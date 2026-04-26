@@ -178,8 +178,8 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
       <p className="small muted">
         Write a deterministic post-Mega learner state into the child subject
         store. Useful for reproducing the 8 canonical fixtures without playing
-        a round. Each apply writes a mutation receipt and is reversible by
-        re-seeding a different shape.
+        a round. Seed overwrites existing state; the pre-image is captured in
+        the audit log for rollback.
       </p>
       <div className="skill-row">
         <label className="field" style={{ minWidth: 220 }}>
@@ -219,6 +219,13 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
             name="postMegaSeedManualLearnerId"
             value={manualLearnerId}
             maxLength={64}
+            // U3 reviewer follow-up (MEDIUM adversarial): browser-side
+            // validation mirrors the Worker + CLI regex so operators see the
+            // red ring immediately when they paste `alice\nbob` or similar.
+            // The pattern lives in an attribute so React still echoes the
+            // value unchanged; the Worker enforces it authoritatively.
+            pattern="[a-z0-9][a-z0-9-]{0,63}"
+            title="Lowercase letters, digits, and hyphens. Must start with a letter or digit. Maximum 64 characters."
             onChange={(event) => setManualLearnerId(event.target.value)}
             placeholder="seed-learner-2026-04-26"
           />

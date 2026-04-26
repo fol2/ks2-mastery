@@ -2232,6 +2232,15 @@ const OPS_ERROR_EVENT_STATUS_MUTATION_KIND = 'admin.ops_error_event.status-set';
 // in its own receipt row for audit.
 const POST_MEGA_SEED_MUTATION_KIND = 'admin.spelling.post-mega-seed';
 const POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS = 64;
+// U3 reviewer follow-up (MEDIUM adversarial): the seed harness accepts a
+// free-form learnerId string for the "new learner" flow. Without a charset
+// guard, an admin can type `alice\nbob`, `<script>`, or other control-char
+// payloads that flow straight into SQL literal via `bindStatement` (safe
+// against injection thanks to parameterisation, but still ugly for logs /
+// audit). The regex mirrors the learner-id naming convention used elsewhere
+// (lowercase/digits/hyphen, must start with alphanumeric) and is also
+// enforced on the CLI + React manual-id input for consistency.
+const POST_MEGA_SEED_LEARNER_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
 
 function normaliseMutationEnvelope(rawMutation, { scopeType, scopeId } = {}) {
   const raw = isPlainObject(rawMutation) ? rawMutation : {};
@@ -2768,6 +2777,7 @@ async function seedPostMegaLearnerState(db, {
   learnerId,
   shapeName,
   today,
+  confirmOverwrite = false,
   mutation = {},
   nowTs,
 }) {
@@ -2780,6 +2790,17 @@ async function seedPostMegaLearnerState(db, {
     throw new BadRequestError('Learner id is too long.', {
       code: 'learner_id_too_long',
       maxChars: POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS,
+    });
+  }
+  // U3 reviewer follow-up (MEDIUM adversarial): reject control chars / HTML /
+  // anything outside `[a-z0-9-]`. `learnerId: 'alice\nbob'` or `<script>` are
+  // rejected with 400 `invalid_learner_id` BEFORE any SQL runs. The regex
+  // enforces lowercase alphanumeric prefix + hyphen-suffix, matching the
+  // platform-wide learner id convention.
+  if (!POST_MEGA_SEED_LEARNER_ID_REGEX.test(learnerId)) {
+    throw new BadRequestError('Learner id contains invalid characters.', {
+      code: 'invalid_learner_id',
+      pattern: POST_MEGA_SEED_LEARNER_ID_REGEX.source,
     });
   }
   if (!POST_MEGA_SEED_SHAPES.includes(shapeName)) {
@@ -2807,7 +2828,17 @@ async function seedPostMegaLearnerState(db, {
     scopeId,
   });
   const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
-  const todayDay = Number.isFinite(Number(today))
+  // U3 reviewer follow-up (HIGH correctness): `Number(null) === 0`, which is
+  // finite, so the previous `Number.isFinite(Number(today))` guard coerced
+  // `today=null` (the Admin UI's default — it never sends `today`) into day 0
+  // (1970-01-01). That produced temporally-nonsensical fixtures (all guardian
+  // `nextDueDay` in 1970). Explicitly reject `null`/`undefined` BEFORE the
+  // finite check so the ts-derived fallback actually fires for the admin
+  // path. `Number('')` is also 0, so string empty is treated the same way.
+  const hasTodayOverride = today != null
+    && !(typeof today === 'string' && today.trim() === '')
+    && Number.isFinite(Number(today));
+  const todayDay = hasTodayOverride
     ? Math.floor(Number(today))
     : Math.floor(ts / (24 * 60 * 60 * 1000));
   const requestHash = mutationPayloadHash(POST_MEGA_SEED_MUTATION_KIND, {
@@ -2860,6 +2891,41 @@ async function seedPostMegaLearnerState(db, {
     [learnerId],
   );
   const createdLearner = !existingLearner;
+
+  // U3 reviewer follow-up (HIGH adversarial): cross-tenant learner data wipe.
+  // Before P2, an admin could type any learnerId and the seed would overwrite
+  // another account's learner_profiles + child_subject_state without warning,
+  // no undo, no audit pre-image. Two-layer guard:
+  //   1. When the target learner already exists and the acting admin has no
+  //      membership row for it, REJECT with 409 `seed_requires_membership`
+  //      UNLESS the client explicitly passes `confirmOverwrite: true`. The
+  //      confirm-flag lets a genuine ops response (debugging another
+  //      account's data) proceed — but only with explicit intent.
+  //   2. On every overwrite path (own-learner or with confirmOverwrite),
+  //      capture the pre-image `data_json` and include it in the mutation
+  //      receipt's `response_json.postMegaSeed.previousDataJson` so a future
+  //      rollback tool can restore the state without trawling backups.
+  let previousDataJson = null;
+  if (!createdLearner) {
+    const existingMembership = await getMembership(db, actorAccountId, learnerId);
+    if (!existingMembership && !confirmOverwrite) {
+      throw new ConflictError(
+        'Seed target is owned by a different account. Re-submit with confirmOverwrite=true to proceed.',
+        {
+          code: 'seed_requires_membership',
+          learnerId,
+          remedy: 'Resubmit the request with `confirmOverwrite: true` in the body to acknowledge the cross-tenant overwrite. The pre-image is captured in the mutation receipt for rollback.',
+        },
+      );
+    }
+    const previousRow = await first(
+      db,
+      `SELECT data_json FROM child_subject_state
+         WHERE learner_id = ? AND subject_id = 'spelling'`,
+      [learnerId],
+    );
+    previousDataJson = typeof previousRow?.data_json === 'string' ? previousRow.data_json : null;
+  }
 
   const statements = [];
   if (createdLearner) {
@@ -2920,6 +2986,18 @@ async function seedPostMegaLearnerState(db, {
       today: todayDay,
       createdLearner,
       dataKeys: Object.keys(data).sort(),
+      // U3 reviewer follow-up (HIGH adversarial): capture pre-image so a
+      // future rollback tool can restore the prior child_subject_state.
+      // `previousDataJson` is the RAW JSON string (possibly null for first-
+      // write) — rollback consumers parse with `JSON.parse` only when
+      // non-null. The field lives inside `postMegaSeed` so the mutation
+      // receipt's `response_json` is self-contained for audit.
+      previousDataJson,
+      // `confirmedOverwrite` is true when the overwrite was cross-tenant
+      // (no membership) and the caller passed `confirmOverwrite: true`. The
+      // audit reviewer can filter on this to surface the small set of
+      // cross-account seeds that deserve a second look.
+      confirmedOverwrite: Boolean(!createdLearner && confirmOverwrite && previousDataJson !== null),
     },
     postMegaSeedMutation: mutationMeta,
   };
@@ -5906,6 +5984,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       learnerId,
       shapeName,
       today = null,
+      confirmOverwrite = false,
       mutation = {},
     } = {}) {
       return seedPostMegaLearnerState(db, {
@@ -5913,6 +5992,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         learnerId,
         shapeName,
         today,
+        confirmOverwrite,
         mutation,
         nowTs: nowFactory(),
       });

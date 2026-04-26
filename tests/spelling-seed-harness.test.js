@@ -461,6 +461,309 @@ test('CLI buildSeedSql shape-for-shape: content-added-after-graduation embeds sp
 });
 
 // -----------------------------------------------------------------------------
+// U3 reviewer follow-up tests (2026-04-26) — HIGH correctness, HIGH
+// adversarial, P2 security, MEDIUM regressions. Every block below is tagged
+// with the reviewer finding it pins so a future reviewer can trace intent.
+// -----------------------------------------------------------------------------
+
+test('[U3 HIGH correctness] missing `today` in the request body falls back to ts-derived day (not 1970-01-01)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
+    // POST WITHOUT a `today` field — the Admin UI never sends one.
+    const response = await seedViaApi(server, 'adult-admin', {
+      learnerId: 'learner-no-today',
+      shapeName: 'fresh-graduate',
+      // `today` omitted intentionally — mirrors the real admin-hub payload.
+      mutation: { requestId: 'req-seed-no-today', correlationId: 'corr-seed-no-today' },
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(payload));
+    // `today` must be the current day's floor, not 0 (which would have been
+    // the `Number(null) === 0` trap before the fix). Any finite value > 10000
+    // proves we took the ts-derived fallback (day ~20k for today ≈ 2026).
+    assert.ok(
+      Number.isFinite(payload.postMegaSeed.today) && payload.postMegaSeed.today > 10000,
+      `expected todayDay to be derived from server ts, got ${payload.postMegaSeed.today}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+test('[U3 HIGH adversarial] pre-image captured on overwrite — receipt carries previousDataJson', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
+    // First seed writes the baseline shape.
+    const first = await seedViaApi(server, 'adult-admin', {
+      learnerId: 'learner-preimage',
+      shapeName: 'fresh-graduate',
+      today: TODAY_DAY,
+      mutation: { requestId: 'req-seed-preimage-1', correlationId: 'corr-preimage-1' },
+    });
+    const firstPayload = await first.json();
+    assert.equal(first.status, 200, JSON.stringify(firstPayload));
+    // On fresh learner creation there is no pre-image.
+    assert.equal(firstPayload.postMegaSeed.previousDataJson, null);
+
+    // Second seed OVERWRITES — must capture the baseline as pre-image.
+    const second = await seedViaApi(server, 'adult-admin', {
+      learnerId: 'learner-preimage',
+      shapeName: 'guardian-first-patrol',
+      today: TODAY_DAY,
+      mutation: { requestId: 'req-seed-preimage-2', correlationId: 'corr-preimage-2' },
+    });
+    const secondPayload = await second.json();
+    assert.equal(second.status, 200, JSON.stringify(secondPayload));
+    assert.ok(
+      typeof secondPayload.postMegaSeed.previousDataJson === 'string'
+        && secondPayload.postMegaSeed.previousDataJson.length > 0,
+      'overwrite must capture previousDataJson',
+    );
+    // The pre-image must be the baseline's progress map (fresh-graduate).
+    const preImage = JSON.parse(secondPayload.postMegaSeed.previousDataJson);
+    assert.ok(preImage?.progress, 'pre-image includes the fresh-graduate progress map');
+    assert.deepEqual(preImage.guardian, {}, 'pre-image guardian is empty (fresh-graduate shape)');
+
+    // The receipt row's response_json also carries the pre-image.
+    const receipt = server.DB.db.prepare(`
+      SELECT response_json FROM mutation_receipts WHERE request_id = ?
+    `).get('req-seed-preimage-2');
+    const storedResponse = JSON.parse(receipt.response_json);
+    assert.equal(
+      storedResponse.postMegaSeed.previousDataJson,
+      secondPayload.postMegaSeed.previousDataJson,
+      'receipt.response_json.postMegaSeed.previousDataJson must match the API response',
+    );
+  } finally {
+    server.close();
+  }
+});
+
+test('[U3 HIGH adversarial] cross-tenant overwrite rejected with 409 seed_requires_membership unless confirmOverwrite=true', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
+    seedAdultAccount(server, { id: 'adult-admin-2', email: 'admin2@example.com', platformRole: 'admin' });
+
+    // adult-admin seeds learner-cross first — membership is granted automatically.
+    const initial = await seedViaApi(server, 'adult-admin', {
+      learnerId: 'learner-cross',
+      shapeName: 'fresh-graduate',
+      today: TODAY_DAY,
+      mutation: { requestId: 'req-seed-cross-1', correlationId: 'corr-cross-1' },
+    });
+    assert.equal(initial.status, 200);
+
+    // adult-admin-2 tries to overwrite — should 409 with seed_requires_membership.
+    const blocked = await seedViaApi(server, 'adult-admin-2', {
+      learnerId: 'learner-cross',
+      shapeName: 'guardian-first-patrol',
+      today: TODAY_DAY,
+      mutation: { requestId: 'req-seed-cross-2', correlationId: 'corr-cross-2' },
+    });
+    const blockedPayload = await blocked.json();
+    assert.equal(blocked.status, 409, `expected 409, got ${blocked.status}: ${JSON.stringify(blockedPayload)}`);
+    assert.equal(blockedPayload.code, 'seed_requires_membership');
+
+    // Same admin, now with confirmOverwrite=true — should succeed and
+    // capture the prior admin's baseline as pre-image.
+    const confirmed = await seedViaApi(server, 'adult-admin-2', {
+      learnerId: 'learner-cross',
+      shapeName: 'guardian-first-patrol',
+      today: TODAY_DAY,
+      confirmOverwrite: true,
+      mutation: { requestId: 'req-seed-cross-3', correlationId: 'corr-cross-3' },
+    });
+    const confirmedPayload = await confirmed.json();
+    assert.equal(confirmed.status, 200, JSON.stringify(confirmedPayload));
+    assert.equal(confirmedPayload.postMegaSeed.confirmedOverwrite, true);
+    assert.ok(
+      typeof confirmedPayload.postMegaSeed.previousDataJson === 'string'
+        && confirmedPayload.postMegaSeed.previousDataJson.length > 0,
+      'confirmed cross-tenant overwrite must capture pre-image',
+    );
+  } finally {
+    server.close();
+  }
+});
+
+test('[U3 HIGH adversarial] admin with membership can overwrite their own learner WITHOUT confirmOverwrite', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
+
+    // First seed — learner auto-created, membership granted.
+    const first = await seedViaApi(server, 'adult-admin', {
+      learnerId: 'learner-own',
+      shapeName: 'fresh-graduate',
+      today: TODAY_DAY,
+      mutation: { requestId: 'req-seed-own-1', correlationId: 'corr-own-1' },
+    });
+    assert.equal(first.status, 200);
+
+    // Second seed from the same admin — no confirmOverwrite needed.
+    const second = await seedViaApi(server, 'adult-admin', {
+      learnerId: 'learner-own',
+      shapeName: 'guardian-first-patrol',
+      today: TODAY_DAY,
+      mutation: { requestId: 'req-seed-own-2', correlationId: 'corr-own-2' },
+    });
+    const secondPayload = await second.json();
+    assert.equal(second.status, 200, JSON.stringify(secondPayload));
+    // Not confirmedOverwrite because the admin has owner membership.
+    assert.equal(secondPayload.postMegaSeed.confirmedOverwrite, false);
+    assert.ok(
+      typeof secondPayload.postMegaSeed.previousDataJson === 'string',
+      'own-learner overwrite still captures pre-image for audit',
+    );
+  } finally {
+    server.close();
+  }
+});
+
+test('[U3 P2 security] 11th POST in 60s window from same IP returns 429 post_mega_seed_rate_limited', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
+    // Fire 10 allowed requests from the same `cf-connecting-ip`. Each uses
+    // a distinct requestId so the mutation-receipt preflight does not
+    // short-circuit them; the 11th should 429.
+    const IP = '203.0.113.42';
+    let lastOkStatus = null;
+    for (let i = 0; i < 10; i += 1) {
+      const response = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/spelling/seed-post-mega', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: 'https://repo.test',
+          'x-ks2-dev-platform-role': 'admin',
+          'cf-connecting-ip': IP,
+        },
+        body: JSON.stringify({
+          learnerId: `learner-rate-${i}`,
+          shapeName: 'fresh-graduate',
+          today: TODAY_DAY,
+          mutation: { requestId: `req-seed-rate-${i}`, correlationId: `corr-rate-${i}` },
+        }),
+      });
+      lastOkStatus = response.status;
+      // All 10 should succeed.
+      assert.equal(response.status, 200, `request ${i} expected 200, got ${response.status}`);
+    }
+    // The 11th is the rate-limit trip.
+    const overLimit = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/spelling/seed-post-mega', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://repo.test',
+        'x-ks2-dev-platform-role': 'admin',
+        'cf-connecting-ip': IP,
+      },
+      body: JSON.stringify({
+        learnerId: 'learner-rate-11',
+        shapeName: 'fresh-graduate',
+        today: TODAY_DAY,
+        mutation: { requestId: 'req-seed-rate-11', correlationId: 'corr-rate-11' },
+      }),
+    });
+    const overPayload = await overLimit.json();
+    assert.equal(overLimit.status, 429, `expected 429, got ${overLimit.status}: ${JSON.stringify(overPayload)}`);
+    assert.equal(overPayload.code, 'post_mega_seed_rate_limited');
+    assert.ok(typeof overPayload.retryAfterSeconds === 'number' && overPayload.retryAfterSeconds >= 0);
+    // RFC 9110 Retry-After header must be present.
+    assert.ok(overLimit.headers.get('retry-after'), 'Retry-After header present on 429');
+
+    // Sanity: the previous attempts (lastOkStatus) all cleared.
+    assert.equal(lastOkStatus, 200);
+  } finally {
+    server.close();
+  }
+});
+
+test('[U3 MEDIUM adversarial] learnerId with control chars or HTML rejected with 400 invalid_learner_id', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
+    // NOTE: the regex is `/^[a-z0-9][a-z0-9-]{0,63}$/i` (case-insensitive),
+    // so `UPPER` is deliberately accepted — the guard targets control chars /
+    // HTML / whitespace / leading-hyphen, not casing.
+    const bogus = ['alice\nbob', '<script>', 'has space', '-leading-hyphen', ''];
+    for (const learnerId of bogus) {
+      const response = await seedViaApi(server, 'adult-admin', {
+        learnerId,
+        shapeName: 'fresh-graduate',
+        today: TODAY_DAY,
+        mutation: {
+          requestId: `req-seed-invalid-${bogus.indexOf(learnerId)}`,
+          correlationId: `corr-invalid-${bogus.indexOf(learnerId)}`,
+        },
+      });
+      const payload = await response.json();
+      assert.equal(response.status, 400, `"${learnerId}" should 400, got ${response.status}: ${JSON.stringify(payload)}`);
+      // Empty string hits the `learner_id_required` pre-guard; other bogus
+      // values hit the regex guard. Both paths are acceptable — the key is
+      // 400 status with a stable code the client can branch on.
+      assert.ok(
+        payload.code === 'invalid_learner_id' || payload.code === 'learner_id_required',
+        `"${learnerId}" should be rejected, got code=${payload.code}`,
+      );
+    }
+  } finally {
+    server.close();
+  }
+});
+
+test('[U3 MEDIUM adversarial] CLI --account flag produces membership INSERT; omitting it skips the INSERT', () => {
+  const withAccount = buildSeedSql({
+    learnerId: 'learner-cli-account',
+    shapeName: 'fresh-graduate',
+    today: TODAY_DAY,
+    nowTs: TODAY_MS,
+    accountId: 'adult-admin',
+  });
+  assert.ok(
+    withAccount.includes('INSERT INTO account_learner_memberships'),
+    'with --account: membership INSERT present',
+  );
+  assert.ok(withAccount.includes("'adult-admin'"), 'membership INSERT embeds the account id');
+  assert.ok(withAccount.includes("'owner'"), 'membership INSERT grants the owner role');
+  assert.ok(
+    withAccount.includes('ON CONFLICT(account_id, learner_id) DO NOTHING'),
+    'membership INSERT is conflict-safe',
+  );
+
+  const withoutAccount = buildSeedSql({
+    learnerId: 'learner-cli-no-account',
+    shapeName: 'fresh-graduate',
+    today: TODAY_DAY,
+    nowTs: TODAY_MS,
+  });
+  assert.ok(
+    !withoutAccount.includes('INSERT INTO account_learner_memberships'),
+    'no --account: membership INSERT suppressed',
+  );
+});
+
+test('[U3 MEDIUM adversarial] CLI buildSeedSql rejects malformed learnerId / accountId with invalid_* codes', () => {
+  assert.throws(
+    () => buildSeedSql({ learnerId: 'alice\nbob', shapeName: 'fresh-graduate', today: TODAY_DAY, nowTs: TODAY_MS }),
+    (err) => err.code === 'invalid_learner_id',
+  );
+  assert.throws(
+    () => buildSeedSql({
+      learnerId: 'learner-x',
+      shapeName: 'fresh-graduate',
+      today: TODAY_DAY,
+      nowTs: TODAY_MS,
+      accountId: '<script>',
+    }),
+    (err) => err.code === 'invalid_account_id',
+  );
+});
+
+// -----------------------------------------------------------------------------
 // Child UI safety — the seed harness panel must only be reachable from the
 // admin hub, which is structurally unavailable to child / parent roles.
 // -----------------------------------------------------------------------------

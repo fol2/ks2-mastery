@@ -30,8 +30,20 @@ import {
   resolvePostMegaSeedShape,
 } from '../shared/spelling/post-mastery-seed-shapes.js';
 
+// U3 reviewer follow-up (MEDIUM adversarial): mirror the Worker-side learner
+// id regex so the CLI rejects control chars / HTML tokens with the same
+// pattern the production route enforces.
+const LEARNER_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
+
 function parseArgs(argv) {
-  const args = { learner: '', shape: '', allowLocal: false, today: null, dryRun: false };
+  const args = {
+    learner: '',
+    shape: '',
+    account: '',
+    allowLocal: false,
+    today: null,
+    dryRun: false,
+  };
   for (const token of argv) {
     if (token === '--dry-run') { args.dryRun = true; continue; }
     if (token === '--allow-local=1') { args.allowLocal = true; continue; }
@@ -41,6 +53,13 @@ function parseArgs(argv) {
     if (token.startsWith('--shape=')) { args.shape = token.slice('--shape='.length); continue; }
     if (token === '--shape') { args.__awaitShape = true; continue; }
     if (args.__awaitShape) { args.shape = token; args.__awaitShape = false; continue; }
+    // U3 reviewer follow-up (MEDIUM adversarial): optional `--account <id>`.
+    // When provided, the emitted SQL also inserts an owner-role membership
+    // row so the seeded learner shows up in the admin hub learner picker for
+    // that account. When omitted, stderr warns the operator.
+    if (token.startsWith('--account=')) { args.account = token.slice('--account='.length); continue; }
+    if (token === '--account') { args.__awaitAccount = true; continue; }
+    if (args.__awaitAccount) { args.account = token; args.__awaitAccount = false; continue; }
     if (token.startsWith('--today=')) {
       const parsed = Number(token.slice('--today='.length));
       if (Number.isFinite(parsed)) args.today = Math.floor(parsed);
@@ -54,7 +73,7 @@ function usage(message) {
   if (message) console.error(message);
   console.error('Usage: node scripts/seed-post-mega.mjs --learner <id> --shape <shape> --allow-local=1');
   console.error(`Allowed shapes: ${POST_MEGA_SEED_SHAPES.join(', ')}`);
-  console.error('Optional: --today <day-epoch>  --dry-run');
+  console.error('Optional: --today <day-epoch>  --account <id>  --dry-run');
 }
 
 // SQL literal escape. Node-pg-style — doubles single quotes.
@@ -66,12 +85,35 @@ function sqlString(value) {
  * Build the SQL script the CLI writes to a temp file and pipes into
  * `wrangler d1 execute`. Exported for test coverage — the round-trip test
  * reads the SQL back and asserts structural shape before shelling out.
+ *
+ * When `accountId` is a non-empty string AND a new `learner_profiles` row is
+ * about to land, the script also inserts an owner-role
+ * `account_learner_memberships` row so the seeded learner appears in the
+ * admin hub picker for that account. The Worker path does this implicitly
+ * (the actor is the admin session); the CLI path has no session, so the
+ * operator supplies `--account <id>` to grant ownership. When `accountId` is
+ * empty the membership INSERT is skipped and the script keeps the prior
+ * behaviour (learner exists but is not linked to any account).
  */
-export function buildSeedSql({ learnerId, shapeName, today, nowTs }) {
+export function buildSeedSql({ learnerId, shapeName, today, nowTs, accountId = '' }) {
   if (!POST_MEGA_SEED_SHAPES.includes(shapeName)) {
     const error = new Error(`Unknown shape: ${shapeName}`);
     error.code = 'unknown_shape';
     error.allowed = [...POST_MEGA_SEED_SHAPES];
+    throw error;
+  }
+  // U3 reviewer follow-up (MEDIUM adversarial): reject malformed learner ids
+  // here too so the CLI never writes a row the Worker would refuse.
+  if (!LEARNER_ID_REGEX.test(learnerId)) {
+    const error = new Error(`Invalid learner id: ${learnerId}`);
+    error.code = 'invalid_learner_id';
+    error.pattern = LEARNER_ID_REGEX.source;
+    throw error;
+  }
+  if (accountId && !LEARNER_ID_REGEX.test(accountId)) {
+    const error = new Error(`Invalid account id: ${accountId}`);
+    error.code = 'invalid_account_id';
+    error.pattern = LEARNER_ID_REGEX.source;
     throw error;
   }
   const runtimeSnapshot = resolveRuntimeSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE, {
@@ -90,12 +132,17 @@ export function buildSeedSql({ learnerId, shapeName, today, nowTs }) {
   // NOTE: wrangler d1 execute --local runs every statement in its own
   // transaction unless we `BEGIN` explicitly. We bundle the script into a
   // single transaction to keep the upsert atomic.
+  const membershipInsert = accountId
+    ? `INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+  VALUES (${sqlString(accountId)}, ${sqlString(learnerId)}, 'owner', 0, ${nowTs}, ${nowTs})
+  ON CONFLICT(account_id, learner_id) DO NOTHING;\n`
+    : '';
   return `PRAGMA foreign_keys = OFF;
 BEGIN;
 INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
   VALUES (${sqlString(learnerId)}, 'Seed learner', 'Y5', '#8A4FFF', '', 15, ${nowTs}, ${nowTs}, 0)
   ON CONFLICT(id) DO NOTHING;
-INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+${membershipInsert}INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
   VALUES (${sqlString(learnerId)}, 'spelling', 'null', ${sqlString(dataJson)}, ${nowTs}, NULL)
   ON CONFLICT(learner_id, subject_id) DO UPDATE SET
     ui_json = 'null',
@@ -130,6 +177,22 @@ async function main(argv) {
     usage(`Unknown shape: ${args.shape}`);
     process.exit(2);
   }
+  if (!LEARNER_ID_REGEX.test(args.learner)) {
+    usage(`Invalid learner id (must match ${LEARNER_ID_REGEX.source}): ${args.learner}`);
+    process.exit(2);
+  }
+  if (args.account && !LEARNER_ID_REGEX.test(args.account)) {
+    usage(`Invalid account id (must match ${LEARNER_ID_REGEX.source}): ${args.account}`);
+    process.exit(2);
+  }
+
+  // U3 reviewer follow-up (MEDIUM adversarial): warn when the operator
+  // forgot `--account`. Without it, the seeded learner exists but is not
+  // linked to any adult_account, so it never shows up in the admin hub
+  // learner picker — the operator will think the seed silently failed.
+  if (!args.account) {
+    console.error('Warning: no --account <id> supplied. The seeded learner will exist in learner_profiles but will NOT appear in the admin hub picker. Re-run with --account <id> to grant owner membership.');
+  }
 
   const nowTs = Date.now();
   const today = args.today == null
@@ -140,6 +203,7 @@ async function main(argv) {
     shapeName: args.shape,
     today,
     nowTs,
+    accountId: args.account,
   });
 
   if (args.dryRun) {
