@@ -57,14 +57,17 @@ Command:
 npm run smoke:production:spelling-audio -- --word-sample accident,accidentally --require-word-hit
 ```
 
+(Note: `--word-sample` overrides only the word probes; the sentence sample stays at the runner default `accident,knowledge` per `scripts/spelling-audio-production-smoke.mjs` parseArgs. Rows below match the JSON `report.probes[]` shape 1:1.)
+
 | Probe | Expected | Actual |
 |---|---|---|
 | word-only `accident` × `Iapetus` | hit + primary | <RESULT> |
 | word-only `accident` × `Sulafat` | hit + primary | <RESULT> |
 | word-only `accidentally` × `Iapetus` | hit + primary | <RESULT> |
 | word-only `accidentally` × `Sulafat` | hit + primary | <RESULT> |
-| sentence-legacy probes | hit + legacy | <RESULT> |
-| cross-account invariant | distinct tokens / same key / identical bytes | <RESULT> |
+| sentence `accident` | hit + legacy | <RESULT> |
+| sentence `knowledge` | hit + legacy | <RESULT> |
+| cross-account `accident` across two demo learners | distinct tokens / same key / identical body bytes; third-word divergence | <RESULT> |
 
 Exit code: <0 / N>
 JSON report: <PASTE FULL JSON OR LINK TO ARTEFACT>
@@ -124,13 +127,14 @@ npm run smoke:production:spelling-audio -- --require-word-hit
 
 Expected: EXIT_OK; all sample word probes hit; sentence-legacy probes still pass; cross-account invariant holds. Actual exit: <CODE>. JSON report: <PASTE>
 
-**Optional R2 inventory sanity (depends on REST API mechanism U2 ships per F-02):**
+**Optional R2 inventory sanity (uses the U2 reconcile command exported by `scripts/build-spelling-word-audio.mjs`):**
 
 ```
-# (REST API list per voice prefix; operator script TBD when U2 reconcile lands)
+# Requires CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN env vars (R2 read scope on the production bucket).
+npm run spelling:word-audio -- reconcile --run-id <verify-RUNID>
 ```
 
-Expected: 236 objects under `spelling-audio/v1/gemini-3.1-flash-tts-preview/Iapetus/word/` and 236 under `Sulafat/word/`. Actual: <COUNTS>
+Expected: `summary.uploaded === 472` AND `inventorySize === 472`, with 236 objects under `spelling-audio/v1/gemini-3.1-flash-tts-preview/Iapetus/word/` and 236 under `Sulafat/word/`. Actual: <SUMMARY.UPLOADED> / <INVENTORYSIZE> / <PER-VOICE COUNTS>
 
 **Race-mitigation cleanup:**
 
