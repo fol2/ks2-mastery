@@ -10,7 +10,6 @@ import {
   greetForHour,
   randomHeroBackground,
   selectTodaysBestRound,
-  subjectName,
 } from './data.js';
 
 export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
@@ -47,7 +46,7 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
   const companionName = pickCompanionName(model.monsterSummary || []);
   const ctaSubjectId = recommendation?.subjectId || 'spelling';
   const ctaLabel = recommendation
-    ? `Start ${recommendation.subjectName || subjectName(recommendation.subjectId)}`
+    ? `Start ${recommendation.subjectName}`
     : "Begin today's round";
 
   return (

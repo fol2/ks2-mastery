@@ -855,12 +855,18 @@ function pickSubjectCompanion(monsterSummary, subjectId) {
     const monsterId = entry?.monster?.id;
     const progress = entry?.progress;
     if (!monsterId || !progress?.caught) continue;
-    // Match either by explicit subjectId annotation (preferred — game state
-    // carries it for Punctuation / Grammar) or by roster membership (legacy
-    // Spelling summaries that don't annotate subjectId per entry).
+    // Roster membership is the hard gate — stale state may carry an explicit
+    // `entry.subjectId` annotation for a reserved monster id (e.g. pre-flip
+    // `{ monster.id:'colisk', subjectId:'punctuation' }`), which would
+    // otherwise bypass the active roster via the annotation branch alone.
+    // Require the monster id to appear in `MONSTERS_BY_SUBJECT[subjectId]`
+    // first; then accept either explicit subject annotation or legacy
+    // unannotated Spelling entries that rely on roster membership. Mirrors
+    // plan U2 R6's "reserved monsters are never learner-facing" invariant.
+    if (!rosterSet.has(monsterId)) continue;
     const isForSubject = entry.subjectId
       ? entry.subjectId === subjectId
-      : rosterSet.has(monsterId);
+      : true;
     if (!isForSubject) continue;
     const stage = Math.max(0, Math.min(4, Number(progress.stage) || 0));
     if (!best || stage > best.stage) {

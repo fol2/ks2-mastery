@@ -161,6 +161,34 @@ test('selectTodaysBestRound surfaces the caught monster companion when one exist
   assert.equal(result.monsterCompanion, 'Chimewing');
 });
 
+test('selectTodaysBestRound refuses a reserved-monster companion even when stale state annotates its subjectId', () => {
+  // Regression guard for U2 review finding (R6 "reserved monsters are never
+  // learner-facing"): a pre-flip learner's stored `monsterSummary` might
+  // carry `{ monster.id:'colisk', subjectId:'punctuation', caught:true }`
+  // after a legacy migration. Without a roster cross-check in
+  // `pickSubjectCompanion`, the explicit-subjectId branch would match and
+  // surface the reserved creature on the hero card. The hardened helper
+  // gates on `MONSTERS_BY_SUBJECT[subjectId]` membership first, so colisk
+  // never becomes the companion regardless of the annotation.
+  const stats = { punctuation: { due: 2 } };
+  const monsterSummary = [
+    // Reserved Punctuation monster with stale explicit annotation — must be
+    // ignored by the companion picker.
+    {
+      monster: {
+        id: 'colisk',
+        name: 'Colisk',
+        nameByStage: ['Colisk Egg', 'Colisk', 'Colisk II', 'Colisk III'],
+      },
+      progress: { caught: true, stage: 2, branch: 'b1' },
+      subjectId: 'punctuation',
+    },
+  ];
+  const result = selectTodaysBestRound(stats, { monsterSummary });
+  assert.equal(result.subjectId, 'punctuation');
+  assert.equal(result.monsterCompanion ?? null, null);
+});
+
 test('selectTodaysBestRound leaves monsterCompanion null when no caught monster exists for the recommended subject', () => {
   const stats = { grammar: { due: 2 } };
   const monsterSummary = [
