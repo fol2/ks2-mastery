@@ -35,26 +35,33 @@ function stripForbiddenChildScopeFields(state) {
 //   - `true`    — the Worker projected a non-empty `skillRows` array. Real
 //                 evidence is available; the Map renders per-skill status.
 //   - `'empty'` — the projection ran and yielded zero rows (fresh learner,
-//                 legitimately no evidence yet). The Map renders every skill
-//                 as `'new'`, preserving the pre-U3 fresh-learner copy.
-//   - `false`   — the payload is missing or malformed (Worker timeout /
-//                 degraded state / serialiser failure). The Map renders every
-//                 skill as `'unknown'` with a child-friendly "We'll unlock
-//                 this after your next round." helper line.
+//                 legitimately no evidence yet), OR the payload is simply
+//                 absent because the upstream worker has not yet wired its
+//                 availability emission (plan R4 defers the upstream half to
+//                 a future PR). The Map renders every skill as `'new'`,
+//                 preserving the pre-U3 fresh-learner copy.
+//   - `false`   — the upstream EXPLICITLY emitted `available: false` (Worker
+//                 timeout / degraded state / serialiser failure). The Map
+//                 renders every skill as `'unknown'` with a child-friendly
+//                 helper line. `false` requires an explicit upstream signal;
+//                 the client NEVER infers `false` from the absence of a
+//                 payload.
 //
-// Plan R4 (line 538-539) pins the `'empty'` vs `false` distinction: an
-// honest empty-evidence state must read differently from a payload failure.
-// When the upstream projection already emits an explicit `available` value,
-// that value is authoritative — the derivation only fills the gap when the
-// signal hasn't been set upstream. This respects the plan's rule that the
-// availability signal ORIGINATES upstream and the client surface merely
-// surfaces it.
+// **Review follow-on (PR #269)**: the BLOCKING defect in the original shape
+// was that a cold-start learner (no upstream emission wired yet) fell into
+// the null-branch and received `false`, rendering 14 "Unknown" chips and
+// 14 copies of the helper line. That is a visible UX regression worse than
+// the pre-U3 silent-'new' behaviour. The null-branch default now flips to
+// `'empty'` — the honest "no evidence yet" reading — so fresh learners see
+// pre-U3 fresh-learner copy until upstream wires its explicit signal. Once
+// that upstream wiring lands, any degraded emission (`available: false`)
+// flows through untouched and triggers the 'unknown' UX correctly.
 export function deriveAnalyticsAvailability(analytics) {
-  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return false;
+  if (!analytics || typeof analytics !== 'object' || Array.isArray(analytics)) return 'empty';
   if (analytics.available === true || analytics.available === false || analytics.available === 'empty') {
     return analytics.available;
   }
-  if (!Array.isArray(analytics.skillRows)) return false;
+  if (!Array.isArray(analytics.skillRows)) return 'empty';
   return analytics.skillRows.length === 0 ? 'empty' : true;
 }
 

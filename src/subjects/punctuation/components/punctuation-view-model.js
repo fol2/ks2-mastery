@@ -383,9 +383,18 @@ const PUNCTUATION_CHILD_STATUS_LABELS = Object.freeze({
   secure: 'Secure',
   // Phase 4 U3 — degraded-analytics state. Distinct from `'new'` (fresh
   // learner) so a payload-failure does not masquerade as an empty-evidence
-  // Map. Paired with the 'We\'ll unlock this after your next round.' helper
-  // sub-line the Map scene renders under each unknown row.
-  unknown: 'Unknown',
+  // Map. Paired with the helper sub-line the Map scene renders under each
+  // unknown row (see `punctuationChildUnknownHelperCopy`).
+  //
+  // Review follow-on (PR #269): the original 'Unknown' label was adult /
+  // clinical register and fired against EVERY fresh learner because the
+  // default null-branch in `deriveAnalyticsAvailability` produced `false`.
+  // Flipping the null-branch to `'empty'` means this label now only ever
+  // surfaces when the upstream EXPLICITLY emits degraded state — so the
+  // wording can relax into child register per plan R4 (line 541:
+  // "`punctuationChildStatusLabel('unknown')` → 'Check back later' or
+  // similar"). Chose the plan's first-suggested wording verbatim.
+  unknown: 'Check back later',
 });
 
 /**
@@ -396,6 +405,21 @@ const PUNCTUATION_CHILD_STATUS_LABELS = Object.freeze({
 export function punctuationChildStatusLabel(status) {
   if (typeof status !== 'string' || !status) return 'New';
   return PUNCTUATION_CHILD_STATUS_LABELS[status] || 'New';
+}
+
+// Phase 4 U3 (review follow-on): the helper sub-line that renders under
+// every `'unknown'` skill row. Routed through this helper so the copy
+// lands under the same governance layer as `punctuationChildStatusLabel`
+// — a future forbidden-term sweep over the helper text lands here, not
+// in a JSX literal inside the scene file. The wording softens away from
+// the original "We'll unlock this after your next round." because the
+// upstream worker does NOT currently wire `ui.analytics` on round
+// complete (that upstream emission is deferred by plan R4 to a future
+// PR). Until that wiring lands, a causal "next round" promise would be
+// broken. The replacement phrasing keeps the reassuring tone (nothing
+// the learner did wrong) without the unhonourable causal claim.
+export function punctuationChildUnknownHelperCopy() {
+  return "We're still loading your progress.";
 }
 
 // --- Misconception-tag → child label ---------------------------------------

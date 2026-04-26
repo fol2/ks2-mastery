@@ -51,6 +51,7 @@ import {
   buildPunctuationMapModel,
   composeIsDisabled,
   punctuationChildStatusLabel,
+  punctuationChildUnknownHelperCopy,
   punctuationMonsterDisplayName,
   punctuationSkillRuleOneLiner,
 } from './punctuation-view-model.js';
@@ -161,8 +162,11 @@ function SkillCard({ skill, disabled, actions }) {
   // Phase 4 U3: when analytics is degraded, every skill arrives with
   // `status: 'unknown'`. The card renders a child-friendly helper line
   // underneath the rule one-liner so a learner understands they haven't
-  // done anything wrong — the system is just waiting for the next round
-  // of evidence. Copy is locked verbatim per plan R4 test scenarios.
+  // done anything wrong — the system is waiting on evidence. The string
+  // is routed through `punctuationChildUnknownHelperCopy()` so the copy
+  // lands under the same governance as the chip label (helper sits in
+  // `punctuation-view-model.js`); a future forbidden-term sweep or copy
+  // tune lands in one place.
   const isUnknown = skill.status === 'unknown';
   return (
     <article className="punctuation-map-skill-card" data-skill-id={skill.skillId}>
@@ -175,7 +179,7 @@ function SkillCard({ skill, disabled, actions }) {
       <p className="punctuation-map-skill-rule">{punctuationSkillRuleOneLiner(skill.skillId)}</p>
       {isUnknown ? (
         <p className="punctuation-map-skill-unknown-helper muted">
-          We&apos;ll unlock this after your next round.
+          {punctuationChildUnknownHelperCopy()}
         </p>
       ) : null}
       <div className="punctuation-map-skill-actions actions">

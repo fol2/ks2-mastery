@@ -31,8 +31,16 @@ export const PUNCTUATION_OPEN_MAP_ALLOWED_PHASES = Object.freeze(['setup', 'summ
 // Reserved Punctuation monsters (Colisk / Hyphang / Carillon) are absent
 // from the monster filter list so a rogue payload cannot surface a retired
 // name as a filter option.
+//
+// Phase 4 U3 (review follow-on): `'unknown'` is included so the filter chip
+// row stays consistent with the skill-row status enum once the upstream
+// worker starts emitting `analytics.available === false`. Without this
+// entry the degraded state would trap a learner on any non-"All" chip
+// (every skill is `'unknown'`, but the filter has no matching id → the
+// Map renders zero cards with no empty-state message). The chip is a
+// harmless extra slot while the upstream wiring is still deferred.
 export const PUNCTUATION_MAP_STATUS_FILTER_IDS = Object.freeze([
-  'all', 'new', 'learning', 'due', 'weak', 'secure',
+  'all', 'new', 'learning', 'due', 'weak', 'secure', 'unknown',
 ]);
 
 export const PUNCTUATION_MAP_MONSTER_FILTER_IDS = Object.freeze([

@@ -575,8 +575,11 @@ test('punctuation Map scene renders the status filter chip row with child copy',
   openMapScene(harness);
   const html = harness.render();
 
-  // Plan: ['All','New','Learning','Due','Wobbly','Secure'].
-  for (const label of ['All', 'New', 'Learning', 'Due today', 'Wobbly', 'Secure']) {
+  // Plan: ['All','New','Learning','Due today','Wobbly','Secure'].
+  // Phase 4 U3 review follow-on (PR #269): `'Check back later'` added for
+  // the degraded-analytics `'unknown'` status (chip is a harmless slot
+  // while upstream wiring is deferred).
+  for (const label of ['All', 'New', 'Learning', 'Due today', 'Wobbly', 'Secure', 'Check back later']) {
     assert.match(html, new RegExp(`>${label}<`), `missing status chip label ${label}`);
   }
   assert.match(html, /data-action="punctuation-map-status-filter"/);
@@ -849,15 +852,39 @@ test('U3 assembleSkillRows: analytics.available=`empty` treats as fresh learner 
   }
 });
 
-test('U3 client-read-models: initState derives analytics.available=false when raw analytics is missing', async () => {
+test('U3 client-read-models: initState derives analytics.available=`empty` when raw analytics is missing', async () => {
+  // Review follow-on (PR #269): flipped from `false` to `'empty'`. The
+  // original contract treated missing-payload as degraded, but the upstream
+  // worker wiring that would emit an explicit `available` signal is
+  // deferred (plan R4). Without this flip, EVERY cold-start learner lands
+  // in the `'unknown'` UX — a visible regression. `false` is now reserved
+  // for the explicit upstream degraded signal; the client never infers
+  // `false` from the absence of a payload.
   const { createPunctuationReadModelService } = await import('../src/subjects/punctuation/client-read-models.js');
   const service = createPunctuationReadModelService({ getState: () => ({}) });
   const state = service.initState({});
   assert.ok(state.analytics, 'initState must surface an analytics object on the read-model');
   assert.equal(
     state.analytics.available,
+    'empty',
+    'missing raw analytics must derive to available: "empty" (no evidence yet, not a failure signal)',
+  );
+});
+
+test('U3 client-read-models: initState honours an explicitly-emitted upstream `false` signal', async () => {
+  // Review follow-on (PR #269): `false` now requires an explicit upstream
+  // emission. This test locks the contract: once the upstream worker
+  // starts emitting `{ available: false }` (Worker timeout / degraded),
+  // the client surfaces that value unchanged so the Map scene fires the
+  // 'unknown' UX correctly. A regression that re-infers `'empty'` when
+  // upstream has spoken would silently swallow the degraded signal.
+  const { createPunctuationReadModelService } = await import('../src/subjects/punctuation/client-read-models.js');
+  const service = createPunctuationReadModelService({ getState: () => ({}) });
+  const state = service.initState({ analytics: { available: false } });
+  assert.equal(
+    state.analytics.available,
     false,
-    'missing raw analytics must derive to available: false (degraded — safest assumption per plan)',
+    'explicit upstream `available: false` must flow through unchanged',
   );
 });
 
@@ -894,41 +921,69 @@ test('U3 client-read-models: initState honours an explicitly set analytics.avail
   assert.equal(state.analytics.available, 'empty');
 });
 
-test('U3 punctuationChildStatusLabel: `unknown` maps to a distinct "Unknown" label', async () => {
+test('U3 punctuationChildStatusLabel: `unknown` maps to the child-register "Check back later" label', async () => {
+  // Review follow-on (PR #269): softened from the original "Unknown"
+  // adult register to the plan's first-suggested child-register wording
+  // (plan line 541: "`punctuationChildStatusLabel('unknown')` →
+  // 'Check back later' or similar"). The explicit 'unknown' id is still
+  // visually distinct from `'new'` so a reviewer can tell the two states
+  // apart in rendered HTML.
   const { punctuationChildStatusLabel } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
   assert.equal(
     punctuationChildStatusLabel('unknown'),
-    'Unknown',
-    '`unknown` must be visually distinct from `new` on the Map',
+    'Check back later',
+    '`unknown` must render with the child-register "Check back later" label',
   );
   // Regression: existing unknown-string fallback (mystery-bucket) still reads
   // as `New` — only the explicit `'unknown'` id gets the new label.
   assert.equal(punctuationChildStatusLabel('mystery-bucket'), 'New');
 });
 
-test('U3 Map scene SSR: analytics.available=false renders Unknown chip + helper copy (covers AE4)', () => {
+test('U3 punctuationChildUnknownHelperCopy: returns the governed child-register helper string', async () => {
+  // Review follow-on (PR #269): the helper sub-line was previously a raw
+  // JSX literal inside PunctuationMapScene.jsx — unreachable by the
+  // forbidden-term sweep that runs on `punctuation-view-model.js`. Routing
+  // the string through a helper puts it under the same governance as the
+  // chip label.
+  const { punctuationChildUnknownHelperCopy, isPunctuationChildCopy } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const copy = punctuationChildUnknownHelperCopy();
+  assert.equal(typeof copy, 'string');
+  assert.ok(copy.length > 0, 'helper must return non-empty string');
+  assert.equal(
+    isPunctuationChildCopy(copy),
+    true,
+    'helper copy must pass the forbidden-term sweep',
+  );
+});
+
+test('U3 Map scene SSR: analytics.available=false renders child-register chip + helper copy (covers AE4)', () => {
   const harness = createPunctuationHarness();
   openMapScene(harness);
   // Seed a degraded-analytics payload so the scene renders the unknown state.
   // A plain `false` on the availability signal is the shape production will
-  // emit when the Worker analytics projection fails.
+  // emit when the Worker analytics projection fails (upstream emission
+  // wiring remains deferred by plan R4; this is the shape that contract
+  // anticipates).
   harness.store.updateSubjectUi('punctuation', {
     analytics: { available: false },
   });
 
   const html = harness.render();
 
-  // Every skill chip carries the unknown status class and label.
+  // Every skill chip carries the unknown status class and the child-register
+  // "Check back later" label (review follow-on: label softened from the
+  // original clinical "Unknown").
   assert.match(
     html,
     /punctuation-map-skill-status--unknown/,
     'Map scene must render the unknown status class on degraded analytics',
   );
-  assert.match(html, />Unknown</, 'Map scene must render an "Unknown" chip label');
-  // Child-friendly helper sub-line per plan AE4.
+  assert.match(html, />Check back later</, 'Map scene must render the child-register "Check back later" chip label');
+  // Child-friendly helper sub-line — routed through
+  // `punctuationChildUnknownHelperCopy()` for governance.
   assert.match(
     html,
-    /We(?:'|&#x27;)ll unlock this after your next round\./,
+    /We(?:'|&#x27;)re still loading your progress\./,
     'Map scene must render the child helper copy on unknown rows',
   );
   // Guard against the regression U3 fixes: no silent "New" fallback for
@@ -960,8 +1015,104 @@ test('U3 Map scene SSR: analytics.available=`empty` preserves fresh-learner `New
   );
   assert.doesNotMatch(
     html,
-    /We(?:'|&#x27;)ll unlock this after your next round/,
+    /We(?:'|&#x27;)re still loading your progress/,
     'helper copy must only appear on unknown rows',
+  );
+});
+
+// Review follow-on (PR #269) — BLOCKER 1 regression guard: a cold-start
+// learner with NO `ui.analytics` payload at all (the production shape
+// today because the upstream worker wiring is deferred) must render all
+// 14 skills as `'new'` and NOT as degraded `'unknown'`. Without the
+// null-branch flip in `deriveAnalyticsAvailability`, every fresh learner
+// would hit a wall of 14 "Check back later" chips — a visible UX
+// regression worse than the pre-U3 behaviour.
+test('U3 Map scene SSR: missing `ui.analytics` payload renders fresh-learner `New` copy, NOT the unknown state (BLOCKER 1 lock)', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  // The harness's initial store state has NO analytics field. The surface
+  // pipes the state through `service.initState`, which (via
+  // `withAnalyticsAvailability`) derives `available: 'empty'` and drives
+  // the Map into the fresh-learner branch. This is the exact cold-start
+  // shape production lands in every day until upstream wiring ships.
+  const ui = harness.store.getState().subjectUi.punctuation;
+  assert.equal(
+    ui.analytics,
+    undefined,
+    'initial store-level state must carry no analytics field (service.initState derives the signal at render time)',
+  );
+
+  const html = harness.render();
+
+  // Every skill renders as `'new'`; none renders as `'unknown'`.
+  assert.match(html, /punctuation-map-skill-status--new/);
+  assert.doesNotMatch(
+    html,
+    /punctuation-map-skill-status--unknown/,
+    'cold-start must NOT render as degraded Unknown',
+  );
+  // And the helper copy line stays absent.
+  assert.doesNotMatch(
+    html,
+    /We(?:'|&#x27;)re still loading your progress/,
+    'cold-start must NOT surface the degraded-state helper copy',
+  );
+});
+
+// Review follow-on (PR #269) — BLOCKER 1 pure-function lock: the contract
+// at the read-model layer. `deriveAnalyticsAvailability` must return
+// `'empty'` when the raw analytics payload is missing / null / a
+// non-object. This pairs with the SSR test above by locking the contract
+// at the layer where production bugs are cheapest to catch.
+test('U3 deriveAnalyticsAvailability: null-branch default is `"empty"`, not `false` (BLOCKER 1 contract)', async () => {
+  const { deriveAnalyticsAvailability } = await import('../src/subjects/punctuation/client-read-models.js');
+  // null / undefined / non-object all infer `'empty'` (no evidence yet).
+  assert.equal(deriveAnalyticsAvailability(null), 'empty');
+  assert.equal(deriveAnalyticsAvailability(undefined), 'empty');
+  assert.equal(deriveAnalyticsAvailability([]), 'empty');
+  assert.equal(deriveAnalyticsAvailability('not-an-object'), 'empty');
+  // A present object with NO `available` and NO `skillRows` is still the
+  // no-evidence-yet reading — not the failure reading.
+  assert.equal(deriveAnalyticsAvailability({}), 'empty');
+  // An explicit upstream `false` is surfaced unchanged (strictly reserved
+  // for the upstream degraded signal).
+  assert.equal(deriveAnalyticsAvailability({ available: false }), false);
+});
+
+// Review follow-on (PR #269) — BLOCKER 2 regression guard: the `'unknown'`
+// filter chip must exist so a learner in the degraded state can still
+// filter the Map to their unknown skills. Without this chip, the filter
+// row would trap a degraded-state learner on any non-"All" chip (every
+// skill is `'unknown'`, but the filter has no matching id → the Map
+// renders zero cards with no empty-state message).
+test('U3 Map scene SSR: status filter row includes the `unknown` chip and filtering to it surfaces every skill under degraded analytics (BLOCKER 2 lock)', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  harness.store.updateSubjectUi('punctuation', {
+    analytics: { available: false },
+  });
+  // The chip exists in the filter row.
+  const baselineHtml = harness.render();
+  assert.match(
+    baselineHtml,
+    /data-action="punctuation-map-status-filter"[^>]*data-value="unknown"/,
+    'filter row must render a chip for the `unknown` status id',
+  );
+
+  // Filtering to `unknown` lands in mapUi and the Map still renders every
+  // card (all 14 are `'unknown'` under degraded analytics).
+  harness.dispatch('punctuation-map-status-filter', { value: 'unknown' });
+  assert.equal(
+    harness.store.getState().subjectUi.punctuation.mapUi.statusFilter,
+    'unknown',
+    'unknown must be a valid filter id — paired state assertion',
+  );
+  const filteredHtml = harness.render();
+  const cardMatches = filteredHtml.match(/class="punctuation-map-skill-card"/g) || [];
+  assert.equal(
+    cardMatches.length,
+    14,
+    'filtering to `unknown` under degraded analytics must surface all 14 skills (not an empty list)',
   );
 });
 
