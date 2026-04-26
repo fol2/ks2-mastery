@@ -3,6 +3,14 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createWorkerRepositoryServer } from './worker-server.js';
+// U9 (sys-hardening p1): fault-injection middleware for Playwright
+// chaos scenes. The hook is DEFAULT-OFF — see `parseFaultPlan()`
+// contract in `tests/helpers/fault-injection.mjs`: a request must
+// carry both `x-ks2-fault-opt-in: 1` AND a plan header/query param
+// before any fault fires. The import is intentionally a named export
+// with a `TESTS_ONLY` suffix so the production bundle audit denies
+// any accidental leak into a shipped bundle.
+import { __ks2_injectFault_TESTS_ONLY__ as faultInjection } from './fault-injection.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -106,6 +114,32 @@ export async function startBrowserAppServer({
     try {
       const url = new URL(request.url || '/', 'http://127.0.0.1');
       if (workerServer && (url.pathname.startsWith('/api/') || url.pathname === '/demo')) {
+        // U9 chaos hook. Default-OFF: `parseFaultPlan()` returns
+        // `null` unless the request carries the explicit opt-in
+        // header AND a valid plan. Any unknown kind, malformed
+        // base64, or missing opt-in short-circuits to a plain
+        // forward — so the golden-path scenes from U5 keep working
+        // unchanged.
+        const faultPlan = faultInjection.parseFaultPlan({
+          url: request.url || '/',
+          headers: request.headers || {},
+        });
+        const faultDecision = faultInjection.applyFault(faultPlan, {
+          url: request.url || '/',
+          pathname: url.pathname,
+          headers: request.headers || {},
+        });
+
+        if (faultDecision.action === 'respond') {
+          response.writeHead(faultDecision.status, faultDecision.headers || {});
+          response.end(faultDecision.body || '');
+          return;
+        }
+
+        if (faultDecision.action === 'delay' && Number.isFinite(faultDecision.delayMs)) {
+          await new Promise((resolve) => setTimeout(resolve, faultDecision.delayMs));
+        }
+
         const workerResponse = await workerServer.fetchRaw(`http://${request.headers.host}${request.url || '/'}`, {
           method: request.method,
           headers: fetchHeadersFromNode(request.headers),

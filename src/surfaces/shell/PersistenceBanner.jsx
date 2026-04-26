@@ -80,16 +80,24 @@ function persistenceDebug(snapshot) {
 export function PersistenceBanner({ snapshot, onRetry }) {
   if (snapshot?.mode !== 'degraded') return null;
   const pendingCount = Number(snapshot?.pendingWriteCount) || 0;
+  // U9 (sys-hardening p1): `data-testid="persistence-banner"` is the
+  // stable anchor Playwright chaos scenes use to assert the degraded-
+  // mode UI contract. Kept narrow per the data-testid policy in
+  // docs/superpowers/specs/2026-04-22-react-port-flicker-elimination-
+  // design.md ("Minimal and targeted. Introduced only where state
+  // assertion cannot express intent cleanly."). Three testids total:
+  // root banner + label + pending-count chip are the only selectors
+  // chaos scenes need; everything else is read by role/text.
   return (
-    <section className="card" style={{ marginBottom: 20 }}>
+    <section className="card" style={{ marginBottom: 20 }} data-testid="persistence-banner" data-persistence-mode={snapshot?.mode || 'unknown'}>
       <div className="feedback warn" role="status" aria-live="polite">
-        <strong>{persistenceLabel(snapshot)}</strong>
+        <strong data-testid="persistence-banner-label">{persistenceLabel(snapshot)}</strong>
         <div style={{ marginTop: 8 }}>{persistenceSummary(snapshot)}</div>
       </div>
       <div className="chip-row" style={{ marginTop: 14 }}>
         <span className={`chip ${persistenceTone(snapshot)}`}>{persistenceTrustedLabel(snapshot)}</span>
         <span className="chip">Cache: {snapshot?.cacheState || 'unknown'}</span>
-        <span className="chip">Pending: {pendingCount}</span>
+        <span className="chip" data-testid="persistence-banner-pending">Pending: {pendingCount}</span>
       </div>
       {snapshot?.remoteAvailable && (
         <div className="actions" style={{ marginTop: 16 }}>
