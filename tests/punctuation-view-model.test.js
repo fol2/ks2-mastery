@@ -18,6 +18,7 @@ import {
   ACTIVE_PUNCTUATION_MONSTER_DISPLAY_NAMES,
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   PUNCTUATION_CHILD_FORBIDDEN_TERMS,
+  PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
   PUNCTUATION_DASHBOARD_HERO,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
@@ -40,6 +41,7 @@ import {
   punctuationSkillModalPreferredExample,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 import { MONSTERS_BY_SUBJECT } from '../src/platform/game/monsters.js';
+import { PUNCTUATION_CLUSTERS } from '../shared/punctuation/content.js';
 
 // ---------------------------------------------------------------------------
 // composeIsDisabled (R11) — moved from PunctuationPracticeSurface.jsx in U1.
@@ -644,6 +646,34 @@ test('U1 view-model: buildPunctuationMapModel output shape is frozen end-to-end'
 });
 
 // ---------------------------------------------------------------------------
+// PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER — drift guard against the Worker's
+// canonical `PUNCTUATION_CLUSTERS.monsterId` table in
+// `shared/punctuation/content.js`. The client mirror is forbidden from
+// importing the shared content in the browser bundle (bundle-audit rule);
+// tests allow the import so the mapping stays locked in step.
+// ---------------------------------------------------------------------------
+
+test('U5 drift: PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER matches shared PUNCTUATION_CLUSTERS', () => {
+  for (const cluster of PUNCTUATION_CLUSTERS) {
+    const clientMapped = PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER[cluster.id];
+    assert.equal(
+      clientMapped,
+      cluster.monsterId,
+      `client mirror drifted for cluster "${cluster.id}": expected "${cluster.monsterId}", got "${clientMapped}"`,
+    );
+  }
+  // Also guard against the client mirror carrying any cluster id not present
+  // in the shared canonical list.
+  const canonicalIds = new Set(PUNCTUATION_CLUSTERS.map((cluster) => cluster.id));
+  for (const clientId of Object.keys(PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER)) {
+    assert.ok(
+      canonicalIds.has(clientId),
+      `client mirror carries unknown cluster id "${clientId}"`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Pure-module safety: no React imports in the view-model file.
 // ---------------------------------------------------------------------------
 
@@ -656,4 +686,44 @@ test('U1 safety: punctuation-view-model.js does not import react', async () => {
   const source = fs.readFileSync(path, 'utf8');
   assert.equal(/from ['"]react['"]/i.test(source), false);
   assert.equal(/require\(['"]react['"]\)/i.test(source), false);
+});
+
+// ---------------------------------------------------------------------------
+// Round-2 maintainability LOW — drift guard between the skill-id list in
+// `service-contract.js` (used by the normaliser + module handler) and the
+// full skill metadata in `read-model.js` (used by the Map scene + selectors).
+// A silent divergence would mean a Map entry exists without a validation
+// counterpart, or vice versa — a class of bug the frozen lists were meant
+// to prevent. One symmetric assertion keeps both files in lock-step.
+// ---------------------------------------------------------------------------
+
+test('U5 drift: PUNCTUATION_CLIENT_SKILL_IDS stays in lock-step with PUNCTUATION_CLIENT_SKILLS', async () => {
+  const { PUNCTUATION_CLIENT_SKILL_IDS } = await import(
+    '../src/subjects/punctuation/service-contract.js'
+  );
+  const { PUNCTUATION_CLIENT_SKILLS } = await import(
+    '../src/subjects/punctuation/read-model.js'
+  );
+  assert.equal(
+    PUNCTUATION_CLIENT_SKILL_IDS.length,
+    PUNCTUATION_CLIENT_SKILLS.length,
+    'skill-id list length diverged from skill metadata list',
+  );
+  const clientIds = new Set(PUNCTUATION_CLIENT_SKILLS.map((skill) => skill.id));
+  for (const id of PUNCTUATION_CLIENT_SKILL_IDS) {
+    assert.ok(
+      clientIds.has(id),
+      `${id} is in PUNCTUATION_CLIENT_SKILL_IDS but not in PUNCTUATION_CLIENT_SKILLS`,
+    );
+  }
+  // Symmetric direction: every skill id in the read-model must also appear
+  // in the validation list — otherwise a Map entry would render with no way
+  // to ever be dispatched by a guarded handler.
+  const contractIds = new Set(PUNCTUATION_CLIENT_SKILL_IDS);
+  for (const skill of PUNCTUATION_CLIENT_SKILLS) {
+    assert.ok(
+      contractIds.has(skill.id),
+      `${skill.id} is in PUNCTUATION_CLIENT_SKILLS but not in PUNCTUATION_CLIENT_SKILL_IDS`,
+    );
+  }
 });

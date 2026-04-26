@@ -19,6 +19,21 @@
 
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { MONSTERS_BY_SUBJECT } from '../../../platform/game/monsters.js';
+import {
+  PUNCTUATION_MAP_DETAIL_TAB_IDS,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+} from '../service-contract.js';
+
+// U5 layer fix (adv-219-005): the Map filter + detail-tab id lists are the
+// service-contract's single source of truth. The view-model re-exports them
+// under their existing names so renderers / tests keep their current import
+// paths while the one-way `contract → view-model` dependency is restored.
+export {
+  PUNCTUATION_MAP_DETAIL_TAB_IDS,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+};
 
 const BELLSTORM_BASE = '/assets/regions/bellstorm-coast';
 
@@ -135,19 +150,63 @@ export const PUNCTUATION_PRIMARY_MODE_CARDS = Object.freeze([
 ]);
 
 // --- Punctuation Map filter lists ------------------------------------------
+//
+// Status, monster, and detail-tab id lists moved to service-contract.js in U5
+// (adv-219-005 layer fix). The view-model re-exports them via the top-of-file
+// `export { ... }` block so downstream imports keep working.
 
-// Map status chips. Order matches the plan: All / New / Learning / Due /
-// Wobbly / Secure. Child copy — the `weak` id reads as "Wobbly" in the UI.
-export const PUNCTUATION_MAP_STATUS_FILTER_IDS = Object.freeze([
-  'all', 'new', 'learning', 'due', 'weak', 'secure',
-]);
+// Short, child-facing rule one-liners for the Punctuation Map scene's skill
+// cards. Each line is a single sentence in KS2-friendly copy — no dotted
+// misconception tags, no adult jargon. Map scene renders one per card; U6's
+// Skill Detail modal reaches for richer content (rule + worked example +
+// contrast) rather than these one-liners. A missing skill falls back to
+// `'Practise this punctuation skill.'` so the card never renders empty.
+const PUNCTUATION_SKILL_RULE_ONE_LINERS = Object.freeze({
+  sentence_endings: 'Start with a capital; end with . ! or ? — no gaps.',
+  list_commas: 'Put a comma between each item in a list.',
+  apostrophe_contractions: "Slot the mark in where the missing letters belong.",
+  apostrophe_possession: "Add 's to show belonging; a plural ending in s takes one mark.",
+  speech: 'Speech marks wrap the spoken words; the end mark sits inside.',
+  fronted_adverbial: 'Put a comma after the opener when it comes before the main clause.',
+  parenthesis: 'Mark an extra idea with two commas, two brackets, or two dashes — one pair only.',
+  comma_clarity: 'Add a comma when it stops the sentence from being misread.',
+  colon_list: 'Use a colon to introduce a list after a complete clause.',
+  semicolon: 'Use a semi-colon to link two closely-related complete clauses.',
+  dash_clause: 'Use a pair of dashes to break off a side thought.',
+  semicolon_list: 'Use semi-colons between long list items that already contain commas.',
+  bullet_points: 'Keep bullet punctuation consistent across every item in the list.',
+  hyphen: 'Hyphenate word pairs before a noun when they act as one idea.',
+});
 
-// Map monster chips. Order matches the plan / codebase active roster. Reserved
-// monsters (Colisk / Hyphang / Carillon) are intentionally absent so a rogue
-// payload cannot surface a retired name as a filter option.
-export const PUNCTUATION_MAP_MONSTER_FILTER_IDS = Object.freeze([
-  'all', 'pealark', 'claspin', 'curlune', 'quoral',
-]);
+/**
+ * Returns the child-facing rule one-liner for a skill id, used by U5's Map
+ * scene skill cards. Unknown ids fall back to a generic "Practise this" line
+ * rather than surfacing the raw id. Output is always a single sentence
+ * suitable for a KS2 reader.
+ */
+export function punctuationSkillRuleOneLiner(skillId) {
+  if (typeof skillId !== 'string' || !skillId) return 'Practise this punctuation skill.';
+  const line = PUNCTUATION_SKILL_RULE_ONE_LINERS[skillId];
+  return typeof line === 'string' && line ? line : 'Practise this punctuation skill.';
+}
+
+// Client-safe cluster → monster mapping. The Worker canonical source of truth
+// is `shared/punctuation/content.js`'s `PUNCTUATION_CLUSTERS`, which the
+// bundle-audit rules forbid from the browser bundle. This constant is the
+// client mirror of that mapping for U5's Map scene — it must stay in lock-step
+// with the shared content's `monsterId` field on every cluster. Skills whose
+// cluster maps to `structure` land on Curlune (List / Structure cluster); the
+// grand monster (Quoral) is reserved for the "published release" aggregate
+// and is the fallback target for any skill whose cluster is unknown (see
+// `buildPunctuationMapModel`).
+export const PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER = Object.freeze({
+  endmarks: 'pealark',
+  speech: 'pealark',
+  boundary: 'pealark',
+  apostrophe: 'claspin',
+  comma_flow: 'curlune',
+  structure: 'curlune',
+});
 
 // --- Active monster roster -------------------------------------------------
 

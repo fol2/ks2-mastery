@@ -8,7 +8,67 @@ export const PUNCTUATION_PHASES = Object.freeze([
   'summary',
   'unavailable',
   'error',
+  // U5: Punctuation Map is a browsing phase — a learner taps the Map link from
+  // Setup, filters the 14 skills by status / monster, and (in U6) opens a
+  // skill detail modal. The phase carries ephemeral UI state via `mapUi`
+  // (see `normalisePunctuationMapUi`) — no Worker command is issued when
+  // entering or leaving the phase.
+  'map',
 ]);
+
+// U5: Phases from which `punctuation-open-map` is a legitimate affordance.
+// Setup is the primary entry point (Map link on the dashboard); Summary offers
+// "Open Punctuation Map" as a next-action (plan line 519). Any other phase —
+// `active-item`, `feedback`, `unavailable`, `error`, or `map` itself — refuses
+// the transition to prevent an orphan session / stale feedback from leaking
+// into phase=map (adversarial reviewer adv-219-002).
+export const PUNCTUATION_OPEN_MAP_ALLOWED_PHASES = Object.freeze(['setup', 'summary']);
+
+// U5: Map filter chip rows and detail-tab ids. These frozen lists are the
+// single source of truth — `normalisePunctuationMapUi` validates inputs
+// against them, module handlers guard dispatched values against them, and
+// the view-model / scene re-exports them for render-time chip iteration.
+// Reserved Punctuation monsters (Colisk / Hyphang / Carillon) are absent
+// from the monster filter list so a rogue payload cannot surface a retired
+// name as a filter option.
+export const PUNCTUATION_MAP_STATUS_FILTER_IDS = Object.freeze([
+  'all', 'new', 'learning', 'due', 'weak', 'secure',
+]);
+
+export const PUNCTUATION_MAP_MONSTER_FILTER_IDS = Object.freeze([
+  'all', 'pealark', 'claspin', 'curlune', 'quoral',
+]);
+
+export const PUNCTUATION_MAP_DETAIL_TAB_IDS = Object.freeze(['learn', 'practise']);
+
+// U5: Published skill ids. Client-safe mirror of the 14 skills that ship in
+// the current Punctuation release. Defined here (rather than read-model.js)
+// so the normaliser + module handler can validate a dispatched `skillId`
+// without reaching into a client-only module. The full skill metadata (name +
+// clusterId) lives on `PUNCTUATION_CLIENT_SKILLS` in read-model.js; this set
+// must stay in lock-step with that list (drift-tested).
+export const PUNCTUATION_CLIENT_SKILL_IDS = Object.freeze([
+  'sentence_endings',
+  'list_commas',
+  'apostrophe_contractions',
+  'apostrophe_possession',
+  'speech',
+  'fronted_adverbial',
+  'parenthesis',
+  'comma_clarity',
+  'colon_list',
+  'semicolon',
+  'dash_clause',
+  'semicolon_list',
+  'bullet_points',
+  'hyphen',
+]);
+
+const PUNCTUATION_CLIENT_SKILL_ID_SET = new Set(PUNCTUATION_CLIENT_SKILL_IDS);
+
+export function isPublishedPunctuationSkillId(value) {
+  return typeof value === 'string' && PUNCTUATION_CLIENT_SKILL_ID_SET.has(value);
+}
 
 export const PUNCTUATION_MODES = Object.freeze([
   'smart',
@@ -88,6 +148,61 @@ export function normalisePunctuationPrefs(value = {}) {
     mode,
     roundLength: normalisePunctuationRoundLength(raw.roundLength ?? raw.length),
   };
+}
+
+// U5: Punctuation Map UI-state shape. Ephemeral; lives on the in-memory store
+// only, never persisted. Validated against the frozen filter / skill-id lists
+// above so a rogue payload cannot smuggle a reserved monster id or an
+// unpublished skill id into the Map's chip row or detail modal. Invalid
+// inputs fall back to the defaults listed below — never throws.
+//
+// Defaults when the Map phase first opens:
+//   { statusFilter: 'all', monsterFilter: 'all', detailOpenSkillId: null,
+//     detailTab: 'learn' }
+//
+// `detailOpenSkillId` is either a published skill id (currently one of 14)
+// or `null`. `detailTab` is either `'learn'` or `'practise'`; invalid input
+// falls back to `'learn'`.
+const PUNCTUATION_MAP_DETAIL_TABS = new Set(PUNCTUATION_MAP_DETAIL_TAB_IDS);
+
+export function normalisePunctuationMapUi(value = {}) {
+  const raw = isPlainObject(value) ? value : {};
+  const rawStatusFilter = typeof raw.statusFilter === 'string' ? raw.statusFilter : 'all';
+  const statusFilter = PUNCTUATION_MAP_STATUS_FILTER_IDS.includes(rawStatusFilter)
+    ? rawStatusFilter
+    : 'all';
+  const rawMonsterFilter = typeof raw.monsterFilter === 'string' ? raw.monsterFilter : 'all';
+  const monsterFilter = PUNCTUATION_MAP_MONSTER_FILTER_IDS.includes(rawMonsterFilter)
+    ? rawMonsterFilter
+    : 'all';
+  // detailOpenSkillId must be a published skill id — unknown ids reset to
+  // null so a U6 modal consumer never renders against a rogue payload.
+  const detailOpenSkillId = isPublishedPunctuationSkillId(raw.detailOpenSkillId)
+    ? raw.detailOpenSkillId
+    : null;
+  const rawDetailTab = typeof raw.detailTab === 'string' ? raw.detailTab : 'learn';
+  const detailTab = PUNCTUATION_MAP_DETAIL_TABS.has(rawDetailTab) ? rawDetailTab : 'learn';
+  return { statusFilter, monsterFilter, detailOpenSkillId, detailTab };
+}
+
+// U5: Rehydrate-time sanitiser for `subjectUi.punctuation`. Called exactly
+// once when the store boots over a persisted `subjectStates` snapshot — the
+// Map phase and its `mapUi` filter state are session-ephemeral by plan
+// (R5 line 565 / line 583), so they must NOT survive a page reload. A live
+// snapshot that carries `phase === 'map'` is coerced back to `'setup'`; the
+// `mapUi` field is stripped entirely so the Map reopens from defaults.
+//
+// This sanitiser runs only on rehydrate — live `updateSubjectUi` dispatches
+// (which build state from the current in-memory entry) bypass it, so the
+// Map phase remains legitimate while the session is active.
+export function sanitisePunctuationUiOnRehydrate(entry) {
+  if (!isPlainObject(entry)) return entry;
+  const needsCoerce = entry.phase === 'map' || 'mapUi' in entry;
+  if (!needsCoerce) return entry;
+  const next = { ...entry };
+  if (next.phase === 'map') next.phase = 'setup';
+  if ('mapUi' in next) delete next.mapUi;
+  return next;
 }
 
 export function createInitialPunctuationState() {

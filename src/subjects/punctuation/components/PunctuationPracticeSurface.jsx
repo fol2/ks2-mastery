@@ -5,6 +5,7 @@ import {
   currentItemInstruction,
   punctuationPhaseLabel,
 } from './punctuation-view-model.js';
+import { PunctuationMapScene } from './PunctuationMapScene.jsx';
 
 function learnerName(appState, learnerId) {
   return appState?.learners?.byId?.[learnerId]?.name || 'Learner';
@@ -329,6 +330,7 @@ export function PunctuationPracticeSurface({ appState, service, actions }) {
   if (ui.phase === 'active-item') return <ActiveItemView ui={ui} actions={actions} />;
   if (ui.phase === 'feedback') return <FeedbackView ui={ui} actions={actions} />;
   if (ui.phase === 'summary') return <SummaryView ui={ui} actions={actions} />;
+  if (ui.phase === 'map') return <PunctuationMapScene ui={ui} actions={actions} />;
 
   return <SetupView learner={learner} stats={stats} ui={ui} actions={actions} />;
 }
