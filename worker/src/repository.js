@@ -54,6 +54,7 @@ import {
 } from './projections/events.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
+import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
 import {
   createInitialPunctuationState,
@@ -7344,6 +7345,22 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     },
     async readSpellingWordBank(accountId, learnerId, filters = {}) {
       return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
+    },
+    // U9: Punctuation telemetry read. Fires the same
+    // `requireLearnerReadAccess` gate the spelling word-bank read uses
+    // so a parent / admin with membership can query their learner's
+    // telemetry, but a caller without membership gets a 403. The SQL
+    // SELECT is delegated to `worker/src/subjects/punctuation/events.js`
+    // for test reachability; the repository layer owns the authz gate.
+    async readPunctuationEvents(accountId, learnerId, options = {}) {
+      await requireLearnerReadAccess(db, accountId, learnerId);
+      return listPunctuationEvents({
+        db,
+        learnerId,
+        kind: options.kind || null,
+        sinceMs: options.sinceMs ?? null,
+        limit: options.limit ?? null,
+      });
     },
     async readParentRecentSessions(accountId, options = {}) {
       return readParentRecentSessions(db, accountId, options);

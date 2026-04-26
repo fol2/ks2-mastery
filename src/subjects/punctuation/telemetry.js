@@ -5,13 +5,11 @@
 // (plan R10). The emitter validates client-side before dispatching
 // `punctuation-record-event` through the subject-command-actions mapping.
 //
-// U9 (future) lands the Worker `record-event` command handler, the D1
+// U9 (shipped) lands the Worker `record-event` command handler, the D1
 // `punctuation_events` table, the per-event shape enforcement at the
-// Worker boundary, the feature flag, and the docs rewrite. U4 is the
-// client scaffold only — when a dispatch reaches the Worker today, the
-// existing `PUNCTUATION_COMMANDS` allowlist at
-// `worker/src/subjects/punctuation/commands.js:13` will reject it with
-// `subject_command_not_found`; that is the expected no-op until U9.
+// Worker boundary, the feature flag, and the docs rewrite. Both halves
+// now read their allowlist from `shared/punctuation/telemetry-shapes.js`
+// so any future allowlist extension lands atomically for both.
 //
 // Authz invariant (R10 / R11): the `{ mutates: false }` flag on the
 // `punctuation-record-event` mapping is CLIENT-SIDE ONLY. It bypasses
@@ -30,46 +28,24 @@
 // prompt text through a denylist). The `answer-submitted` allowlist
 // explicitly excludes `answerText`, `promptText`, and `typed`.
 
-const EVENT_KINDS = Object.freeze([
-  'card-opened',
-  'start-smart-review',
-  'first-item-rendered',
-  'answer-submitted',
-  'feedback-rendered',
-  'summary-reached',
-  'map-opened',
-  'skill-detail-opened',
-  'guided-practice-started',
-  'unit-secured',
-  'monster-progress-changed',
-  'command-failed',
-]);
+// U9 SHARED ALLOWLIST (plan R10): the frozen event kinds + per-kind
+// payload allowlist now live at `shared/punctuation/telemetry-shapes.js`
+// so the Worker handler (U9) and the client emitter (this file, U4)
+// read from the same source of truth. Additive extensions to the
+// allowlist land atomically for both halves — preventing the
+// test-harness-vs-production drift defect flagged in the project memory.
+import {
+  PUNCTUATION_TELEMETRY_EVENT_KINDS,
+  PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST,
+  isPunctuationTelemetryEventKind,
+} from '../../../shared/punctuation/telemetry-shapes.js';
 
-// Per-event-kind payload allowlist. Shapes sourced verbatim from the
-// plan's Key Technical Decisions table (docs/plans/...p4...:807-820).
-// Worker enforcement of these same shapes lands in U9.
-const PAYLOAD_ALLOWLIST = Object.freeze({
-  'card-opened': Object.freeze(['cardId']),
-  'start-smart-review': Object.freeze(['roundLength']),
-  'first-item-rendered': Object.freeze(['sessionId', 'itemMode']),
-  // No answerText / promptText / typed — security invariant.
-  'answer-submitted': Object.freeze(['sessionId', 'itemId', 'correct']),
-  'feedback-rendered': Object.freeze(['sessionId', 'itemId', 'correct']),
-  'summary-reached': Object.freeze(['sessionId', 'total', 'correct', 'accuracy']),
-  // map-opened carries no payload per plan (empty object).
-  'map-opened': Object.freeze([]),
-  'skill-detail-opened': Object.freeze(['skillId']),
-  'guided-practice-started': Object.freeze(['skillId', 'roundLength']),
-  'unit-secured': Object.freeze(['clusterId', 'monsterId']),
-  'monster-progress-changed': Object.freeze(['monsterId', 'stageFrom', 'stageTo']),
-  // No raw error messages or stack traces — security invariant.
-  'command-failed': Object.freeze(['command', 'errorCode']),
-});
+// Re-export for callers that imported the constants from here during U4.
+// No client is known to import these directly (the sanitiser below is
+// the public surface), but the re-export preserves the U4 wire contract.
+export { PUNCTUATION_TELEMETRY_EVENT_KINDS, PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST };
 
-const EVENT_KIND_SET = new Set(EVENT_KINDS);
-
-export const PUNCTUATION_TELEMETRY_EVENT_KINDS = EVENT_KINDS;
-export const PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST = PAYLOAD_ALLOWLIST;
+const PAYLOAD_ALLOWLIST = PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST;
 
 // Strip every field that is not on the per-kind allowlist. Returns a
 // fresh plain object so callers cannot mutate the internal allowlist
@@ -118,7 +94,7 @@ function buildAllowlistedPayload(kind, payload) {
  * @param {object} context `{ actions, learnerId }`.
  */
 export function emitPunctuationEvent(kind, payload = {}, context = {}) {
-  if (typeof kind !== 'string' || !EVENT_KIND_SET.has(kind)) return false;
+  if (!isPunctuationTelemetryEventKind(kind)) return false;
   const actions = context && typeof context === 'object' ? context.actions : null;
   if (!actions || typeof actions.dispatch !== 'function') return false;
   const sanitised = buildAllowlistedPayload(kind, payload);
@@ -142,7 +118,7 @@ export function emitPunctuationEvent(kind, payload = {}, context = {}) {
 // the same allowlist — defence-in-depth in case a caller dispatches
 // `punctuation-record-event` directly without going through the emitter.
 export function sanitisePunctuationTelemetryPayload(kind, payload) {
-  if (typeof kind !== 'string' || !EVENT_KIND_SET.has(kind)) {
+  if (!isPunctuationTelemetryEventKind(kind)) {
     return { event: '', payload: {} };
   }
   return { event: kind, payload: buildAllowlistedPayload(kind, payload) };

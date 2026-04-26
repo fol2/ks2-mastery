@@ -9,7 +9,16 @@ import { projectPunctuationRewards } from '../../projections/rewards.js';
 import { requestPunctuationContextPack } from './ai-enrichment.js';
 import { createServerPunctuationEngine } from './engine.js';
 import { buildPunctuationReadModel } from './read-models.js';
+import { applyRecordEventCommand } from './events.js';
 import { resolveProjectionInput } from '../projection-input.js';
+
+// U9: `record-event` is a new telemetry-only command. It routes through
+// the same `repository.runSubjectCommand` path as the 8 existing
+// commands (so `requireLearnerWriteAccess` fires) but DOES NOT engage
+// the engine / projection pipeline — its handler at
+// `./events.js:applyRecordEventCommand` validates the per-kind payload
+// allowlist and writes a single row to `punctuation_events`.
+const PUNCTUATION_TELEMETRY_COMMAND = 'record-event';
 
 const PUNCTUATION_COMMANDS = Object.freeze([
   'start-session',
@@ -20,6 +29,7 @@ const PUNCTUATION_COMMANDS = Object.freeze([
   'save-prefs',
   'reset-learner',
   'request-context-pack',
+  PUNCTUATION_TELEMETRY_COMMAND,
 ]);
 
 function contentMeta() {
@@ -48,6 +58,15 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
         subjectId: 'punctuation',
         command: command.command,
       });
+    }
+
+    // U9: `record-event` is a telemetry-only command. It does not
+    // interact with the engine, the projection pipeline, the reward
+    // state, or any read-model. Branch BEFORE the manifest-validation
+    // gate below so telemetry stays writeable even if published content
+    // transiently fails validation (e.g. during a content hotfix).
+    if (command.command === PUNCTUATION_TELEMETRY_COMMAND) {
+      return applyRecordEventCommand({ command, context });
     }
 
     if (!PUNCTUATION_MANIFEST_VALIDATION.ok) {

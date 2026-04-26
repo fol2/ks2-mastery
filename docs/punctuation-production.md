@@ -290,7 +290,46 @@ The baseline currently classifies legacy behaviour as:
 
 This baseline is deliberately a guardrail, not a demand to copy the legacy architecture. New parity slices should update the fixture status only when the replacement Worker-owned implementation, redacted read model, tests, and release gate exist.
 
-## Operational Telemetry (aspirational)
+## Operational Telemetry
+
+This section is split into two parts so readers can tell what the code writes from what the code only promises to write one day. **Wired telemetry** lands in D1 today (behind a feature flag that is OFF by default). **Aspirational telemetry** is the set of log warning codes emitted by Phase 2 that still have no ingesting consumer.
+
+### Wired telemetry (Phase 4 U9)
+
+Phase 4 U9 lands the Worker half of a 12-event telemetry pipeline that the Phase 4 U4 client emitter prepared. Rows are written to the D1 table `punctuation_events` (migration `worker/migrations/0012_punctuation_events.sql`) when the `env.PUNCTUATION_EVENTS_ENABLED` flag is truthy (`'1' | 'true' | 'yes' | 'on'`). With the flag absent or set to `'false'`, the `record-event` command still runs authz + allowlist validation (so a rogue client is still rejected) but skips the D1 insert.
+
+**Event kinds (12, frozen).** The allowlist lives in the shared module `shared/punctuation/telemetry-shapes.js` (imported by both the U4 client emitter at `src/subjects/punctuation/telemetry.js` and the U9 Worker handler at `worker/src/subjects/punctuation/events.js`):
+
+- `card-opened` — `{ cardId }`
+- `start-smart-review` — `{ roundLength }`
+- `first-item-rendered` — `{ sessionId, itemMode }`
+- `answer-submitted` — `{ sessionId, itemId, correct }` (**no `answerText`, `promptText`, or `typed` — the Worker rejects these fields with 400**)
+- `feedback-rendered` — `{ sessionId, itemId, correct }`
+- `summary-reached` — `{ sessionId, total, correct, accuracy }`
+- `map-opened` — `{}`
+- `skill-detail-opened` — `{ skillId }`
+- `guided-practice-started` — `{ skillId, roundLength }`
+- `unit-secured` — `{ clusterId, monsterId }`
+- `monster-progress-changed` — `{ monsterId, stageFrom, stageTo }`
+- `command-failed` — `{ command, errorCode }` (no raw error messages, no stack traces)
+
+Any field not on the kind's allowlist is **rejected** (not scrubbed) with a 400 `punctuation_event_field_rejected`. Wrong-typed fields are rejected with `punctuation_event_field_type_invalid`. Forbidden-key defence-in-depth also runs (`accepted`, `rubric`, `validator`, etc. plus the PII names `answerText`, `promptText`, `typed` — even if a future allowlist addition matched them).
+
+**Authz.** The `record-event` command routes through `repository.runSubjectCommand` at `worker/src/repository.js` — which fires `requireLearnerWriteAccess`. The `{mutates: false}` flag on the client-side `punctuation-record-event` action mapping (`src/subjects/punctuation/command-actions.js`) controls pending-UI wrapping only; it does NOT bypass Worker authz. A learner cannot write telemetry rows for another learner.
+
+**Query surface.** `GET /api/subjects/punctuation/events?learner={id}&kind={optional}&since={ms}&limit={n}`. Returns an array of `{kind, payload, occurredAtMs}` sorted reverse-chronological. Limit defaults to 100, clamps to 1000. Authz via `requireLearnerReadAccess` (parent / admin / owner membership required).
+
+**Rollout steps.**
+
+1. `npm run db:migrate:remote` applies migration 0012 (adds the table + indexes; idempotent).
+2. Flip `PUNCTUATION_EVENTS_ENABLED=true` in the staging environment.
+3. Smoke: run a 4-question Smart Review round in staging and verify `SELECT COUNT(*) FROM punctuation_events WHERE learner_id = ?` returns the expected 10 rows (1× `card-opened`, 1× `start-smart-review`, 1× `first-item-rendered`, 4× `answer-submitted`, 4× `feedback-rendered`, 1× `summary-reached` — other kinds do not fire in the smart-review flow).
+4. Let staging accumulate 72h of real data.
+5. Flip the flag in production.
+
+**What Phase 4 U9 does NOT ship:** a dashboard, an alerting pipeline, or any downstream consumer. The events are queryable directly from D1 (ad-hoc via the query endpoint above or a `wrangler d1 execute` call). Wiring a dashboard is deliberately out of scope — see "Aspirational" below and the follow-up candidates.
+
+### Aspirational telemetry (log warning codes with no consumer)
 
 Phase 2 shipped a set of structured warning codes emitted via the existing `logMutation('warn', …)` path. The codes below are stable so a future observability work item can consume them. The repo does not currently have a dashboard or alerting pipeline that ingests these codes — the thresholds quoted here are **aspirational**, not enforced. Until the pipeline lands, operators reviewing Worker logs after a release should watch for:
 
@@ -312,5 +351,6 @@ Items deliberately deferred from earlier phases and scheduled for a future Phase
   - Thresholds: `*-unknown-key-strip` must alert on any non-zero 24h window; `*-malformed-key` must alert on > 10 / 24h sustained for 3 consecutive days; `*-stale-response-drop` must alert on > 50 / 24h; `*-dedupe-reject` must alert on a 7-day-over-7-day increase of > 3x; `*-stuck-at-1` must alert only if the count fails to decrease week-over-week for two consecutive weeks post-release.
   - Consumer: an on-call operations rotation (TBD — likely the same consumer as the Admin Ops Console alert feed once that exists). The default is that this lands as a companion PR alongside whichever phase adds the dashboards.
 - **AI context-pack learner surface.** Phase 2 deferred this deliberately (`safeContextPackSummary` allowlist is already fail-closed). Phase 3 U8 strips it from the default child read model. A Phase 4 decision is required: either productise it as a Parent / Admin-only "Why this question?" surface, or retire the Worker plumbing entirely. The `punctuation-context-pack` client action remains in place as a stub so either path is reachable without a command-surface rewrite.
+- **Dashboard + alerting on `punctuation_events` (post-Phase-4).** Phase 4 U9 ships the D1 table + query endpoint + the 12-event pipeline but deliberately stops short of a dashboard. A post-Phase-4 work item should add: (a) a Cloudflare Workers Analytics Engine or Logpush sink that copies each new row; (b) alert rules on `command-failed` spikes (> 1% of sessions in a 24h window) and on zero-row days (ingest pipeline stalled); (c) a weekly aggregation that joins `punctuation_events.answer-submitted` against the mastery projection to surface under-practising learners. The acceptance criteria mirror the warning-code bullet above — same query-surface options, same consumer rotation.
 
 These items are tracked here (rather than in a GitHub issue) so the doc stays the single source of truth for Punctuation production concerns. When a Phase 4 work item starts, copy the relevant bullet into a tracking issue and link it back to this section.
