@@ -8,23 +8,25 @@ function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * The session card can carry a `wordForPrompt` view-model where `word.sentences`
+ * is collapsed to a single display sentence, which makes `resolveSentenceIndex` fall
+ * back to 0. We only trust `word.sentences` when it clearly contains the active
+ * sentence in a list with more than one entry.
+ *
+ * Do not use `prompt.accepted` (or other prompt fields) to infer truncation:
+ * stored runtime prompts may legitimately omit those fields, which would skip the
+ * canonical snapshot and reintroduce the wrong-audio key bug.
+ */
 function shouldResolveSessionSentenceCanonically(state = null) {
   const session = state?.phase === 'session' ? state.session : null;
   const card = session?.currentCard || null;
   const word = card?.word || null;
-  const prompt = card?.prompt || null;
   const sentence = cleanText(card?.prompt?.sentence);
   if (!word || !sentence) return false;
-  const promptWord = cleanText(prompt?.word);
-  const promptAccepted = Array.isArray(prompt?.accepted)
-    ? prompt.accepted.map((item) => cleanText(item)).filter(Boolean)
-    : [];
-  const wordValue = cleanText(word.word);
-  const promptOverridesWord = Boolean(promptWord && wordValue && promptWord !== wordValue);
-  const promptOverridesAccepted = promptAccepted.length > 0;
   const rawSentences = Array.isArray(word.sentences) ? word.sentences : [];
   const sentences = rawSentences.map((item) => cleanText(item)).filter(Boolean);
-  if (sentences.length <= 1) return promptOverridesWord || promptOverridesAccepted;
+  if (sentences.length <= 1) return true;
   return !sentences.includes(sentence);
 }
 

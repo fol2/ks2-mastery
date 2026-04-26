@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sha256 } from '../worker/src/auth.js';
+import { WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import {
   buildSpellingWordBankAudioCue,
   resolveSpellingAudioRequest,
 } from '../worker/src/subjects/spelling/audio.js';
-import { WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function seedAccountLearner(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {
@@ -412,7 +412,7 @@ test('TTS route reads legacy batch-generated spelling audio keys', async () => {
   }
 });
 
-test('spelling session TTS resolves sentence index from canonical word sentences', async () => {
+test('spelling session TTS uses canonical sentence index when runtime carries only one sentence (no prompt.accepted)', async () => {
   const learnerId = 'learner-a';
   const sessionId = 'session-a';
   const word = WORD_BY_SLUG.parliament;
@@ -442,8 +442,6 @@ test('spelling session TTS resolves sentence index from canonical word sentences
                 slug: word.slug,
                 word: decoratedWord,
                 prompt: {
-                  word: word.word,
-                  accepted: [word.word],
                   sentence,
                   cloze: '__________ voted on the change.',
                 },
@@ -531,14 +529,14 @@ test('spelling session TTS avoids content reads when runtime word sentences are 
   assert.equal(contentReads, 0);
 });
 
-test('spelling session TTS avoids content reads for genuine single-sentence cards', async () => {
+test('spelling session TTS may read content once for a genuine single-sentence card (trade-off for correctness elsewhere)', async () => {
   const learnerId = 'learner-a';
   const sessionId = 'session-a';
   const word = {
-    slug: 'single-card',
-    word: 'single',
-    sentence: 'The single card has one sentence.',
-    sentences: ['The single card has one sentence.'],
+    slug: 'genuine-one',
+    word: 'only',
+    sentence: 'A single-sentence item.',
+    sentences: ['A single-sentence item.'],
   };
   const sentence = word.sentence;
   const promptToken = await sha256([
@@ -561,10 +559,7 @@ test('spelling session TTS avoids content reads for genuine single-sentence card
               currentCard: {
                 slug: word.slug,
                 word,
-                prompt: {
-                  sentence,
-                  cloze: 'The _______ card has one sentence.',
-                },
+                prompt: { sentence, cloze: 'A _________-sentence item.' },
               },
             },
           },
@@ -573,21 +568,18 @@ test('spelling session TTS avoids content reads for genuine single-sentence card
     },
     async readSpellingRuntimeContent() {
       contentReads += 1;
-      throw new Error('Single-sentence runtime cards should not force canonical content reads.');
+      return { snapshot: { wordBySlug: { [word.slug]: word } } };
     },
   };
 
   const request = await resolveSpellingAudioRequest({
     repository,
     accountId: 'adult-a',
-    body: {
-      learnerId,
-      promptToken,
-    },
+    body: { learnerId, promptToken },
   });
 
   assert.equal(request.sentenceIndex, 0);
-  assert.equal(contentReads, 0);
+  assert.equal(contentReads, 1);
 });
 
 test('TTS route serves cached audio for lookup-only requests before selected provider fallback', async () => {
