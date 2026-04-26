@@ -37,7 +37,9 @@ const REQUIRED_CSP_SUBSTRINGS = [
   'fonts.gstatic.com',
   'report-uri /api/security/csp-report',
   'report-to csp-endpoint',
-  'upgrade-insecure-requests',
+  // NOTE: `upgrade-insecure-requests` is intentionally NOT required here.
+  // It is ignored by browsers in Report-Only delivery (CSP3) and is
+  // re-added by the enforcement-flip PR alongside the header-name change.
 ];
 
 /**

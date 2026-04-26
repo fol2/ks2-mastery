@@ -122,10 +122,14 @@ test("policy worker-src is 'none' (F-06, app does not register Service Workers)"
   assert.deepEqual(directives.get('worker-src'), ["'none'"]);
 });
 
-test('policy enables upgrade-insecure-requests', () => {
-  // `upgrade-insecure-requests` has no value — the parser returns an
-  // empty string for the single entry, which is enough to assert.
-  assert.ok(directives.has('upgrade-insecure-requests'));
+test('policy omits upgrade-insecure-requests while shipped under Report-Only', () => {
+  // Per CSP3, `upgrade-insecure-requests` is ignored when delivered via
+  // `Content-Security-Policy-Report-Only` (Chrome emits a console
+  // warning). We rely on HSTS `includeSubDomains` + HTTPS-only origin
+  // allowlists for the upgrade until the enforcement flip lands.
+  // The same PR that renames the header to `Content-Security-Policy`
+  // must restore this directive and invert this assertion.
+  assert.ok(!directives.has('upgrade-insecure-requests'));
 });
 
 test('policy declares report-uri and report-to', () => {

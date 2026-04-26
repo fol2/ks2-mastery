@@ -85,7 +85,7 @@ Preload is a **one-way commitment** with a best-effort reverse path:
 - Worst case for an ill-advised preload: two-year HTTPS-only commitment on every subdomain, with partial recovery only after a second browser-update cycle. A sub-service that unexpectedly needs HTTP (e.g. an appliance firmware endpoint) is unrecoverable via the preload-removal path alone.
 
 Mitigating factors specific to KS2 Mastery:
-- The platform is HTTPS-only by architecture: every surface sits behind Cloudflare with TLS terminated there, and the Worker enforces `upgrade-insecure-requests` in its CSP.
+- The platform is HTTPS-only by architecture: every surface sits behind Cloudflare with TLS terminated there. (`upgrade-insecure-requests` is currently omitted because the CSP is shipped Report-Only — browsers ignore the directive in that mode. The enforcement-flip PR re-adds it alongside the header-name change.)
 - `includeSubDomains` is already active (Phase 1), so a downgrade vector today is already limited to first-visit / unvisited-subdomain traffic.
 - The risk added by `preload` is the commitment length, not the technical shape.
 
