@@ -33,6 +33,10 @@ const SPELLING_COMMAND_ACTIONS = new Set([
   'spelling-end-early',
   'spelling-drill-all',
   'spelling-drill-single',
+  // P2 U9: durable persistence-warning acknowledge. Goes through the same
+  // command channel so remote-sync learners dismiss the banner via a
+  // Worker-side command, keeping server `data.persistenceWarning` in sync.
+  'spelling-acknowledge-persistence-warning',
 ]);
 
 const SPELLING_SETUP_PREF_ACTIONS = new Set([
@@ -1042,6 +1046,18 @@ export function createRemoteSpellingActionHandler({
         length: 1,
         practiceOnly: originMode === 'guardian',
       });
+      return true;
+    }
+
+    // P2 U9: remote-sync parity for the durable persistence-warning
+    // acknowledge. Mirrors the `module.js` dispatcher exactly — routes
+    // through the Worker command boundary so server-side
+    // `data.persistenceWarning.acknowledged` stays in sync with the client.
+    // The local service is also updated optimistically via the command
+    // response (Worker twin's `acknowledge-persistence-warning` command
+    // writes `acknowledged: true` and returns fresh `data`).
+    if (action === 'spelling-acknowledge-persistence-warning') {
+      runCommand('acknowledge-persistence-warning');
       return true;
     }
 

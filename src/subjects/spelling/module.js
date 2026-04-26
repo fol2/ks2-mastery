@@ -479,6 +479,23 @@ export const spellingModule = {
       return true;
     }
 
+    // P2 U9: "I understand" button on the durable persistence-warning banner
+    // dispatches this action. The service sets `acknowledged: true` on the
+    // persisted `data.persistenceWarning` record; the banner re-renders as
+    // absent on the next tick because `buildSpellingContext` re-reads the
+    // record each call. A subsequent new failure overwrites with
+    // `acknowledged: false`, re-surfacing the banner.
+    if (action === 'spelling-acknowledge-persistence-warning') {
+      if (typeof service.acknowledgePersistenceWarning === 'function') {
+        service.acknowledgePersistenceWarning(learnerId);
+      }
+      // Touch the subject UI so the view-model selector re-runs and the
+      // banner unmounts. No error-clearing is needed — the banner lives
+      // outside the feedback/error surfaces.
+      store.updateSubjectUi('spelling', { error: '' });
+      return true;
+    }
+
     return false;
   },
 };

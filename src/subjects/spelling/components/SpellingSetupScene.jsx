@@ -3,7 +3,11 @@ import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConf
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
-import { BOSS_DEFAULT_ROUND_LENGTH } from '../service-contract.js';
+import {
+  BOSS_DEFAULT_ROUND_LENGTH,
+  SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
+  SPELLING_PERSISTENCE_WARNING_REASON,
+} from '../service-contract.js';
 import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
@@ -319,6 +323,11 @@ export function SpellingSetupScene({
   // Defaults to empty string so a prop-less caller (tests, legacy shells)
   // renders the child-safe view with the link absent.
   platformRole = '',
+  // P2 U9: durable persistence-warning sibling threaded from
+  // `buildSpellingContext`. Rendered on the setup scene so a learner who
+  // closed the tab mid-failure sees the warning the instant they re-open
+  // the app. Same "I understand" button + copy as the session scene.
+  persistenceWarning = null,
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
@@ -351,6 +360,20 @@ export function SpellingSetupScene({
   // to the admin hub where the post-mega debug panel explains the counts.
   const showPostMasteryDebugLink = adultCanSeePostMasteryDebug(platformRole) && !isPostMega;
 
+  // P2 U9: banner gate — rendered when the durable `data.persistenceWarning`
+  // sibling exists and the learner has not yet acknowledged. Copy + button
+  // mirror the session scene exactly so the surface feels consistent
+  // whether the failure surfaced on setup (prefs write) or session
+  // (progress / guardian write). "I understand" dispatches the
+  // `spelling-acknowledge-persistence-warning` action handled in module.js
+  // (local) and remote-actions.js (remote-sync parity).
+  const showPersistenceBanner = persistenceWarning && !persistenceWarning.acknowledged;
+  const persistenceWarningCopy = showPersistenceBanner
+    ? (persistenceWarning.reason === SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED
+      ? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED
+      : SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
+    : '';
+
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
       <section
@@ -364,6 +387,24 @@ export function SpellingSetupScene({
       >
         <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
         <div className={contentClasses.join(' ')}>
+          {showPersistenceBanner ? (
+            <div
+              className="spelling-persistence-warning"
+              role="status"
+              aria-live="polite"
+              data-testid="spelling-persistence-warning"
+            >
+              <span className="spelling-persistence-warning-text">{persistenceWarningCopy}</span>
+              <button
+                type="button"
+                className="spelling-persistence-warning-ack"
+                data-action="spelling-acknowledge-persistence-warning"
+                onClick={(event) => renderAction(actions, event, 'spelling-acknowledge-persistence-warning')}
+              >
+                I understand
+              </button>
+            </div>
+          ) : null}
           {isPostMega ? (
             <PostMegaSetupContent
               prefs={prefs}

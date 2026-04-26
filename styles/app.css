@@ -2294,6 +2294,49 @@ textarea:focus-visible {
 }
 .persistence-banner-action:hover { background: color-mix(in oklab, var(--warn) 14%, transparent); }
 
+/* P2 U9: durable spelling persistence-warning banner — surfaces on both
+ * setup and session scenes, persists across tab close until the learner
+ * clicks "I understand". Uses the same warn palette as `.persistence-banner`
+ * so the two surfaces feel coordinated; prominent-but-not-alarming per the
+ * plan's UX direction. */
+.spelling-persistence-warning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  border: 1px solid color-mix(in oklab, var(--warn) 45%, transparent);
+  color: var(--warn-strong);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.spelling-persistence-warning-text {
+  flex: 1 1 240px;
+}
+.spelling-persistence-warning-ack {
+  appearance: none;
+  border: 1px solid color-mix(in oklab, var(--warn) 55%, transparent);
+  background: transparent;
+  color: var(--warn-strong);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.spelling-persistence-warning-ack:hover {
+  background: color-mix(in oklab, var(--warn) 14%, transparent);
+}
+.spelling-persistence-warning-ack:focus-visible {
+  outline: 2px solid var(--warn);
+  outline-offset: 2px;
+}
+
 /* ---------- Profile settings surface ---------- */
 .sr-only {
   position: absolute;

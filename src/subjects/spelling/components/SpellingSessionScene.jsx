@@ -8,7 +8,7 @@ import {
   spellingSessionVoiceNote,
 } from '../session-ui.js';
 import {
-  SPELLING_PERSISTENCE_WARNING_COPY,
+  SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
   SPELLING_PERSISTENCE_WARNING_REASON,
 } from '../service-contract.js';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
@@ -40,6 +40,14 @@ export function SpellingSessionScene({
   actions,
   previousHeroBg = '',
   runtimeReadOnly = false,
+  // P2 U9: durable persistence-warning sibling threaded from
+  // `buildSpellingContext`. When non-null AND `!acknowledged` the banner
+  // renders across sessions; the "I understand" button dispatches
+  // `spelling-acknowledge-persistence-warning` which sets
+  // `acknowledged: true` on the persisted record (data is retained for
+  // audit). A subsequent new failure overwrites `acknowledged: false` and
+  // re-surfaces the banner.
+  persistenceWarning = null,
 }) {
   const prefs = service.getPrefs(learner.id);
   const session = ui.session;
@@ -120,26 +128,29 @@ export function SpellingSessionScene({
   const sessionClasses = ['spelling-in-session'];
   sessionClasses.push(questionRevealed ? 'is-question-revealed' : 'is-entering-session');
 
-  // U8: storage-failure warning surface. The service attaches
-  // `feedback.persistenceWarning` on submit when a local-storage write fails
-  // (progress or guardian). We render a subtle polite-live banner above the
-  // card so the warning is announced once per submit (the aria-live region
-  // reads the new content on mount); Mega is never demoted. On the next
-  // successful submit the feedback re-renders without the warning and the
-  // banner unmounts. Accepted MVP gap: if the child closes the tab before
-  // another submit, the warning does not persist across sessions — a durable
-  // cross-session surface is deferred to a later plan.
+  // P2 U9: storage-failure warning surface migrated from the session-scoped
+  // `feedback.persistenceWarning` to the durable `data.persistenceWarning`
+  // sibling. The service writes `{ reason, occurredAt, acknowledged: false }`
+  // on any `saveJson` failure via `PersistenceSetItemError`; the banner
+  // renders until the learner clicks "I understand" (dispatches
+  // `spelling-acknowledge-persistence-warning`, sets `acknowledged: true`).
+  // Mega is never demoted on any failure path.
   //
-  // Review fix: banner copy is sourced from `SPELLING_PERSISTENCE_WARNING_COPY`
-  // in service-contract.js so a single edit updates every site. The reason
-  // key is the enum from `SPELLING_PERSISTENCE_WARNING_REASON` — the
-  // normaliser guarantees the reason is one of the allow-listed values, so
-  // the copy map always resolves.
-  const persistenceWarning = ui.feedback?.persistenceWarning || null;
-  const persistenceWarningCopy = persistenceWarning
+  // Accepted the P1.5 U8 gap: the previous session-scoped warning died on
+  // tab close. The durable sibling now survives, so a learner who closes
+  // the tab mid-failure still sees the banner on their next visit.
+  //
+  // Review fix: banner copy is sourced from
+  // `SPELLING_DURABLE_PERSISTENCE_WARNING_COPY` in service-contract.js so a
+  // single edit updates every site. The reason key is the enum from
+  // `SPELLING_PERSISTENCE_WARNING_REASON` — the durable-record normaliser
+  // guarantees the reason is one of the allow-listed values, so the copy
+  // map always resolves.
+  const showPersistenceBanner = persistenceWarning && !persistenceWarning.acknowledged;
+  const persistenceWarningCopy = showPersistenceBanner
     ? (persistenceWarning.reason === SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED
-      ? SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED
-      : SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
+      ? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED
+      : SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
     : '';
 
   return (
@@ -151,14 +162,22 @@ export function SpellingSessionScene({
           <span className="path-count">Word {progressCurrent} of {progressTotal}</span>
         </header>
 
-        {persistenceWarning ? (
+        {showPersistenceBanner ? (
           <div
             className="spelling-persistence-warning"
             role="status"
             aria-live="polite"
             data-testid="spelling-persistence-warning"
           >
-            {persistenceWarningCopy}
+            <span className="spelling-persistence-warning-text">{persistenceWarningCopy}</span>
+            <button
+              type="button"
+              className="spelling-persistence-warning-ack"
+              data-action="spelling-acknowledge-persistence-warning"
+              onClick={(event) => renderAction(actions, event, 'spelling-acknowledge-persistence-warning')}
+            >
+              I understand
+            </button>
           </div>
         ) : null}
 
