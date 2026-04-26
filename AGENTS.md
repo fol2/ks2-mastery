@@ -13,6 +13,7 @@
 - Prefer existing platform and subject-module patterns over new abstractions.
 - Do not regress English Spelling parity unless James explicitly accepts the trade-off.
 - Treat remote sync, learner state, spelling content, D1, R2, and deployment paths as production-sensitive.
+- `docs/solutions/` contains documented solutions to past problems (bugs, workflow patterns, conventions), organised by category with YAML frontmatter (`module`, `tags`, `problem_type`). Relevant when implementing or debugging in documented areas.
 
 ## Cloudflare Deployment
 
