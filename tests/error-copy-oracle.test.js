@@ -105,6 +105,33 @@ const FORBIDDEN_TOKENS = Object.freeze([
     remediation:
       'Remove the internal route path from user-facing copy. `/api/...` is an implementation detail. If a diagnostic surface genuinely needs to show it (admin console only), add an allowlist entry with a reason.',
   },
+  {
+    id: 'undefined-leak',
+    // Matches the literal word "undefined" as a standalone token. The
+    // lookarounds on `[A-Za-z_]` prevent false hits on words that happen
+    // to contain the substring (there are none in English, but the
+    // guard is cheap insurance). Matches the plan §U12 line 812 token.
+    //
+    // Target escape: `<p>Saved: {result?.name}</p>` where `result.name`
+    // is missing renders the visible text "Saved: undefined". The copy
+    // must read `"Saved"` / `"Saved."` / `"No name"` etc. — never the
+    // raw JS sentinel.
+    pattern: /(?<![A-Za-z_])undefined(?![A-Za-z_])/,
+    remediation:
+      'Remove the word "undefined" from user-facing copy. It is the JavaScript sentinel leaking through a missing `?? fallback`. Guard the render with a default string such as "No name" / "Untitled".',
+  },
+  {
+    id: 'null-leak',
+    // Matches the literal word "null" as a standalone token. Same
+    // word-boundary guard as `undefined-leak`. Matches plan §U12 line 812.
+    //
+    // Target escape: `<p>{label ?? null}</p>` renders the visible text
+    // "null" when label is missing. Copy must use a humanised fallback
+    // or an empty string.
+    pattern: /(?<![A-Za-z_])null(?![A-Za-z_])/,
+    remediation:
+      'Remove the word "null" from user-facing copy. It is the JavaScript sentinel leaking through a missing fallback. Use a humanised default string (e.g. "—" or a blank) instead.',
+  },
 ]);
 
 // -----------------------------------------------------------------------------
@@ -152,16 +179,15 @@ function fileAllowlist(file) {
 // -----------------------------------------------------------------------------
 
 function listJsxFiles() {
-  const patterns = [
-    path.join(rootDir, 'src/surfaces/**/*.jsx'),
-    path.join(rootDir, 'src/subjects/**/*.jsx'),
-    path.join(rootDir, 'src/app/**/*.jsx'),
-  ];
+  // Scope: every `src/**/*.jsx` file (plan §U12 line 812). Previously the
+  // scanner only covered `src/surfaces|src/subjects|src/app`, which missed
+  // `src/platform/ui/ErrorCard.jsx`, `src/platform/ui/EmptyState.jsx`, and
+  // `src/platform/react/ErrorBoundary.jsx` — the very primitives the plan
+  // calls out as user-facing error surfaces. The broader glob pulls those
+  // in so the humanised contract is enforced at the primitive level.
   const files = new Set();
-  for (const pattern of patterns) {
-    for (const entry of globSync(pattern, { windowsPathsNoEscape: true })) {
-      files.add(entry);
-    }
+  for (const entry of globSync(path.join(rootDir, 'src/**/*.jsx'), { windowsPathsNoEscape: true })) {
+    files.add(entry);
   }
   return [...files].sort();
 }
@@ -348,6 +374,14 @@ function extractJsxLiteralProps(source) {
 //      between them (stripped + trimmed) is a text-node literal.
 //   3. Skip the text if it contains only whitespace. Skip if the first
 //      character was `{` (expression body; not a static literal).
+//
+// Known limitation (SH2-U12 P2, acknowledged): after the `>` of a JSX
+// tag nested inside a JS ternary (`{cond ? <Tag/> : null}`), walking
+// forward until the next `<` or `{` captures the JS tail of the
+// ternary (e.g. `: null}`). Those captures are dropped by the
+// `isLikelyJsCodeFragment` post-filter below. A proper fix requires
+// matched-open-close JSX nesting tracking, which the P2 reviewer left
+// as a future refinement (testing NIT-2).
 function extractJsxTextNodes(source) {
   const results = [];
   let i = 0;
@@ -398,12 +432,37 @@ function extractJsxTextNodes(source) {
     }
     const text = source.slice(textStart, textEnd);
     const trimmed = text.replace(/\s+/g, ' ').trim();
-    if (trimmed && trimmed.length > 0) {
+    if (trimmed && trimmed.length > 0 && !isLikelyJsCodeFragment(trimmed)) {
       results.push({ value: trimmed, index: textStart });
     }
     i = textEnd;
   }
   return results;
+}
+
+// JSX text always BEGINS with a letter, a digit, an opening bracket
+// `(`, `[`, a currency symbol, or a common punctuation mark like `‘`,
+// `“`, `—`, `#`, `@`. It NEVER begins with `:`, `)`, `;`, `&`, `|`,
+// `?`, `,` — those are tails of JS expressions (e.g. `: null}`,
+// `) : null}` from a ternary that wraps a JSX element). When the
+// text-node extractor walks past the `>` of a nested JSX tag INTO a
+// parent `{...}` body, it captures those JS tails. The post-filter
+// drops them so they don't pollute the forbidden-token scan with
+// false `null` / `undefined` hits.
+//
+// This is a structural heuristic, not a full parser. The upstream
+// `extractJsxTextNodes` walker acknowledges the limitation. Adding a
+// proper matched-JSX-nesting tracker is reserved for a future unit
+// (testing NIT-2 — deferred by the P2 reviewer).
+function isLikelyJsCodeFragment(trimmed) {
+  // Leading character is one of the JS tail markers.
+  const firstCh = trimmed[0];
+  if (firstCh === ')' || firstCh === ':' || firstCh === ';' ||
+      firstCh === '&' || firstCh === '|' || firstCh === '?' ||
+      firstCh === ',') {
+    return true;
+  }
+  return false;
 }
 
 // Line-number helper for actionable error messages.
@@ -434,11 +493,16 @@ function scanLiteral(value) {
 // Tests.
 // -----------------------------------------------------------------------------
 
-test('oracle sanity: file discovery picks up surfaces and subject components', () => {
+test('oracle sanity: file discovery picks up surfaces, subject components, and platform primitives', () => {
   const files = listJsxFiles();
+  // Threshold matches the post-broadening `src/**/*.jsx` scope (plan §U12
+  // line 812). Pre-broadening the scanner found 62; after adding
+  // `src/platform/**/*.jsx` the number is ~71. The floor is set a few
+  // below the actual count so a small delete does not regress the
+  // assertion, but it is strict enough to catch a glob breakage.
   assert.ok(
-    files.length >= 30,
-    `expected at least 30 JSX files under src/surfaces|src/subjects|src/app. Found ${files.length}. The glob may be broken or a directory renamed.`,
+    files.length >= 65,
+    `file discovery regressed: ${files.length} JSX files found, expected >= 65. The glob pattern may be broken or a directory renamed.`,
   );
   const relatives = files.map(relative);
   assert.ok(
@@ -448,6 +512,20 @@ test('oracle sanity: file discovery picks up surfaces and subject components', (
   assert.ok(
     relatives.some((rel) => rel.includes('subjects/spelling/components/')),
     'expected the scanner to include src/subjects/spelling/components/*.jsx',
+  );
+  // FIX-2 widened the glob to cover `src/platform/ui/*.jsx` so user-facing
+  // error primitives (ErrorCard, EmptyState, ErrorBoundary) are scanned.
+  assert.ok(
+    relatives.some((rel) => rel === 'src/platform/ui/ErrorCard.jsx'),
+    'expected the scanner to include src/platform/ui/ErrorCard.jsx (user-facing error primitive)',
+  );
+  assert.ok(
+    relatives.some((rel) => rel === 'src/platform/ui/EmptyState.jsx'),
+    'expected the scanner to include src/platform/ui/EmptyState.jsx (user-facing empty-state primitive)',
+  );
+  assert.ok(
+    relatives.some((rel) => rel === 'src/platform/react/ErrorBoundary.jsx'),
+    'expected the scanner to include src/platform/react/ErrorBoundary.jsx (user-facing error boundary)',
   );
 });
 
@@ -578,6 +656,43 @@ test('oracle sanity: synthetic fixture with /api/ internal route in visible copy
   assert.ok(
     hits.some((hit) => hit.id === 'internal-route'),
     'expected the synthetic fixture to trip internal-route when scanned end-to-end.',
+  );
+});
+
+test('oracle sanity: synthetic fixture with the word "undefined" leaking through missing fallback fails', () => {
+  // Simulates `<p>Saved: {result?.name}</p>` when `result.name` is
+  // missing. The displayed text becomes "Saved: undefined". The oracle
+  // fires on the visible token. This guards the plan §U12 line 812
+  // token that the first shipped oracle missed.
+  const synthetic = `<p>Saved: undefined</p>`;
+  const stripped = stripComments(synthetic);
+  const texts = extractJsxTextNodes(stripped);
+  const hits = texts.flatMap(({ value }) => scanLiteral(value).map((hit) => ({ ...hit, value })));
+  assert.ok(
+    hits.some((hit) => hit.id === 'undefined-leak'),
+    'expected the synthetic fixture to trip undefined-leak when scanned end-to-end. Got: ' + JSON.stringify(hits),
+  );
+  // Negative control: a phrase like "left undefined by the spec" is
+  // still a plain-English use and must NOT be humanised away — but the
+  // oracle flags ALL occurrences of the word, so if the product ever
+  // needed that phrasing it would have to be allowlisted with a reason.
+  // For the SH2-U12 baseline we keep the rule strict: there is no
+  // current copy that reads as natural English only by using the word
+  // "undefined", so the strict rule protects against regressions.
+});
+
+test('oracle sanity: synthetic fixture with the word "null" leaking through a visible literal fails', () => {
+  // Simulates a render that leaks the string "null" into JSX text — e.g.
+  // `<p>{value ?? null}</p>` when `value` is missing, or a toast body
+  // built via `String(error?.cause)`. The oracle fires on the standalone
+  // token. Plan §U12 line 812.
+  const synthetic = `<p>Label: null</p>`;
+  const stripped = stripComments(synthetic);
+  const texts = extractJsxTextNodes(stripped);
+  const hits = texts.flatMap(({ value }) => scanLiteral(value).map((hit) => ({ ...hit, value })));
+  assert.ok(
+    hits.some((hit) => hit.id === 'null-leak'),
+    'expected the synthetic fixture to trip null-leak when scanned end-to-end. Got: ' + JSON.stringify(hits),
   );
 });
 
