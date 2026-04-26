@@ -315,10 +315,24 @@ function normaliseErrorEventEntry(rawEntry) {
   };
 }
 
+// Phase E UX-1: `currentRelease` is the SHA of the current Worker build
+// (or null when BUILD_HASH is missing / dirty-tree). Render-side helper
+// that normalises the shape off the Worker envelope so both the full
+// `readAdminHub` payload AND the narrow `readAdminOpsErrorEvents`
+// refresh response hydrate the same field without branch-local
+// re-normalisation. Non-SHA strings collapse to null so a misconfigured
+// env var never leaks a bogus default-value into the filter input.
+const OPS_ERROR_RELEASE_REGEX = /^[a-f0-9]{6,40}$/;
+
 export function normaliseErrorEventSummary(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const totalsRaw = isPlainObject(raw.totals) ? raw.totals : {};
   const entries = Array.isArray(raw.entries) ? raw.entries.map(normaliseErrorEventEntry) : [];
+  const currentRelease = typeof raw.currentRelease === 'string'
+    && raw.currentRelease
+    && OPS_ERROR_RELEASE_REGEX.test(raw.currentRelease)
+    ? raw.currentRelease
+    : null;
   return {
     generatedAt: asTs(raw.generatedAt, 0),
     totals: {
@@ -329,6 +343,7 @@ export function normaliseErrorEventSummary(rawValue) {
       all: toNonNegativeInt(totalsRaw.all),
     },
     entries,
+    currentRelease,
   };
 }
 

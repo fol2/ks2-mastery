@@ -8605,6 +8605,18 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         actorAccountId: accountId,
         limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
       });
+      // Phase E UX-1: surface the build's current release hash on the
+      // admin hub payload so `ErrorLogCentrePanel` can pre-fill the
+      // "New in release" filter and the drawer helper text. The value
+      // mirrors `buildHash` used on `updateOpsErrorEventStatus` — null
+      // when `env.BUILD_HASH` is missing, malformed, or a dirty-tree
+      // build. Null is rendered as "unavailable — paste a SHA" in the
+      // UI so admins still see the input without a misleading default.
+      const currentRelease = typeof env?.BUILD_HASH === 'string'
+        && env.BUILD_HASH
+        && OPS_ERROR_RELEASE_REGEX.test(env.BUILD_HASH)
+        ? env.BUILD_HASH
+        : null;
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -8638,7 +8650,16 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           dashboardKpis,
           opsActivityStream,
           accountOpsMetadata,
-          errorLogSummary,
+          // Phase E UX-1: thread `currentRelease` into the error-log
+          // envelope so the admin-read-model normaliser can surface it
+          // on `model.errorLogSummary.currentRelease`. Attaching here
+          // (rather than on the bare `adminHub` root) keeps the payload
+          // shape cohesive — everything the error-log panel needs
+          // ships under one key.
+          errorLogSummary: {
+            ...(errorLogSummary || {}),
+            currentRelease,
+          },
         },
       };
     },
@@ -8656,13 +8677,26 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       });
     },
     async readAdminOpsErrorEvents(accountId, { status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT, filter = null } = {}) {
-      return readOpsErrorEventSummary(db, {
+      const summary = await readOpsErrorEventSummary(db, {
         now: nowFactory(),
         actorAccountId: accountId,
         status,
         limit,
         filter,
       });
+      // Phase E UX-1: narrow refresh path mirrors the full-hub payload
+      // so the dispatcher that replaces `model.errorLogSummary` after
+      // a filter apply still hydrates `currentRelease`. Without this,
+      // clicking "Apply filters" would null-out the pre-fill hint.
+      const currentRelease = typeof env?.BUILD_HASH === 'string'
+        && env.BUILD_HASH
+        && OPS_ERROR_RELEASE_REGEX.test(env.BUILD_HASH)
+        ? env.BUILD_HASH
+        : null;
+      return {
+        ...(summary || {}),
+        currentRelease,
+      };
     },
     // PR #188 H1: dedicated narrow read that mirrors the other three admin
     // ops GETs. Calls into the shared `readAccountOpsMetadataDirectory`

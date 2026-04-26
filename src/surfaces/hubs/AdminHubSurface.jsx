@@ -981,15 +981,25 @@ function ErrorLogCentrePanel({ model, actions }) {
   // R10: status transitions are admin-only. Ops-role viewers keep the chip.
   const canManage = model?.permissions?.platformRole === 'admin';
   const savingEventId = summary.savingEventId || '';
-  // U19: controlled filter fields live on local panel state so the
-  // user can compose multiple filters before dispatching a single
-  // refresh. On submit we dispatch the combined filter payload;
-  // "Reset" clears every field back to the broad list view.
+  // Phase E UX-1: `currentRelease` comes from the admin-hub payload (the
+  // Worker builds it from `env.BUILD_HASH` validated against the SHA
+  // regex). Null → "unavailable" hint; populated → abbreviated first 7
+  // chars shown as helper text + pre-filled into the filter input on
+  // mount so admins do not need to hunt for the current deploy SHA.
+  const currentRelease = typeof summary.currentRelease === 'string' && summary.currentRelease
+    ? summary.currentRelease
+    : null;
+  // U19 / Phase E UX-1: controlled filter fields live on local panel
+  // state so the user can compose multiple filters before dispatching a
+  // single refresh. On submit we dispatch the combined filter payload;
+  // "Reset" clears every field back to the broad list view. The
+  // "New in release" input defaults to the current deploy SHA when the
+  // Worker supplied one.
   const [filterRoute, setFilterRoute] = React.useState('');
   const [filterKind, setFilterKind] = React.useState('');
   const [filterLastSeenAfter, setFilterLastSeenAfter] = React.useState('');
   const [filterLastSeenBefore, setFilterLastSeenBefore] = React.useState('');
-  const [filterRelease, setFilterRelease] = React.useState('');
+  const [filterRelease, setFilterRelease] = React.useState(currentRelease || '');
   const [filterReopened, setFilterReopened] = React.useState(false);
 
   const dispatchFilter = (statusOverride) => {
@@ -1012,10 +1022,28 @@ function ErrorLogCentrePanel({ model, actions }) {
     setFilterKind('');
     setFilterLastSeenAfter('');
     setFilterLastSeenBefore('');
-    setFilterRelease('');
+    // Phase E UX-1: "Clear filters" resets back to the current-release
+    // pre-fill rather than a blank string — the default narrow view is
+    // "events new in the currently-deployed SHA".
+    setFilterRelease(currentRelease || '');
     setFilterReopened(false);
     actions.dispatch('admin-ops-error-events-refresh', { status: null });
   };
+
+  // Phase E UX-2: "filters active" detection is purely a client-side
+  // derivation — any non-default field toggles the banner and swaps the
+  // empty-state copy so admins can distinguish "nothing matched" from
+  // "nothing recorded". `filterRelease` only counts as active when it
+  // differs from `currentRelease` (the default pre-fill), otherwise a
+  // fresh panel load would always render "filters active".
+  const filtersActive = Boolean(
+    filterRoute
+      || filterKind
+      || filterLastSeenAfter
+      || filterLastSeenBefore
+      || (filterRelease && filterRelease !== currentRelease)
+      || filterReopened,
+  );
 
   const headerExtras = (
     <>
@@ -1096,7 +1124,16 @@ function ErrorLogCentrePanel({ model, actions }) {
             maxLength={40}
             onChange={(event) => setFilterRelease(event.target.value)}
             placeholder="abc1234"
+            data-testid="error-centre-filter-release"
           />
+          <span
+            className="small muted"
+            data-testid="error-centre-filter-release-hint"
+          >
+            {currentRelease
+              ? `Current deploy: ${String(currentRelease).slice(0, 7)}`
+              : 'Current deploy unavailable — paste a SHA'}
+          </span>
         </label>
         <label className="field" style={{ alignSelf: 'end' }}>
           <span>Reopened after resolved</span>
@@ -1125,6 +1162,14 @@ function ErrorLogCentrePanel({ model, actions }) {
         >
           Clear filters
         </button>
+        {filtersActive && (
+          <span
+            className="chip warn"
+            data-testid="error-centre-filters-active-chip"
+          >
+            Filters active
+          </span>
+        )}
       </div>
     </>
   );
@@ -1173,7 +1218,16 @@ function ErrorLogCentrePanel({ model, actions }) {
             <ErrorEventDetailsDrawer entry={entry} canViewAccount={canManage} />
           </div>
         );
-      }) : <p className="small muted">No error events recorded.</p>}
+      }) : (
+        <p
+          className="small muted"
+          data-testid="error-centre-empty-state"
+        >
+          {filtersActive
+            ? 'No errors match the current filters.'
+            : 'No error events recorded.'}
+        </p>
+      )}
     </section>
   );
 }
@@ -1198,9 +1252,31 @@ function ErrorEventDetailsDrawer({ entry, canViewAccount }) {
   const lastStatusChangeAt = Number.isFinite(Number(entry.lastStatusChangeAt))
     ? Number(entry.lastStatusChangeAt)
     : null;
+  // Phase E UX-3: drawer summary carries per-row signal so an admin
+  // scanning a long list can distinguish rows without opening every
+  // drawer. Status is always shown; "since <firstSeenRelease>" and
+  // (for resolved rows) "fixed in <resolvedInRelease>" narrate the row's
+  // release history at a glance. Both release slugs are truncated to
+  // the 7-char abbreviated SHA — the full value stays visible in the
+  // drawer's release rows.
+  const statusLabel = entry.status || 'open';
+  const firstSeenShort = typeof entry.firstSeenRelease === 'string' && entry.firstSeenRelease
+    ? ` · since ${String(entry.firstSeenRelease).slice(0, 7)}`
+    : '';
+  const resolvedShort = (entry.status === 'resolved'
+    && typeof entry.resolvedInRelease === 'string'
+    && entry.resolvedInRelease)
+    ? ` · fixed in ${String(entry.resolvedInRelease).slice(0, 7)}`
+    : '';
   return (
     <details data-testid={`error-event-drawer-${entry.id}`} style={{ gridColumn: '1 / -1', marginTop: 8 }}>
-      <summary className="small muted" style={{ cursor: 'pointer' }}>View event details</summary>
+      <summary
+        className="small muted"
+        style={{ cursor: 'pointer' }}
+        data-testid="error-event-drawer-summary"
+      >
+        Details — {statusLabel}{firstSeenShort}{resolvedShort}
+      </summary>
       <dl className="small" style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '180px 1fr', rowGap: 4 }}>
         <dt className="muted">Error kind</dt>
         <dd>{entry.errorKind || '—'}</dd>
