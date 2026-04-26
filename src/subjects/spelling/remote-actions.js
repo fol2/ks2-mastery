@@ -52,6 +52,10 @@ const SPELLING_IN_FLIGHT_DEDUPE_COMMANDS = new Set([
   'continue-session',
   'skip-word',
   'end-session',
+  // P2 U9 reviewer-feedback fix (LOW): dedupe double-click on the
+  // "I understand" button. Without this, a fast double-click fires two
+  // acknowledge commands; the second is a no-op but still round-trips.
+  'acknowledge-persistence-warning',
 ]);
 
 const SPELLING_UI_LOCAL_ACTIONS = new Set([
@@ -90,6 +94,13 @@ function pendingCommandBlocksAction(action, appState = {}) {
   const pendingCommand = spellingPendingCommand(appState);
   if (!pendingCommand || !SPELLING_COMMAND_ACTIONS.has(action)) return false;
   if (pendingCommand === 'save-prefs' && SPELLING_SETUP_PREF_ACTIONS.has(action)) return false;
+  // P2 U9 reviewer-feedback fix (LOW): acknowledge writes to a different
+  // sibling (`data.persistenceWarning`) than submit-answer (`data.progress`
+  // + `data.guardian`), so structurally they do not conflict. Blocking the
+  // banner dismissal during an in-flight submit is unnecessary and degrades
+  // UX — the learner sees the banner linger until submit completes. Bypass
+  // the pending-command block specifically for the acknowledge action.
+  if (action === 'spelling-acknowledge-persistence-warning') return false;
   return true;
 }
 
@@ -568,6 +579,7 @@ export function createRemoteSpellingActionHandler({
     const {
       learnerId: requestedLearnerId = '',
       errorLearnerId = '',
+      errorMessage = '',
       beforeSend = null,
       onSuccess = null,
       onError = null,
@@ -586,9 +598,15 @@ export function createRemoteSpellingActionHandler({
     }).catch((error) => {
       onError?.(error);
       globalThis.console?.warn?.('Spelling command failed.', error);
+      // P2 U9 reviewer-feedback fix: `errorMessage` is a caller-provided
+      // override so specific commands (e.g. acknowledge-persistence-warning)
+      // can surface child-friendly copy instead of the generic fallback.
+      // Fall back to `commandErrorMessage` so existing callers keep the
+      // previous behaviour (no caller has to opt into the override).
+      const fallback = errorMessage || 'The spelling command could not be completed.';
       setRuntimeErrorForLearner(
         errorLearnerId || commandLearnerId,
-        commandErrorMessage(error, 'The spelling command could not be completed.'),
+        errorMessage || commandErrorMessage(error, fallback),
       );
     }).finally(() => {
       releasePendingCommand(command, pending.dedupeKey);
@@ -1056,8 +1074,18 @@ export function createRemoteSpellingActionHandler({
     // The local service is also updated optimistically via the command
     // response (Worker twin's `acknowledge-persistence-warning` command
     // writes `acknowledged: true` and returns fresh `data`).
+    //
+    // Reviewer-feedback fix (PR #279 HIGH): if the Worker round-trip fails
+    // (network, 5xx, or degraded mode) `runCommand`'s default error handler
+    // would emit a generic "The spelling command could not be completed." —
+    // we override with child-friendly copy that matches the local-mode
+    // dispatcher in `module.js`, so the banner re-renders but the learner
+    // sees a clear "try again" message instead of a mystery.
     if (action === 'spelling-acknowledge-persistence-warning') {
-      runCommand('acknowledge-persistence-warning');
+      runCommand('acknowledge-persistence-warning', {}, {
+        errorLearnerId: learnerId,
+        errorMessage: 'Could not save — try again when storage is available.',
+      });
       return true;
     }
 

@@ -363,8 +363,16 @@ export const SPELLING_PERSISTENCE_WARNING_COPY = Object.freeze({
  * no active round) — the "Your answer counted for this round" phrasing from
  * U8 does not apply there. The U9 copy centres on what the learner needs to
  * do: export data or free up storage.
+ *
+ * Reviewer-feedback fix (PR #279 LOW): keys are indexed by the reason enum
+ * VALUE (kebab-case, e.g. `'storage-save-failed'`) so the UI can do a direct
+ * `COPY[reason]` lookup and adding a future reason is a one-line change in
+ * `SPELLING_PERSISTENCE_WARNING_REASONS` + here. Legacy UPPER_SNAKE key is
+ * kept as an alias so any downstream consumer that relied on the symbolic
+ * name keeps working.
  */
 export const SPELLING_DURABLE_PERSISTENCE_WARNING_COPY = Object.freeze({
+  'storage-save-failed': 'Your progress could not be saved on this device. Export your data or free up storage.',
   STORAGE_SAVE_FAILED: 'Your progress could not be saved on this device. Export your data or free up storage.',
 });
 

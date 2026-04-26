@@ -6,7 +6,6 @@ import { useSetupHeroContrast } from './useSetupHeroContrast.js';
 import {
   BOSS_DEFAULT_ROUND_LENGTH,
   SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
-  SPELLING_PERSISTENCE_WARNING_REASON,
 } from '../service-contract.js';
 import {
   MODE_CARDS,
@@ -367,11 +366,15 @@ export function SpellingSetupScene({
   // (progress / guardian write). "I understand" dispatches the
   // `spelling-acknowledge-persistence-warning` action handled in module.js
   // (local) and remote-actions.js (remote-sync parity).
+  // Reviewer-feedback fix (PR #279 LOW): the previous ternary had identical
+  // branches — a dead-code placeholder. Use a forward-compatible lookup so
+  // adding a new reason is just a key in `SPELLING_DURABLE_PERSISTENCE_WARNING_COPY`
+  // plus (optionally) the enum; no edit to the scenes is required. Fall
+  // back to STORAGE_SAVE_FAILED copy if the reason is absent from the map.
   const showPersistenceBanner = persistenceWarning && !persistenceWarning.acknowledged;
   const persistenceWarningCopy = showPersistenceBanner
-    ? (persistenceWarning.reason === SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED
-      ? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED
-      : SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
+    ? (SPELLING_DURABLE_PERSISTENCE_WARNING_COPY[persistenceWarning.reason]
+      ?? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
     : '';
 
   return (

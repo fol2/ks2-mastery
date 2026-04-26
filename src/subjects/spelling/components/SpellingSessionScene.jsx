@@ -9,7 +9,6 @@ import {
 } from '../session-ui.js';
 import {
   SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
-  SPELLING_PERSISTENCE_WARNING_REASON,
 } from '../service-contract.js';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
 import {
@@ -146,11 +145,18 @@ export function SpellingSessionScene({
   // `SPELLING_PERSISTENCE_WARNING_REASON` — the durable-record normaliser
   // guarantees the reason is one of the allow-listed values, so the copy
   // map always resolves.
+  // Reviewer-feedback fix (PR #279 LOW): the previous ternary had identical
+  // branches — a dead-code placeholder for when future reasons are added.
+  // Use a forward-compatible lookup so adding a new reason is just a key in
+  // `SPELLING_DURABLE_PERSISTENCE_WARNING_COPY` plus (optionally) the enum;
+  // no edit to the scenes is required. Fall back to STORAGE_SAVE_FAILED
+  // copy if the reason is absent from the map (defensive: the normaliser
+  // guarantees the reason is allow-listed but we keep the fallback so a
+  // future map-edit mistake does not blank the banner).
   const showPersistenceBanner = persistenceWarning && !persistenceWarning.acknowledged;
   const persistenceWarningCopy = showPersistenceBanner
-    ? (persistenceWarning.reason === SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED
-      ? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED
-      : SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
+    ? (SPELLING_DURABLE_PERSISTENCE_WARNING_COPY[persistenceWarning.reason]
+      ?? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
     : '';
 
   return (

@@ -1176,6 +1176,16 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   // currently persisted this is a silent no-op (no banner to dismiss).
   // A subsequent new failure resets `acknowledged: false` via
   // `writePersistenceWarning`.
+  //
+  // Reviewer-feedback fix (PR #279 HIGH): apply the same bounded-retry +
+  // console.warn fallback pattern that `writePersistenceWarning` uses. The
+  // whole point of the banner is to surface a broken-storage condition, so
+  // when the learner clicks "I understand" and storage is STILL broken, we
+  // must not silently no-op — the previous behaviour dropped the error and
+  // left the record at `acknowledged: false`, making the click feel like a
+  // black hole. The dispatchers surface `{ ok: false, reason: 'persist-failed' }`
+  // by setting a runtime error so the learner sees the click did not take
+  // effect.
   function acknowledgePersistenceWarning(learnerId) {
     const current = loadPersistenceWarningFromStorage(learnerId);
     if (!current) return { ok: true };
@@ -1184,7 +1194,29 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       occurredAt: current.occurredAt,
       acknowledged: true,
     };
-    return savePersistenceWarningToStorage(learnerId, acknowledgedRecord);
+    const firstAttempt = savePersistenceWarningToStorage(learnerId, acknowledgedRecord);
+    if (firstAttempt.ok === true) return { ok: true };
+    // Bounded retry once. If the first failure was transient (e.g. a race
+    // inside the persistence channel), a retry may succeed.
+    const retryAttempt = savePersistenceWarningToStorage(learnerId, acknowledgedRecord);
+    if (retryAttempt.ok === true) return { ok: true };
+    // Double failure — warn and return ok:false. The banner will re-render
+    // on the next selector pass (storage still reports acknowledged=false),
+    // but that is honest: storage is still broken. The dispatcher surfaces
+    // a runtime error so the click is not silently dropped.
+    try {
+      globalThis.console?.warn?.('Spelling persistence-warning acknowledge failed after retry.', {
+        learnerId,
+        reason: acknowledgedRecord.reason,
+        firstError: firstAttempt?.error?.message,
+        retryError: retryAttempt?.error?.message,
+      });
+    } catch {
+      // A thrown console.warn (very unusual — some sandboxes wrap console)
+      // is not actionable for the learner; absorb silently so the ack path
+      // does not crash on a diagnostic side-effect.
+    }
+    return { ok: false, reason: 'persist-failed' };
   }
 
   // P2 U9: read-side helper for the UI. Returns the normalised record or

@@ -341,6 +341,91 @@ test('P2 U9 subsequent-failure-after-ack: resets acknowledged to false', () => {
     'new failure resets acknowledged false so banner re-surfaces');
 });
 
+// ---- HIGH-fix: acknowledge path also has bounded retry + console.warn ------
+
+// Reviewer-feedback fix (PR #279 HIGH): `acknowledgePersistenceWarning` used
+// to silently no-op on broken storage — the banner re-rendered because
+// storage still recorded `{ acknowledged: false }` but the click looked like
+// a black hole to the learner. It now applies the same bounded-retry +
+// console.warn fallback that `writePersistenceWarning` uses, and returns
+// `{ ok: false, reason: 'persist-failed' }` so the dispatcher can surface a
+// runtime error.
+test('P2 U9 acknowledge HIGH-fix: twice-failing returns ok:false, warns, keeps acknowledged=false', () => {
+  // Arm a hostile storage that returns the seeded warning on getItem but
+  // throws on every setItem. This is the only way to exercise the ack
+  // double-failure path: `savePersistenceWarningToStorage` is the only
+  // writer, and it calls `resolvedStorage.setItem` directly (no persistAll
+  // wrapper for the bare-storage service path).
+  const persistenceKey = 'ks2-spell-persistence-warning-learner-a';
+  const seededRecord = {
+    reason: 'storage-save-failed',
+    occurredAt: TODAY_DAY,
+    acknowledged: false,
+  };
+  const backing = new Map();
+  backing.set(persistenceKey, JSON.stringify(seededRecord));
+  const hostileStorage = {
+    getItem(key) {
+      return backing.has(key) ? backing.get(key) : null;
+    },
+    setItem() {
+      // Every write fails so both the first attempt AND the retry throw.
+      throw Object.assign(new Error('QuotaExceededError'), { name: 'QuotaExceededError' });
+    },
+    removeItem(key) { backing.delete(key); },
+  };
+
+  const originalWarn = globalThis.console?.warn;
+  const warnings = [];
+  globalThis.console = globalThis.console || {};
+  globalThis.console.warn = (...args) => { warnings.push(args); };
+
+  try {
+    const hostile = createSpellingService({
+      storage: hostileStorage,
+      now: () => TODAY_MS,
+      random: () => 0.5,
+      tts: { speak() {}, stop() {}, warmup() {} },
+    });
+
+    // (a) call MUST NOT throw.
+    let thrown = null;
+    let result = null;
+    try {
+      result = hostile.acknowledgePersistenceWarning('learner-a');
+    } catch (error) {
+      thrown = error;
+    }
+    assert.equal(thrown, null,
+      'acknowledgePersistenceWarning must not throw on double-failure storage');
+
+    // (b) returns `{ ok: false, reason: 'persist-failed' }`.
+    assert.ok(result, 'returns a result object');
+    assert.equal(result.ok, false, 'ok: false on double-failure');
+    assert.equal(result.reason, 'persist-failed', 'reason: persist-failed');
+
+    // (c) on-disk record still shows `acknowledged: false`. The ack
+    // attempts both failed so the seeded record is untouched — the banner
+    // will re-render on the next selector pass, which is honest.
+    const onDisk = JSON.parse(backing.get(persistenceKey));
+    assert.equal(onDisk.acknowledged, false,
+      'record unchanged — acknowledged stays false when write fails');
+    assert.equal(onDisk.reason, 'storage-save-failed',
+      'reason preserved');
+
+    // (d) console.warn was called at least once (the diagnostic fallback).
+    assert.ok(warnings.length >= 1, 'console.warn fallback fired');
+    const firstWarn = warnings[0];
+    assert.ok(
+      firstWarn && typeof firstWarn[0] === 'string'
+        && firstWarn[0].includes('acknowledge'),
+      'console.warn message mentions acknowledge path',
+    );
+  } finally {
+    globalThis.console.warn = originalWarn;
+  }
+});
+
 // ---- Bounded retry for writePersistenceWarning itself -----------------------
 
 test('P2 U9 bounded retry: writePersistenceWarning twice-failing falls through to console.warn', () => {
