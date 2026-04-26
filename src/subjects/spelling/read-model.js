@@ -107,6 +107,10 @@ function sessionLabel(kind) {
   if (kind === 'trouble') return 'Trouble drill';
   if (kind === 'boss') return 'Boss Dictation';
   if (kind === 'guardian') return 'Guardian Mission';
+  // U11: Pattern Quest resume surface. Without this branch the Resume
+  // card falls through to 'Smart review' and sends the learner into the
+  // wrong scene on click.
+  if (kind === 'pattern-quest') return 'Pattern Quest';
   return 'Smart review';
 }
 
@@ -612,10 +616,16 @@ export function buildSpellingLearnerReadModel({
     // Resume button routed Boss learners straight into SATs Test Setup and
     // persisted `mode: 'test'` (fol2/ks2-mastery#235 review follow-up).
     const kind = activeSession.sessionKind;
+    // U11: Pattern Quest resumes back into its own mode. Without this branch
+    // `recommendedMode` collapsed to 'smart', so Resume dispatched the
+    // legacy Smart Review start-session and the Pattern Quest session was
+    // abandoned silently.
     const recommendedMode = kind === 'boss'
       ? 'boss'
       : kind === 'guardian'
       ? 'guardian'
+      : kind === 'pattern-quest'
+      ? 'pattern-quest'
       : kind === 'test'
       ? 'test'
       : 'smart';

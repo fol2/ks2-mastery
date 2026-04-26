@@ -14,7 +14,7 @@ import {
 import {
   unacknowledgedMonsterCelebrationEvents,
 } from '../../platform/game/monster-celebration-acks.js';
-import { isPostMasteryMode } from './service-contract.js';
+import { isMegaSafeMode, isPostMasteryMode } from './service-contract.js';
 
 const READ_ONLY_MESSAGE = 'Practice is read-only while sync is degraded. Retry sync before continuing.';
 const SETUP_PREF_SAVE_DEBOUNCE_MS = 120;
@@ -1016,6 +1016,10 @@ export function createRemoteSpellingActionHandler({
         updateOptimisticPrefs(patch);
         const prefsBeforeStart = visiblePrefsForLearner(learnerId, appState());
         const shortcutLength = data.length != null ? data.length : prefsBeforeStart.roundLength;
+        // U11: Pattern Quest payload carries `patternId` so the Worker
+        // selector knows which 5-card quest to build. Guardian / Boss
+        // ignore it; the Worker's startSession branches on mode first.
+        const patternId = typeof data.patternId === 'string' ? data.patternId : '';
         let startResponse = null;
         try {
           startResponse = await sendCommand('start-session', {
@@ -1023,6 +1027,7 @@ export function createRemoteSpellingActionHandler({
             yearFilter: prefsBeforeStart.yearFilter,
             length: shortcutLength,
             extraWordFamilies: prefsBeforeStart.extraWordFamilies,
+            patternId,
           }, { learnerId });
         } catch (error) {
           // Rollback: the optimistic prefs must not outlive a failed
@@ -1099,21 +1104,23 @@ export function createRemoteSpellingActionHandler({
       const mistakes = Array.isArray(ui.summary?.mistakes) ? ui.summary.mistakes : [];
       if (!mistakes.length) return true;
       tts.stop();
-      // U3: mirror of `module.js` drill-all branch — Guardian-origin summary
-      // must never demote Mega via the Worker engine either. Worker's
-      // `legacy-engine.js:763` equivalent honours `practiceOnly` identically,
-      // so forwarding the flag on the remote start-session command keeps the
-      // Mega-never-revoked invariant under remote-sync. Source of truth is
-      // `ui.summary?.mode`; summary-phase persistence across refresh is out
-      // of scope today — refactors that change this must re-validate the
-      // practiceOnly path on both runtimes.
+      // U3 / U11: mirror of `module.js` drill-all branch — Mega-safe origin
+      // (Guardian, Boss, Pattern Quest) summary must never demote Mega via
+      // the Worker engine either. Worker's `legacy-engine.js:763` equivalent
+      // honours `practiceOnly` identically, so forwarding the flag on the
+      // remote start-session command keeps the Mega-never-revoked invariant
+      // under remote-sync. Uses the shared `isMegaSafeMode` predicate so
+      // Pattern Quest (U11) and future post-Mega modes are covered in one
+      // place — the earlier `originMode === 'guardian'` strict match
+      // excluded Pattern Quest and would have demoted Mega (U11 reviewer
+      // finding).
       const originMode = ui.summary?.mode;
       runCommand('start-session', {
         mode: 'trouble',
         words: mistakes.map((word) => word.slug).filter(Boolean),
         yearFilter: 'all',
         length: mistakes.length,
-        practiceOnly: originMode === 'guardian',
+        practiceOnly: isMegaSafeMode(originMode),
       });
       return true;
     }
@@ -1122,17 +1129,20 @@ export function createRemoteSpellingActionHandler({
       const slug = String(data.slug || '').trim();
       if (!slug) return true;
       tts.stop();
-      // U3: mirror of `module.js` drill-single branch. The Guardian scene
-      // hides per-word drill chips so this branch only fires defensively if
-      // a future surface re-exposes them — but the defensive guard is the
-      // whole point of a parity check between local and remote paths.
+      // U3 / U11: mirror of `module.js` drill-single branch. The Guardian
+      // scene hides per-word drill chips, Boss uses static chips, and
+      // Pattern Quest now does the same (U11 Fix 1 scene guard) so this
+      // branch only fires defensively if a future surface re-exposes them —
+      // but the defensive guard is the whole point of a parity check between
+      // local and remote paths. `isMegaSafeMode` keeps Guardian + Boss +
+      // Pattern Quest covered in one predicate.
       const originMode = ui.summary?.mode;
       runCommand('start-session', {
         mode: 'single',
         words: [slug],
         yearFilter: 'all',
         length: 1,
-        practiceOnly: originMode === 'guardian',
+        practiceOnly: isMegaSafeMode(originMode),
       });
       return true;
     }

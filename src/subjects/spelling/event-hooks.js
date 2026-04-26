@@ -99,6 +99,24 @@ function bossCompletedToast(event) {
   });
 }
 
+// U11 Fix 6: Pattern Quest completion toast. Positive-only copy, mirrors
+// Boss's shape exactly: `N of 5 ... landed`. `event.patternTitle` is
+// provided when the quest-completed event carries the readable pattern
+// title; we fall back to the raw patternId for robustness.
+function patternQuestCompletedToast(event) {
+  const correct = Number.isInteger(event.correctCount) ? event.correctCount : 0;
+  const patternLabel = typeof event.patternTitle === 'string' && event.patternTitle
+    ? event.patternTitle
+    : (typeof event.patternId === 'string' && event.patternId ? event.patternId : 'pattern');
+  const body = `Pattern Quest: ${correct}/5 on ${patternLabel}.`;
+  return toastEvent({
+    kind: 'pattern-quest.completed',
+    sourceEvent: event,
+    title: 'Quest complete.',
+    body,
+  });
+}
+
 export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
   return function spellingRewardSubscriber(events = []) {
     const rewardEvents = [];
@@ -121,10 +139,13 @@ export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
         continue;
       }
 
-      // U11 — Guardian + Boss toast branches. Positive-only: wobbled is
-      // intentionally omitted. Each branch emits exactly one reward.toast
-      // event and never invokes the game-state repository (no monster
-      // projection, no persistent badge, no streak tracking).
+      // U11 — Guardian + Boss + Pattern Quest toast branches. Positive-only:
+      // wobbled is intentionally omitted. Each branch emits exactly one
+      // reward.toast event and never invokes the game-state repository
+      // (no monster projection, no persistent badge, no streak tracking).
+      // Fix 6: the Pattern Quest branch was missing in the initial U11 ship —
+      // quest-completed events fell through to the silent-default and no
+      // toast ever surfaced at round-end.
       if (event.type === SPELLING_EVENT_TYPES.GUARDIAN_RENEWED) {
         rewardEvents.push(renewedToast(event));
         continue;
@@ -139,6 +160,10 @@ export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
       }
       if (event.type === SPELLING_EVENT_TYPES.BOSS_COMPLETED) {
         rewardEvents.push(bossCompletedToast(event));
+        continue;
+      }
+      if (event.type === SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED) {
+        rewardEvents.push(patternQuestCompletedToast(event));
         continue;
       }
 

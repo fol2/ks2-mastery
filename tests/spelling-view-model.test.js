@@ -159,29 +159,34 @@ test('renderAction keeps spelling start audio immediate when view transitions ar
 
 // ----- U5: post-mega dashboard view-model -------------------------------------
 
-test('POST_MEGA_MODE_CARDS is a frozen array of four cards in Guardian-first order', () => {
+test('POST_MEGA_MODE_CARDS is a frozen array of five cards in Guardian-first order (P2 U11)', () => {
   assert.equal(Array.isArray(POST_MEGA_MODE_CARDS), true);
   assert.equal(Object.isFrozen(POST_MEGA_MODE_CARDS), true);
-  assert.equal(POST_MEGA_MODE_CARDS.length, 4);
+  // U11 adds a third active card (Pattern Quest) so the total is 5.
+  assert.equal(POST_MEGA_MODE_CARDS.length, 5);
   const ids = POST_MEGA_MODE_CARDS.map((card) => card.id);
-  assert.deepEqual(ids, ['guardian', 'boss-dictation', 'word-detective', 'story-challenge']);
+  assert.deepEqual(ids, ['guardian', 'boss-dictation', 'pattern-quest', 'word-detective', 'story-challenge']);
 });
 
 // U10: Boss Dictation card flips from placeholder to active alongside Guardian.
 // Guardian was active from the start of Phase P1; Boss joins in U10 so the
-// dashboard shows TWO active duties rather than one. Word Detective and Story
-// Challenge stay as placeholders — the P2 roadmap does not ship yet.
-test('POST_MEGA_MODE_CARDS: Guardian + Boss are active, remaining two are disabled placeholders (U10)', () => {
+// dashboard shows TWO active duties rather than one. U11 adds Pattern Quest
+// as a third active duty. Word Detective and Story Challenge stay as
+// placeholders — the P2 roadmap still has them ahead.
+test('POST_MEGA_MODE_CARDS: Guardian + Boss + Pattern Quest are active, remaining two are disabled placeholders (U11)', () => {
   const guardian = POST_MEGA_MODE_CARDS.find((card) => card.id === 'guardian');
   const boss = POST_MEGA_MODE_CARDS.find((card) => card.id === 'boss-dictation');
-  const placeholders = POST_MEGA_MODE_CARDS.filter((card) => card.id !== 'guardian' && card.id !== 'boss-dictation');
+  const patternQuest = POST_MEGA_MODE_CARDS.find((card) => card.id === 'pattern-quest');
+  const placeholders = POST_MEGA_MODE_CARDS.filter((card) => (
+    card.id !== 'guardian' && card.id !== 'boss-dictation' && card.id !== 'pattern-quest'
+  ));
 
   assert.equal(guardian.id, 'guardian');
   assert.notEqual(guardian.disabled, true);
   assert.equal(typeof guardian.title, 'string');
   assert.equal(typeof guardian.desc, 'string');
 
-  // Boss is the new U10 active card.
+  // Boss is the U10 active card.
   assert.equal(boss.id, 'boss-dictation');
   assert.notEqual(boss.disabled, true, 'Boss card must be active post-U10');
   assert.equal(typeof boss.title, 'string');
@@ -191,6 +196,17 @@ test('POST_MEGA_MODE_CARDS: Guardian + Boss are active, remaining two are disabl
   assert.equal(boss.glyph.length, 1, 'Boss glyph is a single character');
   assert.equal(typeof boss.ariaLabel, 'string', 'Boss card carries an ariaLabel for screen readers');
   assert.ok(boss.ariaLabel.length > 0, 'Boss ariaLabel is non-empty');
+
+  // Pattern Quest is the new U11 active card.
+  assert.equal(patternQuest.id, 'pattern-quest');
+  assert.notEqual(patternQuest.disabled, true, 'Pattern Quest card must be active post-U11');
+  assert.equal(typeof patternQuest.title, 'string');
+  assert.equal(typeof patternQuest.desc, 'string');
+  assert.doesNotMatch(patternQuest.desc, /coming soon/i, 'Pattern Quest description must not say "coming soon" now that it is active');
+  assert.equal(typeof patternQuest.glyph, 'string');
+  assert.equal(patternQuest.glyph.length, 1, 'Pattern Quest glyph is a single character');
+  assert.equal(typeof patternQuest.ariaLabel, 'string', 'Pattern Quest card carries an ariaLabel for screen readers');
+  assert.ok(patternQuest.ariaLabel.length > 0, 'Pattern Quest ariaLabel is non-empty');
 
   for (const card of placeholders) {
     assert.equal(card.disabled, true, `${card.id} must be disabled`);

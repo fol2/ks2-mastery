@@ -49,7 +49,7 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
-import { WORDS } from '../src/subjects/spelling/data/word-data.js';
+import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import { SPELLING_EVENT_TYPES } from '../src/subjects/spelling/events.js';
 import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
@@ -254,6 +254,19 @@ const ACTION_SET = Object.freeze([
   'boss-wrong',
   'content-hotswap',
   'storage-quota-failure',
+  // P2 U11: Pattern Quest sequences. The composite invariant must hold
+  // across every wrong answer on a Pattern Quest card — wobble writes to
+  // data.pattern.wobbling, never to progress.stage.
+  'patternquest-correct',
+  'patternquest-wrong',
+  // P2 U11 Fix 1: Pattern Quest summary drill path. A summary with a
+  // wobbled slug dispatches drill-single which (pre-fix) started a
+  // `mode: 'single', practiceOnly: false` session that demoted Mega on
+  // retry + correction. The Fix 1 dispatcher now uses isMegaSafeMode so
+  // the startSession payload carries `practiceOnly: true`; this action
+  // exercises that dispatcher-level fix end-to-end by driving the
+  // resulting drill to its demotion-prone wrong-then-correct sequence.
+  'summary-drill-single-pattern-quest',
 ]);
 
 function ensurePracticeOnlySession(harness, state) {
@@ -387,6 +400,129 @@ function applyBossAnswer(harness, state, { correct }) {
   return { state: submitted.state, events: submitted.events || [] };
 }
 
+// P2 U11: Pattern Quest answer action. Wrong answers must never demote
+// progress.stage; the assertion runs after every action.
+function applyPatternQuestAnswer(harness, state, { correct }) {
+  let s = state;
+  if (s?.phase === 'session' && s.session?.mode !== 'pattern-quest') {
+    s = harness.service.initState(null, harness.learnerId);
+  }
+  if (!s || s.phase !== 'session' || s.session?.mode !== 'pattern-quest') {
+    const started = harness.service.startSession(harness.learnerId, {
+      mode: 'pattern-quest',
+      patternId: 'suffix-tion',
+    });
+    if (!started.ok) {
+      return { state: s || harness.service.initState(null, harness.learnerId), events: [] };
+    }
+    s = started.state;
+  }
+  s = completeAwaitingAdvance(harness, s);
+  if (s.phase !== 'session' || !s.session?.patternQuestCard) {
+    return { state: s, events: [] };
+  }
+  const card = s.session.patternQuestCard;
+  // U11 Fix 2: classify/explain choices are shuffled by a seeded RNG so
+  // the correct option is NOT always at `option-0`. Read the id dynamically
+  // from the decorated card's `choices` array via the `correct: true` flag.
+  const correctChoiceId = Array.isArray(card?.choices)
+    ? card.choices.find((choice) => choice && choice.correct === true)?.id || 'option-0'
+    : 'option-0';
+  const wrongChoiceId = Array.isArray(card?.choices)
+    ? card.choices.find((choice) => choice && choice.correct !== true)?.id || 'option-1'
+    : 'option-1';
+  let typed;
+  if (correct) {
+    if (card.type === 'classify' || card.type === 'explain') {
+      typed = correctChoiceId;
+    } else if (card.type === 'spell' || card.type === 'detect-error') {
+      typed = WORD_BY_SLUG[card.slug]?.word || '';
+    } else {
+      typed = correctChoiceId;
+    }
+  } else if (card.type === 'classify' || card.type === 'explain') {
+    typed = wrongChoiceId;
+  } else {
+    typed = 'zzz-wrong-pattern';
+  }
+  const submitted = harness.service.submitAnswer(harness.learnerId, s, typed);
+  return { state: submitted.state, events: submitted.events || [] };
+}
+
+// U11 Fix 1: Summary-drill from a Pattern Quest round. The reviewer finding
+// was: a Pattern Quest summary's drill-single CTA dispatched
+// `mode: 'single', practiceOnly: originMode === 'guardian'` (strict string
+// match, excluded 'pattern-quest'), which demoted Mega via
+// applyLearningOutcome. The fix threads `isMegaSafeMode` (covers Pattern
+// Quest) through both dispatchers and removes the drill CTA at the JSX
+// layer; this test drives the service-level symmetry: a
+// `spelling.startSession({ mode: 'single', practiceOnly: true })` for a
+// wobbled slug must not demote stage on wrong-then-correct.
+function applySummaryDrillSinglePatternQuest(harness, state) {
+  let s = state;
+  // First, drive a Pattern Quest round with a wrong answer so a slug wobbles.
+  // Reuse the same start pattern as applyPatternQuestAnswer.
+  if (s?.phase === 'session' && s.session?.mode !== 'pattern-quest') {
+    s = harness.service.initState(null, harness.learnerId);
+  }
+  if (!s || s.phase !== 'session' || s.session?.mode !== 'pattern-quest') {
+    const started = harness.service.startSession(harness.learnerId, {
+      mode: 'pattern-quest',
+      patternId: 'suffix-tion',
+    });
+    if (!started.ok) return { state: s || harness.service.initState(null, harness.learnerId), events: [] };
+    s = started.state;
+  }
+  s = completeAwaitingAdvance(harness, s);
+  if (s.phase !== 'session' || !s.session?.patternQuestCard) return { state: s, events: [] };
+  const wobbledCard = s.session.patternQuestCard;
+  const wobbledSlug = wobbledCard.slug;
+  // Deliberately wrong for spell / detect-error cards — this wobbles the slug.
+  const wrongOptionChoice = Array.isArray(wobbledCard?.choices)
+    ? wobbledCard.choices.find((choice) => choice && choice.correct !== true)?.id || 'option-1'
+    : 'option-1';
+  const wrongAnswer = (wobbledCard.type === 'classify' || wobbledCard.type === 'explain')
+    ? wrongOptionChoice
+    : 'zzz-wrong-pattern';
+  const submitted = harness.service.submitAnswer(harness.learnerId, s, wrongAnswer);
+  s = submitted.state;
+
+  // Now simulate the summary drill-single dispatch: start a new session
+  // with `mode: 'single', words: [wobbledSlug], practiceOnly: true`
+  // (Fix 1 behaviour for a pattern-quest summary — the dispatcher now
+  // routes through isMegaSafeMode). If practiceOnly were dropped or set
+  // to false, wrong-then-correct would demote stage via
+  // applyLearningOutcome. The invariant assertion after this action
+  // catches that regression.
+  const drill = harness.service.startSession(harness.learnerId, {
+    mode: 'single',
+    words: [wobbledSlug],
+    yearFilter: 'all',
+    length: 1,
+    practiceOnly: true,
+  });
+  if (!drill.ok) return { state: s, events: submitted.events || [] };
+  s = drill.state;
+  s = completeAwaitingAdvance(harness, s);
+  // Submit wrong first, then correct — the classic "retry + correction"
+  // flow that applyLearningOutcome demotes on.
+  if (s?.phase === 'session' && s.session?.currentCard) {
+    const wrongSubmit = harness.service.submitAnswer(harness.learnerId, s, 'zzz-wrong-drill');
+    s = wrongSubmit.state;
+    s = completeAwaitingAdvance(harness, s);
+    if (s?.phase === 'session' && s.session?.currentCard) {
+      const correctSubmit = harness.service.submitAnswer(
+        harness.learnerId,
+        s,
+        s.session.currentCard.word.word,
+      );
+      s = correctSubmit.state;
+      s = completeAwaitingAdvance(harness, s);
+    }
+  }
+  return { state: s, events: submitted.events || [] };
+}
+
 function applyContentHotswap(harness, state) {
   // Simulate a content hot-swap by injecting an orphan progress record for
   // a slug NOT present in WORD_BY_SLUG, plus an orphan guardianMap entry.
@@ -459,6 +595,10 @@ function applyAction(harness, state, action) {
     case 'boss-wrong':           return applyBossAnswer(harness, state, { correct: false });
     case 'content-hotswap':      return applyContentHotswap(harness, state);
     case 'storage-quota-failure': return applyStorageQuotaFailure(harness, state);
+    case 'patternquest-correct': return applyPatternQuestAnswer(harness, state, { correct: true });
+    case 'patternquest-wrong':   return applyPatternQuestAnswer(harness, state, { correct: false });
+    case 'summary-drill-single-pattern-quest':
+      return applySummaryDrillSinglePatternQuest(harness, state);
     default: throw new Error(`Unknown action: ${action}`);
   }
 }
@@ -815,6 +955,67 @@ test('U8b shape: "I don\'t know" double-press emits exactly one wobble per disti
 // storage-quota-failure (refresh-mid-finalise).
 // Regression class: catches F9 double-emit regressions and catches U8's
 // warning surface accidentally clearing awaitingAdvance.
+
+// ----- Shape 7: Pattern Quest all-wrong never demotes Mega --------------------
+//
+// Length 12, alternating patternquest-wrong with other surfaces. The
+// composite invariant's per-action assert already proves the Pattern Quest
+// submit path cannot demote progress.stage — this shape pins the assertion
+// at the shape level so a regression that cut Pattern Quest out of the
+// dispatcher (e.g. pattern-quest falling through to engine.submitLearning)
+// trips here within the first few actions.
+
+// ----- Shape 7.5 (U11 Fix 1): Pattern Quest summary drill path --------------
+//
+// Length 6, interleaving patternquest-wrong with summary-drill-single-
+// pattern-quest so the summary drill path fires multiple times on a
+// wobbled slug. The reviewer finding: before Fix 1, drill-single from a
+// pattern-quest summary dispatched `practiceOnly: originMode === 'guardian'`
+// (strict string match) which was `false` for pattern-quest, and the
+// resulting `mode: 'single'` session demoted Mega on wrong-then-correct
+// via applyLearningOutcome. This shape pins the Fix 1 dispatcher-level
+// contract at the shape level so a future regression (e.g. someone
+// reverts isMegaSafeMode back to the strict string match) trips here in
+// the first few actions rather than hiding in the 200-seeded-random
+// sweep.
+
+test('U8b shape (U11 Fix 1): Pattern Quest summary drill-single never demotes Mega on wrong-then-correct', () => {
+  const harness = makeHarness({ seed: 42, learnerId: 'learner-pq-summary-drill' });
+  const actions = [
+    'patternquest-wrong',
+    'summary-drill-single-pattern-quest',
+    'summary-drill-single-pattern-quest',
+    'patternquest-wrong',
+    'summary-drill-single-pattern-quest',
+    'patternquest-correct',
+  ];
+  runSequence(harness, actions, { label: 'patternquest-summary-drill' });
+  const progress = readProgressMap(harness);
+  for (const slug of CORE_SLUGS) {
+    if (progress[slug]) {
+      assert.equal(progress[slug].stage, 4, `${slug} stays Mega after Pattern Quest summary drill`);
+    }
+  }
+});
+
+test('U8b shape: Pattern Quest wrong-burst interleaved with Guardian + Boss never demotes Mega', () => {
+  const harness = makeHarness({ seed: 42, learnerId: 'learner-patternquest-burst' });
+  const actions = [
+    'patternquest-wrong', 'guardian-correct',
+    'patternquest-wrong', 'boss-correct',
+    'patternquest-wrong', 'guardian-wrong',
+    'patternquest-wrong', 'boss-wrong',
+    'patternquest-wrong', 'guardian-dontknow',
+    'patternquest-wrong', 'patternquest-correct',
+  ];
+  runSequence(harness, actions, { label: 'patternquest-burst' });
+  const progress = readProgressMap(harness);
+  for (const slug of CORE_SLUGS) {
+    if (progress[slug]) {
+      assert.equal(progress[slug].stage, 4, `${slug} stays Mega after Pattern Quest wrong-burst`);
+    }
+  }
+});
 
 test('U8b shape: Mission-completed idempotency — Guardian finalise followed by storage failure emits mission exactly once', () => {
   const harness = makeHarness({ seed: 42, learnerId: 'learner-mission-idempotent' });

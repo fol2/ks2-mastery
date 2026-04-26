@@ -791,7 +791,8 @@ test('U6 parity sweep: module.js shortcut-start gates every isPostMasteryMode() 
   // post-Mega modes we expect. This guards the sweep from silently passing
   // if `SPELLING_MODES` were trimmed.
   const postMasteryModes = SPELLING_MODES.filter(isPostMasteryMode);
-  assert.deepEqual([...postMasteryModes].sort(), ['boss', 'guardian']);
+  // P2 U11: three post-Mega modes now — Guardian, Boss, Pattern Quest.
+  assert.deepEqual([...postMasteryModes].sort(), ['boss', 'guardian', 'pattern-quest']);
 
   for (const mode of SPELLING_MODES) {
     const storage = installMemoryStorage();

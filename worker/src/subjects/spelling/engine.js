@@ -6,6 +6,7 @@ import {
   createInitialSpellingState,
   normaliseDurablePersistenceWarning,
   normaliseGuardianMap,
+  normalisePatternMap,
   normalisePostMegaRecord,
 } from '../../../../src/subjects/spelling/service-contract.js';
 import { getSpellingPostMasteryState } from '../../../../src/subjects/spelling/read-model.js';
@@ -21,6 +22,9 @@ const PROGRESS_STORAGE_PREFIX = 'ks2-spell-progress-';
 const GUARDIAN_STORAGE_PREFIX = 'ks2-spell-guardian-';
 // P2 U2: mirror client POST_MEGA_STORAGE_PREFIX in src/subjects/spelling/repository.js.
 const POST_MEGA_STORAGE_PREFIX = 'ks2-spell-post-mega-';
+// P2 U11: mirror client PATTERN_STORAGE_PREFIX so the Worker twin routes
+// `data.pattern` reads/writes through the same byte-identical key space.
+const PATTERN_STORAGE_PREFIX = 'ks2-spell-pattern-';
 // P2 U9: mirror client PERSISTENCE_WARNING_STORAGE_PREFIX in src/subjects/spelling/repository.js.
 const PERSISTENCE_WARNING_STORAGE_PREFIX = 'ks2-spell-persistence-warning-';
 
@@ -56,6 +60,12 @@ export function normaliseServerSpellingData(rawValue, nowTs = Date.now()) {
   // through Worker commands without loss.
   const postMega = normalisePostMegaRecord(raw.postMega);
   if (postMega) output.postMega = postMega;
+  // P2 U11: mirror Pattern Quest wobble sibling on the Worker twin so the
+  // subject-state bundle survives a command round-trip with byte-identical
+  // shape. Only attached when at least one wobble record survives so
+  // pre-U11 learners keep a null/undefined `pattern` field.
+  const pattern = normalisePatternMap(raw.pattern);
+  if (pattern && Object.keys(pattern.wobbling).length > 0) output.pattern = pattern;
   // P2 U9: persistenceWarning sibling survives through the Worker twin so
   // a learner who saw a local storage failure and switched tabs to a
   // remote-sync session does not lose their banner.
@@ -82,6 +92,10 @@ function parseStorageKey(key) {
   if (key.startsWith(POST_MEGA_STORAGE_PREFIX)) {
     return { type: 'postMega', learnerId: key.slice(POST_MEGA_STORAGE_PREFIX.length) || 'default' };
   }
+  // P2 U11: pattern prefix likewise must be checked before progress.
+  if (key.startsWith(PATTERN_STORAGE_PREFIX)) {
+    return { type: 'pattern', learnerId: key.slice(PATTERN_STORAGE_PREFIX.length) || 'default' };
+  }
   if (key.startsWith(PROGRESS_STORAGE_PREFIX)) {
     return { type: 'progress', learnerId: key.slice(PROGRESS_STORAGE_PREFIX.length) || 'default' };
   }
@@ -105,7 +119,7 @@ function buildActiveRecord(learnerId, state, now) {
   // would lose that identity so Resume routes back to SATs Test / Smart
   // Review after a refresh. Both runtimes MUST branch identically or server
   // and client will disagree on which scene to open on Resume.
-  const sessionKind = session.mode === 'boss' || session.mode === 'guardian'
+  const sessionKind = session.mode === 'boss' || session.mode === 'guardian' || session.mode === 'pattern-quest'
     ? session.mode
     : session.type;
   return normalisePracticeSessionRecord({
@@ -186,6 +200,10 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
         // null vs object distinction so the service-layer reader can gate
         // on it without special-casing the string literal.
         if (parsed.type === 'postMega') return current.postMega ? JSON.stringify(current.postMega) : 'null';
+        // P2 U11: return empty `{ wobbling: {} }` for pre-U11 learners so
+        // the service reader treats an absent sibling identically to an
+        // empty one (no branching on undefined inside the hot path).
+        if (parsed.type === 'pattern') return JSON.stringify(current.pattern || { wobbling: {} });
         // P2 U9: persistenceWarning is null for learners who have never
         // encountered a local-storage failure; null vs object distinction
         // lets the service-layer reader skip the banner cleanly.
@@ -227,6 +245,13 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
             }, resolveNow());
           }
         }
+        if (parsed.type === 'pattern') {
+          // P2 U11: last-writer-wins for the Pattern Quest wobble map.
+          nextData = normaliseServerSpellingData({
+            ...nextData,
+            pattern: parseStoredJson(value, { wobbling: {} }),
+          }, resolveNow());
+        }
         if (parsed.type === 'persistenceWarning') {
           // P2 U9: persistence-warning is overwrite-ful. A new failure
           // overwrites `reason` + `occurredAt` and resets acknowledged; an
@@ -243,6 +268,8 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
         if (parsed.type === 'prefs') nextData = normaliseServerSpellingData({ ...nextData, prefs: {} }, resolveNow());
         if (parsed.type === 'progress') nextData = normaliseServerSpellingData({ ...nextData, progress: {} }, resolveNow());
         if (parsed.type === 'guardian') nextData = normaliseServerSpellingData({ ...nextData, guardian: {} }, resolveNow());
+        // P2 U11: pattern sibling clears symmetrically with guardian.
+        if (parsed.type === 'pattern') nextData = normaliseServerSpellingData({ ...nextData, pattern: { wobbling: {} } }, resolveNow());
         if (parsed.type === 'persistenceWarning') {
           // P2 U9: removable — e.g. a future admin-ops tool may want to
           // clear a resolved warning. Strip the sibling from the bundle.
@@ -296,6 +323,10 @@ function startOptionsFromPayload(payload = {}) {
     words,
     practiceOnly: payload.practiceOnly,
     extraWordFamilies: payload.extraWordFamilies,
+    // P2 U11: Pattern Quest carries `patternId` through the server command
+    // boundary so the service's `startPatternQuestSession` knows which
+    // 5-card quest to build.
+    patternId: typeof payload.patternId === 'string' ? payload.patternId : undefined,
   };
 }
 
