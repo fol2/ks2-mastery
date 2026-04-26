@@ -296,6 +296,80 @@ test('shortcut resolver matches preserved spelling shortcuts and ignores unrelat
   });
 });
 
+// U10: Alt+1/2/3/4 behaviour unchanged; Alt+5 is additive and routes to Boss.
+// The resolver stays dumb (no allWordsMega inspection); the gate lives inside
+// module.js::spelling-shortcut-start so non-graduated learners get a no-op
+// rather than a stale fallback session.
+test('U10 resolver: Alt+2/3/4 preserved + Alt+5 resolves to boss without breaking Alt+1-4', () => {
+  const appState = {
+    route: { subjectId: 'spelling', tab: 'practice' },
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        awaitingAdvance: false,
+        session: null,
+      },
+    },
+  };
+
+  // Alt+1 → smart (regression spot check — already covered elsewhere)
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '1', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'smart' },
+    preventDefault: true,
+  });
+
+  // Alt+2 → trouble
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '2', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'trouble' },
+    preventDefault: true,
+  });
+
+  // Alt+3 → test
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '3', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'test' },
+    preventDefault: true,
+  });
+
+  // Alt+4 → guardian (preserved from U1)
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '4', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'guardian' },
+    preventDefault: true,
+  });
+
+  // Alt+5 → boss (new in U10)
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '5', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'boss' },
+    preventDefault: true,
+  });
+
+  // Alt+5 inside an unrelated typing field (search, not 'typed') still
+  // resolves to null — matches the Alt+1 typing-guard established upstream.
+  assert.equal(resolveSpellingShortcut({
+    key: '5', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'INPUT', name: 'search' },
+  }, appState), null);
+});
+
 test('legacy auto-advance delay is preserved for learning and SATs saves', () => {
   assert.equal(spellingAutoAdvanceDelay({
     phase: 'session',

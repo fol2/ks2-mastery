@@ -307,7 +307,14 @@ function deriveSummaryTotals(mode, cards, mistakes) {
   let totalWords = 0;
   let correct = 0;
 
-  if (mode === 'test') {
+  // Boss (U10) and SATs Test share the same testSummary card shape
+  // (`Score: 7/10`, `Accuracy: 70%`, `Correct: 7`, `Needs more work: 3`). The
+  // score-card "N/M" parse therefore applies to both; without adding 'boss'
+  // here the else-branch would fall back to `firstValue = '7/10'` →
+  // Number.parseInt → 7, which would lead to `totalWords = 7` and
+  // `correct = 7 - mistakes.length = 4`. That would surface as a Boss summary
+  // claiming only 7 words landed when 10 were played.
+  if (mode === 'test' || mode === 'boss') {
     const scoreCard = cards.find((card) => card.label === 'Score');
     if (scoreCard && typeof scoreCard.value === 'string') {
       const match = /^(\d+)\s*\/\s*(\d+)$/.exec(scoreCard.value);

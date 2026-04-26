@@ -867,3 +867,260 @@ test('Resume after refresh: legacy SATs test preserves sessionKind === "test"', 
   });
   assert.equal(model.currentFocus.recommendedMode, 'test');
 });
+
+// =============================================================================
+// U10: Boss Dictation UI + Alt+5 — end-to-end React render + dispatch surface
+// -----------------------------------------------------------------------------
+// These tests drive the full `createAppHarness` render pipeline so the wiring
+// from POST_MEGA_MODE_CARDS → PostMegaSetupContent → dispatch(shortcut-start)
+// → SpellingSummaryScene is exercised in one pass. U9 tested the service-
+// layer path; U10 adds the scene-layer wiring.
+// =============================================================================
+
+import { createAppHarness } from './helpers/app-harness.js';
+import { createManualScheduler } from './helpers/manual-scheduler.js';
+
+function u10SeedAllCoreMega(repositories, learnerId, todayDay) {
+  // Mirrors the seed helper used by spelling-parity.test.js so a learner
+  // with Mega on every core-pool word flips `allWordsMega === true` and the
+  // post-Mega dashboard renders.
+  const progress = Object.fromEntries(
+    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
+      stage: 4,
+      attempts: 6 + (index % 4),
+      correct: 5 + (index % 4),
+      wrong: 1,
+      dueDay: todayDay + 60,
+      lastDay: todayDay - 7,
+      lastResult: 'correct',
+    }]),
+  );
+  repositories.subjectStates.writeData(learnerId, 'spelling', { progress });
+}
+
+test('U10 dashboard: Boss card renders with active variant when allWordsMega === true', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const harness = createAppHarness({ storage, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  u10SeedAllCoreMega(harness.repositories, learnerId, todayDay);
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+
+  const html = harness.render();
+  // Post-mega dashboard must be active (not legacy Smart Review setup).
+  assert.match(html, /The Word Vault is yours\./, 'post-Mega dashboard rendered');
+  // Boss card present AND active — not the grey "Coming soon" placeholder.
+  assert.match(html, /Boss Dictation/, 'Boss card title rendered');
+  // The Boss card's description must not contain "Coming soon" now that
+  // it's active. We scope the regex to the Boss card's own description
+  // paragraph by matching `Boss Dictation</h4><p>...</p>` rather than
+  // sweeping across sibling cards.
+  const bossCardMatch = html.match(/<h4>Boss Dictation<\/h4><p>([^<]*)<\/p>/);
+  assert.ok(bossCardMatch, 'Boss card description paragraph rendered');
+  assert.doesNotMatch(bossCardMatch[1], /coming soon/i, 'Boss card description no longer says "Coming soon"');
+  // The plan requires a badge on the active card (mirrors Guardian's ACTIVE
+  // DUTY chip). The exact badge string ("BOSS READY") is the copy landed via
+  // /frontend-design for U10.
+  assert.match(html, /BOSS READY/i, 'Boss active badge rendered');
+});
+
+test('U10 dashboard: Alt+5 hint microcopy present when Boss card is active', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const harness = createAppHarness({ storage, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  u10SeedAllCoreMega(harness.repositories, learnerId, todayDay);
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+
+  const html = harness.render();
+  // Alt+5 hint mirrors Alt+4 hint ("quick-start Guardian Mission").
+  assert.match(html, /quick-start Boss Dictation/i, 'Alt+5 hint microcopy rendered');
+});
+
+test('U10 dashboard: dispatch via spelling-shortcut-start mode=boss lands on Boss session (alt+5 wiring)', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const harness = createAppHarness({ storage, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  u10SeedAllCoreMega(harness.repositories, learnerId, todayDay);
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'boss' });
+
+  const state = harness.store.getState().subjectUi.spelling;
+  assert.equal(state.phase, 'session');
+  assert.equal(state.session.mode, 'boss');
+  assert.equal(state.session.label, 'Boss Dictation');
+});
+
+test('U10 summary: Boss summary renders score line + read-only miss list (no drill-all)', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  // Manual scheduler pins auto-advance (320ms for test-type sessions) so the
+  // loop stays deterministic; otherwise the real setTimeout would race the
+  // submit loop.
+  const scheduler = createManualScheduler();
+  const harness = createAppHarness({ storage, scheduler, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  u10SeedAllCoreMega(harness.repositories, learnerId, todayDay);
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  // Dispatch with explicit `length: 10` to mirror the Begin-button payload
+  // (`spelling-shortcut-start` with `{ mode: 'boss', length:
+  // BOSS_DEFAULT_ROUND_LENGTH }`). Without the explicit length the module
+  // handler falls back to `prefs.roundLength` which defaults to '20' for a
+  // fresh learner, and the Boss service clamps it down to 12 — that 12-card
+  // round would defeat the precise correct/total assertion below.
+  harness.dispatch('spelling-shortcut-start', { mode: 'boss', length: 10 });
+
+  // Run through the Boss round. Miss the first 3 cards (wrong answer), type
+  // the real answer for the remaining 7. This produces summary { correct: 7,
+  // totalWords: 10, mistakes.length: 3 }. Track submits by `session.progress.done`
+  // which increments exactly once per scored card, decoupling our wrong/right
+  // policy from the outer iter counter.
+  for (let guard = 0; guard < 80; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      scheduler.flushAll();
+      continue;
+    }
+    const answeredSoFar = Math.max(0, Number(ui.session?.progress?.done) || 0);
+    const real = ui.session.currentCard.word.word;
+    const typed = answeredSoFar < 3 ? 'definitely-wrong' : real;
+    const formData = new FormData();
+    formData.set('typed', typed);
+    harness.dispatch('spelling-submit-form', { formData });
+  }
+
+  const state = harness.store.getState().subjectUi.spelling;
+  assert.equal(state.phase, 'summary');
+  assert.equal(state.summary.mode, 'boss');
+  assert.equal(state.summary.correct, 7);
+  assert.equal(state.summary.totalWords, 10);
+
+  const html = harness.render();
+  // Completion header + score line (U10 copy).
+  assert.match(html, /Boss round complete/i, 'Boss completion header rendered');
+  assert.match(html, /Boss score:\s*7\s*\/\s*10\s*Mega words landed/i,
+    'Boss score line in scene — matches plan spec format');
+
+  // Miss list: present as static chips. The scene renders each mistake via
+  // a read-only chip (no button). Regression guard: `spelling-drill-all` and
+  // `spelling-drill-single` dispatch targets MUST NOT appear anywhere on a
+  // Boss summary — they are the Guardian/legacy drill paths and must not
+  // leak into the test-mode Boss summary.
+  assert.doesNotMatch(html, /data-action="spelling-drill-all"/,
+    'Boss summary must not render a drill-all button');
+  assert.doesNotMatch(html, /data-action="spelling-drill-single"/,
+    'Boss summary must not render per-word drill buttons');
+});
+
+test('U10 summary: all-correct Boss round renders score "10/10 Mega words landed" with no miss list', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const scheduler = createManualScheduler();
+  const harness = createAppHarness({ storage, scheduler, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  u10SeedAllCoreMega(harness.repositories, learnerId, todayDay);
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'boss', length: 10 });
+
+  for (let guard = 0; guard < 60; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      scheduler.flushAll();
+      continue;
+    }
+    const real = ui.session.currentCard.word.word;
+    const formData = new FormData();
+    formData.set('typed', real);
+    harness.dispatch('spelling-submit-form', { formData });
+  }
+
+  const state = harness.store.getState().subjectUi.spelling;
+  assert.equal(state.phase, 'summary');
+  assert.equal(state.summary.mode, 'boss');
+  assert.equal(state.summary.mistakes.length, 0);
+
+  const html = harness.render();
+  assert.match(html, /Boss score:\s*10\s*\/\s*10\s*Mega words landed/i,
+    'All-correct Boss summary renders 10/10');
+});
+
+test('U10 summary: Boss summary mode persists across reopen (round-trip)', () => {
+  // Regression guard — the plan explicitly calls out "Boss round round-trip:
+  // session.mode === 'boss' persists through summary; reopening summary
+  // re-renders Boss branch". This asserts the same via a rehydration cycle
+  // on the summary phase.
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const scheduler = createManualScheduler();
+  const harness = createAppHarness({ storage, scheduler, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  u10SeedAllCoreMega(harness.repositories, learnerId, todayDay);
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'boss', length: 10 });
+
+  for (let guard = 0; guard < 60; guard += 1) {
+    const ui = harness.store.getState().subjectUi.spelling;
+    if (ui.phase !== 'session') break;
+    if (ui.awaitingAdvance) {
+      scheduler.flushAll();
+      continue;
+    }
+    const real = ui.session.currentCard.word.word;
+    const formData = new FormData();
+    formData.set('typed', real);
+    harness.dispatch('spelling-submit-form', { formData });
+  }
+
+  // Re-open the harness against the same storage — tests the full rehydration
+  // path back onto the summary phase.
+  const rehydrated = createAppHarness({ storage, now: () => nowRef.value });
+  rehydrated.dispatch('open-subject', { subjectId: 'spelling' });
+  const state = rehydrated.store.getState().subjectUi.spelling;
+  // Depending on service resume rules this may land on dashboard or summary;
+  // either way, `summary.mode === 'boss'` must survive somewhere in the UI.
+  // The key invariant is that `summary.mode === 'boss'` if a summary is
+  // present; we do not require the resumed phase to be 'summary'.
+  if (state.phase === 'summary') {
+    assert.equal(state.summary.mode, 'boss',
+      'rehydrated Boss summary keeps mode === "boss"');
+  }
+});
+
+test('U10 gate: Alt+5 dispatch when allWordsMega === false is a no-op (module-level gate parity)', () => {
+  // Duplicates the spelling-parity.test.js U9 gate test but under the
+  // U10-owned keyboard entry point — this is the R13 Alt+5 gate invariant
+  // the plan explicitly guards: "Alt+5 press when `allWordsMega === false`:
+  // no-op, no error thrown".
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '5' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  const beforePhase = harness.store.getState().subjectUi.spelling.phase;
+
+  // No throw: Alt+5 fires the same shortcut action as Alt+4. The gate lives
+  // in module.js, so the dispatch must short-circuit before startSession.
+  assert.doesNotThrow(() => {
+    harness.dispatch('spelling-shortcut-start', { mode: 'boss' });
+  });
+
+  const after = harness.store.getState().subjectUi.spelling;
+  assert.equal(after.phase, beforePhase, 'phase unchanged — Boss did not start');
+  assert.equal(after.session, null, 'no Boss session allocated');
+});

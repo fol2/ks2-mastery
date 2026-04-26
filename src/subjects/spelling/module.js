@@ -241,11 +241,24 @@ export const spellingModule = {
       // the session the learner actually landed in. Same pattern must live
       // in remote-actions.js (optimistic-prefs branch).
       const currentPrefs = service.getPrefs(learnerId);
+      // U10: Boss Dictation ships with a fixed default round length
+      // (BOSS_DEFAULT_ROUND_LENGTH = 10). The Boss begin-button dispatches
+      // `{ mode: 'boss', length: 10 }` so the Boss round is always 10 cards
+      // regardless of the learner's persisted `roundLength` preference (which
+      // could be 20 or 40 from a SATs Test session). When the caller supplies
+      // `data.length` we honour it; otherwise we fall back to the persisted
+      // pref. The service clamps Boss length into [8, 12] so a stray 20 is
+      // rounded down to 12 rather than failing, but the Boss card on the
+      // dashboard should not rely on that clamp to land on the spec-mandated
+      // 10 — the dispatch carries the intent explicitly. Guardian's Alt+4
+      // path does not supply a `length` so it continues to use
+      // `currentPrefs.roundLength`, preserving legacy behaviour there.
+      const shortcutLength = data.length != null ? data.length : currentPrefs.roundLength;
       tts.stop();
       const transition = service.startSession(learnerId, {
         mode,
         yearFilter: currentPrefs.yearFilter,
-        length: currentPrefs.roundLength,
+        length: shortcutLength,
         extraWordFamilies: currentPrefs.extraWordFamilies,
       });
       if (transition?.ok !== false) {

@@ -57,6 +57,16 @@ export function resolveSpellingShortcut(event, appState) {
   if (key === '4') {
     return { action: 'spelling-shortcut-start', data: { mode: 'guardian' }, preventDefault: true };
   }
+  // Alt+5 — Boss Dictation quick-start (U10). Symmetric with Alt+4: the
+  // resolver stays dumb (no runtime inspection of `postMastery.allWordsMega`)
+  // and the gate lives downstream in `module.js::spelling-shortcut-start` /
+  // `remote-actions.js::spelling-shortcut-start`. A non-graduated learner
+  // therefore sees the same silent no-op as Alt+4 rather than a stale Smart
+  // Review fallback. Plan reference:
+  // docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md (U10).
+  if (key === '5') {
+    return { action: 'spelling-shortcut-start', data: { mode: 'boss' }, preventDefault: true };
+  }
   if (key === 's') {
     if (spellingUi?.phase === 'session' && spellingUi.session?.type !== 'test' && spellingUi.session?.phase === 'question' && !spellingUi.awaitingAdvance) {
       return { action: 'spelling-skip', preventDefault: true };

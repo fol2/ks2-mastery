@@ -167,13 +167,32 @@ test('POST_MEGA_MODE_CARDS is a frozen array of four cards in Guardian-first ord
   assert.deepEqual(ids, ['guardian', 'boss-dictation', 'word-detective', 'story-challenge']);
 });
 
-test('POST_MEGA_MODE_CARDS: Guardian is active, remaining three are disabled placeholders', () => {
-  const [guardian, ...rest] = POST_MEGA_MODE_CARDS;
+// U10: Boss Dictation card flips from placeholder to active alongside Guardian.
+// Guardian was active from the start of Phase P1; Boss joins in U10 so the
+// dashboard shows TWO active duties rather than one. Word Detective and Story
+// Challenge stay as placeholders — the P2 roadmap does not ship yet.
+test('POST_MEGA_MODE_CARDS: Guardian + Boss are active, remaining two are disabled placeholders (U10)', () => {
+  const guardian = POST_MEGA_MODE_CARDS.find((card) => card.id === 'guardian');
+  const boss = POST_MEGA_MODE_CARDS.find((card) => card.id === 'boss-dictation');
+  const placeholders = POST_MEGA_MODE_CARDS.filter((card) => card.id !== 'guardian' && card.id !== 'boss-dictation');
+
   assert.equal(guardian.id, 'guardian');
   assert.notEqual(guardian.disabled, true);
   assert.equal(typeof guardian.title, 'string');
   assert.equal(typeof guardian.desc, 'string');
-  for (const card of rest) {
+
+  // Boss is the new U10 active card.
+  assert.equal(boss.id, 'boss-dictation');
+  assert.notEqual(boss.disabled, true, 'Boss card must be active post-U10');
+  assert.equal(typeof boss.title, 'string');
+  assert.equal(typeof boss.desc, 'string');
+  assert.doesNotMatch(boss.desc, /coming soon/i, 'Boss description must not say "coming soon" now that it is active');
+  assert.equal(typeof boss.glyph, 'string');
+  assert.equal(boss.glyph.length, 1, 'Boss glyph is a single character');
+  assert.equal(typeof boss.ariaLabel, 'string', 'Boss card carries an ariaLabel for screen readers');
+  assert.ok(boss.ariaLabel.length > 0, 'Boss ariaLabel is non-empty');
+
+  for (const card of placeholders) {
     assert.equal(card.disabled, true, `${card.id} must be disabled`);
     assert.match(card.desc, /coming soon/i, `${card.id} copy should signal a future card, not a grey empty state`);
   }
@@ -198,6 +217,14 @@ test('summaryModeLabel handles the new guardian mode', () => {
   assert.equal(summaryModeLabel('test'), 'SATs Test');
   assert.equal(summaryModeLabel('single'), 'Single-word Drill');
   assert.equal(summaryModeLabel('unknown'), 'Smart Review');
+});
+
+// U10: summaryModeLabel must resolve 'boss' to a distinct, human-readable
+// string. Without this branch `summaryRibbonSub` would display "Smart Review"
+// for the mode chip on the Boss round summary, which leaks legacy copy into
+// the graduated surface.
+test('U10: summaryModeLabel resolves "boss" to "Boss Dictation"', () => {
+  assert.equal(summaryModeLabel('boss'), 'Boss Dictation');
 });
 
 test('guardianLabel: reports "Due today" when nextDueDay <= todayDay and not wobbling', () => {

@@ -3,6 +3,7 @@ import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConf
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
+import { BOSS_DEFAULT_ROUND_LENGTH } from '../service-contract.js';
 import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
@@ -502,7 +503,19 @@ function PostMegaSetupContent({
   runtimeReadOnly,
 }) {
   const guardianCard = POST_MEGA_MODE_CARDS.find((mode) => mode.id === 'guardian') || POST_MEGA_MODE_CARDS[0];
-  const otherCards = POST_MEGA_MODE_CARDS.filter((mode) => mode.id !== 'guardian');
+  // U10: Boss Dictation is the second active post-Mega surface. Pull it out
+  // of POST_MEGA_MODE_CARDS by id rather than by index so future reorderings
+  // don't silently pick up the wrong card.
+  const bossCard = POST_MEGA_MODE_CARDS.find((mode) => mode.id === 'boss-dictation');
+  const placeholderCards = POST_MEGA_MODE_CARDS.filter((mode) => mode.id !== 'guardian' && mode.id !== 'boss-dictation');
+  // Boss active-state gate: the same `postMastery.allWordsMega` that already
+  // gates Guardian's Alt+4 shortcut. We land on PostMegaSetupContent only when
+  // the caller has already decided `isPostMega === true`, so allWordsMega is
+  // true by construction — but we branch defensively so a future caller who
+  // passes a stale postMastery shape doesn't render a dead active card.
+  const bossActive = Boolean(postMastery?.allWordsMega);
+  const bossDescription = bossCard?.desc || '';
+  const bossBadge = 'BOSS READY';
   // U1: branch copy + gating on `guardianMissionState`. Fall back to the
   // legacy `guardianDueCount > 0` signal when the read-model has not yet
   // populated the new scalars so remote-sync and any pre-U1 caller remain
@@ -580,6 +593,17 @@ function PostMegaSetupContent({
     : pendingCommand === 'save-prefs'
       ? 'Saving...'
       : 'Begin Guardian Mission';
+  // U10: Boss Begin button shares the same pending-command gating as the
+  // Guardian Begin — both go through `spelling-shortcut-start` and both
+  // collide on the same `start-session` pending slot. Sharing `beginText`'s
+  // "Starting..." branch would conflate which button is spinning, so Boss
+  // owns its own label but reuses the same disable predicate.
+  const bossBeginDisabled = startDisabled || runtimeReadOnly || !bossActive;
+  const bossBeginText = pendingCommand === 'start-session'
+    ? 'Starting...'
+    : pendingCommand === 'save-prefs'
+      ? 'Saving...'
+      : 'Begin Boss Dictation';
 
   function handleBegin(event) {
     if (beginDisabled) {
@@ -588,6 +612,20 @@ function PostMegaSetupContent({
       return;
     }
     renderAction(actions, event, 'spelling-shortcut-start', { mode: 'guardian' });
+  }
+
+  function handleBossBegin(event) {
+    if (bossBeginDisabled) {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      return;
+    }
+    // The service normalises `length` against BOSS_MIN/MAX; the explicit
+    // payload here matches the plan's Alt+5 spec (`length: BOSS_DEFAULT_ROUND_LENGTH`)
+    // without reaching back into the view-model for the constant. Keeping
+    // the length explicit at the dispatch site makes the begin-button
+    // contract self-documenting for a future reader.
+    renderAction(actions, event, 'spelling-shortcut-start', { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH });
   }
 
   return (
@@ -613,12 +651,34 @@ function PostMegaSetupContent({
           active={guardianActive}
           disabled={!guardianActive}
         />
-        {otherCards.map((mode, index) => (
+        {/* U10: Boss Dictation active card. The variant matches Guardian's
+            active/rested split — `active` when `allWordsMega === true`
+            (always true inside PostMegaSetupContent), `rested` otherwise. We
+            pass the Boss description straight from POST_MEGA_MODE_CARDS so a
+            future copy tweak is a one-line change in the view-model, and keep
+            the badge in this file so a future variant (e.g. "RECENT SCORE
+            9/10") can render conditionally without touching the view-model
+            frozen array. */}
+        {bossCard ? (
+          <PostMegaModeCard
+            mode={bossCard}
+            variant={bossActive ? 'active' : 'rested'}
+            description={bossDescription}
+            badge={bossActive ? bossBadge : null}
+            textTone={heroContrast.contrast.cards?.[1] || heroContrast.contrast.shell}
+            active={bossActive}
+            disabled={!bossActive}
+          />
+        ) : null}
+        {placeholderCards.map((mode, index) => (
           <PostMegaModeCard
             mode={mode}
             variant="placeholder"
-            index={index + 1}
-            textTone={heroContrast.contrast.cards?.[index + 1] || heroContrast.contrast.shell}
+            // Roadmap index bumps to 2 / 3 because Guardian (#0) and Boss
+            // (#1) occupy slots 0 and 1; the "Next 03" / "Next 04" chips on
+            // the placeholders communicate the P2 roadmap position.
+            index={index + 2}
+            textTone={heroContrast.contrast.cards?.[index + 2] || heroContrast.contrast.shell}
             disabled
             key={mode.id}
           />
@@ -642,6 +702,34 @@ function PostMegaSetupContent({
         >
           {beginText} <ArrowRightIcon />
         </button>
+        {/* U10: Boss Begin row. Mirrors the Guardian begin-row structure —
+            hint chip + primary CTA — but dispatches `spelling-shortcut-start`
+            with `{ mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH }`. The
+            Alt+5 hint is aria-hidden when Boss is inactive so screen readers
+            don't announce a shortcut that won't work; the begin button
+            itself stays disabled with a conservative CTA label. */}
+        {bossCard ? (
+          <>
+            <div className="post-mega-begin-hint" aria-hidden={bossActive ? undefined : 'true'}>
+              <kbd>Alt</kbd>
+              <span className="post-mega-begin-hint-join">+</span>
+              <kbd>5</kbd>
+              <span className="post-mega-begin-hint-label">quick-start Boss Dictation</span>
+            </div>
+            <button
+              type="button"
+              className="btn primary xl"
+              style={{ '--btn-accent': accent }}
+              data-action="spelling-shortcut-start"
+              data-mode="boss"
+              disabled={bossBeginDisabled}
+              onClick={handleBossBegin}
+              aria-label={bossCard.ariaLabel || 'Begin Boss Dictation'}
+            >
+              {bossBeginText} <ArrowRightIcon />
+            </button>
+          </>
+        ) : null}
       </div>
     </>
   );
