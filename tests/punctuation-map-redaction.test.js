@@ -27,19 +27,30 @@
 // `scripts/punctuation-production-smoke.mjs`).
 //
 // Scan strategy:
-// - Case-sensitive substring match per forbidden key. Mirrors the
-//   `doesNotMatch(/accepted|correctIndex|rubric|validator|generator|hiddenQueue/)`
-//   pattern already used by `tests/react-punctuation-scene.test.js` lines
-//   61-62, 231, 321, 352.
-// - We deliberately do not mask HTML attributes because the forbidden list
-//   is camel-case / internal-identifier-shaped (`correctIndex`, `hiddenQueue`,
-//   `rawGenerator`, `queueItemIds`, `unpublished`, `rubric`, `validator`)
-//   or low-frequency in child copy (`seed`, `generator`, `responses`) —
-//   any hit is a real leak.
+// - Split match discipline mirrors the sibling Modal test in
+//   `tests/react-punctuation-scene.test.js:1022` (word-boundary regex) but
+//   fanned out across both key families:
+//     * CAMELCASE_KEYS — `correctIndex` / `hiddenQueue` / `rawGenerator` /
+//       `queueItemIds` / `unpublished`. JS `\b` treats the internal
+//       case-boundary oddly, so substring match is the correct probe — a
+//       camelCase identifier has no legitimate child-copy analogue.
+//     * WORDBOUNDARY_KEYS — `accepted` / `answers` / `generator` / `responses`
+//       / `rubric` / `seed` / `validator`. These are English words that
+//       appear legitimately in unrelated copy (e.g. "seed" inside "seeded",
+//       "answers" as a child-facing label on the GPS chip row) so a naive
+//       substring probe false-positives. Word-boundary regex lets legitimate
+//       copy through while still catching a bare-identifier leak.
 // - Child-facing copy sanity: "accepted" / "answers" strings are Session-
 //   scene-only (GPS chip row) and never land on Map / Modal renders. The
 //   scan runs on Map + Modal HTML in isolation so a Session-scene copy
 //   string cannot taint the assertion.
+// - Map-sweep enrichment: the vanilla sweep seeds no analytics, which means
+//   `assembleSkillRows` tags every skill `status: 'new'`. The four non-'new'
+//   status filters (`learning` / `due` / `weak` / `secure`) then render an
+//   empty SkillCard grid — 20 of 30 combinations contribute zero SkillCard
+//   HTML to the redaction probe. We seed a synthetic `analytics.skillRows`
+//   payload so each non-'new' status gets at least one skill per monster,
+//   and the sweep exercises actual SkillCard rendering under every status.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -72,22 +83,90 @@ function openMapScene(harness) {
   harness.dispatch('punctuation-open-map');
 }
 
+// Synthetic analytics snapshot — one skill per non-'new' status, covering
+// the four monsters touched by the fixture clusters (`speech`,
+// `apostrophe`, `comma_flow`). `deriveStatusForSkill` in the view-model
+// collapses any row with `attempts === 0` to `'new'`, so every synthetic
+// row carries `attempts > 0` to let the status flow through.
+//
+// `assembleSkillRows` maps this against `PUNCTUATION_CLIENT_SKILLS` by
+// `skillId`, so the `clusterId` here is informational only (the scene's
+// canonical mapping wins). Kept consistent with `PUNCTUATION_CLIENT_SKILLS`
+// nonetheless so a future normaliser that surfaces mismatches catches drift.
+const SYNTHETIC_SKILL_ROWS = Object.freeze([
+  { skillId: 'speech', clusterId: 'speech', status: 'secure', attempts: 5, accuracy: 100, mastery: 3, dueAt: 0 },
+  { skillId: 'apostrophe_contractions', clusterId: 'apostrophe', status: 'weak', attempts: 3, accuracy: 40, mastery: 0, dueAt: 1 },
+  { skillId: 'comma_clarity', clusterId: 'comma_flow', status: 'due', attempts: 2, accuracy: 60, mastery: 1, dueAt: 1 },
+  { skillId: 'list_commas', clusterId: 'comma_flow', status: 'learning', attempts: 1, accuracy: 50, mastery: 0, dueAt: 0 },
+]);
+
+function seedSyntheticAnalytics(harness) {
+  harness.store.updateSubjectUi('punctuation', {
+    analytics: { skillRows: SYNTHETIC_SKILL_ROWS },
+  });
+}
+
 function applyMapFilters(harness, { statusFilter, monsterFilter }) {
   // `statusFilter: 'all'` / `monsterFilter: 'all'` are the default values
   // seeded by `punctuation-open-map`; dispatching the filter action is
   // still safe (it writes the default back) so the loop can stay
   // uniform. This mirrors production where a learner can click "All"
   // explicitly after narrowing.
+  //
+  // Paired state-level assertion (learning #7 — silent-no-op guard): we
+  // verify the dispatch actually landed in `mapUi` before handing HTML to
+  // the redaction probe. A regression that turns a filter handler into a
+  // no-op would otherwise pass the sweep silently (the empty-state HTML
+  // stays clean of forbidden keys regardless).
   harness.dispatch('punctuation-map-status-filter', { value: statusFilter });
   harness.dispatch('punctuation-map-monster-filter', { value: monsterFilter });
+  const mapUi = harness.store.getState().subjectUi.punctuation.mapUi;
+  assert.strictEqual(
+    mapUi.statusFilter,
+    statusFilter,
+    `status-filter dispatch must land statusFilter=${statusFilter} in mapUi`,
+  );
+  assert.strictEqual(
+    mapUi.monsterFilter,
+    monsterFilter,
+    `monster-filter dispatch must land monsterFilter=${monsterFilter} in mapUi`,
+  );
 }
+
+// Camel-case / internal-identifier keys: `\b` treats the internal
+// case-boundary oddly (e.g. `\bhiddenQueue\b` matches inside `hiddenQueueOn`
+// in ways that surprise). These identifiers have no legitimate child-copy
+// analogue, so a plain substring probe is both correct and strictest.
+const CAMELCASE_KEYS = Object.freeze([
+  'correctIndex',
+  'hiddenQueue',
+  'rawGenerator',
+  'queueItemIds',
+  'unpublished',
+]);
+
+// English-word keys: word-boundary regex so legitimate copy like "seeded"
+// or a child-facing "answers" chip label cannot false-positive. Mirrors
+// the pattern used by `tests/react-punctuation-scene.test.js:1022` on the
+// Modal scan.
+const WORDBOUNDARY_KEYS = Object.freeze([
+  'accepted',
+  'answers',
+  'generator',
+  'responses',
+  'rubric',
+  'seed',
+  'validator',
+]);
 
 function findForbiddenHits(html) {
   const hits = [];
-  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
-    if (html.includes(key)) {
-      hits.push(key);
-    }
+  for (const key of CAMELCASE_KEYS) {
+    if (html.includes(key)) hits.push(key);
+  }
+  for (const key of WORDBOUNDARY_KEYS) {
+    const pattern = new RegExp(`\\b${key}\\b`);
+    if (pattern.test(html)) hits.push(key);
   }
   return hits;
 }
@@ -114,6 +193,11 @@ test('U7: Map scene SSR is clean across 30 status × monster filter combinations
   for (const combo of combinations) {
     const harness = createPunctuationHarness();
     openMapScene(harness);
+    // Seed synthetic analytics so non-'new' status filters actually render
+    // SkillCard HTML (one synthetic row per non-'new' status). Without this
+    // seeding, 20 of 30 combinations render empty cards + empty-message only
+    // and contribute nothing to the redaction probe.
+    seedSyntheticAnalytics(harness);
     applyMapFilters(harness, combo);
     const html = harness.render();
 
@@ -122,6 +206,27 @@ test('U7: Map scene SSR is clean across 30 status × monster filter combinations
       hits,
       [],
       `Map scene leaked forbidden read-model keys at ${combo.statusFilter}/${combo.monsterFilter}: ${hits.join(', ')}`,
+    );
+  }
+});
+
+// Coverage-claim check — paired with the synthetic analytics seeding above.
+// At least one of the non-'new' status filters (`learning` / `due` / `weak`
+// / `secure`) must actually render a SkillCard once the synthetic rows are
+// in place. Without this guard, a future refactor that silently drops the
+// analytics path would return us to the original 20-of-30-empty shape
+// without the sweep failing.
+test('U7: Map sweep enrichment actually renders SkillCard HTML under non-\'new\' filters', () => {
+  const nonNewStatuses = ['learning', 'due', 'weak', 'secure'];
+  for (const statusFilter of nonNewStatuses) {
+    const harness = createPunctuationHarness();
+    openMapScene(harness);
+    seedSyntheticAnalytics(harness);
+    harness.dispatch('punctuation-map-status-filter', { value: statusFilter });
+    const html = harness.render();
+    assert.ok(
+      html.includes('punctuation-map-skill-card'),
+      `status='${statusFilter}' must render at least one SkillCard (synthetic analytics row)`,
     );
   }
 });
@@ -177,4 +282,38 @@ test('U7: FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS is unchanged at 12 entries (Phas
   // and this assertion forces that discipline.
   assert.equal(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.length, 12);
   assert.equal(Object.isFrozen(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS), true);
+
+  // Content-lock — a rename like `rubric` → `rubricSpec` keeps the length
+  // at 12 but silently narrows the sweep's coverage (the renamed key is no
+  // longer probed). Pinning the sorted contents forces any rename to land
+  // here as a paired update, keeping the oracle and the probe aligned.
+  assert.deepEqual(
+    [...FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS].sort(),
+    [
+      'accepted',
+      'answers',
+      'correctIndex',
+      'generator',
+      'hiddenQueue',
+      'queueItemIds',
+      'rawGenerator',
+      'responses',
+      'rubric',
+      'seed',
+      'unpublished',
+      'validator',
+    ],
+    'FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS sorted contents must not drift silently',
+  );
+
+  // Discipline check: the sum of `CAMELCASE_KEYS` + `WORDBOUNDARY_KEYS`
+  // must equal the full forbidden set. A new key landing in the oracle
+  // without a matching entry in one of the two probe lists would otherwise
+  // be silently skipped by `findForbiddenHits`.
+  const probedKeys = [...CAMELCASE_KEYS, ...WORDBOUNDARY_KEYS].sort();
+  assert.deepEqual(
+    probedKeys,
+    [...FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS].sort(),
+    'every forbidden key must be probed by exactly one of CAMELCASE_KEYS / WORDBOUNDARY_KEYS',
+  );
 });
