@@ -342,6 +342,56 @@ test('TTS route serves pre-cached Gemini audio before provider generation', asyn
   }
 });
 
+test('TTS route reads legacy batch-generated spelling audio keys', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error('Provider should not be called for legacy cached audio.');
+  };
+  const bucket = {
+    gets: [],
+    puts: [],
+    async get(key) {
+      this.gets.push(key);
+      if (!/\/Sulafat\/standard\/early\/\d+\.mp3$/.test(key)) return null;
+      return {
+        body: Uint8Array.from([7, 8, 9]),
+        httpMetadata: { contentType: 'audio/mpeg' },
+        customMetadata: {},
+      };
+    },
+    async put() {
+      this.puts.push(arguments);
+    },
+  };
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    const prompt = await startSpellingPrompt(server);
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: prompt.learnerId,
+      promptToken: prompt.promptToken,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Sulafat',
+    }));
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'hit');
+    assert.deepEqual([...bytes], [7, 8, 9]);
+    assert.equal(bucket.gets.length, 2);
+    assert.match(bucket.gets[0], /\/Sulafat\/standard\/[^/]+\/early\/\d+\.mp3$/);
+    assert.match(bucket.gets[1], /\/Sulafat\/standard\/early\/\d+\.mp3$/);
+    assert.equal(bucket.puts.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
 test('TTS route serves cached audio for lookup-only requests before selected provider fallback', async () => {
   const originalFetch = globalThis.fetch;
   let providerCalls = 0;
@@ -393,6 +443,52 @@ test('TTS route serves cached audio for lookup-only requests before selected pro
     assert.equal(limiterCounts.get('tts-lookup-ip'), 1);
     assert.equal(limiterCounts.get('tts-account'), 1);
     assert.equal(limiterCounts.get('tts-ip'), 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS route serves cached word-bank word audio for lookup-only requests', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error('Provider should not be called for cached word audio.');
+  };
+  const bucket = createMemoryR2Bucket({
+    hit: {
+      bytes: [4, 3, 2],
+      contentType: 'audio/mpeg',
+    },
+  });
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    seedAccountLearner(server.DB);
+    const detailResponse = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&detailSlug=early');
+    const detail = await detailResponse.json();
+    const cue = detail.wordBank.detail.audio.word;
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: cue.learnerId,
+      promptToken: cue.promptToken,
+      slug: cue.slug,
+      wordOnly: true,
+      cacheLookupOnly: true,
+      bufferedGeminiVoice: 'Sulafat',
+    }));
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'audio/mpeg');
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'hit');
+    assert.equal(response.headers.get('x-ks2-tts-voice'), 'Sulafat');
+    assert.deepEqual([...bytes], [4, 3, 2]);
+    assert.equal(bucket.gets.length, 1);
+    assert.match(bucket.gets[0], /\/Sulafat\/word\/[^/]+\/early\.mp3$/);
+    assert.equal(bucket.puts.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();
@@ -470,7 +566,7 @@ test('TTS route returns a lookup-only cache miss without generating audio', asyn
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'miss');
     assert.equal(providerCalls, 0);
-    assert.equal(bucket.gets.length, 2);
+    assert.equal(bucket.gets.length, 3);
     assert.equal(bucket.puts.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
@@ -525,7 +621,7 @@ test('TTS route charges cold-cache fallback playback quota only once', async () 
     assert.equal(lookupResponse.headers.get('x-ks2-tts-cache'), 'miss');
     assert.equal(playbackResponse.status, 200);
     assert.equal(providerCalls, 1);
-    assert.equal(bucket.gets.length, 2);
+    assert.equal(bucket.gets.length, 3);
     assert.equal(limiterCounts.get('tts-lookup-account'), 1);
     assert.equal(limiterCounts.get('tts-lookup-ip'), 1);
     assert.equal(limiterCounts.get('tts-account'), 1);
@@ -984,7 +1080,7 @@ test('TTS cache-only warmups are skipped when the warmup quota is exhausted', as
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'skipped_rate_limited');
     assert.equal(providerCalls, 0);
-    assert.equal(bucket.gets.length, 2);
+    assert.equal(bucket.gets.length, 3);
     assert.equal(bucket.puts.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
@@ -1162,6 +1258,54 @@ test('TTS route supports server-tokened word bank vocabulary audio', async () =>
     assert.equal(calls[0].url, 'https://api.openai.com/v1/audio/speech');
     assert.equal(calls[0].body.input, 'early');
     assert.match(calls[0].body.instructions, /Read exactly the supplied word once/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    server.close();
+  }
+});
+
+test('TTS route stores Gemini word-bank word audio in the word cache', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({
+      url,
+      body: JSON.parse(init.body),
+    });
+    return geminiAudioResponse();
+  };
+  const bucket = createMemoryR2Bucket();
+
+  const server = createWorkerRepositoryServer({
+    env: {
+      GEMINI_API_KEY: 'test-gemini-key',
+      SPELLING_AUDIO_BUCKET: bucket,
+    },
+  });
+  try {
+    seedAccountLearner(server.DB);
+    const detailResponse = await server.fetch('https://repo.test/api/subjects/spelling/word-bank?learnerId=learner-a&detailSlug=early');
+    const detail = await detailResponse.json();
+    const cue = detail.wordBank.detail.audio.word;
+    const response = await server.fetch('https://repo.test/api/tts', ttsRequest({
+      learnerId: cue.learnerId,
+      promptToken: cue.promptToken,
+      slug: cue.slug,
+      wordOnly: true,
+      provider: 'gemini',
+      bufferedGeminiVoice: 'Iapetus',
+    }));
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('x-ks2-tts-cache'), 'stored');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent');
+    assert.match(calls[0].body.contents[0].parts[0].text, /Read exactly this KS2 spelling word once/);
+    assert.equal(bucket.puts.length, 1);
+    assert.match(bucket.puts[0].key, /spelling-audio\/v1\/gemini-3\.1-flash-tts-preview\/Iapetus\/word\/[^/]+\/early\.wav$/);
+    assert.equal(bucket.puts[0].options.customMetadata.kind, 'word');
+    assert.equal(bucket.puts[0].options.customMetadata.slug, 'early');
+    assert.equal(bucket.puts[0].options.customMetadata.sentenceIndex, undefined);
   } finally {
     globalThis.fetch = originalFetch;
     server.close();
@@ -1536,7 +1680,7 @@ test('demo lookup-only cache misses use lookup guards instead of playback guards
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('x-ks2-tts-cache'), 'miss');
     assert.equal(providerCalls, 0);
-    assert.equal(bucket.gets.length, 2);
+    assert.equal(bucket.gets.length, 3);
     assert.equal(fallbackMetric, undefined);
     assert.deepEqual(limiterPrefixes, [
       'demo-tts-lookup-account',
