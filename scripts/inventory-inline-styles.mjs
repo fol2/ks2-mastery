@@ -191,9 +191,14 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // migrated in this PR. The budget test in `tests/csp-inline-style-budget.test.js`
 // asserts the current grep total equals `POST_MIGRATION_TOTAL`, and the
 // inventory markdown surfaces the same number under "Total site counts".
-export const PRE_MIGRATION_TOTAL = 282;
+// NOTE: U9 (capacity release gates) merge added 5 `style={{ marginTop }}` sites
+// to ParentHubSurface (+2) and AdminHubSurface (+3) for the new circuit-breaker
+// degraded-state banners. These are `shared-pattern-available` and remain candidates
+// for a future migration PR; the budget is bumped from 282 to 287 to record the
+// post-merge baseline honestly.
+export const PRE_MIGRATION_TOTAL = 287;
 export const SITES_MIGRATED_THIS_PR = 25;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 257
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 262
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';
