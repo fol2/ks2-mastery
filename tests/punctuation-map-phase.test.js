@@ -754,3 +754,118 @@ test('U5 filter handlers ALLOW dispatch when phase is map (adv-219-007 positive)
   );
   assert.equal(punctuationState(harness).mapUi.detailOpenSkillId, 'speech');
 });
+
+// ---------------------------------------------------------------------------
+// Adversarial reviewer HIGH adv-219-008 — `punctuation-close-map` is the sixth
+// Map-scoped handler and was missed by the adv-219-007 round-2 pass. Without a
+// phase guard, a stray dispatch from `active-item` / `feedback` / `summary` /
+// `setup` / `error` unconditionally sets `{ phase: 'setup', error: '', mapUi }`
+// which destroys a live session AND seeds a default mapUi payload into state
+// + localStorage. Handler must refuse (return `false`) so the caller treats
+// the dispatch as a miss and production state is preserved.
+// ---------------------------------------------------------------------------
+
+test('U5 module: punctuation-close-map refuses to dispatch from active-item phase (adv-219-008)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  // Seed an active-item phase with a live session payload.
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: { id: 'session-1', currentItem: { id: 'item-1' } },
+  });
+  assert.equal(punctuationState(harness).phase, 'active-item');
+
+  const result = harness.handleSubjectAction('punctuation-close-map');
+  assert.equal(result, false, 'close-map must return false outside map phase');
+
+  const state = punctuationState(harness);
+  assert.equal(state.phase, 'active-item', 'phase must remain active-item');
+  assert.ok(state.session, 'live session must be preserved on refused dispatch');
+  assert.equal(state.mapUi, undefined, 'mapUi must NOT be seeded by a refused dispatch');
+});
+
+test('U5 module: punctuation-close-map refuses to dispatch from setup phase (adv-219-008)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  assert.equal(punctuationState(harness).phase, 'setup');
+  assert.equal(punctuationState(harness).mapUi, undefined);
+
+  const result = harness.handleSubjectAction('punctuation-close-map');
+  assert.equal(result, false, 'close-map must return false from setup phase');
+
+  const state = punctuationState(harness);
+  assert.equal(state.phase, 'setup');
+  assert.equal(state.mapUi, undefined, 'mapUi must NOT be seeded from setup dispatch');
+});
+
+test('U5 module: punctuation-close-map refuses to dispatch from feedback phase (adv-219-008)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    feedback: { kind: 'success', headline: 'Great!', body: '' },
+  });
+  assert.equal(punctuationState(harness).phase, 'feedback');
+
+  const result = harness.handleSubjectAction('punctuation-close-map');
+  assert.equal(result, false);
+
+  const state = punctuationState(harness);
+  assert.equal(state.phase, 'feedback', 'phase must remain feedback');
+  assert.ok(state.feedback, 'feedback payload must be preserved on refused dispatch');
+  assert.equal(state.mapUi, undefined);
+});
+
+test('U5 module: punctuation-close-map refuses to dispatch from summary phase (adv-219-008)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    summary: { label: 'Session', total: 0, correct: 0 },
+  });
+  assert.equal(punctuationState(harness).phase, 'summary');
+
+  const result = harness.handleSubjectAction('punctuation-close-map');
+  assert.equal(result, false);
+
+  const state = punctuationState(harness);
+  assert.equal(state.phase, 'summary', 'phase must remain summary');
+  assert.ok(state.summary, 'summary payload must be preserved');
+  assert.equal(state.mapUi, undefined);
+});
+
+test('U5 module: punctuation-close-map refuses to dispatch from error phase (adv-219-008)', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'error',
+    error: 'Something went wrong',
+  });
+  assert.equal(punctuationState(harness).phase, 'error');
+
+  const result = harness.handleSubjectAction('punctuation-close-map');
+  assert.equal(result, false);
+
+  const state = punctuationState(harness);
+  assert.equal(state.phase, 'error', 'phase must remain error');
+  assert.equal(state.mapUi, undefined);
+});
+
+test('U5 module: punctuation-close-map ALLOWS dispatch when phase is map (adv-219-008 positive)', () => {
+  // Control: the guard must only refuse non-map phases. Inside map the
+  // close-map handler continues to transition map → setup + reset detail state.
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-open-map');
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'speech' });
+  assert.equal(punctuationState(harness).phase, 'map');
+  assert.equal(punctuationState(harness).mapUi.detailOpenSkillId, 'speech');
+
+  const result = harness.handleSubjectAction('punctuation-close-map');
+  assert.equal(result, true, 'close-map must succeed from map phase');
+
+  const state = punctuationState(harness);
+  assert.equal(state.phase, 'setup', 'phase must transition to setup');
+  assert.equal(state.error, '');
+  assert.equal(state.mapUi.detailOpenSkillId, null, 'detailOpenSkillId must be cleared');
+});

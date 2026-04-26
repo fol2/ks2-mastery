@@ -149,6 +149,18 @@ export const punctuationModule = {
       // Parallel to `punctuation-back` when already in the Map phase. Split
       // as its own action so the Map scene's close-button dispatch is
       // semantically distinct from the generic back-to-dashboard path.
+      //
+      // adv-219-008 guard: round-2's adv-219-007 pass tightened the five
+      // Map-scoped filter / detail handlers but missed this sixth. Without
+      // the guard, a stray dispatch from `active-item` / `feedback` /
+      // `summary` / `setup` / `error` unconditionally writes
+      // `{ phase: 'setup', error: '', mapUi: <default> }` which destroys a
+      // live session AND seeds a default mapUi payload into state +
+      // localStorage (tempting the rehydrate path into restoring filter
+      // state across reloads that sanitisePunctuationUiOnRehydrate would
+      // otherwise clear). Refuse from non-map phases so the caller treats
+      // the dispatch as a miss rather than a silent success (learning #7).
+      if (ui.phase !== 'map') return false;
       const nextMapUi = {
         ...normalisePunctuationMapUi(ui.mapUi),
         detailOpenSkillId: null,
