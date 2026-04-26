@@ -1,8 +1,9 @@
 ---
 title: "fix: System Hardening Pass 1"
 type: fix
-status: active
+status: completed
 date: 2026-04-25
+completed: 2026-04-26
 origin: docs/plans/james/sys-hardening/sys-hardening-p1.md
 deepened: 2026-04-25
 ---
