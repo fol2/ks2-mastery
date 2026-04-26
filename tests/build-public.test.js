@@ -26,13 +26,24 @@ test('public build emits the React app bundle entrypoint', () => {
   const manifestHash = visualManifest.match(/"manifestHash": "([^"]+)"/)?.[1] || '';
   assert.ok(manifestHash, 'expected generated monster visual manifest hash');
   // manifestHash can live in any chunk after SH2-U10 code-split (#322).
-  // Walk every .js chunk and assert at least one contains it.
-  const bundleChunks = readdirSync('dist/public/src/bundles/')
-    .filter((f) => f.endsWith('.js'))
-    .map((f) => readFileSync(`dist/public/src/bundles/${f}`, 'utf8'));
+  // Walk every .js chunk and assert (a) one contains it AND (b) app.bundle.js
+  // imports that chunk by filename, so the manifest is reachable at runtime.
+  const bundlesDir = 'dist/public/src/bundles';
+  assert.ok(existsSync(bundlesDir), 'bundles dir must exist after npm run build');
+  const chunkNames = readdirSync(bundlesDir).filter((f) => f.endsWith('.js'));
+  const chunksWithHash = chunkNames.filter((name) => {
+    const content = readFileSync(`${bundlesDir}/${name}`, 'utf8');
+    return content.includes(manifestHash);
+  });
   assert.ok(
-    bundleChunks.some((content) => content.includes(manifestHash)),
+    chunksWithHash.length > 0,
     'manifestHash must be present in at least one production bundle chunk',
+  );
+  // Entry bundle must reference (by filename) at least one chunk that contains the hash,
+  // so the manifest is actually reachable from app.bundle.js at runtime.
+  assert.ok(
+    chunksWithHash.some((name) => appBundle.includes(name)),
+    'app.bundle.js must import a chunk that contains manifestHash (orphan-chunk guard)',
   );
   assert.match(appBundle, /\/api\/admin\/monster-visual-config\/draft/);
   assert.doesNotMatch(appBundle, /__ks2(HomeSurface|CodexSurface|SubjectTopNavSurface)/);
