@@ -186,11 +186,13 @@ const PUNCTUATION_SKILL_RULE_ONE_LINERS = Object.freeze({
   apostrophe_contractions: "Slot the mark in where the missing letters belong.",
   apostrophe_possession: "Add 's to show belonging; a plural ending in s takes one mark.",
   speech: 'Speech marks wrap the spoken words; the end mark sits inside.',
-  fronted_adverbial: 'Put a comma after the opener when it comes before the main clause.',
+  // Phase 4 U7: rule one-liners rewritten in child register. "main
+  // clause" → "whole sentence", "complete clause" → "whole sentence".
+  fronted_adverbial: 'Put a comma after the opener when it comes before the whole sentence.',
   parenthesis: 'Mark an extra idea with two commas, two brackets, or two dashes — one pair only.',
   comma_clarity: 'Add a comma when it stops the sentence from being misread.',
-  colon_list: 'Use a colon to introduce a list after a complete clause.',
-  semicolon: 'Use a semi-colon to link two closely-related complete clauses.',
+  colon_list: 'Use a colon to introduce a list after a whole sentence.',
+  semicolon: 'Use a semi-colon to link two closely-related whole sentences.',
   dash_clause: 'Use a pair of dashes to break off a side thought.',
   semicolon_list: 'Use semi-colons between long list items that already contain commas.',
   bullet_points: 'Keep bullet punctuation consistent across every item in the list.',
@@ -400,6 +402,16 @@ export const PUNCTUATION_CHILD_FORBIDDEN_TERMS = Object.freeze([
   'apostrophe.',
   'structure.',
   'endmarks.',
+  // Phase 4 U7 — adult grammar terms that engine-files
+  // (`shared/punctuation/marking.js` + `shared/punctuation/generators.js`)
+  // emit via `note` / `prompt` strings. The engine is scope-locked by the
+  // oracle replay, so the client-side `punctuationChildRegisterOverride`
+  // helper intercepts these at display time. Listed here so the forbidden-
+  // term sweep catches any call site that forgets to thread the helper.
+  'fronted adverbial',
+  'main clause',
+  'complete clause',
+  'subordinate',
   // Whole-word catch-all for any case-variant leakage.
   /\bWorker\b/i,
 ]);
@@ -472,6 +484,208 @@ export function punctuationChildStatusLabel(status) {
 // the learner did wrong) without the unhonourable causal claim.
 export function punctuationChildUnknownHelperCopy() {
   return "We're still loading your progress.";
+}
+
+// --- Phase 4 U7 — child-register override layer ----------------------------
+//
+// Plan R8 locks the engine files (`shared/punctuation/marking.js`,
+// `shared/punctuation/generators.js`, `shared/punctuation/scheduler.js`,
+// `shared/punctuation/service.js`, `shared/punctuation/legacy-parity.js`)
+// under the oracle replay gate — byte-for-byte identical output is the
+// proof the engine was not touched. But those files emit adult grammar
+// terminology (`fronted adverbial`, `main clause`, …) inside `note` /
+// `prompt` strings that the child reads in the guided teach-box,
+// feedback panel, and Skill Detail modal. The two-layered fix is:
+//   1. `shared/punctuation/content.js` `rule` fields (edit-safe — not
+//      engine-bound) are rewritten in child register directly.
+//   2. This display-time helper intercepts engine-sourced strings on
+//      the way to the render and rewrites adult phrases using a frozen
+//      override table. Every call site that renders a Worker / engine
+//      atom threads it through this helper.
+//
+// The table is ordered longest-match first so multi-word phrases
+// (`complete clause`, `complex sentence`) replace before shorter
+// overlapping entries (`clause`, `sentence`) and the replacement is
+// stable. Case is preserved — a capitalised input produces a
+// capitalised replacement.
+
+// Ordered longest-to-shortest so the longest-match pass is correct.
+// Each entry: [adultPhrase, childPhrase]. Lower-case keys; the helper
+// handles case preservation.
+const PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES = [
+  ['fronted adverbials', 'starter phrases'],
+  ['fronted adverbial', 'starter phrase'],
+  ['main clauses', 'whole sentences'],
+  ['main clause', 'whole sentence'],
+  ['complete clauses', 'whole sentences'],
+  ['complete clause', 'whole sentence'],
+  ['subordinate clauses', 'added ideas'],
+  ['subordinate clause', 'added idea'],
+  ['complex sentences', 'sentences with an added idea'],
+  ['complex sentence', 'sentence with an added idea'],
+  ['compound sentences', 'joined sentences'],
+  ['compound sentence', 'joined sentence'],
+  ['opening clauses', 'opening phrases'],
+  ['opening clause', 'opening phrase'],
+  ['subordinate', 'added idea'],
+];
+
+// Frozen public view — consumers assert the mapping via `Object.keys`
+// / `Object.entries`. The internal entries array above stays ordered
+// for the longest-match walk; the frozen object has no ordering
+// guarantee but is sufficient for the unit test's `includes` assertions.
+export const PUNCTUATION_CHILD_REGISTER_OVERRIDES = Object.freeze(
+  Object.fromEntries(PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES),
+);
+
+// Match the capitalisation of `source` onto `replacement`. Three cases
+// handled: all-upper (every letter uppercase), title-case (first letter
+// uppercase), and default lower-case. Anything else falls back to
+// lower-case which matches the authored child phrase as-is.
+function matchCase(source, replacement) {
+  if (!source) return replacement;
+  const trimmed = source.trim();
+  if (!trimmed) return replacement;
+  if (trimmed === trimmed.toUpperCase() && trimmed.length > 1) {
+    return replacement.toUpperCase();
+  }
+  if (trimmed[0] === trimmed[0].toUpperCase()) {
+    return replacement.charAt(0).toUpperCase() + replacement.slice(1);
+  }
+  return replacement;
+}
+
+/**
+ * Replace adult grammar phrases in `text` with their child-register
+ * equivalents using `PUNCTUATION_CHILD_REGISTER_OVERRIDES`. Longest-
+ * match pass so `complete clause` replaces before `clause` could ever
+ * match. Case-preserving — a capitalised adult term yields a
+ * capitalised child term. Empty / non-string input returns `''`.
+ *
+ * Idempotent: running twice produces the same output as running once,
+ * because replacements are sourced from a disjoint child vocabulary.
+ */
+export function punctuationChildRegisterOverrideString(text) {
+  if (typeof text !== 'string' || !text) return '';
+  let out = text;
+  for (const [adult, child] of PUNCTUATION_CHILD_REGISTER_OVERRIDE_ENTRIES) {
+    // Case-insensitive global match so every occurrence is swapped.
+    // `adult` entries are guaranteed to be regex-safe (letters + spaces only).
+    const pattern = new RegExp(adult.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    out = out.replace(pattern, (match) => matchCase(match, child));
+  }
+  return out;
+}
+
+// Which atom fields carry learner-read prose and must pass through the
+// override. Non-listed fields (ids, modes, numeric flags, etc.) are not
+// rewritten so the override is safely scoped to user-visible copy. The
+// `name` field is included because the guided teach-box carries the
+// skill's human-readable name ("Commas after fronted adverbials") from
+// `shared/punctuation/content.js` via `skill.name`.
+const PUNCTUATION_ATOM_OVERRIDE_FIELDS = Object.freeze([
+  'name',
+  'rule',
+  'note',
+  'prompt',
+  'body',
+  'headline',
+  'displayCorrection',
+  'explanation',
+]);
+
+function overrideAtomFields(atom) {
+  const out = { ...atom };
+  for (const field of PUNCTUATION_ATOM_OVERRIDE_FIELDS) {
+    if (typeof out[field] === 'string' && out[field]) {
+      out[field] = punctuationChildRegisterOverrideString(out[field]);
+    }
+  }
+  // TeachBox sub-object carries its own rule string — walk one level
+  // deeper so guided-mode Worker payloads (Session guided teachBox) are
+  // covered. We only touch string fields; sub-objects not listed here
+  // pass through untouched.
+  if (out.teachBox && typeof out.teachBox === 'object' && !Array.isArray(out.teachBox)) {
+    const teachBoxCopy = { ...out.teachBox };
+    for (const field of PUNCTUATION_ATOM_OVERRIDE_FIELDS) {
+      if (typeof teachBoxCopy[field] === 'string' && teachBoxCopy[field]) {
+        teachBoxCopy[field] = punctuationChildRegisterOverrideString(teachBoxCopy[field]);
+      }
+    }
+    out.teachBox = teachBoxCopy;
+  }
+  return out;
+}
+
+/**
+ * Display-time override: accepts either a plain string or an atom-shaped
+ * object and rewrites adult grammar phrases to child register. Null /
+ * undefined inputs pass through unchanged so the helper is safe to call
+ * against a possibly-missing Worker payload.
+ *
+ * Usage: import this at any Punctuation scene that renders Worker-
+ * sourced teach-box / feedback / atom prose, and route the atom through
+ * `punctuationChildRegisterOverride(atom)` before referencing `.rule`,
+ * `.note`, `.prompt`, etc.
+ */
+export function punctuationChildRegisterOverride(atom) {
+  if (atom == null) return atom;
+  if (typeof atom === 'string') return punctuationChildRegisterOverrideString(atom);
+  if (typeof atom !== 'object' || Array.isArray(atom)) return atom;
+  return overrideAtomFields(atom);
+}
+
+// --- Phase 4 U7 — Summary-card copy register helpers ------------------------
+//
+// The Summary scene's NextReviewHint, MonsterProgressTeaser sub-line, and
+// per-skill chip badges were authored in adult SaaS register during the
+// U5 build. The U5 design-lens review flagged them as copy-register
+// leakage; U7 routes each through a helper so forbidden-term sweeps and
+// future register passes have one seam per string.
+
+/**
+ * Child-register next-review copy derived from `ui.stats`. `stats.due`
+ * drives the branch: > 0 → "more goes ready" nudge; === 0 → "come back
+ * tomorrow" reassurance. Missing / malformed stats returns `null` so
+ * the caller can skip the render rather than fabricating a hint.
+ */
+export function punctuationChildNextReviewCopy(stats) {
+  if (!stats || typeof stats !== 'object' || Array.isArray(stats)) return null;
+  const due = Number(stats.due);
+  if (!Number.isFinite(due)) return null;
+  return due > 0
+    ? "More goes ready — let's do another round."
+    : 'Brilliant — come back tomorrow for more.';
+}
+
+/**
+ * Child-register sub-line for the monster-progress teaser. Names the
+ * monster explicitly so the Bellstorm frame stays intact (U5 design-lens
+ * flagged the prior "Keep going to unlock the next stage." copy as
+ * generic SaaS gamification). A missing / empty monster name falls back
+ * to a monster-agnostic-but-still-child line.
+ */
+export function punctuationChildTeaserSubLine(monsterName) {
+  if (typeof monsterName === 'string' && monsterName.trim()) {
+    return `Keep training with ${monsterName.trim()} to grow their next stage.`;
+  }
+  return 'Keep training to grow your monster’s next stage.';
+}
+
+/**
+ * Child-register badge label for the per-skill chip row. Prior wording
+ * ("needs practice" / "secure") mixed clinical language with a
+ * decorative middot; the new labels read as peer copy. Unknown /
+ * missing status returns `''` so the render drops the badge.
+ */
+const PUNCTUATION_CHILD_SKILL_BADGE_LABELS = Object.freeze({
+  'needs-practice': 'needs more goes',
+  secure: 'nailed it',
+});
+
+export function punctuationChildSkillBadgeLabel(status) {
+  if (typeof status !== 'string' || !status) return '';
+  return PUNCTUATION_CHILD_SKILL_BADGE_LABELS[status] || '';
 }
 
 // --- Misconception-tag → child label ---------------------------------------

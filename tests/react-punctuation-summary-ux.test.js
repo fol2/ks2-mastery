@@ -120,7 +120,11 @@ test('U5 Summary: per-skill chip row hides when no skillsExercised provided', ()
 // 3. Next-review hint.
 // ---------------------------------------------------------------------------
 
-test('U5 Summary: next-review hint renders "Tomorrow" when stats.due === 0 (all secure)', () => {
+test('U5/U7 Summary: next-review hint renders child-register "tomorrow" copy when stats.due === 0', () => {
+  // U7 copy register pass: the prior wording ("Back tomorrow for the next
+  // round.") read as adult SaaS. Routed through
+  // `punctuationChildNextReviewCopy(stats)` so the governance layer is
+  // shared with the status-label helper.
   const harness = createPunctuationHarness();
   openSummaryScene(harness);
   harness.store.updateSubjectUi('punctuation', {
@@ -128,10 +132,13 @@ test('U5 Summary: next-review hint renders "Tomorrow" when stats.due === 0 (all 
   });
   const html = harness.render();
   assert.match(html, /data-punctuation-summary-review-hint/);
-  assert.match(html, /Back tomorrow for the next round/);
+  assert.match(html, /come back tomorrow/i);
 });
 
-test('U5 Summary: next-review hint renders "more due today" when stats.due > 0', () => {
+test('U5/U7 Summary: next-review hint renders child-register "more goes" copy when stats.due > 0', () => {
+  // U7 copy register pass: the prior wording ("More practice is ready for
+  // you today.") read as adult SaaS. Child copy uses "goes" / "round"
+  // register instead.
   const harness = createPunctuationHarness();
   openSummaryScene(harness);
   harness.store.updateSubjectUi('punctuation', {
@@ -139,7 +146,7 @@ test('U5 Summary: next-review hint renders "more due today" when stats.due > 0',
   });
   const html = harness.render();
   assert.match(html, /data-punctuation-summary-review-hint/);
-  assert.match(html, /More practice is ready for you today/);
+  assert.match(html, /more goes ready/i);
 });
 
 // ---------------------------------------------------------------------------
@@ -158,6 +165,45 @@ test('U5 Summary: monster-progress teaser renders when summary.monsterProgress c
   // headline, but the from/to is encoded as data attributes for
   // telemetry / test use.
   assert.match(html, /Pealark levelled up/);
+});
+
+test('U7 Summary: monster-progress teaser sub-line is monster-themed, not generic SaaS copy', () => {
+  // U7 copy register pass: the prior sub-line ("Keep going to unlock the
+  // next stage.") read as generic SaaS gamification. The new sub-line
+  // names the monster explicitly so the Bellstorm frame stays intact for
+  // the KS2 reader — routed through
+  // `punctuationChildTeaserSubLine(monsterName)`.
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    monsterProgress: { monsterId: 'pealark', stageFrom: 0, stageTo: 1 },
+  });
+  const html = harness.render();
+  assert.doesNotMatch(html, /Keep going to unlock the next stage/);
+  // New sub-line references the monster by name (Bellstorm-themed) —
+  // "Pealark" appears in the sub-line, not only in the headline.
+  assert.match(html, /Pealark/);
+});
+
+test('U7 Summary: per-skill chip badges use child-register "needs more goes" / "nailed it" wording', () => {
+  // U7 copy register pass: the prior chip badges ("· needs practice" /
+  // "· secure") mixed adult clinical language ("practice", "secure")
+  // with a decorative middot. The new badges read as peer copy.
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    skillsExercised: ['speech', 'comma_clarity'],
+    focus: ['speech'],
+  });
+  const html = harness.render();
+  // Needs-practice row carries the new "needs more goes" phrasing.
+  assert.match(html, /needs more goes/);
+  // Secure row carries the new "nailed it" phrasing.
+  assert.match(html, /nailed it/i);
+  // Prior adult-register badge strings must be gone from the per-skill
+  // chip row. The literal "· needs practice" / "· secure" badge suffixes
+  // should not surface. The "Everything was secure this round!" empty-
+  // fallback chip (a different string in `WobblyChipRow`) is unaffected.
+  assert.doesNotMatch(html, /·\s*needs practice/);
+  assert.doesNotMatch(html, /·\s*secure/);
 });
 
 test('U5 Summary: monster-progress teaser is absent when no stage advanced this round', () => {

@@ -1048,3 +1048,70 @@ test('U4 follower: punctuationSummaryHeadline never emits forbidden child terms'
     assert.equal(isPunctuationChildCopy(text), true, `headline ${JSON.stringify(text)} leaked forbidden term`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// U7 Summary copy helpers
+// ---------------------------------------------------------------------------
+// Copy register pass: route every Summary-card sub-line through a helper
+// so forbidden-term sweeps and future register changes have a single seam.
+
+test('U7 Summary copy: punctuationChildNextReviewCopy returns "more goes" when due > 0', async () => {
+  const { punctuationChildNextReviewCopy } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const copy = punctuationChildNextReviewCopy({ due: 3 });
+  assert.match(copy, /more goes/i);
+  assert.equal(isPunctuationChildCopy(copy), true);
+});
+
+test('U7 Summary copy: punctuationChildNextReviewCopy returns "tomorrow" when due === 0', async () => {
+  const { punctuationChildNextReviewCopy } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const copy = punctuationChildNextReviewCopy({ due: 0 });
+  assert.match(copy, /tomorrow/i);
+  assert.equal(isPunctuationChildCopy(copy), true);
+});
+
+test('U7 Summary copy: punctuationChildNextReviewCopy returns null for missing stats', async () => {
+  const { punctuationChildNextReviewCopy } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  assert.equal(punctuationChildNextReviewCopy(null), null);
+  assert.equal(punctuationChildNextReviewCopy(undefined), null);
+  assert.equal(punctuationChildNextReviewCopy({}), null);
+  assert.equal(punctuationChildNextReviewCopy({ due: 'not-a-number' }), null);
+});
+
+test('U7 Summary copy: punctuationChildTeaserSubLine references the monster name', async () => {
+  const { punctuationChildTeaserSubLine } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const pealark = punctuationChildTeaserSubLine('Pealark');
+  assert.match(pealark, /Pealark/);
+  // Child-register — no adult SaaS wording.
+  assert.doesNotMatch(pealark, /unlock the next stage/i);
+  assert.equal(isPunctuationChildCopy(pealark), true);
+});
+
+test('U7 Summary copy: punctuationChildTeaserSubLine falls back when monster name is missing', async () => {
+  const { punctuationChildTeaserSubLine } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  // Null / empty string falls back to a monster-agnostic-but-still-child
+  // copy (never returns "Keep going to unlock the next stage.").
+  const fallback = punctuationChildTeaserSubLine(null);
+  assert.ok(typeof fallback === 'string' && fallback.length > 0);
+  assert.doesNotMatch(fallback, /unlock the next stage/i);
+  assert.equal(isPunctuationChildCopy(fallback), true);
+});
+
+test('U7 Summary copy: punctuationChildSkillBadgeLabel returns child-register text', async () => {
+  const { punctuationChildSkillBadgeLabel } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  const needs = punctuationChildSkillBadgeLabel('needs-practice');
+  const secure = punctuationChildSkillBadgeLabel('secure');
+  assert.match(needs, /needs more goes/i);
+  assert.match(secure, /nailed it/i);
+  assert.equal(isPunctuationChildCopy(needs), true);
+  assert.equal(isPunctuationChildCopy(secure), true);
+});
+
+test('U7 Summary copy: punctuationChildSkillBadgeLabel falls back safely on unknown status', async () => {
+  const { punctuationChildSkillBadgeLabel } = await import('../src/subjects/punctuation/components/punctuation-view-model.js');
+  // Unknown / null / undefined returns an empty string so the render
+  // drops the badge rather than leaking a raw status id.
+  assert.equal(punctuationChildSkillBadgeLabel(null), '');
+  assert.equal(punctuationChildSkillBadgeLabel(undefined), '');
+  assert.equal(punctuationChildSkillBadgeLabel(''), '');
+  assert.equal(punctuationChildSkillBadgeLabel('bogus-status'), '');
+});
