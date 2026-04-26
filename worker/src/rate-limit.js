@@ -284,3 +284,23 @@ export function normaliseRateLimitSubject(request, {
   }
   return result;
 }
+
+/**
+ * Call-site convenience wrapper. Plumbs `env.TRUST_XFF === '1'` into
+ * `normaliseRateLimitSubject` so auth / demo / TTS / public ingest can
+ * route their rate-limit subject through one line instead of
+ * duplicating the env read at every call site.
+ *
+ * @param {Request} request
+ * @param {object|null|undefined} env
+ * @param {object} [options]
+ * @param {string|null} [options.globalBudgetKey]
+ * @returns {{ bucketKey: string, fallbackReason: string|null, globalKey?: string }}
+ */
+export function rateLimitSubject(request, env, { globalBudgetKey = null } = {}) {
+  const trustXForwardedFor = Boolean(env && env.TRUST_XFF === '1');
+  return normaliseRateLimitSubject(request, {
+    trustXForwardedFor,
+    globalBudgetKey,
+  });
+}

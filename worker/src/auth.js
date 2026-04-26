@@ -16,7 +16,7 @@ import {
   withTransaction,
 } from './d1.js';
 import { requireSameOrigin } from './request-origin.js';
-import { consumeRateLimit } from './rate-limit.js';
+import { consumeRateLimit, rateLimitSubject } from './rate-limit.js';
 
 const SESSION_COOKIE_NAME = 'ks2_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -340,7 +340,15 @@ function readOauthAttempt(request) {
   };
 }
 
-function clientIp(request) {
+// U5 (P1.5 Phase B): the former local `clientIp` helper is replaced by
+// `rateLimitSubject(request, env)` from `worker/src/rate-limit.js`, which
+// returns a tiered bucket key (v4:<addr> / v6/64:<prefix> /
+// unknown:<reason>). Turnstile still wants a human-readable remote IP,
+// so `turnstileRemoteIp` below keeps the raw CF-Connecting-IP lookup
+// for that specific API contract only. Rate-limit identifiers come
+// from the helper.
+
+function turnstileRemoteIp(request) {
   return cleanText(
     request.headers.get('cf-connecting-ip')
     || request.headers.get('x-forwarded-for')?.split(',')[0]
@@ -383,11 +391,12 @@ async function verifyTurnstile(env, token, remoteIp) {
 }
 
 async function protectEmailAuth(env, request, { action, email, turnstileToken }) {
-  await verifyTurnstile(env, turnstileToken, clientIp(request));
+  await verifyTurnstile(env, turnstileToken, turnstileRemoteIp(request));
   const limits = AUTH_LIMITS[action];
+  const { bucketKey } = rateLimitSubject(request, env);
   const ipResult = await consumeRateLimit(env, {
     bucket: `auth-${action}-ip`,
-    identifier: clientIp(request),
+    identifier: bucketKey,
     limit: limits.ip,
     windowMs: AUTH_WINDOW_MS,
   });
@@ -406,10 +415,11 @@ async function protectEmailAuth(env, request, { action, email, turnstileToken })
 }
 
 async function protectOAuthStart(env, request, { provider, turnstileToken }) {
-  await verifyTurnstile(env, turnstileToken, clientIp(request));
+  await verifyTurnstile(env, turnstileToken, turnstileRemoteIp(request));
+  const { bucketKey } = rateLimitSubject(request, env);
   const result = await consumeRateLimit(env, {
     bucket: `oauth-start-${provider}`,
-    identifier: clientIp(request),
+    identifier: bucketKey,
     limit: AUTH_LIMITS.oauthStart.ip,
     windowMs: AUTH_WINDOW_MS,
   });

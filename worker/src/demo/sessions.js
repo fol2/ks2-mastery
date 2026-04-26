@@ -14,7 +14,7 @@ import {
   isProductionRuntime as requestOriginIsProductionRuntime,
   requireSameOrigin as requestRequireSameOrigin,
 } from '../request-origin.js';
-import { consumeRateLimit } from '../rate-limit.js';
+import { consumeRateLimit, rateLimitSubject } from '../rate-limit.js';
 import { DEMO_TEMPLATE_ID, demoLearnerTemplate } from './template.js';
 
 export const DEMO_TTL_MS = 24 * 60 * 60 * 1000;
@@ -43,12 +43,15 @@ function cleanText(value) {
   return String(value || '').trim();
 }
 
-function clientIp(request) {
-  return cleanText(
-    request.headers.get('cf-connecting-ip')
-    || request.headers.get('x-forwarded-for')?.split(',')[0]
-    || request.headers.get('x-real-ip'),
-  ) || 'unknown';
+// U5 (P1.5 Phase B): the former local `clientIp` helper is replaced by
+// `rateLimitSubject(request, env)` from `worker/src/rate-limit.js`, which
+// returns a tiered bucket key so an attacker on an IPv6 /64 cannot
+// rotate low bits to evade per-IP limits. `env` is threaded through
+// every call so `env.TRUST_XFF === '1'` can opt dev/staging into the
+// `X-Forwarded-For` fallback without hardcoding trust in production.
+
+function demoRateLimitIdentifier(request, env) {
+  return rateLimitSubject(request, env).bucketKey;
 }
 
 // U6 (sys-hardening p1): these helpers moved to `worker/src/request-origin.js`
@@ -75,10 +78,10 @@ export async function recordDemoMetric(db, key, now) {
   `, [key, now]);
 }
 
-async function protectDemoCreate(db, request, now) {
+async function protectDemoCreate(db, env, request, now) {
   const result = await consumeRateLimit(db, {
     bucket: 'demo-create-ip',
-    identifier: clientIp(request),
+    identifier: demoRateLimitIdentifier(request, env),
     limit: DEMO_LIMITS.createIp,
     windowMs: DEMO_WINDOW_MS,
     now,
@@ -140,7 +143,7 @@ export async function protectDemoSubjectCommand({ env, request, session, command
   await enforceDemoRateLimit(db, [
     {
       bucket: 'demo-command-ip',
-      identifier: clientIp(request),
+      identifier: demoRateLimitIdentifier(request, env),
       limit: DEMO_LIMITS.commandIp,
     },
     {
@@ -168,7 +171,7 @@ export async function protectDemoParentHubRead({ env, request, session, now = Da
   await enforceDemoRateLimit(db, [
     {
       bucket: 'demo-parent-hub-ip',
-      identifier: clientIp(request),
+      identifier: demoRateLimitIdentifier(request, env),
       limit: DEMO_LIMITS.parentHubIp,
     },
     {
@@ -195,7 +198,7 @@ export async function protectDemoTtsFallback({ env, request, session, payload = 
   await enforceDemoRateLimit(db, [
     {
       bucket: 'demo-tts-ip',
-      identifier: clientIp(request),
+      identifier: demoRateLimitIdentifier(request, env),
       limit: DEMO_LIMITS.ttsIp,
     },
     {
@@ -223,7 +226,7 @@ export async function protectDemoTtsLookup({ env, request, session, now = Date.n
   await enforceDemoRateLimit(db, [
     {
       bucket: 'demo-tts-lookup-ip',
-      identifier: clientIp(request),
+      identifier: demoRateLimitIdentifier(request, env),
       limit: DEMO_LIMITS.ttsLookupIp,
     },
     {
@@ -330,7 +333,7 @@ async function insertDemoLearner(db, accountId, learnerId, now) {
 export async function createDemoSession({ env, request, now = Date.now(), allowMissingOrigin = false, capacity = null } = {}) {
   const db = requireDatabaseWithCapacity(env, capacity);
   requireSameOrigin(request, env, { allowMissingOrigin });
-  await protectDemoCreate(db, request, now);
+  await protectDemoCreate(db, env, request, now);
   await cleanupExpiredDemoAccounts(db, now);
 
   const accountId = `demo-${randomToken(10)}`;
