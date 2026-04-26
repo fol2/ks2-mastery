@@ -694,9 +694,12 @@ test('U6 scenario 18: recentEventTokens ring size (250) strictly exceeds lag win
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 19 — 2000-event learner → meta.capacity.queryCount ≤ 12 on hot path.
+// Scenario 19 — 2000-event learner → meta.capacity.queryCount ≤ 13 on hot path.
+// Phase D / U14 added one query to the session-lookup path (the JOIN of
+// `account_ops_metadata` for ops_status + status_revision), so the budget
+// lifts from 12 to 13. The rest of the hot path is unchanged.
 // ---------------------------------------------------------------------------
-test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 12', async () => {
+test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 13', async () => {
   const harness = createHarness();
   try {
     insertProjectionWindowFillerEvents(harness.DB, {
@@ -717,8 +720,8 @@ test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 12', async () =
     const capacity = hot.body.meta?.capacity;
     assert.ok(capacity, 'hot-path command must expose meta.capacity');
     assert.ok(
-      capacity.queryCount <= 12,
-      `hot-path queryCount must be ≤ 12 for 2000-event learner; got ${capacity.queryCount}`,
+      capacity.queryCount <= 13,
+      `hot-path queryCount must be ≤ 13 for 2000-event learner; got ${capacity.queryCount}`,
     );
   } finally {
     harness.close();
