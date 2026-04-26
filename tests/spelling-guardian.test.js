@@ -62,8 +62,11 @@ test('SPELLING_MODES includes guardian alongside existing modes', () => {
   assert.equal(normaliseMode('smart'), 'smart');
 });
 
-test('SPELLING_SERVICE_STATE_VERSION is bumped to 2', () => {
-  assert.equal(SPELLING_SERVICE_STATE_VERSION, 2);
+test('SPELLING_SERVICE_STATE_VERSION is bumped to 3', () => {
+  // P2 U2: version bumped 2 → 3 when `data.postMega` sibling + sticky
+  // graduation fields landed. Keep this test's title reflective of the
+  // current version so a future bump is easy to audit.
+  assert.equal(SPELLING_SERVICE_STATE_VERSION, 3);
 });
 
 test('GUARDIAN_INTERVALS are the planned schedule', () => {
@@ -242,11 +245,14 @@ test('SPELLING_EVENT_TYPES gains exactly four guardian event types with kebab-ca
   assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED, 'spelling.guardian.recovered');
   assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED, 'spelling.guardian.mission-completed');
   const values = Object.values(SPELLING_EVENT_TYPES);
-  // U9 added BOSS_COMPLETED ('spelling.boss.completed'), bringing the total to 9.
-  // Guardian-specific shape is still intact — the assertion below guards the
-  // kebab-case values and uniqueness rather than the Guardian count alone.
-  assert.equal(values.length, 9, 'exactly 9 event types after U9 (U2 baseline + BOSS_COMPLETED)');
+  // P2 U2 added POST_MEGA_UNLOCKED ('spelling.post-mega.unlocked'), bringing
+  // the total to 10. U9 added BOSS_COMPLETED ('spelling.boss.completed'), U2
+  // P1 added the four guardian types. Guardian-specific shape is still
+  // intact — the assertion below guards the kebab-case values and
+  // uniqueness rather than the Guardian count alone.
+  assert.equal(values.length, 10, 'exactly 10 event types after P2 U2 (U9 BOSS_COMPLETED + P2 U2 POST_MEGA_UNLOCKED)');
   assert.equal(new Set(values).size, values.length, 'all event types unique');
+  assert.equal(SPELLING_EVENT_TYPES.POST_MEGA_UNLOCKED, 'spelling.post-mega.unlocked');
 });
 
 test('createSpellingGuardianRenewedEvent returns a well-formed event', () => {

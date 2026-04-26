@@ -44,7 +44,9 @@ test('client spelling read model preserves word-family variant preference', () =
         spelling: {
           subjectId: 'spelling',
           learnerId: 'learner-a',
-          version: 2,
+          // P2 U2: state version bumped 2 -> 3 when data.postMega sibling
+          // + sticky graduation fields landed.
+          version: 3,
           phase: 'dashboard',
           prefs: {
             mode: 'smart',
@@ -111,7 +113,8 @@ test('U1 client-read-models stub: cached postMastery from app state wins over de
         spelling: {
           subjectId: 'spelling',
           learnerId: 'learner-a',
-          version: 2,
+          // P2 U2: state version bumped 2 -> 3.
+          version: 3,
           phase: 'dashboard',
           postMastery: cached,
         },

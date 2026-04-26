@@ -87,6 +87,18 @@ const SEED_STAGE = 4;
 
 const CORE_SLUGS = WORDS.filter((word) => word.spellingPool !== 'extra').map((word) => word.slug);
 
+// P2 U2: the composite invariant also covers postMega — once set, it must
+// NEVER revert to null across any action sequence. `SEED_POST_MEGA` stamps a
+// deterministic sticky record at seed-time so every harness starts with the
+// sticky-bit already present; the per-action invariant then asserts
+// `data.postMega` stays === the seed on every step.
+const SEED_POST_MEGA = Object.freeze({
+  unlockedAt: TODAY_MS - 3 * DAY_MS,
+  unlockedContentReleaseId: 'spelling-p2-baseline-2026-04-26',
+  unlockedPublishedCoreCount: CORE_SLUGS.length,
+  unlockedBy: 'all-core-stage-4',
+});
+
 function seedFullCoreMega(repositories, learnerId) {
   const progress = Object.fromEntries(CORE_SLUGS.map((slug) => [slug, {
     stage: SEED_STAGE,
@@ -97,7 +109,13 @@ function seedFullCoreMega(repositories, learnerId) {
     lastDay: SEED_LAST_DAY,
     lastResult: SEED_LAST_RESULT,
   }]));
-  repositories.subjectStates.writeData(learnerId, 'spelling', { progress, guardian: {} });
+  repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress,
+    guardian: {},
+    // P2 U2: seed the sticky-graduation record so every composite sequence
+    // asserts `postMega` never reverts to null across its action trace.
+    postMega: { ...SEED_POST_MEGA },
+  });
   return progress;
 }
 
@@ -146,6 +164,14 @@ function readProgressMap(harness) {
   }
 }
 
+// P2 U2: read the persisted `data.postMega` sibling for the composite
+// invariant assertion. Returns `null` when the bundle has no postMega (i.e.
+// the sticky-bit has been dropped — a regression we want the test to catch).
+function readPostMegaRecord(harness) {
+  const record = harness.repositories.subjectStates.read(harness.learnerId, 'spelling');
+  return record?.data?.postMega || null;
+}
+
 // -----------------------------------------------------------------------------
 // Invariant checks — called after every action in every sequence. Each
 // assertion includes the action + step index so a failure locates the exact
@@ -178,6 +204,39 @@ function assertMegaInvariant(progressMap, context) {
       `${context}: ${slug} lastResult mutated (${entry.lastResult} vs seed '${SEED_LAST_RESULT}')`,
     );
   }
+}
+
+// P2 U2: sticky-graduation never-revoked invariant. Once `data.postMega`
+// has been set, no action in the U1-U9 + U2 sticky surfaces may revert it
+// to null OR overwrite it with a different record. The assertion checks
+// both shape (non-null + all 4 fields present) and byte-equality against
+// SEED_POST_MEGA — a regression that rewrote the sticky-bit with a fresh
+// `unlockedAt` on every submit would be caught by the byte-equality check.
+function assertPostMegaInvariant(postMega, seedPostMega, context) {
+  assert.ok(
+    postMega,
+    `${context}: data.postMega reverted to null — sticky-graduation invariant violated`,
+  );
+  assert.equal(
+    postMega.unlockedAt,
+    seedPostMega.unlockedAt,
+    `${context}: postMega.unlockedAt mutated (${postMega.unlockedAt} vs seed ${seedPostMega.unlockedAt})`,
+  );
+  assert.equal(
+    postMega.unlockedContentReleaseId,
+    seedPostMega.unlockedContentReleaseId,
+    `${context}: postMega.unlockedContentReleaseId mutated`,
+  );
+  assert.equal(
+    postMega.unlockedPublishedCoreCount,
+    seedPostMega.unlockedPublishedCoreCount,
+    `${context}: postMega.unlockedPublishedCoreCount mutated`,
+  );
+  assert.equal(
+    postMega.unlockedBy,
+    seedPostMega.unlockedBy,
+    `${context}: postMega.unlockedBy mutated`,
+  );
 }
 
 // -----------------------------------------------------------------------------
@@ -430,6 +489,12 @@ function runSequence(harness, actions, { label } = {}) {
     emitted.push(...(result.events || []));
     const progressMap = readProgressMap(harness);
     assertMegaInvariant(progressMap, context);
+    // P2 U2 composite: sticky-graduation invariant runs side-by-side with the
+    // Mega-never-revoked one. A regression that cleared `data.postMega` on
+    // content-hotswap or on a second Mega-producing submit would trip here
+    // within the first few actions of seed-42.
+    const postMega = readPostMegaRecord(harness);
+    assertPostMegaInvariant(postMega, SEED_POST_MEGA, context);
   }
   return { state, events: emitted };
 }
@@ -595,6 +660,8 @@ test('U8b shape: All-wrong saturation (guardian-wrong / guardian-dontknow / boss
 test('U8b shape: Practice-only wrong-burst with wobbling seed leaves progress + guardian byte-identical', () => {
   const harness = makeHarness({ seed: 42, learnerId: 'learner-practiceonly' });
   // Seed two wobbling guardian records that a Guardian summary would dispatch.
+  // P2 U2: include the sticky postMega sibling so the composite invariant
+  // has a seed to assert against across the practice-only action burst.
   harness.repositories.subjectStates.writeData(harness.learnerId, 'spelling', {
     progress: Object.fromEntries(CORE_SLUGS.map((slug) => [slug, {
       stage: SEED_STAGE,
@@ -615,6 +682,7 @@ test('U8b shape: Practice-only wrong-burst with wobbling seed leaves progress + 
         correctStreak: 0, lapses: 1, renewals: 0, wobbling: true,
       },
     },
+    postMega: { ...SEED_POST_MEGA },
   });
   const beforeGuardian = structuredClone(
     harness.service.getPostMasteryState(harness.learnerId).guardianMap,
