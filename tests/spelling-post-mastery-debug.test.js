@@ -525,8 +525,16 @@ test('U1 edge: guardianMapCount reflects normalised guardian map size', () => {
 // --------------------------------------------------------------------------
 
 test('U1 error: client-read-models fallback stub attaches postMasteryDebug.source === "locked-fallback"', () => {
+  // P2 U4: the default read-model service now stamps source='checking' for
+  // the first 500ms of a learner's session (hydration window) and only
+  // falls through to 'locked-fallback' after the timeout. Disable the
+  // hydration window explicitly here so the legacy locked-fallback label
+  // remains visible — this test pins the UI's post-timeout fallback shape
+  // that the Admin hub depends on. The 'checking' transient is covered by
+  // tests in tests/spelling-remote-sync-hydration.test.js.
   const service = createSpellingReadModelService({
     getState: () => ({}),
+    hydrationWindowMs: 0,
   });
   const snapshot = service.getPostMasteryState('learner-a');
   assert.ok(snapshot.postMasteryDebug);
