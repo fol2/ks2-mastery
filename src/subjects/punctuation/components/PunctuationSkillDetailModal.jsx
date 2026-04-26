@@ -18,29 +18,40 @@
 // structurally incapable of leaking an accepted answer, validator, generator,
 // rubric, or any other forbidden read-model key (plan R13).
 //
-// "Practise this" dispatch contract (plan R3, verified against
-// `shared/punctuation/service.js:1281-1283`): the button closes the modal
-// FIRST, then dispatches `punctuation-start` with
-// `{ mode: 'guided', guidedSkillId: <skillId>, roundLength: '4' }`. Cluster
-// mode (e.g. `mode: 'speech', skillId: 'speech'`) would silently drop the
-// skill-pin because `guidedSkillId` is only honoured when `prefs.mode ===
-// 'guided'`.
+// "Practise this" dispatch contract (plan R3 + review-follower adv-231-003):
+// the button dispatches `punctuation-start` FIRST with
+// `{ mode: 'guided', guidedSkillId: <skillId>, roundLength: '4' }` and then
+// `punctuation-skill-detail-close`. If `punctuation-start` throws
+// `punctuation_content_unavailable` the runtime fallback replaces the scene;
+// inverting the order ensures that, on success, the Modal unmounts naturally
+// alongside the Map scene, and on failure the Modal stays mounted so the
+// learner keeps their context instead of being stranded on a runtime
+// fallback view. Cluster mode (e.g. `mode: 'speech', skillId: 'speech'`)
+// would silently drop the skill-pin because `guidedSkillId` is only honoured
+// when `prefs.mode === 'guided'`.
 //
 // Multi-skill paragraph caveat (plan R2): some skills participate in
 // `PUNCTUATION_ITEMS` entries whose `skillIds.length > 1`. For those, the
-// Practise tab renders a footnote — "Some practice questions may also
-// include other punctuation skills." — so a Guided-focus learner isn't
-// surprised by a multi-skill paragraph repair. `punctuationSkillHasMultiSkillItems`
-// returns the set membership from the client-safe mirror.
+// Practise tab renders a softened footnote — "You might see one or two
+// other punctuation skills too — that's normal!" — so a Guided-focus learner
+// isn't surprised by a multi-skill paragraph repair.
+// `punctuationSkillHasMultiSkillItems` returns the set membership from the
+// client-safe mirror.
 //
-// Accessibility: `role="dialog"`, `aria-modal="true"`, `aria-labelledby`
-// pointing at the skill-name <h2>. Close button + scrim click + Esc all
-// dispatch `punctuation-skill-detail-close`. A focus trap is NOT needed in
-// SSR (the harness renders once and doesn't mount an event bridge) — the
-// browser-side focus trap lives on the modal root via the standard Esc /
-// tab keydown handlers wired through `actions.dispatch`.
+// Accessibility (review-follower HIGH 2 + HIGH 3):
+// - The inner `.punctuation-skill-modal` card carries `role="dialog"`,
+//   `aria-modal="true"`, and `aria-labelledby` pointing at the scoped
+//   (per-skill) title id. The scrim remains a click-absorber with
+//   `aria-hidden="true"` — screen-reader users land on the dialog itself.
+// - The Close button carries `data-autofocus="true"` for the platform's
+//   autofocus wiring (`src/main.js` scopes the selector to
+//   `.wb-modal-scrim` only, so a `useEffect` + ref fallback focuses the
+//   Close button in every other mount path — dialog semantics land on
+//   open without the learner having to click first).
+// - Esc + Close button + scrim click all dispatch
+//   `punctuation-skill-detail-close`.
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import {
   PUNCTUATION_MAP_DETAIL_TAB_IDS,
@@ -106,7 +117,7 @@ function PractiseBody({ skillId, skillName, disabled, actions }) {
           className="punctuation-skill-modal-multi-skill-note muted"
           data-punctuation-skill-modal-multi-skill-note="true"
         >
-          Some practice questions may also include other punctuation skills.
+          You might see one or two other punctuation skills too — that's normal!
         </p>
       ) : null}
       <div className="punctuation-skill-modal-actions actions">
@@ -118,14 +129,19 @@ function PractiseBody({ skillId, skillName, disabled, actions }) {
           data-punctuation-start-skill
           data-skill-id={skillId}
           onClick={() => {
-            // Close modal before dispatching start so the Map→Session
-            // transition lands on a clean mapUi state (plan U6 approach).
-            actions.dispatch('punctuation-skill-detail-close');
+            // Review-follower adv-231-003: dispatch start FIRST, then close.
+            // If `punctuation-start` throws (e.g. `punctuation_content_unavailable`)
+            // the runtime fallback replaces the scene and the Modal would be
+            // gone before the learner could retry. Dispatching start first
+            // means: on success, the Modal unmounts naturally when the phase
+            // transitions to `active-item` (Map scene also unmounts); on
+            // failure, the Modal stays open so the learner keeps context.
             actions.dispatch('punctuation-start', {
               mode: 'guided',
               guidedSkillId: skillId,
               roundLength: '4',
             });
+            actions.dispatch('punctuation-skill-detail-close');
           }}
         >
           Practise this
@@ -136,6 +152,29 @@ function PractiseBody({ skillId, skillName, disabled, actions }) {
 }
 
 export function PunctuationSkillDetailModal({ skillId, detailTab = 'learn', ui, actions }) {
+  // Hooks must run before any early return so React sees the same order on
+  // every render — useRef is safe to call even when we ultimately return
+  // null below.
+  const closeButtonRef = useRef(null);
+  // Runtime autofocus fallback. The platform's `[data-autofocus="true"]`
+  // handler in `src/main.js` is scoped to `.wb-modal-scrim` (Spelling) so
+  // it does not reach this Punctuation modal. Focusing the Close button on
+  // mount hands screen-reader users the dialog announcement + a keyboard-
+  // actionable control on open. SSR tests assert on the `data-autofocus`
+  // attribute; this effect is the browser-only companion.
+  useEffect(() => {
+    if (!skillId) return undefined;
+    const button = closeButtonRef.current;
+    if (button && typeof button.focus === 'function') {
+      try {
+        button.focus();
+      } catch {
+        /* non-focusable platforms fall through */
+      }
+    }
+    return undefined;
+  }, [skillId]);
+
   if (typeof skillId !== 'string' || !skillId) return null;
   const content = punctuationSkillModalContent(skillId);
   if (!content) return null;
@@ -143,7 +182,10 @@ export function PunctuationSkillDetailModal({ skillId, detailTab = 'learn', ui, 
   const preferredExample = punctuationSkillModalPreferredExample(skillId);
   const safeTab = detailTab === 'practise' ? 'practise' : 'learn';
   const skillName = skillNameFor(skillId);
-  const titleId = 'punctuation-skill-detail-title';
+  // Review-follower LOW: scope the title id per-skill so the DOM cannot
+  // ever contain two elements with id `punctuation-skill-detail-title` —
+  // e.g. when tests render back-to-back with different skills.
+  const titleId = `punctuation-skill-detail-title-${skillId}`;
 
   const closeFromScrim = (event) => {
     // Only dismiss when the click landed on the scrim itself, not a child
@@ -163,17 +205,25 @@ export function PunctuationSkillDetailModal({ skillId, detailTab = 'learn', ui, 
   return (
     <div
       className="punctuation-skill-modal-scrim"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
       data-punctuation-skill-modal
       data-skill-id={skillId}
       data-detail-tab={safeTab}
       onClick={closeFromScrim}
       onKeyDown={handleKeyDown}
     >
+      {/* Scrim has no ARIA role — it is a click-absorber + visual overlay
+          only. Dialog semantics live on the inner card below so screen-
+          reader users land on the dialog landmark itself. `aria-hidden`
+          is intentionally NOT set on the scrim: React would propagate it
+          to the inner dialog subtree and hide the whole modal from AT. */}
       <div className="punctuation-skill-modal-backdrop" aria-hidden="true" />
-      <div className="punctuation-skill-modal" data-skill-id={skillId}>
+      <div
+        className="punctuation-skill-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        data-skill-id={skillId}
+      >
         <header className="punctuation-skill-modal-head">
           <div>
             <p className="punctuation-skill-modal-eyebrow">Punctuation skill</p>
@@ -181,8 +231,10 @@ export function PunctuationSkillDetailModal({ skillId, detailTab = 'learn', ui, 
           </div>
           <button
             type="button"
+            ref={closeButtonRef}
             className="punctuation-skill-modal-close"
             data-action="punctuation-skill-detail-close"
+            data-autofocus="true"
             aria-label="Close skill detail"
             onClick={() => actions.dispatch('punctuation-skill-detail-close')}
           >

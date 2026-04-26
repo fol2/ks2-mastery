@@ -523,12 +523,22 @@ export function punctuationSkillModalPreferredExample(skillId) {
 //
 // U6: the Skill Detail modal renders exactly 3 pedagogy fields per skill —
 // `rule`, `contrastBad`, and one of `workedGood` OR `contrastGood`. The
-// canonical source of these strings is `shared/punctuation/content.js`'s
+// canonical source for `rule` + `contrastBad` is `shared/punctuation/content.js`'s
 // `PUNCTUATION_SKILLS` roster, which the bundle-audit rule forbids from
-// reaching the browser bundle. This map is the client-safe mirror and must
-// stay in lock-step with the shared content's pedagogy fields — a drift test
-// in `tests/punctuation-view-model.test.js` verifies every entry here matches
-// its shared counterpart byte-for-byte.
+// reaching the browser bundle. The two example fields (`workedGood` +
+// `contrastGood`) are authored FRESH for the client mirror: for several
+// skills the shared `workedGood` / `contrastGood` are byte-for-byte identical
+// to `PUNCTUATION_ITEMS.accepted[*]` strings (a learner would see the exact
+// answer string in the Modal before a Practise round that expects them to
+// produce it). The client mirror deliberately diverges on the two example
+// fields so no rendered example collides with any accepted-answer string
+// for the owning skill. A red-team test in
+// `tests/punctuation-view-model.test.js` guards the disjoint property; a
+// narrower drift test still pins `rule` + `contrastBad` byte-for-byte.
+//
+// Child register: rules and examples use Year 3-5 vocabulary. No adult
+// register terms ("main clause", "fronted adverbial", "opening clause") —
+// those live only in the shared content for the marking engine.
 //
 // No other field from `PUNCTUATION_SKILLS` ships (no `workedBad`, no `phase`,
 // no `prereq`, no `published`). The modal's 3-field contract is enforced in
@@ -542,8 +552,8 @@ export const PUNCTUATION_SKILL_MODAL_CONTENT = Object.freeze({
   }),
   list_commas: Object.freeze({
     rule: 'Use commas to separate items in a list. In standard KS2 examples, the final comma before and is usually not needed.',
-    workedGood: 'We packed torches, maps and water.',
-    contrastGood: 'We packed torches, maps and water.',
+    workedGood: 'The team brought bats, balls and cones.',
+    contrastGood: 'The team brought bats, balls and cones.',
     contrastBad: 'We packed, torches maps, and water.',
   }),
   apostrophe_contractions: Object.freeze({
@@ -565,7 +575,7 @@ export const PUNCTUATION_SKILL_MODAL_CONTENT = Object.freeze({
     contrastBad: '"Where are you going"? asked Zara.',
   }),
   fronted_adverbial: Object.freeze({
-    rule: 'Put a comma after a fronted adverbial, such as At last, Before lunch, or Without warning.',
+    rule: 'Put a comma after the opening phrase that tells when, where, or how the action happens.',
     workedGood: 'Before lunch, we finished the poster.',
     contrastGood: 'Before lunch, we finished the poster.',
     contrastBad: 'Before lunch we, finished the poster.',
@@ -579,43 +589,43 @@ export const PUNCTUATION_SKILL_MODAL_CONTENT = Object.freeze({
   comma_clarity: Object.freeze({
     rule: 'A comma can make meaning clearer and avoid ambiguity.',
     workedGood: "Let's eat, Grandma.",
-    contrastGood: 'Most of the time, travellers worry about delays.',
+    contrastGood: 'After tea, the garden looked peaceful.',
     contrastBad: 'Most of the time travellers worry about delays.',
   }),
   colon_list: Object.freeze({
-    rule: 'A colon can introduce a list after a complete opening clause.',
-    workedGood: 'We needed three things: a torch, a map and a whistle.',
-    contrastGood: 'We needed three things: a torch, a map and a whistle.',
+    rule: 'A colon comes before a list, after a short sentence.',
+    workedGood: 'The bag held four items: a ruler, a pencil, a rubber and a book.',
+    contrastGood: 'The bag held four items: a ruler, a pencil, a rubber and a book.',
     contrastBad: 'We needed: three things a torch, a map and a whistle.',
   }),
   semicolon: Object.freeze({
-    rule: 'A semi-colon can join two closely related main clauses.',
-    workedGood: 'The rain had stopped; the pitch was still slippery.',
-    contrastGood: 'The rain had stopped; the pitch was still slippery.',
+    rule: 'A semicolon joins two short sentences that go together.',
+    workedGood: 'The bell rang; the class fell silent.',
+    contrastGood: 'The bell rang; the class fell silent.',
     contrastBad: 'The rain had stopped; and the pitch was still slippery.',
   }),
   dash_clause: Object.freeze({
-    rule: 'A dash can mark a sharp boundary between two closely related main clauses.',
-    workedGood: 'The path was flooded - we took the longer route.',
-    contrastGood: 'The path was flooded - we took the longer route.',
+    rule: 'A dash shows a sharp pause between two short sentences.',
+    workedGood: 'The bus was late - we walked instead.',
+    contrastGood: 'The bus was late - we walked instead.',
     contrastBad: 'The path was flooded -and we took the longer route.',
   }),
   semicolon_list: Object.freeze({
     rule: 'Use semi-colons to separate list items when each item already contains commas.',
-    workedGood: 'We visited York, England; Cardiff, Wales; and Belfast, Northern Ireland.',
-    contrastGood: 'We visited York, England; Cardiff, Wales; and Belfast, Northern Ireland.',
+    workedGood: 'We invited Ava, our captain; Zane, our goalie; and Priya, our coach.',
+    contrastGood: 'We invited Ava, our captain; Zane, our goalie; and Priya, our coach.',
     contrastBad: 'We visited York, England, Cardiff, Wales; and Belfast, Northern Ireland.',
   }),
   bullet_points: Object.freeze({
     rule: 'Use a colon after the opening stem when appropriate, and punctuate bullets consistently.',
-    workedGood: 'Bring:\n- a drink\n- a hat\n- a sketchbook',
-    contrastGood: 'Bring:\n- a drink\n- a hat\n- a sketchbook',
+    workedGood: 'Pack:\n- your shoes\n- your bottle\n- your book',
+    contrastGood: 'Pack:\n- your shoes\n- your bottle\n- your book',
     contrastBad: 'Bring\n- a drink\n- a hat\n- a sketchbook',
   }),
   hyphen: Object.freeze({
     rule: 'A hyphen can stop a phrase from being misunderstood, such as man-eating shark versus man eating shark.',
     workedGood: 'We saw a man-eating shark.',
-    contrastGood: 'The little-used room was locked.',
+    contrastGood: 'The ten-year-old jumper still fits.',
     contrastBad: 'The little used room was locked.',
   }),
 });

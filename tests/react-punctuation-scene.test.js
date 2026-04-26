@@ -773,15 +773,39 @@ test('punctuation Skill Detail modal renders with role=dialog, aria-modal, label
   openSkillDetailForSpeech(harness);
   const html = harness.render();
 
-  // Scrim carries the dialog semantics (learning #6 — SSR cannot assert focus
-  // trap, only static ARIA).
+  // Review-follower HIGH 3: the inner `.punctuation-skill-modal` card carries
+  // the dialog semantics — scrim is a click-absorber only, without any ARIA
+  // role. The inner-card match is paired with an id-suffix assertion to
+  // confirm the per-skill-scoped `aria-labelledby` (learning #6 — SSR cannot
+  // assert focus trap, only static ARIA).
   assert.match(html, /role="dialog"/);
   assert.match(html, /aria-modal="true"/);
-  assert.match(html, /aria-labelledby="punctuation-skill-detail-title"/);
+  assert.match(html, /aria-labelledby="punctuation-skill-detail-title-speech"/);
   assert.match(
     html,
-    /id="punctuation-skill-detail-title"[^>]*>Inverted commas and speech punctuation</,
-    'modal title must read the speech skill name',
+    /id="punctuation-skill-detail-title-speech"[^>]*>Inverted commas and speech punctuation</,
+    'modal title must read the speech skill name and carry the per-skill-scoped id',
+  );
+  // The scrim must NOT itself be a dialog — only the inner card. Paired
+  // state-level assertion catches any regression that re-hoists role=dialog
+  // onto the scrim.
+  assert.match(
+    html,
+    /<div class="punctuation-skill-modal-scrim"(?:[^>]*)>/,
+    'scrim element must render',
+  );
+  assert.doesNotMatch(
+    html,
+    /<div class="punctuation-skill-modal-scrim"[^>]*role="dialog"/,
+    'scrim must NOT carry role=dialog — dialog semantics live on the inner card',
+  );
+  // Close button carries data-autofocus for the dialog-focus contract
+  // (review-follower HIGH 2). SSR cannot verify the useEffect fallback
+  // actually focused — only that the attribute landed for AT announcement.
+  assert.match(
+    html,
+    /<button[^>]*data-action="punctuation-skill-detail-close"[^>]*data-autofocus="true"/,
+    'Close button must carry data-autofocus="true" for dialog focus announcement',
   );
 });
 
@@ -816,15 +840,21 @@ test('punctuation Skill Detail modal overrides to workedGood for comma_clarity (
   const html = harness.render();
 
   const content = PUNCTUATION_SKILL_MODAL_CONTENT.comma_clarity;
-  // comma_clarity's `contrastGood` is byte-for-byte identical to
-  // `cc_insert_time_travellers.accepted[0]`. The override to `workedGood`
-  // ("Let's eat, Grandma.") ensures the learner-facing modal does not leak
-  // the accepted answer string (plan R13 + Key Technical Decisions).
+  // comma_clarity's shared `contrastGood` was byte-for-byte identical to
+  // `cc_insert_time_travellers.accepted[0]`. The `PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE`
+  // override to `workedGood` ("Let's eat, Grandma.") is the primary guard;
+  // the client-mirror rewrite of `contrastGood` to a fresh example (which
+  // the red-team disjoint test in `tests/punctuation-view-model.test.js`
+  // asserts) is the belt-and-braces guard that neither example field can
+  // leak an accepted answer (plan R13 + review-follower HIGH 1).
   assert.equal(PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE.comma_clarity, 'workedGood');
   assert.ok(
     html.includes(escapeForReactSsr(content.workedGood)),
     'workedGood override must render',
   );
+  // The mirror's new contrastGood (disjoint from accepted[*]) must NOT
+  // render when the preferred example is workedGood.
+  assert.notStrictEqual(content.workedGood, content.contrastGood);
   assert.ok(
     !html.includes(escapeForReactSsr(content.contrastGood)),
     'contrastGood must NOT render when override is workedGood (comma_clarity)',
@@ -843,13 +873,16 @@ test('punctuation Skill Detail modal "Practise this" dispatches Guided + guidedS
     '"Practise this" button must mark the skill id',
   );
 
-  // Simulate the button's dispatch chain: close modal, then start.
-  harness.dispatch('punctuation-skill-detail-close');
+  // Simulate the button's dispatch chain in the review-follower-inverted
+  // order: start FIRST, then close. On success the Modal unmounts
+  // naturally alongside the Map scene; on failure it stays open so the
+  // learner keeps their context (review-follower adv-231-003).
   harness.dispatch('punctuation-start', {
     mode: 'guided',
     guidedSkillId: 'speech',
     roundLength: '4',
   });
+  harness.dispatch('punctuation-skill-detail-close');
 
   // Paired state-level assertion: catches the cluster-mode silent-drop bug.
   // If a future refactor reverts to `{ mode: 'speech', skillId: 'speech' }`,
@@ -870,12 +903,15 @@ test('punctuation Skill Detail modal "Practise this" pins the correct skill in a
   // apostrophe_possession. The old cluster-mode dispatch would silently pick
   // either one; Guided-focus must pin the exact skill the learner tapped.
   harness.dispatch('punctuation-skill-detail-open', { skillId: 'apostrophe_contractions' });
-  harness.dispatch('punctuation-skill-detail-close');
+  // Review-follower adv-231-003: start dispatch fires before close, but for
+  // the happy-path state assertion the ordering is equivalent — state still
+  // lands on guided+apostrophe_contractions.
   harness.dispatch('punctuation-start', {
     mode: 'guided',
     guidedSkillId: 'apostrophe_contractions',
     roundLength: '4',
   });
+  harness.dispatch('punctuation-skill-detail-close');
 
   const state = harness.store.getState().subjectUi.punctuation;
   assert.strictEqual(state.session.mode, 'guided');
@@ -1014,13 +1050,15 @@ test('punctuation Skill Detail modal renders multi-skill footnote for Speech (pa
   openSkillDetailForSpeech(harness);
   // speech appears in sp_fa_transfer_at_last_speech + pg_fronted_speech +
   // pg_parenthesis_speech — i.e. PUNCTUATION_ITEMS entries with
-  // `skillIds.length > 1`. The caveat footnote must render on Practise.
+  // `skillIds.length > 1`. The caveat footnote must render on Practise in
+  // the review-follower-softened child register ("You might see one or two
+  // other punctuation skills too — that's normal!").
   harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
   const html = harness.render();
   assert.match(
     html,
-    /Some practice questions may also include other punctuation skills\./,
-    'Speech must surface the multi-skill caveat footnote',
+    /You might see one or two other punctuation skills too/,
+    'Speech must surface the child-register multi-skill caveat footnote',
   );
   assert.match(html, /data-punctuation-skill-modal-multi-skill-note="true"/);
 });
@@ -1035,7 +1073,7 @@ test('punctuation Skill Detail modal does NOT render multi-skill footnote for a 
   // caveat footnote in the HTML.
   assert.doesNotMatch(
     html,
-    /Some practice questions may also include other punctuation skills\./,
+    /You might see one or two other punctuation skills too/,
     'hyphen must NOT surface the multi-skill caveat footnote',
   );
 });

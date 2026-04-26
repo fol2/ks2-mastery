@@ -9602,3 +9602,50 @@ html { scroll-behavior: smooth; }
     animation: none !important;
   }
 }
+
+/* ---------- Phase 3 U6 · Punctuation Skill Detail modal (minimal) ----------
+   Review-follower MEDIUM 4: co-ship the smallest-surface CSS needed for the
+   modal to be tappable + identifiable. Full styling sweep lands in U10. The
+   Bellstorm top border is the subject accent; the 44x44 close button meets
+   the KS2 touch-target floor; the reduced-motion guard is defence-in-depth
+   for the scrim/modal animations U10 will author. */
+.punctuation-skill-modal-scrim {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background: rgba(15, 22, 32, 0.48);
+  z-index: 100;
+}
+.punctuation-skill-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  z-index: 1;
+}
+.punctuation-skill-modal {
+  position: relative;
+  z-index: 2;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid #B8873F; /* Bellstorm Coast subject accent */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 600px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 28px 32px 22px;
+}
+.punctuation-skill-modal-close {
+  min-width: 44px;
+  min-height: 44px; /* KS2 touch target floor */
+}
+@media (prefers-reduced-motion: reduce) {
+  .punctuation-skill-modal-scrim,
+  .punctuation-skill-modal {
+    animation: none;
+  }
+}

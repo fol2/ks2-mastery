@@ -734,20 +734,78 @@ test('U5 drift: PUNCTUATION_CLIENT_SKILL_IDS stays in lock-step with PUNCTUATION
 // ---------------------------------------------------------------------------
 // U6 — PUNCTUATION_SKILL_MODAL_CONTENT drift against shared/punctuation/content.js
 // ---------------------------------------------------------------------------
+//
+// Review-follower HIGH 1 relaxation. The client mirror intentionally diverges
+// from the shared source on TWO axes:
+//
+//   1. `workedGood` + `contrastGood` — 6 skills had shared values that were
+//      byte-for-byte identical to a `PUNCTUATION_ITEMS.accepted[*]` string
+//      for that skill (plus `hyphen.contrastGood`). The Modal would leak
+//      accepted answers before a Practise round. The mirror authors fresh
+//      KS2-friendly examples that are disjoint from the item bank.
+//   2. `rule` — 4 skills (semicolon, colon_list, dash_clause,
+//      fronted_adverbial) had shared rules phrased in adult register
+//      ("main clauses", "opening clause", "fronted adverbial"). The
+//      mirror rewrites these in Year 3-5 child register.
+//
+// `contrastBad` stays canonical (the Learn tab's "Common mix-up" shows the
+// specific pattern the marking engine also penalises — it must match the
+// marking-side source exactly). The red-team disjoint test below replaces
+// the blanket drift test for the two example fields + rule.
 
-test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT mirrors PUNCTUATION_SKILLS pedagogy fields byte-for-byte', () => {
-  // The modal's client-safe mirror must match the shared source exactly. A
-  // drift here would mean the Learn tab renders stale copy against an updated
-  // shared ruleset. Each of the 4 modal fields (rule, workedGood, contrastGood,
-  // contrastBad) is compared string-equality.
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT.contrastBad mirrors PUNCTUATION_SKILLS byte-for-byte', () => {
+  // `contrastBad` stays canonical — the Learn tab's "Common mix-up" must
+  // match the shared source (which the marking engine also consumes).
   for (const skill of PUNCTUATION_SKILLS) {
     const mirror = PUNCTUATION_SKILL_MODAL_CONTENT[skill.id];
     assert.ok(mirror, `client mirror missing entry for ${skill.id}`);
-    for (const field of ['rule', 'workedGood', 'contrastGood', 'contrastBad']) {
-      assert.strictEqual(
-        mirror[field],
-        skill[field],
-        `PUNCTUATION_SKILL_MODAL_CONTENT.${skill.id}.${field} drifted from shared/punctuation/content.js`,
+    assert.strictEqual(
+      mirror.contrastBad,
+      skill.contrastBad,
+      `PUNCTUATION_SKILL_MODAL_CONTENT.${skill.id}.contrastBad drifted from shared/punctuation/content.js`,
+    );
+  }
+});
+
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT.rule is non-empty, child-safe, and within reasonable length for every skill', () => {
+  // The mirror's rule field may diverge from the shared source (child
+  // register rewrite). But every rule must be non-empty, a plain string,
+  // within a sensible length budget, and pass the forbidden-term filter so
+  // no adult jargon leaks via this axis.
+  for (const skill of PUNCTUATION_SKILLS) {
+    const mirror = PUNCTUATION_SKILL_MODAL_CONTENT[skill.id];
+    assert.ok(mirror, `client mirror missing entry for ${skill.id}`);
+    assert.equal(typeof mirror.rule, 'string');
+    assert.ok(mirror.rule.length > 0, `${skill.id}.rule must be non-empty`);
+    assert.ok(mirror.rule.length <= 240, `${skill.id}.rule must fit KS2 reading budget`);
+    assert.ok(
+      isPunctuationChildCopy(mirror.rule),
+      `${skill.id}.rule contains a forbidden term: ${JSON.stringify(mirror.rule)}`,
+    );
+  }
+});
+
+test('U6 red-team: PUNCTUATION_SKILL_MODAL_CONTENT example fields are disjoint from PUNCTUATION_ITEMS.accepted[*] for the owning skill', () => {
+  // Review-follower HIGH 1 — the modal example fields (workedGood +
+  // contrastGood) AND the common mix-up (contrastBad) must NOT be
+  // byte-for-byte identical to any `accepted[*]` string from a
+  // PUNCTUATION_ITEMS entry that includes this skill. Otherwise the Learn
+  // tab leaks an accepted answer before the learner has attempted a
+  // Practise round on it.
+  for (const [skillId, mirror] of Object.entries(PUNCTUATION_SKILL_MODAL_CONTENT)) {
+    const acceptedSet = new Set();
+    for (const item of PUNCTUATION_ITEMS) {
+      if (!Array.isArray(item.skillIds) || !item.skillIds.includes(skillId)) continue;
+      if (!Array.isArray(item.accepted)) continue;
+      for (const entry of item.accepted) acceptedSet.add(entry);
+    }
+    for (const field of ['workedGood', 'contrastGood', 'contrastBad']) {
+      const value = mirror[field];
+      assert.equal(typeof value, 'string');
+      assert.ok(value.length > 0, `${skillId}.${field} must be non-empty`);
+      assert.ok(
+        !acceptedSet.has(value),
+        `${skillId}.${field} ("${value}") leaks a PUNCTUATION_ITEMS.accepted[*] string — the Modal would render an accepted answer. Author a fresh KS2-friendly example.`,
       );
     }
   }
