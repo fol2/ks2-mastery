@@ -198,10 +198,79 @@ test('U2: scopeAnalytics returns a narrowed substring on well-formed HTML', () =
 });
 
 // -----------------------------------------------------------------------------
+// Follower-up adversarial surface — nested-outer wrapper + duplicate landmark
+// -----------------------------------------------------------------------------
+//
+// A reviewer reproduction fed a landmark nested inside a same-type outer
+// wrapper: `<section class="outer"><section data-grammar-phase-root=
+// "dashboard">INNER</section><p>OUTER-TEXT</p></section><details class=
+// "grammar-grown-up-view">`. The pre-follower lazy-regex scoper returned
+// scoped output with the trailing `<p>OUTER-TEXT</p></section>` still
+// attached — adult copy would leak into the child sweep. The hardened
+// depth-balanced helper either returns only the inner landmark's own
+// subtree or throws loud if the expected sibling boundary is violated.
+//
+// A second attack fed two same-phase landmarks in the same HTML. The
+// pre-follower scoper silently merged both subtrees into one scoped
+// string; the hardened helper throws with a `duplicate ... landmark`
+// message so a stale fixture fails loud.
+
+test('U2: scopeDashboard rejects nested-outer wrapper attack (no trailing OUTER-TEXT leak)', () => {
+  // Reviewer's exact reproduction. Either the scoper narrows correctly
+  // (no `OUTER-TEXT`) or it throws. Both outcomes are acceptable — the
+  // one outcome that is NOT acceptable is returning a scoped string that
+  // contains `OUTER-TEXT`, because that is the adult-copy leak this
+  // follower is defending against.
+  const attack = '<section class="outer"><section data-grammar-phase-root="dashboard">INNER</section><p>OUTER-TEXT</p></section><details class="grammar-grown-up-view">';
+  let scoped = null;
+  let threw = null;
+  try {
+    scoped = scopeDashboard(attack);
+  } catch (err) {
+    threw = err;
+  }
+  if (threw) {
+    assert.match(
+      threw.message,
+      /scopeDashboard: (no data-grammar-phase-root="dashboard" landmark found|duplicate data-grammar-phase-root="dashboard" landmark)/,
+      'throw message must identify the scoper and the failure mode',
+    );
+    return;
+  }
+  assert.ok(scoped !== null, 'scoper must either throw or return a narrowed string');
+  assert.doesNotMatch(
+    scoped,
+    /OUTER-TEXT/,
+    'scoped output must not carry the trailing outer-wrapper text — adult-copy leak class bug',
+  );
+});
+
+test('U2: scopeSummary rejects duplicate-landmark attack with clear error', () => {
+  // Two stale-landmark `<div>`s in the same HTML would silently merge
+  // into one scoped string under the old lazy regex. The follower
+  // requires a clear, named throw so the fixture author sees the defect.
+  const attack = '<main><div data-grammar-phase-root="summary">STALE</div><div data-grammar-phase-root="summary">FRESH</div></main>';
+  assert.throws(
+    () => scopeSummary(attack),
+    /scopeSummary: duplicate data-grammar-phase-root="summary" landmark/,
+    'duplicate-landmark attack must surface a dedicated throw',
+  );
+});
+
+// -----------------------------------------------------------------------------
 // Integration — live harness renders produce HTML that the hardened scopers
 // accept without throwing, and the scoped substring is strictly narrower
 // than the raw HTML (proving the narrowing actually fires).
 // -----------------------------------------------------------------------------
+
+// Phrases that appear only inside the adult `<details class=
+// "grammar-grown-up-view">` disclosure. A reviewer finding pointed out
+// that the prior integration assertions (landmark present + some
+// narrowing) did not catch scope-leak — a regex that captured too much
+// would still carry both a landmark substring AND trailing adult copy
+// while being length-narrower than `rawHtml`. The absence assertions
+// below fail fast on that class of defect for the five child phases.
+const ADULT_MARKERS = Object.freeze(['grammar-grown-up-view', 'Evidence snapshot']);
 
 const LIVE_HARNESS_PHASES = Object.freeze([
   'dashboard',
@@ -211,6 +280,11 @@ const LIVE_HARNESS_PHASES = Object.freeze([
   'transfer',
   'analytics',
 ]);
+
+// Only `analytics` legitimately carries the adult copy; every other live
+// phase in the harness is a child scene whose scoped output must exclude
+// the disclosure and its adult vocabulary.
+const ADULT_LIVE_PHASES = Object.freeze(['analytics']);
 
 for (const phase of LIVE_HARNESS_PHASES) {
   test(`U2: live ${phase} render carries the data-grammar-phase-root landmark`, () => {
@@ -230,5 +304,35 @@ for (const phase of LIVE_HARNESS_PHASES) {
       html.length < rawHtml.length,
       `${phase} scoped HTML (${html.length}) must be strictly narrower than raw HTML (${rawHtml.length})`,
     );
+    // Child phases must exclude every adult marker. The analytics phase
+    // is exempt — it IS the adult surface and legitimately carries
+    // `Evidence snapshot` etc. Splitting the assertion this way makes a
+    // silent scope-leak in any child phase fail loud.
+    if (!ADULT_LIVE_PHASES.includes(phase)) {
+      for (const marker of ADULT_MARKERS) {
+        assert.ok(
+          !html.includes(marker),
+          `${phase} scoped HTML must NOT contain adult marker "${marker}" — scope leak`,
+        );
+      }
+    }
   });
 }
+
+// Dedicated characterisation test that names the attack surface explicitly
+// for the dashboard live render. A reviewer follow-up flagged the risk that
+// a regex variant could still narrow `html.length < rawHtml.length` while
+// carrying the adult disclosure — this test spells out that exact guard in
+// a standalone case so a future regression cannot silently slip past the
+// parameterised loop above.
+test('U2: live dashboard scoped HTML excludes the grown-up-view disclosure (adult-copy absence)', () => {
+  const { html } = renderGrammarChildPhaseFixture('dashboard');
+  assert.ok(
+    !html.includes('grammar-grown-up-view'),
+    'dashboard scoped HTML must not contain the grown-up-view disclosure class — adult scope leak',
+  );
+  assert.ok(
+    !html.includes('Evidence snapshot'),
+    'dashboard scoped HTML must not contain the Evidence snapshot adult phrase — adult scope leak',
+  );
+});
