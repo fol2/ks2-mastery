@@ -2,7 +2,7 @@ import { monsterSummaryFromSpellingAnalytics } from '../../../platform/game/mons
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { monsterVisualFrameStyle } from '../../../platform/game/monster-visual-style.js';
 import { formatElapsedMinutes } from '../../../platform/core/utils.js';
-import { isGuardianEligibleSlug } from '../service-contract.js';
+import { createLockedPostMasteryState, isGuardianEligibleSlug } from '../service-contract.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -914,15 +914,16 @@ export function buildSpellingContext({ appState, service, repositories, subject 
   // does not consult these, so we skip the storage read there to keep the
   // session hot-path cheap.
   const postMasteryPhases = new Set(['dashboard', 'summary', 'word-bank']);
+  // When the session-phase shortcut skips the service read, we still
+  // hand the dashboard a structurally complete snapshot so every field the
+  // PostMegaSetupContent (or later Guardian summary) reads is defined.
+  // Uses the same factory as `client-read-models.js` so the three
+  // historical fallback shapes stay in sync.
   const postMastery = postMasteryPhases.has(ui.phase) && typeof service.getPostMasteryState === 'function'
     ? service.getPostMasteryState(learner.id)
     : {
-        allWordsMega: false,
-        guardianDueCount: 0,
-        wobblingCount: 0,
-        nextGuardianDueDay: null,
+        ...createLockedPostMasteryState(),
         todayDay: Math.floor(Date.now() / DAY_MS),
-        guardianMap: {},
       };
   return {
     learner,

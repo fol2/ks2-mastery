@@ -42,7 +42,7 @@ function makeLearner(name = 'Learner 1') {
   };
 }
 
-function buildSubjectUiState(subject, persistedEntry = null) {
+function buildSubjectUiState(subject, persistedEntry = null, { rehydrate = false } = {}) {
   const initialState = subject.initState();
   if (!initialState || typeof initialState !== 'object' || Array.isArray(initialState)) {
     throw new TypeError(`Subject "${subject.id}" initState() must return an object.`);
@@ -52,17 +52,28 @@ function buildSubjectUiState(subject, persistedEntry = null) {
     ? persistedEntry
     : null;
 
+  // On rehydrate (boot over a persisted `subjectStates` snapshot), subjects
+  // may opt-in to sanitise the persisted entry before it merges over
+  // defaults — typically to strip session-ephemeral fields (e.g. Punctuation
+  // U5's `phase: 'map'` + `mapUi`) that must never echo back across a
+  // reload. Live `updateSubjectUi` dispatches (which rebuild entries from
+  // the current in-memory snapshot) pass `rehydrate: false`, so the Map
+  // phase remains legitimate while the session is active.
+  const sanitisedPersisted = (rehydrate && persisted && typeof subject.sanitiseUiOnRehydrate === 'function')
+    ? subject.sanitiseUiOnRehydrate(persisted)
+    : persisted;
+
   return {
     ...DEFAULT_SUBJECT_UI,
     ...initialState,
-    ...(persisted || {}),
+    ...(sanitisedPersisted || {}),
   };
 }
 
-function buildSubjectUiTree(subjects, persistedUi = {}) {
+function buildSubjectUiTree(subjects, persistedUi = {}, { rehydrate = false } = {}) {
   return Object.fromEntries(subjects.map((subject) => [
     subject.id,
-    buildSubjectUiState(subject, persistedUi[subject.id] || null),
+    buildSubjectUiState(subject, persistedUi[subject.id] || null, { rehydrate }),
   ]));
 }
 
@@ -269,12 +280,12 @@ function stateFromRepositories(subjects, repositories) {
   };
 }
 
-function sanitiseState(rawState, subjects) {
+function sanitiseState(rawState, subjects, { rehydrate = false } = {}) {
   const learners = normaliseLearnersSnapshot(rawState?.learners);
   return {
     route: normaliseRoute(rawState?.route, subjects),
     learners,
-    subjectUi: buildSubjectUiTree(subjects, rawState?.subjectUi || {}),
+    subjectUi: buildSubjectUiTree(subjects, rawState?.subjectUi || {}, { rehydrate }),
     persistence: normalisePersistenceSnapshot(rawState?.persistence),
     transientUi: normaliseTransientUi(rawState?.transientUi),
     toasts: normaliseToasts(rawState?.toasts),
@@ -285,13 +296,24 @@ function sanitiseState(rawState, subjects) {
 function subjectUiForLearner(registry, repositories, learnerId) {
   const records = learnerId ? repositories.subjectStates.readForLearner(learnerId) : {};
   const persistedUi = Object.fromEntries(Object.entries(records).map(([subjectId, record]) => [subjectId, record.ui]));
-  return buildSubjectUiTree(registry, persistedUi);
+  // Switching between learners re-reads each subject's UI from the persisted
+  // snapshot, so this is a rehydrate path too — ephemeral fields (e.g.
+  // Punctuation's `phase: 'map'`) must be sanitised on entry.
+  return buildSubjectUiTree(registry, persistedUi, { rehydrate: true });
 }
 
 export function createStore(subjects, { repositories, cacheSubjectUiWrites = false } = {}) {
   const registry = buildSubjectRegistry(subjects);
   const resolvedRepositories = validatePlatformRepositories(repositories);
-  let state = sanitiseState(stateFromRepositories(registry, resolvedRepositories), registry);
+  // Initial bootstrap reads every subject UI from the persisted snapshot —
+  // this is the canonical rehydrate path, so ephemeral fields (e.g.
+  // Punctuation U5's `phase: 'map'` + `mapUi`) get sanitised before the
+  // store serves its first `getState()`.
+  let state = sanitiseState(
+    stateFromRepositories(registry, resolvedRepositories),
+    registry,
+    { rehydrate: true },
+  );
   const listeners = new Set();
 
   function notify() {
@@ -304,6 +326,9 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
 
   function setState(updater) {
     const nextState = typeof updater === 'function' ? updater(state) : updater;
+    // Live updates: rehydrate flag stays false, so session-ephemeral
+    // sanitisers fire only on bootstrap / learner switch, never on each
+    // dispatch.
     state = sanitiseState(nextState, registry);
     notify();
   }
@@ -321,13 +346,22 @@ export function createStore(subjects, { repositories, cacheSubjectUiWrites = fal
     const previousRoute = state.route;
     const previousMonsterCelebrations = state.monsterCelebrations;
     const nextState = stateFromRepositories(registry, resolvedRepositories);
+    // adv-219-006: `reloadFromRepositories` re-reads every subject UI entry
+    // from the persisted `subjectStates` snapshot, which makes this a
+    // rehydrate path just like bootstrap (createStore) and learner-switch
+    // (subjectUiForLearner). Without `rehydrate: true` the persisted entry
+    // would shallow-merge straight over defaults, echoing
+    // `phase: 'map'` + `mapUi` back into in-memory state — defeating the
+    // bootstrap sanitiser on persistence-retry, learner-deletion,
+    // server-synced settings, clear-all-progress, import-snapshot, and the
+    // Punctuation command response adapter. Thread the flag through.
     state = sanitiseState({
       ...nextState,
       route: preserveRoute ? previousRoute : nextState.route,
       monsterCelebrations: preserveMonsterCelebrations
         ? previousMonsterCelebrations
         : nextState.monsterCelebrations,
-    }, registry);
+    }, registry, { rehydrate: true });
     notify();
     return state;
   }

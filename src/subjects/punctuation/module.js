@@ -1,4 +1,12 @@
-import { createInitialPunctuationState } from './service-contract.js';
+import {
+  createInitialPunctuationState,
+  isPublishedPunctuationSkillId,
+  normalisePunctuationMapUi,
+  sanitisePunctuationUiOnRehydrate,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+  PUNCTUATION_OPEN_MAP_ALLOWED_PHASES,
+} from './service-contract.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../platform/core/subject-availability.js';
 
 function applyTransition(context, transition) {
@@ -29,6 +37,13 @@ export const punctuationModule = {
   reactPractice: true,
   initState() {
     return createInitialPunctuationState();
+  },
+  // U5 (adv-219-001): Map phase + mapUi are session-ephemeral. The store's
+  // rehydrate path invokes this hook once per boot on the persisted entry;
+  // `phase === 'map'` is coerced back to `'setup'` and `mapUi` is stripped
+  // so a reload never lands on the Map phase with stale filter state.
+  sanitiseUiOnRehydrate(entry) {
+    return sanitisePunctuationUiOnRehydrate(entry);
   },
   getDashboardStats(appState, { service }) {
     const learnerId = appState.learners.selectedId;
@@ -80,7 +95,169 @@ export const punctuationModule = {
     }
 
     if (action === 'punctuation-back') {
-      store.updateSubjectUi('punctuation', { phase: 'setup', error: '' });
+      // Returning from the Map phase should clear the ephemeral detail modal
+      // state; other phases do not carry a mapUi field so the reset is a
+      // no-op for them. Subsequent Map re-opens start from defaults anyway,
+      // but explicitly clearing detailOpenSkillId keeps the state clean in
+      // tests that interleave phases.
+      const nextMapUi = ui.phase === 'map' && ui.mapUi
+        ? { ...normalisePunctuationMapUi(ui.mapUi), detailOpenSkillId: null }
+        : undefined;
+      store.updateSubjectUi('punctuation', {
+        phase: 'setup',
+        error: '',
+        ...(nextMapUi ? { mapUi: nextMapUi } : {}),
+      });
+      return true;
+    }
+
+    // --- U5: Punctuation Map phase handlers ---------------------------------
+    //
+    // All four handlers below are pure UI-state mutations — no Worker
+    // command is issued. They toggle the local `phase` / `mapUi` carried on
+    // `subjectUi.punctuation`. Invalid payloads return `false` so the
+    // caller (adapter layer) treats the dispatch as a miss rather than a
+    // silent success (pairs with learning #7 — "HTML absence tests pass
+    // whether a command genuinely fails closed or silently does nothing").
+
+    if (action === 'punctuation-open-map') {
+      // adv-219-002 guard: `punctuation-open-map` is only a legitimate
+      // affordance from Setup (the dashboard Map link) and Summary (the
+      // next-action button on the Summary scene per plan line 519). A
+      // dispatch from `active-item` / `feedback` / `unavailable` / `error`
+      // / `map` itself would otherwise leave a zombie `session` +
+      // `feedback` under `phase: 'map'` thanks to the shallow-merge store
+      // path. Refuse the transition so the caller treats the dispatch as a
+      // miss rather than a silent success.
+      if (!PUNCTUATION_OPEN_MAP_ALLOWED_PHASES.includes(ui.phase)) {
+        return false;
+      }
+      store.updateSubjectUi('punctuation', {
+        phase: 'map',
+        error: '',
+        // Clear feedback defensively — summary-phase transitions in
+        // `active-item → feedback → summary` already null it, but a
+        // belt-and-braces reset here means no open-map path ever lands on
+        // a feedback payload from an earlier session.
+        feedback: null,
+        mapUi: normalisePunctuationMapUi(),
+      });
+      return true;
+    }
+
+    if (action === 'punctuation-close-map') {
+      // Parallel to `punctuation-back` when already in the Map phase. Split
+      // as its own action so the Map scene's close-button dispatch is
+      // semantically distinct from the generic back-to-dashboard path.
+      //
+      // adv-219-008 guard: round-2's adv-219-007 pass tightened the five
+      // Map-scoped filter / detail handlers but missed this sixth. Without
+      // the guard, a stray dispatch from `active-item` / `feedback` /
+      // `summary` / `setup` / `error` unconditionally writes
+      // `{ phase: 'setup', error: '', mapUi: <default> }` which destroys a
+      // live session AND seeds a default mapUi payload into state +
+      // localStorage (tempting the rehydrate path into restoring filter
+      // state across reloads that sanitisePunctuationUiOnRehydrate would
+      // otherwise clear). Refuse from non-map phases so the caller treats
+      // the dispatch as a miss rather than a silent success (learning #7).
+      if (ui.phase !== 'map') return false;
+      const nextMapUi = {
+        ...normalisePunctuationMapUi(ui.mapUi),
+        detailOpenSkillId: null,
+      };
+      store.updateSubjectUi('punctuation', {
+        phase: 'setup',
+        error: '',
+        mapUi: nextMapUi,
+      });
+      return true;
+    }
+
+    if (action === 'punctuation-map-status-filter') {
+      // adv-219-007: all five Map-scoped handlers below must gate on
+      // `ui.phase === 'map'`. A dispatch from Setup / active-item / feedback
+      // / summary / unavailable / error would otherwise seed `mapUi` into
+      // state + localStorage, which then tempts the rehydrate path into
+      // restoring filter state across reloads that the adv-219-001 /
+      // adv-219-006 sanitiser would otherwise clear. Return false so the
+      // caller treats the dispatch as a miss rather than a silent success.
+      if (ui.phase !== 'map') return false;
+      const value = typeof data?.value === 'string' ? data.value : '';
+      if (!PUNCTUATION_MAP_STATUS_FILTER_IDS.includes(value)) return false;
+      const nextMapUi = {
+        ...normalisePunctuationMapUi(ui.mapUi),
+        statusFilter: value,
+      };
+      store.updateSubjectUi('punctuation', { mapUi: nextMapUi });
+      return true;
+    }
+
+    if (action === 'punctuation-map-monster-filter') {
+      // adv-219-007: phase guard — see punctuation-map-status-filter above.
+      if (ui.phase !== 'map') return false;
+      const value = typeof data?.value === 'string' ? data.value : '';
+      if (!PUNCTUATION_MAP_MONSTER_FILTER_IDS.includes(value)) return false;
+      const nextMapUi = {
+        ...normalisePunctuationMapUi(ui.mapUi),
+        monsterFilter: value,
+      };
+      store.updateSubjectUi('punctuation', { mapUi: nextMapUi });
+      return true;
+    }
+
+    // --- U5 deviation: Skill Detail modal state handlers -------------------
+    //
+    // U6 will create the PunctuationSkillDetailModal component that consumes
+    // `mapUi.detailOpenSkillId` + `mapUi.detailTab`. The three handlers
+    // below land in U5 so the Map scene's "Open details" / "Practise this"
+    // buttons dispatch a real state delta today rather than dead-ending
+    // until U6 arrives. Pure UI-state mutations, no Worker side-effect.
+    // Recorded in the PR body as an intentional deviation from the plan's
+    // strict unit boundary.
+
+    if (action === 'punctuation-skill-detail-open') {
+      // adv-219-007: phase guard — detail state is Map-scoped.
+      if (ui.phase !== 'map') return false;
+      // adv-219-004: skillId must be a published Punctuation skill id so the
+      // U6 Skill Detail modal never opens against a rogue payload.
+      // `isPublishedPunctuationSkillId` gates both the string shape and the
+      // membership check against the frozen `PUNCTUATION_CLIENT_SKILL_IDS`
+      // list in service-contract. Unknown ids return `false` — the store is
+      // not touched and the caller treats the dispatch as a miss.
+      if (!isPublishedPunctuationSkillId(data?.skillId)) return false;
+      const skillId = data.skillId;
+      const rawTab = typeof data?.tab === 'string' ? data.tab : 'learn';
+      const detailTab = rawTab === 'practise' ? 'practise' : 'learn';
+      const nextMapUi = {
+        ...normalisePunctuationMapUi(ui.mapUi),
+        detailOpenSkillId: skillId,
+        detailTab,
+      };
+      store.updateSubjectUi('punctuation', { mapUi: nextMapUi });
+      return true;
+    }
+
+    if (action === 'punctuation-skill-detail-close') {
+      // adv-219-007: phase guard — detail state is Map-scoped.
+      if (ui.phase !== 'map') return false;
+      const nextMapUi = {
+        ...normalisePunctuationMapUi(ui.mapUi),
+        detailOpenSkillId: null,
+      };
+      store.updateSubjectUi('punctuation', { mapUi: nextMapUi });
+      return true;
+    }
+
+    if (action === 'punctuation-skill-detail-tab') {
+      // adv-219-007: phase guard — detail state is Map-scoped.
+      if (ui.phase !== 'map') return false;
+      const rawTab = typeof data?.value === 'string' ? data.value : '';
+      if (rawTab !== 'learn' && rawTab !== 'practise') return false;
+      const nextMapUi = {
+        ...normalisePunctuationMapUi(ui.mapUi),
+        detailTab: rawTab,
+      };
+      store.updateSubjectUi('punctuation', { mapUi: nextMapUi });
       return true;
     }
 

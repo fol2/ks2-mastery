@@ -483,6 +483,13 @@ export function createAppController({
     getSnapshot,
     subscribe,
     dispatch,
+    // Exposed for tests that need the subject-handler's truthy/falsy return
+    // value. Production callers should always use `dispatch` (which wraps
+    // `handleSubjectAction` in the autoAdvance / audio lifecycle and
+    // swallows the boolean); adv-219-007's refuse-to-dispatch assertion
+    // pairs the raw handler return with a state-level check to close
+    // learning #7's silent-no-op gap.
+    handleSubjectAction,
     keydown,
     autoAdvance,
     scheduler,

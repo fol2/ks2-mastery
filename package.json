@@ -41,12 +41,15 @@
     "smoke:production:effect": "node ./scripts/effect-config-production-smoke.mjs",
     "smoke:production:grammar": "node ./scripts/grammar-production-smoke.mjs",
     "smoke:production:punctuation": "node ./scripts/punctuation-production-smoke.mjs",
+    "smoke:production:spelling-dense": "node ./scripts/spelling-dense-history-smoke.mjs",
     "pretest": "node ./scripts/preflight-test.mjs",
-    "test": "node --test",
+    "test": "node ./scripts/run-node-tests.mjs",
     "test:migration:browser": "KS2_BROWSER_SMOKE=1 node --test tests/browser-react-migration-smoke.test.js",
+    "test:playwright": "npx playwright test",
     "verify": "npm test && npm run check && npm run capacity:verify-evidence"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "esbuild": "^0.28.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

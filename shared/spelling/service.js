@@ -21,6 +21,7 @@ import {
   GUARDIAN_MAX_REVIEW_LEVEL,
   GUARDIAN_MAX_ROUND_LENGTH,
   GUARDIAN_MIN_ROUND_LENGTH,
+  GUARDIAN_MISSION_STATES,
   GUARDIAN_SECURE_STAGE,
   cloneSerialisable,
   createInitialSpellingState,
@@ -53,6 +54,220 @@ import {
 // `service-contract.js` to keep the Word Bank view-model's client bundle
 // free of the full word dataset (see audit-client-bundle.mjs).
 export { isGuardianEligibleSlug };
+
+/**
+ * Pure dashboard state machine (U1). Derives the Guardian mission state from
+ * aggregate counts so the Setup scene, the module shortcut gate, and any
+ * downstream consumer can branch their copy on a single labelled value.
+ *
+ * Contract:
+ *   - `allWordsMega` false → 'locked' (dashboard renders legacy setup).
+ *   - Empty guardian map + unguarded Mega slugs AND the combined pool can
+ *     fill a minimum-length round (`>= GUARDIAN_MIN_ROUND_LENGTH`) →
+ *     'first-patrol'. Below that threshold `selectGuardianWords` would
+ *     produce a short round, so we collapse to 'rested' to keep Begin
+ *     disabled rather than ship a 1-4 word Guardian.
+ *   - Any eligible wobbling-due entry → 'wobbling' (urgent recovery check).
+ *     Wobbling always dominates 'due' so a single recovery drill rides even
+ *     under the round-length minimum (the selector tops up from non-due
+ *     guardians if needed).
+ *   - Any eligible due entry → 'due' (the normal daily patrol). Same
+ *     top-up reasoning as wobbling — a short due round top-ups from the
+ *     non-due bucket.
+ *   - No due entries, but a round CAN be produced via top-up or lazy-create
+ *     AND the combined pool hits `GUARDIAN_MIN_ROUND_LENGTH`, AND policy
+ *     allows optional patrol → 'optional-patrol'.
+ *   - Everything guarded, nothing due, no top-up policy (or pool too small)
+ *     → 'rested' (Begin disabled, copy shows next check in N days).
+ *
+ * Short-round invariant (adversarial sev 60/50): `selectGuardianWords` walks
+ * four buckets (wobbling-due, non-wobbling-due, lazy-create, top-up) and
+ * stops at `GUARDIAN_MIN_ROUND_LENGTH`. If the dashboard advertises
+ * 'first-patrol' or 'optional-patrol' without the combined pool reaching
+ * that threshold, the learner would tap Begin and receive a 1-4 word round
+ * — below the Guardian minimum. This helper therefore gates both states on
+ * `unguardedMegaCount + entries.length >= GUARDIAN_MIN_ROUND_LENGTH`. The
+ * 'wobbling' and 'due' states skip this check because a single wobbling or
+ * due entry plus the selector's own top-up fallback always fills the round.
+ *
+ * The helper is tolerant of null/garbage inputs: if `ctx` is falsy or
+ * `allWordsMega` is not strictly true, the result is 'locked'. This lets
+ * the remote-sync client-read-models stub default to 'locked' without a
+ * special-case code path.
+ *
+ * @param {object} ctx
+ * @param {boolean} ctx.allWordsMega
+ * @param {Array<{slug: string, wobbling: boolean, nextDueDay: number}>} ctx.eligibleGuardianEntries
+ *   Guardian records whose slugs have already been run through
+ *   `isGuardianEligibleSlug` — orphan slugs must be excluded by the caller
+ *   before passing in. The helper trusts this contract rather than
+ *   re-filtering (keeps the helper decoupled from `wordBySlug` / `progressMap`).
+ * @param {number} ctx.unguardedMegaCount
+ *   Number of core-pool Mega slugs that have no entry in the guardian map.
+ *   Zero when every Mega word is already being tracked.
+ * @param {number} ctx.todayDay   Integer day (Math.floor(ts/DAY_MS)).
+ * @param {object} [ctx.policy]
+ * @param {boolean} [ctx.policy.allowOptionalPatrol=true]  If false, the
+ *   'optional-patrol' branch collapses into 'rested' so the Begin button
+ *   stays disabled when the only available round is non-urgent.
+ * @returns {string}  One of `GUARDIAN_MISSION_STATES`.
+ */
+export function computeGuardianMissionState(ctx) {
+  const resolved = resolveGuardianMissionState(ctx);
+  // Runtime sanity check — if the state-machine above ever returns an
+  // unknown label (e.g. a typo like 'fist-patrol'), refuse to leak the
+  // garbage into UI copy. Throwing here is loud on purpose: the dashboard
+  // branches on this value and would otherwise render the defensive fallback
+  // silently, hiding the bug.
+  if (!GUARDIAN_MISSION_STATES.includes(resolved)) {
+    throw new Error(`computeGuardianMissionState: unknown state "${resolved}"`);
+  }
+  return resolved;
+}
+
+function resolveGuardianMissionState(ctx) {
+  if (!ctx || typeof ctx !== 'object' || Array.isArray(ctx)) return 'locked';
+  if (ctx.allWordsMega !== true) return 'locked';
+
+  const todayDay = Number.isFinite(Number(ctx.todayDay)) ? Math.floor(Number(ctx.todayDay)) : 0;
+  const entries = Array.isArray(ctx.eligibleGuardianEntries) ? ctx.eligibleGuardianEntries : [];
+  const unguardedMegaCount = Number.isFinite(Number(ctx.unguardedMegaCount))
+    ? Math.max(0, Math.floor(Number(ctx.unguardedMegaCount)))
+    : 0;
+  const policy = ctx.policy && typeof ctx.policy === 'object' && !Array.isArray(ctx.policy) ? ctx.policy : {};
+  const allowOptionalPatrol = policy.allowOptionalPatrol !== false; // default true
+
+  // Combined-pool size fed to the selector. `selectGuardianWords` walks
+  // wobbling-due → non-wobbling-due → lazy-create → top-up and stops at
+  // GUARDIAN_MIN_ROUND_LENGTH (5). The dashboard therefore must not offer
+  // 'first-patrol' or 'optional-patrol' unless the pool reaches that
+  // minimum — otherwise the learner would click Begin and receive a short
+  // round with fewer than 5 words, violating the Guardian round invariant.
+  const combinedPoolSize = unguardedMegaCount + entries.length;
+  const canFillRound = combinedPoolSize >= GUARDIAN_MIN_ROUND_LENGTH;
+
+  // Fresh graduate: has never run Guardian AND has Mega words to patrol.
+  // Requires enough combined pool to fill the round; otherwise the learner
+  // is effectively 'rested' until more words graduate.
+  if (entries.length === 0 && unguardedMegaCount > 0) {
+    if (canFillRound) return 'first-patrol';
+    return 'rested';
+  }
+
+  const wobblingDue = entries.some((entry) => entry?.wobbling === true && Number(entry?.nextDueDay) <= todayDay);
+  if (wobblingDue) return 'wobbling';
+
+  const anyDue = entries.some((entry) => Number(entry?.nextDueDay) <= todayDay);
+  if (anyDue) return 'due';
+
+  // Nothing due. `optional-patrol` is only offered when a round CAN be
+  // produced — either by lazy-creating from an unguarded Mega slug OR by
+  // topping up from a non-due guardian (selector's bucket 4). If neither is
+  // possible, OR the caller explicitly disabled the optional path, OR the
+  // combined pool is below the minimum round length, we are 'rested'.
+  const canProduceTopUpRound = unguardedMegaCount > 0 || entries.length > 0;
+  if (allowOptionalPatrol && canProduceTopUpRound && canFillRound) return 'optional-patrol';
+  return 'rested';
+}
+
+/**
+ * Pure aggregate helper. Walks `guardianMap` once to produce the filtered
+ * eligible-entries list and the decomposed due-count scalars; walks
+ * `progressMap` once to produce `unguardedMegaCount`. Returning all seven
+ * fields from a single helper means `getPostMasteryState` (service) and
+ * `getSpellingPostMasteryState` (read-model) cannot drift — they consume
+ * the same derivation.
+ *
+ * The helper trusts that `isGuardianEligibleSlug` is the single orphan
+ * predicate (U2 contract). Callers pass in the ambient `wordBySlug`
+ * (runtime content) and `progressMap` (learner state) so the predicate can
+ * filter orphan records without the helper itself needing to import word
+ * data.
+ *
+ * Invariant guaranteed by the implementation:
+ *   `wobblingDueCount + nonWobblingDueCount === guardianDueCount`
+ *
+ * @param {object} params
+ * @param {object} params.guardianMap   slug -> normalised guardian record
+ * @param {object} params.progressMap   slug -> legacy progress record
+ * @param {object} params.wordBySlug    slug -> published word metadata
+ * @param {number} params.todayDay      integer day (Math.floor(ts/DAY_MS))
+ * @returns {{
+ *   eligibleGuardianEntries: Array<{slug: string, wobbling: boolean, nextDueDay: number}>,
+ *   guardianDueCount: number,
+ *   wobblingDueCount: number,
+ *   nonWobblingDueCount: number,
+ *   wobblingCount: number,
+ *   nextGuardianDueDay: number|null,
+ *   unguardedMegaCount: number,
+ * }}
+ */
+export function deriveGuardianAggregates({
+  guardianMap = {},
+  progressMap = {},
+  wordBySlug = {},
+  todayDay = 0,
+} = {}) {
+  const safeGuardianMap = guardianMap && typeof guardianMap === 'object' && !Array.isArray(guardianMap)
+    ? guardianMap
+    : {};
+  const safeProgressMap = progressMap && typeof progressMap === 'object' && !Array.isArray(progressMap)
+    ? progressMap
+    : {};
+  const safeWordBySlug = wordBySlug && typeof wordBySlug === 'object' && !Array.isArray(wordBySlug)
+    ? wordBySlug
+    : {};
+  const safeToday = Number.isFinite(Number(todayDay)) ? Math.floor(Number(todayDay)) : 0;
+
+  const eligibleGuardianEntries = [];
+  let guardianDueCount = 0;
+  let wobblingCount = 0;
+  let wobblingDueCount = 0;
+  let nonWobblingDueCount = 0;
+  let nextGuardianDueDay = null;
+
+  for (const [slug, record] of Object.entries(safeGuardianMap)) {
+    if (!record) continue;
+    if (!isGuardianEligibleSlug(slug, safeProgressMap, safeWordBySlug)) continue;
+    const isWobbling = record.wobbling === true;
+    const entryDueDay = Number(record.nextDueDay);
+    eligibleGuardianEntries.push({
+      slug,
+      wobbling: isWobbling,
+      nextDueDay: entryDueDay,
+    });
+    const isDueToday = entryDueDay <= safeToday;
+    if (isDueToday) {
+      guardianDueCount += 1;
+      if (isWobbling) {
+        wobblingDueCount += 1;
+      } else {
+        nonWobblingDueCount += 1;
+      }
+    }
+    if (isWobbling) wobblingCount += 1;
+    if (nextGuardianDueDay === null || entryDueDay < nextGuardianDueDay) {
+      nextGuardianDueDay = entryDueDay;
+    }
+  }
+
+  let unguardedMegaCount = 0;
+  for (const [slug] of Object.entries(safeProgressMap)) {
+    if (!isGuardianEligibleSlug(slug, safeProgressMap, safeWordBySlug)) continue;
+    if (Object.prototype.hasOwnProperty.call(safeGuardianMap, slug)) continue;
+    unguardedMegaCount += 1;
+  }
+
+  return {
+    eligibleGuardianEntries,
+    guardianDueCount,
+    wobblingDueCount,
+    nonWobblingDueCount,
+    wobblingCount,
+    nextGuardianDueDay,
+    unguardedMegaCount,
+  };
+}
 
 const PREF_KEY = 'ks2-platform-v2.spelling-prefs';
 const GUARDIAN_PROGRESS_KEY_PREFIX = 'ks2-spell-guardian-';
@@ -851,10 +1066,16 @@ export function createSpellingService({ repository, storage, tts, now, random, c
    * service state so the Setup scene, Alt+4 gate, and summary copy see a
    * consistent view without drilling a read-model through the container tree.
    *
-   * Returns: { allWordsMega, guardianDueCount, wobblingCount, nextGuardianDueDay, todayDay, guardianMap }
+   * Returns: { allWordsMega, guardianDueCount, wobblingCount, nextGuardianDueDay,
+   *            todayDay, guardianMap, wobblingDueCount, nonWobblingDueCount,
+   *            unguardedMegaCount, guardianAvailableCount, guardianMissionState,
+   *            guardianMissionAvailable }
    * The raw `guardianMap` is included so UI consumers can compute per-word
    * labels (e.g. "Wobbling — due tomorrow") via `guardianLabel` without a
-   * second round-trip to storage.
+   * second round-trip to storage. U1 additions mirror the read-model selector
+   * shape so the dashboard gate (`guardianMissionAvailable`) and the labelled
+   * state (`guardianMissionState`) read the same value whether they are fed
+   * by the live service or the pre-computed read-model.
    */
   function getPostMasteryState(learnerId) {
     const progressStore = progressSnapshot(learnerId) || {};
@@ -862,28 +1083,39 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const today = currentTodayDay();
     const allWordsMega = isAllWordsMega(progressStore);
 
-    // U2: orphan sanitiser — count only entries whose slug is still a valid
-    // Guardian candidate (known in runtime, stage >= Mega, pool !== extra).
-    // Persisted orphan records stay intact; they simply drop out of counts
-    // and the earliest-due calculation.
-    let guardianDueCount = 0;
-    let wobblingCount = 0;
-    let nextGuardianDueDay = null;
-    for (const [slug, record] of Object.entries(guardianMap)) {
-      if (!record) continue;
-      if (!isGuardianEligibleSlug(slug, progressStore, runtimeWordBySlug)) continue;
-      if (record.nextDueDay <= today) guardianDueCount += 1;
-      if (record.wobbling === true) wobblingCount += 1;
-      if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
-        nextGuardianDueDay = record.nextDueDay;
-      }
-    }
+    // Shared derivation — same helper feeds `getSpellingPostMasteryState`
+    // in the read-model so service and read-model cannot drift. U2 orphan
+    // sanitiser lives inside the helper (via `isGuardianEligibleSlug`), so
+    // a content hot-swap removing a slug automatically drops it from the
+    // counts here and in the read-model.
+    const aggregates = deriveGuardianAggregates({
+      guardianMap,
+      progressMap: progressStore,
+      wordBySlug: runtimeWordBySlug,
+      todayDay: today,
+    });
+
+    const guardianAvailableCount = aggregates.unguardedMegaCount + aggregates.eligibleGuardianEntries.length;
+    const guardianMissionState = computeGuardianMissionState({
+      allWordsMega,
+      eligibleGuardianEntries: aggregates.eligibleGuardianEntries,
+      unguardedMegaCount: aggregates.unguardedMegaCount,
+      todayDay: today,
+      policy: { allowOptionalPatrol: true },
+    });
+    const guardianMissionAvailable = guardianMissionState !== 'locked' && guardianMissionState !== 'rested';
 
     return {
       allWordsMega,
-      guardianDueCount,
-      wobblingCount,
-      nextGuardianDueDay,
+      guardianDueCount: aggregates.guardianDueCount,
+      wobblingCount: aggregates.wobblingCount,
+      wobblingDueCount: aggregates.wobblingDueCount,
+      nonWobblingDueCount: aggregates.nonWobblingDueCount,
+      unguardedMegaCount: aggregates.unguardedMegaCount,
+      guardianAvailableCount,
+      guardianMissionState,
+      guardianMissionAvailable,
+      nextGuardianDueDay: aggregates.nextGuardianDueDay,
       todayDay: today,
       guardianMap,
     };
