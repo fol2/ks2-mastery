@@ -19,6 +19,21 @@
 
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { MONSTERS_BY_SUBJECT } from '../../../platform/game/monsters.js';
+import {
+  PUNCTUATION_MAP_DETAIL_TAB_IDS,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+} from '../service-contract.js';
+
+// U5 layer fix (adv-219-005): the Map filter + detail-tab id lists are the
+// service-contract's single source of truth. The view-model re-exports them
+// under their existing names so renderers / tests keep their current import
+// paths while the one-way `contract → view-model` dependency is restored.
+export {
+  PUNCTUATION_MAP_DETAIL_TAB_IDS,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+};
 
 const BELLSTORM_BASE = '/assets/regions/bellstorm-coast';
 
@@ -135,19 +150,10 @@ export const PUNCTUATION_PRIMARY_MODE_CARDS = Object.freeze([
 ]);
 
 // --- Punctuation Map filter lists ------------------------------------------
-
-// Map status chips. Order matches the plan: All / New / Learning / Due /
-// Wobbly / Secure. Child copy — the `weak` id reads as "Wobbly" in the UI.
-export const PUNCTUATION_MAP_STATUS_FILTER_IDS = Object.freeze([
-  'all', 'new', 'learning', 'due', 'weak', 'secure',
-]);
-
-// Map monster chips. Order matches the plan / codebase active roster. Reserved
-// monsters (Colisk / Hyphang / Carillon) are intentionally absent so a rogue
-// payload cannot surface a retired name as a filter option.
-export const PUNCTUATION_MAP_MONSTER_FILTER_IDS = Object.freeze([
-  'all', 'pealark', 'claspin', 'curlune', 'quoral',
-]);
+//
+// Status, monster, and detail-tab id lists moved to service-contract.js in U5
+// (adv-219-005 layer fix). The view-model re-exports them via the top-of-file
+// `export { ... }` block so downstream imports keep working.
 
 // Short, child-facing rule one-liners for the Punctuation Map scene's skill
 // cards. Each line is a single sentence in KS2-friendly copy — no dotted

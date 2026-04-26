@@ -18,6 +18,7 @@ import {
   ACTIVE_PUNCTUATION_MONSTER_DISPLAY_NAMES,
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   PUNCTUATION_CHILD_FORBIDDEN_TERMS,
+  PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
   PUNCTUATION_DASHBOARD_HERO,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
@@ -40,6 +41,7 @@ import {
   punctuationSkillModalPreferredExample,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 import { MONSTERS_BY_SUBJECT } from '../src/platform/game/monsters.js';
+import { PUNCTUATION_CLUSTERS } from '../shared/punctuation/content.js';
 
 // ---------------------------------------------------------------------------
 // composeIsDisabled (R11) — moved from PunctuationPracticeSurface.jsx in U1.
@@ -640,6 +642,34 @@ test('U1 view-model: buildPunctuationMapModel output shape is frozen end-to-end'
     for (const skill of monster.skills) {
       assert.equal(Object.isFrozen(skill), true);
     }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER — drift guard against the Worker's
+// canonical `PUNCTUATION_CLUSTERS.monsterId` table in
+// `shared/punctuation/content.js`. The client mirror is forbidden from
+// importing the shared content in the browser bundle (bundle-audit rule);
+// tests allow the import so the mapping stays locked in step.
+// ---------------------------------------------------------------------------
+
+test('U5 drift: PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER matches shared PUNCTUATION_CLUSTERS', () => {
+  for (const cluster of PUNCTUATION_CLUSTERS) {
+    const clientMapped = PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER[cluster.id];
+    assert.equal(
+      clientMapped,
+      cluster.monsterId,
+      `client mirror drifted for cluster "${cluster.id}": expected "${cluster.monsterId}", got "${clientMapped}"`,
+    );
+  }
+  // Also guard against the client mirror carrying any cluster id not present
+  // in the shared canonical list.
+  const canonicalIds = new Set(PUNCTUATION_CLUSTERS.map((cluster) => cluster.id));
+  for (const clientId of Object.keys(PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER)) {
+    assert.ok(
+      canonicalIds.has(clientId),
+      `client mirror carries unknown cluster id "${clientId}"`,
+    );
   }
 });
 

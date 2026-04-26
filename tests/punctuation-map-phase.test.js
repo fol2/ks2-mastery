@@ -371,3 +371,209 @@ test('U5 module: punctuation-skill-detail-tab rejects invalid tab values', () =>
   // Invalid value: handler returns false, state is unchanged.
   assert.equal(punctuationState(harness).mapUi.detailTab, 'practise');
 });
+
+// ---------------------------------------------------------------------------
+// Adversarial reviewer HIGH adv-219-001 — `mapUi` + `phase: 'map'` must NOT
+// survive a page reload. The plan (line 565, 583) pins the Map phase and its
+// filter state as session-ephemeral: there is no D1 persistence path and a
+// fresh harness over the same localStorage must land on `phase: 'setup'` with
+// mapUi defaulted (or absent). This test reproduces the reload by
+// instantiating a second `createAppHarness` over the same `MemoryStorage`.
+// ---------------------------------------------------------------------------
+
+test('U5 persistence: phase=map and mapUi filter/detail state do not survive reload', () => {
+  const storage = installMemoryStorage();
+
+  const h1 = createAppHarness({
+    storage,
+    subjectExposureGates: { [SUBJECT_EXPOSURE_GATES.punctuation]: true },
+  });
+  h1.dispatch('open-subject', { subjectId: 'punctuation' });
+  h1.dispatch('punctuation-open-map');
+  h1.dispatch('punctuation-map-status-filter', { value: 'weak' });
+  h1.dispatch('punctuation-map-monster-filter', { value: 'pealark' });
+  h1.dispatch('punctuation-skill-detail-open', { skillId: 'speech' });
+
+  // Pre-condition: live state reflects the Map-phase interactions.
+  const pre = h1.store.getState().subjectUi.punctuation;
+  assert.equal(pre.phase, 'map');
+  assert.equal(pre.mapUi.statusFilter, 'weak');
+  assert.equal(pre.mapUi.monsterFilter, 'pealark');
+  assert.equal(pre.mapUi.detailOpenSkillId, 'speech');
+
+  // Simulate reload by constructing a second harness over the same storage.
+  // `createAppHarness` re-hydrates from the repositories, which in turn read
+  // from `localStorage` (the MemoryStorage we installed above).
+  const h2 = createAppHarness({
+    storage,
+    subjectExposureGates: { [SUBJECT_EXPOSURE_GATES.punctuation]: true },
+  });
+  const post = h2.store.getState().subjectUi.punctuation;
+
+  // Phase must NOT survive: learner returns to Setup after a reload. This
+  // guards the plan's "mapUi is session-ephemeral" invariant (line 565, 583)
+  // against the current shallow-merge `buildSubjectUiState` path which would
+  // otherwise echo `phase: 'map'` straight back from `localStorage`.
+  assert.notEqual(post.phase, 'map', 'phase "map" must NOT survive a reload');
+  assert.equal(post.phase, 'setup', 'phase must coerce to "setup" on rehydrate');
+
+  // mapUi must NOT carry persisted filter / detail state. Either the field is
+  // stripped entirely or it matches the default shape.
+  const mapUi = post.mapUi;
+  const isStrippedOrDefault = mapUi === undefined
+    || (
+      mapUi.statusFilter === 'all'
+      && mapUi.monsterFilter === 'all'
+      && mapUi.detailOpenSkillId === null
+    );
+  assert.ok(
+    isStrippedOrDefault,
+    `mapUi must NOT carry persisted filter / detail state, got ${JSON.stringify(mapUi)}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Adversarial reviewer HIGH adv-219-002 — `punctuation-open-map` must guard
+// against orphan-session creation. The shallow-merge path preserves `session`
+// / `feedback` / `summary` when called mid-session, which leaves a zombie
+// session pinned under `phase: 'map'`. The guard restricts open-map to the
+// phases where Map is a legitimate affordance: `'setup'` and `'summary'`.
+// ---------------------------------------------------------------------------
+
+test('U5 open-map guard: refuses to dispatch from active-item phase', () => {
+  // State-level assertion only: `harness.dispatch` always returns `true` at
+  // the app-controller layer (it wraps handle-subject-action inside a
+  // try/finally and returns `true` unconditionally). The guard's failure
+  // mode surfaces as a no-op on `state.phase` / `state.session` — paired
+  // state-level checks close the silent-no-op gap (learning #7).
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  // Put the subject into `active-item` with a live session. A plain
+  // updateSubjectUi write is enough — the guard is phase-level and does not
+  // care how the session was seeded.
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: { id: 'zombie-session', currentItem: { id: 'item-1' } },
+  });
+  assert.equal(punctuationState(harness).phase, 'active-item');
+
+  harness.dispatch('punctuation-open-map');
+
+  assert.equal(
+    punctuationState(harness).phase,
+    'active-item',
+    'phase must remain active-item (guard refused the transition)',
+  );
+  assert.ok(
+    punctuationState(harness).session,
+    'session must NOT be orphaned into phase=map',
+  );
+  assert.equal(
+    punctuationState(harness).mapUi,
+    undefined,
+    'mapUi must NOT be seeded from a refused open-map dispatch',
+  );
+});
+
+test('U5 open-map guard: refuses to dispatch from feedback phase', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    feedback: { kind: 'success', headline: 'Great!', body: '' },
+  });
+
+  harness.dispatch('punctuation-open-map');
+
+  assert.equal(
+    punctuationState(harness).phase,
+    'feedback',
+    'phase must remain feedback (guard refused the transition)',
+  );
+  assert.ok(
+    punctuationState(harness).feedback,
+    'feedback payload must NOT be wiped by a refused open-map dispatch',
+  );
+});
+
+test('U5 open-map guard: allowed from setup phase', () => {
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  assert.equal(punctuationState(harness).phase, 'setup');
+
+  harness.dispatch('punctuation-open-map');
+
+  assert.equal(punctuationState(harness).phase, 'map');
+  assert.ok(punctuationState(harness).mapUi, 'mapUi must seed on successful open-map');
+});
+
+test('U5 open-map guard: allowed from summary phase', () => {
+  // Per plan line 519 — the Summary scene offers an "Open Punctuation Map"
+  // next-action button. Guard must permit the transition out of summary.
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    summary: { label: 'Punctuation session summary', total: 0, correct: 0 },
+    session: null,
+    feedback: null,
+  });
+
+  harness.dispatch('punctuation-open-map');
+
+  assert.equal(punctuationState(harness).phase, 'map');
+});
+
+// ---------------------------------------------------------------------------
+// Adversarial reviewer MEDIUM adv-219-004 — `punctuation-skill-detail-open`
+// must validate skillId against the published PUNCTUATION_CLIENT_SKILLS list.
+// An arbitrary string lands a rogue detailOpenSkillId in state and, in U6,
+// would render an empty / malformed modal.
+// ---------------------------------------------------------------------------
+
+test('U5 skill-detail-open: rejects skillId not in PUNCTUATION_CLIENT_SKILLS', () => {
+  // State-level assertion only — see comment on the open-map guard tests
+  // above (harness.dispatch returns true unconditionally at the controller
+  // layer). The handler's refusal surfaces as state retaining the prior
+  // value; learning #7's silent-no-op gap is closed by the paired check.
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-open-map');
+  // Seed a known-good value so we can prove the invalid dispatch is a no-op.
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'speech' });
+  assert.equal(punctuationState(harness).mapUi.detailOpenSkillId, 'speech');
+
+  harness.dispatch('punctuation-skill-detail-open', {
+    skillId: 'nonexistent_xyz',
+  });
+
+  assert.equal(
+    punctuationState(harness).mapUi.detailOpenSkillId,
+    'speech',
+    'state must retain prior skillId when an unknown id is dispatched',
+  );
+});
+
+test('U5 skill-detail-open: accepts every published PUNCTUATION_CLIENT_SKILLS id', async () => {
+  const { PUNCTUATION_CLIENT_SKILLS } = await import('../src/subjects/punctuation/read-model.js');
+  const harness = createHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-open-map');
+
+  for (const skill of PUNCTUATION_CLIENT_SKILLS) {
+    harness.dispatch('punctuation-skill-detail-open', { skillId: skill.id });
+    assert.equal(
+      punctuationState(harness).mapUi.detailOpenSkillId,
+      skill.id,
+      `published id ${skill.id} must be accepted`,
+    );
+  }
+});
+
+test('U5 normalisePunctuationMapUi: rejects detailOpenSkillId not in PUNCTUATION_CLIENT_SKILLS', async () => {
+  // Second-line defence: even if a rogue payload reaches the normaliser
+  // directly (e.g. via a raw service-contract call), detailOpenSkillId must
+  // reset to null for unknown ids.
+  const ui = normalisePunctuationMapUi({ detailOpenSkillId: 'nonexistent_xyz' });
+  assert.equal(ui.detailOpenSkillId, null);
+});

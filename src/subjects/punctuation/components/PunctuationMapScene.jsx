@@ -39,8 +39,6 @@ import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
   PUNCTUATION_DASHBOARD_HERO,
-  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
-  PUNCTUATION_MAP_STATUS_FILTER_IDS,
   bellstormSceneForPhase,
   buildPunctuationMapModel,
   composeIsDisabled,
@@ -48,6 +46,11 @@ import {
   punctuationMonsterDisplayName,
   punctuationSkillRuleOneLiner,
 } from './punctuation-view-model.js';
+import {
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+  normalisePunctuationMapUi,
+} from '../service-contract.js';
 import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
 
 // Child-facing labels for the status filter chips. `'all'` is a literal
@@ -66,33 +69,12 @@ function monsterFilterLabel(id) {
   return punctuationMonsterDisplayName(id);
 }
 
-// Normalise `mapUi` for render — accepts undefined (default shape) or a
-// partial object. Mirrors `normalisePunctuationMapUi` in service-contract
-// but operates on the shape actually threaded into the scene (the caller
-// has already run the normaliser when the Map phase opened; this is a
-// defence against a hand-rolled fixture that omits the field).
-function mapUiFromState(ui) {
-  const raw = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui.mapUi : null;
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { statusFilter: 'all', monsterFilter: 'all', detailOpenSkillId: null, detailTab: 'learn' };
-  }
-  const statusFilter = typeof raw.statusFilter === 'string'
-    && PUNCTUATION_MAP_STATUS_FILTER_IDS.includes(raw.statusFilter)
-    ? raw.statusFilter
-    : 'all';
-  const monsterFilter = typeof raw.monsterFilter === 'string'
-    && PUNCTUATION_MAP_MONSTER_FILTER_IDS.includes(raw.monsterFilter)
-    ? raw.monsterFilter
-    : 'all';
-  return {
-    statusFilter,
-    monsterFilter,
-    detailOpenSkillId: typeof raw.detailOpenSkillId === 'string' && raw.detailOpenSkillId
-      ? raw.detailOpenSkillId
-      : null,
-    detailTab: raw.detailTab === 'practise' ? 'practise' : 'learn',
-  };
-}
+// `mapUi` normalisation delegates to the service-contract's
+// `normalisePunctuationMapUi` (see `../service-contract.js`). The maint-lens
+// reviewer flagged the previous `mapUiFromState` helper as duplication of
+// that function; importing the contract version keeps the scene rendering
+// against the single source of truth and lets future changes to the shape
+// (e.g. new filter ids) land once.
 
 // Build the 14 skill-row inputs for `buildPunctuationMapModel`. When the
 // Worker-projected analytics snapshot carries `skillRows`, we enrich each
@@ -260,7 +242,7 @@ function MonsterGroup({ monster, statusFilter, disabled, actions }) {
 export function PunctuationMapScene({ ui, actions }) {
   const scene = bellstormSceneForPhase('map');
   const disabled = composeIsDisabled(ui);
-  const mapUi = mapUiFromState(ui);
+  const mapUi = normalisePunctuationMapUi(ui?.mapUi);
   const rewardState = ui && typeof ui === 'object' && !Array.isArray(ui) && ui.rewardState
     && typeof ui.rewardState === 'object' && !Array.isArray(ui.rewardState)
     ? ui.rewardState
@@ -279,6 +261,21 @@ export function PunctuationMapScene({ ui, actions }) {
     ? model.monsters
     : model.monsters.filter((monster) => monster.monsterId === mapUi.monsterFilter);
 
+  // Live-region total across every visible monster group, post-status-filter.
+  // Pairs with the `role="status"` <p> below so a screen reader announces how
+  // many skills a filter combination yields. Mirrors the Grammar Concept Bank
+  // "Showing N of M concepts" pattern (design-lens MEDIUM).
+  const visibleSkillCount = mapUi.statusFilter === 'all'
+    ? visibleMonsters.reduce((sum, monster) => sum + monster.skills.length, 0)
+    : visibleMonsters.reduce(
+      (sum, monster) => sum + monster.skills.filter((skill) => skill.status === mapUi.statusFilter).length,
+      0,
+    );
+  const totalSkillCount = model.monsters.reduce((sum, monster) => sum + monster.skills.length, 0);
+  const summaryText = visibleSkillCount === totalSkillCount
+    ? `Showing all ${totalSkillCount} skills.`
+    : `Showing ${visibleSkillCount} of ${totalSkillCount} skills.`;
+
   return (
     <section
       className="card border-top punctuation-surface punctuation-map-scene"
@@ -286,6 +283,22 @@ export function PunctuationMapScene({ ui, actions }) {
       data-punctuation-phase="map"
       style={{ borderTopColor: '#B8873F' }}
     >
+      {/* Back button at the top, mirroring Spelling word-bank-topbar and
+          Grammar grammar-bank-topbar (design-lens MEDIUM). A top-of-scene
+          affordance matches the pattern learners already know from the
+          sibling banks and keeps the scroll-up return path cheap. */}
+      <header className="punctuation-map-topbar">
+        <button
+          type="button"
+          className="btn ghost sm"
+          disabled={disabled}
+          data-action="punctuation-close-map"
+          onClick={() => actions.dispatch('punctuation-close-map')}
+        >
+          &larr; Back to dashboard
+        </button>
+      </header>
+
       <div className="punctuation-hero">
         <img
           src={scene.src}
@@ -316,6 +329,11 @@ export function PunctuationMapScene({ ui, actions }) {
         />
       </div>
 
+      {/* Live-region count of visible skills after filters apply. A screen
+          reader announces the new total whenever a chip flips the filter
+          state (design-lens MEDIUM). */}
+      <p className="punctuation-map-summary muted" role="status">{summaryText}</p>
+
       <div className="punctuation-map-body" data-punctuation-map-body>
         {visibleMonsters.length
           ? visibleMonsters.map((monster) => (
@@ -328,18 +346,6 @@ export function PunctuationMapScene({ ui, actions }) {
             />
           ))
           : <div className="punctuation-map-empty muted">No matching skills yet.</div>}
-      </div>
-
-      <div className="actions" style={{ marginTop: 16 }}>
-        <button
-          type="button"
-          className="btn secondary"
-          disabled={disabled}
-          data-action="punctuation-close-map"
-          onClick={() => actions.dispatch('punctuation-close-map')}
-        >
-          Back to dashboard
-        </button>
       </div>
 
       {ACTIVE_PUNCTUATION_MONSTER_IDS.length !== 4 ? (

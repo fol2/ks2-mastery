@@ -1,11 +1,12 @@
 import {
   createInitialPunctuationState,
+  isPublishedPunctuationSkillId,
   normalisePunctuationMapUi,
-} from './service-contract.js';
-import {
+  sanitisePunctuationUiOnRehydrate,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
-} from './components/punctuation-view-model.js';
+  PUNCTUATION_OPEN_MAP_ALLOWED_PHASES,
+} from './service-contract.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../platform/core/subject-availability.js';
 
 function applyTransition(context, transition) {
@@ -36,6 +37,13 @@ export const punctuationModule = {
   reactPractice: true,
   initState() {
     return createInitialPunctuationState();
+  },
+  // U5 (adv-219-001): Map phase + mapUi are session-ephemeral. The store's
+  // rehydrate path invokes this hook once per boot on the persisted entry;
+  // `phase === 'map'` is coerced back to `'setup'` and `mapUi` is stripped
+  // so a reload never lands on the Map phase with stale filter state.
+  sanitiseUiOnRehydrate(entry) {
+    return sanitisePunctuationUiOnRehydrate(entry);
   },
   getDashboardStats(appState, { service }) {
     const learnerId = appState.learners.selectedId;
@@ -113,9 +121,25 @@ export const punctuationModule = {
     // whether a command genuinely fails closed or silently does nothing").
 
     if (action === 'punctuation-open-map') {
+      // adv-219-002 guard: `punctuation-open-map` is only a legitimate
+      // affordance from Setup (the dashboard Map link) and Summary (the
+      // next-action button on the Summary scene per plan line 519). A
+      // dispatch from `active-item` / `feedback` / `unavailable` / `error`
+      // / `map` itself would otherwise leave a zombie `session` +
+      // `feedback` under `phase: 'map'` thanks to the shallow-merge store
+      // path. Refuse the transition so the caller treats the dispatch as a
+      // miss rather than a silent success.
+      if (!PUNCTUATION_OPEN_MAP_ALLOWED_PHASES.includes(ui.phase)) {
+        return false;
+      }
       store.updateSubjectUi('punctuation', {
         phase: 'map',
         error: '',
+        // Clear feedback defensively — summary-phase transitions in
+        // `active-item → feedback → summary` already null it, but a
+        // belt-and-braces reset here means no open-map path ever lands on
+        // a feedback payload from an earlier session.
+        feedback: null,
         mapUi: normalisePunctuationMapUi(),
       });
       return true;
@@ -170,8 +194,14 @@ export const punctuationModule = {
     // strict unit boundary.
 
     if (action === 'punctuation-skill-detail-open') {
-      const skillId = typeof data?.skillId === 'string' && data.skillId ? data.skillId : '';
-      if (!skillId) return false;
+      // adv-219-004: skillId must be a published Punctuation skill id so the
+      // U6 Skill Detail modal never opens against a rogue payload.
+      // `isPublishedPunctuationSkillId` gates both the string shape and the
+      // membership check against the frozen `PUNCTUATION_CLIENT_SKILL_IDS`
+      // list in service-contract. Unknown ids return `false` — the store is
+      // not touched and the caller treats the dispatch as a miss.
+      if (!isPublishedPunctuationSkillId(data?.skillId)) return false;
+      const skillId = data.skillId;
       const rawTab = typeof data?.tab === 'string' ? data.tab : 'learn';
       const detailTab = rawTab === 'practise' ? 'practise' : 'learn';
       const nextMapUi = {

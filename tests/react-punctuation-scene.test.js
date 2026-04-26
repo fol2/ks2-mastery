@@ -682,3 +682,57 @@ test('punctuation Map phase: skill-detail open / close transitions mapUi correct
   harness.dispatch('punctuation-skill-detail-close');
   assert.equal(harness.store.getState().subjectUi.punctuation.mapUi.detailOpenSkillId, null);
 });
+
+// ---------------------------------------------------------------------------
+// Design-lens follow-ups from U5 review: top-bar Back button + live-region
+// filtered-count summary. Mirrors Spelling `word-bank-topbar` and Grammar
+// `grammar-bank-topbar` patterns.
+// ---------------------------------------------------------------------------
+
+test('punctuation Map scene renders a top-bar Back to dashboard button (design-lens)', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  const html = harness.render();
+
+  // `punctuation-map-topbar` parallels Spelling's `word-bank-topbar` and
+  // Grammar's `grammar-bank-topbar` so a screen reader lands on the exit
+  // affordance before the hero / filter rows.
+  assert.match(html, /class="punctuation-map-topbar"/);
+  // The top-bar back button dispatches `punctuation-close-map`.
+  assert.match(
+    html,
+    /<header class="punctuation-map-topbar">[\s\S]*?data-action="punctuation-close-map"[\s\S]*?<\/header>/,
+    'top-bar must contain a punctuation-close-map button',
+  );
+});
+
+test('punctuation Map scene renders a role="status" live-region count of visible skills', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  const html = harness.render();
+
+  // Default filters render all 14 skills — the summary text reads "Showing
+  // all 14 skills." and lives inside a role="status" <p> so a screen reader
+  // announces filter changes.
+  assert.match(
+    html,
+    /role="status"[^>]*>Showing all 14 skills\.<|>Showing all 14 skills\.<[^>]*role="status"/,
+    'live-region summary must read "Showing all 14 skills." by default',
+  );
+});
+
+test('punctuation Map scene live-region count reflects a monster filter flip', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  // Apply the Pealark monster filter — Pealark owns endmarks + speech +
+  // boundary clusters, which carry 5 skills total (sentence_endings, speech,
+  // semicolon, dash_clause, hyphen). The summary must re-count.
+  harness.dispatch('punctuation-map-monster-filter', { value: 'pealark' });
+
+  const html = harness.render();
+  assert.match(
+    html,
+    /role="status"[^>]*>Showing 5 of 14 skills\.<|>Showing 5 of 14 skills\.<[^>]*role="status"/,
+    'live-region summary must reflect the narrowed monster filter',
+  );
+});
