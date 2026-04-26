@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execSync as nodeExecSync } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 
 const rootDir = process.cwd();
@@ -23,7 +23,14 @@ const outputDir = path.join(rootDir, 'src', 'bundles');
 // The regex here matches the server-side `/^[a-f0-9]{6,40}$/` tightened per
 // Phase B adversarial review — no case-insensitive flag, no dots/dashes/
 // underscores, lowercase hex only.
-function resolveBuildHash() {
+//
+// Phase E Imp-3: `execSync` is accepted as an injected dependency so tests
+// can exercise the three control paths against this exact function rather
+// than a mirrored stub. The test used to duplicate the logic in
+// `tests/helpers/build-hash-resolver.js`, which drifted silently if the
+// production helper's regex / ordering changed. The production default is
+// `nodeExecSync`; tests pass a stub that returns canned output or throws.
+function resolveBuildHash({ execSync = nodeExecSync } = {}) {
   try {
     const hash = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
     if (!/^[a-f0-9]{6,40}$/.test(hash)) return null;

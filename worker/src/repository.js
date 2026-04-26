@@ -2431,6 +2431,20 @@ function emptyOpsErrorEventSummary(generatedAt) {
 // trigraph. Values above this cap throw `validation_failed` rather than
 // silently truncating — no ambiguity at the dispatch boundary.
 const OPS_ERROR_FILTER_ROUTE_MAX_CHARS = 64;
+
+// Phase E adv-e-4: SQLite LIKE metacharacter escape. The admin-supplied
+// route substring is bound via a `?` placeholder, so SQL injection is
+// already prevented — but `%` and `_` are LIKE wildcards. Without
+// escaping them, an admin typing `%` would accidentally match every
+// route (e.g. `LIKE '%%%'`). We pair the escape with an `ESCAPE '\\'`
+// clause on the LIKE expression so a literal `\` in user input stays
+// literal after the double replacement.
+function escapeLikePattern(value) {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_');
+}
 const OPS_ERROR_FILTER_KIND_MAX_CHARS = 128;
 // Date range is clamped to the last 90 days. Older events are pruned
 // from `ops_error_events` by the retention sweep anyway; a wider
@@ -2597,8 +2611,16 @@ async function readOpsErrorEventSummary(db, {
       // by `normaliseRouteNameServer` on write so it is already lowercase
       // where it came from the client. Admins may still type upper-case
       // (e.g. `/API/`) which we lower to match.
-      whereClauses.push('lower(route_name) LIKE lower(?)');
-      whereParams.push(`%${resolvedFilter.route}%`);
+      //
+      // Phase E adv-e-4: escape LIKE metacharacters (`%`, `_`, `\`) in
+      // the admin-supplied substring so typing `%` finds literal `%`
+      // rather than matching every route. The ESCAPE clause tells
+      // SQLite that `\` introduces a literal metacharacter. This is
+      // defence-in-depth — the filter validator already caps length +
+      // rejects control chars, but admins may legitimately want to find
+      // a route they know literally contains `%` or `_`.
+      whereClauses.push(`lower(route_name) LIKE lower(?) ESCAPE '\\'`);
+      whereParams.push(`%${escapeLikePattern(resolvedFilter.route)}%`);
     }
     if (resolvedFilter.kind) {
       whereClauses.push('error_kind = ?');
@@ -7957,6 +7979,35 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
   const db = withCapacityCollector(requireDatabase(env), capacity);
   const nowFactory = () => asTs(now(), Date.now());
 
+  // Phase E adv-e-5: validate `env.BUILD_HASH` once at the factory
+  // boundary. Every downstream consumer (readAdminHub's currentRelease,
+  // readAdminOpsErrorEvents' narrow refresh, updateOpsErrorEventStatus
+  // which stamps `resolved_in_release` on status→resolved) previously
+  // re-ran the regex check inline, which (a) duplicated the predicate
+  // and (b) silently ignored a malformed env var without logging. We
+  // normalise once here, log a structured warning when the env var is
+  // present but does not match the server-side regex, and pass the
+  // validated value to the consumers. A null `resolvedBuildHash`
+  // disables auto-reopen stamping consistent with the U16 "null ==
+  // opt-out" contract.
+  const rawBuildHash = typeof env?.BUILD_HASH === 'string' && env.BUILD_HASH
+    ? env.BUILD_HASH
+    : null;
+  const resolvedBuildHash = rawBuildHash && OPS_ERROR_RELEASE_REGEX.test(rawBuildHash)
+    ? rawBuildHash
+    : null;
+  if (rawBuildHash && !resolvedBuildHash) {
+    try {
+      // eslint-disable-next-line no-console
+      console.warn(JSON.stringify({
+        event: 'ops.build_hash.malformed_env_var',
+        reason: 'BUILD_HASH does not match [a-f0-9]{6,40}; ignored. resolved_in_release will be null until fixed.',
+      }));
+    } catch {
+      // Structured logs are best-effort.
+    }
+  }
+
   return {
     async ensureAccount(session) {
       const nowTs = nowFactory();
@@ -8612,11 +8663,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       // when `env.BUILD_HASH` is missing, malformed, or a dirty-tree
       // build. Null is rendered as "unavailable — paste a SHA" in the
       // UI so admins still see the input without a misleading default.
-      const currentRelease = typeof env?.BUILD_HASH === 'string'
-        && env.BUILD_HASH
-        && OPS_ERROR_RELEASE_REGEX.test(env.BUILD_HASH)
-        ? env.BUILD_HASH
-        : null;
+      //
+      // Phase E adv-e-5: reads the factory-validated `resolvedBuildHash`
+      // instead of re-running the regex inline. A single validation
+      // point prevents the three consumers drifting out of sync and
+      // ensures the "malformed env var" warning fires exactly once per
+      // Worker invocation rather than per GET.
+      const currentRelease = resolvedBuildHash;
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -8688,14 +8741,12 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       // so the dispatcher that replaces `model.errorLogSummary` after
       // a filter apply still hydrates `currentRelease`. Without this,
       // clicking "Apply filters" would null-out the pre-fill hint.
-      const currentRelease = typeof env?.BUILD_HASH === 'string'
-        && env.BUILD_HASH
-        && OPS_ERROR_RELEASE_REGEX.test(env.BUILD_HASH)
-        ? env.BUILD_HASH
-        : null;
+      //
+      // Phase E adv-e-5: reuses the factory-validated `resolvedBuildHash`
+      // for consistency with `readAdminHub`.
       return {
         ...(summary || {}),
-        currentRelease,
+        currentRelease: resolvedBuildHash,
       };
     },
     // PR #188 H1: dedicated narrow read that mirrors the other three admin
@@ -8760,9 +8811,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         // stamp the `resolved_in_release` column for Phase E's auto-reopen
         // rule. Missing env var → null (no stamp), which is the documented
         // opt-out per the plan.
-        buildHash: typeof env?.BUILD_HASH === 'string' && env.BUILD_HASH
-          ? env.BUILD_HASH
-          : null,
+        //
+        // Phase E adv-e-5: reads the factory-validated value so a
+        // malformed env var is consistently treated as "no stamp" and
+        // emits a single warning at factory boot rather than silently
+        // stamping a non-SHA literal that the server-side regex would
+        // later reject.
+        buildHash: resolvedBuildHash,
       });
     },
     // P2 U3: admin-gated QA seed harness. Dispatches to the

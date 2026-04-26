@@ -42,72 +42,73 @@ test('U16 — redactClientErrorEvent produces the allowlist shape the ingest rou
   assert.equal(redacted.release, undefined);
 });
 
+// Phase E Imp-3: the real `resolveBuildHash` now takes an injectable
+// `execSync` so the tests below exercise it directly rather than a
+// mirrored stub. A regression in the production regex / ordering will
+// now fail these tests — the old mirror helper silently drifted.
+function stubbedExecSync({ revParseOutput, statusOutput, throwOnRevParse = false, throwOnStatus = false } = {}) {
+  return (command) => {
+    if (command.startsWith('git rev-parse')) {
+      if (throwOnRevParse) throw new Error('simulated execSync failure (.git missing)');
+      return revParseOutput ?? '';
+    }
+    if (command.startsWith('git status')) {
+      if (throwOnStatus) throw new Error('simulated execSync failure (status)');
+      return statusOutput ?? '';
+    }
+    throw new Error(`unexpected command: ${command}`);
+  };
+}
+
 test('U16 — resolveBuildHash returns a SHA when git rev-parse succeeds + tree is clean', async () => {
-  // We re-import the module after patching `child_process.execSync` via a
-  // tiny shim. Because ESM caches imports, we manipulate the global
-  // `execSync` through the `require`-style cjs shim module. Simpler: read
-  // the helper's source behaviour by mocking the commands from inside a
-  // child Node process.
-  //
-  // Here we take the direct-unit-test path: the helper is a pure function
-  // over child_process.execSync, so we exercise the three branches via a
-  // wrapper module that mirrors the helper's shape exactly. This keeps the
-  // test independent of the host repo's live git state.
-  const { default: resolveWithStubs } = await import('./helpers/build-hash-resolver.js');
-  const result = resolveWithStubs({
-    revParseOutput: 'abc1234\n',
-    statusOutput: '',
+  const { resolveBuildHash } = await import('../scripts/build-client.mjs');
+  const result = resolveBuildHash({
+    execSync: stubbedExecSync({ revParseOutput: 'abc1234\n', statusOutput: '' }),
   });
   assert.equal(result, 'abc1234');
 });
 
 test('U16 — resolveBuildHash returns null when the tree is dirty', async () => {
-  const { default: resolveWithStubs } = await import('./helpers/build-hash-resolver.js');
-  const result = resolveWithStubs({
-    revParseOutput: 'abc1234\n',
-    statusOutput: ' M src/main.js\n',
+  const { resolveBuildHash } = await import('../scripts/build-client.mjs');
+  const result = resolveBuildHash({
+    execSync: stubbedExecSync({ revParseOutput: 'abc1234\n', statusOutput: ' M src/main.js\n' }),
   });
   assert.equal(result, null);
 });
 
 test('U16 — resolveBuildHash returns null when execSync throws (missing .git / CI shallow)', async () => {
-  const { default: resolveWithStubs } = await import('./helpers/build-hash-resolver.js');
-  const result = resolveWithStubs({
-    throwOnRevParse: true,
-  });
+  const { resolveBuildHash } = await import('../scripts/build-client.mjs');
+  const result = resolveBuildHash({ execSync: stubbedExecSync({ throwOnRevParse: true }) });
   assert.equal(result, null);
 });
 
 test('U16 — resolveBuildHash returns null when rev-parse output is not hex-shaped', async () => {
-  const { default: resolveWithStubs } = await import('./helpers/build-hash-resolver.js');
+  const { resolveBuildHash } = await import('../scripts/build-client.mjs');
   // Simulate a bizarre rev-parse output (e.g. a tag name if someone reconfigured
   // the repo) — the stricter `/^[a-f0-9]{6,40}$/` regex kicks it out so a
   // non-SHA literal never reaches the bundle.
-  const result = resolveWithStubs({
-    revParseOutput: 'v5.2.0\n',
-    statusOutput: '',
+  const result = resolveBuildHash({
+    execSync: stubbedExecSync({ revParseOutput: 'v5.2.0\n', statusOutput: '' }),
   });
   assert.equal(result, null);
 });
 
 test('U16 — resolveBuildHash returns null when rev-parse output is uppercase hex', async () => {
-  const { default: resolveWithStubs } = await import('./helpers/build-hash-resolver.js');
+  const { resolveBuildHash } = await import('../scripts/build-client.mjs');
   // Defence-in-depth: `git rev-parse --short HEAD` emits lowercase by
   // default, but a patched git config could return uppercase. The regex
   // has no /i flag — uppercase is rejected so the stamped release always
   // satisfies the Worker's server-side guard.
-  const result = resolveWithStubs({
-    revParseOutput: 'ABC1234\n',
-    statusOutput: '',
+  const result = resolveBuildHash({
+    execSync: stubbedExecSync({ revParseOutput: 'ABC1234\n', statusOutput: '' }),
   });
   assert.equal(result, null);
 });
 
 test('U16 — resolveBuildHash returns null when rev-parse output is too short', async () => {
-  const { default: resolveWithStubs } = await import('./helpers/build-hash-resolver.js');
-  const result = resolveWithStubs({
-    revParseOutput: 'abc\n', // 3 chars < 6 minimum
-    statusOutput: '',
+  const { resolveBuildHash } = await import('../scripts/build-client.mjs');
+  const result = resolveBuildHash({
+    execSync: stubbedExecSync({ revParseOutput: 'abc\n', statusOutput: '' }), // 3 chars < 6 minimum
   });
   assert.equal(result, null);
 });

@@ -155,6 +155,54 @@ test('U19 filter — route LIKE is parameterised; SQL metacharacters do not inje
   }
 });
 
+// Phase E adv-e-4: LIKE metacharacters (`%`, `_`, `\`) in the admin
+// substring are escaped via `ESCAPE '\\'` so a literal `%` in the
+// filter matches only routes containing `%`, rather than matching every
+// row (which would make the substring feel meaningless). This is not a
+// security fix — bind placeholders already prevent injection — but it
+// is a correctness fix for admins who genuinely want to locate legacy
+// routes that contain `%` or `_` in their path.
+test('Phase E adv-e-4 LIKE escape — `%` in filter matches only literal `%` substrings', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdmin(server);
+    // Seed two rows: one whose route contains a literal `%`, one plain.
+    seedRow(server, { id: 'evt-percent', routeName: '/api/%escaped' });
+    seedRow(server, { id: 'evt-plain', routeName: '/api/plain' });
+
+    // Filter `%` — with the LIKE escape this ONLY matches the literal
+    // `/api/%escaped` row. Without the escape, it would match every row
+    // because `%` is the SQL wildcard.
+    const response = await fetchWithFilter(server, { route: '%' });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    const ids = payload.entries.map((entry) => entry.id).sort();
+    assert.deepEqual(ids, ['evt-percent']);
+  } finally {
+    server.close();
+  }
+});
+
+// Phase E adv-e-4: underscore is also a LIKE wildcard (matches any
+// single character). Without escaping, `_` in the filter would match
+// any single char; with escaping, it only matches literal `_`.
+test('Phase E adv-e-4 LIKE escape — `_` in filter matches only literal `_` substrings', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdmin(server);
+    seedRow(server, { id: 'evt-under', routeName: '/api/with_under' });
+    seedRow(server, { id: 'evt-plain', routeName: '/api/abcdef' });
+
+    const response = await fetchWithFilter(server, { route: '_' });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    const ids = payload.entries.map((entry) => entry.id).sort();
+    assert.deepEqual(ids, ['evt-under']);
+  } finally {
+    server.close();
+  }
+});
+
 test('U19 filter — oversized route (>64 chars) rejected with 400 validation_failed', async () => {
   const server = createWorkerRepositoryServer();
   try {
