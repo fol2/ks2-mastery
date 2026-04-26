@@ -1,4 +1,5 @@
 import { access, readFile, readdir } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -7,6 +8,21 @@ const rootDir = process.cwd();
 const DEFAULT_BUNDLE = 'src/bundles/app.bundle.js';
 const DEFAULT_METAFILE = 'src/bundles/app.bundle.meta.json';
 const DEFAULT_PUBLIC_DIR = 'dist/public';
+
+// SH2-U10: byte-budget gate on the main-bundle gzip size. Baseline
+// measured against the SH2-U10 first post-split build
+// (`npm run build:bundles` on `feat/sh2-u10-bundle-hygiene`): gzip
+// was 203,227 bytes vs the 253,181 bytes pre-split main bundle on
+// `main`. That is a ~50 KB first-paint reduction — the adult-only
+// Admin Hub + Parent Hub hubs now ship as lazy-loaded chunks.
+// Budget is `baseline × 1.05 ≈ 213,390` rounded up to 214,000 so the
+// main-bundle gzip has a tiny amount of headroom for line-count
+// growth without admitting a regression that pulls ~50 KB of adult
+// surface JS back into the learner-first critical path. Override via
+// CLI `--main-bundle-budget-bytes` for experimentation. See
+// `tests/bundle-byte-budget.test.js` for the committed baseline +
+// rationale.
+const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 214_000;
 
 const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/data\//, reason: 'full spelling content dataset' },
@@ -161,7 +177,16 @@ function auditPublicFiles(files, failures) {
     if (file.startsWith('shared/')) {
       failures.push(`Public output exposes shared source: ${file}`);
     }
-    if (file.startsWith('src/') && file !== 'src/bundles/app.bundle.js') {
+    // SH2-U10 (S-01): widen the allowlist so esbuild split chunks under
+    // `src/bundles/` (e.g. `admin-hub.bundle.js`, `parent-hub.bundle.js`,
+    // and content-hashed shared chunks like `chunk-ABCDEF12.js`) are
+    // permitted alongside the main bundle. Any other `src/` path is still
+    // a raw-source leak. The `.js` extension gate keeps the metafile
+    // artefact (`app.bundle.meta.json`) out; it never ships to public.
+    if (
+      file.startsWith('src/')
+      && !(file.startsWith('src/bundles/') && file.endsWith('.js'))
+    ) {
       failures.push(`Public output exposes raw source under src/: ${file}`);
     }
     if (file.startsWith('worker/') || file.startsWith('tests/') || file.startsWith('docs/')) {
@@ -176,10 +201,30 @@ function auditPublicFiles(files, failures) {
   }
 }
 
+// SH2-U10 (S-01): derive every `.js` output chunk under `src/bundles/`
+// from the esbuild metafile. Splitting emits `app.bundle.js` plus shared
+// chunks (content-hashed names) plus per-lazy-entry chunks; the
+// forbidden-token scan must cover every one of them. Input keys in the
+// metafile are the raw sources; `outputs` is the chunked output graph.
+// We normalise to repo-relative `src/bundles/...` paths so callers can
+// `readFile(path.resolve(rootDir, chunkPath))`.
+function collectBundleChunkPaths(metafile) {
+  const outputs = (metafile && metafile.outputs) || {};
+  const chunks = [];
+  for (const rawPath of Object.keys(outputs)) {
+    const normalised = normalisePath(rawPath);
+    if (!normalised.startsWith('src/bundles/')) continue;
+    if (!normalised.endsWith('.js')) continue;
+    chunks.push(normalised);
+  }
+  return chunks.sort();
+}
+
 export async function runClientBundleAudit({
   bundlePath = DEFAULT_BUNDLE,
   metafilePath = DEFAULT_METAFILE,
   publicDir = DEFAULT_PUBLIC_DIR,
+  mainBundleGzipBudgetBytes = DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES,
 } = {}) {
   const failures = [];
   const notes = [];
@@ -189,11 +234,57 @@ export async function runClientBundleAudit({
   auditText(bundlePath, bundle, failures);
   auditAllowlist(bundle, notes);
 
-  if (!await exists(resolvedMetafile)) {
-    failures.push(`Missing esbuild metafile: ${metafilePath}`);
-  } else {
+  // SH2-U10 (S-01): walk every `.js` chunk emitted under `src/bundles/`
+  // from the esbuild metafile and run the forbidden-token scan against
+  // each one. Splitting means a module can land in a shared chunk or a
+  // lazy-entry chunk — not just `app.bundle.js` — so limiting the scan
+  // to the caller-supplied `bundlePath` would silently let forbidden
+  // tokens ship in a split chunk. `bundlePath` is still scanned above
+  // so synthetic tests that pass only a bundle + metafile (without an
+  // outputs graph) keep working.
+  const scannedChunks = [bundlePath];
+  if (await exists(resolvedMetafile)) {
     const metafile = JSON.parse(await readFile(resolvedMetafile, 'utf8'));
     auditMetafile(metafile, failures);
+
+    const chunkPaths = collectBundleChunkPaths(metafile);
+    for (const chunkPath of chunkPaths) {
+      // Skip the explicit `bundlePath` — already scanned above. Normalise
+      // both sides so a caller passing a repo-relative or absolute path
+      // still dedupes cleanly.
+      const normalisedCaller = normalisePath(bundlePath);
+      if (chunkPath === normalisedCaller) continue;
+      const resolvedChunk = path.resolve(rootDir, chunkPath);
+      if (!await exists(resolvedChunk)) {
+        // A metafile entry without a file on disk is a build bug; name
+        // the chunk so operators can see which one is missing.
+        failures.push(`Esbuild metafile lists chunk not present on disk: ${chunkPath}`);
+        continue;
+      }
+      const chunkText = await readFile(resolvedChunk, 'utf8');
+      auditText(chunkPath, chunkText, failures);
+      scannedChunks.push(chunkPath);
+    }
+  } else {
+    failures.push(`Missing esbuild metafile: ${metafilePath}`);
+  }
+
+  // SH2-U10 byte-budget gate on the main bundle gzip size. Threshold is
+  // the measured baseline × ~1.05; if the critical-path graph regrows
+  // (e.g. an adult-only module accidentally re-imported into a learner
+  // surface) the gate fails with a `bundle-budget-exceeded` failure row
+  // so CI blocks before the regression hits production. Chunks other
+  // than `app.bundle.js` are intentionally excluded from the budget: the
+  // goal is first-paint critical path, not total shipped bytes.
+  const mainBundleGzipBytes = gzipSync(bundle).byteLength;
+  if (
+    Number.isFinite(mainBundleGzipBudgetBytes)
+    && mainBundleGzipBudgetBytes > 0
+    && mainBundleGzipBytes > mainBundleGzipBudgetBytes
+  ) {
+    failures.push(
+      `bundle-budget-exceeded: ${bundlePath} gzip ${mainBundleGzipBytes} bytes exceeds budget ${mainBundleGzipBudgetBytes} bytes`,
+    );
   }
 
   const files = await walk(path.resolve(rootDir, publicDir));
@@ -208,6 +299,10 @@ export async function runClientBundleAudit({
       metafilePath,
       publicDir,
       publicFileCount: files.length,
+      scannedChunkCount: scannedChunks.length,
+      scannedChunks,
+      mainBundleGzipBytes,
+      mainBundleGzipBudgetBytes,
     },
   };
 }
@@ -216,15 +311,22 @@ export async function runClientBundleAudit({
 // backslashes to the same `file:///C:/...` form that `import.meta.url`
 // produces, so a direct string comparison is safe across platforms.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const budgetArg = argValue('--main-bundle-budget-bytes', String(DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES));
+  const budgetNumeric = Number(budgetArg);
   const result = await runClientBundleAudit({
     bundlePath: argValue('--bundle', DEFAULT_BUNDLE),
     metafilePath: argValue('--metafile', DEFAULT_METAFILE),
     publicDir: argValue('--public-dir', DEFAULT_PUBLIC_DIR),
+    mainBundleGzipBudgetBytes: Number.isFinite(budgetNumeric) ? budgetNumeric : DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES,
   });
   if (!result.ok) {
     console.error(result.failures.join('\n'));
     process.exit(1);
   }
   for (const note of result.notes) console.log(note);
-  console.log(`Client bundle audit passed (${result.checked.publicFileCount} public files checked).`);
+  console.log(
+    `Client bundle audit passed (${result.checked.publicFileCount} public files, `
+    + `${result.checked.scannedChunkCount} chunks scanned, `
+    + `main bundle ${result.checked.mainBundleGzipBytes} / ${result.checked.mainBundleGzipBudgetBytes} bytes gzip).`,
+  );
 }

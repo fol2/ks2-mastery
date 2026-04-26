@@ -45,11 +45,36 @@ export async function runBuildClient({ buildHash } = {}) {
   await mkdir(outputDir, { recursive: true });
   const resolvedHash = buildHash !== undefined ? buildHash : resolveBuildHash();
 
+  // SH2-U10: esbuild code-splitting is enabled so adult-only surfaces
+  // (Admin Hub, Parent Hub, Monster Visual Config panel — already
+  // reachable via `React.lazy()`) are emitted as sibling `.js` chunks
+  // under `src/bundles/` instead of baked into `app.bundle.js`. First-
+  // paint learner routes only download `app.bundle.js`; the adult
+  // chunks load on demand when the matching route is navigated.
+  //
+  // `splitting: true` requires `format: 'esm'` (already in place) and
+  // uses `outdir` instead of `outfile`. `entryNames: 'app.bundle'`
+  // keeps the entry name stable at `app.bundle.js` so the Worker
+  // allowlist, `_headers` `/src/bundles/` cache rules, and the
+  // `index.html` `<script type="module" src="./src/bundles/app.bundle.js">`
+  // reference continue to resolve to the same filename. Chunk names
+  // (`chunkNames: '[name]-[hash]'`) give each split chunk a content-
+  // hashed filename so the immutable cache in
+  // `worker/src/security-headers.js::isImmutableBundlePath` is safe
+  // across redeploys.
+  //
+  // F-01 (same-PR atomicity): `worker/src/app.js::publicSourceAssetResponse`
+  // is updated in the same commit to match `/src/bundles/*.js` by prefix,
+  // not just `/src/bundles/app.bundle.js` exactly. Without that change
+  // every split chunk would 404 in production.
   const result = await build({
     entryPoints: [path.join(rootDir, 'src/app/entry.jsx')],
-    outfile: path.join(outputDir, 'app.bundle.js'),
+    outdir: outputDir,
+    entryNames: 'app.bundle',
+    chunkNames: '[name]-[hash]',
     bundle: true,
     format: 'esm',
+    splitting: true,
     target: ['es2022'],
     jsx: 'automatic',
     jsxImportSource: 'react',
