@@ -604,3 +604,88 @@ npm run test:playwright -- --update-snapshots
 Commit the updated PNGs in the same PR as the visual change. Review the diff
 alongside the code change so an accidental regression never sneaks in behind a
 baseline refresh.
+
+## Browser Validation (U8)
+
+U8 (capacity release gates and telemetry) introduces browser-native proof that
+the Phase 1 `localStorage`-lease multi-tab bootstrap coordination holds under
+simultaneous load. The scene lives at
+`tests/playwright/bootstrap-multi-tab.playwright.test.mjs` and drives a real
+Chromium instance against five coordination scenarios (A through E).
+
+### What the multi-tab test proves
+
+The lease-arbitration contract inside
+`src/platform/core/repositories/api.js`: when several tabs in the same
+browser window reload, they observe one another's coordination lease via
+shared `localStorage` and defer to a single leader. Only the leader's tab
+actually hits `/api/bootstrap`; the followers rehydrate from the
+warmed-in-cache bundle.
+
+The scene asserts this via two independent signals:
+
+1. Network: `page.on('request')` counts every outbound
+   `/api/bootstrap` call. Three coordinated tabs reloading within a
+   ~1.5 s window must produce no more than two bootstrap hits (leader
+   plus one natural follower retry); five tabs stress must stay
+   strictly below the naive fan-out of five.
+2. Counter: `globalThis.__ks2_capacityMeta__` exposes per-tab
+   totals — `bootstrapLeaderAcquired`, `bootstrapFollowerWaited`,
+   `bootstrapFollowerUsedCache`, `bootstrapFollowerTimedOut`,
+   `bootstrapFallbackFullRefresh`, `staleCommandSmallRefresh`,
+   `staleCommandFullBootstrapFallback`. The counters are installed
+   only when `process.env.NODE_ENV !== 'production'`; esbuild's
+   `define` block in `scripts/build-client.mjs` dead-code eliminates
+   them in shipped bundles (verified by the
+   `__ks2_capacityMeta__` entry in
+   `scripts/audit-client-bundle.mjs` `FORBIDDEN_TEXT`).
+
+### What failure means operationally
+
+- Scenario A or B failing with `bootstrapTotal > 2` (or > 4 for the
+  5-tab variant) means lease arbitration broke. In production this
+  surfaces as classroom-scale fan-out storms at morning sign-in,
+  multiplying the bootstrap cost by the number of open tabs per pupil.
+  Treat as a release blocker.
+- Scenario C or E failing with `bootstrapFollowerTimedOut === 0`
+  means the expired-lease takeover path no longer fires. Ghost leases
+  (a tab closed mid-bootstrap without releasing) would then block
+  every subsequent tab for the remainder of the session. Treat as a
+  release blocker.
+- Scenario D failing means the "no coordination possible" path
+  (incognito / school managed profiles with `localStorage` disabled)
+  is no longer gracefully degrading.
+
+### Fallback behaviour when `localStorage` is unavailable
+
+Incognito windows and UK school Chromebooks with managed profiles that
+deny site-scoped storage cannot observe the lease. Scenario D confirms
+each such tab independently issues its own bootstrap — no hard error,
+no shared lease — which at classroom scale reproduces the pre-Phase-1
+fan-out shape. This is an accepted residual risk for v2 and is
+tracked for the U9 circuit breakers work: if breaker telemetry shows
+the incognito / managed-profile surface materially dominates classroom
+load, the escalation is a Durable-Object-backed coordination layer
+(see `worker/README.md` coordination deferral note).
+
+### How to invoke locally
+
+```sh
+npm run test:playwright -- tests/playwright/bootstrap-multi-tab.playwright.test.mjs
+```
+
+The scene is `desktop-1024`-only (gated via
+`test.beforeEach(testInfo => test.skip(testInfo.project.name !== 'desktop-1024'))`);
+coordination is viewport-independent, so running across all five
+projects would only saturate the demo-session rate limit without
+adding coverage. If a regression specifically needs viewport
+verification (e.g. a touch-emulation interaction with the follower
+deferral loop), remove the skip and scope the new scene accordingly.
+
+The Playwright webServer passes `KS2_BUILD_MODE=test` so the bundle
+served under test keeps the counter object alive
+(`scripts/build-client.mjs` swaps the esbuild `NODE_ENV` define from
+`"production"` to `"test"`). Production builds use the default
+`production` mode and the counter identifier is stripped — verified by
+both `scripts/audit-client-bundle.mjs` (local bundle) and
+`scripts/production-bundle-audit.mjs` (post-deploy).
