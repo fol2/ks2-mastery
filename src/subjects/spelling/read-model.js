@@ -103,6 +103,8 @@ function sessionLabel(kind) {
   if (kind === 'test') return 'SATs 20';
   if (kind === 'single') return 'Single word';
   if (kind === 'trouble') return 'Trouble drill';
+  if (kind === 'boss') return 'Boss Dictation';
+  if (kind === 'guardian') return 'Guardian Mission';
   return 'Smart review';
 }
 
@@ -404,10 +406,22 @@ export function buildSpellingLearnerReadModel({
   if (activeSession) {
     const currentSlug = activeSession?.sessionState?.currentSlug || null;
     const currentWord = currentSlug ? (runtime.bySlug[currentSlug]?.word || currentSlug) : null;
+    // Post-Mega modes (boss / guardian) must resume into their own scenes, not
+    // the SATs Test Setup or Smart Review Setup. Without this branch the
+    // Resume button routed Boss learners straight into SATs Test Setup and
+    // persisted `mode: 'test'` (fol2/ks2-mastery#235 review follow-up).
+    const kind = activeSession.sessionKind;
+    const recommendedMode = kind === 'boss'
+      ? 'boss'
+      : kind === 'guardian'
+      ? 'guardian'
+      : kind === 'test'
+      ? 'test'
+      : 'smart';
     currentFocus = {
       subjectId: 'spelling',
-      recommendedMode: activeSession.sessionKind === 'test' ? 'test' : 'smart',
-      label: `Continue ${sessionLabel(activeSession.sessionKind)}`,
+      recommendedMode,
+      label: `Continue ${sessionLabel(kind)}`,
       detail: currentWord ? `Current word: ${currentWord}.` : 'A live spelling round is saved for this learner.',
       dueCount: dueRows.length,
       troubleCount: troubleRows.length,

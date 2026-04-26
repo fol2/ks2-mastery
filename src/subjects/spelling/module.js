@@ -232,15 +232,26 @@ export const spellingModule = {
         const confirmed = globalThis.confirm?.('End the current spelling session and switch?');
         if (confirmed === false) return true;
       }
-      service.savePrefs(learnerId, { mode });
-      const prefs = service.getPrefs(learnerId);
+      // Read current prefs WITHOUT mutating them — we only persist
+      // `{ mode }` once the session actually transitions. A rapid Alt+5
+      // double-press where the second press is declined must not leave
+      // `prefs.mode` pointing at the new mode if the first attempt was
+      // declined or the startSession path bails out. savePrefs runs AFTER
+      // a successful transition so the stored preference always matches
+      // the session the learner actually landed in. Same pattern must live
+      // in remote-actions.js (optimistic-prefs branch).
+      const currentPrefs = service.getPrefs(learnerId);
       tts.stop();
-      return applySpellingTransition(context, service.startSession(learnerId, {
-        mode: prefs.mode,
-        yearFilter: prefs.yearFilter,
-        length: prefs.roundLength,
-        extraWordFamilies: prefs.extraWordFamilies,
-      }));
+      const transition = service.startSession(learnerId, {
+        mode,
+        yearFilter: currentPrefs.yearFilter,
+        length: currentPrefs.roundLength,
+        extraWordFamilies: currentPrefs.extraWordFamilies,
+      });
+      if (transition?.ok !== false) {
+        service.savePrefs(learnerId, { mode });
+      }
+      return applySpellingTransition(context, transition);
     }
 
     if (action === 'spelling-submit-form') {

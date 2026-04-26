@@ -71,11 +71,20 @@ function parseStoredJson(value, fallback) {
 function buildActiveRecord(learnerId, state, now) {
   const session = state?.session;
   if (!session) return null;
+  // Mirror src/subjects/spelling/repository.js::buildActiveRecord — Boss and
+  // Guardian both override session.type with a shape-only value and the real
+  // post-Mega identity lives on session.mode. Persisting session.type here
+  // would lose that identity so Resume routes back to SATs Test / Smart
+  // Review after a refresh. Both runtimes MUST branch identically or server
+  // and client will disagree on which scene to open on Resume.
+  const sessionKind = session.mode === 'boss' || session.mode === 'guardian'
+    ? session.mode
+    : session.type;
   return normalisePracticeSessionRecord({
     id: session.id,
     learnerId,
     subjectId: SUBJECT_ID,
-    sessionKind: session.type,
+    sessionKind,
     status: 'active',
     sessionState: cloneSerialisable(session),
     summary: null,

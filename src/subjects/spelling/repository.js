@@ -89,11 +89,22 @@ function writeSpellingData(repositories, learnerId, nextData, todayDay = 0) {
 function buildActiveRecord(learnerId, state, now) {
   const session = state?.session;
   if (!session) return null;
+  // Boss Dictation (`session.mode === 'boss'`) and Guardian Mission
+  // (`session.mode === 'guardian'`) are both "post-Mega" modes that override
+  // `session.type` with a shape-only value ('test' for Boss, 'learning' for
+  // Guardian). Persisting `sessionKind: session.type` would lose the post-Mega
+  // mode and make the Resume button route back to SATs Test / Smart Review.
+  // Prefer `session.mode` for those modes so `activeSession.sessionKind` keeps
+  // the real identity across refresh; fall back to `session.type` for
+  // session-shape-preserved modes (smart / trouble / test / single).
+  const sessionKind = session.mode === 'boss' || session.mode === 'guardian'
+    ? session.mode
+    : session.type;
   return normalisePracticeSessionRecord({
     id: session.id,
     learnerId,
     subjectId: SUBJECT_ID,
-    sessionKind: session.type,
+    sessionKind,
     status: 'active',
     sessionState: cloneSerialisable(session),
     summary: null,
