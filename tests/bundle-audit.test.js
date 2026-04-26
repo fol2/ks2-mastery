@@ -757,10 +757,14 @@ test('assertCacheSplitRules rejects duplicate path groups (adv-2)', () => {
 });
 
 test('assertCacheSplitRules rejects multiple Cache-Control lines in one block (adv-3)', () => {
+  // The `/*` block intentionally has no `Cache-Control` line — Cloudflare
+  // Workers Static Assets appends matching block headers, so a wildcard
+  // `Cache-Control` would prepend onto every more-specific block. The
+  // assertion under test (multiple `Cache-Control` in the manifest block)
+  // is unrelated to that contract and must still fire.
   const doubleCacheManifest = [
     '/*',
     '  X-Content-Type-Options: nosniff',
-    '  Cache-Control: no-store',
     '',
     '/manifest.webmanifest',
     '  Cache-Control: public, max-age=3600',
