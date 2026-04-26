@@ -31,7 +31,10 @@ import {
   createNoopRepositoryAuthSession,
   repositoryAuthCacheScopeKey,
 } from './auth-session.js';
-import { normaliseMonsterVisualRuntimeConfig } from '../../game/monster-visual-config.js';
+import {
+  normaliseMonsterVisualRuntimeConfig,
+  resolveMonsterVisualConfigFromPointer,
+} from '../../game/monster-visual-config.js';
 
 const MUTATION_POLICY_VERSION = 1;
 const OPERATION_STATUS_PENDING = 'pending';
@@ -1757,7 +1760,14 @@ export function createApiPlatformRepositories({
       const remoteBundle = normaliseRepositoryBundle(payload);
       const remoteSyncState = normaliseSyncState(payload?.syncState);
       if (payload && Object.prototype.hasOwnProperty.call(payload, 'monsterVisualConfig')) {
-        monsterVisualConfig = normaliseMonsterVisualRuntimeConfig(payload.monsterVisualConfig);
+        // U7 adv-u7-r1-001: the server emits a compact pointer on the
+        // selected-learner-bounded path. Merge the pointer with the
+        // previously cached full config so admin-published custom
+        // configs survive across bootstraps. A hash mismatch surfaces
+        // the pointer itself; a matching hash preserves the cached full
+        // config; a full server response overwrites the cache as before.
+        const incoming = normaliseMonsterVisualRuntimeConfig(payload.monsterVisualConfig);
+        monsterVisualConfig = resolveMonsterVisualConfigFromPointer(incoming, monsterVisualConfig);
       }
       // U7: capture the revision hash for the next probe when the v2
       // envelope is present. The server only emits `revision` on the
