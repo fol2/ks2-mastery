@@ -33,6 +33,10 @@ name: Playwright (PR)
 
 on:
   pull_request:
+  # Reviewer NIT-A3 (cli-agent #3): `workflow_dispatch` lets a maintainer
+  # manually re-run the Playwright job (e.g. transient Chromium download
+  # failure) without pushing a new commit.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -72,7 +76,27 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-trace-mobile-390
+          # Reviewer NIT-A1 (cli-agent #1): include `run_attempt` + `sha`
+          # in the artefact name so re-running a failed run does not
+          # overwrite the previous artefact (GitHub Actions rejects
+          # duplicate names within a workflow run). The retention window
+          # (7d) is unchanged.
+          name: playwright-trace-mobile-390-${{ github.run_attempt }}-${{ github.sha }}
           path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload Playwright HTML report on failure
+        # Reviewer NIT-A2 (cli-agent #2): the HTML report gives a
+        # reviewer a browsable trace viewer without needing to reproduce
+        # the failure locally. Uploaded only on failure because a green
+        # run would just add noise + storage cost. The report directory
+        # is `.gitignore`d (`playwright-report/`) so it is never
+        # committed.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-mobile-390-${{ github.run_attempt }}-${{ github.sha }}
+          path: playwright-report/
           retention-days: 7
           if-no-files-found: ignore

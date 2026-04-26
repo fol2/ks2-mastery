@@ -69,8 +69,26 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-nightly-trace
+          # Reviewer NIT-A1 (cli-agent #1): run_attempt + sha in the name
+          # so a manual re-run via `workflow_dispatch` does not overwrite
+          # the scheduled run's artefact. For the scheduled cron the sha
+          # stays the same across attempts on the same HEAD, so the
+          # run_attempt suffix provides the uniqueness.
+          name: playwright-nightly-trace-${{ github.run_attempt }}-${{ github.sha }}
           path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload Playwright HTML report
+        # Reviewer NIT-A2 (cli-agent #2): browsable trace viewer on every
+        # nightly run (including green ones — the nightly matrix is the
+        # 5-viewport safety net, and a reviewer may want to inspect the
+        # report even after a passing run when tracking a flake).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-nightly-report-${{ github.run_attempt }}-${{ github.sha }}
+          path: playwright-report/
           retention-days: 14
           if-no-files-found: ignore
 
@@ -78,7 +96,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-nightly-baselines
+          name: playwright-nightly-baselines-${{ github.run_attempt }}-${{ github.sha }}
           path: tests/playwright/__screenshots__/
           retention-days: 14
           if-no-files-found: ignore

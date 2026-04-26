@@ -14,16 +14,25 @@
 //
 //   import { test } from '@playwright/test';
 //   import { createIsolatedDb } from '../../helpers/playwright-isolated-db.js';
+//   import { startBrowserAppServer } from '../../helpers/browser-app-server.js';
 //
 //   test.beforeEach(async ({}, testInfo) => {
 //     const db = createIsolatedDb({ label: testInfo.testId });
+//     // CRITICAL: the server MUST run in THIS Node process. The registry
+//     // below is an in-process `Map`, so a `webServer.command`-spawned
+//     // child cannot see handles created here. Use the direct
+//     // `startBrowserAppServer({ db })` form so the registry + the
+//     // server share one process.
+//     process.env.KS2_TEST_DB_HANDLE = db.handle;
+//     const app = await startBrowserAppServer({ withWorkerApi: true, port: 0 });
 //     testInfo.db = db;
-//     // spawn a browser-app-server child with KS2_TEST_DB_HANDLE=db.handle
-//     // ... (scene-specific glue)
+//     testInfo.app = app;
 //   });
 //
 //   test.afterEach(async ({}, testInfo) => {
+//     await testInfo.app?.close();
 //     await testInfo.db?.close();
+//     delete process.env.KS2_TEST_DB_HANDLE;
 //   });
 //
 // The helper is intentionally small: it wraps the existing
@@ -35,13 +44,30 @@
 //
 // Registry semantics:
 //  - A handle is a UUID-ish token scoped to the CURRENT Node process.
-//    Playwright spawns a browser-app-server per scene when
-//    `KS2_TEST_DB_HANDLE` is set, so the registry holds at most one
-//    DB per handle. Handles are NOT shared across processes.
+//    Handles are NOT shared across processes — the registry below is
+//    an in-process `Map`, not a file/IPC primitive.
 //  - `close()` pops the handle out of the registry AND calls
 //    `.close()` on the underlying SQLite instance so Node can GC the
 //    file descriptor.
 //  - Calling `close()` twice is a no-op (idempotent).
+//
+// IMPORTANT — cross-process caveat (reviewer BLOCKER-2):
+//
+//   The top-level `playwright.config.mjs` declares a `webServer.command`
+//   that SPAWNS a child `node ./tests/helpers/browser-app-server.js`
+//   process. That child has its OWN empty registry `Map`; a handle
+//   created in the Playwright test process (where `createIsolatedDb` ran)
+//   will NOT resolve inside that child. The server would log
+//   `KS2_TEST_DB_HANDLE set but handle did not resolve; falling back to
+//   shared DB` and the isolation contract would silently break.
+//
+//   Isolated scenes therefore MUST spawn a per-test server IN-PROCESS
+//   via `startBrowserAppServer({ db })` — NOT use the shared Playwright
+//   `webServer` block. The example above, and the companion README
+//   (`tests/playwright/isolated/README.md`), both demonstrate the
+//   correct pattern. The `tests/journeys/_server.mjs` helper shows the
+//   same in-process `startBrowserAppServer()` shape used by the
+//   existing Phase 4 U8 journey specs.
 
 import { randomUUID } from 'node:crypto';
 import { createMigratedSqliteD1Database } from './sqlite-d1.js';

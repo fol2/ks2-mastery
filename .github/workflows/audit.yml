@@ -15,6 +15,10 @@ name: Client Bundle Audit (PR)
 
 on:
   pull_request:
+  # Reviewer NIT-A3 (cli-agent #3): `workflow_dispatch` so a maintainer
+  # can re-run the audit without pushing a new commit (e.g. after an
+  # upstream dependency issue is transient).
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -40,6 +44,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      # Reviewer BLOCKER-1 fix (ce-correctness): `scripts/audit-client-bundle.mjs`
+      # reads `src/bundles/app.bundle.js`, which is `.gitignore`d (line 12)
+      # and therefore absent in a fresh CI checkout. Without a build step
+      # the audit hits ENOENT on every PR. Mirror the chain used by
+      # `wrangler.jsonc:20` — `npm run build && npm run audit:client` — so
+      # CI matches the Cloudflare remote-build contract.
+      - name: Build bundles
+        run: npm run build
 
       - name: Run client-bundle audit
         run: npm run audit:client

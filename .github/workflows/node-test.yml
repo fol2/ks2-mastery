@@ -25,6 +25,9 @@ name: Node Tests (PR)
 
 on:
   pull_request:
+  # Reviewer NIT-A3 (cli-agent #3): manual re-run for flaky transient
+  # failures (e.g. npm registry hiccup) without a no-op commit.
+  workflow_dispatch:
 
 permissions:
   contents: read

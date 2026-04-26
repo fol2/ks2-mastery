@@ -15,12 +15,15 @@ serial suite, `workers: 1`).
 ## Rules for this folder
 
 1. **Every scene MUST spawn its own DB handle via
-   `tests/helpers/playwright-isolated-db.js::createIsolatedDb()`** and
-   pass the returned handle into the browser-app-server via the
-   `KS2_TEST_DB_HANDLE` env var (Playwright fixture pattern). The main
-   `playwright.config.mjs` `webServer.env` block starts one shared
-   server per test run; isolated scenes therefore run a per-test
-   server by overriding that env var.
+   `tests/helpers/playwright-isolated-db.js::createIsolatedDb()`** AND
+   run a per-test `startBrowserAppServer({ db: ... })` IN-PROCESS.
+   Do NOT rely on the shared Playwright `webServer` block in
+   `playwright.config.mjs` — that spawns a CHILD Node process with
+   its own empty registry `Map`, and the handle created in this
+   process will not resolve there (see BLOCKER-2 note in the helper
+   docstring). The `tests/journeys/_server.mjs` helper shows the
+   in-process `startBrowserAppServer()` shape; isolated scenes use
+   the same approach with the added `db` parameter.
 
 2. **Every scene MUST close its DB handle in `afterEach`** so a
    failing test does not leak a file descriptor onto the next worker
@@ -43,6 +46,59 @@ serial suite, `workers: 1`).
    short, stateless scenes. A 30-second scene under `workers: 4`
    still blocks for 30 seconds; file a ticket to split it before
    adding it here.
+
+## Canonical scene shape (end-to-end)
+
+Reviewer BLOCKER-2 (ce-correctness): the `playwright.config.mjs`
+`webServer.command` approach spawns a CHILD process whose registry is
+empty — handles registered in the Playwright test process never
+resolve inside that child, and the server silently falls back to the
+shared DB. The fix is to start the server IN-PROCESS per test. Every
+isolated scene should therefore follow this template:
+
+```js
+import { test, expect } from '@playwright/test';
+import { createIsolatedDb } from '../../helpers/playwright-isolated-db.js';
+import { startBrowserAppServer } from '../../helpers/browser-app-server.js';
+
+test.beforeEach(async ({}, testInfo) => {
+  // 1. Create a per-test migrated DB (registered in THIS process).
+  const db = createIsolatedDb({ label: testInfo.testId });
+
+  // 2. Tell the to-be-spawned server which handle to resolve. The env
+  //    var MUST be set BEFORE startBrowserAppServer() so the server
+  //    reads it during construction.
+  process.env.KS2_TEST_DB_HANDLE = db.handle;
+
+  // 3. Start the server IN THE SAME Node process as the registry.
+  //    Port 0 asks the OS for a free port (avoids collisions under
+  //    workers: 4).
+  const app = await startBrowserAppServer({
+    withWorkerApi: true,
+    port: 0,
+  });
+
+  testInfo.db = db;
+  testInfo.app = app;
+});
+
+test.afterEach(async ({}, testInfo) => {
+  await testInfo.app?.close();
+  await testInfo.db?.close();
+  delete process.env.KS2_TEST_DB_HANDLE;
+});
+
+test('scene', async ({ page }) => {
+  await page.goto(testInfo.app.origin);
+  // ... assertions ...
+});
+```
+
+The main `playwright.config.mjs` `webServer` block stays in place for
+the serial suite — isolated scenes simply do not depend on it. The
+config's `baseURL: 'http://127.0.0.1:4173'` also does not apply inside
+isolated scenes; use `testInfo.app.origin` instead (the per-test
+port).
 
 ## Running
 

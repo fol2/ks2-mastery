@@ -22,6 +22,27 @@
 // those two to 0.035; wider viewports keep the tighter 0.02 because
 // Linux rendering there matches the developer-machine baselines closely
 // enough. F-04 deepening.
+//
+// Interaction with U6 per-surface table (reviewer NIT-CR1):
+//  - `tests/playwright/visual-baselines.playwright.test.mjs` defines
+//    its OWN per-surface ratio table: `LOOSE_RATIO = 0.25` for four
+//    demo-seed-variant surfaces (dashboard-home + spelling-{setup,
+//    session,summary}), `TIGHT_RATIO = 0.001` for the reverse-case
+//    mask-porosity contract, and project-default (0.02 / 0.035 at
+//    narrow viewports) for everything else. That per-capture override
+//    is ORTHOGONAL to the per-project override here: Playwright
+//    resolves `toHaveScreenshot` ratios using the call-site value when
+//    provided, then the project-level `expect.toHaveScreenshot.
+//    maxDiffPixelRatio`, then the top-level `expect` block. So:
+//      * Explicit capture ratio (LOOSE_RATIO / TIGHT_RATIO) — wins.
+//      * No explicit override on a `mobile-360` / `mobile-390` project
+//        run — resolves to 0.035 below.
+//      * No explicit override on tablet / desktop / isolated — resolves
+//        to 0.02 from the top-level `expect` block.
+//    The per-surface table will take priority for the four LOOSE_RATIO
+//    surfaces and the reverse-case regardless of viewport. When a
+//    future surface is added to the U6 table, there is NO need to
+//    touch this config block — the per-call override already dominates.
 export default {
   testDir: './tests',
   // Playwright scenes live under `tests/playwright/*.playwright.test.mjs`.
