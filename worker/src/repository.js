@@ -22,6 +22,10 @@ import {
 } from '../../src/subjects/spelling/content/model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data/content-data.js';
 import {
+  POST_MEGA_SEED_SHAPES,
+  resolvePostMegaSeedShape,
+} from '../../shared/spelling/post-mastery-seed-shapes.js';
+import {
   PLATFORM_ROLES,
   canManageAccountRoles,
   canViewAdminHub,
@@ -2303,6 +2307,24 @@ const OPS_TAG_MAX_CHARS = 32;
 const OPS_INTERNAL_NOTES_MAX_CHARS = 2000;
 const ACCOUNT_OPS_METADATA_MUTATION_KIND = 'admin.account_ops_metadata.update';
 const OPS_ERROR_EVENT_STATUS_MUTATION_KIND = 'admin.ops_error_event.status-set';
+// P2 U3: admin-gated QA seed harness. Writes a named post-Mega shape into
+// `child_subject_state.spelling.data` for the target learner. scopeType is
+// 'platform' so the mutation-receipt path defeats the cross-origin CSRF
+// vector (H9 — a malicious iframe POST with the admin session cookie cannot
+// forge a receipt header, and the receipt row proves which admin clicked).
+// scopeId is deliberately `post-mega-seed:<learnerId>` so each seed lands
+// in its own receipt row for audit.
+const POST_MEGA_SEED_MUTATION_KIND = 'admin.spelling.post-mega-seed';
+const POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS = 64;
+// U3 reviewer follow-up (MEDIUM adversarial): the seed harness accepts a
+// free-form learnerId string for the "new learner" flow. Without a charset
+// guard, an admin can type `alice\nbob`, `<script>`, or other control-char
+// payloads that flow straight into SQL literal via `bindStatement` (safe
+// against injection thanks to parameterisation, but still ugly for logs /
+// audit). The regex mirrors the learner-id naming convention used elsewhere
+// (lowercase/digits/hyphen, must start with alphanumeric) and is also
+// enforced on the CLI + React manual-id input for consistency.
+const POST_MEGA_SEED_LEARNER_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
 
 function normaliseMutationEnvelope(rawMutation, { scopeType, scopeId } = {}) {
   const raw = isPlainObject(rawMutation) ? rawMutation : {};
@@ -2815,6 +2837,267 @@ async function updateOpsErrorEventStatus(db, {
     });
   }
 
+  return response;
+}
+
+// ---------------------------------------------------------------------------
+// P2 U3: admin-gated QA seed harness for post-Mega learner states.
+//
+// Writes one of the 8 canonical seed shapes into `child_subject_state` for a
+// target learner. Routes through the Admin Ops P1 mutation-receipt path with
+// `scopeType='platform'` so cross-origin CSRF attempts fail at the receipt
+// header check. Atomic via `batch()` (R21) so the child_subject_state upsert
+// and the receipt row either both land or neither does — a partial land
+// would leave a seed without a receipt (or vice versa) and obscure the
+// audit trail.
+//
+// Edge case — target learner does not yet exist: a learner_profiles row is
+// inserted (Name: "Seed learner", Year Group: "Y5", Avatar: "#8A4FFF",
+// Goal: empty) and the acting admin is granted owner membership so they
+// can later see the seeded learner in the admin hub's learner picker.
+// ---------------------------------------------------------------------------
+async function seedPostMegaLearnerState(db, {
+  actorAccountId,
+  learnerId,
+  shapeName,
+  today,
+  confirmOverwrite = false,
+  mutation = {},
+  nowTs,
+}) {
+  if (!(typeof learnerId === 'string' && learnerId)) {
+    throw new BadRequestError('Learner id is required for post-Mega seed.', {
+      code: 'learner_id_required',
+    });
+  }
+  if (learnerId.length > POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS) {
+    throw new BadRequestError('Learner id is too long.', {
+      code: 'learner_id_too_long',
+      maxChars: POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS,
+    });
+  }
+  // U3 reviewer follow-up (MEDIUM adversarial): reject control chars / HTML /
+  // anything outside `[a-z0-9-]`. `learnerId: 'alice\nbob'` or `<script>` are
+  // rejected with 400 `invalid_learner_id` BEFORE any SQL runs. The regex
+  // enforces lowercase alphanumeric prefix + hyphen-suffix, matching the
+  // platform-wide learner id convention.
+  if (!POST_MEGA_SEED_LEARNER_ID_REGEX.test(learnerId)) {
+    throw new BadRequestError('Learner id contains invalid characters.', {
+      code: 'invalid_learner_id',
+      pattern: POST_MEGA_SEED_LEARNER_ID_REGEX.source,
+    });
+  }
+  if (!POST_MEGA_SEED_SHAPES.includes(shapeName)) {
+    throw new BadRequestError('Unknown post-Mega seed shape.', {
+      code: 'unknown_shape',
+      allowed: [...POST_MEGA_SEED_SHAPES],
+    });
+  }
+
+  // H9 CSRF — only admin-role accounts may invoke. `requireAdminHubAccess`
+  // rejects demo accounts and any platformRole other than admin/ops; we
+  // further tighten to admin only (ops accounts can view but not seed)
+  // because the seed is destructive from the learner's perspective.
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  if (accountPlatformRole(actor) !== 'admin') {
+    throw new ForbiddenError('Post-Mega seed harness is admin-only.', {
+      code: 'post_mega_seed_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+
+  const scopeId = `post-mega-seed:${learnerId}`;
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: 'platform',
+    scopeId,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  // U3 reviewer follow-up (HIGH correctness): `Number(null) === 0`, which is
+  // finite, so the previous `Number.isFinite(Number(today))` guard coerced
+  // `today=null` (the Admin UI's default — it never sends `today`) into day 0
+  // (1970-01-01). That produced temporally-nonsensical fixtures (all guardian
+  // `nextDueDay` in 1970). Explicitly reject `null`/`undefined` BEFORE the
+  // finite check so the ts-derived fallback actually fires for the admin
+  // path. `Number('')` is also 0, so string empty is treated the same way.
+  const hasTodayOverride = today != null
+    && !(typeof today === 'string' && today.trim() === '')
+    && Number.isFinite(Number(today));
+  const todayDay = hasTodayOverride
+    ? Math.floor(Number(today))
+    : Math.floor(ts / (24 * 60 * 60 * 1000));
+  const requestHash = mutationPayloadHash(POST_MEGA_SEED_MUTATION_KIND, {
+    learnerId,
+    shapeName,
+    today: todayDay,
+  });
+
+  // Idempotency preflight — replay-safe.
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: POST_MEGA_SEED_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      postMegaSeedMutation: {
+        ...(storedReplay.postMegaSeedMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  // Build the seed shape. Uses the bundled seeded content snapshot so the
+  // core-slug list is deterministic and matches what the service layer sees
+  // on a fresh deploy. Tests inject a fixed today/learnerId so assertions
+  // are reproducible.
+  const runtimeSnapshot = resolveRuntimeSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE, {
+    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+  });
+  const wordBySlug = Object.fromEntries(
+    (runtimeSnapshot?.words || []).map((word) => [word.slug, word]),
+  );
+  const data = resolvePostMegaSeedShape(shapeName, wordBySlug, todayDay);
+  const dataJson = JSON.stringify(data);
+
+  // Auto-create the learner if missing (plan edge case).
+  const existingLearner = await first(
+    db,
+    'SELECT id FROM learner_profiles WHERE id = ?',
+    [learnerId],
+  );
+  const createdLearner = !existingLearner;
+
+  // U3 reviewer follow-up (HIGH adversarial): cross-tenant learner data wipe.
+  // Before P2, an admin could type any learnerId and the seed would overwrite
+  // another account's learner_profiles + child_subject_state without warning,
+  // no undo, no audit pre-image. Two-layer guard:
+  //   1. When the target learner already exists and the acting admin has no
+  //      membership row for it, REJECT with 409 `seed_requires_membership`
+  //      UNLESS the client explicitly passes `confirmOverwrite: true`. The
+  //      confirm-flag lets a genuine ops response (debugging another
+  //      account's data) proceed — but only with explicit intent.
+  //   2. On every overwrite path (own-learner or with confirmOverwrite),
+  //      capture the pre-image `data_json` and include it in the mutation
+  //      receipt's `response_json.postMegaSeed.previousDataJson` so a future
+  //      rollback tool can restore the state without trawling backups.
+  let previousDataJson = null;
+  if (!createdLearner) {
+    const existingMembership = await getMembership(db, actorAccountId, learnerId);
+    if (!existingMembership && !confirmOverwrite) {
+      throw new ConflictError(
+        'Seed target is owned by a different account. Re-submit with confirmOverwrite=true to proceed.',
+        {
+          code: 'seed_requires_membership',
+          learnerId,
+          remedy: 'Resubmit the request with `confirmOverwrite: true` in the body to acknowledge the cross-tenant overwrite. The pre-image is captured in the mutation receipt for rollback.',
+        },
+      );
+    }
+    const previousRow = await first(
+      db,
+      `SELECT data_json FROM child_subject_state
+         WHERE learner_id = ? AND subject_id = 'spelling'`,
+      [learnerId],
+    );
+    previousDataJson = typeof previousRow?.data_json === 'string' ? previousRow.data_json : null;
+  }
+
+  const statements = [];
+  if (createdLearner) {
+    statements.push(bindStatement(db, `
+      INSERT INTO learner_profiles (
+        id, name, year_group, avatar_color, goal, daily_minutes,
+        created_at, updated_at, state_revision
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+    `, [
+      learnerId,
+      'Seed learner',
+      'Y5',
+      '#8A4FFF',
+      '',
+      15,
+      ts,
+      ts,
+    ]));
+    statements.push(bindStatement(db, `
+      INSERT INTO account_learner_memberships (
+        account_id, learner_id, role, sort_index, created_at, updated_at
+      )
+      VALUES (?, ?, 'owner', 0, ?, ?)
+      ON CONFLICT(account_id, learner_id) DO NOTHING
+    `, [actorAccountId, learnerId, ts, ts]));
+  }
+
+  // Upsert child_subject_state for (learner, 'spelling') with the seed
+  // shape's data JSON. ui_json is reset to 'null' so a stale local UI
+  // snapshot does not contaminate the seeded state's read-side projection.
+  statements.push(bindStatement(db, `
+    INSERT INTO child_subject_state (
+      learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+    )
+    VALUES (?, 'spelling', 'null', ?, ?, ?)
+    ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+      ui_json = 'null',
+      data_json = excluded.data_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `, [learnerId, dataJson, ts, actorAccountId]));
+
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: POST_MEGA_SEED_MUTATION_KIND,
+    scopeType: 'platform',
+    scopeId,
+    requestId,
+    correlationId,
+    appliedAt: ts,
+    replayed: false,
+  };
+  const response = {
+    postMegaSeed: {
+      learnerId,
+      shapeName,
+      today: todayDay,
+      createdLearner,
+      dataKeys: Object.keys(data).sort(),
+      // U3 reviewer follow-up (HIGH adversarial): capture pre-image so a
+      // future rollback tool can restore the prior child_subject_state.
+      // `previousDataJson` is the RAW JSON string (possibly null for first-
+      // write) — rollback consumers parse with `JSON.parse` only when
+      // non-null. The field lives inside `postMegaSeed` so the mutation
+      // receipt's `response_json` is self-contained for audit.
+      previousDataJson,
+      // `confirmedOverwrite` is true when the overwrite was cross-tenant
+      // (no membership) and the caller passed `confirmOverwrite: true`. The
+      // audit reviewer can filter on this to surface the small set of
+      // cross-account seeds that deserve a second look.
+      confirmedOverwrite: Boolean(!createdLearner && confirmOverwrite && previousDataJson !== null),
+    },
+    postMegaSeedMutation: mutationMeta,
+  };
+  statements.push(storeMutationReceiptStatement(db, {
+    accountId: actorAccountId,
+    requestId,
+    scopeType: 'platform',
+    scopeId,
+    mutationKind: POST_MEGA_SEED_MUTATION_KIND,
+    requestHash,
+    response,
+    correlationId,
+    appliedAt: ts,
+  }));
+
+  await batch(db, statements);
   return response;
 }
 
@@ -6191,6 +6474,26 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         eventId,
         status,
         expectedPreviousStatus,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    // P2 U3: admin-gated QA seed harness. Dispatches to the
+    // `seedPostMegaLearnerState` helper above so the CSRF-safe
+    // mutation-receipt + batch-atomic write lives in one place.
+    async seedPostMegaLearnerState(accountId, {
+      learnerId,
+      shapeName,
+      today = null,
+      confirmOverwrite = false,
+      mutation = {},
+    } = {}) {
+      return seedPostMegaLearnerState(db, {
+        actorAccountId: accountId,
+        learnerId,
+        shapeName,
+        today,
+        confirmOverwrite,
         mutation,
         nowTs: nowFactory(),
       });

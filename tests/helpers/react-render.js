@@ -767,6 +767,9 @@ export function renderHubSurfaceFixture({ surface = 'parent', platformRole = 'ad
         punctuationReleaseDiagnostics: { releaseId: 'punctuation-r4-full-14-skill-structure', trackedRewardUnitCount: 1, sessionCount: 1, weakPatternCount: 1, productionExposureStatus: 'enabled' },
         entryPoints: [{ action: 'open-subject', label: 'Open Spelling', subjectId: 'spelling' }, { action: 'open-subject', label: 'Open Punctuation analytics', subjectId: 'punctuation', tab: 'analytics' }],
       },
+      postMegaSeedHarness: {
+        shapes: ['fresh-graduate', 'guardian-first-patrol', 'guardian-wobbling', 'guardian-rested', 'guardian-optional-patrol', 'boss-ready', 'boss-mixed-summary', 'content-added-after-graduation'],
+      },
     };
     const accountDirectory = {
       status: 'loaded',
