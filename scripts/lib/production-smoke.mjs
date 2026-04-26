@@ -43,7 +43,7 @@ async function readJsonResponse(response) {
   }
 }
 
-function configuredTimeoutMs() {
+export function configuredTimeoutMs() {
   const value = Number(argValue('--timeout-ms') || process.env.KS2_SMOKE_TIMEOUT_MS || DEFAULT_SMOKE_TIMEOUT_MS);
   return Number.isFinite(value) && value > 0 ? value : DEFAULT_SMOKE_TIMEOUT_MS;
 }
