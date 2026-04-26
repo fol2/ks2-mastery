@@ -51,9 +51,14 @@ function seedSession(db, { id, accountId, expiresAt, revisionAtIssue = 0 }) {
   `).run(id, accountId, `hash-${id}`, expiresAt, revisionAtIssue);
 }
 
-function seedMutationReceipt(db, { requestId, appliedAt }) {
+function seedMutationReceipt(db, { requestId, appliedAt, mutationKind = 'parent.learner.update' } = {}) {
   // mutation_receipts rows require an adult_accounts row (FK CASCADE). Seed
   // the admin once so every seeded receipt can reference it.
+  //
+  // Note: default mutationKind is non-admin so the 30-day retention window
+  // applies. I7 (Phase C) introduced a 365-day window for `admin.*` kinds;
+  // callers that want to exercise the admin retention path pass an explicit
+  // `admin.*` mutationKind.
   db.db.prepare(`
     INSERT OR IGNORE INTO adult_accounts (
       id, email, display_name, platform_role, selected_learner_id,
@@ -65,9 +70,9 @@ function seedMutationReceipt(db, { requestId, appliedAt }) {
       account_id, request_id, scope_type, scope_id, mutation_kind,
       request_hash, response_json, status_code, correlation_id, applied_at
     )
-    VALUES ('adult-admin', ?, 'platform', 'scope', 'admin.ops.reconcile_kpis',
+    VALUES ('adult-admin', ?, 'platform', 'scope', ?,
             'hash-x', '{}', 200, 'corr-x', ?)
-  `).run(requestId, appliedAt);
+  `).run(requestId, mutationKind, appliedAt);
 }
 
 function seedRequestLimit(db, { limiterKey, windowStartedAt }) {
@@ -157,6 +162,118 @@ test('U11 runRetentionSweeps aggregates per-sweep deletion counts', async () => 
     assert.equal(byName.mutation_receipts, 1);
     assert.equal(byName.request_limits, 1);
     assert.equal(byName.account_sessions, 1);
+  } finally {
+    db.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// H1 (Phase C reviewer): bounded sweep + admin-audit 365-day retention
+// ---------------------------------------------------------------------------
+
+test('H1 sweepMutationReceipts caps deletions at MUTATION_RECEIPT_MAX_DELETE_BATCH per run', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    // Seed 10,001 stale non-admin receipts. Helper inserts the admin
+    // account once; loop inserts receipts referencing it.
+    db.db.prepare(`
+      INSERT OR IGNORE INTO adult_accounts (
+        id, email, display_name, platform_role, selected_learner_id,
+        created_at, updated_at, repo_revision, account_type, demo_expires_at
+      ) VALUES ('adult-admin', NULL, NULL, 'admin', NULL, 1, 1, 0, 'real', NULL)
+    `).run();
+    const insertReceipt = db.db.prepare(`
+      INSERT INTO mutation_receipts (
+        account_id, request_id, scope_type, scope_id, mutation_kind,
+        request_hash, response_json, status_code, correlation_id, applied_at
+      ) VALUES ('adult-admin', ?, 'platform', 'scope', 'parent.learner.update',
+                'hash-x', '{}', 200, 'corr-x', ?)
+    `);
+    const cutoff = now - MUTATION_RECEIPT_RETENTION_MS - 1;
+    for (let i = 0; i < 10_001; i += 1) {
+      insertReceipt.run(`req-bulk-${i}`, cutoff - i);
+    }
+    const { sweepMutationReceipts, MUTATION_RECEIPT_MAX_DELETE_BATCH } = await import('../worker/src/cron/retention-sweep.js');
+    assert.equal(MUTATION_RECEIPT_MAX_DELETE_BATCH, 5000);
+
+    // Run 1: caps at 5000.
+    const run1 = await sweepMutationReceipts(db, now);
+    assert.equal(run1.deleted, 5000);
+    // Run 2: another 5000.
+    const run2 = await sweepMutationReceipts(db, now);
+    assert.equal(run2.deleted, 5000);
+    // Run 3: final tail row.
+    const run3 = await sweepMutationReceipts(db, now);
+    assert.equal(run3.deleted, 1);
+    // Run 4: empty.
+    const run4 = await sweepMutationReceipts(db, now);
+    assert.equal(run4.deleted, 0);
+  } finally {
+    db.close();
+  }
+});
+
+test('I7 sweepMutationReceipts retains admin.* receipts for 365 days, non-admin for 30 days', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    const MS_IN_DAY = 24 * 60 * 60 * 1000;
+    db.db.prepare(`
+      INSERT OR IGNORE INTO adult_accounts (
+        id, email, display_name, platform_role, selected_learner_id,
+        created_at, updated_at, repo_revision, account_type, demo_expires_at
+      ) VALUES ('adult-admin', NULL, NULL, 'admin', NULL, 1, 1, 0, 'real', NULL)
+    `).run();
+    const insertReceipt = db.db.prepare(`
+      INSERT INTO mutation_receipts (
+        account_id, request_id, scope_type, scope_id, mutation_kind,
+        request_hash, response_json, status_code, correlation_id, applied_at
+      ) VALUES ('adult-admin', ?, 'platform', 'scope', ?,
+                'hash-x', '{}', 200, 'corr-x', ?)
+    `);
+    // 31-day-old admin receipt — within the 365-day admin retention window, KEEP.
+    insertReceipt.run('req-admin-31d', 'admin.accounts.ops_metadata_update', now - 31 * MS_IN_DAY);
+    // 366-day-old admin receipt — OUTSIDE the 365-day admin window, PRUNE.
+    insertReceipt.run('req-admin-366d', 'admin.accounts.ops_metadata_update', now - 366 * MS_IN_DAY);
+    // 31-day-old non-admin receipt — OUTSIDE the 30-day window, PRUNE.
+    insertReceipt.run('req-non-admin-31d', 'parent.learner.update', now - 31 * MS_IN_DAY);
+    // 29-day-old non-admin receipt — within the 30-day window, KEEP.
+    insertReceipt.run('req-non-admin-29d', 'parent.learner.update', now - 29 * MS_IN_DAY);
+
+    const { sweepMutationReceipts } = await import('../worker/src/cron/retention-sweep.js');
+    const result = await sweepMutationReceipts(db, now);
+    assert.equal(result.deleted, 2);
+    const surviving = db.db.prepare(
+      'SELECT request_id FROM mutation_receipts ORDER BY request_id',
+    ).all().map((row) => row.request_id);
+    assert.deepEqual(surviving.sort(), ['req-admin-31d', 'req-non-admin-29d']);
+  } finally {
+    db.close();
+  }
+});
+
+test('I2 sweepRequestLimits filters on updated_at, not window_started_at', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    // Seed a row whose window_started_at is OLD but updated_at is FRESH.
+    // Under the new predicate this row should survive.
+    db.db.prepare(`
+      INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)
+      VALUES (?, ?, ?, ?)
+    `).run('old-window-fresh-use', now - REQUEST_LIMITS_RETENTION_MS - 1, 0, now - 1000);
+    // Seed a row whose updated_at is old — PRUNE.
+    db.db.prepare(`
+      INSERT INTO request_limits (limiter_key, window_started_at, request_count, updated_at)
+      VALUES (?, ?, ?, ?)
+    `).run('old-use', now - 1000, 0, now - REQUEST_LIMITS_RETENTION_MS - 1);
+
+    const { sweepRequestLimits } = await import('../worker/src/cron/retention-sweep.js');
+    const result = await sweepRequestLimits(db, now);
+    assert.equal(result.deleted, 1);
+    const keys = db.db.prepare('SELECT limiter_key FROM request_limits ORDER BY limiter_key').all().map((row) => row.limiter_key);
+    assert.deepEqual(keys, ['old-window-fresh-use']);
   } finally {
     db.close();
   }

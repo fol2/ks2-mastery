@@ -964,3 +964,168 @@ test('U5 follow-up — expectedPreviousStatus validation rejects unknown value',
     server.close();
   }
 });
+
+// ---------------------------------------------------------------------------
+// H3 (Phase C reviewer): role update CAS on `repo_revision` + atomicity of
+// the UPDATE + mutation receipt write. Before the fix, the site composed
+// the UPDATE, a directory re-read, and the receipt INSERT as three
+// separate D1 calls — a failure between the UPDATE and the receipt INSERT
+// would leave the role committed without an audit trail. Now both land in
+// one atomic batch().
+// ---------------------------------------------------------------------------
+
+async function putRole(server, actor, targetAccountId, { platformRole, requestId, expectedRepoRevision, role = 'admin' } = {}) {
+  const body = { accountId: targetAccountId, platformRole, requestId };
+  if (expectedRepoRevision !== undefined) body.expectedRepoRevision = expectedRepoRevision;
+  return server.fetchAs(actor, 'https://repo.test/api/admin/accounts/role', {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      origin: 'https://repo.test',
+      'x-ks2-dev-platform-role': role,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+test('H3 role CAS — stale expectedRepoRevision returns 409 account_role_stale', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+    // Seed a second admin so the first can be safely demoted (avoids last-admin guard).
+    seedAdultAccount(server, { id: 'adult-admin-2', platformRole: 'admin', now });
+
+    // Bump repo_revision manually to simulate a concurrent write.
+    server.DB.db.prepare(`
+      UPDATE adult_accounts SET repo_revision = ? WHERE id = ?
+    `).run(3, 'adult-parent');
+
+    // Caller observed revision 2 (stale) and tries to demote.
+    const response = await putRole(server, 'adult-admin', 'adult-parent', {
+      platformRole: 'ops',
+      expectedRepoRevision: 2,
+      requestId: 'req-role-stale',
+    });
+    assert.equal(response.status, 409);
+    const payload = await response.json();
+    assert.equal(payload.code, 'account_role_stale');
+    assert.equal(payload.expected, 2);
+    assert.equal(payload.current, 3);
+    // Role unchanged.
+    const roleNow = server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('adult-parent').platform_role;
+    assert.equal(roleNow, 'parent');
+  } finally {
+    server.close();
+  }
+});
+
+test('H3 role happy — expectedRepoRevision matching current on-disk value succeeds and bumps revision', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+    seedAdultAccount(server, { id: 'adult-admin-2', platformRole: 'admin', now });
+
+    const beforeRevision = Number(server.DB.db.prepare('SELECT repo_revision FROM adult_accounts WHERE id = ?').get('adult-parent').repo_revision);
+
+    const response = await putRole(server, 'adult-admin', 'adult-parent', {
+      platformRole: 'ops',
+      expectedRepoRevision: beforeRevision,
+      requestId: 'req-role-cas-ok',
+    });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.updatedAccount.platformRole, 'ops');
+    assert.equal(payload.roleMutation.repoRevision, beforeRevision + 1);
+
+    const afterRevision = Number(server.DB.db.prepare('SELECT repo_revision FROM adult_accounts WHERE id = ?').get('adult-parent').repo_revision);
+    assert.equal(afterRevision, beforeRevision + 1);
+  } finally {
+    server.close();
+  }
+});
+
+test('H3 role last-admin — demoting the sole admin still surfaces 409 last_admin_required (regression)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+    // Only one admin exists (adult-admin). Attempt to demote returns 409.
+    const response = await putRole(server, 'adult-admin', 'adult-admin', {
+      platformRole: 'parent',
+      requestId: 'req-role-last-admin',
+    });
+    assert.equal(response.status, 409);
+    const payload = await response.json();
+    assert.equal(payload.code, 'last_admin_required');
+    const roleNow = server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('adult-admin').platform_role;
+    assert.equal(roleNow, 'admin');
+  } finally {
+    server.close();
+  }
+});
+
+test('H3 role atomicity — receipt INSERT failure rolls back the UPDATE', async () => {
+  // Force the batch's second statement (the mutation_receipts INSERT) to
+  // fail. The atomic batch must roll the UPDATE back.
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+    seedAdultAccount(server, { id: 'adult-admin-2', platformRole: 'admin', now });
+    const beforeRole = server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('adult-parent').platform_role;
+    assert.equal(beforeRole, 'parent');
+
+    // Monkey-patch batch so the SECOND statement (receipts insert) throws.
+    const d1 = server.DB;
+    const originalBatch = d1.batch.bind(d1);
+    d1.batch = async (statements) => {
+      // Replace the 2nd statement with one whose .run() throws.
+      const malformed = [
+        statements[0],
+        { run: async () => { throw new Error('synthetic receipt insert failure'); } },
+      ];
+      return originalBatch(malformed);
+    };
+
+    try {
+      const response = await putRole(server, 'adult-admin', 'adult-parent', {
+        platformRole: 'ops',
+        requestId: 'req-role-atomic',
+      });
+      assert.notEqual(response.status, 200);
+    } catch { /* transport-level failure is acceptable here */ }
+
+    // The role must NOT have changed — the batch rolled back.
+    const afterRole = server.DB.db.prepare('SELECT platform_role FROM adult_accounts WHERE id = ?').get('adult-parent').platform_role;
+    assert.equal(afterRole, 'parent', 'role must remain parent because the batch aborted atomically');
+  } finally {
+    server.close();
+  }
+});
+
+test('H3 role idempotency — same requestId replays cached receipt', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedCore(server, now);
+    seedAdultAccount(server, { id: 'adult-admin-2', platformRole: 'admin', now });
+
+    const first = await putRole(server, 'adult-admin', 'adult-parent', {
+      platformRole: 'ops',
+      requestId: 'req-role-replay',
+    });
+    assert.equal(first.status, 200);
+
+    const replay = await putRole(server, 'adult-admin', 'adult-parent', {
+      platformRole: 'ops',
+      requestId: 'req-role-replay',
+    });
+    assert.equal(replay.status, 200);
+    const payload = await replay.json();
+    assert.equal(payload.roleMutation.replayed, true);
+  } finally {
+    server.close();
+  }
+});

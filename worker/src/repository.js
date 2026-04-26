@@ -2463,6 +2463,52 @@ export async function reconcileAdminKpiMetricsInternal(db, {
   }
   const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
   const ownerHash = reconcileLockHashForRequestId(requestId);
+  const receiptAccountId = actorAccountId || 'system';
+  const requestHash = mutationPayloadHash(RECONCILE_KPIS_MUTATION_KIND, {
+    requestId,
+    clientComputed,
+  });
+
+  // H2 (Phase C reviewer): idempotency preflight. A retried reconcile with
+  // the same requestId must short-circuit to the cached response BEFORE we
+  // acquire the single-flight lock, otherwise a client backoff-retry storm
+  // forces every caller into the lock and every caller observes 409
+  // `reconcile_in_progress` even though the original reconcile already
+  // landed. Matches the pattern in `updateAccountOpsMetadata` and
+  // `updateOpsErrorEventStatus`.
+  const existingReceipt = await loadMutationReceipt(db, receiptAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: RECONCILE_KPIS_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId: `reconcile-kpis:${requestId}`,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    // The receipt body was shaped as `{ reconcile: {...} }`. Re-expand to the
+    // canonical return shape and flag it as replayed via `cached: true`.
+    const priorReconcile = (storedReplay && typeof storedReplay === 'object' && storedReplay.reconcile)
+      ? storedReplay.reconcile
+      : {};
+    return {
+      ok: true,
+      cached: true,
+      reconciledAt: Number(priorReconcile.appliedAt) || Number(existingReceipt.applied_at) || ts,
+      deltas: Array.isArray(priorReconcile.deltas) ? priorReconcile.deltas : [],
+      appliedCounts: (priorReconcile.serverComputed && typeof priorReconcile.serverComputed === 'object')
+        ? { ...priorReconcile.serverComputed }
+        : {},
+      clientComputed: priorReconcile.clientComputed && typeof priorReconcile.clientComputed === 'object'
+        ? { ...priorReconcile.clientComputed }
+        : null,
+      serverComputed: priorReconcile.serverComputed && typeof priorReconcile.serverComputed === 'object'
+        ? { ...priorReconcile.serverComputed }
+        : {},
+    };
+  }
 
   // --- Single-flight lock acquisition (INSERT OR IGNORE + CAS-takeover) ---
   // Step 1: optimistic insert.
@@ -2552,15 +2598,12 @@ export async function reconcileAdminKpiMetricsInternal(db, {
     await batch(db, [
       ...upserts,
       storeMutationReceiptStatement(db, {
-        accountId: actorAccountId || 'system',
+        accountId: receiptAccountId,
         requestId,
         scopeType: 'platform',
         scopeId: `reconcile-kpis:${requestId}`,
         mutationKind: RECONCILE_KPIS_MUTATION_KIND,
-        requestHash: mutationPayloadHash(RECONCILE_KPIS_MUTATION_KIND, {
-          requestId,
-          clientComputed,
-        }),
+        requestHash,
         response: receiptBody,
         correlationId: resolvedCorrelationId,
         appliedAt: ts,
@@ -4625,6 +4668,7 @@ async function updateManagedAccountRole(db, {
   actorAccountId,
   targetAccountId,
   platformRole,
+  expectedRepoRevision = null,
   requestId,
   correlationId = requestId,
   nowTs,
@@ -4645,119 +4689,175 @@ async function updateManagedAccountRole(db, {
   const requestHash = mutationPayloadHash('admin.account_role.update', {
     targetAccountId,
     platformRole: nextRole,
+    expectedRepoRevision: Number.isInteger(expectedRepoRevision) ? expectedRepoRevision : null,
   });
 
-  // NOTE: non-atomic by design — (a) branching on intermediate read results
-  // (existingReceipt short-circuit, target account lookup, last-admin-locked
-  // defence, role-change UPDATE guarded by a subquery). Each decision point
-  // depends on the outcome of the previous read; a pure `batch()` cannot
-  // express that control flow. `withTransaction` was removed in U12 (silent
-  // production no-op; preserving it would imply atomicity we do not have).
-  return (async () => {
-    const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
-    requireAccountRoleManager(actor);
+  // H3 (Phase C reviewer): this site was previously non-atomic — the
+  // role-change UPDATE, the directory re-read, and the mutation-receipt
+  // INSERT were three separate D1 calls. A failure between the UPDATE
+  // and the receipt INSERT would leave the role committed with no audit
+  // trail; withTransaction was a production no-op. Fix: compose the
+  // UPDATE + receipt INSERT in a single `batch()` so they share D1's
+  // atomic commit. The UPDATE's CAS guard combines:
+  //   1) `repo_revision = ?` — stale client state rejects with 409
+  //      `account_role_stale`.
+  //   2) The existing last-admin subquery — surfaces 409
+  //      `last_admin_required` when the demotion would empty the admin
+  //      pool. When rowsAffected=0 we follow up with a SELECT to tell
+  //      the two apart.
+  const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
+  requireAccountRoleManager(actor);
 
-    const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
-    if (existingReceipt) {
-      if (existingReceipt.request_hash !== requestHash) {
-        throw idempotencyReuseError({
-          kind: 'admin.account_role.update',
-          scopeType: 'account',
-          scopeId: targetAccountId,
-          requestId,
-          correlationId,
-        });
-      }
-      const storedReplay = safeJsonParse(existingReceipt.response_json, {});
-      return {
-        ...storedReplay,
-        roleMutation: {
-          ...(storedReplay.roleMutation || {}),
-          requestId,
-          correlationId,
-          replayed: true,
-        },
-      };
-    }
-
-    const target = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [targetAccountId]);
-    if (!target) {
-      throw new NotFoundError('Target account was not found.', {
-        code: 'target_account_not_found',
-        accountId: targetAccountId,
-      });
-    }
-    if (accountType(target) === 'demo') {
-      throw new ForbiddenError('Demo accounts cannot be managed from account role controls.', {
-        code: 'demo_account_role_forbidden',
-        accountId: targetAccountId,
-      });
-    }
-
-    const currentRole = normalisePlatformRole(target.platform_role);
-    if (currentRole === 'admin' && nextRole !== 'admin') {
-      const updateResult = await run(db, `
-        UPDATE adult_accounts
-        SET platform_role = ?,
-            updated_at = ?
-        WHERE id = ?
-          AND EXISTS (
-            SELECT 1
-            FROM adult_accounts
-            WHERE platform_role = 'admin'
-              AND COALESCE(account_type, 'real') <> 'demo'
-              AND id <> ?
-          )
-      `, [nextRole, nowTs, targetAccountId, targetAccountId]);
-      const updateChanges = Number(updateResult?.meta?.changes) || 0;
-      if (updateChanges !== 1) {
-        throw new ConflictError('At least one admin account must remain.', {
-          code: 'last_admin_required',
-          accountId: targetAccountId,
-        });
-      }
-    } else {
-      await run(db, `
-        UPDATE adult_accounts
-        SET platform_role = ?,
-            updated_at = ?
-        WHERE id = ?
-      `, [nextRole, nowTs, targetAccountId]);
-    }
-
-    const directory = await accountDirectoryPayload(db, actorAccountId);
-    const updatedAccount = directory.accounts.find((account) => account.id === targetAccountId) || null;
-    const response = {
-      ...directory,
-      updatedAccount,
-      roleMutation: {
-        policyVersion: MUTATION_POLICY_VERSION,
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
         kind: 'admin.account_role.update',
         scopeType: 'account',
         scopeId: targetAccountId,
         requestId,
         correlationId,
-        previousRole: currentRole,
-        platformRole: nextRole,
-        appliedAt: nowTs,
-        replayed: false,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      roleMutation: {
+        ...(storedReplay.roleMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
       },
     };
+  }
 
-    await storeMutationReceipt(db, {
+  const target = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [targetAccountId]);
+  if (!target) {
+    throw new NotFoundError('Target account was not found.', {
+      code: 'target_account_not_found',
+      accountId: targetAccountId,
+    });
+  }
+  if (accountType(target) === 'demo') {
+    throw new ForbiddenError('Demo accounts cannot be managed from account role controls.', {
+      code: 'demo_account_role_forbidden',
+      accountId: targetAccountId,
+    });
+  }
+
+  const currentRole = normalisePlatformRole(target.platform_role);
+  const currentRepoRevision = Math.max(0, Number(target.repo_revision) || 0);
+  const normalisedExpectedRepoRevision = Number.isInteger(expectedRepoRevision)
+    ? expectedRepoRevision
+    : currentRepoRevision;
+
+  // Early CAS check so a 409 reports the right `current` pre-image without
+  // needing to invert the UPDATE's rowsAffected signal.
+  if (normalisedExpectedRepoRevision !== currentRepoRevision) {
+    throw new ConflictError('Account has changed since it was last read. Re-read and retry.', {
+      code: 'account_role_stale',
+      retryable: true,
+      accountId: targetAccountId,
+      expected: normalisedExpectedRepoRevision,
+      current: currentRepoRevision,
+    });
+  }
+
+  const nextRepoRevision = currentRepoRevision + 1;
+
+  // Compose the UPDATE statement. The WHERE clause combines repo_revision
+  // CAS with the existing last-admin subquery so both invariants are
+  // enforced in one SQL round-trip.
+  const lastAdminGuard = (currentRole === 'admin' && nextRole !== 'admin')
+    ? `AND EXISTS (
+         SELECT 1
+         FROM adult_accounts
+         WHERE platform_role = 'admin'
+           AND COALESCE(account_type, 'real') <> 'demo'
+           AND id <> ?
+       )`
+    : '';
+  const lastAdminParams = (currentRole === 'admin' && nextRole !== 'admin') ? [targetAccountId] : [];
+
+  // Build response eagerly (before the batch) so the mutation receipt captures
+  // the intended effect. The directory re-read happens post-batch.
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: 'admin.account_role.update',
+    scopeType: 'account',
+    scopeId: targetAccountId,
+    requestId,
+    correlationId,
+    previousRole: currentRole,
+    platformRole: nextRole,
+    appliedAt: nowTs,
+    replayed: false,
+    expectedRepoRevision: normalisedExpectedRepoRevision,
+    repoRevision: nextRepoRevision,
+  };
+
+  const updateSql = `
+    UPDATE adult_accounts
+    SET platform_role = ?,
+        repo_revision = repo_revision + 1,
+        updated_at = ?
+    WHERE id = ?
+      AND repo_revision = ?
+      ${lastAdminGuard}
+  `;
+  const updateParams = [nextRole, nowTs, targetAccountId, currentRepoRevision, ...lastAdminParams];
+
+  // Receipt body includes the directory shape we'll return post-commit.
+  // For the forensic audit trail we store a `post` shape that matches the
+  // actual mutation outcome.
+  const receiptBody = {
+    roleMutation: mutationMeta,
+  };
+
+  const batchResult = await batch(db, [
+    bindStatement(db, updateSql, updateParams),
+    storeMutationReceiptStatement(db, {
       accountId: actorAccountId,
       requestId,
       scopeType: 'account',
       scopeId: targetAccountId,
       mutationKind: 'admin.account_role.update',
       requestHash,
-      response,
+      response: receiptBody,
       correlationId,
       appliedAt: nowTs,
+    }),
+  ]);
+  const updateChanges = Math.max(0, Number(batchResult?.[0]?.meta?.changes) || 0);
+  if (updateChanges !== 1) {
+    // rowsAffected=0 can mean (a) stale repo_revision, or (b) last-admin
+    // guard blocked the demotion. Distinguish via a follow-up SELECT so the
+    // 409 body names the right failure mode. The batch was atomic — the
+    // receipt INSERT rolled back with the UPDATE, so no drift.
+    const fresh = await first(db, 'SELECT repo_revision, platform_role FROM adult_accounts WHERE id = ?', [targetAccountId]);
+    const freshRepoRevision = Math.max(0, Number(fresh?.repo_revision) || 0);
+    if (freshRepoRevision !== currentRepoRevision) {
+      throw new ConflictError('Account has changed since it was last read. Re-read and retry.', {
+        code: 'account_role_stale',
+        retryable: true,
+        accountId: targetAccountId,
+        expected: normalisedExpectedRepoRevision,
+        current: freshRepoRevision,
+      });
+    }
+    throw new ConflictError('At least one admin account must remain.', {
+      code: 'last_admin_required',
+      accountId: targetAccountId,
     });
+  }
 
-    return response;
-  })();
+  const directory = await accountDirectoryPayload(db, actorAccountId);
+  const updatedAccount = directory.accounts.find((account) => account.id === targetAccountId) || null;
+  return {
+    ...directory,
+    updatedAccount,
+    roleMutation: mutationMeta,
+  };
 }
 
 async function ensureUniqueOrAccessibleLearnerId(db, accountId, learnerId) {
@@ -6917,11 +7017,12 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async listAdminAccounts(accountId) {
       return listAccountDirectory(db, accountId);
     },
-    async updateAdminAccountRole(accountId, { targetAccountId, platformRole, requestId, correlationId = null } = {}) {
+    async updateAdminAccountRole(accountId, { targetAccountId, platformRole, expectedRepoRevision = null, requestId, correlationId = null } = {}) {
       return updateManagedAccountRole(db, {
         actorAccountId: accountId,
         targetAccountId,
         platformRole,
+        expectedRepoRevision,
         requestId,
         correlationId: correlationId || requestId,
         nowTs: nowFactory(),

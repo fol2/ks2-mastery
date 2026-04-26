@@ -54,6 +54,12 @@ const app = createWorkerApp();
 export const CRON_METRIC_SUCCESS_COUNTER = 'capacity.cron.reconcile.success';
 export const CRON_METRIC_LAST_SUCCESS_AT = 'capacity.cron.reconcile.last_success_at';
 export const CRON_METRIC_LAST_FAILURE_AT = 'capacity.cron.reconcile.last_failure_at';
+// H1 (Phase C reviewer): separate telemetry channel for the retention
+// sweep arm. A sweep failure used to be a console.error-only path, which
+// meant the admin dashboard showed the reconciliation arm green while
+// `mutation_receipts` / `request_limits` overflowed silently. The
+// retention-specific metric lets the banner light up on either arm.
+export const CRON_METRIC_RETENTION_LAST_FAILURE_AT = 'capacity.cron.retention.last_failure_at';
 
 async function bumpCronMetricCounter(db, key, now) {
   try {
@@ -65,7 +71,16 @@ async function bumpCronMetricCounter(db, key, now) {
         updated_at = ?
     `, [key, now, now]);
   } catch (error) {
-    console.error('[ks2-cron] metric counter write failed', error?.message);
+    // I5 (Phase C reviewer): distinct structured event so operators can
+    // grep for "telemetry write failed" separately from "cron itself
+    // failed". When this fires, the dashboard's success/failure banner
+    // may lag one cycle; the next run reconciles.
+    console.error('[ks2-cron]', JSON.stringify({
+      event: 'cron.telemetry.write_failed',
+      channel: 'counter',
+      key,
+      reason: error?.message || String(error),
+    }));
   }
 }
 
@@ -79,7 +94,13 @@ async function writeCronMetricTimestamp(db, key, now) {
         updated_at = ?
     `, [key, now, now, now, now]);
   } catch (error) {
-    console.error('[ks2-cron] metric timestamp write failed', error?.message);
+    // I5 (Phase C reviewer): same distinct structured event.
+    console.error('[ks2-cron]', JSON.stringify({
+      event: 'cron.telemetry.write_failed',
+      channel: 'timestamp',
+      key,
+      reason: error?.message || String(error),
+    }));
   }
 }
 
@@ -148,25 +169,47 @@ export async function runScheduledHandler(event, env, ctx, {
       clientComputed: null,
       nowTs,
     });
-    // Retention sweeps are defence-in-depth; do not abort telemetry if
-    // they throw mid-stream — log and continue marking reconciliation
-    // itself as a success.
+    // H1 (Phase C reviewer): a retention-sweep failure was previously
+    // swallowed into console.error only while the reconcile arm still
+    // marked LAST_SUCCESS_AT — the dashboard then stayed green while
+    // `mutation_receipts` / `request_limits` silently overflowed.
+    // Now the sweep arm has its own failure metric
+    // (CRON_METRIC_RETENTION_LAST_FAILURE_AT) AND the overall success
+    // gate bumps LAST_SUCCESS_AT only when BOTH arms succeed.
     let retention = null;
+    let retentionError = null;
     try {
       retention = await runRetentionSweeps(db, nowTs);
     } catch (sweepError) {
-      console.error('[ks2-cron] retention sweep failed', sweepError?.message);
-      retention = { error: String(sweepError?.message || sweepError) };
+      retentionError = sweepError;
+      const reason = String(sweepError?.message || sweepError);
+      retention = { error: reason };
+      await writeCronMetricTimestamp(db, CRON_METRIC_RETENTION_LAST_FAILURE_AT, nowTs);
+      console.error('[ks2-cron]', JSON.stringify({
+        event: 'cron.retention.failure',
+        requestId,
+        nowTs,
+        reason,
+      }));
     }
     await bumpCronMetricCounter(db, CRON_METRIC_SUCCESS_COUNTER, nowTs);
-    await writeCronMetricTimestamp(db, CRON_METRIC_LAST_SUCCESS_AT, nowTs);
+    if (!retentionError) {
+      await writeCronMetricTimestamp(db, CRON_METRIC_LAST_SUCCESS_AT, nowTs);
+    }
     console.log('[ks2-cron]', JSON.stringify({
-      event: 'cron.reconcile.success',
+      event: retentionError ? 'cron.reconcile.partial' : 'cron.reconcile.success',
       requestId,
       nowTs,
       retention,
     }));
-    return { ok: true, requestId, nowTs, reconcile: reconcileResult, retention };
+    return {
+      ok: !retentionError,
+      requestId,
+      nowTs,
+      reconcile: reconcileResult,
+      retention,
+      ...(retentionError ? { reason: `retention_sweep_failed: ${String(retentionError?.message || retentionError)}` } : {}),
+    };
   } catch (error) {
     const code = typeof error?.extra?.code === 'string' ? error.extra.code : null;
     if (code === 'reconcile_in_progress') {

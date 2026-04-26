@@ -238,3 +238,66 @@ test('U10 reconcileLockHashForRequestId — deterministic non-negative integer',
     assert.ok(value >= 0);
   }
 });
+
+// ---------------------------------------------------------------------------
+// H2 (Phase C reviewer): idempotency preflight — a retried reconcile with
+// the same requestId must return the cached response BEFORE acquiring the
+// single-flight lock. Prevents a backoff-retry storm from forcing every
+// caller into the lock and every caller observing 409 reconcile_in_progress
+// despite the first reconcile having landed.
+// ---------------------------------------------------------------------------
+
+test('H2 idempotency — same requestId + same computedValues replays cached response without writing a new receipt', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdultAccount(server, { id: 'adult-admin', platformRole: 'admin', now });
+    seedErrorEvent(server, { id: 'evt-a', status: 'open', now });
+    seedErrorEvent(server, { id: 'evt-b', status: 'resolved', now });
+
+    const body = { requestId: 'req-idem', computedValues: null };
+    const first = await postReconcile(server, 'adult-admin', body);
+    assert.equal(first.status, 200);
+    const firstPayload = await first.json();
+    assert.equal(firstPayload.appliedCounts['ops_error_events.status.open'], 1);
+
+    // Retry with the same requestId. The preflight should short-circuit
+    // BEFORE the lock is acquired, and the response should mark `cached:
+    // true` while preserving the same applied counts. The mutation_receipts
+    // table should still only have one row for this requestId.
+    const second = await postReconcile(server, 'adult-admin', body);
+    assert.equal(second.status, 200);
+    const secondPayload = await second.json();
+    assert.equal(secondPayload.ok, true);
+    assert.equal(secondPayload.cached, true);
+    assert.equal(secondPayload.appliedCounts['ops_error_events.status.open'], 1);
+
+    const receiptCount = server.DB.db.prepare(`
+      SELECT COUNT(*) AS count FROM mutation_receipts WHERE request_id = ?
+    `).get('req-idem').count;
+    assert.equal(receiptCount, 1);
+  } finally {
+    server.close();
+  }
+});
+
+test('H2 idempotency_reuse — same requestId + different computedValues is rejected 409', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdultAccount(server, { id: 'adult-admin', platformRole: 'admin', now });
+    seedErrorEvent(server, { id: 'evt-a', status: 'open', now });
+
+    const requestId = 'req-idem-reuse';
+    const first = await postReconcile(server, 'adult-admin', { requestId, computedValues: { 'ops_error_events.status.open': 1 } });
+    assert.equal(first.status, 200);
+
+    // Replay with different computedValues — idempotency layer flags reuse.
+    const reuse = await postReconcile(server, 'adult-admin', { requestId, computedValues: { 'ops_error_events.status.open': 99 } });
+    assert.equal(reuse.status, 409);
+    const payload = await reuse.json();
+    assert.equal(payload.code, 'idempotency_reuse');
+  } finally {
+    server.close();
+  }
+});
