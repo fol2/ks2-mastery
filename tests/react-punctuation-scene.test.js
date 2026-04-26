@@ -2225,3 +2225,262 @@ test('punctuation Setup scene stale-prefs migration: re-render does not re-dispa
   // The migration did NOT fire again — the revert stands.
   assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'speech');
 });
+
+test('punctuation Setup scene stale-prefs migration (adv-234 HIGH 1): store-level prefsMigrated latch is set by the render', () => {
+  // adv-234 HIGH 1: the Scene latches `ui.prefsMigrated: true` VIA
+  // `actions.updateSubjectUi` BEFORE the `punctuation-set-mode` dispatch
+  // fires, so the latch lands regardless of whether the dispatch routes
+  // through the module handler (test harness) or the remote command
+  // boundary (production `handleRemotePunctuationAction` path — where the
+  // Worker `save-prefs` command short-circuits the fall-through to
+  // `handleSubjectAction`). We assert the store state directly after the
+  // first render — `ui.prefsMigrated === true` proves the client-side
+  // latch fired.
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'endmarks', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  const beforeLatch = harness.store.getState().subjectUi.punctuation.prefsMigrated;
+  // Fresh Setup state — latch starts unset.
+  assert.ok(!beforeLatch, 'prefsMigrated must start unset on a fresh open-subject');
+
+  harness.render();
+
+  const afterLatch = harness.store.getState().subjectUi.punctuation.prefsMigrated;
+  assert.equal(afterLatch, true, 'prefsMigrated must latch true after the first Setup render migrates');
+});
+
+test('punctuation Setup scene stale-prefs migration (adv-234 HIGH 1): second mount with prefsMigrated set does NOT re-dispatch', () => {
+  // Second Setup mount (fresh component instance — `migratedRef` reset)
+  // where the store already carries `prefsMigrated: true` must NOT run
+  // the migration. This is the production regression the HIGH 1 fix
+  // closes: a subsequent SSR render of the Setup scene no longer re-
+  // fires the Worker `save-prefs` command.
+  //
+  // Stored mode is set to a legacy cluster value AND the latch is
+  // pre-set to simulate the "learner previously migrated this
+  // session" state. If the Scene ignores the store-level latch it
+  // will migrate `prefs.mode` back to 'smart' (mutation) and the
+  // test fails.
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'speech', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    prefs: { mode: 'speech', roundLength: '4' },
+    prefsMigrated: true,
+  });
+
+  harness.render();
+
+  // The migration MUST NOT have run — stored mode stays at 'speech'.
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'speech');
+  // The latch stayed true.
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefsMigrated, true);
+});
+
+test('punctuation module handler (adv-234-004 MEDIUM): punctuation-set-mode rejected from non-setup phases', () => {
+  // adv-234-004: set-mode is a Setup-scoped mutation. A dispatch from
+  // active-item / feedback / summary / map must not mutate prefs. This
+  // locks the phase guard at the module handler level — the Scene-side
+  // migration dispatch still works because Setup-phase render is the
+  // only trigger.
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  // Force the Setup → active-item transition via a direct store merge so
+  // we don't rely on `punctuation-start` spinning a real session.
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: { id: 'mid-session', currentItem: { id: 'it-1' }, answeredCount: 0 },
+    prefs: { mode: 'smart', roundLength: '4' },
+    prefsMigrated: true,
+  });
+
+  // Returns false from non-setup phase; controller.dispatch's
+  // `handled` boolean surfaces via handleSubjectAction.
+  const handled = harness.handleSubjectAction('punctuation-set-mode', { value: 'weak' });
+  assert.equal(handled, false, 'set-mode must be rejected from active-item phase');
+  // Stored mode is untouched.
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'smart');
+});
+
+test('punctuation module handler (adv-234-001 MEDIUM): punctuation-set-round-length rejected from non-setup phases', () => {
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: { id: 's-1', currentItem: { id: 'it' }, answeredCount: 0 },
+    prefs: { mode: 'smart', roundLength: '4' },
+    prefsMigrated: true,
+  });
+
+  const handled = harness.handleSubjectAction('punctuation-set-round-length', { value: '8' });
+  assert.equal(handled, false, 'set-round-length must be rejected from active-item phase');
+  // roundLength stays at 4.
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefs.roundLength, '4');
+});
+
+test('punctuation module handler (adv-234-001 MEDIUM): punctuation-set-round-length rejects off-enum values (all / 1)', () => {
+  // The narrower UI-level enum is ['4', '8', '12']. The storage-level
+  // `normalisePunctuationRoundLength` accepts 1 / 2 / 3 / 6 / 'all' too —
+  // those are kept valid for the /start-session Worker command so legacy
+  // per-skill drills still work, but the Setup dashboard toggle must never
+  // accept them. Rogue 'all' / '1' payloads are rejected here.
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  // Setup phase, but value is out of the narrow enum.
+  for (const badValue of ['all', '1', '2', '3', '6', 'seven', '', null, undefined, 4]) {
+    const handled = harness.handleSubjectAction('punctuation-set-round-length', { value: badValue });
+    assert.equal(handled, false, `set-round-length should reject value ${JSON.stringify(badValue)}`);
+    // Stored prefs (via the service) must still read roundLength '4'.
+    // `ui.prefs` is only populated once a successful handler mirrors — a
+    // rejected dispatch leaves `ui.prefs` undefined on a freshly-opened
+    // Setup, so we read from the repository via the service as the
+    // canonical source.
+    assert.equal(
+      harness.services.punctuation.getPrefs(learnerId).roundLength,
+      '4',
+      `stored prefs.roundLength must stay at 4 after rejected ${JSON.stringify(badValue)}`,
+    );
+  }
+});
+
+test('punctuation module handler (adv-234-001 MEDIUM): punctuation-set-round-length accepts each narrow-enum stop', () => {
+  // Positive-case pair for the rejection test above: the three narrow-enum
+  // stops DO save through to stored prefs when dispatched from Setup.
+  for (const value of ['4', '8', '12']) {
+    const harness = createPunctuationHarness();
+    const learnerId = harness.store.getState().learners.selectedId;
+    harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+    harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+    const handled = harness.handleSubjectAction('punctuation-set-round-length', { value });
+    assert.equal(handled, true, `set-round-length should accept ${value}`);
+    assert.equal(harness.store.getState().subjectUi.punctuation.prefs.roundLength, value);
+  }
+});
+
+test('punctuation remote dispatch (adv-234 HIGH 1): production-shape routing latches prefsMigrated and sends exactly one save-prefs', async () => {
+  // Simulates the production dispatch chain (main.js):
+  //   dispatchAction → handleRemotePunctuationAction → punctuationCommandActions.handle
+  // The subject-command-actions handler routes `punctuation-set-mode` through
+  // the Worker save-prefs command and RETURNS TRUE — the fall-through to
+  // `handleSubjectAction` (which would run the module handler that sets
+  // `prefsMigrated: true`) never happens in production. Before the HIGH 1
+  // fix, a subsequent SSR render would re-run the migration dispatch and
+  // send ANOTHER save-prefs command to the Worker.
+  //
+  // The fix latches `ui.prefsMigrated: true` CLIENT-SIDE via
+  // `actions.updateSubjectUi` BEFORE the dispatch fires, so regardless of
+  // downstream routing the store's `prefsMigrated` gate is set and the
+  // next render skips the migration.
+  //
+  // This test verifies that contract end-to-end without spinning the full
+  // main.js stack: we render the Setup scene with `actions.dispatch` wired
+  // to a production-shaped routing that calls the real
+  // `punctuationCommandActions.handle` against a mock subjectCommands.
+
+  // Deferred imports so other test files don't pay the cost.
+  const { createSubjectCommandActionHandler } = await import(
+    '../src/platform/runtime/subject-command-actions.js'
+  );
+  const { punctuationSubjectCommandActions } = await import(
+    '../src/subjects/punctuation/command-actions.js'
+  );
+
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'endmarks', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  // Mock subject-command client — captures every outgoing request and
+  // resolves each `send` with a benign response.
+  const sent = [];
+  const subjectCommands = {
+    send(request) {
+      sent.push(request);
+      return Promise.resolve({ ok: true, learnerId: request.learnerId });
+    },
+  };
+  const punctuationCommandHandler = createSubjectCommandActionHandler({
+    subjectId: 'punctuation',
+    subjectCommands,
+    getState: () => harness.store.getState(),
+    actions: punctuationSubjectCommandActions,
+  });
+
+  // Production-shape dispatch: handleRemotePunctuationAction → handler.handle
+  // short-circuits for set-mode (and the other mapped actions). If the
+  // handler does NOT claim the action it falls through to the module
+  // handleAction so setup-only UI mutations (updateSubjectUi) still land.
+  function prodDispatch(action, data = {}) {
+    const handled = punctuationCommandHandler.handle(action, data);
+    if (!handled) {
+      harness.handleSubjectAction(action, data);
+    }
+  }
+
+  // Render the Setup scene directly with a production-shaped actions
+  // object. The Scene's migration dispatch must both latch
+  // `prefsMigrated: true` AND emit exactly one save-prefs Worker call.
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  renderPunctuationSetupSceneStandalone({
+    ui: harness.store.getState().subjectUi.punctuation,
+    actions: {
+      dispatch: prodDispatch,
+      updateSubjectUi: (subjectId, updater) => harness.store.updateSubjectUi(subjectId, updater),
+    },
+    prefs: { mode: 'endmarks', roundLength: '4' },
+    stats: {},
+    learner: null,
+    rewardState: {},
+  });
+
+  // Flush the queued promise microtasks so the send() resolutions settle.
+  await Promise.resolve();
+  await Promise.resolve();
+
+  // Exactly one save-prefs command should have been sent to the Worker.
+  const savePrefsCalls = sent.filter((request) => request.command === 'save-prefs');
+  assert.equal(savePrefsCalls.length, 1, `expected exactly one save-prefs Worker call, got ${savePrefsCalls.length}`);
+  assert.deepEqual(savePrefsCalls[0].payload, { prefs: { mode: 'smart' } });
+
+  // The store-level latch was set BY THE SCENE BEFORE the dispatch — not
+  // by the (never-invoked-in-prod) module handler. This is the key
+  // HIGH 1 assertion.
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefsMigrated, true);
+
+  // A second render MUST NOT re-fire the migration. Because we use the
+  // same Scene helper but a fresh component tree, the only remaining
+  // gate is the store-level `prefsMigrated` latch.
+  sent.length = 0;
+  renderPunctuationSetupSceneStandalone({
+    ui: harness.store.getState().subjectUi.punctuation,
+    actions: {
+      dispatch: prodDispatch,
+      updateSubjectUi: (subjectId, updater) => harness.store.updateSubjectUi(subjectId, updater),
+    },
+    // Deliberately simulate a data-restore that rolled prefs back to a
+    // legacy cluster mode — the latch must STILL block re-migration.
+    prefs: { mode: 'boundary', roundLength: '4' },
+    stats: {},
+    learner: null,
+    rewardState: {},
+  });
+  await Promise.resolve();
+
+  const savePrefsCallsAfterSecondMount = sent.filter((request) => request.command === 'save-prefs');
+  assert.equal(savePrefsCallsAfterSecondMount.length, 0, 'second mount must not re-fire the save-prefs Worker call');
+});

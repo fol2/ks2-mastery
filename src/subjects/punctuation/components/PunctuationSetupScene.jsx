@@ -44,6 +44,7 @@ import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   PUNCTUATION_DASHBOARD_HERO,
   PUNCTUATION_PRIMARY_MODE_CARDS,
+  PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS,
   bellstormSceneForPhase,
   buildPunctuationDashboardModel,
   composeIsDisabled,
@@ -69,7 +70,9 @@ const LEGACY_PUNCTUATION_MODE_IDS = Object.freeze(new Set([
 // Compact three-option toggle for the Setup scene. Default 4 (per plan);
 // 8 and 12 are the other two stops. Mirrors the Spelling LengthPicker's
 // radiogroup shape so screen readers land on the same familiar control.
-const PUNCTUATION_ROUND_LENGTH_OPTIONS = Object.freeze(['4', '8', '12']);
+// Shared as `PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS` from the view-model so
+// the module's `punctuation-set-round-length` handler can validate against
+// the same narrow enum (adv-234-001).
 
 function TodayCard({ card }) {
   return (
@@ -138,7 +141,7 @@ function RoundLengthToggle({ selectedValue, disabled, actions }) {
       role="radiogroup"
       aria-label="Round length"
     >
-      {PUNCTUATION_ROUND_LENGTH_OPTIONS.map((value) => {
+      {PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.map((value) => {
         const selected = selectedValue === value;
         return (
           <button
@@ -195,7 +198,7 @@ function selectedRoundLength(prefs) {
     ? prefs.roundLength
     : null;
   const candidate = typeof raw === 'string' && raw ? raw : '4';
-  return PUNCTUATION_ROUND_LENGTH_OPTIONS.includes(candidate) ? candidate : '4';
+  return PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(candidate) ? candidate : '4';
 }
 
 export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewardState }) {
@@ -211,7 +214,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
     [stats, prefs, rewardState],
   );
 
-  // One-shot stale-prefs migration. Two gates combine to guarantee
+  // One-shot stale-prefs migration. Three gates combine to guarantee
   // exactly one dispatch per session:
   //
   //   1. `migratedRef` — React-level gate. Persists across every
@@ -221,8 +224,19 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   //   2. `ui.prefsMigrated` — store-level gate. Survives component
   //      tear-down and rebuild (SSR renders produce fresh trees each
   //      time; `migratedRef` alone would re-fire on every SSR call).
-  //      Set by the module's `punctuation-migrate-prefs` handler as
-  //      part of the same store update that saves the new mode.
+  //      Latched CLIENT-SIDE below via `actions.updateSubjectUi` BEFORE
+  //      the dispatch fires — see adv-234 HIGH 1 for the detail. The
+  //      module's `punctuation-set-mode` handler also sets this latch
+  //      as part of its store update, but in production the dispatch
+  //      routes through `handleRemotePunctuationAction` → the Worker
+  //      `save-prefs` command, which returns true and short-circuits
+  //      the fall-through to `handleSubjectAction` → module handler.
+  //      Landing the latch here keeps both the harness (module-handler
+  //      path) and production (Worker-command path) in lock-step.
+  //   3. Reload-from-repositories after the Worker response rehydrates
+  //      `prefs.mode` to 'smart' — so even if the client-side latch is
+  //      somehow lost, the next render's `legacyCluster` check is
+  //      false.
   //
   // The check runs synchronously in the component body rather than
   // an effect — `renderToStaticMarkup` does not execute effects, so a
@@ -242,6 +256,16 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   const legacyCluster = typeof storedMode === 'string' && LEGACY_PUNCTUATION_MODE_IDS.has(storedMode);
   if (legacyCluster && !migratedRef.current && !prefsMigrated) {
     migratedRef.current = true;
+    // adv-234 HIGH 1: latch the store-level gate BEFORE dispatching so the
+    // production Worker-command path (which never falls through to the
+    // module handler) still gets the `prefsMigrated: true` store update.
+    // `updateSubjectUi` is exposed on `actions` by both the production
+    // `buildSurfaceActions` in main.js and the tests/helpers/react-app-ssr
+    // renderer. Safe to call during render — it is a plain store merge,
+    // not a dispatch through `handleSubjectAction`, so no re-entrant loop.
+    if (typeof actions.updateSubjectUi === 'function') {
+      actions.updateSubjectUi('punctuation', { prefsMigrated: true });
+    }
     actions.dispatch('punctuation-set-mode', { value: 'smart' });
   }
 

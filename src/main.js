@@ -2004,6 +2004,18 @@ function buildSurfaceActions() {
     openAdminHub: () => dispatchAction('open-admin-hub'),
     logout: () => dispatchAction('platform-logout'),
     retryPersistence: () => dispatchAction('persistence-retry'),
+    // adv-234 (HIGH 1): expose a direct store-merge handle so client-only
+    // UI latches (e.g. Punctuation Setup's `prefsMigrated` store-level gate)
+    // can land BEFORE a dispatch that routes through `handleRemotePunctuationAction`
+    // into `punctuationCommandActions.handle` — which returns true on every
+    // punctuation-set-mode call and short-circuits the module's fall-through
+    // to `handleSubjectAction`. Without this handle, the module handler that
+    // sets `prefsMigrated: true` is only exercised by the test harness, so
+    // the stale-prefs migration re-fires on every Setup SSR in production.
+    // Component-level callers should only use this for tightly scoped UI
+    // latches that the plan explicitly calls out — mutation-of-record still
+    // flows through `dispatch`.
+    updateSubjectUi: (subjectId, updater) => store.updateSubjectUi(subjectId, updater),
     // P1.5 Phase A (U2): expose dirty-row registration to the admin surface
     // so the AccountOpsMetadataRow can flip its dirtyRef through a stable
     // actions handle. The registry is module-scope (see

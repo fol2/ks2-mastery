@@ -3,13 +3,13 @@ import {
   isPublishedPunctuationSkillId,
   normalisePunctuationMapUi,
   normalisePunctuationPrefs,
-  normalisePunctuationRoundLength,
   sanitisePunctuationUiOnRehydrate,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
   PUNCTUATION_MODES,
   PUNCTUATION_OPEN_MAP_ALLOWED_PHASES,
 } from './service-contract.js';
+import { PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS } from './components/punctuation-view-model.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../platform/core/subject-availability.js';
 
 function applyTransition(context, transition) {
@@ -97,6 +97,17 @@ export const punctuationModule = {
     const ui = currentUi(context, learnerId);
 
     if (action === 'punctuation-set-mode') {
+      // adv-234-004 (MEDIUM): phase guard. `punctuation-set-mode` is a Setup-
+      // scoped affordance (the three primary mode cards + the one-shot
+      // stale-prefs migration dispatch that fires from the Setup-phase render).
+      // Admin / Parent-Hub surfaces that want to write prefs on a learner's
+      // behalf should go through the Worker `save-prefs` command directly, not
+      // through this module action — respecting the same Map-phase discipline
+      // (adv-219-007). Refuse from non-Setup phases so a stray dispatch treats
+      // as a miss rather than a silent success (learning #7). Safe for the
+      // Setup render-time migration dispatch: the scene itself renders under
+      // `ui.phase === 'setup'`.
+      if (ui.phase !== 'setup') return false;
       // U2: reject invalid mode values so a rogue payload cannot smuggle a
       // non-enum mode into stored prefs. `PUNCTUATION_MODES` stays at 10
       // entries (R17); Phase 3's stale-prefs migration explicitly dispatches
@@ -114,9 +125,21 @@ export const punctuationModule = {
       // Stale-prefs migration latch: ANY successful `punctuation-set-mode`
       // dispatch flips `prefsMigrated` to `true`. This latch prevents the
       // Setup scene's one-shot stale-prefs migration from re-firing on
-      // subsequent renders, even if stored prefs somehow revert. A fresh
-      // page load or learner switch clears it (session-memory only; not
-      // persisted to the subject data repository).
+      // subsequent renders, even if stored prefs somehow revert.
+      //
+      // `prefsMigrated` persists across reloads via `subjectStates.writeUi`
+      // — once a learner has migrated from a legacy cluster mode to `'smart'`,
+      // we never re-migrate them, even if a data-restore path later writes
+      // a cluster value back into their prefs. This matches the plan's
+      // intent that migration is a one-shot, per-learner event (plan R1,
+      // line 408). A fresh learner (different selectedId) starts without
+      // the latch; switching back to a migrated learner re-hydrates it.
+      //
+      // Parent-Hub backup restore that rolls stored prefs back to a legacy
+      // cluster mode while leaving `prefsMigrated: true` in place is an
+      // accepted edge case — see the PR body's "Accepted risk" section
+      // (adv-234-003). A manual dispatch of `punctuation-set-mode`
+      // `{ value: 'smart' }` re-runs the save cleanly.
       store.updateSubjectUi('punctuation', {
         phase: 'setup',
         error: '',
@@ -127,14 +150,23 @@ export const punctuationModule = {
     }
 
     if (action === 'punctuation-set-round-length') {
-      // U2: round-length toggle on the Setup scene's primary mode section.
-      // Validates the value against the shared enum so a rogue payload
-      // cannot smuggle an unsupported length into stored prefs. Returns
-      // `false` on invalid input so the caller treats the dispatch as a
-      // miss rather than a silent success (pairs with learning #7).
-      const normalised = normalisePunctuationRoundLength(data?.value, null);
-      if (!normalised) return false;
-      const nextPrefs = service.savePrefs(learnerId, { roundLength: normalised });
+      // adv-234-001 (MEDIUM): phase guard. Round-length is a Setup-scoped
+      // affordance (the compact 4 / 8 / 12 toggle on the Setup scene). A
+      // dispatch from session / feedback / summary / map would otherwise save
+      // prefs mid-session without any reflection in the active session's
+      // `length`. Refuse so the caller treats the dispatch as a miss rather
+      // than a silent success (learning #7).
+      if (ui.phase !== 'setup') return false;
+      // adv-234-001 (MEDIUM): validate against the narrow UI enum
+      // `PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS = ['4', '8', '12']` rather
+      // than the storage-level `normalisePunctuationRoundLength` which also
+      // accepts 1 / 2 / 3 / 6 / 'all' (the superset kept for `/start-session`
+      // payloads that still honour legacy per-skill drills). The Setup toggle
+      // exposes exactly three stops; a rogue payload carrying 'all' or '1'
+      // bypasses the primary-dashboard contract and must be rejected here.
+      const value = typeof data?.value === 'string' ? data.value : '';
+      if (!PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(value)) return false;
+      const nextPrefs = service.savePrefs(learnerId, { roundLength: value });
       store.updateSubjectUi('punctuation', {
         prefs: normalisePunctuationPrefs(nextPrefs || {}),
       });
