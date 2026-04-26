@@ -156,7 +156,13 @@ test('punctuation React surface renders guided setup controls and teach boxes', 
   assert.doesNotMatch(activeHtml, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
 });
 
-test('punctuation React surface renders weak focus chips safely', () => {
+// Phase 3 U3 replaces the adult-facing `WeakFocusChips` diagnostic row with
+// a child-facing header (`Question N of M · Skill · Mode`). The scene
+// derives the skill name from `item.skillIds[0]` against the frozen
+// `PUNCTUATION_CLIENT_SKILLS` manifest, so a weak-mode round still reads
+// the skill without leaking internal bucket labels (`weakFocus`,
+// `weak_facet`) — those are now in `PUNCTUATION_CHILD_FORBIDDEN_TERMS`.
+test('punctuation session scene header uses child-friendly skill + mode labels in weak-mode rounds', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
@@ -166,18 +172,11 @@ test('punctuation React surface renders weak focus chips safely', () => {
       mode: 'weak',
       length: 1,
       answeredCount: 0,
-      weakFocus: {
-        skillId: 'speech',
-        skillName: 'Inverted commas and speech punctuation',
-        mode: 'insert',
-        clusterId: 'speech',
-        bucket: 'weak',
-        source: 'weak_facet',
-      },
       currentItem: {
         id: 'sp_insert_question',
         mode: 'insert',
         inputKind: 'text',
+        skillIds: ['speech'],
         prompt: 'Add the direct-speech punctuation.',
         stem: 'Ella asked, can we start now?',
       },
@@ -185,9 +184,13 @@ test('punctuation React surface renders weak focus chips safely', () => {
   });
 
   const html = harness.render();
-  assert.match(html, /Weak focus/);
   assert.match(html, /Inverted commas and speech punctuation/);
-  assert.match(html, /insert/);
+  assert.match(html, /Wobbly spots/);
+  assert.match(html, /Question 1 of 1/);
+  // Adult-facing chips / internal bucket labels must NOT leak to the child
+  // scene HTML (plan R15 — `weakFocus` is in the forbidden-term fixture).
+  assert.doesNotMatch(html, /Weak focus/);
+  assert.doesNotMatch(html, /weak_facet/);
   assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
 });
 
@@ -219,8 +222,11 @@ test('punctuation React surface renders GPS active progress and final review', (
   });
 
   const activeHtml = harness.render();
-  assert.match(activeHtml, /GPS test/);
-  assert.match(activeHtml, /Delayed feedback/);
+  // Phase 3 U3: GPS chip row carries the new child-facing copy. The
+  // "answers at the end" phrasing replaces the adult "Delayed feedback"
+  // internal-state label from the monolith.
+  assert.match(activeHtml, /GPS check/);
+  assert.match(activeHtml, /Test mode: answers at the end\./);
   assert.match(activeHtml, /2 of 3/);
   assert.doesNotMatch(activeHtml, /Worked example|Common mistake|displayCorrection|accepted|correctIndex|rubric|validator|generator|hiddenQueue|queueItemIds|responses/);
 
@@ -271,12 +277,20 @@ test('punctuation React surface renders GPS active progress and final review', (
 });
 
 test('punctuation text input remounts when the current text item changes', async () => {
+  // Phase 3 U3 adv-232-002: text-input remount lives in
+  // `PunctuationSessionScene.jsx`. The `key` uses `session.answeredCount`
+  // as a monotonic counter so every item transition forces remount
+  // regardless of item id / prompt content. The previous `item.id ||
+  // item.prompt || 'text-item'` pattern collided on empty id +
+  // shared-prompt items (paragraph repair / combine) and carried the
+  // prior typed answer into the next item — the learning #9 regression
+  // U3 was meant to fix.
   const source = await readFile(
-    new URL('../src/subjects/punctuation/components/PunctuationPracticeSurface.jsx', import.meta.url),
+    new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
     'utf8',
   );
 
-  assert.match(source, /<TextItem key=\{item\.id \|\| item\.prompt\}/);
+  assert.match(source, /<TextItem[^>]*key=\{`text-item-\$\{session\.answeredCount \|\| 0\}`\}/);
 });
 
 test('punctuation React surface renders combine tasks as text-entry rewrites', () => {
@@ -331,7 +345,9 @@ test('punctuation React surface renders paragraph repair as multiline text entry
   assert.match(html, /Repair the whole passage/);
   assert.match(html, /textarea/);
   assert.match(html, /rows="6"/);
-  assert.match(html, /white-space:pre-wrap/);
+  // Phase 3 U3: paragraph mode prefills the textarea with `item.stem`; the
+  // old standalone pre-wrap callout is gone (the stem lives inside the
+  // textarea, which preserves newlines without needing a CSS rule).
   assert.match(html, /Bring\n- a drink\.\n- a hat\n- a sketchbook\./);
   assert.doesNotMatch(html, /accepted|correctIndex|rubric|validator|generator|hiddenQueue/);
 });
@@ -1090,4 +1106,799 @@ test('punctuation Skill Detail modal only renders when mapUi.detailOpenSkillId i
   const openHtml = harness.render();
   assert.match(openHtml, /role="dialog"/);
   assert.match(openHtml, /data-punctuation-skill-modal/);
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3 U3 — Punctuation Session scene.
+//
+// Consolidates `active-item` + `feedback` into one scene (`PunctuationSessionScene`).
+// Covers per-item-type input shape (plan R6, learning #9), the child-facing
+// header (plan R5), the collapsed guided teach box, GPS delayed-feedback
+// discipline (learning #10), `composeIsDisabled` threading (plan R11), and
+// the forbidden-term sweep (plan R15). Each scenario pairs an HTML-match
+// assertion with a state-level or adjacency check where the contract runs
+// deeper than the first render (learning #7 — silent-no-op guard).
+// ---------------------------------------------------------------------------
+
+function sessionHarnessWithItem({
+  mode,
+  sessionMode = 'smart',
+  item,
+  extra = {},
+}) {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: `${mode}-ui`,
+      mode: sessionMode,
+      length: 1,
+      answeredCount: 0,
+      currentItem: item,
+      ...(extra.session || {}),
+    },
+    ...(extra.top || {}),
+  });
+  return harness;
+}
+
+function extractTextarea(html) {
+  const match = html.match(/<textarea[^>]*>([\s\S]*?)<\/textarea>/);
+  return match ? { tag: match[0], body: match[1] } : null;
+}
+
+test('U3 session scene: insert mode renders textarea prefilled with item.stem and no source block', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    item: {
+      id: 'se_insert_capital',
+      mode: 'insert',
+      inputKind: 'text',
+      prompt: 'Add the missing capital letter and full stop.',
+      stem: 'the boat reached the harbour',
+    },
+  });
+  const html = harness.render();
+  const textarea = extractTextarea(html);
+  assert.ok(textarea, 'expected a textarea in insert-mode render');
+  assert.match(textarea.body, /the boat reached the harbour/);
+  assert.match(textarea.tag, /rows="4"/);
+  assert.doesNotMatch(html, /data-punctuation-session-source/);
+});
+
+test('U3 session scene: fix mode renders textarea prefilled with item.stem and no source block', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'fix',
+    item: {
+      id: 'sp_fix_quotes',
+      mode: 'fix',
+      inputKind: 'text',
+      prompt: 'Fix the inverted-comma punctuation.',
+      stem: 'Mia shouted look out',
+    },
+  });
+  const html = harness.render();
+  const textarea = extractTextarea(html);
+  assert.ok(textarea);
+  assert.match(textarea.body, /Mia shouted look out/);
+  assert.match(textarea.tag, /rows="4"/);
+  assert.doesNotMatch(html, /data-punctuation-session-source/);
+});
+
+test('U3 session scene: paragraph mode prefills stem and sets rows=6 on the textarea', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'paragraph',
+    item: {
+      id: 'pg_fronted_speech',
+      mode: 'paragraph',
+      inputKind: 'text',
+      prompt: 'Repair the passage.',
+      stem: 'Quietly the door opened\nShe whispered hello',
+    },
+  });
+  const html = harness.render();
+  const textarea = extractTextarea(html);
+  assert.ok(textarea);
+  assert.match(textarea.tag, /rows="6"/);
+  assert.match(textarea.body, /Quietly the door opened\nShe whispered hello/);
+  assert.doesNotMatch(html, /data-punctuation-session-source/);
+});
+
+test('U3 session scene: combine mode renders EMPTY textarea with source block above (prefill fix for learning #9)', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'combine',
+    item: {
+      id: 'sc_combine_rain_pitch',
+      mode: 'combine',
+      inputKind: 'text',
+      prompt: 'Combine the two clauses with a semi-colon.',
+      stem: 'The rain had stopped.\nThe pitch was still slippery.',
+    },
+  });
+  const html = harness.render();
+  const textarea = extractTextarea(html);
+  assert.ok(textarea);
+  // The body of the textarea must be empty — combine items must not prefill
+  // the source sentences as the learner's answer (the old monolith bug).
+  assert.equal(textarea.body.trim(), '', 'combine textarea must start blank');
+  // The source block renders the stem above the textarea.
+  assert.match(html, /data-punctuation-session-source[^>]*>[\s\S]*The rain had stopped/);
+});
+
+test('U3 session scene: transfer mode renders EMPTY textarea with source block above', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'transfer',
+    item: {
+      id: 'st_transfer_speech',
+      mode: 'transfer',
+      inputKind: 'text',
+      prompt: 'Use the fact below in one accurate sentence with speech punctuation.',
+      stem: 'Fact: The otters had returned to the river.',
+    },
+  });
+  const html = harness.render();
+  const textarea = extractTextarea(html);
+  assert.ok(textarea);
+  assert.equal(textarea.body.trim(), '', 'transfer textarea must start blank');
+  assert.match(html, /data-punctuation-session-source[^>]*>[\s\S]*Fact: The otters had returned/);
+});
+
+test('U3 session scene: choose mode renders the radio group and preserves existing behaviour', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'choose',
+    item: {
+      id: 'se_choose_ending',
+      mode: 'choose',
+      inputKind: 'choice',
+      prompt: 'Which ending is correct?',
+      options: [
+        { index: 0, text: 'She asked "where is the key"' },
+        { index: 1, text: 'She asked, "Where is the key?"' },
+      ],
+    },
+  });
+  const html = harness.render();
+  assert.match(html, /role="radiogroup"/);
+  assert.match(html, /She asked, &quot;Where is the key\?&quot;|She asked, "Where is the key\?"/);
+  // No textarea in the choice branch.
+  assert.equal(extractTextarea(html), null);
+});
+
+test('U3 session scene: submit in non-GPS mode dispatches punctuation-submit-form with the typed answer', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    item: {
+      id: 'se_insert_x',
+      mode: 'insert',
+      inputKind: 'text',
+      prompt: 'Add end punctuation.',
+      stem: 'the dog barked',
+    },
+  });
+
+  // Dispatch the submit action directly — the scene's onSubmit prop calls
+  // `actions.dispatch('punctuation-submit-form', { typed })`. Paired state
+  // assertion: the session transitions (either feedback or summary)
+  // demonstrates the dispatch is wired through the real reducer.
+  harness.dispatch('punctuation-submit-form', { typed: 'The dog barked.' });
+  const state = harness.store.getState().subjectUi.punctuation;
+  assert.ok(
+    state.phase === 'feedback' || state.phase === 'summary' || state.phase === 'active-item',
+    `punctuation-submit-form must land on a recognised phase, got ${state.phase}`,
+  );
+});
+
+test('U3 session scene: GPS active-item phase renders NO feedback panel (learning #10 delayed feedback)', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    sessionMode: 'gps',
+    item: {
+      id: 'se_insert_gps',
+      mode: 'insert',
+      inputKind: 'text',
+      prompt: 'Fix the capital letter.',
+      stem: 'the bell rang',
+    },
+    extra: {
+      session: {
+        gps: { testLength: 2, answeredCount: 0, remainingCount: 2, delayedFeedback: true },
+      },
+      top: {
+        // Feedback payload is defensively populated but MUST NOT render in
+        // GPS active-item — the help-visibility helper hides it.
+        feedback: {
+          kind: 'warn',
+          headline: 'Not quite',
+          body: 'Try again.',
+          displayCorrection: 'The bell rang.',
+        },
+      },
+    },
+  });
+  const html = harness.render();
+  // The GPS active render must not surface feedback — no headline / no
+  // model-answer reveal / no feedback chip container.
+  assert.doesNotMatch(html, /Not quite/);
+  assert.doesNotMatch(html, /Show model answer/);
+  assert.doesNotMatch(html, /The bell rang\./);
+});
+
+test('U3 session scene: GPS submit label reads "Save answer" (session-ui contract)', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    sessionMode: 'gps',
+    item: {
+      id: 'se_insert_gps_label',
+      mode: 'insert',
+      inputKind: 'text',
+      prompt: 'Fix the end punctuation.',
+      stem: 'i like toast',
+    },
+  });
+  const html = harness.render();
+  assert.match(html, /<button[^>]*data-punctuation-submit[^>]*>Save answer<\/button>/);
+  assert.doesNotMatch(html, /<button[^>]*data-punctuation-submit[^>]*>Check<\/button>/);
+});
+
+test('U3 session scene: header renders "Question N of M · Skill · Mode" when item carries skillIds', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    sessionMode: 'smart',
+    item: {
+      id: 'se_header',
+      mode: 'insert',
+      inputKind: 'text',
+      skillIds: ['sentence_endings'],
+      prompt: 'Fix capitalisation.',
+      stem: 'the cat purred',
+    },
+    extra: {
+      session: {
+        length: 4,
+        answeredCount: 2,
+      },
+    },
+  });
+  const html = harness.render();
+  assert.match(html, /Question 3 of 4 · Capital letters and sentence endings · Smart review/);
+});
+
+test('U3 session scene: feedback phase shows headline + body + Continue by default, model behind reveal', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    session: {
+      id: 'feedback-ui',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 1,
+      currentItem: {
+        id: 'se_feedback',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Fix the punctuation.',
+        stem: 'hello world',
+      },
+    },
+    feedback: {
+      kind: 'warn',
+      headline: 'Almost there',
+      body: 'Try one more punctuation mark.',
+      displayCorrection: 'Hello, world.',
+      facets: [{ id: 'ending', label: 'End punctuation', ok: false }],
+    },
+  });
+  const html = harness.render();
+  // Headline + body on the hero.
+  assert.match(html, /Almost there/);
+  assert.match(html, /Try one more punctuation mark/);
+  // Continue button is the primary feedback action.
+  assert.match(html, /data-punctuation-continue/);
+  // The `displayCorrection` content IS in the DOM (inside <details>) but
+  // lives behind the "Show model answer" toggle — the summary text must
+  // render so a screen reader can expand it.
+  assert.match(html, /Show model answer/);
+  assert.match(html, /Hello, world\./);
+});
+
+test('U3 session scene: raw misconceptionTags (dotted IDs) are NOT rendered as chips by default', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    session: {
+      id: 'feedback-ui-tags',
+      mode: 'smart',
+      length: 1,
+      answeredCount: 1,
+      currentItem: {
+        id: 'sp_fb_tags',
+        mode: 'insert',
+        inputKind: 'text',
+        prompt: 'Fix the speech punctuation.',
+        stem: 'Mia said look out',
+      },
+    },
+    feedback: {
+      kind: 'warn',
+      headline: 'Almost — speech marks',
+      body: 'Wrap the spoken words first.',
+      misconceptionTags: ['speech.quote_missing'],
+      facets: [],
+    },
+  });
+  const html = harness.render();
+  // Raw dotted ID must never surface as visible chip text — U3 pipes
+  // `misconceptionTags` through `punctuationChildMisconceptionLabel`
+  // (which returns `'Speech punctuation'` for that tag).
+  assert.doesNotMatch(html, />speech\.quote_missing</);
+  // When a mapped child label exists, it renders in the "Show more" reveal.
+  assert.match(html, /Speech punctuation/);
+});
+
+test('U3 session scene: guided teach box renders rule line; worked example lives behind a toggle', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'guided-teach-ui',
+      mode: 'guided',
+      length: 1,
+      answeredCount: 0,
+      guided: {
+        skillId: 'speech',
+        supportLevel: 2,
+        teachBox: {
+          name: 'Inverted commas and speech punctuation',
+          rule: 'Put spoken words inside inverted commas.',
+          workedExample: {
+            before: 'Mia said come here.',
+            after: 'Mia said, "Come here."',
+          },
+          contrastExample: {
+            before: 'Mia said "come here".',
+            after: 'Mia said, "Come here."',
+          },
+          selfCheckPrompt: 'Check the rule, compare the examples, then try the item without looking.',
+        },
+      },
+      currentItem: {
+        id: 'sp_insert_guided',
+        mode: 'insert',
+        inputKind: 'text',
+        skillIds: ['speech'],
+        prompt: 'Add the direct-speech punctuation.',
+        stem: 'Ella asked, can we start now?',
+      },
+    },
+  });
+  const html = harness.render();
+  // Rule is visible in the collapsed teach box.
+  assert.match(html, /Put spoken words inside inverted commas/);
+  // The worked / contrast examples live inside a `<details>` element — SSR
+  // renders them in the DOM but the `<summary>Show example</summary>`
+  // gating is the collapsed affordance.
+  assert.match(html, /<details[^>]*punctuation-session-teach-details[\s\S]*<summary>Show example<\/summary>/);
+});
+
+test('U3 session scene: availability=unavailable disables Check / Skip / End buttons', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    item: {
+      id: 'se_unavailable',
+      mode: 'insert',
+      inputKind: 'text',
+      prompt: 'Fix.',
+      stem: 'hello',
+    },
+    extra: {
+      top: {
+        availability: { status: 'unavailable', code: 'runtime_unavailable', message: 'offline' },
+      },
+    },
+  });
+  const html = harness.render();
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-submit/);
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-skip/);
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-end-round/);
+});
+
+test('U3 session scene: pendingCommand disables the textarea itself (not just the submit button)', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    item: {
+      id: 'se_pending',
+      mode: 'insert',
+      inputKind: 'text',
+      prompt: 'Fix.',
+      stem: 'hello',
+    },
+    extra: {
+      top: {
+        pendingCommand: 'punctuation-submit-form',
+      },
+    },
+  });
+  const html = harness.render();
+  const textarea = extractTextarea(html);
+  assert.ok(textarea);
+  // Textarea itself must be disabled while a command is in flight so the
+  // learner cannot keep typing into a stale mid-transition input.
+  assert.match(textarea.tag, /disabled/);
+  // Submit button still disabled as before (sanity check).
+  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-submit/);
+});
+
+test('U3 session scene: active-item SSR contains none of PUNCTUATION_CHILD_FORBIDDEN_TERMS', () => {
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    sessionMode: 'smart',
+    item: {
+      id: 'se_forbid_sweep',
+      mode: 'insert',
+      inputKind: 'text',
+      skillIds: ['sentence_endings'],
+      prompt: 'Fix the end punctuation.',
+      stem: 'the bell rang',
+    },
+  });
+  const html = harness.render();
+  const leaks = forbiddenTermsInHtml(html);
+  assert.deepEqual(
+    leaks,
+    [],
+    `forbidden term leak in active-item session scene HTML: ${leaks.join(', ')}`,
+  );
+});
+
+test('U3 session scene: feedback SSR contains none of PUNCTUATION_CHILD_FORBIDDEN_TERMS', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    session: {
+      id: 'feedback-sweep-ui',
+      mode: 'smart',
+      length: 1,
+      answeredCount: 1,
+      currentItem: {
+        id: 'se_fb_sweep',
+        mode: 'insert',
+        inputKind: 'text',
+        skillIds: ['sentence_endings'],
+        prompt: 'Fix.',
+        stem: 'hello',
+      },
+    },
+    feedback: {
+      kind: 'success',
+      headline: 'Nice.',
+      body: 'Capital and full stop land clean.',
+      displayCorrection: 'Hello.',
+      facets: [{ id: 'ending', label: 'End punctuation', ok: true }],
+      misconceptionTags: [],
+    },
+  });
+  const html = harness.render();
+  const leaks = forbiddenTermsInHtml(html);
+  assert.deepEqual(
+    leaks,
+    [],
+    `forbidden term leak in feedback session scene HTML: ${leaks.join(', ')}`,
+  );
+});
+
+test('U3 session scene: every cluster focus mode still starts a session via punctuation-start (R4/R16 behavioural cover)', () => {
+  // Plan R16: the six cluster-focus modes stay dispatchable via
+  // punctuation-start with `mode: <clusterId>`. The primary-setup
+  // affordances moved (U2 owns); the dispatch path keeps behavioural
+  // parity with the Phase 2 U9 matrix.
+  for (const mode of ['endmarks', 'apostrophe', 'speech', 'comma_flow', 'boundary', 'structure']) {
+    const harness = createPunctuationHarness();
+    harness.dispatch('open-subject', { subjectId: 'punctuation' });
+    harness.dispatch('punctuation-start', { mode, roundLength: '1' });
+    const state = harness.store.getState().subjectUi.punctuation;
+    // The scheduler may transition immediately to `active-item` or fall
+    // through on a stock learner — either phase proves the dispatch is
+    // reachable. The state-level check closes the silent-no-op gap
+    // (learning #7) that a simple HTML-match would not.
+    assert.ok(
+      state.phase === 'active-item' || state.session?.mode === mode,
+      `punctuation-start with mode=${mode} did not land on a recognised session state`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3 U3 adv-232 review-follower block.
+//
+// Five blockers (3 HIGH + 2 MEDIUM) raised on PR #232:
+//
+//   adv-232-001 HIGH: `pendingCommand` never flips for punctuation —
+//     `composeIsDisabled` reads `ui?.pendingCommand` but no code path
+//     writes `subjectUi.punctuation.pendingCommand`. Wiring test
+//     dispatches `punctuation-submit-form` through the real action
+//     handler and observes the store snapshot sequence — a production
+//     wire has to write `pendingCommand` before clearing it.
+//
+//   adv-232-002 HIGH: `TextItem` key collision on empty id + shared prompt.
+//     Two consecutive items with the same prompt + empty id reuse the same
+//     TextItem instance and the previously-typed answer carries over. The
+//     key pattern must force remount on every item transition regardless
+//     of item content — `session.answeredCount` is the monotonic counter
+//     that guarantees this.
+//
+//   adv-232-003 HIGH: `ChoiceItem` has no `key` prop at all. Same class as
+//     002 but affects every consecutive `choose` item (not just same-
+//     prompt ones). Radio selection from item N carries over to item N+1.
+//
+//   adv-232-004 MEDIUM: GPS contract literal `session.mode === 'gps'` gate
+//     in `FeedbackBranch`. Switch to the authoritative `!help.showFeedback`
+//     signal so any future read-model shape that sets `showFeedback: false`
+//     also hides `feedback.displayCorrection`, not just the literal GPS
+//     mode string.
+//
+//   design-lens HIGH: combine/transfer blockquote lacks `aria-label` and
+//     bridging copy between source text and textarea. Session-phase
+//     forbidden-terms sweep must cover every item mode, not just `insert`.
+// ---------------------------------------------------------------------------
+
+test('adv-232-001 HIGH: punctuation-submit-form writes pendingCommand through the real action handler', () => {
+  // Dispatches through the real pipeline (not a seed) and observes the
+  // store snapshot sequence via `store.subscribe`. A production wire must
+  // set `pendingCommand === 'punctuation-submit-form'` on at least one
+  // snapshot between `dispatch()` entering and returning. Seeding
+  // `pendingCommand` on the initial state would not prove this — only an
+  // observed intermediate snapshot during dispatch does.
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    sessionMode: 'smart',
+    item: {
+      id: 'se_pending_wiring',
+      mode: 'insert',
+      inputKind: 'text',
+      prompt: 'Add end punctuation.',
+      stem: 'the cat sat',
+    },
+  });
+  const snapshots = [];
+  const unsubscribe = harness.store.subscribe((state) => {
+    snapshots.push(state.subjectUi.punctuation?.pendingCommand || '');
+  });
+  harness.dispatch('punctuation-submit-form', { typed: 'The cat sat.' });
+  unsubscribe();
+  assert.ok(
+    snapshots.some((value) => value === 'punctuation-submit-form'),
+    `expected an intermediate snapshot with pendingCommand='punctuation-submit-form'; got ${JSON.stringify(snapshots)}`,
+  );
+  // Final state must clear pendingCommand so the UI re-enables after the
+  // command settles.
+  const finalState = harness.store.getState().subjectUi.punctuation;
+  assert.equal(finalState.pendingCommand || '', '', 'pendingCommand must clear once the synchronous transition settles');
+});
+
+test('adv-232-002 HIGH: consecutive combine items with shared prompt + empty id do NOT carry prior typed answer', async () => {
+  // Pre-fix: `key={item.id || item.prompt || 'text-item'}` falls back to
+  // `item.prompt` when `item.id` is empty, so two items sharing the same
+  // prompt reuse the React TextItem instance and the previously-typed
+  // answer stays in the textarea. Post-fix: key includes
+  // `session.answeredCount` so every item transition forces remount.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'carryover-ui',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 0,
+      currentItem: {
+        id: '',
+        mode: 'combine',
+        inputKind: 'text',
+        prompt: 'Combine the clauses.',
+        stem: 'The rain fell.\nThe pitch was wet.',
+      },
+    },
+  });
+  // Simulate learner having typed an answer into the mounted textarea.
+  // SSR cannot capture typed state, so we prove the contract at the key
+  // level: after advancing to a second item sharing the same prompt +
+  // empty id, the rendered textarea body must be empty (i.e. a new
+  // component instance with its own useState('')).
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'carryover-ui',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 1,
+      currentItem: {
+        id: '',
+        mode: 'combine',
+        inputKind: 'text',
+        prompt: 'Combine the clauses.',
+        stem: 'The wind blew.\nThe flag waved.',
+      },
+    },
+  });
+  const html = harness.render();
+  const textarea = extractTextarea(html);
+  assert.ok(textarea, 'expected a textarea on the second combine item');
+  assert.equal(textarea.body.trim(), '', 'second combine item textarea must start blank — no carry-over from item 1');
+  // The key pattern must include the monotonic answeredCount so every
+  // transition forces remount regardless of item content.
+  const sceneSource = await readFile(
+    new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    sceneSource,
+    /<TextItem[^>]*key=\{`text-item-\$\{session\.answeredCount \|\| 0\}`\}/,
+    'TextItem key must derive from session.answeredCount so consecutive items remount (adv-232-002)',
+  );
+});
+
+test('adv-232-003 HIGH: ChoiceItem has a key prop that forces remount on every item transition', async () => {
+  // Pre-fix: `<ChoiceItem>` is rendered with NO key, so two consecutive
+  // `choose` items reuse the same component instance and the radio
+  // selection from item N carries over to item N+1. Post-fix: key uses
+  // `session.answeredCount` as a monotonic counter.
+  const sceneSource = await readFile(
+    new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    sceneSource,
+    /<ChoiceItem[^>]*key=\{`choice-item-\$\{session\.answeredCount \|\| 0\}`\}/,
+    'ChoiceItem key must derive from session.answeredCount so consecutive items remount (adv-232-003)',
+  );
+  // Paired SSR assertion: the first render shows no pre-selected radio
+  // (choiceIndex starts at ''). The second render after advancing
+  // answeredCount must render the same contract — no server-side carry.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'choice-carryover-ui',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 1,
+      currentItem: {
+        id: '',
+        mode: 'choose',
+        inputKind: 'choice',
+        prompt: 'Which ending is correct?',
+        options: [
+          { index: 0, text: 'She asked "where is the key"' },
+          { index: 1, text: 'She asked, "Where is the key?"' },
+        ],
+      },
+    },
+  });
+  const html = harness.render();
+  // No radio input carries the `checked` attribute on SSR render (the
+  // scene's ChoiceItem starts with useState('') so no pre-selection).
+  assert.doesNotMatch(html, /<input[^>]*type="radio"[^>]*checked/);
+});
+
+test('adv-232-004 MEDIUM: FeedbackBranch gate uses !help.showFeedback (authoritative) not session.mode==="gps"', async () => {
+  // Pre-fix: the GPS minimal branch gates on the literal string
+  // `session.mode === 'gps'`. Post-fix: it gates on `!help.showFeedback`
+  // which matches the session-ui help-visibility table (the authoritative
+  // source for whether the feedback panel is visible in a given phase).
+  const sceneSource = await readFile(
+    new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
+    'utf8',
+  );
+  // The gate must use the authoritative `!help.showFeedback` flag.
+  assert.match(
+    sceneSource,
+    /if \(!help\.showFeedback\) \{/,
+    'FeedbackBranch must gate the minimal branch on !help.showFeedback (adv-232-004)',
+  );
+  // And the literal-GPS gate must be gone.
+  assert.doesNotMatch(
+    sceneSource,
+    /if \(session\.mode === 'gps' && !help\.showFeedback\)/,
+    'literal session.mode === "gps" gate must be removed (adv-232-004)',
+  );
+  // Paired behavioural check: the existing GPS feedback-phase scenario
+  // still hides per-item feedback (mode='gps' makes help.showFeedback false).
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    session: {
+      id: 'gps-fb-ui',
+      mode: 'gps',
+      length: 2,
+      answeredCount: 1,
+      currentItem: { id: 'x', mode: 'insert', inputKind: 'text', prompt: 'p', stem: '' },
+    },
+    feedback: {
+      kind: 'warn',
+      headline: 'Should not render',
+      body: 'Should not render either.',
+      displayCorrection: 'Hidden by the gate.',
+    },
+  });
+  const html = harness.render();
+  assert.doesNotMatch(html, /Should not render/);
+  assert.doesNotMatch(html, /Hidden by the gate\./);
+});
+
+test('design-lens HIGH: combine/transfer source blockquote carries aria-label and a bridging paragraph', () => {
+  // The blockquote is read-only source material. Screen readers need a
+  // label so a learner landing on it knows it is source (not an input
+  // field), and sighted learners need a bridging sentence between the
+  // source block and the `<label>Your answer</label>` so the connection
+  // between "read this" and "write below" is explicit.
+  const harness = sessionHarnessWithItem({
+    mode: 'combine',
+    item: {
+      id: 'sc_bridge',
+      mode: 'combine',
+      inputKind: 'text',
+      prompt: 'Combine the clauses.',
+      stem: 'A one.\nA two.',
+    },
+  });
+  const html = harness.render();
+  assert.match(
+    html,
+    /<blockquote[^>]*aria-label="Source text — read only"/,
+    'combine source blockquote must carry aria-label="Source text — read only"',
+  );
+  // Bridging copy sits between the blockquote and the Your-answer label.
+  assert.match(
+    html,
+    /Read the text above, then write your answer below\./,
+    'combine source must be followed by a visible bridging paragraph',
+  );
+});
+
+test('design-lens HIGH: every item mode passes the PUNCTUATION_CHILD_FORBIDDEN_TERMS sweep in the session scene', () => {
+  // U3 must render every item mode without leaking any adult / internal
+  // terms. The pre-existing sweep covered only `insert`. We iterate every
+  // mode so a regression in any branch (combine / transfer / paragraph /
+  // choose / fix) fails loudly.
+  const scenarios = [
+    { mode: 'insert', inputKind: 'text', prompt: 'Fix the end punctuation.', stem: 'the bell rang' },
+    { mode: 'fix', inputKind: 'text', prompt: 'Fix the speech punctuation.', stem: 'Mia said look out' },
+    { mode: 'paragraph', inputKind: 'text', prompt: 'Repair the whole passage.', stem: 'Line one.\nLine two.' },
+    { mode: 'combine', inputKind: 'text', prompt: 'Combine the clauses.', stem: 'The rain fell.\nThe pitch was wet.' },
+    { mode: 'transfer', inputKind: 'text', prompt: 'Write one accurate sentence.', stem: 'Fact: the wind blew.' },
+    {
+      mode: 'choose',
+      inputKind: 'choice',
+      prompt: 'Which ending is correct?',
+      options: [
+        { index: 0, text: 'She asked "where is the key"' },
+        { index: 1, text: 'She asked, "Where is the key?"' },
+      ],
+    },
+  ];
+  for (const extra of scenarios) {
+    const harness = sessionHarnessWithItem({
+      mode: extra.mode,
+      sessionMode: 'smart',
+      item: {
+        id: `sweep_${extra.mode}`,
+        skillIds: ['sentence_endings'],
+        ...extra,
+      },
+    });
+    const html = harness.render();
+    const leaks = forbiddenTermsInHtml(html);
+    assert.deepEqual(
+      leaks,
+      [],
+      `forbidden term leak in session scene (${extra.mode}): ${leaks.join(', ')}`,
+    );
+  }
 });

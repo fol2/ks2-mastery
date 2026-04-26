@@ -24,6 +24,38 @@ function currentUi(context, learnerId) {
     || createInitialPunctuationState();
 }
 
+// adv-232-001: wrapper for synchronous session mutations (submit / continue
+// / skip / end). Writes `pendingCommand: <actionName>` BEFORE calling into
+// the service, runs the transition, then explicitly clears `pendingCommand`
+// AFTER (success and error both).
+//
+// Why: `composeIsDisabled` (punctuation-view-model) reads
+// `ui?.pendingCommand` to disable the textarea / radio group / submit /
+// skip / end buttons while a command is in flight. Without this wrapper
+// the textarea NEVER actually disables during submit — even though the
+// service call is synchronous, the `store.subscribe` listener fires at
+// each `updateSubjectUi`, so any React render or SSR snapshot mid-tick
+// observes `pendingCommand` set. The intermediate-disabled signal is also
+// the wiring-level assertion in `tests/react-punctuation-scene.test.js`
+// that closes the silent-no-op gap (learning #7): a seed of
+// `pendingCommand` in test fixtures does NOT prove production writes it.
+//
+// Mirrors Grammar's `sendGrammarCommand` pattern in
+// `src/subjects/grammar/module.js:147-188` — Grammar's Worker round-trip
+// is async so the pending state is observable across ticks; Punctuation's
+// service is synchronous so the state is observable only across
+// `updateSubjectUi` snapshots inside the same tick. Both satisfy the
+// `composeIsDisabled` contract.
+function runPunctuationSessionCommand(context, actionName, runTransition) {
+  const { store } = context;
+  store.updateSubjectUi('punctuation', { pendingCommand: actionName });
+  try {
+    return runTransition();
+  } finally {
+    store.updateSubjectUi('punctuation', { pendingCommand: '' });
+  }
+}
+
 export const punctuationModule = {
   id: 'punctuation',
   name: 'Punctuation',
@@ -69,29 +101,41 @@ export const punctuationModule = {
 
     if (action === 'punctuation-start' || action === 'punctuation-start-again') {
       const prefs = service.getPrefs(learnerId);
-      return applyTransition(context, service.startSession(learnerId, {
-        ...prefs,
-        ...(data?.mode ? { mode: data.mode } : {}),
-        ...(data?.roundLength ? { roundLength: data.roundLength } : {}),
-        ...(typeof data?.skillId === 'string' ? { skillId: data.skillId } : {}),
-        ...(typeof data?.guidedSkillId === 'string' ? { guidedSkillId: data.guidedSkillId } : {}),
-      }));
+      return runPunctuationSessionCommand(context, action, () => (
+        applyTransition(context, service.startSession(learnerId, {
+          ...prefs,
+          ...(data?.mode ? { mode: data.mode } : {}),
+          ...(data?.roundLength ? { roundLength: data.roundLength } : {}),
+          ...(typeof data?.skillId === 'string' ? { skillId: data.skillId } : {}),
+          ...(typeof data?.guidedSkillId === 'string' ? { guidedSkillId: data.guidedSkillId } : {}),
+        }))
+      ));
     }
 
     if (action === 'punctuation-submit-form') {
-      return applyTransition(context, service.submitAnswer(learnerId, ui, data || {}));
+      // adv-232-001: thread `pendingCommand` so `composeIsDisabled`
+      // actually disables the textarea / radio during submit.
+      return runPunctuationSessionCommand(context, 'punctuation-submit-form', () => (
+        applyTransition(context, service.submitAnswer(learnerId, ui, data || {}))
+      ));
     }
 
     if (action === 'punctuation-continue') {
-      return applyTransition(context, service.continueSession(learnerId, ui));
+      return runPunctuationSessionCommand(context, 'punctuation-continue', () => (
+        applyTransition(context, service.continueSession(learnerId, ui))
+      ));
     }
 
     if (action === 'punctuation-skip') {
-      return applyTransition(context, service.skipItem(learnerId, ui));
+      return runPunctuationSessionCommand(context, 'punctuation-skip', () => (
+        applyTransition(context, service.skipItem(learnerId, ui))
+      ));
     }
 
     if (action === 'punctuation-end-early') {
-      return applyTransition(context, service.endSession(learnerId, ui));
+      return runPunctuationSessionCommand(context, 'punctuation-end-early', () => (
+        applyTransition(context, service.endSession(learnerId, ui))
+      ));
     }
 
     if (action === 'punctuation-back') {
