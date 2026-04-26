@@ -203,6 +203,12 @@ export const DEFAULT_GRAMMAR_PREFS = Object.freeze({
   allowTeachingItems: false,
   showDomainBeforeAnswer: true,
   speechRate: 1,
+  // U10: additive learner-only pref driving the Writing Try "Hide from my
+  // list" toggle. Evidence is untouched; the toggle only filters the
+  // child-facing orphan list. Default must be an array so the client
+  // normaliser produces stable shapes (a mutable array is freshly cloned
+  // on every read, so Object.freeze on the pref container is sufficient).
+  transferHiddenPromptIds: Object.freeze([]),
 });
 
 export function grammarMonsterAsset(id, size = 320) {
@@ -654,6 +660,16 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
       ...DEFAULT_GRAMMAR_PREFS,
       ...(raw.prefs && typeof raw.prefs === 'object' && !Array.isArray(raw.prefs) ? raw.prefs : {}),
       speechRate: normaliseGrammarSpeechRate(raw.prefs?.speechRate, DEFAULT_GRAMMAR_PREFS.speechRate),
+      // U10: normalise the `transferHiddenPromptIds` pref so a malformed
+      // upstream value (missing / non-array / mixed types) never propagates
+      // into the Writing Try scene filter. The spread above would preserve
+      // a string or object, which would explode downstream `.includes()`.
+      transferHiddenPromptIds: Array.isArray(raw.prefs?.transferHiddenPromptIds)
+        ? raw.prefs.transferHiddenPromptIds
+          .filter((value) => typeof value === 'string' && value)
+          .map((value) => value.slice(0, 64))
+          .slice(0, 40)
+        : [],
     },
     stats,
     analytics: {

@@ -8,6 +8,7 @@ import {
 } from './helpers/grammar-subject-harness.js';
 import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { scopeSummary } from './helpers/grammar-phase3-renders.js';
 import {
   grammarModule,
   GRAMMAR_TRANSFER_ERROR_COPY,
@@ -1402,6 +1403,82 @@ test('Grammar "More practice" disclosure exposes secondary modes without locked 
   assert.doesNotMatch(html, /<button[^>]*class="grammar-secondary-mode[^"]* is-disabled"[^>]*disabled=""/);
 });
 
+// --- U5 Phase 4: Mixed practice labels on Surgery / Builder cards ---------
+
+test('U5: Grammar dashboard renders "Mixed practice" label on Surgery and Builder secondary-mode cards', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+
+  // Scope to the More practice disclosure so a stray "Mixed practice"
+  // somewhere else in the app shell does not false-positive the assertion.
+  const disclosureMatch = html.match(/<details class="grammar-more-practice"[\s\S]*?<\/details>/);
+  assert.ok(disclosureMatch, 'More practice disclosure renders');
+  const disclosure = disclosureMatch[0];
+
+  // Surgery and Builder both carry the label under the mode title. The
+  // span is scoped by `data-mode-label="<id>"` so the test can narrow
+  // without matching unrelated spans.
+  assert.match(disclosure, /data-mode-label="surgery"[^>]*>Mixed practice</);
+  assert.match(disclosure, /data-mode-label="builder"[^>]*>Mixed practice</);
+  // The label renders exactly twice on the dashboard (one per mode).
+  const labelCount = (disclosure.match(/Mixed practice/g) || []).length;
+  assert.equal(labelCount, 2, 'Mixed practice label appears on exactly two cards');
+});
+
+test('U5: Grammar dashboard does NOT render "Mixed practice" on Learn, Worked, or Faded cards', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+
+  const disclosureMatch = html.match(/<details class="grammar-more-practice"[\s\S]*?<\/details>/);
+  assert.ok(disclosureMatch, 'More practice disclosure renders');
+  const disclosure = disclosureMatch[0];
+
+  // Learn / Worked / Faded cards honour focus — no "Mixed practice" tag.
+  for (const modeId of ['learn', 'worked', 'faded']) {
+    const cardMatch = disclosure.match(
+      new RegExp(`<button[^>]*data-mode-id="${modeId}"[\\s\\S]*?</button>`),
+    );
+    assert.ok(cardMatch, `${modeId} card renders`);
+    assert.doesNotMatch(cardMatch[0], /Mixed practice/);
+    assert.doesNotMatch(cardMatch[0], /data-mode-label="[^"]+"/);
+  }
+});
+
+test('U5: Grammar primary cards (Smart, Trouble, Mini Test, Bank) never render the "Mixed practice" label', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+
+  // Primary mode cards live outside the "More practice" disclosure. Scope
+  // to the primary section and assert no Mixed practice copy leaks into
+  // Smart / Trouble / Mini Test / Bank cards.
+  const primaryMatch = html.match(/<section class="grammar-primary-modes"[\s\S]*?<\/section>/);
+  assert.ok(primaryMatch, 'primary modes section renders');
+  assert.doesNotMatch(primaryMatch[0], /Mixed practice/);
+  assert.doesNotMatch(primaryMatch[0], /data-mode-label="/);
+});
+
+test('U5: data-grammar-phase-root="dashboard" landmark is preserved with the Mixed practice labels', () => {
+  // U2 Phase 4 hardened the dashboard landmark — this test ensures U5's
+  // label addition does not disturb the root wrapper. Regression-lock.
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+  assert.match(html, /data-grammar-phase-root="dashboard"/);
+  // And the label is still rendered inside the dashboard.
+  assert.match(html, /data-mode-label="surgery"/);
+});
+
 test('Grammar setup can start trouble drill mode', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
@@ -2520,10 +2597,13 @@ function u5RunRegularToSummary() {
 }
 
 function u5ScopeToSummaryHtml(html) {
-  const match = html.match(/<div class="grammar-summary-shell[^"]*">[\s\S]*?<\/div><\/main>/);
-  assert.ok(match, 'summary shell was rendered');
-  // Trim trailing `</main>` so the returned HTML is the summary subtree.
-  return match[0].replace(/<\/main>$/, '');
+  // Phase 4 U2: delegate to the exported, landmark-based `scopeSummary`
+  // helper so the local surface test and the Phase 3 forbidden-term
+  // sweep share a single source of truth for what "the summary subtree"
+  // means. The helper throws on a missing
+  // `data-grammar-phase-root="summary"` landmark, so a DOM refactor that
+  // drops the attribute surfaces a loud failure here too.
+  return scopeSummary(html);
 }
 
 test('U5: regular summary renders exactly five summary cards', () => {

@@ -555,6 +555,97 @@ test('matrix: /api/hubs/parent parent-viewer returns read-only membership view',
   server.close();
 });
 
+test('matrix: /api/hubs/parent demo-expired body path and the F-10 guard path both surface SH2-U3-compatible 401 codes', async () => {
+  // SH2-U3 body-shape documentation: the `/api/hubs/parent` endpoint has
+  // two distinct 401 paths for an expired demo:
+  //
+  //   (a) production-cookie path: `accountSessionFromToken()` in
+  //       `worker/src/auth.js` already SQL-filters out demo sessions
+  //       whose `demo_expires_at` is in the past. When the cookie is
+  //       still valid at the HTTP layer but the demo account has been
+  //       reaped, the session lookup returns null and the route throws
+  //       the generic `UnauthenticatedError({ code: 'unauthenticated' })`.
+  //       The learner sees the standard AuthSurface on refresh.
+  //
+  //   (b) dev-stub F-10 drive path: the dev-stub provider emits
+  //       `session.demo = true` without SQL-filtering, so the
+  //       `requireActiveDemoAccount` guard in `demo/sessions.js` fires
+  //       and throws `code: 'demo_session_expired'`. This is the path
+  //       the DemoExpiryBanner UX responds to.
+  //
+  // Both paths are 401s that the SH2-U3 client handles: (a) hands off to
+  // the generic AuthSurface, (b) hands off to the DemoExpiryBanner. The
+  // SH2-U3 UI correctness contract is proven by the parser-level banner
+  // test + the worker-auth-401-contract test; this matrix row pins the
+  // backend-layer invariant that neither path ever returns 200 or leaks
+  // learner data for an expired demo at /api/hubs/parent.
+  const server = productionServer();
+  const { cookie, accountId } = await createDemoSessionCookie(server);
+  extendDemoSessionCookieWhileExpiringAccount(server, accountId);
+  coverage.noteCombination('demo + owner + demo-expired + /api/hubs/parent (SH2-U3 code contract documentation)');
+
+  const response = await server.fetchRaw(`${ORIGIN}/api/hubs/parent`, { headers: { cookie } });
+  const payload = await response.json();
+  assert.ok([401, 403].includes(response.status), `Expected 401/403, got ${response.status}: ${JSON.stringify(payload)}`);
+  if (response.status === 401) {
+    assert.ok(
+      ['unauthenticated', 'demo_session_expired'].includes(payload.code),
+      `SH2-U3: /api/hubs/parent 401 code for expired demo must be one of the two documented paths; got "${payload.code}".`,
+    );
+  }
+  assert.equal(payload.parentHub, undefined, 'Expired demo must not receive parent hub data.');
+  assertNoForbiddenKeys('/api/hubs/parent (SH2-U3 demo-expired)', payload);
+
+  server.close();
+});
+
+test('matrix: /api/hubs/parent parent-viewer payload does not leak admin-only feature names (S-05)', async () => {
+  // SH2-U3 S-05 deepening: a read-only parent viewer's payload must not
+  // enumerate admin-only feature names. The ReadOnlyLearnerNotice copy is
+  // the visible surface; the backend payload is the API surface. Both must
+  // stay capability-class (NOT name specific admin routes).
+  const server = createWorkerRepositoryServer();
+  seedAdultAccount(server, { id: 'adult-owner-s05', email: 'owner-s05@example.com', displayName: 'Owner S05', platformRole: 'parent' });
+  await seedLearnerViaOwner(server, 'adult-owner-s05', {
+    id: 'learner-s05',
+    name: 'Nova',
+    yearGroup: 'Y5',
+    goal: 'sats',
+    dailyMinutes: 15,
+    avatarColor: '#3E6FA8',
+    createdAt: 1,
+  });
+  seedAdultAccount(server, { id: 'adult-viewer-s05', email: 'viewer-s05@example.com', displayName: 'Viewer S05', platformRole: 'parent' });
+  seedMembership(server, { accountId: 'adult-viewer-s05', learnerId: 'learner-s05', role: 'viewer' });
+  coverage.noteCombination('parent + viewer + real-auth + /api/hubs/parent (SH2-U3 S-05 capability-class)');
+
+  const response = await server.fetchAs('adult-viewer-s05', `${ORIGIN}/api/hubs/parent`, {}, {
+    'x-ks2-dev-platform-role': 'parent',
+  });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  // Admin-only feature tokens forbidden in the parent-hub response for a
+  // viewer-role membership. Capability-class language is allowed; feature
+  // enumerations are not.
+  const serialised = JSON.stringify(payload).toLowerCase();
+  const forbiddenFeatureNames = [
+    'tts configuration',
+    'word-bank configuration',
+    'monster config',
+    'admin settings',
+  ];
+  for (const token of forbiddenFeatureNames) {
+    assert.equal(
+      serialised.includes(token),
+      false,
+      `S-05: parent-viewer payload must not enumerate admin-only feature name "${token}"`,
+    );
+  }
+  assertNoForbiddenKeys('/api/hubs/parent (parent-viewer S-05)', payload);
+
+  server.close();
+});
+
 test('matrix: /api/hubs/parent demo-expired-with-valid-cookie fails closed', async () => {
   const server = productionServer();
   const { cookie, accountId } = await createDemoSessionCookie(server);

@@ -42,6 +42,14 @@ const FAULT_KINDS = Object.freeze([
   'timeout',
   'malformed-json',
   'slow-tts',
+  // SH2-U4 (sys-hardening p2): scoped TTS failure modes. `500-tts`
+  // synthesises a 500 response on any path matching the plan's
+  // `pathPattern` (typically `/api/tts`). It differs from
+  // `500-server-error` only in intent — using a separate kind lets a
+  // scene assert the failure banner copy for TTS specifically, while
+  // `500-server-error` continues to cover the generic persistence case.
+  // The handler reuses the same `respondJson(500, ...)` payload.
+  '500-tts',
   'offline',
 ]);
 
@@ -228,6 +236,13 @@ function applyFault(plan, request) {
       };
     case 'slow-tts':
       return { action: 'delay', delayMs: 1500 };
+    case '500-tts':
+      // SH2-U4: TTS-scoped 500. Same shape as `500-server-error` so a
+      // scene that already asserts against the generic shape continues
+      // to work; only the kind label is different so a scene can
+      // namespace its assertions (e.g. "failure banner copy matches
+      // the TTS error string" not the persistence error string).
+      return respondJson(500, { ok: false, error: 'tts internal error', code: 'tts_internal_error' });
     case 'offline':
       return {
         action: 'respond',

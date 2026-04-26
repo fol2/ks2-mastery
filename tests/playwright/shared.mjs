@@ -262,3 +262,317 @@ export async function waitForFontsReady(page) {
     }
   });
 }
+
+// ---------------------------------------------------------------
+// U9 (Grammar Phase 4): extended helpers for the 6-flow Playwright
+// matrix. These three helpers land in shared.mjs because Grammar,
+// Punctuation, and Spelling goldens will all benefit from them over
+// time — the Concordium-fraction reader is grammar-specific today but
+// the same pattern applies to the other subjects' mastery surfaces.
+// ---------------------------------------------------------------
+
+/**
+ * U9 seedFreshLearner — navigate to `/demo` to get a fresh demo
+ * learner. Playwright gives each test its own isolated `context`
+ * (and thus its own cookie jar), so a fresh `page.goto('/demo')` in
+ * a new test always hits the no-cookie branch of the worker's /demo
+ * handler and mints a new demo account.
+ *
+ * This is an alias for `createDemoSession(page)` that exists so the
+ * U9 flows can document "this test seeds a pristine learner" at the
+ * call site. Do NOT clear cookies or localStorage here - the test
+ * context is already fresh, and extra `/demo` hits (from cookie
+ * clears triggering re-navigation) saturate the worker's
+ * 30-req/10-min rate limit when multiple scenes run in series.
+ *
+ * If a SINGLE test needs multiple pristine-learner resets (e.g.,
+ * two sequential flows in the same test body), the caller must
+ * manually clear cookies + re-seed, OR split into separate `test()`
+ * calls so each gets its own context.
+ */
+export async function seedFreshLearner(page) {
+  return createDemoSession(page);
+}
+
+/**
+ * U9 assertConcordiumFraction — read the grammar dashboard's Concordium
+ * progress marker and assert its rendered fraction. Used by Flow 4
+ * (Writing Try non-scored) to pin that the fraction does NOT move after
+ * a save, and by Flow 6 (reward path) to pin the reverse side of the
+ * invariant (it DOES move when a concept is secured, but NEVER moves on
+ * re-secure).
+ *
+ * The marker is `[data-testid="grammar-concordium-progress"]` scoped to
+ * the dashboard's `<strong class="grammar-concordium-value">` child. The
+ * helper accepts either a literal string (`'3/18'`) or an object
+ * describing the expected shape (`{ mastered: 3, total: 18 }`) — the
+ * object form keeps the assertion ergonomic at call sites that compute
+ * the expected fraction from the read-model upstream.
+ *
+ * `expected === null` means "pin whatever is currently rendered and
+ * return it" — used by the Flow 4 snapshot-then-assert pattern:
+ *
+ *   const before = await assertConcordiumFraction(page, null);
+ *   // ... do the non-scored save ...
+ *   await assertConcordiumFraction(page, before);
+ *
+ * Returns the rendered fraction string so callers can use it as the
+ * `expected` value on a subsequent invocation.
+ */
+export async function assertConcordiumFraction(page, expected) {
+  const root = page.locator('[data-testid="grammar-concordium-progress"]');
+  await expect(root).toBeVisible({ timeout: 10_000 });
+  const valueNode = root.locator('.grammar-concordium-value');
+  await expect(valueNode).toBeVisible();
+  const raw = (await valueNode.textContent()) || '';
+  const rendered = raw.trim();
+  if (expected === null || expected === undefined) return rendered;
+  const expectedString = typeof expected === 'string'
+    ? expected
+    : `${expected.mastered}/${expected.total}`;
+  expect(rendered, 'Concordium fraction should match expected shape').toBe(expectedString);
+  return rendered;
+}
+
+/**
+ * U9 networkOffline — wrap an async callback with the browser context
+ * flipped into offline mode, restoring the online state (even on
+ * throw) in a finally block. Used by the Flow 4 / Flow 3 error-path
+ * scenes to exercise the "draft preserved under network failure"
+ * contract without depending on the chaos fault-injection middleware.
+ *
+ * Playwright's `page.context().setOffline(true)` drops the TCP
+ * connectivity for every request in the context, so subsequent
+ * `fetch()` calls reject with a `TypeError: Failed to fetch` matching
+ * the browser's native offline behaviour. The wrapper restores the
+ * online state before returning so the next test step starts on a
+ * clean network.
+ */
+export async function networkOffline(page, fn) {
+  const context = page.context();
+  await context.setOffline(true);
+  try {
+    return await fn();
+  } finally {
+    await context.setOffline(false);
+  }
+}
+
+// ---------------------------------------------------------------
+// U9 grammar helpers — small locator shortcuts reused across the 6
+// grammar golden-path flows. Scoped here instead of per-test file so
+// the action contract is in one place and a dashboard copy change
+// lands in one sweep.
+// ---------------------------------------------------------------
+
+/**
+ * U9 openGrammarDashboard — deterministic entry into the grammar
+ * surface. Wraps `openSubject(page, 'grammar')` + the dashboard
+ * visibility wait so flows can call one helper and immediately assert
+ * on dashboard sub-elements.
+ */
+export async function openGrammarDashboard(page) {
+  await openSubject(page, 'grammar');
+  await expect(page.locator('.grammar-dashboard')).toBeVisible({ timeout: 15_000 });
+}
+
+/**
+ * U9 fillGrammarAnswer — the grammar session renders six input shapes
+ * (free text, textarea, single_choice radio, checkbox_list, multi with
+ * sub-fields, and table_choice). Each one requires a different fill
+ * pattern to satisfy the form's native `required` validation. This
+ * helper probes for every shape and fills whichever mounts, returning
+ * the tag it filled so callers can log / assert on it if needed.
+ *
+ * Handled shapes (in priority order):
+ *   1. Free-text `<input name="answer">` or `<textarea name="answer">`
+ *      -> fill with a deterministic wrong string.
+ *   2. Table-choice `<table class="grammar-table-choice">` -> tick the
+ *      first radio in every row. Each row uses `name="<rowKey>"` so
+ *      the required-per-row validation is satisfied.
+ *   3. Single-choice `<input type="radio" name="answer">` -> check the
+ *      first radio.
+ *   4. Checkbox list `<input type="checkbox" name="selected">` -> tick
+ *      the first checkbox.
+ *   5. Multi fields (inputSpec.type === 'multi') -> iterate sub-fields
+ *      and fill/select the first option of each.
+ *
+ * Uses `{ force: true }` on radio/checkbox `check()` to tolerate the
+ * `<label>`-wrapped shape the grammar session uses — clicking the
+ * native input is the cleanest path to update state.
+ *
+ * Returns `{ kind }` where `kind` is one of `'freeText'`,
+ * `'tableChoice'`, `'radio'`, `'checkbox'`, `'multi'`, or `'none'`
+ * (no input present - caller should wait and retry or treat as a
+ * no-input question).
+ */
+export async function fillGrammarAnswer(page, { typed = 'zzz-not-a-real-answer' } = {}) {
+  const form = page.locator('.grammar-answer-form').first();
+  // 1. Free text / textarea.
+  const freeText = form.locator('input[name="answer"]:not([type="radio"]):not([type="checkbox"]), textarea[name="answer"]').first();
+  if (await freeText.count()) {
+    await freeText.fill(typed);
+    return { kind: 'freeText' };
+  }
+  // 2. Table choice: tick the first radio in every row. Each row is
+  // keyed by `name="<rowKey>"` so we group by name and pick the first
+  // radio for each group.
+  const tableRoot = form.locator('.grammar-table-choice');
+  if (await tableRoot.count()) {
+    const rowNames = await tableRoot.evaluate((root) => {
+      const radios = Array.from(root.querySelectorAll('input[type="radio"]'));
+      const seen = new Set();
+      for (const radio of radios) {
+        const name = radio.getAttribute('name');
+        if (name) seen.add(name);
+      }
+      return Array.from(seen);
+    });
+    for (const name of rowNames) {
+      const firstRadio = form.locator(`input[type="radio"][name="${name}"]`).first();
+      if (await firstRadio.count()) {
+        await firstRadio.check({ force: true }).catch(() => firstRadio.click({ force: true }));
+      }
+    }
+    return { kind: 'tableChoice' };
+  }
+  // 3. Single-choice radio.
+  const radio = form.locator('input[type="radio"]').first();
+  if (await radio.count()) {
+    await radio.check({ force: true }).catch(() => radio.click({ force: true }));
+    return { kind: 'radio' };
+  }
+  // 4. Checkbox list.
+  const checkbox = form.locator('input[type="checkbox"]').first();
+  if (await checkbox.count()) {
+    await checkbox.check({ force: true }).catch(() => checkbox.click({ force: true }));
+    return { kind: 'checkbox' };
+  }
+  // 5. Multi fields - mixed select/radio/text. Fill the first input of
+  // each kind so the form's required validation passes.
+  const multiRoot = form.locator('.grammar-multi-fields');
+  if (await multiRoot.count()) {
+    const selects = multiRoot.locator('select');
+    const selectCount = await selects.count();
+    for (let i = 0; i < selectCount; i += 1) {
+      const select = selects.nth(i);
+      const firstOption = await select.locator('option').nth(0).getAttribute('value');
+      if (firstOption != null) {
+        await select.selectOption(firstOption).catch(() => {});
+      }
+    }
+    const multiText = multiRoot.locator('input:not([type="radio"]):not([type="checkbox"])');
+    const multiTextCount = await multiText.count();
+    for (let i = 0; i < multiTextCount; i += 1) {
+      await multiText.nth(i).fill(typed).catch(() => {});
+    }
+    const multiRadio = multiRoot.locator('input[type="radio"]').first();
+    if (await multiRadio.count()) {
+      await multiRadio.check({ force: true }).catch(() => multiRadio.click({ force: true }));
+    }
+    return { kind: 'multi' };
+  }
+  return { kind: 'none' };
+}
+
+/**
+ * U9 returnToGrammarDashboard — navigate back to the grammar dashboard
+ * from wherever the flow has landed (summary, analytics, session, …).
+ * Uses the subject breadcrumb's `Grammar` button when present; falls
+ * back to the home-dashboard breadcrumb + re-opening the subject card.
+ *
+ * Mini-test summary does NOT expose an `Open Grammar Bank` secondary
+ * link (only the regular-practice summary does), so flows that need
+ * dashboard-phase state after a mini-test finish must route through
+ * this helper rather than the bank round-trip shortcut.
+ */
+export async function returnToGrammarDashboard(page) {
+  // Round-trip via a hard reload + re-open. `page.reload()` exercises
+  // the rehydrate path on the grammar module (see SH2-U2 test), which
+  // coerces `phase: 'summary'` to `phase: 'dashboard'` via the
+  // sanitiseUiOnRehydrate hook. Result: the subject-grid remounts
+  // cleanly and the grammar card can be tapped to land on the
+  // dashboard phase.
+  //
+  // We prefer reload over a breadcrumb click because the breadcrumb's
+  // `onDashboard` handler navigates the URL but does NOT clear the
+  // persisted `grammar.phase` in the subject-ui store - a follow-up
+  // subject re-entry could land back on the summary shell.
+  await reload(page);
+  // If the reload lands us on the grammar dashboard directly, we are
+  // done. Otherwise the home grid is visible and we need to re-open
+  // the grammar card.
+  const dashboardCandidate = page.locator('.grammar-dashboard');
+  if (await dashboardCandidate.isVisible().catch(() => false)) return;
+  await expect(page.locator('.subject-grid')).toBeVisible({ timeout: 15_000 });
+  await openSubject(page, 'grammar');
+  await expect(page.locator('.grammar-dashboard')).toBeVisible({ timeout: 15_000 });
+}
+
+/**
+ * U9 primeGrammarReadModel — fire one trivial grammar command so the
+ * client receives the Worker's full read model (capabilities,
+ * transferLane, bank data, etc.). On a pristine demo learner,
+ * `applyRemoteReadModel` has never run; Writing Try prompts are only
+ * populated after at least one command round-trip.
+ *
+ * Strategy: dispatch `grammar-set-round-length` (which sends a
+ * `save-prefs` command). save-prefs returns the full read model in
+ * its response, including `transferLane.prompts`. save-prefs does NOT
+ * alter `state.phase` or `state.summary` on the server side, so
+ * subsequent commands (e.g., save-transfer-evidence) return responses
+ * with `phase: 'dashboard'` / `summary: null` as expected.
+ *
+ * Caller MUST be on the grammar dashboard surface before calling.
+ * Leaves the learner on the dashboard with `transferLane.prompts`
+ * populated in memory.
+ */
+export async function primeGrammarReadModel(page) {
+  // Dashboard's round-length <select> dispatches
+  // `grammar-set-round-length` which the module routes to a
+  // `save-prefs` Worker command. The response carries the full read
+  // model; `applyRemoteReadModel` then hydrates the subject UI with
+  // transferLane.prompts.
+  const lengthSelect = page.locator('.grammar-round-controls select').first();
+  await expect(lengthSelect).toBeVisible({ timeout: 10_000 });
+  const initial = await lengthSelect.inputValue();
+  const options = await lengthSelect.evaluate((el) => Array.from(el.options).map((o) => o.value));
+  const other = options.find((v) => v !== initial) || options[0];
+  if (!other) return;
+  // Toggle to a different length to trigger save-prefs.
+  await lengthSelect.selectOption(other);
+  // Wait for the command to complete. We watch for a response pattern
+  // via the network - any grammar command response suffices.
+  await page.waitForResponse(
+    (resp) => resp.url().includes('/api/subjects/grammar/command') && resp.status() === 200,
+    { timeout: 10_000 },
+  ).catch(() => {
+    // If the response didn't land, fall back to a short wait so the
+    // in-memory state has time to settle.
+  });
+  // Flip back to the original value for a clean baseline.
+  if (initial !== other) {
+    await lengthSelect.selectOption(initial);
+    await page.waitForResponse(
+      (resp) => resp.url().includes('/api/subjects/grammar/command') && resp.status() === 200,
+      { timeout: 10_000 },
+    ).catch(() => {});
+  }
+}
+
+/**
+ * U9 startGrammarMiniTest — click the "Mini Test" primary mode card
+ * then "Begin round" and wait for the mini-test panel to render.
+ * Factored out so multiple flows can reuse the setup without coupling
+ * to the dashboard's internal button order.
+ */
+export async function startGrammarMiniTest(page) {
+  const miniTestButton = page.getByRole('button', { name: /^Mini Test/ });
+  await expect(miniTestButton).toBeVisible();
+  await miniTestButton.click();
+  const beginRound = page.getByRole('button', { name: /Begin round/ });
+  await expect(beginRound).toBeVisible();
+  await beginRound.click();
+  const session = page.locator('.grammar-mini-test-panel, .grammar-session').first();
+  await expect(session).toBeVisible({ timeout: 15_000 });
+}

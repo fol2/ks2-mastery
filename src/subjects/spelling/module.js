@@ -1,5 +1,6 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
-import { createInitialSpellingState, isPostMasteryMode } from './service-contract.js';
+import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
+import { createInitialSpellingState, isMegaSafeMode, isPostMasteryMode } from './service-contract.js';
 import {
   WORD_BANK_FILTER_IDS,
   WORD_BANK_YEAR_FILTER_IDS,
@@ -123,6 +124,37 @@ export const spellingModule = {
   reactPractice: true,
   initState() {
     return createInitialSpellingState();
+  },
+  // SH2-U2 (R2): drop post-session-ephemeral fields on rehydrate so
+  // browser Back / Refresh on a completed-session summary screen cannot
+  // resurrect the summary's "Start another round" CTA. Baseline drop
+  // set (`summary`, `transientUi`, `pendingCommand`) lives on
+  // `SESSION_EPHEMERAL_FIELDS` in `platform/core/subject-contract.js`.
+  // Active-session state (`session`, `feedback`, `awaitingAdvance`) is
+  // intentionally preserved so a mid-round reload picks up where the
+  // learner left off -- `tests/store.test.js::serialisable spelling
+  // state survives store persistence for resume` and
+  // `tests/spelling-parity.test.js::restored completed spelling card
+  // caps progress and resumes auto-advance` lock both the session-
+  // resume and awaitingAdvance-resume invariants. Preferences (mode,
+  // yearFilter, roundLength, extraWordFamilies), `version`, and any
+  // other persisted subject-level static data survive untouched. Runs
+  // only on the rehydrate path (`rehydrate: true`); live
+  // `updateSubjectUi` dispatches bypass this hook so sessions mid-
+  // flight are unaffected.
+  //
+  // Blocker parity (adv-sh2u2-001 analog): Spelling also coerces
+  // `phase === 'summary'` back to `'dashboard'` so reload on a spelling
+  // summary never re-renders the "Start another round" CTA even when
+  // `normaliseSubjectEntryForOpen` (store.js:235) is bypassed (e.g. if
+  // a route-open path changes upstream). Parity drop-set across
+  // Grammar + Spelling + Punctuation keeps the invariant uniform.
+  sanitiseUiOnRehydrate(entry) {
+    const next = dropSessionEphemeralFields(entry);
+    if (next && typeof next === 'object' && !Array.isArray(next) && next.phase === 'summary') {
+      next.phase = 'dashboard';
+    }
+    return next;
   },
   getDashboardStats(appState, { service }) {
     const learner = appState.learners.byId[appState.learners.selectedId];
@@ -259,11 +291,17 @@ export const spellingModule = {
       // `currentPrefs.roundLength`, preserving legacy behaviour there.
       const shortcutLength = data.length != null ? data.length : currentPrefs.roundLength;
       tts.stop();
+      // U11: Pattern Quest takes an extra `patternId` in the dispatch
+      // payload so the service selector knows which 5-card quest to build.
+      // Guardian / Boss ignore the field; the service's `startSession`
+      // already branches on `mode` before reading it.
+      const patternId = typeof data.patternId === 'string' ? data.patternId : '';
       const transition = service.startSession(learnerId, {
         mode,
         yearFilter: currentPrefs.yearFilter,
         length: shortcutLength,
         extraWordFamilies: currentPrefs.extraWordFamilies,
+        patternId,
       });
       if (transition?.ok !== false) {
         service.savePrefs(learnerId, { mode });
@@ -311,20 +349,21 @@ export const spellingModule = {
     if (action === 'spelling-drill-all') {
       if (!ui.summary?.mistakes?.length) return true;
       tts.stop();
-      // U3: when the origin summary is a Guardian round, force practiceOnly so
-      // the dispatched `mode: 'trouble'` session short-circuits at
-      // `legacy-engine.js:763` and leaves `progress.stage/dueDay/lastDay/
-      // lastResult` + the guardian record untouched. Source of truth is
-      // `ui.summary?.mode` (not a payload flag): summary-phase persistence
-      // across refresh is out of scope today; refactors that change this
-      // must re-validate the practiceOnly path.
+      // U3 / U11: when the origin summary is a Mega-safe mode (Guardian, Boss,
+      // Pattern Quest), force practiceOnly so the dispatched `mode: 'trouble'`
+      // session short-circuits at `legacy-engine.js:763` and leaves
+      // `progress.stage/dueDay/lastDay/lastResult` + the guardian/pattern
+      // records untouched. Using the shared `isMegaSafeMode` predicate keeps
+      // the list of Mega-safe origins in one place — the earlier
+      // `originMode === 'guardian'` check excluded Pattern Quest and would
+      // have demoted Mega via the drill path (U11 reviewer finding).
       const originMode = ui.summary?.mode;
       return applySpellingTransition(context, service.startSession(learnerId, {
         mode: 'trouble',
         words: ui.summary.mistakes.map((word) => word.slug),
         yearFilter: 'all',
         length: ui.summary.mistakes.length,
-        practiceOnly: originMode === 'guardian',
+        practiceOnly: isMegaSafeMode(originMode),
       }));
     }
 
@@ -332,18 +371,21 @@ export const spellingModule = {
       const slug = data.slug;
       if (!slug) return true;
       tts.stop();
-      // U3: mirror of drill-all — Guardian origin must never demote Mega. We
-      // keep the per-word drill using `mode: 'single'` here for legacy
-      // behaviour, then gate `practiceOnly` by `summary.mode === 'guardian'`.
-      // Note that the Guardian scene hides per-word drill chips (U3), so this
-      // branch only fires defensively if a future surface re-exposes them.
+      // U3 / U11: mirror of drill-all — Mega-safe origin (Guardian / Boss /
+      // Pattern Quest) must never demote Mega. We keep the per-word drill
+      // using `mode: 'single'` here for legacy behaviour, then gate
+      // `practiceOnly` by the shared `isMegaSafeMode` predicate. Note that
+      // the Guardian scene hides per-word drill chips (U3), Boss renders
+      // static chips (U10), and Pattern Quest now does the same (U11 Fix 1)
+      // so this branch only fires defensively if a future surface re-exposes
+      // them. The predicate fix is the belt; the scene guard is the braces.
       const originMode = ui.summary?.mode;
       return applySpellingTransition(context, service.startSession(learnerId, {
         mode: 'single',
         words: [slug],
         yearFilter: 'all',
         length: 1,
-        practiceOnly: originMode === 'guardian',
+        practiceOnly: isMegaSafeMode(originMode),
       }));
     }
 
@@ -476,6 +518,34 @@ export const spellingModule = {
         sentence: word.sentence,
         slow: action === 'spelling-word-bank-drill-replay-slow',
       });
+      return true;
+    }
+
+    // P2 U9: "I understand" button on the durable persistence-warning banner
+    // dispatches this action. The service sets `acknowledged: true` on the
+    // persisted `data.persistenceWarning` record; the banner re-renders as
+    // absent on the next tick because `buildSpellingContext` re-reads the
+    // record each call. A subsequent new failure overwrites with
+    // `acknowledged: false`, re-surfacing the banner.
+    //
+    // Reviewer-feedback fix (PR #279 HIGH): when the service reports
+    // `{ ok: false }` (storage is still broken during the ack write), we
+    // MUST surface a runtime error so the click does not silently drop.
+    // The banner will re-render on the next selector pass because storage
+    // still records `acknowledged: false`, which is honest — but the
+    // learner now sees a clear "try again" message rather than a mystery.
+    if (action === 'spelling-acknowledge-persistence-warning') {
+      let ackResult = { ok: true };
+      if (typeof service.acknowledgePersistenceWarning === 'function') {
+        ackResult = service.acknowledgePersistenceWarning(learnerId) || { ok: true };
+      }
+      const nextError = ackResult.ok === false
+        ? 'Could not save — try again when storage is available.'
+        : '';
+      // Touch the subject UI so the view-model selector re-runs. The error
+      // slot reflects whether the ack persisted: on success we clear, on
+      // failure we surface child-friendly copy.
+      store.updateSubjectUi('spelling', { error: nextError });
       return true;
     }
 

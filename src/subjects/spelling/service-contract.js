@@ -1,3 +1,12 @@
+/**
+ * P2 versioning convention (H7 synthesis, documented at U10): content-model
+ * versions use EVEN numbers; service-state versions use ODD numbers. The two
+ * version counters live in different files and get bumped on different
+ * cadences, but a collision (e.g. both at 3) would blow an entire day in
+ * triage to re-establish which counter moved. The even/odd split rules out
+ * collisions by construction — see `SPELLING_CONTENT_MODEL_VERSION` in
+ * `src/subjects/spelling/content/model.js` (currently 4).
+ */
 export const SPELLING_SERVICE_STATE_VERSION = 3;
 
 /**
@@ -11,8 +20,33 @@ export const SPELLING_SERVICE_STATE_VERSION = 3;
  */
 export const SPELLING_CONTENT_RELEASE_ID = 'spelling-p2-baseline-2026-04-26';
 
+/**
+ * P2 U10: re-export of the pattern registry identifiers so consumers
+ * (Pattern Quest selector, UI, Admin dashboards) can import a single
+ * constant without reaching into `content/patterns.js`. The canonical
+ * registry definitions stay in that file; this is a narrow re-export
+ * facade — the Array is frozen at definition, and the helpers below are
+ * plain pure functions.
+ */
+export {
+  SPELLING_PATTERN_IDS,
+  SPELLING_PATTERNS,
+  PATTERN_LAUNCH_THRESHOLD,
+  computeLaunchedPatternIds,
+  isPatternEligibleSlug,
+} from './content/patterns.js';
+
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
-export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
+export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss', 'pattern-quest']);
+
+/**
+ * P2 U11: Pattern Quest round length. A quest is a fixed-size 5-card round
+ * (mass-then-interleave: cards 1-3 massed encoding on the same pattern,
+ * cards 4-5 interleaved variety within the pattern). The constant lives
+ * here so the selector, the service, and the UI share a single authoritative
+ * value — changing the length in one place flows through every consumer.
+ */
+export const PATTERN_QUEST_ROUND_LENGTH = 5;
 
 export const GUARDIAN_INTERVALS = Object.freeze([3, 7, 14, 30, 60, 90]);
 export const GUARDIAN_MAX_REVIEW_LEVEL = GUARDIAN_INTERVALS.length - 1;
@@ -191,7 +225,7 @@ export function isGuardianEligibleSlug(slug, progressMap, wordBySlug) {
  * @returns {boolean}
  */
 export function isPostMasteryMode(mode) {
-  return mode === 'guardian' || mode === 'boss';
+  return mode === 'guardian' || mode === 'boss' || mode === 'pattern-quest';
 }
 
 /**
@@ -317,6 +351,32 @@ export const SPELLING_PERSISTENCE_WARNING_REASON = Object.freeze({
 });
 
 /**
+ * P2 U9: Normalise the durable `data.persistenceWarning` sibling. Unlike the
+ * session-scoped `feedback.persistenceWarning` (which carries only `{ reason }`
+ * for the current-round banner), the persisted record also carries `occurredAt`
+ * (day number) and `acknowledged` (boolean) so the banner survives tab close
+ * and dismisses once the learner clicks "I understand". Returns `null` for
+ * garbage / missing input so `data.persistenceWarning === null` is the
+ * unambiguous "no warning" marker for the sibling record writer.
+ *
+ * Shape: `{ reason, occurredAt, acknowledged }`.
+ *  - `reason`: must be a member of `SPELLING_PERSISTENCE_WARNING_REASONS`.
+ *  - `occurredAt`: non-negative integer day number (floor of Date.now() / DAY_MS).
+ *  - `acknowledged`: boolean; defaults to false when missing.
+ */
+export function normaliseDurablePersistenceWarning(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const reason = typeof raw.reason === 'string' ? raw.reason : '';
+  if (!SPELLING_PERSISTENCE_WARNING_REASONS.includes(reason)) return null;
+  const occurredAtRaw = Number(raw.occurredAt);
+  const occurredAt = Number.isFinite(occurredAtRaw) && occurredAtRaw >= 0
+    ? Math.floor(occurredAtRaw)
+    : 0;
+  const acknowledged = raw.acknowledged === true;
+  return { reason, occurredAt, acknowledged };
+}
+
+/**
  * U8 review fix: banner copy extracted so future wording tweaks live in one
  * place. The wording was updated from the original "Progress could not be
  * saved on this device. Export or free storage." to the more accurate
@@ -328,6 +388,26 @@ export const SPELLING_PERSISTENCE_WARNING_REASON = Object.freeze({
  */
 export const SPELLING_PERSISTENCE_WARNING_COPY = Object.freeze({
   STORAGE_SAVE_FAILED: 'We could not save your progress on this device. Your answer counted for this round, but you may see this word again after a reload. Free up storage or export your progress.',
+});
+
+/**
+ * P2 U9: copy for the durable persistence-warning banner. The wording is
+ * deliberately more compact than `SPELLING_PERSISTENCE_WARNING_COPY` because
+ * the durable banner may surface on the setup scene (learner arrives fresh,
+ * no active round) — the "Your answer counted for this round" phrasing from
+ * U8 does not apply there. The U9 copy centres on what the learner needs to
+ * do: export data or free up storage.
+ *
+ * Reviewer-feedback fix (PR #279 LOW): keys are indexed by the reason enum
+ * VALUE (kebab-case, e.g. `'storage-save-failed'`) so the UI can do a direct
+ * `COPY[reason]` lookup and adding a future reason is a one-line change in
+ * `SPELLING_PERSISTENCE_WARNING_REASONS` + here. Legacy UPPER_SNAKE key is
+ * kept as an alias so any downstream consumer that relied on the symbolic
+ * name keeps working.
+ */
+export const SPELLING_DURABLE_PERSISTENCE_WARNING_COPY = Object.freeze({
+  'storage-save-failed': 'Your progress could not be saved on this device. Export your data or free up storage.',
+  STORAGE_SAVE_FAILED: 'Your progress could not be saved on this device. Export your data or free up storage.',
 });
 
 function normalisePersistenceWarning(raw) {
@@ -400,7 +480,7 @@ function deriveSummaryTotals(mode, cards, mistakes) {
   // Number.parseInt → 7, which would lead to `totalWords = 7` and
   // `correct = 7 - mistakes.length = 4`. That would surface as a Boss summary
   // claiming only 7 words landed when 10 were played.
-  if (mode === 'test' || mode === 'boss') {
+  if (mode === 'test' || mode === 'boss' || mode === 'pattern-quest') {
     const scoreCard = cards.find((card) => card.label === 'Score');
     if (scoreCard && typeof scoreCard.value === 'string') {
       const match = /^(\d+)\s*\/\s*(\d+)$/.exec(scoreCard.value);
@@ -555,4 +635,53 @@ export function normaliseGuardianMap(rawValue, todayDay = 0) {
     output[slug] = normaliseGuardianRecord(entry, todayDay);
   }
   return output;
+}
+
+/**
+ * P2 U11: Normalise a single pattern-wobble record. The canonical shape is
+ * `{ wobbling: boolean, wobbledAt: integerDay, patternId: string }`. Garbage
+ * inputs collapse to `null` rather than throwing so a partially-corrupt
+ * persisted blob cannot crash the read path.
+ *
+ * @param {*} rawValue
+ * @returns {{wobbling: boolean, wobbledAt: number, patternId: string}|null}
+ */
+export function normalisePatternWobbleRecord(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return null;
+  const wobbling = rawValue.wobbling === true;
+  const wobbledAt = Number(rawValue.wobbledAt);
+  const patternId = typeof rawValue.patternId === 'string' ? rawValue.patternId : '';
+  if (!patternId) return null;
+  if (!Number.isFinite(wobbledAt) || wobbledAt < 0) return null;
+  return {
+    wobbling,
+    wobbledAt: Math.floor(wobbledAt),
+    patternId,
+  };
+}
+
+/**
+ * P2 U11: Normalise `data.pattern`. Shape:
+ *   { wobbling: { [slug]: { wobbling, wobbledAt, patternId } } }
+ * This is the parallel-sibling map to `data.guardian.wobbling` — Pattern
+ * Quest wrong answers write here, never to `data.progress` / `data.guardian`.
+ *
+ * Garbage input collapses to `null` so pre-U11 persisted bundles (no
+ * `data.pattern` sibling) skip the field entirely when normalising.
+ *
+ * @param {*} rawValue
+ * @returns {{wobbling: Record<string, object>}|null}
+ */
+export function normalisePatternMap(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return null;
+  const rawWobbling = rawValue.wobbling && typeof rawValue.wobbling === 'object' && !Array.isArray(rawValue.wobbling)
+    ? rawValue.wobbling
+    : {};
+  const wobbling = {};
+  for (const [slug, entry] of Object.entries(rawWobbling)) {
+    if (!slug || typeof slug !== 'string') continue;
+    const record = normalisePatternWobbleRecord(entry);
+    if (record) wobbling[slug] = record;
+  }
+  return { wobbling };
 }

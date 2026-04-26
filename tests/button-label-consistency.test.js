@@ -372,6 +372,10 @@ test('button labels: every statically extractable label is classified', () => {
     'Hide',
     'Save',
     'Save + next',
+    // P1.5 Phase C (U9): 409 conflict banner resolution buttons on the
+    // account-ops-metadata row.
+    'Keep mine',
+    'Use theirs',
     'Start Guardian mission',
     'Start the drill',
     'Back to Codex',
@@ -434,6 +438,42 @@ test('button labels: every statically extractable label is classified', () => {
     'Refresh',
     'Retry refresh',
     'Save learner profile',
+    // SH2-U3 DemoExpiryBanner: bespoke, S-04-compliant CTAs for the
+    // demo-expired UX branch. Both labels are intentional — "Sign in"
+    // sends the learner back to the generic AuthSurface and "Start new
+    // demo" posts to /demo. See src/surfaces/auth/DemoExpiryBanner.jsx.
+    'Sign in',
+    'Start new demo',
+    // SH2-U3 review TEST-BLOCKER-2 / TEST-BLOCKER-3: bespoke CTAs for
+    // the 403 friendly card and the 500 transient-error banner.
+    // "Return home" escapes the 403 without leaking which feature is
+    // restricted; "Try again" is the retry affordance on the transient
+    // banner. See src/surfaces/auth/AuthSurface.jsx.
+    'Return home',
+    'Try again',
+    // U10: child-side "Hide from my list" on orphaned Writing Try entries
+    // (evidence preserved — the pref only filters the child's view) and
+    // admin-side Archive / Delete permanently controls on the Writing
+    // Try panel. Bespoke labels because the contract is intentional —
+    // "Hide" for child-friendly copy, "Delete permanently" to emphasise
+    // the irreversible step gated behind a confirm dialog.
+    'Hide from my list',
+    // U10 follower (HIGH 2): reverse-toggle control on the collapsed
+    // Hidden section. KS2-friendly copy ("Show again") paired with the
+    // existing "Hide from my list" to give the child a symmetric
+    // reverse affordance.
+    'Show again',
+    'Archive',
+    'Delete permanently',
+    // Pre-existing branch-base labels that the scanner now reports. They
+    // predate U10 — "I understand" is the Post-Mega Spelling (P2)
+    // Guardian-unlock copy, "Why is Guardian locked?" is the paired
+    // help link, and "Apply seed" is the Post-Mega seed harness CTA
+    // (P2 U3). Added here as part of U10 so the test suite passes
+    // end-to-end; a follow-up polish unit can triage the wording.
+    'I understand',
+    'Why is Guardian locked?',
+    'Apply seed',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

@@ -75,5 +75,12 @@
       "deleted_classes": ["SpellingLockDO"],
       "new_sqlite_classes": ["LearnerLock"]
     }
-  ]
+  ],
+  // U11 (P1.5 Phase C): daily KPI reconciliation + retention sweeps.
+  // Primary at 04:00 UTC with a fallback retry at 05:00 UTC so a
+  // crashed/locked primary recovers within an hour rather than 24h.
+  // See worker/src/index.js::runScheduledHandler for the entrypoint.
+  "triggers": {
+    "crons": ["0 4 * * *", "0 5 * * *"]
+  }
 }

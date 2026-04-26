@@ -16,9 +16,23 @@ function isGuardianSession(session) {
   return Boolean(session) && session.mode === 'guardian';
 }
 
+// P2 U11: Pattern Quest session helper. Pattern Quest rides as
+// `session.type === 'learning'`-shaped (legacy SATs copy must not leak), so
+// the session-UI helpers below branch on isPatternQuestSession FIRST when
+// both a test/learning check and a Pattern Quest check would apply.
+function isPatternQuestSession(session) {
+  return Boolean(session) && session.mode === 'pattern-quest';
+}
+
 export function spellingSessionSubmitLabel(session, awaitingAdvance = false) {
   if (!session) return 'Submit';
   if (awaitingAdvance) return 'Saved';
+  if (isPatternQuestSession(session)) {
+    const cardType = session.patternQuestCard?.type || '';
+    if (cardType === 'classify' || cardType === 'explain') return 'Lock in choice';
+    if (cardType === 'detect-error') return 'Submit correction';
+    return 'Submit spelling';
+  }
   if (isBossSession(session)) return 'Lock it in';
   if (session.type === 'test') return 'Save and next';
   if (session.phase === 'retry') return 'Try again';
@@ -28,6 +42,11 @@ export function spellingSessionSubmitLabel(session, awaitingAdvance = false) {
 
 export function spellingSessionInputPlaceholder(session) {
   if (!session) return 'Type the spelling here';
+  if (isPatternQuestSession(session)) {
+    const cardType = session.patternQuestCard?.type || '';
+    if (cardType === 'detect-error') return 'Type the correct spelling';
+    return 'Type the spelling here';
+  }
   if (isBossSession(session)) return 'Type the Mega word';
   if (session.type === 'test') return 'Type the spelling and move on';
   if (session.phase === 'retry') return 'Try once more from memory';
@@ -37,6 +56,10 @@ export function spellingSessionInputPlaceholder(session) {
 
 export function spellingSessionContextNote(session) {
   if (!session) return 'Family hidden during live recall.';
+  if (isPatternQuestSession(session)) {
+    const title = session.patternQuestCard?.patternTitle || session.patternQuestProgress?.patternTitle || 'a pattern';
+    return `Pattern Quest — ${title}. Mega stays no matter what.`;
+  }
   if (isBossSession(session)) return 'Boss round. Mega words only.';
   if (isGuardianSession(session)) return 'Spell the word from memory. One clean attempt.';
   if (session.type === 'test') return 'SATs mode uses audio only. Press Replay to hear the dictation again.';
@@ -45,6 +68,9 @@ export function spellingSessionContextNote(session) {
 
 export function spellingSessionFooterNote(session) {
   if (!session) return '';
+  if (isPatternQuestSession(session)) {
+    return 'Pattern Quest: five cards on the same pattern. Wrong answers wobble the word but Mega stays intact. Esc replays the word, Shift+Esc replays slowly.';
+  }
   if (isBossSession(session)) {
     // Boss Dictation is `type: 'test'`-shaped but NEVER demotes Mega, so the
     // SATs footer ("Wrong answers are marked due again for this learner after
@@ -64,6 +90,12 @@ export function spellingSessionFooterNote(session) {
 
 export function spellingSessionProgressLabel(session) {
   if (!session) return '';
+  if (isPatternQuestSession(session)) {
+    const idx = Number(session.patternQuestProgress?.index) || 0;
+    const total = Number(session.patternQuestProgress?.total) || 5;
+    const title = session.patternQuestProgress?.patternTitle || 'Pattern Quest';
+    return `Card ${Math.min(total, idx + 1)} of ${total} · ${title}`;
+  }
   if (isBossSession(session)) return 'Boss round';
   if (session.type === 'test') return 'SATs one-shot';
   if (session.practiceOnly) return 'Practice only';
@@ -77,6 +109,14 @@ export function spellingSessionInfoChips(session) {
   if (session.practiceOnly) chips.push('Practice only');
   if (isGuardianSession(session)) chips.push('Guardian');
   if (isBossSession(session)) chips.push('Boss');
+  if (isPatternQuestSession(session)) {
+    chips.push('Pattern Quest');
+    const cardType = session.patternQuestCard?.type;
+    if (cardType === 'spell') chips.push('Spell');
+    else if (cardType === 'classify') chips.push('Classify');
+    else if (cardType === 'detect-error') chips.push('Detect error');
+    else if (cardType === 'explain') chips.push('Explain');
+  }
   return chips;
 }
 

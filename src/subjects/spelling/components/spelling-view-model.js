@@ -63,12 +63,20 @@ export const POST_MEGA_MODE_CARDS = Object.freeze([
     iconSrc: null,
     glyph: 'B',
     title: 'Boss Dictation',
-    // "Ten Mega words. One spelling each. Miss one — it still stays Mega."
-    // reinforces the Mega-never-revoked invariant on the card face itself so
-    // a child who hesitates before pressing Begin already knows a Boss round
-    // cannot punish them into Guardian recovery.
     desc: 'Ten Mega words. One spelling each. Miss one — it still stays Mega.',
     ariaLabel: 'Boss Dictation — ten-word one-shot dictation from your Mega words. Mega status never drops.',
+    disabled: false,
+  },
+  {
+    id: 'pattern-quest',
+    iconSrc: null,
+    glyph: 'P',
+    title: 'Pattern Quest',
+    // U11: 5-card quest on a single KS2 spelling pattern (e.g. "-tion"). The
+    // description names the flow so a child reading it knows the quest is a
+    // short curiosity-first drill, not another Guardian patrol.
+    desc: 'Five short cards on one spelling pattern. Spot the clue, fix the trick, lock it in — Mega always stays.',
+    ariaLabel: 'Pattern Quest — five-card quest on a single KS2 spelling pattern. Mega status never drops.',
     disabled: false,
   },
   {
@@ -646,6 +654,8 @@ export function summaryModeLabel(mode) {
   // Review" on the Boss summary mode chip, leaking legacy copy into the
   // graduated surface.
   if (mode === 'boss') return 'Boss Dictation';
+  // U11: Pattern Quest summary mode label.
+  if (mode === 'pattern-quest') return 'Pattern Quest';
   return 'Smart Review';
 }
 
@@ -950,6 +960,16 @@ export function buildSpellingContext({ appState, service, repositories, subject 
         ...createLockedPostMasteryState(),
         todayDay: Math.floor(Date.now() / DAY_MS),
       };
+  // P2 U9: durable persistence-warning sibling. Read on every context build
+  // so the banner surfaces the instant the service writes a new record
+  // (submit-path failure) and disappears the instant it is acknowledged.
+  // The normaliser in service-contract.js drops garbage back to null, so
+  // `persistenceWarning` is either a `{ reason, occurredAt, acknowledged }`
+  // record or `null`. Setup + session scenes branch on `!acknowledged` to
+  // decide whether to render the banner.
+  const persistenceWarning = typeof service.getPersistenceWarning === 'function'
+    ? service.getPersistenceWarning(learner.id)
+    : null;
   return {
     learner,
     ui,
@@ -957,6 +977,7 @@ export function buildSpellingContext({ appState, service, repositories, subject 
     prefs: service.getPrefs(learner.id),
     analytics,
     postMastery,
+    persistenceWarning,
     codex: ui.phase === 'dashboard' && analytics
       ? monsterSummaryFromSpellingAnalytics(analytics, {
           learnerId: learner.id,

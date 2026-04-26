@@ -50,6 +50,8 @@ import {
   composeIsDisabled,
   currentItemInstruction,
   punctuationChildMisconceptionLabel,
+  punctuationChildRegisterOverride,
+  punctuationChildRegisterOverrideString,
   punctuationFeedbackChips,
   punctuationPhaseLabel,
 } from './punctuation-view-model.js';
@@ -243,8 +245,15 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit }) {
 // revealing the worked example + common-mistake pair. The old inline three-
 // panel layout moves behind the toggle so the question card breathes.
 function CollapsedTeachBox({ guided }) {
-  const box = guided?.teachBox;
-  if (!box) return null;
+  const rawBox = guided?.teachBox;
+  if (!rawBox) return null;
+  // Phase 4 U7: Worker-sourced teachBox strings pass through the child-
+  // register override helper at display time. The engine files
+  // (`shared/punctuation/marking.js`, `shared/punctuation/generators.js`)
+  // are scope-locked by the oracle replay and can still emit adult
+  // grammar terms in `rule` / `prompt` / `note` strings; the override
+  // rewrites them in child register before the learner ever sees them.
+  const box = punctuationChildRegisterOverride(rawBox) || rawBox;
   const hasWorked = Boolean(box.workedExample?.before || box.workedExample?.after);
   const hasContrast = Boolean(box.contrastExample?.before || box.contrastExample?.after);
   if (!box.rule && !hasWorked && !hasContrast) return null;
@@ -357,7 +366,13 @@ function ActiveItemBranch({ ui, actions }) {
           >
             {headerTop}
           </div>
-          <h2 className="section-title">{item.prompt || 'Punctuation practice'}</h2>
+          {/*
+            Phase 4 U7: engine-sourced item prompts (e.g. "Correct the
+            comma after the fronted adverbial.") pass through the child-
+            register override so adult grammar terminology never reaches
+            the learner.
+          */}
+          <h2 className="section-title">{punctuationChildRegisterOverrideString(item.prompt) || 'Punctuation practice'}</h2>
           <p className="subtitle">{currentItemInstruction(item)}</p>
         </div>
       </div>
@@ -386,6 +401,14 @@ function ActiveItemBranch({ ui, actions }) {
        * service.js) so it is the robust per-transition counter — it does
        * not depend on item id or prompt content.
        */}
+      {/* SH2-U3 input preservation contract: `pendingCommand` is
+         DELIBERATELY absent from these keys. When a mid-type 401 clears
+         `pendingCommand` (auth-required path or SH2-U2 rehydrate), the
+         React keys tied to `session.answeredCount` stay stable so the
+         uncontrolled `<input>` / `<textarea>` inside `ChoiceItem` /
+         `TextItem` is retained and the learner's typed answer survives.
+         Adding `pendingCommand` here would regress the contract covered
+         by `tests/demo-expiry-banner.test.js::input-preservation`. */}
       <div className="punctuation-session-body" style={{ marginTop: 16 }}>
         {item.inputKind === 'choice' ? (
           <ChoiceItem
@@ -447,7 +470,13 @@ function FeedbackBranch({ ui, actions }) {
   // End-round-early ("Finish now") is treated as destructive per plan
   // and is not wrapped.
   const submitLock = useSubmitLock();
-  const feedback = ui.feedback || {};
+  // Phase 4 U7: the feedback payload comes from the marking engine
+  // (scope-locked by oracle replay) which can still emit adult grammar
+  // terms in `headline` / `body` / `displayCorrection`. Route the whole
+  // atom through the override helper so every user-visible string is
+  // rewritten before the JSX references it. The helper is a no-op when
+  // no override entries match.
+  const feedback = punctuationChildRegisterOverride(ui.feedback) || ui.feedback || {};
   const session = ui.session || {};
   const scene = bellstormSceneForPhase('feedback');
   const isDisabled = composeIsDisabled(ui);

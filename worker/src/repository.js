@@ -22,6 +22,10 @@ import {
 } from '../../src/subjects/spelling/content/model.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data/content-data.js';
 import {
+  POST_MEGA_SEED_SHAPES,
+  resolvePostMegaSeedShape,
+} from '../../shared/spelling/post-mastery-seed-shapes.js';
+import {
   PLATFORM_ROLES,
   canManageAccountRoles,
   canViewAdminHub,
@@ -64,6 +68,12 @@ import {
 import { MONSTER_ASSET_MANIFEST } from '../../src/platform/game/monster-asset-manifest.js';
 import { bundledEffectConfig } from '../../src/platform/game/render/effect-config-defaults.js';
 import {
+  archiveGrammarTransferEvidenceState,
+  createInitialGrammarState,
+  deleteGrammarTransferEvidenceState,
+} from './subjects/grammar/engine.js';
+import { grammarTransferPromptById } from './subjects/grammar/transfer-prompts.js';
+import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
@@ -80,7 +90,6 @@ import {
   scalar,
   sqlPlaceholders,
   withCapacityCollector,
-  withTransaction,
 } from './d1.js';
 
 const WRITABLE_MEMBERSHIP_ROLES = new Set(['owner', 'member']);
@@ -1011,6 +1020,22 @@ function requireMonsterVisualConfigManager(account) {
   if (accountType(account) === 'demo' || accountPlatformRole(account) !== 'admin') {
     throw new ForbiddenError('Monster visual config changes require an admin account.', {
       code: 'monster_visual_config_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+}
+
+// U10 follower (MEDIUM — admin-only policy lock): the Grammar Writing
+// Try archive + hard-delete routes are destructive data mutations. The
+// reviewer convergence chose the stricter gate (admin only, ops 403)
+// rather than `requireAdminHubAccess` which grants ops through. Mirrors
+// `requireMonsterVisualConfigManager` and emits a dedicated error code
+// (`grammar_transfer_admin_forbidden`) so the security test can lock
+// the exact policy string.
+function requireGrammarTransferAdmin(account) {
+  if (accountType(account) === 'demo' || accountPlatformRole(account) !== 'admin') {
+    throw new ForbiddenError('Grammar Writing Try archive and delete require an admin account.', {
+      code: 'grammar_transfer_admin_forbidden',
       required: 'platform-role-admin',
     });
   }
@@ -1972,6 +1997,11 @@ function emptyDashboardKpis(generatedAt) {
       byOrigin: { client: 0, server: 0 },
     },
     accountOpsUpdates: { total: 0 },
+    cronReconcile: {
+      lastSuccessAt: 0,
+      lastFailureAt: 0,
+      successCount: 0,
+    },
   };
 }
 
@@ -2189,6 +2219,48 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
     // migration lands in remote D1.
   }
 
+  // U11: surface cron-driven reconciliation telemetry so the dashboard
+  // can warn when automated reconciliation has stalled. Metric keys live
+  // in `worker/src/index.js::runScheduledHandler`; we soft-fail if the
+  // table is missing so the hub keeps loading pre-migration.
+  // I-RE-1 (re-review Important): the cron also runs a retention sweep on
+  // request_limits + sessions + receipts. A retention failure alone
+  // doesn't trip the reconcile failure timestamp, so the dashboard was
+  // silent when retention alone degraded. Surface the retention
+  // last-failure-at so the banner predicate can fire on either failure.
+  let cronReconcile = {
+    lastSuccessAt: 0,
+    lastFailureAt: 0,
+    successCount: 0,
+    retentionLastFailureAt: 0,
+  };
+  try {
+    const cronRows = await all(db, `
+      SELECT metric_key, metric_count, updated_at
+      FROM admin_kpi_metrics
+      WHERE metric_key IN (?, ?, ?, ?)
+    `, [
+      'capacity.cron.reconcile.success',
+      'capacity.cron.reconcile.last_success_at',
+      'capacity.cron.reconcile.last_failure_at',
+      'capacity.cron.retention.last_failure_at',
+    ]);
+    for (const row of cronRows) {
+      const key = typeof row?.metric_key === 'string' ? row.metric_key : '';
+      if (key === 'capacity.cron.reconcile.success') {
+        cronReconcile.successCount = Math.max(0, Number(row.metric_count) || 0);
+      } else if (key === 'capacity.cron.reconcile.last_success_at') {
+        cronReconcile.lastSuccessAt = Math.max(0, Number(row.metric_count) || 0);
+      } else if (key === 'capacity.cron.reconcile.last_failure_at') {
+        cronReconcile.lastFailureAt = Math.max(0, Number(row.metric_count) || 0);
+      } else if (key === 'capacity.cron.retention.last_failure_at') {
+        cronReconcile.retentionLastFailureAt = Math.max(0, Number(row.metric_count) || 0);
+      }
+    }
+  } catch (error) {
+    if (!isMissingTableError(error, 'admin_kpi_metrics')) throw error;
+  }
+
   return {
     generatedAt: nowTs,
     accounts: {
@@ -2219,6 +2291,7 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
       byOrigin: { client: errorsClient, server: errorsServer },
     },
     accountOpsUpdates: { total: accountOpsUpdatesTotal },
+    cronReconcile,
   };
 }
 
@@ -2277,7 +2350,8 @@ async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorP
         COALESCE(om.tags_json, '[]') AS tags_json,
         om.internal_notes AS internal_notes,
         COALESCE(om.updated_at, a.updated_at) AS updated_at,
-        om.updated_by_account_id AS updated_by_account_id
+        om.updated_by_account_id AS updated_by_account_id,
+        COALESCE(om.row_version, 0) AS row_version
       FROM adult_accounts a
       LEFT JOIN account_ops_metadata om ON om.account_id = a.id
       WHERE COALESCE(a.account_type, 'real') <> 'demo'
@@ -2298,7 +2372,8 @@ async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorP
         '[]' AS tags_json,
         NULL AS internal_notes,
         updated_at AS updated_at,
-        NULL AS updated_by_account_id
+        NULL AS updated_by_account_id,
+        0 AS row_version
       FROM adult_accounts
       WHERE COALESCE(account_type, 'real') <> 'demo'
       ORDER BY updated_at DESC, id ASC
@@ -2324,6 +2399,9 @@ async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorP
         : null,
       updatedAt: Number(row?.updated_at) || 0,
       updatedByAccountId: typeof row?.updated_by_account_id === 'string' ? row.updated_by_account_id : null,
+      // U8 CAS: surface the row_version alongside every admin row so the
+      // client can carry it as `expectedRowVersion` on the next mutation.
+      rowVersion: Math.max(0, Number(row?.row_version) || 0),
     })),
   };
 }
@@ -2429,17 +2507,385 @@ async function bumpAdminKpiMetric(db, key, nowTs, delta = 1) {
   }
 }
 
-function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1) {
+function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1, { exists = null } = {}) {
   const resolvedDelta = Number.isFinite(Number(delta)) ? Number(delta) : 1;
   const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
   const seedCount = Math.max(0, resolvedDelta);
+  const valueParams = [key, seedCount, ts];
+  // B-RE-1: when an `exists` guard is supplied, the row is inserted via
+  // `INSERT INTO ... SELECT <values> WHERE EXISTS (<guard>) ON CONFLICT`. If
+  // the guard does not match (e.g. the caller's UPSERT lost a CAS race and
+  // the post-bump row_version does not exist on disk), the SELECT yields
+  // zero rows, nothing is inserted and no ON CONFLICT branch fires — the
+  // counter bump is a true no-op. The batch commits semantically but the
+  // counter was never moved, eliminating drift between successful receipts
+  // and `account_ops_metadata.updates` / `admin.account_role.updates`.
+  if (exists) {
+    return bindStatement(db, `
+      INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+      ${guardedExistsValueSource(valueParams.length, exists.sql)}
+      ON CONFLICT(metric_key) DO UPDATE SET
+        metric_count = MAX(0, admin_kpi_metrics.metric_count + ?),
+        updated_at = ?
+    `, [...guardedExistsParams(valueParams, exists), resolvedDelta, ts]);
+  }
   return bindStatement(db, `
     INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
     VALUES (?, ?, ?)
     ON CONFLICT(metric_key) DO UPDATE SET
       metric_count = MAX(0, admin_kpi_metrics.metric_count + ?),
       updated_at = ?
-  `, [key, seedCount, ts, resolvedDelta, ts]);
+  `, [...valueParams, resolvedDelta, ts]);
+}
+
+// ---------------------------------------------------------------------------
+// U10: KPI reconciliation.
+//
+// Computes the authoritative per-status counts for `ops_error_events`,
+// compares against the values reported by the client script (for
+// forensic-audit diffing), and writes the server-side values to
+// `admin_kpi_metrics`.
+//
+// I8 (Phase C reviewer): `account_ops_metadata.updates` is NOT in the
+// reconcilable set. It is a monotonic event counter incremented on
+// every ops-metadata write and deliberately not recomputed from
+// `mutation_receipts` — the receipts table is pruned on a 30-day
+// retention window (or 365 for `admin.*` kinds), so a recompute would
+// drift downward as old receipts age out. The counter is the
+// cumulative-lifetime count of ops-metadata writes and is preserved
+// across retention sweeps by keeping it out of `RECONCILABLE_METRIC_KEYS`.
+// Earlier doc comments mistakenly described this counter as
+// "reconciled"; that was incorrect and is corrected here.
+//
+// Single-flight lock semantics (adv-9 hardening):
+//   - `admin_kpi_metrics.metric_key = 'reconcile_pending:lock'` holds the
+//     lock. `metric_count` encodes the caller's requestId-derived owner
+//     hash; `updated_at` records the last heartbeat / acquire.
+//   - A stale lock (now - updated_at > 10 min) may be CAS-taken-over via
+//     an UPDATE that matches the stale owner hash.
+//   - Completion deletes the lock via CAS-on-own-hash so a slow caller
+//     never clears a successor's lock.
+//
+// Mutation receipt (forensic trail): every invocation writes a
+// `admin.ops.reconcile_kpis` receipt with `{ clientComputed,
+// serverComputed, deltas }` so a rogue admin's tampering is caught at
+// audit time.
+// ---------------------------------------------------------------------------
+
+const RECONCILE_KPIS_MUTATION_KIND = 'admin.ops.reconcile_kpis';
+const RECONCILE_LOCK_METRIC_KEY = 'reconcile_pending:lock';
+const RECONCILE_LOCK_STALE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+// Metric keys reconciliation is authoritative for. Derivable-from-source
+// counters only — monotonic counters (e.g. `global_budget_exhausted`)
+// stay event-driven.
+const RECONCILABLE_METRIC_KEYS = Object.freeze([
+  `${KPI_ERROR_STATUS_METRIC_PREFIX}open`,
+  `${KPI_ERROR_STATUS_METRIC_PREFIX}investigating`,
+  `${KPI_ERROR_STATUS_METRIC_PREFIX}resolved`,
+  `${KPI_ERROR_STATUS_METRIC_PREFIX}ignored`,
+]);
+
+export function reconcileLockHashForRequestId(requestId) {
+  // Deterministic integer derived from the caller's `requestId`. The CAS
+  // takeover UPDATE matches against the existing-lock hash exactly so two
+  // concurrent takeover attempts cannot both succeed.
+  //
+  // I6 (Phase C reviewer): the earlier implementation was a single FNV-1a
+  // 32-bit hash. 32 bits gives a collision probability of ~1 in 4.3×10^9
+  // per distinct requestId pair — too low for a long-lived production
+  // workload where billions of request IDs accumulate over months. The
+  // upgraded implementation composes **two independent FNV-1a 32-bit
+  // passes** (forward and reverse seeds) into a 52-bit Number. 52 bits
+  // is the largest field that fits safely inside `Number.MAX_SAFE_INTEGER`
+  // (JS numbers are IEEE 754 doubles with 53-bit mantissas; using the full
+  // 53 bits would sometimes produce values that don't round-trip through
+  // JSON or SQLite INTEGER exactly). Collision probability at 52 bits is
+  // ~1 in 4.5×10^15 per pair — astronomically safe for any realistic
+  // reconciliation cadence.
+  //
+  // Return shape: a non-negative integer between 0 and 2^52 - 1. The
+  // reserved value 0 signals "empty/invalid input" and is still emitted
+  // for backwards compatibility with tests that assert `hash(null) === 0`.
+  if (typeof requestId !== 'string' || !requestId) return 0;
+  // Forward pass — FNV-1a 32-bit.
+  let fwd = 2166136261;
+  for (let i = 0; i < requestId.length; i += 1) {
+    fwd ^= requestId.charCodeAt(i);
+    fwd = Math.imul(fwd, 16777619);
+  }
+  fwd = fwd >>> 0;
+  // Reverse pass — different offset basis so the two hashes are
+  // independent. Iterating in reverse forces a different prefix-sensitive
+  // hash path.
+  let rev = 2654435761; // Knuth's multiplicative constant (non-FNV offset)
+  for (let i = requestId.length - 1; i >= 0; i -= 1) {
+    rev ^= requestId.charCodeAt(i);
+    rev = Math.imul(rev, 16777619);
+  }
+  rev = rev >>> 0;
+  // Pack into a 52-bit number: (fwd as high 20 bits) * 2^32 + (rev).
+  // High 20 bits come from fwd >>> 12 so we are not wasting entropy on
+  // low-order bits already represented in the other pass.
+  const high = (fwd >>> 12) & 0xfffff; // 20 bits
+  // Result fits in 52 bits: 20 + 32 = 52.
+  // Use multiplication rather than bit shift because `<<` operates on
+  // 32-bit ints in JS; the multiplication stays in double-precision.
+  return high * 0x1_0000_0000 + rev;
+}
+
+async function readReconcileLockRow(db) {
+  return first(db, `
+    SELECT metric_key, metric_count, updated_at
+    FROM admin_kpi_metrics
+    WHERE metric_key = ?
+  `, [RECONCILE_LOCK_METRIC_KEY]);
+}
+
+async function recomputeReconcilableCounters(db) {
+  // Authoritative recompute from source tables. Each `SELECT COUNT` is
+  // the ground truth the reconciliation writes back.
+  const statusRows = await all(db, `
+    SELECT status, COUNT(*) AS count
+    FROM ops_error_events
+    GROUP BY status
+  `);
+  const serverComputed = Object.create(null);
+  // Seed every reconcilable status bucket at zero so a status with no
+  // rows still reconciles to a write.
+  for (const status of OPS_ERROR_STATUSES) {
+    serverComputed[`${KPI_ERROR_STATUS_METRIC_PREFIX}${status}`] = 0;
+  }
+  for (const row of statusRows) {
+    const status = typeof row?.status === 'string' ? row.status : '';
+    if (!OPS_ERROR_STATUSES.includes(status)) continue;
+    serverComputed[`${KPI_ERROR_STATUS_METRIC_PREFIX}${status}`] = Math.max(
+      0,
+      Number(row.count) || 0,
+    );
+  }
+  return serverComputed;
+}
+
+async function readCurrentCounters(db) {
+  const current = Object.create(null);
+  for (const key of RECONCILABLE_METRIC_KEYS) current[key] = 0;
+  const rows = await all(db, `
+    SELECT metric_key, metric_count
+    FROM admin_kpi_metrics
+    WHERE metric_key IN (${RECONCILABLE_METRIC_KEYS.map(() => '?').join(', ')})
+  `, RECONCILABLE_METRIC_KEYS);
+  for (const row of rows) {
+    const key = typeof row?.metric_key === 'string' ? row.metric_key : '';
+    if (!(key in current)) continue;
+    current[key] = Math.max(0, Number(row.metric_count) || 0);
+  }
+  return current;
+}
+
+function reconcileDiffTable(current, serverComputed, clientComputed) {
+  const deltas = Object.create(null);
+  for (const key of RECONCILABLE_METRIC_KEYS) {
+    const currentValue = Math.max(0, Number(current[key]) || 0);
+    const serverValue = Math.max(0, Number(serverComputed[key]) || 0);
+    const clientValue = clientComputed && Object.prototype.hasOwnProperty.call(clientComputed, key)
+      ? Math.max(0, Number(clientComputed[key]) || 0)
+      : null;
+    deltas[key] = {
+      before: currentValue,
+      serverComputed: serverValue,
+      clientComputed: clientValue,
+      delta: serverValue - currentValue,
+      clientServerDelta: clientValue === null ? null : clientValue - serverValue,
+    };
+  }
+  return deltas;
+}
+
+export async function reconcileAdminKpiMetricsInternal(db, {
+  actorAccountId = null,
+  requestId,
+  correlationId = null,
+  clientComputed = null,
+  nowTs,
+} = {}) {
+  if (typeof requestId !== 'string' || !requestId) {
+    throw new BadRequestError('Reconcile requestId is required.', {
+      code: 'validation_failed',
+      field: 'requestId',
+    });
+  }
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const ownerHash = reconcileLockHashForRequestId(requestId);
+  const receiptAccountId = actorAccountId || 'system';
+  const requestHash = mutationPayloadHash(RECONCILE_KPIS_MUTATION_KIND, {
+    requestId,
+    clientComputed,
+  });
+
+  // H2 (Phase C reviewer): idempotency preflight. A retried reconcile with
+  // the same requestId must short-circuit to the cached response BEFORE we
+  // acquire the single-flight lock, otherwise a client backoff-retry storm
+  // forces every caller into the lock and every caller observes 409
+  // `reconcile_in_progress` even though the original reconcile already
+  // landed. Matches the pattern in `updateAccountOpsMetadata` and
+  // `updateOpsErrorEventStatus`.
+  const existingReceipt = await loadMutationReceipt(db, receiptAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: RECONCILE_KPIS_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId: `reconcile-kpis:${requestId}`,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    // The receipt body was shaped as `{ reconcile: {...} }`. Re-expand to the
+    // canonical return shape and flag it as replayed via `cached: true`.
+    const priorReconcile = (storedReplay && typeof storedReplay === 'object' && storedReplay.reconcile)
+      ? storedReplay.reconcile
+      : {};
+    return {
+      ok: true,
+      cached: true,
+      reconciledAt: Number(priorReconcile.appliedAt) || Number(existingReceipt.applied_at) || ts,
+      deltas: Array.isArray(priorReconcile.deltas) ? priorReconcile.deltas : [],
+      appliedCounts: (priorReconcile.serverComputed && typeof priorReconcile.serverComputed === 'object')
+        ? { ...priorReconcile.serverComputed }
+        : {},
+      clientComputed: priorReconcile.clientComputed && typeof priorReconcile.clientComputed === 'object'
+        ? { ...priorReconcile.clientComputed }
+        : null,
+      serverComputed: priorReconcile.serverComputed && typeof priorReconcile.serverComputed === 'object'
+        ? { ...priorReconcile.serverComputed }
+        : {},
+    };
+  }
+
+  // --- Single-flight lock acquisition (INSERT OR IGNORE + CAS-takeover) ---
+  // Step 1: optimistic insert.
+  await run(db, `
+    INSERT OR IGNORE INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+    VALUES (?, ?, ?)
+  `, [RECONCILE_LOCK_METRIC_KEY, ownerHash, ts]);
+
+  // Step 2: check who holds the lock.
+  let lockRow = await readReconcileLockRow(db);
+  let weHoldTheLock = lockRow
+    && Number(lockRow.metric_count) === ownerHash;
+
+  if (!weHoldTheLock) {
+    const existingOwnerHash = Math.max(0, Number(lockRow?.metric_count) || 0);
+    const existingUpdatedAt = Math.max(0, Number(lockRow?.updated_at) || 0);
+    const lockAgeMs = ts - existingUpdatedAt;
+    if (lockAgeMs <= RECONCILE_LOCK_STALE_WINDOW_MS) {
+      // Fresh lock held by another caller — reject.
+      throw new ConflictError('Another reconciliation is in progress. Retry in a minute.', {
+        code: 'reconcile_in_progress',
+        retryable: true,
+        lockedSince: existingUpdatedAt,
+        staleAfterMs: RECONCILE_LOCK_STALE_WINDOW_MS,
+      });
+    }
+    // Stale — try CAS-takeover.
+    const takeoverResult = await run(db, `
+      UPDATE admin_kpi_metrics
+      SET metric_count = ?, updated_at = ?
+      WHERE metric_key = ? AND metric_count = ? AND updated_at = ?
+    `, [
+      ownerHash,
+      ts,
+      RECONCILE_LOCK_METRIC_KEY,
+      existingOwnerHash,
+      existingUpdatedAt,
+    ]);
+    const rowsAffected = Math.max(0, Number(takeoverResult?.meta?.changes) || 0);
+    if (rowsAffected !== 1) {
+      // Race-lost takeover — another caller just took over.
+      throw new ConflictError('Another reconciliation is in progress. Retry in a minute.', {
+        code: 'reconcile_in_progress',
+        retryable: true,
+      });
+    }
+    weHoldTheLock = true;
+    lockRow = await readReconcileLockRow(db);
+  }
+
+  try {
+    // --- Reconcile body ---
+    const before = await readCurrentCounters(db);
+    const serverComputed = await recomputeReconcilableCounters(db);
+    const deltas = reconcileDiffTable(before, serverComputed, clientComputed);
+
+    // Assemble the authoritative UPSERTs + mutation receipt in one batch.
+    const resolvedCorrelationId = typeof correlationId === 'string' && correlationId
+      ? correlationId
+      : requestId;
+    const appliedCounts = Object.create(null);
+    const upserts = [];
+    for (const key of RECONCILABLE_METRIC_KEYS) {
+      const value = Math.max(0, Number(serverComputed[key]) || 0);
+      appliedCounts[key] = value;
+      upserts.push(bindStatement(db, `
+        INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(metric_key) DO UPDATE SET
+          metric_count = excluded.metric_count,
+          updated_at = excluded.updated_at
+      `, [key, value, ts]));
+    }
+
+    const receiptBody = {
+      reconcile: {
+        requestId,
+        correlationId: resolvedCorrelationId,
+        appliedAt: ts,
+        before,
+        serverComputed,
+        clientComputed: clientComputed && typeof clientComputed === 'object' ? { ...clientComputed } : null,
+        deltas,
+      },
+    };
+    // R21 batch atomicity — every UPSERT + mutation receipt land together.
+    await batch(db, [
+      ...upserts,
+      storeMutationReceiptStatement(db, {
+        accountId: receiptAccountId,
+        requestId,
+        scopeType: 'platform',
+        scopeId: `reconcile-kpis:${requestId}`,
+        mutationKind: RECONCILE_KPIS_MUTATION_KIND,
+        requestHash,
+        response: receiptBody,
+        correlationId: resolvedCorrelationId,
+        appliedAt: ts,
+      }),
+    ]);
+
+    return {
+      ok: true,
+      reconciledAt: ts,
+      deltas,
+      appliedCounts,
+      clientComputed: clientComputed && typeof clientComputed === 'object' ? { ...clientComputed } : null,
+      serverComputed,
+    };
+  } finally {
+    // Release lock on own hash only so a slow caller does not clear a
+    // successor's takeover.
+    try {
+      await run(db, `
+        DELETE FROM admin_kpi_metrics
+        WHERE metric_key = ? AND metric_count = ?
+      `, [RECONCILE_LOCK_METRIC_KEY, ownerHash]);
+    } catch (error) {
+      // Release failure is non-fatal — the stale-lock window lets the
+      // next caller take over after 10 minutes. Surface via error
+      // propagation only if the caller passed us a reportable helper.
+      if (!isMissingTableError(error, 'admin_kpi_metrics')) throw error;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2462,6 +2908,24 @@ const OPS_TAG_MAX_CHARS = 32;
 const OPS_INTERNAL_NOTES_MAX_CHARS = 2000;
 const ACCOUNT_OPS_METADATA_MUTATION_KIND = 'admin.account_ops_metadata.update';
 const OPS_ERROR_EVENT_STATUS_MUTATION_KIND = 'admin.ops_error_event.status-set';
+// P2 U3: admin-gated QA seed harness. Writes a named post-Mega shape into
+// `child_subject_state.spelling.data` for the target learner. scopeType is
+// 'platform' so the mutation-receipt path defeats the cross-origin CSRF
+// vector (H9 — a malicious iframe POST with the admin session cookie cannot
+// forge a receipt header, and the receipt row proves which admin clicked).
+// scopeId is deliberately `post-mega-seed:<learnerId>` so each seed lands
+// in its own receipt row for audit.
+const POST_MEGA_SEED_MUTATION_KIND = 'admin.spelling.post-mega-seed';
+const POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS = 64;
+// U3 reviewer follow-up (MEDIUM adversarial): the seed harness accepts a
+// free-form learnerId string for the "new learner" flow. Without a charset
+// guard, an admin can type `alice\nbob`, `<script>`, or other control-char
+// payloads that flow straight into SQL literal via `bindStatement` (safe
+// against injection thanks to parameterisation, but still ugly for logs /
+// audit). The regex mirrors the learner-id naming convention used elsewhere
+// (lowercase/digits/hyphen, must start with alphanumeric) and is also
+// enforced on the CLI + React manual-id input for consistency.
+const POST_MEGA_SEED_LEARNER_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
 
 function normaliseMutationEnvelope(rawMutation, { scopeType, scopeId } = {}) {
   const raw = isPlainObject(rawMutation) ? rawMutation : {};
@@ -2570,10 +3034,60 @@ function validateAccountOpsPatch(rawPatch) {
 async function loadAccountOpsMetadataRow(db, targetAccountId) {
   return first(db, `
     SELECT account_id, ops_status, plan_label, tags_json, internal_notes,
-           updated_at, updated_by_account_id
+           updated_at, updated_by_account_id, row_version
     FROM account_ops_metadata
     WHERE account_id = ?
   `, [targetAccountId]);
+}
+
+// U8 CAS helper: normalise the incoming `expectedRowVersion`. Accepts
+// non-negative integers only. Omission is treated as `null` so the mutation
+// payload hash remains stable for legacy (pre-CAS) callers during the
+// transitional window between worker deploy and client update. On the
+// mutation path a null value signals "no CAS pre-image was supplied" and
+// is rejected with a 400 so the client is forced to integrate the field.
+function normaliseExpectedRowVersion(value) {
+  if (value === null || value === undefined) return null;
+  const numeric = Number(value);
+  if (!Number.isInteger(numeric) || numeric < 0) {
+    throw new BadRequestError('Expected row version must be a non-negative integer.', {
+      code: 'validation_failed',
+      field: 'expectedRowVersion',
+    });
+  }
+  return numeric;
+}
+
+// U8 CAS helper: build the redacted `currentState` echo that accompanies a
+// 409 response. `internal_notes` is admin-only (R25); ops-role viewers see
+// `null` for that field while all other fields surface unchanged so the
+// 409 diff banner can still show them where the row sits.
+function buildAccountOpsMetadataConflictState(row, actorPlatformRole, targetAccountId) {
+  const includeNotes = actorPlatformRole === 'admin';
+  if (!row) {
+    return {
+      accountId: targetAccountId,
+      opsStatus: 'active',
+      planLabel: null,
+      tags: [],
+      internalNotes: null,
+      updatedAt: 0,
+      updatedByAccountId: null,
+      rowVersion: 0,
+    };
+  }
+  return {
+    accountId: typeof row.account_id === 'string' ? row.account_id : targetAccountId,
+    opsStatus: typeof row.ops_status === 'string' ? row.ops_status : 'active',
+    planLabel: typeof row.plan_label === 'string' ? row.plan_label : null,
+    tags: normaliseTagsJson(row.tags_json),
+    internalNotes: includeNotes
+      ? (typeof row.internal_notes === 'string' ? row.internal_notes : null)
+      : null,
+    updatedAt: Number(row.updated_at) || 0,
+    updatedByAccountId: typeof row.updated_by_account_id === 'string' ? row.updated_by_account_id : null,
+    rowVersion: Math.max(0, Number(row.row_version) || 0),
+  };
 }
 
 function accountOpsMetadataRowToModel(row, targetAccountId, includeNotes) {
@@ -2605,6 +3119,7 @@ async function updateAccountOpsMetadata(db, {
   actorAccountId,
   targetAccountId,
   patch: rawPatch,
+  expectedRowVersion = null,
   mutation,
   nowTs,
 } = {}) {
@@ -2617,6 +3132,21 @@ async function updateAccountOpsMetadata(db, {
   requireAccountRoleManager(actor);
 
   const patch = validateAccountOpsPatch(rawPatch);
+  // U8 CAS: `expectedRowVersion` is required on every mutation envelope. It
+  // is a non-negative integer representing the `account_ops_metadata.row_version`
+  // the client observed at read time. On success, `row_version` bumps by 1;
+  // on mismatch, the helper responds with 409 `account_ops_metadata_stale`.
+  // Including the field in the payload hash ensures a 409-retry carrying a
+  // fresh `expectedRowVersion` is not idempotency-replayed as the original
+  // stale attempt.
+  const normalisedExpectedRowVersion = normaliseExpectedRowVersion(expectedRowVersion);
+  if (normalisedExpectedRowVersion === null) {
+    throw new BadRequestError('Expected row version is required for account ops metadata updates.', {
+      code: 'validation_failed',
+      field: 'expectedRowVersion',
+    });
+  }
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
   const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
     scopeType: 'account',
     scopeId: targetAccountId,
@@ -2625,6 +3155,7 @@ async function updateAccountOpsMetadata(db, {
   const requestHash = mutationPayloadHash(ACCOUNT_OPS_METADATA_MUTATION_KIND, {
     targetAccountId,
     patch,
+    expectedRowVersion: normalisedExpectedRowVersion,
   });
 
   // Idempotency preflight — replay-safe without relying on savepoints.
@@ -2666,6 +3197,37 @@ async function updateAccountOpsMetadata(db, {
   }
 
   const existingRow = await loadAccountOpsMetadataRow(db, targetAccountId);
+  const existingRowVersion = Math.max(0, Number(existingRow?.row_version) || 0);
+
+  // U8 CAS layer 1 — pre-check. Compare the client-supplied expected pre-image
+  // against the on-disk `row_version`. The common-case path rejects here so
+  // the subsequent batch is never composed when the read-modify-write lost
+  // the race (mirrors `updateOpsErrorEventStatus` pattern).
+  if (existingRow && existingRowVersion !== normalisedExpectedRowVersion) {
+    throw new ConflictError('Account ops metadata has changed since it was last read. Re-read and retry.', {
+      code: 'account_ops_metadata_stale',
+      retryable: true,
+      accountId: targetAccountId,
+      expected: normalisedExpectedRowVersion,
+      current: existingRowVersion,
+      currentState: buildAccountOpsMetadataConflictState(existingRow, actorPlatformRole, targetAccountId),
+    });
+  }
+  // Fresh-row edit: the migration defaults `row_version` to 0, and the first
+  // UPSERT must therefore supply `expectedRowVersion = 0`. Reject any other
+  // value as stale so a mis-configured client never silently wins on a
+  // missing row.
+  if (!existingRow && normalisedExpectedRowVersion !== 0) {
+    throw new ConflictError('Account ops metadata has changed since it was last read. Re-read and retry.', {
+      code: 'account_ops_metadata_stale',
+      retryable: true,
+      accountId: targetAccountId,
+      expected: normalisedExpectedRowVersion,
+      current: 0,
+      currentState: buildAccountOpsMetadataConflictState(null, actorPlatformRole, targetAccountId),
+    });
+  }
+
   const existingTags = normaliseTagsJson(existingRow?.tags_json);
   const mergedOpsStatus = Object.prototype.hasOwnProperty.call(patch, 'opsStatus')
     ? patch.opsStatus
@@ -2680,6 +3242,7 @@ async function updateAccountOpsMetadata(db, {
     ? patch.internalNotes
     : (typeof existingRow?.internal_notes === 'string' ? existingRow.internal_notes : null);
   const mergedTagsJson = JSON.stringify(mergedTags);
+  const nextRowVersion = normalisedExpectedRowVersion + 1;
 
   const appliedRow = {
     accountId: targetAccountId,
@@ -2689,6 +3252,7 @@ async function updateAccountOpsMetadata(db, {
     internalNotes: mergedInternalNotes,
     updatedAt: ts,
     updatedByAccountId: actorAccountId,
+    rowVersion: nextRowVersion,
   };
   const mutationMeta = {
     policyVersion: MUTATION_POLICY_VERSION,
@@ -2699,14 +3263,43 @@ async function updateAccountOpsMetadata(db, {
     correlationId,
     appliedAt: ts,
     replayed: false,
+    rowVersion: nextRowVersion,
   };
   const response = {
     accountOpsMetadataEntry: appliedRow,
     opsMetadataMutation: mutationMeta,
   };
 
+  // U8 CAS layer 2 — SQL guard. The UPSERT carries `row_version = ?` in the
+  // ON CONFLICT branch. A concurrent write that beat the pre-check SELECT
+  // produces zero affected rows; layer 3 (C1 fix) inspects the batch
+  // result's `meta.changes` to surface 409. The insert branch fires only
+  // on the fresh-row path (expectedRowVersion = 0 → nextRowVersion = 1).
+  // NOTE: Phase D's U15 will extend this UPDATE to bump `status_revision`
+  // when `ops_status` changes — Phase C must NOT touch that column (see
+  // plan §Phase D).
   // R21 batch atomicity: UPSERT + receipt + counter bump commit together.
-  await batch(db, [
+  // B-RE-1 (re-review Blocker): the receipt INSERT and counter bump are
+  // EXISTS-guarded on a write-signature tuple `(updated_at, updated_by,
+  // row_version)` that uniquely identifies THIS batch's UPSERT output.
+  // Guarding only on `row_version = nextRowVersion` would not suffice —
+  // two writers pre-checking at the same pre-image both compute the same
+  // `nextRowVersion`, and the race-winner's commit satisfies the loser's
+  // EXISTS check. Adding `updated_at = ts` discriminates the race loser
+  // (whose `ts` was never written) from the winner. `batch()` atomicity
+  // fires on SQL errors, not on zero-match UPSERTs, so without these
+  // guards the receipt + counter would persist against a phantom
+  // `appliedRow` and a retry with the same requestId would replay the
+  // phantom 200.
+  const receiptAndCounterExists = {
+    sql: `SELECT 1 FROM account_ops_metadata
+          WHERE account_id = ?
+            AND updated_at = ?
+            AND updated_by_account_id = ?
+            AND row_version = ?`,
+    params: [targetAccountId, ts, actorAccountId, nextRowVersion],
+  };
+  const batchResult = await batch(db, [
     bindStatement(db, `
       INSERT INTO account_ops_metadata (
         account_id,
@@ -2715,16 +3308,19 @@ async function updateAccountOpsMetadata(db, {
         tags_json,
         internal_notes,
         updated_at,
-        updated_by_account_id
+        updated_by_account_id,
+        row_version
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(account_id) DO UPDATE SET
         ops_status = excluded.ops_status,
         plan_label = excluded.plan_label,
         tags_json = excluded.tags_json,
         internal_notes = excluded.internal_notes,
         updated_at = excluded.updated_at,
-        updated_by_account_id = excluded.updated_by_account_id
+        updated_by_account_id = excluded.updated_by_account_id,
+        row_version = account_ops_metadata.row_version + 1
+      WHERE account_ops_metadata.row_version = ?
     `, [
       targetAccountId,
       mergedOpsStatus,
@@ -2733,6 +3329,8 @@ async function updateAccountOpsMetadata(db, {
       mergedInternalNotes,
       ts,
       actorAccountId,
+      nextRowVersion,
+      normalisedExpectedRowVersion,
     ]),
     storeMutationReceiptStatement(db, {
       accountId: actorAccountId,
@@ -2744,9 +3342,48 @@ async function updateAccountOpsMetadata(db, {
       response,
       correlationId,
       appliedAt: ts,
-    }),
-    bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1),
+    }, { exists: receiptAndCounterExists }),
+    bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1, { exists: receiptAndCounterExists }),
   ]);
+
+  // U8 CAS layer 3 (C1 fix) — post-batch verify via batch result rowsAffected.
+  // The earlier implementation re-read `row_version` and compared it to
+  // `nextRowVersion`, which was tautological: when two writers both
+  // pre-check at v=3, their `nextRowVersion` is the same (=4), and both
+  // batches commit atomically even though writer B's UPSERT WHERE-clause
+  // matched zero rows. Re-reading `row_version` post-batch sees 4 (the
+  // value writer A wrote) and compares to B's `nextRowVersion=4` → false
+  // success with B's `appliedRow` diverging from the stored row.
+  //
+  // The authoritative signal is the UPSERT statement's own `meta.changes`:
+  // the WHERE-guarded ON CONFLICT branch produces `changes = 0` on a race
+  // loss. The insert branch and an unguarded update both produce
+  // `changes = 1`. I-RE-2 (re-review Important): the receipt INSERT and
+  // counter bump above are EXISTS-guarded on a write-signature tuple
+  // `(account_id, updated_at, updated_by_account_id, row_version)` that
+  // uniquely identifies THIS batch's UPSERT output (matching on
+  // `row_version` alone would not suffice — two racing writers both
+  // computing the same `nextRowVersion` would both pass the guard once
+  // the winner commits). When the UPSERT loses the CAS, the guard SELECT
+  // matches zero rows and the receipt + counter statements each INSERT
+  // zero rows. `batch()` atomicity is preserved semantically: a
+  // race-loser's batch commits but writes nothing. No drift, no phantom
+  // receipt, no replay hazard.
+  const upsertChanges = Math.max(0, Number(batchResult?.[0]?.meta?.changes) || 0);
+  if (upsertChanges !== 1) {
+    // Race-lost. Read the freshest row so the 409 currentState echo is
+    // accurate for the banner diff.
+    const postBatchRow = await loadAccountOpsMetadataRow(db, targetAccountId);
+    const postBatchRowVersion = Math.max(0, Number(postBatchRow?.row_version) || 0);
+    throw new ConflictError('Account ops metadata write lost to a concurrent update. Re-read and retry.', {
+      code: 'account_ops_metadata_stale',
+      retryable: true,
+      accountId: targetAccountId,
+      expected: nextRowVersion,
+      current: postBatchRowVersion,
+      currentState: buildAccountOpsMetadataConflictState(postBatchRow, actorPlatformRole, targetAccountId),
+    });
+  }
 
   // Return the merged shape so callers (and optimistic clients) get the final row.
   return response;
@@ -2976,6 +3613,671 @@ async function updateOpsErrorEventStatus(db, {
 
   return response;
 }
+
+// ---------------------------------------------------------------------------
+// P2 U3: admin-gated QA seed harness for post-Mega learner states.
+//
+// Writes one of the 8 canonical seed shapes into `child_subject_state` for a
+// target learner. Routes through the Admin Ops P1 mutation-receipt path with
+// `scopeType='platform'` so cross-origin CSRF attempts fail at the receipt
+// header check. Atomic via `batch()` (R21) so the child_subject_state upsert
+// and the receipt row either both land or neither does — a partial land
+// would leave a seed without a receipt (or vice versa) and obscure the
+// audit trail.
+//
+// Edge case — target learner does not yet exist: a learner_profiles row is
+// inserted (Name: "Seed learner", Year Group: "Y5", Avatar: "#8A4FFF",
+// Goal: empty) and the acting admin is granted owner membership so they
+// can later see the seeded learner in the admin hub's learner picker.
+// ---------------------------------------------------------------------------
+async function seedPostMegaLearnerState(db, {
+  actorAccountId,
+  learnerId,
+  shapeName,
+  today,
+  confirmOverwrite = false,
+  mutation = {},
+  nowTs,
+}) {
+  if (!(typeof learnerId === 'string' && learnerId)) {
+    throw new BadRequestError('Learner id is required for post-Mega seed.', {
+      code: 'learner_id_required',
+    });
+  }
+  if (learnerId.length > POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS) {
+    throw new BadRequestError('Learner id is too long.', {
+      code: 'learner_id_too_long',
+      maxChars: POST_MEGA_SEED_LEARNER_NAME_MAX_CHARS,
+    });
+  }
+  // U3 reviewer follow-up (MEDIUM adversarial): reject control chars / HTML /
+  // anything outside `[a-z0-9-]`. `learnerId: 'alice\nbob'` or `<script>` are
+  // rejected with 400 `invalid_learner_id` BEFORE any SQL runs. The regex
+  // enforces lowercase alphanumeric prefix + hyphen-suffix, matching the
+  // platform-wide learner id convention.
+  if (!POST_MEGA_SEED_LEARNER_ID_REGEX.test(learnerId)) {
+    throw new BadRequestError('Learner id contains invalid characters.', {
+      code: 'invalid_learner_id',
+      pattern: POST_MEGA_SEED_LEARNER_ID_REGEX.source,
+    });
+  }
+  if (!POST_MEGA_SEED_SHAPES.includes(shapeName)) {
+    throw new BadRequestError('Unknown post-Mega seed shape.', {
+      code: 'unknown_shape',
+      allowed: [...POST_MEGA_SEED_SHAPES],
+    });
+  }
+
+  // H9 CSRF — only admin-role accounts may invoke. `requireAdminHubAccess`
+  // rejects demo accounts and any platformRole other than admin/ops; we
+  // further tighten to admin only (ops accounts can view but not seed)
+  // because the seed is destructive from the learner's perspective.
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  if (accountPlatformRole(actor) !== 'admin') {
+    throw new ForbiddenError('Post-Mega seed harness is admin-only.', {
+      code: 'post_mega_seed_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+
+  const scopeId = `post-mega-seed:${learnerId}`;
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: 'platform',
+    scopeId,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  // U3 reviewer follow-up (HIGH correctness): `Number(null) === 0`, which is
+  // finite, so the previous `Number.isFinite(Number(today))` guard coerced
+  // `today=null` (the Admin UI's default — it never sends `today`) into day 0
+  // (1970-01-01). That produced temporally-nonsensical fixtures (all guardian
+  // `nextDueDay` in 1970). Explicitly reject `null`/`undefined` BEFORE the
+  // finite check so the ts-derived fallback actually fires for the admin
+  // path. `Number('')` is also 0, so string empty is treated the same way.
+  const hasTodayOverride = today != null
+    && !(typeof today === 'string' && today.trim() === '')
+    && Number.isFinite(Number(today));
+  const todayDay = hasTodayOverride
+    ? Math.floor(Number(today))
+    : Math.floor(ts / (24 * 60 * 60 * 1000));
+  const requestHash = mutationPayloadHash(POST_MEGA_SEED_MUTATION_KIND, {
+    learnerId,
+    shapeName,
+    today: todayDay,
+  });
+
+  // Idempotency preflight — replay-safe.
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: POST_MEGA_SEED_MUTATION_KIND,
+        scopeType: 'platform',
+        scopeId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      postMegaSeedMutation: {
+        ...(storedReplay.postMegaSeedMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  // Build the seed shape. Uses the bundled seeded content snapshot so the
+  // core-slug list is deterministic and matches what the service layer sees
+  // on a fresh deploy. Tests inject a fixed today/learnerId so assertions
+  // are reproducible.
+  const runtimeSnapshot = resolveRuntimeSnapshot(SEEDED_SPELLING_CONTENT_BUNDLE, {
+    referenceBundle: SEEDED_SPELLING_CONTENT_BUNDLE,
+  });
+  const wordBySlug = Object.fromEntries(
+    (runtimeSnapshot?.words || []).map((word) => [word.slug, word]),
+  );
+  const data = resolvePostMegaSeedShape(shapeName, wordBySlug, todayDay);
+  const dataJson = JSON.stringify(data);
+
+  // Auto-create the learner if missing (plan edge case).
+  const existingLearner = await first(
+    db,
+    'SELECT id FROM learner_profiles WHERE id = ?',
+    [learnerId],
+  );
+  const createdLearner = !existingLearner;
+
+  // U3 reviewer follow-up (HIGH adversarial): cross-tenant learner data wipe.
+  // Before P2, an admin could type any learnerId and the seed would overwrite
+  // another account's learner_profiles + child_subject_state without warning,
+  // no undo, no audit pre-image. Two-layer guard:
+  //   1. When the target learner already exists and the acting admin has no
+  //      membership row for it, REJECT with 409 `seed_requires_membership`
+  //      UNLESS the client explicitly passes `confirmOverwrite: true`. The
+  //      confirm-flag lets a genuine ops response (debugging another
+  //      account's data) proceed — but only with explicit intent.
+  //   2. On every overwrite path (own-learner or with confirmOverwrite),
+  //      capture the pre-image `data_json` and include it in the mutation
+  //      receipt's `response_json.postMegaSeed.previousDataJson` so a future
+  //      rollback tool can restore the state without trawling backups.
+  let previousDataJson = null;
+  if (!createdLearner) {
+    const existingMembership = await getMembership(db, actorAccountId, learnerId);
+    if (!existingMembership && !confirmOverwrite) {
+      throw new ConflictError(
+        'Seed target is owned by a different account. Re-submit with confirmOverwrite=true to proceed.',
+        {
+          code: 'seed_requires_membership',
+          learnerId,
+          remedy: 'Resubmit the request with `confirmOverwrite: true` in the body to acknowledge the cross-tenant overwrite. The pre-image is captured in the mutation receipt for rollback.',
+        },
+      );
+    }
+    const previousRow = await first(
+      db,
+      `SELECT data_json FROM child_subject_state
+         WHERE learner_id = ? AND subject_id = 'spelling'`,
+      [learnerId],
+    );
+    previousDataJson = typeof previousRow?.data_json === 'string' ? previousRow.data_json : null;
+  }
+
+  const statements = [];
+  if (createdLearner) {
+    statements.push(bindStatement(db, `
+      INSERT INTO learner_profiles (
+        id, name, year_group, avatar_color, goal, daily_minutes,
+        created_at, updated_at, state_revision
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+    `, [
+      learnerId,
+      'Seed learner',
+      'Y5',
+      '#8A4FFF',
+      '',
+      15,
+      ts,
+      ts,
+    ]));
+    statements.push(bindStatement(db, `
+      INSERT INTO account_learner_memberships (
+        account_id, learner_id, role, sort_index, created_at, updated_at
+      )
+      VALUES (?, ?, 'owner', 0, ?, ?)
+      ON CONFLICT(account_id, learner_id) DO NOTHING
+    `, [actorAccountId, learnerId, ts, ts]));
+  }
+
+  // Upsert child_subject_state for (learner, 'spelling') with the seed
+  // shape's data JSON. ui_json is reset to 'null' so a stale local UI
+  // snapshot does not contaminate the seeded state's read-side projection.
+  statements.push(bindStatement(db, `
+    INSERT INTO child_subject_state (
+      learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id
+    )
+    VALUES (?, 'spelling', 'null', ?, ?, ?)
+    ON CONFLICT(learner_id, subject_id) DO UPDATE SET
+      ui_json = 'null',
+      data_json = excluded.data_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `, [learnerId, dataJson, ts, actorAccountId]));
+
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: POST_MEGA_SEED_MUTATION_KIND,
+    scopeType: 'platform',
+    scopeId,
+    requestId,
+    correlationId,
+    appliedAt: ts,
+    replayed: false,
+  };
+  const response = {
+    postMegaSeed: {
+      learnerId,
+      shapeName,
+      today: todayDay,
+      createdLearner,
+      dataKeys: Object.keys(data).sort(),
+      // U3 reviewer follow-up (HIGH adversarial): capture pre-image so a
+      // future rollback tool can restore the prior child_subject_state.
+      // `previousDataJson` is the RAW JSON string (possibly null for first-
+      // write) — rollback consumers parse with `JSON.parse` only when
+      // non-null. The field lives inside `postMegaSeed` so the mutation
+      // receipt's `response_json` is self-contained for audit.
+      previousDataJson,
+      // `confirmedOverwrite` is true when the overwrite was cross-tenant
+      // (no membership) and the caller passed `confirmOverwrite: true`. The
+      // audit reviewer can filter on this to surface the small set of
+      // cross-account seeds that deserve a second look.
+      confirmedOverwrite: Boolean(!createdLearner && confirmOverwrite && previousDataJson !== null),
+    },
+    postMegaSeedMutation: mutationMeta,
+  };
+  statements.push(storeMutationReceiptStatement(db, {
+    accountId: actorAccountId,
+    requestId,
+    scopeType: 'platform',
+    scopeId,
+    mutationKind: POST_MEGA_SEED_MUTATION_KIND,
+    requestHash,
+    response,
+    correlationId,
+    appliedAt: ts,
+  }));
+
+  await batch(db, statements);
+  return response;
+}
+
+// ---------------------------------------------------------------------------
+// U10: Grammar Writing Try — admin archive + hard-delete.
+//
+// Plan: docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md §U10
+//
+// The learner subject-command dispatcher at
+// `worker/src/subjects/grammar/commands.js:26-103` never inspects role, so
+// U10 adds admin-gated HTTP routes (`worker/src/app.js`) that bypass the
+// learner command path and invoke these repository helpers directly. The
+// helpers mirror the `requireMonsterVisualConfigManager` pattern — role is
+// derived server-side from the actor account, NEVER from the request
+// payload. Two-step safety: archive moves the live entry into
+// `state.transferEvidenceArchive`, then a separate `delete` call wipes the
+// archived slot. An admin that tries to delete before archiving receives
+// `archive_required_before_delete` so an accidental hard-delete is
+// impossible along the admin path.
+//
+// Phase 4 invariant 5 ("Writing Try is non-scored") is preserved because
+// these helpers mutate only `state.transferEvidence` /
+// `state.transferEvidenceArchive`, never the scored slots
+// (mastery/retryQueue/misconceptions/recentAttempts). The emitted audit
+// events carry `nonScored: true` and are not consumed by the reward
+// projection pipeline.
+// ---------------------------------------------------------------------------
+
+const GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE = 'grammar-transfer-evidence';
+const GRAMMAR_TRANSFER_ARCHIVE_MUTATION_KIND = 'admin.grammar.transfer-evidence.archive';
+const GRAMMAR_TRANSFER_DELETE_MUTATION_KIND = 'admin.grammar.transfer-evidence.delete';
+// Matches the POST_MEGA_SEED_LEARNER_ID_REGEX guard — archive + delete
+// paths must enforce the same charset rules so a forged admin request
+// cannot smuggle control chars or HTML into the scopeId / audit log.
+const GRAMMAR_ADMIN_LEARNER_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
+// Mirrors the per-promptId cap on the learner side. Longer ids are
+// rejected with `invalid_prompt_id` BEFORE any DB access runs.
+const GRAMMAR_ADMIN_PROMPT_ID_MAX_CHARS = 64;
+const GRAMMAR_ADMIN_PROMPT_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
+
+function assertAdminGrammarTransferInputs(learnerId, promptId) {
+  if (!(typeof learnerId === 'string' && learnerId)) {
+    throw new BadRequestError('Learner id is required for Writing Try admin actions.', {
+      code: 'learner_id_required',
+    });
+  }
+  if (!GRAMMAR_ADMIN_LEARNER_ID_REGEX.test(learnerId)) {
+    throw new BadRequestError('Learner id contains invalid characters.', {
+      code: 'invalid_learner_id',
+      pattern: GRAMMAR_ADMIN_LEARNER_ID_REGEX.source,
+    });
+  }
+  if (!(typeof promptId === 'string' && promptId)) {
+    throw new BadRequestError('Prompt id is required for Writing Try admin actions.', {
+      code: 'grammar_transfer_prompt_id_required',
+    });
+  }
+  if (promptId.length > GRAMMAR_ADMIN_PROMPT_ID_MAX_CHARS || !GRAMMAR_ADMIN_PROMPT_ID_REGEX.test(promptId)) {
+    throw new BadRequestError('Prompt id contains invalid characters.', {
+      code: 'invalid_prompt_id',
+      pattern: GRAMMAR_ADMIN_PROMPT_ID_REGEX.source,
+      maxChars: GRAMMAR_ADMIN_PROMPT_ID_MAX_CHARS,
+    });
+  }
+}
+
+async function loadGrammarSubjectStateForAdmin(db, learnerId) {
+  const row = await first(db, `
+    SELECT learner_id, subject_id, ui_json, data_json, updated_at
+    FROM child_subject_state
+    WHERE learner_id = ? AND subject_id = 'grammar'
+  `, [learnerId]);
+  return {
+    row,
+    record: row ? subjectStateRowToRecord(row) : null,
+  };
+}
+
+async function runAdminGrammarTransferMutation(db, {
+  actorAccountId,
+  learnerId,
+  promptId,
+  mutation,
+  mutationKind,
+  scopeType,
+  scopeTypeForReceipt,
+  applyStateChange,
+  nowTs,
+}) {
+  assertAdminGrammarTransferInputs(learnerId, promptId);
+
+  // Role gate. `assertAdminHubAccess` rejects demo accounts and any
+  // platformRole outside admin/ops; then `requireGrammarTransferAdmin`
+  // narrows to admin-only (ops receives 403 `grammar_transfer_admin_
+  // forbidden`). The U10 follower MEDIUM chose admin-only because
+  // destructive data mutations warrant the tightest gate. The payload
+  // is never inspected — the client-supplied body is discarded by the
+  // app.js handler, so spoofing `command.payload.actor.role` has no
+  // effect.
+  //
+  // TODO (U10 follower — deferred MEDIUM, IDOR): no per-family
+  // membership check today. A platform-admin can archive / delete any
+  // learner's Writing Try evidence regardless of their
+  // `account_learner_memberships`. This matches the current single-
+  // family deployment where a platform-admin is implicitly trusted
+  // across every learner. If the product ships multi-family
+  // deployments, add a per-family scope here using
+  // `canViewLearnerDiagnostics` (src/platform/access/roles.js:28-31)
+  // OR a dedicated `requireLearnerFamilyMembership(db, adminId,
+  // learnerId)` primitive. Tracked as follow-up work; not blocking
+  // Phase 4 because the platform is single-family and the admin-only
+  // gate is already narrower than the admin-hub gate.
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  requireGrammarTransferAdmin(actor);
+
+  const scopeId = `${scopeType}:${learnerId}:${promptId}`;
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: scopeTypeForReceipt,
+    scopeId,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const requestHash = mutationPayloadHash(mutationKind, { learnerId, promptId });
+
+  // Idempotency replay preflight. A duplicate requestId that matches the
+  // stored requestHash returns the prior response with `replayed: true`.
+  // A mismatched hash is a client bug (or an attack) and raises 409.
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: mutationKind,
+        scopeType: scopeTypeForReceipt,
+        scopeId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      grammarTransferMutation: {
+        ...(storedReplay.grammarTransferMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  // U10 follower (HIGH 3): read the learner's `state_revision` up front
+  // so the subject-state UPDATE can CAS against it. A concurrent learner
+  // save races the admin archive; without this guard the admin UPDATE
+  // would silently overwrite the learner's in-flight save. The guard is
+  // the same `learner_profiles.state_revision` primitive the learner
+  // command path uses (runSubjectCommandMutation + guardedValueSource).
+  const learnerRow = await first(
+    db,
+    'SELECT id, state_revision FROM learner_profiles WHERE id = ?',
+    [learnerId],
+  );
+  if (!learnerRow) {
+    // Preserve the pre-follower error code — the security-contract test
+    // asserts `grammar_state_not_found` for an unknown learner. We use
+    // the Grammar-flavoured code because the route namespace is the
+    // admin-grammar path; the learner is missing, which in practice is
+    // indistinguishable from "no grammar subject state" for this
+    // endpoint.
+    throw new NotFoundError('Grammar subject state not found for this learner.', {
+      code: 'grammar_state_not_found',
+      learnerId,
+    });
+  }
+  const learnerExpectedRevision = Number(learnerRow.state_revision) || 0;
+
+  // Load the learner's Grammar subject state. Admin paths must not
+  // auto-create the row — an admin action on a learner with no Grammar
+  // evidence is always a lookup error.
+  const { row, record } = await loadGrammarSubjectStateForAdmin(db, learnerId);
+  if (!row || !record) {
+    throw new NotFoundError('Grammar subject state not found for this learner.', {
+      code: 'grammar_state_not_found',
+      learnerId,
+    });
+  }
+
+  // Run the pure engine helper against a normalised state. The engine's
+  // normaliser defaults `transferEvidence` / `transferEvidenceArchive` to
+  // `{}`, so pre-U10 rows without the archive slot are handled safely.
+  // The pure helper throws on "archive required" / "entry not found" /
+  // "archive_slot_occupied" with a stable error code; we let the error
+  // bubble up to the HTTP handler.
+  const initialState = createInitialGrammarState(record.data || {});
+  const state = {
+    ...initialState,
+    ...(isPlainObject(record.ui) ? cloneSerialisable(record.ui) : {}),
+    transferEvidence: isPlainObject(record.data?.transferEvidence)
+      ? cloneSerialisable(record.data.transferEvidence)
+      : (isPlainObject(record.ui?.transferEvidence) ? cloneSerialisable(record.ui.transferEvidence) : {}),
+    transferEvidenceArchive: isPlainObject(record.data?.transferEvidenceArchive)
+      ? cloneSerialisable(record.data.transferEvidenceArchive)
+      : (isPlainObject(record.ui?.transferEvidenceArchive)
+        ? cloneSerialisable(record.ui.transferEvidenceArchive)
+        : {}),
+  };
+
+  const events = applyStateChange(state, { promptId, learnerId, requestId, now: ts });
+
+  // Persist the mutated slots back into child_subject_state. We write the
+  // full data_json and the minimal ui_json patch — the scored slots
+  // (mastery/retryQueue/misconceptions/recentAttempts) are untouched so
+  // the resulting JSON differs only in the two transfer slots. This is
+  // the byte-level guarantee that backs Phase 4 invariant 5.
+  const nextDataSource = isPlainObject(record.data) ? cloneSerialisable(record.data) : {};
+  nextDataSource.transferEvidence = cloneSerialisable(state.transferEvidence) || {};
+  nextDataSource.transferEvidenceArchive = cloneSerialisable(state.transferEvidenceArchive) || {};
+  const nextUiSource = isPlainObject(record.ui) ? cloneSerialisable(record.ui) : null;
+  if (nextUiSource) {
+    nextUiSource.transferEvidence = cloneSerialisable(state.transferEvidence) || {};
+    nextUiSource.transferEvidenceArchive = cloneSerialisable(state.transferEvidenceArchive) || {};
+  }
+
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: mutationKind,
+    scopeType: scopeTypeForReceipt,
+    scopeId,
+    requestId,
+    correlationId,
+    appliedAt: ts,
+    replayed: false,
+  };
+  const response = {
+    grammarTransferEvidence: {
+      learnerId,
+      promptId,
+      events: events.map((event) => cloneSerialisable(event)),
+    },
+    grammarTransferMutation: mutationMeta,
+  };
+
+  // U10 follower (HIGH 3): CAS guard on the subject-state UPDATE. The
+  // UPDATE only lands when `learner_profiles.state_revision` still
+  // matches the value we read at the top of this function. If a learner
+  // command slipped in between (save-transfer-evidence bumps the
+  // revision), the UPDATE matches zero rows and we raise `stale_write`.
+  // The admin retries with the fresh state, which re-runs the pure
+  // helper against post-learner-save evidence (so archive no longer
+  // clobbers the learner's save).
+  //
+  // U10 follower (HIGH 4): the archive + delete audit events are now
+  // written to `event_log` inside the SAME batch — forensic trail
+  // restored. Shape matches the existing `buildSubjectRuntimePersistencePlan`
+  // event row: id / learner_id / subject_id / system_id / event_type /
+  // event_json / created_at / actor_account_id. `actor_account_id`
+  // stamps the admin for forensics. No row in `activity_feed` — this
+  // is an admin audit event, not learner activity.
+  const eventStatements = [];
+  for (const rawEvent of events) {
+    const event = cloneSerialisable(rawEvent) || null;
+    if (!event || typeof event !== 'object' || Array.isArray(event)) continue;
+    const id = typeof event.id === 'string' && event.id ? event.id : uid('event');
+    const createdAt = Number.isFinite(Number(event.createdAt)) ? Number(event.createdAt) : ts;
+    const eventType = typeof event.type === 'string' && event.type ? event.type : 'event';
+    event.id = id;
+    event.learnerId = event.learnerId || learnerId;
+    event.subjectId = event.subjectId || 'grammar';
+    event.createdAt = createdAt;
+    event.actorAccountId = actorAccountId;
+    event.actorPlatformRole = accountPlatformRole(actor) || '';
+    eventStatements.push(bindStatement(db, `
+      INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        system_id = excluded.system_id,
+        event_type = excluded.event_type,
+        event_json = excluded.event_json,
+        created_at = excluded.created_at,
+        actor_account_id = excluded.actor_account_id
+    `, [
+      id,
+      event.learnerId,
+      event.subjectId,
+      event.systemId || null,
+      eventType,
+      JSON.stringify(event),
+      createdAt,
+      actorAccountId,
+    ]));
+  }
+
+  // CAS guard: wraps the subject-state UPDATE in the learner's
+  // `state_revision` check. SQLite fires the UPDATE only when the
+  // current revision equals the value we read above; otherwise the
+  // statement matches zero rows and we detect the race via changes=0.
+  const subjectUpdate = bindStatement(db, `
+    UPDATE child_subject_state
+    SET ui_json = ?,
+        data_json = ?,
+        updated_at = ?,
+        updated_by_account_id = ?
+    WHERE learner_id = ? AND subject_id = 'grammar'
+      AND EXISTS (
+        SELECT 1
+        FROM learner_profiles
+        WHERE id = ?
+          AND state_revision = ?
+      )
+  `, [
+    nextUiSource == null ? 'null' : JSON.stringify(nextUiSource),
+    JSON.stringify(nextDataSource),
+    ts,
+    actorAccountId,
+    learnerId,
+    learnerId,
+    learnerExpectedRevision,
+  ]);
+
+  const statements = [
+    subjectUpdate,
+    ...eventStatements,
+    storeMutationReceiptStatement(db, {
+      accountId: actorAccountId,
+      requestId,
+      scopeType: scopeTypeForReceipt,
+      scopeId,
+      mutationKind,
+      requestHash,
+      response,
+      correlationId,
+      appliedAt: ts,
+    }),
+  ];
+  const batchResults = await batch(db, statements);
+  const subjectUpdateResult = batchResults[0] || null;
+  const casChanges = Number(subjectUpdateResult?.meta?.changes) || 0;
+  if (casChanges !== 1) {
+    // Concurrent learner save bumped the revision between our read and
+    // the CAS UPDATE — the batch leaves zero rows touched. Re-read the
+    // current revision for the error payload so the admin client can
+    // decide whether to retry.
+    const currentRevision = Number(await scalar(
+      db,
+      'SELECT state_revision FROM learner_profiles WHERE id = ?',
+      [learnerId],
+      'state_revision',
+    )) || 0;
+    throw staleWriteError({
+      kind: mutationKind,
+      scopeType: scopeTypeForReceipt,
+      scopeId,
+      requestId,
+      correlationId,
+      expectedRevision: learnerExpectedRevision,
+      currentRevision,
+    });
+  }
+
+  return response;
+}
+
+async function archiveGrammarTransferEvidence(db, {
+  actorAccountId,
+  learnerId,
+  promptId,
+  mutation,
+  nowTs,
+}) {
+  return runAdminGrammarTransferMutation(db, {
+    actorAccountId,
+    learnerId,
+    promptId,
+    mutation,
+    mutationKind: GRAMMAR_TRANSFER_ARCHIVE_MUTATION_KIND,
+    scopeType: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    scopeTypeForReceipt: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    nowTs,
+    applyStateChange: (state, context) => archiveGrammarTransferEvidenceState(state, context),
+  });
+}
+
+async function deleteGrammarTransferEvidence(db, {
+  actorAccountId,
+  learnerId,
+  promptId,
+  mutation,
+  nowTs,
+}) {
+  return runAdminGrammarTransferMutation(db, {
+    actorAccountId,
+    learnerId,
+    promptId,
+    mutation,
+    mutationKind: GRAMMAR_TRANSFER_DELETE_MUTATION_KIND,
+    scopeType: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    scopeTypeForReceipt: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    nowTs,
+    applyStateChange: (state, context) => deleteGrammarTransferEvidenceState(state, context),
+  });
+}
+
+// Suppress unused import until admin read-model consumes them in the
+// public repository method registration. The constants are referenced
+// inside the repository close below.
+void grammarTransferPromptById;
 
 // ---------------------------------------------------------------------------
 // U6: public client error capture ingest.
@@ -3672,7 +4974,14 @@ async function withMonsterVisualConfigMutation(db, {
   const nextMutation = normaliseMonsterVisualMutation(mutation);
   const requestHash = mutationPayloadHash(kind, payload);
 
-  return withTransaction(db, async () => {
+  // NOTE: non-atomic by design — (a) branching on intermediate read results
+  // (existingReceipt short-circuit, currentRevision CAS compare) plus (b) an
+  // `apply()` callback that runs its own `batch()`. `withTransaction` was
+  // removed in U12: on production D1 it was a silent no-op and hiding that
+  // behind a wrapper would have been misleading. Atomicity for the final
+  // commit lives inside `apply()`'s batch; pre-check races degrade to a
+  // stale-write 409 or to the R21 CAS guard on the UPDATE.
+  return (async () => {
     const actor = await first(db, 'SELECT id, platform_role, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
     requireMonsterVisualConfigManager(actor);
 
@@ -3748,7 +5057,7 @@ async function withMonsterVisualConfigMutation(db, {
       monsterVisualMutation: mutationMeta,
     };
     return response;
-  });
+  })();
 }
 
 async function saveMonsterVisualConfigDraft(db, actorAccountId, rawDraft, mutation, nowTs) {
@@ -4080,6 +5389,7 @@ async function updateManagedAccountRole(db, {
   actorAccountId,
   targetAccountId,
   platformRole,
+  expectedRepoRevision = null,
   requestId,
   correlationId = requestId,
   nowTs,
@@ -4100,113 +5410,197 @@ async function updateManagedAccountRole(db, {
   const requestHash = mutationPayloadHash('admin.account_role.update', {
     targetAccountId,
     platformRole: nextRole,
+    expectedRepoRevision: Number.isInteger(expectedRepoRevision) ? expectedRepoRevision : null,
   });
 
-  return withTransaction(db, async () => {
-    const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
-    requireAccountRoleManager(actor);
+  // H3 (Phase C reviewer): this site was previously non-atomic — the
+  // role-change UPDATE, the directory re-read, and the mutation-receipt
+  // INSERT were three separate D1 calls. A failure between the UPDATE
+  // and the receipt INSERT would leave the role committed with no audit
+  // trail; withTransaction was a production no-op. Fix: compose the
+  // UPDATE + receipt INSERT in a single `batch()` so they share D1's
+  // atomic commit. The UPDATE's CAS guard combines:
+  //   1) `repo_revision = ?` — stale client state rejects with 409
+  //      `account_role_stale`.
+  //   2) The existing last-admin subquery — surfaces 409
+  //      `last_admin_required` when the demotion would empty the admin
+  //      pool. When rowsAffected=0 we follow up with a SELECT to tell
+  //      the two apart.
+  const actor = await first(db, 'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?', [actorAccountId]);
+  requireAccountRoleManager(actor);
 
-    const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
-    if (existingReceipt) {
-      if (existingReceipt.request_hash !== requestHash) {
-        throw idempotencyReuseError({
-          kind: 'admin.account_role.update',
-          scopeType: 'account',
-          scopeId: targetAccountId,
-          requestId,
-          correlationId,
-        });
-      }
-      const storedReplay = safeJsonParse(existingReceipt.response_json, {});
-      return {
-        ...storedReplay,
-        roleMutation: {
-          ...(storedReplay.roleMutation || {}),
-          requestId,
-          correlationId,
-          replayed: true,
-        },
-      };
-    }
-
-    const target = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [targetAccountId]);
-    if (!target) {
-      throw new NotFoundError('Target account was not found.', {
-        code: 'target_account_not_found',
-        accountId: targetAccountId,
-      });
-    }
-    if (accountType(target) === 'demo') {
-      throw new ForbiddenError('Demo accounts cannot be managed from account role controls.', {
-        code: 'demo_account_role_forbidden',
-        accountId: targetAccountId,
-      });
-    }
-
-    const currentRole = normalisePlatformRole(target.platform_role);
-    if (currentRole === 'admin' && nextRole !== 'admin') {
-      const updateResult = await run(db, `
-        UPDATE adult_accounts
-        SET platform_role = ?,
-            updated_at = ?
-        WHERE id = ?
-          AND EXISTS (
-            SELECT 1
-            FROM adult_accounts
-            WHERE platform_role = 'admin'
-              AND COALESCE(account_type, 'real') <> 'demo'
-              AND id <> ?
-          )
-      `, [nextRole, nowTs, targetAccountId, targetAccountId]);
-      const updateChanges = Number(updateResult?.meta?.changes) || 0;
-      if (updateChanges !== 1) {
-        throw new ConflictError('At least one admin account must remain.', {
-          code: 'last_admin_required',
-          accountId: targetAccountId,
-        });
-      }
-    } else {
-      await run(db, `
-        UPDATE adult_accounts
-        SET platform_role = ?,
-            updated_at = ?
-        WHERE id = ?
-      `, [nextRole, nowTs, targetAccountId]);
-    }
-
-    const directory = await accountDirectoryPayload(db, actorAccountId);
-    const updatedAccount = directory.accounts.find((account) => account.id === targetAccountId) || null;
-    const response = {
-      ...directory,
-      updatedAccount,
-      roleMutation: {
-        policyVersion: MUTATION_POLICY_VERSION,
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
         kind: 'admin.account_role.update',
         scopeType: 'account',
         scopeId: targetAccountId,
         requestId,
         correlationId,
-        previousRole: currentRole,
-        platformRole: nextRole,
-        appliedAt: nowTs,
-        replayed: false,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      roleMutation: {
+        ...(storedReplay.roleMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
       },
     };
+  }
 
-    await storeMutationReceipt(db, {
+  const target = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [targetAccountId]);
+  if (!target) {
+    throw new NotFoundError('Target account was not found.', {
+      code: 'target_account_not_found',
+      accountId: targetAccountId,
+    });
+  }
+  if (accountType(target) === 'demo') {
+    throw new ForbiddenError('Demo accounts cannot be managed from account role controls.', {
+      code: 'demo_account_role_forbidden',
+      accountId: targetAccountId,
+    });
+  }
+
+  const currentRole = normalisePlatformRole(target.platform_role);
+  const currentRepoRevision = Math.max(0, Number(target.repo_revision) || 0);
+  const normalisedExpectedRepoRevision = Number.isInteger(expectedRepoRevision)
+    ? expectedRepoRevision
+    : currentRepoRevision;
+
+  // Early CAS check so a 409 reports the right `current` pre-image without
+  // needing to invert the UPDATE's rowsAffected signal.
+  if (normalisedExpectedRepoRevision !== currentRepoRevision) {
+    throw new ConflictError('Account has changed since it was last read. Re-read and retry.', {
+      code: 'account_role_stale',
+      retryable: true,
+      accountId: targetAccountId,
+      expected: normalisedExpectedRepoRevision,
+      current: currentRepoRevision,
+    });
+  }
+
+  const nextRepoRevision = currentRepoRevision + 1;
+
+  // Compose the UPDATE statement. The WHERE clause combines repo_revision
+  // CAS with the existing last-admin subquery so both invariants are
+  // enforced in one SQL round-trip.
+  const lastAdminGuard = (currentRole === 'admin' && nextRole !== 'admin')
+    ? `AND EXISTS (
+         SELECT 1
+         FROM adult_accounts
+         WHERE platform_role = 'admin'
+           AND COALESCE(account_type, 'real') <> 'demo'
+           AND id <> ?
+       )`
+    : '';
+  const lastAdminParams = (currentRole === 'admin' && nextRole !== 'admin') ? [targetAccountId] : [];
+
+  // Build response eagerly (before the batch) so the mutation receipt captures
+  // the intended effect. The directory re-read happens post-batch.
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: 'admin.account_role.update',
+    scopeType: 'account',
+    scopeId: targetAccountId,
+    requestId,
+    correlationId,
+    previousRole: currentRole,
+    platformRole: nextRole,
+    appliedAt: nowTs,
+    replayed: false,
+    expectedRepoRevision: normalisedExpectedRepoRevision,
+    repoRevision: nextRepoRevision,
+  };
+
+  const updateSql = `
+    UPDATE adult_accounts
+    SET platform_role = ?,
+        repo_revision = repo_revision + 1,
+        updated_at = ?
+    WHERE id = ?
+      AND repo_revision = ?
+      ${lastAdminGuard}
+  `;
+  const updateParams = [nextRole, nowTs, targetAccountId, currentRepoRevision, ...lastAdminParams];
+
+  // Receipt body includes the directory shape we'll return post-commit.
+  // For the forensic audit trail we store a `post` shape that matches the
+  // actual mutation outcome.
+  const receiptBody = {
+    roleMutation: mutationMeta,
+  };
+
+  // B-RE-1 (re-review Blocker): guard the receipt INSERT on a
+  // write-signature tuple `(platform_role, repo_revision, updated_at)`
+  // that uniquely identifies THIS batch's UPDATE output. Guarding only
+  // on `repo_revision = nextRepoRevision` would not suffice if two
+  // writers pre-checking at the same pre-image both compute the same
+  // `nextRepoRevision`: the race-winner's commit satisfies the loser's
+  // EXISTS check. Adding `platform_role = nextRole AND updated_at = nowTs`
+  // discriminates the loser (whose row was never touched). Without this
+  // guard, both the stale-revision failure mode and the last-admin
+  // failure mode would persist a receipt whose response describes a
+  // commit that never happened (`batch()` atomicity fires on SQL errors,
+  // not on zero-match UPDATEs).
+  const receiptExists = {
+    sql: `SELECT 1 FROM adult_accounts
+          WHERE id = ?
+            AND platform_role = ?
+            AND repo_revision = ?
+            AND updated_at = ?`,
+    params: [targetAccountId, nextRole, nextRepoRevision, nowTs],
+  };
+  const batchResult = await batch(db, [
+    bindStatement(db, updateSql, updateParams),
+    storeMutationReceiptStatement(db, {
       accountId: actorAccountId,
       requestId,
       scopeType: 'account',
       scopeId: targetAccountId,
       mutationKind: 'admin.account_role.update',
       requestHash,
-      response,
+      response: receiptBody,
       correlationId,
       appliedAt: nowTs,
+    }, { exists: receiptExists }),
+  ]);
+  const updateChanges = Math.max(0, Number(batchResult?.[0]?.meta?.changes) || 0);
+  if (updateChanges !== 1) {
+    // rowsAffected=0 can mean (a) stale repo_revision, or (b) last-admin
+    // guard blocked the demotion. Distinguish via a follow-up SELECT so the
+    // 409 body names the right failure mode. The receipt INSERT is
+    // EXISTS-guarded on the post-bump `repo_revision` above, so on either
+    // failure mode it wrote zero rows — no phantom receipt, no replay
+    // hazard (see B-RE-1 commentary).
+    const fresh = await first(db, 'SELECT repo_revision, platform_role FROM adult_accounts WHERE id = ?', [targetAccountId]);
+    const freshRepoRevision = Math.max(0, Number(fresh?.repo_revision) || 0);
+    if (freshRepoRevision !== currentRepoRevision) {
+      throw new ConflictError('Account has changed since it was last read. Re-read and retry.', {
+        code: 'account_role_stale',
+        retryable: true,
+        accountId: targetAccountId,
+        expected: normalisedExpectedRepoRevision,
+        current: freshRepoRevision,
+      });
+    }
+    throw new ConflictError('At least one admin account must remain.', {
+      code: 'last_admin_required',
+      accountId: targetAccountId,
     });
+  }
 
-    return response;
-  });
+  const directory = await accountDirectoryPayload(db, actorAccountId);
+  const updatedAccount = directory.accounts.find((account) => account.id === targetAccountId) || null;
+  return {
+    ...directory,
+    updatedAccount,
+    roleMutation: mutationMeta,
+  };
 }
 
 async function ensureUniqueOrAccessibleLearnerId(db, accountId, learnerId) {
@@ -5428,7 +6822,12 @@ async function withAccountMutation(db, {
   const nextMutation = normaliseMutationInput(mutation, 'account');
   const requestHash = mutationPayloadHash(kind, payload);
 
-  return withTransaction(db, async () => {
+  // NOTE: non-atomic by design — (a) branching on intermediate read results
+  // (existingReceipt short-circuit, repo_revision CAS compare) plus (b) an
+  // `apply()` callback that runs its own write path. `withTransaction` was
+  // removed in U12 (production D1 no-op). The CAS UPDATE itself
+  // (`WHERE repo_revision = ?`) is the authoritative stale-write defence.
+  return (async () => {
     const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
     if (existingReceipt) {
       if (existingReceipt.request_hash !== requestHash) {
@@ -5522,7 +6921,7 @@ async function withAccountMutation(db, {
       appliedRevision,
     });
     return response;
-  });
+  })();
 }
 
 async function withLearnerMutation(db, {
@@ -5541,7 +6940,12 @@ async function withLearnerMutation(db, {
   const nextMutation = normaliseMutationInput(mutation, 'learner');
   const requestHash = mutationPayloadHash(kind, payload);
 
-  return withTransaction(db, async () => {
+  // NOTE: non-atomic by design — (a) branching on intermediate read results
+  // (write-access check, existingReceipt short-circuit, state_revision CAS
+  // compare) plus (b) an `apply()` callback that runs its own write path.
+  // `withTransaction` was removed in U12 (silent production no-op). The
+  // CAS UPDATE (`WHERE state_revision = ?`) is the stale-write defence.
+  return (async () => {
     await requireLearnerWriteAccess(db, accountId, learnerId);
     const existingReceipt = await loadMutationReceipt(db, accountId, nextMutation.requestId);
     if (existingReceipt) {
@@ -5633,7 +7037,7 @@ async function withLearnerMutation(db, {
       appliedRevision,
     });
     return response;
-  });
+  })();
 }
 
 async function runSubjectCommandMutation(db, {
@@ -6695,21 +8099,28 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async listAdminAccounts(accountId) {
       return listAccountDirectory(db, accountId);
     },
-    async updateAdminAccountRole(accountId, { targetAccountId, platformRole, requestId, correlationId = null } = {}) {
+    async updateAdminAccountRole(accountId, { targetAccountId, platformRole, expectedRepoRevision = null, requestId, correlationId = null } = {}) {
       return updateManagedAccountRole(db, {
         actorAccountId: accountId,
         targetAccountId,
         platformRole,
+        expectedRepoRevision,
         requestId,
         correlationId: correlationId || requestId,
         nowTs: nowFactory(),
       });
     },
-    async updateAccountOpsMetadata(accountId, { targetAccountId, patch, mutation = {} } = {}) {
+    async updateAccountOpsMetadata(accountId, {
+      targetAccountId,
+      patch,
+      expectedRowVersion = null,
+      mutation = {},
+    } = {}) {
       return updateAccountOpsMetadata(db, {
         actorAccountId: accountId,
         targetAccountId,
         patch,
+        expectedRowVersion,
         mutation,
         nowTs: nowFactory(),
       });
@@ -6725,6 +8136,69 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         eventId,
         status,
         expectedPreviousStatus,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    // P2 U3: admin-gated QA seed harness. Dispatches to the
+    // `seedPostMegaLearnerState` helper above so the CSRF-safe
+    // mutation-receipt + batch-atomic write lives in one place.
+    async seedPostMegaLearnerState(accountId, {
+      learnerId,
+      shapeName,
+      today = null,
+      confirmOverwrite = false,
+      mutation = {},
+    } = {}) {
+      return seedPostMegaLearnerState(db, {
+        actorAccountId: accountId,
+        learnerId,
+        shapeName,
+        today,
+        confirmOverwrite,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    async reconcileAdminKpiMetrics(accountId, {
+      requestId,
+      correlationId = null,
+      clientComputed = null,
+    } = {}) {
+      // admin-only. `requireAccountRoleManager` forbids non-admin
+      // actors. Internal reconciliation (cron path) bypasses this by
+      // calling `reconcileAdminKpiMetricsInternal` directly.
+      const actor = await assertAdminHubActor(db, accountId);
+      requireAccountRoleManager(actor);
+      return reconcileAdminKpiMetricsInternal(db, {
+        actorAccountId: accountId,
+        requestId,
+        correlationId,
+        clientComputed,
+        nowTs: nowFactory(),
+      });
+    },
+    // U10: Grammar Writing Try admin archive + hard-delete routes. These
+    // are the FIRST admin-scoped subject-data pathway in the repository,
+    // mirroring `requireMonsterVisualConfigManager` (config is global,
+    // archive/delete is per-learner, but the RBAC primitive is the same:
+    // `requireAdminHubAccess` via `assertAdminHubActor`). Role is
+    // derived server-side from the actor account ONLY — the body is not
+    // inspected for role claims.
+    async archiveGrammarTransferEvidence(accountId, { learnerId, promptId, mutation = {} } = {}) {
+      return archiveGrammarTransferEvidence(db, {
+        actorAccountId: accountId,
+        learnerId,
+        promptId,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    async deleteGrammarTransferEvidence(accountId, { learnerId, promptId, mutation = {} } = {}) {
+      return deleteGrammarTransferEvidence(db, {
+        actorAccountId: accountId,
+        learnerId,
+        promptId,
         mutation,
         nowTs: nowFactory(),
       });

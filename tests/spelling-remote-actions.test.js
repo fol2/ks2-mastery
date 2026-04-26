@@ -1571,3 +1571,270 @@ test('U10 remote-sync: non-session start response skips save-prefs (dashboard bo
   assert.deepEqual(commands, ['start-session'],
     'server-level start rejection (phase !== session) must also skip save-prefs');
 });
+
+// -----------------------------------------------------------------------------
+// U4 (P2): Alt+4 (Guardian) + Alt+5 (Boss) regression pin for BOTH dispatchers.
+//
+// The ordering fix already shipped in P1.5 U10 but the regression surface is
+// subtle enough to pin explicitly here. Test matrix per mode:
+//   - remote-sync async path (sendCommand('start-session') before
+//     sendCommand('save-prefs'); save-prefs skipped on failure).
+//   - module.js synchronous path via a spy on `service.startSession` +
+//     `service.savePrefs`; tested separately below under the `U4 module.js`
+//     heading because they exercise a different dispatcher.
+// -----------------------------------------------------------------------------
+
+function createGuardianShortcutHarness({
+  startResponse = { subjectReadModel: { phase: 'session' } },
+  startRejection = null,
+  saveResponse = { subjectReadModel: { phase: 'session' } },
+  prefs = { mode: 'smart', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+} = {}) {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs,
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() { return getState().subjectUi.spelling.prefs; },
+        // `allWordsMega: true` — Guardian gate lets Alt+4 through.
+        getPostMasteryState() { return { allWordsMega: true }; },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        if (request.command === 'start-session') {
+          if (startRejection) return Promise.reject(startRejection);
+          return Promise.resolve(startResponse);
+        }
+        if (request.command === 'save-prefs') return Promise.resolve(saveResponse);
+        return Promise.resolve({});
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+  return { handler, sent, getState };
+}
+
+test('U4 remote-sync: Alt+4 Guardian shortcut runs start-session FIRST, then save-prefs (ordering pin)', async () => {
+  const { handler, sent } = createGuardianShortcutHarness();
+  // Alt+4 dispatches { mode: 'guardian' } WITHOUT an explicit length — the
+  // handler falls back to prefs.roundLength. Unlike Alt+5 Boss, Guardian does
+  // not override the round length on the shortcut payload.
+  assert.equal(handler.handle('spelling-shortcut-start', { mode: 'guardian' }), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  const orderedCommands = sent.map((request) => request.command);
+  assert.deepEqual(orderedCommands, ['start-session', 'save-prefs'],
+    'Guardian (Alt+4) ordering must be start-session → save-prefs: a failed Guardian start cannot persist prefs.mode = "guardian"');
+  const startSession = sent.find((request) => request.command === 'start-session');
+  assert.equal(startSession.payload.mode, 'guardian');
+});
+
+test('U4 remote-sync: Alt+4 Guardian failed start-session skips save-prefs (rollback pin)', async () => {
+  const originalWarn = globalThis.console?.warn;
+  if (globalThis.console) globalThis.console.warn = () => {};
+  try {
+    const { handler, sent } = createGuardianShortcutHarness({
+      startRejection: new Error('Guardian start rejected'),
+    });
+    assert.equal(handler.handle('spelling-shortcut-start', { mode: 'guardian' }), true);
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    const commands = sent.map((request) => request.command);
+    assert.deepEqual(commands, ['start-session'],
+      'Alt+4 failure must NOT fire save-prefs — prefs.mode must not be mutated to "guardian"');
+  } finally {
+    if (globalThis.console) globalThis.console.warn = originalWarn;
+  }
+});
+
+test('U4 remote-sync: Alt+4 Guardian non-session start response skips save-prefs', async () => {
+  const { handler, sent } = createGuardianShortcutHarness({
+    startResponse: { ok: false, subjectReadModel: { phase: 'dashboard' } },
+  });
+  assert.equal(handler.handle('spelling-shortcut-start', { mode: 'guardian' }), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  const commands = sent.map((request) => request.command);
+  assert.deepEqual(commands, ['start-session'],
+    'server-level start rejection (phase !== session) must also skip save-prefs on Guardian Alt+4');
+});
+
+test('U4 remote-sync: Alt+5 Boss pinned length = 10 (BOSS_DEFAULT_ROUND_LENGTH) on the start-session payload', async () => {
+  // Explicit second-pass pin: `length: 10` is the BOSS_DEFAULT_ROUND_LENGTH
+  // constant in service-contract.js. A future refactor that wires Alt+5 to
+  // prefs.roundLength without this override would fail this assertion.
+  const { handler, sent } = createBossShortcutHarness({
+    prefs: { mode: 'smart', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+  });
+  assert.equal(handler.handle('spelling-shortcut-start', { mode: 'boss', length: 10 }), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  const startSession = sent.find((request) => request.command === 'start-session');
+  assert.equal(startSession.payload.length, 10,
+    'Alt+5 Boss shortcut pinned to BOSS_DEFAULT_ROUND_LENGTH = 10');
+  assert.equal(startSession.payload.mode, 'boss');
+  const orderedCommands = sent.map((request) => request.command);
+  assert.deepEqual(orderedCommands, ['start-session', 'save-prefs'],
+    'Alt+5 Boss ordering: start-session FIRST, then save-prefs');
+});
+
+// -----------------------------------------------------------------------------
+// U4 (P2): module.js LOCAL SYNCHRONOUS path pinning. The spec in the plan
+// says the local path asserts:
+//   1. service.startSession(...) fires before service.savePrefs(...).
+//   2. savePrefs only when `transition?.ok !== false`.
+// Both for Alt+4 (Guardian) AND Alt+5 (Boss) dispatch.
+//
+// We drive `spellingModule.handleAction(...)` directly with a spy service
+// so the ordering assertion is decoupled from the full app harness.
+// -----------------------------------------------------------------------------
+
+import { spellingModule } from '../src/subjects/spelling/module.js';
+import { BOSS_DEFAULT_ROUND_LENGTH } from '../src/subjects/spelling/service-contract.js';
+
+function createModuleShortcutSpy({
+  allWordsMega = true,
+  startResult = { ok: true, state: { phase: 'session', session: { id: 's' } } },
+  prefs = { mode: 'smart', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+} = {}) {
+  const callLog = [];
+  const service = {
+    initState(state) { return state || { phase: 'dashboard' }; },
+    getPrefs() { return { ...prefs }; },
+    getPostMasteryState() { return { allWordsMega }; },
+    startSession(learnerId, options) {
+      callLog.push({ name: 'startSession', args: { learnerId, options } });
+      return startResult;
+    },
+    savePrefs(learnerId, patch) {
+      callLog.push({ name: 'savePrefs', args: { learnerId, patch } });
+      return { ...prefs, ...patch };
+    },
+  };
+  const context = {
+    appState: {
+      learners: { selectedId: 'learner-a', byId: { 'learner-a': { id: 'learner-a' } } },
+      subjectUi: { spelling: { phase: 'dashboard' } },
+      transientUi: {},
+    },
+    data: {},
+    store: {
+      patch() {},
+      updateSubjectUi() {},
+      getState() { return context.appState; },
+    },
+    service,
+    tts: { speak() {}, stop() {} },
+    applySubjectTransition() { return true; },
+  };
+  return { service, context, callLog };
+}
+
+test('U4 module.js: Alt+4 Guardian — service.startSession fires BEFORE service.savePrefs (local-path ordering pin)', () => {
+  const { context, callLog } = createModuleShortcutSpy({
+    startResult: { ok: true, state: { phase: 'session', session: { id: 'guardian-1' } } },
+  });
+  spellingModule.handleAction('spelling-shortcut-start', { ...context, data: { mode: 'guardian' } });
+
+  const names = callLog.map((entry) => entry.name);
+  // Must start with startSession (savePrefs may or may not follow, but it
+  // must not precede it).
+  assert.equal(names[0], 'startSession',
+    'Guardian local path: service.startSession must be the FIRST service call on Alt+4');
+  const startIdx = names.indexOf('startSession');
+  const saveIdx = names.indexOf('savePrefs');
+  assert.ok(startIdx < saveIdx,
+    `Guardian local path ordering: startSession (${startIdx}) must precede savePrefs (${saveIdx})`);
+});
+
+test('U4 module.js: Alt+4 Guardian — failed startSession (ok:false) does NOT call savePrefs (local-path rollback pin)', () => {
+  const { context, callLog } = createModuleShortcutSpy({
+    startResult: { ok: false, state: { phase: 'dashboard' } },
+  });
+  spellingModule.handleAction('spelling-shortcut-start', { ...context, data: { mode: 'guardian' } });
+
+  const names = callLog.map((entry) => entry.name);
+  assert.ok(names.includes('startSession'),
+    'Guardian local path invoked startSession');
+  assert.equal(names.includes('savePrefs'), false,
+    'Guardian local path: ok:false transition must NOT fire savePrefs — prefs.mode stays on the pre-Alt+4 value');
+});
+
+test('U4 module.js: Alt+5 Boss — service.startSession fires BEFORE service.savePrefs and receives length = BOSS_DEFAULT_ROUND_LENGTH', () => {
+  const { context, callLog } = createModuleShortcutSpy({
+    startResult: { ok: true, state: { phase: 'session', session: { id: 'boss-1' } } },
+  });
+  spellingModule.handleAction('spelling-shortcut-start', {
+    ...context,
+    data: { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH },
+  });
+
+  const startCall = callLog.find((entry) => entry.name === 'startSession');
+  assert.ok(startCall, 'Boss local path invoked service.startSession');
+  assert.equal(startCall.args.options.mode, 'boss');
+  assert.equal(startCall.args.options.length, BOSS_DEFAULT_ROUND_LENGTH,
+    'Alt+5 Boss local path: length = BOSS_DEFAULT_ROUND_LENGTH (10) must survive onto startSession options');
+  const names = callLog.map((entry) => entry.name);
+  const startIdx = names.indexOf('startSession');
+  const saveIdx = names.indexOf('savePrefs');
+  assert.ok(startIdx < saveIdx, `Boss local path ordering: startSession (${startIdx}) must precede savePrefs (${saveIdx})`);
+});
+
+test('U4 module.js: Alt+5 Boss — failed startSession (ok:false) does NOT call savePrefs (local-path rollback pin)', () => {
+  const { context, callLog } = createModuleShortcutSpy({
+    startResult: { ok: false, state: { phase: 'dashboard' } },
+  });
+  spellingModule.handleAction('spelling-shortcut-start', {
+    ...context,
+    data: { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH },
+  });
+  const names = callLog.map((entry) => entry.name);
+  assert.ok(names.includes('startSession'));
+  assert.equal(names.includes('savePrefs'), false,
+    'Boss local path: ok:false transition must NOT fire savePrefs — prefs.mode stays on the pre-Alt+5 value');
+});
+
+test('U4 module.js: Alt+4 Guardian is a no-op when allWordsMega=false — neither startSession nor savePrefs fires', () => {
+  const { context, callLog } = createModuleShortcutSpy({ allWordsMega: false });
+  spellingModule.handleAction('spelling-shortcut-start', { ...context, data: { mode: 'guardian' } });
+  const names = callLog.map((entry) => entry.name);
+  assert.equal(names.includes('startSession'), false,
+    'Guardian gate held — startSession must NOT fire before graduation');
+  assert.equal(names.includes('savePrefs'), false,
+    'Guardian gate held — savePrefs must NOT fire before graduation');
+});
+
+test('U4 module.js: Alt+5 Boss is a no-op when allWordsMega=false — neither startSession nor savePrefs fires', () => {
+  const { context, callLog } = createModuleShortcutSpy({ allWordsMega: false });
+  spellingModule.handleAction('spelling-shortcut-start', {
+    ...context,
+    data: { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH },
+  });
+  const names = callLog.map((entry) => entry.name);
+  assert.equal(names.includes('startSession'), false,
+    'Boss gate held — startSession must NOT fire before graduation');
+  assert.equal(names.includes('savePrefs'), false,
+    'Boss gate held — savePrefs must NOT fire before graduation');
+});

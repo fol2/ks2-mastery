@@ -107,6 +107,10 @@ function sessionLabel(kind) {
   if (kind === 'trouble') return 'Trouble drill';
   if (kind === 'boss') return 'Boss Dictation';
   if (kind === 'guardian') return 'Guardian Mission';
+  // U11: Pattern Quest resume surface. Without this branch the Resume
+  // card falls through to 'Smart review' and sends the learner into the
+  // wrong scene on click.
+  if (kind === 'pattern-quest') return 'Pattern Quest';
   return 'Smart review';
 }
 
@@ -413,6 +417,20 @@ export function getSpellingPostMasteryState({
     guardianMissionAvailable,
     recommendedWords,
     nextGuardianDueDay,
+    // PR #277 HIGH (correctness) fix — the SpellingSetupScene's
+    // GraduationStatRibbon (line ~114) reads `postMastery.todayDay` to
+    // compute `nextDueDelta`, and SpellingWordBankScene (lines 206-211,
+    // 391-396) reads `postMastery.guardianMap` + `postMastery.todayDay`
+    // to drive Guardian chip filtering and the word-bank stats. Prior to
+    // this fix the Worker-emitted postMastery block omitted these two
+    // fields, so after U4 hydration the Setup scene displayed
+    // "Next check in 20562 days" (today fell back to 0 so
+    // nextDueDelta === nextGuardianDueDay) and the Word Bank's Guardian
+    // filters produced an empty mapping. Both values are already in scope
+    // above (computed at lines ~167 and ~173) so this is a pure return-
+    // shape fix — no derivation change, no contract drift.
+    todayDay: currentDay,
+    guardianMap,
     postMasteryDebug,
   };
 }
@@ -598,10 +616,16 @@ export function buildSpellingLearnerReadModel({
     // Resume button routed Boss learners straight into SATs Test Setup and
     // persisted `mode: 'test'` (fol2/ks2-mastery#235 review follow-up).
     const kind = activeSession.sessionKind;
+    // U11: Pattern Quest resumes back into its own mode. Without this branch
+    // `recommendedMode` collapsed to 'smart', so Resume dispatched the
+    // legacy Smart Review start-session and the Pattern Quest session was
+    // abandoned silently.
     const recommendedMode = kind === 'boss'
       ? 'boss'
       : kind === 'guardian'
       ? 'guardian'
+      : kind === 'pattern-quest'
+      ? 'pattern-quest'
       : kind === 'test'
       ? 'test'
       : 'smart';

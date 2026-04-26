@@ -195,7 +195,10 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
       },
     ];
     return (
-      <div className="grammar-summary-shell grammar-summary-shell--mini-test">
+      <div
+        className="grammar-summary-shell grammar-summary-shell--mini-test"
+        data-grammar-phase-root="summary"
+      >
         <section className="card grammar-summary-card-wrap" aria-labelledby="grammar-summary-title">
           <div className="eyebrow">Mini Test complete</div>
           <h2 className="section-title" id="grammar-summary-title">
@@ -239,7 +242,10 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
   ];
 
   return (
-    <div className="grammar-summary-shell">
+    <div
+      className="grammar-summary-shell"
+      data-grammar-phase-root="summary"
+    >
       <section className="card grammar-summary-card-wrap" aria-labelledby="grammar-summary-title">
         <div className="eyebrow">Grammar round complete</div>
         <h2 className="section-title" id="grammar-summary-title">

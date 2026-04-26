@@ -201,3 +201,38 @@ test('candidate punctuation monster assets exist', async () => {
     await access(path.join(process.cwd(), 'assets', 'monsters', monsterId, 'b2', `${monsterId}-b2-4.1280.webp`));
   }
 });
+
+// Phase 4 U7 — content-rule forbidden-term sweep.
+//
+// `shared/punctuation/content.js`'s top-level `rule` fields are edit-safe
+// (not consumed by the marking engine — the oracle replay validates
+// marking + generator output, not skill metadata strings). R8 requires
+// every `rule` string to read in child register. This sweep iterates the
+// published skill manifest and asserts each `rule` contains zero adult
+// grammar terms that R8 calls out: `fronted adverbial`, `main clause`,
+// `complete clause`, `subordinate` (and its `subordinate clause`
+// family). A leak here indicates either (a) an author regressed a rule
+// back to adult register, or (b) a new skill landed without running
+// through the U7 override audit.
+const PUNCTUATION_RULE_FORBIDDEN_TERMS = Object.freeze([
+  'fronted adverbial',
+  'main clause',
+  'complete clause',
+  'subordinate',
+]);
+
+test('U7: every skill `rule` string in shared content reads in child register', async () => {
+  // Import lazily so a manifest error above (which test(...) order would
+  // skip) still emits as a dedicated failure here.
+  const { PUNCTUATION_SKILLS } = await import('../shared/punctuation/content.js');
+  for (const skill of PUNCTUATION_SKILLS) {
+    const rule = typeof skill.rule === 'string' ? skill.rule : '';
+    for (const term of PUNCTUATION_RULE_FORBIDDEN_TERMS) {
+      assert.equal(
+        rule.toLowerCase().includes(term),
+        false,
+        `${skill.id}.rule contains forbidden adult term "${term}": ${JSON.stringify(rule)}`,
+      );
+    }
+  }
+});

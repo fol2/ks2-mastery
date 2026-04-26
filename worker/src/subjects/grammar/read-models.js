@@ -810,9 +810,64 @@ export function buildGrammarReadModel({
 // surface does not import worker/src/subjects/grammar/transfer-prompts.js
 // directly. Saved evidence is emitted redacted (latest + bounded history per
 // prompt) and never derived from scored state.
-function grammarTransferLaneReadModel(state) {
+//
+// U10 extension: the `includeArchive` option adds `archive` (a list mirroring
+// `evidence` but drawn from `state.transferEvidenceArchive`). Learner
+// projections MUST leave `includeArchive` false so the archive stays admin-
+// scoped; the admin read-model passes `includeArchive: true`.
+function grammarTransferLaneReadModel(state, { includeArchive = false } = {}) {
   const evidenceMap = isPlainObject(state?.transferEvidence) ? state.transferEvidence : {};
-  return {
+  const archiveMap = includeArchive && isPlainObject(state?.transferEvidenceArchive)
+    ? state.transferEvidenceArchive
+    : {};
+  const evidence = Object.entries(evidenceMap)
+    .map(([promptId, entry]) => {
+      const base = isPlainObject(entry) ? entry : {};
+      const latest = isPlainObject(base.latest) ? base.latest : null;
+      const history = Array.isArray(base.history) ? base.history : [];
+      return {
+        promptId,
+        latest: latest ? {
+          writing: typeof latest.writing === 'string' ? latest.writing : '',
+          selfAssessment: Array.isArray(latest.selfAssessment) ? latest.selfAssessment.slice() : [],
+          savedAt: asTs(latest.savedAt, 0),
+          source: 'transfer-lane',
+        } : null,
+        history: history.map((snapshot) => ({
+          writing: typeof snapshot?.writing === 'string' ? snapshot.writing : '',
+          savedAt: asTs(snapshot?.savedAt, 0),
+          source: 'transfer-lane',
+        })),
+        updatedAt: asTs(base.updatedAt, 0),
+      };
+    })
+    .filter((entry) => entry.latest || entry.history.length > 0)
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+  const archive = Object.entries(archiveMap)
+    .map(([promptId, entry]) => {
+      const base = isPlainObject(entry) ? entry : {};
+      const latest = isPlainObject(base.latest) ? base.latest : null;
+      const history = Array.isArray(base.history) ? base.history : [];
+      return {
+        promptId,
+        latest: latest ? {
+          writing: typeof latest.writing === 'string' ? latest.writing : '',
+          selfAssessment: Array.isArray(latest.selfAssessment) ? latest.selfAssessment.slice() : [],
+          savedAt: asTs(latest.savedAt, 0),
+          source: 'transfer-archive',
+        } : null,
+        history: history.map((snapshot) => ({
+          writing: typeof snapshot?.writing === 'string' ? snapshot.writing : '',
+          savedAt: asTs(snapshot?.savedAt, 0),
+          source: 'transfer-archive',
+        })),
+        archivedAt: asTs(base.archivedAt, 0),
+        updatedAt: asTs(base.updatedAt, 0),
+      };
+    })
+    .filter((entry) => entry.latest || entry.history.length > 0)
+    .sort((a, b) => b.archivedAt - a.archivedAt);
+  const out = {
     mode: 'non-scored',
     prompts: GRAMMAR_TRANSFER_PROMPTS.map(grammarTransferPromptSummary),
     limits: {
@@ -820,28 +875,18 @@ function grammarTransferLaneReadModel(state) {
       historyPerPrompt: GRAMMAR_TRANSFER_HISTORY_PER_PROMPT_LIMIT,
       writingCapChars: GRAMMAR_TRANSFER_WRITING_CAP_LIMIT,
     },
-    evidence: Object.entries(evidenceMap)
-      .map(([promptId, entry]) => {
-        const base = isPlainObject(entry) ? entry : {};
-        const latest = isPlainObject(base.latest) ? base.latest : null;
-        const history = Array.isArray(base.history) ? base.history : [];
-        return {
-          promptId,
-          latest: latest ? {
-            writing: typeof latest.writing === 'string' ? latest.writing : '',
-            selfAssessment: Array.isArray(latest.selfAssessment) ? latest.selfAssessment.slice() : [],
-            savedAt: asTs(latest.savedAt, 0),
-            source: 'transfer-lane',
-          } : null,
-          history: history.map((snapshot) => ({
-            writing: typeof snapshot?.writing === 'string' ? snapshot.writing : '',
-            savedAt: asTs(snapshot?.savedAt, 0),
-            source: 'transfer-lane',
-          })),
-          updatedAt: asTs(base.updatedAt, 0),
-        };
-      })
-      .filter((entry) => entry.latest || entry.history.length > 0)
-      .sort((a, b) => b.updatedAt - a.updatedAt),
+    evidence,
   };
+  if (includeArchive) out.archive = archive;
+  return out;
+}
+
+// U10: admin read-model. Mirrors `buildGrammarReadModel` but exposes
+// `transferLane.archive` (learner-facing projections strip this). Callers
+// are expected to have enforced `requireAdminHubAccess(account)` before
+// invoking this builder — the repository-level admin routes guarantee
+// that contract; the builder itself has no access check so tests can
+// compose it freely without wiring an account record.
+export function buildGrammarAdminTransferLaneReadModel(state) {
+  return grammarTransferLaneReadModel(state, { includeArchive: true });
 }

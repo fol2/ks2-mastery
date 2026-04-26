@@ -172,15 +172,24 @@ export function createHubApi({
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/accounts-metadata');
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
-    async updateAccountOpsMetadata({ accountId, patch, mutation } = {}) {
+    async updateAccountOpsMetadata({ accountId, patch, expectedRowVersion = null, mutation } = {}) {
       const url = buildRequestUrl(
         baseUrl,
         `/api/admin/accounts/${encodeURIComponent(accountId)}/ops-metadata`,
       );
+      // U8 CAS: include the client-observed `expectedRowVersion` so the
+      // Worker helper can reject stale writes with 409 and echo
+      // `currentState`. The field is always sent (never omitted) so the
+      // Worker's mutation-payload hash is stable across clients.
+      const body = {
+        patch,
+        expectedRowVersion,
+        mutation,
+      };
       return fetchHubJson(fetch, url, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ patch, mutation }),
+        body: JSON.stringify(body),
       }, authSession);
     },
     async updateOpsErrorEventStatus({
@@ -205,6 +214,53 @@ export function createHubApi({
       };
       return fetchHubJson(fetch, url, {
         method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      }, authSession);
+    },
+    // U10: admin-only archive + hard-delete for Grammar Writing Try
+    // entries. The routes are POST-only (CSRF + idempotent via the
+    // mutation envelope) and are guarded server-side by
+    // `requireAdminHubAccess`. The client never claims the admin role —
+    // the session cookie identifies the actor and the Worker derives
+    // the role from the account record.
+    async archiveGrammarTransferEvidence({ learnerId, promptId, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/learners/${encodeURIComponent(learnerId)}/grammar/transfer-evidence/${encodeURIComponent(promptId)}/archive`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mutation }),
+      }, authSession);
+    },
+    async deleteGrammarTransferEvidence({ learnerId, promptId, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/learners/${encodeURIComponent(learnerId)}/grammar/transfer-evidence/${encodeURIComponent(promptId)}/delete`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mutation }),
+      }, authSession);
+    },
+    // P2 U3: admin-gated seed harness. Caller supplies learnerId, one of the
+    // 8 canonical shape names, optional day-epoch `today`, and a mutation
+    // envelope. Server responds with `{ok, postMegaSeed, postMegaSeedMutation}`
+    // where `postMegaSeed.dataKeys` is the sorted list of keys written so the
+    // UI can render a diff hint ("Wrote progress + guardian + postMega").
+    async seedPostMegaLearnerState({ learnerId, shapeName, today, mutation } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/spelling/seed-post-mega');
+      const body = {
+        learnerId,
+        shapeName,
+        mutation,
+        ...(Number.isFinite(Number(today)) ? { today: Number(today) } : {}),
+      };
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
       }, authSession);

@@ -433,3 +433,94 @@ test('worker spelling command route keeps core practice available while capacity
     server.close();
   }
 });
+
+// U11 Fix 9 (reviewer feedback): Worker twin Pattern Quest parity. Drives
+// `start-session` + `submit-answer` via the Worker `apply()` boundary with
+// `mode: 'pattern-quest', patternId: 'suffix-tion'` and asserts the server
+// produces a Pattern Quest session (patternQuestCard present, wobbles
+// persisted to `data.pattern.wobbling`, progress.stage untouched). Without
+// this parity test, a regression where the Worker routed Pattern Quest
+// through `chooseSmartWords` (legacy smart-review fallback) would only be
+// caught by an integration flow — this lifts the assertion to the
+// engine-parity test so it trips in the fast CI loop.
+test('worker spelling engine starts and submits Pattern Quest under all-Mega seed', () => {
+  const now = () => Date.UTC(2026, 0, 1);
+  const learnerId = 'learner-a';
+  const snap = contentSnapshot();
+
+  const server = createServerSpellingEngine({
+    now,
+    random: makeSeededRandom(42),
+    contentSnapshot: snap,
+  });
+  // All-core-Mega seed so Pattern Quest is allowed to launch.
+  const serverSubjectData = {
+    progress: seedAllCoreMegaForSnapshot(snap),
+  };
+
+  const serverStarted = server.apply({
+    learnerId,
+    subjectRecord: { ui: null, data: serverSubjectData },
+    latestSession: null,
+    command: 'start-session',
+    payload: { mode: 'pattern-quest', patternId: 'suffix-tion' },
+  });
+  assert.equal(serverStarted.ok, true, 'Pattern Quest start succeeds');
+  assert.equal(serverStarted.state.session.mode, 'pattern-quest');
+  assert.ok(
+    serverStarted.state.session.patternQuestCard,
+    'session exposes decorated patternQuestCard',
+  );
+  assert.equal(
+    serverStarted.state.session.patternQuestCard.patternId,
+    'suffix-tion',
+    'patternId threaded through decoration',
+  );
+  const firstCard = serverStarted.state.session.patternQuestCard;
+  const firstSlug = firstCard.slug;
+
+  // Submit wrong on Card 1 (spell) so the slug wobbles. Assert the wobble
+  // persists to data.pattern.wobbling and progress.stage is untouched.
+  const preStage = serverStarted.data?.progress?.[firstSlug]?.stage;
+  const wrongSubmit = server.apply({
+    learnerId,
+    subjectRecord: { ui: serverStarted.state, data: serverStarted.data },
+    latestSession: serverStarted.practiceSession,
+    command: 'submit-answer',
+    payload: { answer: 'zzz-worker-wrong' },
+  });
+  assert.equal(wrongSubmit.ok, true);
+  // Wobble persisted.
+  assert.ok(
+    wrongSubmit.data?.pattern?.wobbling?.[firstSlug],
+    `data.pattern.wobbling[${firstSlug}] populated after wrong answer`,
+  );
+  assert.equal(
+    wrongSubmit.data.pattern.wobbling[firstSlug].patternId,
+    'suffix-tion',
+  );
+  // Mega invariant: stage preserved exactly.
+  assert.equal(
+    wrongSubmit.data?.progress?.[firstSlug]?.stage,
+    preStage,
+    `progress.stage preserved for ${firstSlug}`,
+  );
+  // Fix 8: attempts bumped, wrong bumped, correct unchanged.
+  assert.equal(
+    wrongSubmit.data.progress[firstSlug].attempts,
+    (serverStarted.data.progress[firstSlug].attempts || 0) + 1,
+    'attempts bumped',
+  );
+  assert.equal(
+    wrongSubmit.data.progress[firstSlug].wrong,
+    (serverStarted.data.progress[firstSlug].wrong || 0) + 1,
+    'wrong bumped',
+  );
+
+  // Events emitted on submit — session-level events should NOT include a
+  // word-secured / mastery-milestone on a wrong answer.
+  assert.ok(Array.isArray(wrongSubmit.events));
+  for (const event of wrongSubmit.events) {
+    assert.notEqual(event.type, 'spelling.word-secured', 'no word-secured on wrong answer');
+  }
+});
