@@ -1391,3 +1391,34 @@ completion report)
   is not directly asserted. Defensible because resolveSpellingAudioRequest
   is the only code path that constructs `transcript`, and
   worker-tts.test.js covers that path's outputs.
+
+### Tech debt deferred from U2 review (2026-04-26)
+
+* **`isGeminiQuotaError` treats 403 as quota.** Defensible because Gemini
+  historically returns 403 for quota in some endpoints, but it masks
+  misconfigured-key auth errors (the operator burns the entire key pool
+  on what is really a single bad credential). Future: distinguish via
+  response-body keyword inspection (`RESOURCE_EXHAUSTED` / `quota`
+  vs. `permission denied` / `invalid API key`) and only rotate on the
+  former.
+* **`listR2Objects` no per-request timeout, no auth-failure short-circuit,
+  no 5xx retry.** A single 502 from the Cloudflare API aborts the entire
+  reconcile pass; a 401 keeps paginating uselessly. Future: add
+  `AbortSignal.timeout(15000)` per fetch, classify 401/403 distinctly
+  (fail fast, do not retry), and retry 5xx with bounded exponential
+  backoff before surfacing the error.
+* **`uploadObjectToR2` (wrangler shell-out) no timeout.** A hung wrangler
+  process ties up a concurrency slot indefinitely. Future: pass `timeout`
+  to `execFile` (e.g., 60s) so a stuck child is killed and the entry can
+  be retried on the next pass.
+* **Concurrency guard inconsistency.** `--concurrency` validation uses
+  `Number.isFinite` (decimals OK) while `--max-retries` uses
+  `Number.isInteger`. Cosmetic for argv-only callers (parser already
+  enforces integer at parse time) but worth aligning. Suggested:
+  `Number.isInteger` everywhere.
+* **Network-blip retry.** Transient `ECONNRESET` / fetch `TypeError`
+  exceptions on the Gemini call now break immediately under the non-quota
+  path. Future: add a transport-error retry lane with bounded backoff,
+  distinct from the Gemini API-error budget. The retry budget knob
+  (`--max-retries`) is currently reserved for upload-side 5xx; this
+  future lane would also consume from it.

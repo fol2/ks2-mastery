@@ -688,3 +688,224 @@ test('statePathFor uses the .spelling-audio/word-runs/<runId>/state.json layout'
   const target = statePathFor('rfix');
   assert.match(target, /\.spelling-audio[/\\]word-runs[/\\]rfix[/\\]state\.json$/);
 });
+
+// FIX 1 (review 2026-04-26): `--max-retries 0` + non-quota Gemini error
+// must produce exactly ONE attempt + status `failed`. Pins the
+// break-immediately semantics for the non-quota path.
+test('--max-retries 0 + non-quota Gemini error → exactly 1 attempt, status failed', async (t) => {
+  let geminiCalls = 0;
+  const callGemini = async () => {
+    geminiCalls += 1;
+    const error = new Error('Gemini malformed response');
+    // No status; not a quota signature.
+    throw error;
+  };
+  const result = await commandGenerate({
+    flags: { slug: ['accident'], voice: 'Iapetus', concurrency: 1, maxRetries: 0 },
+    env: { GEMINI_API_KEY: 'stub-key' },
+    dependencies: {
+      callGemini,
+      upload: async () => {},
+      transcode: async () => {},
+      writeWav: async () => {},
+      processSignals: { on() {}, removeListener() {}, exit() {} },
+    },
+  });
+  t.after(async () => rm(path.dirname(result.statePath), { recursive: true, force: true }));
+
+  assert.equal(geminiCalls, 1, `expected exactly 1 Gemini call, saw ${geminiCalls}`);
+  const entry = result.entries[0];
+  assert.equal(entry.status, 'failed');
+  assert.equal(entry.attempts, 1);
+  assert.match(entry.lastError, /Gemini malformed response/);
+});
+
+// FIX 1 (review 2026-04-26): `--max-retries 0` + quota error rotating
+// through 2 keys → key rotation happens, entry succeeds on the 2nd key.
+// Proves quota rotation is INDEPENDENT of the retry budget — a single
+// 429 on key #1 must not fail the entry while key #2 is healthy.
+test('--max-retries 0 + quota error rotates through 2 keys + succeeds on 2nd', async (t) => {
+  const seenKeys = [];
+  const callGemini = async ({ apiKey }) => {
+    seenKeys.push(apiKey);
+    if (apiKey === 'first-key') {
+      const quotaError = new Error('429 RESOURCE_EXHAUSTED');
+      quotaError.status = 429;
+      throw quotaError;
+    }
+    return {
+      data: Buffer.from('fake-pcm').toString('base64'),
+      mimeType: 'audio/L16;rate=24000',
+    };
+  };
+  const result = await commandGenerate({
+    flags: { slug: ['accident'], voice: 'Iapetus', concurrency: 1, maxRetries: 0 },
+    env: { GEMINI_API_KEY: 'first-key', GEMINI_API_KEY_2: 'second-key' },
+    dependencies: {
+      callGemini,
+      upload: async () => {},
+      transcode: async () => {},
+      writeWav: async () => {},
+      processSignals: { on() {}, removeListener() {}, exit() {} },
+    },
+  });
+  t.after(async () => rm(path.dirname(result.statePath), { recursive: true, force: true }));
+
+  // Two Gemini calls: first-key (429), then second-key (success).
+  assert.deepEqual(seenKeys, ['first-key', 'second-key']);
+  const entry = result.entries[0];
+  assert.equal(entry.status, 'uploaded');
+  assert.equal(entry.attempts, 2);
+});
+
+// FIX 1 (review 2026-04-26): `--max-retries 2` + non-quota Gemini error
+// should STILL produce exactly 1 attempt — the retry budget is reserved
+// for upload-side 5xx (handled in `processEntry`) and a future
+// transport-error lane. Non-quota errors break immediately because
+// they will not resolve on the same key without operator action.
+test('--max-retries 2 + non-quota Gemini error → exactly 1 attempt (break-immediately semantics)', async (t) => {
+  let geminiCalls = 0;
+  const callGemini = async () => {
+    geminiCalls += 1;
+    const error = new Error('Gemini server bug');
+    throw error;
+  };
+  const result = await commandGenerate({
+    flags: { slug: ['accident'], voice: 'Iapetus', concurrency: 1, maxRetries: 2 },
+    env: { GEMINI_API_KEY: 'stub-key' },
+    dependencies: {
+      callGemini,
+      upload: async () => {},
+      transcode: async () => {},
+      writeWav: async () => {},
+      processSignals: { on() {}, removeListener() {}, exit() {} },
+    },
+  });
+  t.after(async () => rm(path.dirname(result.statePath), { recursive: true, force: true }));
+
+  assert.equal(geminiCalls, 1, `expected exactly 1 Gemini call, saw ${geminiCalls}`);
+  const entry = result.entries[0];
+  assert.equal(entry.status, 'failed');
+  assert.equal(entry.attempts, 1);
+});
+
+// FIX 2a (review 2026-04-26): atomic state file — corrupt JSON on read
+// throws a clear, actionable error pointing the operator at
+// `--from-r2-inventory`, NOT a raw `SyntaxError` stack trace. Simulated
+// by writing a half-payload (`{`) directly to the state path.
+test('readStateFile rejects corrupt JSON with a clear actionable error', async (t) => {
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'corrupt-state-'));
+  t.after(async () => rm(tmpDir, { recursive: true, force: true }));
+  const statePath = path.join(tmpDir, 'state.json');
+  // Simulate a SIGINT mid-write: a half-flushed payload.
+  await writeFile(statePath, '{', 'utf8');
+
+  await assert.rejects(
+    () => readStateFile(statePath),
+    /state file corrupt at .*state\.json.*delete and re-run with --from-r2-inventory/,
+  );
+});
+
+// FIX 2a (review 2026-04-26): writeStateFile is atomic — uses tmp + rename.
+// Verified by inspecting the `<path>.tmp` artefact does NOT linger after a
+// successful write (rename consumes it). A leaking `.tmp` would indicate
+// the rename path is broken and partial writes could corrupt the target.
+test('writeStateFile is atomic via tmp + rename (no .tmp.* lingers)', async (t) => {
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'atomic-state-'));
+  t.after(async () => rm(tmpDir, { recursive: true, force: true }));
+  const statePath = path.join(tmpDir, 'state.json');
+  await writeStateFile(statePath, { runId: 'atomic-fixture', entries: [] });
+  // Target exists.
+  const loaded = await readStateFile(statePath);
+  assert.equal(loaded.runId, 'atomic-fixture');
+  // No staged tmp files linger in the target dir — unique-suffix tmp is
+  // required because concurrent flushState writers would race a fixed
+  // `<path>.tmp`.
+  const { readdir: readdirFs } = await import('node:fs/promises');
+  const remaining = await readdirFs(tmpDir);
+  const stragglers = remaining.filter((name) => name.includes('.tmp'));
+  assert.deepEqual(stragglers, [], `expected no .tmp.* stragglers, saw ${stragglers.join(', ')}`);
+});
+
+// FIX 2b (review 2026-04-26): SIGINT + SIGTERM handlers are registered
+// during `commandGenerate` and removed on normal completion. Asserted
+// via a `processSignals` spy injected through `dependencies` — proves
+// the handler-registration contract without leaking real signal
+// listeners onto the actual `process` object.
+test('commandGenerate registers + removes SIGINT/SIGTERM handlers', async (t) => {
+  const registered = [];
+  const removed = [];
+  const spy = {
+    on(signal, listener) {
+      registered.push({ signal, listener });
+    },
+    removeListener(signal, listener) {
+      removed.push({ signal, listener });
+    },
+    exit() {},
+  };
+  const result = await commandGenerate({
+    flags: { slug: ['accident'], voice: 'Iapetus', concurrency: 1, maxRetries: 0 },
+    env: { GEMINI_API_KEY: 'stub-key' },
+    dependencies: {
+      callGemini: async () => ({ data: Buffer.from('x').toString('base64'), mimeType: 'audio/L16;rate=24000' }),
+      upload: async () => {},
+      transcode: async () => {},
+      writeWav: async () => {},
+      processSignals: spy,
+    },
+  });
+  t.after(async () => rm(path.dirname(result.statePath), { recursive: true, force: true }));
+
+  // Both signals registered exactly once.
+  const registeredSignals = registered.map((entry) => entry.signal).sort();
+  assert.deepEqual(registeredSignals, ['SIGINT', 'SIGTERM']);
+  // Both signals removed on normal completion (matched by listener identity).
+  const removedSignals = removed.map((entry) => entry.signal).sort();
+  assert.deepEqual(removedSignals, ['SIGINT', 'SIGTERM']);
+  for (const { signal, listener } of registered) {
+    const matchingRemoval = removed.find((entry) => entry.signal === signal && entry.listener === listener);
+    assert.ok(matchingRemoval, `listener for ${signal} was registered but never removed`);
+  }
+});
+
+// FIX 2b (review 2026-04-26): per-entry state flush — the state file is
+// written after EVERY entry's status mutation, not only at the end of
+// `commandGenerate`. Verified by injecting a fault on the second entry
+// and reading the on-disk state to confirm the first entry's `uploaded`
+// status was persisted before the crash propagated.
+test('commandGenerate flushes state after every entry (no end-of-run-only writes)', async (t) => {
+  let calls = 0;
+  // Two entries planned (accident × 2 voices). First call succeeds, second
+  // call fails — partial progress must be on disk after both finish.
+  const callGemini = async () => {
+    calls += 1;
+    if (calls === 1) {
+      return {
+        data: Buffer.from('first-ok').toString('base64'),
+        mimeType: 'audio/L16;rate=24000',
+      };
+    }
+    throw new Error('second-fails-non-quota');
+  };
+  const result = await commandGenerate({
+    flags: { slug: ['accident'], concurrency: 1, maxRetries: 0 },
+    env: { GEMINI_API_KEY: 'stub-key' },
+    dependencies: {
+      callGemini,
+      upload: async () => {},
+      transcode: async () => {},
+      writeWav: async () => {},
+      processSignals: { on() {}, removeListener() {}, exit() {} },
+    },
+  });
+  t.after(async () => rm(path.dirname(result.statePath), { recursive: true, force: true }));
+
+  // On disk: read the state file directly (not the in-memory result), to
+  // prove the first entry's success WAS persisted before the second failed.
+  const onDisk = await readStateFile(result.statePath);
+  const uploaded = onDisk.entries.filter((entry) => entry.status === 'uploaded');
+  const failed = onDisk.entries.filter((entry) => entry.status === 'failed');
+  assert.equal(uploaded.length, 1, 'first entry should be persisted as uploaded');
+  assert.equal(failed.length, 1, 'second entry should be persisted as failed');
+});

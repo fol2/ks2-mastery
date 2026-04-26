@@ -27,7 +27,7 @@
 // object so the unit tests can stub them without ever reaching production.
 
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -371,19 +371,44 @@ async function ensureDir(target) {
   await mkdir(target, { recursive: true });
 }
 
+// `readStateFile` rejects corrupt JSON loudly so the operator deletes the
+// state file and reseeds via `--from-r2-inventory` rather than silently
+// re-burning Gemini quota against unparseable progress. A truncated write
+// from a SIGINT mid-flush would land here as a `SyntaxError`; surface it
+// as a clear actionable instead of a parser stack trace.
 export async function readStateFile(statePath) {
   if (!existsSync(statePath)) return null;
   const raw = await readFile(statePath, 'utf8');
-  return JSON.parse(raw);
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `state file corrupt at ${statePath} (${String(error?.message || error)}); delete and re-run with --from-r2-inventory.`,
+    );
+  }
 }
 
+// `writeStateFile` writes atomically: stage to a unique `<path>.tmp.<n>`,
+// then `rename()` over the target. POSIX `rename(2)` is atomic when source
+// and target are on the same filesystem (always true here — both under
+// `.spelling-audio/`). A SIGINT mid-write either leaves the previous good
+// `state.json` untouched or completes the new payload; never a half-written
+// target. The unique suffix is required because `commandGenerate` flushes
+// state from concurrent workers (per-entry checkpoints) — a fixed
+// `<path>.tmp` would race: writer A's rename consumes `.tmp`, then writer
+// B's rename fails with ENOENT. Idempotent-resume contract from the U2
+// plan depends on this.
+let writeTmpCounter = 0;
 export async function writeStateFile(statePath, state) {
   await ensureDir(path.dirname(statePath));
   const payload = {
     ...state,
     updatedAt: nowIso(),
   };
-  await writeFile(statePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  writeTmpCounter += 1;
+  const tmpPath = `${statePath}.tmp.${process.pid}.${writeTmpCounter}`;
+  await writeFile(tmpPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  await rename(tmpPath, statePath);
   return payload;
 }
 
@@ -880,7 +905,7 @@ export async function commandGenerate({
   const runDir = path.join(wordRunsRoot, runId);
   // Use Number-coalescing rather than `||` so an explicit `--max-retries 0`
   // (which is falsy) is honoured instead of silently falling back to the
-  // default. Same applies to `--concurrency`, but that value must be ≥ 1
+  // default. Same applies to `--concurrency`, but that value must be >= 1
   // by the parser contract.
   const concurrency = Number.isFinite(flags.concurrency) && flags.concurrency >= 1
     ? flags.concurrency
@@ -889,55 +914,117 @@ export async function commandGenerate({
     ? flags.maxRetries
     : DEFAULT_MAX_RETRIES;
 
-  const remaining = entries.filter((entry) => entry.status !== 'uploaded');
-  await runWithConcurrency(remaining, concurrency, async (entry) => {
-    let lastError = null;
-    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-      const apiKey = nextKey();
-      if (!apiKey) {
-        entry.status = 'failed';
-        entry.lastError = 'All Gemini API keys exhausted.';
-        return;
-      }
-      entry.attempts = Number(entry.attempts || 0) + 1;
-      try {
-        await processEntry({
-          entry,
-          apiKey,
-          model,
-          bucketName: DEFAULT_BUCKET_NAME,
-          runDir,
-          maxRetries,
-          skipUpload,
-          dependencies,
-        });
-        return;
-      } catch (error) {
-        lastError = error;
-        if (isGeminiQuotaError(error)) {
-          exhausted.add(activeKeyIndex);
-          activeKeyIndex = (activeKeyIndex + 1) % apiKeys.length;
-          continue;
-        }
-        // Non-quota Gemini failure: do not retry (the error is unlikely to
-        // resolve on the same key without operator action). Upload-side
-        // 502/503 retries are owned by `processEntry` itself.
-        break;
-      }
-    }
-    entry.status = entry.status === 'generated' ? 'generated' : 'failed';
-    entry.lastError = String(lastError?.message || lastError || 'Pipeline failed.');
-  });
+  // Per-entry checkpoint helper: flush state-of-the-world after every
+  // status mutation so a SIGINT / crash mid-run does not lose finished
+  // entries. `writeStateFile` is atomic (tmp + rename), and the per-entry
+  // cost is one ~50KB write — negligible compared to a Gemini call.
+  async function flushState() {
+    await writeStateFile(statePath, {
+      runId,
+      createdAt: existing?.createdAt || nowIso(),
+      model,
+      voices,
+      bucketName: DEFAULT_BUCKET_NAME,
+      entries,
+      summary: summariseState(entries),
+    });
+  }
 
-  await writeStateFile(statePath, {
-    runId,
-    createdAt: existing?.createdAt || nowIso(),
-    model,
-    voices,
-    bucketName: DEFAULT_BUCKET_NAME,
-    entries,
-    summary: summariseState(entries),
-  });
+  // SIGINT / SIGTERM flush: register handlers BEFORE work starts so an
+  // operator hitting Ctrl-C during a long run gets the partial progress
+  // persisted before exit. Handlers are removed on normal completion to
+  // avoid leaking listeners across multiple `commandGenerate` invocations
+  // (the test suite calls in-process). Uses an injectable `processSignals`
+  // hook so tests can spy on the registration without leaking real
+  // listeners on the actual `process` object.
+  const signalHook = dependencies.processSignals || process;
+  let signalsRegistered = false;
+  const handleSignal = (signal) => {
+    Promise.resolve(flushState()).finally(() => {
+      // Re-raise via exit code 130 (SIGINT) / 143 (SIGTERM) for shell
+      // composition; default to 1 if unknown.
+      const code = signal === 'SIGINT' ? 130 : signal === 'SIGTERM' ? 143 : 1;
+      signalHook.exit?.(code);
+    });
+  };
+  const sigintListener = () => handleSignal('SIGINT');
+  const sigtermListener = () => handleSignal('SIGTERM');
+  if (typeof signalHook.on === 'function') {
+    signalHook.on('SIGINT', sigintListener);
+    signalHook.on('SIGTERM', sigtermListener);
+    signalsRegistered = true;
+  }
+
+  try {
+    const remaining = entries.filter((entry) => entry.status !== 'uploaded');
+    await runWithConcurrency(remaining, concurrency, async (entry) => {
+      let lastError = null;
+      // Two budgets, two loops:
+      //   1. Quota rotation (outer-ish): bounded by key pool size — once
+      //      every key in the pool returns 429/RESOURCE_EXHAUSTED for THIS
+      //      entry, give up. Each rotation does NOT consume the retry
+      //      budget — rotating to a healthy key is a deterministic
+      //      recovery action, not a retry of the same failing call.
+      //   2. Non-quota errors: break immediately with a single attempt.
+      //      The retry-budget knob `--max-retries` is currently reserved
+      //      for upload-side 502/503 (handled inside `processEntry`) and
+      //      a future transport-error lane (see deferred tech debt). A
+      //      non-quota Gemini error is unlikely to resolve on the same
+      //      key without operator action, so we fail fast.
+      // Hard upper bound on quota rotations: the size of the key pool.
+      // Once every key is exhausted, `nextKey()` returns null and we exit.
+      while (true) {
+        const apiKey = nextKey();
+        if (!apiKey) {
+          entry.status = 'failed';
+          entry.lastError = lastError
+            ? `All Gemini API keys exhausted; last error: ${String(lastError?.message || lastError)}`
+            : 'All Gemini API keys exhausted.';
+          await flushState();
+          return;
+        }
+        entry.attempts = Number(entry.attempts || 0) + 1;
+        try {
+          await processEntry({
+            entry,
+            apiKey,
+            model,
+            bucketName: DEFAULT_BUCKET_NAME,
+            runDir,
+            maxRetries,
+            skipUpload,
+            dependencies,
+          });
+          await flushState();
+          return;
+        } catch (error) {
+          lastError = error;
+          if (isGeminiQuotaError(error)) {
+            // Quota error → rotate keys WITHOUT consuming the retry budget.
+            // Loop continues until the pool is exhausted (handled by
+            // nextKey() returning null on next iteration).
+            exhausted.add(activeKeyIndex);
+            activeKeyIndex = (activeKeyIndex + 1) % apiKeys.length;
+            continue;
+          }
+          // Non-quota Gemini failure: break immediately. `--max-retries`
+          // budget is reserved for upload-side 5xx (already handled in
+          // `processEntry`) and a future transport-error lane.
+          break;
+        }
+      }
+      entry.status = entry.status === 'generated' ? 'generated' : 'failed';
+      entry.lastError = String(lastError?.message || lastError || 'Pipeline failed.');
+      await flushState();
+    });
+
+    await flushState();
+  } finally {
+    if (signalsRegistered && typeof signalHook.removeListener === 'function') {
+      signalHook.removeListener('SIGINT', sigintListener);
+      signalHook.removeListener('SIGTERM', sigtermListener);
+    }
+  }
 
   return { runId, statePath, summary: summariseState(entries), entries };
 }
