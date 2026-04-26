@@ -194,6 +194,11 @@ export function createAppController({
     if (subjectId === 'spelling' && shouldStopSpellingAudio(previousSubjectUi, nextSubjectUi, transition)) {
       clearDeferredAudio();
       tts.stop();
+      // SH2-U4: route-change TTS cleanup contract — `stop()` kills the
+      // playing audio, `abortPending()` cancels any in-flight fetch
+      // waiting on the Gemini pipeline so a slow TTS does not resolve
+      // on the next surface.
+      tts.abortPending?.();
     }
 
     if (transition.audio?.word) {
@@ -249,7 +254,13 @@ export function createAppController({
     const learnerId = appState.learners.selectedId;
 
     if (action === 'navigate-home') {
+      // SH2-U4: every route-change site calls `tts.stop()` AND
+      // `tts.abortPending()` explicitly so the contract (stop + cancel
+      // pending fetch) is visible at every handler. The two calls are
+      // deliberately NOT hidden behind a helper — reviewers should see
+      // both at every site.
       tts.stop();
+      tts.abortPending?.();
       store.goHome();
       return true;
     }
@@ -261,30 +272,35 @@ export function createAppController({
         return true;
       }
       tts.stop();
+      tts.abortPending?.();
       store.openSubject(subject.id, data.tab || 'practice');
       return true;
     }
 
     if (action === 'open-codex') {
       tts.stop();
+      tts.abortPending?.();
       store.openCodex();
       return true;
     }
 
     if (action === 'open-parent-hub') {
       tts.stop();
+      tts.abortPending?.();
       store.openParentHub();
       return true;
     }
 
     if (action === 'open-admin-hub') {
       tts.stop();
+      tts.abortPending?.();
       store.openAdminHub();
       return true;
     }
 
     if (action === 'open-profile-settings') {
       tts.stop();
+      tts.abortPending?.();
       store.openProfileSettings();
       return true;
     }
@@ -296,6 +312,7 @@ export function createAppController({
 
     if (action === 'learner-select') {
       tts.stop();
+      tts.abortPending?.();
       runtimeBoundary.clearAll();
       store.selectLearner(data.value);
       return true;
@@ -359,6 +376,7 @@ export function createAppController({
     if (action === 'learner-reset-progress') {
       if (!ports.confirm('Warning: reset subject progress and codex rewards for the current learner?')) return true;
       tts.stop();
+      tts.abortPending?.();
       runtimeBoundary.clearLearner(learnerId);
       clearMonsterCelebrationAcknowledgements(learnerId);
       resetLearnerData(learnerId);
@@ -369,6 +387,7 @@ export function createAppController({
     if (action === 'platform-reset-all') {
       if (!ports.confirm('Reset all app data for every learner on this browser?')) return true;
       tts.stop();
+      tts.abortPending?.();
       runtimeBoundary.clearAll();
       clearAllMonsterCelebrationAcknowledgements();
       store.clearAllProgress();
@@ -380,6 +399,7 @@ export function createAppController({
       repositories.persistence.retry()
         .then(() => {
           tts.stop();
+          tts.abortPending?.();
           runtimeBoundary.clearAll();
           store.clearMonsterCelebrations();
           store.reloadFromRepositories({ preserveRoute: true });
@@ -430,6 +450,7 @@ export function createAppController({
       return Boolean(handled);
     } catch (error) {
       tts.stop();
+      tts.abortPending?.();
       runtimeBoundary.capture({
         learnerId,
         subject,

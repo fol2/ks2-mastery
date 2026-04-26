@@ -2337,6 +2337,28 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
+/* SH2-U4 (sys-hardening p2): pending chip + failure banner for the
+ * spelling session audio lifecycle. The chip sits next to the replay
+ * buttons and surfaces "…loading audio" while the Gemini pipeline
+ * resolves; the banner replaces it when the 15s watchdog fires or a
+ * 500 lands. Copy is intentionally terse so it never crowds the
+ * practice surface. Reduced-motion consumers see no animation — these
+ * are static elements; the chip does not pulse. */
+.spelling-tts-pending-chip {
+  background: color-mix(in oklab, var(--accent-base, var(--good)) 18%, transparent);
+  color: color-mix(in oklab, var(--accent-base, var(--good)) 92%, black 8%);
+  border: 1px solid color-mix(in oklab, var(--accent-base, var(--good)) 45%, transparent);
+  font-size: 0.86rem;
+  padding: 4px 10px;
+}
+.spelling-tts-failure-banner {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
 /* ---------- Profile settings surface ---------- */
 .sr-only {
   position: absolute;
