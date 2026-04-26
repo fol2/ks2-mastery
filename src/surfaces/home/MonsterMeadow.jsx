@@ -20,8 +20,13 @@ export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
     // empty-state card non-interactive and invisible behind the hero
     // copy. `.monster-meadow-empty` is a static-flow block that sits in
     // the hero's normal layout order; the primitive keeps its role=status.
+    //
+    // Post-review: no `aria-label` on the wrapper because the inner
+    // EmptyState already carries `role="status"` with its own announced
+    // copy. Adding an outer label would duplicate-announce without a
+    // matching role, which AT engines read as a dead landmark.
     return (
-      <div className="monster-meadow-empty" aria-label="Meadow is empty">
+      <div className="monster-meadow-empty">
         <EmptyState
           title="Nothing caught yet"
           body="Nothing caught yet. Your meadow stays tidy. Finish a round to see your first monster appear."

@@ -1,5 +1,3 @@
-import React from 'react';
-
 // SH2-U5: shared loading-skeleton primitive. CSS-only shimmer built from
 // a moving background-position gradient (compositor-cheap, no layout).
 // The `@media (prefers-reduced-motion: reduce)` carve-out in

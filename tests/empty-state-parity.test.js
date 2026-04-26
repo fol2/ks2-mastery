@@ -85,6 +85,41 @@ test('WordBank empty copy follows the canonical three-part structure', () => {
   );
 });
 
+test('WordBank empty EmptyState wires an action CTA (post-review fix)', () => {
+  // Design-review found that the WordBank empty branch rendered the
+  // canonical action sentence ("Play a spelling round to add your first
+  // word") but without a button — learners read an instruction with
+  // nothing to click. The fix wires `action.onClick` to the existing
+  // `spelling-close-word-bank` dispatch so the CTA returns the learner
+  // to the setup scene where they can start a round.
+  //
+  // This parser-level assertion keeps the fix load-bearing: if a future
+  // edit drops the action prop, the source-text parity test alone
+  // wouldn't notice (the three-sentence copy still parses). A separate
+  // SSR integration test in `empty-state-consumer-integration.test.js`
+  // verifies the button actually renders with the right data-action.
+  const source = readFile('src/subjects/spelling/components/SpellingWordBankScene.jsx');
+  // The empty branch passes an `action=` prop to EmptyState that
+  // dispatches `spelling-close-word-bank`. We scope the match to the
+  // empty-branch block so accidentally matching the topbar's existing
+  // `spelling-close-word-bank` button would fail.
+  const emptyBranchMatch = source.match(
+    /if\s*\(\s*totalTrackedWords\s*===\s*0\s*\)[\s\S]*?<\/section>\s*\)\s*;\s*\}/,
+  );
+  assert.ok(emptyBranchMatch, 'WordBank empty-branch block must be detectable');
+  const emptyBranch = emptyBranchMatch[0];
+  assert.match(
+    emptyBranch,
+    /action\s*=\s*\{/,
+    'WordBank EmptyState must pass an `action=` prop (no dead CTA)',
+  );
+  assert.match(
+    emptyBranch,
+    /dataAction:\s*['"]spelling-close-word-bank['"]/,
+    'WordBank EmptyState CTA must wire to `spelling-close-word-bank`',
+  );
+});
+
 test('MonsterMeadow empty copy follows the canonical three-part structure', () => {
   const source = readFile('src/surfaces/home/MonsterMeadow.jsx');
   assert.match(source, /Nothing caught yet/, 'MonsterMeadow empty headline "Nothing caught yet"');
@@ -119,7 +154,13 @@ test('Grammar dashboard-empty copy keeps the existing anchor AND adds reassuranc
   // The pre-U5 "Start your first round…" anchor stays because the
   // existing child-copy regression tests assert on it. The U5 upgrade
   // wraps it in EmptyState + adds the reassurance sentence.
-  assert.match(source, /Grammar is ready/, 'Grammar dashboard-empty headline');
+  //
+  // Post-review: the title changed from the promotional "Grammar is
+  // ready" to the neutral "No rounds yet" so the six EmptyState
+  // surfaces share a single voice (neutral "No X yet" / "Nothing yet"
+  // pattern). The anchor + reassurance + action copy are unchanged so
+  // the downstream child-copy tests keep their existing regex.
+  assert.match(source, /No rounds yet/, 'Grammar dashboard-empty headline follows the neutral "No X yet" baseline');
   assert.match(source, /Progress is saved as you practise/, 'Grammar dashboard-empty reassurance');
   assert.match(source, /Start your first round to see your scores here/);
 });

@@ -337,6 +337,11 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
           <EmptyState
             title="No words yet"
             body="No words yet. Your progress is saved. Play a spelling round to add your first word."
+            action={{
+              label: 'Back to spelling',
+              onClick: (event) => renderAction(actions, event, 'spelling-close-word-bank'),
+              dataAction: 'spelling-close-word-bank',
+            }}
           />
         </div>
       </section>

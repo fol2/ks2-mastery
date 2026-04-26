@@ -1,5 +1,3 @@
-import React from 'react';
-
 // SH2-U5: shared empty-state primitive. Three-part copy pattern:
 //   1. what happened (neutral, past tense)
 //   2. is progress safe (explicit reassurance)

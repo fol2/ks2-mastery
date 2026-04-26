@@ -164,8 +164,8 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
         {dashboard.isEmpty ? (
           <div className="grammar-today-empty" data-testid="grammar-today-empty">
             <EmptyState
-              title="Grammar is ready"
-              body="Grammar is ready. Progress is saved as you practise. Start your first round to see your scores here."
+              title="No rounds yet"
+              body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
             />
           </div>
         ) : (

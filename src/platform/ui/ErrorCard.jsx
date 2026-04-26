@@ -1,5 +1,3 @@
-import React from 'react';
-
 // SH2-U5: shared error-card primitive. Never renders `code` in visible
 // copy — that is SH2-U12's oracle. `code` is surfaced ONLY as a
 // `data-error-code` attribute for debugging + future telemetry, which
