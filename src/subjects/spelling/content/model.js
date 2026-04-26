@@ -589,9 +589,12 @@ export function validateSpellingContentBundle(rawBundle) {
 
   // P2 U10 F10 feasibility: warn (not fail) when a pattern has fewer than 4
   // tagged core words. U11 Pattern Quest refuses to launch quests for these
-  // under-used patterns via `SPELLING_PATTERNS_LAUNCHED`. Registry entries
+  // under-used patterns via `computeLaunchedPatternIds()`. Registry entries
   // stay defined so future content expansion can lift them without a
   // content-model bump. Sorted by registry order for deterministic output.
+  // Patterns with empty `promptTypes` (e.g. `exception-word`) are registry-
+  // only catch-alls and are suppressed from the warning stream here so they
+  // never permanently report below threshold.
   const patternCounts = new Map(SPELLING_PATTERN_IDS.map((id) => [id, 0]));
   for (const word of bundle.draft.words) {
     if (word.spellingPool !== 'core') continue;
@@ -602,6 +605,11 @@ export function validateSpellingContentBundle(rawBundle) {
     }
   }
   for (const id of SPELLING_PATTERN_IDS) {
+    const pattern = SPELLING_PATTERNS[id];
+    // Suppress empty-promptTypes catch-alls (e.g. exception-word) — they are
+    // registry-only and cannot host quests, so reporting them below threshold
+    // would be permanent noise.
+    if (!pattern || !Array.isArray(pattern.promptTypes) || pattern.promptTypes.length === 0) continue;
     const count = patternCounts.get(id) || 0;
     if (count < PATTERN_LAUNCH_THRESHOLD) {
       warnings.push(issue(

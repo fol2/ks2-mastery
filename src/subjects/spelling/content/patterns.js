@@ -19,8 +19,13 @@
  *   - curriculumBand one of `'y3-4'` | `'y5-6'` (GOV.UK English Appendix 1).
  *   - promptTypes    which U11 card templates this pattern supports —
  *                    `('spell' | 'classify' | 'explain' | 'detect-error')[]`.
- *                    All patterns ship with all four types pre-U11; U11 may
- *                    narrow this per-pattern once live.
+ *                    Every promptable pattern ships with all four types
+ *                    pre-U11; U11 may narrow this per-pattern once live.
+ *                    The special `exception-word` entry carries an empty
+ *                    array so it cannot host a quest — it is a registry-
+ *                    only catch-all for words the tag system lists under
+ *                    `tags: ['exception-word']` rather than a `patternIds`
+ *                    entry.
  *
  * Convention: patterns are defined in the stable order below. The registry
  * is frozen at module load so a consumer cannot mutate a shared record.
@@ -42,7 +47,7 @@ const ALL_PROMPT_TYPES = Object.freeze(['spell', 'classify', 'explain', 'detect-
 export const PATTERN_LAUNCH_THRESHOLD = 4;
 
 /**
- * Full 15-pattern registry. `SPELLING_PATTERNS_LAUNCHED` (below) is a
+ * Full 15-pattern registry. `computeLaunchedPatternIds()` (below) returns a
  * runtime subset — patterns with &lt;4 tagged core words are excluded from
  * the launched subset but stay in the registry so future expansion can
  * lift them into launch without a content-model bump.
@@ -151,7 +156,7 @@ export const SPELLING_PATTERNS = Object.freeze({
     id: 'homophone',
     title: 'Homophones',
     rule: 'Some words sound the same but are spelled differently and mean different things, such as "their", "there" and "they’re".',
-    examples: Object.freeze(['heard', 'heart', 'weight', 'bruise', 'peculiar']),
+    examples: Object.freeze(['heard', 'weight', 'eight']),
     traps: Object.freeze(['hered', 'wieght']),
     curriculumBand: 'y3-4',
     promptTypes: ALL_PROMPT_TYPES,
@@ -160,7 +165,13 @@ export const SPELLING_PATTERNS = Object.freeze({
     id: 'root-graph-scribe',
     title: 'Roots -graph- and -scribe-',
     rule: 'The root -graph- means "write" or "draw"; -scribe- also means "write".',
-    examples: Object.freeze(['describe', 'grammar', 'signature', 'dictionary']),
+    // Only `describe` is tagged in the current core pool. The other entries are
+    // illustrative of the rule (paragraph/photograph/subscribe/prescribe are
+    // classic -graph-/-scribe- words a KS2 learner should recognise) but do
+    // not yet exist as core-pool words — they stay here as teaching examples
+    // so the card copy is honest about the rule even when the tagged set is
+    // still below the F10 launch threshold of 4.
+    examples: Object.freeze(['describe', 'paragraph', 'photograph', 'subscribe']),
     traps: Object.freeze(['discribe']),
     curriculumBand: 'y5-6',
     promptTypes: ALL_PROMPT_TYPES,
@@ -174,6 +185,12 @@ export const SPELLING_PATTERNS = Object.freeze({
     curriculumBand: 'y5-6',
     promptTypes: ALL_PROMPT_TYPES,
   }),
+  // exception-word is a catch-all tag, not a promptable pattern. It stays in
+  // the registry for traversal completeness but computeLaunchedPatternIds and
+  // U11 Pattern Quest filtering will reject empty promptTypes. The validator's
+  // pattern_below_launch_threshold warning is suppressed for it by the same
+  // empty-promptTypes filter, so it never permanently shows up in the
+  // warning stream.
   'exception-word': Object.freeze({
     id: 'exception-word',
     title: 'Exception words',
@@ -181,7 +198,7 @@ export const SPELLING_PATTERNS = Object.freeze({
     examples: Object.freeze(['yacht', 'queue', 'rhythm', 'lightning']),
     traps: Object.freeze(['yot', 'cue', 'rythm']),
     curriculumBand: 'y5-6',
-    promptTypes: ALL_PROMPT_TYPES,
+    promptTypes: Object.freeze([]),
   }),
 });
 
@@ -200,6 +217,11 @@ export const SPELLING_PATTERN_IDS = Object.freeze(Object.keys(SPELLING_PATTERNS)
  * pass a map of slug -> patternIds[] derived from the runtime content
  * snapshot.
  *
+ * Patterns with empty `promptTypes` (today: `exception-word`) are registry-
+ * only catch-alls, not promptable quests. They are excluded from the
+ * launched set even if they would clear the threshold, so the warning
+ * stream does not permanently report them.
+ *
  * @param {Object} patternIdsBySlug  slug -> patternIds[]
  * @param {number} [threshold]       minimum core words per pattern
  * @returns {string[]}               launched pattern ids, in registry order
@@ -215,7 +237,13 @@ export function computeLaunchedPatternIds(patternIdsBySlug, threshold = PATTERN_
       }
     }
   }
-  return SPELLING_PATTERN_IDS.filter((id) => (counts.get(id) || 0) >= threshold);
+  return SPELLING_PATTERN_IDS.filter((id) => {
+    const pattern = SPELLING_PATTERNS[id];
+    if (!pattern || !Array.isArray(pattern.promptTypes) || pattern.promptTypes.length === 0) {
+      return false;
+    }
+    return (counts.get(id) || 0) >= threshold;
+  });
 }
 
 /**
@@ -242,5 +270,10 @@ export function isPatternEligibleSlug(slug, patternId, wordBySlug) {
   const word = wordBySlug[slug];
   if (!word || typeof word !== 'object') return false;
   if (word.spellingPool === 'extra') return false;
+  // The word must actually carry the requested patternId. Otherwise a content hot-swap
+  // that retags a word (without removing the slug or pattern) would still pass as eligible.
+  if (!Array.isArray(word.patternIds) || !word.patternIds.includes(patternId)) {
+    return false;
+  }
   return true;
 }

@@ -15,6 +15,7 @@ import {
 import {
   SPELLING_PATTERN_IDS as SERVICE_CONTRACT_PATTERN_IDS,
   SPELLING_PATTERNS as SERVICE_CONTRACT_PATTERNS,
+  SPELLING_SERVICE_STATE_VERSION,
   computeLaunchedPatternIds as SERVICE_CONTRACT_COMPUTE,
   isPatternEligibleSlug as SERVICE_CONTRACT_IS_PATTERN_ELIGIBLE,
 } from '../src/subjects/spelling/service-contract.js';
@@ -39,7 +40,13 @@ test('SPELLING_PATTERNS exports exactly 15 patterns with the required shape', ()
     assert.ok(pattern.traps.length >= 1, `Pattern "${id}" must include at least 1 trap.`);
     assert.ok(['y3-4', 'y5-6'].includes(pattern.curriculumBand), `Pattern "${id}" uses an invalid curriculumBand.`);
     assert.ok(Array.isArray(pattern.promptTypes));
-    assert.deepEqual([...pattern.promptTypes].sort(), ['classify', 'detect-error', 'explain', 'spell']);
+    // exception-word is a catch-all tag with empty promptTypes (non-promptable);
+    // every other pattern ships with the full set of four prompt types pre-U11.
+    if (id === 'exception-word') {
+      assert.deepEqual([...pattern.promptTypes], []);
+    } else {
+      assert.deepEqual([...pattern.promptTypes].sort(), ['classify', 'detect-error', 'explain', 'spell']);
+    }
   }
 });
 
@@ -107,17 +114,23 @@ test('every patternId on a core word resolves to a registered pattern', () => {
 });
 
 test('a multi-pattern word retains all registered patternIds through normalisation', () => {
-  // Simulate a multi-pattern tag explicitly (e.g., `competition` → both
-  // suffix-tion and a future root-compete pattern). We use two registered
-  // ids to stay within the current registry.
-  const broken = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
-  const target = broken.draft.words.find((word) => word.slug === 'competition');
-  assert.ok(target, 'Fixture must include the competition word.');
-  target.patternIds = ['suffix-tion', 'double-consonant'];
-  const validation = validateSpellingContentBundle(broken);
+  // `accidentally` is a legitimate multi-pattern core word in the seed:
+  // it carries BOTH `double-consonant` (cc) AND `suffix-ly`. This test
+  // asserts that normalisation preserves both registered patterns rather
+  // than collapsing to a single id — a regression here would hide the
+  // double-consonant clue from U11 Pattern Quest for this word.
+  const bundle = cloneSerialisable(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const target = bundle.draft.words.find((word) => word.slug === 'accidentally');
+  assert.ok(target, 'Fixture must include the accidentally word.');
+  assert.deepEqual(
+    [...target.patternIds].sort(),
+    ['double-consonant', 'suffix-ly'],
+    'accidentally must ship as a genuine multi-pattern word in the seed.',
+  );
+  const validation = validateSpellingContentBundle(bundle);
   assert.equal(validation.ok, true);
-  const normalised = validation.bundle.draft.words.find((word) => word.slug === 'competition');
-  assert.deepEqual([...normalised.patternIds].sort(), ['double-consonant', 'suffix-tion']);
+  const normalised = validation.bundle.draft.words.find((word) => word.slug === 'accidentally');
+  assert.deepEqual([...normalised.patternIds].sort(), ['double-consonant', 'suffix-ly']);
 });
 
 test('validation fails when a core word has empty patternIds and no exception-word tag', () => {
@@ -208,15 +221,22 @@ test('computeLaunchedPatternIds preserves registry order', () => {
     }
   }
   const launched = computeLaunchedPatternIds(allSlugs);
-  assert.deepEqual(launched, [...SPELLING_PATTERN_IDS]);
+  // exception-word is a registry-only catch-all with empty promptTypes
+  // (F5) and is never launched, so the expected launched list is the
+  // registry minus that entry.
+  const expected = [...SPELLING_PATTERN_IDS].filter((id) => {
+    const pattern = SPELLING_PATTERNS[id];
+    return Array.isArray(pattern.promptTypes) && pattern.promptTypes.length > 0;
+  });
+  assert.deepEqual(launched, expected);
 });
 
 test('isPatternEligibleSlug guards against missing pattern, extra-pool, and orphan slugs', () => {
   const wordBySlug = {
-    nation: { slug: 'nation', spellingPool: 'core' },
-    mollusc: { slug: 'mollusc', spellingPool: 'extra' },
+    nation: { slug: 'nation', spellingPool: 'core', patternIds: ['suffix-tion'] },
+    mollusc: { slug: 'mollusc', spellingPool: 'extra', patternIds: ['suffix-tion'] },
   };
-  // Happy path — registered pattern, core-pool slug present.
+  // Happy path — registered pattern, core-pool slug present, patternIds carries it.
   assert.equal(isPatternEligibleSlug('nation', 'suffix-tion', wordBySlug), true);
   // Extra-pool never qualifies.
   assert.equal(isPatternEligibleSlug('mollusc', 'suffix-tion', wordBySlug), false);
@@ -228,6 +248,60 @@ test('isPatternEligibleSlug guards against missing pattern, extra-pool, and orph
   assert.equal(isPatternEligibleSlug(null, 'suffix-tion', wordBySlug), false);
   assert.equal(isPatternEligibleSlug('nation', null, wordBySlug), false);
   assert.equal(isPatternEligibleSlug('nation', 'suffix-tion', null), false);
+});
+
+test('isPatternEligibleSlug rejects words whose patternIds do not include the requested pattern', () => {
+  // F3 fix: a word whose `patternIds` does NOT include the requested pattern
+  // must not be eligible. Otherwise a content hot-swap that retags a word
+  // (say, drops `suffix-tion` from `nation` but leaves the slug and the
+  // registry pattern alive) would still pass as eligible and feed the
+  // learner a mismatched quest.
+  const wordBySlug = {
+    nation: { slug: 'nation', spellingPool: 'core', patternIds: ['suffix-tion'] },
+    retagged: { slug: 'retagged', spellingPool: 'core', patternIds: ['suffix-ous'] },
+    empty: { slug: 'empty', spellingPool: 'core', patternIds: [] },
+    missing: { slug: 'missing', spellingPool: 'core' },
+    malformed: { slug: 'malformed', spellingPool: 'core', patternIds: 'suffix-tion' },
+  };
+  assert.equal(isPatternEligibleSlug('nation', 'suffix-tion', wordBySlug), true);
+  // Requested pattern not among the slug's patternIds.
+  assert.equal(isPatternEligibleSlug('retagged', 'suffix-tion', wordBySlug), false);
+  // Empty patternIds array.
+  assert.equal(isPatternEligibleSlug('empty', 'suffix-tion', wordBySlug), false);
+  // patternIds field missing entirely.
+  assert.equal(isPatternEligibleSlug('missing', 'suffix-tion', wordBySlug), false);
+  // patternIds not an array (malformed persisted blob).
+  assert.equal(isPatternEligibleSlug('malformed', 'suffix-tion', wordBySlug), false);
+});
+
+test('computeLaunchedPatternIds excludes empty-promptTypes catch-alls even above threshold', () => {
+  // F5: exception-word ships with empty promptTypes — it must never appear
+  // in the launched subset regardless of how many core words carry the tag.
+  const patternIdsBySlug = Object.fromEntries(
+    Array.from({ length: 10 }, (_, index) => [`slug-${index}`, ['exception-word']]),
+  );
+  const launched = computeLaunchedPatternIds(patternIdsBySlug);
+  assert.ok(!launched.includes('exception-word'));
+});
+
+test('validator suppresses pattern_below_launch_threshold warnings for empty-promptTypes catch-alls', () => {
+  // F5: exception-word has empty promptTypes. It is registry-only and must
+  // never trip the below-threshold warning — that would be permanent noise.
+  const validation = validateSpellingContentBundle(SEEDED_SPELLING_CONTENT_BUNDLE);
+  const warningIds = validation.warnings
+    .filter((warning) => warning.code === 'pattern_below_launch_threshold')
+    .map((warning) => warning.path);
+  assert.ok(!warningIds.includes('patterns.exception-word'));
+});
+
+test('H7 convention: content model even, service state odd', () => {
+  // The even/odd split (content-model EVEN, service-state ODD) rules out
+  // accidental collisions by construction. See U10 adversarial synthesis
+  // in the P2 plan (§U10). A regression here means a future bump pushed
+  // both counters onto the same parity lane and the triage cost blows a
+  // whole day re-establishing which counter moved.
+  assert.equal(SPELLING_CONTENT_MODEL_VERSION % 2, 0, 'content model must be even');
+  assert.equal(SPELLING_SERVICE_STATE_VERSION % 2, 1, 'service state must be odd');
 });
 
 test('SPELLING_CONTENT_MODEL_VERSION skips 3 per H7 synthesis', () => {
