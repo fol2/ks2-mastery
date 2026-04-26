@@ -39,6 +39,7 @@ import { pathToFileURL } from 'node:url';
 import {
   argValue,
   configuredOrigin,
+  configuredTimeoutMs,
   createDemoSession,
   DEFAULT_PRODUCTION_ORIGIN,
   loadBootstrap,
@@ -49,6 +50,7 @@ import {
   SPELLING_AUDIO_MODEL,
   buildWordAudioAssetKey,
 } from '../shared/spelling-audio.js';
+import { SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from '../src/subjects/spelling/data/content-data.js';
 
 // --- Exit-code taxonomy --------------------------------------------------
 //
@@ -160,6 +162,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     requireLegacyHit: false,
     json: false,
     help: false,
+    timeoutMs: 0,
   };
 
   const assigned = new Set();
@@ -197,8 +200,15 @@ export function parseArgs(argv = process.argv.slice(2)) {
     } else if (arg === '--json') {
       options.json = true;
     } else if (arg === '--timeout-ms') {
-      // Consumed by `scripts/lib/production-smoke.mjs` via process.argv;
-      // we only need to skip the value so the parser does not fault.
+      // Plumbed into both `runSpellingAudioSmoke(options)` and the
+      // shared `lib/production-smoke.mjs` helpers (which read it back via
+      // `configuredTimeoutMs()` from process.argv / env).
+      assignOnce(arg);
+      const parsed = Number(readOptionValue(argv, index, arg));
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        throw new Error('--timeout-ms requires a positive number of milliseconds.');
+      }
+      options.timeoutMs = parsed;
       index += 1;
     } else {
       throw new Error(`Unknown option: ${arg}`);
@@ -211,11 +221,16 @@ export function parseArgs(argv = process.argv.slice(2)) {
 // --- Prompt token + R2 key derivation -----------------------------------
 //
 // Byte-equal mirror of `worker/src/subjects/spelling/audio.js` salt
-// prefixes:
+// prefix:
 //   `wordBankPromptToken({ learnerId, slug, word, sentence })`
 //      → `sha256('spelling-word-bank-prompt-v1' | learnerId | slug | word | sentence)`
-//   `sessionPromptToken({ learnerId, sessionId, slug, word, sentence })`
-//      → `sha256('spelling-prompt-v1' | learnerId | sessionId | slug | word | sentence)`
+// The Worker reads the sentence from the published snapshot
+// (`snapshot.wordBySlug[slug].sentence` then `cleanText`) before computing
+// its expected token, so the smoke MUST supply the matching sentence or
+// the Worker rejects the request with `tts_prompt_stale` (HTTP 400).
+// `lookupSeedWord(slug)` reads from `SEEDED_SPELLING_PUBLISHED_SNAPSHOT`
+// — the same source the Worker pins for runtime reads.
+//
 // The cross-account R2 key derivation mirrors `bufferedAudioMetadata`:
 //   `contentKey = sha256('spelling-audio-word-v1' | slug | word)`
 // — deliberately omits `accountId` so two learners share the same R2 key
@@ -225,21 +240,21 @@ function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
+export function lookupSeedWord(slug) {
+  const safeSlug = cleanText(slug).toLowerCase();
+  const entry = SEEDED_SPELLING_PUBLISHED_SNAPSHOT?.wordBySlug?.[safeSlug] || null;
+  if (!entry) return null;
+  return {
+    slug: entry.slug || safeSlug,
+    word: cleanText(entry.word),
+    sentence: cleanText(entry.sentence),
+  };
+}
+
 export async function computeWordBankPromptToken({ learnerId, slug, word, sentence = '' } = {}) {
   return sha256([
     'spelling-word-bank-prompt-v1',
     cleanText(learnerId),
-    cleanText(slug),
-    cleanText(word),
-    cleanText(sentence),
-  ].join('|'));
-}
-
-export async function computeSessionPromptToken({ learnerId, sessionId, slug, word, sentence } = {}) {
-  return sha256([
-    'spelling-prompt-v1',
-    cleanText(learnerId),
-    cleanText(sessionId),
     cleanText(slug),
     cleanText(word),
     cleanText(sentence),
@@ -275,8 +290,25 @@ export async function expectedWordR2Key({ slug, word, voice, model = SPELLING_AU
 //     `x-ks2-tts-cache-source`, model, voice).
 // The same-origin headers + JSON encoding mirror `postJson`.
 
-async function postTtsRequest({ origin, cookie, body }) {
+function abortSignalFor(timeoutMs) {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(timeoutMs);
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  if (typeof timer?.unref === 'function') timer.unref();
+  return controller.signal;
+}
+
+async function postTtsRequest({ origin, cookie, body, timeoutMs }) {
   const url = new URL('/api/tts', origin);
+  // `--timeout-ms` (parsed by `parseArgs`, also honoured via env
+  // `KS2_SMOKE_TIMEOUT_MS`) is plumbed through `configuredTimeoutMs()` so
+  // production hangs (Gemini outage, Worker cold-start) bound the smoke
+  // run rather than wedging it indefinitely.
+  const effectiveTimeoutMs = Number.isFinite(timeoutMs) && timeoutMs > 0
+    ? timeoutMs
+    : configuredTimeoutMs();
   let response;
   try {
     response = await globalThis.fetch(url, {
@@ -288,9 +320,12 @@ async function postTtsRequest({ origin, cookie, body }) {
         ...(cookie ? { cookie } : {}),
       },
       body: JSON.stringify(body),
+      signal: abortSignalFor(effectiveTimeoutMs),
     });
   } catch (error) {
-    throw transportError(`POST /api/tts failed or timed out: ${error?.message || error}`, error);
+    // `AbortError` from `AbortSignal.timeout` should still classify as
+    // EXIT_TRANSPORT — keep the kind tag stable.
+    throw transportError(`POST /api/tts failed or timed out after ${effectiveTimeoutMs}ms: ${error?.message || error}`, error);
   }
 
   return response;
@@ -335,15 +370,29 @@ async function runWordProbe({
   slug,
   voice,
   requireWordHit,
+  timeoutMs,
 }) {
-  const word = cleanText(slug);
-  const sentence = '';
+  // BLOCKER fix (2026-04-26 review): the Worker's `wordBankPromptParts`
+  // (`worker/src/subjects/spelling/audio.js:87-107`) reads the seed
+  // snapshot and includes `cleanText(word.sentence)` in its expected
+  // token. An empty-sentence token mismatches → 400 `tts_prompt_stale`.
+  // Look up the canonical `(word, sentence)` pair from the published
+  // snapshot so the smoke's token matches what the Worker computes.
+  const seed = lookupSeedWord(slug);
+  if (!seed || !seed.word) {
+    throw validationError(
+      `Word probe ${slug}/${voice}: slug missing from SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug — update the smoke fixture or seed.`,
+    );
+  }
+  const word = seed.word;
+  const sentence = seed.sentence;
   const promptToken = await computeWordBankPromptToken({ learnerId, slug, word, sentence });
   const expectedKey = await expectedWordR2Key({ slug, word, voice });
 
   const response = await postTtsRequest({
     origin,
     cookie,
+    timeoutMs,
     body: {
       wordOnly: true,
       scope: 'word-bank',
@@ -431,8 +480,8 @@ async function runSentenceProbe({
   learnerId,
   slug,
   requireLegacyHit,
+  timeoutMs,
 }) {
-  const word = cleanText(slug);
   // For legacy sentence probes we still need a session-style prompt token;
   // since the smoke runner does not have an active session id (no spelling
   // round was started), the Worker validates the prompt against the
@@ -440,16 +489,26 @@ async function runSentenceProbe({
   // word-bank token here so the Worker accepts the request and then runs
   // the cache lookup on the legacy R2 key shape (the legacy fallback
   // applies to sentence-shaped metadata, not the wordOnly path).
+  // Sentence is loaded from the snapshot to match what the Worker computes
+  // (see BLOCKER fix in `runWordProbe`).
+  const seed = lookupSeedWord(slug);
+  if (!seed || !seed.word) {
+    throw validationError(
+      `Sentence probe ${slug}: slug missing from SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug — update the smoke fixture or seed.`,
+    );
+  }
+  const word = seed.word;
   const promptToken = await computeWordBankPromptToken({
     learnerId,
     slug,
     word,
-    sentence: '',
+    sentence: seed.sentence,
   });
 
   const response = await postTtsRequest({
     origin,
     cookie,
+    timeoutMs,
     body: {
       slug,
       learnerId,
@@ -527,6 +586,7 @@ async function runCrossAccountProbe({
   fixtureWord = CROSS_ACCOUNT_FIXTURE_WORD,
   distinctWord = CROSS_ACCOUNT_DISTINCT_WORD,
   voice = VOICE_IDS[0],
+  timeoutMs,
 }) {
   // Two real demo sessions — Worker validates `learnerId` against the
   // session at `worker/src/subjects/spelling/audio.js:114-118`, so faked
@@ -536,23 +596,42 @@ async function runCrossAccountProbe({
   const sessionB = await createDemoSession(origin);
   const bootstrapB = await loadBootstrap(origin, sessionB.cookie, { expectedSession: sessionB.session });
 
+  // BLOCKER fix: load fixture/distinct sentences from the snapshot so the
+  // tokens match what the Worker computes (see `runWordProbe`).
+  const fixtureSeed = lookupSeedWord(fixtureWord);
+  const distinctSeed = lookupSeedWord(distinctWord);
+  if (!fixtureSeed || !fixtureSeed.word) {
+    throw validationError(
+      `Cross-account probe: fixture word ${fixtureWord} missing from SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug.`,
+    );
+  }
+  if (!distinctSeed || !distinctSeed.word) {
+    throw validationError(
+      `Cross-account probe: distinct word ${distinctWord} missing from SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug.`,
+    );
+  }
+  const fixtureWordText = fixtureSeed.word;
+  const fixtureSentence = fixtureSeed.sentence;
+  const distinctWordText = distinctSeed.word;
+  const distinctSentence = distinctSeed.sentence;
+
   const tokenA = await computeWordBankPromptToken({
     learnerId: bootstrapA.learnerId,
     slug: fixtureWord,
-    word: fixtureWord,
-    sentence: '',
+    word: fixtureWordText,
+    sentence: fixtureSentence,
   });
   const tokenB = await computeWordBankPromptToken({
     learnerId: bootstrapB.learnerId,
     slug: fixtureWord,
-    word: fixtureWord,
-    sentence: '',
+    word: fixtureWordText,
+    sentence: fixtureSentence,
   });
-  const expectedKeyA = await expectedWordR2Key({ slug: fixtureWord, word: fixtureWord, voice });
-  const expectedKeyB = await expectedWordR2Key({ slug: fixtureWord, word: fixtureWord, voice });
+  const expectedKeyA = await expectedWordR2Key({ slug: fixtureWord, word: fixtureWordText, voice });
+  const expectedKeyB = await expectedWordR2Key({ slug: fixtureWord, word: fixtureWordText, voice });
   const expectedKeyDistinct = await expectedWordR2Key({
     slug: distinctWord,
-    word: distinctWord,
+    word: distinctWordText,
     voice,
   });
 
@@ -572,6 +651,7 @@ async function runCrossAccountProbe({
   const responseA = await postTtsRequest({
     origin,
     cookie: sessionA.cookie,
+    timeoutMs,
     body: {
       wordOnly: true,
       scope: 'word-bank',
@@ -586,6 +666,7 @@ async function runCrossAccountProbe({
   const responseB = await postTtsRequest({
     origin,
     cookie: sessionB.cookie,
+    timeoutMs,
     body: {
       wordOnly: true,
       scope: 'word-bank',
@@ -598,6 +679,7 @@ async function runCrossAccountProbe({
   const responseDistinct = await postTtsRequest({
     origin,
     cookie: sessionA.cookie,
+    timeoutMs,
     body: {
       wordOnly: true,
       scope: 'word-bank',
@@ -606,8 +688,8 @@ async function runCrossAccountProbe({
       promptToken: await computeWordBankPromptToken({
         learnerId: bootstrapA.learnerId,
         slug: distinctWord,
-        word: distinctWord,
-        sentence: '',
+        word: distinctWordText,
+        sentence: distinctSentence,
       }),
       bufferedGeminiVoice: voice,
     },
@@ -678,12 +760,58 @@ async function runCrossAccountProbe({
 
 // --- Top-level runner ----------------------------------------------------
 
+// Wrap a probe runner so a thrown error becomes a structured probe entry
+// rather than short-circuiting the entire run. Operator gets the full
+// matrix of pass/fail in one report instead of "first failure only" —
+// makes triage faster when several probes regress at once.
+async function safeRunProbe(kindLabel, runner) {
+  try {
+    return await runner();
+  } catch (error) {
+    const kind = error?.kind === 'transport'
+      ? 'transport'
+      : error?.kind === 'usage'
+        ? 'usage'
+        : 'validation';
+    return {
+      kind: kindLabel,
+      ok: false,
+      error: {
+        kind,
+        message: error?.message || String(error),
+      },
+      notes: [`error[${kind}]: ${error?.message || String(error)}`],
+    };
+  }
+}
+
+// Compute the worst-classification exit code from the failed probes:
+// validation > transport (validation surfaces a contract regression while
+// transport may resolve on retry; we want validation to dominate so the
+// operator's eye lands on the contract break first).
+function worstProbeExitCode(probes) {
+  let worst = EXIT_OK;
+  for (const probe of probes) {
+    if (probe.ok !== false) continue;
+    const kind = probe.error?.kind || 'validation';
+    if (kind === 'validation') return EXIT_VALIDATION;
+    if (kind === 'transport' && worst !== EXIT_VALIDATION) worst = EXIT_TRANSPORT;
+    if (kind === 'usage' && worst === EXIT_OK) worst = EXIT_USAGE;
+  }
+  return worst;
+}
+
 export async function runSpellingAudioSmoke(options = {}) {
   const origin = options.origin || configuredOrigin();
   const startedAt = new Date().toISOString();
+  const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+    ? options.timeoutMs
+    : configuredTimeoutMs();
 
   // Primary demo session — used for word-only + sentence probes. The
   // cross-account probe internally creates two more demo sessions.
+  // Demo + bootstrap failures still throw (no point producing a probe
+  // matrix when we cannot authenticate at all).
   let demo;
   try {
     demo = await createDemoSession(origin);
@@ -706,26 +834,28 @@ export async function runSpellingAudioSmoke(options = {}) {
   const probes = [];
   for (const slug of options.wordSample) {
     for (const voice of VOICE_IDS) {
-      probes.push(await runWordProbe({
+      probes.push(await safeRunProbe('word', () => runWordProbe({
         origin,
         cookie: demo.cookie,
         learnerId: bootstrap.learnerId,
         slug,
         voice,
         requireWordHit: options.requireWordHit,
-      }));
+        timeoutMs,
+      })));
     }
   }
   for (const slug of options.sentenceSample) {
-    probes.push(await runSentenceProbe({
+    probes.push(await safeRunProbe('sentence', () => runSentenceProbe({
       origin,
       cookie: demo.cookie,
       learnerId: bootstrap.learnerId,
       slug,
       requireLegacyHit: options.requireLegacyHit,
-    }));
+      timeoutMs,
+    })));
   }
-  probes.push(await runCrossAccountProbe({ origin }));
+  probes.push(await safeRunProbe('cross-account', () => runCrossAccountProbe({ origin, timeoutMs })));
 
   const finishedAt = new Date().toISOString();
   const ok = probes.every((probe) => probe.ok !== false);
@@ -792,7 +922,10 @@ export async function runCli(argv = process.argv.slice(2)) {
   } else {
     console.log(renderHumanReadableReport(report));
   }
-  return report.ok ? EXIT_OK : EXIT_VALIDATION;
+  if (report.ok) return EXIT_OK;
+  // Map exit code from the worst probe.kind classification — validation
+  // dominates transport so contract regressions are visible first.
+  return worstProbeExitCode(report.probes);
 }
 
 async function main() {
