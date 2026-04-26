@@ -1993,6 +1993,57 @@ async function applyPostMegaSeed({ learnerId, shapeName }) {
   }
 }
 
+// U10: admin archive a Grammar Writing Try entry. The role gate is
+// enforced server-side via `requireAdminHubAccess`; the client never
+// claims the admin role. After a successful archive, reload the Admin
+// Hub so the UI reflects the live / archive split without a full page
+// refresh. Errors surface through the standard alert + notice patching
+// used by other admin mutations (post-Mega seed, account ops metadata).
+async function archiveGrammarTransferEntry({ learnerId, promptId }) {
+  if (!hubApi) return;
+  if (!(typeof learnerId === 'string' && learnerId)) return;
+  if (!(typeof promptId === 'string' && promptId)) return;
+  const requestId = uid('grammar-transfer-archive');
+  const mutation = { requestId, correlationId: requestId };
+  try {
+    await hubApi.archiveGrammarTransferEvidence({ learnerId, promptId, mutation });
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      notice: `Archived Writing Try entry for ${promptId} (learner ${learnerId}).`,
+    }));
+    loadAdminHub({ learnerId, force: true });
+  } catch (error) {
+    globalThis.alert?.(`Archive failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
+// U10: admin hard-delete a Grammar Writing Try entry. Requires the entry
+// to have been archived first — the repository helper rejects a delete
+// against a live entry with `archive_required_before_delete`. The UI
+// gates the button behind an explicit confirm dialog so a misclick
+// cannot irreversibly wipe learner writing.
+async function deleteGrammarTransferEntry({ learnerId, promptId }) {
+  if (!hubApi) return;
+  if (!(typeof learnerId === 'string' && learnerId)) return;
+  if (!(typeof promptId === 'string' && promptId)) return;
+  const confirmed = typeof globalThis.confirm === 'function'
+    ? globalThis.confirm(`Permanently delete the archived Writing Try entry for ${promptId}? This cannot be undone.`)
+    : true;
+  if (!confirmed) return;
+  const requestId = uid('grammar-transfer-delete');
+  const mutation = { requestId, correlationId: requestId };
+  try {
+    await hubApi.deleteGrammarTransferEvidence({ learnerId, promptId, mutation });
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      notice: `Deleted archived Writing Try entry for ${promptId} (learner ${learnerId}).`,
+    }));
+    loadAdminHub({ learnerId, force: true });
+  } catch (error) {
+    globalThis.alert?.(`Delete failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
 function ensureSpellingAutoAdvanceFromCurrentState() {
   return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
@@ -2541,6 +2592,22 @@ function handleGlobalAction(action, data) {
     applyPostMegaSeed({
       learnerId: data?.learnerId,
       shapeName: data?.shapeName,
+    });
+    return true;
+  }
+
+  if (action === 'grammar-transfer-admin-archive') {
+    archiveGrammarTransferEntry({
+      learnerId: data?.learnerId,
+      promptId: data?.promptId,
+    });
+    return true;
+  }
+
+  if (action === 'grammar-transfer-admin-delete') {
+    deleteGrammarTransferEntry({
+      learnerId: data?.learnerId,
+      promptId: data?.promptId,
     });
     return true;
   }

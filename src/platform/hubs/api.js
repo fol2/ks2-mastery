@@ -218,6 +218,34 @@ export function createHubApi({
         body: JSON.stringify(body),
       }, authSession);
     },
+    // U10: admin-only archive + hard-delete for Grammar Writing Try
+    // entries. The routes are POST-only (CSRF + idempotent via the
+    // mutation envelope) and are guarded server-side by
+    // `requireAdminHubAccess`. The client never claims the admin role —
+    // the session cookie identifies the actor and the Worker derives
+    // the role from the account record.
+    async archiveGrammarTransferEvidence({ learnerId, promptId, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/learners/${encodeURIComponent(learnerId)}/grammar/transfer-evidence/${encodeURIComponent(promptId)}/archive`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mutation }),
+      }, authSession);
+    },
+    async deleteGrammarTransferEvidence({ learnerId, promptId, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/learners/${encodeURIComponent(learnerId)}/grammar/transfer-evidence/${encodeURIComponent(promptId)}/delete`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mutation }),
+      }, authSession);
+    },
     // P2 U3: admin-gated seed harness. Caller supplies learnerId, one of the
     // 8 canonical shape names, optional day-epoch `today`, and a mutation
     // envelope. Server responds with `{ok, postMegaSeed, postMegaSeedMutation}`

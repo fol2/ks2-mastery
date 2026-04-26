@@ -68,6 +68,12 @@ import {
 import { MONSTER_ASSET_MANIFEST } from '../../src/platform/game/monster-asset-manifest.js';
 import { bundledEffectConfig } from '../../src/platform/game/render/effect-config-defaults.js';
 import {
+  archiveGrammarTransferEvidenceState,
+  createInitialGrammarState,
+  deleteGrammarTransferEvidenceState,
+} from './subjects/grammar/engine.js';
+import { grammarTransferPromptById } from './subjects/grammar/transfer-prompts.js';
+import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
@@ -3695,6 +3701,279 @@ async function seedPostMegaLearnerState(db, {
 }
 
 // ---------------------------------------------------------------------------
+// U10: Grammar Writing Try — admin archive + hard-delete.
+//
+// Plan: docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md §U10
+//
+// The learner subject-command dispatcher at
+// `worker/src/subjects/grammar/commands.js:26-103` never inspects role, so
+// U10 adds admin-gated HTTP routes (`worker/src/app.js`) that bypass the
+// learner command path and invoke these repository helpers directly. The
+// helpers mirror the `requireMonsterVisualConfigManager` pattern — role is
+// derived server-side from the actor account, NEVER from the request
+// payload. Two-step safety: archive moves the live entry into
+// `state.transferEvidenceArchive`, then a separate `delete` call wipes the
+// archived slot. An admin that tries to delete before archiving receives
+// `archive_required_before_delete` so an accidental hard-delete is
+// impossible along the admin path.
+//
+// Phase 4 invariant 5 ("Writing Try is non-scored") is preserved because
+// these helpers mutate only `state.transferEvidence` /
+// `state.transferEvidenceArchive`, never the scored slots
+// (mastery/retryQueue/misconceptions/recentAttempts). The emitted audit
+// events carry `nonScored: true` and are not consumed by the reward
+// projection pipeline.
+// ---------------------------------------------------------------------------
+
+const GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE = 'grammar-transfer-evidence';
+const GRAMMAR_TRANSFER_ARCHIVE_MUTATION_KIND = 'admin.grammar.transfer-evidence.archive';
+const GRAMMAR_TRANSFER_DELETE_MUTATION_KIND = 'admin.grammar.transfer-evidence.delete';
+// Matches the POST_MEGA_SEED_LEARNER_ID_REGEX guard — archive + delete
+// paths must enforce the same charset rules so a forged admin request
+// cannot smuggle control chars or HTML into the scopeId / audit log.
+const GRAMMAR_ADMIN_LEARNER_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
+// Mirrors the per-promptId cap on the learner side. Longer ids are
+// rejected with `invalid_prompt_id` BEFORE any DB access runs.
+const GRAMMAR_ADMIN_PROMPT_ID_MAX_CHARS = 64;
+const GRAMMAR_ADMIN_PROMPT_ID_REGEX = /^[a-z0-9][a-z0-9-]{0,63}$/i;
+
+function assertAdminGrammarTransferInputs(learnerId, promptId) {
+  if (!(typeof learnerId === 'string' && learnerId)) {
+    throw new BadRequestError('Learner id is required for Writing Try admin actions.', {
+      code: 'learner_id_required',
+    });
+  }
+  if (!GRAMMAR_ADMIN_LEARNER_ID_REGEX.test(learnerId)) {
+    throw new BadRequestError('Learner id contains invalid characters.', {
+      code: 'invalid_learner_id',
+      pattern: GRAMMAR_ADMIN_LEARNER_ID_REGEX.source,
+    });
+  }
+  if (!(typeof promptId === 'string' && promptId)) {
+    throw new BadRequestError('Prompt id is required for Writing Try admin actions.', {
+      code: 'grammar_transfer_prompt_id_required',
+    });
+  }
+  if (promptId.length > GRAMMAR_ADMIN_PROMPT_ID_MAX_CHARS || !GRAMMAR_ADMIN_PROMPT_ID_REGEX.test(promptId)) {
+    throw new BadRequestError('Prompt id contains invalid characters.', {
+      code: 'invalid_prompt_id',
+      pattern: GRAMMAR_ADMIN_PROMPT_ID_REGEX.source,
+      maxChars: GRAMMAR_ADMIN_PROMPT_ID_MAX_CHARS,
+    });
+  }
+}
+
+async function loadGrammarSubjectStateForAdmin(db, learnerId) {
+  const row = await first(db, `
+    SELECT learner_id, subject_id, ui_json, data_json, updated_at
+    FROM child_subject_state
+    WHERE learner_id = ? AND subject_id = 'grammar'
+  `, [learnerId]);
+  return {
+    row,
+    record: row ? subjectStateRowToRecord(row) : null,
+  };
+}
+
+async function runAdminGrammarTransferMutation(db, {
+  actorAccountId,
+  learnerId,
+  promptId,
+  mutation,
+  mutationKind,
+  scopeType,
+  scopeTypeForReceipt,
+  applyStateChange,
+  nowTs,
+}) {
+  assertAdminGrammarTransferInputs(learnerId, promptId);
+
+  // Role gate. `assertAdminHubAccess` rejects demo accounts and any
+  // platformRole outside admin/ops; the payload is never inspected. This
+  // is the ONLY source of truth for the admin role on this path — the
+  // client-supplied body is discarded by the app.js handler, so spoofing
+  // `command.payload.actor.role` has no effect.
+  const actor = await assertAdminHubActor(db, actorAccountId);
+
+  const scopeId = `${scopeType}:${learnerId}:${promptId}`;
+  const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
+    scopeType: scopeTypeForReceipt,
+    scopeId,
+  });
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const requestHash = mutationPayloadHash(mutationKind, { learnerId, promptId });
+
+  // Idempotency replay preflight. A duplicate requestId that matches the
+  // stored requestHash returns the prior response with `replayed: true`.
+  // A mismatched hash is a client bug (or an attack) and raises 409.
+  const existingReceipt = await loadMutationReceipt(db, actorAccountId, requestId);
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind: mutationKind,
+        scopeType: scopeTypeForReceipt,
+        scopeId,
+        requestId,
+        correlationId,
+      });
+    }
+    const storedReplay = safeJsonParse(existingReceipt.response_json, {});
+    return {
+      ...storedReplay,
+      grammarTransferMutation: {
+        ...(storedReplay.grammarTransferMutation || {}),
+        requestId,
+        correlationId,
+        replayed: true,
+      },
+    };
+  }
+
+  // Load the learner's Grammar subject state. Admin paths must not
+  // auto-create the row — an admin action on a learner with no Grammar
+  // evidence is always a lookup error.
+  const { row, record } = await loadGrammarSubjectStateForAdmin(db, learnerId);
+  if (!row || !record) {
+    throw new NotFoundError('Grammar subject state not found for this learner.', {
+      code: 'grammar_state_not_found',
+      learnerId,
+    });
+  }
+
+  // Run the pure engine helper against a normalised state. The engine's
+  // normaliser defaults `transferEvidence` / `transferEvidenceArchive` to
+  // `{}`, so pre-U10 rows without the archive slot are handled safely.
+  // The pure helper throws on "archive required" / "entry not found" with
+  // a stable error code; we let the error bubble up to the HTTP handler.
+  const initialState = createInitialGrammarState(record.data || {});
+  const state = {
+    ...initialState,
+    ...(isPlainObject(record.ui) ? cloneSerialisable(record.ui) : {}),
+    transferEvidence: isPlainObject(record.data?.transferEvidence)
+      ? cloneSerialisable(record.data.transferEvidence)
+      : (isPlainObject(record.ui?.transferEvidence) ? cloneSerialisable(record.ui.transferEvidence) : {}),
+    transferEvidenceArchive: isPlainObject(record.data?.transferEvidenceArchive)
+      ? cloneSerialisable(record.data.transferEvidenceArchive)
+      : (isPlainObject(record.ui?.transferEvidenceArchive)
+        ? cloneSerialisable(record.ui.transferEvidenceArchive)
+        : {}),
+  };
+
+  const events = applyStateChange(state, { promptId, learnerId, requestId, now: ts });
+
+  // Persist the mutated slots back into child_subject_state. We write the
+  // full data_json and the minimal ui_json patch — the scored slots
+  // (mastery/retryQueue/misconceptions/recentAttempts) are untouched so
+  // the resulting JSON differs only in the two transfer slots. This is
+  // the byte-level guarantee that backs Phase 4 invariant 5.
+  const nextDataSource = isPlainObject(record.data) ? cloneSerialisable(record.data) : {};
+  nextDataSource.transferEvidence = cloneSerialisable(state.transferEvidence) || {};
+  nextDataSource.transferEvidenceArchive = cloneSerialisable(state.transferEvidenceArchive) || {};
+  const nextUiSource = isPlainObject(record.ui) ? cloneSerialisable(record.ui) : null;
+  if (nextUiSource) {
+    nextUiSource.transferEvidence = cloneSerialisable(state.transferEvidence) || {};
+    nextUiSource.transferEvidenceArchive = cloneSerialisable(state.transferEvidenceArchive) || {};
+  }
+
+  const mutationMeta = {
+    policyVersion: MUTATION_POLICY_VERSION,
+    kind: mutationKind,
+    scopeType: scopeTypeForReceipt,
+    scopeId,
+    requestId,
+    correlationId,
+    appliedAt: ts,
+    replayed: false,
+  };
+  const response = {
+    grammarTransferEvidence: {
+      learnerId,
+      promptId,
+      events: events.map((event) => cloneSerialisable(event)),
+    },
+    grammarTransferMutation: mutationMeta,
+  };
+
+  const statements = [
+    bindStatement(db, `
+      UPDATE child_subject_state
+      SET ui_json = ?,
+          data_json = ?,
+          updated_at = ?,
+          updated_by_account_id = ?
+      WHERE learner_id = ? AND subject_id = 'grammar'
+    `, [
+      nextUiSource == null ? 'null' : JSON.stringify(nextUiSource),
+      JSON.stringify(nextDataSource),
+      ts,
+      actorAccountId,
+      learnerId,
+    ]),
+    storeMutationReceiptStatement(db, {
+      accountId: actorAccountId,
+      requestId,
+      scopeType: scopeTypeForReceipt,
+      scopeId,
+      mutationKind,
+      requestHash,
+      response,
+      correlationId,
+      appliedAt: ts,
+    }),
+  ];
+  await batch(db, statements);
+  // Suppress the unused `actor` lint — keeping the variable reads the
+  // role at least once so a reviewer sees the RBAC gate explicitly.
+  void actor;
+  return response;
+}
+
+async function archiveGrammarTransferEvidence(db, {
+  actorAccountId,
+  learnerId,
+  promptId,
+  mutation,
+  nowTs,
+}) {
+  return runAdminGrammarTransferMutation(db, {
+    actorAccountId,
+    learnerId,
+    promptId,
+    mutation,
+    mutationKind: GRAMMAR_TRANSFER_ARCHIVE_MUTATION_KIND,
+    scopeType: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    scopeTypeForReceipt: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    nowTs,
+    applyStateChange: (state, context) => archiveGrammarTransferEvidenceState(state, context),
+  });
+}
+
+async function deleteGrammarTransferEvidence(db, {
+  actorAccountId,
+  learnerId,
+  promptId,
+  mutation,
+  nowTs,
+}) {
+  return runAdminGrammarTransferMutation(db, {
+    actorAccountId,
+    learnerId,
+    promptId,
+    mutation,
+    mutationKind: GRAMMAR_TRANSFER_DELETE_MUTATION_KIND,
+    scopeType: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    scopeTypeForReceipt: GRAMMAR_TRANSFER_ARCHIVE_SCOPE_TYPE,
+    nowTs,
+    applyStateChange: (state, context) => deleteGrammarTransferEvidenceState(state, context),
+  });
+}
+
+// Suppress unused import until admin read-model consumes them in the
+// public repository method registration. The constants are referenced
+// inside the repository close below.
+void grammarTransferPromptById;
+
+// ---------------------------------------------------------------------------
 // U6: public client error capture ingest.
 //
 // recordClientErrorEvent persists a client-reported error into
@@ -7205,7 +7484,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       correlationId = null,
       clientComputed = null,
     } = {}) {
-      // U10: admin-only. `requireAccountRoleManager` forbids non-admin
+      // admin-only. `requireAccountRoleManager` forbids non-admin
       // actors. Internal reconciliation (cron path) bypasses this by
       // calling `reconcileAdminKpiMetricsInternal` directly.
       const actor = await assertAdminHubActor(db, accountId);
@@ -7215,6 +7494,31 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         requestId,
         correlationId,
         clientComputed,
+        nowTs: nowFactory(),
+      });
+    },
+    // U10: Grammar Writing Try admin archive + hard-delete routes. These
+    // are the FIRST admin-scoped subject-data pathway in the repository,
+    // mirroring `requireMonsterVisualConfigManager` (config is global,
+    // archive/delete is per-learner, but the RBAC primitive is the same:
+    // `requireAdminHubAccess` via `assertAdminHubActor`). Role is
+    // derived server-side from the actor account ONLY — the body is not
+    // inspected for role claims.
+    async archiveGrammarTransferEvidence(accountId, { learnerId, promptId, mutation = {} } = {}) {
+      return archiveGrammarTransferEvidence(db, {
+        actorAccountId: accountId,
+        learnerId,
+        promptId,
+        mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    async deleteGrammarTransferEvidence(accountId, { learnerId, promptId, mutation = {} } = {}) {
+      return deleteGrammarTransferEvidence(db, {
+        actorAccountId: accountId,
+        learnerId,
+        promptId,
+        mutation,
         nowTs: nowFactory(),
       });
     },

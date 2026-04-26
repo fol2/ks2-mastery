@@ -345,7 +345,7 @@ function SavedHistory({ evidence, checklist }) {
   );
 }
 
-function OrphanedEvidence({ entries }) {
+function OrphanedEvidence({ entries, onHide }) {
   if (!entries.length) return null;
   return (
     <section
@@ -355,7 +355,7 @@ function OrphanedEvidence({ entries }) {
     >
       <h3 id="grammar-transfer-orphaned-title" className="grammar-transfer-orphaned-title">Retired prompts</h3>
       <p className="grammar-transfer-orphaned-hint">
-        These writings were saved for writing prompts that are no longer on the list. They are kept so a grown-up can still read them.
+        These writings were saved for writing prompts that are no longer on the list. They are kept so a grown-up can still read them. You can hide any of them from your list — your writing is still saved.
       </p>
       <ul className="grammar-transfer-orphaned-list">
         {entries.map((entry) => (
@@ -369,6 +369,17 @@ function OrphanedEvidence({ entries }) {
               <span className="grammar-transfer-orphaned-time">{relativeSavedAt(entry.latest?.savedAt || entry.updatedAt)}</span>
             </header>
             <p className="grammar-transfer-orphaned-writing">{truncate(entry.latest?.writing || '')}</p>
+            <div className="grammar-transfer-orphaned-actions">
+              <button
+                type="button"
+                className="btn ghost sm"
+                data-action="grammar-toggle-transfer-hidden"
+                data-prompt-id={entry.promptId}
+                onClick={() => onHide(entry.promptId)}
+              >
+                Hide from my list
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -400,7 +411,19 @@ export function GrammarTransferScene({ grammar, actions }) {
     : null;
 
   const promptIdSet = new Set(prompts.map((prompt) => prompt.id));
-  const orphanedEvidence = evidence.filter((entry) => entry.promptId && !promptIdSet.has(entry.promptId));
+  // U10: child-side "Hide from my list" filter. The pref is lazy-
+  // initialised empty; when the learner toggles Hide, the promptId is
+  // added to `prefs.transferHiddenPromptIds` via `save-prefs`. The
+  // filter applies ONLY to the orphan surface — evidence is otherwise
+  // untouched on the server, so a grown-up still sees every entry in
+  // the Admin Hub.
+  const hiddenPromptIds = Array.isArray(grammar?.prefs?.transferHiddenPromptIds)
+    ? grammar.prefs.transferHiddenPromptIds
+    : [];
+  const hiddenSet = new Set(hiddenPromptIds);
+  const orphanedEvidence = evidence.filter(
+    (entry) => entry.promptId && !promptIdSet.has(entry.promptId) && !hiddenSet.has(entry.promptId),
+  );
 
   const pendingSave = grammar?.pendingCommand === 'save-transfer-evidence';
   const overCap = draft.length > writingCap;
@@ -422,6 +445,10 @@ export function GrammarTransferScene({ grammar, actions }) {
   };
   const handleToggle = (key, checked) => {
     actions?.dispatch?.('grammar-toggle-transfer-check', { key, checked });
+  };
+  const handleHideOrphan = (promptId) => {
+    if (typeof promptId !== 'string' || !promptId) return;
+    actions?.dispatch?.('grammar-toggle-transfer-hidden', { promptId, hidden: true });
   };
   const handleSave = () => {
     if (!activePrompt) return;
@@ -499,7 +526,7 @@ export function GrammarTransferScene({ grammar, actions }) {
         />
       )}
 
-      <OrphanedEvidence entries={orphanedEvidence} />
+      <OrphanedEvidence entries={orphanedEvidence} onHide={handleHideOrphan} />
     </section>
   );
 }

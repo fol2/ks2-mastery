@@ -331,6 +331,14 @@ export function normaliseServerGrammarData(rawValue) {
       : [],
     // U7 non-scored transfer evidence. Stored per promptId with capped history.
     transferEvidence: isPlainObject(raw.transferEvidence) ? cloneSerialisable(raw.transferEvidence) : {},
+    // U10 non-scored transfer archive. Admin-managed bucket that receives
+    // entries displaced from `transferEvidence` via the admin HTTP routes.
+    // Lazy-initialised to `{}` on first access so existing learners do not
+    // need a migration write. Learner read-models strip this field; admin
+    // read-models expose it under `transferLane.archive`.
+    transferEvidenceArchive: isPlainObject(raw.transferEvidenceArchive)
+      ? cloneSerialisable(raw.transferEvidenceArchive)
+      : {},
     aiEnrichment: normalisePersistentAiEnrichment(raw.aiEnrichment),
   };
 }
@@ -352,12 +360,21 @@ export function createInitialGrammarState(data = {}) {
       allowTeachingItems: normaliseBoolean(normalisedData.prefs.allowTeachingItems, false),
       showDomainBeforeAnswer: normaliseBoolean(normalisedData.prefs.showDomainBeforeAnswer, true),
       speechRate: normaliseSpeechRate(normalisedData.prefs.speechRate),
+      // U10: additive learner pref for the "Hide from my list" toggle on
+      // orphaned Writing Try entries. Defaults to an empty array so a
+      // never-saved learner never surfaces the pref through read-models
+      // unless they explicitly hide an orphan.
+      transferHiddenPromptIds: normaliseTransferHiddenPromptIds(
+        normalisedData.prefs.transferHiddenPromptIds,
+        [],
+      ),
     },
     mastery: normalisedData.mastery,
     retryQueue: normalisedData.retryQueue,
     misconceptions: normalisedData.misconceptions,
     recentAttempts: normalisedData.recentAttempts,
     transferEvidence: normalisedData.transferEvidence || {},
+    transferEvidenceArchive: normalisedData.transferEvidenceArchive || {},
     aiEnrichment: normalisedData.aiEnrichment,
     session: null,
     feedback: null,
@@ -378,6 +395,7 @@ function normaliseGrammarState(rawState, data = {}) {
     misconceptions: rawState.misconceptions || data.misconceptions,
     recentAttempts: rawState.recentAttempts || data.recentAttempts,
     transferEvidence: rawState.transferEvidence || data.transferEvidence,
+    transferEvidenceArchive: rawState.transferEvidenceArchive || data.transferEvidenceArchive,
     aiEnrichment: rawState.aiEnrichment || data.aiEnrichment,
   });
   return {
@@ -397,12 +415,21 @@ function normaliseGrammarState(rawState, data = {}) {
       focusConceptId: Object.prototype.hasOwnProperty.call(rawPrefs, 'focusConceptId')
         ? normaliseStoredFocusConceptId(rawPrefs.focusConceptId)
         : fallback.prefs.focusConceptId,
+      // U10: the hidden-prompt list must round-trip through the normaliser
+      // so a stale state missing the field never crashes prefs consumers.
+      transferHiddenPromptIds: normaliseTransferHiddenPromptIds(
+        Object.prototype.hasOwnProperty.call(rawPrefs, 'transferHiddenPromptIds')
+          ? rawPrefs.transferHiddenPromptIds
+          : fallback.prefs.transferHiddenPromptIds,
+        fallback.prefs.transferHiddenPromptIds,
+      ),
     },
     mastery: normalisedData.mastery,
     retryQueue: normalisedData.retryQueue,
     misconceptions: normalisedData.misconceptions,
     recentAttempts: normalisedData.recentAttempts,
     transferEvidence: normalisedData.transferEvidence || {},
+    transferEvidenceArchive: normalisedData.transferEvidenceArchive || {},
     aiEnrichment: normalisedData.aiEnrichment,
     session: isPlainObject(rawState.session) ? cloneSerialisable(rawState.session) : null,
     feedback: isPlainObject(rawState.feedback) ? cloneSerialisable(rawState.feedback) : null,
@@ -427,6 +454,13 @@ function stateData(state) {
     // cosmetic only.
     ...(isPlainObject(state.transferEvidence) && Object.keys(state.transferEvidence).length
       ? { transferEvidence: cloneSerialisable(state.transferEvidence) }
+      : {}),
+    // U10: transferEvidenceArchive is only emitted when non-empty so the
+    // persisted payload stays compact for the typical learner who never
+    // has an admin action taken against their Writing Try lane. Identical
+    // asymmetry to `transferEvidence` above.
+    ...(isPlainObject(state.transferEvidenceArchive) && Object.keys(state.transferEvidenceArchive).length
+      ? { transferEvidenceArchive: cloneSerialisable(state.transferEvidenceArchive) }
       : {}),
     ...(state.aiEnrichment ? { aiEnrichment: cloneSerialisable(state.aiEnrichment) } : {}),
   };
@@ -1673,6 +1707,34 @@ function submitAnswer(state, payload, command, nowTs) {
   return applied.events;
 }
 
+// U10: cap on the number of promptIds a learner may mark as "hidden" in
+// the Writing Try orphan surface. Evidence is untouched; the toggle only
+// controls the child-facing "Retired prompts" list so a learner can clear
+// a clutter of old prompts from their own view. Cap chosen to be 2× the
+// global `GRAMMAR_TRANSFER_MAX_PROMPTS` so a learner can hide every entry
+// they ever saved (20) plus every currently-catalogued prompt (~20 over
+// time as the catalogue churns). Excess ids are dropped on write.
+const GRAMMAR_TRANSFER_HIDDEN_PROMPTS_CAP = 40;
+
+function normaliseTransferHiddenPromptIds(value, fallback) {
+  const raw = Array.isArray(value) ? value : [];
+  const seen = new Set();
+  const out = [];
+  for (const entry of raw) {
+    if (typeof entry !== 'string') continue;
+    const promptId = entry.slice(0, 64);
+    if (!promptId || seen.has(promptId)) continue;
+    seen.add(promptId);
+    out.push(promptId);
+    if (out.length >= GRAMMAR_TRANSFER_HIDDEN_PROMPTS_CAP) break;
+  }
+  if (!Array.isArray(value)) {
+    const existing = Array.isArray(fallback) ? fallback : [];
+    return existing.slice(0, GRAMMAR_TRANSFER_HIDDEN_PROMPTS_CAP);
+  }
+  return out;
+}
+
 function savePrefs(state, payload) {
   const prefs = isPlainObject(payload.prefs) ? payload.prefs : payload;
   const nextMode = prefs.mode ? normaliseMode(prefs.mode) : state.prefs.mode;
@@ -1685,6 +1747,16 @@ function savePrefs(state, payload) {
     : (hasFocusConcept
       ? normaliseStoredFocusConceptId(prefs.focusConceptId)
       : normaliseStoredFocusConceptId(state.prefs.focusConceptId));
+  // U10: `transferHiddenPromptIds` is an additive learner-only pref driving
+  // the child-facing "Hide from my list" toggle on orphaned Writing Try
+  // entries. Only the prefs path writes it (never a scored event); the
+  // server evidence row is untouched. Malformed arrays fall back to the
+  // existing value — the payload can't reset the pref to an empty array
+  // unless the client explicitly sends `[]`.
+  const hasHiddenPromptIds = Object.prototype.hasOwnProperty.call(prefs, 'transferHiddenPromptIds');
+  const nextTransferHiddenPromptIds = hasHiddenPromptIds
+    ? normaliseTransferHiddenPromptIds(prefs.transferHiddenPromptIds, state.prefs.transferHiddenPromptIds)
+    : normaliseTransferHiddenPromptIds(state.prefs.transferHiddenPromptIds, state.prefs.transferHiddenPromptIds);
   state.prefs = {
     ...state.prefs,
     mode: ENABLED_MODES.has(nextMode) ? nextMode : state.prefs.mode,
@@ -1700,6 +1772,7 @@ function savePrefs(state, payload) {
       ? normaliseSpeechRate(prefs.speechRate, state.prefs.speechRate)
       : normaliseSpeechRate(state.prefs.speechRate),
     focusConceptId: nextFocusConceptId,
+    transferHiddenPromptIds: nextTransferHiddenPromptIds,
   };
   if (state.phase === 'summary') {
     state.phase = 'dashboard';
@@ -1788,6 +1861,113 @@ function saveTransferEvidence(state, payload, command, nowTs) {
     contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
     promptId,
     savedAt: nowTs,
+    nonScored: true,
+    createdAt: nowTs,
+  }];
+}
+
+// U10 admin-only archive helper. Moves an entry from
+// `state.transferEvidence[promptId]` to
+// `state.transferEvidenceArchive[promptId]` and emits a non-scored audit
+// event. Pure state-mutation helper — the RBAC check lives in
+// `worker/src/repository.js::archiveGrammarTransferEvidence` (mirrors the
+// `requireMonsterVisualConfigManager` pattern), NOT here. Callers MUST
+// enforce `requireAdminHubAccess(account)` before invoking.
+//
+// Emits a `grammar.transfer-evidence-archived` event carrying `nonScored:
+// true`. The event type is not consumed by the reward projection pipeline
+// (see `worker/src/projections/rewards.js`), preserving Phase 4
+// invariant 5 "Writing Try is non-scored".
+export function archiveGrammarTransferEvidenceState(state, {
+  promptId,
+  learnerId = '',
+  requestId = '',
+  now,
+} = {}) {
+  if (!(typeof promptId === 'string' && promptId)) {
+    throw new BadRequestError('Grammar transfer prompt id is required for archive.', {
+      code: 'grammar_transfer_prompt_id_required',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  if (!isPlainObject(state.transferEvidence)) state.transferEvidence = {};
+  if (!isPlainObject(state.transferEvidenceArchive)) state.transferEvidenceArchive = {};
+  const entry = state.transferEvidence[promptId];
+  if (!isPlainObject(entry)) {
+    throw new NotFoundError('Grammar transfer evidence not found for that prompt.', {
+      code: 'transfer_evidence_not_found',
+      subjectId: SUBJECT_ID,
+      promptId,
+    });
+  }
+  const nowTs = timestamp(now);
+  const archived = {
+    ...cloneSerialisable(entry),
+    archivedAt: nowTs,
+  };
+  state.transferEvidenceArchive[promptId] = archived;
+  delete state.transferEvidence[promptId];
+  return [{
+    id: `grammar.transfer-evidence-archived.${learnerId || 'learner'}.${requestId || 'req'}.${promptId}`,
+    type: 'grammar.transfer-evidence-archived',
+    subjectId: SUBJECT_ID,
+    learnerId: learnerId || '',
+    contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+    promptId,
+    archivedAt: nowTs,
+    nonScored: true,
+    createdAt: nowTs,
+  }];
+}
+
+// U10 admin-only hard-delete helper. Removes an entry from
+// `state.transferEvidenceArchive` (NOT from `state.transferEvidence`) —
+// the two-step safety requires the admin to archive first, so an
+// accidental delete on a live entry cannot bypass the archive step.
+// Rejects with `archive_required_before_delete` when the admin tries to
+// delete an entry that has not been archived.
+export function deleteGrammarTransferEvidenceState(state, {
+  promptId,
+  learnerId = '',
+  requestId = '',
+  now,
+} = {}) {
+  if (!(typeof promptId === 'string' && promptId)) {
+    throw new BadRequestError('Grammar transfer prompt id is required for delete.', {
+      code: 'grammar_transfer_prompt_id_required',
+      subjectId: SUBJECT_ID,
+    });
+  }
+  if (!isPlainObject(state.transferEvidenceArchive)) state.transferEvidenceArchive = {};
+  const archivedEntry = state.transferEvidenceArchive[promptId];
+  if (!isPlainObject(archivedEntry)) {
+    // Two-step safety: you must archive before you can delete. The live
+    // evidence row stays read-only through the admin path; the only way
+    // to remove an entry is archive → delete.
+    const liveEntry = isPlainObject(state.transferEvidence) ? state.transferEvidence[promptId] : null;
+    if (isPlainObject(liveEntry)) {
+      throw new BadRequestError('Archive the Writing Try entry before deleting it.', {
+        code: 'archive_required_before_delete',
+        subjectId: SUBJECT_ID,
+        promptId,
+      });
+    }
+    throw new NotFoundError('Grammar transfer evidence not found for that prompt.', {
+      code: 'transfer_evidence_not_found',
+      subjectId: SUBJECT_ID,
+      promptId,
+    });
+  }
+  const nowTs = timestamp(now);
+  delete state.transferEvidenceArchive[promptId];
+  return [{
+    id: `grammar.transfer-evidence-deleted.${learnerId || 'learner'}.${requestId || 'req'}.${promptId}`,
+    type: 'grammar.transfer-evidence-deleted',
+    subjectId: SUBJECT_ID,
+    learnerId: learnerId || '',
+    contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+    promptId,
+    deletedAt: nowTs,
     nonScored: true,
     createdAt: nowTs,
   }];

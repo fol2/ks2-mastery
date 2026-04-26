@@ -683,6 +683,57 @@ export const grammarModule = {
       return true;
     }
 
+    // U10: "Hide from my list" toggle on an orphaned Writing Try entry.
+    // Evidence on the server is UNTOUCHED — the pref only controls the
+    // child-facing "Retired prompts" list so a learner can declutter their
+    // own view. When `hidden: true`, add the promptId to
+    // `prefs.transferHiddenPromptIds`; when `false`, remove it. The toggle
+    // routes through the standard `save-prefs` pipeline so the pref
+    // persists via the same Worker path as every other learner pref. When
+    // the service-shim has a local `savePrefs`, use it so the test-mode
+    // deterministic path matches production.
+    if (action === 'grammar-toggle-transfer-hidden') {
+      const promptId = typeof context.data?.promptId === 'string' ? context.data.promptId : '';
+      if (!promptId) return true;
+      const currentList = Array.isArray(ui.prefs?.transferHiddenPromptIds)
+        ? ui.prefs.transferHiddenPromptIds
+        : [];
+      const alreadyHidden = currentList.includes(promptId);
+      const hiddenNext = Object.prototype.hasOwnProperty.call(context.data || {}, 'hidden')
+        ? Boolean(context.data.hidden)
+        : !alreadyHidden;
+      // Build the next list — de-duplicated, and capped at the same 40-id
+      // ceiling the Worker enforces (see
+      // `GRAMMAR_TRANSFER_HIDDEN_PROMPTS_CAP` in the engine). The
+      // round-trip is idempotent: toggling hidden → hidden is a no-op.
+      let nextList;
+      if (hiddenNext) {
+        if (alreadyHidden) return true;
+        nextList = [...currentList, promptId].slice(0, 40);
+      } else {
+        if (!alreadyHidden) return true;
+        nextList = currentList.filter((entry) => entry !== promptId);
+      }
+      const patch = { transferHiddenPromptIds: nextList };
+      if (service?.savePrefs) {
+        // Local service shim (test-mode): apply the pref in-place so the
+        // Writing Try scene stays on-screen. `resetToDashboardWithPrefs`
+        // would navigate back to the dashboard — wrong UX for a hide
+        // toggle that happens inline on the Transfer surface.
+        const prefs = service.savePrefs(learnerId, patch);
+        context.store.updateSubjectUi(GRAMMAR_SUBJECT_ID, (current) => {
+          const normalised = normaliseGrammarReadModel(current, learnerId);
+          return {
+            ...normalised,
+            prefs: { ...normalised.prefs, ...(prefs || patch) },
+            error: '',
+          };
+        });
+        return true;
+      }
+      return sendGrammarCommand(context, 'save-prefs', { prefs: patch });
+    }
+
     if (action === 'grammar-toggle-transfer-check') {
       const key = String(context.data?.key || '').slice(0, 64);
       if (!key) return true;

@@ -347,6 +347,86 @@ export function normaliseMonsterVisualConfigAdminModel(rawValue, platformRole = 
   };
 }
 
+// U10: Grammar Writing Try admin projection. Reads the learner's Grammar
+// subject state (data or ui) and surfaces the live `transferEvidence` +
+// the admin-only `transferEvidenceArchive` in a single admin-facing
+// shape. The shape mirrors `transferLane` on the learner side with an
+// added `archive` array. Learner surfaces never reach this projection —
+// the Admin Hub API loads the admin read-model behind
+// `requireAdminHubAccess`, so this helper assumes the caller is already
+// authorised. Falls back to an empty shape when the learner has no
+// Grammar state (a legal zero case — the admin UI renders an "empty"
+// placeholder).
+function grammarTransferAdminFromLearnerBundle(bundle) {
+  const emptyShape = {
+    subjectId: 'grammar',
+    hasEvidence: false,
+    hasArchive: false,
+    evidence: [],
+    archive: [],
+  };
+  if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle)) return emptyShape;
+  const subjectStates = isPlainObject(bundle.subjectStates) ? bundle.subjectStates : {};
+  const grammar = isPlainObject(subjectStates.grammar) ? subjectStates.grammar : null;
+  if (!grammar) return emptyShape;
+  const data = isPlainObject(grammar.data) ? grammar.data : {};
+  const ui = isPlainObject(grammar.ui) ? grammar.ui : {};
+  const liveRaw = isPlainObject(data.transferEvidence)
+    ? data.transferEvidence
+    : (isPlainObject(ui.transferEvidence) ? ui.transferEvidence : {});
+  const archiveRaw = isPlainObject(data.transferEvidenceArchive)
+    ? data.transferEvidenceArchive
+    : (isPlainObject(ui.transferEvidenceArchive) ? ui.transferEvidenceArchive : {});
+  return {
+    subjectId: 'grammar',
+    hasEvidence: Object.keys(liveRaw).length > 0,
+    hasArchive: Object.keys(archiveRaw).length > 0,
+    // Evidence and archive are emitted as sorted arrays so the UI has a
+    // stable render order across admin sessions. Each entry surfaces
+    // promptId + latest + updatedAt (and archivedAt for archive entries)
+    // — the full history is intentionally omitted from the admin summary
+    // because the panel only needs "what was saved" to inform the
+    // archive + delete decision.
+    evidence: Object.entries(liveRaw)
+      .map(([promptId, entry]) => normaliseGrammarTransferAdminEntry(promptId, entry, { archived: false }))
+      .filter((entry) => entry.latest || (entry.history && entry.history.length > 0))
+      .sort((a, b) => b.updatedAt - a.updatedAt),
+    archive: Object.entries(archiveRaw)
+      .map(([promptId, entry]) => normaliseGrammarTransferAdminEntry(promptId, entry, { archived: true }))
+      .filter((entry) => entry.latest || (entry.history && entry.history.length > 0))
+      .sort((a, b) => b.archivedAt - a.archivedAt),
+  };
+}
+
+function normaliseGrammarTransferAdminEntry(promptId, rawEntry, { archived }) {
+  const entry = isPlainObject(rawEntry) ? rawEntry : {};
+  const latestRaw = isPlainObject(entry.latest) ? entry.latest : null;
+  const history = Array.isArray(entry.history) ? entry.history : [];
+  return {
+    promptId: String(promptId || ''),
+    latest: latestRaw ? {
+      writing: typeof latestRaw.writing === 'string' ? latestRaw.writing : '',
+      selfAssessment: Array.isArray(latestRaw.selfAssessment)
+        ? latestRaw.selfAssessment
+          .filter((tick) => tick && typeof tick === 'object' && !Array.isArray(tick))
+          .map((tick) => ({
+            key: typeof tick.key === 'string' ? tick.key : '',
+            checked: Boolean(tick.checked),
+          }))
+        : [],
+      savedAt: asTs(latestRaw.savedAt, 0),
+    } : null,
+    history: history
+      .filter((snapshot) => snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot))
+      .map((snapshot) => ({
+        writing: typeof snapshot.writing === 'string' ? snapshot.writing : '',
+        savedAt: asTs(snapshot.savedAt, 0),
+      })),
+    updatedAt: asTs(entry.updatedAt, 0),
+    archivedAt: archived ? asTs(entry.archivedAt, 0) : 0,
+  };
+}
+
 export function buildAdminHubReadModel({
   account = null,
   platformRole = 'parent',
@@ -399,6 +479,13 @@ export function buildAdminHubReadModel({
       currentFocus: parentHub.dueWork[0] || null,
       grammarEvidence: parentHub.grammarEvidence || null,
       punctuationEvidence: parentHub.punctuationEvidence || null,
+      // U10: Grammar Writing Try admin surface. Exposes live + archived
+      // evidence keyed per prompt so the Admin Hub can render archive +
+      // delete controls. Only populated when the admin can view the hub
+      // (the role gate is re-checked at the route; this projection is
+      // emitted regardless so the shape stays stable, but the React panel
+      // is hidden unless `canViewAdminHub === true`).
+      grammarTransferAdmin: grammarTransferAdminFromLearnerBundle(learnerBundles[learnerId] || null),
     };
   });
 
