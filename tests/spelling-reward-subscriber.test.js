@@ -16,8 +16,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-// Seed the module-scoped default `wordMeta` for the spelling event factories.
-// See tests/helpers/seed-spelling-events-default.js for the rationale.
 import './helpers/seed-spelling-events-default.js';
 
 import {

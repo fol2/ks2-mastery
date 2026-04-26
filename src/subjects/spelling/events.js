@@ -1,28 +1,13 @@
-// Hotfix (2026-04-26): a previous version statically imported
-// `WORD_BY_SLUG` from `./data/word-data.js` to provide a default for
-// `wordMeta`. That import dragged the full 200k-line spelling content
-// dataset (`data/word-data.js` -> `data/content-data.js`) into
-// `src/bundles/app.bundle.js` through the chain
-// `entry.jsx -> main.js -> create-app-controller -> spelling/shortcuts
-//  -> service-contract -> achievements -> events.js -> data/word-data.js`.
-// The `audit:client` check fails the deploy because the dataset modules
-// are on `FORBIDDEN_MODULES` in `scripts/audit-client-bundle.mjs`.
-//
-// Production server callers in `shared/spelling/service.js` already pass
-// `wordMeta: runtimeWordBySlug` at every call site, so they are unaffected.
-// Tests that previously relied on the implicit default now seed it once via
-// `__setDefaultSpellingWordBySlug` from
-// `tests/helpers/seed-spelling-events-default.js`.
+// No static import of the spelling content dataset here: it is reachable
+// from the client entry via `achievements.js` and would fail `audit:client`
+// (see scripts/audit-client-bundle.mjs FORBIDDEN_MODULES). Production
+// callers pass `wordMeta` explicitly; tests seed a default via the setter
+// below from `tests/helpers/seed-spelling-events-default.js`.
 let __defaultWordBySlug = null;
 
-/**
- * Seed the module-scoped fallback `wordMeta` map used by factories below.
- * Only invoked by a test-support helper; production callers always pass
- * `wordMeta` explicitly. Accepts `null` to clear the seed (useful in tests
- * that need to assert the "no-map" path). Values other than objects are
- * coerced to `null` so a misuse surfaces as "unknown slug -> null event"
- * rather than a silent `undefined` dereference.
- */
+// Test-only setter. Non-object inputs coerce to `null` so a misuse surfaces
+// as the documented "unknown slug -> null event" path instead of a silent
+// `undefined` dereference. In production the seed stays `null`.
 export function __setDefaultSpellingWordBySlug(wordBySlug) {
   __defaultWordBySlug = wordBySlug && typeof wordBySlug === 'object' ? wordBySlug : null;
 }

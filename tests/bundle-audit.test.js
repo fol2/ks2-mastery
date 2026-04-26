@@ -422,24 +422,56 @@ test('worker spelling runtime imports the shared domain service instead of the b
   assert.match(browserService, /shared\/spelling\/service\.js/);
 });
 
-// Regression for the 2026-04-26 deploy failure. `src/subjects/spelling/
-// events.js` was statically importing `./data/word-data.js` to provide a
-// default for `wordMeta`. That pulled the 200k-line spelling content
-// dataset into `src/bundles/app.bundle.js` via the chain
-// `entry.jsx -> main.js -> create-app-controller -> spelling/shortcuts
-//  -> service-contract -> achievements -> events.js -> data/word-data.js`
-// and failed `audit:client` on deploy. This source-level pin fires at
-// `npm test` without a build step, so a future edit that reinstates the
-// static import is caught before it ever reaches wrangler.
-test('spelling events factory does not static-import the word dataset', async () => {
+// Regression pin for the 2026-04-26 deploy failure: events.js is reachable
+// from the client entry via achievements.js, so any reference to the
+// `./data/` dataset modules drags the full spelling content dataset into
+// `src/bundles/app.bundle.js`. The pin runs at `npm test`, so a regression
+// fails locally without waiting for `audit:client` to run on deploy.
+//
+// The regex is path-anchored (not import-keyword-anchored) so it catches
+// every reachable form: static `import`, `import ... from`, re-export
+// (`export ... from`), dynamic `await import(...)`, and side-effect
+// import. Every one of those produces an esbuild edge that `audit:client`
+// would reject, and every one of them is caught by `WORD_DATA_PIN_REGEX`.
+const WORD_DATA_PIN_REGEX = /['"]\.\/data\/(?:word-data|content-data)\.js['"]/;
+
+test('spelling events factory does not reference the spelling content dataset', async () => {
   const events = await readFile('src/subjects/spelling/events.js', 'utf8');
   assert.doesNotMatch(
     events,
-    /^\s*import[\s\S]*?['"].\/data\/word-data\.js['"]/m,
-    'src/subjects/spelling/events.js must not import ./data/word-data.js — '
-      + 'the dataset is reachable from the client entry and would inflate '
-      + 'app.bundle.js past the audit boundary (see scripts/audit-client-bundle.mjs).',
+    WORD_DATA_PIN_REGEX,
+    'src/subjects/spelling/events.js must not reference ./data/word-data.js '
+      + 'or ./data/content-data.js — the dataset is reachable from the client '
+      + 'entry and would inflate app.bundle.js past the audit boundary '
+      + '(see scripts/audit-client-bundle.mjs).',
   );
+});
+
+// Self-test: verify the pin's regex would actually catch each bypass form.
+// Without this, a future typo (e.g. `world-data` for `word-data`) silently
+// passes the pin above forever. Mirrors the positive+negative pattern used
+// by the FORBIDDEN_SHARED_PUNCTUATION_MODULES loop earlier in this file.
+const FORBIDDEN_EVENTS_DATASET_SOURCE_FIXTURES = [
+  `import { WORD_BY_SLUG } from './data/word-data.js';`,
+  `import WORDS from "./data/word-data.js";`,
+  `import { SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from './data/content-data.js';`,
+  `export { WORD_BY_SLUG } from './data/word-data.js';`,
+  `const { WORD_BY_SLUG } = await import('./data/word-data.js');`,
+  `import './data/word-data.js';`,
+];
+
+for (const fixture of FORBIDDEN_EVENTS_DATASET_SOURCE_FIXTURES) {
+  test(`WORD_DATA_PIN_REGEX matches forbidden form: ${fixture}`, () => {
+    assert.match(fixture, WORD_DATA_PIN_REGEX);
+  });
+}
+
+test('WORD_DATA_PIN_REGEX does not match benign references', () => {
+  // Benign strings that should not trip the pin — a neighbouring path, a
+  // comment mentioning the module, and a different relative-path root.
+  assert.doesNotMatch(`import x from './data/other.js';`, WORD_DATA_PIN_REGEX);
+  assert.doesNotMatch(`// previously imported ./data/word-data.js here`, WORD_DATA_PIN_REGEX);
+  assert.doesNotMatch(`import x from '../data/word-data.js';`, WORD_DATA_PIN_REGEX);
 });
 
 test('worker-first asset routing keeps demo and source lockdown routes out of SPA fallback', async () => {
