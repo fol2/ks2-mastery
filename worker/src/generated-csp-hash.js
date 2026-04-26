@@ -2,4 +2,4 @@
 // This file is committed so fresh clones can run `npm test` before
 // `npm run build` has produced a real hash. Build overwrites this.
 
-export const CSP_INLINE_SCRIPT_HASH = 'sha256-d5B0kdrkvmMBHcWJ8TUVFkTDTxk/ACGS+ezi8RwKeZE=';
+export const CSP_INLINE_SCRIPT_HASH = 'sha256-06SFOq2Wj74Ww4wfCm1nJLKf6sUYs9usIiwlCVmZLfg=';

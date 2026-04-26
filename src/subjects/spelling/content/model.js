@@ -1,7 +1,17 @@
 import { cloneSerialisable } from '../../../platform/core/repositories/helpers.js';
+import { PATTERN_LAUNCH_THRESHOLD, SPELLING_PATTERN_IDS, SPELLING_PATTERNS } from './patterns.js';
 
 export const SPELLING_CONTENT_SUBJECT_ID = 'spelling';
-export const SPELLING_CONTENT_MODEL_VERSION = 2;
+/**
+ * P2 U10 (H7 adversarial synthesis): jump straight from version 2 to 4,
+ * skipping 3, so the content-model version never collides with
+ * `SPELLING_SERVICE_STATE_VERSION: 3` from P2 U2. Going forward: content
+ * model uses even numbers; service state uses odd numbers. Bump this
+ * constant whenever a change to the content-model shape should invalidate
+ * a cached bundle — runtime consumers treat `modelVersion < MODEL_VERSION`
+ * as "normalise and rewrite" on next save.
+ */
+export const SPELLING_CONTENT_MODEL_VERSION = 4;
 export const SPELLING_CONTENT_EXPORT_KIND = 'ks2-spelling-content';
 export const SPELLING_CONTENT_EXPORT_VERSION = 1;
 export const SPELLING_CONTENT_POOLS = Object.freeze(['core', 'extra']);
@@ -68,6 +78,27 @@ function normaliseYearGroups(value, fallback = []) {
 
 function normaliseTags(value) {
   return uniqueStrings(value, { lowerCase: true });
+}
+
+/**
+ * P2 U10: normalise the `patternIds` field on a word. Only pattern ids
+ * registered in `SPELLING_PATTERNS` are retained — a persisted-blob
+ * containing an unknown pattern id is silently dropped (a content
+ * hot-swap that retires a pattern cannot crash the read path). Order is
+ * preserved from the raw input (first-seen wins on duplicates) so a
+ * multi-pattern tag like `competition → ['suffix-tion', 'root-compete']`
+ * surfaces in the order the content editor chose. Validator (below)
+ * separately enforces coverage.
+ */
+function normalisePatternIds(value) {
+  const list = uniqueStrings(value, { lowerCase: true });
+  const registered = [];
+  for (const id of list) {
+    if (Object.prototype.hasOwnProperty.call(SPELLING_PATTERNS, id)) {
+      registered.push(id);
+    }
+  }
+  return registered;
 }
 
 function normaliseAcceptedSpellings(value, defaultValue = '') {
@@ -140,6 +171,7 @@ function normaliseWordEntry(rawValue, index = 0, wordListsById = new Map()) {
     spellingPool: normaliseSpellingPool(raw.spellingPool, listPool),
     yearGroups: normaliseYearGroups(raw.yearGroups),
     tags: normaliseTags(raw.tags),
+    patternIds: normalisePatternIds(raw.patternIds),
     accepted: normaliseAcceptedSpellings(raw.accepted, slug),
     ...(variants.length ? { variants } : {}),
     explanation: normaliseString(raw.explanation),
@@ -206,6 +238,7 @@ function normaliseRuntimeWord(rawValue, index = 0) {
     listId: normaliseString(raw.listId),
     yearGroups: normaliseYearGroups(raw.yearGroups, spellingPool === 'extra' ? [] : year === '5-6' ? ['Y5', 'Y6'] : ['Y3', 'Y4']),
     tags: normaliseTags(raw.tags),
+    patternIds: normalisePatternIds(raw.patternIds),
     sourceNote: normaliseString(raw.sourceNote),
     provenance: normaliseProvenance(raw.provenance, raw.sourceNote || 'published spelling word'),
     sortIndex: Number.isInteger(Number(raw.sortIndex)) && Number(raw.sortIndex) >= 0 ? Number(raw.sortIndex) : index,
@@ -426,6 +459,19 @@ export function validateSpellingContentBundle(rawBundle) {
     if (!word.sentenceEntryIds.length) {
       errors.push(issue('error', 'broken_sentence_reference', `draft.words[${index}].sentenceEntryIds`, `Word "${word.slug}" must reference at least one sentence entry.`));
     }
+    if (word.spellingPool === 'core') {
+      const hasPatternId = Array.isArray(word.patternIds) && word.patternIds.length > 0;
+      const exceptionTag = Array.isArray(word.tags)
+        && (word.tags.includes('exception-word') || word.tags.includes('statutory-exception'));
+      if (!hasPatternId && !exceptionTag) {
+        errors.push(issue(
+          'error',
+          'missing_pattern_coverage',
+          `draft.words[${index}].patternIds`,
+          `Core word "${word.slug}" must carry at least one patternId or be tagged "exception-word"/"statutory-exception".`,
+        ));
+      }
+    }
     const variants = Array.isArray(word.variants) ? word.variants : [];
     if (variants.length && word.spellingPool !== 'extra') {
       errors.push(issue('error', 'core_variants_not_supported', `draft.words[${index}].variants`, `Word "${word.slug}" can only define variants in the Extra pool.`));
@@ -541,6 +587,32 @@ export function validateSpellingContentBundle(rawBundle) {
     warnings.push(issue('warn', 'missing_publication_pointer', 'publication.currentReleaseId', 'Releases exist but no current publication pointer has been set.'));
   }
 
+  // P2 U10 F10 feasibility: warn (not fail) when a pattern has fewer than 4
+  // tagged core words. U11 Pattern Quest refuses to launch quests for these
+  // under-used patterns via `SPELLING_PATTERNS_LAUNCHED`. Registry entries
+  // stay defined so future content expansion can lift them without a
+  // content-model bump. Sorted by registry order for deterministic output.
+  const patternCounts = new Map(SPELLING_PATTERN_IDS.map((id) => [id, 0]));
+  for (const word of bundle.draft.words) {
+    if (word.spellingPool !== 'core') continue;
+    for (const patternId of word.patternIds || []) {
+      if (patternCounts.has(patternId)) {
+        patternCounts.set(patternId, patternCounts.get(patternId) + 1);
+      }
+    }
+  }
+  for (const id of SPELLING_PATTERN_IDS) {
+    const count = patternCounts.get(id) || 0;
+    if (count < PATTERN_LAUNCH_THRESHOLD) {
+      warnings.push(issue(
+        'warn',
+        'pattern_below_launch_threshold',
+        `patterns.${id}`,
+        `Pattern "${id}" has ${count} tagged core word(s); below the launch threshold of ${PATTERN_LAUNCH_THRESHOLD}.`,
+      ));
+    }
+  }
+
   return {
     ok: errors.length === 0,
     errors,
@@ -632,6 +704,7 @@ export function buildPublishedSnapshotFromDraft(rawDraft, { generatedAt = Date.n
       listId: word.listId,
       yearGroups: word.yearGroups,
       tags: word.tags,
+      patternIds: word.patternIds,
       sourceNote: word.sourceNote,
       provenance: word.provenance,
       sortIndex: index,
