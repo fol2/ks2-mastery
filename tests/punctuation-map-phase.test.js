@@ -71,18 +71,27 @@ test('U5: PUNCTUATION_PHASES frozen list is exactly the 7 expected phases', () =
 
 test('U5 normalisePunctuationMapUi: undefined returns full default shape', () => {
   const ui = normalisePunctuationMapUi(undefined);
+  // U4 follower (adv-238-003): `returnTo` tracks the source phase so
+  // close-map can route back to Summary. Defaults to 'setup'.
   assert.deepEqual(ui, {
     statusFilter: 'all',
     monsterFilter: 'all',
     detailOpenSkillId: null,
     detailTab: 'learn',
+    returnTo: 'setup',
   });
 });
 
 test('U5 normalisePunctuationMapUi: null returns full default shape', () => {
   assert.deepEqual(
     normalisePunctuationMapUi(null),
-    { statusFilter: 'all', monsterFilter: 'all', detailOpenSkillId: null, detailTab: 'learn' },
+    {
+      statusFilter: 'all',
+      monsterFilter: 'all',
+      detailOpenSkillId: null,
+      detailTab: 'learn',
+      returnTo: 'setup',
+    },
   );
 });
 
@@ -92,12 +101,14 @@ test('U5 normalisePunctuationMapUi: valid values pass through unchanged', () => 
     monsterFilter: 'pealark',
     detailOpenSkillId: 'speech',
     detailTab: 'practise',
+    returnTo: 'summary',
   });
   assert.deepEqual(ui, {
     statusFilter: 'weak',
     monsterFilter: 'pealark',
     detailOpenSkillId: 'speech',
     detailTab: 'practise',
+    returnTo: 'summary',
   });
 });
 
@@ -136,8 +147,25 @@ test('U5 normalisePunctuationMapUi: array input coerces to defaults', () => {
   // so a [key, value] pair can't accidentally set any field.
   assert.deepEqual(
     normalisePunctuationMapUi(['foo', 'bar']),
-    { statusFilter: 'all', monsterFilter: 'all', detailOpenSkillId: null, detailTab: 'learn' },
+    {
+      statusFilter: 'all',
+      monsterFilter: 'all',
+      detailOpenSkillId: null,
+      detailTab: 'learn',
+      returnTo: 'setup',
+    },
   );
+});
+
+test('U5 normalisePunctuationMapUi: invalid returnTo falls back to `setup`', () => {
+  // U4 follower (adv-238-003): only 'setup' and 'summary' are accepted
+  // source phases; anything else resets to 'setup' so a rogue payload
+  // can't strand close-map on a dead phase.
+  assert.equal(normalisePunctuationMapUi({ returnTo: 'active-item' }).returnTo, 'setup');
+  assert.equal(normalisePunctuationMapUi({ returnTo: 'garbage' }).returnTo, 'setup');
+  assert.equal(normalisePunctuationMapUi({ returnTo: 123 }).returnTo, 'setup');
+  assert.equal(normalisePunctuationMapUi({ returnTo: null }).returnTo, 'setup');
+  assert.equal(normalisePunctuationMapUi({ returnTo: '' }).returnTo, 'setup');
 });
 
 test('U5 normalisePunctuationMapUi: accepts every valid status filter id', () => {
@@ -166,11 +194,14 @@ test('U5 module: punctuation-open-map transitions setup → map with default map
 
   const next = punctuationState(harness);
   assert.equal(next.phase, 'map');
+  // U4 follower (adv-238-003): Setup-source opens record `returnTo: 'setup'`
+  // so close-map routes back to the dashboard (unchanged default behaviour).
   assert.deepEqual(next.mapUi, {
     statusFilter: 'all',
     monsterFilter: 'all',
     detailOpenSkillId: null,
     detailTab: 'learn',
+    returnTo: 'setup',
   });
 });
 

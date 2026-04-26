@@ -3,29 +3,31 @@
 // Replaces the monolith's `SummaryView` with a standalone component. Summary
 // now reads as:
 //
-//   - Bellstorm summary hero (eyebrow "Summary" + child headline).
+//   - Bellstorm summary hero (eyebrow "Summary" + celebratory headline via
+//     `punctuationSummaryHeadline(summary)` — accuracy-bucketed child copy
+//     replaces the clinical `summary.label` default).
 //   - Score chip row: Answered / Correct / Accuracy (3 chips).
 //   - Wobbly chips: `summary.focus` skillIds mapped through
 //     `PUNCTUATION_CLIENT_SKILLS` to produce child labels like
-//     "Speech punctuation needs another go" — NEVER raw skill ids.
+//     "Speech punctuation needs another go" — NEVER raw skill ids. An empty
+//     focus array renders a single positive chip ("Everything was secure
+//     this round!") rather than dead whitespace.
 //   - Active-only monster progress strip: iterate
-//     `ACTIVE_PUNCTUATION_MONSTER_IDS` over `progressForPunctuationMonster`.
-//     Reserved monsters (Colisk / Hyphang / Carillon) are never rendered.
+//     `ACTIVE_PUNCTUATION_MONSTER_IDS` over `progressForPunctuationMonster`
+//     against the flat `ui.rewardState` path (the same path MapScene reads,
+//     and the path the Grammar surface already wires). Reserved monsters
+//     (Colisk / Hyphang / Carillon) are never rendered.
 //   - GPS summary (Phase 2 contract preserved): short review cards when
 //     `summary.gps?.reviewItems` exists. `misconceptionTags` pipe through
 //     `punctuationChildMisconceptionLabel`; null-mapped tags hide rather
 //     than surfacing raw dotted ids.
 //   - 4 next-action buttons (Practise wobbly / Open Map / Start again /
 //     Back to dashboard).
-//   - Secondary "Grown-up view" link. Action is a future Parent Hub hook —
-//     today the button carries `data-action="punctuation-open-adult-view"`
-//     and is a no-op at the dispatch layer until the Admin / Parent surface
-//     lands.
 //
 // Every mutation control threads `composeIsDisabled(ui)` — the 4 primary
-// buttons and the Grown-up link disable as a single bundle whenever
-// availability flips to degraded / unavailable, a command is in flight, or
-// the runtime is read-only (plan R11).
+// buttons disable as a single bundle whenever availability flips to
+// degraded / unavailable, a command is in flight, or the runtime is
+// read-only (plan R11).
 //
 // SSR blind spots (learning #6): pointer-capture, focus, and scroll-into-view
 // are NOT observable via node:test + SSR. Every feature that claims a
@@ -40,6 +42,7 @@ import {
   composeIsDisabled,
   punctuationChildMisconceptionLabel,
   punctuationMonsterDisplayName,
+  punctuationSummaryHeadline,
 } from './punctuation-view-model.js';
 import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
 import { progressForPunctuationMonster } from '../../../platform/game/mastery/index.js';
@@ -64,17 +67,23 @@ function newlineTextStyle(value) {
   return String(value || '').includes('\n') ? { whiteSpace: 'pre-wrap' } : undefined;
 }
 
-// Reward state lives under `ui.rewards?.monsters?.punctuation`. Fall back to
-// an empty object so `progressForPunctuationMonster` can still return a safe
-// stage 0 progress shape for fresh learners.
-function rewardStateForPunctuation(ui) {
-  const rewards = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui.rewards : null;
-  if (!rewards || typeof rewards !== 'object' || Array.isArray(rewards)) return {};
-  const monsters = rewards.monsters;
-  if (!monsters || typeof monsters !== 'object' || Array.isArray(monsters)) return {};
-  const punctuationState = monsters.punctuation;
-  if (!punctuationState || typeof punctuationState !== 'object' || Array.isArray(punctuationState)) return {};
-  return punctuationState;
+// U4 follower (HIGH 1 — monster strip dead path): reward state lives at the
+// flat `ui.rewardState` path, the same path `PunctuationMapScene` reads and
+// that `GrammarPracticeSurface` resolves before passing to the summary scene
+// as a prop. The pre-fix shape (`ui.rewards.monsters.punctuation`) was only
+// ever set by fixtures — no production write path populated it, so every
+// real learner saw "Stage 0 of 4" across all four monsters regardless of
+// their actual progress. The surface now accepts a resolved `rewardState`
+// prop (Grammar precedent); this helper falls back to `ui.rewardState` and
+// finally to an empty object so `progressForPunctuationMonster` can still
+// return a safe stage 0 shape for fresh learners.
+function rewardStateForPunctuation(ui, propRewardState) {
+  if (propRewardState && typeof propRewardState === 'object' && !Array.isArray(propRewardState)) {
+    return propRewardState;
+  }
+  const fromUi = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui.rewardState : null;
+  if (fromUi && typeof fromUi === 'object' && !Array.isArray(fromUi)) return fromUi;
+  return {};
 }
 
 // --- Score chips -----------------------------------------------------------
@@ -111,16 +120,33 @@ function ScoreChipRow({ summary }) {
 // via `PUNCTUATION_CLIENT_SKILLS`, then wraps the name in the "needs another
 // go" nudge copy. Unknown ids are silently dropped (the safe default per
 // learning #9 — better an empty chip row than a leaked raw id).
+//
+// U4 follower (design-lens MEDIUM 4): when there are no wobbly skills
+// (either because `summary.focus` is empty, or every id mapped to null),
+// render a positive "Everything was secure this round!" chip so the slot
+// still communicates round outcome rather than rendering as empty space.
 function WobblyChipRow({ focus }) {
   const ids = Array.isArray(focus) ? focus.filter((id) => typeof id === 'string' && id) : [];
-  if (!ids.length) return null;
   const chips = [];
   for (const skillId of ids) {
     const name = summaryFocusSkillLabel(skillId);
     if (!name) continue;
     chips.push({ id: skillId, label: `${name} needs another go` });
   }
-  if (!chips.length) return null;
+  if (!chips.length) {
+    return (
+      <div
+        className="chip-row punctuation-summary-wobbly punctuation-summary-wobbly--empty"
+        role="group"
+        aria-label="Round outcome"
+        style={{ marginTop: 14 }}
+      >
+        <span className="chip good" data-punctuation-summary-wobbly-empty>
+          Everything was secure this round!
+        </span>
+      </div>
+    );
+  }
   return (
     <div
       className="chip-row punctuation-summary-wobbly"
@@ -144,8 +170,8 @@ function WobblyChipRow({ focus }) {
 // if the reward state contains them (plan R10 / learning #5). Progress is
 // rendered as 5 stage dots (0–4) per monster so the strip keeps its shape
 // across fresh learners and secure releases.
-function MonsterProgressStrip({ ui }) {
-  const rewardState = rewardStateForPunctuation(ui);
+function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
+  const rewardState = rewardStateForPunctuation(ui, propRewardState);
   return (
     <div
       className="punctuation-summary-monsters"
@@ -308,41 +334,31 @@ function NextActionRow({ ui, actions }) {
   );
 }
 
-// --- Grown-up view link ----------------------------------------------------
-
-// Future Parent Hub hook (origin R34 / plan Q§"Grown-up view"). The action
-// is NOT yet wired at the dispatch layer; rendering carries the data-action
-// so an adult surface can listen later without the Summary scene needing a
-// follow-up PR. Threads `composeIsDisabled(ui)` so the link visibly pauses
-// alongside the primary buttons (plan R11).
-function GrownUpViewLink({ ui, actions }) {
-  const isDisabled = composeIsDisabled(ui);
-  return (
-    <div
-      className="punctuation-summary-grown-up small muted"
-      style={{ marginTop: 12 }}
-    >
-      <button
-        type="button"
-        className="btn ghost small"
-        disabled={isDisabled}
-        data-action="punctuation-open-adult-view"
-        onClick={() => actions.dispatch('punctuation-open-adult-view')}
-      >
-        Grown-up view
-      </button>
-    </div>
-  );
-}
-
 // --- Scene -----------------------------------------------------------------
 
-export function PunctuationSummaryScene({ ui = {}, actions = { dispatch() {} } }) {
+// U4 follower (adversarial MEDIUM 1): the Grown-up view placeholder button
+// was dispatching a `punctuation-open-adult-view` action with no handler —
+// a child tap produced a silent no-op. The plan allowed a placeholder, but
+// the reviewer-consensus rule is "don't ship dead UX". Parent Hub will add
+// this surface when the adult view ships (PR body notes the deferral); the
+// Summary scene renders no Grown-up affordance today.
+
+export function PunctuationSummaryScene({
+  ui = {},
+  actions = { dispatch() {} },
+  rewardState = null,
+}) {
   const summary = ui && typeof ui === 'object' && !Array.isArray(ui) ? (ui.summary || {}) : {};
   const scene = bellstormSceneForPhase('summary');
-  const headline = typeof summary.label === 'string' && summary.label
-    ? summary.label
-    : 'Punctuation session summary';
+  // Accuracy-bucketed celebration copy (design-lens HIGH 2). The helper
+  // returns null when `summary.accuracy` is missing / malformed; the label
+  // fallback keeps the hero filled even for degenerate payloads.
+  const tonalHeadline = punctuationSummaryHeadline(summary);
+  const headline = typeof tonalHeadline === 'string' && tonalHeadline
+    ? tonalHeadline
+    : (typeof summary.label === 'string' && summary.label
+      ? summary.label
+      : 'Punctuation session summary');
   const subtitle = typeof summary.message === 'string' && summary.message
     ? summary.message
     : 'Session complete.';
@@ -350,7 +366,11 @@ export function PunctuationSummaryScene({ ui = {}, actions = { dispatch() {} } }
     <section
       className="card border-top punctuation-surface"
       data-punctuation-summary
-      style={{ borderTopColor: '#2E8479' }}
+      // U4 follower (design-lens MEDIUM 5): borderTopColor now matches the
+      // canonical Punctuation accent `#B8873F` (Bellstorm gold) rather than
+      // the stray `#2E8479` teal. Aligns with `PunctuationPracticeSurface`
+      // and the module's `accent` field.
+      style={{ borderTopColor: '#B8873F' }}
     >
       <div className="punctuation-strip">
         <img
@@ -368,10 +388,9 @@ export function PunctuationSummaryScene({ ui = {}, actions = { dispatch() {} } }
       </div>
       <ScoreChipRow summary={summary} />
       <WobblyChipRow focus={summary.focus} />
-      <MonsterProgressStrip ui={ui} />
+      <MonsterProgressStrip ui={ui} rewardState={rewardState} />
       <GpsReviewBlock gps={summary.gps} />
       <NextActionRow ui={ui} actions={actions} />
-      <GrownUpViewLink ui={ui} actions={actions} />
     </section>
   );
 }

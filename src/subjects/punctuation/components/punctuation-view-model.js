@@ -244,6 +244,33 @@ export function punctuationMonsterDisplayName(monsterId) {
   return ACTIVE_PUNCTUATION_MONSTER_DISPLAY_NAMES[monsterId] || titlecase(monsterId);
 }
 
+// --- Summary headline ------------------------------------------------------
+
+// Child-facing celebration copy for the Punctuation Summary scene hero. The
+// session-summary payload from `shared/punctuation/service.js` carries a
+// clinical `summary.label` of `'Punctuation session summary'` — a Year 3-6
+// child reading "Session complete." after a round gets zero sense of the
+// round's tone. The helper branches on `summary.accuracy` to produce a copy
+// register that mirrors the child's experience:
+//
+//  - accuracy >= 80  → celebratory ("Great round!")
+//  - accuracy >= 50  → encouraging ("Good try! Here's what you got.")
+//  - accuracy  < 50  → supportive ("Keep going — every round helps.")
+//
+// Returns `null` when the summary payload is missing / malformed so the
+// caller can fall back to `summary.label` without a string-comparison dance.
+// No adult register, no dotted tags, no Worker terms — U10's forbidden-term
+// sweep treats every string emitted here as child copy.
+export function punctuationSummaryHeadline(summary) {
+  if (!summary || typeof summary !== 'object' || Array.isArray(summary)) return null;
+  const rawAccuracy = Number(summary.accuracy);
+  if (!Number.isFinite(rawAccuracy)) return null;
+  const accuracy = Math.max(0, Math.min(100, rawAccuracy));
+  if (accuracy >= 80) return 'Great round!';
+  if (accuracy >= 50) return "Good try! Here's what you got.";
+  return 'Keep going — every round helps.';
+}
+
 // --- Dashboard hero copy ---------------------------------------------------
 
 // Hero headline + subheadline for the Setup / dashboard scene. Frozen so U1

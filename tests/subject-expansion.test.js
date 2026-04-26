@@ -240,7 +240,10 @@ const punctuationSpec = {
   expectReactPractice: true,
   practiceMatcher: /Punctuation practice/,
   sessionMatcher: /Choose the best punctuated sentence|Punctuate the sentence accurately|Correct the punctuation/,
-  summaryMatcher: /Punctuation session summary/,
+  // U4 follower (design-lens HIGH 2): summary headline is now the
+  // accuracy-bucketed celebration copy from `punctuationSummaryHeadline`.
+  // The golden path answers one item correctly → 100% accuracy → "Great round!".
+  summaryMatcher: /Great round!/,
   getUiState(harness) {
     return harness.store.getState().subjectUi.punctuation;
   },
