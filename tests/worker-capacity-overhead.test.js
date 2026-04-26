@@ -163,8 +163,23 @@ test('U3 overhead benchmark — capacity proxy mean ≤+10%, p95 ≤+15%', async
 
 // Micro-benchmark: per-query proxy overhead. Useful for debugging if
 // the main benchmark fails — it isolates the prepare() + first() cost
-// from surrounding work. Reports only; the main test above is the gate.
-test('U3 per-query micro-benchmark — reports proxy cost on single first()', async () => {
+// from surrounding work. The request-level macro benchmark above is
+// the primary gate; this variant adds a widened secondary gate.
+//
+// Threshold rationale (Cluster F, D6): the macro benchmark keeps the
+// plan-budget 10%/15% thresholds because each iteration is a full
+// bootstrap (~15-25 ms) where scheduler jitter is negligible versus
+// the work. This micro variant measures a single `prepare().first()`
+// call — typically sub-0.1 ms on modern hardware — where scheduler
+// jitter dominates under concurrent-test load (`node --test`
+// parallelises by default). Under full-suite load, mean deltas of
+// 20-30% are routine even when the proxy costs zero, because the
+// jitter noise floor exceeds the work itself. A widened 20%/25%
+// budget preserves "order-of-magnitude no regression" while
+// tolerating CI jitter on shared test runners. Any future reader
+// tightening these thresholds should first re-measure the timer
+// resolution and the sub-0.1 ms noise floor on the target runner.
+test('U3 per-query micro-benchmark — capacity proxy mean ≤+20%, p95 ≤+25%', async () => {
   const DB = createMigratedSqliteD1Database();
   seedAccount(DB, { accountId: 'adult-micro', learnerId: 'learner-micro' });
 
@@ -200,10 +215,30 @@ test('U3 per-query micro-benchmark — reports proxy cost on single first()', as
       meanDeltaPct: (meanDelta * 100).toFixed(2),
       p95DeltaPct: (p95Delta * 100).toFixed(2),
     })}\n`);
-    // No hard assertion — report only. The request-level gate is the
-    // main benchmark; at microsecond timescales individual calls are
-    // dominated by noise.
+
     assert.ok(Number.isFinite(raw.mean) && Number.isFinite(prx.mean));
+
+    // Timer-resolution guard — mirrors the macro benchmark's 0.5 ms
+    // floor, scaled to this variant's sub-millisecond regime. At mean
+    // timings below 0.1 ms per query, the % delta is essentially
+    // `(proxy_jitter - raw_jitter) / raw_jitter` and tells us nothing
+    // about proxy cost. Report and skip the strict assertion rather
+    // than flake the build.
+    if (raw.mean < 0.1 || prx.mean < 0.1) {
+      process.stdout.write('[capacity-overhead-micro] SKIP strict: timer resolution too coarse for reliable %\n');
+      return;
+    }
+
+    // Widened budget: mean ≤+20%, p95 ≤+25%. See comment above the
+    // `test(...)` call for the rationale.
+    assert.ok(
+      meanDelta <= 0.20,
+      `Capacity proxy micro mean overhead ${(meanDelta * 100).toFixed(2)}% exceeds +20% budget (raw=${raw.mean.toFixed(4)}ms proxy=${prx.mean.toFixed(4)}ms)`,
+    );
+    assert.ok(
+      p95Delta <= 0.25,
+      `Capacity proxy micro p95 overhead ${(p95Delta * 100).toFixed(2)}% exceeds +25% budget (raw=${raw.p95.toFixed(4)}ms proxy=${prx.p95.toFixed(4)}ms)`,
+    );
   } finally {
     DB.close();
   }
