@@ -23,6 +23,7 @@
 - These scripts route Wrangler through `scripts/wrangler-oauth.mjs`, which removes `CLOUDFLARE_API_TOKEN` from the child process so Wrangler uses the logged-in OAuth session.
 - Do not reintroduce raw `npx wrangler deploy`, raw remote D1 Wrangler commands, or scripts that depend on `CLOUDFLARE_API_TOKEN` unless the authentication strategy is intentionally changed and documented.
 - The `*:oauth` aliases are compatibility aliases only; the default scripts are already OAuth-safe.
+- The repo root `.npmrc` sets `playwright_skip_browser_download=true`, which Playwright honours as equivalent to the `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` environment variable. Every `npm install` — including the one Cloudflare Wrangler remote builds run — therefore skips the ~300 MB Chromium download by default. Developers who need the browser locally opt in with `npx playwright install chromium`. See `docs/operations/capacity.md#playwright-test-suite`.
 
 ## Verification
 

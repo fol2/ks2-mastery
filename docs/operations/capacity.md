@@ -478,3 +478,59 @@ To inspect the current hash without deploying:
 ```sh
 node ./scripts/compute-inline-script-hash.mjs
 ```
+
+## Playwright test suite
+
+U5 (sys-hardening p1) added `@playwright/test` and three golden-path scenes
+under `tests/playwright/*.playwright.test.mjs`. The suite is additive — it
+does NOT run under `npm test` (node --test) because `scripts/run-node-tests.mjs`
+skips the `tests/playwright/` folder so the two runners stay independent.
+
+### Running locally
+
+```sh
+npm run test:playwright                           # all scenes, all five viewports
+npm run test:playwright -- --project=mobile-390   # single viewport
+npm run test:playwright -- tests/playwright/spelling-golden-path.playwright.test.mjs
+```
+
+The config spins up `tests/helpers/browser-app-server.js --with-worker-api`
+automatically, so `/api/*` routes respond during scenes. Chromium is the only
+browser wired up in U5; Firefox / WebKit land in a follow-up.
+
+### First-time setup
+
+Fresh clones must download the Chromium binary once:
+
+```sh
+npx playwright install chromium
+```
+
+The repo root `.npmrc` enforces the skip by default:
+
+```
+playwright_skip_browser_download=true
+```
+
+Playwright honours that key as equivalent to the
+`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` environment variable, so every
+`npm install` — including the one Cloudflare Wrangler remote builds run —
+automatically skips the ~300 MB Chromium download. The deployed Worker never
+uses the Playwright browser, and developers who want it locally opt in with
+the `npx playwright install chromium` command above.
+
+### Updating screenshot baselines
+
+U5 commits a single `mobile-390` baseline for `spelling-golden-path` under
+`tests/playwright/__screenshots__/`. Grammar and punctuation baselines plus the
+full five-viewport matrix are landed in follow-up units (U9 / U10 / U12).
+
+When an intentional visual change ships, regenerate the baselines locally:
+
+```sh
+npm run test:playwright -- --update-snapshots
+```
+
+Commit the updated PNGs in the same PR as the visual change. Review the diff
+alongside the code change so an accidental regression never sneaks in behind a
+baseline refresh.
