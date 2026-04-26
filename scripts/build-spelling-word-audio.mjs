@@ -388,6 +388,46 @@ export async function readStateFile(statePath) {
   }
 }
 
+// `renameWithRetry` shields `writeStateFile` from a Windows-specific race.
+// Under `Promise.all` with eight concurrent workers (see the "full simulated
+// generate run lands 472 uploaded entries" test), Windows `MoveFileEx`
+// briefly surfaces `EPERM`/`EACCES`/`EBUSY` when the target file is still
+// held open for an instant by another worker's own `rename` call. POSIX
+// `rename(2)` is atomic and does not surface these codes on this path, so
+// this retry is a no-op on Linux and macOS. Pattern follows the memory
+// playbook at `memory/project_windows_nodejs_pitfalls.md` (concurrent test
+// temp-dir races, NUL-byte merge playbook) — eight attempts with linear
+// backoff (10 / 20 / 30 / … / 80 ms), narrow error-code allowlist, anything
+// else rethrows immediately. Under contention from eight workers a single
+// state-file slot can queue 5-7 would-be overwriters behind it before the
+// OS releases the handle, so the ceiling is generous by design.
+async function renameWithRetry(from, to, maxAttempts = 8, baseDelayMs = 10) {
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      await rename(from, to);
+      return;
+    } catch (error) {
+      const code = error?.code;
+      // Retry only Windows-style concurrent-target contention.
+      // EPERM / EACCES / EBUSY surface when another worker in the
+      // Promise.all batch still has the target open for an instant
+      // around its own rename call. Linux/macOS `rename(2)` is
+      // atomic and would not surface these codes on this path, so
+      // the retry is a no-op on POSIX.
+      if (code !== 'EPERM' && code !== 'EACCES' && code !== 'EBUSY') {
+        throw error;
+      }
+      lastErr = error;
+      if (attempt === maxAttempts - 1) break;
+      // Small async wait so the other worker's rename completes.
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => setTimeout(resolve, baseDelayMs * (attempt + 1)));
+    }
+  }
+  throw lastErr;
+}
+
 // `writeStateFile` writes atomically: stage to a unique `<path>.tmp.<n>`,
 // then `rename()` over the target. POSIX `rename(2)` is atomic when source
 // and target are on the same filesystem (always true here — both under
@@ -408,7 +448,7 @@ export async function writeStateFile(statePath, state) {
   writeTmpCounter += 1;
   const tmpPath = `${statePath}.tmp.${process.pid}.${writeTmpCounter}`;
   await writeFile(tmpPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  await rename(tmpPath, statePath);
+  await renameWithRetry(tmpPath, statePath);
   return payload;
 }
 
