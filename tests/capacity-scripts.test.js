@@ -19,7 +19,11 @@ import {
   sanitiseWranglerEnv,
   selectAvailablePort,
 } from '../scripts/capacity-local-worker.mjs';
-import { redactLogLine } from '../scripts/lib/log-redaction.mjs';
+import {
+  createRedactionStream,
+  redactLogChunk,
+  redactLogLine,
+} from '../scripts/lib/log-redaction.mjs';
 
 function jsonResponse(payload, init = {}) {
   const status = Number(init.status) || 200;
@@ -1480,4 +1484,560 @@ test('capacity-local-worker orchestrator: redaction filter scrubs wrangler stdou
   assert.ok(written.includes('Ready on http://localhost:8787'));
 
   rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 Round 1: P0 adv-u4-001 — readiness must accept any 2xx (real Worker
+// createDemoSession returns 201 Created, not 200)
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: readiness treats POST /api/demo/session 201 as ready (adv-u4-001 regression)', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: true }));
+
+  const child = createFakeChild();
+  // Mirror the real Worker: health → 200, demo session → 201 Created.
+  const realWorkerShapeFetch = async (url) => {
+    const parsed = new URL(String(url));
+    if (parsed.pathname === '/api/health') return { ok: true, status: 200, async text() { return 'ok'; } };
+    if (parsed.pathname === '/api/demo/session') {
+      return { ok: true, status: 201, async text() { return JSON.stringify({ ok: true }); } };
+    }
+    return { ok: true, status: 200, async text() { return ''; } };
+  };
+
+  let driverInvoked = false;
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: realWorkerShapeFetch,
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => { driverInvoked = true; return Promise.resolve({ exitCode: 0 }); },
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 0, 'orchestrator must treat 201 Created as ready (real Worker contract)');
+  assert.equal(driverInvoked, true, 'driver must run after 201 readiness');
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+test('capacity-local-worker orchestrator: readiness treats 204 No Content as ready (permissive 2xx)', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: true }));
+
+  const child = createFakeChild();
+  const twoHundredFourFetch = async (url) => {
+    const parsed = new URL(String(url));
+    if (parsed.pathname === '/api/health') return { ok: true, status: 204, async text() { return ''; } };
+    if (parsed.pathname === '/api/demo/session') return { ok: true, status: 204, async text() { return ''; } };
+    return { ok: true, status: 200, async text() { return ''; } };
+  };
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: twoHundredFourFetch,
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => Promise.resolve({ exitCode: 0 }),
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 0, '204 No Content must count as ready');
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+test('capacity-local-worker orchestrator: readiness does NOT treat 301/3xx as ready (must be 2xx specifically)', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+
+  const child = createFakeChild();
+  // A 3xx redirect must NOT be treated as ready — a misconfigured proxy
+  // returning 301 must still time out rather than invoke the driver.
+  const threeHundredOneFetch = async (url) => {
+    const parsed = new URL(String(url));
+    if (parsed.pathname === '/api/health') return { ok: false, status: 301, async text() { return ''; } };
+    if (parsed.pathname === '/api/demo/session') return { ok: false, status: 301, async text() { return ''; } };
+    return { ok: false, status: 301, async text() { return ''; } };
+  };
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('starting...\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: threeHundredOneFetch,
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => { throw new Error('driver MUST NOT run on 3xx readiness'); },
+    killChild: (c) => { c.emit('exit', 1, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 5000; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator(['--readiness-timeout-ms', '1000'], injections);
+  assert.equal(result.exitCode, 2, '3xx must not count as ready — orchestrator should exit 2 on timeout');
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+test('capacity-local-worker orchestrator: readiness does NOT treat 500 as ready', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+
+  const child = createFakeChild();
+  const fiveHundredFetch = async () => ({ ok: false, status: 500, async text() { return 'nope'; } });
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('starting...\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: fiveHundredFetch,
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => { throw new Error('driver MUST NOT run on 500 readiness'); },
+    killChild: (c) => { c.emit('exit', 1, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 5000; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator(['--readiness-timeout-ms', '1000'], injections);
+  assert.equal(result.exitCode, 2, '500 must not count as ready');
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 Round 1: P1 adv-u4-002 — stream-chunk redaction across data events
+// ---------------------------------------------------------------------------
+test('createRedactionStream buffers incomplete lines across chunks (adv-u4-002 regression)', () => {
+  const writes = [];
+  const stream = createRedactionStream({ write: (s) => writes.push(s) });
+  // Split a Set-Cookie payload such that the prefix and value arrive in
+  // separate chunks. The naive per-chunk filter leaks the second half.
+  stream.write('Set-Cookie: ks2_sess');
+  stream.write('ion=abc123secret; Path=/\n');
+  stream.end();
+  const combined = writes.join('');
+  assert.ok(!combined.includes('abc123secret'), `stream-chunk split leaked cookie value: ${combined}`);
+  assert.ok(combined.includes('[redacted]'), 'redaction marker expected on stream join');
+});
+
+test('createRedactionStream redacts when value boundary falls mid-chunk', () => {
+  const writes = [];
+  const stream = createRedactionStream({ write: (s) => writes.push(s) });
+  // Prefix present in first chunk; value split in two.
+  stream.write('Set-Cookie: ks2_session=abc');
+  stream.write('123secretvalue; Path=/\n');
+  stream.end();
+  const combined = writes.join('');
+  assert.ok(!combined.includes('abc123secretvalue'), `mid-value split leaked: ${combined}`);
+  assert.ok(!combined.includes('123secretvalue'), `value tail leaked: ${combined}`);
+  assert.ok(combined.includes('[redacted]'));
+});
+
+test('createRedactionStream flushes residual buffer on end() without trailing newline', () => {
+  const writes = [];
+  const stream = createRedactionStream({ write: (s) => writes.push(s) });
+  // No trailing newline — close must still redact the residual.
+  stream.write('Authorization: Bearer leaky-trailing-token');
+  stream.end();
+  const combined = writes.join('');
+  assert.ok(!combined.includes('leaky-trailing-token'), `residual buffer leaked on end(): ${combined}`);
+  assert.ok(combined.includes('[redacted]'), 'final flush must apply redaction');
+});
+
+test('createRedactionStream passes benign multi-chunk text through unmodified', () => {
+  const writes = [];
+  const stream = createRedactionStream({ write: (s) => writes.push(s) });
+  stream.write('wrangler ready on ');
+  stream.write('http://localhost:8787\n');
+  stream.write('another benign line\n');
+  stream.end();
+  const combined = writes.join('');
+  assert.equal(combined, 'wrangler ready on http://localhost:8787\nanother benign line\n');
+});
+
+test('capacity-local-worker orchestrator: redaction handles chunk-split cookie in spawn pipe (end-to-end)', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: true }));
+
+  const child = createFakeChild();
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      // Emit cookie value across two data chunks (real stream boundary case).
+      setImmediate(() => {
+        child.stdout.emit('data', Buffer.from('Set-Cookie: ks2_session=leaky'));
+        child.stdout.emit('data', Buffer.from('halfsplit.value.here; Path=/\n'));
+        child.stdout.emit('data', Buffer.from('Ready\n'));
+      });
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => Promise.resolve({ exitCode: 0 }),
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 0);
+  const written = readFileSync(logPath, 'utf8');
+  assert.ok(!written.includes('leakyhalfsplit.value.here'), `chunk-split cookie leaked: ${written}`);
+  assert.ok(!written.includes('halfsplit.value.here'), `tail of chunk-split cookie leaked: ${written}`);
+  assert.ok(written.includes('[redacted]'));
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 Round 1: P1 adv-u4-005 — redaction scope expanded (OAuth artefacts,
+// quote-delimited values, JSON-shape tokens)
+// ---------------------------------------------------------------------------
+test('redactLogLine scrubs OAuth artefacts access_token, refresh_token, id_token (adv-u4-005)', () => {
+  const line = 'body: access_token=oauth-access refresh_token=oauth-refresh id_token=oauth-id done';
+  const out = redactLogLine(line);
+  assert.ok(!out.includes('oauth-access'), `access_token leaked: ${out}`);
+  assert.ok(!out.includes('oauth-refresh'), `refresh_token leaked: ${out}`);
+  assert.ok(!out.includes('oauth-id'), `id_token leaked: ${out}`);
+  assert.ok(out.includes('[redacted]'));
+});
+
+test('redactLogLine scrubs quote-delimited ks2_session and Bearer values', () => {
+  assert.ok(
+    !redactLogLine('cookie: ks2_session="quoted-secret"; Path=/').includes('quoted-secret'),
+    'double-quoted cookie value leaked',
+  );
+  assert.ok(
+    !redactLogLine("cookie: ks2_session='single-secret'; Path=/").includes('single-secret'),
+    'single-quoted cookie value leaked',
+  );
+  assert.ok(
+    !redactLogLine('header: "Bearer quoted.jwt.value"').includes('quoted.jwt.value'),
+    'quoted Bearer token leaked',
+  );
+});
+
+test('redactLogLine scrubs JSON-shape token/secret/password/key payloads', () => {
+  const jsonLine = '{"CLOUDFLARE_API_TOKEN":"json-secret-value","other":"ok"}';
+  const out = redactLogLine(jsonLine);
+  assert.ok(!out.includes('json-secret-value'), `JSON-shape CF token leaked: ${out}`);
+  assert.ok(out.includes('[redacted]'));
+
+  const shaped = '{"database_password":"pw123","access_token":"at456","api_key":"ak789"}';
+  const shapedOut = redactLogLine(shaped);
+  assert.ok(!shapedOut.includes('pw123'), 'json password leaked');
+  assert.ok(!shapedOut.includes('at456'), 'json access_token leaked');
+  assert.ok(!shapedOut.includes('ak789'), 'json api_key leaked');
+});
+
+test('redactLogLine scrubs common third-party secret env assignments', () => {
+  const line = 'env NPM_TOKEN=npm-secret OPENAI_API_KEY=openai-secret AWS_SECRET_ACCESS_KEY=aws-secret';
+  const out = redactLogLine(line);
+  assert.ok(!out.includes('npm-secret'), 'NPM_TOKEN leaked');
+  assert.ok(!out.includes('openai-secret'), 'OPENAI_API_KEY leaked');
+  assert.ok(!out.includes('aws-secret'), 'AWS_SECRET_ACCESS_KEY leaked');
+});
+
+test('redactLogChunk is idempotent across expanded patterns', () => {
+  const line = 'cookie: ks2_session=[redacted]; Bearer [redacted]; access_token=[redacted]';
+  assert.equal(redactLogChunk(line), line, 'already-redacted lines must pass through unchanged');
+});
+
+// ---------------------------------------------------------------------------
+// U4 Round 1: P1 adv-u4-004 — allowlist-based env sanitisation
+// ---------------------------------------------------------------------------
+test('sanitiseWranglerEnv strips every non-allowlisted secret by name (adv-u4-004)', () => {
+  const source = {
+    PATH: '/usr/bin',
+    HOME: '/home/user',
+    CLOUDFLARE_API_TOKEN: 'cf-secret-upper',
+    cloudflare_api_token: 'cf-secret-lower',
+    CLOUDFLARE_TOKEN: 'cf-token-variant',
+    CF_API_TOKEN: 'cf-api-token-variant',
+    NPM_TOKEN: 'npm-secret',
+    OPENAI_API_KEY: 'openai-secret',
+    AWS_SECRET_ACCESS_KEY: 'aws-secret',
+    GITHUB_TOKEN: 'gh-secret',
+    DATABASE_PASSWORD: 'db-secret',
+    OAUTH_CLIENT_SECRET: 'oauth-secret',
+  };
+  const cleaned = sanitiseWranglerEnv(source);
+  for (const key of [
+    'CLOUDFLARE_API_TOKEN',
+    'cloudflare_api_token',
+    'CLOUDFLARE_TOKEN',
+    'CF_API_TOKEN',
+    'NPM_TOKEN',
+    'OPENAI_API_KEY',
+    'AWS_SECRET_ACCESS_KEY',
+    'GITHUB_TOKEN',
+    'DATABASE_PASSWORD',
+    'OAUTH_CLIENT_SECRET',
+  ]) {
+    assert.equal(
+      Object.prototype.hasOwnProperty.call(cleaned, key),
+      false,
+      `${key} leaked into wrangler env via denylist gap`,
+    );
+  }
+  // Value-level defence: stringified env must not contain any seeded secret value.
+  const seeded = [
+    'cf-secret-upper', 'cf-secret-lower', 'cf-token-variant', 'cf-api-token-variant',
+    'npm-secret', 'openai-secret', 'aws-secret', 'gh-secret', 'db-secret', 'oauth-secret',
+  ];
+  const stringified = JSON.stringify(cleaned);
+  for (const value of seeded) {
+    assert.equal(stringified.includes(value), false, `secret value "${value}" present in sanitised env`);
+  }
+});
+
+test('sanitiseWranglerEnv keeps essential allowlisted keys (PATH, CLOUDFLARE_ACCOUNT_ID, WRANGLER_LOG)', () => {
+  const cleaned = sanitiseWranglerEnv({
+    PATH: '/usr/bin',
+    HOME: '/home/user',
+    USERPROFILE: 'C:\\Users\\u',
+    APPDATA: 'C:\\Users\\u\\AppData\\Roaming',
+    LOCALAPPDATA: 'C:\\Users\\u\\AppData\\Local',
+    CLOUDFLARE_ACCOUNT_ID: 'acct-12345',
+    CF_ACCOUNT_ID: 'acct-also',
+    WRANGLER_LOG: 'debug',
+    WRANGLER_SEND_METRICS: 'false',
+    NODE_ENV: 'development',
+    LANG: 'en_GB.UTF-8',
+    CI: 'true',
+    TERM: 'xterm-256color',
+  });
+  assert.equal(cleaned.PATH, '/usr/bin');
+  assert.equal(cleaned.CLOUDFLARE_ACCOUNT_ID, 'acct-12345');
+  assert.equal(cleaned.CF_ACCOUNT_ID, 'acct-also');
+  assert.equal(cleaned.WRANGLER_LOG, 'debug');
+  assert.equal(cleaned.WRANGLER_SEND_METRICS, 'false');
+  assert.equal(cleaned.NODE_ENV, 'development');
+});
+
+test('sanitiseWranglerEnv passes WRANGLER_* prefixed keys through (wildcard allow)', () => {
+  const cleaned = sanitiseWranglerEnv({
+    PATH: '/usr/bin',
+    WRANGLER_LOG: 'debug',
+    WRANGLER_CUSTOM_FLAG: 'xyz',
+    WRANGLER_SEND_METRICS: 'false',
+  });
+  assert.equal(cleaned.WRANGLER_CUSTOM_FLAG, 'xyz');
+  assert.equal(cleaned.WRANGLER_LOG, 'debug');
+});
+
+test('sanitiseWranglerEnv excludes suspicious-suffix keys even if otherwise allowlisted-looking', () => {
+  // A rogue WRANGLER_TOKEN would be concerning — pattern-exclude wins over prefix-allow.
+  const cleaned = sanitiseWranglerEnv({
+    PATH: '/usr/bin',
+    WRANGLER_TOKEN: 'rogue-secret',
+    WRANGLER_API_KEY: 'rogue-api',
+    WRANGLER_PASSWORD: 'rogue-password',
+    WRANGLER_SECRET: 'rogue-secret-suffix',
+    WRANGLER_LOG: 'debug',
+  });
+  assert.equal(Object.prototype.hasOwnProperty.call(cleaned, 'WRANGLER_TOKEN'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(cleaned, 'WRANGLER_API_KEY'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(cleaned, 'WRANGLER_PASSWORD'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(cleaned, 'WRANGLER_SECRET'), false);
+  assert.equal(cleaned.WRANGLER_LOG, 'debug');
+});
+
+test('sanitiseWranglerEnv keeps CLOUDFLARE_API_TOKEN when WORKERS_CI=1 (Workers CI parity)', () => {
+  const cleaned = sanitiseWranglerEnv({
+    PATH: '/usr/bin',
+    WORKERS_CI: '1',
+    CLOUDFLARE_API_TOKEN: 'ci-token-value',
+  });
+  assert.equal(cleaned.CLOUDFLARE_API_TOKEN, 'ci-token-value');
+  assert.equal(cleaned.WORKERS_CI, '1');
+});
+
+// ---------------------------------------------------------------------------
+// U4 Round 1: P1 adv-u4-003 — orchestrator forces --output at position 0
+// of driver passthrough; asserts evidence file exists after driver exit 0
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: injects --output <evidencePath> at front of driver argv (adv-u4-003)', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+
+  const child = createFakeChild();
+  let capturedArgv = null;
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: async ({ argv }) => {
+      capturedArgv = [...argv];
+      // Simulate driver honouring --output by writing the evidence file.
+      const outIdx = capturedArgv.indexOf('--output');
+      if (outIdx >= 0) {
+        const { writeFileSync } = await import('node:fs');
+        writeFileSync(capturedArgv[outIdx + 1], JSON.stringify({ ok: true }));
+      }
+      return { exitCode: 0 };
+    },
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 0);
+  assert.ok(capturedArgv.includes('--output'), `--output not injected: ${JSON.stringify(capturedArgv)}`);
+  const outIdx = capturedArgv.indexOf('--output');
+  assert.equal(capturedArgv[outIdx + 1], evidencePath, '--output value must point at orchestrator evidencePath');
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+test('capacity-local-worker orchestrator: operator --output in passthrough wins with warning', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const customPath = join(tempDir, 'custom-output.json');
+
+  const child = createFakeChild();
+  let capturedArgv = null;
+  const warnings = [];
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: async ({ argv }) => {
+      capturedArgv = [...argv];
+      const outIdx = capturedArgv.indexOf('--output');
+      if (outIdx >= 0) {
+        const { writeFileSync } = await import('node:fs');
+        writeFileSync(capturedArgv[outIdx + 1], JSON.stringify({ ok: true }));
+      }
+      return { exitCode: 0 };
+    },
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    warn: (msg) => warnings.push(msg),
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator(['--', '--output', customPath], injections);
+  assert.equal(result.exitCode, 0);
+  // Operator override honoured — custom path present; orchestrator default NOT present.
+  assert.ok(capturedArgv.includes(customPath), `operator path not honoured: ${JSON.stringify(capturedArgv)}`);
+  assert.equal(capturedArgv.filter((a) => a === '--output').length, 1, 'exactly one --output expected');
+  assert.ok(warnings.some((m) => /output/i.test(String(m))), 'warning expected when operator overrides --output');
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+test('capacity-local-worker orchestrator: missing evidence file after driver exit 0 → exit 3', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  // Note: no one writes evidencePath in this test — driver claims exit 0 yet file is missing.
+
+  const child = createFakeChild();
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => Promise.resolve({ exitCode: 0 }),
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 3, 'missing evidence must produce exit 3');
+  assert.ok(result.error && /evidence/i.test(result.error), `expected evidence error, got ${result.error}`);
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 Round 1: P2 adv-u4-010 — --port-start upper bound check
+// ---------------------------------------------------------------------------
+test('parseLocalWorkerArgs rejects --port-start above 65533', () => {
+  assert.throws(() => parseLocalWorkerArgs(['--port-start', '99999']), /port-start/i);
+  assert.throws(() => parseLocalWorkerArgs(['--port-start', '65534']), /port-start/i);
+  // Within range still works.
+  const ok = parseLocalWorkerArgs(['--port-start', '9000']);
+  assert.equal(ok.portStart, 9000);
+});
+
+// ---------------------------------------------------------------------------
+// U4 Round 1: P2 adv-u4-009 — reject operator --origin in passthrough
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: rejects operator --origin in driver passthrough upfront', async () => {
+  const result = await runLocalWorkerOrchestrator(['--', '--origin', 'http://evil.com'], {
+    platform: 'linux',
+    // These should never be called — the rejection is upfront.
+    spawn: () => { throw new Error('spawn MUST NOT run on --origin collision'); },
+    runMigrations: () => { throw new Error('migration MUST NOT run on --origin collision'); },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runDriver: () => { throw new Error('driver MUST NOT run on --origin collision'); },
+    killChild: () => Promise.resolve(),
+    nowMs: () => 0,
+    sleep: () => Promise.resolve(),
+  });
+  assert.equal(result.exitCode, 2);
+  assert.ok(result.error && /origin/i.test(result.error), `expected origin collision error, got ${result.error}`);
 });

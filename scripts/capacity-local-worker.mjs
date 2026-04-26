@@ -8,32 +8,100 @@
 // section U4):
 // - Exit 0 on happy path (driver exit 0)
 // - Exit N on driver non-zero exit (propagated)
-// - Exit 2 on readiness timeout
+// - Exit 2 on readiness timeout or operator argv collision
+// - Exit 3 on evidence file missing after driver exit 0
 // - Exit 130 on SIGINT
 // - NEVER wire into `npm run check` or `npm run verify`
 //
 // All side effects (spawn, fetch, fs writes, net probes, platform dispatch)
-// are injectable so the 10 scenarios under `tests/capacity-scripts.test.js`
+// are injectable so the 10+ scenarios under `tests/capacity-scripts.test.js`
 // can exercise the logic without a real wrangler subprocess.
+//
+// U4 round 1 fixes (see .context/compound-engineering/ce-code-review/
+// u4-round1/adversarial-findings.json):
+// - adv-u4-001 P0: readiness accepts any 2xx (real Worker createDemoSession
+//   returns 201 Created — see `worker/src/demo/sessions.js:353`).
+// - adv-u4-002 P1: redaction pipeline now uses `createRedactionStream` which
+//   buffers partial lines across stream chunks.
+// - adv-u4-003 P1: driver argv is forced to include
+//   `--output <evidencePath>`; operator override in the passthrough honoured
+//   with a warning. After driver exit 0 the evidence file existence is
+//   asserted — missing file produces exit 3.
+// - adv-u4-004 P1: `sanitiseWranglerEnv` flipped to an allowlist plus a
+//   suspicious-suffix denylist. Every non-allowlisted key is dropped by
+//   default.
+// - adv-u4-009 P2: operator `--origin` in passthrough rejected upfront
+//   before migrations/spawn so the collision surfaces instantly.
+// - adv-u4-010 P2: `--port-start` upper bound enforced at parse time.
 
 import net from 'node:net';
 import { spawn as realSpawn, spawnSync as realSpawnSync } from 'node:child_process';
-import { createWriteStream, existsSync, mkdirSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, resolve as resolvePath } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { redactLogChunk } from './lib/log-redaction.mjs';
+import { createRedactionStream } from './lib/log-redaction.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const DEFAULT_PORT_START = 8787;
+const MAX_PORT_START = 65533; // leave at least PORT_CANDIDATES_COUNT headroom
 const PORT_CANDIDATES_COUNT = 3;
 const DEFAULT_READINESS_TIMEOUT_MS = 30000;
 const READINESS_POLL_START_MS = 100;
 const READINESS_POLL_CAP_MS = 1000;
 const DEFAULT_LOG_PATH = 'reports/capacity/local-worker-stdout.log';
 const DEFAULT_EVIDENCE_PATH = 'reports/capacity/latest-local.json';
+
+// Allowlist of env var names the wrangler subprocess is PERMITTED to see.
+// Everything else is dropped, including third-party secrets that would
+// otherwise be inherited from the operator's shell. `WRANGLER_*` prefixed
+// keys pass through via `WRANGLER_ENV_PREFIXES` below so operators can still
+// tweak wrangler's own knobs.
+//
+// adv-u4-004 flip: denylist-of-one became allowlist. A rogue
+// `WRANGLER_TOKEN`/`WRANGLER_SECRET` would match the prefix allow but is
+// rejected by `SUSPICIOUS_SUFFIX_PATTERN` below — suffix deny wins so a
+// future wrangler version that adds a confusingly-named credential variable
+// does not leak by accident.
+const WRANGLER_ENV_ALLOWLIST = new Set([
+  'PATH',               // binary discovery
+  'HOME',               // wrangler config dir (POSIX)
+  'USERPROFILE',        // wrangler config dir (Windows)
+  'APPDATA',            // Windows config locations
+  'LOCALAPPDATA',       // Windows cache
+  'USER',
+  'USERNAME',
+  'SHELL',
+  'LANG',
+  'LC_ALL',
+  'LC_CTYPE',
+  'TZ',
+  'TMPDIR',
+  'TEMP',
+  'TMP',
+  'NODE_ENV',
+  'CLOUDFLARE_ACCOUNT_ID',    // public account id; wrangler needs it for bindings
+  'CF_ACCOUNT_ID',            // wrangler alternative spelling
+  'WRANGLER_LOG',             // debug verbosity
+  'WRANGLER_SEND_METRICS',    // opt-out
+  'FORCE_COLOR',
+  'NO_COLOR',
+  'CI',                       // wrangler behaviour toggles on this
+  'TERM',
+  'WORKERS_CI',               // Cloudflare Workers CI marker; preserved so the
+                              // CI-build branch still recognises itself.
+]);
+
+const WRANGLER_ENV_PREFIXES = ['WRANGLER_'];
+
+// Keys whose name ends in one of these suffixes are always dropped, even if
+// they match the allowlist or the prefix pass-through. This is the defence
+// against a future wrangler variable named `WRANGLER_SOMETHING_TOKEN` or a
+// confusingly-named allowlist entry like `CLOUDFLARE_ACCOUNT_ID_KEY` (not
+// a real variable today; defensive).
+const SUSPICIOUS_SUFFIX_PATTERN = /(TOKEN|SECRET|PASSWORD|KEY)$/i;
 
 // ---------------------------------------------------------------------------
 // CLI argument parsing
@@ -45,7 +113,8 @@ const DEFAULT_EVIDENCE_PATH = 'reports/capacity/latest-local.json';
  * - Every arg BEFORE the literal `--` separator is interpreted as an
  *   orchestrator flag (`--fresh`, `--port-start`, `--readiness-timeout-ms`).
  * - Every arg AFTER `--` is captured verbatim into `driverArgs` and forwarded
- *   to `classroom-load-test.mjs` unchanged. This keeps the orchestrator out of
+ *   to `classroom-load-test.mjs` unchanged (except for upfront rejections —
+ *   see `rejectConflictingDriverArgs`). This keeps the orchestrator out of
  *   the business of understanding every load-driver flag.
  */
 export function parseLocalWorkerArgs(argv = []) {
@@ -73,6 +142,11 @@ export function parseLocalWorkerArgs(argv = []) {
       if (!Number.isInteger(parsed) || parsed <= 0) {
         throw new Error(`--port-start requires a positive integer, got: ${value}`);
       }
+      // adv-u4-010: bound the upper end so an obvious typo (88787) surfaces as
+      // a clear validation error instead of opaque "No free port available".
+      if (parsed > MAX_PORT_START) {
+        throw new Error(`--port-start must be <= ${MAX_PORT_START} (got ${value}); leave room for ${PORT_CANDIDATES_COUNT} candidates below the 65535 ceiling.`);
+      }
       result.portStart = parsed;
       index += 1;
       continue;
@@ -94,21 +168,73 @@ export function parseLocalWorkerArgs(argv = []) {
   return result;
 }
 
+/**
+ * Reject operator-supplied driver flags that collide with orchestrator-owned
+ * contracts (`--origin`, `--local-fixture`, `--demo-sessions`). `--output`
+ * is allowed through with a warning so an operator can redirect evidence
+ * when they really want to (the orchestrator still honours it for its own
+ * existence check).
+ *
+ * adv-u4-009: catches the collision BEFORE migrations/spawn so the operator
+ * does not wait multiple minutes before learning they typed a duplicate
+ * flag.
+ */
+function rejectConflictingDriverArgs(driverArgs) {
+  const reserved = new Set(['--origin', '--url', '--local-fixture', '--demo-sessions']);
+  for (const arg of driverArgs) {
+    if (reserved.has(arg)) {
+      throw new Error(`operator passthrough must not include ${arg}; the orchestrator owns this flag (run with --help for details).`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
-// Env sanitisation (defence-in-depth; wrangler-oauth.mjs already strips)
+// Env sanitisation (allowlist; wrangler-oauth.mjs still strips CF token too)
 // ---------------------------------------------------------------------------
 
 /**
- * Remove secrets that must never reach the wrangler child-process env. Returns
- * a NEW object; does not mutate the input. Matches the guard in
- * `scripts/wrangler-oauth.mjs` so the orchestrator double-defends even if the
- * oauth wrapper is ever replaced.
+ * Return a NEW object containing only the env vars the wrangler subprocess is
+ * PERMITTED to see.
+ *
+ * Rules (in order):
+ * 1. If `WORKERS_CI === '1'` the `CLOUDFLARE_API_TOKEN` variable survives —
+ *    the Cloudflare Workers CI build path needs it. This matches the guard
+ *    in `scripts/wrangler-oauth.mjs`.
+ * 2. Keys matching the suspicious-suffix deny pattern (`/TOKEN|SECRET|
+ *    PASSWORD|KEY$/i`) are always dropped.
+ * 3. Keys that are exact matches in `WRANGLER_ENV_ALLOWLIST` pass through.
+ * 4. Keys starting with `WRANGLER_` pass through (wrangler-internal knobs).
+ * 5. Everything else is dropped.
+ *
+ * adv-u4-004: denylist-of-one CLOUDFLARE_API_TOKEN became this allowlist so
+ * NPM_TOKEN/OPENAI_API_KEY/AWS_SECRET_ACCESS_KEY/etc. no longer leak into the
+ * wrangler child.
  */
 export function sanitiseWranglerEnv(env = {}) {
-  const cleaned = { ...env };
-  const isWorkersBuild = cleaned.WORKERS_CI === '1';
-  if (!isWorkersBuild) {
-    delete cleaned.CLOUDFLARE_API_TOKEN;
+  const isWorkersBuild = env.WORKERS_CI === '1';
+  const cleaned = {};
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof key !== 'string' || typeof value !== 'string') continue;
+
+    // Workers CI exception for CLOUDFLARE_API_TOKEN: the build pipeline needs
+    // the token, and the suspicious-suffix check would otherwise drop it.
+    if (isWorkersBuild && key === 'CLOUDFLARE_API_TOKEN') {
+      cleaned[key] = value;
+      continue;
+    }
+
+    // Suspicious suffix deny overrides both allowlist and prefix-allow.
+    if (SUSPICIOUS_SUFFIX_PATTERN.test(key)) continue;
+
+    if (WRANGLER_ENV_ALLOWLIST.has(key)) {
+      cleaned[key] = value;
+      continue;
+    }
+
+    if (WRANGLER_ENV_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+      cleaned[key] = value;
+      continue;
+    }
   }
   return cleaned;
 }
@@ -217,12 +343,24 @@ function defaultPortProbe(port) {
 // ---------------------------------------------------------------------------
 
 /**
- * Two-stage readiness poll. Stage 1: GET `/api/health` expects 200. Stage 2:
- * POST `/api/demo/session` expects 200. Only after BOTH succeed is the worker
- * considered ready — the two-stage check avoids an auth-401-as-ready false
- * positive (a D1 binding misconfiguration can produce 401 from the auth
- * middleware while `/api/health` still returns 200).
+ * Two-stage readiness poll. Stage 1: GET `/api/health` expects any 2xx
+ * response. Stage 2: POST `/api/demo/session` expects any 2xx response. Only
+ * after BOTH succeed is the worker considered ready — the two-stage check
+ * avoids an auth-401-as-ready false positive (a D1 binding misconfiguration
+ * can produce 401 from the auth middleware while `/api/health` still returns
+ * 2xx).
+ *
+ * adv-u4-001: stage 2 was previously `=== 200` but the real Worker's
+ * `createDemoSession` returns 201 Created on success (see
+ * `worker/src/demo/sessions.js:353`). Accepting any 2xx matches the real
+ * contract while still rejecting 3xx redirects, 4xx auth failures, and 5xx
+ * errors.
  */
+function isTwoXx(res) {
+  if (!res || typeof res.status !== 'number') return false;
+  return res.status >= 200 && res.status < 300;
+}
+
 async function waitForReadiness({ origin, fetchFn, timeoutMs, nowMs, sleep }) {
   const deadline = nowMs() + timeoutMs;
   let delay = READINESS_POLL_START_MS;
@@ -231,7 +369,7 @@ async function waitForReadiness({ origin, fetchFn, timeoutMs, nowMs, sleep }) {
     let stageOne = false;
     try {
       const healthRes = await fetchFn(`${origin}/api/health`, { method: 'GET' });
-      if (healthRes && healthRes.status === 200) stageOne = true;
+      if (isTwoXx(healthRes)) stageOne = true;
     } catch { /* ignore, retry */ }
 
     if (stageOne) {
@@ -241,7 +379,7 @@ async function waitForReadiness({ origin, fetchFn, timeoutMs, nowMs, sleep }) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({}),
         });
-        if (demoRes && demoRes.status === 200) return { ready: true };
+        if (isTwoXx(demoRes)) return { ready: true };
       } catch { /* ignore, retry */ }
     }
 
@@ -262,6 +400,12 @@ async function waitForReadiness({ origin, fetchFn, timeoutMs, nowMs, sleep }) {
  * on-disk log file. Returns an object with `{close}` so callers can flush
  * before exit.
  *
+ * adv-u4-002: routes bytes through `createRedactionStream` so partial lines
+ * that span stream-chunk boundaries accumulate in a state buffer and only
+ * get scrubbed once the line terminator arrives. The stream's `end()` method
+ * flushes whatever tail remains through the redaction filter before closing
+ * the write stream.
+ *
  * `close()` waits one turn of the event loop for any queued stdout/stderr
  * emissions (real subprocesses can deliver buffered chunks after SIGINT; the
  * fake children used by tests deliver theirs via `setImmediate`). After the
@@ -270,12 +414,25 @@ async function waitForReadiness({ origin, fetchFn, timeoutMs, nowMs, sleep }) {
  */
 function attachRedactedLogPipe(child, logPath) {
   mkdirSync(dirname(logPath), { recursive: true });
-  const stream = createWriteStream(logPath, { flags: 'w' });
+  const fileStream = createWriteStream(logPath, { flags: 'w' });
   let closed = false;
+  let fileStreamEnded = false;
+
+  // A sink that writes to `fileStream` only while it's still open. The
+  // internal redaction stream keeps its own state, so the sink itself is
+  // stateless beyond the closed flag.
+  const redactionStream = createRedactionStream({
+    write(text) {
+      if (closed || fileStreamEnded) return;
+      fileStream.write(text);
+    },
+    // Deliberately no `end()` here — the write stream's end is handled
+    // explicitly in the returned `close()` method so callers can await it.
+  });
+
   const writeChunk = (chunk) => {
     if (closed) return;
-    const scrubbed = redactLogChunk(chunk);
-    stream.write(scrubbed);
+    redactionStream.write(chunk);
   };
   child.stdout.on('data', writeChunk);
   child.stderr.on('data', writeChunk);
@@ -288,8 +445,51 @@ function attachRedactedLogPipe(child, logPath) {
       closed = true;
       try { child.stdout.removeListener('data', writeChunk); } catch { /* noop */ }
       try { child.stderr.removeListener('data', writeChunk); } catch { /* noop */ }
-      await new Promise((resolve) => stream.end(resolve));
+      // Flush residual buffered bytes through the redaction stream before
+      // closing the file. This covers the case where wrangler emitted a
+      // trailing fragment without a newline.
+      redactionStream.end();
+      fileStreamEnded = true;
+      await new Promise((resolve) => fileStream.end(resolve));
     },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Driver argv composition
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the argv forwarded to `classroom-load-test.mjs`.
+ *
+ * - `--local-fixture`, `--origin <resolved>`, `--demo-sessions` are forced at
+ *   the front (the orchestrator owns these contracts).
+ * - `--output <evidencePath>` is injected by the orchestrator (adv-u4-003).
+ *   If the operator supplied their own `--output <path>` in the passthrough
+ *   it wins (the caller can detect this via the returned `operatorOutputPath`
+ *   and warn).
+ * - `--fresh` passthrough is appended after all orchestrator-owned flags so
+ *   the driver can wipe its per-run state.
+ */
+export function composeDriverArgs({ originResolved, evidencePath, passthrough = [], fresh = false }) {
+  const operatorOutputIndex = passthrough.indexOf('--output');
+  const operatorOutputPath = operatorOutputIndex >= 0 ? passthrough[operatorOutputIndex + 1] : null;
+
+  const argv = [
+    '--local-fixture',
+    '--origin', originResolved,
+    '--demo-sessions',
+  ];
+  if (!operatorOutputPath) {
+    argv.push('--output', evidencePath);
+  }
+  for (const item of passthrough) argv.push(item);
+  if (fresh) argv.push('--fresh');
+
+  return {
+    argv,
+    operatorOutputPath,
+    effectiveEvidencePath: operatorOutputPath || evidencePath,
   };
 }
 
@@ -316,6 +516,14 @@ export async function runLocalWorkerOrchestrator(argv = [], injections = {}) {
     return { exitCode: 0, port: null, originResolved: null, environment: 'local', help: true };
   }
 
+  // Pre-scan the driver passthrough for orchestrator-owned flag collisions.
+  // Rejecting upfront avoids a multi-minute wait before wrangler spawn.
+  try {
+    rejectConflictingDriverArgs(parsed.driverArgs);
+  } catch (error) {
+    return { exitCode: 2, port: null, originResolved: null, environment: 'local', error: error.message };
+  }
+
   const {
     platform = process.platform,
     spawn = realSpawn,
@@ -329,6 +537,9 @@ export async function runLocalWorkerOrchestrator(argv = [], injections = {}) {
     nowMs = () => Date.now(),
     sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
     triggerSigint = false,
+    warn = (msg) => process.stderr.write(`capacity-local-worker: ${msg}\n`),
+    existsFile = existsSync,
+    statFile = statSync,
   } = injections;
 
   // Stage 1: apply local D1 migrations. Failures here are fatal — no point
@@ -395,17 +606,18 @@ export async function runLocalWorkerOrchestrator(argv = [], injections = {}) {
   }
 
   // Stage 5: run the load driver. Compose driverArgs with --local-fixture +
-  // --origin + --demo-sessions by default; operator-supplied argv (after `--`)
-  // is appended verbatim so operators can pin thresholds, output paths, etc.
-  const driverArgs = [
-    '--local-fixture',
-    '--origin', originResolved,
-    '--demo-sessions',
-    ...parsed.driverArgs,
-  ];
-  // Forward the orchestrator --fresh flag so the load driver can wipe its own
-  // per-run state if needed. Does NOT touch .wrangler/state in v1.
-  if (parsed.fresh) driverArgs.push('--fresh');
+  // --origin + --demo-sessions + --output by default; operator-supplied argv
+  // (after `--`) is appended verbatim so operators can pin thresholds. If the
+  // operator passes their own `--output` it wins (with a warning).
+  const composed = composeDriverArgs({
+    originResolved,
+    evidencePath,
+    passthrough: parsed.driverArgs,
+    fresh: parsed.fresh,
+  });
+  if (composed.operatorOutputPath) {
+    warn(`operator --output ${composed.operatorOutputPath} overrides default evidence path ${evidencePath}.`);
+  }
 
   // Support a SIGINT simulation for the test that exercises the error path.
   const abortController = new AbortController();
@@ -418,7 +630,7 @@ export async function runLocalWorkerOrchestrator(argv = [], injections = {}) {
 
   try {
     driverResult = await runDriver({
-      argv: driverArgs,
+      argv: composed.argv,
       env: sanitiseWranglerEnv(process.env),
       signal: abortController.signal,
     });
@@ -433,6 +645,28 @@ export async function runLocalWorkerOrchestrator(argv = [], injections = {}) {
   const exitCode = Number.isInteger(driverResult && driverResult.exitCode)
     ? driverResult.exitCode
     : (driverResult && driverResult.ok ? 0 : 1);
+
+  // adv-u4-003: if the driver reports success but the evidence file is
+  // missing, fail loudly so downstream verifiers never read stale evidence.
+  if (exitCode === 0) {
+    const evidenceCheckPath = composed.effectiveEvidencePath;
+    let evidenceOk = false;
+    try {
+      if (existsFile(evidenceCheckPath)) {
+        const stats = statFile(evidenceCheckPath);
+        evidenceOk = stats && stats.size > 0;
+      }
+    } catch { evidenceOk = false; }
+    if (!evidenceOk) {
+      return {
+        exitCode: 3,
+        port,
+        originResolved,
+        environment: 'local',
+        error: `driver reported success but evidence file missing or empty at ${evidenceCheckPath}`,
+      };
+    }
+  }
 
   return {
     exitCode,
@@ -513,11 +747,15 @@ function helpText() {
     '',
     'Options:',
     '  --fresh                         Forward --fresh to the load driver',
-    '  --port-start <n>                First port to try (default 8787)',
+    '  --port-start <n>                First port to try (default 8787, max 65533)',
     '  --readiness-timeout-ms <n>      Readiness hard cap in ms (default 30000)',
     '  --help, -h                      Show this help',
     '',
-    'Every argument after -- is forwarded unchanged to classroom-load-test.mjs.',
+    'Every argument after -- is forwarded unchanged to classroom-load-test.mjs,',
+    'except that the orchestrator owns --origin/--url/--local-fixture/--demo-sessions',
+    'and will reject those if supplied in the passthrough. --output is honoured as',
+    'an override with a warning; by default the orchestrator injects --output',
+    `"${DEFAULT_EVIDENCE_PATH}".`,
   ].join('\n');
 }
 
@@ -541,5 +779,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   });
 }
 
-// Helper used by existsSync in tests via `await import`.
+// Helper re-exports for tests that stub out the filesystem check.
 export { existsSync };
