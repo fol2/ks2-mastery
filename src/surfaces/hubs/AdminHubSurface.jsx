@@ -981,6 +981,70 @@ function ErrorLogCentrePanel({ model, actions }) {
   // R10: status transitions are admin-only. Ops-role viewers keep the chip.
   const canManage = model?.permissions?.platformRole === 'admin';
   const savingEventId = summary.savingEventId || '';
+  // Phase E UX-1: `currentRelease` comes from the admin-hub payload (the
+  // Worker builds it from `env.BUILD_HASH` validated against the SHA
+  // regex). Null → "unavailable" hint; populated → abbreviated first 7
+  // chars shown as helper text + pre-filled into the filter input on
+  // mount so admins do not need to hunt for the current deploy SHA.
+  const currentRelease = typeof summary.currentRelease === 'string' && summary.currentRelease
+    ? summary.currentRelease
+    : null;
+  // U19 / Phase E UX-1: controlled filter fields live on local panel
+  // state so the user can compose multiple filters before dispatching a
+  // single refresh. On submit we dispatch the combined filter payload;
+  // "Reset" clears every field back to the broad list view. The
+  // "New in release" input defaults to the current deploy SHA when the
+  // Worker supplied one.
+  const [filterRoute, setFilterRoute] = React.useState('');
+  const [filterKind, setFilterKind] = React.useState('');
+  const [filterLastSeenAfter, setFilterLastSeenAfter] = React.useState('');
+  const [filterLastSeenBefore, setFilterLastSeenBefore] = React.useState('');
+  const [filterRelease, setFilterRelease] = React.useState(currentRelease || '');
+  const [filterReopened, setFilterReopened] = React.useState(false);
+
+  const dispatchFilter = (statusOverride) => {
+    const payload = {
+      status: statusOverride || null,
+      route: filterRoute.trim() || null,
+      kind: filterKind.trim() || null,
+      release: filterRelease.trim() || null,
+      reopenedAfterResolved: Boolean(filterReopened),
+    };
+    const afterTs = Date.parse(filterLastSeenAfter);
+    if (Number.isFinite(afterTs)) payload.lastSeenAfter = afterTs;
+    const beforeTs = Date.parse(filterLastSeenBefore);
+    if (Number.isFinite(beforeTs)) payload.lastSeenBefore = beforeTs;
+    actions.dispatch('admin-ops-error-events-refresh', payload);
+  };
+
+  const clearFilters = () => {
+    setFilterRoute('');
+    setFilterKind('');
+    setFilterLastSeenAfter('');
+    setFilterLastSeenBefore('');
+    // Phase E UX-1: "Clear filters" resets back to the current-release
+    // pre-fill rather than a blank string — the default narrow view is
+    // "events new in the currently-deployed SHA".
+    setFilterRelease(currentRelease || '');
+    setFilterReopened(false);
+    actions.dispatch('admin-ops-error-events-refresh', { status: null });
+  };
+
+  // Phase E UX-2: "filters active" detection is purely a client-side
+  // derivation — any non-default field toggles the banner and swaps the
+  // empty-state copy so admins can distinguish "nothing matched" from
+  // "nothing recorded". `filterRelease` only counts as active when it
+  // differs from `currentRelease` (the default pre-fill), otherwise a
+  // fresh panel load would always render "filters active".
+  const filtersActive = Boolean(
+    filterRoute
+      || filterKind
+      || filterLastSeenAfter
+      || filterLastSeenBefore
+      || (filterRelease && filterRelease !== currentRelease)
+      || filterReopened,
+  );
+
   const headerExtras = (
     <>
       <div className="chip-row" style={{ marginTop: 8 }}>
@@ -1001,6 +1065,115 @@ function ErrorLogCentrePanel({ model, actions }) {
           </button>
         ))}
       </div>
+      <div
+        className="filters"
+        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        data-testid="error-centre-filters"
+      >
+        <label className="field">
+          <span>Route contains</span>
+          <input
+            type="text"
+            className="input"
+            name="errorFilterRoute"
+            value={filterRoute}
+            maxLength={64}
+            onChange={(event) => setFilterRoute(event.target.value)}
+            placeholder="/api/"
+          />
+        </label>
+        <label className="field">
+          <span>Kind</span>
+          <input
+            type="text"
+            className="input"
+            name="errorFilterKind"
+            value={filterKind}
+            maxLength={128}
+            onChange={(event) => setFilterKind(event.target.value)}
+            placeholder="TypeError"
+          />
+        </label>
+        <label className="field">
+          <span>Last seen after</span>
+          <input
+            type="datetime-local"
+            className="input"
+            name="errorFilterLastSeenAfter"
+            value={filterLastSeenAfter}
+            onChange={(event) => setFilterLastSeenAfter(event.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>Last seen before</span>
+          <input
+            type="datetime-local"
+            className="input"
+            name="errorFilterLastSeenBefore"
+            value={filterLastSeenBefore}
+            onChange={(event) => setFilterLastSeenBefore(event.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>New in release (SHA)</span>
+          <input
+            id="error-filter-release"
+            aria-describedby="error-filter-release-hint"
+            type="text"
+            className="input"
+            name="errorFilterRelease"
+            value={filterRelease}
+            maxLength={40}
+            onChange={(event) => setFilterRelease(event.target.value)}
+            placeholder="abc1234"
+            data-testid="error-centre-filter-release"
+          />
+          <span
+            id="error-filter-release-hint"
+            className="small muted"
+            data-testid="error-centre-filter-release-hint"
+          >
+            {currentRelease
+              ? `Current deploy: ${String(currentRelease).slice(0, 7)}`
+              : 'Current deploy unavailable — paste a SHA'}
+          </span>
+        </label>
+        <label className="field" style={{ alignSelf: 'end' }}>
+          <span>Reopened after resolved</span>
+          <input
+            type="checkbox"
+            name="errorFilterReopened"
+            checked={filterReopened}
+            onChange={(event) => setFilterReopened(event.target.checked)}
+          />
+        </label>
+      </div>
+      <div className="chip-row" style={{ marginTop: 8 }}>
+        <button
+          className="btn"
+          type="button"
+          data-testid="error-centre-filter-apply"
+          onClick={() => dispatchFilter(null)}
+        >
+          Apply filters
+        </button>
+        <button
+          className="btn ghost"
+          type="button"
+          data-testid="error-centre-filter-reset"
+          onClick={clearFilters}
+        >
+          Clear filters
+        </button>
+        {filtersActive && (
+          <span
+            className="chip warn"
+            data-testid="error-centre-filters-active-chip"
+          >
+            Filters active
+          </span>
+        )}
+      </div>
     </>
   );
   return (
@@ -1016,7 +1189,7 @@ function ErrorLogCentrePanel({ model, actions }) {
       {entries.length ? entries.map((entry) => {
         const isSaving = savingEventId === entry.id;
         return (
-          <div className="skill-row" key={entry.id}>
+          <div className="skill-row" key={entry.id} data-testid={`error-event-row-${entry.id}`}>
             <div>
               <strong>{entry.errorKind || 'Error'}</strong>
               <div className="small muted">{entry.messageFirstLine || ''}</div>
@@ -1045,10 +1218,117 @@ function ErrorLogCentrePanel({ model, actions }) {
                 <span className="chip">{entry.status || 'open'}</span>
               )}
             </div>
+            <ErrorEventDetailsDrawer entry={entry} canViewAccount={canManage} />
           </div>
         );
-      }) : <p className="small muted">No error events recorded.</p>}
+      }) : (
+        <p
+          className="small muted"
+          data-testid="error-centre-empty-state"
+        >
+          {filtersActive
+            ? 'No errors match the current filters.'
+            : 'No error events recorded.'}
+        </p>
+      )}
     </section>
+  );
+}
+
+// U18: per-row expandable drawer. Uses the native <details>/<summary>
+// primitive so the drawer state is platform-managed and SSR-friendly
+// (no React useState wiring needed, so server-rendered admin hub pages
+// can hydrate without open/closed flicker). Layout keeps everything
+// text-oriented per R25 "minimal drawer" brief — release columns,
+// timestamps, occurrence counter, and (admin-only) account_id last-6
+// cross-reference.
+//
+// Occurrence-timeline (last 5 event timestamps) is deferred to a
+// follow-up: P1.5 schema stores only `first_seen + last_seen +
+// occurrence_count` and adding an `ops_error_event_occurrences` table
+// is explicitly out of scope per the plan. The drawer surfaces a
+// stable "timeline: occurrence_count aggregated" message so ops
+// readers understand the absence.
+function ErrorEventDetailsDrawer({ entry, canViewAccount }) {
+  if (!entry) return null;
+  const releaseFallback = (value) => (typeof value === 'string' && value ? value : 'unknown');
+  const lastStatusChangeAt = Number.isFinite(Number(entry.lastStatusChangeAt))
+    ? Number(entry.lastStatusChangeAt)
+    : null;
+  // Phase E UX-3: drawer summary carries per-row signal so an admin
+  // scanning a long list can distinguish rows without opening every
+  // drawer. Status is always shown; "since <firstSeenRelease>" and
+  // (for resolved rows) "fixed in <resolvedInRelease>" narrate the row's
+  // release history at a glance. Both release slugs are truncated to
+  // the 7-char abbreviated SHA — the full value stays visible in the
+  // drawer's release rows.
+  const statusLabel = entry.status || 'open';
+  const firstSeenShort = typeof entry.firstSeenRelease === 'string' && entry.firstSeenRelease
+    ? ` · since ${String(entry.firstSeenRelease).slice(0, 7)}`
+    : '';
+  const resolvedShort = (entry.status === 'resolved'
+    && typeof entry.resolvedInRelease === 'string'
+    && entry.resolvedInRelease)
+    ? ` · fixed in ${String(entry.resolvedInRelease).slice(0, 7)}`
+    : '';
+  return (
+    <details data-testid={`error-event-drawer-${entry.id}`} style={{ gridColumn: '1 / -1', marginTop: 8 }}>
+      <summary
+        className="small muted"
+        style={{ cursor: 'pointer' }}
+        data-testid="error-event-drawer-summary"
+      >
+        Details — {statusLabel}{firstSeenShort}{resolvedShort}
+      </summary>
+      <dl className="small" style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '180px 1fr', rowGap: 4 }}>
+        <dt className="muted">Error kind</dt>
+        <dd>{entry.errorKind || '—'}</dd>
+
+        <dt className="muted">Message (first line)</dt>
+        <dd data-testid="error-drawer-message">{entry.messageFirstLine || '—'}</dd>
+
+        <dt className="muted">First frame</dt>
+        <dd style={{ fontFamily: 'monospace' }}>{entry.firstFrame || '—'}</dd>
+
+        <dt className="muted">Route</dt>
+        <dd>{entry.routeName || '—'}</dd>
+
+        <dt className="muted">User agent</dt>
+        <dd style={{ wordBreak: 'break-all' }}>{entry.userAgent || '—'}</dd>
+
+        <dt className="muted">Occurrences</dt>
+        <dd>×{Number(entry.occurrenceCount) || 1} (timeline aggregated — per-event history deferred)</dd>
+
+        <dt className="muted">First seen</dt>
+        <dd>{formatTimestamp(entry.firstSeen)}</dd>
+
+        <dt className="muted">Last seen</dt>
+        <dd>{formatTimestamp(entry.lastSeen)}</dd>
+
+        <dt className="muted">First seen release</dt>
+        <dd data-testid="error-drawer-first-release">{releaseFallback(entry.firstSeenRelease)}</dd>
+
+        <dt className="muted">Last seen release</dt>
+        <dd data-testid="error-drawer-last-release">{releaseFallback(entry.lastSeenRelease)}</dd>
+
+        <dt className="muted">Resolved in release</dt>
+        <dd data-testid="error-drawer-resolved-release">{releaseFallback(entry.resolvedInRelease)}</dd>
+
+        <dt className="muted">Last status change</dt>
+        <dd data-testid="error-drawer-status-change">
+          {lastStatusChangeAt ? formatTimestamp(lastStatusChangeAt) : 'status unchanged'}
+        </dd>
+
+        {canViewAccount ? (
+          <React.Fragment>
+            <dt className="muted">Linked account (last 6)</dt>
+            <dd data-testid="error-drawer-account">
+              {entry.accountIdMasked || 'anonymous'}
+            </dd>
+          </React.Fragment>
+        ) : null}
+      </dl>
+    </details>
   );
 }
 

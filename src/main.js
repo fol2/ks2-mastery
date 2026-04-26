@@ -879,11 +879,32 @@ async function refreshAdminOpsActivity({ limit = 50 } = {}) {
   }
 }
 
-async function refreshAdminOpsErrorEvents({ status = null, limit = 50 } = {}) {
+async function refreshAdminOpsErrorEvents({
+  status = null,
+  limit = 50,
+  route = null,
+  kind = null,
+  lastSeenAfter = null,
+  lastSeenBefore = null,
+  release = null,
+  reopenedAfterResolved = false,
+} = {}) {
   if (!hubApi) return { ok: false, reason: 'no-hub' };
   const token = beginAdminOpsRefreshToken('errorLogSummary');
   try {
-    const payload = await hubApi.readAdminOpsErrorEvents({ status, limit });
+    // U19: filter object threads through the hub api layer. Unset filters
+    // collapse to null inside `buildRequestUrl` and are dropped from the
+    // query string entirely.
+    const payload = await hubApi.readAdminOpsErrorEvents({
+      status,
+      limit,
+      route,
+      kind,
+      lastSeenAfter,
+      lastSeenBefore,
+      release,
+      reopenedAfterResolved,
+    });
     if (!isAdminOpsRefreshTokenLatest('errorLogSummary', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubErrorLogSummaryPatch(adminHub, payload));
     return { ok: true };
@@ -2561,7 +2582,28 @@ function handleGlobalAction(action, data) {
     if (boot.session.signedIn) {
       const status = typeof data?.status === 'string' && data.status ? data.status : null;
       const limit = Number(data?.limit) > 0 ? Number(data.limit) : 50;
-      refreshAdminOpsErrorEvents({ status, limit });
+      // U19: additional filter fields thread through from the dispatched
+      // payload. Each is nullable on the client — unset filters are
+      // dropped from the URL so backward-compatible calls that send only
+      // `status` continue working.
+      const route = typeof data?.route === 'string' && data.route ? data.route : null;
+      const kind = typeof data?.kind === 'string' && data.kind ? data.kind : null;
+      const lastSeenAfter = Number.isFinite(Number(data?.lastSeenAfter))
+        ? Number(data.lastSeenAfter) : null;
+      const lastSeenBefore = Number.isFinite(Number(data?.lastSeenBefore))
+        ? Number(data.lastSeenBefore) : null;
+      const release = typeof data?.release === 'string' && data.release ? data.release : null;
+      const reopenedAfterResolved = data?.reopenedAfterResolved === true;
+      refreshAdminOpsErrorEvents({
+        status,
+        limit,
+        route,
+        kind,
+        lastSeenAfter,
+        lastSeenBefore,
+        release,
+        reopenedAfterResolved,
+      });
     }
     return true;
   }

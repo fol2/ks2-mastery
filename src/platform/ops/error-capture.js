@@ -228,6 +228,21 @@ async function drainQueue(credentialFetch) {
   }
 }
 
+// U16: read the esbuild-injected `__BUILD_HASH__` constant at call time so the
+// client can forward its release on every error-capture POST. `typeof` guard
+// because esbuild only defines the symbol at bundle time; test / dev builds
+// that import this module without running through esbuild see it as
+// `undefined` and fall back to `null` (the Worker accepts null releases and
+// U17 auto-reopen short-circuits on null per condition 3).
+function resolveClientRelease() {
+  try {
+    // eslint-disable-next-line no-undef
+    return typeof __BUILD_HASH__ === 'string' && __BUILD_HASH__ ? __BUILD_HASH__ : null;
+  } catch {
+    return null;
+  }
+}
+
 export function captureClientError({ source, error, info, credentialFetch, timestamp } = {}) {
   try {
     const resolvedFetch = typeof credentialFetch === 'function'
@@ -251,6 +266,12 @@ export function captureClientError({ source, error, info, credentialFetch, times
       timestamp,
     };
     const redacted = redactClientErrorEvent(rawEvent);
+    // U16: stamp the release onto every enqueued event. `release` stays on the
+    // allowlist defended at `readJsonBounded` + `serverRedactClientEvent` on
+    // the Worker — server-side regex validation (`/^[a-f0-9]{6,40}$/`) is the
+    // authoritative guard, but we do the cheap null coercion here so a broken
+    // esbuild define never leaks `undefined`.
+    redacted.release = resolveClientRelease();
 
     // Drop oldest on overflow so recent signal survives (R30 bounded queue).
     while (_queue.length >= MAX_QUEUE) {

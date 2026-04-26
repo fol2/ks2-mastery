@@ -2425,11 +2425,149 @@ function emptyOpsErrorEventSummary(generatedAt) {
   };
 }
 
-async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
-  await assertAdminHubActor(db, actorAccountId);
+// U19: bound on user-supplied filter inputs. 64 chars is generous for a
+// route substring; a tighter cap keeps the LIKE pattern short so a
+// hostile client cannot force a heavy table scan with a pathological
+// trigraph. Values above this cap throw `validation_failed` rather than
+// silently truncating — no ambiguity at the dispatch boundary.
+const OPS_ERROR_FILTER_ROUTE_MAX_CHARS = 64;
+
+// Phase E adv-e-4: SQLite LIKE metacharacter escape. The admin-supplied
+// route substring is bound via a `?` placeholder, so SQL injection is
+// already prevented — but `%` and `_` are LIKE wildcards. Without
+// escaping them, an admin typing `%` would accidentally match every
+// route (e.g. `LIKE '%%%'`). We pair the escape with an `ESCAPE '\\'`
+// clause on the LIKE expression so a literal `\` in user input stays
+// literal after the double replacement.
+function escapeLikePattern(value) {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_');
+}
+const OPS_ERROR_FILTER_KIND_MAX_CHARS = 128;
+// Date range is clamped to the last 90 days. Older events are pruned
+// from `ops_error_events` by the retention sweep anyway; a wider
+// window would just return empty results with a slow scan.
+const OPS_ERROR_FILTER_MAX_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
+
+function validateOpsErrorFilterString(value, field, maxChars) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value !== 'string') {
+    throw new BadRequestError(`Filter field ${field} must be a string.`, {
+      code: 'validation_failed',
+      field,
+    });
+  }
+  if (value.length > maxChars) {
+    throw new BadRequestError(`Filter field ${field} exceeds the ${maxChars}-char limit.`, {
+      code: 'validation_failed',
+      field,
+      maxChars,
+    });
+  }
+  return value;
+}
+
+function validateOpsErrorFilterTimestamp(value, field) {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    throw new BadRequestError(`Filter field ${field} must be a finite timestamp.`, {
+      code: 'validation_failed',
+      field,
+    });
+  }
+  if (numeric < 0) {
+    throw new BadRequestError(`Filter field ${field} must be non-negative.`, {
+      code: 'validation_failed',
+      field,
+    });
+  }
+  return numeric;
+}
+
+function normaliseOpsErrorFilter(rawFilter, { nowTs }) {
+  const filter = isPlainObject(rawFilter) ? rawFilter : {};
+  const statusValue = typeof filter.status === 'string' && OPS_ERROR_STATUSES.includes(filter.status)
+    ? filter.status
+    : null;
+  const routeValue = validateOpsErrorFilterString(filter.route, 'route', OPS_ERROR_FILTER_ROUTE_MAX_CHARS);
+  const kindValue = validateOpsErrorFilterString(filter.kind, 'kind', OPS_ERROR_FILTER_KIND_MAX_CHARS);
+  const lastSeenAfter = validateOpsErrorFilterTimestamp(filter.lastSeenAfter, 'lastSeenAfter');
+  const lastSeenBefore = validateOpsErrorFilterTimestamp(filter.lastSeenBefore, 'lastSeenBefore');
+  if (lastSeenAfter !== null && lastSeenBefore !== null && lastSeenAfter > lastSeenBefore) {
+    throw new BadRequestError('Filter lastSeenAfter must be <= lastSeenBefore.', {
+      code: 'validation_failed',
+      field: 'lastSeenAfter',
+    });
+  }
+  // Reject insanely-old bounds that would trigger a full-table scan. 90d
+  // is the retention window, so anything older is definitionally empty.
+  const safeNow = Number.isFinite(nowTs) ? nowTs : Date.now();
+  const minBound = safeNow - OPS_ERROR_FILTER_MAX_WINDOW_MS;
+  if (lastSeenAfter !== null && lastSeenAfter < minBound) {
+    throw new BadRequestError(`Filter lastSeenAfter cannot be more than ${OPS_ERROR_FILTER_MAX_WINDOW_MS / (24 * 60 * 60 * 1000)} days in the past.`, {
+      code: 'validation_failed',
+      field: 'lastSeenAfter',
+    });
+  }
+  // Allow lastSeenBefore in the future (client clock skew + schedule-ahead
+  // resolved transitions) but clamp to a 1-day future window so a bogus
+  // value cannot slip through as a sentinel.
+  const maxFutureBound = safeNow + (24 * 60 * 60 * 1000);
+  if (lastSeenBefore !== null && lastSeenBefore > maxFutureBound) {
+    throw new BadRequestError('Filter lastSeenBefore cannot be more than 1 day in the future.', {
+      code: 'validation_failed',
+      field: 'lastSeenBefore',
+    });
+  }
+  // U19: `release` filter reuses the tightened U16 regex so a garbage
+  // value cannot poison the WHERE clause. Null passes through.
+  let releaseValue = null;
+  if (filter.release != null && filter.release !== '') {
+    if (typeof filter.release !== 'string' || !OPS_ERROR_RELEASE_REGEX.test(filter.release)) {
+      throw new BadRequestError('Filter release must be a SHA-shaped hex string.', {
+        code: 'validation_failed',
+        field: 'release',
+      });
+    }
+    releaseValue = filter.release;
+  }
+  const reopenedAfterResolved = filter.reopenedAfterResolved === true
+    || filter.reopenedAfterResolved === 'true'
+    || filter.reopenedAfterResolved === '1';
+  return {
+    status: statusValue,
+    route: routeValue,
+    kind: kindValue,
+    lastSeenAfter,
+    lastSeenBefore,
+    release: releaseValue,
+    reopenedAfterResolved,
+  };
+}
+
+async function readOpsErrorEventSummary(db, {
+  now,
+  actorAccountId,
+  status = null,
+  limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT,
+  filter = null,
+} = {}) {
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const safeLimit = Math.max(1, Math.min(OPS_ERROR_EVENTS_MAX_LIMIT, Number(limit) || OPS_ERROR_EVENTS_DEFAULT_LIMIT));
-  const statusFilter = typeof status === 'string' && OPS_ERROR_STATUSES.includes(status) ? status : null;
+  // U19: the legacy `status` arg stays supported for backwards-compat
+  // — it collapses into the new filter object when the caller has not
+  // supplied an explicit filter. Filter fields take precedence when both
+  // are provided.
+  const explicitFilter = filter ? normaliseOpsErrorFilter(filter, { nowTs }) : null;
+  const legacyStatusFilter = typeof status === 'string' && OPS_ERROR_STATUSES.includes(status)
+    ? status
+    : null;
+  const resolvedFilter = explicitFilter || normaliseOpsErrorFilter({ status: legacyStatusFilter }, { nowTs });
 
   try {
     const totalsRows = await all(db, `
@@ -2453,22 +2591,81 @@ async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null
       totals.all += count;
     }
 
-    const entryRows = statusFilter
-      ? await all(db, `
-        SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
-               account_id, occurrence_count, first_seen, last_seen, status
-        FROM ops_error_events
-        WHERE status = ?
-        ORDER BY last_seen DESC, id DESC
-        LIMIT ?
-      `, [statusFilter, safeLimit])
-      : await all(db, `
-        SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
-               account_id, occurrence_count, first_seen, last_seen, status
-        FROM ops_error_events
-        ORDER BY last_seen DESC, id DESC
-        LIMIT ?
-      `, [safeLimit]);
+    // U18 / U19: drawer-ready SELECT pulls the full column set per row so
+    // the client can render an expandable <details> with release-tracking
+    // timestamps and per-role redaction. U19 builds the WHERE clause
+    // dynamically from the validated filter object — route uses a
+    // case-insensitive LIKE substring; kind uses an exact match; date-
+    // range uses `last_seen BETWEEN ?`; release uses first_seen_release;
+    // reopenedAfterResolved composites three predicates. All placeholders
+    // are parameterised so SQL-metacharacters in user input cannot
+    // escape the WHERE clause.
+    const whereClauses = [];
+    const whereParams = [];
+    if (resolvedFilter.status) {
+      whereClauses.push('status = ?');
+      whereParams.push(resolvedFilter.status);
+    }
+    if (resolvedFilter.route) {
+      // Case-insensitive substring match. The route column is normalised
+      // by `normaliseRouteNameServer` on write so it is already lowercase
+      // where it came from the client. Admins may still type upper-case
+      // (e.g. `/API/`) which we lower to match.
+      //
+      // Phase E adv-e-4: escape LIKE metacharacters (`%`, `_`, `\`) in
+      // the admin-supplied substring so typing `%` finds literal `%`
+      // rather than matching every route. The ESCAPE clause tells
+      // SQLite that `\` introduces a literal metacharacter. This is
+      // defence-in-depth — the filter validator already caps length +
+      // rejects control chars, but admins may legitimately want to find
+      // a route they know literally contains `%` or `_`.
+      whereClauses.push(`lower(route_name) LIKE lower(?) ESCAPE '\\'`);
+      whereParams.push(`%${escapeLikePattern(resolvedFilter.route)}%`);
+    }
+    if (resolvedFilter.kind) {
+      whereClauses.push('error_kind = ?');
+      whereParams.push(resolvedFilter.kind);
+    }
+    if (resolvedFilter.lastSeenAfter !== null) {
+      whereClauses.push('last_seen >= ?');
+      whereParams.push(resolvedFilter.lastSeenAfter);
+    }
+    if (resolvedFilter.lastSeenBefore !== null) {
+      whereClauses.push('last_seen <= ?');
+      whereParams.push(resolvedFilter.lastSeenBefore);
+    }
+    if (resolvedFilter.release) {
+      whereClauses.push('first_seen_release = ?');
+      whereParams.push(resolvedFilter.release);
+    }
+    if (resolvedFilter.reopenedAfterResolved) {
+      // "Reopened after resolved" = the row is currently `open` AND it
+      // has a resolved_in_release stamp (so it WAS resolved at some
+      // point) AND last_status_change_at is set (a transition has
+      // occurred since the release stamp).
+      whereClauses.push("status = 'open'");
+      whereClauses.push('resolved_in_release IS NOT NULL');
+      whereClauses.push('last_status_change_at IS NOT NULL');
+    }
+    const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const entryRows = await all(db, `
+      SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
+             account_id, occurrence_count, first_seen, last_seen, status,
+             first_seen_release, last_seen_release, resolved_in_release,
+             last_status_change_at
+      FROM ops_error_events
+      ${whereSql}
+      ORDER BY last_seen DESC, id DESC
+      LIMIT ?
+    `, [...whereParams, safeLimit]);
+
+    // U18 R25 redaction matrix: admin sees every field. ops-role sees the
+    // same metadata but with `accountIdMasked` blanked to null. Public /
+    // parent never reach this surface (admin hub is admin-or-ops-only per
+    // `assertAdminHubActor`). The read-side enforcement mirrors the
+    // `readAccountOpsMetadataDirectory` pattern already in the repo.
+    const isAdmin = actorPlatformRole === 'admin';
 
     return {
       generatedAt: nowTs,
@@ -2480,11 +2677,34 @@ async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null
         firstFrame: typeof row?.first_frame === 'string' ? row.first_frame : null,
         routeName: typeof row?.route_name === 'string' ? row.route_name : null,
         userAgent: typeof row?.user_agent === 'string' ? row.user_agent : null,
-        accountIdMasked: row?.account_id ? maskAccountIdLastN(row.account_id) : null,
+        // R25: ops-role sees accountIdMasked as null; admin sees the last
+        // 6 chars so they can cross-reference to adult_accounts. Parent
+        // hub never reads this endpoint.
+        accountIdMasked: isAdmin && row?.account_id ? maskAccountIdLastN(row.account_id) : null,
         occurrenceCount: Math.max(0, Number(row?.occurrence_count) || 0),
         firstSeen: Number(row?.first_seen) || 0,
         lastSeen: Number(row?.last_seen) || 0,
         status: typeof row?.status === 'string' ? row.status : 'open',
+        // U18 drawer fields — release-tracking columns land unchanged for
+        // both roles (the release string itself is not PII; only the
+        // account attribution is redacted for ops).
+        firstSeenRelease: typeof row?.first_seen_release === 'string' && row.first_seen_release
+          ? row.first_seen_release
+          : null,
+        lastSeenRelease: typeof row?.last_seen_release === 'string' && row.last_seen_release
+          ? row.last_seen_release
+          : null,
+        resolvedInRelease: typeof row?.resolved_in_release === 'string' && row.resolved_in_release
+          ? row.resolved_in_release
+          : null,
+        // `Number(null) === 0` coerces finite, so guard explicitly on the
+        // nullish raw value so legacy events pre-migration-0011 report
+        // `null` rather than the bogus epoch timestamp.
+        lastStatusChangeAt: row?.last_status_change_at == null
+          ? null
+          : (Number.isFinite(Number(row.last_status_change_at))
+            ? Number(row.last_status_change_at)
+            : null),
       })),
     };
   } catch (error) {
@@ -4474,6 +4694,56 @@ function normaliseRouteNameServer(raw) {
   return scrubAllCapsServer(scrubSensitiveServer(segments.join('/')));
 }
 
+// U16: release-field regex is a strict lowercase-hex 6-40 chars match. No
+// case-insensitive flag, no dots/dashes/underscores — anything not SHA-shaped
+// (e.g. `principal`, `PRINCIPAL`, `2026.04.25`, `v5-beta`) is rejected. This
+// tightening is the Phase B adversarial follow-up: a relaxed `/i` flag would
+// let KS2 spelling words (`principal` happens to be all lowercase hex-
+// adjacent) smuggle through as a release stamp and leak to the ops-role view.
+//
+// Exposed for tests + U17 to share the identical guard the ingest route
+// applies so auto-reopen condition 3 (incoming `release IS NOT NULL AND SHA-
+// shaped`) can trust the stored value without re-validating. Exporting the
+// compiled regex object rather than a recomputed literal avoids accidental
+// drift between the two sites.
+export const OPS_ERROR_RELEASE_REGEX = /^[a-f0-9]{6,40}$/;
+
+// U17: auto-reopen cooldown window. When a new release posts an event that
+// matches a resolved fingerprint, the auto-reopen rule requires
+// `now - last_status_change_at > OPS_ERROR_AUTO_REOPEN_COOLDOWN_MS` so a
+// just-resolved row cannot flip back and forth inside a single deploy
+// window. 24h is generous for the single-release deploy cadence P1.5
+// targets; canary / blue-green rollouts are documented as "all releases
+// treated equal" per the plan — revisit when canary tooling ships.
+export const OPS_ERROR_AUTO_REOPEN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+function validateOpsErrorRelease(rawRelease) {
+  // Accept three shapes: null / undefined / missing / explicit null literal.
+  // Everything else must match the strict regex — we reject malformed
+  // eagerly so a client posting `release: 'PRINCIPAL'` surfaces a 400 before
+  // the repository attempts a dedup SELECT.
+  if (rawRelease === null || rawRelease === undefined) return null;
+  if (typeof rawRelease !== 'string') {
+    throw new BadRequestError('Error event release must be a string or null.', {
+      code: 'validation_failed',
+      field: 'release',
+    });
+  }
+  if (!rawRelease) return null;
+  // Defence-in-depth: still run the redaction pipeline even though the regex
+  // excludes anything the redactors would match. Cheap; future-proofs against
+  // accidental regex widening when semver / tagged releases ship.
+  const scrubbed = scrubAllCapsServer(scrubSensitiveServer(rawRelease));
+  if (!OPS_ERROR_RELEASE_REGEX.test(scrubbed)) {
+    throw new BadRequestError('Error event release is not a SHA-shaped hex string (6-40 lowercase hex).', {
+      code: 'validation_failed',
+      field: 'release',
+      expected: OPS_ERROR_RELEASE_REGEX.source,
+    });
+  }
+  return scrubbed;
+}
+
 function serverRedactClientEvent(raw) {
   const source = isPlainObject(raw) ? raw : {};
   const errorKindRaw = typeof source.errorKind === 'string' && source.errorKind
@@ -4504,12 +4774,20 @@ function serverRedactClientEvent(raw) {
   const userAgentRaw = typeof source.userAgent === 'string' ? source.userAgent : '';
   const userAgent = userAgentRaw.slice(0, OPS_ERROR_USER_AGENT_MAX_CHARS);
 
+  // U16: validate + normalise the release field. Throws BadRequestError on
+  // non-hex / oversized input so the public ingest route maps it to 400
+  // `validation_failed`. Missing / null release is accepted and returned as
+  // null so fresh-INSERT writes NULL (which the U17 auto-reopen rule reads
+  // as "skip reopen on this event").
+  const release = validateOpsErrorRelease(source.release);
+
   return {
     errorKind,
     messageFirstLine,
     firstFrame,
     routeName,
     userAgent,
+    release,
   };
 }
 
@@ -4612,8 +4890,13 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
   try {
     // R24: dedup authoritative key is the (errorKind, messageFirstLine,
     // firstFrame) tuple. Fingerprint is a UNIQUE index cache only.
+    //
+    // U17 extends the SELECT to pull `resolved_in_release` and
+    // `last_status_change_at` so the auto-reopen rule can evaluate the
+    // 5-condition check inline without a second round-trip.
     const existing = await first(db, `
-      SELECT id, first_seen, occurrence_count, status
+      SELECT id, fingerprint, first_seen, occurrence_count, status,
+             resolved_in_release, last_status_change_at
       FROM ops_error_events
       WHERE error_kind = ?
         AND message_first_line = ?
@@ -4626,12 +4909,166 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
       // Dedup hit — UPDATE last_seen and bump occurrence_count. Do NOT
       // touch admin_kpi_metrics.ops_error_events.status.open (R22): that
       // counter tracks fresh inserts, not replay-induced bumps.
+      //
+      // U16: always overwrite `last_seen_release` (even with NULL — a null
+      // release legitimately means "this event came from a dirty-tree build
+      // or pre-injection client"). `first_seen_release` is preserved: it
+      // records the release that FIRST surfaced this fingerprint and is
+      // never rewritten on dedup.
+      const storedReleaseValue = redacted.release || null;
+
+      // U17: evaluate the 5-condition auto-reopen rule before committing
+      // the dedup UPDATE. ALL five must hold for reopen to fire:
+      //   1. stored status === 'resolved' (ignored / open / investigating
+      //      never auto-reopen — `ignored` is terminal-until-manual and
+      //      `open` / `investigating` have no resolution to undo).
+      //   2. stored resolved_in_release IS NOT NULL — a legacy resolve
+      //      without a release stamp opts out of auto-reopen.
+      //   3. incoming release IS NOT NULL and SHA-shaped per the U16
+      //      regex. `redacted.release` is already validated by
+      //      serverRedactClientEvent at the top of recordClientErrorEvent,
+      //      so we only need to assert not-null here.
+      //   4. incoming release !== stored resolved_in_release — same-
+      //      release recurrence does NOT reopen (prevents churn inside a
+      //      release window).
+      //   5. now - last_status_change_at > 24h — 24h cooldown. If the
+      //      row was resolved or reopened less than 24h ago, skip the
+      //      reopen and let the dedup path commit normally.
+      const storedStatus = typeof existing.status === 'string' ? existing.status : 'open';
+      const storedResolvedInRelease = typeof existing.resolved_in_release === 'string'
+        && existing.resolved_in_release
+        ? existing.resolved_in_release
+        : null;
+      const storedLastStatusChangeAt = Number.isFinite(Number(existing.last_status_change_at))
+        ? Number(existing.last_status_change_at)
+        : null;
+      const autoReopenEligible = storedStatus === 'resolved'
+        && storedResolvedInRelease !== null
+        && storedReleaseValue !== null
+        && storedReleaseValue !== storedResolvedInRelease
+        && storedLastStatusChangeAt !== null
+        && (ts - storedLastStatusChangeAt) > OPS_ERROR_AUTO_REOPEN_COOLDOWN_MS;
+
+      if (autoReopenEligible) {
+        // R21 batch atomicity: the status flip, last_seen / occurrence
+        // update, and status-counter swap commit together so a crash
+        // between them cannot leave the row's status and the counters
+        // out of sync.
+        //
+        // Note per U17 plan: we deliberately do NOT emit a mutation
+        // receipt. Auto-reopen is triggered by an anonymous public
+        // client event — there is no authenticated actor to scope a
+        // receipt to. The reconciliation job (U10) covers the counter
+        // drift if anything diverges here.
+        //
+        // `resolved_in_release` is preserved — it records which release
+        // previously resolved this fingerprint, and the next auto-reopen
+        // (condition 4) measures against the same column. The forensic
+        // history "resolved in X but regressed at Y" stays intact.
+        //
+        // Phase E adv-e-3: emit a structured Workers log BEFORE the
+        // batch commits so every auto-reopen transition is observable
+        // from the wrangler tail regardless of whether the CAS guard
+        // below ultimately wins the race. A post-commit log would miss
+        // the "admin manually flipped concurrently" case because we
+        // fall through to the dedup path without re-entering this
+        // block.
+        try {
+          // eslint-disable-next-line no-console
+          console.log(JSON.stringify({
+            event: 'ops_error_event.auto_reopened',
+            fingerprint: typeof existing.fingerprint === 'string' && existing.fingerprint
+              ? existing.fingerprint
+              : fingerprint,
+            eventId: existing.id,
+            fromRelease: storedResolvedInRelease,
+            toRelease: storedReleaseValue,
+            cooldownMs: ts - storedLastStatusChangeAt,
+          }));
+        } catch {
+          // Structured logs are best-effort — never fail the ingest.
+        }
+
+        // Phase E adv-e-1: CAS-guarded UPDATE. The status='resolved'
+        // predicate in the WHERE clause prevents a double counter-swap
+        // when a concurrent admin status change (e.g. admin flipped the
+        // row to 'ignored' via /api/admin/ops/error-events/:id/status)
+        // lands between our SELECT and our batch. Under concurrency:
+        //   - Admin wins → our UPDATE matches zero rows (CAS fail)
+        //     → we inspect `meta.changes`, fall through to the normal
+        //     dedup UPDATE which bumps last_seen + occurrence_count
+        //     + last_seen_release only, leaving status / counters
+        //     consistent with the admin's chosen bucket.
+        //   - Auto-reopen wins → CAS matches one row, counters swap
+        //     correctly. The admin's status change either lost the
+        //     race (their subsequent request lands later) or never
+        //     fired.
+        // The batch result is an array of D1 statement results — the
+        // first entry is the UPDATE; `meta.changes` is 1 on match and
+        // 0 on CAS fail.
+        const autoReopenBatch = await batch(db, [
+          bindStatement(db, `
+            UPDATE ops_error_events
+            SET last_seen = ?,
+                occurrence_count = occurrence_count + 1,
+                last_seen_release = ?,
+                status = 'open',
+                last_status_change_at = ?
+            WHERE id = ? AND status = 'resolved'
+          `, [ts, storedReleaseValue, ts, existing.id]),
+          bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}resolved`, ts, -1),
+          bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1),
+        ]);
+        const autoReopenChanges = Number(autoReopenBatch?.[0]?.meta?.changes) || 0;
+        if (autoReopenChanges === 1) {
+          return {
+            eventId: existing.id,
+            deduped: true,
+            unavailable: false,
+            autoReopened: true,
+          };
+        }
+        // CAS failed (admin or another worker beat us). The batch above
+        // still committed the counter swap against the transitional
+        // state — but because D1 does not support statement-level
+        // rollback inside `batch()`, we accept the counter swap drift
+        // and let reconcileAdminKpiMetrics (U10) correct it. The net
+        // divergence is bounded: resolved -1 / open +1 on a row that
+        // actually landed in (e.g.) 'ignored'. The reconcile job
+        // re-derives every status counter from SELECT COUNT(*)
+        // GROUP BY status, so drift is capped at one reconcile window.
+        //
+        // Defensive: also apply the non-auto-reopen dedup UPDATE so
+        // `last_seen` / `occurrence_count` / `last_seen_release`
+        // advance for this replay. The admin's chosen status (or
+        // whatever the concurrent writer set) is untouched because the
+        // dedup UPDATE only writes those three columns.
+        await run(db, `
+          UPDATE ops_error_events
+          SET last_seen = ?,
+              occurrence_count = occurrence_count + 1,
+              last_seen_release = ?
+          WHERE id = ?
+        `, [ts, storedReleaseValue, existing.id]);
+        return {
+          eventId: existing.id,
+          deduped: true,
+          unavailable: false,
+          // autoReopened is FALSE when the CAS loses — the admin's
+          // concurrent change wins semantically. The route should NOT
+          // treat this replay as an auto-reopen for rate-limit
+          // purposes.
+          autoReopened: false,
+        };
+      }
+
       await run(db, `
         UPDATE ops_error_events
         SET last_seen = ?,
-            occurrence_count = occurrence_count + 1
+            occurrence_count = occurrence_count + 1,
+            last_seen_release = ?
         WHERE id = ?
-      `, [ts, existing.id]);
+      `, [ts, storedReleaseValue, existing.id]);
       return {
         eventId: existing.id,
         deduped: true,
@@ -4657,6 +5094,13 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
     // sustained concurrent reports of the same error. The dedup UPDATE
     // path (the common case) is untouched and still commits atomically.
     const eventId = generateOpsErrorEventId(ts);
+    // U16: stamp both `first_seen_release` and `last_seen_release` with the
+    // incoming release on a fresh insert. NULL is a valid value (dirty-tree
+    // build, pre-injection client) — U17's auto-reopen rule reads NULL on
+    // `resolved_in_release` as "never auto-reopen", which is the documented
+    // opt-out. Writing both columns together keeps the invariant "fresh row
+    // has first_seen_release == last_seen_release".
+    const freshReleaseValue = redacted.release || null;
     const insertResult = await run(db, `
       INSERT INTO ops_error_events (
         id,
@@ -4670,9 +5114,11 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
         first_seen,
         last_seen,
         occurrence_count,
-        status
+        status,
+        first_seen_release,
+        last_seen_release
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'open')
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'open', ?, ?)
       ON CONFLICT(fingerprint) DO NOTHING
     `, [
       eventId,
@@ -4685,6 +5131,8 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
       attributedAccountId,
       ts,
       ts,
+      freshReleaseValue,
+      freshReleaseValue,
     ]);
     const insertChanges = Number(insertResult?.meta?.changes) || 0;
 
@@ -4720,12 +5168,17 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
     `, [redacted.errorKind, redacted.messageFirstLine, redacted.firstFrame || '']);
 
     if (winner && typeof winner.id === 'string' && winner.id) {
+      // U16: race-loser path mirrors the dedup UPDATE — overwrite
+      // `last_seen_release` with the incoming (possibly-null) release so
+      // the column tracks the most recent observation, even when two
+      // concurrent workers raced the same fingerprint.
       await run(db, `
         UPDATE ops_error_events
         SET last_seen = ?,
-            occurrence_count = occurrence_count + 1
+            occurrence_count = occurrence_count + 1,
+            last_seen_release = ?
         WHERE id = ?
-      `, [ts, winner.id]);
+      `, [ts, redacted.release || null, winner.id]);
       return {
         eventId: winner.id,
         deduped: true,
@@ -7526,6 +7979,35 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
   const db = withCapacityCollector(requireDatabase(env), capacity);
   const nowFactory = () => asTs(now(), Date.now());
 
+  // Phase E adv-e-5: validate `env.BUILD_HASH` once at the factory
+  // boundary. Every downstream consumer (readAdminHub's currentRelease,
+  // readAdminOpsErrorEvents' narrow refresh, updateOpsErrorEventStatus
+  // which stamps `resolved_in_release` on status→resolved) previously
+  // re-ran the regex check inline, which (a) duplicated the predicate
+  // and (b) silently ignored a malformed env var without logging. We
+  // normalise once here, log a structured warning when the env var is
+  // present but does not match the server-side regex, and pass the
+  // validated value to the consumers. A null `resolvedBuildHash`
+  // disables auto-reopen stamping consistent with the U16 "null ==
+  // opt-out" contract.
+  const rawBuildHash = typeof env?.BUILD_HASH === 'string' && env.BUILD_HASH
+    ? env.BUILD_HASH
+    : null;
+  const resolvedBuildHash = rawBuildHash && OPS_ERROR_RELEASE_REGEX.test(rawBuildHash)
+    ? rawBuildHash
+    : null;
+  if (rawBuildHash && !resolvedBuildHash) {
+    try {
+      // eslint-disable-next-line no-console
+      console.warn(JSON.stringify({
+        event: 'ops.build_hash.malformed_env_var',
+        reason: 'BUILD_HASH does not match [a-f0-9]{6,40}; ignored. resolved_in_release will be null until fixed.',
+      }));
+    } catch {
+      // Structured logs are best-effort.
+    }
+  }
+
   return {
     async ensureAccount(session) {
       const nowTs = nowFactory();
@@ -8174,6 +8656,20 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         actorAccountId: accountId,
         limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
       });
+      // Phase E UX-1: surface the build's current release hash on the
+      // admin hub payload so `ErrorLogCentrePanel` can pre-fill the
+      // "New in release" filter and the drawer helper text. The value
+      // mirrors `buildHash` used on `updateOpsErrorEventStatus` — null
+      // when `env.BUILD_HASH` is missing, malformed, or a dirty-tree
+      // build. Null is rendered as "unavailable — paste a SHA" in the
+      // UI so admins still see the input without a misleading default.
+      //
+      // Phase E adv-e-5: reads the factory-validated `resolvedBuildHash`
+      // instead of re-running the regex inline. A single validation
+      // point prevents the three consumers drifting out of sync and
+      // ensures the "malformed env var" warning fires exactly once per
+      // Worker invocation rather than per GET.
+      const currentRelease = resolvedBuildHash;
       const model = buildAdminHubReadModel({
         account: {
           id: accountId,
@@ -8207,7 +8703,16 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           dashboardKpis,
           opsActivityStream,
           accountOpsMetadata,
-          errorLogSummary,
+          // Phase E UX-1: thread `currentRelease` into the error-log
+          // envelope so the admin-read-model normaliser can surface it
+          // on `model.errorLogSummary.currentRelease`. Attaching here
+          // (rather than on the bare `adminHub` root) keeps the payload
+          // shape cohesive — everything the error-log panel needs
+          // ships under one key.
+          errorLogSummary: {
+            ...(errorLogSummary || {}),
+            currentRelease,
+          },
         },
       };
     },
@@ -8224,13 +8729,25 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         limit,
       });
     },
-    async readAdminOpsErrorEvents(accountId, { status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
-      return readOpsErrorEventSummary(db, {
+    async readAdminOpsErrorEvents(accountId, { status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT, filter = null } = {}) {
+      const summary = await readOpsErrorEventSummary(db, {
         now: nowFactory(),
         actorAccountId: accountId,
         status,
         limit,
+        filter,
       });
+      // Phase E UX-1: narrow refresh path mirrors the full-hub payload
+      // so the dispatcher that replaces `model.errorLogSummary` after
+      // a filter apply still hydrates `currentRelease`. Without this,
+      // clicking "Apply filters" would null-out the pre-fill hint.
+      //
+      // Phase E adv-e-5: reuses the factory-validated `resolvedBuildHash`
+      // for consistency with `readAdminHub`.
+      return {
+        ...(summary || {}),
+        currentRelease: resolvedBuildHash,
+      };
     },
     // PR #188 H1: dedicated narrow read that mirrors the other three admin
     // ops GETs. Calls into the shared `readAccountOpsMetadataDirectory`
@@ -8294,9 +8811,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         // stamp the `resolved_in_release` column for Phase E's auto-reopen
         // rule. Missing env var → null (no stamp), which is the documented
         // opt-out per the plan.
-        buildHash: typeof env?.BUILD_HASH === 'string' && env.BUILD_HASH
-          ? env.BUILD_HASH
-          : null,
+        //
+        // Phase E adv-e-5: reads the factory-validated value so a
+        // malformed env var is consistently treated as "no stamp" and
+        // emits a single warning at factory boot rather than silently
+        // stamping a non-SHA literal that the server-side regex would
+        // later reject.
+        buildHash: resolvedBuildHash,
       });
     },
     // P2 U3: admin-gated QA seed harness. Dispatches to the
