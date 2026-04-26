@@ -229,6 +229,7 @@ function WriteMode({
           className="grammar-transfer-textarea"
           name="grammarTransferDraft"
           data-action="grammar-update-transfer-draft"
+          data-autofocus="true"
           aria-describedby="grammar-transfer-counter"
           placeholder="Write 3-5 sentences here. Nothing you write is scored."
           value={draft}
@@ -448,6 +449,7 @@ export function GrammarTransferScene({ grammar, actions }) {
           type="button"
           className="btn ghost sm"
           data-action="grammar-close-transfer"
+          aria-label="Back to Grammar Garden dashboard"
           onClick={handleBack}
         >
           &larr; Back to Grammar Garden
