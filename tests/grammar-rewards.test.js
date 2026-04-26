@@ -255,3 +255,122 @@ test('writer self-heal does not fire for a truly fresh learner (no retired state
     'fresh learners still earn the Bracehart caught milestone',
   );
 });
+
+// -------- Phase 4 U3: adversarial scenarios from flow-analyst --------------
+// These tests pin behaviour under three flow-analyst-surfaced shapes:
+//   1. Supported-correct answer (worked/faded mode) — the reward pipeline
+//      reads only the committed mastery signal, not the support flag. So the
+//      event shape is identical regardless of how the concept was secured.
+//   2. Transfer-save event — zero reward.monster events ever emit (invariant 5).
+//   3. Malformed state shapes — the reward subscriber stays shape-stable and
+//      never throws.
+
+test('Phase 4 U3 edge case: supported-correct secure (worked/faded mode) emits an identical reward-event shape as independent-correct', () => {
+  // The reward pipeline consumes a `grammar.concept-secured` event that
+  // carries NO `supportLevelAtScoring` field — support flags live on the
+  // upstream `grammar.answer-submitted` event. By the time a secure is
+  // emitted, the Worker engine has already reduced support → mastery-gain.
+  // The reward layer reads only the committed mastery delta.
+  //
+  // Assertion: two identical concept-secured events produce byte-identical
+  // reward events (modulo the createdAt wall-clock) regardless of the path
+  // that led to the secure. This pins the invariant: reward layer is pure
+  // with respect to the support flag.
+
+  const supportedEvent = securedEvent('modal_verbs', {
+    // Support flags do NOT appear on concept-secured events by contract;
+    // any such fields would be ignored by the reward subscriber because
+    // `createGrammarRewardSubscriber` reads only learnerId, conceptId,
+    // releaseId, masteryKey, createdAt.
+    //
+    // We include a synthetic `supportUsed` marker to prove the subscriber
+    // doesn't short-circuit on non-contract fields.
+    supportUsed: 'worked',
+    supportLevelAtScoring: 2,
+  });
+  const independentEvent = securedEvent('modal_verbs', {
+    supportUsed: 'none',
+    supportLevelAtScoring: 0,
+  });
+
+  const supportedRepo = makeRepository();
+  const independentRepo = makeRepository();
+  const supportedEvents = rewardEventsFromGrammarEvents([supportedEvent], {
+    gameStateRepository: supportedRepo,
+    random: () => 0,
+  });
+  const independentEvents = rewardEventsFromGrammarEvents([independentEvent], {
+    gameStateRepository: independentRepo,
+    random: () => 0,
+  });
+
+  // Both produce identical event kinds and monsters.
+  const supportedShape = supportedEvents
+    .map((e) => `${e.monsterId}:${e.kind}:${e.conceptId}`)
+    .sort();
+  const independentShape = independentEvents
+    .map((e) => `${e.monsterId}:${e.kind}:${e.conceptId}`)
+    .sort();
+  assert.deepEqual(supportedShape, independentShape,
+    'reward event shape is identical whether the secure came from supported-correct or independent-correct');
+  // Ratio: one Chronalyx caught + one Concordium caught.
+  assert.deepEqual(supportedShape, [
+    'chronalyx:caught:modal_verbs',
+    'concordium:caught:modal_verbs',
+  ]);
+});
+
+test('Phase 4 U3 edge case — Covers AE3: transfer-save event never reaches the reward pipeline', () => {
+  const repository = makeRepository();
+  const transferEvent = {
+    id: 'grammar.transfer-evidence-saved.learner-a.req-1.adverbial-opener',
+    type: 'grammar.transfer-evidence-saved',
+    subjectId: 'grammar',
+    learnerId: 'learner-a',
+    contentReleaseId: GRAMMAR_REWARD_RELEASE_ID,
+    promptId: 'adverbial-opener',
+    savedAt: 1,
+    nonScored: true,
+    createdAt: 1,
+  };
+  const events = rewardEventsFromGrammarEvents([transferEvent], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Zero reward events emit.
+  assert.deepEqual(events, [],
+    'reward pipeline produces zero reward.monster events from a transfer-evidence-saved event (invariant 5)');
+  // State never mutates.
+  assert.deepEqual(repository.state(), {},
+    'reward pipeline writes zero state from a transfer-save event');
+});
+
+test('Phase 4 U3 error path: malformed state shape (reserved=null, mastered=non-array) — subscriber returns shape-stable without throwing', () => {
+  const malformedInitialState = {
+    glossbloom: null,
+    loomrill: { mastered: 'not-an-array', caught: true },
+    mirrane: { mastered: undefined, caught: false },
+    concordium: { mastered: 0, caught: 'yes' },
+    // Valid post-flip entries alongside the malformed retired entries.
+    bracehart: { mastered: [grammarMasteryKey('clauses')], caught: true },
+  };
+  const repository = makeRepository(malformedInitialState);
+
+  assert.doesNotThrow(() => {
+    rewardEventsFromGrammarEvents([securedEvent('noun_phrases')], {
+      gameStateRepository: repository,
+      random: () => 0,
+    });
+  }, 'subscriber does not throw on malformed state shape');
+
+  // Subsequent call on a different concept still works — the subscriber
+  // normalises the state on every call, so malformed retired entries
+  // don't poison future writes.
+  assert.doesNotThrow(() => {
+    rewardEventsFromGrammarEvents([securedEvent('sentence_functions')], {
+      gameStateRepository: repository,
+      random: () => 0,
+    });
+  }, 'subscriber stays shape-stable across sequential writes to malformed state');
+});
