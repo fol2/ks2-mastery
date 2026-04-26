@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { renderAuthSurfaceFixture, renderAppFixture } from './helpers/react-render.js';
+import {
+  renderAuthSurfaceFixture,
+  renderAppFixture,
+  renderSharedSurfaceFixture,
+} from './helpers/react-render.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createAppHarness } from './helpers/app-harness.js';
 import {
@@ -288,3 +292,84 @@ test('Grammar button CSS contract — .btn.xl primary keeps a 44px-friendly tap 
   assert.ok(Number(xlRule[1]) >= 44, `.btn.xl min-height must be >= 44px (got ${xlRule[1]}px)`);
 });
 
+// ----------------------------------------------------------------------------
+// U10 (sys-hardening p1) — shared surface accessibility contract.
+//
+// These assertions pin the three anchors / ARIA attributes that U10's
+// Playwright scenes rely on:
+//
+//   - `tests/playwright/multi-tab-bootstrap.playwright.test.mjs`
+//   - `tests/playwright/reduced-motion.playwright.test.mjs`
+//   - `tests/playwright/accessibility-golden.playwright.test.mjs`
+//
+// A regression that removes the `data-testid="toast-shelf"`, downgrades
+// the `role="status"` on toasts, or drops the
+// `data-testid="monster-celebration"` anchor will fail HERE first —
+// earlier and more cheaply than the browser suite.
+//
+// Scope boundary: the baseline doc entry "Broken card states when
+// session data is partially loaded, showing skeleton-card outline
+// without the shimmer animation" is tracked in U12 — there is no
+// loading-skeleton role/aria contract in the current shell, so no
+// assertion is added for it in U10. Empty-state copy invariants are
+// per-surface, so they are covered by each subject scene's own
+// contract test rather than a single cross-shell assertion.
+// ----------------------------------------------------------------------------
+
+test('ToastShelf container is the single aria-live region anchored by data-testid for SR announcement', async () => {
+  const html = await renderSharedSurfaceFixture();
+  // Anchor + role + live region + accessible name are the four
+  // invariants U10 locks. A copy regression that removes any of them
+  // surfaces here before the Playwright scene.
+  assert.match(html, /data-testid="toast-shelf"/);
+  // role=status on the container elevates the aria-live contract for
+  // assistive tech that ignores live regions without an explicit role.
+  assert.match(html, /<div class="toast-shelf"[^>]*role="status"/);
+  assert.match(html, /<div class="toast-shelf"[^>]*aria-live="polite"/);
+  assert.match(html, /<div class="toast-shelf"[^>]*aria-label="Notifications"/);
+  // U10 review follow-up (adversarial finding #6): the inner <aside>
+  // elements MUST NOT carry their own role=status. Nested live regions
+  // have undefined AT behaviour (NVDA/VoiceOver may double-announce or
+  // skip). The container is the single live region.
+  assert.match(html, /<aside class="toast [^"]*"(?![^>]*role="status")/);
+  // The close button is explicitly labelled.
+  assert.match(html, /aria-label="Dismiss notification"/);
+});
+
+test('MonsterCelebrationOverlay exposes dialog semantics + data-testid anchor for reduced-motion scene', async () => {
+  const html = await renderSharedSurfaceFixture();
+  // `role="dialog"` + `aria-modal="true"` + `aria-labelledby` was the
+  // pre-U10 contract; the `data-testid` anchor is the new addition so
+  // the reduced-motion scene can query the overlay deterministically.
+  assert.match(html, /<section class="monster-celebration-overlay[^"]*"[^>]*role="dialog"/);
+  assert.match(html, /<section class="monster-celebration-overlay[^"]*"[^>]*aria-modal="true"/);
+  assert.match(html, /aria-labelledby="monster-celebration-title"/);
+  assert.match(html, /data-testid="monster-celebration"/);
+  // `data-celebration-kind` exposes the event kind (caught/evolve/mega)
+  // for the scene to filter on without reading the className bag.
+  assert.match(html, /data-celebration-kind="caught"/);
+});
+
+test('PersistenceBanner degraded mode keeps role=status + aria-live for the persistence SR contract', async () => {
+  // U9 already pinned the banner data-testids; U10 adds an explicit
+  // aria contract assertion so a copy regression that drops the
+  // announce semantics surfaces in the contract suite rather than
+  // only in the chaos Playwright suite.
+  const html = await renderSharedSurfaceFixture();
+  assert.match(html, /data-testid="persistence-banner"/);
+  // The persistence feedback block carries role=status + aria-live.
+  assert.match(html, /class="feedback warn"[^>]*role="status"[^>]*aria-live="polite"/);
+});
+
+test('home dashboard subject-grid carries keyboard-reachable open-subject buttons for the accessibility-golden scene', async () => {
+  // The accessibility-golden Playwright scene focuses the subject
+  // card via `locator.focus()` + `Enter`. That presupposes the card
+  // is a NATIVE focusable element (not a div with a click handler).
+  // We lock the `<button data-action="open-subject">` shape here so
+  // any refactor that swaps the element type (e.g. <a href="#"> or
+  // <div role="button">) catches this test before the scene.
+  const html = await renderAppFixture({ route: 'dashboard' });
+  assert.match(html, /<button[^>]*data-action="open-subject"/);
+  // Every subject card advertises its subject id (scene query uses it).
+  assert.match(html, /data-action="open-subject"[^>]*data-subject-id="spelling"/);
+});

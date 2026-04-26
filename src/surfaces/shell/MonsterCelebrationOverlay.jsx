@@ -84,12 +84,20 @@ export function MonsterCelebrationOverlay({ queue = [], onDismiss }) {
   const beforeVisual = hasFrom ? imageVisual(monster.id, fromStage, branch, monsterVisualConfig?.config) : null;
   const afterVisual = imageVisual(monster.id, toStage, branch, monsterVisualConfig?.config);
 
+  // U10 (sys-hardening p1): `data-testid="monster-celebration"` anchors
+  // the reduced-motion Playwright scene so it can query the overlay and
+  // confirm the `after` CelebrationVisual is the only visible frame
+  // when `prefers-reduced-motion: reduce` is honoured. The existing
+  // `role="dialog"` + `aria-modal="true"` + `aria-labelledby` contract
+  // is preserved — no behaviour change.
   return (
     <section
       className={`monster-celebration-overlay ${event.kind}${isEggCrack ? ' egg-crack' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="monster-celebration-title"
+      data-testid="monster-celebration"
+      data-celebration-kind={event.kind}
       style={{
         '--monster-primary': primary,
         '--monster-secondary': secondary,

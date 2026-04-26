@@ -73,12 +73,20 @@ function ToastContent({ toast }) {
 
 export function ToastShelf({ toasts = [], onDismiss }) {
   if (!toasts.length) return null;
+  // U10 (sys-hardening p1): the container is the single live region.
+  // `role="status"` + `aria-live="polite"` announce new toast inserts
+  // once. The inner `<aside>` elements are plain containers — nesting
+  // `role="status"` inside a live region has undefined AT behaviour
+  // (WAI-ARIA does not define nested-live-region semantics; NVDA and
+  // VoiceOver can double-announce or skip). U10 review adversarial
+  // review finding #6 prompted flattening to a single live region.
+  // `data-testid="toast-shelf"` anchors the accessibility scene.
   return (
-    <div className="toast-shelf" aria-live="polite" aria-label="Notifications">
+    <div className="toast-shelf" role="status" aria-live="polite" aria-label="Notifications" data-testid="toast-shelf">
       {toasts.map((toast, index) => {
         const kind = toast?.type === 'reward.monster' && toast?.kind === 'caught' ? 'catch' : 'info';
         return (
-          <aside className={`toast ${kind}`} role="status" data-toast-id={toast?.id || undefined} key={toast?.id || index}>
+          <aside className={`toast ${kind}`} data-toast-id={toast?.id || undefined} key={toast?.id || index}>
             <ToastContent toast={toast} />
             <button
               className="cm-close"
