@@ -1134,7 +1134,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   /**
    * P2 U2: First-graduation detection for the sticky `data.postMega` record.
    *
-   * Emission requires THREE conjunct conditions:
+   * Two emission paths:
+   *
+   * **A. Fresh-graduation path** (the canonical U2 write). Requires THREE
+   * conjunct conditions:
    *   1. Pre-submit `preSubmitAllMega === false` (learner was not graduated
    *      before this submit).
    *   2. Post-submit `postSubmitAllMega === true` (learner is graduated now).
@@ -1145,6 +1148,22 @@ export function createSpellingService({ repository, storage, tts, now, random, c
    * `publishedCoreCount` (e.g. dropping two blocker slugs out of the core
    * pool) would flip `isAllWordsMega` from false to true on an already-Mega
    * slug's submit. The H1 guard pins emission to genuine learner action.
+   *
+   * Emitted with `unlockedBy: 'all-core-stage-4'`.
+   *
+   * **B. Pre-v3 backfill path** (reviewer adversarial fix — HIGH). Covers the
+   * cohort who achieved `allWordsMega: true` under P1/P1.5 BEFORE U2 shipped.
+   * Those learners have `data.postMega: null` and cannot graduate via path A
+   * because path A's first conjunct (`preSubmitAllMega === false`) rejects
+   * every submit — they're already at full Mega. Path B fires when:
+   *   1. `preSubmitAllMega === true` (already graduated before this submit).
+   *   2. `postSubmitAllMega === true` (still graduated after this submit).
+   *   3. No persisted sticky-bit exists yet.
+   * On first genuine write after U2 ships, the sticky-bit is persisted with
+   * `unlockedBy: 'pre-v3-backfill'` so admins can distinguish it from genuine
+   * stage-4 transitions in audit. The emitted event is the same type
+   * (`spelling.post-mega.unlocked`) — downstream consumers gate on the
+   * `contentReleaseId`, not `unlockedBy`.
    *
    * Returns either the newly-created postMega record (for event emission +
    * caller attribution) or null when no emission is warranted.
@@ -1161,19 +1180,44 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     submittedSlugPrevStage,
     submittedSlugNewStage,
   }) {
-    if (preSubmitAllMega !== false) return null;
     if (postSubmitAllMega !== true) return null;
-    // H1 submit-caused-this guard.
-    if (!Number.isFinite(Number(submittedSlugPrevStage))) return null;
-    if (!Number.isFinite(Number(submittedSlugNewStage))) return null;
-    if (Number(submittedSlugPrevStage) >= GUARDIAN_SECURE_STAGE) return null;
-    if (Number(submittedSlugNewStage) < GUARDIAN_SECURE_STAGE) return null;
     // Defensive belt-and-braces: re-read the persisted sticky-bit. If
     // already set (e.g. a concurrent second tab beat us to the write), do
     // NOT emit a duplicate event. The storage proxy's H3 guard will also
     // refuse to overwrite, but callers should observe the same result.
+    // Runs early so BOTH paths (fresh + backfill) share the dedup check.
     const priorRecord = loadPostMegaFromStorage(learnerId);
     if (priorRecord) return null;
+
+    // Path B — pre-v3 backfill. Already-graduated learners without a sticky
+    // record get one minted on their next submit. The H1 submit-caused-this
+    // guard is intentionally bypassed here: the learner DID reach full Mega,
+    // they just did it before U2 shipped. Emission on the first U2-era
+    // submit restores audit parity.
+    if (preSubmitAllMega === true) {
+      const unlockedAt = clock();
+      const publishedCoreCount = coreWordCount();
+      const record = {
+        unlockedAt,
+        unlockedContentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+        unlockedPublishedCoreCount: publishedCoreCount,
+        unlockedBy: 'pre-v3-backfill',
+      };
+      const saveResult = savePostMegaToStorage(learnerId, record);
+      if (!saveResult || saveResult.ok === false) {
+        // Storage failure on backfill write. Suppress emission so event +
+        // sticky-bit stay in lockstep. Next submit re-detects and retries.
+        return null;
+      }
+      return record;
+    }
+
+    // Path A — fresh graduation. H1 submit-caused-this guard.
+    if (preSubmitAllMega !== false) return null;
+    if (!Number.isFinite(Number(submittedSlugPrevStage))) return null;
+    if (!Number.isFinite(Number(submittedSlugNewStage))) return null;
+    if (Number(submittedSlugPrevStage) >= GUARDIAN_SECURE_STAGE) return null;
+    if (Number(submittedSlugNewStage) < GUARDIAN_SECURE_STAGE) return null;
     const unlockedAt = clock();
     const publishedCoreCount = coreWordCount();
     const record = {
@@ -1182,11 +1226,18 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       unlockedPublishedCoreCount: publishedCoreCount,
       unlockedBy: 'all-core-stage-4',
     };
-    // Write through the persistence proxy. The proxy's H3 guard re-reads
-    // data.postMega inside its critical section and drops the write if
-    // non-null; that is the authoritative idempotency check under
-    // concurrent submits.
-    savePostMegaToStorage(learnerId, record);
+    // u2-corr-1 (LOW fix): propagate storage-failure. If the persistence
+    // proxy throws (e.g. quota exceeded, private mode, disk full),
+    // `savePostMegaToStorage` returns `{ ok: false }`. Suppress the event
+    // so emission and sticky-bit stay in lockstep — the learner will retry
+    // on the next submit, the guard will re-detect graduation, and the
+    // write will be re-attempted. Mega never demotes because this write
+    // happens AFTER progress has been persisted, so `progress.stage`
+    // already reflects the graduation even when the sticky-bit write fails.
+    const saveResult = savePostMegaToStorage(learnerId, record);
+    if (!saveResult || saveResult.ok === false) {
+      return null;
+    }
     return record;
   }
 
@@ -2712,6 +2763,22 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // storage-only host) do not leak a non-empty ks2-spell-guardian-*
     // record across a learner reset. Idempotent on an already-empty map.
     saveGuardianMap(learnerId, {});
+    // P2 U2 (MEDIUM reviewer fix): belt-and-braces clear for bare-storage
+    // hosts (no `repository` adapter, or a repository without
+    // `resetLearner`). `savePostMegaToStorage(null)` is a silent no-op
+    // because the helper guards on `normalisePostMegaRecord(null) === null`
+    // (see line ~1099-1103), so calling it here would not clear anything.
+    // Use `removeItem` directly on the raw storage, inside a try/catch so a
+    // throw (quota/IO error on remove) doesn't crash the reset path —
+    // reset is best-effort on bare hosts. Idempotent: repeated calls on an
+    // already-empty slot are benign.
+    try {
+      resolvedStorage?.removeItem?.(postMegaKey(learnerId));
+    } catch {
+      // Swallow — reset is best-effort on bare hosts, and the `resetLearner`
+      // API on the persistence adapter above has already cleared the
+      // production path via `writeSpellingData(repositories, learnerId, {})`.
+    }
   }
 
   return {

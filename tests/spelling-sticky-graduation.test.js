@@ -289,23 +289,25 @@ test('U2 idempotency: second Mega-producing answer preserves original unlockedAt
 
 // ----- 5. H1 submit-caused-this guard — NEGATIVE path -------------------------
 
-test('U2 H1 guard: content-retirement flipping allWordsMegaNow true does NOT emit sticky unlock', () => {
+test('U2 H1 guard: content-retirement flipping allWordsMegaNow true emits sticky unlock via pre-v3-backfill path', () => {
   // Scenario: learner has 168 Mega slugs out of 170 published. A content
   // hot-swap RETIRES the remaining 2 non-Mega slugs (publishedCoreCount
-  // drops from 170 -> 168). `allWordsMegaNow` would suddenly flip to true
-  // without any slug's stage having transitioned from <4 to 4. The H1
-  // submit-caused-this guard must PREVENT a spurious sticky unlock.
+  // drops from 170 -> 168). `allWordsMegaNow` flips to true on the next
+  // submit.
   //
-  // We drive this through a service.submitAnswer call on a non-graduating
-  // slug (e.g. a guardian correct answer). The just-submitted slug's
-  // stage was already 4, so the third conjunct "stage transitioned <4 → 4"
-  // is false → no emission.
+  // **Updated contract (reviewer HIGH fix — pre-v3 backfill)**: under U2,
+  // the sticky-unlock path now fires for BOTH fresh graduations (path A,
+  // via H1 submit-caused-this guard) AND already-graduated learners without
+  // a sticky record (path B, pre-v3 backfill). The service layer cannot
+  // distinguish "never graduated" from "graduated via retirement edge" —
+  // both surfaces present as `preSubmitAllMega === true` and
+  // `loadPostMegaFromStorage === null`. Rather than denying the dashboard
+  // to a fully-Mega learner, path B writes the sticky bit with
+  // `unlockedBy: 'pre-v3-backfill'` so admins can distinguish it from
+  // genuine stage-4 graduations in audit.
   //
-  // Harness: build a runtime snapshot that has ONLY the CORE_SLUGS[0..167]
-  // slice (shrunken core pool). The learner was pre-seeded with Mega on
-  // slugs [0..167] and stage 2 on [168..169]. With the shrunken snapshot,
-  // `isAllWordsMega` would return true — but the learner's submit didn't
-  // upgrade any stage from <4 to 4.
+  // H1 submit-caused-this guard is preserved for path A (fresh path). Path
+  // B intentionally bypasses H1 — the learner IS fully Mega now.
   const RETIRED_COUNT = 2;
   const activeSlugs = CORE_SLUGS.slice(0, CORE_SLUGS.length - RETIRED_COUNT);
   const shrunkenWords = CORE_WORDS.filter((w) => activeSlugs.includes(w.slug));
@@ -351,9 +353,8 @@ test('U2 H1 guard: content-retirement flipping allWordsMegaNow true does NOT emi
     // sticky bit has never been written.
   });
 
-  // Submit a Guardian correct on an already-Mega slug. Pre-submit stage === 4,
-  // post-submit stage === 4. The H1 guard denies emission because the
-  // just-submitted slug did NOT transition <4 → 4.
+  // Submit a Guardian correct on an already-Mega slug. Pre-submit
+  // allWordsMega is true (168/168 in shrunken runtime), so path B fires.
   const targetSlug = activeSlugs[0];
   const targetWord = CORE_WORDS.find((w) => w.slug === targetSlug);
   const started = service.startSession(learnerId, {
@@ -366,9 +367,10 @@ test('U2 H1 guard: content-retirement flipping allWordsMegaNow true does NOT emi
   assert.equal(submitted.ok, true);
 
   const postMega = readPersistedPostMega(repositories, learnerId);
-  assert.equal(postMega, null, 'no spurious sticky unlock on content-retirement edge');
+  assert.ok(postMega, 'pre-v3 backfill path persists the sticky bit');
+  assert.equal(postMega.unlockedBy, 'pre-v3-backfill', 'marker distinguishes backfill from fresh graduation');
   const unlockEvents = (submitted.events || []).filter((e) => e?.type === SPELLING_EVENT_TYPES.POST_MEGA_UNLOCKED);
-  assert.equal(unlockEvents.length, 0, 'no post-mega.unlocked event on content-retirement edge');
+  assert.equal(unlockEvents.length, 1, 'single post-mega.unlocked event on pre-v3 backfill');
 });
 
 // ----- 6. Content-added delta surfacing via read-model ------------------------
@@ -471,11 +473,14 @@ test('U2 read-model: fresh learner never graduated reports locked sticky bits', 
 
 // ----- 8. Boss-answer first-graduation path -----------------------------------
 
-test('U2 Boss Dictation final-card correct submit emits sticky unlock if it graduates the learner', () => {
-  // Boss is Mega-safe — submits don't demote. But the H1 guard also means
-  // Boss submits can't cause a first-graduation (the slug was already
-  // stage 4 to be in the Boss pool). So the event must NOT emit from a
-  // Boss path. Pin this explicitly.
+test('U2 Boss Dictation submit on pre-v3 graduated learner writes sticky via pre-v3-backfill path', () => {
+  // Under the new U2 contract (pre-v3 backfill fix), Boss submits CAN
+  // emit a sticky-unlock event via path B when the learner is fully Mega
+  // but has no persisted sticky-bit. H1's submit-caused-this guard still
+  // forbids path A on Boss (no stage transition), but path B explicitly
+  // bypasses H1 to cover the pre-v3 cohort. The write is marked with
+  // `unlockedBy: 'pre-v3-backfill'` so admins can distinguish it from
+  // fresh-path graduations.
   const { service, repositories, learnerId } = makeHarness();
   seedFullMega(repositories, learnerId);
 
@@ -489,10 +494,13 @@ test('U2 Boss Dictation final-card correct submit emits sticky unlock if it grad
   const submitted = service.submitAnswer(learnerId, started.state, firstWord.word);
   assert.equal(submitted.ok, true);
 
-  // No postMega was written by Boss because no slug transitioned <4 → 4.
-  assert.equal(readPersistedPostMega(repositories, learnerId), null);
+  // Path B fires: the learner IS fully Mega, so the sticky is minted with
+  // the pre-v3 backfill marker.
+  const postMega = readPersistedPostMega(repositories, learnerId);
+  assert.ok(postMega, 'Boss submit on fully-Mega learner persists sticky via backfill');
+  assert.equal(postMega.unlockedBy, 'pre-v3-backfill', 'marker identifies backfill path');
   const unlockEvents = (submitted.events || []).filter((e) => e?.type === SPELLING_EVENT_TYPES.POST_MEGA_UNLOCKED);
-  assert.equal(unlockEvents.length, 0);
+  assert.equal(unlockEvents.length, 1, 'single post-mega.unlocked event emitted on backfill');
 });
 
 // ----- 9. normaliseSpellingSubjectData learns postMega sibling ----------------
@@ -651,4 +659,260 @@ test('U2 allWordsMega alias: getSpellingPostMasteryState exposes both allWordsMe
   });
   assert.equal(state.allWordsMegaNow, true);
   assert.equal(state.allWordsMega, true, 'allWordsMega alias tracks allWordsMegaNow');
+});
+
+// ----- 13. Pre-v3 graduated cohort backfill (reviewer HIGH fix) --------------
+//
+// Any learner who reached `allWordsMega: true` under P1/P1.5 has
+// `data.postMega: null` when U2 code first reads their state. Without a
+// backfill, H1's first conjunct (`preSubmitAllMega === false`) rejects every
+// subsequent submit — the learner never mints a sticky bit via normal play.
+// If content later adds a word, `allWordsMegaNow` flips to false,
+// `postMegaUnlockedEver` is still false, `postMegaDashboardAvailable`
+// becomes false, and the dashboard silently disappears.
+//
+// The backfill path has two surfaces:
+//   A) Read-model: `getSpellingPostMasteryState` mints an in-memory record
+//      when `allWordsMegaNow && postMegaRecord === null`, so the dashboard
+//      stays visible even before a persisted write lands.
+//   B) Service: `detectAndPersistFirstGraduation` now accepts the
+//      pre-v3 path (`preSubmitAllMega === true`) and persists with
+//      `unlockedBy: 'pre-v3-backfill'` on the next genuine submit.
+
+test('U2 pre-v3 backfill: read-model mints in-memory record for fully-Mega learner with no sticky', () => {
+  const { repositories, learnerId } = makeHarness();
+  // Simulate v2 persisted state: progress is fullMega, NO `postMega` key
+  // whatsoever (not even null — the sibling doesn't exist).
+  const progress = Object.fromEntries(CORE_SLUGS.map((slug) => [slug, {
+    stage: 4,
+    attempts: 6,
+    correct: 5,
+    wrong: 1,
+    dueDay: TODAY_DAY + 30,
+    lastDay: TODAY_DAY - 1,
+    lastResult: 'correct',
+  }]));
+  repositories.subjectStates.writeData(learnerId, 'spelling', {
+    progress,
+    guardian: {},
+    // postMega: undefined — identical to the v2 persisted shape.
+  });
+
+  const record = repositories.subjectStates.read(learnerId, 'spelling');
+  // Pin the state layer — sibling must be absent so the backfill path
+  // under test is the one that fires (not a stale value).
+  assert.equal(record.data.postMega, undefined, 'v2 persisted shape has no postMega sibling');
+
+  const state = getSpellingPostMasteryState({
+    subjectStateRecord: record,
+    now: TODAY_MS,
+  });
+  assert.equal(state.allWordsMegaNow, true, 'learner is fully Mega');
+  assert.equal(state.postMegaUnlockedEver, true, 'backfill mints in-memory sticky');
+  assert.equal(state.postMegaDashboardAvailable, true, 'dashboard stays visible');
+});
+
+test('U2 pre-v3 backfill: next Guardian-correct submit persists sticky with pre-v3-backfill marker', () => {
+  const { service, repositories, learnerId } = makeHarness();
+  // Pre-seed a pre-v3 graduated learner (fullMega, no postMega sibling).
+  seedFullMega(repositories, learnerId);
+  // Precondition sanity-check: postMega is absent.
+  assert.equal(readPersistedPostMega(repositories, learnerId), null);
+
+  const targetSlug = CORE_SLUGS[0];
+  const targetWord = CORE_WORDS.find((w) => w.slug === targetSlug);
+  const started = service.startSession(learnerId, {
+    mode: 'guardian',
+    words: [targetSlug],
+    length: 1,
+  });
+  assert.equal(started.ok, true);
+  const submitted = service.submitAnswer(learnerId, started.state, targetWord.word);
+  assert.equal(submitted.ok, true);
+
+  // After the first U2-era submit, postMega is stamped with the backfill
+  // marker so admins can distinguish this cohort from fresh graduations.
+  const postMega = readPersistedPostMega(repositories, learnerId);
+  assert.ok(postMega, 'data.postMega persisted after first post-v3 submit');
+  assert.equal(postMega.unlockedBy, 'pre-v3-backfill', 'marker distinguishes pre-v3 cohort');
+  assert.equal(postMega.unlockedContentReleaseId, SPELLING_CONTENT_RELEASE_ID);
+  assert.equal(postMega.unlockedPublishedCoreCount, ALL_CORE_COUNT);
+
+  // Event emitted for audit parity with fresh graduations.
+  const unlockEvents = (submitted.events || []).filter((e) => e?.type === SPELLING_EVENT_TYPES.POST_MEGA_UNLOCKED);
+  assert.equal(unlockEvents.length, 1, 'single post-mega.unlocked event emitted on backfill');
+});
+
+test('U2 pre-v3 backfill: content added after sticky persists keeps postMegaDashboardAvailable true', () => {
+  const { service, repositories, learnerId } = makeHarness();
+  // Seed pre-v3 fullMega and trigger the backfill write via a submit.
+  seedFullMega(repositories, learnerId);
+  const warmupSlug = CORE_SLUGS[0];
+  const warmupWord = CORE_WORDS.find((w) => w.slug === warmupSlug);
+  const started = service.startSession(learnerId, {
+    mode: 'guardian',
+    words: [warmupSlug],
+    length: 1,
+  });
+  assert.equal(started.ok, true);
+  const warmup = service.submitAnswer(learnerId, started.state, warmupWord.word);
+  assert.equal(warmup.ok, true);
+  assert.ok(readPersistedPostMega(repositories, learnerId), 'sticky is now persistent');
+
+  // Content bundle adds a new core word — the learner hasn't drilled it,
+  // so `allWordsMegaNow` flips to false. The sticky-bit must keep the
+  // dashboard available.
+  const record = repositories.subjectStates.read(learnerId, 'spelling');
+  const syntheticExtra = [{
+    slug: 'fresh-word-delta',
+    word: 'delta',
+    family: 'new-family',
+    year: '3-4',
+    yearLabel: 'Years 3-4',
+    spellingPool: 'core',
+  }];
+  const expandedSnapshot = {
+    words: [...WORDS, ...syntheticExtra],
+    wordBySlug: { ...Object.fromEntries(WORDS.map((w) => [w.slug, w])), ...Object.fromEntries(syntheticExtra.map((w) => [w.slug, w])) },
+  };
+  const state = getSpellingPostMasteryState({
+    subjectStateRecord: record,
+    runtimeSnapshot: expandedSnapshot,
+    now: TODAY_MS,
+  });
+  assert.equal(state.allWordsMegaNow, false, 'live flag flips when new core word appears');
+  assert.equal(state.postMegaUnlockedEver, true, 'persistent sticky stays set');
+  assert.equal(state.postMegaDashboardAvailable, true, 'dashboard stays available');
+  assert.equal(state.newCoreWordsSinceGraduation, 1, 'delta matches the added word');
+});
+
+// ----- 14. resetLearner clears ks2-spell-post-mega-<id> (MEDIUM fix) ---------
+//
+// `savePostMegaToStorage(learnerId, null)` is a silent no-op (the helper
+// guards on `normalisePostMegaRecord(null) === null`). Bare-storage hosts
+// (no `repository` adapter, or a repository without `resetLearner`) rely on
+// the service's own explicit clears. `resetLearner` now calls
+// `storage.removeItem(postMegaKey(learnerId))` directly, inside a try/catch.
+
+test('U2 resetLearner clears persisted postMega sticky-bit on bare-storage host', () => {
+  // Bare-storage harness: install MemoryStorage and wire the spelling
+  // service DIRECTLY against it, with NO `createSpellingPersistence`
+  // adapter. This is the contract the bare-storage fallback has to honour.
+  const storage = installMemoryStorage();
+  const learnerId = 'learner-bare';
+  const service = createSpellingService({
+    storage,
+    now: () => TODAY_MS,
+    random: () => 0.5,
+    tts: { speak() {}, stop() {}, warmup() {} },
+  });
+
+  // Seed postMega directly on the raw storage.
+  const postMegaKey = `ks2-spell-post-mega-${learnerId}`;
+  storage.setItem(postMegaKey, JSON.stringify({
+    unlockedAt: TODAY_MS,
+    unlockedContentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+    unlockedPublishedCoreCount: ALL_CORE_COUNT,
+    unlockedBy: 'all-core-stage-4',
+  }));
+  assert.ok(storage.getItem(postMegaKey), 'postMega seeded');
+
+  // Reset the learner.
+  service.resetLearner(learnerId);
+
+  // Raw-storage read confirms the sticky-bit is cleared.
+  assert.equal(storage.getItem(postMegaKey), null, 'resetLearner clears postMega on bare storage');
+});
+
+// ----- 15. Event suppression on failed sticky-unlock persist (u2-corr-1 LOW) -
+//
+// If the persistence proxy throws specifically on the sticky-unlock write
+// (distinct from the legacy-engine progress write), `savePostMegaToStorage`
+// returns `{ ok: false }` and `detectAndPersistFirstGraduation` must
+// suppress the event so event + sticky-bit stay in lockstep. The learner's
+// progress.stage must NOT demote — Mega stays. The next submit retries.
+
+test('U2 storage failure on postMega write suppresses event and does NOT demote Mega', () => {
+  // Drive u2-corr-1 directly via a bare-storage harness so the
+  // throwOnNextSet raw-key filter maps cleanly to the postMega key written
+  // by `savePostMegaToStorage` — there is no platform-persistence bundle
+  // layer to rewrite the key here. The service is wired directly against
+  // MemoryStorage (no createSpellingPersistence proxy), so raw key writes
+  // are 1:1 with service-level writes. That lets us target ONLY the
+  // sticky-unlock write without interfering with progress saves.
+  const storage = installMemoryStorage();
+  const learnerId = 'learner-bare-corr1';
+  const service = createSpellingService({
+    storage,
+    now: () => TODAY_MS,
+    random: () => 0.5,
+    tts: { speak() {}, stop() {}, warmup() {} },
+  });
+
+  // Seed a graduation-ready learner: all slugs Mega except one at stage 3.
+  const progress = {};
+  for (const slug of CORE_SLUGS) {
+    progress[slug] = slug === CORE_SLUGS[0]
+      ? { stage: 3, attempts: 3, correct: 2, wrong: 0, dueDay: TODAY_DAY, lastDay: TODAY_DAY - 1, lastResult: 'correct' }
+      : { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY_DAY + 30, lastDay: TODAY_DAY - 1, lastResult: 'correct' };
+  }
+  storage.setItem(`ks2-spell-progress-${learnerId}`, JSON.stringify(progress));
+
+  const targetSlug = CORE_SLUGS[0];
+  const targetWord = CORE_WORDS.find((w) => w.slug === targetSlug);
+
+  // Arm storage to throw ONLY on writes to the sticky-unlock key. Bare
+  // storage makes this 1:1 with the service's `savePostMegaToStorage` call,
+  // so progress writes and guardian writes go through unaffected.
+  storage.throwOnNextSet({ key: `ks2-spell-post-mega-${learnerId}` });
+
+  const started = service.startSession(learnerId, {
+    mode: 'single',
+    words: [targetSlug],
+    yearFilter: 'core',
+    length: 1,
+  });
+  assert.equal(started.ok, true);
+  const submitted = service.submitAnswer(learnerId, started.state, targetWord.word);
+  assert.equal(submitted.ok, true);
+
+  // (a) Event NOT emitted — persist + emit stay in lockstep.
+  const unlockEvents = (submitted.events || []).filter((e) => e?.type === SPELLING_EVENT_TYPES.POST_MEGA_UNLOCKED);
+  assert.equal(unlockEvents.length, 0, 'event suppressed on failed sticky-unlock write');
+
+  // (b) Sticky-bit NOT persisted (the throw blocked the write).
+  const persistedRaw = storage.getItem(`ks2-spell-post-mega-${learnerId}`);
+  assert.equal(persistedRaw, null, 'sticky-bit not persisted on storage throw');
+
+  // (c) `progress.stage` NOT demoted — the target slug still transitioned
+  // to stage 4 via legacy-engine's own write (which happens before the
+  // sticky-unlock write).
+  const progressRaw = storage.getItem(`ks2-spell-progress-${learnerId}`);
+  const progressAfter = JSON.parse(progressRaw);
+  assert.equal(Number(progressAfter[targetSlug].stage), 4, 'Mega stays after failed sticky write');
+  // And every OTHER Mega slug stays at stage 4 too.
+  for (const slug of CORE_SLUGS) {
+    if (slug === targetSlug) continue;
+    const entry = progressAfter[slug];
+    if (!entry) continue;
+    assert.ok(entry.stage >= 4, `${slug} stage stays >= 4 after failed sticky write`);
+  }
+
+  // (d) Next submit succeeds and writes postMega. The learner's already at
+  // full Mega → path B (pre-v3 backfill) fires on the retry. The storage
+  // throw-hook is one-shot so the next write succeeds.
+  const retrySlug = CORE_SLUGS[1];
+  const retryWord = CORE_WORDS.find((w) => w.slug === retrySlug);
+  const retryStarted = service.startSession(learnerId, {
+    mode: 'guardian',
+    words: [retrySlug],
+    length: 1,
+  });
+  assert.equal(retryStarted.ok, true);
+  const retrySubmit = service.submitAnswer(learnerId, retryStarted.state, retryWord.word);
+  assert.equal(retrySubmit.ok, true);
+  const postMegaRaw = storage.getItem(`ks2-spell-post-mega-${learnerId}`);
+  assert.ok(postMegaRaw, 'next submit succeeds and writes postMega');
+  const retryUnlockEvents = (retrySubmit.events || []).filter((e) => e?.type === SPELLING_EVENT_TYPES.POST_MEGA_UNLOCKED);
+  assert.equal(retryUnlockEvents.length, 1, 'retry emits the event cleanly');
 });

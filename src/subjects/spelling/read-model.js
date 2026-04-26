@@ -1,6 +1,7 @@
 import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 import {
   GUARDIAN_SECURE_STAGE,
+  SPELLING_CONTENT_RELEASE_ID,
   normaliseGuardianMap,
   normalisePostMegaRecord,
   normaliseYearFilter,
@@ -139,7 +140,10 @@ export function getSpellingPostMasteryState({
   // — fresh learners, pre-P2 persisted records (no migration needed because
   // `normalisePostMegaRecord` tolerates absent / malformed input), and any
   // legitimate pre-graduation state all map to null here.
-  const postMegaRecord = normalisePostMegaRecord(stateRecord?.data?.postMega);
+  //
+  // Declared with `let` so the pre-v3 backfill path below can mint an
+  // in-memory record for learners who graduated before U2 shipped.
+  let postMegaRecord = normalisePostMegaRecord(stateRecord?.data?.postMega);
 
   // allWordsMega requires BOTH: (1) the secure-core count equals the
   // published-core count, AND (2) the published core count is non-zero.
@@ -215,6 +219,31 @@ export function getSpellingPostMasteryState({
   // invisible to the child (M3 adversarial finding — keeps emotional
   // contract simple).
   const allWordsMegaNow = allWordsMega;
+
+  // Pre-v3 graduated cohort backfill: if the learner is currently fully Mega
+  // AND has no sticky record, mint one in-memory so postMegaDashboardAvailable
+  // reflects their current graduation. The service layer writes the persisted
+  // sticky-bit lazily on the next genuine submit via
+  // detectAndPersistFirstGraduation (which now also accepts the pre-v3 path —
+  // see service.js change). Without this, pre-v3 graduates silently lose the
+  // dashboard when content adds a new core word because:
+  //   1. They have `data.postMega: null` (never persisted under P1/P1.5).
+  //   2. H1's first conjunct (`preSubmitAllMega === false`) rejects every
+  //      submit because they're already at full Mega, so they never mint a
+  //      sticky bit via normal play.
+  //   3. A later content-add flips `allWordsMegaNow` to false,
+  //      `postMegaUnlockedEver` stays false, `postMegaDashboardAvailable`
+  //      becomes false — dashboard disappears (the exact emotional
+  //      regression U2 exists to prevent).
+  if (allWordsMegaNow && postMegaRecord === null) {
+    postMegaRecord = {
+      unlockedAt: (currentDay || 0) * DAY_MS,
+      unlockedContentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+      unlockedPublishedCoreCount: publishedCoreCount,
+      unlockedBy: 'pre-v3-backfill',
+    };
+  }
+
   const postMegaUnlockedEver = postMegaRecord != null;
   const postMegaDashboardAvailable = allWordsMegaNow || postMegaUnlockedEver;
   const unlockedPublishedCoreCount = postMegaRecord
