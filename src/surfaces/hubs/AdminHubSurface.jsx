@@ -609,9 +609,33 @@ function RecentActivityStreamPanel({ model, actions }) {
 }
 
 const OPS_STATUS_OPTIONS = ['active', 'suspended', 'payment_hold'];
-// R27: prominent, UK-English non-enforcement notice rendered beside the
-// ops_status control. Do NOT reword — the string is asserted verbatim.
-const ACCOUNT_OPS_R27_CALLOUT = 'Status labels are informational only. Suspension, payment-hold, and deactivation are not currently enforced by sign-in. Enforcement is planned for a later release.';
+// Phase D / U15: R27's non-enforcement callout is RETIRED. The plan
+// requires the UI to reflect the new auth-boundary enforcement. A small
+// read-only note now sits next to the selector explaining that the
+// status is enforced on sign-in.
+const ACCOUNT_OPS_ENFORCEMENT_NOTE = 'Status is enforced: suspended accounts cannot sign in, and payment-hold accounts cannot write.';
+
+function lastSixOfAccountId(accountId) {
+  const value = typeof accountId === 'string' ? accountId : '';
+  return value.slice(-6);
+}
+
+// Phase D / U15: confirmation prompt before applying a non-active
+// ops_status. The admin must type the last 6 characters of the target
+// account id. Returns true if confirmed, false if cancelled or mismatched.
+//
+// Extracted so tests can stub `window.prompt` or inject a replacement.
+function defaultConfirmOpsStatusChange(accountId, nextStatus) {
+  if (nextStatus === 'active') return true;
+  if (typeof globalThis === 'undefined') return true;
+  const promptFn = typeof globalThis.prompt === 'function' ? globalThis.prompt : null;
+  if (!promptFn) return true;
+  const expected = lastSixOfAccountId(accountId);
+  const message = `Type the last 6 chars of ${expected} to confirm changing status to ${nextStatus}.`;
+  const typed = promptFn(message);
+  if (typeof typed !== 'string') return false;
+  return typed.trim() === expected;
+}
 
 
 function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions }) {
@@ -706,8 +730,20 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
   // — enough to absorb a double-click burst but not so long that the
   // next legitimate save is blocked after `savingAccountId` clears.
   const submitLock = useSubmitLock();
+  const confirmOpsStatusChange = actions?.confirmOpsStatusChange || defaultConfirmOpsStatusChange;
   const handleSave = () => {
     submitLock.run(async () => {
+      // Phase D / U15: when submitting a non-active ops_status, require
+      // the admin to type the last-6 chars of the target account id.
+      // Protects against accidental clicks in the ops_status selector
+      // that would immediately kick a user out of their session. The
+      // prompt is injectable via `actions.confirmOpsStatusChange` so
+      // Node-side tests and adversarial suites can exercise the branch
+      // without a DOM.
+      if (opsStatus !== 'active' && opsStatus !== (account.opsStatus || 'active')) {
+        const confirmed = confirmOpsStatusChange(accountId, opsStatus);
+        if (!confirmed) return;
+      }
       const parsedTags = tagsText
         .split(',')
         .map((tag) => tag.trim())
@@ -786,8 +822,10 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
   };
 
   if (!canManage) {
-    // Read-only render preserved verbatim from U4. Ops-role viewers also see
-    // the R27 callout so they understand the informational nature of the flag.
+    // Read-only render for ops-role viewers. Phase D / U15 replaces the
+    // R27 non-enforcement callout with a short confirmation that the
+    // status is ACTUALLY enforced now (suspended → no sign-in;
+    // payment_hold → no writes).
     return (
       <div className="skill-row" key={accountId}>
         <div>
@@ -796,7 +834,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
         </div>
         <div>
           <span className="chip">{account.opsStatus || 'active'}</span>
-          <div className="callout warn small" style={{ marginTop: 6 }}>{ACCOUNT_OPS_R27_CALLOUT}</div>
+          <div className="small muted" style={{ marginTop: 6 }} data-testid="ops-status-enforcement-note">{ACCOUNT_OPS_ENFORCEMENT_NOTE}</div>
         </div>
         <div className="small muted">{account.planLabel || '—'}</div>
         <div className="small muted">{(account.tags || []).join(', ') || '—'}</div>
@@ -873,7 +911,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
             ))}
           </select>
         </label>
-        <div className="callout warn small" style={{ marginTop: 6 }}>{ACCOUNT_OPS_R27_CALLOUT}</div>
+        <div className="small muted" style={{ marginTop: 6 }} data-testid="ops-status-enforcement-note">{ACCOUNT_OPS_ENFORCEMENT_NOTE}</div>
       </div>
       <label className="field" style={{ minWidth: 140 }}>
         <span>Plan label</span>
@@ -928,8 +966,9 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
 function AccountOpsMetadataPanel({ model, actions }) {
   const directory = model?.accountOpsMetadata || {};
   const accounts = Array.isArray(directory.accounts) ? directory.accounts : [];
-  // R27/R2: admin-only edit controls; ops-role users see read-only rows but
-  // still get the non-enforcement callout.
+  // Phase D / U15: admin-only edit controls; ops-role users see read-only
+  // rows. The R27 non-enforcement callout has been retired now that the
+  // auth boundary enforces suspended + payment_hold.
   const canManage = model?.permissions?.platformRole === 'admin';
   const savingAccountId = directory.savingAccountId || '';
   return (

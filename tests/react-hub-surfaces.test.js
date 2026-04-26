@@ -68,7 +68,9 @@ test('React Admin Operations surface renders content, audit, account roles, and 
 
   // U5: admin-role now sees mutation UI inside the account ops panel
   // (ops_status select, plan_label input, tags input, internal_notes textarea,
-  // Save button) plus the R27 non-enforcement callout.
+  // Save button). Phase D / U15 replaces the R27 non-enforcement callout
+  // with the short "Status is enforced" note now that suspended / payment
+  // _hold actually block sign-in + mutations.
   const opsMetaStart = html.indexOf('Account ops metadata');
   assert.ok(opsMetaStart >= 0, 'Account ops metadata panel must render');
   const opsMetaEnd = html.indexOf('Error log centre', opsMetaStart);
@@ -78,8 +80,10 @@ test('React Admin Operations surface renders content, audit, account roles, and 
   assert.match(opsMetaRegion, /<input\b[^>]*name="planLabel"/);
   assert.match(opsMetaRegion, /<textarea\b[^>]*name="internalNotes"/);
   assert.match(opsMetaRegion, /Save/);
-  // R27 callout wording must be exact.
-  assert.match(opsMetaRegion, /Status labels are informational only\. Suspension, payment-hold, and deactivation are not currently enforced by sign-in\. Enforcement is planned for a later release\./);
+  // Phase D / U15: the retired R27 callout must NOT appear any more.
+  assert.doesNotMatch(opsMetaRegion, /Status labels are informational only/);
+  // Phase D / U15: the new enforcement note ships alongside the selector.
+  assert.match(opsMetaRegion, /Status is enforced: suspended accounts cannot sign in, and payment-hold accounts cannot write\./);
 
   // U5: admin-role also sees a status select inside each error log row.
   const errorLogStart = html.indexOf('Error log centre');
@@ -88,15 +92,17 @@ test('React Admin Operations surface renders content, audit, account roles, and 
   assert.match(errorLogRegion, /<select\b[^>]*name="errorEventStatus"/);
 });
 
-test('U5: ops-role viewer sees read-only rows with the R27 callout but no edit controls', async () => {
+test('U5: ops-role viewer sees read-only rows with the enforcement note but no edit controls', async () => {
   const html = await renderHubSurfaceFixture({ surface: 'admin', platformRole: 'ops' });
 
   // Ops-role path must still render the same panels.
   assert.match(html, /Account ops metadata/);
   assert.match(html, /Error log centre/);
 
-  // R27 callout is visible for ops-role viewers too.
-  assert.match(html, /Status labels are informational only\. Suspension, payment-hold, and deactivation are not currently enforced by sign-in\. Enforcement is planned for a later release\./);
+  // Phase D / U15: the retired R27 callout must NOT appear any more.
+  assert.doesNotMatch(html, /Status labels are informational only/);
+  // The new enforcement note is visible for ops-role viewers too.
+  assert.match(html, /Status is enforced: suspended accounts cannot sign in, and payment-hold accounts cannot write\./);
 
   // No mutation controls should appear anywhere in the account ops panel for ops-role.
   const opsMetaStart = html.indexOf('Account ops metadata');

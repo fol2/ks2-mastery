@@ -257,7 +257,7 @@ The hub read models consume durable records after the fact.
 - no worker-backed audit search UI beyond basic lookup output
 - no invite flow, organisation model, or rich admin account management beyond basic platform-role assignment
 - no viewer learner promotion into the writable subject shell yet
-- no `ops_status` enforcement in auth (sign-in still succeeds for suspended / payment-hold accounts in P1; enforcement deferred)
+- `ops_status` enforcement at auth boundary: suspended → 403 `account_suspended` on every authenticated request (session creation refused with redirect to `/?auth=account_suspended`); payment_hold → 403 `account_payment_hold` on mutation-receipt paths (GETs remain accessible); session invalidation via `status_revision` bump on every transition. See `docs/plans/2026-04-25-005-refactor-admin-ops-console-p1-5-hardening-plan.md` for the full matrix.
 
 ## Why this pass stops here
 

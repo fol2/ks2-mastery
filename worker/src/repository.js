@@ -3132,6 +3132,22 @@ async function updateAccountOpsMetadata(db, {
   requireAccountRoleManager(actor);
 
   const patch = validateAccountOpsPatch(rawPatch);
+
+  // U15 guard 1 (self-suspend): an admin must not change their own
+  // `ops_status` away from `active`. Fires BEFORE any DB work so the row_version
+  // never bumps on a rejected self-suspend. `null` in the patch means
+  // "field absent" (partial PATCH); only explicit non-active strings
+  // trigger the guard.
+  if (Object.prototype.hasOwnProperty.call(patch, 'opsStatus')
+    && actorAccountId === targetAccountId
+    && patch.opsStatus !== 'active'
+    && patch.opsStatus !== null
+  ) {
+    throw new ForbiddenError('You cannot change your own account status.', {
+      code: 'self_suspend_forbidden',
+      accountId: targetAccountId,
+    });
+  }
   // U8 CAS: `expectedRowVersion` is required on every mutation envelope. It
   // is a non-negative integer representing the `account_ops_metadata.row_version`
   // the client observed at read time. On success, `row_version` bumps by 1;
@@ -3182,7 +3198,7 @@ async function updateAccountOpsMetadata(db, {
     };
   }
 
-  const target = await first(db, 'SELECT id, account_type FROM adult_accounts WHERE id = ?', [targetAccountId]);
+  const target = await first(db, 'SELECT id, account_type, platform_role FROM adult_accounts WHERE id = ?', [targetAccountId]);
   if (!target) {
     throw new NotFoundError('Target account was not found.', {
       code: 'target_account_not_found',
@@ -3194,6 +3210,36 @@ async function updateAccountOpsMetadata(db, {
       code: 'demo_account_ops_forbidden',
       accountId: targetAccountId,
     });
+  }
+
+  // U15 guard 2 (last-active-admin): when the incoming patch takes a
+  // platform-role=admin target off `active`, check that at least one
+  // other admin remains active across `adult_accounts` × `account_ops_metadata`.
+  // The pre-check SELECT is an authoritative count; the existing CAS +
+  // post-batch verify catch any sub-millisecond race. When two admins race
+  // to suspend each other concurrently, the second committer re-runs this
+  // guard on retry and sees the winner as suspended — converging to
+  // "exactly one active admin remains".
+  if (Object.prototype.hasOwnProperty.call(patch, 'opsStatus')
+    && patch.opsStatus !== 'active'
+    && patch.opsStatus !== null
+    && normalisePlatformRole(target.platform_role) === 'admin'
+  ) {
+    const otherActiveAdmins = await scalar(db, `
+      SELECT COUNT(*) AS n
+      FROM adult_accounts a
+      LEFT JOIN account_ops_metadata m ON m.account_id = a.id
+      WHERE a.platform_role = 'admin'
+        AND COALESCE(a.account_type, 'real') <> 'demo'
+        AND COALESCE(m.ops_status, 'active') = 'active'
+        AND a.id <> ?
+    `, [targetAccountId], 'n');
+    if (!(Number(otherActiveAdmins) > 0)) {
+      throw new ConflictError('Cannot change this account — they are the only active administrator.', {
+        code: 'last_admin_locked_out',
+        accountId: targetAccountId,
+      });
+    }
   }
 
   const existingRow = await loadAccountOpsMetadataRow(db, targetAccountId);
@@ -3275,9 +3321,11 @@ async function updateAccountOpsMetadata(db, {
   // produces zero affected rows; layer 3 (C1 fix) inspects the batch
   // result's `meta.changes` to surface 409. The insert branch fires only
   // on the fresh-row path (expectedRowVersion = 0 → nextRowVersion = 1).
-  // NOTE: Phase D's U15 will extend this UPDATE to bump `status_revision`
-  // when `ops_status` changes — Phase C must NOT touch that column (see
-  // plan §Phase D).
+  // U15 extends this UPDATE: `status_revision` bumps only when
+  // `ops_status` changes (active→suspended or the reverse), while
+  // `row_version` always bumps (CAS invariant). The CASE keeps both
+  // counters in a single atomic statement so no follow-up SELECT is
+  // needed to decide whether the revision moved.
   // R21 batch atomicity: UPSERT + receipt + counter bump commit together.
   // B-RE-1 (re-review Blocker): the receipt INSERT and counter bump are
   // EXISTS-guarded on a write-signature tuple `(updated_at, updated_by,
@@ -3319,7 +3367,9 @@ async function updateAccountOpsMetadata(db, {
         internal_notes = excluded.internal_notes,
         updated_at = excluded.updated_at,
         updated_by_account_id = excluded.updated_by_account_id,
-        row_version = account_ops_metadata.row_version + 1
+        row_version = account_ops_metadata.row_version + 1,
+        status_revision = account_ops_metadata.status_revision
+          + CASE WHEN account_ops_metadata.ops_status <> excluded.ops_status THEN 1 ELSE 0 END
       WHERE account_ops_metadata.row_version = ?
     `, [
       targetAccountId,
@@ -3344,6 +3394,35 @@ async function updateAccountOpsMetadata(db, {
       appliedAt: ts,
     }, { exists: receiptAndCounterExists }),
     bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1, { exists: receiptAndCounterExists }),
+    // U15 stale-session sweep. When the UPSERT bumps `status_revision`,
+    // invalidate every `account_sessions` row on the target that was
+    // stamped at an older revision. EXISTS-guarded on the write-signature
+    // tuple (same shape as the receipt / counter guards) so the DELETE
+    // fires only when the UPSERT actually committed — no ghost DELETE
+    // when the CAS loses. The subquery reads the post-bump
+    // `status_revision` so the DELETE catches every stale session
+    // including the race-loser's prior cookie.
+    bindStatement(db, `
+      DELETE FROM account_sessions
+      WHERE account_id = ?
+        AND status_revision_at_issue < (
+          SELECT status_revision FROM account_ops_metadata WHERE account_id = ?
+        )
+        AND EXISTS (
+          SELECT 1 FROM account_ops_metadata
+          WHERE account_id = ?
+            AND updated_at = ?
+            AND updated_by_account_id = ?
+            AND row_version = ?
+        )
+    `, [
+      targetAccountId,
+      targetAccountId,
+      targetAccountId,
+      ts,
+      actorAccountId,
+      nextRowVersion,
+    ]),
   ]);
 
   // U8 CAS layer 3 (C1 fix) — post-batch verify via batch result rowsAffected.
@@ -3396,6 +3475,7 @@ async function updateOpsErrorEventStatus(db, {
   expectedPreviousStatus = null,
   mutation,
   nowTs,
+  buildHash = null,
 } = {}) {
   if (!(typeof eventId === 'string' && eventId)) {
     throw new BadRequestError('Error event id is required.', {
@@ -3569,12 +3649,29 @@ async function updateOpsErrorEventStatus(db, {
   // counter-drift on the extreme-race path. The primary correctness check
   // is the client-driven `expectedPreviousStatus` guard higher up the
   // function, which rejects stale dispatches before the batch is composed.
+  //
+  // U15 additions:
+  // - Write `last_status_change_at = :ts` on every real transition so
+  //   Phase E's auto-reopen cooldown measures the window from the most
+  //   recent status change (manual or automatic).
+  // - Write `resolved_in_release = :buildHash` only on transitions INTO
+  //   `resolved`. Null `buildHash` means the env var was not set, which
+  //   Phase E's auto-reopen rule treats as "never auto-reopen" — the
+  //   documented opt-out.
+  const resolvedInReleaseValue = nextStatus === 'resolved'
+    ? (typeof buildHash === 'string' && buildHash ? buildHash : null)
+    : null;
   await batch(db, [
     bindStatement(db, `
       UPDATE ops_error_events
-      SET status = ?
+      SET status = ?,
+          last_status_change_at = ?,
+          resolved_in_release = CASE
+            WHEN ? = 'resolved' THEN ?
+            ELSE resolved_in_release
+          END
       WHERE id = ? AND status = ?
-    `, [nextStatus, eventId, oldStatus]),
+    `, [nextStatus, ts, nextStatus, resolvedInReleaseValue, eventId, oldStatus]),
     storeMutationReceiptStatement(db, {
       accountId: actorAccountId,
       requestId,
@@ -8138,6 +8235,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         expectedPreviousStatus,
         mutation,
         nowTs: nowFactory(),
+        // U15: forward `env.BUILD_HASH` so `→ resolved` transitions can
+        // stamp the `resolved_in_release` column for Phase E's auto-reopen
+        // rule. Missing env var → null (no stamp), which is the documented
+        // opt-out per the plan.
+        buildHash: typeof env?.BUILD_HASH === 'string' && env.BUILD_HASH
+          ? env.BUILD_HASH
+          : null,
       });
     },
     // P2 U3: admin-gated QA seed harness. Dispatches to the
