@@ -35,3 +35,8 @@ export {
   progressForGrammarMonster,
   recordGrammarConceptMastery,
 } from './grammar.js';
+export {
+  GRAMMAR_GRAND_MONSTER_ID,
+  GRAMMAR_MONSTER_IDS,
+  GRAMMAR_RESERVED_MONSTER_IDS,
+} from './shared.js';
