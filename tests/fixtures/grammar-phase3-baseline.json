@@ -132,7 +132,7 @@
       "topic": "Regression + absence + fixture-driven invariants",
       "resolutionStatus": "completed",
       "ownerUnit": "U10",
-      "landedIn": "PR #227",
+      "landedIn": "PR #229",
       "supportingTests": [
         "tests/grammar-phase3-child-copy.test.js",
         "tests/grammar-phase3-roster.test.js",
@@ -148,7 +148,7 @@
       "topic": "GRAMMAR_CHILD_FORBIDDEN_TERMS absent from all nine child phases",
       "resolutionStatus": "completed",
       "ownerUnit": "U10",
-      "landedIn": "PR #227",
+      "landedIn": "PR #229",
       "supportingTests": [
         "tests/grammar-phase3-child-copy.test.js"
       ],
@@ -159,7 +159,7 @@
       "topic": "Reserved monsters (Glossbloom/Loomrill/Mirrane) absent from child UI and 4 active routes",
       "resolutionStatus": "completed",
       "ownerUnit": "U10",
-      "landedIn": "PR #227",
+      "landedIn": "PR #229",
       "supportingTests": [
         "tests/grammar-phase3-roster.test.js",
         "tests/grammar-monster-roster.test.js"
@@ -171,7 +171,7 @@
       "topic": "Writing Try save leaves mastery/retryQueue/misconceptions/session byte-equal with zero reward events",
       "resolutionStatus": "completed",
       "ownerUnit": "U10",
-      "landedIn": "PR #227",
+      "landedIn": "PR #229",
       "supportingTests": [
         "tests/grammar-phase3-non-scored.test.js",
         "tests/grammar-transfer-scene.test.js"
