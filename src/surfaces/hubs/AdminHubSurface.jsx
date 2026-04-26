@@ -7,6 +7,8 @@ import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner }
 import { PanelHeader } from './admin-panel-header.jsx';
 import { decideDirtyResetOnServerUpdate } from '../../platform/hubs/admin-metadata-dirty-registry.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
+import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
+import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confidence.js';
 
 function AdminAccountRoles({ model, directory = {}, actions }) {
   const isAdmin = model?.permissions?.platformRole === 'admin';
@@ -280,6 +282,47 @@ function DemoOperationsSummary({ summary = {} }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+// Phase 4 U7: Admin Hub "Grammar concepts" confidence panel. Admins see the
+// full 5-field confidence projection — label, sample size, recent-miss
+// count, interval-days spacing, and distinct-template coverage — for every
+// tracked Grammar concept on the selected learner. Child surfaces MUST NOT
+// import `AdultConfidenceChip`; `tests/grammar-parent-hub-confidence.test.js`
+// greps the dashboard / bank / summary / transfer scene code to lock this.
+function GrammarConceptConfidencePanel({ evidence }) {
+  const rows = Array.isArray(evidence?.conceptStatus) ? evidence.conceptStatus : [];
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-concept-confidence">
+      <div className="eyebrow">Grammar · concept confidence</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Grammar concepts</h3>
+      <p className="small muted">
+        Adult-facing confidence label per concept for the selected learner, with the full evidence shape: sample size, recent misses, interval-days spacing, and distinct-template coverage over the last {GRAMMAR_RECENT_ATTEMPT_HORIZON} attempts.
+      </p>
+      {rows.length ? (
+        <ul className="admin-grammar-confidence-list" aria-label="Grammar concept confidence chips">
+          {rows.map((row) => (
+            <li
+              className="admin-grammar-confidence-row skill-row"
+              key={row.id || row.name}
+              data-concept-id={row.id || ''}
+            >
+              <div>
+                <strong>{row.name || row.id}</strong>
+                <div className="small muted">{row.domain || 'Grammar'}</div>
+              </div>
+              <div>
+                <AdultConfidenceChip
+                  confidence={row.confidence || null}
+                  showAdminExtras
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="small muted">No Grammar concept evidence has been recorded for this learner.</p>}
     </section>
   );
 }
@@ -822,6 +865,7 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
       <ErrorLogCentrePanel model={model} actions={actions} />
       <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
       <PostMegaSeedHarnessPanel model={model} actions={actions} />
+      <GrammarConceptConfidencePanel evidence={selectedGrammarEvidence} />
 
       <section className="two-col" style={{ marginBottom: 20 }}>
         <article className="card">

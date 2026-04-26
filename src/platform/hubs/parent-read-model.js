@@ -33,6 +33,16 @@ function orderDueWork(entries = []) {
     .sort((a, b) => Number(isActionableFocus(b)) - Number(isActionableFocus(a)));
 }
 
+// Phase 4 U7: `conceptStatus`, `dueConcepts`, and `weakConcepts` each
+// contain concept rows whose client read-model projection now includes a
+// `confidence: { label, sampleSize, intervalDays, distinctTemplates,
+// recentMisses }` sub-object (see `src/subjects/grammar/read-model.js`
+// `normaliseConceptRow`). The pass-through is structural — each array is
+// forwarded verbatim — so Parent Hub + Admin Hub inherit the confidence
+// projection without any additional shaping work here. The `AdultConfidenceChip`
+// component consumes `confidence` directly. Child surfaces never read the
+// `confidence` field (they use `grammarChildConfidenceLabel` from the
+// view-model).
 function grammarEvidenceFromReadModel(grammar = {}) {
   return {
     subjectId: 'grammar',
