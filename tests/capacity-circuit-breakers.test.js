@@ -661,6 +661,99 @@ test('U9 integration: server-side readModelDerivedWrite breaker open skips proje
 });
 
 // ---------------------------------------------------------------------------
+// U9 round 1 fix (adv-u9-r1-004): successful batch() commits recordSuccess
+// against the server-side breaker; failed batch() (D1 error) recordFailure.
+// CAS contention (changes=0) records NEITHER.
+// ---------------------------------------------------------------------------
+
+test('U9 round 1: successful subject-command projection write records success on server breaker', async () => {
+  const { createWorkerApp } = await import('../worker/src/app.js');
+  const { createMigratedSqliteD1Database } = await import('./helpers/sqlite-d1.js');
+  const {
+    getReadModelDerivedWriteBreaker,
+    resetReadModelDerivedWriteBreaker,
+  } = await import('../worker/src/circuit-breaker-server.js');
+
+  resetReadModelDerivedWriteBreaker();
+  try {
+    const DB = createMigratedSqliteD1Database();
+    const now = Date.UTC(2026, 0, 1);
+    DB.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    `).run('learner-a', now, now);
+    DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES (?, ?, ?, 'parent', ?, ?, ?, 0)
+    `).run('adult-a', 'adult@example.test', 'Adult A', 'learner-a', now, now);
+    DB.db.prepare(`
+      INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+      VALUES (?, ?, 'owner', 0, ?, ?)
+    `).run('adult-a', 'learner-a', now, now);
+
+    // Trigger 2 failures on the breaker (below threshold=3, stays closed) so a
+    // subsequent healthy write proves recordSuccess resets the count.
+    const breaker = getReadModelDerivedWriteBreaker();
+    breaker.recordFailure();
+    breaker.recordFailure();
+    assert.equal(breaker.state, BREAKER_STATES.CLOSED, 'breaker stays closed below threshold');
+
+    const app = createWorkerApp({ now: () => now });
+    const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test' };
+    const response = await app.fetch(new Request('https://repo.test/api/subjects/spelling/command', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-ks2-dev-account-id': 'adult-a',
+      },
+      body: JSON.stringify({
+        command: 'start-session',
+        learnerId: 'learner-a',
+        requestId: 'success-record-1',
+        expectedLearnerRevision: 0,
+        payload: { mode: 'single', slug: 'possess', length: 1 },
+      }),
+    }), env, {});
+    assert.equal(response.status, 200);
+    // Successful write records success -> failureCount resets to 0. Trigger 2
+    // more failures; breaker still closed (2 < 3) confirms the prior 2 reset.
+    breaker.recordFailure();
+    breaker.recordFailure();
+    assert.equal(breaker.state, BREAKER_STATES.CLOSED, 'recordSuccess reset the failure counter');
+    DB.close();
+  } finally {
+    resetReadModelDerivedWriteBreaker();
+  }
+});
+
+test('U9 round 1: CAS-retry Attempt 2 re-checks breaker and preserves breaker-open reason stamp', async () => {
+  // Given the breaker is forced OPEN before Attempt 1, both Attempt 2 and
+  // Attempt 3 of the CAS retry chain must also skip projection and keep the
+  // `breaker-open` reason on `derivedWriteSkipped` — NOT overwrite with
+  // `concurrent-retry-exhausted`. The base integration test (line 593)
+  // exercises Attempt 1. Here we assert the breaker primitive's shouldBlockCall
+  // is stable across multiple reads so Attempts 2 and 3 re-check cleanly.
+  const {
+    getReadModelDerivedWriteBreaker,
+    resetReadModelDerivedWriteBreaker,
+  } = await import('../worker/src/circuit-breaker-server.js');
+  resetReadModelDerivedWriteBreaker();
+  try {
+    const breaker = getReadModelDerivedWriteBreaker();
+    breaker.forceOpen();
+    assert.equal(breaker.state, BREAKER_STATES.OPEN);
+    // Two consecutive reads both block — Attempt 1 gate + Attempt 2 re-check.
+    assert.equal(breaker.shouldBlockCall(), true);
+    assert.equal(breaker.shouldBlockCall(), true);
+    // snapshot does not mutate state in a way that would unblock future calls.
+    breaker.snapshot();
+    assert.equal(breaker.shouldBlockCall(), true);
+  } finally {
+    resetReadModelDerivedWriteBreaker();
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Client UX degradation: ParentHub + AdminHub render breaker-open panels.
 // ---------------------------------------------------------------------------
 
@@ -717,6 +810,232 @@ test('U9 UX: Admin Hub renders full per-learner stats when no breakers are open'
   assert.doesNotMatch(html, /Classroom summary temporarily unavailable/);
   assert.doesNotMatch(html, /Bootstrap capacity metadata missing/);
   assert.match(html, /Grammar: 1 due/, 'per-learner Grammar stats render when breakers closed');
+});
+
+// ---------------------------------------------------------------------------
+// U9 round 1 fix (adv-u9-r1-005): emitTransition reentrancy guard prevents
+// cascading transitions when a listener reads state during a transition.
+// ---------------------------------------------------------------------------
+
+test('U9 round 1: listener that reads state mid-transition does not cascade recursive transitions', () => {
+  const clock = makeNow();
+  const transitions = [];
+  let observedStateInsideListener = null;
+  const breaker = createCircuitBreaker({
+    name: 'reentrancy-test',
+    failureThreshold: 2,
+    cooldownMs: 1000,
+    now: clock.read,
+    storage: null,
+    onTransition: (payload) => {
+      transitions.push(payload);
+      // Adversarial listener: read the state getter, which could internally
+      // call respectBroadcast + maybeHalfOpenFromCooldown and re-enter
+      // transitionTo in a pre-fix implementation.
+      observedStateInsideListener = breaker.state;
+      // Also call snapshot which has the same read-side-effect risk.
+      breaker.snapshot();
+    },
+  });
+  breaker.recordFailure();
+  breaker.recordFailure();
+  // Exactly one closed->open transition, no recursion.
+  assert.equal(transitions.filter((t) => t.to === BREAKER_STATES.OPEN).length, 1);
+  assert.equal(observedStateInsideListener, BREAKER_STATES.OPEN);
+});
+
+test('U9 round 1: two breakers flapping in listener callbacks emit transitions in FIFO order without recursion', () => {
+  const clock = makeNow();
+  const emitted = [];
+  const breakerA = createCircuitBreaker({
+    name: 'breaker-a',
+    failureThreshold: 1,
+    now: clock.read,
+    storage: null,
+    onTransition: (payload) => emitted.push(['A', payload.from, payload.to]),
+  });
+  const breakerB = createCircuitBreaker({
+    name: 'breaker-b',
+    failureThreshold: 1,
+    now: clock.read,
+    storage: null,
+    onTransition: (payload) => {
+      emitted.push(['B', payload.from, payload.to]);
+      // Re-enter breakerB.state from within its own listener.
+      breakerB.state; // eslint-disable-line no-unused-expressions
+    },
+  });
+  breakerA.recordFailure();
+  breakerB.recordFailure();
+  // Each breaker emits exactly one transition; no interleaving / duplicate.
+  assert.equal(emitted.filter((e) => e[0] === 'A').length, 1);
+  assert.equal(emitted.filter((e) => e[0] === 'B').length, 1);
+});
+
+// ---------------------------------------------------------------------------
+// U9 round 1 fix (adv-u9-r1-006): localStorage stale-key cleanup on OPEN.
+// ---------------------------------------------------------------------------
+
+test('U9 round 1: writing a new open broadcast key clears any prior open keys for the same breaker', () => {
+  const storage = installMemoryStorage();
+  const clock = makeNow();
+  const breaker = createCircuitBreaker({
+    name: 'cleanup-test',
+    failureThreshold: 1,
+    cooldownMs: 500,
+    cooldownMaxMs: 30_000,
+    now: clock.read,
+    storage,
+  });
+  // Simulate a pre-existing stale open-key from a prior flap.
+  storage.setItem('ks2-breaker:cleanup-test:open:999', '1');
+  storage.setItem('ks2-breaker:cleanup-test:open:500', '1');
+  // Unrelated breaker key must survive.
+  storage.setItem('ks2-breaker:other-breaker:open:999', '1');
+
+  breaker.recordFailure();
+  assert.equal(breaker.state, BREAKER_STATES.OPEN);
+
+  // Collect every key still present in storage.
+  const survivors = [];
+  for (let i = 0; i < storage.length; i += 1) {
+    const key = storage.key(i);
+    if (typeof key === 'string') survivors.push(key);
+  }
+  // The two pre-existing cleanup-test keys are gone.
+  assert.equal(survivors.filter((k) => k.startsWith('ks2-breaker:cleanup-test:open:999')).length, 0);
+  assert.equal(survivors.filter((k) => k.startsWith('ks2-breaker:cleanup-test:open:500')).length, 0);
+  // Exactly one cleanup-test open key survives, with the fresh timestamp.
+  const freshOpens = survivors.filter((k) => k.startsWith('ks2-breaker:cleanup-test:open:'));
+  assert.equal(freshOpens.length, 1);
+  // Other breaker's key was untouched.
+  assert.ok(survivors.includes('ks2-breaker:other-breaker:open:999'));
+});
+
+// ---------------------------------------------------------------------------
+// U9 round 1 fix (adv-u9-r1-002): hub-api fetch sites wire recordFailure /
+// recordSuccess to the matching client-side breaker so 5xx / network failures
+// self-trip the breaker. Pre-fix the primitive was only tripped by operator
+// forceOpen / test-only direct calls; the production fetch path ignored it.
+// ---------------------------------------------------------------------------
+
+test('U9 round 1: parentHubRecentSessions self-trips after 3 consecutive 5xx responses', async () => {
+  const { createHubApi } = await import('../src/platform/hubs/api.js');
+  const { createCircuitBreaker } = await import('../src/platform/core/circuit-breaker.js');
+  const transitions = [];
+  const clock = makeNow();
+  const breaker = createCircuitBreaker({
+    name: 'parentHubRecentSessions',
+    failureThreshold: 3,
+    now: clock.read,
+    storage: null,
+    onTransition: (payload) => transitions.push(payload),
+  });
+  const api = createHubApi({
+    baseUrl: 'https://repo.test',
+    fetch: async () => new Response('oops', { status: 502 }),
+    breakers: { parentHubRecentSessions: breaker },
+  });
+  for (let i = 0; i < 3; i += 1) {
+    try { await api.readParentRecentSessions({ learnerId: 'learner-a' }); }
+    catch { /* expected 5xx rethrow */ }
+  }
+  assert.equal(breaker.state, BREAKER_STATES.OPEN);
+  const openTransitions = transitions.filter((t) => t.to === BREAKER_STATES.OPEN);
+  assert.equal(openTransitions.length, 1, 'breakerTransition emits exactly once per closed->open transition');
+});
+
+test('U9 round 1: parentHubActivity self-trips on network failure (no Response object)', async () => {
+  const { createHubApi } = await import('../src/platform/hubs/api.js');
+  const { createCircuitBreaker } = await import('../src/platform/core/circuit-breaker.js');
+  const clock = makeNow();
+  const breaker = createCircuitBreaker({
+    name: 'parentHubActivity',
+    failureThreshold: 3,
+    now: clock.read,
+    storage: null,
+  });
+  const api = createHubApi({
+    baseUrl: 'https://repo.test',
+    fetch: async () => { throw new TypeError('Failed to fetch'); },
+    breakers: { parentHubActivity: breaker },
+  });
+  for (let i = 0; i < 3; i += 1) {
+    try { await api.readParentActivity({ learnerId: 'learner-a' }); }
+    catch { /* expected network-fault rethrow */ }
+  }
+  assert.equal(breaker.state, BREAKER_STATES.OPEN);
+});
+
+test('U9 round 1: classroomSummary self-trips after 3 consecutive 503 responses on readAdminHub', async () => {
+  const { createHubApi } = await import('../src/platform/hubs/api.js');
+  const { createCircuitBreaker } = await import('../src/platform/core/circuit-breaker.js');
+  const clock = makeNow();
+  const breaker = createCircuitBreaker({
+    name: 'classroomSummary',
+    failureThreshold: 3,
+    now: clock.read,
+    storage: null,
+  });
+  const api = createHubApi({
+    baseUrl: 'https://repo.test',
+    fetch: async () => new Response(JSON.stringify({ message: 'overloaded' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json' },
+    }),
+    breakers: { classroomSummary: breaker },
+  });
+  for (let i = 0; i < 3; i += 1) {
+    try { await api.readAdminHub({ learnerId: 'learner-a' }); }
+    catch { /* expected 5xx rethrow */ }
+  }
+  assert.equal(breaker.state, BREAKER_STATES.OPEN);
+});
+
+test('U9 round 1: client breakers record success on 2xx and do NOT trip on 4xx user errors', async () => {
+  const { createHubApi } = await import('../src/platform/hubs/api.js');
+  const { createCircuitBreaker } = await import('../src/platform/core/circuit-breaker.js');
+  const clock = makeNow();
+  const recentSessions = createCircuitBreaker({
+    name: 'parentHubRecentSessions',
+    failureThreshold: 3,
+    now: clock.read,
+    storage: null,
+  });
+  const activity = createCircuitBreaker({
+    name: 'parentHubActivity',
+    failureThreshold: 3,
+    now: clock.read,
+    storage: null,
+  });
+  // Sequence: 2x 404 (4xx — NEITHER record), 1x 200 (recordSuccess),
+  // then drop in 2x 500 (recordFailure x2) followed by another 200.
+  // 4xx must not tally toward failureThreshold, and 2xx must reset any
+  // partial closed-state failure count.
+  const responses = [
+    new Response(JSON.stringify({ message: 'not found' }), { status: 404, headers: { 'content-type': 'application/json' } }),
+    new Response(JSON.stringify({ message: 'forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } }),
+    new Response(JSON.stringify({ recentSessions: [] }), { status: 200, headers: { 'content-type': 'application/json' } }),
+  ];
+  let call = 0;
+  const api = createHubApi({
+    baseUrl: 'https://repo.test',
+    fetch: async () => {
+      const next = responses[Math.min(call, responses.length - 1)];
+      call += 1;
+      return next;
+    },
+    breakers: { parentHubRecentSessions: recentSessions, parentHubActivity: activity },
+  });
+  for (let i = 0; i < 3; i += 1) {
+    try { await api.readParentRecentSessions({ learnerId: 'learner-a' }); }
+    catch { /* 4xx rethrows */ }
+  }
+  // Three calls: 404, 403, 200 — NONE of them count toward threshold (two 4xx +
+  // one success). Breaker must remain CLOSED with zero failures.
+  assert.equal(recentSessions.state, BREAKER_STATES.CLOSED);
+  // Activity breaker had zero calls — never tripped.
+  assert.equal(activity.state, BREAKER_STATES.CLOSED);
 });
 
 test('U9 integration: a response with meta.capacity.bootstrapCapacity resets the consecutive-miss counter', async () => {

@@ -110,6 +110,13 @@ function readBroadcastOpenUntil(storage, name, currentTime) {
 
 function writeBroadcastOpen(storage, name, until) {
   if (!storage) return false;
+  // U9 round 1 fix (adv-u9-r1-006): clear any pre-existing `open:*` keys for
+  // this breaker BEFORE writing the new one. Prior behaviour left stale
+  // future-timed entries in localStorage until they expired naturally; under
+  // breaker flap a tab could accumulate multiple `ks2-breaker:<name>:open:<ts>`
+  // keys with different timestamps, bloating the keyspace and making the
+  // opportunistic cleanup in `readBroadcastOpenUntil` O(N) per read.
+  clearBroadcastForName(storage, name);
   try {
     storage.setItem(localStorageKeyForBreaker(name, until), '1');
     return true;
@@ -181,13 +188,35 @@ export function createCircuitBreaker({
   let openedAt = 0;
   let currentCooldown = resolvedCooldown;
   let cooldownUntil = 0;
+  // U9 round 1 fix (adv-u9-r1-005): reentrancy guard on emitTransition.
+  // Without this flag, a listener that reads the breaker's `state` or
+  // `isOpen` getter (or snapshot()) can indirectly call
+  // `respectBroadcast`/`maybeHalfOpenFromCooldown`, which themselves may
+  // transition the state — cascading into a nested `emitTransition` stack.
+  // We queue any transitions observed while a listener is running, then
+  // drain the queue in FIFO order after the active listener returns.
+  // Listeners therefore observe transitions one at a time, in order, with
+  // no recursion — matching the adversarial reviewer's requested
+  // "ONE recompute per user action" contract.
+  let isEmittingTransition = false;
+  const pendingTransitionQueue = [];
 
   function emitTransition(from, to) {
     if (!resolvedOnTransition) return;
+    const payload = { name, from, to, at: resolvedNow() };
+    if (isEmittingTransition) {
+      pendingTransitionQueue.push(payload);
+      return;
+    }
+    isEmittingTransition = true;
     try {
-      resolvedOnTransition({ name, from, to, at: resolvedNow() });
-    } catch {
-      // Never let a misbehaving listener propagate.
+      try { resolvedOnTransition(payload); } catch { /* listener throw swallowed */ }
+      while (pendingTransitionQueue.length > 0) {
+        const next = pendingTransitionQueue.shift();
+        try { resolvedOnTransition(next); } catch { /* listener throw swallowed */ }
+      }
+    } finally {
+      isEmittingTransition = false;
     }
   }
 
