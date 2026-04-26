@@ -4873,7 +4873,7 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
     // `last_status_change_at` so the auto-reopen rule can evaluate the
     // 5-condition check inline without a second round-trip.
     const existing = await first(db, `
-      SELECT id, first_seen, occurrence_count, status,
+      SELECT id, fingerprint, first_seen, occurrence_count, status,
              resolved_in_release, last_status_change_at
       FROM ops_error_events
       WHERE error_kind = ?
@@ -4943,7 +4943,48 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
         // previously resolved this fingerprint, and the next auto-reopen
         // (condition 4) measures against the same column. The forensic
         // history "resolved in X but regressed at Y" stays intact.
-        await batch(db, [
+        //
+        // Phase E adv-e-3: emit a structured Workers log BEFORE the
+        // batch commits so every auto-reopen transition is observable
+        // from the wrangler tail regardless of whether the CAS guard
+        // below ultimately wins the race. A post-commit log would miss
+        // the "admin manually flipped concurrently" case because we
+        // fall through to the dedup path without re-entering this
+        // block.
+        try {
+          // eslint-disable-next-line no-console
+          console.log(JSON.stringify({
+            event: 'ops_error_event.auto_reopened',
+            fingerprint: typeof existing.fingerprint === 'string' && existing.fingerprint
+              ? existing.fingerprint
+              : fingerprint,
+            eventId: existing.id,
+            fromRelease: storedResolvedInRelease,
+            toRelease: storedReleaseValue,
+            cooldownMs: ts - storedLastStatusChangeAt,
+          }));
+        } catch {
+          // Structured logs are best-effort — never fail the ingest.
+        }
+
+        // Phase E adv-e-1: CAS-guarded UPDATE. The status='resolved'
+        // predicate in the WHERE clause prevents a double counter-swap
+        // when a concurrent admin status change (e.g. admin flipped the
+        // row to 'ignored' via /api/admin/ops/error-events/:id/status)
+        // lands between our SELECT and our batch. Under concurrency:
+        //   - Admin wins → our UPDATE matches zero rows (CAS fail)
+        //     → we inspect `meta.changes`, fall through to the normal
+        //     dedup UPDATE which bumps last_seen + occurrence_count
+        //     + last_seen_release only, leaving status / counters
+        //     consistent with the admin's chosen bucket.
+        //   - Auto-reopen wins → CAS matches one row, counters swap
+        //     correctly. The admin's status change either lost the
+        //     race (their subsequent request lands later) or never
+        //     fired.
+        // The batch result is an array of D1 statement results — the
+        // first entry is the UPDATE; `meta.changes` is 1 on match and
+        // 0 on CAS fail.
+        const autoReopenBatch = await batch(db, [
           bindStatement(db, `
             UPDATE ops_error_events
             SET last_seen = ?,
@@ -4951,16 +4992,51 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
                 last_seen_release = ?,
                 status = 'open',
                 last_status_change_at = ?
-            WHERE id = ?
+            WHERE id = ? AND status = 'resolved'
           `, [ts, storedReleaseValue, ts, existing.id]),
           bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}resolved`, ts, -1),
           bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1),
         ]);
+        const autoReopenChanges = Number(autoReopenBatch?.[0]?.meta?.changes) || 0;
+        if (autoReopenChanges === 1) {
+          return {
+            eventId: existing.id,
+            deduped: true,
+            unavailable: false,
+            autoReopened: true,
+          };
+        }
+        // CAS failed (admin or another worker beat us). The batch above
+        // still committed the counter swap against the transitional
+        // state — but because D1 does not support statement-level
+        // rollback inside `batch()`, we accept the counter swap drift
+        // and let reconcileAdminKpiMetrics (U10) correct it. The net
+        // divergence is bounded: resolved -1 / open +1 on a row that
+        // actually landed in (e.g.) 'ignored'. The reconcile job
+        // re-derives every status counter from SELECT COUNT(*)
+        // GROUP BY status, so drift is capped at one reconcile window.
+        //
+        // Defensive: also apply the non-auto-reopen dedup UPDATE so
+        // `last_seen` / `occurrence_count` / `last_seen_release`
+        // advance for this replay. The admin's chosen status (or
+        // whatever the concurrent writer set) is untouched because the
+        // dedup UPDATE only writes those three columns.
+        await run(db, `
+          UPDATE ops_error_events
+          SET last_seen = ?,
+              occurrence_count = occurrence_count + 1,
+              last_seen_release = ?
+          WHERE id = ?
+        `, [ts, storedReleaseValue, existing.id]);
         return {
           eventId: existing.id,
           deduped: true,
           unavailable: false,
-          autoReopened: true,
+          // autoReopened is FALSE when the CAS loses — the admin's
+          // concurrent change wins semantically. The route should NOT
+          // treat this replay as an auto-reopen for rate-limit
+          // purposes.
+          autoReopened: false,
         };
       }
 

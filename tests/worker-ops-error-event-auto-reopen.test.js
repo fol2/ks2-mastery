@@ -366,3 +366,100 @@ test('U17 auto-reopen — manual admin reopen then new-release arrival does not 
     server.close();
   }
 });
+
+// Phase E adv-e-1: CAS guard on auto-reopen UPDATE.
+//
+// The auto-reopen UPDATE must carry `AND status = 'resolved'` so a
+// concurrent manual admin status change (e.g. the admin flipped the row
+// to 'ignored' between our SELECT and our batch) does not clobber the
+// chosen bucket and double-swap the counters. When the CAS loses, the
+// repository falls through to the normal dedup UPDATE and returns
+// `autoReopened: false` so the route's post-commit rate-limit bucket
+// does NOT fire for a transition that did not happen.
+test('Phase E adv-e-1 CAS guard — concurrent admin "ignored" change beats auto-reopen; row stays ignored', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const eventId = seedResolvedEvent(server, {
+      resolvedInRelease: 'abc1234',
+      lastStatusChangeAt: Date.now() - (25 * ONE_HOUR_MS),
+    });
+
+    // Simulate a concurrent manual admin status change landing BEFORE our
+    // UPDATE but AFTER our SELECT. Direct D1 mutation stands in for
+    // "another worker won the race" — the code path we exercise is the
+    // CAS predicate inside `recordClientErrorEvent`'s auto-reopen batch.
+    server.DB.db.prepare(`
+      UPDATE ops_error_events SET status = 'ignored', last_status_change_at = ?
+      WHERE id = ?
+    `).run(Date.now(), eventId);
+
+    const response = await postEvent(server, { ...matchingBody, release: 'def5678' });
+    assert.equal(response.status, 200);
+
+    const row = readEvent(server, eventId);
+    // Admin won — status is terminal 'ignored', not 'open'.
+    assert.equal(row.status, 'ignored');
+    // Dedup UPDATE still bumps last_seen_release + occurrence_count.
+    assert.equal(row.last_seen_release, 'def5678');
+    assert.equal(row.occurrence_count, 2);
+  } finally {
+    server.close();
+  }
+});
+
+// Phase E adv-e-2: post-commit rate-limit bucket on auto-reopen.
+//
+// The fresh-insert cap (10 / hour / subject) does not fire on dedup
+// replay because `wouldBeDedup === true`. Without a dedicated bucket an
+// anonymous attacker could force unlimited auto-reopens per resolved
+// fingerprint per /64 — distinct fingerprints from the same subject,
+// each resolved in an old release, each replayed with a new release
+// SHA. The route consumes a dedicated `ops-error-auto-reopen` bucket
+// AFTER the DB write commits; the 11th reopen in a 1h window bumps
+// `ops_error_events.auto_reopen_throttled` on admin_kpi_metrics.
+test('Phase E adv-e-2 auto-reopen throttle — 11 distinct-fingerprint reopens bump KPI', async () => {
+  // Keep the env override scoped to this test so other tests run with
+  // the default 10/hour cap.
+  const server = createWorkerRepositoryServer({
+    env: { OPS_ERROR_AUTO_REOPEN_LIMIT: '3' },
+  });
+  try {
+    const now = Date.now();
+    for (let idx = 0; idx < 4; idx += 1) {
+      const eventId = `evt-reopen-${idx}`;
+      const kind = `TypeError${idx}`;
+      server.DB.db.prepare(`
+        INSERT INTO ops_error_events (
+          id, fingerprint, error_kind, message_first_line, first_frame, route_name,
+          user_agent, account_id, occurrence_count, first_seen, last_seen, status,
+          first_seen_release, last_seen_release, resolved_in_release, last_status_change_at
+        )
+        VALUES (?, ?, ?, 'boom', 'frame', '/api/foo', 'UA', NULL, 1, ?, ?, 'resolved', 'abc1234', 'abc1234', 'abc1234', ?)
+      `).run(eventId, `fp-${eventId}`, kind, now - 1000, now - 1000, now - (25 * ONE_HOUR_MS));
+    }
+
+    // 4 reopens against a cap of 3 → the 4th (and any subsequent in the
+    // same window) trip the throttle telemetry. Using a cap of 3 keeps
+    // the test fast; the production default is 10.
+    for (let idx = 0; idx < 4; idx += 1) {
+      const response = await postEvent(server, {
+        errorKind: `TypeError${idx}`,
+        messageFirstLine: 'boom',
+        firstFrame: 'frame',
+        release: 'def5678',
+      });
+      assert.equal(response.status, 200, `reopen ${idx} should succeed (DB write already committed)`);
+    }
+
+    // The 4th reopen crossed the 3/hour cap → KPI counter bumped.
+    const kpiRow = server.DB.db.prepare(`
+      SELECT metric_count FROM admin_kpi_metrics
+      WHERE metric_key = 'ops_error_events.auto_reopen_throttled'
+    `).get();
+    assert.ok(kpiRow, 'auto_reopen_throttled KPI row was created');
+    assert.ok(Number(kpiRow.metric_count) >= 1,
+      `KPI count should be >= 1, got ${kpiRow?.metric_count}`);
+  } finally {
+    server.close();
+  }
+});
