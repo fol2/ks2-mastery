@@ -304,6 +304,48 @@ test('U7 adv-u7-r1-002: two fresh accounts emit different revision.hash values',
 });
 
 // ---------------------------------------------------------------------------
+// U7 adv-u7-r1-003: POST /api/bootstrap MUST cap the request body so a
+// 10 KB+ crafted body is rejected before allocation. Matches the
+// existing `readJsonBounded` pattern used by the ops-error ingest.
+// ---------------------------------------------------------------------------
+test('U7 adv-u7-r1-003: POST /api/bootstrap rejects an oversized body', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertSubjectState(server, 'adult-u7', 'learner-a');
+
+    // Craft a body well beyond the 2 KB bootstrap cap. `lastKnownRevision`
+    // is a 32-char hex string under normal conditions.
+    const oversized = 'a'.repeat(10 * 1024);
+    const response = await postBootstrap(server, { lastKnownRevision: oversized });
+    assert.equal(response.status, 400, 'oversized body must 400');
+    const payload = await readJsonBody(response);
+    assert.equal(payload?.ok, false);
+    assert.equal(payload?.code, 'ops_error_payload_too_large');
+  } finally {
+    server.close();
+  }
+});
+
+test('U7 adv-u7-r1-003: POST /api/bootstrap accepts a normal-sized body', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertSubjectState(server, 'adult-u7', 'learner-a');
+
+    // 32-char hash is well under the cap.
+    const response = await postBootstrap(server, {
+      lastKnownRevision: '0123456789abcdef0123456789abcdef',
+    });
+    assert.equal(response.status, 200, 'normal body accepted');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Scenario 1: 1-learner account GET bootstrap — characterisation baseline.
 // ---------------------------------------------------------------------------
 test('U7 scenario 1: 1-learner bootstrap stamps selected-learner-bounded mode', async () => {
