@@ -1,5 +1,5 @@
 ---
-title: Sys-Hardening Phase 2 — UX-flow reliability, visual/a11y polish, and security finalisation
+title: "feat: Sys-Hardening Phase 2 — UX-flow reliability, visual/a11y polish, and security finalisation"
 type: feat
 status: active
 date: 2026-04-26
@@ -820,6 +820,7 @@ Edge annotations: the `U0 → U1..U4` fan-out means every batch-1 PR cites a U0 
 - Test: `tests/error-copy-oracle.test.js` + extended `tests/toast-positioning-contract.test.js`.
 
 **Approach:**
+- Why U10+U11 are real dependencies: bundle splitting introduces chunk-load error paths and CI introduces workflow output strings; both surfaces must be visible to the oracle before it locks the final copy.
 - Build the oracle as a Node-based grep that walks JSX + JS for string-literal tokens in user-facing props (`children`, `title`, `body`, `message`, `label`, `aria-label`, `placeholder`, `data-toast-body`, etc).
 - Allowlist pattern (like P1 U12 `LABELS_NOT_BLOCKING`): any intentional status-code reference (like `data-status="500"` attributes for testing) must be allowlisted with reason.
 - R29-style redaction (from admin-ops memory): `\b[A-Z]{4,}\b` is not safe with underscores; use `(?<![A-Za-z_])[A-Z]{4,}(?![A-Za-z_])` for internal-identifier scrubbing if needed.
