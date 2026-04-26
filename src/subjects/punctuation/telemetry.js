@@ -35,15 +35,21 @@
 // allowlist land atomically for both halves — preventing the
 // test-harness-vs-production drift defect flagged in the project memory.
 import {
+  PUNCTUATION_TELEMETRY_ERROR_CODES,
   PUNCTUATION_TELEMETRY_EVENT_KINDS,
   PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST,
+  isPunctuationTelemetryErrorCode,
   isPunctuationTelemetryEventKind,
 } from '../../../shared/punctuation/telemetry-shapes.js';
 
 // Re-export for callers that imported the constants from here during U4.
 // No client is known to import these directly (the sanitiser below is
 // the public surface), but the re-export preserves the U4 wire contract.
-export { PUNCTUATION_TELEMETRY_EVENT_KINDS, PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST };
+export {
+  PUNCTUATION_TELEMETRY_ERROR_CODES,
+  PUNCTUATION_TELEMETRY_EVENT_KINDS,
+  PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST,
+};
 
 const PAYLOAD_ALLOWLIST = PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST;
 
@@ -53,6 +59,13 @@ const PAYLOAD_ALLOWLIST = PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST;
 // caller cannot push unbounded payloads at the Worker. Non-string /
 // non-number / non-boolean values are dropped — the Worker allowlist
 // (U9) re-validates types, but the client emitter is the first defence.
+//
+// Review follow-on 2026-04-26: `command-failed.errorCode` is restricted
+// to the sanctioned enum. Out-of-enum values are dropped here (before
+// the round-trip) so a misclassified client branch never trips the
+// Worker 400 and never gets swallowed by the fire-and-forget error
+// handler in silence. Mirrors the Worker enforcement at
+// `worker/src/subjects/punctuation/events.js` `assertPayloadShape`.
 function buildAllowlistedPayload(kind, payload) {
   const allowed = PAYLOAD_ALLOWLIST[kind];
   if (!allowed) return {};
@@ -73,6 +86,14 @@ function buildAllowlistedPayload(kind, payload) {
     }
     // else: drop silently (objects / arrays / functions never pass the
     // allowlist — the Worker half at U9 would reject them anyway).
+  }
+  // Drop `command-failed.errorCode` when it is not on the sanctioned
+  // enum so a misclassified client branch does not tumble into the
+  // Worker 400 path. Defence-in-depth: Worker re-validates.
+  if (kind === 'command-failed'
+    && Object.prototype.hasOwnProperty.call(next, 'errorCode')
+    && !isPunctuationTelemetryErrorCode(next.errorCode)) {
+    delete next.errorCode;
   }
   return next;
 }

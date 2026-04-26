@@ -23,6 +23,42 @@
 // Any client that tries to send them receives a 400.
 
 /**
+ * Frozen enum of error codes the `command-failed` event is allowed to
+ * carry. The Worker rejects any other value with 400
+ * `punctuation_event_errorcode_not_allowed` (review follow-on, 2026-04-26
+ * — closes the PII smuggling sibling to the existing errorMessage wall).
+ *
+ * The client emitter aligns its `sanitisePunctuationTelemetryPayload`
+ * logic against this enum so an out-of-range value is stripped BEFORE
+ * the Worker round-trip, mirroring the defence-in-depth stance the rest
+ * of the module already takes.
+ *
+ * Seven values cover every classifier branch the client emitter reaches
+ * when it fires a `command-failed` emit: backend 5xx, validation 400,
+ * rate-limit 429, authz 403, timeout, read-only guard reject, and a
+ * catch-all `unknown` for untyped failures.
+ */
+export const PUNCTUATION_TELEMETRY_ERROR_CODES = Object.freeze([
+  'backend_unavailable',
+  'validation_failed',
+  'rate_limited',
+  'forbidden',
+  'timeout',
+  'read_only',
+  'unknown',
+]);
+
+const ERROR_CODE_SET = new Set(PUNCTUATION_TELEMETRY_ERROR_CODES);
+
+/**
+ * O(1) predicate: is `value` a sanctioned `command-failed.errorCode`?
+ * Used by BOTH the client emitter and the Worker handler.
+ */
+export function isPunctuationTelemetryErrorCode(value) {
+  return typeof value === 'string' && ERROR_CODE_SET.has(value);
+}
+
+/**
  * The 12 event kinds the Punctuation subject emits. Frozen.
  */
 export const PUNCTUATION_TELEMETRY_EVENT_KINDS = Object.freeze([

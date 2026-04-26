@@ -37,12 +37,24 @@
 
 import {
   isPunctuationTelemetryEventKind,
+  isPunctuationTelemetryErrorCode,
+  PUNCTUATION_TELEMETRY_ERROR_CODES,
   PUNCTUATION_TELEMETRY_PAYLOAD_ALLOWLIST,
   PUNCTUATION_TELEMETRY_FIELD_TYPES_BY_KIND,
   PUNCTUATION_TELEMETRY_FIELD_SETS,
 } from '../../../../shared/punctuation/telemetry-shapes.js';
 import { BadRequestError, BackendUnavailableError } from '../../errors.js';
 import { batch, bindStatement } from '../../d1.js';
+
+// TODO (U9 post-rollout, deferred to follow-on unit): add a
+// per-session / per-learner rate-limit on `record-event` so a runaway
+// client cannot flood the D1 ingest path. Classified at review time as
+// adversarial MEDIUM + security LOW; deferred because the payload
+// allowlist + 256-char per-field cap already bound individual writes,
+// the `(learner_id, request_id)` UNIQUE dedup stops retry storms, and
+// the flag remains OFF in production until monitoring is in place. See
+// `docs/punctuation-production.md` "Rollout deferrals" for the decision
+// trail.
 
 // Mirrors the set in worker/src/subjects/punctuation/read-models.js so
 // a payload with a field name that matches a server-only read-model
@@ -174,6 +186,25 @@ function assertPayloadShape({ kind, payload }) {
     }
   }
 
+  // Review follow-on 2026-04-26: `command-failed.errorCode` is restricted
+  // to the sanctioned enum. A free-form 256-char string is a sibling PII
+  // smuggling vector to the `errorMessage` field the forbidden-key list
+  // already blocks; enforcing a closed set closes that gap without losing
+  // the dimension operators need for classifying failures.
+  if (kind === 'command-failed'
+    && Object.prototype.hasOwnProperty.call(sanitised, 'errorCode')
+    && !isPunctuationTelemetryErrorCode(sanitised.errorCode)) {
+    throw new BadRequestError(
+      'Punctuation telemetry errorCode is not on the sanctioned enum.',
+      {
+        code: 'punctuation_event_errorcode_not_allowed',
+        rejectedField: 'errorCode',
+        allowedValues: [...PUNCTUATION_TELEMETRY_ERROR_CODES],
+        eventKind: kind,
+      },
+    );
+  }
+
   return sanitised;
 }
 
@@ -184,10 +215,16 @@ function assertPayloadShape({ kind, payload }) {
  *
  * Returns a command-shaped response with `changed: false` so the
  * repository helper treats the call as an OBSERVED (no-op) mutation:
- * no learner revision bump, no mutation-receipt write. This matches
- * the fire-and-forget telemetry contract — a retried requestId simply
- * appends another row. (Learners never drive retries for telemetry;
- * the client emitter is fire-and-forget per U4 R11.)
+ * no learner revision bump, no mutation-receipt write. Matches the
+ * fire-and-forget telemetry contract.
+ *
+ * Retry idempotency (review follow-on 2026-04-26): the D1 insert uses
+ * `INSERT OR IGNORE` against the `(learner_id, request_id)` UNIQUE
+ * index, so a retried `requestId` no longer writes a second row. The
+ * handler reports `{recorded: false, deduped: true}` when the insert
+ * was ignored — callers who care (operators inspecting the response
+ * shape) can tell a dedupe from a first write, but the fire-and-forget
+ * client never observes a difference.
  */
 export async function applyRecordEventCommand({ command, context }) {
   const env = context?.env || {};
@@ -243,33 +280,57 @@ export async function applyRecordEventCommand({ command, context }) {
     );
   }
 
+  // Review follow-on 2026-04-26: dedupe retries via
+  // `(learner_id, request_id)` UNIQUE index. `INSERT OR IGNORE` silently
+  // drops the second write so a retried client never creates a duplicate
+  // row. `command.requestId` is the envelope-validated id
+  // `normaliseSubjectCommandRequest` guarantees; we treat an empty id
+  // as "legacy / no dedup" and let the insert proceed with NULL (the
+  // UNIQUE index is `WHERE request_id IS NOT NULL` so NULLs are free).
+  const requestId = typeof command?.requestId === 'string' && command.requestId
+    ? command.requestId
+    : null;
+
   // D1 write via batch() per project memory
   // (`project_d1_atomicity_batch_vs_withtransaction`). A single INSERT
   // does not strictly need a batch, but wrapping it in `batch()` matches
   // the canonical `saveMonsterVisualConfigDraft` template and keeps the
   // write path uniform for a future multi-statement extension
   // (e.g. sequence counter row).
-  await batch(env.DB, [
+  const results = await batch(env.DB, [
     bindStatement(env.DB, `
-      INSERT INTO punctuation_events (
-        learner_id, event_kind, payload_json, release_id, occurred_at_ms, created_at_ms
-      ) VALUES (?, ?, ?, ?, ?, ?)
+      INSERT OR IGNORE INTO punctuation_events (
+        learner_id, event_kind, payload_json, release_id, request_id, occurred_at_ms, created_at_ms
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `, [
       command.learnerId,
       kind,
       payloadJson,
       null, // release_id — reserved for future release-scoped filtering
+      requestId,
       now,
       now,
     ]),
   ]);
+
+  // `meta.changes` is 0 when `INSERT OR IGNORE` dropped the row because
+  // the UNIQUE constraint fired; 1 on a fresh insert. We expose a
+  // `deduped` flag for operators who inspect the response shape. The
+  // default `recorded` contract stays true for backwards compat so
+  // existing tests keep passing.
+  const insertMeta = Array.isArray(results) && results[0]?.meta ? results[0].meta : null;
+  const changesRaw = insertMeta && Object.prototype.hasOwnProperty.call(insertMeta, 'changes')
+    ? Number(insertMeta.changes)
+    : null;
+  const deduped = Number.isFinite(changesRaw) ? changesRaw === 0 : false;
 
   return {
     learnerId: command.learnerId,
     ok: true,
     changed: false,
     enabled: true,
-    recorded: true,
+    recorded: !deduped,
+    deduped,
     eventKind: kind,
     occurredAtMs: now,
   };
@@ -281,6 +342,15 @@ export async function applyRecordEventCommand({ command, context }) {
  * repository helper.
  *
  * `limit` is clamped to [1, 1000] with a default of 100.
+ *
+ * Review follow-on 2026-04-26:
+ *   - Unknown `kind` values now raise a 400 `punctuation_event_unknown_kind`
+ *     (FINDING A). Previously they were silently dropped from the WHERE
+ *     clause, which returned the learner's entire dump — a surprising
+ *     behaviour for a caller who thought they were scoping by kind.
+ *   - The ORDER BY adds `id DESC` as a tiebreaker on `occurred_at_ms`
+ *     so same-ms events (handler emits back-to-back with the same
+ *     `context.now`) return in deterministic insertion order.
  */
 export async function listPunctuationEvents({
   db,
@@ -296,7 +366,21 @@ export async function listPunctuationEvents({
   const appliedLimit = clampLimit(limit);
   const clauses = ['learner_id = ?'];
   const params = [cleanLearner];
-  if (kind && isPunctuationTelemetryEventKind(kind)) {
+  if (kind) {
+    // FINDING A (review follow-on): reject an unknown kind with 400 so
+    // the caller is told their filter was not applied. The previous
+    // silent-drop behaviour returned the learner's full event dump,
+    // which could be interpreted as "this kind has no events" — a
+    // dangerous ambiguity for anyone triaging from the Worker logs.
+    if (!isPunctuationTelemetryEventKind(kind)) {
+      throw new BadRequestError(
+        'Punctuation telemetry query kind is not recognised.',
+        {
+          code: 'punctuation_event_unknown_kind',
+          eventKind: kind,
+        },
+      );
+    }
     clauses.push('event_kind = ?');
     params.push(kind);
   }
@@ -309,7 +393,7 @@ export async function listPunctuationEvents({
     SELECT event_kind, payload_json, occurred_at_ms
     FROM punctuation_events
     WHERE ${clauses.join(' AND ')}
-    ORDER BY occurred_at_ms DESC
+    ORDER BY occurred_at_ms DESC, id DESC
     LIMIT ?
   `;
   const result = await db.prepare(sql).bind(...params).all();

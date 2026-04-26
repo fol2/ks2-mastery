@@ -315,6 +315,205 @@ test('GET events clamps the limit to the documented maximum (1000)', async () =>
   }
 });
 
+test('GET events limit=N is honoured in range (review follow-on FINDING E.2)', async () => {
+  // Plan review FINDING E.2: query branches untested. Insert 5 events
+  // and confirm limit=2 returns exactly 2 rows + appliedLimit === 2.
+  const h = createHarness();
+  try {
+    for (let i = 0; i < 5; i += 1) {
+      h.nowRef.value = Date.UTC(2026, 0, 1, 10, 0, i);
+      await h.recordEvent({ kind: 'card-opened', payload: { cardId: `smart-${i}` } });
+    }
+    const { response, body } = await h.getEvents({ limit: 2 });
+    assert.equal(response.status, 200, JSON.stringify(body));
+    assert.equal(body.events.length, 2);
+    assert.equal(body.appliedLimit, 2);
+  } finally {
+    h.close();
+  }
+});
+
+test('GET events limit defaults to 100 when absent (review follow-on FINDING E.3)', async () => {
+  const h = createHarness();
+  try {
+    const { body } = await h.getEvents({});
+    assert.equal(body.appliedLimit, 100, 'default limit is 100');
+  } finally {
+    h.close();
+  }
+});
+
+test('GET events limit=0 / limit=-1 / limit=abc clamps to default 100 (review follow-on FINDING E.5)', async () => {
+  const h = createHarness();
+  try {
+    for (const limit of [0, -1, 'abc']) {
+      // eslint-disable-next-line no-await-in-loop
+      const { body } = await h.getEvents({ limit });
+      assert.equal(body.appliedLimit, 100, `expected default for limit=${limit}`);
+    }
+  } finally {
+    h.close();
+  }
+});
+
+test('GET events since=<timestamp> filters to events occurring at or after the cutoff (review follow-on FINDING E.1)', async () => {
+  const h = createHarness();
+  try {
+    const t1 = Date.UTC(2026, 0, 1, 10, 0, 0);
+    const t2 = Date.UTC(2026, 0, 1, 10, 5, 0);
+    const t3 = Date.UTC(2026, 0, 1, 10, 10, 0);
+    h.nowRef.value = t1;
+    await h.recordEvent({ kind: 'card-opened', payload: { cardId: 'a' } });
+    h.nowRef.value = t2;
+    await h.recordEvent({ kind: 'card-opened', payload: { cardId: 'b' } });
+    h.nowRef.value = t3;
+    await h.recordEvent({ kind: 'card-opened', payload: { cardId: 'c' } });
+    // Since the midpoint should surface the middle + last event.
+    const { body } = await h.getEvents({ since: t2 });
+    assert.equal(body.events.length, 2);
+    const cardIds = body.events.map((ev) => ev.payload.cardId).sort();
+    assert.deepEqual(cardIds, ['b', 'c']);
+  } finally {
+    h.close();
+  }
+});
+
+test('GET events since=non-numeric is ignored (treated as "no filter")', async () => {
+  // Review follow-on: FINDING E.6 — a malformed `since` should not
+  // fall through to an unfiltered query by accident; the handler
+  // reads `Number.isFinite(Number(sinceMs))` so garbage is ignored.
+  const h = createHarness();
+  try {
+    await h.recordEvent({ kind: 'card-opened', payload: { cardId: 'smart' } });
+    const { body } = await h.getEvents({ since: 'not-a-number' });
+    assert.equal(body.events.length, 1);
+  } finally {
+    h.close();
+  }
+});
+
+test('GET events kind=<unknown> rejects with 400 punctuation_event_unknown_kind (review follow-on FINDING A)', async () => {
+  // Review follow-on: FINDING A — the previous behaviour was to
+  // silently drop the `kind` filter and return the learner's full
+  // event dump, which a caller could misread as "no events of that
+  // kind exist". Now the Worker rejects the query explicitly.
+  const h = createHarness();
+  try {
+    await h.recordEvent({ kind: 'card-opened', payload: { cardId: 'smart' } });
+    const { response, body } = await h.getEvents({ kind: 'nonsense-kind' });
+    assert.equal(response.status, 400, JSON.stringify(body));
+    const code = body.error?.code || body.code;
+    assert.equal(code, 'punctuation_event_unknown_kind');
+  } finally {
+    h.close();
+  }
+});
+
+test('record-event with the same requestId twice leaves exactly one row (review follow-on FINDING B)', async () => {
+  // Plan review FINDING B: duplicate retries wrote two rows. The fix
+  // adds a `(learner_id, request_id)` UNIQUE index + `INSERT OR IGNORE`
+  // so the second call is silently deduped. Because `record-event` is
+  // a `{changed: false}` observed command, runSubjectCommandMutation
+  // never writes a `mutation_receipts` row for it — so every retry
+  // reaches the row-layer, where `INSERT OR IGNORE` is the only guard.
+  // The handler reports `{recorded: false, deduped: true}` on the
+  // dedup path so operators can distinguish a first write from a retry.
+  const h = createHarness();
+  try {
+    const first = await h.post({
+      command: 'record-event',
+      learnerId: 'learner-a',
+      requestId: 'dup-1',
+      expectedLearnerRevision: 0,
+      payload: { event: 'card-opened', payload: { cardId: 'smart' } },
+    });
+    assert.equal(first.response.status, 200, JSON.stringify(first.body));
+    assert.equal(first.body.recorded, true);
+    assert.equal(first.body.deduped, false);
+    assert.equal(h.eventRowCount(), 1);
+
+    const second = await h.post({
+      command: 'record-event',
+      learnerId: 'learner-a',
+      requestId: 'dup-1',
+      expectedLearnerRevision: 0,
+      payload: { event: 'card-opened', payload: { cardId: 'smart' } },
+    });
+    assert.equal(second.response.status, 200, JSON.stringify(second.body));
+    assert.equal(second.body.recorded, false);
+    assert.equal(second.body.deduped, true);
+    assert.equal(h.eventRowCount(), 1);
+  } finally {
+    h.close();
+  }
+});
+
+test('record-event command-failed rejects an off-enum errorCode with 400 (review follow-on FINDING F)', async () => {
+  // Plan review FINDING F: `command-failed.errorCode` was free-form
+  // and could smuggle PII ("dear-dr-smith-wrote-this"). The Worker now
+  // restricts it to the sanctioned enum.
+  const h = createHarness();
+  try {
+    const { response, body } = await h.recordEvent({
+      kind: 'command-failed',
+      payload: {
+        command: 'start-session',
+        errorCode: 'dear-dr-smith-wrote-this',
+      },
+    });
+    assert.equal(response.status, 400, JSON.stringify(body));
+    const code = body.error?.code || body.code;
+    assert.equal(code, 'punctuation_event_errorcode_not_allowed');
+    assert.equal(h.eventRowCount(), 0);
+  } finally {
+    h.close();
+  }
+});
+
+test('record-event command-failed accepts each of the 7 sanctioned errorCodes', async () => {
+  // Review follow-on: verify the complete enum round-trips so future
+  // additions need to update both halves together.
+  const { PUNCTUATION_TELEMETRY_ERROR_CODES } = await import(
+    '../shared/punctuation/telemetry-shapes.js'
+  );
+  const h = createHarness();
+  try {
+    for (const errorCode of PUNCTUATION_TELEMETRY_ERROR_CODES) {
+      // eslint-disable-next-line no-await-in-loop
+      const { response } = await h.recordEvent({
+        kind: 'command-failed',
+        payload: { command: 'start-session', errorCode },
+      });
+      assert.equal(response.status, 200, `errorCode=${errorCode} should be accepted`);
+    }
+    assert.equal(h.eventRowCount(), PUNCTUATION_TELEMETRY_ERROR_CODES.length);
+  } finally {
+    h.close();
+  }
+});
+
+test('GET events ORDER BY adds id DESC tiebreaker so same-ms events return in deterministic order (review follow-on FINDING C)', async () => {
+  // Plan review FINDING C: `context.now` yields identical
+  // `occurred_at_ms` for events emitted back-to-back inside one
+  // handler invocation. Without a tiebreaker the JSON response was
+  // non-deterministic. The fix adds `, id DESC` to the ORDER BY so
+  // later inserts sort first.
+  const h = createHarness();
+  try {
+    h.nowRef.value = Date.UTC(2026, 0, 1, 10, 0, 0);
+    await h.recordEvent({ kind: 'card-opened', payload: { cardId: 'a' } });
+    await h.recordEvent({ kind: 'card-opened', payload: { cardId: 'b' } });
+    await h.recordEvent({ kind: 'card-opened', payload: { cardId: 'c' } });
+    const { body } = await h.getEvents({ kind: 'card-opened' });
+    assert.equal(body.events.length, 3);
+    assert.equal(body.events[0].payload.cardId, 'c');
+    assert.equal(body.events[1].payload.cardId, 'b');
+    assert.equal(body.events[2].payload.cardId, 'a');
+  } finally {
+    h.close();
+  }
+});
+
 test('GET events with non-owner learnerId returns 403', async () => {
   const h = createHarness();
   try {

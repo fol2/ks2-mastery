@@ -329,6 +329,24 @@ Any field not on the kind's allowlist is **rejected** (not scrubbed) with a 400 
 
 **What Phase 4 U9 does NOT ship:** a dashboard, an alerting pipeline, or any downstream consumer. The events are queryable directly from D1 (ad-hoc via the query endpoint above or a `wrangler d1 execute` call). Wiring a dashboard is deliberately out of scope — see "Aspirational" below and the follow-up candidates.
 
+**Retry idempotency (review follow-on 2026-04-26).** The D1 table carries a `UNIQUE (learner_id, request_id) WHERE request_id IS NOT NULL` index, and the Worker handler issues `INSERT OR IGNORE`. A retried telemetry call with the same `requestId` is silently deduped at the storage layer and returns `{recorded: false, deduped: true}` in the response. The client remains fire-and-forget; the dedup is a defence against a client that aggressively retries network-drop telemetry posts.
+
+**`command-failed.errorCode` enum (review follow-on 2026-04-26).** `command-failed` carries a closed enum of 7 error codes (`backend_unavailable`, `validation_failed`, `rate_limited`, `forbidden`, `timeout`, `read_only`, `unknown`) exported from `shared/punctuation/telemetry-shapes.js` as `PUNCTUATION_TELEMETRY_ERROR_CODES`. An out-of-enum value is rejected by the Worker with `400 punctuation_event_errorcode_not_allowed` and stripped client-side before dispatch. Closes a PII smuggling sibling to the `errorMessage` denylist the forbidden-key scan already blocks.
+
+**Schema hardening (review follow-on 2026-04-26).** Migration 0012 was rewritten in place (rather than landing a 0013 ALTER) because the `PUNCTUATION_EVENTS_ENABLED` flag is OFF in every deployed environment — no production rows are at risk. The hardened schema adds:
+
+- `learner_id TEXT NOT NULL REFERENCES learner_profiles(id) ON DELETE CASCADE` — GDPR erasure on the parent row cascades to telemetry.
+- `CHECK (event_kind IN (...))` anchored to the 12 frozen event kinds — direct `wrangler d1 execute` inserts with arbitrary kind values are rejected at the storage boundary.
+- `CHECK (json_valid(payload_json))` — a corrupt payload can never reach the downstream query-helper `JSON.parse`.
+- `request_id TEXT` + `UNIQUE (learner_id, request_id)` — the retry dedup described above.
+
+**Rollout deferrals (review follow-on 2026-04-26).** Two items are deliberately deferred to a follow-on unit before the flag is flipped on in production:
+
+- **Per-session / per-learner rate-limit** on `record-event` to protect against a runaway client flooding the D1 ingest path. Adversarial MEDIUM at review time. The payload allowlist + 256-char cap + UNIQUE retry-dedup already bound individual writes; a per-session rate-limit is the belt-and-braces layer.
+- **Audit trail on query-endpoint reads** mirroring the admin-ops audit pattern. Security LOW. A later unit should log every `GET /api/subjects/punctuation/events` call to the admin audit feed so a parent looking at their learner's telemetry leaves a tracked entry.
+
+Neither deferral blocks schema land or the flag-OFF integration smoke — both can be additively shipped before the production flag flip.
+
 ### Aspirational telemetry (log warning codes with no consumer)
 
 Phase 2 shipped a set of structured warning codes emitted via the existing `logMutation('warn', …)` path. The codes below are stable so a future observability work item can consume them. The repo does not currently have a dashboard or alerting pipeline that ingests these codes — the thresholds quoted here are **aspirational**, not enforced. Until the pipeline lands, operators reviewing Worker logs after a release should watch for:

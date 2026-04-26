@@ -64,6 +64,116 @@ test('migration 0012 creates punctuation_events table with expected columns', ()
     assert.ok(columns.has('payload_json'));
     assert.ok(columns.has('occurred_at_ms'));
     assert.ok(columns.has('created_at_ms'));
+    // Review follow-on 2026-04-26: `request_id` column supports the
+    // dedup UNIQUE index the handler relies on.
+    assert.ok(columns.has('request_id'));
+  } finally {
+    db.close();
+  }
+});
+
+test('migration 0012 UNIQUE(learner_id, request_id) index dedupes retried requestIds', () => {
+  // Review follow-on 2026-04-26 FINDING B: the handler uses
+  // `INSERT OR IGNORE` against this partial UNIQUE index so two
+  // `record-event` calls with the same (learner_id, request_id) never
+  // leave two rows. The index is `WHERE request_id IS NOT NULL` so
+  // legacy rows with NULL request_id are unaffected.
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    // Seed the learner row so the FK-cascade does not reject the insert.
+    db.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES ('dedup-learner', 'Dedup', 'Y5', '#000', 'sats', 15, ?, ?, 0)
+    `).run(now, now);
+    const insert = db.db.prepare(`
+      INSERT OR IGNORE INTO punctuation_events (
+        learner_id, event_kind, payload_json, release_id, request_id, occurred_at_ms, created_at_ms
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    const first = insert.run('dedup-learner', 'card-opened', '{}', null, 'req-1', now, now);
+    const second = insert.run('dedup-learner', 'card-opened', '{}', null, 'req-1', now + 1, now + 1);
+    assert.equal(first.changes, 1, 'first insert lands');
+    assert.equal(second.changes, 0, 'second insert dedupes');
+    const count = Number(db.db
+      .prepare('SELECT COUNT(*) AS n FROM punctuation_events WHERE learner_id = ?')
+      .get('dedup-learner').n);
+    assert.equal(count, 1, 'only one row remains');
+  } finally {
+    db.close();
+  }
+});
+
+test('migration 0012 CHECK(event_kind) rejects arbitrary values even via direct D1 exec', () => {
+  // Review follow-on 2026-04-26 FINDING D.2: the schema CHECK fires even
+  // when a caller bypasses the Worker allowlist (e.g. a misconfigured
+  // `wrangler d1 execute`) so the 12-kind discipline is defended at the
+  // storage boundary too.
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    db.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES ('check-kind', 'Check', 'Y5', '#000', 'sats', 15, ?, ?, 0)
+    `).run(now, now);
+    assert.throws(() => {
+      db.db.prepare(`
+        INSERT INTO punctuation_events (learner_id, event_kind, payload_json, occurred_at_ms, created_at_ms)
+        VALUES (?, ?, '{}', ?, ?)
+      `).run('check-kind', 'evil-event', now, now);
+    }, /constraint/i);
+  } finally {
+    db.close();
+  }
+});
+
+test('migration 0012 CHECK(json_valid(payload_json)) rejects malformed JSON', () => {
+  // Review follow-on 2026-04-26 FINDING D.3: a bad JSON string can
+  // never reach the downstream query helper because SQLite evaluates
+  // `json_valid()` at write time.
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    db.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES ('check-json', 'Check', 'Y5', '#000', 'sats', 15, ?, ?, 0)
+    `).run(now, now);
+    assert.throws(() => {
+      db.db.prepare(`
+        INSERT INTO punctuation_events (learner_id, event_kind, payload_json, occurred_at_ms, created_at_ms)
+        VALUES (?, 'card-opened', 'not-json-at-all', ?, ?)
+      `).run('check-json', now, now);
+    }, /constraint|json/i);
+  } finally {
+    db.close();
+  }
+});
+
+test('migration 0012 learner_id FK + ON DELETE CASCADE wipes events when learner is deleted', () => {
+  // Review follow-on 2026-04-26 FINDING D.1: GDPR erasure on the
+  // parent learner row must cascade to telemetry.
+  const db = createMigratedSqliteD1Database();
+  try {
+    const now = 1_700_000_000_000;
+    db.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES ('cascade-learner', 'Cascade', 'Y5', '#000', 'sats', 15, ?, ?, 0)
+    `).run(now, now);
+    db.db.prepare(`
+      INSERT INTO punctuation_events (learner_id, event_kind, payload_json, occurred_at_ms, created_at_ms)
+      VALUES (?, 'card-opened', '{}', ?, ?)
+    `).run('cascade-learner', now, now);
+    assert.equal(
+      Number(db.db.prepare('SELECT COUNT(*) AS n FROM punctuation_events').get().n),
+      1,
+      'event landed',
+    );
+    db.db.prepare('DELETE FROM learner_profiles WHERE id = ?').run('cascade-learner');
+    assert.equal(
+      Number(db.db.prepare('SELECT COUNT(*) AS n FROM punctuation_events').get().n),
+      0,
+      'event cascaded away',
+    );
   } finally {
     db.close();
   }
@@ -112,6 +222,14 @@ test('migration 0012 indexes route the two documented read queries off table sca
   try {
     // Seed a few rows so SQLite's planner has statistics to work with.
     const now = 1_700_000_000_000;
+    // Review follow-on 2026-04-26: the FK + CASCADE on learner_id now
+    // requires the learner rows to exist before we can seed events.
+    for (let i = 0; i < 2; i += 1) {
+      db.db.prepare(`
+        INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+        VALUES (?, ?, 'Y5', '#000', 'sats', 15, ?, ?, 0)
+      `).run(`learner-${i}`, `Learner ${i}`, now, now);
+    }
     const insert = db.db.prepare(`
       INSERT INTO punctuation_events (learner_id, event_kind, payload_json, occurred_at_ms, created_at_ms)
       VALUES (?, ?, ?, ?, ?)
