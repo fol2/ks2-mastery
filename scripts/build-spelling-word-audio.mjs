@@ -878,10 +878,21 @@ export async function commandGenerate({
   }
 
   const runDir = path.join(wordRunsRoot, runId);
+  // Use Number-coalescing rather than `||` so an explicit `--max-retries 0`
+  // (which is falsy) is honoured instead of silently falling back to the
+  // default. Same applies to `--concurrency`, but that value must be ≥ 1
+  // by the parser contract.
+  const concurrency = Number.isFinite(flags.concurrency) && flags.concurrency >= 1
+    ? flags.concurrency
+    : DEFAULT_CONCURRENCY;
+  const maxRetries = Number.isInteger(flags.maxRetries) && flags.maxRetries >= 0
+    ? flags.maxRetries
+    : DEFAULT_MAX_RETRIES;
+
   const remaining = entries.filter((entry) => entry.status !== 'uploaded');
-  await runWithConcurrency(remaining, flags.concurrency || DEFAULT_CONCURRENCY, async (entry) => {
+  await runWithConcurrency(remaining, concurrency, async (entry) => {
     let lastError = null;
-    for (let attempt = 0; attempt <= (flags.maxRetries || DEFAULT_MAX_RETRIES); attempt += 1) {
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       const apiKey = nextKey();
       if (!apiKey) {
         entry.status = 'failed';
@@ -896,7 +907,7 @@ export async function commandGenerate({
           model,
           bucketName: DEFAULT_BUCKET_NAME,
           runDir,
-          maxRetries: flags.maxRetries || DEFAULT_MAX_RETRIES,
+          maxRetries,
           skipUpload,
           dependencies,
         });
@@ -908,7 +919,10 @@ export async function commandGenerate({
           activeKeyIndex = (activeKeyIndex + 1) % apiKeys.length;
           continue;
         }
-        if (attempt === (flags.maxRetries || DEFAULT_MAX_RETRIES)) break;
+        // Non-quota Gemini failure: do not retry (the error is unlikely to
+        // resolve on the same key without operator action). Upload-side
+        // 502/503 retries are owned by `processEntry` itself.
+        break;
       }
     }
     entry.status = entry.status === 'generated' ? 'generated' : 'failed';

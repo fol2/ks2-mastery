@@ -49,13 +49,17 @@ import { SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from '../src/subjects/spelling/dat
 // Pinned fixture values — same digests/keys assertion `tests/spelling-word-prompt.test.js`
 // pins on the worker side. If the encoding or hash input shape changes,
 // CI fails on both files at once.
+// `accident` and `accidentally` are both real WORDS slugs (verified via
+// `node -e` against `src/subjects/spelling/data/word-data.js` — the plan
+// brief's `beginning` example slug does NOT exist in this repo's WORDS
+// fixture, so the integration tests use the next adjacent slug instead).
 const ACCIDENT_DIGEST = '_71BbbYsUhNeilGccY6U4YPJ8-8tMfGXZT7P6m6bkls';
 const ACCIDENT_DEMO_DIGEST = '47smZ2cRWsCNqnEM7dUZPOr6gksxfCp0JFADmaZT24k';
-const BEGINNING_DIGEST = 'DmFUMGYUb9opMWUll-5vK3l-vNMUJ4E_xisJ8XzgZtg';
+const ACCIDENTALLY_DIGEST = 'QAeEpLBuWwuzCUlLsnpD5ptZeQKhqVBIrk5IaNhwTNY';
 const ACCIDENT_KEY_IAPETUS = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Iapetus/word/${ACCIDENT_DIGEST}/accident.mp3`;
 const ACCIDENT_KEY_SULAFAT = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Sulafat/word/${ACCIDENT_DIGEST}/accident.mp3`;
-const BEGINNING_KEY_IAPETUS = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Iapetus/word/${BEGINNING_DIGEST}/beginning.mp3`;
-const BEGINNING_KEY_SULAFAT = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Sulafat/word/${BEGINNING_DIGEST}/beginning.mp3`;
+const ACCIDENTALLY_KEY_IAPETUS = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Iapetus/word/${ACCIDENTALLY_DIGEST}/accidentally.mp3`;
+const ACCIDENTALLY_KEY_SULAFAT = `spelling-audio/v1/${SPELLING_AUDIO_MODEL}/Sulafat/word/${ACCIDENTALLY_DIGEST}/accidentally.mp3`;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -105,42 +109,34 @@ test('list emits 472 entries (236 unique slugs × 2 voices) with valid R2 keys',
   }
 });
 
-// HAPPY PATH: dry-run --slug accident,beginning plans 4 entries with byte-
-// equal R2 keys and base64url contentKeys against the pinned fixture.
-test('dry-run --slug accident,beginning plans 4 entries with pinned keys', async (t) => {
-  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'word-audio-test-'));
-  t.after(async () => rm(tmpDir, { recursive: true, force: true }));
-
+// HAPPY PATH: dry-run --slug accident,accidentally plans 4 entries with
+// byte-equal R2 keys and base64url contentKeys against the pinned fixture.
+test('dry-run --slug accident,accidentally plans 4 entries with pinned keys', async (t) => {
   // commandGenerate writes state into the canonical .spelling-audio dir.
   // For the dry-run case the side effect is just the state file; we read it
   // back to assert keys, then clean up the state dir.
   const result = await commandGenerate({
-    flags: { slug: ['accident', 'beginning'], dryRun: true },
+    flags: { slug: ['accident', 'accidentally'], dryRun: true },
     env: { ...process.env, GEMINI_API_KEY: 'test-key-fixture' },
     dependencies: {},
   });
-  try {
-    assert.equal(result.summary.planned, 4);
-    assert.equal(result.summary.pending, 4);
-    const slugs = result.entries.map((entry) => entry.slug).sort();
-    assert.deepEqual(slugs, ['accident', 'accident', 'beginning', 'beginning']);
-    const accidentEntries = result.entries.filter((entry) => entry.slug === 'accident');
-    assert.equal(accidentEntries.length, 2);
-    for (const entry of accidentEntries) {
-      assert.equal(entry.contentKey, ACCIDENT_DIGEST);
-      assert.ok(entry.key === ACCIDENT_KEY_IAPETUS || entry.key === ACCIDENT_KEY_SULAFAT);
-    }
-    const beginningEntries = result.entries.filter((entry) => entry.slug === 'beginning');
-    assert.equal(beginningEntries.length, 2);
-    for (const entry of beginningEntries) {
-      assert.equal(entry.contentKey, BEGINNING_DIGEST);
-      assert.ok(entry.key === BEGINNING_KEY_IAPETUS || entry.key === BEGINNING_KEY_SULAFAT);
-    }
-  } finally {
-    // commandGenerate writes to .spelling-audio in the repo root; the run-id
-    // is timestamp-based so each invocation has its own dir.
-    const stateDir = path.dirname(result.statePath);
-    await rm(stateDir, { recursive: true, force: true });
+  t.after(async () => rm(path.dirname(result.statePath), { recursive: true, force: true }));
+
+  assert.equal(result.summary.planned, 4);
+  assert.equal(result.summary.pending, 4);
+  const slugs = result.entries.map((entry) => entry.slug).sort();
+  assert.deepEqual(slugs, ['accident', 'accident', 'accidentally', 'accidentally']);
+  const accidentEntries = result.entries.filter((entry) => entry.slug === 'accident');
+  assert.equal(accidentEntries.length, 2);
+  for (const entry of accidentEntries) {
+    assert.equal(entry.contentKey, ACCIDENT_DIGEST);
+    assert.ok(entry.key === ACCIDENT_KEY_IAPETUS || entry.key === ACCIDENT_KEY_SULAFAT);
+  }
+  const accidentallyEntries = result.entries.filter((entry) => entry.slug === 'accidentally');
+  assert.equal(accidentallyEntries.length, 2);
+  for (const entry of accidentallyEntries) {
+    assert.equal(entry.contentKey, ACCIDENTALLY_DIGEST);
+    assert.ok(entry.key === ACCIDENTALLY_KEY_IAPETUS || entry.key === ACCIDENTALLY_KEY_SULAFAT);
   }
 });
 
@@ -307,10 +303,10 @@ test('reconcile reconstructs uploaded status from a mocked R2 inventory', async 
   for (const entry of accidentEntries) {
     assert.equal(entry.status, 'uploaded');
   }
-  // Other entries (e.g. beginning) stay pending.
-  const beginningEntries = result.state.entries.filter((entry) => entry.slug === 'beginning');
-  assert.equal(beginningEntries.length, 2);
-  for (const entry of beginningEntries) {
+  // Other entries (e.g. accidentally — the next adjacent slug) stay pending.
+  const accidentallyEntries = result.state.entries.filter((entry) => entry.slug === 'accidentally');
+  assert.equal(accidentallyEntries.length, 2);
+  for (const entry of accidentallyEntries) {
     assert.equal(entry.status, 'pending');
   }
   assert.equal(result.state.summary.uploaded, 2);
