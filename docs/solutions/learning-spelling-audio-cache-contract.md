@@ -123,7 +123,7 @@ The mitigations:
   in `shared/spelling-audio.js` is imported by both sides.
 - **Hash algorithm: 4-line shim, not import.** The generator
   duplicates the SHA-256 + base64url logic from
-  `worker/src/auth.js:156-185` as a 4-line shim
+  `worker/src/auth.js:162-191` as a 4-line shim
   (`crypto.subtle.digest('SHA-256', ...)` +
   URL-safe alphabet rewrite). Direct import was avoided because the
   Worker module pulls Worker-runtime dependencies that may not
@@ -143,7 +143,7 @@ The mitigations:
   path the Worker would never read.
 - **`cleanText` normalisation, not bare `.trim()`.** Worker hashes
   `cleanText(value) = String(value || '').replace(/\s+/g, ' ').trim()`
-  (`worker/src/tts.js:38-40`). This collapses NBSP (`U+00A0`),
+  (`worker/src/tts.js:39-41`). This collapses NBSP (`U+00A0`),
   double-space, and tabs to a single space *before* trimming. Bare
   `.trim()` diverges silently on any input containing internal NBSP
   or double-space — and the U1 fixture suite includes those cases
@@ -345,7 +345,7 @@ So future readers know the boundary of this entry:
 - **OpenAI provider audio.** This work strictly fills the buffered
   Gemini cache lane. The OpenAI path
   (`requestOpenAiSpeech` in `worker/src/tts.js`, `ttsInstructions`
-  wordOnly variant on line 154) is unaffected.
+  wordOnly variant on line 156) is unaffected.
 - **Browser TTS fallback** (`speakWithBrowser`). Untouched.
 - **Word-bank prompt token shape** (`wordBankPromptToken` salt
   prefix `'spelling-word-bank-prompt-v1'`). Untouched.
@@ -367,7 +367,7 @@ So future readers know the boundary of this entry:
 - Cache contract: `shared/spelling-audio.js`,
   `worker/src/tts.js:282-448`,
   `worker/src/subjects/spelling/audio.js`
-- Hash digest helper: `worker/src/auth.js:156-185`
+- Hash digest helper: `worker/src/auth.js:162-191`
 - Word source: `src/subjects/spelling/data/word-data.js` (236
   entries)
 - Snapshot lookup: `src/subjects/spelling/data/content-data.js`

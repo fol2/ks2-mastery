@@ -1459,4 +1459,4 @@ completion report)
 
 ---
 
-**Plan completed 2026-04-26.** All 5 implementation units shipped via PRs #286 (U1), #297 (U2 — bulk script via direct push as `1050111` + cleanup PR), #299 (U3), #302 (U4 template), #<U5-PR-NUMBER> (U5). Operator must run §4 of `docs/reports/2026-04-26-spelling-word-audio-generation-report.md` against production to actually generate the 472 audio files; this plan ships the infrastructure + verification, not the executed run.
+**Plan completed 2026-04-26.** All 5 implementation units shipped via PRs #286 (U1), #297 (U2 — bulk script via direct push as `1050111` + cleanup PR), #299 (U3), #302 (U4 template), #304 (U5). Operator must run §4 of `docs/reports/2026-04-26-spelling-word-audio-generation-report.md` against production to actually generate the 472 audio files; this plan ships the infrastructure + verification, not the executed run.

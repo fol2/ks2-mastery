@@ -347,7 +347,7 @@ about contentKey or R2 key shape:
     (deliberately omits accountId for cross-account R2 reuse).
   - `resolveSpellingAudioRequest` (line 109) — the only resolver
     path; do not modify.
-- **Canonical SHA-256 helper** — `worker/src/auth.js:156-185`:
+- **Canonical SHA-256 helper** — `worker/src/auth.js:162-191`:
   - `bytesToBase64Url` (line 162) — URL-safe base64 encoding (no `=`
     padding, `+`→`-`, `/`→`_`).
   - `sha256(value)` (line 188) — returns base64url, **not hex**.
@@ -414,7 +414,7 @@ The Worker normalises every hashable text input via:
 const cleanText = (value) => String(value || '').replace(/\s+/g, ' ').trim();
 ```
 
-Source: `worker/src/tts.js:38-40` (and the duplicate in
+Source: `worker/src/tts.js:39-41` (and the duplicate in
 `worker/src/subjects/spelling/audio.js:7-9`). Both definitions are
 byte-equal; the helper is **not** bare `.trim()` — it collapses
 internal whitespace (NBSP `U+00A0`, double-space, tabs) to a single
