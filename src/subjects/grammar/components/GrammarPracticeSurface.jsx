@@ -98,6 +98,7 @@ export function GrammarPracticeSurface({
             type="button"
             className="btn ghost"
             data-action="grammar-close-analytics"
+            aria-label="Back to round summary"
             onClick={() => actions.dispatch('grammar-close-analytics')}
           >
             Back to round summary
