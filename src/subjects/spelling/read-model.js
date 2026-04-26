@@ -2,6 +2,7 @@ import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 import {
   GUARDIAN_SECURE_STAGE,
   normaliseGuardianMap,
+  normalisePostMegaRecord,
   normaliseYearFilter,
 } from './service-contract.js';
 import {
@@ -134,6 +135,11 @@ export function getSpellingPostMasteryState({
   const rawGuardianMap = isPlainObject(stateRecord?.data?.guardian) ? stateRecord.data.guardian : {};
   const guardianMap = normaliseGuardianMap(rawGuardianMap, currentDay);
   const runtime = runtimeWordMap(runtimeSnapshot);
+  // P2 U2: persisted sticky-graduation record. Null means "never graduated"
+  // — fresh learners, pre-P2 persisted records (no migration needed because
+  // `normalisePostMegaRecord` tolerates absent / malformed input), and any
+  // legitimate pre-graduation state all map to null here.
+  const postMegaRecord = normalisePostMegaRecord(stateRecord?.data?.postMega);
 
   // allWordsMega requires BOTH: (1) the secure-core count equals the
   // published-core count, AND (2) the published core count is non-zero.
@@ -198,13 +204,32 @@ export function getSpellingPostMasteryState({
   });
   const guardianMissionAvailable = guardianMissionState !== 'locked' && guardianMissionState !== 'rested';
 
+  // P2 U2: Derive the three sticky-graduation surfaces from the persisted
+  // `postMegaRecord` plus the live `allWordsMega` (renamed to allWordsMegaNow
+  // internally to make the "live vs sticky" distinction loud). The dashboard
+  // gate is a logical OR — a graduated learner keeps dashboard access even
+  // if the content bundle later adds words they haven't drilled yet.
+  //
+  // `newCoreWordsSinceGraduation` is clamped at 0 for the retirement case
+  // (publishedCoreCount < unlockedPublishedCoreCount). Retirements are
+  // invisible to the child (M3 adversarial finding — keeps emotional
+  // contract simple).
+  const allWordsMegaNow = allWordsMega;
+  const postMegaUnlockedEver = postMegaRecord != null;
+  const postMegaDashboardAvailable = allWordsMegaNow || postMegaUnlockedEver;
+  const unlockedPublishedCoreCount = postMegaRecord
+    ? Number(postMegaRecord.unlockedPublishedCoreCount) || 0
+    : 0;
+  const newCoreWordsSinceGraduation = postMegaUnlockedEver
+    ? Math.max(0, publishedCoreCount - unlockedPublishedCoreCount)
+    : 0;
+
   // Recommended words — a deterministic preview for UI consumers. We only
-  // produce this when the learner has actually graduated; otherwise the
-  // preview would be meaningless (no Guardian surface to consume it yet).
-  // A constant seeded random (() => 0.5) keeps the output deterministic
-  // across renders and test runs; the UI is explicitly documented as a
-  // snapshot preview, not a stochastic reselection.
-  const recommendedWords = allWordsMega
+  // produce this when the learner is currently Mega or post-graduation;
+  // otherwise the preview would be meaningless (no Guardian surface to
+  // consume it yet). A constant seeded random (() => 0.5) keeps the output
+  // deterministic across renders and test runs.
+  const recommendedWords = postMegaDashboardAvailable
     ? selectGuardianWords({
         guardianMap,
         progressMap,
@@ -216,7 +241,16 @@ export function getSpellingPostMasteryState({
     : [];
 
   return {
-    allWordsMega,
+    // P2 U2: `allWordsMega` is kept as an ALIAS of `allWordsMegaNow` for
+    // one release. Legacy consumers (Alt+4 gate in remote-actions.js,
+    // module.js) still read this field; new consumers should gate on
+    // `postMegaDashboardAvailable` instead.
+    allWordsMega: allWordsMegaNow,
+    allWordsMegaNow,
+    postMegaUnlockedEver,
+    postMegaDashboardAvailable,
+    newCoreWordsSinceGraduation,
+    publishedCoreCount,
     guardianDueCount,
     wobblingCount,
     wobblingDueCount,
@@ -473,7 +507,12 @@ export function buildSpellingLearnerReadModel({
   });
   const postMastery = {
     ...postMasteryState,
-    recommendedMode: postMasteryState.allWordsMega && postMasteryState.guardianDueCount > 0
+    // P2 U2: gate on the dashboard-availability flag (sticky OR live) rather
+    // than `allWordsMega` alone. A learner who graduated before a content
+    // release and has guardian work due should still land on Guardian as
+    // the recommended mode even if `allWordsMegaNow` is false because a
+    // handful of new core words were published since they graduated.
+    recommendedMode: postMasteryState.postMegaDashboardAvailable && postMasteryState.guardianDueCount > 0
       ? 'guardian'
       : currentFocus.recommendedMode,
   };

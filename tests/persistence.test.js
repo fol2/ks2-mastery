@@ -999,7 +999,9 @@ test('subject command responses update the api cache without queuing broad runti
         subjectReadModel: {
           subjectId: 'spelling',
           learnerId: body.learnerId,
-          version: 2,
+          // P2 U2: spelling service state version bumped 2 -> 3 when
+          // data.postMega sibling + sticky graduation fields landed.
+          version: 3,
           phase: 'session',
           session: {
             id: 'server-session',
@@ -1111,7 +1113,8 @@ test('subject commands refresh stale learner revision without a second bootstrap
         subjectReadModel: {
           subjectId: 'spelling',
           learnerId: body.learnerId,
-          version: 2,
+          // P2 U2: version bump 2 -> 3.
+          version: 3,
           phase: 'session',
           session: {
             id: 'server-session',

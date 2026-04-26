@@ -8,6 +8,7 @@ import {
   createSpellingGuardianRenewedEvent,
   createSpellingGuardianWobbledEvent,
   createSpellingMasteryMilestoneEvent,
+  createSpellingPostMegaUnlockedEvent,
   createSpellingRetryClearedEvent,
   createSpellingSessionCompletedEvent,
   createSpellingWordSecuredEvent,
@@ -27,6 +28,7 @@ import {
   GUARDIAN_MIN_ROUND_LENGTH,
   GUARDIAN_MISSION_STATES,
   GUARDIAN_SECURE_STAGE,
+  SPELLING_CONTENT_RELEASE_ID,
   cloneSerialisable,
   createInitialSpellingState,
   defaultLearningStatus,
@@ -38,6 +40,7 @@ import {
   normaliseMode,
   normaliseNonNegativeInteger,
   normaliseOptionalString,
+  normalisePostMegaRecord,
   normaliseRoundLength,
   normaliseStats,
   normaliseString,
@@ -276,6 +279,10 @@ export function deriveGuardianAggregates({
 const PREF_KEY = 'ks2-platform-v2.spelling-prefs';
 const GUARDIAN_PROGRESS_KEY_PREFIX = 'ks2-spell-guardian-';
 const PROGRESS_KEY_PREFIX = 'ks2-spell-progress-';
+// P2 U2: sticky-graduation sibling key. Stored under the same per-learner
+// suffix convention as the other three siblings so `parseStorageKey` in the
+// repository can route the write through the subject-state bundle.
+const POST_MEGA_KEY_PREFIX = 'ks2-spell-post-mega-';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function createNoopStorage() {
@@ -298,6 +305,13 @@ function guardianMapKey(learnerId) {
 
 function progressMapKey(learnerId) {
   return `${PROGRESS_KEY_PREFIX}${learnerId || 'default'}`;
+}
+
+// P2 U2: storage key for the sticky-graduation record. The client and Worker
+// storage proxies route reads/writes under this prefix through the
+// `data.postMega` sibling of the subject-state bundle.
+function postMegaKey(learnerId) {
+  return `${POST_MEGA_KEY_PREFIX}${learnerId || 'default'}`;
 }
 
 function intervalForLevel(level) {
@@ -1070,6 +1084,24 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   }
 
+  // P2 U2: load/save helpers for the sticky-graduation sibling. Uses the
+  // same JSON/storage path as progress + guardian so a bare-storage test host
+  // (no platform repositories) behaves identically to a production host that
+  // routes through `createSpellingPersistence`. The proxy's setItem path
+  // carries the H3 idempotency guard so a concurrent second-graduation
+  // submit cannot overwrite the original record — re-reading inside the
+  // critical section is the single source of truth.
+  function loadPostMegaFromStorage(learnerId) {
+    const raw = loadJson(resolvedStorage, postMegaKey(learnerId), null);
+    return normalisePostMegaRecord(raw);
+  }
+
+  function savePostMegaToStorage(learnerId, record) {
+    const normalised = normalisePostMegaRecord(record);
+    if (!normalised) return { ok: true };
+    return saveJson(resolvedStorage, postMegaKey(learnerId), normalised);
+  }
+
   // U8: returns `{ ok, reason? }` so submit paths can raise a
   // persistenceWarning. The non-Guardian Smart Review / SATs path writes
   // progress through the legacy engine's own setProgress (not this helper);
@@ -1097,6 +1129,65 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const total = coreWordCount();
     if (!total) return false;
     return secureCoreCount(progressStore) === total;
+  }
+
+  /**
+   * P2 U2: First-graduation detection for the sticky `data.postMega` record.
+   *
+   * Emission requires THREE conjunct conditions:
+   *   1. Pre-submit `preSubmitAllMega === false` (learner was not graduated
+   *      before this submit).
+   *   2. Post-submit `postSubmitAllMega === true` (learner is graduated now).
+   *   3. **Submit-caused-this guard (H1 fix)**: the just-submitted slug
+   *      transitioned from stage `< 4` to stage `=== 4` in THIS submit.
+   *
+   * Without condition (3), a content-retirement edge that shrinks
+   * `publishedCoreCount` (e.g. dropping two blocker slugs out of the core
+   * pool) would flip `isAllWordsMega` from false to true on an already-Mega
+   * slug's submit. The H1 guard pins emission to genuine learner action.
+   *
+   * Returns either the newly-created postMega record (for event emission +
+   * caller attribution) or null when no emission is warranted.
+   *
+   * The persistence is H3-idempotent at the storage-proxy layer: if the
+   * proxy's `setItem` sees `data.postMega` already non-null inside its
+   * critical section, it drops the write silently. The caller should still
+   * check `priorRecord != null` to avoid emitting a duplicate event.
+   */
+  function detectAndPersistFirstGraduation({
+    learnerId,
+    preSubmitAllMega,
+    postSubmitAllMega,
+    submittedSlugPrevStage,
+    submittedSlugNewStage,
+  }) {
+    if (preSubmitAllMega !== false) return null;
+    if (postSubmitAllMega !== true) return null;
+    // H1 submit-caused-this guard.
+    if (!Number.isFinite(Number(submittedSlugPrevStage))) return null;
+    if (!Number.isFinite(Number(submittedSlugNewStage))) return null;
+    if (Number(submittedSlugPrevStage) >= GUARDIAN_SECURE_STAGE) return null;
+    if (Number(submittedSlugNewStage) < GUARDIAN_SECURE_STAGE) return null;
+    // Defensive belt-and-braces: re-read the persisted sticky-bit. If
+    // already set (e.g. a concurrent second tab beat us to the write), do
+    // NOT emit a duplicate event. The storage proxy's H3 guard will also
+    // refuse to overwrite, but callers should observe the same result.
+    const priorRecord = loadPostMegaFromStorage(learnerId);
+    if (priorRecord) return null;
+    const unlockedAt = clock();
+    const publishedCoreCount = coreWordCount();
+    const record = {
+      unlockedAt,
+      unlockedContentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+      unlockedPublishedCoreCount: publishedCoreCount,
+      unlockedBy: 'all-core-stage-4',
+    };
+    // Write through the persistence proxy. The proxy's H3 guard re-reads
+    // data.postMega inside its critical section and drops the write if
+    // non-null; that is the authoritative idempotency check under
+    // concurrent submits.
+    savePostMegaToStorage(learnerId, record);
+    return record;
   }
 
   function getAnalyticsSnapshot(learnerId) {
@@ -1136,7 +1227,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const progressStore = progressSnapshot(learnerId) || {};
     const guardianMap = loadGuardianMap(learnerId);
     const today = currentTodayDay();
-    const allWordsMega = isAllWordsMega(progressStore);
+    const allWordsMegaNow = isAllWordsMega(progressStore);
+    // P2 U2: sticky-graduation record. Null when never graduated.
+    const postMegaRecord = loadPostMegaFromStorage(learnerId);
+    const publishedCoreCount = coreWordCount();
 
     // Shared derivation — same helper feeds `getSpellingPostMasteryState`
     // in the read-model so service and read-model cannot drift. U2 orphan
@@ -1152,16 +1246,32 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
     const guardianAvailableCount = aggregates.unguardedMegaCount + aggregates.eligibleGuardianEntries.length;
     const guardianMissionState = computeGuardianMissionState({
-      allWordsMega,
+      allWordsMega: allWordsMegaNow,
       eligibleGuardianEntries: aggregates.eligibleGuardianEntries,
       unguardedMegaCount: aggregates.unguardedMegaCount,
       todayDay: today,
       policy: { allowOptionalPatrol: true },
     });
     const guardianMissionAvailable = guardianMissionState !== 'locked' && guardianMissionState !== 'rested';
+    const postMegaUnlockedEver = postMegaRecord != null;
+    const postMegaDashboardAvailable = allWordsMegaNow || postMegaUnlockedEver;
+    const unlockedPublishedCoreCount = postMegaRecord
+      ? Number(postMegaRecord.unlockedPublishedCoreCount) || 0
+      : 0;
+    const newCoreWordsSinceGraduation = postMegaUnlockedEver
+      ? Math.max(0, publishedCoreCount - unlockedPublishedCoreCount)
+      : 0;
 
     return {
-      allWordsMega,
+      // P2 U2 alias — kept for one release to avoid churning every gate
+      // site at once. New consumers should gate on
+      // `postMegaDashboardAvailable` instead.
+      allWordsMega: allWordsMegaNow,
+      allWordsMegaNow,
+      postMegaUnlockedEver,
+      postMegaDashboardAvailable,
+      newCoreWordsSinceGraduation,
+      publishedCoreCount,
       guardianDueCount: aggregates.guardianDueCount,
       wobblingCount: aggregates.wobblingCount,
       wobblingDueCount: aggregates.wobblingDueCount,
@@ -1682,6 +1792,14 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     if (!baseWord) {
       return invalidSessionTransition('This Guardian Mission card is missing its word metadata.');
     }
+    // P2 U2: pre-submit graduation snapshot. Guardian only starts when the
+    // learner is already Mega, so `preSubmitAllMega === true` and the H1
+    // guard ALWAYS refuses first-graduation emission from this path. We
+    // still capture the snapshot for consistency with `submitAnswer` and to
+    // make the guard's operation auditable in tests.
+    const preSubmitProgressStore = progressSnapshot(learnerId) || {};
+    const preSubmitAllMega = isAllWordsMega(preSubmitProgressStore);
+    const preSubmitStage = Number(preSubmitProgressStore?.[currentSlug]?.stage) || 0;
     const promptWord = wordForPrompt(baseWord, session.currentPrompt);
     const graded = engine.grade(promptWord, rawTyped);
     const correct = Boolean(graded.correct);
@@ -1836,6 +1954,29 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       }));
     }
 
+    // P2 U2: first-graduation detection on the Guardian submit path. The H1
+    // submit-caused-this guard will naturally refuse emission here — Guardian
+    // only starts when `allWordsMega === true`, so `preSubmitAllMega` is
+    // always true and the guard's first conjunct fails. Kept for audit
+    // symmetry with `submitAnswer` / `submitBossAnswer`.
+    const postSubmitProgressStoreG = progressSnapshot(learnerId) || {};
+    const postSubmitAllMegaG = isAllWordsMega(postSubmitProgressStoreG);
+    const postMegaUnlockG = detectAndPersistFirstGraduation({
+      learnerId,
+      preSubmitAllMega,
+      postSubmitAllMega: postSubmitAllMegaG,
+      submittedSlugPrevStage: preSubmitStage,
+      submittedSlugNewStage: Number(postSubmitProgressStoreG?.[currentSlug]?.stage) || preSubmitStage,
+    });
+    if (postMegaUnlockG) {
+      events.push(createSpellingPostMegaUnlockedEvent({
+        learnerId,
+        unlockedAt: postMegaUnlockG.unlockedAt,
+        contentReleaseId: postMegaUnlockG.unlockedContentReleaseId,
+        publishedCoreCount: postMegaUnlockG.unlockedPublishedCoreCount,
+      }));
+    }
+
     const daysUntilNextCheck = Math.max(0, updatedRecord.nextDueDay - todayDay);
     const feedback = correct
       ? {
@@ -1890,6 +2031,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     if (!baseWord) {
       return invalidSessionTransition('This Boss Dictation card is missing its word metadata.');
     }
+    // P2 U2: pre-submit graduation snapshot. Boss only starts when the
+    // learner is Mega, so H1 guard refuses first-graduation emission.
+    const preSubmitProgressStoreB = progressSnapshot(learnerId) || {};
+    const preSubmitAllMegaB = isAllWordsMega(preSubmitProgressStoreB);
+    const preSubmitStageB = Number(preSubmitProgressStoreB?.[currentSlug]?.stage) || 0;
     const promptWord = wordForPrompt(baseWord, session.currentPrompt);
     const graded = engine.grade(promptWord, rawTyped);
     const correct = Boolean(graded.correct);
@@ -1929,6 +2075,28 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     saveProgressToStorage(learnerId, progressMap);
 
     const events = [];
+    // P2 U2: first-graduation detection on the Boss submit path. Boss only
+    // starts post-Mega and never changes `progress.stage`, so the H1 guard
+    // ALWAYS refuses — preSubmitAllMega is true AND the submitted slug's
+    // stage is already 4. Kept here for audit symmetry.
+    const postSubmitProgressStoreB = progressSnapshot(learnerId) || {};
+    const postSubmitAllMegaB = isAllWordsMega(postSubmitProgressStoreB);
+    const postMegaUnlockB = detectAndPersistFirstGraduation({
+      learnerId,
+      preSubmitAllMega: preSubmitAllMegaB,
+      postSubmitAllMega: postSubmitAllMegaB,
+      submittedSlugPrevStage: preSubmitStageB,
+      submittedSlugNewStage: Number(postSubmitProgressStoreB?.[currentSlug]?.stage) || preSubmitStageB,
+    });
+    if (postMegaUnlockB) {
+      events.push(createSpellingPostMegaUnlockedEvent({
+        learnerId,
+        unlockedAt: postMegaUnlockB.unlockedAt,
+        contentReleaseId: postMegaUnlockB.unlockedContentReleaseId,
+        publishedCoreCount: postMegaUnlockB.unlockedPublishedCoreCount,
+      }));
+    }
+
     // Feedback mirrors the legacy test-mode "Saved." prompt so the Boss UI
     // inherits the same "no retry, no correction" microcopy as SATs but the
     // Boss context note + info chip (U5) already distinguish the surfaces for
@@ -2004,6 +2172,14 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // lastError (set by `persistAll` inside `createLocalPlatformRepositories`)
     // is the authoritative signal for a silent swallow.
     const beforeError = readPersistenceError();
+    // P2 U2: pre-submit graduation snapshot for first-graduation detection.
+    // Captured BEFORE the engine call so the H1 guard has a clean baseline
+    // to compare against post-submit state. `preSubmitAllMega` must be false
+    // for the learner to graduate via this submit; pre-submit stage of the
+    // submitted slug must be < 4 for the submit-caused-this guard to pass.
+    const preSubmitProgressStore = progressSnapshot(learnerId) || {};
+    const preSubmitAllMega = isAllWordsMega(preSubmitProgressStore);
+    const preSubmitStage = Number(preSubmitProgressStore?.[currentSlug]?.stage) || 0;
     const result = session.type === 'test'
       ? engine.submitTest(session, learnerId, rawTyped)
       : engine.submitLearning(session, learnerId, rawTyped);
@@ -2092,6 +2268,31 @@ export function createSpellingService({ repository, storage, tts, now, random, c
           createdAt: eventTime,
         }));
       }
+    }
+
+    // P2 U2: first-graduation detection. Run AFTER legacy engine's write so
+    // the progress snapshot reflects the newly-promoted stage. `result.outcome`
+    // carries the prevStage / newStage of the submitted slug, which feeds the
+    // H1 submit-caused-this guard. `detectAndPersistFirstGraduation` itself
+    // is conservative — it only emits when all three conjuncts hold AND the
+    // storage-proxy H3 guard confirms no prior sticky-bit exists. The write
+    // is idempotent, so this helper can run unconditionally on every submit.
+    const postSubmitProgressStore = progressSnapshot(learnerId) || {};
+    const postSubmitAllMega = isAllWordsMega(postSubmitProgressStore);
+    const postMegaUnlock = detectAndPersistFirstGraduation({
+      learnerId,
+      preSubmitAllMega,
+      postSubmitAllMega,
+      submittedSlugPrevStage: preSubmitStage,
+      submittedSlugNewStage: Number(result.outcome?.newStage) || preSubmitStage,
+    });
+    if (postMegaUnlock) {
+      events.push(createSpellingPostMegaUnlockedEvent({
+        learnerId,
+        unlockedAt: postMegaUnlock.unlockedAt,
+        contentReleaseId: postMegaUnlock.unlockedContentReleaseId,
+        publishedCoreCount: postMegaUnlock.unlockedPublishedCoreCount,
+      }));
     }
 
     const nextState = {

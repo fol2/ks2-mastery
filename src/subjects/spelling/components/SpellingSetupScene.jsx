@@ -313,7 +313,16 @@ export function SpellingSetupScene({
   const preferenceControlsDisabled = runtimeReadOnly || Boolean(pendingCommand && pendingCommand !== 'save-prefs');
   const startDisabled = runtimeReadOnly || Boolean(pendingCommand);
   if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
-  const isPostMega = Boolean(postMastery?.allWordsMega);
+  // P2 U2: dashboard gate migrates from live `allWordsMega` to the sticky
+  // `postMegaDashboardAvailable` (sticky-or-live). A learner who graduated
+  // under release N-1 and now sees 3 new core words from release N still
+  // lands on the post-Mega dashboard rather than getting kicked back into
+  // the legacy Smart Review setup. Fallback to `allWordsMega` keeps
+  // pre-U2 callers stable for one release.
+  const isPostMega = Boolean(
+    postMastery?.postMegaDashboardAvailable
+    ?? postMastery?.allWordsMega,
+  );
   const contentClasses = ['setup-content'];
   if (isPostMega) contentClasses.push('setup-content--post-mega');
 
@@ -508,12 +517,21 @@ function PostMegaSetupContent({
   // don't silently pick up the wrong card.
   const bossCard = POST_MEGA_MODE_CARDS.find((mode) => mode.id === 'boss-dictation');
   const placeholderCards = POST_MEGA_MODE_CARDS.filter((mode) => mode.id !== 'guardian' && mode.id !== 'boss-dictation');
-  // Boss active-state gate: the same `postMastery.allWordsMega` that already
-  // gates Guardian's Alt+4 shortcut. We land on PostMegaSetupContent only when
-  // the caller has already decided `isPostMega === true`, so allWordsMega is
-  // true by construction — but we branch defensively so a future caller who
-  // passes a stale postMastery shape doesn't render a dead active card.
-  const bossActive = Boolean(postMastery?.allWordsMega);
+  // Boss active-state gate. Boss requires genuine `allWordsMegaNow === true`
+  // (not sticky). A learner in the "graduated but content-added" state has
+  // `postMegaDashboardAvailable === true` but `allWordsMegaNow === false`,
+  // and Boss must NOT be offerable because the Boss pool would include only
+  // the words that ARE currently Mega — not the handful of new-arrival core
+  // slugs still at stage < 4. Falling back through `allWordsMega` (the
+  // legacy alias) keeps pre-U2 callers stable.
+  const bossActive = Boolean(
+    postMastery?.allWordsMegaNow
+    ?? postMastery?.allWordsMega,
+  );
+  const newCoreWordsSinceGraduation = Math.max(
+    0,
+    Number(postMastery?.newCoreWordsSinceGraduation) || 0,
+  );
   const bossDescription = bossCard?.desc || '';
   const bossBadge = 'BOSS READY';
   // U1: branch copy + gating on `guardianMissionState`. Fall back to the
@@ -637,6 +655,15 @@ function PostMegaSetupContent({
         words you already own. Smart Review, Trouble Drill, and the SATs Test have done their work.
       </p>
       <GraduationStatRibbon postMastery={postMastery} secureCount={secureCount} />
+      {newCoreWordsSinceGraduation > 0 ? (
+        <p
+          className="post-mega-new-arrivals"
+          data-test-id="post-mega-new-arrivals"
+          role="status"
+        >
+          {newCoreWordsSinceGraduation} new core word{newCoreWordsSinceGraduation === 1 ? ' has' : 's have'} arrived since graduation. Add {newCoreWordsSinceGraduation === 1 ? 'it' : 'them'} to the Vault when ready.
+        </p>
+      ) : null}
       <div
         className="mode-row mode-row-post-mega"
         data-variant={guardianActive ? 'active' : 'rested'}

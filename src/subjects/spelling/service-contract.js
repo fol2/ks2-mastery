@@ -1,4 +1,15 @@
-export const SPELLING_SERVICE_STATE_VERSION = 2;
+export const SPELLING_SERVICE_STATE_VERSION = 3;
+
+/**
+ * P2 U2: Spelling content-release identifier. Stamped into `data.postMega` at
+ * first-graduation so a later content shake-up (new core words, retirements)
+ * can diff against the release the learner graduated under. Pattern mirrors
+ * Grammar's `GRAMMAR_CONTENT_RELEASE_ID` in `worker/src/subjects/grammar/content.js`
+ * — an opaque string constant, bumped by hand when the content bundle changes
+ * in a way learners should feel. Bump day: 2026-04-26 (baseline for P2
+ * visibility theme).
+ */
+export const SPELLING_CONTENT_RELEASE_ID = 'spelling-p2-baseline-2026-04-26';
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
 export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
@@ -66,7 +77,17 @@ export const GUARDIAN_MISSION_STATES = Object.freeze([
  */
 export function createLockedPostMasteryState() {
   return {
+    // P2 U2: `allWordsMega` is kept as an alias to `allWordsMegaNow` for one
+    // release. Consumers gating on dashboard availability should prefer
+    // `postMegaDashboardAvailable` (sticky OR live); `allWordsMega` is a
+    // legacy surface that is scheduled for removal once every caller has
+    // migrated. The stub returns false for both because a locked fallback
+    // represents a pre-graduation learner — no live Mega, no sticky bit.
     allWordsMega: false,
+    allWordsMegaNow: false,
+    postMegaUnlockedEver: false,
+    postMegaDashboardAvailable: false,
+    newCoreWordsSinceGraduation: 0,
     guardianDueCount: 0,
     wobblingCount: 0,
     wobblingDueCount: 0,
@@ -79,6 +100,32 @@ export function createLockedPostMasteryState() {
     todayDay: 0,
     guardianMap: {},
     recommendedWords: [],
+  };
+}
+
+/**
+ * P2 U2: Normalise a `data.postMega` record to the canonical shape. Returns
+ * `null` for any garbage / array / missing input so `data.postMega === null`
+ * is the unambiguous "never graduated" marker. Callers (client repository,
+ * Worker twin) stop the sibling-record spread when the result is null so
+ * the subject-state bundle stays compact.
+ */
+export function normalisePostMegaRecord(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return null;
+  const unlockedAt = Number(rawValue.unlockedAt);
+  const unlockedPublishedCoreCount = Number(rawValue.unlockedPublishedCoreCount);
+  const unlockedContentReleaseId = typeof rawValue.unlockedContentReleaseId === 'string'
+    ? rawValue.unlockedContentReleaseId
+    : '';
+  const unlockedBy = typeof rawValue.unlockedBy === 'string' ? rawValue.unlockedBy : '';
+  if (!Number.isFinite(unlockedAt) || unlockedAt < 0) return null;
+  if (!Number.isFinite(unlockedPublishedCoreCount) || unlockedPublishedCoreCount < 0) return null;
+  if (!unlockedContentReleaseId) return null;
+  return {
+    unlockedAt: Math.floor(unlockedAt),
+    unlockedContentReleaseId,
+    unlockedPublishedCoreCount: Math.floor(unlockedPublishedCoreCount),
+    unlockedBy: unlockedBy || 'all-core-stage-4',
   };
 }
 

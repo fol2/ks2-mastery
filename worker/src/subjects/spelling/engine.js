@@ -5,6 +5,7 @@ import {
 import {
   createInitialSpellingState,
   normaliseGuardianMap,
+  normalisePostMegaRecord,
 } from '../../../../src/subjects/spelling/service-contract.js';
 import { createSpellingService } from '../../../../shared/spelling/service.js';
 import { BadRequestError } from '../../errors.js';
@@ -16,6 +17,8 @@ const SERVER_AUTHORITY = 'worker';
 const PREF_STORAGE_PREFIX = 'ks2-platform-v2.spelling-prefs.';
 const PROGRESS_STORAGE_PREFIX = 'ks2-spell-progress-';
 const GUARDIAN_STORAGE_PREFIX = 'ks2-spell-guardian-';
+// P2 U2: mirror client POST_MEGA_STORAGE_PREFIX in src/subjects/spelling/repository.js.
+const POST_MEGA_STORAGE_PREFIX = 'ks2-spell-post-mega-';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -39,11 +42,17 @@ function normaliseProgressMap(rawValue) {
 export function normaliseServerSpellingData(rawValue, nowTs = Date.now()) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
   const todayDay = Math.floor(Number(nowTs) / DAY_MS);
-  return {
+  const output = {
     prefs: isPlainObject(raw.prefs) ? cloneSerialisable(raw.prefs) : {},
     progress: normaliseProgressMap(raw.progress),
     guardian: normaliseGuardianMap(raw.guardian, Number.isFinite(todayDay) && todayDay >= 0 ? todayDay : 0),
   };
+  // P2 U2: Worker twin of client's normaliseSpellingSubjectData. Must be
+  // byte-identical in behaviour so a learner's `data.postMega` round-trips
+  // through Worker commands without loss.
+  const postMega = normalisePostMegaRecord(raw.postMega);
+  if (postMega) output.postMega = postMega;
+  return output;
 }
 
 function parseStorageKey(key) {
@@ -53,6 +62,11 @@ function parseStorageKey(key) {
   }
   if (key.startsWith(GUARDIAN_STORAGE_PREFIX)) {
     return { type: 'guardian', learnerId: key.slice(GUARDIAN_STORAGE_PREFIX.length) || 'default' };
+  }
+  // P2 U2: post-mega prefix must be checked before progress because the two
+  // share the first 10 chars (`ks2-spell-`) but diverge at the 11th.
+  if (key.startsWith(POST_MEGA_STORAGE_PREFIX)) {
+    return { type: 'postMega', learnerId: key.slice(POST_MEGA_STORAGE_PREFIX.length) || 'default' };
   }
   if (key.startsWith(PROGRESS_STORAGE_PREFIX)) {
     return { type: 'progress', learnerId: key.slice(PROGRESS_STORAGE_PREFIX.length) || 'default' };
@@ -154,6 +168,10 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
         if (parsed.type === 'prefs') return JSON.stringify(current.prefs || {});
         if (parsed.type === 'progress') return JSON.stringify(current.progress || {});
         if (parsed.type === 'guardian') return JSON.stringify(current.guardian || {});
+        // P2 U2: postMega is null until first-graduation; preserve the
+        // null vs object distinction so the service-layer reader can gate
+        // on it without special-casing the string literal.
+        if (parsed.type === 'postMega') return current.postMega ? JSON.stringify(current.postMega) : 'null';
         return null;
       },
       setItem(key, value) {
@@ -177,6 +195,18 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
             guardian: parseStoredJson(value, {}),
           }, resolveNow());
         }
+        if (parsed.type === 'postMega') {
+          // P2 U2 H3 mitigation guard — inside the persistence critical
+          // section, re-read the current `postMega` sibling; if non-null,
+          // skip the write so a concurrent submit cannot overwrite the
+          // original `unlockedAt`.
+          if (!nextData.postMega) {
+            nextData = normaliseServerSpellingData({
+              ...nextData,
+              postMega: parseStoredJson(value, null),
+            }, resolveNow());
+          }
+        }
       },
       removeItem(key) {
         const parsed = parseStorageKey(key);
@@ -184,6 +214,7 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
         if (parsed.type === 'prefs') nextData = normaliseServerSpellingData({ ...nextData, prefs: {} }, resolveNow());
         if (parsed.type === 'progress') nextData = normaliseServerSpellingData({ ...nextData, progress: {} }, resolveNow());
         if (parsed.type === 'guardian') nextData = normaliseServerSpellingData({ ...nextData, guardian: {} }, resolveNow());
+        // postMega intentionally not removable — sticky by contract.
       },
     },
     syncPracticeSession(nextLearnerId, state) {
