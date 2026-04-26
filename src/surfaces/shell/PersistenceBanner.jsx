@@ -88,25 +88,28 @@ export function PersistenceBanner({ snapshot, onRetry }) {
   // assertion cannot express intent cleanly."). Three testids total:
   // root banner + label + pending-count chip are the only selectors
   // chaos scenes need; everything else is read by role/text.
+  // SH2-U8: inline style props migrated to `.persistence-banner-*` classes in
+  // styles/app.css. Values are identical to the previous inline values so
+  // SH2-U6 visual baselines stay green. See docs/hardening/csp-inline-style-inventory.md.
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-testid="persistence-banner" data-persistence-mode={snapshot?.mode || 'unknown'}>
+    <section className="card persistence-banner-card" data-testid="persistence-banner" data-persistence-mode={snapshot?.mode || 'unknown'}>
       <div className="feedback warn" role="status" aria-live="polite">
         <strong data-testid="persistence-banner-label">{persistenceLabel(snapshot)}</strong>
-        <div style={{ marginTop: 8 }}>{persistenceSummary(snapshot)}</div>
+        <div className="persistence-banner-summary">{persistenceSummary(snapshot)}</div>
       </div>
-      <div className="chip-row" style={{ marginTop: 14 }}>
+      <div className="chip-row persistence-banner-chips">
         <span className={`chip ${persistenceTone(snapshot)}`}>{persistenceTrustedLabel(snapshot)}</span>
         <span className="chip">Cache: {snapshot?.cacheState || 'unknown'}</span>
         <span className="chip" data-testid="persistence-banner-pending">Pending: {pendingCount}</span>
       </div>
       {snapshot?.remoteAvailable && (
-        <div className="actions" style={{ marginTop: 16 }}>
+        <div className="actions persistence-banner-actions">
           <button className="btn secondary" type="button" onClick={onRetry}>Retry sync</button>
         </div>
       )}
-      <details style={{ marginTop: 16 }}>
+      <details className="persistence-banner-details">
         <summary>Persistence details</summary>
-        <div className="code-block" style={{ marginTop: 12, whiteSpace: 'pre-wrap' }}>{persistenceDebug(snapshot)}</div>
+        <div className="code-block persistence-banner-debug">{persistenceDebug(snapshot)}</div>
       </details>
     </section>
   );

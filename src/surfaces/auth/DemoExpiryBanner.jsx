@@ -72,11 +72,15 @@ export function DemoExpiryBanner({ onSignIn, onStartDemo }) {
         <p className="subtitle" data-testid="demo-expiry-banner-body">
           Your demo round has ended. Sign in or start a new demo to keep practising.
         </p>
-        <div className="actions" style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+        {/* SH2-U8: inline style props migrated — `.auth-panel-actions` carries the
+            flex + gap + margin-top + wrap layout; the "#3E6FA8" inline background
+            is removed because it is identical to `--brand` which `.btn.primary`
+            already uses by default via `background: var(--btn-accent, var(--brand))`.
+            See docs/hardening/csp-inline-style-inventory.md. */}
+        <div className="actions auth-panel-actions">
           <button
             className="btn primary lg"
             type="button"
-            style={{ background: '#3E6FA8' }}
             data-action="demo-expiry-sign-in"
             onClick={handleSignIn}
           >

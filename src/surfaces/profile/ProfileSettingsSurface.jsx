@@ -379,9 +379,11 @@ function PortableSnapshotsPanel({ appState, importLocked, importLockReason, acti
         <button className="btn secondary" type="button" onClick={() => actions.dispatch('platform-export-app')}>Export full app</button>
         <button className="btn ghost" type="button" disabled={importLocked} onClick={() => actions.dispatch('platform-import')}>Import JSON</button>
       </div>
+      {/* SH2-U8: inline style prop migrated to `.platform-import-file-input`
+          class (display: none). See docs/hardening/csp-inline-style-inventory.md. */}
       <input
         id="platform-import-file"
-        style={{ display: 'none' }}
+        className="platform-import-file-input"
         type="file"
         accept=".json,application/json"
         onChange={(event) => actions.dispatch('platform-import-file-selected', { input: event.currentTarget })}

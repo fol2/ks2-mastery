@@ -112,15 +112,17 @@ function handleBoundaryError(error, info) {
 }
 
 function UnknownRouteSurface({ screen, actions }) {
+  // SH2-U8: inline style props migrated to `.unknown-route-*` classes
+  // (see docs/hardening/csp-inline-style-inventory.md).
   return (
-    <main className="subject-main" style={{ maxWidth: 960, margin: '0 auto', width: '100%' }}>
+    <main className="subject-main unknown-route-main">
       <section className="card" role="alert" aria-live="polite">
         <div className="eyebrow">Route unavailable</div>
         <h1 className="section-title">This screen is not available</h1>
         <p className="subtitle">
           The React shell could not match the route "{screen || 'unknown'}". Return to the dashboard to continue.
         </p>
-        <div className="actions" style={{ marginTop: 16 }}>
+        <div className="actions unknown-route-actions">
           <button className="btn primary" type="button" onClick={actions.navigateHome}>Back to dashboard</button>
         </div>
       </section>

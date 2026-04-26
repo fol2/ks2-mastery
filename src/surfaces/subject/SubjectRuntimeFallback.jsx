@@ -29,7 +29,14 @@ export function SubjectRuntimeFallback({ subject, runtimeEntry = null, activeTab
         retryLabel="Try this tab again"
         code={runtimeEntry?.code || runtimeEntry?.methodName || methodName}
       />
-      <div className="small muted" style={{ marginTop: 12 }}>
+      {/* SH2-U8: static inline style prop migrated to `.subject-runtime-fallback-footer`.
+          The bespoke `borderTopColor: subject.accent` style above stays inline: the
+          accent flows from the client-side subject registry (see
+          `src/platform/core/subject-registry.js`), classifies as
+          `dynamic-content-driven` in the inventory, and is defer-candidate for future
+          CSS-variable work. No server data enters this style bag. See
+          docs/hardening/csp-inline-style-inventory.md. */}
+      <div className="small muted subject-runtime-fallback-footer">
         Failure point: {methodName}
       </div>
     </section>
