@@ -373,13 +373,29 @@ export function createServerSpellingEngine({
       // consumer) so Worker and client cannot drift. `sourceHint: 'worker'`
       // flows into `postMasteryDebug.source` so the Admin hub can tell a
       // worker-hydrated snapshot apart from a client-only locked-fallback.
+      //
+      // PR #277 MEDIUM (reliability) fix — wrap the derivation in a
+      // try/catch. If the selector throws (unexpected persisted shape,
+      // runtime snapshot corruption, content-bundle drift), fall back to
+      // `postMastery: undefined` so the response still ships and the
+      // client degrades to its own locked-fallback (or the previous
+      // cache via the HIGH adversarial fix in remote-actions.js) instead
+      // of hard-failing every spelling command until the derivation is
+      // patched. Logged via console.warn so the Admin hub + server logs
+      // surface the underlying error.
       const finalSnapshot = persistence.snapshot();
-      const postMastery = getSpellingPostMasteryState({
-        subjectStateRecord: { data: finalSnapshot },
-        runtimeSnapshot: contentSnapshot,
-        now: clock,
-        sourceHint: 'worker',
-      });
+      let postMastery;
+      try {
+        postMastery = getSpellingPostMasteryState({
+          subjectStateRecord: { data: finalSnapshot },
+          runtimeSnapshot: contentSnapshot,
+          now: clock,
+          sourceHint: 'worker',
+        });
+      } catch (error) {
+        globalThis.console?.warn?.('[spelling.apply] postMastery derivation failed, omitting from response', error);
+        postMastery = undefined;
+      }
       return {
         ok: transition.ok !== false,
         changed: transition.changed !== false,

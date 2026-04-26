@@ -490,3 +490,262 @@ test('U4 Worker response omits postMastery (old-worker characterisation): client
     assert.equal(spelling.postMastery.postMegaDashboardAvailable, false);
   }
 });
+
+// -----------------------------------------------------------------------------
+// Section 4 — PR #277 reviewer-driven fixes
+// (a) HIGH correctness: Worker postMastery includes todayDay + guardianMap so
+//     the SpellingSetupScene's GraduationStatRibbon doesn't render
+//     "Next check in 20562 days".
+// (b) HIGH adversarial: applyCommandResponse preserves the previous postMastery
+//     snapshot when a subsequent response lacks postMastery (old Worker
+//     rolling deploy, engine throw via the MEDIUM try/catch fix).
+// (c) HIGH adversarial: handlePreferenceSaveError preserves the postMastery
+//     cache so a graduated learner whose Alt+4 start succeeds but whose
+//     save-prefs fails doesn't regress to legacy Smart Review.
+// -----------------------------------------------------------------------------
+
+test('PR #277 Worker postMastery carries todayDay + guardianMap so the Setup scene renders a sensible nextDueDelta', () => {
+  const engine = createServerSpellingEngine({
+    now: () => TODAY_MS,
+    random: () => 0.5,
+    contentSnapshot: contentSnapshot(),
+  });
+
+  // A graduated learner with one guardian entry due tomorrow. The scene's
+  // GraduationStatRibbon computes `nextDueDelta = nextGuardianDueDay - todayDay`;
+  // if todayDay falls back to 0 the delta becomes 20562 (the D1-epoch day
+  // number today) and the "Next check in 20562 days" regression reappears.
+  const firstCoreSlug = CORE_SLUGS[0];
+  const guardianMap = {
+    [firstCoreSlug]: {
+      stage: 'secure',
+      nextDueDay: TODAY_DAY + 1,
+      // Normaliser tolerates extra fields; we only need a shape that survives
+      // normaliseGuardianMap.
+    },
+  };
+  const data = {
+    progress: seedAllCoreMegaProgress(),
+    guardian: guardianMap,
+    postMega: {
+      unlockedAt: TODAY_MS - 7 * DAY_MS,
+      unlockedContentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+      unlockedPublishedCoreCount: ALL_CORE_COUNT,
+      unlockedBy: 'all-core-stage-4',
+    },
+  };
+
+  const response = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: null, data },
+    latestSession: null,
+    command: 'save-prefs',
+    payload: { prefs: { mode: 'smart' } },
+  });
+
+  const pm = response.postMastery;
+  assert.ok(pm, 'Worker postMastery block present');
+
+  // (1) `todayDay` must equal the clock's day number — NOT 0, not undefined.
+  // Without this the scene's `nextDueDelta` computation falls back to 0 and
+  // the ribbon displays "Next check in 20562 days".
+  assert.equal(typeof pm.todayDay, 'number', 'postMastery.todayDay is a number');
+  assert.equal(pm.todayDay, TODAY_DAY, 'postMastery.todayDay equals the scene-expected today');
+
+  // (2) `guardianMap` must be a populated object mirroring the persisted
+  // guardian entries (after normalisation). The Word Bank scene depends on
+  // this for Guardian chip filtering; without it the chips render empty.
+  assert.ok(pm.guardianMap && typeof pm.guardianMap === 'object' && !Array.isArray(pm.guardianMap),
+    'postMastery.guardianMap is a plain object');
+
+  // (3) Integration parity with the Setup scene's GraduationStatRibbon:
+  // replicate its `nextDueDelta` derivation and assert it computes sensibly
+  // (NOT 20562 — that was the original bug signature when `todayDay` fell back
+  // to 0). The ribbon renders "in 20562 days" only when
+  // `nextDueDelta = nextGuardianDueDay - 0`, i.e. today is missing.
+  const today = Number.isFinite(Number(pm.todayDay)) ? Math.floor(Number(pm.todayDay)) : 0;
+  const nextDue = Number.isFinite(Number(pm.nextGuardianDueDay)) ? Math.floor(Number(pm.nextGuardianDueDay)) : null;
+  const nextDueDelta = nextDue == null ? null : nextDue - today;
+  if (nextDueDelta !== null) {
+    // The delta must be a small non-negative integer — 0 (today), 1
+    // (tomorrow), or a handful of days. Anything >= 1000 is the regression
+    // we're pinning against; 20562 is the specific signature from the bug.
+    assert.ok(nextDueDelta >= 0 && nextDueDelta < 1000,
+      `nextDueDelta must be a small value, got ${nextDueDelta}`);
+    assert.notEqual(nextDueDelta, 20562,
+      'regression guard — "Next check in 20562 days" must never render');
+  }
+});
+
+test('PR #277 applyCommandResponse preserves postMastery cache when follow-up response lacks postMastery', async () => {
+  // Sequence: (a) hydrate from response A (full postMastery),
+  // (b) issue response B WITHOUT postMastery, (c) assert the cached
+  // response-A snapshot is still present. Simulates the Worker-rolling-deploy
+  // scenario where one in-flight request lands on an old worker instance that
+  // never emitted the field.
+  const { getState, store } = createHydrationHarness();
+  const responses = [];
+  const workerPostMastery = {
+    allWordsMega: true,
+    allWordsMegaNow: true,
+    postMegaUnlockedEver: true,
+    postMegaDashboardAvailable: true,
+    newCoreWordsSinceGraduation: 0,
+    guardianDueCount: 3,
+    wobblingCount: 1,
+    wobblingDueCount: 1,
+    nonWobblingDueCount: 2,
+    unguardedMegaCount: 0,
+    guardianAvailableCount: 5,
+    guardianMissionState: 'wobbling',
+    guardianMissionAvailable: true,
+    nextGuardianDueDay: TODAY_DAY + 1,
+    todayDay: TODAY_DAY,
+    guardianMap: { 'demo-slug': { stage: 'secure', nextDueDay: TODAY_DAY + 1 } },
+    recommendedWords: [],
+    postMasteryDebug: {
+      source: 'worker',
+      publishedCoreCount: ALL_CORE_COUNT,
+      secureCoreCount: ALL_CORE_COUNT,
+      blockingCoreCount: 0,
+      blockingCoreSlugsPreview: [],
+      extraWordsIgnoredCount: 0,
+      guardianMapCount: 1,
+      contentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+      allWordsMega: true,
+      stickyUnlocked: true,
+    },
+  };
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: { getPrefs() { return getState().subjectUi.spelling.prefs; } } },
+    tts: { speak() {}, stop() {} },
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send() {
+        const next = responses.shift();
+        return Promise.resolve(next);
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  // Response A — full postMastery block. This hydrates the cache.
+  responses.push({
+    subjectReadModel: { phase: 'dashboard' },
+    postMastery: workerPostMastery,
+  });
+  handler.handle('spelling-toggle-pref', { pref: 'autoSpeak' });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await flushPromises();
+  await flushPromises();
+
+  const afterA = getState().subjectUi?.spelling?.postMastery;
+  assert.ok(afterA, 'response A hydrated postMastery cache');
+  assert.equal(afterA.allWordsMega, true, 'cache has graduated-learner snapshot');
+  assert.equal(afterA.guardianMissionState, 'wobbling');
+
+  // Response B — NO postMastery field (rolling-deploy old worker / throw-
+  // handled by MEDIUM try/catch). The cache must be preserved.
+  responses.push({
+    subjectReadModel: { phase: 'dashboard' },
+    // deliberately no postMastery
+  });
+  handler.handle('spelling-toggle-pref', { pref: 'autoSpeak' });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await flushPromises();
+  await flushPromises();
+
+  const afterB = getState().subjectUi?.spelling?.postMastery;
+  assert.ok(afterB, 'postMastery cache preserved across postMastery-less response');
+  assert.equal(afterB.allWordsMega, true, 'cache still reflects graduated-learner snapshot');
+  assert.equal(afterB.postMegaDashboardAvailable, true,
+    'dashboard availability survives old-worker compat window');
+  assert.equal(afterB.guardianMissionState, 'wobbling',
+    'response A values remain after a postMastery-less response');
+});
+
+test('PR #277 handlePreferenceSaveError preserves postMastery cache so a graduated learner does not regress to legacy dashboard', async () => {
+  // Scenario: Alt+4 Guardian shortcut fires. start-session succeeds and the
+  // response hydrates postMastery with graduated values. The subsequent
+  // save-prefs throws (e.g. flaky sync). Before this fix
+  // handlePreferenceSaveError wiped the cache via reloadFromRepositories and
+  // the dashboard regressed to locked-fallback, dropping the learner back
+  // onto Smart Review. After the fix the cache is preserved across the
+  // error path.
+  const workerPostMastery = {
+    allWordsMega: true,
+    allWordsMegaNow: true,
+    postMegaUnlockedEver: true,
+    postMegaDashboardAvailable: true,
+    newCoreWordsSinceGraduation: 0,
+    guardianDueCount: 2,
+    wobblingCount: 0,
+    wobblingDueCount: 0,
+    nonWobblingDueCount: 2,
+    unguardedMegaCount: 0,
+    guardianAvailableCount: 2,
+    guardianMissionState: 'due',
+    guardianMissionAvailable: true,
+    nextGuardianDueDay: TODAY_DAY,
+    todayDay: TODAY_DAY,
+    guardianMap: {},
+    recommendedWords: [],
+    postMasteryDebug: {
+      source: 'worker',
+      publishedCoreCount: ALL_CORE_COUNT,
+      secureCoreCount: ALL_CORE_COUNT,
+      blockingCoreCount: 0,
+      blockingCoreSlugsPreview: [],
+      extraWordsIgnoredCount: 0,
+      guardianMapCount: 0,
+      contentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+      allWordsMega: true,
+      stickyUnlocked: true,
+    },
+  };
+  // Start from a state that already has the graduated postMastery cached so
+  // we can isolate the save-prefs-error path without depending on start-
+  // session completing first.
+  const { getState, store } = createHydrationHarness({
+    phase: 'dashboard',
+    prefs: { mode: 'guardian', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+    analytics: null,
+    error: '',
+    postMastery: workerPostMastery,
+  });
+
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: { spelling: { getPrefs() { return getState().subjectUi.spelling.prefs; } } },
+    tts: { speak() {}, stop() {} },
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        if (request.command === 'save-prefs') {
+          return Promise.reject(new Error('Sync temporarily unavailable.'));
+        }
+        return Promise.resolve({ subjectReadModel: { phase: 'dashboard' }, postMastery: workerPostMastery });
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+
+  // Trigger a preference-save action — the debounced save-prefs call will
+  // reject and route through handlePreferenceSaveError.
+  handler.handle('spelling-toggle-pref', { pref: 'autoSpeak' });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  // Cache must survive the failed save-prefs: the learner is still graduated.
+  const afterError = getState().subjectUi?.spelling?.postMastery;
+  assert.ok(afterError, 'postMastery cache preserved across save-prefs failure');
+  assert.equal(afterError.allWordsMega, true,
+    'graduated learner does not regress to legacy Smart Review dashboard');
+  assert.equal(afterError.postMegaDashboardAvailable, true,
+    'dashboard remains available after preference-save error');
+  assert.equal(afterError.guardianMissionState, 'due',
+    'cached mission state from before the error is still in place');
+});
