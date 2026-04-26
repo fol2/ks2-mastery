@@ -38,6 +38,53 @@ function normaliseError(rawValue) {
   };
 }
 
+// U9: per-breaker internal snapshot shape. NOT serialised directly to
+// components — the minimal boolean `breakersDegraded` map is the only
+// UI-facing exposure. Kept under `persistenceChannel.read().breakers.*`
+// for internal observability (plan line 877-878).
+function normaliseBreakerSnapshot(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return null;
+  const state = typeof rawValue.state === 'string' ? rawValue.state : null;
+  if (!state) return null;
+  return {
+    name: typeof rawValue.name === 'string' ? rawValue.name : null,
+    state,
+    failureCount: Number.isFinite(Number(rawValue.failureCount)) ? Number(rawValue.failureCount) : 0,
+    openedAt: Number.isFinite(Number(rawValue.openedAt)) ? Number(rawValue.openedAt) : 0,
+    cooldownUntil: rawValue.cooldownUntil == null
+      ? null
+      : (Number.isFinite(Number(rawValue.cooldownUntil)) ? Number(rawValue.cooldownUntil) : null),
+    cooldownMs: Number.isFinite(Number(rawValue.cooldownMs)) ? Number(rawValue.cooldownMs) : 0,
+  };
+}
+
+function normaliseBreakers(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return null;
+  const output = {};
+  for (const [key, value] of Object.entries(rawValue)) {
+    const snapshot = normaliseBreakerSnapshot(value);
+    if (snapshot) output[key] = snapshot;
+  }
+  return Object.keys(output).length ? output : null;
+}
+
+function normaliseBreakersDegraded(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) {
+    return {
+      parentHub: false,
+      classroomSummary: false,
+      derivedWrite: false,
+      bootstrapCapacity: false,
+    };
+  }
+  return {
+    parentHub: rawValue.parentHub === true,
+    classroomSummary: rawValue.classroomSummary === true,
+    derivedWrite: rawValue.derivedWrite === true,
+    bootstrapCapacity: rawValue.bootstrapCapacity === true,
+  };
+}
+
 export function normalisePersistenceSnapshot(rawValue) {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
   const mode = Object.values(PERSISTENCE_MODES).includes(raw.mode)
@@ -60,6 +107,11 @@ export function normalisePersistenceSnapshot(rawValue) {
     lastSyncAt: Number.isFinite(Number(raw.lastSyncAt)) ? Number(raw.lastSyncAt) : 0,
     lastError: normaliseError(raw.lastError),
     updatedAt: Number.isFinite(Number(raw.updatedAt)) ? Number(raw.updatedAt) : 0,
+    // U9: internal observability sub-namespace. Full state is not
+    // exposed to UI components (plan line 878); they read
+    // `breakersDegraded` only.
+    breakers: normaliseBreakers(raw.breakers),
+    breakersDegraded: normaliseBreakersDegraded(raw.breakersDegraded),
   };
 }
 
@@ -79,6 +131,12 @@ export function createPersistenceError({ phase, scope, code = null, message, ret
 
 export function defaultPersistenceSnapshot(mode = PERSISTENCE_MODES.LOCAL_ONLY, now = Date.now) {
   const updatedAt = nowTs(now);
+  const defaultBreakersDegraded = {
+    parentHub: false,
+    classroomSummary: false,
+    derivedWrite: false,
+    bootstrapCapacity: false,
+  };
   if (mode === PERSISTENCE_MODES.REMOTE_SYNC) {
     return {
       mode,
@@ -90,6 +148,8 @@ export function defaultPersistenceSnapshot(mode = PERSISTENCE_MODES.LOCAL_ONLY, 
       lastSyncAt: 0,
       lastError: null,
       updatedAt,
+      breakers: null,
+      breakersDegraded: defaultBreakersDegraded,
     };
   }
 
@@ -103,6 +163,8 @@ export function defaultPersistenceSnapshot(mode = PERSISTENCE_MODES.LOCAL_ONLY, 
     lastSyncAt: updatedAt,
     lastError: null,
     updatedAt,
+    breakers: null,
+    breakersDegraded: defaultBreakersDegraded,
   };
 }
 

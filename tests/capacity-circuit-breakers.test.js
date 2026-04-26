@@ -20,7 +20,9 @@ import {
   buildBreakersDegradedMap,
   createCircuitBreaker,
 } from '../src/platform/core/circuit-breaker.js';
+import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { createMockRepositoryServer } from './helpers/mock-api-server.js';
 
 function makeNow(initial = 1_000_000) {
   let clock = initial;
@@ -445,4 +447,193 @@ test('U9 DEFAULT_BREAKER_CONFIG matches plan line 877 tuning', () => {
   assert.equal(DEFAULT_BREAKER_CONFIG.failureThreshold, 3);
   assert.equal(DEFAULT_BREAKER_CONFIG.cooldownMs, 500);
   assert.equal(DEFAULT_BREAKER_CONFIG.cooldownMaxMs, 30_000);
+});
+
+// ---------------------------------------------------------------------------
+// Integration: api.js exposes breakersDegraded via persistenceChannel.
+// ---------------------------------------------------------------------------
+
+function learnerSnapshot() {
+  return {
+    byId: {
+      'learner-a': {
+        id: 'learner-a',
+        name: 'Ava',
+        yearGroup: 'Y5',
+        goal: 'sats',
+        dailyMinutes: 15,
+        avatarColor: '#2D7DD2',
+        createdAt: 1,
+      },
+    },
+    allIds: ['learner-a'],
+    selectedId: 'learner-a',
+  };
+}
+
+test('U9 integration: fresh api repository exposes a zeroed breakersDegraded map via persistenceChannel', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => 1_000,
+  });
+  await repositories.hydrate();
+  const snapshot = repositories.persistence.read();
+  assert.ok(snapshot, 'persistence snapshot must be present');
+  assert.deepEqual(snapshot.breakersDegraded, {
+    parentHub: false,
+    classroomSummary: false,
+    derivedWrite: false,
+    bootstrapCapacity: false,
+  });
+  // Full breakers sub-namespace is null when every breaker is CLOSED with zero
+  // failures — the default `cooldownUntil:0` and `state:'closed'` is present
+  // but the sub-namespace itself is populated.
+  assert.ok(snapshot.breakers, 'breakers sub-namespace exists on the snapshot');
+  assert.equal(snapshot.breakers.parentHubRecentSessions.state, BREAKER_STATES.CLOSED);
+});
+
+test('U9 integration: tripping parentHubRecentSessions flips breakersDegraded.parentHub via persistenceChannel', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => 1_000,
+  });
+  await repositories.hydrate();
+
+  // Simulate three consecutive failures on the recentSessions endpoint.
+  repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
+  repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
+  repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
+
+  const snapshot = repositories.persistence.read();
+  assert.equal(snapshot.breakersDegraded.parentHub, true);
+  assert.equal(snapshot.breakersDegraded.classroomSummary, false);
+  assert.equal(snapshot.breakersDegraded.derivedWrite, false);
+  assert.equal(snapshot.breakersDegraded.bootstrapCapacity, false);
+});
+
+test('U9 integration: 3 consecutive missing meta.capacity.bootstrapCapacity trips bootstrapCapacity breaker sticky', async () => {
+  const storage = installMemoryStorage();
+  // Server that drops `meta.capacity.bootstrapCapacity` deliberately.
+  const rawServer = createMockRepositoryServer({ learners: learnerSnapshot() });
+  const fetchStrip = async (url, init) => {
+    const response = await rawServer.fetch(url, init);
+    if (typeof url === 'string' && url.endsWith('/api/bootstrap')) {
+      const body = await response.json();
+      // Remove the bootstrapCapacity meta so the client counts a miss.
+      const stripped = {
+        ...body,
+        meta: { ...(body.meta || {}), capacity: {} },
+      };
+      return new Response(JSON.stringify(stripped), {
+        status: response.status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return response;
+  };
+
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: fetchStrip,
+    storage,
+    now: () => 1_000,
+  });
+
+  await repositories.hydrate();
+  assert.equal(repositories.persistence.read().breakersDegraded.bootstrapCapacity, false, 'one miss is not enough');
+  await repositories.hydrate();
+  assert.equal(repositories.persistence.read().breakersDegraded.bootstrapCapacity, false, 'two misses is not enough');
+  await repositories.hydrate();
+  // Third miss trips the breaker and it is sticky — no auto-recovery.
+  const snapshot = repositories.persistence.read();
+  assert.equal(snapshot.breakersDegraded.bootstrapCapacity, true, 'third miss trips sticky breaker');
+  assert.equal(snapshot.breakers.bootstrapCapacityMetadata.state, BREAKER_STATES.OPEN);
+});
+
+// ---------------------------------------------------------------------------
+// U3 worker signal allowlist — breakerTransition reuse.
+// ---------------------------------------------------------------------------
+
+test('U9 worker collector: addSignal(breakerTransition) is a legal closed-enum token', async () => {
+  const { CapacityCollector } = await import('../worker/src/logger.js');
+  const collector = new CapacityCollector({
+    requestId: 'ks2_req_12345678-9abc-4def-89ab-123456789abc',
+    endpoint: '/api/subjects/spelling/command',
+    method: 'POST',
+    startedAt: 0,
+  });
+  collector.addSignal('breakerTransition');
+  const emitted = collector.toPublicJSON();
+  assert.ok(Array.isArray(emitted.signals));
+  assert.equal(emitted.signals.filter((token) => token === 'breakerTransition').length, 1);
+  // Vocabulary-drift regression: other imaginary tokens are silently rejected.
+  collector.addSignal('breakerName:parentHubRecentSessions');
+  assert.equal(
+    collector.toPublicJSON().signals.filter((token) => token !== 'breakerTransition').length,
+    0,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Composition: U7 notModified success resets bootstrapCapacityMetadata counter.
+// ---------------------------------------------------------------------------
+
+test('U9 integration: a response with meta.capacity.bootstrapCapacity resets the consecutive-miss counter', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
+  // The mock server never emits bootstrapCapacity metadata by default;
+  // injectResponses lets us flip hydrate responses into an enriched
+  // envelope to simulate a healthy third bootstrap.
+  let requestIndex = 0;
+  const fetchEnriching = async (url, init) => {
+    const response = await server.fetch(url, init);
+    if (typeof url === 'string' && url.endsWith('/api/bootstrap')) {
+      requestIndex += 1;
+      if (requestIndex === 3) {
+        // Healthy response — inject bootstrapCapacity metadata.
+        const body = await response.json();
+        const enriched = {
+          ...body,
+          meta: {
+            ...(body.meta || {}),
+            capacity: {
+              ...(body.meta?.capacity || {}),
+              bootstrapCapacity: { version: 1 },
+            },
+          },
+        };
+        return new Response(JSON.stringify(enriched), {
+          status: response.status,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+    }
+    return response;
+  };
+
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: fetchEnriching,
+    storage,
+    now: () => 1_000,
+  });
+
+  await repositories.hydrate(); // miss 1
+  await repositories.hydrate(); // miss 2
+  // After two misses the counter is 2 but below the 3-threshold — breaker stays closed.
+  assert.equal(repositories.persistence.read().breakersDegraded.bootstrapCapacity, false);
+  await repositories.hydrate(); // SUCCESS — counter resets to 0
+  await repositories.hydrate(); // miss 1 (post-reset)
+  // Only 1 miss in the latest streak — breaker must NOT trip.
+  const snapshot = repositories.persistence.read();
+  assert.equal(snapshot.breakersDegraded.bootstrapCapacity, false);
+  assert.equal(snapshot.breakers.bootstrapCapacityMetadata.state, BREAKER_STATES.CLOSED);
 });
