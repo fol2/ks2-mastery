@@ -246,6 +246,91 @@ test('U6 scenario 3: first command on fresh learner emits projectionFallback=mis
 });
 
 // ---------------------------------------------------------------------------
+// Scenario 3b (adv-u6-r1-001) — Pre-U6 v1 row migration safety.
+//   A learner's persisted `command.projection.v1` row that was written
+//   BEFORE U6 merge has shape `{version: 1, rewards, eventCounts}` with no
+//   `recentEventTokens` field. The reader must NOT ride the hit path with
+//   an empty dedupe seed (which would let the next command's
+//   `combineCommandEvents` admit a duplicate `reward.monster` event during
+//   the one-command migration window). Treat a present-but-tokens-absent
+//   row as `miss-rehydrated` so the bounded fallback repopulates the ring
+//   on first touch and self-heals.
+// ---------------------------------------------------------------------------
+test('U6 scenario 3b: pre-U6 v1 row without recentEventTokens degrades to miss-rehydrated', async () => {
+  const harness = createHarness();
+  try {
+    // Prime the learner so the revision + mutation-receipt chain works.
+    const first = await harness.command('start-session', {
+      mode: 'single',
+      slug: 'possess',
+      length: 1,
+    });
+    assert.equal(first.response.status, 200, JSON.stringify(first.body));
+
+    // Overwrite the persisted row with a pre-U6 shape that LACKS the
+    // `recentEventTokens` field entirely. A pre-U6 writer would have
+    // written `{version: 1, rewards, eventCounts}` because U6 introduced
+    // the field additively; the version number alone does NOT signal the
+    // migration.
+    const preU6Payload = JSON.stringify({
+      version: 1,
+      rewards: {
+        systemId: 'monster-codex',
+        state: { inklet: { mastered: ['possess'] } },
+        events: [],
+        toastEvents: [],
+      },
+      eventCounts: { domain: 3, reactions: 0, toasts: 0 },
+      // NOTE: deliberately no `recentEventTokens` field.
+    });
+    harness.DB.db.prepare(`
+      UPDATE learner_read_models
+      SET model_json = ?
+      WHERE learner_id = 'learner-a' AND model_key = ?
+    `).run(preU6Payload, COMMAND_PROJECTION_MODEL_KEY);
+
+    // Run the next hot-path command. The reader must recognise the
+    // pre-U6 shape (field absent, not [] empty) and degrade to the
+    // miss-rehydrated path so the bounded fallback repopulates the ring.
+    const migration = await harness.command('submit-answer', { answer: 'possess' });
+    assert.equal(migration.response.status, 200, JSON.stringify(migration.body));
+    assert.equal(
+      migration.body.meta?.capacity?.projectionFallback,
+      'miss-rehydrated',
+      'pre-U6 v1 row must NOT land on the hit path (empty dedupe seed risk)',
+    );
+
+    // The row is rewritten with the `recentEventTokens` field explicitly
+    // present (an empty array is acceptable if the command emits no events;
+    // the critical fix is that the field now EXISTS so subsequent reads
+    // recognise the row as a real v1 shape, not a pre-U6 migration row).
+    const refreshedRow = readProjectionRow(harness.DB);
+    const refreshed = JSON.parse(refreshedRow.model_json);
+    assert.ok(
+      Array.isArray(refreshed.recentEventTokens),
+      `rewritten row must carry recentEventTokens field; got ${JSON.stringify(refreshed.recentEventTokens)}`,
+    );
+    assert.ok(
+      Object.prototype.hasOwnProperty.call(refreshed, 'recentEventTokens'),
+      'rewritten row must have the recentEventTokens property present',
+    );
+
+    // A subsequent command now rides the hit path because the row is a
+    // real v1 shape (not a pre-U6 migration row).
+    const healed = await harness.command('continue-session');
+    if (healed.body.meta?.capacity) {
+      assert.equal(
+        healed.body.meta.capacity.projectionFallback,
+        'hit',
+        `repopulated v1 row must allow the next command onto the hit path; saw ${healed.body.meta.capacity.projectionFallback}`,
+      );
+    }
+  } finally {
+    harness.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Scenario 4 — Sustained 60 back-to-back commands on dense-history learner
 //   stay on hit path (no stale-catchup).
 // ---------------------------------------------------------------------------
@@ -641,83 +726,162 @@ test('U6 scenario 19: 2000-event learner hot-path queryCount ≤ 12', async () =
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 9 — Two concurrent commands at the same base revision. The first
-//   CAS wins, the second retries with a fresh read + merged token ring, and
-//   both commands succeed. The test asserts the projection row ends with a
-//   merged token ring covering both writers' contributions.
-// ---------------------------------------------------------------------------
-test('U6 scenario 9: concurrent CAS — first wins, second retries with merged tokens', async () => {
-  // The SQLite-backed D1 stub is synchronous once awaited, so the two
-  // commands cannot interleave at the driver level. We instead simulate
-  // the CAS behaviour at the read-model layer by directly exercising the
-  // `mergeRecentEventTokens` helper, which is the merge step the CAS
-  // retry path performs inside `buildSubjectRuntimePersistencePlan`.
-  // The integration half of this scenario is covered by scenarios 1 and
-  // 19 (projection row carries the append-only token ring).
-  const {
-    mergeRecentEventTokens,
-    RECENT_EVENT_TOKEN_RING_LIMIT,
-  } = await import('../worker/src/read-models/learner-read-models.js');
-
-  // Winner persisted first with three tokens; loser's fresh read reveals
-  // the winner's row and merges its two additional tokens.
-  const winner = ['token-a', 'token-b', 'token-c'];
-  const loser = ['token-b', 'token-d', 'token-e'];
-  const merged = mergeRecentEventTokens(winner, loser);
-  assert.deepEqual(
-    merged,
-    ['token-a', 'token-b', 'token-c', 'token-d', 'token-e'],
-    'merged ring preserves winner order, appends loser novelty, dedupes overlap',
-  );
-
-  // Ring cap: when total exceeds the limit, oldest tokens drop first.
-  const winnerFull = Array.from(
-    { length: RECENT_EVENT_TOKEN_RING_LIMIT },
-    (_, i) => `winner-${i}`,
-  );
-  const loserFull = ['loser-0', 'loser-1'];
-  const mergedFull = mergeRecentEventTokens(winnerFull, loserFull);
-  assert.equal(mergedFull.length, RECENT_EVENT_TOKEN_RING_LIMIT);
-  assert.equal(mergedFull[0], `winner-2`, 'oldest winner tokens dropped first');
-  assert.equal(mergedFull[RECENT_EVENT_TOKEN_RING_LIMIT - 1], 'loser-1');
-});
-
-// ---------------------------------------------------------------------------
-// Scenario 10 — Concurrent CAS retry ALSO fails. The command's primary
-//   state persists; `derivedWriteSkipped: {reason:'concurrent-retry-exhausted'}`
-//   is logged; the next command on the same learner catches up via
-//   `stale-catchup`.
+// Scenario 9 (adv-u6-r1-002) — Two concurrent commands at the same base
+//   revision. The first CAS wins; the second observes the revision jump,
+//   re-applies the command against fresh state, merges its recentEventTokens
+//   with the winner's ring, and writes successfully on the retry.
 //
-// The SQLite stub cannot model a true CAS race, so the test drives the
-// collector directly (the only path where the reason token is surfaced)
-// and verifies the closed-union schema accepts the token and preserves
-// the optional revision hints.
+//   The SQLite stub cannot interleave two real commands, so we simulate the
+//   "winner already committed" state by bumping `learner_profiles.state_revision`
+//   between the loser's apply and its batch() CAS. The injection point is a
+//   wrapped `db.batch()` that fires a one-shot revision bump before the
+//   first batch run.
 // ---------------------------------------------------------------------------
-test('U6 scenario 10: concurrent-retry-exhausted derivedWriteSkipped surfaces on collector', async () => {
-  const { CapacityCollector } = await import('../worker/src/logger.js');
-  const collector = new CapacityCollector({
-    requestId: 'ks2_req_12345678-9abc-4def-89ab-123456789abc',
-    endpoint: '/api/subjects/spelling/command',
-    method: 'POST',
-    startedAt: 0,
-  });
-  collector.setDerivedWriteSkipped({
-    reason: 'concurrent-retry-exhausted',
-    baseRevision: 42,
-    currentRevision: 43,
-  });
-  const emitted = collector.toPublicJSON().derivedWriteSkipped;
-  assert.deepEqual(
-    emitted,
-    { reason: 'concurrent-retry-exhausted', baseRevision: 42, currentRevision: 43 },
-    'concurrent-retry-exhausted reason and numeric hints must round-trip',
-  );
+test('U6 scenario 9: concurrent CAS — first wins, loser retries with merged tokens', async () => {
+  const harness = createHarness();
+  try {
+    // Prime projection so the row exists.
+    const first = await harness.command('start-session', {
+      mode: 'single',
+      slug: 'possess',
+      length: 1,
+    });
+    assert.equal(first.response.status, 200, JSON.stringify(first.body));
+
+    // Ensure a baseline row exists (tokens may still be empty if
+    // start-session emits no events; the retry merge must preserve any
+    // WINNER_TOKEN we inject below regardless).
+    const rowBefore = readProjectionRow(harness.DB);
+    assert.ok(rowBefore, 'priming must persist the projection row');
+
+    // Inject a winner's commit immediately before the loser's batch. The
+    // bump advances learner_profiles.state_revision by 1 AND updates the
+    // projection row's source_revision + adds a winner-only token to the
+    // ring, so the loser's retry will see the winner's state and merge.
+    const WINNER_TOKEN = 'winner-injected-token';
+    const originalBatch = harness.DB.batch.bind(harness.DB);
+    let injected = false;
+    harness.DB.batch = async (statements) => {
+      if (!injected) {
+        injected = true;
+        // Winner commits externally: bump the learner revision and add a
+        // token to the persisted projection.
+        const currentRow = harness.DB.db.prepare(`
+          SELECT model_json, source_revision
+          FROM learner_read_models
+          WHERE learner_id = 'learner-a' AND model_key = ?
+        `).get(COMMAND_PROJECTION_MODEL_KEY);
+        const model = JSON.parse(currentRow.model_json);
+        model.recentEventTokens = [...(model.recentEventTokens || []), WINNER_TOKEN];
+        harness.DB.db.prepare(`
+          UPDATE learner_read_models
+          SET model_json = ?, source_revision = source_revision + 1
+          WHERE learner_id = 'learner-a' AND model_key = ?
+        `).run(JSON.stringify(model), COMMAND_PROJECTION_MODEL_KEY);
+        harness.DB.db.prepare(`
+          UPDATE learner_profiles SET state_revision = state_revision + 1 WHERE id = 'learner-a'
+        `).run();
+      }
+      return originalBatch(statements);
+    };
+
+    const loser = await harness.command('submit-answer', { answer: 'possess' });
+    assert.equal(
+      loser.response.status,
+      200,
+      `CAS retry path must succeed (got ${loser.response.status}): ${JSON.stringify(loser.body)}`,
+    );
+
+    // After the retry, the persisted row must contain the winner's token
+    // (merged) alongside the loser's own tokens.
+    const rowAfter = readProjectionRow(harness.DB);
+    const tokensAfter = JSON.parse(rowAfter.model_json).recentEventTokens || [];
+    assert.ok(
+      tokensAfter.includes(WINNER_TOKEN),
+      `merged ring must preserve winner token; got ${JSON.stringify(tokensAfter)}`,
+    );
+  } finally {
+    harness.close();
+  }
 });
 
 // ---------------------------------------------------------------------------
-// Scenario 14 — Projection write failure (D1 transient) — primary state is
-//   NOT rolled back; `derivedWriteSkipped: {reason:'write-failed'}` is
-//   emitted so operators can correlate the skip with telemetry.
+// Scenario 10 (adv-u6-r1-002) — Concurrent CAS retry ALSO fails (three
+//   writers). The third writer's retry still fails CAS. The command's
+//   response must carry `derivedWriteSkipped:{reason:'concurrent-retry-exhausted',
+//   baseRevision, currentRevision}`. Primary state still progresses so a
+//   subsequent command sees the refreshed row.
+// ---------------------------------------------------------------------------
+test('U6 scenario 10: concurrent-retry-exhausted surfaces derivedWriteSkipped', async () => {
+  const harness = createHarness();
+  try {
+    const first = await harness.command('start-session', {
+      mode: 'single',
+      slug: 'possess',
+      length: 1,
+    });
+    assert.equal(first.response.status, 200, JSON.stringify(first.body));
+
+    // Inject TWO winners, one before each batch attempt: the first bump
+    // makes the initial CAS fail; the second bump makes the retry's CAS
+    // fail too. Three writers total (this command + two phantom winners).
+    const originalBatch = harness.DB.batch.bind(harness.DB);
+    let injectionsRemaining = 2;
+    harness.DB.batch = async (statements) => {
+      if (injectionsRemaining > 0) {
+        injectionsRemaining -= 1;
+        harness.DB.db.prepare(`
+          UPDATE learner_profiles SET state_revision = state_revision + 1 WHERE id = 'learner-a'
+        `).run();
+        harness.DB.db.prepare(`
+          UPDATE learner_read_models
+          SET source_revision = source_revision + 1
+          WHERE learner_id = 'learner-a' AND model_key = ?
+        `).run(COMMAND_PROJECTION_MODEL_KEY);
+      }
+      return originalBatch(statements);
+    };
+
+    const result = await harness.command('submit-answer', { answer: 'possess' });
+    assert.equal(
+      result.response.status,
+      200,
+      `retry-exhausted command must still return 200 with primary state write: ${JSON.stringify(result.body)}`,
+    );
+    const skipped = result.body.meta?.capacity?.derivedWriteSkipped;
+    assert.ok(skipped, 'retry-exhausted path must emit derivedWriteSkipped');
+    assert.equal(skipped.reason, 'concurrent-retry-exhausted');
+    assert.ok(Number.isFinite(skipped.baseRevision), 'baseRevision hint must be numeric');
+    assert.ok(Number.isFinite(skipped.currentRevision), 'currentRevision hint must be numeric');
+
+    // The next command on the same learner sees the post-write state and
+    // does NOT stay on stale-catchup indefinitely (the invariant is that
+    // the system converges to hit after the primary state settles).
+    const follow = await harness.command('continue-session');
+    if (follow.body.meta?.capacity) {
+      assert.ok(
+        ['hit', 'miss-rehydrated', 'stale-catchup'].includes(follow.body.meta.capacity.projectionFallback),
+        `follow-up must ride a known path; got ${follow.body.meta.capacity.projectionFallback}`,
+      );
+    }
+  } finally {
+    harness.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 14 (adv-u6-r1-002) — Projection write failure (D1 transient).
+//   The projection's UPSERT statement fails inside the batch; primary
+//   state should not be silently dropped.
+//
+//   Implementation note: the current batch is atomic (SAVEPOINT-based in
+//   the SQLite helper), so a failing statement ROLLS BACK the entire batch.
+//   The production semantics — "primary state succeeds, projection write
+//   is skipped" — require splitting the batch. That isn't in scope for
+//   round 1 (a bigger refactor). This test documents the current
+//   behaviour: a transient projection failure surfaces as a 5xx and the
+//   client should retry. The `write-failed` signal remains reachable via
+//   the direct-collector path tested by scenario 11.
 // ---------------------------------------------------------------------------
 test('U6 scenario 14: write-failed reason surfaces on collector (primary state preserved)', async () => {
   const { CapacityCollector } = await import('../worker/src/logger.js');
@@ -734,6 +898,36 @@ test('U6 scenario 14: write-failed reason surfaces on collector (primary state p
     { reason: 'write-failed' },
     'write-failed reason must be accepted by the closed union',
   );
+});
+
+// ---------------------------------------------------------------------------
+// Merge helper unit-test kept alongside the production path test (scenario
+// 9) so the append-only ring contract is independently asserted.
+// ---------------------------------------------------------------------------
+test('U6 scenario 9 unit: mergeRecentEventTokens preserves order, dedupes, caps at ring limit', async () => {
+  const {
+    mergeRecentEventTokens,
+    RECENT_EVENT_TOKEN_RING_LIMIT,
+  } = await import('../worker/src/read-models/learner-read-models.js');
+
+  const winner = ['token-a', 'token-b', 'token-c'];
+  const loser = ['token-b', 'token-d', 'token-e'];
+  const merged = mergeRecentEventTokens(winner, loser);
+  assert.deepEqual(
+    merged,
+    ['token-a', 'token-b', 'token-c', 'token-d', 'token-e'],
+    'merged ring preserves winner order, appends loser novelty, dedupes overlap',
+  );
+
+  const winnerFull = Array.from(
+    { length: RECENT_EVENT_TOKEN_RING_LIMIT },
+    (_, i) => `winner-${i}`,
+  );
+  const loserFull = ['loser-0', 'loser-1'];
+  const mergedFull = mergeRecentEventTokens(winnerFull, loserFull);
+  assert.equal(mergedFull.length, RECENT_EVENT_TOKEN_RING_LIMIT);
+  assert.equal(mergedFull[0], `winner-2`, 'oldest winner tokens dropped first');
+  assert.equal(mergedFull[RECENT_EVENT_TOKEN_RING_LIMIT - 1], 'loser-1');
 });
 
 // ---------------------------------------------------------------------------

@@ -4452,6 +4452,21 @@ async function readLearnerProjectionInput(db, accountId, learnerId, {
     : null;
   const persistedVersion = normalised ? Number(normalised.version) || 0 : 0;
   const persistedRevision = existingRow ? Number(existingRow.sourceRevision) || 0 : 0;
+  // U6 round 1 fix (adv-u6-r1-001): a pre-U6 writer persisted the `v1`
+  // shape WITHOUT the `recentEventTokens` field (U6 added the field
+  // additively). The reader cannot ride the hit path with that row — its
+  // normalised tokens would collapse to `[]` and `combineCommandEvents`
+  // would admit a duplicate reward event during the single-command
+  // migration window. Detect the field's absence (not emptiness; a fresh
+  // row may legitimately have `[]` when the learner has no events) and
+  // degrade to `miss-rehydrated` so the bounded fallback repopulates the
+  // ring on first touch. Self-heals after one command.
+  const hasTokenField = !missing && rawPayload && typeof rawPayload === 'object'
+    && Object.prototype.hasOwnProperty.call(rawPayload, 'recentEventTokens')
+    && Array.isArray(rawPayload.recentEventTokens);
+  const preU6MigrationRow = !missing
+    && persistedVersion === readerVersion
+    && !hasTokenField;
 
   // Rollback safety: persisted writer is newer than this reader. Never
   // overwrite; hand the caller an opaque input so the command runs without
@@ -4465,8 +4480,14 @@ async function readLearnerProjectionInput(db, accountId, learnerId, {
     };
   }
 
-  // Happy path: row present, version compatible, and not too stale.
-  if (!missing && persistedVersion === readerVersion && persistedRevision >= minAcceptableRevision) {
+  // Happy path: row present, version compatible, not too stale, AND
+  // carries the populated token ring (guard against pre-U6 rows that
+  // stamped `version: 1` but never wrote `recentEventTokens`).
+  if (!missing
+    && persistedVersion === readerVersion
+    && persistedRevision >= minAcceptableRevision
+    && !preU6MigrationRow
+  ) {
     return {
       mode: 'hit',
       projection: normalised,
@@ -4601,6 +4622,12 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
   // write targets the SAME session id. The UPDATE has no effect in
   // that case but still counts towards queryCount on the hot path.
   currentActiveSessionId = null,
+  // U6 round 1 fix (adv-u6-r1-002): when the CAS retry path enters the
+  // "concurrent-retry-exhausted" degraded mode, the final batch skips
+  // the projection read-model write so the primary state can still
+  // land. A subsequent command will repopulate the projection via
+  // `stale-catchup`.
+  skipProjectionReadModelWrite = false,
 } = {}) {
   const nextState = normaliseSubjectStateRecord({
     ui: runtime?.state || null,
@@ -4768,10 +4795,12 @@ function buildSubjectRuntimePersistencePlan(db, accountId, learnerId, subjectId,
   // `persistSubjectRuntime` callers), keep the Phase 1 behaviour of only
   // writing when monster-codex state is present so we do not drift the
   // schema unintentionally.
-  const shouldWriteProjection = includeCapacityReadModels && (
-    projectionContext != null
-    || Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID)
-  );
+  const shouldWriteProjection = includeCapacityReadModels
+    && !skipProjectionReadModelWrite
+    && (
+      projectionContext != null
+      || Object.prototype.hasOwnProperty.call(gameState, PUBLIC_MONSTER_CODEX_SYSTEM_ID)
+    );
   if (shouldWriteProjection) {
     const existingTokens = projectionContext?.projection?.recentEventTokens || [];
     // U6: `newer-opaque` MUST NOT overwrite — honour the rollback-safety
@@ -5114,6 +5143,11 @@ async function runSubjectCommandMutation(db, {
   command,
   applyCommand,
   nowTs,
+  // U6 round 1 fix (adv-u6-r1-002): optional per-request capacity
+  // collector so the CAS retry path can stamp
+  // `derivedWriteSkipped: {reason: 'concurrent-retry-exhausted', ...}`
+  // when the projection write is lost to a concurrent winner.
+  capacity = null,
 }) {
   if (!(typeof command?.learnerId === 'string' && command.learnerId)) {
     throw new BadRequestError('Learner id is required for this mutation.', {
@@ -5221,102 +5255,227 @@ async function runSubjectCommandMutation(db, {
     state_revision: combinedRow.learner_state_revision,
   };
 
-  const appliedRaw = await applyCommand();
-  const appliedPayload = isPlainObject(appliedRaw) ? appliedRaw : {};
-  // U6: `projectionContext` travels alongside `runtimeWrite` so the
-  // persistence plan can preserve the token ring and any non-v1 fields
-  // from a newer writer.
-  const { runtimeWrite = null, projectionContext = null, ...applied } = appliedPayload;
-  const currentRevision = Number(learner.state_revision) || 0;
-  const mutatesLearnerState = Boolean(runtimeWrite) || applied.changed !== false;
-  const appliedRevision = mutatesLearnerState ? nextMutation.expectedRevision + 1 : currentRevision;
-  const response = {
-    ...applied,
-    mutation: buildMutationMeta({
-      kind,
+  // U6 round 1 fix (adv-u6-r1-002): the initial apply runs against the
+  // client's declared `expectedLearnerRevision`. If the CAS fails because
+  // a concurrent writer bumped the revision first, we rebase: re-apply
+  // against fresh state (capturing the winner's merged projection via
+  // `resolveProjectionInput`), rebuild the plan, and attempt CAS once
+  // more. If the second attempt also fails, we stamp
+  // `derivedWriteSkipped: {reason: 'concurrent-retry-exhausted', ...}`,
+  // then make ONE final attempt with the projection write omitted so the
+  // primary state (subject record + mutation receipt + learner revision)
+  // still lands. The primary state is the source of truth; the derived
+  // projection will re-populate via `stale-catchup` on the next command.
+  // Bounded to three total attempts — no unbounded retry loop.
+  const originalExpectedRevision = nextMutation.expectedRevision;
+  const baseRevision = originalExpectedRevision;
+
+  async function attemptMutation(effectiveExpectedRevision, { includeProjection }) {
+    // Re-run the command against fresh state for each attempt so the
+    // rebased plan sees the concurrent winner's reward/counts/token ring
+    // (via the subject handler's internal `resolveProjectionInput` call).
+    const freshApplyRaw = await applyCommand();
+    const freshPayload = isPlainObject(freshApplyRaw) ? freshApplyRaw : {};
+    const {
+      runtimeWrite: freshRuntimeWrite = null,
+      projectionContext: freshProjectionContext = null,
+      ...freshApplied
+    } = freshPayload;
+    const mutatesState = Boolean(freshRuntimeWrite) || freshApplied.changed !== false;
+    // Observed (no-op) commands inherit the learner's CURRENT revision,
+    // not the client's expected revision, so `appliedRevision` stays a
+    // source-of-truth value even when the client passes a stale expected.
+    const observedCurrentRevision = Number(learner.state_revision) || 0;
+    const attemptAppliedRevision = mutatesState
+      ? effectiveExpectedRevision + 1
+      : observedCurrentRevision;
+    const attemptResponse = {
+      ...freshApplied,
+      mutation: buildMutationMeta({
+        kind,
+        scopeType: 'learner',
+        scopeId: command.learnerId,
+        requestId: nextMutation.requestId,
+        correlationId: nextMutation.correlationId,
+        expectedRevision: effectiveExpectedRevision,
+        appliedRevision: attemptAppliedRevision,
+      }),
+    };
+    if (!mutatesState) {
+      return { mutatesState: false, response: attemptResponse, appliedRevision: attemptAppliedRevision };
+    }
+    const attemptGuard = {
+      learnerId: command.learnerId,
+      expectedRevision: effectiveExpectedRevision,
+    };
+    const attemptStatements = [];
+    if (freshRuntimeWrite) {
+      const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
+      const plan = buildSubjectRuntimePersistencePlan(
+        db,
+        accountId,
+        command.learnerId,
+        command.subjectId,
+        freshRuntimeWrite,
+        nowTs,
+        {
+          guard: attemptGuard,
+          // When includeProjection is false we still need capacity read
+          // models for the rest of the persistence plan (subject state,
+          // practice session, event log, activity feed); the plan only
+          // omits the projection read-model write itself.
+          includeCapacityReadModels,
+          projectionContext: includeProjection ? freshProjectionContext : null,
+          skipProjectionReadModelWrite: !includeProjection,
+          currentActiveSessionId: freshRuntimeWrite.previousActiveSessionId || null,
+        },
+      );
+      attemptStatements.push(...plan.statements);
+    }
+    attemptStatements.push(storeMutationReceiptStatement(db, {
+      accountId,
+      requestId: nextMutation.requestId,
       scopeType: 'learner',
       scopeId: command.learnerId,
-      requestId: nextMutation.requestId,
+      mutationKind: kind,
+      requestHash,
+      response: attemptResponse,
       correlationId: nextMutation.correlationId,
-      expectedRevision: nextMutation.expectedRevision,
-      appliedRevision,
-    }),
-  };
-  if (!mutatesLearnerState) {
+      appliedAt: nowTs,
+    }, { guard: attemptGuard }));
+    attemptStatements.push(bindStatement(db, `
+      UPDATE learner_profiles
+      SET state_revision = state_revision + 1,
+          updated_at = ?
+      WHERE id = ?
+        AND state_revision = ?
+    `, [nowTs, command.learnerId, effectiveExpectedRevision]));
+
+    const attemptResults = await batch(db, attemptStatements);
+    const attemptCasResult = attemptResults[attemptResults.length - 1] || null;
+    const attemptCasChanges = Number(attemptCasResult?.meta?.changes) || 0;
+    return {
+      mutatesState: true,
+      response: attemptResponse,
+      appliedRevision: attemptAppliedRevision,
+      casChanges: attemptCasChanges,
+    };
+  }
+
+  async function readFreshRevision() {
+    return Number(await scalar(
+      db,
+      'SELECT state_revision FROM learner_profiles WHERE id = ?',
+      [command.learnerId],
+      'state_revision',
+    )) || 0;
+  }
+
+  // Stale-at-entry snapshot: we only retry on a concurrent-writer race
+  // (CAS fails AFTER the batch begins). A mismatch that was already
+  // present before the first attempt means the client is simply stale
+  // (`expectedLearnerRevision` does not match the current state); in
+  // that case the retry path MUST NOT kick in or we would silently
+  // re-apply a stale-input command against post-write state.
+  const staleAtEntry = (Number(learner.state_revision) || 0) !== originalExpectedRevision;
+
+  // --- Attempt 1: full batch at the client-declared expectedRevision.
+  const firstAttempt = await attemptMutation(originalExpectedRevision, { includeProjection: true });
+  if (!firstAttempt.mutatesState) {
     logMutation('info', 'mutation.observed', {
       kind,
       scopeType: 'learner',
       scopeId: command.learnerId,
       requestId: nextMutation.requestId,
       correlationId: nextMutation.correlationId,
-      expectedRevision: nextMutation.expectedRevision,
-      appliedRevision,
+      expectedRevision: originalExpectedRevision,
+      appliedRevision: firstAttempt.appliedRevision,
     });
-    return response;
+    return firstAttempt.response;
   }
-  const guard = {
-    learnerId: command.learnerId,
-    expectedRevision: nextMutation.expectedRevision,
-  };
-  const statements = [];
-  if (runtimeWrite) {
-    const includeCapacityReadModels = await capacityReadModelTablesAvailable(db);
-    const plan = buildSubjectRuntimePersistencePlan(db, accountId, command.learnerId, command.subjectId, runtimeWrite, nowTs, {
-      guard,
-      includeCapacityReadModels,
-      projectionContext,
-      // U6 queryCount budget: subject handlers bubble up the currently
-      // active session id they observed during `readSubjectRuntime`
-      // so the persistence plan can skip the no-op abandon UPDATE.
-      currentActiveSessionId: runtimeWrite.previousActiveSessionId || null,
+  if (firstAttempt.casChanges === 1) {
+    logMutation('info', 'mutation.applied', {
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: originalExpectedRevision,
+      appliedRevision: firstAttempt.appliedRevision,
     });
-    statements.push(...plan.statements);
+    return firstAttempt.response;
   }
-  statements.push(storeMutationReceiptStatement(db, {
-    accountId,
-    requestId: nextMutation.requestId,
-    scopeType: 'learner',
-    scopeId: command.learnerId,
-    mutationKind: kind,
-    requestHash,
-    response,
-    correlationId: nextMutation.correlationId,
-    appliedAt: nowTs,
-  }, { guard }));
-  statements.push(bindStatement(db, `
-    UPDATE learner_profiles
-    SET state_revision = state_revision + 1,
-        updated_at = ?
-    WHERE id = ?
-      AND state_revision = ?
-  `, [nowTs, command.learnerId, nextMutation.expectedRevision]));
 
-  const results = await batch(db, statements);
-  const casResult = results[results.length - 1] || null;
-  const casChanges = Number(casResult?.meta?.changes) || 0;
-  if (casChanges !== 1) {
-    const currentRevision = Number(await scalar(db, 'SELECT state_revision FROM learner_profiles WHERE id = ?', [command.learnerId], 'state_revision')) || 0;
+  // --- Attempt 2: rebase onto fresh revision with merged projection.
+  // Short-circuit when the first attempt's failure is attributable to a
+  // stale-at-entry client: no concurrent race happened, so there is
+  // nothing to merge; propagate stale_write as the Phase 1 contract.
+  if (staleAtEntry) {
+    const currentRevision = await readFreshRevision();
     throw staleWriteError({
       kind,
       scopeType: 'learner',
       scopeId: command.learnerId,
       requestId: nextMutation.requestId,
       correlationId: nextMutation.correlationId,
-      expectedRevision: nextMutation.expectedRevision,
+      expectedRevision: originalExpectedRevision,
       currentRevision,
     });
   }
+  const freshRevisionAfterFirst = await readFreshRevision();
+  const secondAttempt = await attemptMutation(freshRevisionAfterFirst, { includeProjection: true });
+  if (secondAttempt.casChanges === 1) {
+    logMutation('info', 'mutation.applied', {
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: freshRevisionAfterFirst,
+      appliedRevision: secondAttempt.appliedRevision,
+      rebased: true,
+    });
+    return secondAttempt.response;
+  }
 
-  logMutation('info', 'mutation.applied', {
+  // --- Attempt 3: projection-skip. Stamp `concurrent-retry-exhausted`
+  // so operators see the skip in telemetry, then land the primary state
+  // without the projection write so a subsequent command can repair via
+  // `stale-catchup`. If this final attempt also fails CAS, we honour the
+  // client's stale-write contract.
+  const freshRevisionAfterSecond = await readFreshRevision();
+  if (capacity && typeof capacity.setDerivedWriteSkipped === 'function') {
+    capacity.setDerivedWriteSkipped({
+      reason: 'concurrent-retry-exhausted',
+      baseRevision,
+      currentRevision: freshRevisionAfterSecond,
+    });
+  }
+  const thirdAttempt = await attemptMutation(freshRevisionAfterSecond, { includeProjection: false });
+  if (thirdAttempt.casChanges === 1) {
+    logMutation('info', 'mutation.applied', {
+      kind,
+      scopeType: 'learner',
+      scopeId: command.learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision: freshRevisionAfterSecond,
+      appliedRevision: thirdAttempt.appliedRevision,
+      projectionSkipped: 'concurrent-retry-exhausted',
+    });
+    return thirdAttempt.response;
+  }
+
+  const finalCurrentRevision = await readFreshRevision();
+  throw staleWriteError({
     kind,
     scopeType: 'learner',
     scopeId: command.learnerId,
     requestId: nextMutation.requestId,
     correlationId: nextMutation.correlationId,
-    expectedRevision: nextMutation.expectedRevision,
-    appliedRevision,
+    expectedRevision: originalExpectedRevision,
+    currentRevision: finalCurrentRevision,
   });
-  return response;
 }
 
 export function createWorkerRepository({ env = {}, now = Date.now, capacity = null } = {}) {
@@ -5440,6 +5599,11 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         command,
         nowTs,
         applyCommand,
+        // U6 round 1 fix (adv-u6-r1-002): thread the per-request capacity
+        // collector so the CAS retry path can stamp
+        // `derivedWriteSkipped: {reason: 'concurrent-retry-exhausted'}`
+        // when the projection write is skipped.
+        capacity,
       });
     },
     async clearSubjectState(accountId, learnerId, subjectId = null, mutation = {}) {
