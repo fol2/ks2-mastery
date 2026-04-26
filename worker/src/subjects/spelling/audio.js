@@ -12,11 +12,19 @@ function shouldResolveSessionSentenceCanonically(state = null) {
   const session = state?.phase === 'session' ? state.session : null;
   const card = session?.currentCard || null;
   const word = card?.word || null;
+  const prompt = card?.prompt || null;
   const sentence = cleanText(card?.prompt?.sentence);
   if (!word || !sentence) return false;
+  const promptWord = cleanText(prompt?.word);
+  const promptAccepted = Array.isArray(prompt?.accepted)
+    ? prompt.accepted.map((item) => cleanText(item)).filter(Boolean)
+    : [];
+  const wordValue = cleanText(word.word);
+  const promptOverridesWord = Boolean(promptWord && wordValue && promptWord !== wordValue);
+  const promptOverridesAccepted = promptAccepted.length > 0;
   const rawSentences = Array.isArray(word.sentences) ? word.sentences : [];
   const sentences = rawSentences.map((item) => cleanText(item)).filter(Boolean);
-  if (sentences.length <= 1) return true;
+  if (sentences.length <= 1) return promptOverridesWord || promptOverridesAccepted;
   return !sentences.includes(sentence);
 }
 

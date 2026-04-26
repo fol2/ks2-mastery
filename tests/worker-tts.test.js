@@ -442,6 +442,8 @@ test('spelling session TTS resolves sentence index from canonical word sentences
                 slug: word.slug,
                 word: decoratedWord,
                 prompt: {
+                  word: word.word,
+                  accepted: [word.word],
                   sentence,
                   cloze: '__________ voted on the change.',
                 },
@@ -526,6 +528,65 @@ test('spelling session TTS avoids content reads when runtime word sentences are 
   });
 
   assert.equal(request.sentenceIndex, 5);
+  assert.equal(contentReads, 0);
+});
+
+test('spelling session TTS avoids content reads for genuine single-sentence cards', async () => {
+  const learnerId = 'learner-a';
+  const sessionId = 'session-a';
+  const word = {
+    slug: 'single-card',
+    word: 'single',
+    sentence: 'The single card has one sentence.',
+    sentences: ['The single card has one sentence.'],
+  };
+  const sentence = word.sentence;
+  const promptToken = await sha256([
+    'spelling-prompt-v1',
+    learnerId,
+    sessionId,
+    word.slug,
+    word.word,
+    sentence,
+  ].join('|'));
+  let contentReads = 0;
+  const repository = {
+    async readSubjectRuntime() {
+      return {
+        subjectRecord: {
+          ui: {
+            phase: 'session',
+            session: {
+              id: sessionId,
+              currentCard: {
+                slug: word.slug,
+                word,
+                prompt: {
+                  sentence,
+                  cloze: 'The _______ card has one sentence.',
+                },
+              },
+            },
+          },
+        },
+      };
+    },
+    async readSpellingRuntimeContent() {
+      contentReads += 1;
+      throw new Error('Single-sentence runtime cards should not force canonical content reads.');
+    },
+  };
+
+  const request = await resolveSpellingAudioRequest({
+    repository,
+    accountId: 'adult-a',
+    body: {
+      learnerId,
+      promptToken,
+    },
+  });
+
+  assert.equal(request.sentenceIndex, 0);
   assert.equal(contentReads, 0);
 });
 
