@@ -66,7 +66,10 @@ export function PanelHeader({
       <div className="card-header">
         <div>
           <div className="eyebrow">{eyebrow}</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>{title}</h3>
+          {/* SH2-U8: inline style prop migrated to `.admin-panel-header-title`
+              (font-size override 1.2rem vs .section-title default 1.35rem).
+              See docs/hardening/csp-inline-style-inventory.md. */}
+          <h3 className="section-title admin-panel-header-title">{title}</h3>
           {subtitle ? <p className="small muted">{subtitle}</p> : null}
           {headerExtras}
         </div>

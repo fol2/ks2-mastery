@@ -180,7 +180,9 @@ export function MonsterVisualFieldControls({
             />
           ))}
         </div>
-        <div className="actions" style={{ marginTop: 12 }}>
+        {/* SH2-U8: inline style prop migrated to `.monster-visual-field-controls-actions`
+            (see docs/hardening/csp-inline-style-inventory.md). */}
+        <div className="actions monster-visual-field-controls-actions">
           <button
             className="btn good"
             type="button"

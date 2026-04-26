@@ -54,11 +54,18 @@ function ForbiddenNotice({ onSignIn }) {
         <p className="subtitle" data-testid="auth-forbidden-body">
           This account is not permitted to view the page you asked for. Return home to continue.
         </p>
-        <div className="actions" style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+        {/* SH2-U8: inline style props migrated to `.auth-panel-actions`; the
+            `#3E6FA8` inline background is dropped in favour of `.btn.primary`'s
+            default `var(--btn-accent, var(--brand))`. In LIGHT mode `--brand`
+            is `#3E6FA8` (pixel-identical to the removed inline). In DARK mode
+            `--brand` is `#6E9ED6` — this is an INTENTIONAL theme unification:
+            the previous inline hard-locked the light hex in every theme, which
+            was theme-blind. Post-U8, the button now follows theme. See
+            docs/hardening/csp-inline-style-inventory.md "Dark-mode classification". */}
+        <div className="actions auth-panel-actions">
           <button
             className="btn primary lg"
             type="button"
-            style={{ background: '#3E6FA8' }}
             data-action="auth-forbidden-return-home"
             onClick={handleReturn}
           >
@@ -95,11 +102,17 @@ function AuthTransientErrorNotice({ onRetry }) {
         <p className="subtitle" data-testid="auth-transient-error-body">
           We couldn&apos;t reach the sign-in service just now. Please try again in a moment.
         </p>
-        <div className="actions" style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
+        {/* SH2-U8: inline style props migrated to `.auth-panel-actions`; the
+            `#3E6FA8` inline background is dropped in favour of `.btn.primary`'s
+            default `var(--btn-accent, var(--brand))`. Light-mode `--brand` is
+            `#3E6FA8` (pixel-identical); dark-mode `--brand` is `#6E9ED6` —
+            INTENTIONAL theme unification (the inline previously hard-locked
+            the light hex across all themes). See
+            docs/hardening/csp-inline-style-inventory.md "Dark-mode classification". */}
+        <div className="actions auth-panel-actions">
           <button
             className="btn primary lg"
             type="button"
-            style={{ background: '#3E6FA8' }}
             data-action="auth-transient-error-retry"
             onClick={handleRetry}
           >
@@ -205,8 +218,10 @@ function AuthSurfaceStandard({ initialMode = 'login', initialError = '', onSubmi
         <div className="eyebrow">KS2 Mastery</div>
         <h1 className="title">{isRegister ? 'Create your parent account' : 'Sign in to continue'}</h1>
         <p className="subtitle">Your learner profiles and spelling progress sync through the KS2 Mastery cloud backend.</p>
+        {/* SH2-U8: inline style prop migrated to `.auth-standard-error` class
+            (see docs/hardening/csp-inline-style-inventory.md). */}
         {error && (
-          <div className="feedback bad" role="alert" aria-live="polite" style={{ marginTop: 16 }}>
+          <div className="feedback bad auth-standard-error" role="alert" aria-live="polite">
             {error}
           </div>
         )}
@@ -227,7 +242,13 @@ function AuthSurfaceStandard({ initialMode = 'login', initialError = '', onSubmi
               disabled={busy}
             />
           </label>
-          <button className="btn primary lg" style={{ background: '#3E6FA8' }} type="submit" disabled={busy}>
+          {/* SH2-U8: `#3E6FA8` inline background dropped; `.btn.primary` uses
+              `var(--btn-accent, var(--brand))` — pixel-identical in light mode
+              (`--brand: #3E6FA8`) and INTENTIONALLY theme-aware in dark mode
+              (`--brand: #6E9ED6`). The previous inline hard-locked the light
+              hex across both themes. See
+              docs/hardening/csp-inline-style-inventory.md "Dark-mode classification". */}
+          <button className="btn primary lg" type="submit" disabled={busy}>
             {isRegister ? 'Create account' : 'Sign in'}
           </button>
         </form>
