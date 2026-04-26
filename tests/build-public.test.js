@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -25,7 +25,15 @@ test('public build emits the React app bundle entrypoint', () => {
   const visualManifest = readFileSync('src/platform/game/monster-asset-manifest.js', 'utf8');
   const manifestHash = visualManifest.match(/"manifestHash": "([^"]+)"/)?.[1] || '';
   assert.ok(manifestHash, 'expected generated monster visual manifest hash');
-  assert.match(appBundle, new RegExp(manifestHash));
+  // manifestHash can live in any chunk after SH2-U10 code-split (#322).
+  // Walk every .js chunk and assert at least one contains it.
+  const bundleChunks = readdirSync('dist/public/src/bundles/')
+    .filter((f) => f.endsWith('.js'))
+    .map((f) => readFileSync(`dist/public/src/bundles/${f}`, 'utf8'));
+  assert.ok(
+    bundleChunks.some((content) => content.includes(manifestHash)),
+    'manifestHash must be present in at least one production bundle chunk',
+  );
   assert.match(appBundle, /\/api\/admin\/monster-visual-config\/draft/);
   assert.doesNotMatch(appBundle, /__ks2(HomeSurface|CodexSurface|SubjectTopNavSurface)/);
   assert.doesNotMatch(appBundle, /data-home-mount|data-subject-topnav-mount/);
