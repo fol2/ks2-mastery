@@ -532,6 +532,123 @@ test('monsterSummaryFromState routes Grammar state through the normaliser for re
     'Concordium mastered count must include the retired-id concept via the unioned view');
 });
 
+// -------- Phase 4 U3: cross-release retired-id census ----------------------
+//
+// The normaliser's release-id resolution contract: `releaseIdForEntry(entry,
+// releaseId)` returns the PASSED releaseId (first precedence) when non-
+// empty; entry.releaseId is ONLY consulted when the passed value is null.
+// `normaliseGrammarRewardState` always passes `releaseId = GRAMMAR_REWARD
+// _RELEASE_ID` to `releaseIdForEntry`, so retired entries are always
+// re-scoped to the CURRENT release id. A retired entry's mastery keys
+// prefixed with a NON-current release id (e.g., 'grammar:v7:*') therefore
+// silently drop — this is the documented current-release-only contract,
+// and the census tests below pin it.
+
+test('Phase 4 U3 cross-release census: Glossbloom current-release keys → normaliser unions into Concordium aggregate', () => {
+  const currentKey = grammarMasteryKey('noun_phrases');
+  const state = {
+    glossbloom: { caught: true, mastered: [currentKey], releaseId: GRAMMAR_REWARD_RELEASE_ID },
+    concordium: { mastered: [], caught: false },
+  };
+  const view = normaliseGrammarRewardState(state);
+  const conceptSlots = new Set(view.concordium.mastered.map((key) => key.split(':').pop()));
+  assert.equal(conceptSlots.has('noun_phrases'), true,
+    'Glossbloom (retired) current-release key unions into Concordium aggregate');
+  assert.equal(view.concordium.caught, true);
+});
+
+test('Phase 4 U3 cross-release census: Loomrill current-release keys → normaliser unions into Concordium aggregate (retired Flow/Linkage)', () => {
+  const currentKey = grammarMasteryKey('adverbials');
+  const state = {
+    loomrill: { caught: true, mastered: [currentKey], releaseId: GRAMMAR_REWARD_RELEASE_ID },
+    concordium: { mastered: [], caught: false },
+  };
+  const view = normaliseGrammarRewardState(state);
+  const conceptSlots = new Set(view.concordium.mastered.map((key) => key.split(':').pop()));
+  assert.equal(conceptSlots.has('adverbials'), true);
+  assert.equal(view.concordium.caught, true);
+});
+
+test('Phase 4 U3 cross-release census: Mirrane current-release keys → normaliser unions into Concordium aggregate (retired Voice/Role)', () => {
+  const currentKey = grammarMasteryKey('active_passive');
+  const state = {
+    mirrane: { caught: true, mastered: [currentKey], releaseId: GRAMMAR_REWARD_RELEASE_ID },
+    concordium: { mastered: [], caught: false },
+  };
+  const view = normaliseGrammarRewardState(state);
+  const conceptSlots = new Set(view.concordium.mastered.map((key) => key.split(':').pop()));
+  assert.equal(conceptSlots.has('active_passive'), true);
+  assert.equal(view.concordium.caught, true);
+});
+
+test('Phase 4 U3 cross-release census: all three retired ids populated under current release → Concordium unions 5 distinct concept slots', () => {
+  const state = {
+    glossbloom: {
+      caught: true,
+      mastered: [
+        grammarMasteryKey('noun_phrases'),
+        grammarMasteryKey('word_classes'),
+      ],
+      releaseId: GRAMMAR_REWARD_RELEASE_ID,
+    },
+    loomrill: {
+      caught: true,
+      mastered: [
+        grammarMasteryKey('adverbials'),
+        grammarMasteryKey('pronouns_cohesion'),
+      ],
+      releaseId: GRAMMAR_REWARD_RELEASE_ID,
+    },
+    mirrane: {
+      caught: true,
+      mastered: [grammarMasteryKey('active_passive')],
+      releaseId: GRAMMAR_REWARD_RELEASE_ID,
+    },
+    concordium: { mastered: [], caught: false },
+  };
+  const view = normaliseGrammarRewardState(state);
+  const conceptSlots = new Set(view.concordium.mastered.map((key) => key.split(':').pop()));
+  assert.equal(conceptSlots.size, 5);
+  assert.deepEqual(
+    [...conceptSlots].sort(),
+    ['active_passive', 'adverbials', 'noun_phrases', 'pronouns_cohesion', 'word_classes'],
+  );
+  assert.equal(view.concordium.caught, true);
+});
+
+test('Phase 4 U3 cross-release census: non-current-release prefix keys drop silently (documented contract; same as named shape 7)', () => {
+  // A retired entry's mastery key with a NON-current release prefix silently
+  // drops from the union because `normaliseGrammarRewardState` always re-
+  // scopes retired entries to the CURRENT release id (not entry.releaseId).
+  // The `caught` flag still surfaces via `caughtFromRetired` so Concordium
+  // stays caught — the user-trust contract holds at the Concordium level.
+  const state = {
+    glossbloom: { caught: true, mastered: ['grammar:v7:noun_phrases'], releaseId: 'v7' },
+    concordium: { mastered: [], caught: false },
+  };
+  const view = normaliseGrammarRewardState(state);
+  // Mastered empty — v7 prefix mismatch with current release id.
+  assert.deepEqual(view.concordium.mastered, [],
+    'v7-prefixed retired-id mastery key does not survive normalisation (current-release-only contract)');
+  // But caught surfaces via caughtFromRetired.
+  assert.equal(view.concordium.caught, true,
+    'Concordium.caught preserved via caughtFromRetired (user-trust contract)');
+});
+
+test('Phase 4 U3 cross-release census: retired + current concordium for DIFFERENT concepts → aggregate unions both', () => {
+  const retiredKey = grammarMasteryKey('noun_phrases');
+  const currentConcordiumKey = grammarMasteryKey('modal_verbs');
+  const state = {
+    glossbloom: { caught: true, mastered: [retiredKey], releaseId: GRAMMAR_REWARD_RELEASE_ID },
+    concordium: { mastered: [currentConcordiumKey], caught: true, releaseId: GRAMMAR_REWARD_RELEASE_ID },
+  };
+  const view = normaliseGrammarRewardState(state);
+  const conceptSlots = new Set(view.concordium.mastered.map((key) => key.split(':').pop()));
+  assert.equal(conceptSlots.size, 2);
+  assert.equal(conceptSlots.has('noun_phrases'), true);
+  assert.equal(conceptSlots.has('modal_verbs'), true);
+});
+
 test('monsterSummaryFromSpellingAnalytics routes persisted branch state through the normaliser', () => {
   const preFlipKey = grammarMasteryKey('word_classes');
   const learnerId = 'learner-retired-id-only';
