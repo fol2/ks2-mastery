@@ -455,6 +455,12 @@ const PROPERTY_SEED_RAW = process.env.PROPERTY_SEED;
 const PROPERTY_SEED = PROPERTY_SEED_RAW !== undefined && PROPERTY_SEED_RAW !== ''
   ? Number(PROPERTY_SEED_RAW)
   : CANONICAL_SEED;
+// Hard fail on NaN — `Number('fourty-two')` silently becomes NaN, which then
+// coerces to 0 under `>>> 0` in makeSeededRandom. Catch it at module load so
+// a typo in PROPERTY_SEED surfaces immediately instead of running as seed 0.
+if (PROPERTY_SEED_RAW !== undefined && PROPERTY_SEED_RAW !== '' && !Number.isFinite(PROPERTY_SEED)) {
+  throw new Error(`PROPERTY_SEED must be a finite integer, got raw value: ${JSON.stringify(PROPERTY_SEED_RAW)}`);
+}
 if (PROPERTY_SEED_RAW !== undefined && PROPERTY_SEED_RAW !== '' && Number.isFinite(PROPERTY_SEED)) {
   // Log on test entry so the seed is always captured in CI output even if
   // the run passes. The nightly workflow's failure path greps this line too.
@@ -484,6 +490,20 @@ const PROMOTED_EXAMPLES = Object.freeze([
   // },
 ]);
 
+// Module-load-time validation of PROMOTED_EXAMPLES — if a typo lands in a
+// promoted counterexample (e.g. 'guardian-wrongx'), every PR and every nightly
+// would cascade-block. Validate against ACTION_SET up front with a clear error
+// so the root cause is obvious in the failure output.
+for (const example of PROMOTED_EXAMPLES) {
+  for (const action of example.actions) {
+    if (!ACTION_SET.includes(action)) {
+      throw new Error(
+        `[PROMOTED_EXAMPLES] Unknown action "${action}" in example "${example.label}" — check shrunk counterexample for typos (valid actions: ${ACTION_SET.join(', ')})`,
+      );
+    }
+  }
+}
+
 // =============================================================================
 // 1. Canonical CI suite — PROMOTED_EXAMPLES first, then 200 seeded random
 // sequences. When PROPERTY_SEED is set the whole sweep re-runs under that
@@ -492,9 +512,16 @@ const PROMOTED_EXAMPLES = Object.freeze([
 
 if (PROMOTED_EXAMPLES.length > 0) {
   test('U8b canonical: promoted counterexamples from nightly variable-seed probe hold Mega-never-revoked', () => {
-    for (const example of PROMOTED_EXAMPLES) {
-      const harness = makeHarness({ seed: example.seed, learnerId: `learner-promoted-${example.label}` });
-      runSequence(harness, example.actions, { label: `promoted-${example.label}` });
+    try {
+      for (const example of PROMOTED_EXAMPLES) {
+        const harness = makeHarness({ seed: example.seed, learnerId: `learner-promoted-${example.label}` });
+        runSequence(harness, example.actions, { label: `promoted-${example.label}` });
+      }
+    } catch (err) {
+      // Distinct prefix from [mega-invariant] so the workflow Issue body
+      // accurately attributes the failure to the promoted-examples slot.
+      const message = err && err.message ? err.message : String(err);
+      throw new Error(`[promoted-examples] FAILED :: ${message}`);
     }
   });
 }
@@ -506,19 +533,24 @@ test(`U8b canonical: 200 seeded random sequences (seed ${PROPERTY_SEED}, length 
   // shadows PROPERTY_SEED with a random value, this same test explores a
   // new slice of the action-sequence space; any failure message is
   // prefixed with the seed so the maintainer can reproduce it locally.
-  try {
-    const sequenceRng = makeSeededRandom(PROPERTY_SEED);
-    for (let seqIndex = 0; seqIndex < 200; seqIndex += 1) {
-      const length = 5 + Math.floor(sequenceRng() * 11); // 5..15
-      const actions = randomSequence(sequenceRng, length);
-      const harness = makeHarness({ seed: PROPERTY_SEED + seqIndex, learnerId: `learner-seq-${seqIndex}` });
-      runSequence(harness, actions, { label: `canonical-seq-${seqIndex}` });
+  const sequenceRng = makeSeededRandom(PROPERTY_SEED);
+  for (let i = 0; i < 200; i += 1) {
+    const length = 5 + Math.floor(sequenceRng() * 11); // 5..15
+    const actions = randomSequence(sequenceRng, length);
+    const harness = makeHarness({ seed: PROPERTY_SEED + i, learnerId: `learner-seq-${i}` });
+    try {
+      runSequence(harness, actions, { label: `canonical-seq-${i}` });
+    } catch (error) {
+      // Narrow the catch: only re-label AssertionError with the seed + seq
+      // index so the nightly workflow's failure path can extract them.
+      // Other errors (TypeError, RangeError, etc.) re-throw as-is so the
+      // workflow Issue body shows the actual root-cause class instead of
+      // misattributing it as an invariant violation.
+      if (error instanceof assert.AssertionError) {
+        throw new Error(`[mega-invariant] FAILED seed=${PROPERTY_SEED} seq=${i} :: ${error.message}`);
+      }
+      throw error;
     }
-  } catch (err) {
-    // Re-throw with the seed prefixed so the nightly workflow's failure
-    // path can extract it via a single grep.
-    const message = err && err.message ? err.message : String(err);
-    throw new Error(`[mega-invariant] FAILED seed=${PROPERTY_SEED} :: ${message}`);
   }
 });
 

@@ -17,8 +17,9 @@
 #
 # Notes:
 #  - Cron is off the :00 boundary per GitHub peak-queue guidance.
-#  - Private-repo 60-day auto-disable applies only to public repos, not
-#    private forks.
+#  - GitHub disables scheduled workflows after 60 days of no repository
+#    activity — applies to ALL repos (public AND private). This repo has
+#    daily commits so the risk is low.
 #  - The `permissions` block MUST declare `issues: write` explicitly.
 #    GitHub's 2023 default-permissions tightening does not grant `issues:
 #    write` to `GITHUB_TOKEN` automatically; without this, `gh issue
@@ -84,6 +85,16 @@ jobs:
             seed="$(shuf -i 1-999999999 -n 1)"
             echo "Using random seed: $seed"
           fi
+          # Validate seed — workflow_dispatch accepts any string so a typo like
+          # "fourty-two" would silently run as seed 0 (NaN >>> 0). Fail fast.
+          if ! [[ "$seed" =~ ^[0-9]+$ ]]; then
+            echo "::error::PROPERTY_SEED must be a non-negative integer, got: $seed"
+            exit 1
+          fi
+          if [ "$seed" -gt 4294967295 ]; then
+            echo "::error::PROPERTY_SEED must fit in UINT32 (<= 4294967295), got: $seed"
+            exit 1
+          fi
           echo "seed=$seed" >> "$GITHUB_OUTPUT"
           echo "PROPERTY_SEED=$seed" >> "$GITHUB_ENV"
 
@@ -101,6 +112,16 @@ jobs:
           name: mega-invariant-probe-${{ steps.seed.outputs.seed }}
           path: probe-output.log
           retention-days: 14
+
+      - name: Ensure nightly-probe label exists
+        if: steps.probe.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create nightly-probe \
+            --description "Nightly Mega invariant probe counterexample" \
+            --color "d76e00" \
+            --force || true
 
       - name: Open or comment on dedup'd GitHub Issue on failure
         if: steps.probe.outcome == 'failure'
