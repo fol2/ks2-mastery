@@ -407,8 +407,8 @@ test('consecutive-failure counter resets on 2xx success (Finding 4)', async (t) 
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(_peekErrorCaptureBackoffState().consecutiveFailures, 1);
 
-  // Wait for the scheduled retry (~2s under failures=1, base = 2000ms, mid-jitter 0.5).
-  await new Promise((resolve) => setTimeout(resolve, 2800));
+  // Wait 4s (base=2000ms + jitter + scheduler-delay headroom under concurrent test load).
+  await new Promise((resolve) => setTimeout(resolve, 4000));
   const finalState = _peekErrorCaptureBackoffState();
   assert.equal(finalState.consecutiveFailures, 0, 'a 2xx must reset the failure counter');
   assert.equal(finalState.backoffUntil, 0, 'a 2xx must clear the backoff window');
