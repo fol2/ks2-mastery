@@ -93,4 +93,56 @@ test.describe('grammar golden path', () => {
     );
     await expect(reloadedMarker.first()).toBeVisible({ timeout: 15_000 });
   });
+
+  // SH2-U2 (R2): reload-on-summary scene. The `sanitiseUiOnRehydrate()`
+  // hook on `grammarModule` must strip the persisted `summary` field on
+  // bootstrap so that a browser Back / Refresh on the summary screen
+  // does NOT re-render the completion surface. After reload the learner
+  // must land on a clean dashboard-phase surface instead.
+  test('SH2-U2: reload on grammar summary lands on clean dashboard phase, not summary shell', async ({ page }) => {
+    await createDemoSession(page);
+    await expect(page.locator('.subject-grid')).toBeVisible();
+    await openSubject(page, 'grammar');
+
+    const dashboard = page.locator('.grammar-dashboard');
+    await expect(dashboard).toBeVisible({ timeout: 15_000 });
+
+    const miniTestButton = page.getByRole('button', { name: /^Mini Test/ });
+    await expect(miniTestButton).toBeVisible();
+    await miniTestButton.click();
+
+    const beginRound = page.getByRole('button', { name: /Begin round/ });
+    await expect(beginRound).toBeVisible();
+    await beginRound.click();
+
+    const session = page.locator('.grammar-mini-test-panel, .grammar-session').first();
+    await expect(session).toBeVisible({ timeout: 15_000 });
+
+    // End the mini-test round via Finish mini-set without answering so
+    // we land on the summary screen without coupling to a specific
+    // question seed.
+    const finish = page.getByRole('button', { name: /Finish mini-set/ });
+    await expect(finish).toBeVisible();
+    await finish.click();
+
+    // Wait for summary scene.
+    await expect(page.locator('.grammar-summary-shell, .grammar-dashboard')).toBeVisible({ timeout: 15_000 });
+
+    // Reload — this is the R2 hazard. After reload, the rehydrate
+    // sanitiser drops the persisted summary so the UI CANNOT land on
+    // the completion summary shell.
+    await reload(page);
+
+    // Post-reload invariant: the grammar summary shell must NOT be
+    // visible. A safe fallback is either the Grammar dashboard or the
+    // home subject grid.
+    const safeMarker = page.locator(
+      '.subject-grid [data-action="open-subject"][data-subject-id="grammar"], .grammar-dashboard',
+    ).first();
+    await expect(safeMarker).toBeVisible({ timeout: 15_000 });
+
+    // The summary shell must NOT be visible on the rehydrated page
+    // (would indicate the summary survived through the sanitiser).
+    await expect(page.locator('.grammar-summary-shell')).toHaveCount(0);
+  });
 });

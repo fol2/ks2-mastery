@@ -203,21 +203,43 @@ export function normalisePunctuationMapUi(value = {}) {
   return { statusFilter, monsterFilter, detailOpenSkillId, detailTab, returnTo };
 }
 
-// U5: Rehydrate-time sanitiser for `subjectUi.punctuation`. Called exactly
-// once when the store boots over a persisted `subjectStates` snapshot — the
-// Map phase and its `mapUi` filter state are session-ephemeral by plan
-// (R5 line 565 / line 583), so they must NOT survive a page reload. A live
-// snapshot that carries `phase === 'map'` is coerced back to `'setup'`; the
-// `mapUi` field is stripped entirely so the Map reopens from defaults.
+// U5 + SH2-U2: Rehydrate-time sanitiser for `subjectUi.punctuation`. Called
+// exactly once when the store boots over a persisted `subjectStates`
+// snapshot. Two concerns compose here:
+//
+//   1. (U5, R5 line 565 / line 583) The Map phase and its `mapUi` filter
+//      state are session-ephemeral by plan, so a snapshot that carries
+//      `phase === 'map'` is coerced back to `'setup'` and `mapUi` is
+//      stripped so the Map reopens from defaults.
+//
+//   2. (SH2-U2, R2) The round-completion transient state — `summary`,
+//      `transientUi` — must not survive a reload. The Summary scene's
+//      "Start another round" CTA fires a fresh `start-session` reusing
+//      the prior round's mode; a zombie summary after reload would
+//      silently re-enter a round the learner thought they had finished.
+//      Active-session state (`session`, `feedback`, `awaitingAdvance`,
+//      `pendingCommand`) is INTENTIONALLY preserved so mid-round /
+//      mid-feedback reload resumes the learner's active round. The
+//      baseline drop set lives on `SESSION_EPHEMERAL_FIELDS` in
+//      `platform/core/subject-contract.js` so every subject drops the
+//      same fields.
 //
 // This sanitiser runs only on rehydrate — live `updateSubjectUi` dispatches
 // (which build state from the current in-memory entry) bypass it, so the
-// Map phase remains legitimate while the session is active.
+// Map phase + summary / feedback / awaitingAdvance fields remain
+// legitimate while a session is active in memory.
 export function sanitisePunctuationUiOnRehydrate(entry) {
   if (!isPlainObject(entry)) return entry;
-  const needsCoerce = entry.phase === 'map' || 'mapUi' in entry;
-  if (!needsCoerce) return entry;
   const next = { ...entry };
+  // SH2-U2 baseline: drop the post-session-ephemeral fields shared across
+  // all subjects (summary, transientUi). `session`, `feedback`,
+  // `awaitingAdvance`, `pendingCommand` are intentionally NOT dropped —
+  // see the comment above. Inlined rather than importing
+  // `dropSessionEphemeralFields` to keep service-contract.js free of
+  // platform-layer imports (it runs on both client + Worker contexts).
+  if ('summary' in next) delete next.summary;
+  if ('transientUi' in next) delete next.transientUi;
+  // U5 subject-specific: coerce Map phase + strip mapUi.
   if (next.phase === 'map') next.phase = 'setup';
   if ('mapUi' in next) delete next.mapUi;
   return next;

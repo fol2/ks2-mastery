@@ -1,4 +1,5 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
+import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
 import { createInitialSpellingState, isPostMasteryMode } from './service-contract.js';
 import {
   WORD_BANK_FILTER_IDS,
@@ -123,6 +124,26 @@ export const spellingModule = {
   reactPractice: true,
   initState() {
     return createInitialSpellingState();
+  },
+  // SH2-U2 (R2): drop post-session-ephemeral fields on rehydrate so
+  // browser Back / Refresh on a completed-session summary screen cannot
+  // resurrect the summary's "Start another round" CTA. Baseline drop
+  // set (`summary`, `transientUi`) lives on `SESSION_EPHEMERAL_FIELDS`
+  // in `platform/core/subject-contract.js`. Active-session state
+  // (`session`, `feedback`, `awaitingAdvance`) is intentionally
+  // preserved so a mid-round reload picks up where the learner left
+  // off — `tests/store.test.js::serialisable spelling state survives
+  // store persistence for resume` and
+  // `tests/spelling-parity.test.js::restored completed spelling card
+  // caps progress and resumes auto-advance` lock both the session-
+  // resume and awaitingAdvance-resume invariants. Preferences (mode,
+  // yearFilter, roundLength, extraWordFamilies), `version`, and any
+  // other persisted subject-level static data survive untouched. Runs
+  // only on the rehydrate path (`rehydrate: true`); live
+  // `updateSubjectUi` dispatches bypass this hook so sessions mid-
+  // flight are unaffected.
+  sanitiseUiOnRehydrate(entry) {
+    return dropSessionEphemeralFields(entry);
   },
   getDashboardStats(appState, { service }) {
     const learner = appState.learners.byId[appState.learners.selectedId];

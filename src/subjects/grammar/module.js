@@ -7,6 +7,7 @@ import {
   normaliseGrammarReadModel,
 } from './metadata.js';
 import { normaliseGrammarSpeechRate } from './speech.js';
+import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
 
 // U6a: Child-facing copy for the four known `save-transfer-evidence` error
 // codes emitted by the Worker (worker/src/subjects/grammar/engine.js:1723-1803,
@@ -317,6 +318,22 @@ export const grammarModule = {
   reactPractice: true,
   initState() {
     return normaliseGrammarReadModel();
+  },
+  // SH2-U2 (R2): drop post-session-ephemeral fields on rehydrate so a
+  // reload on a Grammar summary screen never resurrects the "Start
+  // another round" CTA from a round the learner thought was finished.
+  // Baseline set (`summary`, `transientUi`) lives on
+  // `SESSION_EPHEMERAL_FIELDS` in `platform/core/subject-contract.js`.
+  // Active-session state (`session`, `feedback`, `awaitingAdvance`,
+  // `pendingCommand`) is intentionally preserved so mid-round reload
+  // resumes the learner's active round. Preferences, stats, analytics
+  // concepts, capabilities, transferLane (saved evidence), and the
+  // `bank` + `ui.transfer` UI slices all survive. Runs only on
+  // rehydrate paths (bootstrap / reloadFromRepositories / learner-
+  // switch); live dispatches pass `rehydrate: false` and skip this
+  // hook.
+  sanitiseUiOnRehydrate(entry) {
+    return dropSessionEphemeralFields(entry);
   },
   getDashboardStats(appState) {
     const learnerId = appState.learners?.selectedId || '';
