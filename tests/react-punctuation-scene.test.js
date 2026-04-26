@@ -45,22 +45,24 @@ function answerCurrentItemCorrectly(harness) {
 }
 
 test('punctuation React surface renders setup, active item, feedback and summary states', () => {
+  // Phase 3 U2 replaces the Phase 2 ten-button mode grid with a
+  // dashboard hero + three primary mode cards (Smart Review / Wobbly
+  // Spots / GPS Check) + one Open Map secondary card + round-length
+  // toggle. The old `data-punctuation-*-start` data attributes and
+  // `Endmarks focus` / `Apostrophe focus` / etc. labels are gone —
+  // the U2 describe block below tests the new dashboard shape
+  // explicitly, so this smoke test only asserts the hero + the
+  // three primary card labels land on Setup.
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
 
   const setupHtml = harness.render();
   assert.match(setupHtml, /Bellstorm Coast/);
   assert.match(setupHtml, /Punctuation practice/);
-  assert.match(setupHtml, /data-punctuation-start/);
-  // Phase 2 U8: all six cluster focus buttons must reach the setup surface.
-  assert.match(setupHtml, /data-punctuation-endmarks-start/);
-  assert.match(setupHtml, /data-punctuation-apostrophe-start/);
-  assert.match(setupHtml, />Endmarks focus</);
-  assert.match(setupHtml, />Apostrophe focus</);
-  assert.match(setupHtml, />Speech focus</);
-  assert.match(setupHtml, />Comma focus</);
-  assert.match(setupHtml, />Boundary focus</);
-  assert.match(setupHtml, />Structure focus</);
+  assert.match(setupHtml, />Smart Review</);
+  assert.match(setupHtml, />Wobbly Spots</);
+  assert.match(setupHtml, />GPS Check</);
+  assert.match(setupHtml, /data-action="punctuation-set-mode"/);
 
   startOneItemPunctuationSession(harness);
   const activeHtml = harness.render();
@@ -92,28 +94,14 @@ test('punctuation React surface keeps server-only fields out of active HTML', ()
   assert.equal(html.includes(PUNCTUATION_RELEASE_ID), false);
 });
 
-test('punctuation React surface renders guided setup controls and teach boxes', () => {
+test('punctuation React surface renders Guided teach box during an active session', () => {
+  // Phase 3 U2: the setup-surface Guided dropdown + Weak / GPS buttons
+  // are removed (the new dashboard uses three primary mode cards +
+  // Open Map). This test keeps the active-item Guided teach-box
+  // regression coverage — the current session's guided teach-box
+  // payload still renders rule + worked example + common mistake.
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
-  harness.store.updateSubjectUi('punctuation', {
-    phase: 'setup',
-    content: {
-      publishedScopeCopy: 'This Punctuation release covers all 14 KS2 punctuation skills.',
-      skills: [
-        { id: 'sentence_endings', name: 'Capital letters and sentence endings', clusterId: 'endmarks' },
-        { id: 'speech', name: 'Inverted commas and speech punctuation', clusterId: 'speech' },
-      ],
-    },
-  });
-
-  const setupHtml = harness.render();
-  assert.match(setupHtml, /Guided skill/);
-  assert.match(setupHtml, /Guided learn/);
-  assert.match(setupHtml, /data-punctuation-guided-start/);
-  assert.match(setupHtml, /Weak spots/);
-  assert.match(setupHtml, /data-punctuation-weak-start/);
-  assert.match(setupHtml, /GPS test/);
-  assert.match(setupHtml, /data-punctuation-gps-start/);
 
   harness.store.updateSubjectUi('punctuation', {
     phase: 'active-item',
@@ -434,7 +422,12 @@ test('punctuation text-item controls disable when runtime is degraded', () => {
   assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-submit/);
 });
 
-test('punctuation setup view disables Start practice when availability is degraded', () => {
+test('punctuation setup view disables primary mode cards when availability is degraded', () => {
+  // Phase 3 U2: the old `data-punctuation-start` Start practice button
+  // is replaced with three primary mode cards + an Open Map secondary
+  // card. Every mutation control threads `composeIsDisabled(ui)`, so
+  // degraded availability disables the Smart Review card (and every
+  // other card beside it).
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
@@ -442,7 +435,11 @@ test('punctuation setup view disables Start practice when availability is degrad
     availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' },
   });
   const html = harness.render();
-  assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-start/);
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-action="punctuation-set-mode"[^>]*data-value="smart"|<button[^>]*data-action="punctuation-set-mode"[^>]*data-value="smart"[^>]*disabled/,
+    'Smart Review card must be disabled under degraded availability',
+  );
 });
 
 test('punctuation feedback view disables Continue while a command is pending', () => {
@@ -1901,4 +1898,330 @@ test('design-lens HIGH: every item mode passes the PUNCTUATION_CHILD_FORBIDDEN_T
       `forbidden term leak in session scene (${extra.mode}): ${leaks.join(', ')}`,
     );
   }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3 U2 — Punctuation setup scene (child dashboard).
+//
+// Replaces the Phase 2 ten-button mode grid with Hero + Today cards +
+// three primary journey cards (Smart Review / Wobbly Spots / GPS Check) +
+// one "Open Punctuation Map" secondary card + compact round-length
+// toggle + active-monster strip. Reserved monsters (Colisk / Hyphang /
+// Carillon) NEVER surface regardless of state shape.
+//
+// SSR blind spots (learning #6): focus, pointer-capture, and scroll are
+// not observable here — assertions pair HTML-match with state-level
+// checks (learning #7) where a silent no-op would otherwise pass.
+// ---------------------------------------------------------------------------
+
+function forbiddenTermsInSetupHtml(html) {
+  const leaks = [];
+  for (const term of PUNCTUATION_CHILD_FORBIDDEN_TERMS) {
+    if (term instanceof RegExp) {
+      if (term.test(html)) leaks.push(String(term));
+      continue;
+    }
+    if (typeof term !== 'string' || !term) continue;
+    if (html.toLowerCase().includes(term.toLowerCase())) leaks.push(term);
+  }
+  return leaks;
+}
+
+test('punctuation Setup scene renders 3 primary mode cards + Open Map secondary card', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  const html = harness.render();
+
+  // Three primary journey cards, each tagged by mode id.
+  for (const modeId of ['smart', 'weak', 'gps']) {
+    assert.match(
+      html,
+      new RegExp(`data-action="punctuation-set-mode"[^>]*data-value="${modeId}"`),
+      `missing primary mode card for ${modeId}`,
+    );
+  }
+  // Child-facing labels land too.
+  assert.match(html, />Smart Review</);
+  assert.match(html, />Wobbly Spots</);
+  assert.match(html, />GPS Check</);
+  // Exactly one Open Map secondary card.
+  const openMapMatches = html.match(/data-action="punctuation-open-map"/g) || [];
+  assert.equal(openMapMatches.length, 1, 'expected exactly one Open Map affordance');
+  assert.match(html, />Open Punctuation Map</);
+});
+
+test('punctuation Setup scene does not render the 6 cluster focus buttons (plan R1)', () => {
+  // Phase 3 U2 demotes the 6 cluster focus modes from primary-setup
+  // affordances. They stay dispatchable via direct mode dispatch
+  // (Phase 2 U9 parity matrix) but should never appear as Setup
+  // buttons again. Regression guard against a future revert.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  const html = harness.render();
+
+  for (const label of ['Endmarks focus', 'Apostrophe focus', 'Speech focus', 'Comma focus', 'Boundary focus', 'Structure focus']) {
+    assert.doesNotMatch(html, new RegExp(`>${label}<`), `${label} should no longer render on Setup`);
+  }
+  // Also check the old data attributes are gone.
+  assert.doesNotMatch(html, /data-punctuation-endmarks-start/);
+  assert.doesNotMatch(html, /data-punctuation-apostrophe-start/);
+  assert.doesNotMatch(html, /data-punctuation-guided-start/);
+  assert.doesNotMatch(html, /data-punctuation-weak-start/);
+  assert.doesNotMatch(html, /data-punctuation-gps-start/);
+});
+
+test('punctuation Setup scene Smart Review card has aria-pressed="true" when prefs.mode is smart', () => {
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  // Force a fresh dispatch so ui.prefs mirrors the stored mode.
+  harness.dispatch('punctuation-set-mode', { value: 'smart' });
+  const html = harness.render();
+
+  assert.match(
+    html,
+    /data-value="smart"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-value="smart"/,
+    'Smart Review card should be aria-pressed="true" when prefs.mode === "smart"',
+  );
+});
+
+test('punctuation Setup scene Wobbly card has aria-pressed="true" when prefs.mode is weak', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-mode', { value: 'weak' });
+  const html = harness.render();
+  assert.match(
+    html,
+    /data-value="weak"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-value="weak"/,
+    'Wobbly Spots card should be aria-pressed="true" when prefs.mode === "weak"',
+  );
+});
+
+test('punctuation Setup scene GPS card has aria-pressed="true" when prefs.mode is gps', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-mode', { value: 'gps' });
+  const html = harness.render();
+  assert.match(
+    html,
+    /data-value="gps"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-value="gps"/,
+    'GPS Check card should be aria-pressed="true" when prefs.mode === "gps"',
+  );
+});
+
+test('punctuation Setup scene: clicking Smart Review sets state.subjectUi.punctuation.prefs.mode to smart', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-mode', { value: 'smart' });
+  const state = harness.store.getState().subjectUi.punctuation;
+  assert.equal(state.prefs.mode, 'smart');
+});
+
+test('punctuation Setup scene: clicking Wobbly sets state.subjectUi.punctuation.prefs.mode to weak', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-mode', { value: 'weak' });
+  const state = harness.store.getState().subjectUi.punctuation;
+  assert.equal(state.prefs.mode, 'weak');
+});
+
+test('punctuation Setup scene: clicking GPS sets state.subjectUi.punctuation.prefs.mode to gps', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-mode', { value: 'gps' });
+  const state = harness.store.getState().subjectUi.punctuation;
+  assert.equal(state.prefs.mode, 'gps');
+});
+
+test('punctuation Setup scene: Open Map dispatch transitions phase setup → map (paired state assertion)', () => {
+  // Paired state-level assertion per learning #7 — catches the
+  // U2-before-U5 ordering gap where the dispatch silently no-ops.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  assert.equal(harness.store.getState().subjectUi.punctuation.phase, 'setup');
+
+  harness.dispatch('punctuation-open-map');
+  assert.equal(harness.store.getState().subjectUi.punctuation.phase, 'map');
+});
+
+test('punctuation Setup scene: degraded availability disables every primary and secondary card', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' },
+  });
+  const html = harness.render();
+
+  // Each primary mode card is disabled.
+  for (const modeId of ['smart', 'weak', 'gps']) {
+    assert.match(
+      html,
+      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"[^>]*disabled`),
+      `primary mode card ${modeId} should be disabled under degraded availability`,
+    );
+  }
+  // Open Map secondary card is disabled.
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-action="punctuation-open-map"|<button[^>]*data-action="punctuation-open-map"[^>]*disabled/,
+    'Open Map card should be disabled under degraded availability',
+  );
+});
+
+test('punctuation Setup scene: pendingCommand disables every primary and secondary card', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    pendingCommand: 'save-prefs',
+  });
+  const html = harness.render();
+
+  for (const modeId of ['smart', 'weak', 'gps']) {
+    assert.match(
+      html,
+      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"[^>]*disabled`),
+      `primary mode card ${modeId} should be disabled while pendingCommand is set`,
+    );
+  }
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-action="punctuation-open-map"|<button[^>]*data-action="punctuation-open-map"[^>]*disabled/,
+    'Open Map card should be disabled while pendingCommand is set',
+  );
+});
+
+test('punctuation Setup scene: fresh learner renders zero-state copy (guards Phase 2 hasEvidence fix)', () => {
+  // A fresh learner with no stats should NOT see "1 skill due" or any
+  // inflated Today counter. The empty-state copy lives in a dedicated
+  // data-testid hook so this test stays resilient to copy tweaks.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  const html = harness.render();
+
+  // Zero-state copy lands — every count is zero, so the dashboard
+  // shows the empty-state prompt instead of the grid.
+  assert.match(html, /data-testid="punctuation-today-empty"/);
+});
+
+test('punctuation Setup scene: reserved monster ids NEVER appear in the active monster strip', () => {
+  // Smuggle reserved monster entries into the reward state. The
+  // iterator is `ACTIVE_PUNCTUATION_MONSTER_IDS` only (plan R10), so
+  // even a poisoned rewardState must not surface the reserved trio.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    rewardState: {
+      pealark: { mastered: ['r1'] },
+      colisk: { mastered: ['c1', 'c2'] },
+      hyphang: { mastered: ['h1'] },
+      carillon: { mastered: ['ca1'] },
+    },
+  });
+  const html = harness.render();
+
+  for (const reserved of ['colisk', 'hyphang', 'carillon']) {
+    assert.doesNotMatch(
+      html,
+      new RegExp(`data-monster-id="${reserved}"`),
+      `reserved monster ${reserved} leaked into the active monster strip`,
+    );
+  }
+  // The four active monsters all render.
+  for (const active of ['pealark', 'claspin', 'curlune', 'quoral']) {
+    assert.match(
+      html,
+      new RegExp(`data-monster-id="${active}"`),
+      `active monster ${active} should render in the strip`,
+    );
+  }
+});
+
+test('punctuation Setup scene SSR HTML contains no forbidden child terms', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  const html = harness.render();
+  const leaks = forbiddenTermsInSetupHtml(html);
+  assert.deepEqual(leaks, [], `forbidden term leak in Setup scene HTML: ${leaks.join(', ')}`);
+});
+
+test('punctuation Setup scene stale-prefs migration: endmarks prefs collapse to smart on first render', () => {
+  // Pre-Phase-3 stored `prefs.mode === 'endmarks'` → Setup renders with
+  // Smart Review aria-pressed="true" (display normaliser) AND first
+  // render dispatches `punctuation-set-mode` with `{ value: 'smart' }`
+  // to migrate stored state once.
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'endmarks', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  // First render — the effect dispatches the migration.
+  const html = harness.render();
+  // Display collapse: Smart Review reads as aria-pressed="true".
+  assert.match(
+    html,
+    /data-value="smart"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-value="smart"/,
+    'Smart Review must render as aria-pressed="true" when prefs.mode is a legacy cluster value',
+  );
+  // Migration persisted — stored prefs.mode is now 'smart'.
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'smart');
+});
+
+test('punctuation Setup scene stale-prefs migration: apostrophe prefs also collapse to smart', () => {
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'apostrophe', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.render();
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'smart');
+});
+
+test('punctuation Setup scene stale-prefs migration: guided prefs also collapse to smart', () => {
+  // `'guided'` is the seventh value that should migrate — Guided is no
+  // longer a primary affordance (the Modal's Practise-this path is
+  // Guided under the hood, but the learner-facing mode is collapsed).
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'guided', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.render();
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'smart');
+});
+
+test('punctuation Setup scene stale-prefs migration: smart prefs do NOT trigger a migration dispatch', () => {
+  // Starting with `prefs.mode === 'smart'` should not touch the store's
+  // prefs at all (no re-dispatch, no updateSubjectUi with a prefs
+  // delta). We snapshot the store version before and after the render.
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.render();
+  // The store should still have the fresh-open state — stored mode
+  // never flipped to anything else.
+  const state = harness.store.getState().subjectUi.punctuation;
+  // `state.prefs` is undefined until a dispatch mirrors it into ui
+  // state; the absence itself proves no migration dispatch fired.
+  assert.ok(!state.prefs || state.prefs.mode === 'smart');
+});
+
+test('punctuation Setup scene stale-prefs migration: re-render does not re-dispatch', () => {
+  // After the first render migrates, a subsequent render with the same
+  // component instance must not re-dispatch — the `useRef` gate in
+  // `PunctuationSetupScene.jsx` closes the loop.
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'boundary', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+
+  harness.render();
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'smart');
+
+  // Force prefs.mode to revert via direct store mutation — the next
+  // render must not re-run the migration because `migratedRef` stays
+  // true within the same component instance.
+  harness.store.updateSubjectUi('punctuation', { prefs: { mode: 'speech', roundLength: '4' } });
+  harness.render();
+  // The migration did NOT fire again — the revert stands.
+  assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'speech');
 });

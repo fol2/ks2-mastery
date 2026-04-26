@@ -2,9 +2,12 @@ import {
   createInitialPunctuationState,
   isPublishedPunctuationSkillId,
   normalisePunctuationMapUi,
+  normalisePunctuationPrefs,
+  normalisePunctuationRoundLength,
   sanitisePunctuationUiOnRehydrate,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
+  PUNCTUATION_MODES,
   PUNCTUATION_OPEN_MAP_ALLOWED_PHASES,
 } from './service-contract.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../platform/core/subject-availability.js';
@@ -94,8 +97,47 @@ export const punctuationModule = {
     const ui = currentUi(context, learnerId);
 
     if (action === 'punctuation-set-mode') {
-      service.savePrefs(learnerId, { mode: data.value });
-      store.updateSubjectUi('punctuation', { phase: 'setup', error: '' });
+      // U2: reject invalid mode values so a rogue payload cannot smuggle a
+      // non-enum mode into stored prefs. `PUNCTUATION_MODES` stays at 10
+      // entries (R17); Phase 3's stale-prefs migration explicitly dispatches
+      // `'smart'` / `'weak'` / `'gps'` from the Setup scene and relies on
+      // this guard to refuse garbage.
+      if (!PUNCTUATION_MODES.includes(data?.value)) return false;
+      const nextPrefs = service.savePrefs(learnerId, { mode: data.value });
+      // U2: mirror the saved prefs into `ui.prefs` so downstream scenes and
+      // tests can read the canonical value from `state.subjectUi.punctuation.prefs`.
+      // The service writes to the data repository; without this update the
+      // next render (and the Phase 3 test that asserts
+      // `state.subjectUi.punctuation.prefs.mode === 'smart'`) would see stale
+      // ui state. Mirrors Grammar's `resetToDashboardWithPrefs`.
+      //
+      // Stale-prefs migration latch: ANY successful `punctuation-set-mode`
+      // dispatch flips `prefsMigrated` to `true`. This latch prevents the
+      // Setup scene's one-shot stale-prefs migration from re-firing on
+      // subsequent renders, even if stored prefs somehow revert. A fresh
+      // page load or learner switch clears it (session-memory only; not
+      // persisted to the subject data repository).
+      store.updateSubjectUi('punctuation', {
+        phase: 'setup',
+        error: '',
+        prefs: normalisePunctuationPrefs(nextPrefs || {}),
+        prefsMigrated: true,
+      });
+      return true;
+    }
+
+    if (action === 'punctuation-set-round-length') {
+      // U2: round-length toggle on the Setup scene's primary mode section.
+      // Validates the value against the shared enum so a rogue payload
+      // cannot smuggle an unsupported length into stored prefs. Returns
+      // `false` on invalid input so the caller treats the dispatch as a
+      // miss rather than a silent success (pairs with learning #7).
+      const normalised = normalisePunctuationRoundLength(data?.value, null);
+      if (!normalised) return false;
+      const nextPrefs = service.savePrefs(learnerId, { roundLength: normalised });
+      store.updateSubjectUi('punctuation', {
+        prefs: normalisePunctuationPrefs(nextPrefs || {}),
+      });
       return true;
     }
 
