@@ -67,6 +67,10 @@ import {
   composeIsNavigationDisabled,
   extractPunctuationMonsterProgress,
   punctuationChildMisconceptionLabel,
+  punctuationChildNextReviewCopy,
+  punctuationChildRegisterOverrideString,
+  punctuationChildSkillBadgeLabel,
+  punctuationChildTeaserSubLine,
   punctuationMonsterDisplayName,
   punctuationSummaryHeadline,
 } from './punctuation-view-model.js';
@@ -177,19 +181,27 @@ function SkillsExercisedRow({ summary }) {
       data-punctuation-summary-skill-row
       style={{ marginTop: 14 }}
     >
-      {chips.map((chip) => (
-        <span
-          className={`chip ${chip.status === 'needs-practice' ? 'warn' : 'good'}`}
-          key={`skill-chip-${chip.id}`}
-          data-skill-chip-id={chip.id}
-          data-skill-status={chip.status}
-        >
-          {chip.name}
-          <span className="punctuation-summary-skill-badge small muted" style={{ marginLeft: 6 }}>
-            {chip.status === 'needs-practice' ? '· needs practice' : '· secure'}
+      {chips.map((chip) => {
+        // U7 copy register pass: badge strings routed through
+        // `punctuationChildSkillBadgeLabel` so the sweep has a single
+        // governance layer for every status → label mapping.
+        const badgeText = punctuationChildSkillBadgeLabel(chip.status);
+        return (
+          <span
+            className={`chip ${chip.status === 'needs-practice' ? 'warn' : 'good'}`}
+            key={`skill-chip-${chip.id}`}
+            data-skill-chip-id={chip.id}
+            data-skill-status={chip.status}
+          >
+            {chip.name}
+            {badgeText ? (
+              <span className="punctuation-summary-skill-badge small muted" style={{ marginLeft: 6 }}>
+                {` — ${badgeText}`}
+              </span>
+            ) : null}
           </span>
-        </span>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -208,11 +220,14 @@ function NextReviewHint({ ui }) {
     ? ui.stats
     : null;
   if (!stats) return null;
-  const due = Number(stats.due);
-  if (!Number.isFinite(due)) return null;
-  const copy = due > 0
-    ? 'More practice is ready for you today.'
-    : 'Back tomorrow for the next round.';
+  // U7 copy register pass: routed through
+  // `punctuationChildNextReviewCopy` so the wording ships as child copy
+  // ("More goes ready — let's do another round." / "Brilliant — come
+  // back tomorrow for more.") and future register changes land in one
+  // seam rather than JSX literals. `null` return short-circuits the
+  // render so a malformed `stats.due` never fabricates a hint.
+  const copy = punctuationChildNextReviewCopy(stats);
+  if (!copy) return null;
   return (
     <p
       className="punctuation-summary-review-hint muted"
@@ -236,6 +251,11 @@ function NextReviewHint({ ui }) {
 function MonsterProgressTeaser({ progress }) {
   if (!progress) return null;
   const monsterName = punctuationMonsterDisplayName(progress.monsterId);
+  // U7 copy register pass: sub-line routed through
+  // `punctuationChildTeaserSubLine(monsterName)` so the Bellstorm frame
+  // stays intact for the KS2 reader (the prior "Keep going to unlock
+  // the next stage." read as generic SaaS gamification).
+  const subLine = punctuationChildTeaserSubLine(monsterName);
   return (
     <div
       className="punctuation-summary-monster-teaser"
@@ -248,7 +268,7 @@ function MonsterProgressTeaser({ progress }) {
     >
       <strong>{`${monsterName} levelled up!`}</strong>
       <p className="small muted" style={{ marginTop: 4 }}>
-        {`Keep going to unlock the next stage.`}
+        {subLine}
       </p>
     </div>
   );
@@ -420,7 +440,15 @@ function GpsReviewBlock({ gps }) {
               className={`feedback ${entry.correct ? 'good' : 'warn'}`}
             >
               <strong>{entry.index}. {entry.correct ? 'Correct' : 'Review'}</strong>
-              <div style={{ marginTop: 6 }}>{entry.prompt}</div>
+              <div style={{ marginTop: 6 }}>
+                {/*
+                  U7 child-register override: every Worker-sourced GPS
+                  review string passes through the display-time helper so
+                  adult grammar phrases from the engine are rewritten
+                  before reaching the learner.
+                */}
+                {punctuationChildRegisterOverrideString(entry.prompt)}
+              </div>
               {entry.attemptedAnswer ? (
                 <div className="small" style={{ marginTop: 6 }}>
                   Answer: {entry.attemptedAnswer}
@@ -431,7 +459,7 @@ function GpsReviewBlock({ gps }) {
                   className="small"
                   style={{ marginTop: 6, ...newlineTextStyle(entry.displayCorrection) }}
                 >
-                  Model: {entry.displayCorrection}
+                  Model: {punctuationChildRegisterOverrideString(entry.displayCorrection)}
                 </div>
               ) : null}
               {tagLabels.length ? (

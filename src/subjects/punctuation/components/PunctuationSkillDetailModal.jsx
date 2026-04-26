@@ -58,6 +58,7 @@ import {
   PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE,
   composeIsDisabled,
   composeIsNavigationDisabled,
+  punctuationChildRegisterOverrideString,
   punctuationSkillHasMultiSkillItems,
   punctuationSkillModalContent,
   punctuationSkillModalPreferredExample,
@@ -70,22 +71,43 @@ export { PUNCTUATION_MAP_DETAIL_TAB_IDS };
 export { PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE };
 
 function skillNameFor(skillId) {
+  // Review follow-on FINDING A: the learner-facing skill name is read
+  // from the client mirror `PUNCTUATION_CLIENT_SKILLS`. Most entries
+  // already carry child-register names (the `fronted_adverbial` entry
+  // was explicitly rewritten in U7 to "Commas after starter phrases"),
+  // but the override helper is idempotent and guards against any
+  // future authoring drift back to adult register — a defensive call
+  // that the Map scene's skill cards already make.
   const entry = PUNCTUATION_CLIENT_SKILLS.find((skill) => skill.id === skillId);
-  return entry?.name || skillId;
+  const raw = entry?.name || skillId;
+  return punctuationChildRegisterOverrideString(raw) || raw;
 }
 
 function LearnBody({ skillId, content, preferredExample }) {
+  // Review follow-on FINDING A: the SkillDetailModal renders
+  // `content.rule`, `content.workedGood` / `contrastGood`, and
+  // `content.contrastBad` — every one of which is authored in
+  // `PUNCTUATION_SKILL_MODAL_CONTENT` and could regress to adult
+  // register in a future edit, OR be shadowed at display time by a
+  // Worker-sourced atom in the future. Thread the child-register
+  // override through all three teach-content sites so the modal is
+  // structurally unable to leak adult grammar terminology, aligning
+  // with how SessionScene (teachBox, prompt) and SummaryScene
+  // (review-item prompts, displayCorrection) thread it.
   const exampleText = preferredExample === 'contrastGood'
     ? content.contrastGood
     : content.workedGood;
   const exampleLabel = preferredExample === 'contrastGood'
     ? 'Strong example'
     : 'Worked example';
+  const ruleText = punctuationChildRegisterOverrideString(content.rule);
+  const exampleDisplay = punctuationChildRegisterOverrideString(exampleText);
+  const contrastBadDisplay = punctuationChildRegisterOverrideString(content.contrastBad);
   return (
     <div className="punctuation-skill-modal-body" data-punctuation-skill-modal-body="learn">
       <section className="punctuation-skill-modal-section">
         <h3 className="punctuation-skill-modal-section-label">The rule</h3>
-        <p className="punctuation-skill-modal-rule">{content.rule}</p>
+        <p className="punctuation-skill-modal-rule">{ruleText}</p>
       </section>
       <section className="punctuation-skill-modal-section">
         <h3 className="punctuation-skill-modal-section-label">{exampleLabel}</h3>
@@ -93,13 +115,13 @@ function LearnBody({ skillId, content, preferredExample }) {
           className="punctuation-skill-modal-example"
           data-punctuation-skill-modal-example-kind={preferredExample}
         >
-          {exampleText}
+          {exampleDisplay}
         </blockquote>
       </section>
       <section className="punctuation-skill-modal-section">
         <h3 className="punctuation-skill-modal-section-label">Common mix-up</h3>
         <blockquote className="punctuation-skill-modal-contrast-bad">
-          {content.contrastBad}
+          {contrastBadDisplay}
         </blockquote>
       </section>
     </div>
@@ -108,10 +130,15 @@ function LearnBody({ skillId, content, preferredExample }) {
 
 function PractiseBody({ skillId, skillName, disabled, actions }) {
   const multiSkill = punctuationSkillHasMultiSkillItems(skillId);
+  // Review follow-on FINDING A: skillName is already routed through
+  // `skillNameFor` which threads the override, but call the helper
+  // defensively one more time here to make the threading obvious at
+  // the render site — idempotent, zero runtime cost.
+  const displayName = punctuationChildRegisterOverrideString(skillName) || skillName;
   return (
     <div className="punctuation-skill-modal-body" data-punctuation-skill-modal-body="practise">
       <p className="punctuation-skill-modal-practise-copy">
-        A short focused round on <strong>{skillName}</strong>. We pick four questions for you — answer at your own pace.
+        A short focused round on <strong>{displayName}</strong>. We pick four questions for you — answer at your own pace.
       </p>
       {multiSkill ? (
         <p

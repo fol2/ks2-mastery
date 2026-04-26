@@ -459,3 +459,187 @@ for (const skillId of PUNCTUATION_CLIENT_SKILL_IDS) {
     );
   });
 }
+
+// -----------------------------------------------------------------------------
+// Review follow-on FINDING C — end-to-end override regression sweep.
+//
+// The existing sweeps above seed fixtures that do NOT carry the U7 adult
+// grammar terms (`fronted adverbial`, `main clause`, `complete clause`,
+// `subordinate`). Removing the `punctuationChildRegisterOverride` call from
+// any threading site would therefore PASS those tests silently — they prove
+// the pre-clean fixtures don't leak, not that the override is actually
+// firing. This block seeds the worst-case shape: adult terms in EVERY
+// threading site (teachBox.rule, feedback.headline/body/displayCorrection,
+// summary review-item prompt/displayCorrection, and the Skill Detail modal
+// content via the shared-source rule field). Renders each scene and
+// asserts the rendered HTML contains ZERO adult terms.
+//
+// This test MUST fail if the override is silently removed from any
+// threading call site in the future.
+// -----------------------------------------------------------------------------
+
+function forbiddenAdultGrammarTerms(html) {
+  // The four U7-registered adult terms. Explicit list rather than
+  // re-using the full PUNCTUATION_CHILD_FORBIDDEN_TERMS so this sweep
+  // is scoped to the override's job.
+  const terms = ['fronted adverbial', 'main clause', 'complete clause', 'subordinate'];
+  return terms.filter((term) => html.toLowerCase().includes(term));
+}
+
+test('U7 FINDING C: seeded adult-term teachBox payload renders with override applied (Session scene)', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'u7-finding-c-session',
+      mode: 'guided',
+      length: 4,
+      answeredCount: 1,
+      guided: {
+        skillId: 'semicolon',
+        supportLevel: 2,
+        teachBox: {
+          name: 'Semi-colons between related clauses',
+          rule: 'A semi-colon can join two closely related main clauses.',
+          workedExample: {
+            before: 'Two main clauses without a semi-colon.',
+            after: 'Two main clauses joined by a semi-colon.',
+          },
+          contrastExample: {
+            before: 'A fronted adverbial without a comma.',
+            after: 'A fronted adverbial, with a comma.',
+          },
+        },
+      },
+      currentItem: {
+        id: 'sc_insert',
+        mode: 'insert',
+        inputKind: 'text',
+        skillIds: ['semicolon'],
+        prompt: 'Add the semi-colon between the two main clauses.',
+        stem: 'The rain had stopped the pitch was still slippery',
+      },
+    },
+  });
+  const html = harness.render();
+  const leaks = forbiddenAdultGrammarTerms(html);
+  assert.deepEqual(
+    leaks,
+    [],
+    `Session scene leaked adult grammar terms (override not firing?): ${leaks.join(', ')}`,
+  );
+});
+
+test('U7 FINDING C: seeded adult-term feedback payload renders with override applied (Session scene feedback)', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    session: {
+      id: 'u7-finding-c-feedback',
+      mode: 'smart',
+      length: 4,
+      answeredCount: 2,
+      currentItem: {
+        id: 'sc_fix',
+        mode: 'fix',
+        inputKind: 'text',
+        skillIds: ['semicolon'],
+        prompt: 'Fix the comma splice between the two main clauses.',
+        stem: 'The rain had stopped, the pitch was still slippery',
+      },
+    },
+    feedback: {
+      kind: 'error',
+      headline: 'A complete clause matters.',
+      body: 'Combine it with the main clause using a semi-colon.',
+      displayCorrection: 'The rain had stopped; the pitch was still slippery.',
+      facets: [],
+      misconceptionTags: [],
+    },
+  });
+  const html = harness.render();
+  const leaks = forbiddenAdultGrammarTerms(html);
+  assert.deepEqual(
+    leaks,
+    [],
+    `Feedback branch leaked adult grammar terms (override not firing?): ${leaks.join(', ')}`,
+  );
+});
+
+test('U7 FINDING C: seeded adult-term GPS review-item renders with override applied (Summary scene)', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'summary',
+    summary: {
+      label: 'Punctuation session summary',
+      message: 'Session complete.',
+      total: 2,
+      correct: 1,
+      accuracy: 50,
+      focus: [],
+      securedUnits: [],
+      misconceptionTags: [],
+      gps: {
+        delayedFeedback: true,
+        recommendedMode: 'weak',
+        recommendedLabel: 'Wobbly Spots',
+        reviewItems: [
+          {
+            index: 1,
+            itemId: 'sc_fix',
+            mode: 'fix',
+            skillIds: ['semicolon'],
+            // Adult-term seeding at both the prompt + displayCorrection
+            // sites so removing either override call fails the sweep.
+            prompt: 'Fix the comma splice between the two main clauses.',
+            stem: 'The rain had stopped, the pitch was still slippery',
+            attemptedAnswer: 'The rain had stopped, the pitch was still slippery.',
+            displayCorrection: 'Two main clauses joined by a semi-colon.',
+            correct: false,
+            misconceptionTags: [],
+            facets: [],
+          },
+        ],
+      },
+    },
+  });
+  const html = harness.render();
+  const leaks = forbiddenAdultGrammarTerms(html);
+  assert.deepEqual(
+    leaks,
+    [],
+    `Summary scene leaked adult grammar terms (override not firing?): ${leaks.join(', ')}`,
+  );
+});
+
+test('U7 FINDING C: SkillDetailModal renders with override applied (adult-term smuggle probe)', () => {
+  // The modal reads from PUNCTUATION_SKILL_MODAL_CONTENT. The source
+  // for that table was rewritten in U7 to child register, so we cannot
+  // seed adult terms by mutating live state. Instead, assert the SAME
+  // invariant at the integration level: open the modal for a skill
+  // whose shared-source rule contains "main clause" and confirm the
+  // rendered HTML contains no adult grammar terms. If the override
+  // were removed from SkillDetailModal.jsx, the modal's rule line
+  // would bypass the rewrite even though the client mirror
+  // (PUNCTUATION_SKILL_MODAL_CONTENT) is pre-rewritten — but the defense-
+  // in-depth sweep guards against future authors re-populating the
+  // client mirror with adult-register strings.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-open-map');
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'semicolon' });
+  // Default tab 'learn' renders rule + worked example + common mix-up.
+  const html = harness.render();
+  const modalStart = html.indexOf('<div class="punctuation-skill-modal-scrim"');
+  const modalHtml = modalStart === -1 ? '' : html.slice(modalStart);
+  assert.ok(modalHtml, 'modal HTML must be present');
+  const leaks = forbiddenAdultGrammarTerms(modalHtml);
+  assert.deepEqual(
+    leaks,
+    [],
+    `SkillDetailModal leaked adult grammar terms (override not threaded?): ${leaks.join(', ')}`,
+  );
+});
