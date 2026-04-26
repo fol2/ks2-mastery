@@ -475,6 +475,60 @@ test('spelling session TTS resolves sentence index from canonical word sentences
   assert.equal(request.sentenceIndex, 5);
 });
 
+test('spelling session TTS avoids content reads when runtime word sentences are complete', async () => {
+  const learnerId = 'learner-a';
+  const sessionId = 'session-a';
+  const word = WORD_BY_SLUG.parliament;
+  const sentence = 'Parliament voted on the change.';
+  const promptToken = await sha256([
+    'spelling-prompt-v1',
+    learnerId,
+    sessionId,
+    word.slug,
+    word.word,
+    sentence,
+  ].join('|'));
+  let contentReads = 0;
+  const repository = {
+    async readSubjectRuntime() {
+      return {
+        subjectRecord: {
+          ui: {
+            phase: 'session',
+            session: {
+              id: sessionId,
+              currentCard: {
+                slug: word.slug,
+                word,
+                prompt: {
+                  sentence,
+                  cloze: '__________ voted on the change.',
+                },
+              },
+            },
+          },
+        },
+      };
+    },
+    async readSpellingRuntimeContent() {
+      contentReads += 1;
+      throw new Error('Session TTS should not read content when runtime sentences are complete.');
+    },
+  };
+
+  const request = await resolveSpellingAudioRequest({
+    repository,
+    accountId: 'adult-a',
+    body: {
+      learnerId,
+      promptToken,
+    },
+  });
+
+  assert.equal(request.sentenceIndex, 5);
+  assert.equal(contentReads, 0);
+});
+
 test('TTS route serves cached audio for lookup-only requests before selected provider fallback', async () => {
   const originalFetch = globalThis.fetch;
   let providerCalls = 0;

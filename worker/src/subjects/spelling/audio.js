@@ -8,6 +8,18 @@ function cleanText(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
+function shouldResolveSessionSentenceCanonically(state = null) {
+  const session = state?.phase === 'session' ? state.session : null;
+  const card = session?.currentCard || null;
+  const word = card?.word || null;
+  const sentence = cleanText(card?.prompt?.sentence);
+  if (!word || !sentence) return false;
+  const rawSentences = Array.isArray(word.sentences) ? word.sentences : [];
+  const sentences = rawSentences.map((item) => cleanText(item)).filter(Boolean);
+  if (sentences.length <= 1) return true;
+  return !sentences.includes(sentence);
+}
+
 function currentPromptParts({ learnerId, state, snapshot = null } = {}) {
   const session = state?.phase === 'session' ? state.session : null;
   const card = session?.currentCard || null;
@@ -141,8 +153,11 @@ export async function resolveSpellingAudioRequest({
 
   const runtime = await repository.readSubjectRuntime(accountId, learnerId, 'spelling');
   const state = runtime.subjectRecord?.ui || null;
-  const snapshot = await readRuntimeSnapshot({ repository, accountId });
-  const parts = currentPromptParts({ learnerId, state, snapshot });
+  let parts = currentPromptParts({ learnerId, state });
+  if (parts && shouldResolveSessionSentenceCanonically(state)) {
+    const snapshot = await readRuntimeSnapshot({ repository, accountId });
+    parts = currentPromptParts({ learnerId, state, snapshot });
+  }
   if (!parts) {
     const wordBankParts = await wordBankPromptParts({
       repository,
