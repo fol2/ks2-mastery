@@ -342,6 +342,144 @@ function GrammarConceptConfidencePanel({ evidence }) {
   );
 }
 
+// U10: Grammar Writing Try admin panel. Renders the live + archived
+// transfer evidence for the selected learner with archive + two-step
+// delete controls. The controls dispatch to the `grammar-transfer-admin-*`
+// actions in main.js, which call the `/api/admin/learners/:id/grammar/
+// transfer-evidence/:promptId/{archive,delete}` routes guarded by
+// `requireAdminHubAccess`. Role is derived server-side; this component
+// never claims the admin role.
+//
+// UX:
+//   - Live evidence section: one row per saved prompt with "Archive" button.
+//   - Archive section (collapsible): rows for archived prompts with
+//     "Delete" button. Delete dispatches through a confirm dialog so a
+//     misclick cannot wipe writing irreversibly. The archive-before-delete
+//     invariant is enforced server-side; the button layout mirrors that
+//     contract by only offering Delete inside the Archive section.
+//   - Empty states: clear messaging when there's no evidence / archive yet.
+function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
+  const [archiveOpen, setArchiveOpen] = React.useState(false);
+  const liveEntries = Array.isArray(transfer?.evidence) ? transfer.evidence : [];
+  const archivedEntries = Array.isArray(transfer?.archive) ? transfer.archive : [];
+  if (!learnerId) {
+    return (
+      <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-writing-try-admin">
+        <div className="eyebrow">Grammar · Writing Try admin</div>
+        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Writing Try — archive and delete</h3>
+        <p className="small muted">Choose a learner to manage their saved Writing Try entries.</p>
+      </section>
+    );
+  }
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-writing-try-admin">
+      <div className="eyebrow">Grammar · Writing Try admin</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Writing Try — archive and delete</h3>
+      <p className="small muted">
+        Writing Try evidence is non-scored. Archive removes an entry from the learner's active list without deleting it. Delete is only allowed once an entry is archived.
+      </p>
+      <section aria-labelledby="grammar-writing-try-admin-live" style={{ marginTop: 16 }}>
+        <h4 id="grammar-writing-try-admin-live" className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+          Active entries
+        </h4>
+        {liveEntries.length ? (
+          <ul className="skill-list" aria-label="Active Writing Try entries">
+            {liveEntries.map((entry) => (
+              <li
+                className="skill-row"
+                key={`live-${entry.promptId}`}
+                data-prompt-id={entry.promptId}
+                data-entry-kind="live"
+              >
+                <div>
+                  <strong>{entry.promptId}</strong>
+                  <div className="small muted">
+                    Saved {formatTimestamp(entry.latest?.savedAt || entry.updatedAt)}
+                  </div>
+                </div>
+                <div>
+                  <button
+                    className="btn secondary"
+                    type="button"
+                    data-action="grammar-transfer-admin-archive"
+                    data-prompt-id={entry.promptId}
+                    onClick={() => actions.dispatch('grammar-transfer-admin-archive', {
+                      learnerId,
+                      promptId: entry.promptId,
+                    })}
+                  >
+                    Archive
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="small muted">No active Writing Try entries for this learner.</p>
+        )}
+      </section>
+      <section aria-labelledby="grammar-writing-try-admin-archive" style={{ marginTop: 20 }}>
+        <h4 id="grammar-writing-try-admin-archive" className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+          Archived entries
+        </h4>
+        <button
+          className="btn ghost sm"
+          type="button"
+          aria-expanded={archiveOpen ? 'true' : 'false'}
+          aria-controls="grammar-writing-try-admin-archive-list"
+          onClick={() => setArchiveOpen((open) => !open)}
+        >
+          {archiveOpen ? 'Hide archive' : `Show archive (${archivedEntries.length})`}
+        </button>
+        {archiveOpen ? (
+          archivedEntries.length ? (
+            <ul
+              id="grammar-writing-try-admin-archive-list"
+              className="skill-list"
+              style={{ marginTop: 12 }}
+              aria-label="Archived Writing Try entries"
+            >
+              {archivedEntries.map((entry) => (
+                <li
+                  className="skill-row"
+                  key={`archive-${entry.promptId}`}
+                  data-prompt-id={entry.promptId}
+                  data-entry-kind="archive"
+                >
+                  <div>
+                    <strong>{entry.promptId}</strong>
+                    <div className="small muted">
+                      Archived {formatTimestamp(entry.archivedAt || entry.updatedAt)}
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      className="btn warn"
+                      type="button"
+                      data-action="grammar-transfer-admin-delete"
+                      data-prompt-id={entry.promptId}
+                      onClick={() => actions.dispatch('grammar-transfer-admin-delete', {
+                        learnerId,
+                        promptId: entry.promptId,
+                      })}
+                    >
+                      Delete permanently
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="small muted" style={{ marginTop: 12 }}>
+              No archived Writing Try entries for this learner.
+            </p>
+          )
+        ) : null}
+      </section>
+    </section>
+  );
+}
+
 function DashboardKpiPanel({ model, actions }) {
   const kpis = model?.dashboardKpis || {};
   const accounts = kpis.accounts || {};
@@ -1020,6 +1158,11 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
       <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
       <PostMegaSeedHarnessPanel model={model} actions={actions} />
       <GrammarConceptConfidencePanel evidence={selectedGrammarEvidence} />
+      <GrammarWritingTryAdminPanel
+        learnerId={selectedLearnerId}
+        transfer={selectedDiagnostics?.grammarTransferAdmin || null}
+        actions={actions}
+      />
 
       <section className="two-col" style={{ marginBottom: 20 }}>
         <article className="card">
