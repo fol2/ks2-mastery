@@ -872,6 +872,21 @@ export function createRemoteSpellingActionHandler({
     if (action === 'spelling-shortcut-start') {
       const mode = data.mode;
       if (!mode) return true;
+      // Mirror `module.js::spelling-shortcut-start` gate: Guardian Mission
+      // (Alt+4) AND Boss Dictation (Alt+5) are both gated on
+      // `postMastery.allWordsMega === true`. The gate lives here on the
+      // remote-sync path too so a learner who has not graduated yet cannot
+      // fire a Boss-start command to the server and receive a stale
+      // Smart Review fallback. Without this check the remote-sync path would
+      // bypass the local `allWordsMega` guard — adversarial review of U3
+      // surfaced the same omission for Guardian, so U9 extends both gates in
+      // lockstep to prevent the Boss surface from regressing the same way.
+      if (mode === 'guardian' || mode === 'boss') {
+        const postMastery = typeof spelling?.getPostMasteryState === 'function'
+          ? spelling.getPostMasteryState(learnerId)
+          : null;
+        if (!postMastery?.allWordsMega) return true;
+      }
       if (ui.phase === 'session') {
         const confirmed = globalThis.confirm?.('End the current spelling session and switch?');
         if (confirmed === false) return true;

@@ -9,6 +9,7 @@ export const SPELLING_EVENT_TYPES = Object.freeze({
   GUARDIAN_WOBBLED: 'spelling.guardian.wobbled',
   GUARDIAN_RECOVERED: 'spelling.guardian.recovered',
   GUARDIAN_MISSION_COMPLETED: 'spelling.guardian.mission-completed',
+  BOSS_COMPLETED: 'spelling.boss.completed',
 });
 
 export const SPELLING_MASTERY_MILESTONES = Object.freeze([1, 5, 10, 25, 50, 100, 150, 200]);
@@ -218,5 +219,46 @@ export function createSpellingGuardianMissionCompletedEvent({
     renewalCount: Number.isInteger(renewalCount) && renewalCount >= 0 ? renewalCount : 0,
     wobbledCount: Number.isInteger(wobbledCount) && wobbledCount >= 0 ? wobbledCount : 0,
     recoveredCount: Number.isInteger(recoveredCount) && recoveredCount >= 0 ? recoveredCount : 0,
+  };
+}
+
+/**
+ * Emitted when a Boss Dictation round finalises to summary (U9). Mirrors
+ * createSpellingGuardianMissionCompletedEvent's shape but carries Boss-specific
+ * score metadata (correct/wrong/length + seed slug list). Deterministic event
+ * id: `['spelling.boss.completed', learnerId, session.id].join(':')`.
+ *
+ * The seedSlugs list is the exact ordered sample produced by selectBossWords
+ * at round start; reward subscribers and later dashboards can replay the round
+ * scope without walking the per-answer event stream.
+ */
+export function createSpellingBossCompletedEvent({
+  learnerId,
+  session,
+  summary,
+  seedSlugs = null,
+  createdAt,
+} = {}) {
+  if (!session?.id) return null;
+  const correct = Number.isInteger(Number(summary?.correct)) && Number(summary.correct) >= 0
+    ? Number(summary.correct)
+    : 0;
+  const wrong = Number.isInteger(Number(summary?.wrong)) && Number(summary.wrong) >= 0
+    ? Number(summary.wrong)
+    : 0;
+  const length = Array.isArray(session.uniqueWords) ? session.uniqueWords.length : (correct + wrong);
+  const safeSeedSlugs = Array.isArray(seedSlugs)
+    ? seedSlugs.filter((slug) => typeof slug === 'string' && slug)
+    : (Array.isArray(session.uniqueWords) ? session.uniqueWords.slice() : []);
+  return {
+    ...baseSpellingEvent(
+      SPELLING_EVENT_TYPES.BOSS_COMPLETED,
+      { learnerId, session, createdAt },
+      [learnerId || 'default', session.id],
+    ),
+    length,
+    correct,
+    wrong,
+    seedSlugs: safeSeedSlugs,
   };
 }

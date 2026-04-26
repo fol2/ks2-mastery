@@ -649,3 +649,45 @@ test('Trouble Drill pure session-ui helpers: byte-for-byte unchanged under U5', 
   assert.equal(spellingSessionProgressLabel(practiceTrouble), 'Practice only');
   assert.deepEqual(spellingSessionInfoChips(practiceTrouble), ['Y5-6', 'Practice only']);
 });
+
+// U9: Boss Dictation shortcut-start gate parity. The plan guards the module-
+// level gate (mode === 'boss' → requires allWordsMega === true) against a
+// regression where a Smart Review fallback fires for non-graduated learners.
+// The gate mirrors the Guardian (Alt+4) gate already in place; this test
+// guards the Boss branch at the same call site via the local harness.
+test('spelling-shortcut-start with mode:boss when allWordsMega=false is a gate-level no-op', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '5' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  const beforePhase = harness.store.getState().subjectUi.spelling.phase;
+
+  harness.dispatch('spelling-shortcut-start', { mode: 'boss' });
+
+  const after = harness.store.getState().subjectUi.spelling;
+  // Not graduated → the gate must short-circuit; no Boss session should have
+  // been started. Phase remains at whatever it was (dashboard or similar).
+  assert.equal(after.phase, beforePhase, 'Boss shortcut must not start a session without allWordsMega');
+  assert.equal(after.session, null, 'no Boss session allocated');
+});
+
+test('spelling-shortcut-start with mode:boss when allWordsMega=true starts a Boss session', () => {
+  const storage = installMemoryStorage();
+  const nowRef = { value: Date.UTC(2026, 0, 10) };
+  const harness = createAppHarness({ storage, now: () => nowRef.value });
+  const learnerId = harness.store.getState().learners.selectedId;
+  const todayDay = Math.floor(nowRef.value / DAY_MS);
+
+  seedAllCoreMegaForGuardian(harness.repositories, learnerId, todayDay);
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-shortcut-start', { mode: 'boss' });
+
+  const state = harness.store.getState().subjectUi.spelling;
+  assert.equal(state.phase, 'session');
+  assert.equal(state.session.mode, 'boss');
+  assert.equal(state.session.type, 'test');
+  assert.equal(state.session.label, 'Boss Dictation');
+});

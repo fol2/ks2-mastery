@@ -49,7 +49,10 @@ const TODAY = 18_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 test('SPELLING_MODES includes guardian alongside existing modes', () => {
-  assert.deepEqual(SPELLING_MODES, ['smart', 'trouble', 'test', 'single', 'guardian']);
+  // Post-U9 the list also contains 'boss'. Keep the guardian-specific assertions
+  // here focused on what U1/U3 cared about; Boss-specific mode coverage lives
+  // in spelling-boss.test.js.
+  assert.deepEqual(SPELLING_MODES, ['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
   assert.equal(normaliseMode('guardian'), 'guardian');
   assert.equal(normaliseMode('unknown-mode'), 'smart');
   assert.equal(normaliseMode('smart'), 'smart');
@@ -235,7 +238,10 @@ test('SPELLING_EVENT_TYPES gains exactly four guardian event types with kebab-ca
   assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED, 'spelling.guardian.recovered');
   assert.equal(SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED, 'spelling.guardian.mission-completed');
   const values = Object.values(SPELLING_EVENT_TYPES);
-  assert.equal(values.length, 8, 'exactly 8 event types after U2');
+  // U9 added BOSS_COMPLETED ('spelling.boss.completed'), bringing the total to 9.
+  // Guardian-specific shape is still intact — the assertion below guards the
+  // kebab-case values and uniqueness rather than the Guardian count alone.
+  assert.equal(values.length, 9, 'exactly 9 event types after U9 (U2 baseline + BOSS_COMPLETED)');
   assert.equal(new Set(values).size, values.length, 'all event types unique');
 });
 
