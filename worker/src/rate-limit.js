@@ -385,23 +385,36 @@ export function normaliseRateLimitSubject(request, {
 //
 // The TRUST_XFF env flag is a convenience for dev / staging deployments
 // behind a reverse proxy where CF-Connecting-IP is absent. We gate the
-// flag on `env.ENVIRONMENT !== 'production'` so a misconfigured
-// production deployment cannot accidentally flip it and open the door.
+// flag on stage !== 'production' so a misconfigured production
+// deployment cannot accidentally flip it and open the door. The stage
+// is computed from `env.ENVIRONMENT || env.NODE_ENV` and normalised to
+// lowercase to mirror the canonical pattern in `worker/src/auth.js` and
+// `worker/src/request-origin.js` — this closes the NODE_ENV-only
+// misconfiguration where `ENVIRONMENT` is unset but `NODE_ENV=production`
+// is carried over from Node-derived config templates, and also handles
+// `Production` / `PRODUCTION` casing variants.
+//
 // `warnOnceAboutTrustedXff` emits a Workers log at first use so the
 // operator sees the trust decision in telemetry.
 
 let trustXffWarned = false;
 
+function resolveStage(env) {
+  return String(env?.ENVIRONMENT || env?.NODE_ENV || '').trim().toLowerCase();
+}
+
 function envTrustsXForwardedFor(env) {
   if (!env || env.TRUST_XFF !== '1') return false;
-  if (env.ENVIRONMENT === 'production') {
+  const stage = resolveStage(env);
+  if (stage === 'production') {
     if (!trustXffWarned) {
       trustXffWarned = true;
       try {
         // eslint-disable-next-line no-console
         console.warn(JSON.stringify({
           event: 'rate_limit.trust_xff_ignored_in_production',
-          reason: 'TRUST_XFF was set to "1" but ENVIRONMENT=production; forwarded-IP headers remain untrusted.',
+          reason: 'TRUST_XFF was set to "1" but the deployment stage resolves to production; forwarded-IP headers remain untrusted.',
+          stage,
         }));
       } catch {
         // Worker runtime without console.warn — swallow.
@@ -415,7 +428,7 @@ function envTrustsXForwardedFor(env) {
       // eslint-disable-next-line no-console
       console.warn(JSON.stringify({
         event: 'rate_limit.trust_xff_enabled',
-        environment: typeof env.ENVIRONMENT === 'string' ? env.ENVIRONMENT : null,
+        stage: stage || null,
       }));
     } catch {
       // Worker runtime without console.warn — swallow.

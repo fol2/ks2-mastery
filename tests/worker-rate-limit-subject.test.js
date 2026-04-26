@@ -326,3 +326,58 @@ test('H1: TRUST_XFF=1 with ENVIRONMENT=staging honours the flag and emits enable
     console.warn = originalWarn;
   }
 });
+
+// H1 re-review: the production-stage resolver mirrors auth.js / request-origin.js
+// and reads `env.ENVIRONMENT || env.NODE_ENV`. Without the NODE_ENV fallback
+// a Node-derived deploy template that carries `NODE_ENV=production` but no
+// `ENVIRONMENT` would treat itself as non-production and let TRUST_XFF=1
+// flip the rate-limit subject to attacker-controlled headers. These tests
+// lock in the NODE_ENV fallback + case-insensitive match.
+test('H1: TRUST_XFF=1 with NODE_ENV=production (ENVIRONMENT unset) is IGNORED', () => {
+  __resetTrustXffWarningForTests();
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = (message) => { warnings.push(String(message)); };
+  try {
+    const request = requestWith({ 'x-forwarded-for': '8.8.8.8' });
+    const env = { TRUST_XFF: '1', NODE_ENV: 'production' };
+    const out = rateLimitSubject(request, env);
+    assert.equal(out.bucketKey, 'unknown:missing', 'NODE_ENV=production must disable XFF fallback');
+    const ignoredWarnings = warnings.filter((w) =>
+      w.includes('rate_limit.trust_xff_ignored_in_production'),
+    );
+    assert.equal(ignoredWarnings.length, 1);
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
+test('H1: TRUST_XFF=1 with ENVIRONMENT=Production (mixed case) is IGNORED', () => {
+  __resetTrustXffWarningForTests();
+  try {
+    const request = requestWith({ 'x-forwarded-for': '8.8.8.8' });
+    const mixedCase = rateLimitSubject(request, { TRUST_XFF: '1', ENVIRONMENT: 'Production' });
+    assert.equal(mixedCase.bucketKey, 'unknown:missing', 'casing typo must not bypass the guard');
+  } finally {
+    // Reset for any subsequent test sharing the module latch.
+    __resetTrustXffWarningForTests();
+  }
+  __resetTrustXffWarningForTests();
+  const upperCase = rateLimitSubject(
+    requestWith({ 'x-forwarded-for': '8.8.8.8' }),
+    { TRUST_XFF: '1', ENVIRONMENT: 'PRODUCTION' },
+  );
+  assert.equal(upperCase.bucketKey, 'unknown:missing');
+});
+
+test('H1: ENVIRONMENT wins over NODE_ENV (staging env honoured even if NODE_ENV=production)', () => {
+  __resetTrustXffWarningForTests();
+  const request = requestWith({ 'x-forwarded-for': '8.8.8.8' });
+  const out = rateLimitSubject(request, {
+    TRUST_XFF: '1',
+    ENVIRONMENT: 'staging',
+    NODE_ENV: 'production',
+  });
+  // ENVIRONMENT=staging wins because the resolver uses `ENVIRONMENT || NODE_ENV`.
+  assert.equal(out.bucketKey, 'v4:8.8.8.8');
+});
