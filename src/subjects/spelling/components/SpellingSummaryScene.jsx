@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { AnimatedPromptCard, PathProgress, Ribbon } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
@@ -104,6 +105,15 @@ function SummaryBossMissList({ mistakes = [] }) {
 
 export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery = null, previousHeroBg = '', runtimeReadOnly = false }) {
   const summary = ui.summary;
+  // SH2-U1: JSX-layer guard for non-destructive next-action buttons.
+  // Drill/Start-again/Drill-all all route through the subject adapter
+  // which already dedupes via `pendingCommand`; the hook absorbs the
+  // window between the click and the round-trip so a double-click
+  // cannot fire two flow transitions. `ui.summary` may be null while
+  // the scene mounts without a settled summary (edge case guarded
+  // below), but the hook is safe to instantiate unconditionally —
+  // React hook-order constraints require it to sit at component top.
+  const submitLock = useSubmitLock();
   if (!summary) return null;
   const pendingCommand = ui.pendingCommand || '';
   const pending = Boolean(pendingCommand);
@@ -194,8 +204,10 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
                     type="button"
                     className="btn primary sm"
                     data-action="spelling-drill-all"
-                    disabled={runtimeReadOnly || pending}
-                    onClick={(event) => renderAction(actions, event, 'spelling-drill-all')}
+                    disabled={runtimeReadOnly || pending || submitLock.locked}
+                    onClick={(event) => {
+                      submitLock.run(async () => renderAction(actions, event, 'spelling-drill-all'));
+                    }}
                   >
                     {guardianPracticeActionLabel()} <ArrowRightIcon />
                   </button>
@@ -215,8 +227,10 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
                       data-action="spelling-drill-single"
                       data-slug={word.slug}
                       key={word.slug}
-                      disabled={runtimeReadOnly || pending}
-                      onClick={(event) => renderAction(actions, event, 'spelling-drill-single', { slug: word.slug })}
+                      disabled={runtimeReadOnly || pending || submitLock.locked}
+                      onClick={(event) => {
+                        submitLock.run(async () => renderAction(actions, event, 'spelling-drill-single', { slug: word.slug }));
+                      }}
                     >
                       {word.word}
                     </button>
@@ -225,8 +239,10 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
                     type="button"
                     className="btn primary sm"
                     data-action="spelling-drill-all"
-                    disabled={runtimeReadOnly || pending}
-                    onClick={(event) => renderAction(actions, event, 'spelling-drill-all')}
+                    disabled={runtimeReadOnly || pending || submitLock.locked}
+                    onClick={(event) => {
+                      submitLock.run(async () => renderAction(actions, event, 'spelling-drill-all'));
+                    }}
                   >
                     Drill all {summary.mistakes.length} <ArrowRightIcon />
                   </button>
@@ -249,8 +265,10 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
               className="btn primary lg"
               style={{ '--btn-accent': accent }}
               data-action="spelling-start-again"
-              disabled={runtimeReadOnly || pending}
-              onClick={(event) => renderAction(actions, event, 'spelling-start-again')}
+              disabled={runtimeReadOnly || pending || submitLock.locked}
+              onClick={(event) => {
+                submitLock.run(async () => renderAction(actions, event, 'spelling-start-again'));
+              }}
             >
               {pendingCommand === 'start-session' ? 'Starting...' : 'Start another round'} <ArrowRightIcon />
             </button>

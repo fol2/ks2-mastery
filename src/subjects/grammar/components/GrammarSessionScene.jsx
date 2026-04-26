@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   buildGrammarSpeechText,
   isGrammarSpeechAvailable,
@@ -362,8 +363,16 @@ function SessionGoalChip({ goal }) {
 }
 
 function RepairActions({ isMiniTest, isFeedback, help, feedback, pending, runtimeReadOnly, actions }) {
+  // SH2-U1: child-component hook instance covers the retry / worked /
+  // similar / faded-support / similar-problem clusters. Each cluster
+  // shares a single lock because a child cannot sensibly tap two of
+  // them back-to-back — the first dispatch mutates the ui state and
+  // the other buttons unmount on the next render. Scoping the hook to
+  // this child keeps the parent GrammarSessionScene's hook narrow to
+  // the primary Continue / Next-question button.
+  const submitLock = useSubmitLock();
   if (isMiniTest) return null;
-  const disabled = runtimeReadOnly || pending;
+  const disabled = runtimeReadOnly || pending || submitLock.locked;
   // Post-answer (feedback) branch: only render repair controls for a wrong
   // answer. A correct answer funnels the learner to the single `Next question`
   // primary action — no retry / worked solution / similar problem clutter.
@@ -373,16 +382,31 @@ function RepairActions({ isMiniTest, isFeedback, help, feedback, pending, runtim
     if (isCorrect) return null;
     return (
       <div className="grammar-repair-actions" aria-label="Grammar repair actions">
-        <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-retry-current-question')}>
+        <button
+          className="btn secondary"
+          type="button"
+          disabled={disabled}
+          onClick={() => submitLock.run(async () => actions.dispatch('grammar-retry-current-question'))}
+        >
           Retry
         </button>
         {help.showWorkedSolution ? (
-          <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-show-worked-solution')}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={disabled}
+            onClick={() => submitLock.run(async () => actions.dispatch('grammar-show-worked-solution'))}
+          >
             Worked solution
           </button>
         ) : null}
         {help.showSimilarProblem ? (
-          <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-start-similar-problem')}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={disabled}
+            onClick={() => submitLock.run(async () => actions.dispatch('grammar-start-similar-problem'))}
+          >
             Similar problem
           </button>
         ) : null}
@@ -395,10 +419,20 @@ function RepairActions({ isMiniTest, isFeedback, help, feedback, pending, runtim
   if (!help?.showFadedSupport || !help?.showSimilarProblem) return null;
   return (
     <div className="grammar-repair-actions" aria-label="Grammar support actions">
-      <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-use-faded-support')}>
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={disabled}
+        onClick={() => submitLock.run(async () => actions.dispatch('grammar-use-faded-support'))}
+      >
         Faded support
       </button>
-      <button className="btn secondary" type="button" disabled={disabled} onClick={() => actions.dispatch('grammar-start-similar-problem')}>
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={disabled}
+        onClick={() => submitLock.run(async () => actions.dispatch('grammar-start-similar-problem'))}
+      >
         Similar problem
       </button>
     </div>
@@ -462,6 +496,13 @@ function ReadAloudControls({ grammar }) {
 }
 
 export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
+  // SH2-U1: JSX-layer guard for the primary Continue / Next-question
+  // button. Submit is already guarded via `grammar.pendingCommand`
+  // (submit / save / finish-mini-test / save-mini-test-response all
+  // flow through the adapter's pendingKeys). The hook sits on the
+  // flow-advance button so a double-click doesn't queue two continues
+  // before the UI transitions phases.
+  const submitLock = useSubmitLock();
   const session = grammar.session || {};
   const miniTest = session.type === 'mini-set' ? session.miniTest : null;
   const miniTestQuestions = Array.isArray(miniTest?.questions) ? miniTest.questions : [];
@@ -493,7 +534,11 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const submitLabel = grammarSessionSubmitLabel(session, grammar.awaitingAdvance);
 
   return (
-    <section className="grammar-session" aria-labelledby="grammar-session-title">
+    <section
+      className="grammar-session"
+      aria-labelledby="grammar-session-title"
+      data-grammar-phase-root="session"
+    >
       <div className="grammar-session-head">
         <div>
           <div className="eyebrow">Grammar practice</div>
@@ -602,8 +647,8 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
               <button
                 className="btn secondary"
                 type="button"
-                disabled={runtimeReadOnly || pending}
-                onClick={() => actions.dispatch('grammar-continue')}
+                disabled={runtimeReadOnly || pending || submitLock.locked}
+                onClick={() => submitLock.run(async () => actions.dispatch('grammar-continue'))}
               >
                 {progressDone >= progressTotal ? 'Finish round' : 'Next question'}
               </button>

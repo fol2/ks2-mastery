@@ -143,7 +143,11 @@ export function GrammarAnalyticsScene({
   const securedPunctuationConcepts = punctuationConcepts.filter((concept) => concept.status === 'secured').length;
 
   return (
-    <section className="card grammar-analytics" aria-labelledby="grammar-analytics-title">
+    <section
+      className="card grammar-analytics"
+      aria-labelledby="grammar-analytics-title"
+      data-grammar-phase-root="analytics"
+    >
       <div className="card-header">
         <div>
           <div className="eyebrow">Evidence snapshot</div>

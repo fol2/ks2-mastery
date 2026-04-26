@@ -1,3 +1,12 @@
+/**
+ * P2 versioning convention (H7 synthesis, documented at U10): content-model
+ * versions use EVEN numbers; service-state versions use ODD numbers. The two
+ * version counters live in different files and get bumped on different
+ * cadences, but a collision (e.g. both at 3) would blow an entire day in
+ * triage to re-establish which counter moved. The even/odd split rules out
+ * collisions by construction — see `SPELLING_CONTENT_MODEL_VERSION` in
+ * `src/subjects/spelling/content/model.js` (currently 4).
+ */
 export const SPELLING_SERVICE_STATE_VERSION = 3;
 
 /**
@@ -10,6 +19,22 @@ export const SPELLING_SERVICE_STATE_VERSION = 3;
  * visibility theme).
  */
 export const SPELLING_CONTENT_RELEASE_ID = 'spelling-p2-baseline-2026-04-26';
+
+/**
+ * P2 U10: re-export of the pattern registry identifiers so consumers
+ * (Pattern Quest selector, UI, Admin dashboards) can import a single
+ * constant without reaching into `content/patterns.js`. The canonical
+ * registry definitions stay in that file; this is a narrow re-export
+ * facade — the Array is frozen at definition, and the helpers below are
+ * plain pure functions.
+ */
+export {
+  SPELLING_PATTERN_IDS,
+  SPELLING_PATTERNS,
+  PATTERN_LAUNCH_THRESHOLD,
+  computeLaunchedPatternIds,
+  isPatternEligibleSlug,
+} from './content/patterns.js';
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
 export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
@@ -317,6 +342,32 @@ export const SPELLING_PERSISTENCE_WARNING_REASON = Object.freeze({
 });
 
 /**
+ * P2 U9: Normalise the durable `data.persistenceWarning` sibling. Unlike the
+ * session-scoped `feedback.persistenceWarning` (which carries only `{ reason }`
+ * for the current-round banner), the persisted record also carries `occurredAt`
+ * (day number) and `acknowledged` (boolean) so the banner survives tab close
+ * and dismisses once the learner clicks "I understand". Returns `null` for
+ * garbage / missing input so `data.persistenceWarning === null` is the
+ * unambiguous "no warning" marker for the sibling record writer.
+ *
+ * Shape: `{ reason, occurredAt, acknowledged }`.
+ *  - `reason`: must be a member of `SPELLING_PERSISTENCE_WARNING_REASONS`.
+ *  - `occurredAt`: non-negative integer day number (floor of Date.now() / DAY_MS).
+ *  - `acknowledged`: boolean; defaults to false when missing.
+ */
+export function normaliseDurablePersistenceWarning(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const reason = typeof raw.reason === 'string' ? raw.reason : '';
+  if (!SPELLING_PERSISTENCE_WARNING_REASONS.includes(reason)) return null;
+  const occurredAtRaw = Number(raw.occurredAt);
+  const occurredAt = Number.isFinite(occurredAtRaw) && occurredAtRaw >= 0
+    ? Math.floor(occurredAtRaw)
+    : 0;
+  const acknowledged = raw.acknowledged === true;
+  return { reason, occurredAt, acknowledged };
+}
+
+/**
  * U8 review fix: banner copy extracted so future wording tweaks live in one
  * place. The wording was updated from the original "Progress could not be
  * saved on this device. Export or free storage." to the more accurate
@@ -328,6 +379,26 @@ export const SPELLING_PERSISTENCE_WARNING_REASON = Object.freeze({
  */
 export const SPELLING_PERSISTENCE_WARNING_COPY = Object.freeze({
   STORAGE_SAVE_FAILED: 'We could not save your progress on this device. Your answer counted for this round, but you may see this word again after a reload. Free up storage or export your progress.',
+});
+
+/**
+ * P2 U9: copy for the durable persistence-warning banner. The wording is
+ * deliberately more compact than `SPELLING_PERSISTENCE_WARNING_COPY` because
+ * the durable banner may surface on the setup scene (learner arrives fresh,
+ * no active round) — the "Your answer counted for this round" phrasing from
+ * U8 does not apply there. The U9 copy centres on what the learner needs to
+ * do: export data or free up storage.
+ *
+ * Reviewer-feedback fix (PR #279 LOW): keys are indexed by the reason enum
+ * VALUE (kebab-case, e.g. `'storage-save-failed'`) so the UI can do a direct
+ * `COPY[reason]` lookup and adding a future reason is a one-line change in
+ * `SPELLING_PERSISTENCE_WARNING_REASONS` + here. Legacy UPPER_SNAKE key is
+ * kept as an alias so any downstream consumer that relied on the symbolic
+ * name keeps working.
+ */
+export const SPELLING_DURABLE_PERSISTENCE_WARNING_COPY = Object.freeze({
+  'storage-save-failed': 'Your progress could not be saved on this device. Export your data or free up storage.',
+  STORAGE_SAVE_FAILED: 'Your progress could not be saved on this device. Export your data or free up storage.',
 });
 
 function normalisePersistenceWarning(raw) {

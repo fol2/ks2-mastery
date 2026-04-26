@@ -155,6 +155,20 @@ test('Worker runtime registers punctuation command handlers', async () => {
       async readLearnerProjectionState() {
         return { gameState: {}, events: [] };
       },
+      async readLearnerProjectionInput() {
+        // U6 hot-path reader stub; see Grammar runtime test for shape.
+        return {
+          mode: 'hit',
+          projection: {
+            version: 1,
+            rewards: { systemId: 'monster-codex', state: {} },
+            eventCounts: { domain: 0, reactions: 0, toasts: 0 },
+            recentEventTokens: [],
+          },
+          sourceRevision: 0,
+          rawRow: null,
+        };
+      },
     },
   });
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   spellingSessionContextNote,
   spellingSessionInfoChips,
@@ -8,8 +9,7 @@ import {
   spellingSessionVoiceNote,
 } from '../session-ui.js';
 import {
-  SPELLING_PERSISTENCE_WARNING_COPY,
-  SPELLING_PERSISTENCE_WARNING_REASON,
+  SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
 } from '../service-contract.js';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
 import {
@@ -40,6 +40,14 @@ export function SpellingSessionScene({
   actions,
   previousHeroBg = '',
   runtimeReadOnly = false,
+  // P2 U9: durable persistence-warning sibling threaded from
+  // `buildSpellingContext`. When non-null AND `!acknowledged` the banner
+  // renders across sessions; the "I understand" button dispatches
+  // `spelling-acknowledge-persistence-warning` which sets
+  // `acknowledged: true` on the persisted record (data is retained for
+  // audit). A subsequent new failure overwrites `acknowledged: false` and
+  // re-surfaces the banner.
+  persistenceWarning = null,
 }) {
   const prefs = service.getPrefs(learner.id);
   const session = ui.session;
@@ -73,6 +81,15 @@ export function SpellingSessionScene({
   const awaitingAdvance = Boolean(ui.awaitingAdvance);
   const pendingCommand = ui.pendingCommand || '';
   const pending = Boolean(pendingCommand);
+  // SH2-U1: JSX-layer belt-and-braces for non-destructive action buttons.
+  // Submit is already guarded by `pendingCommand` (and adapter-layer
+  // pendingKeys); the hook sits ON TOP of that so a fast double-click or
+  // mobile double-tap on Continue / Skip gets early-returned BEFORE the
+  // adapter round-trips `pendingCommand` back to the JSX. The hook is
+  // NOT applied to End-round-early: that path routes through
+  // `globalThis.confirm()` and is covered by the destructive-action
+  // confirm contract test.
+  const submitLock = useSubmitLock();
   const submitLabel = spellingSessionSubmitLabel(session, awaitingAdvance);
   const effectiveSubmitLabel = pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel;
   const inputPlaceholder = spellingSessionInputPlaceholder(session);
@@ -120,26 +137,36 @@ export function SpellingSessionScene({
   const sessionClasses = ['spelling-in-session'];
   sessionClasses.push(questionRevealed ? 'is-question-revealed' : 'is-entering-session');
 
-  // U8: storage-failure warning surface. The service attaches
-  // `feedback.persistenceWarning` on submit when a local-storage write fails
-  // (progress or guardian). We render a subtle polite-live banner above the
-  // card so the warning is announced once per submit (the aria-live region
-  // reads the new content on mount); Mega is never demoted. On the next
-  // successful submit the feedback re-renders without the warning and the
-  // banner unmounts. Accepted MVP gap: if the child closes the tab before
-  // another submit, the warning does not persist across sessions — a durable
-  // cross-session surface is deferred to a later plan.
+  // P2 U9: storage-failure warning surface migrated from the session-scoped
+  // `feedback.persistenceWarning` to the durable `data.persistenceWarning`
+  // sibling. The service writes `{ reason, occurredAt, acknowledged: false }`
+  // on any `saveJson` failure via `PersistenceSetItemError`; the banner
+  // renders until the learner clicks "I understand" (dispatches
+  // `spelling-acknowledge-persistence-warning`, sets `acknowledged: true`).
+  // Mega is never demoted on any failure path.
   //
-  // Review fix: banner copy is sourced from `SPELLING_PERSISTENCE_WARNING_COPY`
-  // in service-contract.js so a single edit updates every site. The reason
-  // key is the enum from `SPELLING_PERSISTENCE_WARNING_REASON` — the
-  // normaliser guarantees the reason is one of the allow-listed values, so
-  // the copy map always resolves.
-  const persistenceWarning = ui.feedback?.persistenceWarning || null;
-  const persistenceWarningCopy = persistenceWarning
-    ? (persistenceWarning.reason === SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED
-      ? SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED
-      : SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
+  // Accepted the P1.5 U8 gap: the previous session-scoped warning died on
+  // tab close. The durable sibling now survives, so a learner who closes
+  // the tab mid-failure still sees the banner on their next visit.
+  //
+  // Review fix: banner copy is sourced from
+  // `SPELLING_DURABLE_PERSISTENCE_WARNING_COPY` in service-contract.js so a
+  // single edit updates every site. The reason key is the enum from
+  // `SPELLING_PERSISTENCE_WARNING_REASON` — the durable-record normaliser
+  // guarantees the reason is one of the allow-listed values, so the copy
+  // map always resolves.
+  // Reviewer-feedback fix (PR #279 LOW): the previous ternary had identical
+  // branches — a dead-code placeholder for when future reasons are added.
+  // Use a forward-compatible lookup so adding a new reason is just a key in
+  // `SPELLING_DURABLE_PERSISTENCE_WARNING_COPY` plus (optionally) the enum;
+  // no edit to the scenes is required. Fall back to STORAGE_SAVE_FAILED
+  // copy if the reason is absent from the map (defensive: the normaliser
+  // guarantees the reason is allow-listed but we keep the fallback so a
+  // future map-edit mistake does not blank the banner).
+  const showPersistenceBanner = persistenceWarning && !persistenceWarning.acknowledged;
+  const persistenceWarningCopy = showPersistenceBanner
+    ? (SPELLING_DURABLE_PERSISTENCE_WARNING_COPY[persistenceWarning.reason]
+      ?? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
     : '';
 
   return (
@@ -151,14 +178,22 @@ export function SpellingSessionScene({
           <span className="path-count">Word {progressCurrent} of {progressTotal}</span>
         </header>
 
-        {persistenceWarning ? (
+        {showPersistenceBanner ? (
           <div
             className="spelling-persistence-warning"
             role="status"
             aria-live="polite"
             data-testid="spelling-persistence-warning"
           >
-            {persistenceWarningCopy}
+            <span className="spelling-persistence-warning-text">{persistenceWarningCopy}</span>
+            <button
+              type="button"
+              className="spelling-persistence-warning-ack"
+              data-action="spelling-acknowledge-persistence-warning"
+              onClick={(event) => renderAction(actions, event, 'spelling-acknowledge-persistence-warning')}
+            >
+              I understand
+            </button>
           </div>
         ) : null}
 
@@ -224,10 +259,19 @@ export function SpellingSessionScene({
                   className="btn good lg"
                   type="button"
                   data-action="spelling-continue"
-                  disabled={runtimeReadOnly || pending}
-                  onClick={(event) => renderAction(actions, event, 'spelling-continue', {
-                    flowTransition: isCompletingRound,
-                  })}
+                  disabled={runtimeReadOnly || pending || submitLock.locked}
+                  onClick={(event) => {
+                    // SH2-U1: the hook's `run()` flips `pendingRef.current`
+                    // synchronously before awaiting, so a second click fired
+                    // in the same microtask tick returns `undefined` without
+                    // invoking `renderAction` a second time. `renderAction`
+                    // runs inside `run(fn)` so the synchronous side effects
+                    // (event.preventDefault, action dispatch, flow-transition
+                    // start) still observe the live React synthetic event.
+                    submitLock.run(async () => renderAction(actions, event, 'spelling-continue', {
+                      flowTransition: isCompletingRound,
+                    }));
+                  }}
                 >
                   Continue <ArrowRightIcon />
                 </button>
@@ -237,8 +281,10 @@ export function SpellingSessionScene({
                   className="btn ghost lg"
                   type="button"
                   data-action="spelling-skip"
-                  disabled={runtimeReadOnly || pending}
-                  onClick={(event) => renderAction(actions, event, 'spelling-skip')}
+                  disabled={runtimeReadOnly || pending || submitLock.locked}
+                  onClick={(event) => {
+                    submitLock.run(async () => renderAction(actions, event, 'spelling-skip'));
+                  }}
                 >
                   {skipLabel}
                 </button>

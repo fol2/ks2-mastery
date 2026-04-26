@@ -36,6 +36,7 @@ import {
   spellingSessionSubmitLabel,
 } from '../src/subjects/spelling/session-ui.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
+import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -64,19 +65,17 @@ function makeServiceWithSeed({ now, random, storage = installMemoryStorage() } =
   return { storage, repositories, service };
 }
 
+// P2 U3: delegates to the shared seeder. Matches the guardian suite's
+// wiring — `guardian: {}` + `postMega: null` + `variation: true` — so the
+// Boss unit tests keep the exact starting shape they had before the
+// extraction.
 function seedAllCoreMega(repositories, learnerId, todayDay) {
-  const progress = Object.fromEntries(
-    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
-      stage: 4,
-      attempts: 6 + (index % 4),
-      correct: 5 + (index % 4),
-      wrong: 1,
-      dueDay: todayDay + 60,
-      lastDay: todayDay - 7,
-      lastResult: 'correct',
-    }]),
-  );
-  repositories.subjectStates.writeData(learnerId, 'spelling', { progress });
+  return seedFullCoreMegaShared(repositories, learnerId, {
+    today: todayDay,
+    guardian: {},
+    postMega: null,
+    variation: true,
+  });
 }
 
 function runBossRoundUntilSummary(service, learnerId, state, getAnswerForSlug) {

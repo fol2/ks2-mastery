@@ -68,6 +68,22 @@ test('worker subject runtime registers Grammar command handlers', async () => {
       async readLearnerProjectionState() {
         return { gameState: {}, events: [] };
       },
+      async readLearnerProjectionInput() {
+        // U6 hot-path reader stub. Returns a `hit`-mode input with empty
+        // reward state and an empty token ring so the command handler can
+        // proceed without scanning event_log.
+        return {
+          mode: 'hit',
+          projection: {
+            version: 1,
+            rewards: { systemId: 'monster-codex', state: {} },
+            eventCounts: { domain: 0, reactions: 0, toasts: 0 },
+            recentEventTokens: [],
+          },
+          sourceRevision: 0,
+          rawRow: null,
+        };
+      },
     },
   });
 
@@ -137,6 +153,22 @@ test('worker subject runtime starts Grammar trouble drills against weak concepts
       },
       async readLearnerProjectionState() {
         return { gameState: {}, events: [] };
+      },
+      async readLearnerProjectionInput() {
+        // U6 hot-path reader stub. Returns a `hit`-mode input with empty
+        // reward state and an empty token ring so the command handler can
+        // proceed without scanning event_log.
+        return {
+          mode: 'hit',
+          projection: {
+            version: 1,
+            rewards: { systemId: 'monster-codex', state: {} },
+            eventCounts: { domain: 0, reactions: 0, toasts: 0 },
+            recentEventTokens: [],
+          },
+          sourceRevision: 0,
+          rawRow: null,
+        };
       },
     },
   });

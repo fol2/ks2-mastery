@@ -52,6 +52,7 @@ import {
   punctuationPrimaryModeFromPrefs,
 } from './punctuation-view-model.js';
 import { progressForPunctuationMonster } from '../../../platform/game/mastery/punctuation.js';
+import { emitPunctuationEvent } from '../telemetry.js';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
 // one-shot stored-prefs migration. Local to this scene because the
@@ -273,6 +274,30 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   // `legacyCluster` is computed from the raw stored mode, not the
   // display collapse, so a reverted state is detected only the first
   // time before `prefsMigrated` latches.
+  // Phase 4 U4 — telemetry smoke integration.
+  //
+  // Setup-mount is the first of 12 telemetry emission sites in the plan's
+  // emission-site table (line 832-842). Firing the `card-opened` event at
+  // render-time (guarded by `cardOpenedRef`) gives U4 a real production
+  // touchpoint; the remaining 11 emission sites land in follow-on units
+  // (Session mount, submit-answer dispatch, feedback render, summary,
+  // map, etc.).
+  //
+  // A useRef gate is used (not useEffect) because `renderToStaticMarkup`
+  // never runs effects. The gate prevents React 18 strict-mode's
+  // double-invoke from firing the emit twice per mount. The emitter is
+  // fire-and-forget and routes through the subject-command-actions
+  // mapping — it cannot stall the render (see `telemetry.js` for the
+  // authz invariant).
+  const cardOpenedRef = useRef(false);
+  if (!cardOpenedRef.current) {
+    cardOpenedRef.current = true;
+    emitPunctuationEvent('card-opened', { cardId: 'smart' }, {
+      actions,
+      learnerId: learner && typeof learner === 'object' ? learner.id : null,
+    });
+  }
+
   const migratedRef = useRef(false);
   const prefsMigrated = Boolean(ui && typeof ui === 'object' && !Array.isArray(ui) && ui.prefsMigrated);
   const storedMode = prefs && typeof prefs === 'object' && !Array.isArray(prefs)

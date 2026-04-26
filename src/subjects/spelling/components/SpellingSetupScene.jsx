@@ -3,7 +3,10 @@ import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConf
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
-import { BOSS_DEFAULT_ROUND_LENGTH } from '../service-contract.js';
+import {
+  BOSS_DEFAULT_ROUND_LENGTH,
+  SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
+} from '../service-contract.js';
 import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
@@ -319,6 +322,11 @@ export function SpellingSetupScene({
   // Defaults to empty string so a prop-less caller (tests, legacy shells)
   // renders the child-safe view with the link absent.
   platformRole = '',
+  // P2 U9: durable persistence-warning sibling threaded from
+  // `buildSpellingContext`. Rendered on the setup scene so a learner who
+  // closed the tab mid-failure sees the warning the instant they re-open
+  // the app. Same "I understand" button + copy as the session scene.
+  persistenceWarning = null,
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
@@ -341,8 +349,23 @@ export function SpellingSetupScene({
     postMastery?.postMegaDashboardAvailable
     ?? postMastery?.allWordsMega,
   );
+  // P2 U4: hydration window signal. When the remote-sync shell has not yet
+  // received the worker's `postMastery` snapshot AND the learner has no
+  // local sticky-bit, the client read-model stamps
+  // `postMasteryDebug.source === 'checking'` for the first ~500ms. During
+  // that window we render a minimalist "Checking Word Vault..." skeleton
+  // post-Mega card instead of the legacy Smart Review setup — a graduated
+  // learner seeing the Guardian dashboard flicker into existence is jarring,
+  // so the skeleton preserves the post-Mega silhouette while the worker
+  // round-trip lands. After the timeout the source flips to
+  // `'locked-fallback'` and the legacy dashboard renders (the only
+  // acceptable flicker window is fresh-device bootstrap, per the plan's
+  // H6 short-circuit invariant).
+  const hydrationSource = postMastery?.postMasteryDebug?.source || '';
+  const isHydrationChecking = !isPostMega && hydrationSource === 'checking';
   const contentClasses = ['setup-content'];
   if (isPostMega) contentClasses.push('setup-content--post-mega');
+  if (isHydrationChecking) contentClasses.push('setup-content--checking');
 
   // P2 U1: admin / ops adults see a "Why is Guardian locked?" diagnostic
   // link right below the setup hero when Guardian Mission is NOT unlocked
@@ -350,6 +373,24 @@ export function SpellingSetupScene({
   // empty (defaulted) or === 'parent' and the link never renders. Routed
   // to the admin hub where the post-mega debug panel explains the counts.
   const showPostMasteryDebugLink = adultCanSeePostMasteryDebug(platformRole) && !isPostMega;
+
+  // P2 U9: banner gate — rendered when the durable `data.persistenceWarning`
+  // sibling exists and the learner has not yet acknowledged. Copy + button
+  // mirror the session scene exactly so the surface feels consistent
+  // whether the failure surfaced on setup (prefs write) or session
+  // (progress / guardian write). "I understand" dispatches the
+  // `spelling-acknowledge-persistence-warning` action handled in module.js
+  // (local) and remote-actions.js (remote-sync parity).
+  // Reviewer-feedback fix (PR #279 LOW): the previous ternary had identical
+  // branches — a dead-code placeholder. Use a forward-compatible lookup so
+  // adding a new reason is just a key in `SPELLING_DURABLE_PERSISTENCE_WARNING_COPY`
+  // plus (optionally) the enum; no edit to the scenes is required. Fall
+  // back to STORAGE_SAVE_FAILED copy if the reason is absent from the map.
+  const showPersistenceBanner = persistenceWarning && !persistenceWarning.acknowledged;
+  const persistenceWarningCopy = showPersistenceBanner
+    ? (SPELLING_DURABLE_PERSISTENCE_WARNING_COPY[persistenceWarning.reason]
+      ?? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
+    : '';
 
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
@@ -364,6 +405,24 @@ export function SpellingSetupScene({
       >
         <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
         <div className={contentClasses.join(' ')}>
+          {showPersistenceBanner ? (
+            <div
+              className="spelling-persistence-warning"
+              role="status"
+              aria-live="polite"
+              data-testid="spelling-persistence-warning"
+            >
+              <span className="spelling-persistence-warning-text">{persistenceWarningCopy}</span>
+              <button
+                type="button"
+                className="spelling-persistence-warning-ack"
+                data-action="spelling-acknowledge-persistence-warning"
+                onClick={(event) => renderAction(actions, event, 'spelling-acknowledge-persistence-warning')}
+              >
+                I understand
+              </button>
+            </div>
+          ) : null}
           {isPostMega ? (
             <PostMegaSetupContent
               prefs={prefs}
@@ -376,6 +435,8 @@ export function SpellingSetupScene({
               startDisabled={startDisabled}
               runtimeReadOnly={runtimeReadOnly}
             />
+          ) : isHydrationChecking ? (
+            <CheckingWordVaultContent />
           ) : (
             <LegacySetupContent
               prefs={prefs}
@@ -524,6 +585,77 @@ function LegacySetupContent({
         </button>
       </div>
     </>
+  );
+}
+
+/* P2 U4: "Checking Word Vault..." skeleton for the brief hydration window
+ * on a fresh-device bootstrap. Rendered only when the learner has no
+ * client-cached postMastery snapshot AND the remote-sync shell has not yet
+ * received the worker's postMastery response. Sticky-bit local-storage
+ * graduates skip this entirely (H6 short-circuit); the skeleton is only
+ * visible on a fresh device or after a data-clear.
+ *
+ * Design intent: preserve the post-Mega silhouette (hero card, title,
+ * stat ribbon, single CTA slot) so a graduated learner who opens the app
+ * on a new device does NOT see the legacy Smart Review setup flicker.
+ * Reserves the vertical space so the eventual worker response does not
+ * shift page content. Uses the same `post-mega-eyebrow` / `post-mega-title`
+ * typography classes as the real dashboard for visual continuity.
+ *
+ * Copy is deliberately neutral ("checking", not "loading"): kids read it
+ * as a deliberate system state rather than a spinner that might be stuck.
+ * The "Checking Word Vault..." label lives in a role=status region so
+ * assistive tech announces the placeholder once on render without
+ * overriding the learner's focus. */
+function CheckingWordVaultContent() {
+  return (
+    <section
+      className="post-mega-hydration-skeleton"
+      data-test-id="post-mega-hydration-skeleton"
+      aria-busy="true"
+    >
+      <p className="eyebrow post-mega-eyebrow">Graduated · Spelling Guardian</p>
+      <h1 className="title post-mega-title post-mega-hydration-skeleton__title">
+        <span aria-hidden="true" className="post-mega-hydration-skeleton__title-fill">The Word Vault is yours.</span>
+      </h1>
+      <p
+        className="lede post-mega-lede post-mega-hydration-skeleton__lede"
+        role="status"
+      >
+        Checking Word Vault&hellip;
+      </p>
+      <dl
+        className="post-mega-stat-ribbon post-mega-hydration-skeleton__ribbon"
+        aria-label="Guardian duty overview loading"
+      >
+        <div className="post-mega-stat post-mega-hydration-skeleton__stat" aria-hidden="true">
+          <dt>Words secured</dt>
+          <dd>&mdash;</dd>
+        </div>
+        <div className="post-mega-stat post-mega-hydration-skeleton__stat" aria-hidden="true">
+          <dt>Due today</dt>
+          <dd>&mdash;</dd>
+        </div>
+        <div className="post-mega-stat post-mega-hydration-skeleton__stat" aria-hidden="true">
+          <dt>Next check</dt>
+          <dd>&mdash;</dd>
+        </div>
+      </dl>
+      <div
+        className="mode-row mode-row-post-mega post-mega-hydration-skeleton__row"
+        data-variant="checking"
+        aria-hidden="true"
+      >
+        <div className="mode-card mode-card-post post-mega-hydration-skeleton__card">
+          <div className="mc-top">
+            <div className="mc-icon mc-icon-glyph"><span className="mc-glyph">&middot;</span></div>
+            <span className="mc-badge mc-badge-post post-mega-hydration-skeleton__badge">CHECKING</span>
+          </div>
+          <h4>Guardian Mission</h4>
+          <p>Confirming your Word Vault status&hellip;</p>
+        </div>
+      </div>
+    </section>
   );
 }
 

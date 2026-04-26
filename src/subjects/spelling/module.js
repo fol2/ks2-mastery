@@ -1,4 +1,5 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
+import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
 import { createInitialSpellingState, isPostMasteryMode } from './service-contract.js';
 import {
   WORD_BANK_FILTER_IDS,
@@ -123,6 +124,37 @@ export const spellingModule = {
   reactPractice: true,
   initState() {
     return createInitialSpellingState();
+  },
+  // SH2-U2 (R2): drop post-session-ephemeral fields on rehydrate so
+  // browser Back / Refresh on a completed-session summary screen cannot
+  // resurrect the summary's "Start another round" CTA. Baseline drop
+  // set (`summary`, `transientUi`, `pendingCommand`) lives on
+  // `SESSION_EPHEMERAL_FIELDS` in `platform/core/subject-contract.js`.
+  // Active-session state (`session`, `feedback`, `awaitingAdvance`) is
+  // intentionally preserved so a mid-round reload picks up where the
+  // learner left off -- `tests/store.test.js::serialisable spelling
+  // state survives store persistence for resume` and
+  // `tests/spelling-parity.test.js::restored completed spelling card
+  // caps progress and resumes auto-advance` lock both the session-
+  // resume and awaitingAdvance-resume invariants. Preferences (mode,
+  // yearFilter, roundLength, extraWordFamilies), `version`, and any
+  // other persisted subject-level static data survive untouched. Runs
+  // only on the rehydrate path (`rehydrate: true`); live
+  // `updateSubjectUi` dispatches bypass this hook so sessions mid-
+  // flight are unaffected.
+  //
+  // Blocker parity (adv-sh2u2-001 analog): Spelling also coerces
+  // `phase === 'summary'` back to `'dashboard'` so reload on a spelling
+  // summary never re-renders the "Start another round" CTA even when
+  // `normaliseSubjectEntryForOpen` (store.js:235) is bypassed (e.g. if
+  // a route-open path changes upstream). Parity drop-set across
+  // Grammar + Spelling + Punctuation keeps the invariant uniform.
+  sanitiseUiOnRehydrate(entry) {
+    const next = dropSessionEphemeralFields(entry);
+    if (next && typeof next === 'object' && !Array.isArray(next) && next.phase === 'summary') {
+      next.phase = 'dashboard';
+    }
+    return next;
   },
   getDashboardStats(appState, { service }) {
     const learner = appState.learners.byId[appState.learners.selectedId];
@@ -476,6 +508,34 @@ export const spellingModule = {
         sentence: word.sentence,
         slow: action === 'spelling-word-bank-drill-replay-slow',
       });
+      return true;
+    }
+
+    // P2 U9: "I understand" button on the durable persistence-warning banner
+    // dispatches this action. The service sets `acknowledged: true` on the
+    // persisted `data.persistenceWarning` record; the banner re-renders as
+    // absent on the next tick because `buildSpellingContext` re-reads the
+    // record each call. A subsequent new failure overwrites with
+    // `acknowledged: false`, re-surfacing the banner.
+    //
+    // Reviewer-feedback fix (PR #279 HIGH): when the service reports
+    // `{ ok: false }` (storage is still broken during the ack write), we
+    // MUST surface a runtime error so the click does not silently drop.
+    // The banner will re-render on the next selector pass because storage
+    // still records `acknowledged: false`, which is honest — but the
+    // learner now sees a clear "try again" message rather than a mystery.
+    if (action === 'spelling-acknowledge-persistence-warning') {
+      let ackResult = { ok: true };
+      if (typeof service.acknowledgePersistenceWarning === 'function') {
+        ackResult = service.acknowledgePersistenceWarning(learnerId) || { ok: true };
+      }
+      const nextError = ackResult.ok === false
+        ? 'Could not save — try again when storage is available.'
+        : '';
+      // Touch the subject UI so the view-model selector re-runs. The error
+      // slot reflects whether the ack persisted: on success we clear, on
+      // failure we surface child-friendly copy.
+      store.updateSubjectUi('spelling', { error: nextError });
       return true;
     }
 

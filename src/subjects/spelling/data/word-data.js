@@ -1,4 +1,4 @@
-// Generated from content/spelling.seed.json via scripts/generate-spelling-content.mjs
+// Generated from content\spelling.seed.json via scripts/generate-spelling-content.mjs
 // This file stays as a small compatibility shim for the existing spelling runtime.
 
 export {
@@ -42,6 +42,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -88,6 +91,10 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -131,8 +138,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -178,6 +187,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -221,6 +233,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -266,6 +281,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "silent-letter"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -309,6 +327,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -354,6 +375,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -398,6 +422,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "i-before-e"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -440,8 +467,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -484,8 +513,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -528,8 +559,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -574,6 +607,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "silent-letter"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -617,8 +653,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -662,8 +700,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -706,8 +746,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -750,8 +792,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -794,8 +838,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -838,8 +884,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -882,8 +930,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -926,8 +976,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -972,6 +1024,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1014,8 +1069,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1058,8 +1115,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1103,6 +1162,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "prefix-pre-re-de"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -1148,6 +1210,10 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de",
+      "root-graph-scribe"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1191,6 +1257,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -1236,6 +1305,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1279,6 +1351,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -1324,6 +1399,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1366,8 +1444,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1412,6 +1492,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "homophone"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -1458,6 +1541,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1500,8 +1586,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1544,8 +1632,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1588,8 +1678,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1632,8 +1724,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1676,8 +1770,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1722,6 +1818,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ous"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1764,8 +1863,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1808,8 +1909,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1853,8 +1956,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1898,8 +2003,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1942,8 +2049,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -1988,6 +2097,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "root-graph-scribe"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2030,8 +2142,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2074,8 +2188,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2118,8 +2234,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2163,6 +2281,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "homophone"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -2208,6 +2329,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2252,6 +2376,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2294,8 +2421,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2338,8 +2467,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2382,8 +2513,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2428,6 +2561,10 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-un-in-im",
+      "root-port-spect"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2470,8 +2607,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2515,6 +2654,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "silent-letter"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -2560,6 +2702,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "silent-letter"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2602,8 +2747,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2646,8 +2793,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2690,8 +2839,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2734,8 +2885,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2778,8 +2931,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2824,6 +2979,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-tion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2866,8 +3024,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2910,8 +3070,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2954,8 +3116,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -2998,8 +3162,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3044,6 +3210,10 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-sion"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -3090,6 +3260,10 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3132,8 +3306,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3178,6 +3354,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3220,8 +3399,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3264,8 +3445,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3310,6 +3493,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3352,8 +3538,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3396,8 +3584,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3441,6 +3631,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-tion"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -3487,6 +3680,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3532,6 +3728,10 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-sion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3576,6 +3776,10 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-able-ible"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3618,8 +3822,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3664,6 +3870,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3706,8 +3915,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3750,8 +3961,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3794,8 +4007,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3838,8 +4053,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3883,6 +4100,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-tion"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -3928,6 +4148,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3970,8 +4193,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4014,8 +4239,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4060,6 +4287,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4102,8 +4332,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4146,8 +4378,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4190,8 +4424,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4234,8 +4470,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4278,8 +4516,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4322,8 +4562,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4368,6 +4610,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4410,8 +4655,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4454,8 +4701,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4499,8 +4748,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4544,8 +4795,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4588,8 +4841,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4632,8 +4887,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4677,6 +4934,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-ous"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -4722,6 +4982,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4765,8 +5028,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4810,8 +5075,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4855,6 +5122,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -4900,6 +5170,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -4943,6 +5216,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -4988,6 +5264,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "i-before-e"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5032,6 +5311,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5074,8 +5356,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5119,6 +5403,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "i-before-e"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -5164,6 +5451,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5207,6 +5497,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -5252,6 +5545,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5296,6 +5592,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-able-ible"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5338,8 +5637,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5382,8 +5683,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5426,8 +5729,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5472,6 +5777,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5514,8 +5822,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5558,8 +5868,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5603,6 +5915,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -5648,6 +5963,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5691,6 +6009,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -5736,6 +6057,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-tion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5779,6 +6103,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "i-before-e"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -5824,6 +6151,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ous"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5866,8 +6196,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5910,8 +6242,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5956,6 +6290,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -5999,8 +6336,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6043,8 +6382,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6087,8 +6428,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6131,8 +6474,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6175,8 +6520,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6220,6 +6567,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "prefix-pre-re-de"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -6265,6 +6615,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "root-graph-scribe"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6308,6 +6661,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-ous"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -6353,6 +6709,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6395,8 +6754,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6441,8 +6802,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6489,6 +6852,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6533,8 +6899,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6578,6 +6946,10 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-ly"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -6623,6 +6995,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6667,6 +7042,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6709,8 +7087,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6755,6 +7135,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-tion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6797,8 +7180,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6841,8 +7226,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6885,8 +7272,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6931,6 +7320,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6973,8 +7365,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7017,8 +7411,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7063,6 +7459,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7105,8 +7504,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7149,8 +7550,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7195,6 +7598,10 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "prefix-un-in-im",
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -7241,6 +7648,11 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-un-in-im",
+      "double-consonant",
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7283,8 +7695,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7327,8 +7741,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7373,6 +7789,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7415,8 +7834,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7459,8 +7880,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7503,8 +7926,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7548,6 +7973,10 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-ous"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -7593,6 +8022,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ous"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7636,6 +8068,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "silent-letter"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -7681,6 +8116,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7723,8 +8161,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7767,8 +8207,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7812,6 +8254,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -7857,6 +8302,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7901,6 +8349,10 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "root-port-spect"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7943,8 +8395,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -7987,8 +8441,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8031,8 +8487,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8077,6 +8535,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8119,8 +8580,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8164,6 +8627,9 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-sion"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -8209,6 +8675,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8253,6 +8722,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-tion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8295,8 +8767,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8342,6 +8816,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8386,6 +8863,10 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de",
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8428,8 +8909,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8472,8 +8955,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8516,8 +9001,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8560,8 +9047,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8604,8 +9093,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8648,8 +9139,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8692,8 +9185,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8738,6 +9233,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "root-graph-scribe"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8781,8 +9279,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8828,6 +9328,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8870,8 +9373,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8914,8 +9419,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -8959,6 +9466,10 @@ export const WORDS = [
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "i-before-e",
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -9004,6 +9515,9 @@ export const WORDS = [
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9046,8 +9560,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9090,8 +9606,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9134,8 +9652,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9178,8 +9698,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9222,8 +9744,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9266,8 +9790,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9310,8 +9836,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9354,8 +9882,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9398,8 +9928,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9474,6 +10006,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -9529,6 +10062,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -9603,6 +10137,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -9677,6 +10212,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -9732,6 +10268,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -9806,6 +10343,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -9861,6 +10399,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -9935,6 +10474,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10009,6 +10549,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10064,6 +10605,7 @@ export const WORDS = [
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10137,6 +10679,7 @@ export const WORDS = [
       "science",
       "classification"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10192,6 +10735,7 @@ export const WORDS = [
       "body",
       "structure"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10247,6 +10791,7 @@ export const WORDS = [
       "body",
       "structure"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10282,6 +10827,7 @@ export const WORDS = [
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10337,6 +10883,7 @@ export const WORDS = [
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10392,6 +10939,7 @@ export const WORDS = [
       "life",
       "cycles"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10447,6 +10995,7 @@ export const WORDS = [
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10502,6 +11051,7 @@ export const WORDS = [
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10557,6 +11107,7 @@ export const WORDS = [
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "Added as an Extra spelling word family on 23 April 2026.",
     "provenance": {
       "source": "James Extra spelling family extension",
@@ -10612,6 +11163,7 @@ export const WORDS = [
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10667,6 +11219,7 @@ export const WORDS = [
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10740,6 +11293,7 @@ export const WORDS = [
       "science",
       "plants"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10813,6 +11367,7 @@ export const WORDS = [
       "science",
       "plants"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -10861,6 +11416,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -10906,6 +11464,10 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -10949,8 +11511,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -10996,6 +11560,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11039,6 +11606,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -11084,6 +11654,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "silent-letter"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11127,6 +11700,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -11172,6 +11748,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11216,6 +11795,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "i-before-e"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11258,8 +11840,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11302,8 +11886,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11346,8 +11932,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11392,6 +11980,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "silent-letter"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11435,8 +12026,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11480,8 +12073,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11524,8 +12119,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11568,8 +12165,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11612,8 +12211,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11656,8 +12257,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11700,8 +12303,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11744,8 +12349,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11790,6 +12397,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11832,8 +12442,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11876,8 +12488,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11921,6 +12535,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "prefix-pre-re-de"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -11966,6 +12583,10 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de",
+      "root-graph-scribe"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12009,6 +12630,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -12054,6 +12678,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12097,6 +12724,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -12142,6 +12772,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12184,8 +12817,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12230,6 +12865,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "homophone"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -12276,6 +12914,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12318,8 +12959,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12362,8 +13005,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12406,8 +13051,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12450,8 +13097,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12494,8 +13143,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12540,6 +13191,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ous"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12582,8 +13236,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12626,8 +13282,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12671,8 +13329,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12716,8 +13376,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12760,8 +13422,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12806,6 +13470,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "root-graph-scribe"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12848,8 +13515,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12892,8 +13561,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12936,8 +13607,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -12981,6 +13654,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "homophone"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -13026,6 +13702,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13070,6 +13749,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13112,8 +13794,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13156,8 +13840,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13200,8 +13886,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13246,6 +13934,10 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-un-in-im",
+      "root-port-spect"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13288,8 +13980,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13333,6 +14027,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "silent-letter"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -13378,6 +14075,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "silent-letter"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13420,8 +14120,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13464,8 +14166,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13508,8 +14212,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13552,8 +14258,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13596,8 +14304,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13642,6 +14352,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-tion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13684,8 +14397,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13728,8 +14443,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13772,8 +14489,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13816,8 +14535,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13862,6 +14583,10 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-sion"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -13908,6 +14633,10 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13950,8 +14679,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -13996,6 +14727,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14038,8 +14772,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14082,8 +14818,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14128,6 +14866,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14170,8 +14911,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14214,8 +14957,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14259,6 +15004,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-tion"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -14305,6 +15053,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14350,6 +15101,10 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-sion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14394,6 +15149,10 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-able-ible"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14436,8 +15195,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14482,6 +15243,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14524,8 +15288,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14568,8 +15334,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14612,8 +15380,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14656,8 +15426,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14701,6 +15473,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-tion"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -14746,6 +15521,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14788,8 +15566,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14832,8 +15612,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14878,6 +15660,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14920,8 +15705,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14964,8 +15751,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15008,8 +15797,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15052,8 +15843,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15096,8 +15889,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15140,8 +15935,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15186,6 +15983,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15228,8 +16028,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15272,8 +16074,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15317,8 +16121,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15362,8 +16168,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15406,8 +16214,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15450,8 +16260,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15495,6 +16307,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-ous"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -15540,6 +16355,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15583,8 +16401,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15628,8 +16448,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15673,6 +16495,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -15718,6 +16543,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15761,6 +16589,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -15806,6 +16637,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "i-before-e"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15850,6 +16684,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15892,8 +16729,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -15937,6 +16776,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "i-before-e"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -15982,6 +16824,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16025,6 +16870,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -16070,6 +16918,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16114,6 +16965,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-able-ible"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16156,8 +17010,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16200,8 +17056,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16244,8 +17102,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16290,6 +17150,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "homophone"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16332,8 +17195,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16376,8 +17241,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16421,6 +17288,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -16466,6 +17336,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16509,6 +17382,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -16554,6 +17430,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-tion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16597,6 +17476,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "i-before-e"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -16642,6 +17524,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ous"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16684,8 +17569,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16728,8 +17615,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16774,6 +17663,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16817,8 +17709,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16861,8 +17755,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16905,8 +17801,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16949,8 +17847,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -16993,8 +17893,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17038,6 +17940,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "prefix-pre-re-de"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -17083,6 +17988,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "root-graph-scribe"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17126,6 +18034,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-ous"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -17171,6 +18082,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17213,8 +18127,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17259,8 +18175,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17307,6 +18225,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17351,8 +18272,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17396,6 +18319,10 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-ly"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -17441,6 +18368,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17485,6 +18415,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17527,8 +18460,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17573,6 +18508,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-tion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17615,8 +18553,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17659,8 +18599,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17703,8 +18645,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17749,6 +18693,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17791,8 +18738,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17835,8 +18784,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17881,6 +18832,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17923,8 +18877,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17967,8 +18923,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18013,6 +18971,10 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "prefix-un-in-im",
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -18059,6 +19021,11 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-un-in-im",
+      "double-consonant",
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18101,8 +19068,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18145,8 +19114,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18191,6 +19162,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18233,8 +19207,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18277,8 +19253,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18321,8 +19299,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18366,6 +19346,10 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant",
+      "suffix-ous"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -18411,6 +19395,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ous"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18454,6 +19441,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "silent-letter"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -18499,6 +19489,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18541,8 +19534,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18585,8 +19580,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18630,6 +19627,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -18675,6 +19675,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18719,6 +19722,10 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant",
+      "root-port-spect"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18761,8 +19768,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18805,8 +19814,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18849,8 +19860,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18895,6 +19908,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18937,8 +19953,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -18982,6 +20000,9 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "suffix-sion"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -19027,6 +20048,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19071,6 +20095,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-tion"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19113,8 +20140,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19160,6 +20189,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19204,6 +20236,10 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "prefix-pre-re-de",
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19246,8 +20282,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19290,8 +20328,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19334,8 +20374,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19378,8 +20420,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19422,8 +20466,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19466,8 +20512,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19510,8 +20558,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19556,6 +20606,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "root-graph-scribe"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19599,8 +20652,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19646,6 +20701,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "suffix-ly"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19688,8 +20746,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19732,8 +20792,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19777,6 +20839,10 @@ export const WORD_BY_SLUG = {
     "tags": [
       "statutory",
       "legacy-seed"
+    ],
+    "patternIds": [
+      "i-before-e",
+      "double-consonant"
     ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
@@ -19822,6 +20888,9 @@ export const WORD_BY_SLUG = {
       "statutory",
       "legacy-seed"
     ],
+    "patternIds": [
+      "double-consonant"
+    ],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19864,8 +20933,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19908,8 +20979,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19952,8 +21025,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -19996,8 +21071,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -20040,8 +21117,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -20084,8 +21163,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -20128,8 +21209,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -20172,8 +21255,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -20216,8 +21301,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -20292,6 +21379,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20347,6 +21435,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20421,6 +21510,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20495,6 +21585,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20550,6 +21641,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20624,6 +21716,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20679,6 +21772,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20753,6 +21847,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20827,6 +21922,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20882,6 +21978,7 @@ export const WORD_BY_SLUG = {
       "building",
       "verbs"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -20955,6 +22052,7 @@ export const WORD_BY_SLUG = {
       "science",
       "classification"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21010,6 +22108,7 @@ export const WORD_BY_SLUG = {
       "body",
       "structure"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21065,6 +22164,7 @@ export const WORD_BY_SLUG = {
       "body",
       "structure"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21100,6 +22200,7 @@ export const WORD_BY_SLUG = {
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21155,6 +22256,7 @@ export const WORD_BY_SLUG = {
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21210,6 +22312,7 @@ export const WORD_BY_SLUG = {
       "life",
       "cycles"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21265,6 +22368,7 @@ export const WORD_BY_SLUG = {
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21320,6 +22424,7 @@ export const WORD_BY_SLUG = {
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21375,6 +22480,7 @@ export const WORD_BY_SLUG = {
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "Added as an Extra spelling word family on 23 April 2026.",
     "provenance": {
       "source": "James Extra spelling family extension",
@@ -21430,6 +22536,7 @@ export const WORD_BY_SLUG = {
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21485,6 +22592,7 @@ export const WORD_BY_SLUG = {
       "animal",
       "groups"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21558,6 +22666,7 @@ export const WORD_BY_SLUG = {
       "science",
       "plants"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",
@@ -21631,6 +22740,7 @@ export const WORD_BY_SLUG = {
       "science",
       "plants"
     ],
+    "patternIds": [],
     "sourceNote": "James supplied the initial Extra spelling expansion on 22 April 2026.",
     "provenance": {
       "source": "James Extra spelling list",

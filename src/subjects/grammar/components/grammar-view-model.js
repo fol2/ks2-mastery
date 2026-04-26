@@ -26,6 +26,28 @@ import { GRAMMAR_GRAND_MONSTER_ID } from '../../../platform/game/mastery/shared.
 
 // --- Frozen option lists ----------------------------------------------------
 
+// U5 Phase 4: Grammar Bank focus dispatch is allowlisted to Smart + Learn only.
+// Surgery and Builder are legitimately global/mixed modes — a focused concept
+// dispatch into those modes would silently drop the learner's focus because
+// Worker's `NO_SESSION_FOCUS_MODES` safety net strips it before the engine
+// reads it. James's 2026-04-26 decision: "No focused UI action silently
+// becomes mixed practice." The client enforces the allowlist on every
+// Practise 5 button + `grammar-focus-concept` dispatch; the Worker's existing
+// `NO_SESSION_FOCUS_MODES` and `NO_STORED_FOCUS_MODES` remain as safety net.
+//
+// Frozen Set so module/UI checks are O(1) and cannot be mutated at runtime.
+export const GRAMMAR_FOCUS_ALLOWED_MODES = Object.freeze(new Set(['smart', 'learn']));
+
+/**
+ * Returns `true` iff `mode` is one of `GRAMMAR_FOCUS_ALLOWED_MODES`. The
+ * client JSX layer + module dispatcher both call this helper so the truth
+ * table lives in a single place. Unknown / missing input returns `false`.
+ */
+export function isGrammarFocusAllowedMode(mode) {
+  if (typeof mode !== 'string' || !mode) return false;
+  return GRAMMAR_FOCUS_ALLOWED_MODES.has(mode);
+}
+
 // The dashboard's four primary mode cards. `Smart Practice` sits first so it
 // is the obvious default action (R2). `Grammar Bank` is the fourth card and
 // routes into U2's new bank scene. `satsset` maps to the existing mode id so
@@ -59,11 +81,15 @@ export const GRAMMAR_PRIMARY_MODE_CARDS = Object.freeze([
 
 // Secondary modes disclosed under the dashboard's "More practice" details
 // block. Order follows the plan: Learn → Sentence Surgery → Sentence Builder
-// → Worked Examples → Faded Guidance.
+// → Worked Examples → Faded Guidance. U5 Phase 4: Surgery and Builder carry
+// a `label: 'Mixed practice'` so the dashboard surfaces the child-facing
+// truth that these modes do not honour a focused concept id. The label is
+// ~12 chars and does not change the mode's behaviour — it is rendered by
+// `GrammarSetupScene.jsx` under the mode title.
 export const GRAMMAR_MORE_PRACTICE_MODES = Object.freeze([
   Object.freeze({ id: 'learn', title: 'Learn a concept', desc: 'Focused retrieval on one concept at a time.' }),
-  Object.freeze({ id: 'surgery', title: 'Sentence Surgery', desc: 'Fix and rewrite sentence-level errors.' }),
-  Object.freeze({ id: 'builder', title: 'Sentence Builder', desc: 'Build sentences from structured prompts.' }),
+  Object.freeze({ id: 'surgery', title: 'Sentence Surgery', desc: 'Fix and rewrite sentence-level errors.', label: 'Mixed practice' }),
+  Object.freeze({ id: 'builder', title: 'Sentence Builder', desc: 'Build sentences from structured prompts.', label: 'Mixed practice' }),
   Object.freeze({ id: 'worked', title: 'Worked Examples', desc: 'See a modelled answer before your turn.' }),
   Object.freeze({ id: 'faded', title: 'Faded Guidance', desc: 'Less help each round. You do the reasoning.' }),
 ]);

@@ -260,44 +260,199 @@ const PHASE_RENDERERS = Object.freeze({
 //
 // Each scope helper returns only the child-facing subtree. The adult
 // disclosure is swept separately via the `analytics` phase.
+//
+// Phase 4 U2 hardening: the scope helpers assert on the
+// `data-grammar-phase-root="<phase>"` semantic landmark on the scene's
+// existing root element (added in the six `Grammar*Scene.jsx` components).
+// A DOM refactor that drops a CSS class would otherwise silently
+// fall back to the full HTML and turn the forbidden-term sweep into a
+// false-positive silencer — the exact test-harness-vs-production defect
+// class the Phase 4 plan's invariant 12 floor is defending. On no-match
+// every scoper throws a named error so drift is loud and visible.
+//
+// Phase 4 U2 follower-up hardening (nested-outer attack + duplicate-landmark
+// attack): the previous lazy-regex approach (`[\s\S]*?</tag>(?=boundary)`)
+// matched the inner landmark's close but kept the outer wrapper's close +
+// trailing siblings when a hostile fixture nested the landmark inside a
+// same-type outer element. A reviewer-authored
+// `<section class="outer"><section data-grammar-phase-root="dashboard">INNER
+// </section><p>OUTER-TEXT</p></section><details class="grammar-grown-up-view">`
+// input produced scoped output `<section data-grammar-phase-root="dashboard">
+// INNER</section><p>OUTER-TEXT</p></section>` — adult copy leaking into the
+// child sweep. Regex with lazy quantifiers cannot solve nested same-type
+// tag balancing in general.
+//
+// The fix is a depth-balanced walker (`scopeLandmark`) that counts opens
+// and closes of the root tag until depth returns to zero. The walker
+// also enforces exactly-one landmark occurrence, rejecting
+// duplicate-landmark fixtures like
+// `<main><div data-grammar-phase-root="summary">STALE</div><div
+// data-grammar-phase-root="summary">FRESH</div></main>` which the old
+// lazy-regex silently merged into one scoped string.
+//
+// Assumptions and SSR notes:
+//   * React's server renderer emits tag names only inside tag brackets;
+//     string literals like `<section>` never appear inside attribute
+//     values after escaping. The walker's simple open/close detection is
+//     therefore safe for SSR output and for synthetic test fixtures that
+//     mirror that shape.
+//   * Void/self-closing variants of `section` and `div` do not exist in
+//     HTML5; the walker does not need to handle them.
+//   * The optional `boundary` argument asserts that the root close is
+//     immediately followed by a specific sibling marker. This preserves
+//     the old boundary invariant (dashboard → grown-up-view disclosure,
+//     transfer → `</div></main>`, summary → `</main>`) and fails loud if
+//     a refactor reorders the sibling structure.
 
-function scopeDashboard(html) {
-  // Dashboard section ends right before the `<details
-  // class="grammar-grown-up-view">` sibling.
-  const match = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section>(?=<details class="grammar-grown-up-view">)/);
-  if (match) return match[0];
-  const fallback = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section>/);
-  return fallback ? fallback[0] : html;
+/**
+ * Depth-balanced landmark scoper. Shared by all six `scope<Phase>` helpers.
+ *
+ * @param {string} html — full rendered HTML.
+ * @param {string} phase — phase key, e.g. `"dashboard"`.
+ * @param {string} rootTag — the landmark root tag name, e.g. `"section"` or `"div"`.
+ * @param {string|null} [boundary] — optional substring that must appear immediately
+ *   after the root close. Pass `null` when no sibling boundary is required.
+ * @returns {string} the landmark-rooted substring (landmark open → root close).
+ * @throws {Error} on missing / multiple landmarks, unbalanced tags, or missing
+ *   expected boundary.
+ */
+function scopeLandmark(html, phase, rootTag, boundary = null) {
+  const scoperName = `scope${phase[0].toUpperCase()}${phase.slice(1)}`;
+  const landmarkAttr = `data-grammar-phase-root="${phase}"`;
+
+  // -- Step 1: enforce exactly-one landmark (duplicate-landmark guard). --
+  // A fixture or a refactor that leaves a stale landmark behind would
+  // otherwise silently merge two subtrees into one scoped string. The
+  // zero-match branch emits the legacy "no landmark found" message so
+  // pre-follower error-path tests keep their stable message regex; the
+  // duplicate branch emits a clearly different "duplicate landmark"
+  // message so a fixture with two landmarks fails loud with a tailored
+  // explanation.
+  const landmarkMatches = html.match(new RegExp(`data-grammar-phase-root="${phase}"`, 'g')) || [];
+  if (landmarkMatches.length === 0) {
+    throw new Error(
+      `${scoperName}: no data-grammar-phase-root="${phase}" landmark found in rendered HTML`,
+    );
+  }
+  if (landmarkMatches.length > 1) {
+    throw new Error(
+      `${scoperName}: duplicate data-grammar-phase-root="${phase}" landmark — expected exactly 1, found ${landmarkMatches.length}`,
+    );
+  }
+
+  // -- Step 2: locate the opening tag that carries the landmark. --
+  // Search backwards from the attribute position for the most recent
+  // `<rootTag ` or `<rootTag>` occurrence — that is the landmark's own
+  // opening tag.
+  const attrIdx = html.indexOf(landmarkAttr);
+  if (attrIdx < 0) {
+    throw new Error(
+      `${scoperName}: no data-grammar-phase-root="${phase}" landmark found in rendered HTML`,
+    );
+  }
+  // Scan backwards: find `<rootTag` followed by a space or `>`. We stop at
+  // the first such occurrence within the same opening tag, i.e. before any
+  // intervening `>` that would close a different tag.
+  let openStart = -1;
+  for (let i = attrIdx; i >= 0; i -= 1) {
+    if (html[i] === '>') break; // landed in a different tag — bail
+    if (html[i] === '<' && html.slice(i + 1, i + 1 + rootTag.length) === rootTag) {
+      const afterName = html[i + 1 + rootTag.length];
+      if (afterName === ' ' || afterName === '>' || afterName === '\t' || afterName === '\n') {
+        openStart = i;
+        break;
+      }
+    }
+  }
+  if (openStart < 0) {
+    throw new Error(
+      `${scoperName}: no data-grammar-phase-root="${phase}" landmark found in rendered HTML`,
+    );
+  }
+
+  // -- Step 3: walk forward, counting opens/closes of `rootTag`. --
+  // We start at `openStart`, treat the landmark's own opening tag as
+  // depth=1, and increment/decrement as further same-type tags appear.
+  // The root close is the first `</rootTag>` that returns depth to 0.
+  const openMarker = `<${rootTag}`;
+  const closeMarker = `</${rootTag}>`;
+  let depth = 0;
+  let i = openStart;
+  let rootEnd = -1;
+  while (i < html.length) {
+    if (html.slice(i, i + openMarker.length) === openMarker) {
+      const afterName = html[i + openMarker.length];
+      if (afterName === ' ' || afterName === '>' || afterName === '\t' || afterName === '\n') {
+        depth += 1;
+        i += openMarker.length;
+        continue;
+      }
+    }
+    if (html.slice(i, i + closeMarker.length) === closeMarker) {
+      depth -= 1;
+      if (depth === 0) {
+        rootEnd = i + closeMarker.length;
+        break;
+      }
+      i += closeMarker.length;
+      continue;
+    }
+    i += 1;
+  }
+  if (rootEnd < 0) {
+    throw new Error(
+      `${scoperName}: no data-grammar-phase-root="${phase}" landmark found in rendered HTML`,
+    );
+  }
+
+  // -- Step 4: enforce the optional sibling boundary. --
+  // This preserves the old regex lookahead contract so a refactor that
+  // reorders the sibling siblings (e.g. inserting a `<hr>` between the
+  // dashboard root and the grown-up-view disclosure) still fails loud.
+  if (boundary !== null && html.slice(rootEnd, rootEnd + boundary.length) !== boundary) {
+    throw new Error(
+      `${scoperName}: no data-grammar-phase-root="${phase}" landmark found in rendered HTML`,
+    );
+  }
+
+  return html.slice(openStart, rootEnd);
 }
 
-function scopeSession(html) {
-  const match = html.match(/<section class="grammar-session"[\s\S]*?<\/section>/);
-  return match ? match[0] : html;
+export function scopeDashboard(html) {
+  // Dashboard root section ends right before the sibling
+  // `<details class="grammar-grown-up-view">` disclosure.
+  return scopeLandmark(html, 'dashboard', 'section', '<details class="grammar-grown-up-view">');
 }
 
-function scopeSummary(html) {
-  // Summary shell — stop before the `<details class="grammar-grown-up-view">`
-  // (Grown-up view disclosure) so the child scope is tight.
-  const shellOnly = html.match(/<div class="grammar-summary-shell[^"]*">[\s\S]*?(?=<details class="grammar-grown-up-view">|<\/div><\/main>)/);
-  if (shellOnly) return shellOnly[0];
-  const fallback = html.match(/<div class="grammar-summary-shell[^"]*">[\s\S]*?<\/div><\/main>/);
-  return fallback ? fallback[0].replace(/<\/main>$/, '') : html;
+export function scopeSession(html) {
+  return scopeLandmark(html, 'session', 'section', null);
 }
 
-function scopeBank(html) {
-  const match = html.match(/<section class="grammar-bank[\s\S]*?<\/section>/);
-  return match ? match[0] : html;
+export function scopeSummary(html) {
+  // Summary shell root `<div>` closes just before `</main>`. The boundary
+  // check enforces that sibling structure so a refactor that moves the
+  // shell out of `<main>` fails loud.
+  return scopeLandmark(html, 'summary', 'div', '</main>');
 }
 
-function scopeTransfer(html) {
-  const match = html.match(/<section class="grammar-transfer-scene"[\s\S]*?<\/section>/);
-  return match ? match[0] : html;
+export function scopeBank(html) {
+  return scopeLandmark(html, 'bank', 'section', null);
 }
 
-function scopeAnalytics(html) {
-  // Adult-facing — no scoping; inverse-presence sweep reads the whole
-  // rendered surface.
-  return html;
+export function scopeTransfer(html) {
+  // Transfer root contains nested `<section>` siblings (write, saved,
+  // orphaned). The boundary check enforces that the root close is
+  // immediately followed by `</div></main>`.
+  return scopeLandmark(html, 'transfer', 'section', '</div></main>');
+}
+
+export function scopeAnalytics(html) {
+  // Adult-facing — still asserts the landmark exists so the adult surface
+  // cannot silently lose its root and turn inverse-presence into a
+  // no-op. Returns the narrowed landmark-scoped substring; the adult
+  // inverse-presence sweep reads `rawHtml` (not this scoped value) so
+  // no downstream assertion is affected by the narrowing.
+  return scopeLandmark(html, 'analytics', 'section', null);
 }
 
 const PHASE_SCOPERS = Object.freeze({

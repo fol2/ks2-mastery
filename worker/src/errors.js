@@ -69,6 +69,30 @@ export class BackendUnavailableError extends HttpError {
   }
 }
 
+/**
+ * Thrown from the command hot path when the command.projection.v1 read
+ * model is missing AND the bounded 200-event fallback rehydrate itself
+ * fails (e.g. D1 5xx). Produces a 503 response payload shaped
+ * `{ok: false, error: 'projection_unavailable', retryable: false, requestId}`
+ * so the client's `isCommandBackendExhausted()` classifier can move the
+ * command to pending without transport-retry, jitter, or bootstrap
+ * recovery. See U6 plan section for rationale.
+ */
+export class ProjectionUnavailableError extends HttpError {
+  constructor(message = 'Command projection is unavailable.', extra = {}) {
+    super(503, message, {
+      ok: false,
+      error: 'projection_unavailable',
+      retryable: false,
+      ...extra,
+    });
+  }
+}
+
+export function isProjectionUnavailableError(error) {
+  return error instanceof ProjectionUnavailableError;
+}
+
 export class AuthConfigurationError extends HttpError {
   constructor(message = 'Production auth adapter is not configured.', extra = {}) {
     super(501, message, {

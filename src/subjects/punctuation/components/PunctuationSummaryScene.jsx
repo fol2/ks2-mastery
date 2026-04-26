@@ -36,6 +36,7 @@
 
 import React from 'react';
 
+import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   bellstormSceneForPhase,
@@ -297,7 +298,16 @@ function NextActionRow({ ui, actions }) {
   // degraded runtime never traps the child on the Summary scene (plan R7 /
   // AE7). The ghost-button divergence is the canonical example the Map
   // top-bar and Skill Detail close mirror.
-  const isDisabled = composeIsDisabled(ui);
+  //
+  // SH2-U1 (from main): JSX-layer guard for all four non-destructive next-
+  // action buttons. Sharing one lock means a double-tap across the row (an
+  // unlikely but possible "thumb drift" pattern on narrow mobile viewports)
+  // early-returns the second dispatch — which is the right UX outcome
+  // since any of these actions unmounts the summary. The lock OR's into
+  // the mutation `isDisabled` only — navigation deliberately stays
+  // escape-hatch-live (a stuck lock must not trap the child on Summary).
+  const submitLock = useSubmitLock();
+  const isDisabled = composeIsDisabled(ui) || submitLock.locked;
   const isNavigationDisabled = composeIsNavigationDisabled(ui);
   return (
     <div className="actions punctuation-summary-actions" style={{ marginTop: 16 }}>
@@ -307,7 +317,7 @@ function NextActionRow({ ui, actions }) {
         disabled={isDisabled}
         data-action="punctuation-start"
         data-value="weak"
-        onClick={() => actions.dispatch('punctuation-start', { mode: 'weak' })}
+        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-start', { mode: 'weak' }))}
       >
         Practise wobbly spots
       </button>
@@ -316,7 +326,7 @@ function NextActionRow({ ui, actions }) {
         type="button"
         disabled={isDisabled}
         data-action="punctuation-open-map"
-        onClick={() => actions.dispatch('punctuation-open-map')}
+        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-open-map'))}
       >
         Open Punctuation Map
       </button>
@@ -326,7 +336,7 @@ function NextActionRow({ ui, actions }) {
         disabled={isDisabled}
         data-action="punctuation-start-again"
         data-punctuation-start-again
-        onClick={() => actions.dispatch('punctuation-start-again')}
+        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-start-again'))}
       >
         Start again
       </button>
@@ -336,7 +346,7 @@ function NextActionRow({ ui, actions }) {
         disabled={isNavigationDisabled}
         aria-disabled={isNavigationDisabled ? 'true' : 'false'}
         data-action="punctuation-back"
-        onClick={() => actions.dispatch('punctuation-back')}
+        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-back'))}
       >
         Back to dashboard
       </button>

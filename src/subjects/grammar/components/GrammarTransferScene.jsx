@@ -443,7 +443,11 @@ export function GrammarTransferScene({ grammar, actions }) {
   const errorMessage = typeof grammar?.error === 'string' ? grammar.error : '';
 
   return (
-    <section className="grammar-transfer-scene" aria-labelledby="grammar-transfer-title">
+    <section
+      className="grammar-transfer-scene"
+      aria-labelledby="grammar-transfer-title"
+      data-grammar-phase-root="transfer"
+    >
       <header className="grammar-transfer-topbar">
         <button
           type="button"

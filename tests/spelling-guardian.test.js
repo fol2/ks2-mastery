@@ -48,6 +48,7 @@ import {
   buildSpellingLearnerReadModel,
   getSpellingPostMasteryState,
 } from '../src/subjects/spelling/read-model.js';
+import { seedFullCoreMega as seedFullCoreMegaShared } from './helpers/post-mastery-seeds.js';
 
 const TODAY = 18_000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -657,19 +658,21 @@ function makeServiceWithSeed({ now, random, storage = installMemoryStorage() } =
   return { storage, repositories, service, spoken };
 }
 
+// P2 U3: delegates to the shared seeder. The guardian suite historically
+// left `data.guardian` undefined (tests later overwrite via `seedGuardianMap`);
+// the shared helper writes `guardian: {}` which reads identically through
+// the `isPlainObject(guardian)` guard in the read model. `postMega: null` is
+// explicit so the guardian tests continue to exercise the pre-sticky path
+// (the backfill mint-an-in-memory-sticky branch of
+// `getSpellingPostMasteryState` keeps the dashboard lit without the
+// persisted record).
 function seedAllCoreMega(repositories, learnerId, todayDay) {
-  const progress = Object.fromEntries(
-    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
-      stage: 4,
-      attempts: 6 + (index % 4),
-      correct: 5 + (index % 4),
-      wrong: 1,
-      dueDay: todayDay + 60,
-      lastDay: todayDay - 7,
-      lastResult: 'correct',
-    }]),
-  );
-  repositories.subjectStates.writeData(learnerId, 'spelling', { progress });
+  return seedFullCoreMegaShared(repositories, learnerId, {
+    today: todayDay,
+    guardian: {},
+    postMega: null,
+    variation: true,
+  });
 }
 
 function seedGuardianMap(repositories, learnerId, map) {

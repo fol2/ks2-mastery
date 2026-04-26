@@ -1082,6 +1082,32 @@ function downloadJson(filename, payload) {
   URL.revokeObjectURL(url);
 }
 
+// SH2-U1 (review follow-up, BLOCKER-3): module-scope in-flight guard for
+// Parent Hub export actions. `downloadJson()` above is fully synchronous —
+// Blob + object URL + anchor click all execute in the same microtask. The
+// `useSubmitLock` hook at the ParentHubSurface call site acquires + releases
+// its lock inside a single microtask too, so a human double-click 50 ms
+// apart slips past the JSX-layer guard and fires two downloads. This Set
+// holds the action name while the synchronous dispatch is mid-flight, and
+// a 300 ms `setTimeout` clears it — mirrors the `updateAccountOpsMetadata`
+// savingAccountId pattern at L1705 (admin-ops in-flight guard) but adapted
+// for the synchronous export case. 300 ms is the standard click-debounce
+// window used elsewhere in the codebase; it covers normal double-click
+// cadence while staying invisible to intentional single-click retries.
+const exportActionsInFlight = new Set();
+const EXPORT_DEBOUNCE_MS = 300;
+
+function runExportOnce(action, fn) {
+  if (exportActionsInFlight.has(action)) return false;
+  exportActionsInFlight.add(action);
+  try {
+    fn();
+  } finally {
+    setTimeout(() => exportActionsInFlight.delete(action), EXPORT_DEBOUNCE_MS);
+  }
+  return true;
+}
+
 async function parseApiJson(response) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.ok === false) {
@@ -1851,6 +1877,37 @@ async function updateOpsErrorEventStatus({ eventId, status }) {
   }
 }
 
+// P2 U3: admin-gated QA seed harness. Pipes through the Admin Ops P1
+// mutation-receipt path (`scopeType='platform'`, `scopeId='post-mega-seed:<learnerId>'`)
+// so cross-origin CSRF attempts fail at the receipt header check. No
+// optimistic patching — the seed's effect lives in child_subject_state, not
+// in the admin hub read-model, so the UI only shows a notice. After a
+// successful seed, the hub's learner diagnostics panel will reflect the new
+// state on its next refresh.
+async function applyPostMegaSeed({ learnerId, shapeName }) {
+  if (!hubApi) return;
+  if (!(typeof learnerId === 'string' && learnerId)) return;
+  if (!(typeof shapeName === 'string' && shapeName)) return;
+
+  const requestId = uid('post-mega-seed');
+  const mutation = { requestId, correlationId: requestId };
+  try {
+    const payload = await hubApi.seedPostMegaLearnerState({
+      learnerId,
+      shapeName,
+      mutation,
+    });
+    const summary = payload?.postMegaSeed || {};
+    const createdCopy = summary.createdLearner ? ' (learner created)' : '';
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      notice: `Post-Mega seed applied: ${shapeName} → ${learnerId}${createdCopy}.`,
+    }));
+  } catch (error) {
+    globalThis.alert?.(`Post-Mega seed failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
 function ensureSpellingAutoAdvanceFromCurrentState() {
   return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
@@ -2379,6 +2436,14 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'post-mega-seed-apply') {
+    applyPostMegaSeed({
+      learnerId: data?.learnerId,
+      shapeName: data?.shapeName,
+    });
+    return true;
+  }
+
   if (action === 'shell-set-role') {
     if (!boot.session.signedIn) {
       shellPlatformRole = normalisePlatformRole(data.value);
@@ -2526,15 +2591,25 @@ function handleGlobalAction(action, data) {
 
   if (action === 'platform-export-learner') {
     if (blockReadOnlyAdultAction(action)) return true;
-    const payload = exportLearnerSnapshot(repositories, learnerId);
-    downloadJson(`${sanitiseFilenamePart(learner?.name)}-ks2-platform-learner.json`, payload);
+    // SH2-U1 (review follow-up, BLOCKER-3): wrap the synchronous dispatch
+    // in `runExportOnce()` so a human 50 ms double-click only fires one
+    // download. See the exportActionsInFlight comment near downloadJson().
+    runExportOnce('platform-export-learner', () => {
+      const payload = exportLearnerSnapshot(repositories, learnerId);
+      downloadJson(`${sanitiseFilenamePart(learner?.name)}-ks2-platform-learner.json`, payload);
+    });
     return true;
   }
 
   if (action === 'platform-export-app') {
     if (blockReadOnlyAdultAction(action)) return true;
-    const payload = exportPlatformSnapshot(repositories);
-    downloadJson('ks2-platform-data.json', payload);
+    // SH2-U1 (review follow-up, BLOCKER-3): wrap the synchronous dispatch
+    // in `runExportOnce()` so a human 50 ms double-click only fires one
+    // download. See the exportActionsInFlight comment near downloadJson().
+    runExportOnce('platform-export-app', () => {
+      const payload = exportPlatformSnapshot(repositories);
+      downloadJson('ks2-platform-data.json', payload);
+    });
     return true;
   }
 

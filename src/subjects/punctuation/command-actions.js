@@ -1,4 +1,5 @@
 import { parseChoiceIndex } from '../../../shared/punctuation/choice-index.js';
+import { sanitisePunctuationTelemetryPayload } from './telemetry.js';
 
 export function punctuationSubmitAnswerPayload(data = {}) {
   if (data?.formData?.get) return { typed: data.formData.get('typed') || '' };
@@ -62,6 +63,35 @@ export function createPunctuationOnCommandError({
     warn('Punctuation command failed.', error);
     if (context?.command === 'save-prefs') {
       store.updateSubjectUi('punctuation', { prefsMigrated: false });
+    }
+    // Phase 4 U4 BLOCKER fix (convergent adversarial + correctness finding on
+    // PR #280). Cascade identified: Setup mount → `card-opened` telemetry
+    // emit → `punctuation-record-event` dispatch → Worker
+    // `PUNCTUATION_COMMANDS` allowlist at
+    // `worker/src/subjects/punctuation/commands.js:13` does NOT yet include
+    // `record-event` (U9 scope) → rejection with
+    // `subject_command_not_found` → without this short-circuit,
+    // `setSubjectError` would paint a red `Subject message: Punctuation
+    // command is not available.` banner on every Setup mount (and re-paint
+    // it on every session-back because `cardOpenedRef` is per-mount).
+    //
+    // Telemetry is FIRE-AND-FORGET by design (plan R10 / R11). A dispatch
+    // failure must never surface to the learner. Emit a dev-only
+    // console.debug for ops visibility, then early-return BEFORE the
+    // shared `setSubjectError` path fires.
+    //
+    // Matches the `save-prefs` bespoke branch precedent above (which
+    // adjusts ui state before the shared surfacing path). Difference: this
+    // branch also SKIPS the shared surfacing path entirely.
+    if (context?.action === 'punctuation-record-event' || context?.command === 'record-event') {
+      if (typeof console !== 'undefined' && typeof console?.debug === 'function') {
+        const code = error?.payload?.code || error?.code || '';
+        console.debug('[punctuation.telemetry] record-event dispatch failed', {
+          code,
+          action: context?.action || '',
+        });
+      }
+      return;
     }
     setSubjectError(error?.payload?.message || error?.message || fallbackMessage);
   };
@@ -130,6 +160,49 @@ export const punctuationSubjectCommandActions = Object.freeze({
     command: 'save-prefs',
     payload({ data }) {
       return { prefs: { mode: data?.value || data?.mode || 'smart' } };
+    },
+  },
+  // Phase 4 U4 — client-side telemetry emission hook.
+  //
+  // `mutates: false` is the same signal that `punctuation-context-pack`
+  // above uses (line ~120). It bypasses the read-only guard in
+  // `createSubjectCommandActionHandler` (so a degraded-sync learner can
+  // still emit observability signal) AND — by routing through the
+  // command-actions mapping rather than `punctuationModule.handleAction`
+  // — it keeps the dispatch off the `runPunctuationSessionCommand`
+  // pending-wrapper path (so telemetry emission never stalls the
+  // learner's active interaction).
+  //
+  // **Authz invariant (R10 / R11):** the `{ mutates: false }` flag is
+  // CLIENT-SIDE ONLY. The dispatch still routes through
+  // `subjectCommands.send(...)` → the `/api/subjects/punctuation/command`
+  // endpoint → `repository.runSubjectCommand` → `requireLearnerWriteAccess`
+  // at `worker/src/repository.js:4919`. When U9 lands the Worker
+  // `record-event` handler, that authz chain fires unchanged.
+  //
+  // Today (pre-U9), the Worker's `PUNCTUATION_COMMANDS` list at
+  // `worker/src/subjects/punctuation/commands.js:13` does NOT yet
+  // include `record-event`, so a real Worker round-trip returns
+  // `subject_command_not_found`. That failure is short-circuited inside
+  // `createPunctuationOnCommandError` (see the
+  // `action === 'punctuation-record-event'` early-return branch) so it
+  // is NEVER surfaced to the learner — telemetry is fire-and-forget by
+  // design. Without that short-circuit, the shared `setSubjectError`
+  // path would paint a red banner on every Setup mount.
+  'punctuation-record-event': {
+    mutates: false,
+    command: 'record-event',
+    payload({ data }) {
+      // Defence-in-depth: re-run the per-kind allowlist here even if the
+      // caller went through `emitPunctuationEvent`. A rogue dispatch that
+      // bypasses the emitter (direct `actions.dispatch(...)` with a raw
+      // payload) still gets stripped to the allowlisted shape before the
+      // Worker round-trip fires.
+      const { event, payload } = sanitisePunctuationTelemetryPayload(
+        data?.kind,
+        data?.payload,
+      );
+      return { event, payload };
     },
   },
 });

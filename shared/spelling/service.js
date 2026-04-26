@@ -34,6 +34,7 @@ import {
   defaultLearningStatus,
   isGuardianEligibleSlug,
   normaliseBoolean,
+  normaliseDurablePersistenceWarning,
   normaliseFeedback,
   normaliseGuardianMap,
   normaliseGuardianRecord,
@@ -283,6 +284,11 @@ const PROGRESS_KEY_PREFIX = 'ks2-spell-progress-';
 // suffix convention as the other three siblings so `parseStorageKey` in the
 // repository can route the write through the subject-state bundle.
 const POST_MEGA_KEY_PREFIX = 'ks2-spell-post-mega-';
+// P2 U9: durable persistence-warning sibling key. Must stay byte-identical
+// with PERSISTENCE_WARNING_STORAGE_PREFIX in src/subjects/spelling/repository.js
+// and worker/src/subjects/spelling/engine.js — all three route reads/writes
+// under this key through the `data.persistenceWarning` sibling of the bundle.
+const PERSISTENCE_WARNING_KEY_PREFIX = 'ks2-spell-persistence-warning-';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function createNoopStorage() {
@@ -312,6 +318,13 @@ function progressMapKey(learnerId) {
 // `data.postMega` sibling of the subject-state bundle.
 function postMegaKey(learnerId) {
   return `${POST_MEGA_KEY_PREFIX}${learnerId || 'default'}`;
+}
+
+// P2 U9: storage key for the durable persistence-warning record. The client
+// and Worker storage proxies route reads/writes under this prefix through the
+// `data.persistenceWarning` sibling of the subject-state bundle.
+function persistenceWarningKey(learnerId) {
+  return `${PERSISTENCE_WARNING_KEY_PREFIX}${learnerId || 'default'}`;
 }
 
 function intervalForLevel(level) {
@@ -1100,6 +1113,117 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const normalised = normalisePostMegaRecord(record);
     if (!normalised) return { ok: true };
     return saveJson(resolvedStorage, postMegaKey(learnerId), normalised);
+  }
+
+  // P2 U9: load/save helpers for the durable `data.persistenceWarning` sibling.
+  // Uses the same `saveJson` contract as the other siblings so bare-storage
+  // hosts (no platform repositories) behave identically to a production host
+  // that wires `createSpellingPersistence`. Unlike `savePostMegaToStorage`,
+  // this helper is explicitly non-sticky — a second failure overwrites the
+  // previous `reason` + `occurredAt` and resets `acknowledged: false`.
+  function loadPersistenceWarningFromStorage(learnerId) {
+    const raw = loadJson(resolvedStorage, persistenceWarningKey(learnerId), null);
+    return normaliseDurablePersistenceWarning(raw);
+  }
+
+  function savePersistenceWarningToStorage(learnerId, record) {
+    const normalised = normaliseDurablePersistenceWarning(record);
+    if (!normalised) return { ok: true };
+    return saveJson(resolvedStorage, persistenceWarningKey(learnerId), normalised);
+  }
+
+  // P2 U9: durable-warning writer. Called from the submit paths whenever
+  // `feedback.persistenceWarning` surfaces on a round. The write itself is
+  // bounded-retry: if the FIRST attempt to persist the warning fails (because
+  // the underlying storage is the very thing that is broken), we make ONE
+  // retry attempt; if that also fails, we fall back to a `console.warn` so
+  // the app never crashes. This matches the P2 U9 plan requirement:
+  // "bounded retry ... never crash the app."
+  //
+  // The record shape is `{ reason, occurredAt: currentTodayDay(),
+  // acknowledged: false }`. A subsequent new failure overwrites `reason` +
+  // `occurredAt` and resets `acknowledged` to false (the plan invariant).
+  function writePersistenceWarning(learnerId, reason) {
+    const record = {
+      reason,
+      occurredAt: currentTodayDay(),
+      acknowledged: false,
+    };
+    const firstAttempt = savePersistenceWarningToStorage(learnerId, record);
+    if (firstAttempt.ok === true) return firstAttempt;
+    // Bounded retry once. If the first failure was transient (e.g. a race
+    // inside the persistence channel), a retry may succeed. If the retry
+    // also fails, swallow into console.warn so the host does not crash.
+    const retry = savePersistenceWarningToStorage(learnerId, record);
+    if (retry.ok === true) return retry;
+    try {
+      globalThis.console?.warn?.('Spelling persistence-warning write failed after retry.', {
+        learnerId,
+        reason,
+        firstError: firstAttempt?.error?.message,
+        retryError: retry?.error?.message,
+      });
+    } catch {
+      // A thrown console.warn (very unusual — some sandboxes wrap console)
+      // is not actionable for the learner; absorb silently so the submit
+      // path does not crash on a diagnostic side-effect.
+    }
+    return retry;
+  }
+
+  // P2 U9: acknowledge dispatcher. Sets `acknowledged: true` while
+  // preserving `reason` + `occurredAt` for audit. If no warning is
+  // currently persisted this is a silent no-op (no banner to dismiss).
+  // A subsequent new failure resets `acknowledged: false` via
+  // `writePersistenceWarning`.
+  //
+  // Reviewer-feedback fix (PR #279 HIGH): apply the same bounded-retry +
+  // console.warn fallback pattern that `writePersistenceWarning` uses. The
+  // whole point of the banner is to surface a broken-storage condition, so
+  // when the learner clicks "I understand" and storage is STILL broken, we
+  // must not silently no-op — the previous behaviour dropped the error and
+  // left the record at `acknowledged: false`, making the click feel like a
+  // black hole. The dispatchers surface `{ ok: false, reason: 'persist-failed' }`
+  // by setting a runtime error so the learner sees the click did not take
+  // effect.
+  function acknowledgePersistenceWarning(learnerId) {
+    const current = loadPersistenceWarningFromStorage(learnerId);
+    if (!current) return { ok: true };
+    const acknowledgedRecord = {
+      reason: current.reason,
+      occurredAt: current.occurredAt,
+      acknowledged: true,
+    };
+    const firstAttempt = savePersistenceWarningToStorage(learnerId, acknowledgedRecord);
+    if (firstAttempt.ok === true) return { ok: true };
+    // Bounded retry once. If the first failure was transient (e.g. a race
+    // inside the persistence channel), a retry may succeed.
+    const retryAttempt = savePersistenceWarningToStorage(learnerId, acknowledgedRecord);
+    if (retryAttempt.ok === true) return { ok: true };
+    // Double failure — warn and return ok:false. The banner will re-render
+    // on the next selector pass (storage still reports acknowledged=false),
+    // but that is honest: storage is still broken. The dispatcher surfaces
+    // a runtime error so the click is not silently dropped.
+    try {
+      globalThis.console?.warn?.('Spelling persistence-warning acknowledge failed after retry.', {
+        learnerId,
+        reason: acknowledgedRecord.reason,
+        firstError: firstAttempt?.error?.message,
+        retryError: retryAttempt?.error?.message,
+      });
+    } catch {
+      // A thrown console.warn (very unusual — some sandboxes wrap console)
+      // is not actionable for the learner; absorb silently so the ack path
+      // does not crash on a diagnostic side-effect.
+    }
+    return { ok: false, reason: 'persist-failed' };
+  }
+
+  // P2 U9: read-side helper for the UI. Returns the normalised record or
+  // null. Consumed by `buildSpellingContext` so setup + session scenes can
+  // branch on a single helper rather than re-running `loadJson` themselves.
+  function getPersistenceWarning(learnerId) {
+    return loadPersistenceWarningFromStorage(learnerId);
   }
 
   // U8: returns `{ ok, reason? }` so submit paths can raise a
@@ -1961,6 +2085,14 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const persistenceWarning = (!progressSave?.ok || !guardianSave?.ok || lastErrorChanged)
       ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
       : null;
+    // P2 U9: mirror the session-scoped `feedback.persistenceWarning` into
+    // the durable `data.persistenceWarning` sibling so the banner survives
+    // tab close. Write is bounded-retry + console.warn fallback — the
+    // service path never crashes the submit even if the storage is
+    // fundamentally broken (the very condition we're warning about).
+    if (persistenceWarning) {
+      writePersistenceWarning(learnerId, persistenceWarning.reason);
+    }
 
     // Record the per-word outcome so the finalisation step can emit the
     // mission-completed event with accurate aggregate counts.
@@ -2284,6 +2416,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const persistenceWarning = (!probeSave?.ok || midErrorChanged)
       ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
       : null;
+    // P2 U9: durable mirror on the Smart Review / SATs submit path too.
+    if (persistenceWarning) {
+      writePersistenceWarning(learnerId, persistenceWarning.reason);
+    }
 
     const eventTime = clock();
     const events = [];
@@ -2626,6 +2762,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const persistenceWarning = (!progressSave?.ok || !guardianSave?.ok || lastErrorChanged)
       ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
       : null;
+    // P2 U9: durable mirror on the "I don't know" skipWord branch.
+    if (persistenceWarning) {
+      writePersistenceWarning(learnerId, persistenceWarning.reason);
+    }
 
     // Record the per-word outcome so guardianMissionEventsForSession counts
     // this as a wobble on the final mission-completed event.
@@ -2779,6 +2919,15 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       // API on the persistence adapter above has already cleared the
       // production path via `writeSpellingData(repositories, learnerId, {})`.
     }
+    // P2 U9: clear the durable persistence-warning too. A fresh learner
+    // should not inherit a previous learner's storage-failure banner after
+    // a reset. Same best-effort try/catch applies.
+    try {
+      resolvedStorage?.removeItem?.(persistenceWarningKey(learnerId));
+    } catch {
+      // Swallow — reset is best-effort; a stale warning is a minor UX
+      // inconvenience, not a data-loss hazard.
+    }
   }
 
   return {
@@ -2801,5 +2950,15 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     // write sites (e.g. U4's "I don't know" branch) can call it directly
     // instead of going through a whole-map load/mutate/save.
     saveGuardianRecord,
+    // P2 U9: durable persistence-warning surface. `getPersistenceWarning`
+    // is the read-side helper for `buildSpellingContext` (setup + session
+    // scene banners). `acknowledgePersistenceWarning` is the dispatcher
+    // target for the "I understand" button — sets `acknowledged: true` and
+    // keeps the record for audit. `writePersistenceWarning` is internal
+    // (called from the submit paths) but exposed here so tests can drive
+    // it directly without constructing a full submit round.
+    getPersistenceWarning,
+    acknowledgePersistenceWarning,
+    writePersistenceWarning,
   };
 }
