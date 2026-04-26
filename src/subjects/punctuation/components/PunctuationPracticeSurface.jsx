@@ -5,91 +5,23 @@ import {
 } from './punctuation-view-model.js';
 import { PunctuationMapScene } from './PunctuationMapScene.jsx';
 import { PunctuationSessionScene } from './PunctuationSessionScene.jsx';
+import { PunctuationSetupScene } from './PunctuationSetupScene.jsx';
 
-function learnerName(appState, learnerId) {
-  return appState?.learners?.byId?.[learnerId]?.name || 'Learner';
+function learnerRecord(appState, learnerId) {
+  const record = appState?.learners?.byId?.[learnerId];
+  return record && typeof record === 'object' && !Array.isArray(record) ? record : null;
 }
 
 function newlineTextStyle(value) {
   return String(value || '').includes('\n') ? { whiteSpace: 'pre-wrap' } : undefined;
 }
 
-function SetupView({ learner, stats, ui, actions }) {
-  const scene = bellstormSceneForPhase('setup');
-  const content = ui.content || {};
-  const guidedSkills = Array.isArray(content.skills) ? content.skills : [];
-  const [guidedSkillId, setGuidedSkillId] = useState(guidedSkills[0]?.id || '');
-  const selectedGuidedSkillId = guidedSkillId || guidedSkills[0]?.id || '';
-  const isDisabled = composeIsDisabled(ui);
-  return (
-    <section className="card border-top punctuation-surface" style={{ borderTopColor: '#B8873F' }}>
-      <div className="punctuation-hero">
-        <img src={scene.src} srcSet={scene.srcSet} sizes="(max-width: 980px) 100vw, 960px" alt="" aria-hidden="true" />
-        <div>
-          <div className="eyebrow">Bellstorm Coast</div>
-          <h2 className="section-title">Punctuation practice</h2>
-          <p className="subtitle">{content.publishedScopeCopy || 'Punctuation covers the 14-skill KS2 progression with Smart Review, Guided focus, Weak Spots, GPS tests, sentence combining, paragraph repair, and transfer practice.'}</p>
-        </div>
-      </div>
-      <div className="stat-grid" style={{ marginTop: 16 }}>
-        <div className="stat"><div className="stat-label">Accuracy</div><div className="stat-value">{stats.accuracy || 0}%</div><div className="stat-sub">{learner}</div></div>
-        <div className="stat"><div className="stat-label">Secure units</div><div className="stat-value">{stats.securedRewardUnits || 0}</div><div className="stat-sub">{stats.publishedRewardUnits || 14} published</div></div>
-        <div className="stat"><div className="stat-label">Due</div><div className="stat-value">{stats.due || 0}</div><div className="stat-sub">Review items</div></div>
-      </div>
-      <div className="actions" style={{ marginTop: 16 }}>
-        <button className="btn primary" type="button" disabled={isDisabled} data-punctuation-start onClick={() => actions.dispatch('punctuation-start')}>Start practice</button>
-        {guidedSkills.length ? (
-          <label className="field" style={{ minWidth: 220 }}>
-            <span>Guided skill</span>
-            <select
-              className="input"
-              value={selectedGuidedSkillId}
-              disabled={isDisabled}
-              onChange={(event) => setGuidedSkillId(event.target.value)}
-            >
-              {guidedSkills.map((skill) => (
-                <option key={skill.id} value={skill.id}>{skill.name}</option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        <button
-          className="btn secondary"
-          type="button"
-          disabled={isDisabled}
-          data-punctuation-guided-start
-          onClick={() => actions.dispatch('punctuation-start', { mode: 'guided', skillId: selectedGuidedSkillId || undefined })}
-        >
-          Guided learn
-        </button>
-        <button
-          className="btn secondary"
-          type="button"
-          disabled={isDisabled}
-          data-punctuation-weak-start
-          onClick={() => actions.dispatch('punctuation-start', { mode: 'weak' })}
-        >
-          Weak spots
-        </button>
-        <button
-          className="btn secondary"
-          type="button"
-          disabled={isDisabled}
-          data-punctuation-gps-start
-          onClick={() => actions.dispatch('punctuation-start', { mode: 'gps', roundLength: '8' })}
-        >
-          GPS test
-        </button>
-        <button className="btn secondary" type="button" disabled={isDisabled} data-punctuation-endmarks-start onClick={() => actions.dispatch('punctuation-start', { mode: 'endmarks' })}>Endmarks focus</button>
-        <button className="btn secondary" type="button" disabled={isDisabled} data-punctuation-apostrophe-start onClick={() => actions.dispatch('punctuation-start', { mode: 'apostrophe' })}>Apostrophe focus</button>
-        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'speech' })}>Speech focus</button>
-        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'comma_flow' })}>Comma focus</button>
-        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'boundary' })}>Boundary focus</button>
-        <button className="btn secondary" type="button" disabled={isDisabled} onClick={() => actions.dispatch('punctuation-start', { mode: 'structure' })}>Structure focus</button>
-      </div>
-    </section>
-  );
-}
+// Phase 3 U2 removed the legacy `SetupView` from this module. The
+// Setup phase now delegates to `PunctuationSetupScene.jsx`, which
+// renders the dashboard hero + today cards + three primary mode
+// cards + Open Map secondary card + round-length toggle + active
+// monster strip. See `./PunctuationSetupScene.jsx` for the current
+// implementation and the one-shot stale-prefs migration.
 
 function SummaryView({ ui, actions }) {
   const summary = ui.summary || {};
@@ -149,7 +81,25 @@ export function PunctuationPracticeSurface({ appState, service, actions }) {
   const learnerId = appState.learners.selectedId;
   const ui = service?.initState?.(appState.subjectUi?.punctuation, learnerId) || appState.subjectUi?.punctuation || {};
   const stats = useMemo(() => service?.getStats?.(learnerId) || ui.stats || {}, [learnerId, service, ui.stats]);
-  const learner = learnerName(appState, learnerId);
+  const learner = learnerRecord(appState, learnerId);
+  // U2: prefer `ui.prefs` so the display collapse stays coherent across
+  // re-renders; fall back to the service read (which hits the data
+  // repository) when `ui.prefs` has not yet been mirrored (e.g. first
+  // Setup visit on a pre-U2 subject state). Service read is side-effect
+  // free.
+  const prefs = (ui && typeof ui === 'object' && !Array.isArray(ui) && ui.prefs)
+    ? ui.prefs
+    : (service?.getPrefs?.(learnerId) || {});
+  // U2: the active monster strip reads monster reward state from
+  // `ui.rewardState` (mirrors the Map scene's source). When not
+  // present, default to empty so the strip renders fresh-learner
+  // zeros rather than throwing.
+  const rewardState = (ui && typeof ui === 'object' && !Array.isArray(ui)
+    && ui.rewardState
+    && typeof ui.rewardState === 'object'
+    && !Array.isArray(ui.rewardState))
+    ? ui.rewardState
+    : {};
 
   // Phase 3 U3: `active-item` + `feedback` route through the consolidated
   // `PunctuationSessionScene`. Summary stays inline until U4; Map routes
@@ -160,5 +110,20 @@ export function PunctuationPracticeSurface({ appState, service, actions }) {
   if (ui.phase === 'summary') return <SummaryView ui={ui} actions={actions} />;
   if (ui.phase === 'map') return <PunctuationMapScene ui={ui} actions={actions} />;
 
-  return <SetupView learner={learner} stats={stats} ui={ui} actions={actions} />;
+  // U2: every non-session / non-map / non-unavailable / non-error phase
+  // falls through to the Setup scene. The Phase 2 enum still includes
+  // `'setup'`, `'unavailable'`, and `'error'`; the latter two keep
+  // their Phase 2 behaviour (the parent shell handles unavailable /
+  // error banners). Unknown phase strings default to Setup so a rogue
+  // payload doesn't land the learner on a broken blank scene.
+  return (
+    <PunctuationSetupScene
+      ui={ui}
+      actions={actions}
+      prefs={prefs}
+      stats={stats}
+      learner={learner}
+      rewardState={rewardState}
+    />
+  );
 }

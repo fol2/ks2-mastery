@@ -3,6 +3,14 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createWorkerRepositoryServer } from './worker-server.js';
+// U9 (sys-hardening p1): fault-injection middleware for Playwright
+// chaos scenes. The hook is DEFAULT-OFF — see `parseFaultPlan()`
+// contract in `tests/helpers/fault-injection.mjs`: a request must
+// carry both `x-ks2-fault-opt-in: 1` AND a plan header/query param
+// before any fault fires. The import is intentionally a named export
+// with a `TESTS_ONLY` suffix so the production bundle audit denies
+// any accidental leak into a shipped bundle.
+import { __ks2_injectFault_TESTS_ONLY__ as faultInjection } from './fault-injection.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -102,10 +110,52 @@ export async function startBrowserAppServer({
       },
     })
     : null;
+  // U9 follow-up (review blocker-2 + major-1): per-process consumption
+  // registry backs the `once: true` plan contract. Scenes that expect a
+  // one-shot failure now get exactly one fired response; subsequent
+  // requests fall through to the real dispatcher. The registry is
+  // created once per server process, not per request, so the "consumed"
+  // bit survives across the retries that chaos scenes deliberately
+  // trigger.
+  const faultRegistry = faultInjection.createFaultRegistry();
   const server = createServer(async (request, response) => {
     try {
       const url = new URL(request.url || '/', 'http://127.0.0.1');
       if (workerServer && (url.pathname.startsWith('/api/') || url.pathname === '/demo')) {
+        // U9 chaos hook. Default-OFF: the env gate
+        // (`isFaultInjectionAllowed()`) AND the per-request opt-in
+        // header BOTH must be satisfied before any fault plan is
+        // honoured. Defence-in-depth: a shipped worker process
+        // would never satisfy the env gate, so even if a header
+        // leaked into a production request the fault path stays
+        // dormant. Any unknown kind, malformed base64, or missing
+        // opt-in short-circuits to a plain forward — so the
+        // golden-path scenes from U5 keep working unchanged.
+        // `createFaultRegistry()` backs the `once: true` contract:
+        // scenes ask for a one-shot fault and the registry retires
+        // the plan identity after its first match.
+        const faultPlan = faultInjection.isFaultInjectionAllowed()
+          ? faultInjection.parseFaultPlan({
+            url: request.url || '/',
+            headers: request.headers || {},
+          })
+          : null;
+        const faultDecision = faultRegistry.decide(faultPlan, {
+          url: request.url || '/',
+          pathname: url.pathname,
+          headers: request.headers || {},
+        });
+
+        if (faultDecision.action === 'respond') {
+          response.writeHead(faultDecision.status, faultDecision.headers || {});
+          response.end(faultDecision.body || '');
+          return;
+        }
+
+        if (faultDecision.action === 'delay' && Number.isFinite(faultDecision.delayMs)) {
+          await new Promise((resolve) => setTimeout(resolve, faultDecision.delayMs));
+        }
+
         const workerResponse = await workerServer.fetchRaw(`http://${request.headers.host}${request.url || '/'}`, {
           method: request.method,
           headers: fetchHeadersFromNode(request.headers),

@@ -255,6 +255,18 @@ export const PUNCTUATION_DASHBOARD_HERO = Object.freeze({
   subtitle: "Pick a short round — we'll queue what matters next.",
 });
 
+// --- Setup round-length toggle options -------------------------------------
+
+// The three stops the child Setup toggle exposes. Tighter subset of the
+// service-contract `PUNCTUATION_ROUND_LENGTHS` superset (which accepts
+// 1 / 2 / 3 / 4 / 6 / 8 / 12 / 'all' so the /start Worker command can still
+// honour legacy per-skill drills). The Setup dispatch handler validates
+// against THIS narrower enum so a rogue payload cannot smuggle an off-menu
+// length (e.g. 'all' or '1') in via the primary dashboard control
+// (adv-234-001). Shared so the Scene and the module handler agree byte-
+// for-byte on what a legitimate Setup round-length dispatch looks like.
+export const PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS = Object.freeze(['4', '8', '12']);
+
 // --- Forbidden-terms fixture -----------------------------------------------
 
 // Every adult / internal term that must not appear in child-facing
@@ -719,11 +731,16 @@ export function buildPunctuationDashboardModel(stats, learner, rewardState) {
   const secureCount = safeNumber(safeStats.securedRewardUnits ?? safeStats.secure, 0);
   const accuracyValue = safeNumber(safeStats.accuracy, 0);
 
+  // HIGH 3 (adv-234 follow-up): child-register `detail` strings. The
+  // previous "Reward units you own" / "This release" wording was adult-
+  // register (the former leaks the internal "reward unit" token, the
+  // latter the release-id token). Child copy stays in the same 3-5 word
+  // slot so the card grid layout is unchanged.
   const todayCards = Object.freeze([
-    Object.freeze({ id: 'secure', label: 'Secure', value: secureCount, detail: 'Reward units you own' }),
+    Object.freeze({ id: 'secure', label: 'Secure', value: secureCount, detail: 'Skills you know well' }),
     Object.freeze({ id: 'due', label: 'Due', value: dueCount, detail: 'Come back to these today' }),
     Object.freeze({ id: 'weak', label: 'Wobbly', value: weakCount, detail: 'Needs another go' }),
-    Object.freeze({ id: 'accuracy', label: 'Accuracy', value: accuracyValue, detail: 'This release' }),
+    Object.freeze({ id: 'accuracy', label: 'Accuracy', value: accuracyValue, detail: 'Your best so far' }),
   ]);
 
   const prefs = learner && typeof learner === 'object' && !Array.isArray(learner)

@@ -86,6 +86,11 @@ const FORBIDDEN_DEPLOYED_TEXT = [
   'data-home-mount',
   'data-subject-mount',
   'home.bundle.js',
+  // U9 (sys-hardening p1): forbid the fault-injection middleware
+  // symbol in any production-served bundle. The same token is listed
+  // in `scripts/audit-client-bundle.mjs` FORBIDDEN_TEXT — dual-gated
+  // to catch both local-build regressions and deployed-bundle drift.
+  '__ks2_injectFault_TESTS_ONLY__',
 ];
 
 function argValue(name, fallback) {
