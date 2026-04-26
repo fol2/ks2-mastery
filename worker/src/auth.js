@@ -1450,7 +1450,27 @@ export function resolveSessionProvider(env = {}) {
  */
 export function requireActiveAccount(session) {
   if (!session) return;
+  // ADV-4 (Phase D reviewer): demo sessions bypass the auth-boundary
+  // enforcement. The P1.5 plan defers ops_status on demo explicitly
+  // (docs/plans/2026-04-25-005-refactor-admin-ops-console-p1-5-hardening-plan.md line 89).
+  // Demo cookies do not carry real user accounts and cannot reach the
+  // ops surfaces that mint/suspend accounts.
+  if (session.demo) return;
   if (session.opsStatus === 'suspended') {
+    // SEC-Med (Phase D reviewer): structured denial log so returning-
+    // after-suspend + brute-force probes surface in ops dashboards
+    // without leaking account PII. Single line per denial; not rate-
+    // limited (the 403 itself is already rate-gated upstream).
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.request_denied',
+        code: 'account_suspended',
+        opsStatus: session.opsStatus,
+      }));
+    } catch {
+      // Swallow - telemetry is best-effort.
+    }
     throw new AccountSuspendedError();
   }
 }
@@ -1469,10 +1489,37 @@ export function requireActiveAccount(session) {
  */
 export function requireMutationCapability(session) {
   if (!session) return;
+  // ADV-4 (Phase D reviewer): demo sessions bypass mutation capability
+  // enforcement. Demo routes have their own separate write-gating
+  // (see demo/sessions.js + the demo-tracked mutation paths) so
+  // layering ops_status enforcement on top of demo would double-gate
+  // without benefit. Plan defers ops_status on demo explicitly.
+  if (session.demo) return;
   if (session.opsStatus === 'suspended') {
+    // SEC-Med (Phase D reviewer) structured denial log.
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.request_denied',
+        code: 'account_suspended',
+        opsStatus: session.opsStatus,
+      }));
+    } catch {
+      // Swallow - telemetry is best-effort.
+    }
     throw new AccountSuspendedError();
   }
   if (session.opsStatus === 'payment_hold') {
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.request_denied',
+        code: 'account_payment_hold',
+        opsStatus: session.opsStatus,
+      }));
+    } catch {
+      // Swallow - telemetry is best-effort.
+    }
     throw new AccountPaymentHoldError();
   }
 }
