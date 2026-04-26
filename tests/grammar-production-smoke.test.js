@@ -93,7 +93,7 @@ test('Grammar production smoke rejects extra production option fields', () => {
 
 test('Grammar production smoke scans feedback and summary models for forbidden keys', () => {
   assert.doesNotThrow(() => assertNoForbiddenGrammarReadModelKeys({
-    stats: { templates: { total: 44, selectedResponse: 20 } },
+    stats: { contentStats: { total: 51, selectedResponse: 31, constructedResponse: 20 } },
     session: {
       currentItem: {
         templateId: 'fronted_adverbial_choose',
