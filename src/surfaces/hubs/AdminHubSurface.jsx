@@ -15,6 +15,13 @@ import {
   buildAccountOpsMetadataConflictDiff,
   formatAccountOpsMetadataConflictValue,
 } from '../../platform/hubs/admin-metadata-conflict-diff.js';
+// C2/C3 (Phase C reviewer fix): the "Keep mine" and "Use theirs" click
+// handlers delegate to pure-function helpers so Node tests can exercise
+// the dispatch payload + state-transition logic without mounting React.
+import {
+  buildKeepMineDispatchPayload,
+  applyUseTheirsStateUpdate,
+} from '../../platform/hubs/admin-metadata-conflict-actions.js';
 export { buildAccountOpsMetadataConflictDiff };
 const formatConflictValue = formatAccountOpsMetadataConflictValue;
 
@@ -591,42 +598,40 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
     : [];
 
   const handleKeepMine = () => {
-    if (!conflictCurrentState) return;
-    const parsedTags = tagsText
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0)
-      .slice(0, 10);
-    // U9: fresh CAS pre-image from the banner envelope. The dispatcher
-    // mints a brand-new requestId on every click so receipt-caching does
-    // not serve a cached 409-retry result to a later retry.
-    actions.dispatch('account-ops-metadata-save', {
+    // U9 + C2/C3 (Phase C): delegate to the pure helper so the dispatch
+    // payload — including the fresh CAS pre-image harvested from the 409
+    // banner and the parsed-tag slice — is exercised by Node tests without
+    // the need to mount a React tree.
+    const payload = buildKeepMineDispatchPayload({
       accountId,
-      expectedRowVersion: Number.isInteger(conflictCurrentState.rowVersion) ? conflictCurrentState.rowVersion : 0,
-      patch: {
-        opsStatus,
-        planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
-        tags: parsedTags,
-        internalNotes: internalNotes.trim() === '' ? null : internalNotes,
-      },
+      currentState: conflictCurrentState,
+      opsStatus,
+      planLabel,
+      tagsText,
+      internalNotes,
     });
+    if (!payload) return;
+    actions.dispatch(payload.action, payload.data);
   };
 
   const handleUseTheirs = () => {
-    if (!conflictCurrentState) return;
-    // Adopt the server's state verbatim, clear the dirty flag, and dismiss
-    // the banner by publishing an action the dispatcher listens to.
-    const currentStateTags = Array.isArray(conflictCurrentState.tags) ? conflictCurrentState.tags : [];
-    setOpsStatus(typeof conflictCurrentState.opsStatus === 'string' ? conflictCurrentState.opsStatus : 'active');
-    setPlanLabel(typeof conflictCurrentState.planLabel === 'string' ? conflictCurrentState.planLabel : '');
-    setTagsText(currentStateTags.join(', '));
-    setInternalNotes(typeof conflictCurrentState.internalNotes === 'string' ? conflictCurrentState.internalNotes : '');
-    dirtyRef.current = false;
-    registerDirty(accountId, false);
-    actions.dispatch('account-ops-metadata-use-theirs', {
+    // U9 + C2/C3 (Phase C): compute the next component state via the pure
+    // helper. React's `setState` still owns the actual update, but the
+    // decision logic (array normalisation, string defaults, R25 redaction
+    // edge case for ops-role viewers) is covered by the helper's tests.
+    const result = applyUseTheirsStateUpdate({
       accountId,
       currentState: conflictCurrentState,
     });
+    if (!result) return;
+    const { nextState, dispatch } = result;
+    setOpsStatus(nextState.opsStatus);
+    setPlanLabel(nextState.planLabel);
+    setTagsText(nextState.tagsText);
+    setInternalNotes(nextState.internalNotes);
+    dirtyRef.current = false;
+    registerDirty(accountId, false);
+    actions.dispatch(dispatch.action, dispatch.data);
   };
 
   if (!canManage) {

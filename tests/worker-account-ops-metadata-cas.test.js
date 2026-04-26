@@ -380,3 +380,98 @@ test('U8 payload-hash — expectedRowVersion participates in the receipt hash', 
     server.close();
   }
 });
+
+// ---------------------------------------------------------------------------
+// C1 (Phase C reviewer): TOCTOU race — simulate a concurrent writer
+// committing between the pre-check SELECT and the batch commit. Writer B
+// must see 409 `account_ops_metadata_stale` driven by the UPSERT
+// statement's `meta.changes = 0`, NOT a tautological row_version re-read.
+// Before the fix, both racers could see a post-batch `row_version` equal
+// to their own `nextRowVersion` → false 200 with the loser's `appliedRow`
+// diverging from the DB. The rowsAffected signal closes that hole.
+// ---------------------------------------------------------------------------
+test('C1 TOCTOU — concurrent writer commits between pre-check and batch; loser gets 409 with fresh currentState', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedCore(server, Date.now());
+    // Baseline — row_version = 1 after initial seed.
+    const seeded = await putMetadata(server, 'adult-admin', 'adult-parent', {
+      patch: { opsStatus: 'suspended', planLabel: 'Plan-A' },
+      expectedRowVersion: 0,
+      mutation: { requestId: 'req-toctou-seed', correlationId: 'corr-toctou-seed' },
+    });
+    assert.equal(seeded.status, 200);
+    assert.equal(rowVersion(server, 'adult-parent'), 1);
+
+    // Monkey-patch the D1 batch so a concurrent writer A commits one row_version
+    // bump between B's pre-check SELECT and B's batch commit. We do this by
+    // wrapping the underlying sqlite-D1 `batch` method — the next call to
+    // `batch()` first commits writer A's UPDATE directly (bypassing the CAS
+    // helper) before delegating to the real implementation. That mirrors the
+    // production race where writer A wins the D1 round-trip while writer B is
+    // mid-flight.
+    const d1 = server.DB;
+    const originalBatch = d1.batch.bind(d1);
+    let batchCalls = 0;
+    d1.batch = async (statements) => {
+      batchCalls += 1;
+      if (batchCalls === 1) {
+        // Simulate writer A's already-committed UPSERT. Bumps row_version from
+        // 1 → 2 BEFORE writer B's batch runs. Writer B pre-checked at v=1 and
+        // composed its batch with `WHERE row_version = 1`; after this bump the
+        // UPSERT WHERE-clause matches zero rows.
+        d1.db.prepare(`
+          UPDATE account_ops_metadata
+          SET ops_status = 'payment_hold',
+              plan_label = 'Plan-RacerA',
+              updated_at = ?,
+              updated_by_account_id = 'adult-admin',
+              row_version = row_version + 1
+          WHERE account_id = ?
+        `).run(Date.now(), 'adult-parent');
+      }
+      return originalBatch(statements);
+    };
+
+    // Writer B (the loser) pre-checks at v=1, composes its batch, and tries to
+    // commit. The SQL guard (layer 2) yields `changes = 0` on the UPSERT
+    // statement. Layer 3 (C1 fix) reads that count from the batch result and
+    // throws 409.
+    const loser = await putMetadata(server, 'adult-admin', 'adult-parent', {
+      patch: { opsStatus: 'active' },
+      expectedRowVersion: 1,
+      mutation: { requestId: 'req-toctou-loser', correlationId: 'corr-toctou-loser' },
+    });
+    const payload = await loser.json();
+    assert.equal(loser.status, 409);
+    assert.equal(payload.code, 'account_ops_metadata_stale');
+    // The 409 echoes the fresh post-race row_version (= 2) in currentState so
+    // the UI banner can render the diff against the server's true state.
+    assert.equal(payload.currentState.rowVersion, 2);
+    assert.equal(payload.currentState.opsStatus, 'payment_hold');
+    assert.equal(payload.currentState.planLabel, 'Plan-RacerA');
+
+    // Writer B's patch must NOT have clobbered writer A's commit. The DB holds
+    // writer A's values — this is the data-integrity invariant the C1 fix
+    // protects. Before the fix, both writers committed their batch; the row
+    // reflected whichever batch ran last AND the HTTP loser got 200 with their
+    // `appliedRow` diverging from the DB.
+    const dbRow = metadataRow(server, 'adult-parent');
+    assert.equal(dbRow.ops_status, 'payment_hold');
+    assert.equal(dbRow.plan_label, 'Plan-RacerA');
+    assert.equal(dbRow.row_version, 2);
+
+    // Note: the mutation_receipts row + counter bump DO land for writer B
+    // because a zero-match UPSERT is not a SQL error and the batch commits.
+    // This is accepted drift — KPI reconciliation (U10) collapses it. The
+    // critical invariant is that writer B's STATE was not applied, which the
+    // DB assertions above confirm. Documenting the behaviour here so a future
+    // reviewer does not treat the receipt landing as a bug.
+    const loserReceipt = server.DB.db.prepare(
+      'SELECT request_id FROM mutation_receipts WHERE request_id = ?',
+    ).get('req-toctou-loser');
+    assert.ok(loserReceipt, 'the 409-loser receipt IS persisted (accepted drift); U10 reconciles counters');
+  } finally {
+    server.close();
+  }
+});

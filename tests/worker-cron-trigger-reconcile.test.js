@@ -132,3 +132,45 @@ test('U11 default export wires scheduled() to runScheduledHandler', async () => 
     db.close();
   }
 });
+
+// ---------------------------------------------------------------------------
+// C4 (Phase C reviewer): ks2-cron actor row is seeded as `platform_role =
+// 'ops'`, NOT 'admin'. If the cron actor were an admin, a genuine human
+// admin could demote themselves to a non-admin role because the
+// `last_admin_required` guard in `updateManagedAccountRole` would treat
+// ks2-cron as the remaining admin. The cron never needs role-manager
+// privileges: reconciliation goes through the internal helper (bypasses
+// every HTTP role gate) and retention sweeps never touch role management.
+// ---------------------------------------------------------------------------
+test('C4 ks2-cron actor row is seeded with platform_role=ops (not admin)', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const env = { DB: db };
+    const nowTs = 1_700_000_000_000;
+    await runScheduledHandler({}, env, {}, { now: () => nowTs });
+    const row = db.db.prepare(
+      'SELECT id, platform_role FROM adult_accounts WHERE id = ?',
+    ).get('ks2-cron');
+    assert.ok(row, 'ks2-cron row was seeded');
+    assert.equal(row.platform_role, 'ops');
+  } finally {
+    db.close();
+  }
+});
+
+test('C4 ks2-cron actor bootstrap is idempotent — second run leaves role and row count intact', async () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    const env = { DB: db };
+    const nowTs = 1_700_000_000_000;
+    await runScheduledHandler({}, env, {}, { now: () => nowTs });
+    await runScheduledHandler({}, env, {}, { now: () => nowTs + 60_000 });
+    const rows = db.db.prepare(
+      'SELECT platform_role FROM adult_accounts WHERE id = ?',
+    ).all('ks2-cron');
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].platform_role, 'ops');
+  } finally {
+    db.close();
+  }
+});

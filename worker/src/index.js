@@ -98,14 +98,26 @@ const CRON_ACTOR_ACCOUNT_ID = 'ks2-cron';
 async function ensureCronActorAccount(db, nowTs) {
   // `mutation_receipts.account_id` has an FK to `adult_accounts`. Cron runs
   // pre-seed a minimal system row so every reconciliation receipt resolves
-  // its FK cleanly. Idempotent.
+  // its FK cleanly. Idempotent via `INSERT OR IGNORE`.
+  //
+  // C4 (Phase C reviewer fix): the cron actor is seeded with `platform_role
+  // = 'ops'` — NOT `'admin'`. An `admin` cron actor counts toward the
+  // `last_admin_required` invariant in `updateManagedAccountRole`, letting
+  // a genuine human admin demote themselves to a non-admin role with the
+  // cron row providing the "last admin" cover. `ops` is an existing role
+  // with admin-hub VIEW access (see `canViewAdminHub`) but NOT
+  // `canManageAccountRoles`, which exactly matches the cron's needs: the
+  // reconciliation path calls `reconcileAdminKpiMetricsInternal` directly
+  // and bypasses every HTTP-layer role gate; retention sweeps never touch
+  // role management; the `mutation_receipts` FK only requires the
+  // `adult_accounts.id` row to exist, independent of role.
   try {
     await run(db, `
       INSERT OR IGNORE INTO adult_accounts (
         id, email, display_name, platform_role, selected_learner_id,
         created_at, updated_at, repo_revision, account_type, demo_expires_at
       )
-      VALUES (?, NULL, 'Cron', 'admin', NULL, ?, ?, 0, 'real', NULL)
+      VALUES (?, NULL, 'Cron', 'ops', NULL, ?, ?, 0, 'real', NULL)
     `, [CRON_ACTOR_ACCOUNT_ID, nowTs, nowTs]);
   } catch (error) {
     console.error('[ks2-cron] actor-account bootstrap failed', error?.message);

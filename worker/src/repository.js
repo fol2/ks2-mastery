@@ -2976,13 +2976,14 @@ async function updateAccountOpsMetadata(db, {
 
   // U8 CAS layer 2 — SQL guard. The UPSERT carries `row_version = ?` in the
   // ON CONFLICT branch. A concurrent write that beat the pre-check SELECT
-  // produces zero affected rows; the post-batch verify (layer 3) then
-  // surfaces 409. The insert branch fires only on the fresh-row path
-  // (expectedRowVersion = 0 → nextRowVersion = 1). NOTE: Phase D's U15
-  // will extend this UPDATE to bump `status_revision` when `ops_status`
-  // changes — Phase C must NOT touch that column (see plan §Phase D).
+  // produces zero affected rows; layer 3 (C1 fix) inspects the batch
+  // result's `meta.changes` to surface 409. The insert branch fires only
+  // on the fresh-row path (expectedRowVersion = 0 → nextRowVersion = 1).
+  // NOTE: Phase D's U15 will extend this UPDATE to bump `status_revision`
+  // when `ops_status` changes — Phase C must NOT touch that column (see
+  // plan §Phase D).
   // R21 batch atomicity: UPSERT + receipt + counter bump commit together.
-  await batch(db, [
+  const batchResult = await batch(db, [
     bindStatement(db, `
       INSERT INTO account_ops_metadata (
         account_id,
@@ -3029,13 +3030,27 @@ async function updateAccountOpsMetadata(db, {
     bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1),
   ]);
 
-  // U8 CAS layer 3 — post-batch verify. Catches the narrow window between
-  // the pre-check SELECT and the batch commit where a concurrent writer
-  // could have raced through. Counter deltas already committed in that
-  // tail window (accepted drift; KPI reconciliation from U10 closes it).
-  const postBatchRow = await loadAccountOpsMetadataRow(db, targetAccountId);
-  const postBatchRowVersion = Math.max(0, Number(postBatchRow?.row_version) || 0);
-  if (postBatchRowVersion !== nextRowVersion) {
+  // U8 CAS layer 3 (C1 fix) — post-batch verify via batch result rowsAffected.
+  // The earlier implementation re-read `row_version` and compared it to
+  // `nextRowVersion`, which was tautological: when two writers both
+  // pre-check at v=3, their `nextRowVersion` is the same (=4), and both
+  // batches commit atomically even though writer B's UPSERT WHERE-clause
+  // matched zero rows. Re-reading `row_version` post-batch sees 4 (the
+  // value writer A wrote) and compares to B's `nextRowVersion=4` → false
+  // success with B's `appliedRow` diverging from the stored row.
+  //
+  // The authoritative signal is the UPSERT statement's own `meta.changes`:
+  // the WHERE-guarded ON CONFLICT branch produces `changes = 0` on a race
+  // loss. The insert branch and an unguarded update both produce
+  // `changes = 1`. The batch is atomic, so when the UPSERT changes count
+  // is zero the mutation_receipts INSERT + counter bump also rolled back
+  // (they share the same txn) — no drift.
+  const upsertChanges = Math.max(0, Number(batchResult?.[0]?.meta?.changes) || 0);
+  if (upsertChanges !== 1) {
+    // Race-lost. Read the freshest row so the 409 currentState echo is
+    // accurate for the banner diff.
+    const postBatchRow = await loadAccountOpsMetadataRow(db, targetAccountId);
+    const postBatchRowVersion = Math.max(0, Number(postBatchRow?.row_version) || 0);
     throw new ConflictError('Account ops metadata write lost to a concurrent update. Re-read and retry.', {
       code: 'account_ops_metadata_stale',
       retryable: true,

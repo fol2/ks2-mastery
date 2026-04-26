@@ -19,6 +19,15 @@ import {
   buildAccountOpsMetadataConflictDiff,
   formatAccountOpsMetadataConflictValue,
 } from '../src/platform/hubs/admin-metadata-conflict-diff.js';
+// C2/C3 (Phase C reviewer fix): the "Keep mine" / "Use theirs" click
+// handlers delegate to pure helpers. The component wires them; these
+// tests exercise the dispatch payload + state-update decisions without
+// JSDOM/RTL (neither of which is installed in this repo — see the
+// resolver's deviation note).
+import {
+  buildKeepMineDispatchPayload,
+  applyUseTheirsStateUpdate,
+} from '../src/platform/hubs/admin-metadata-conflict-actions.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -201,6 +210,125 @@ test('AccountOpsMetadataRow renders a conflict banner when account.conflict is s
   // Both resolution buttons present.
   assert.match(html, /data-action="account-ops-metadata-keep-mine"/);
   assert.match(html, /data-action="account-ops-metadata-use-theirs"/);
+});
+
+// ---------------------------------------------------------------------
+// 3. Click handlers — C2/C3 pure-helper coverage.
+//
+// RTL/JSDOM are not installed. The React component delegates to pure
+// helpers (admin-metadata-conflict-actions.js), so these tests exercise
+// the production decision logic — the same code path that fires when a
+// human clicks the buttons — without mounting a component tree.
+// ---------------------------------------------------------------------
+
+test('C2 Keep mine dispatch payload — carries fresh expectedRowVersion from 409 currentState', () => {
+  const payload = buildKeepMineDispatchPayload({
+    accountId: 'adult-parent',
+    currentState: {
+      accountId: 'adult-parent',
+      opsStatus: 'suspended',
+      planLabel: 'Plan-X',
+      tags: ['t1'],
+      internalNotes: 'server note',
+      rowVersion: 4,
+    },
+    opsStatus: 'active',
+    planLabel: 'Plan-MINE',
+    tagsText: 'alpha, beta',
+    internalNotes: 'local note',
+  });
+  assert.equal(payload.action, 'account-ops-metadata-save');
+  assert.equal(payload.data.accountId, 'adult-parent');
+  // The retry MUST carry the server-observed row_version (=4), NOT the
+  // user's stale pre-image that triggered the 409 in the first place.
+  assert.equal(payload.data.expectedRowVersion, 4);
+  // The user's live draft (Plan-MINE, opsStatus=active) wins — that's the
+  // whole point of Keep-mine.
+  assert.equal(payload.data.patch.opsStatus, 'active');
+  assert.equal(payload.data.patch.planLabel, 'Plan-MINE');
+  assert.deepEqual(payload.data.patch.tags, ['alpha', 'beta']);
+  assert.equal(payload.data.patch.internalNotes, 'local note');
+});
+
+test('C2 Keep mine — blank planLabel/internalNotes trim to null', () => {
+  const payload = buildKeepMineDispatchPayload({
+    accountId: 'adult-parent',
+    currentState: { rowVersion: 2 },
+    opsStatus: 'active',
+    planLabel: '   ',
+    tagsText: '',
+    internalNotes: '   ',
+  });
+  assert.equal(payload.data.patch.planLabel, null);
+  assert.equal(payload.data.patch.internalNotes, null);
+  assert.deepEqual(payload.data.patch.tags, []);
+});
+
+test('C2 Keep mine — tags capped at 10 entries (matches server ceiling)', () => {
+  const tagsText = Array.from({ length: 15 }, (_, i) => `tag-${i}`).join(', ');
+  const payload = buildKeepMineDispatchPayload({
+    accountId: 'adult-parent',
+    currentState: { rowVersion: 1 },
+    opsStatus: 'active',
+    planLabel: 'Plan',
+    tagsText,
+    internalNotes: '',
+  });
+  assert.equal(payload.data.patch.tags.length, 10);
+  assert.equal(payload.data.patch.tags[0], 'tag-0');
+  assert.equal(payload.data.patch.tags[9], 'tag-9');
+});
+
+test('C2 Keep mine — missing currentState returns null (no dispatch fired)', () => {
+  assert.equal(buildKeepMineDispatchPayload({ accountId: 'a' }), null);
+  assert.equal(buildKeepMineDispatchPayload({ accountId: 'a', currentState: null }), null);
+  assert.equal(buildKeepMineDispatchPayload({ accountId: '', currentState: { rowVersion: 1 } }), null);
+});
+
+test('C3 Use theirs — adopts server state verbatim', () => {
+  const result = applyUseTheirsStateUpdate({
+    accountId: 'adult-parent',
+    currentState: {
+      accountId: 'adult-parent',
+      opsStatus: 'payment_hold',
+      planLabel: 'Plan-SERVER',
+      tags: ['server-a', 'server-b'],
+      internalNotes: 'server note',
+      rowVersion: 7,
+    },
+  });
+  assert.equal(result.dispatch.action, 'account-ops-metadata-use-theirs');
+  assert.equal(result.dispatch.data.accountId, 'adult-parent');
+  assert.equal(result.nextState.opsStatus, 'payment_hold');
+  assert.equal(result.nextState.planLabel, 'Plan-SERVER');
+  assert.equal(result.nextState.tagsText, 'server-a, server-b');
+  assert.equal(result.nextState.internalNotes, 'server note');
+});
+
+test('C3 Use theirs (R25) — ops-role null internalNotes normalises to empty string, never leaks diff', () => {
+  // Ops-role viewers see `currentState.internalNotes = null` (R25 redaction).
+  // The adopted local state must be '' (matching the component's empty-string
+  // initialiser), NOT the literal `null` which would render as "null" in the
+  // textarea and confuse the user. The pure helper enforces that default.
+  const result = applyUseTheirsStateUpdate({
+    accountId: 'adult-parent',
+    currentState: {
+      opsStatus: 'suspended',
+      planLabel: null,
+      tags: [],
+      internalNotes: null,
+      rowVersion: 3,
+    },
+  });
+  assert.equal(result.nextState.internalNotes, '');
+  assert.equal(result.nextState.planLabel, '');
+  assert.equal(result.nextState.tagsText, '');
+});
+
+test('C3 Use theirs — missing currentState returns null (no state update, no dispatch)', () => {
+  assert.equal(applyUseTheirsStateUpdate({ accountId: 'a' }), null);
+  assert.equal(applyUseTheirsStateUpdate({ accountId: 'a', currentState: null }), null);
+  assert.equal(applyUseTheirsStateUpdate({ accountId: '', currentState: { rowVersion: 1 } }), null);
 });
 
 test('AccountOpsMetadataRow does NOT render the conflict banner when account.conflict is null', async () => {
