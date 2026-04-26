@@ -80,6 +80,36 @@ patterns above before approving a change in this directory.
 | `audit.yml` | `pull_request` | `npm run audit:client`. |
 | `mega-invariant-nightly.yml` | `schedule` (02:37 UTC) | Variable-seed Mega invariant probe. |
 
+## Temporary non-blocking status: `audit.yml` (SH2-U11)
+
+`audit.yml` currently runs `npm run audit:client` with `continue-on-error: true`
+on the audit step. This is a temporary measure because PRE-EXISTING
+forbidden-import violations live on `main`:
+
+- `src/subjects/spelling/data/content-data.js`
+- `src/subjects/spelling/data/word-data.js`
+
+are flagged by the forbidden-module rules in `scripts/audit-client-bundle.mjs`
+(lines 12 and 16) but are imported by:
+
+- `src/subjects/spelling/content/repository.js`
+- `src/subjects/spelling/content/service.js`
+- `src/subjects/spelling/events.js`
+- `src/subjects/spelling/read-model.js`
+
+These imports predate SH2-U11 — the new CI simply surfaces them.
+`audit.yml` still runs on every PR (logs + step output remain visible),
+but does not gate merge until the spelling-team follow-up lands to
+sanitise the data imports so content/word datasets ship via the Worker
+boundary only, not the client bundle. At that point the
+`continue-on-error: true` on the `Run client-bundle audit` step in
+`audit.yml` must be removed so the gate is restored.
+
+Note: `continue-on-error` applies only to the `Run client-bundle audit`
+step. The preceding `Build bundles` (`npm run build`) and `Install
+dependencies` (`npm ci`) steps remain hard gates — a clean build is
+still required.
+
 ## Contact
 
 Maintainer-owned. Any change in this directory goes through the normal
