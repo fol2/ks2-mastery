@@ -40,6 +40,12 @@ Production bootstrap probe for a logged-in session:
 npm run smoke:production:bootstrap -- --url https://ks2.eugnel.uk --cookie "ks2_session=..." --max-bytes 600000 --max-sessions 12 --max-events 100
 ```
 
+Dense-history Spelling Smart Review smoke (U11) for a high-history demo or learner session:
+
+```sh
+npm run smoke:production:spelling-dense -- --origin https://ks2.eugnel.uk --cookie "ks2_session=..." --max-p95-ms 750 --require-bootstrap-capacity --output reports/capacity/spelling-dense-latest.json
+```
+
 Use package scripts for Cloudflare operations. Normal deploy verification remains:
 
 ```sh
@@ -141,6 +147,21 @@ When adding a row:
 2. Copy the values from the evidence JSON (`reportMeta.commit`, `summary.endpoints`, `summary.signals`) into the row.
 3. The `Evidence` cell links to the persisted JSON (relative path).
 4. The verify script runs automatically via `npm run verify`.
+
+### Dense-history Spelling smoke (U11)
+
+`scripts/spelling-dense-history-smoke.mjs` (`npm run smoke:production:spelling-dense`) is the dated evidence row for PR #135's Smart Review start-session caching optimisation. PR #135 reduced dense-history Smart Review starts from ~1.7 s to ~12.5 ms by caching the learner progress map for the duration of `startSession`, eliminating a per-slug `getProgress` fan-out during the initial `advanceCard` hop. Because the optimisation only matters when the learner has several hundred active progress rows, the gate is only meaningful against a live account with dense practice history.
+
+Expected behaviour:
+
+- The smoke creates (or reuses) a demo session, loads `/api/bootstrap`, starts a Smart Review spelling session with `mode: 'smart'`, submits one deliberately-wrong answer, and captures the client-observed wall time for the `start-session` command.
+- `--max-p95-ms 750` is the default production gate and matches the classroom-tier command P95 threshold in `capacity:classroom:release-gate`. The dense-history ceiling is deliberately generous (PR #135 typically reports ~12.5 ms post-optimisation) so expected transient latency does not produce false fails.
+- `--require-bootstrap-capacity` asserts `/api/bootstrap` carries `bootstrapCapacity` metadata (mirrors the probe gate).
+- `--output reports/capacity/spelling-dense-*.json` persists a U3 schema-shaped envelope (`reportMeta`, `summary.commands[]`, `thresholds`, `safety`) so the launch-evidence table can cite the JSON directly.
+- The smoke fails (exit 1) when any command returns a forbidden key, a response `meta.capacity.signals[]` carries `exceededCpu`, or the `start-session` wall time exceeds `--max-p95-ms`.
+- Structural plan-note: against a local worker-server harness the 12.5 ms claim is not reproducible because the local SQLite double does not carry dense production progress rows. The smoke falls back to a structural contract check (session phase + redaction pass + `bootstrapCapacity` present) in CI and the latency gate fires only against a live production run.
+
+Record dense-history runs by appending a row to the launch-evidence table above with `summary.commands[0].wallMs` populating the P95 Command column and the persisted JSON in the Evidence column.
 
 ## Operational Thresholds
 
