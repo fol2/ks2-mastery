@@ -40,21 +40,33 @@ import { createLocalAppController } from '../src/platform/app/create-local-app-c
 // add counters.
 
 function createTrackingTtsPort() {
+  // SH2-U4 (sys-hardening p2): the tracking port gains `abortPending`
+  // alongside `stop()`. Every documented route-change site MUST fan out
+  // to BOTH — `stop()` kills playing audio, `abortPending()` cancels
+  // any in-flight fetch. The two are intentionally NOT merged into a
+  // single helper so reviewers see both calls at every site.
   const stopCalls = [];
   const speakCalls = [];
+  const abortPendingCalls = [];
   return {
     spoken: speakCalls,
     stopCalls,
+    abortPendingCalls,
     speak(payload) {
       speakCalls.push({ payload, at: Date.now() });
     },
     stop() {
       stopCalls.push({ at: Date.now() });
     },
+    abortPending() {
+      abortPendingCalls.push({ at: Date.now() });
+    },
+    getStatus() { return 'idle'; },
     warmup() {},
     clear() {
       speakCalls.length = 0;
       stopCalls.length = 0;
+      abortPendingCalls.length = 0;
     },
   };
 }
@@ -165,5 +177,72 @@ test('route-change audio cleanup: the port.stop contract is honoured even when n
     tts.stopCalls.length,
     1,
     'navigate-home must call tts.stop() unconditionally, even when no audio is currently in flight. The handler must not gate the cleanup on an observability check against the port.',
+  );
+});
+
+// SH2-U4 (sys-hardening p2): every documented route-change site must
+// call BOTH `tts.stop()` (kills playing audio) AND `tts.abortPending()`
+// (cancels in-flight fetch). A 15s TTS fetch that never resolves must
+// be aborted the moment the learner leaves the subject surface so the
+// Worker abort signal fires and the pending latency telemetry emits.
+// The two calls are explicit per site (no helper) so this test asserts
+// counts, not ordering.
+
+test('route-change audio cleanup: navigate-home calls BOTH tts.stop() AND tts.abortPending()', () => {
+  const { controller, tts } = createTrackingHarness();
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  tts.clear();
+  controller.dispatch('navigate-home');
+  assert.equal(
+    tts.stopCalls.length, 1,
+    'navigate-home must call tts.stop() — kills playing audio.',
+  );
+  assert.equal(
+    tts.abortPendingCalls.length, 1,
+    'navigate-home must call tts.abortPending() — cancels in-flight fetch so a slow TTS does not resolve on the dashboard.',
+  );
+});
+
+test('route-change audio cleanup: every adult surface entry calls BOTH stop + abortPending', () => {
+  const adultActions = ['open-codex', 'open-parent-hub', 'open-admin-hub', 'open-profile-settings'];
+  for (const action of adultActions) {
+    const { controller, tts } = createTrackingHarness();
+    controller.dispatch('open-subject', { subjectId: 'spelling' });
+    tts.clear();
+    controller.dispatch(action);
+    assert.equal(
+      tts.stopCalls.length, 1,
+      `${action}: stop() must fire exactly once.`,
+    );
+    assert.equal(
+      tts.abortPendingCalls.length, 1,
+      `${action}: abortPending() must fire alongside stop() so an in-flight TTS fetch does not resolve on the ${action} surface.`,
+    );
+  }
+});
+
+test('route-change audio cleanup: open-subject hop calls BOTH stop + abortPending on each hop', () => {
+  const { controller, tts } = createTrackingHarness();
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  tts.clear();
+  controller.dispatch('open-subject', { subjectId: 'grammar' });
+  assert.equal(tts.stopCalls.length, 1, 'cross-subject hop: stop() must fire.');
+  assert.equal(tts.abortPendingCalls.length, 1, 'cross-subject hop: abortPending() must fire.');
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  assert.equal(tts.stopCalls.length, 2, 'returning hop: stop() must fire again.');
+  assert.equal(tts.abortPendingCalls.length, 2, 'returning hop: abortPending() must fire again.');
+});
+
+test('route-change audio cleanup: learner-select fires BOTH stop + abortPending', () => {
+  const { controller, tts } = createTrackingHarness();
+  controller.dispatch('open-subject', { subjectId: 'spelling' });
+  controller.dispatch('learner-create', { name: 'Learner B', yearGroup: 'Y4' });
+  const learnerA = controller.store.getState().learners.allIds[0];
+  tts.clear();
+  controller.dispatch('learner-select', { value: learnerA });
+  assert.equal(tts.stopCalls.length, 1, 'learner-select: stop() must fire.');
+  assert.equal(
+    tts.abortPendingCalls.length, 1,
+    'learner-select: abortPending() must fire — a mid-prompt fetch for the leaving learner must not complete against the incoming learner.',
   );
 });
