@@ -200,6 +200,73 @@ test('api repositories expose published monster visual config from bootstrap', a
   assert.equal(runtimeConfig.config.assets['vellhorn-b1-3'].baseline.facing, 'right');
 });
 
+// U7 adv-u7-r1-001: the server emits a compact pointer envelope on the
+// selected-learner-bounded bootstrap path. A second bootstrap that returns
+// a pointer MUST NOT destroy a valid cached full config from an earlier
+// bootstrap — otherwise admin-published custom configs silently regress on
+// every page load.
+test('U7 adv-u7-r1-001: second bootstrap with compact pointer preserves cached full config', async () => {
+  const storage = installMemoryStorage();
+  const customConfig = structuredClone(BUNDLED_MONSTER_VISUAL_CONFIG);
+  customConfig.assets['vellhorn-b1-3'].baseline.facing = 'right';
+  const server = createMockRepositoryServer({
+    monsterVisualConfig: {
+      schemaVersion: 1,
+      manifestHash: customConfig.manifestHash,
+      publishedVersion: 5,
+      publishedAt: 1234,
+      config: customConfig,
+    },
+  });
+
+  // First bootstrap hydrates the cache with the full config.
+  const first = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+  });
+  await first.hydrate();
+  assert.equal(
+    first.monsterVisualConfig.read()?.config?.assets['vellhorn-b1-3'].baseline.facing,
+    'right',
+    'first bootstrap seeds cache with the admin-published facing',
+  );
+
+  // Server now emits the compact pointer only (selected-learner-bounded
+  // path). The same-hash pointer means the client already has the latest
+  // full config — do NOT drop it.
+  server.store.monsterVisualConfig = {
+    schemaVersion: 1,
+    manifestHash: customConfig.manifestHash,
+    publishedVersion: 5,
+    publishedAt: 1234,
+    compact: true,
+  };
+
+  // Re-hydrate the SAME repositories instance — this mirrors the client
+  // re-running bootstrap on a tab focus. The cached full config must
+  // survive.
+  await first.hydrate();
+  assert.equal(
+    first.monsterVisualConfig.read()?.config?.assets['vellhorn-b1-3'].baseline.facing,
+    'right',
+    'cached custom facing must survive pointer-only bootstrap',
+  );
+
+  // Fresh client (new in-memory instance) re-reading the persisted cache
+  // also preserves the custom config.
+  const second = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+  });
+  assert.equal(
+    second.monsterVisualConfig.read()?.config?.assets['vellhorn-b1-3'].baseline.facing,
+    'right',
+    'persisted cache hydrated from storage still holds the custom facing',
+  );
+});
+
 test('the reference spelling flow works unchanged against local repositories', async () => {
   const day = 24 * 60 * 60 * 1000;
   const nowRef = { value: Date.UTC(2026, 0, 1) };

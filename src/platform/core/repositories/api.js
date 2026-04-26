@@ -31,7 +31,10 @@ import {
   createNoopRepositoryAuthSession,
   repositoryAuthCacheScopeKey,
 } from './auth-session.js';
-import { normaliseMonsterVisualRuntimeConfig } from '../../game/monster-visual-config.js';
+import {
+  normaliseMonsterVisualRuntimeConfig,
+  resolveMonsterVisualConfigFromPointer,
+} from '../../game/monster-visual-config.js';
 
 const MUTATION_POLICY_VERSION = 1;
 const OPERATION_STATUS_PENDING = 'pending';
@@ -41,6 +44,20 @@ const BOOTSTRAP_BACKOFF_BASE_MS = 2_000;
 const BOOTSTRAP_BACKOFF_MAX_MS = 30_000;
 const BOOTSTRAP_BACKOFF_JITTER_MS = 250;
 const BOOTSTRAP_COORDINATION_LEASE_MS = BOOTSTRAP_BACKOFF_MAX_MS;
+// U7: `meta.capacity.bootstrapCapacity` is the U9 regression-detection
+// field. Three consecutive bootstraps without it escalates to an
+// operator-visible error and stops retries (plan line 752).
+const BOOTSTRAP_MISSING_METADATA_ESCALATION_LIMIT = 3;
+// U7: required revision-envelope keys. Used both for the v2 POST body
+// and for the client-side schema check before honouring notModified
+// (plan line 751).
+const BOOTSTRAP_V2_REVISION_KEYS = [
+  'accountRevision',
+  'accountLearnerListRevision',
+  'bootstrapCapacityVersion',
+  'hash',
+  'selectedLearnerRevision',
+];
 const LEGACY_RUNTIME_WRITES_ENABLED = typeof process === 'object'
   && process?.env?.NODE_ENV !== 'production';
 const LEGACY_RUNTIME_OPERATION_KINDS = new Set([
@@ -1080,6 +1097,18 @@ export function createApiPlatformRepositories({
   let processing = false;
   let syncScheduled = false;
   let bootstrapBackoff = normaliseBootstrapBackoff(cachedState.bootstrapBackoff);
+  // U7: last-known revision hash from the most recent successful
+  // bootstrap. Sent on subsequent bootstraps to drive the notModified
+  // short-circuit path; reset to null when the cache is rebuilt.
+  let lastKnownBootstrapRevision = typeof cachedState?.bootstrapRevisionHash === 'string'
+    ? cachedState.bootstrapRevisionHash
+    : null;
+  // U7: consecutive-missing-metadata counter. Increments when a
+  // bootstrap response arrives without `meta.capacity.bootstrapCapacity`;
+  // resets on every success that includes it. Three in a row ->
+  // operator-visible error and retry suppression.
+  let consecutiveMissingBootstrapMetadata = 0;
+  let bootstrapMetadataOperatorError = null;
 
   function currentTime() {
     return nowTs(now);
@@ -1660,17 +1689,91 @@ export function createApiPlatformRepositories({
     }
 
     try {
-      const payload = await fetchJson(fetchFn, joinUrl(baseUrl, '/api/bootstrap'), {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          ...(publicReadModels ? { 'x-ks2-public-read-models': '1' } : {}),
-        },
-      }, authSession);
+      // U7: if we have a prior revision hash, try the POST notModified
+      // short-circuit first. Otherwise fall through to the GET path.
+      // The server will return either `{ok, notModified: true, revision}`
+      // (< 2 KB) or the full v2 bundle.
+      const usePostProbe = typeof lastKnownBootstrapRevision === 'string' && lastKnownBootstrapRevision;
+      const payload = usePostProbe
+        ? await fetchJson(fetchFn, joinUrl(baseUrl, '/api/bootstrap'), {
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+            ...(publicReadModels ? { 'x-ks2-public-read-models': '1' } : {}),
+          },
+          body: JSON.stringify({ lastKnownRevision: lastKnownBootstrapRevision }),
+        }, authSession)
+        : await fetchJson(fetchFn, joinUrl(baseUrl, '/api/bootstrap'), {
+          method: 'GET',
+          headers: {
+            accept: 'application/json',
+            ...(publicReadModels ? { 'x-ks2-public-read-models': '1' } : {}),
+          },
+        }, authSession);
+      // U7: 3-consecutive-missing-metadata backstop. The cached bundle
+      // stays valid; we simply escalate to an operator-visible error
+      // and let the higher layer decide whether to surface it (plan
+      // line 752).
+      const capacityMeta = payload?.meta?.capacity;
+      if (!capacityMeta || !capacityMeta.bootstrapCapacity) {
+        consecutiveMissingBootstrapMetadata += 1;
+        if (consecutiveMissingBootstrapMetadata >= BOOTSTRAP_MISSING_METADATA_ESCALATION_LIMIT) {
+          bootstrapMetadataOperatorError = {
+            code: 'bootstrap_metadata_missing',
+            consecutiveMisses: consecutiveMissingBootstrapMetadata,
+          };
+        }
+      } else {
+        consecutiveMissingBootstrapMetadata = 0;
+        bootstrapMetadataOperatorError = null;
+      }
+      // U7: notModified short-circuit. Validate the revision envelope
+      // is structurally sound before honouring — a missing field
+      // means the server deployed a schema change without a version
+      // bump, which our local cache cannot honour. Force a full
+      // refresh and log `cacheDivergence` (plan line 751).
+      if (payload?.notModified === true) {
+        const revision = payload.revision;
+        const schemaValid = revision && typeof revision === 'object'
+          && BOOTSTRAP_V2_REVISION_KEYS.every((key) => Object.prototype.hasOwnProperty.call(revision, key));
+        if (!schemaValid) {
+          lastKnownBootstrapRevision = null;
+          markRemoteFailure(classifyError(
+            new Error('bootstrap_cache_divergence'),
+            '/api/bootstrap',
+          ));
+          // Recursive retry without the lastKnownRevision triggers a
+          // full GET. One-shot only — the function falls through on
+          // subsequent invocations because the revision is cleared.
+          if (typeof fetchFn === 'function') {
+            return hydrateRemoteState({ rebasePending, rebasePayloads, cacheScope });
+          }
+        } else {
+          lastKnownBootstrapRevision = revision.hash;
+          markRemoteSuccess({ bootstrap: true });
+          lastSyncAt = currentTime();
+          persistLocalCache(cacheScope);
+          return { operations: pendingOperations, syncState, rebasedCount: 0, unblockedCount: 0 };
+        }
+      }
       const remoteBundle = normaliseRepositoryBundle(payload);
       const remoteSyncState = normaliseSyncState(payload?.syncState);
       if (payload && Object.prototype.hasOwnProperty.call(payload, 'monsterVisualConfig')) {
-        monsterVisualConfig = normaliseMonsterVisualRuntimeConfig(payload.monsterVisualConfig);
+        // U7 adv-u7-r1-001: the server emits a compact pointer on the
+        // selected-learner-bounded path. Merge the pointer with the
+        // previously cached full config so admin-published custom
+        // configs survive across bootstraps. A hash mismatch surfaces
+        // the pointer itself; a matching hash preserves the cached full
+        // config; a full server response overwrites the cache as before.
+        const incoming = normaliseMonsterVisualRuntimeConfig(payload.monsterVisualConfig);
+        monsterVisualConfig = resolveMonsterVisualConfigFromPointer(incoming, monsterVisualConfig);
+      }
+      // U7: capture the revision hash for the next probe when the v2
+      // envelope is present. The server only emits `revision` on the
+      // selected-learner-bounded path.
+      if (payload?.revision && typeof payload.revision.hash === 'string') {
+        lastKnownBootstrapRevision = payload.revision.hash;
       }
       const rebase = applyHydratedState(remoteBundle, remoteSyncState, { rebasePending, rebasePayloads });
       markRemoteSuccess({ bootstrap: true });

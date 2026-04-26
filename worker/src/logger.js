@@ -78,11 +78,18 @@ const BOOTSTRAP_CAPACITY_ALLOWED_KEYS = new Set([
 
 // U3 round 1 (P1 #05): closed allowlist of `bootstrapMode` strings. Any
 // string outside the set resets the field to null (silent reject).
+// U7: extended with the selected-learner-bounded v2 envelope modes
+// (plan line 724 — `'selected-learner-bounded' | 'full-legacy' |
+// 'not-modified'`). `public-bounded` remains for the non-U7 public
+// path, `fresh`/`rehydrated` for the cache-source signal.
 const BOOTSTRAP_MODE_ALLOWED = new Set([
   'fresh',
   'rehydrated',
   'miss-rehydrated',
   'public-bounded',
+  'selected-learner-bounded',
+  'full-legacy',
+  'not-modified',
 ]);
 
 // U6: closed allowlist of `projectionFallback` tokens that may appear on

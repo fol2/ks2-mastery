@@ -7,6 +7,7 @@ import {
   BOSS_DEFAULT_ROUND_LENGTH,
   SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
 } from '../service-contract.js';
+import { SoftLockoutBanner, useSoftLockoutState } from './SoftLockoutBanner.jsx';
 import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
@@ -374,6 +375,19 @@ export function SpellingSetupScene({
   // to the admin hub where the post-mega debug panel explains the counts.
   const showPostMasteryDebugLink = adultCanSeePostMasteryDebug(platformRole) && !isPostMega;
 
+  // P2 U5: soft-lockout banner state. Renders above the setup hero when a
+  // sibling tab holds the write lock, or when the browser has no Web Locks
+  // support (fallback). Mounted once per setup render; the detector
+  // cleans up on unmount.
+  //
+  // Reviewer-feedback: pass `acknowledge` and the `storageCas` surface so
+  // the steal button closes the banner immediately and the stealing tab
+  // announces fresh ownership via the broadcaster. When `repositories` is
+  // not passed (legacy callers / pre-P2 test harnesses), `storageCas` is
+  // null and the banner degrades to the bare `stealWriteLock` path.
+  const { state: softLockoutState, acknowledge: softLockoutAcknowledge } = useSoftLockoutState();
+  const softLockoutStorageCas = repositories?.storageCas || null;
+
   // P2 U9: banner gate — rendered when the durable `data.persistenceWarning`
   // sibling exists and the learner has not yet acknowledged. Copy + button
   // mirror the session scene exactly so the surface feels consistent
@@ -394,6 +408,11 @@ export function SpellingSetupScene({
 
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
+      <SoftLockoutBanner
+        state={softLockoutState}
+        onAcknowledge={softLockoutAcknowledge}
+        storageCas={softLockoutStorageCas}
+      />
       <section
         className={setupClasses.join(' ')}
         data-react-hero-contrast="true"

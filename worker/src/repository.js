@@ -82,6 +82,10 @@ import {
   ProjectionUnavailableError,
 } from './errors.js';
 import {
+  SELF_SUSPEND_FORBIDDEN,
+  LAST_ADMIN_LOCKED_OUT,
+} from './error-codes.js';
+import {
   all,
   batch,
   bindStatement,
@@ -117,7 +121,55 @@ const PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER = 5;
 const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER = 1;
 const PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER = 5;
 const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
-const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 1;
+// U7: bumped from 1 → 2 when the selected-learner-bounded envelope landed.
+// Any additive required field on the bootstrap envelope MUST bump this in
+// the same PR. `tests/worker-bootstrap-v2.test.js` has a snapshot test that
+// fails if the envelope shape changes without a version bump (scenario 15).
+const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 2;
+export const BOOTSTRAP_CAPACITY_VERSION = PUBLIC_BOOTSTRAP_CAPACITY_VERSION;
+
+// U7: closed union for `meta.capacity.bootstrapMode` when the public
+// bootstrap runs. `full-legacy` covers the `publicReadModels=false` path
+// (non-public internal callers still go through the unrestricted bundle).
+// `not-modified` is returned when the client's `lastKnownRevision` matches
+// the current server hash and we return a < 2 KB short response.
+export const BOOTSTRAP_MODES = new Set([
+  'selected-learner-bounded',
+  'full-legacy',
+  'not-modified',
+]);
+
+// U7: snapshot for the v2 envelope shape. Locked per-version; a required
+// shape change without a `BOOTSTRAP_CAPACITY_VERSION` bump + a snapshot
+// update in the same PR fails the release-rule test (scenario 15).
+// EVIDENCE_SCHEMA_VERSION is deliberately NOT bumped — that constant
+// covers the capacity evidence doc schema (U3), not the bootstrap
+// envelope; bootstrap envelope evolution is governed by its own version.
+export const BOOTSTRAP_V2_ENVELOPE_SHAPE = Object.freeze({
+  version: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+  requiredTopLevelKeys: Object.freeze([
+    'account',
+    'eventLog',
+    'gameState',
+    'learners',
+    'meta',
+    'monsterVisualConfig',
+    'practiceSessions',
+    'revision',
+    'subjectStates',
+    'syncState',
+  ]),
+  requiredRevisionKeys: Object.freeze([
+    'accountRevision',
+    'accountLearnerListRevision',
+    'bootstrapCapacityVersion',
+    'hash',
+    'selectedLearnerRevision',
+  ]),
+});
+
+// U7: the classroom summary paginates at 50 learners per page (plan R11).
+const CLASSROOM_LEARNERS_SUMMARY_PAGE_LIMIT = 50;
 const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 const PROJECTION_RECENT_EVENT_LIMIT = 200;
 const CAPACITY_READ_MODEL_TABLES = Object.freeze([
@@ -1708,6 +1760,117 @@ async function readParentActivity(db, accountId, {
   };
 }
 
+// U7: parent summary — compact lazy-loaded digest for `/api/hubs/parent/summary`.
+// The plan says NO demo access at the route level (auth is enforced in
+// the worker handler, not here). Here we validate learnerId is in the
+// caller's writable set before any query runs (plan line 744), matching
+// the existing `requireLearnerWriteAccess` pattern.
+async function readParentHubSummary(db, accountId, learnerId) {
+  if (!learnerId) {
+    throw new BadRequestError('learnerId query parameter is required.', {
+      code: 'parent_summary_missing_learner',
+    });
+  }
+  await requireLearnerWriteAccess(db, accountId, learnerId);
+  // Keep the summary additive + compact. U7 just stamps the shape; U8+
+  // can layer on richer read-model fields without bumping the bootstrap
+  // version (this endpoint has its own independent envelope).
+  const learnerRow = await first(db, `
+    SELECT id, name, year_group, avatar_color, state_revision
+    FROM learner_profiles
+    WHERE id = ?
+  `, [learnerId]);
+  const sessionCountRow = await first(db, `
+    SELECT COUNT(*) AS count
+    FROM practice_sessions
+    WHERE learner_id = ?
+  `, [learnerId]);
+  const recentEventRow = await first(db, `
+    SELECT event_type, created_at
+    FROM event_log
+    WHERE learner_id = ?
+    ORDER BY created_at DESC, id DESC
+    LIMIT 1
+  `, [learnerId]);
+  return {
+    summary: {
+      learnerId,
+      learner: learnerRow ? {
+        id: learnerRow.id,
+        name: learnerRow.name,
+        yearGroup: learnerRow.year_group,
+        avatarColor: learnerRow.avatar_color,
+        revision: Number(learnerRow.state_revision) || 0,
+      } : null,
+      activity: {
+        sessionCount: Number(sessionCountRow?.count) || 0,
+        lastEventType: recentEventRow?.event_type || null,
+        lastEventAt: recentEventRow?.created_at || null,
+      },
+    },
+  };
+}
+
+// U7: classroom summary — paginated list of learners scoped to the
+// caller's account. Hard cap 50 per page (plan R11 + scenario 17b).
+// Caller MUST have classroom-or-admin role; enforcement is in the
+// worker handler.
+async function readClassroomLearnersSummary(db, accountId, { cursor = null } = {}) {
+  const decoded = decodeClassroomLearnerCursor(cursor);
+  const params = [accountId];
+  const cursorClause = decoded
+    ? 'AND (m.sort_index > ? OR (m.sort_index = ? AND l.id > ?))'
+    : '';
+  if (decoded) {
+    params.push(decoded.sortIndex, decoded.sortIndex, decoded.learnerId);
+  }
+  // Over-fetch by 1 to tell whether a next page exists.
+  params.push(CLASSROOM_LEARNERS_SUMMARY_PAGE_LIMIT + 1);
+  const rows = await all(db, `
+    SELECT l.id, l.name, l.year_group, l.avatar_color, l.state_revision,
+           m.sort_index AS sort_index
+    FROM account_learner_memberships m
+    JOIN learner_profiles l ON l.id = m.learner_id
+    WHERE m.account_id = ?
+      ${cursorClause}
+    ORDER BY m.sort_index ASC, l.id ASC
+    LIMIT ?
+  `, params);
+  const hasNext = rows.length > CLASSROOM_LEARNERS_SUMMARY_PAGE_LIMIT;
+  const pageRows = hasNext ? rows.slice(0, CLASSROOM_LEARNERS_SUMMARY_PAGE_LIMIT) : rows;
+  const nextCursor = hasNext
+    ? encodeClassroomLearnerCursor({
+      sortIndex: pageRows[pageRows.length - 1].sort_index,
+      learnerId: pageRows[pageRows.length - 1].id,
+    })
+    : null;
+  return {
+    learners: pageRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      yearGroup: row.year_group,
+      avatarColor: row.avatar_color,
+      revision: Number(row.state_revision) || 0,
+    })),
+    nextCursor,
+  };
+}
+
+function encodeClassroomLearnerCursor({ sortIndex, learnerId }) {
+  return `${Number(sortIndex) || 0}:${encodeURIComponent(String(learnerId))}`;
+}
+
+function decodeClassroomLearnerCursor(cursor) {
+  if (!cursor || typeof cursor !== 'string') return null;
+  const idx = cursor.indexOf(':');
+  if (idx <= 0) return null;
+  const sortIndex = Number(cursor.slice(0, idx));
+  if (!Number.isFinite(sortIndex)) return null;
+  const learnerId = decodeURIComponent(cursor.slice(idx + 1));
+  if (!learnerId) return null;
+  return { sortIndex, learnerId };
+}
+
 async function listMutationReceiptRows(db, accountId, { requestId = null, scopeId = null, limit = 20 } = {}) {
   const clauses = ['account_id = ?'];
   const params = [accountId];
@@ -2874,9 +3037,12 @@ function validateAccountOpsPatch(rawPatch) {
 }
 
 async function loadAccountOpsMetadataRow(db, targetAccountId) {
+  // ADV-3 (Phase D reviewer): expose `status_revision` so the
+  // stale-session DELETE can gate its EXISTS tuple on the post-bump
+  // revision, preventing false positives on tags-only edits.
   return first(db, `
     SELECT account_id, ops_status, plan_label, tags_json, internal_notes,
-           updated_at, updated_by_account_id, row_version
+           updated_at, updated_by_account_id, row_version, status_revision
     FROM account_ops_metadata
     WHERE account_id = ?
   `, [targetAccountId]);
@@ -2974,6 +3140,22 @@ async function updateAccountOpsMetadata(db, {
   requireAccountRoleManager(actor);
 
   const patch = validateAccountOpsPatch(rawPatch);
+
+  // U15 guard 1 (self-suspend): an admin must not change their own
+  // `ops_status` away from `active`. Fires BEFORE any DB work so the row_version
+  // never bumps on a rejected self-suspend. `null` in the patch means
+  // "field absent" (partial PATCH); only explicit non-active strings
+  // trigger the guard.
+  if (Object.prototype.hasOwnProperty.call(patch, 'opsStatus')
+    && actorAccountId === targetAccountId
+    && patch.opsStatus !== 'active'
+    && patch.opsStatus !== null
+  ) {
+    throw new ForbiddenError('You cannot change your own account status.', {
+      code: SELF_SUSPEND_FORBIDDEN,
+      accountId: targetAccountId,
+    });
+  }
   // U8 CAS: `expectedRowVersion` is required on every mutation envelope. It
   // is a non-negative integer representing the `account_ops_metadata.row_version`
   // the client observed at read time. On success, `row_version` bumps by 1;
@@ -3024,7 +3206,7 @@ async function updateAccountOpsMetadata(db, {
     };
   }
 
-  const target = await first(db, 'SELECT id, account_type FROM adult_accounts WHERE id = ?', [targetAccountId]);
+  const target = await first(db, 'SELECT id, account_type, platform_role FROM adult_accounts WHERE id = ?', [targetAccountId]);
   if (!target) {
     throw new NotFoundError('Target account was not found.', {
       code: 'target_account_not_found',
@@ -3036,6 +3218,36 @@ async function updateAccountOpsMetadata(db, {
       code: 'demo_account_ops_forbidden',
       accountId: targetAccountId,
     });
+  }
+
+  // U15 guard 2 (last-active-admin): when the incoming patch takes a
+  // platform-role=admin target off `active`, check that at least one
+  // other admin remains active across `adult_accounts` × `account_ops_metadata`.
+  // The pre-check SELECT is an authoritative count; the existing CAS +
+  // post-batch verify catch any sub-millisecond race. When two admins race
+  // to suspend each other concurrently, the second committer re-runs this
+  // guard on retry and sees the winner as suspended — converging to
+  // "exactly one active admin remains".
+  if (Object.prototype.hasOwnProperty.call(patch, 'opsStatus')
+    && patch.opsStatus !== 'active'
+    && patch.opsStatus !== null
+    && normalisePlatformRole(target.platform_role) === 'admin'
+  ) {
+    const otherActiveAdmins = await scalar(db, `
+      SELECT COUNT(*) AS n
+      FROM adult_accounts a
+      LEFT JOIN account_ops_metadata m ON m.account_id = a.id
+      WHERE a.platform_role = 'admin'
+        AND COALESCE(a.account_type, 'real') <> 'demo'
+        AND COALESCE(m.ops_status, 'active') = 'active'
+        AND a.id <> ?
+    `, [targetAccountId], 'n');
+    if (!(Number(otherActiveAdmins) > 0)) {
+      throw new ConflictError('Cannot change this account — they are the only active administrator.', {
+        code: LAST_ADMIN_LOCKED_OUT,
+        accountId: targetAccountId,
+      });
+    }
   }
 
   const existingRow = await loadAccountOpsMetadataRow(db, targetAccountId);
@@ -3085,6 +3297,22 @@ async function updateAccountOpsMetadata(db, {
     : (typeof existingRow?.internal_notes === 'string' ? existingRow.internal_notes : null);
   const mergedTagsJson = JSON.stringify(mergedTags);
   const nextRowVersion = normalisedExpectedRowVersion + 1;
+  // ADV-3 (Phase D reviewer): mirror the SQL CASE that bumps
+  // `status_revision` only when `ops_status` actually changes.
+  // The stale-session DELETE below is EXISTS-guarded on THIS value
+  // so a tags-only save never fires the sweep, even if the UPSERT
+  // succeeds and bumps `row_version`.
+  const existingStatusRevision = Math.max(0, Number(existingRow?.status_revision) || 0);
+  const existingOpsStatus = typeof existingRow?.ops_status === 'string' ? existingRow.ops_status : 'active';
+  const opsStatusChanged = mergedOpsStatus !== existingOpsStatus;
+  const nextStatusRevision = opsStatusChanged ? existingStatusRevision + 1 : existingStatusRevision;
+  // ADV-3 sweep threshold: when ops_status changed, any session
+  // stamped at status_revision_at_issue < nextStatusRevision is
+  // stale. When ops_status did NOT change, we bind -1 so the
+  // outer WHERE evaluates to false for every session row
+  // (status_revision_at_issue >= 0 always), keeping the sweep off
+  // on tags-only / notes-only edits.
+  const sweepThreshold = opsStatusChanged ? nextStatusRevision : -1;
 
   const appliedRow = {
     accountId: targetAccountId,
@@ -3117,9 +3345,11 @@ async function updateAccountOpsMetadata(db, {
   // produces zero affected rows; layer 3 (C1 fix) inspects the batch
   // result's `meta.changes` to surface 409. The insert branch fires only
   // on the fresh-row path (expectedRowVersion = 0 → nextRowVersion = 1).
-  // NOTE: Phase D's U15 will extend this UPDATE to bump `status_revision`
-  // when `ops_status` changes — Phase C must NOT touch that column (see
-  // plan §Phase D).
+  // U15 extends this UPDATE: `status_revision` bumps only when
+  // `ops_status` changes (active→suspended or the reverse), while
+  // `row_version` always bumps (CAS invariant). The CASE keeps both
+  // counters in a single atomic statement so no follow-up SELECT is
+  // needed to decide whether the revision moved.
   // R21 batch atomicity: UPSERT + receipt + counter bump commit together.
   // B-RE-1 (re-review Blocker): the receipt INSERT and counter bump are
   // EXISTS-guarded on a write-signature tuple `(updated_at, updated_by,
@@ -3161,7 +3391,9 @@ async function updateAccountOpsMetadata(db, {
         internal_notes = excluded.internal_notes,
         updated_at = excluded.updated_at,
         updated_by_account_id = excluded.updated_by_account_id,
-        row_version = account_ops_metadata.row_version + 1
+        row_version = account_ops_metadata.row_version + 1,
+        status_revision = account_ops_metadata.status_revision
+          + CASE WHEN account_ops_metadata.ops_status <> excluded.ops_status THEN 1 ELSE 0 END
       WHERE account_ops_metadata.row_version = ?
     `, [
       targetAccountId,
@@ -3186,6 +3418,40 @@ async function updateAccountOpsMetadata(db, {
       appliedAt: ts,
     }, { exists: receiptAndCounterExists }),
     bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1, { exists: receiptAndCounterExists }),
+    // U15 stale-session sweep. When the UPSERT bumps `status_revision`,
+    // invalidate every `account_sessions` row on the target that was
+    // stamped at an older revision.
+    //
+    // ADV-3 (Phase D reviewer) fix: the EXISTS guard tuple now
+    // includes `status_revision = ?`. Without this field the guard
+    // would match on any committed UPSERT (tags-only, notes-only,
+    // etc.) even though the target row stayed at the old revision.
+    // With the extended tuple the DELETE fires IFF the UPSERT
+    // actually bumped `status_revision` AND committed with this
+    // batch's write signature. A race-loser or a tags-only save
+    // consequently writes zero rows here, preserving the existing
+    // sessions.
+    bindStatement(db, `
+      DELETE FROM account_sessions
+      WHERE account_id = ?
+        AND status_revision_at_issue < ?
+        AND EXISTS (
+          SELECT 1 FROM account_ops_metadata
+          WHERE account_id = ?
+            AND updated_at = ?
+            AND updated_by_account_id = ?
+            AND row_version = ?
+            AND status_revision = ?
+        )
+    `, [
+      targetAccountId,
+      sweepThreshold,
+      targetAccountId,
+      ts,
+      actorAccountId,
+      nextRowVersion,
+      nextStatusRevision,
+    ]),
   ]);
 
   // U8 CAS layer 3 (C1 fix) — post-batch verify via batch result rowsAffected.
@@ -3238,6 +3504,7 @@ async function updateOpsErrorEventStatus(db, {
   expectedPreviousStatus = null,
   mutation,
   nowTs,
+  buildHash = null,
 } = {}) {
   if (!(typeof eventId === 'string' && eventId)) {
     throw new BadRequestError('Error event id is required.', {
@@ -3411,12 +3678,29 @@ async function updateOpsErrorEventStatus(db, {
   // counter-drift on the extreme-race path. The primary correctness check
   // is the client-driven `expectedPreviousStatus` guard higher up the
   // function, which rejects stale dispatches before the batch is composed.
+  //
+  // U15 additions:
+  // - Write `last_status_change_at = :ts` on every real transition so
+  //   Phase E's auto-reopen cooldown measures the window from the most
+  //   recent status change (manual or automatic).
+  // - Write `resolved_in_release = :buildHash` only on transitions INTO
+  //   `resolved`. Null `buildHash` means the env var was not set, which
+  //   Phase E's auto-reopen rule treats as "never auto-reopen" — the
+  //   documented opt-out.
+  const resolvedInReleaseValue = nextStatus === 'resolved'
+    ? (typeof buildHash === 'string' && buildHash ? buildHash : null)
+    : null;
   await batch(db, [
     bindStatement(db, `
       UPDATE ops_error_events
-      SET status = ?
+      SET status = ?,
+          last_status_change_at = ?,
+          resolved_in_release = CASE
+            WHEN ? = 'resolved' THEN ?
+            ELSE resolved_in_release
+          END
       WHERE id = ? AND status = ?
-    `, [nextStatus, eventId, oldStatus]),
+    `, [nextStatus, ts, nextStatus, resolvedInReleaseValue, eventId, oldStatus]),
     storeMutationReceiptStatement(db, {
       accountId: actorAccountId,
       requestId,
@@ -4746,6 +5030,42 @@ async function readBootstrapMonsterVisualRuntimeConfig(db, nowTs) {
   }
 }
 
+// U7: compact pointer for the selected-learner-bounded envelope. Omits
+// the ~450 KB bundled config; the client uses `publishedVersion` +
+// `manifestHash` to decide whether its cached config is still current,
+// and fetches the full config via its existing lazy path when not.
+async function readMonsterVisualConfigPointer(db) {
+  try {
+    const row = await first(db, `
+      SELECT published_version, manifest_hash, published_at, schema_version
+      FROM platform_monster_visual_config
+      WHERE id = ?
+    `, [MONSTER_VISUAL_CONFIG_ID]);
+    return {
+      schemaVersion: Number(row?.schema_version) || MONSTER_VISUAL_SCHEMA_VERSION,
+      manifestHash: row?.manifest_hash || MONSTER_ASSET_MANIFEST.manifestHash,
+      publishedVersion: Number(row?.published_version) || 0,
+      publishedAt: Number(row?.published_at) || 0,
+      // Marker so clients know this is the compact v2 pointer (no
+      // `config` payload); their existing hydration logic falls back to
+      // `/api/monster-visual-config` (or the cached bundle) when
+      // `config` is absent.
+      compact: true,
+    };
+  } catch (error) {
+    if (isMissingTableError(error, 'platform_monster_visual_config')) {
+      return {
+        schemaVersion: MONSTER_VISUAL_SCHEMA_VERSION,
+        manifestHash: MONSTER_ASSET_MANIFEST.manifestHash,
+        publishedVersion: 0,
+        publishedAt: 0,
+        compact: true,
+      };
+    }
+    throw error;
+  }
+}
+
 function monsterVisualMutationMeta({ kind, mutation, expectedRevision, appliedRevision }) {
   return buildMutationMeta({
     kind,
@@ -5295,13 +5615,23 @@ async function updateManagedAccountRole(db, {
   // Compose the UPDATE statement. The WHERE clause combines repo_revision
   // CAS with the existing last-admin subquery so both invariants are
   // enforced in one SQL round-trip.
+  // CONV-2 (Phase D reviewer) fix: the guard must also require
+  // `COALESCE(m.ops_status, 'active') = 'active'` on the sibling admin
+  // so a suspended-but-still-platform_role-admin account does NOT
+  // count as 'the other active admin'. Without the JOIN, demoting
+  // the only effectively-active admin would succeed whenever a
+  // second admin row existed at any ops_status. The LEFT JOIN lets
+  // accounts with no metadata row (legacy pre-0011 installs) still
+  // count as active via COALESCE.
   const lastAdminGuard = (currentRole === 'admin' && nextRole !== 'admin')
     ? `AND EXISTS (
          SELECT 1
-         FROM adult_accounts
-         WHERE platform_role = 'admin'
-           AND COALESCE(account_type, 'real') <> 'demo'
-           AND id <> ?
+         FROM adult_accounts a
+         LEFT JOIN account_ops_metadata m ON m.account_id = a.id
+         WHERE a.platform_role = 'admin'
+           AND COALESCE(a.account_type, 'real') <> 'demo'
+           AND COALESCE(m.ops_status, 'active') = 'active'
+           AND a.id <> ?
        )`
     : '';
   const lastAdminParams = (currentRole === 'admin' && nextRole !== 'admin') ? [targetAccountId] : [];
@@ -5575,6 +5905,101 @@ async function listPublicBootstrapEventRows(db, learnerIds) {
   return sortEventRowsAscending(rows);
 }
 
+// U7: SHA-256 revision hash over the stable four-part signature. Truncated
+// to 16 bytes hex (32 chars). NOT a password hash — purely a cache-tag
+// identifier; `crypto.subtle.digest('SHA-256', ...)` is fine for this use
+// per the plan (line 792: "never a password hash").
+//
+// Input format is strictly:
+//   accountId:<id>;accountRevision:<N>;selectedLearnerRevision:<M>;bootstrapCapacityVersion:<V>;accountLearnerListRevision:<L>
+//
+// The `accountId` prefix (U7 adv-u7-r1-002) salts the hash per account so
+// two accounts with identical (N,M,V,L) tuples no longer collide. Without
+// this salt, an operator correlating hashes across requests could infer
+// state-equivalence between accounts. No user data leaks either way
+// because session scope already isolates responses, but the hash-level
+// privacy hardening closes the side-channel.
+//
+// Changing this input format (or the truncation length) is equivalent to
+// bumping `BOOTSTRAP_CAPACITY_VERSION` — stale clients will silently
+// reject `notModified` responses via the schema check. The version bump
+// in U7 from 1→2 already forces pre-U7 clients to miss, so adding the
+// accountId salt costs no extra roundtrip on rollout.
+export async function computeBootstrapRevisionHash({
+  accountId,
+  accountRevision,
+  selectedLearnerRevision,
+  bootstrapCapacityVersion,
+  accountLearnerListRevision,
+}) {
+  const input = [
+    `accountId:${String(accountId || '')}`,
+    `accountRevision:${Number(accountRevision) || 0}`,
+    `selectedLearnerRevision:${Number(selectedLearnerRevision) || 0}`,
+    `bootstrapCapacityVersion:${Number(bootstrapCapacityVersion) || 0}`,
+    `accountLearnerListRevision:${Number(accountLearnerListRevision) || 0}`,
+  ].join(';');
+  const bytes = new TextEncoder().encode(input);
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  const out = new Uint8Array(digest).slice(0, 16);
+  let hex = '';
+  for (let i = 0; i < out.length; i += 1) {
+    hex += out[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+// U7: read the sibling-table counter. Missing row is revision 0 (lazy
+// creation deferred to the first bump). Tolerant of the helper table not
+// yet existing (e.g. partial migration apply mid-deploy).
+async function readAccountLearnerListRevision(db, accountId) {
+  try {
+    const row = await first(
+      db,
+      'SELECT revision FROM adult_account_list_revisions WHERE account_id = ?',
+      [accountId],
+    );
+    return Number(row?.revision) || 0;
+  } catch (error) {
+    if (isMissingTableError(error, 'adult_account_list_revisions')) return 0;
+    throw error;
+  }
+}
+
+// U7: bump the sibling-table counter. Creates the row lazily on first
+// bump; subsequent bumps increment in place. Swallows missing-table to
+// preserve the deploy-order tolerance contract (subjects write before
+// the migration finishes applying on the first cold start).
+async function bumpAccountLearnerListRevision(db, accountId, nowTs) {
+  try {
+    await run(db, `
+      INSERT INTO adult_account_list_revisions (account_id, revision, updated_at)
+      VALUES (?, 1, ?)
+      ON CONFLICT(account_id) DO UPDATE SET
+        revision = revision + 1,
+        updated_at = excluded.updated_at
+    `, [accountId, Number(nowTs) || 0]);
+  } catch (error) {
+    if (isMissingTableError(error, 'adult_account_list_revisions')) return;
+    throw error;
+  }
+}
+
+// U7: compact `account.learnerList` entry for unselected learners in the
+// selected-learner-bounded response. Hard limit on per-entry payload —
+// no avatar blobs, no history, no prompts. Roughly 150 bytes per entry
+// after JSON serialisation; 50 entries → ~7.5 KB.
+function compactLearnerListEntry(row) {
+  if (!row) return null;
+  return {
+    id: String(row.id || ''),
+    name: String(row.name || ''),
+    avatarColor: row.avatar_color ? String(row.avatar_color) : null,
+    yearGroup: row.year_group ? String(row.year_group) : null,
+    revision: Number(row.state_revision) || 0,
+  };
+}
+
 function bootstrapCapacityMeta({
   publicReadModels,
   learnerCount,
@@ -5611,9 +6036,58 @@ function bootstrapCapacityMeta({
   };
 }
 
-async function bootstrapBundle(db, accountId, { publicReadModels = false } = {}) {
+// U7: resolve the "cold-start" selected learner given optional client
+// preference. Precedence (per plan line 756):
+//   1. preferredLearnerId (if writable in caller's scope)
+//   2. persisted account.selected_learner_id (if still writable)
+//   3. first alphabetical by learner id
+// Client preference pointing at a non-writable id is silently rejected —
+// do NOT leak `clientPreferenceRejected` in the response body per plan
+// line 778.
+function resolveBootstrapSelectedLearnerId(
+  membershipRows,
+  persistedSelectedId,
+  preferredLearnerId,
+) {
+  const writableIds = new Set(
+    membershipRows.filter((row) => writableRole(row.role)).map((row) => String(row.id)),
+  );
+  if (!writableIds.size) return null;
+  const preferred = preferredLearnerId ? String(preferredLearnerId) : '';
+  if (preferred && writableIds.has(preferred)) return preferred;
+  if (persistedSelectedId && writableIds.has(String(persistedSelectedId))) {
+    return String(persistedSelectedId);
+  }
+  // Alphabetical fallback.
+  const sorted = [...writableIds].sort();
+  return sorted[0] || null;
+}
+
+async function bootstrapBundle(db, accountId, {
+  publicReadModels = false,
+  // U7: opt-in to the selected-learner-bounded shape. Defaults mirror the
+  // pre-U7 unrestricted-per-public behaviour so non-U7 callers (demo
+  // reset, internal tests) keep the legacy envelope.
+  selectedLearnerBounded = false,
+  // U7: cold-start preference (plan line 756).
+  preferredLearnerId = null,
+  // U7: include `revision` + `account.learnerList` only when the caller
+  // is using the v2 envelope shape. Legacy callers get the legacy shape.
+  revisionEnvelope = false,
+} = {}) {
   const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
-  const monsterVisualConfig = await readBootstrapMonsterVisualRuntimeConfig(db, Date.now());
+  // U7: on the bounded path we omit the ~450 KB `BUNDLED_MONSTER_VISUAL_CONFIG`
+  // from the bootstrap response. Clients fetch the full config lazily via
+  // the existing monster-visual-config read path; the bootstrap instead
+  // ships a compact `{schemaVersion, manifestHash, publishedVersion}`
+  // pointer so the client's schema check + cache invalidation still work.
+  const fullMonsterVisualConfig = selectedLearnerBounded
+    ? null
+    : await readBootstrapMonsterVisualRuntimeConfig(db, Date.now());
+  const monsterVisualConfigPointer = selectedLearnerBounded
+    ? await readMonsterVisualConfigPointer(db)
+    : null;
+  const monsterVisualConfig = fullMonsterVisualConfig || monsterVisualConfigPointer;
   const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
   const learnersById = {};
   const learnerIds = [];
@@ -5627,15 +6101,64 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     learnerRevisions[learner.id] = Number(row.state_revision) || 0;
   }
 
-  const selectedId = learnerIds.includes(account?.selected_learner_id)
-    ? account.selected_learner_id
-    : (learnerIds[0] || null);
+  const selectedId = revisionEnvelope
+    ? resolveBootstrapSelectedLearnerId(
+      membershipRows,
+      account?.selected_learner_id,
+      preferredLearnerId,
+    )
+    : (learnerIds.includes(account?.selected_learner_id)
+      ? account.selected_learner_id
+      : (learnerIds[0] || null));
 
   if (selectedId !== (account?.selected_learner_id || null)) {
     await run(db, 'UPDATE adult_accounts SET selected_learner_id = ?, updated_at = ? WHERE id = ?', [selectedId, Date.now(), accountId]);
   }
 
+  // U7: the "bounded" mode restricts per-learner reads to the selected
+  // learner only. If no selected learner exists (empty account, or
+  // cold-start with alphabetical fallback also producing null), the
+  // bounded mode degrades to the empty-learners branch further down.
+  const boundedToSelected = publicReadModels && selectedLearnerBounded && selectedId;
+  const queryLearnerIds = boundedToSelected ? [selectedId] : learnerIds;
+
+  // U7: precompute the revision-envelope ingredients so that both the
+  // empty and non-empty branches can stamp them consistently. These
+  // queries are free when `revisionEnvelope=false` (we skip them).
+  const accountRevisionValue = Number(account?.repo_revision) || 0;
+  const accountLearnerListRevision = revisionEnvelope
+    ? await readAccountLearnerListRevision(db, accountId)
+    : 0;
+  const selectedLearnerRevision = selectedId ? (learnerRevisions[selectedId] || 0) : 0;
+  const revisionHash = revisionEnvelope
+    ? await computeBootstrapRevisionHash({
+      accountId,
+      accountRevision: accountRevisionValue,
+      selectedLearnerRevision,
+      bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+      accountLearnerListRevision,
+    })
+    : null;
+
+  // U7: compact `account.learnerList` entries for unselected learners.
+  // When `boundedToSelected` is false (legacy callers), this stays empty
+  // so the legacy envelope is unchanged.
+  const learnerListEntries = boundedToSelected
+    ? membershipRows
+      .filter((row) => String(row.id) !== String(selectedId))
+      .map((row) => compactLearnerListEntry(row))
+      .filter(Boolean)
+    : [];
+
   if (!learnerIds.length) {
+    const emptyMode = boundedToSelected ? 'selected-learner-bounded' : null;
+    const capacityMeta = publicReadModels ? bootstrapCapacityMeta({
+      publicReadModels,
+      learnerCount: 0,
+      sessionRows: [],
+      eventRows: [],
+    }) : null;
+    if (capacityMeta && emptyMode) capacityMeta.bootstrapMode = emptyMode;
     return {
       ...normaliseRepositoryBundle({
         meta: currentRepositoryMeta(),
@@ -5647,48 +6170,54 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
       }),
       syncState: {
         policyVersion: MUTATION_POLICY_VERSION,
-        accountRevision: Number(account?.repo_revision) || 0,
+        accountRevision: accountRevisionValue,
         learnerRevisions: {},
       },
       monsterVisualConfig,
-      ...(publicReadModels ? {
-        bootstrapCapacity: bootstrapCapacityMeta({
-          publicReadModels,
-          learnerCount: 0,
-          sessionRows: [],
-          eventRows: [],
-        }),
+      ...(publicReadModels ? { bootstrapCapacity: capacityMeta } : {}),
+      ...(revisionEnvelope ? {
+        account: {
+          selectedLearnerId: selectedId,
+          learnerList: [],
+        },
+        revision: {
+          accountRevision: accountRevisionValue,
+          selectedLearnerRevision,
+          accountLearnerListRevision,
+          bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+          hash: revisionHash,
+        },
       } : {}),
     };
   }
 
-  const placeholders = sqlPlaceholders(learnerIds.length);
+  const placeholders = sqlPlaceholders(queryLearnerIds.length);
   const subjectRows = await all(db, `
     SELECT learner_id, subject_id, ui_json, data_json, updated_at
     FROM child_subject_state
     WHERE learner_id IN (${placeholders})
-  `, learnerIds);
+  `, queryLearnerIds);
   const sessionRows = publicReadModels
-    ? await listPublicBootstrapSessionRows(db, learnerIds)
+    ? await listPublicBootstrapSessionRows(db, queryLearnerIds)
     : await all(db, `
       SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
       FROM practice_sessions
       WHERE learner_id IN (${placeholders})
       ORDER BY updated_at DESC, id DESC
-    `, learnerIds);
+    `, queryLearnerIds);
   const gameRows = await all(db, `
     SELECT learner_id, system_id, state_json, updated_at
     FROM child_game_state
     WHERE learner_id IN (${placeholders})
-  `, learnerIds);
+  `, queryLearnerIds);
   const eventRows = publicReadModels
-    ? await listPublicBootstrapEventRows(db, learnerIds)
+    ? await listPublicBootstrapEventRows(db, queryLearnerIds)
     : await all(db, `
       SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
       FROM event_log
       WHERE learner_id IN (${placeholders})
       ORDER BY created_at ASC, id ASC
-    `, learnerIds);
+    `, queryLearnerIds);
   const publicSpellingContent = publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
     ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
     : null;
@@ -5716,6 +6245,14 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     });
   }
 
+  const capacityMeta = publicReadModels ? bootstrapCapacityMeta({
+    publicReadModels,
+    learnerCount: queryLearnerIds.length,
+    sessionRows,
+    eventRows,
+  }) : null;
+  if (capacityMeta && boundedToSelected) capacityMeta.bootstrapMode = 'selected-learner-bounded';
+
   return {
     ...normaliseRepositoryBundle({
       meta: currentRepositoryMeta(),
@@ -5735,18 +6272,64 @@ async function bootstrapBundle(db, accountId, { publicReadModels = false } = {})
     }),
     syncState: {
       policyVersion: MUTATION_POLICY_VERSION,
-      accountRevision: Number(account?.repo_revision) || 0,
+      accountRevision: accountRevisionValue,
       learnerRevisions,
     },
     monsterVisualConfig,
-    ...(publicReadModels ? {
-      bootstrapCapacity: bootstrapCapacityMeta({
-        publicReadModels,
-        learnerCount: learnerIds.length,
-        sessionRows,
-        eventRows,
-      }),
+    ...(publicReadModels ? { bootstrapCapacity: capacityMeta } : {}),
+    ...(revisionEnvelope ? {
+      account: {
+        selectedLearnerId: selectedId,
+        learnerList: learnerListEntries,
+      },
+      revision: {
+        accountRevision: accountRevisionValue,
+        selectedLearnerRevision,
+        accountLearnerListRevision,
+        bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+        hash: revisionHash,
+      },
     } : {}),
+  };
+}
+
+// U7: short-circuit response when `lastKnownRevision` matches the current
+// server hash. Returns null if the hash doesn't match (caller should
+// build a full bundle instead). ≤ 2 KB body.
+async function bootstrapNotModifiedProbe(db, accountId, {
+  lastKnownRevision,
+  preferredLearnerId = null,
+}) {
+  if (!lastKnownRevision || typeof lastKnownRevision !== 'string') return null;
+  const account = await first(db, 'SELECT id, selected_learner_id, repo_revision FROM adult_accounts WHERE id = ?', [accountId]);
+  if (!account) return null;
+  const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
+  const writableSelectedId = resolveBootstrapSelectedLearnerId(
+    membershipRows,
+    account.selected_learner_id,
+    preferredLearnerId,
+  );
+  const accountRevisionValue = Number(account.repo_revision) || 0;
+  const accountLearnerListRevision = await readAccountLearnerListRevision(db, accountId);
+  const selectedRow = writableSelectedId
+    ? membershipRows.find((row) => String(row.id) === String(writableSelectedId))
+    : null;
+  const selectedLearnerRevision = Number(selectedRow?.state_revision) || 0;
+  const serverHash = await computeBootstrapRevisionHash({
+    accountId,
+    accountRevision: accountRevisionValue,
+    selectedLearnerRevision,
+    bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+    accountLearnerListRevision,
+  });
+  if (serverHash !== lastKnownRevision) return null;
+  return {
+    accountRevision: accountRevisionValue,
+    selectedLearnerId: writableSelectedId,
+    selectedLearnerRevision,
+    accountLearnerListRevision,
+    bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+    hash: serverHash,
   };
 }
 
@@ -6354,6 +6937,11 @@ async function writeLearnersSnapshot(db, accountId, snapshot, nowTs) {
     ? next.selectedId
     : (incomingIds[0] || null);
   await run(db, 'UPDATE adult_accounts SET selected_learner_id = ?, updated_at = ? WHERE id = ?', [selectedId, nowTs, accountId]);
+  // U7: any learner-list mutation (add, remove, rename, avatar-change) runs
+  // through this path. Bumping here ensures the revision hash changes even
+  // when `repo_revision` (the account CAS revision) happens to stay
+  // stable for a non-mutation refresh.
+  await bumpAccountLearnerListRevision(db, accountId, nowTs);
   return bootstrapBundle(db, accountId);
 }
 
@@ -6962,6 +7550,87 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         capacity.setBootstrapCapacity(bundle.bootstrapCapacity);
       }
       return bundle;
+    },
+    // U7: POST /api/bootstrap variant. Caller passes either
+    // `{lastKnownRevision, preferredLearnerId?}` or nothing; we try a
+    // short-circuit probe first, then fall back to a full bounded
+    // bundle. Response shape is described in BOOTSTRAP_V2_ENVELOPE_SHAPE.
+    async bootstrapV2(accountId, {
+      lastKnownRevision = null,
+      preferredLearnerId = null,
+      publicReadModels = false,
+    } = {}) {
+      if (lastKnownRevision) {
+        const probe = await bootstrapNotModifiedProbe(db, accountId, {
+          lastKnownRevision,
+          preferredLearnerId,
+        });
+        if (probe) {
+          // Stamp the minimal capacity meta so U9's
+          // `bootstrapCapacityMetadata` breaker does not trip on a
+          // legitimate short response (plan line 749).
+          if (capacity && typeof capacity.setBootstrapCapacity === 'function') {
+            capacity.setBootstrapCapacity({
+              version: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+              mode: 'public-bounded',
+            });
+          }
+          if (capacity && typeof capacity.setBootstrapMode === 'function') {
+            capacity.setBootstrapMode('not-modified');
+          }
+          return {
+            ok: true,
+            notModified: true,
+            revision: {
+              accountRevision: probe.accountRevision,
+              selectedLearnerRevision: probe.selectedLearnerRevision,
+              accountLearnerListRevision: probe.accountLearnerListRevision,
+              bootstrapCapacityVersion: probe.bootstrapCapacityVersion,
+              hash: probe.hash,
+            },
+          };
+        }
+      }
+      const bundle = await bootstrapBundle(db, accountId, {
+        publicReadModels,
+        selectedLearnerBounded: true,
+        preferredLearnerId,
+        revisionEnvelope: true,
+      });
+      if (capacity && bundle?.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {
+        capacity.setBootstrapCapacity(bundle.bootstrapCapacity);
+      }
+      if (capacity && typeof capacity.setBootstrapMode === 'function') {
+        capacity.setBootstrapMode(publicReadModels ? 'selected-learner-bounded' : 'full-legacy');
+      }
+      return bundle;
+    },
+    // U7: GET /api/bootstrap v2 variant used when the client passes a
+    // query param. Same envelope as bootstrapV2 minus the notModified
+    // branch (GET does not carry a body).
+    async bootstrapV2Get(accountId, {
+      preferredLearnerId = null,
+      publicReadModels = false,
+    } = {}) {
+      const bundle = await bootstrapBundle(db, accountId, {
+        publicReadModels,
+        selectedLearnerBounded: true,
+        preferredLearnerId,
+        revisionEnvelope: true,
+      });
+      if (capacity && bundle?.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {
+        capacity.setBootstrapCapacity(bundle.bootstrapCapacity);
+      }
+      if (capacity && typeof capacity.setBootstrapMode === 'function') {
+        capacity.setBootstrapMode(publicReadModels ? 'selected-learner-bounded' : 'full-legacy');
+      }
+      return bundle;
+    },
+    async readParentHubSummary(accountId, learnerId) {
+      return readParentHubSummary(db, accountId, learnerId);
+    },
+    async readClassroomLearnersSummary(accountId, options = {}) {
+      return readClassroomLearnersSummary(db, accountId, options);
     },
     async readSubjectRuntime(accountId, learnerId, subjectId = 'spelling', options = {}) {
       return readSubjectRuntimeBundle(db, accountId, learnerId, subjectId, options);
@@ -7621,6 +8290,13 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         expectedPreviousStatus,
         mutation,
         nowTs: nowFactory(),
+        // U15: forward `env.BUILD_HASH` so `→ resolved` transitions can
+        // stamp the `resolved_in_release` column for Phase E's auto-reopen
+        // rule. Missing env var → null (no stamp), which is the documented
+        // opt-out per the plan.
+        buildHash: typeof env?.BUILD_HASH === 'string' && env.BUILD_HASH
+          ? env.BUILD_HASH
+          : null,
       });
     },
     // P2 U3: admin-gated QA seed harness. Dispatches to the
@@ -7720,6 +8396,11 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
           }
           await run(db, 'UPDATE adult_accounts SET selected_learner_id = NULL, updated_at = ? WHERE id = ?', [nowTs, accountId]);
           await run(db, 'DELETE FROM account_subject_content WHERE account_id = ?', [accountId]);
+          // U7: wholesale reset still bumps the list revision so cached
+          // clients invalidate on the next bootstrap.
+          if (rows.length > 0) {
+            await bumpAccountLearnerListRevision(db, accountId, nowTs);
+          }
           const bundle = await bootstrapBundle(db, accountId);
           return {
             reset: true,

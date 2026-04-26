@@ -255,8 +255,17 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   assert.deepEqual(payload.learners.allIds, ['learner-high-a', 'learner-high-b']);
   assert.equal(payload.syncState.learnerRevisions['learner-high-a'], 7);
   assert.equal(payload.syncState.learnerRevisions['learner-high-b'], 11);
+  // U7: production bootstrap is now the selected-learner-bounded path.
+  // The selected learner (learner-high-a) keeps its full session history;
+  // the sibling learner (learner-high-b) ships as a compact
+  // `account.learnerList` entry, with its practice sessions fetched
+  // lazily via the subject runtime endpoint when the user switches.
   assert.equal(payload.practiceSessions.some((session) => session.id === 'learner-high-a-active'), true);
-  assert.equal(payload.practiceSessions.some((session) => session.id === 'learner-high-b-active'), true);
+  assert.equal(payload.practiceSessions.every((session) => session.learnerId === 'learner-high-a'), true,
+    'U7 bounded mode ships only the selected learner\'s sessions');
+  const siblingEntry = (payload.account?.learnerList || []).find((entry) => entry.id === 'learner-high-b');
+  assert.ok(siblingEntry, 'sibling learner surfaces in account.learnerList');
+  assert.equal(siblingEntry.revision, 11, 'compact entry carries state_revision');
 
   const learnerCount = payload.learners.allIds.length;
   assert.ok(payload.bootstrapCapacity);
@@ -283,7 +292,11 @@ test('production bootstrap keeps high-history public payloads bounded and redact
 
   const eventReads = server.DB.takeQueryLog()
     .filter((entry) => entry.operation === 'all' && /\bFROM event_log\b/i.test(entry.sql));
-  assert.ok(eventReads.length >= learnerCount);
+  // U7: bounded mode reads events for the selected learner only, so the
+  // old `>= learnerCount` lower bound no longer applies. The important
+  // invariant is that every single read stays within the per-learner
+  // recent-event cap, which still holds.
+  assert.ok(eventReads.length >= 1, 'at least one event_log read for the selected learner');
   assert.equal(eventReads.every((entry) => entry.rowCount <= RECENT_EVENT_LIMIT_PER_LEARNER), true);
 
   // U3: meta.capacity surface is attached to production bootstrap and
@@ -302,7 +315,10 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   // bootstrapCapacity on the public shape mirrors the bundle's
   // bootstrapCapacity (stamped on the collector inside bootstrap()).
   assert.ok(payload.meta.capacity.bootstrapCapacity, 'bootstrapCapacity must be stamped on collector for public bootstrap.');
-  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 1);
+  // U7: BOOTSTRAP_CAPACITY_VERSION bumped from 1 to 2 when the
+  // selected-learner-bounded envelope landed (plan line 750 release
+  // rule).
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 2);
   assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
 
   server.close();

@@ -1458,14 +1458,18 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   //
   // Stays synchronous on purpose: no `navigator.locks`, no `await`, no Promise.
   //
-  // This does NOT provide cross-tab protection. In production, each tab calls
-  // `createLocalPlatformRepositories` independently, and each instance holds
-  // its OWN per-tab `collections` cache keyed on subject-state (see
-  // `src/platform/core/repositories/local.js`). There is no `storage` event
-  // listener invalidating that cache, so reads inside tab A never see writes
-  // performed by tab B until tab A restarts. Closing that cross-tab race is
-  // deferred to the `post-mega-spelling-storage-cas` plan (navigator.locks +
-  // BroadcastChannel + writeVersion CAS + lockout banner).
+  // Cross-tab coordination is provided by U5's `withWriteLock` (the async
+  // lock-wrapped persist path in `src/platform/core/repositories/locks/`),
+  // writeVersion CAS (`write-version.js`), and BroadcastChannel
+  // invalidation (`broadcast-invalidator.js`). See `P2 U5` for invariants.
+  // The optimistic-CAS retry loop inside
+  // `src/subjects/spelling/repository.js::writeSpellingData` re-hydrates
+  // on stale detection so same-disjoint-slug writes from multiple tabs
+  // both survive. Same-slug contention remains last-writer-wins — an
+  // acceptable semantic for Guardian slugs that advance monotonically on
+  // correct answers. See the reviewer-feedback follow-up on the U5 PR
+  // for exponential-backoff + higher CAS_MAX_ATTEMPTS handling of
+  // cross-domain writeVersion thrash.
   //
   // Same-slug concurrent writes inside one service instance still
   // last-writer-wins.

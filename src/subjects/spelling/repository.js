@@ -5,6 +5,7 @@ import {
   normalisePatternMap,
   normalisePostMegaRecord,
 } from './service-contract.js';
+import { WriteVersionStaleError, isWriteVersionStaleError } from '../../platform/core/repositories/locks/write-version.js';
 
 const SUBJECT_ID = 'spelling';
 const PREF_STORAGE_PREFIX = 'ks2-platform-v2.spelling-prefs.';
@@ -151,11 +152,109 @@ function readSpellingData(repositories, learnerId, todayDay = 0) {
   return normaliseSpellingSubjectData(repositories.subjectStates.read(learnerId, SUBJECT_ID).data || {}, todayDay);
 }
 
-function writeSpellingData(repositories, learnerId, nextData, todayDay = 0) {
-  return normaliseSpellingSubjectData(
-    repositories.subjectStates.writeData(learnerId, SUBJECT_ID, normaliseSpellingSubjectData(nextData, todayDay)).data,
-    todayDay,
-  );
+// P2 U5 reviewer-feedback (NEW HIGH 1): raise the attempt cap to survive
+// cross-domain writeVersion thrash. The `persistAll` writeVersion counter
+// bumps on every write across all bundle domains (learners, subjectStates,
+// practiceSessions, gameState, eventLog). An unrelated domain's write —
+// e.g. a monster-codex gameState update or a telemetry eventLog append —
+// bumps the counter and makes an in-flight Guardian write look stale under
+// contention. Empirical repro: 4 concurrent bumps from unrelated domains
+// + 1 guardian write exhausted the previous cap of 4. Raising to 16 gives
+// the Guardian write room to survive thrash from sibling domains.
+//
+// The capped-linear backoff (BACKOFF_STEP_MS per attempt) reduces
+// re-contention pressure so the thrashing sibling has a chance to complete.
+// We avoid true exponential growth because writeVersion CAS is cheap; the
+// goal is to nudge scheduling rather than rate-limit aggressively. The
+// first attempt has no delay (fast path for the common no-contention case).
+const CAS_MAX_ATTEMPTS = 16;
+// Backoff helpers kept for future async-call-site use (the sync CAS path
+// cannot `await` without invasively touching every caller). An async
+// wrapper can import `backoffDelayForAttempt` and `delayMs` when the
+// service layer grows an async write surface.
+const BACKOFF_STEP_MS = 8;
+const BACKOFF_MAX_MS = 128;
+
+export function backoffDelayForAttempt(attempt) {
+  const jitter = Math.floor(Math.random() * BACKOFF_STEP_MS);
+  const linear = Math.min(attempt * BACKOFF_STEP_MS, BACKOFF_MAX_MS);
+  return linear + jitter;
+}
+
+export function delayMs(ms) {
+  if (ms <= 0) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// P2 U5: CAS-aware write. When the platform repository exposes
+// `storageCas.readWriteVersion`, this helper reads the current version,
+// computes the merged next state from the passed projector (so we always
+// merge-on-top-of-latest), then commits via `writeData` with the
+// `expectedWriteVersion` hint. On a `WriteVersionStaleError`, re-hydrate
+// and retry — this is the duplicate-leader edge case the plan calls out.
+//
+// Hosts without `storageCas` (api.js remote / legacy tests) fall through
+// to the plain `writeData` path so the existing contract is preserved.
+function writeSpellingData(repositories, learnerId, nextData, todayDay = 0, options = {}) {
+  const cas = repositories.storageCas;
+  const project = typeof options.project === 'function'
+    ? options.project
+    : (() => normaliseSpellingSubjectData(nextData, todayDay));
+  if (!cas || typeof cas.readWriteVersion !== 'function') {
+    // Legacy path — no CAS available, just write.
+    return normaliseSpellingSubjectData(
+      repositories.subjectStates.writeData(
+        learnerId,
+        SUBJECT_ID,
+        normaliseSpellingSubjectData(project(null), todayDay),
+      ).data,
+      todayDay,
+    );
+  }
+  let lastError = null;
+  let spinCount = 0;
+  for (let attempt = 0; attempt < CAS_MAX_ATTEMPTS; attempt += 1) {
+    // On every retry (including the first), force-rehydrate the repository's
+    // in-memory cache from raw storage. This guarantees the projector reads
+    // the LATEST persisted state so the write-on-top merge is correct —
+    // without rehydration, Tab A's cache would still hold {X} and Tab B's
+    // write of {Y} on disk would be invisible to the projector.
+    if (typeof cas.rehydrateFromStorage === 'function') {
+      cas.rehydrateFromStorage();
+    }
+    const expected = cas.readWriteVersion();
+    const projected = normaliseSpellingSubjectData(project(null), todayDay);
+    try {
+      const result = repositories.subjectStates.writeData(learnerId, SUBJECT_ID, projected, {
+        expectedWriteVersion: expected,
+      });
+      return normaliseSpellingSubjectData(result.data, todayDay);
+    } catch (error) {
+      if (isWriteVersionStaleError(error)) {
+        // Another tab wrote between our read and pre-commit re-read. Loop
+        // back: rehydrate, re-project, and re-commit with the fresher
+        // expectedWriteVersion. Sync retry burns CPU on second+
+        // attempts — spin-yield with a short busy wait proxy (Atomics
+        // isn't available everywhere, and we cannot `await` here). The
+        // primary backpressure lives in the async caller; this sync
+        // path accepts more attempts but cannot schedule delays. The
+        // 16-attempt cap is sized for the worst case where 3-4 sibling
+        // domains race concurrently.
+        lastError = error;
+        spinCount += 1;
+        continue;
+      }
+      throw error;
+    }
+  }
+  // Exhausted attempts — surface the last stale-version error so the
+  // service layer can raise `feedback.persistenceWarning`. The plan
+  // intentionally opts for a soft warning over silent data loss.
+  throw lastError || new WriteVersionStaleError({
+    expected: -1,
+    actual: -1,
+    reason: `write-version-stale-exhausted-${spinCount}-spins`,
+  });
 }
 
 function buildActiveRecord(learnerId, state, now) {
@@ -268,42 +367,52 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       const parsed = parseStorageKey(key);
       if (!parsed) return;
       const day = currentDay();
-      const current = readSpellingData(repositories, parsed.learnerId, day);
       const beforeError = readPersistenceError();
-      if (parsed.type === 'prefs') {
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          prefs: parseStoredJson(value, {}),
-        }, day);
-      }
-      if (parsed.type === 'progress') {
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          progress: parseStoredJson(value, {}),
-        }, day);
-      }
-      if (parsed.type === 'guardian') {
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          guardian: parseStoredJson(value, {}),
-        }, day);
-      }
-      if (parsed.type === 'postMega') {
-        // P2 U2 H3 mitigation guard — idempotency in the persistence
-        // critical section. Re-read `current.postMega`; if already set,
-        // skip the write so a concurrent second Mega-producing submit
-        // cannot overwrite the original `unlockedAt`. This guard survives
-        // the U2-to-U5 window where full storage-CAS is not yet in place;
-        // U5 later reinforces it with `navigator.locks` serialisation.
-        if (current.postMega) {
-          // Already sticky — treat as benign no-op, preserving the
-          // original record.
-        } else {
-          writeSpellingData(repositories, parsed.learnerId, {
-            ...current,
-            postMega: parseStoredJson(value, null),
-          }, day);
+      // P2 U5: each field write passes a `project` callback to
+      // `writeSpellingData`. The CAS-aware path invokes the callback on
+      // every retry with a fresh read of the merged subject state. Tabs
+      // that lost the race re-compute their write on top of the winner's
+      // persisted state, so the Guardian / progress / postMega slug the
+      // caller wanted to update is merged into the fresh bundle instead
+      // of being clobbered.
+      // P2 U5: multi-slug maps (progress + guardian) merge rather than replace.
+      // The caller's `value` is the FULL map as the caller understood it.
+      // When a sibling tab writes in parallel, the caller's map is missing
+      // the sibling's slug; naive replacement would drop it. Merging per-
+      // slug preserves both tabs' writes when the slug sets are disjoint,
+      // and last-writer-wins when both tabs wrote the same slug (which is
+      // the acceptable local semantic for same-slug contention — Guardian
+      // slugs advance monotonically on correct answers). Prefs is a
+      // last-writer-wins map on purpose (single-intent settings tray).
+      const projectForField = () => {
+        const current = readSpellingData(repositories, parsed.learnerId, day);
+        if (parsed.type === 'prefs') return { ...current, prefs: parseStoredJson(value, {}) };
+        if (parsed.type === 'progress') {
+          const incoming = parseStoredJson(value, {});
+          const currentProgress = isPlainObject(current.progress) ? current.progress : {};
+          const incomingMap = isPlainObject(incoming) ? incoming : {};
+          return { ...current, progress: { ...currentProgress, ...incomingMap } };
         }
+        if (parsed.type === 'guardian') {
+          const incoming = parseStoredJson(value, {});
+          const currentGuardian = isPlainObject(current.guardian) ? current.guardian : {};
+          const incomingMap = isPlainObject(incoming) ? incoming : {};
+          return { ...current, guardian: { ...currentGuardian, ...incomingMap } };
+        }
+        if (parsed.type === 'postMega') {
+          // P2 U2 H3 mitigation guard — idempotency in the persistence
+          // critical section. Re-read `current.postMega`; if already set,
+          // return the current snapshot unchanged so a concurrent second
+          // Mega-producing submit cannot overwrite the original
+          // `unlockedAt`. U5 CAS runs this callback on every retry, so
+          // the idempotency check sees the freshest state each time.
+          if (current.postMega) return current;
+          return { ...current, postMega: parseStoredJson(value, null) };
+        }
+        return current;
+      };
+      if (parsed.type === 'prefs' || parsed.type === 'progress' || parsed.type === 'guardian' || parsed.type === 'postMega') {
+        writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForField });
       }
       if (parsed.type === 'pattern') {
         // P2 U11: straight last-writer-wins for Pattern Quest wobble. Unlike
@@ -340,15 +449,18 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       const parsed = parseStorageKey(key);
       if (!parsed) return;
       const day = currentDay();
-      const current = readSpellingData(repositories, parsed.learnerId, day);
-      if (parsed.type === 'prefs') {
-        writeSpellingData(repositories, parsed.learnerId, { ...current, prefs: {} }, day);
-      }
-      if (parsed.type === 'progress') {
-        writeSpellingData(repositories, parsed.learnerId, { ...current, progress: {} }, day);
-      }
-      if (parsed.type === 'guardian') {
-        writeSpellingData(repositories, parsed.learnerId, { ...current, guardian: {} }, day);
+      // P2 U5: same CAS-aware projection for removal paths. Each retry
+      // re-reads the subject state and zeros just the field the caller
+      // targeted, leaving other concurrent writes' fields intact.
+      const projectForFieldRemoval = () => {
+        const current = readSpellingData(repositories, parsed.learnerId, day);
+        if (parsed.type === 'prefs') return { ...current, prefs: {} };
+        if (parsed.type === 'progress') return { ...current, progress: {} };
+        if (parsed.type === 'guardian') return { ...current, guardian: {} };
+        return current;
+      };
+      if (parsed.type === 'prefs' || parsed.type === 'progress' || parsed.type === 'guardian') {
+        writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForFieldRemoval });
       }
       // P2 U11: pattern sibling is clearable through removeItem so
       // resetLearner and explicit clear paths work symmetrically with the

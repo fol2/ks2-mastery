@@ -1,8 +1,11 @@
 import {
+  AccountPaymentHoldError,
+  AccountSuspendedError,
   AuthConfigurationError,
   BadRequestError,
   BackendUnavailableError,
   ConflictError,
+  SessionInvalidatedError,
   UnauthenticatedError,
 } from './errors.js';
 import { normalisePlatformRole } from '../../src/platform/access/roles.js';
@@ -454,8 +457,89 @@ async function ensureAccountRow(db, {
   return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
 }
 
+/**
+ * Phase D / U13 sentinel thrown by `createSession` when the target account's
+ * `ops_status` is `suspended`. Callers (OAuth callback, email login,
+ * email register, demo bootstrap) catch this and issue a 302 redirect to
+ * `/?auth=account_suspended` with NO cookie set, rather than minting a
+ * session that would immediately 403 on the next authenticated request.
+ *
+ * We do not throw a structured HTTP error because the UX is a redirect,
+ * not a JSON envelope — the user lands on the unauthenticated shell with a
+ * banner explaining the state.
+ */
+export class SessionCreationSuspendedError extends Error {
+  constructor(accountId) {
+    super('Session creation refused — account is suspended.');
+    this.name = 'SessionCreationSuspendedError';
+    this.code = 'account_suspended';
+    this.accountId = accountId;
+  }
+}
+
+// Phase D / U13: read ops_status + status_revision so createSession can
+// (a) refuse suspended accounts and (b) stamp status_revision_at_issue.
+// Missing row → treated as active with revision 0 (legacy accounts
+// predate migration 0011). Missing column (partial migration) → soft-fail
+// to active/0 so deploy order is not load-bearing.
+async function readAccountOpsStatusForSession(db, accountId) {
+  if (!accountId) return { opsStatus: 'active', statusRevision: 0 };
+  try {
+    const row = await first(
+      db,
+      'SELECT ops_status, status_revision FROM account_ops_metadata WHERE account_id = ?',
+      [accountId],
+    );
+    if (!row) return { opsStatus: 'active', statusRevision: 0 };
+    return {
+      opsStatus: typeof row.ops_status === 'string' && row.ops_status
+        ? row.ops_status
+        : 'active',
+      statusRevision: Math.max(0, Number(row.status_revision) || 0),
+    };
+  } catch (error) {
+    const message = String(error?.message || '').toLowerCase();
+    if (message.includes('no such column') || message.includes('no such table')) {
+      // Migration 0011 not yet applied on this instance — fall through to
+      // pre-Phase-D semantics so partial-deploy ordering is not a
+      // lockout risk. Next deploy snaps back to enforced.
+      try {
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify({
+          event: 'capacity.auth.enforcement_unavailable',
+          reason: 'missing_column_or_table',
+          phase: 'create_session',
+        }));
+      } catch {
+        // Swallow — telemetry is best-effort.
+      }
+      return { opsStatus: 'active', statusRevision: 0 };
+    }
+    throw error;
+  }
+}
+
 export async function createSession(env, accountId, provider, now = Date.now(), options = {}) {
   const db = requireDatabase(env);
+  // U13: pre-check ops_status BEFORE minting token/hash/row so a suspended
+  // account never produces a session artefact. payment_hold still gets a
+  // session (user needs to reach billing UI — U14 enforces mutation
+  // capability at the request boundary).
+  const { opsStatus, statusRevision } = await readAccountOpsStatusForSession(db, accountId);
+  if (opsStatus === 'suspended') {
+    try {
+      // Capacity telemetry: repeated rejections signal a returning-after-
+      // suspend flow and should be visible to ops.
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.session_creation_refused.suspended',
+        provider: provider || null,
+      }));
+    } catch {
+      // Swallow — telemetry is best-effort.
+    }
+    throw new SessionCreationSuspendedError(accountId);
+  }
   const token = randomToken(32);
   const hash = await sha256(token);
   const sessionId = `session-${randomToken(12)}`;
@@ -463,11 +547,59 @@ export async function createSession(env, accountId, provider, now = Date.now(), 
     ? Number(options.expiresAt)
     : now + SESSION_TTL_MS;
   const sessionKind = cleanText(options.sessionKind) || (provider === 'demo' ? 'demo' : 'real');
-  await run(db, `
-    INSERT INTO account_sessions (id, account_id, session_hash, provider, created_at, expires_at, session_kind)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `, [sessionId, accountId, hash, provider, now, expiresAt, sessionKind]);
-  return { token, hash, sessionId, expiresAt, sessionKind };
+  // U13: stamp the account's current `status_revision` so U14's per-request
+  // comparison can invalidate this session on the next transition. Legacy
+  // accounts / missing-migration paths stamp 0, which remains valid until
+  // the account's revision bumps above 0.
+  try {
+    await run(db, `
+      INSERT INTO account_sessions (
+        id, account_id, session_hash, provider, created_at, expires_at,
+        session_kind, status_revision_at_issue
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [sessionId, accountId, hash, provider, now, expiresAt, sessionKind, statusRevision]);
+  } catch (error) {
+    const message = String(error?.message || '').toLowerCase();
+    if (!(message.includes('no such column') || message.includes('has no column'))) {
+      throw error;
+    }
+    // Partial migration: the column isn't there yet. Fall back to the
+    // pre-Phase-D INSERT shape so the deploy ordering remains safe.
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.enforcement_unavailable',
+        reason: 'missing_column_on_insert',
+        phase: 'create_session',
+      }));
+    } catch {
+      // Swallow.
+    }
+    await run(db, `
+      INSERT INTO account_sessions (id, account_id, session_hash, provider, created_at, expires_at, session_kind)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [sessionId, accountId, hash, provider, now, expiresAt, sessionKind]);
+  }
+  return { token, hash, sessionId, expiresAt, sessionKind, statusRevisionAtIssue: statusRevision };
+}
+
+// Phase D / U14: log enforcement-unavailable once per request so a partial
+// migration (column/table missing) surfaces in telemetry while the auth
+// boundary falls through to pre-Phase-D semantics. The throttle is local
+// to the D1 proxy; we do not need session-scoped dedup here because the
+// same JOIN is called at most a handful of times per request.
+function logEnforcementUnavailable(phase, reason) {
+  try {
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify({
+      event: 'capacity.auth.enforcement_unavailable',
+      phase,
+      reason,
+    }));
+  } catch {
+    // Swallow — telemetry is best-effort.
+  }
 }
 
 async function accountSessionFromToken(env, token, now = Date.now(), capacity = null) {
@@ -480,21 +612,31 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
     ? requireDatabaseWithCapacity(env, capacity)
     : requireDatabase(env);
   const hash = await sha256(token);
-  const row = await first(db, `
+  // Phase D / U14: JOIN `account_ops_metadata` so each authenticated
+  // request carries `ops_status` + `status_revision` + the session's
+  // `status_revision_at_issue`. LEFT JOIN so legacy accounts with no
+  // metadata row survive. Wrapped in try/catch so missing columns (partial
+  // migration 0011) soft-fail to pre-Phase-D semantics rather than
+  // locking everyone out.
+  const selectSql = `
     SELECT
       s.id AS session_id,
       s.session_hash,
       s.provider,
       s.session_kind,
       s.expires_at,
+      s.status_revision_at_issue AS session_status_revision,
       a.id AS account_id,
       a.email,
       a.display_name,
       a.platform_role,
       a.account_type,
-      a.demo_expires_at
+      a.demo_expires_at,
+      COALESCE(m.ops_status, 'active') AS ops_status,
+      COALESCE(m.status_revision, 0) AS current_status_revision
     FROM account_sessions s
     JOIN adult_accounts a ON a.id = s.account_id
+    LEFT JOIN account_ops_metadata m ON m.account_id = a.id
     WHERE s.session_hash = ?
       AND s.expires_at > ?
       AND (
@@ -507,13 +649,68 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
           AND a.demo_expires_at > ?
         )
       )
-  `, [hash, now, now]);
+  `;
+  let row = null;
+  try {
+    row = await first(db, selectSql, [hash, now, now]);
+  } catch (error) {
+    const message = String(error?.message || '').toLowerCase();
+    if (!(message.includes('no such column') || message.includes('no such table'))) {
+      throw error;
+    }
+    logEnforcementUnavailable('require_session', 'missing_column_or_table');
+    // Fall back to the pre-Phase-D SELECT so legacy tests / partial
+    // migrations continue to resolve sessions. `opsStatus` defaults to
+    // active; revision comparison is skipped.
+    row = await first(db, `
+      SELECT
+        s.id AS session_id,
+        s.session_hash,
+        s.provider,
+        s.session_kind,
+        s.expires_at,
+        a.id AS account_id,
+        a.email,
+        a.display_name,
+        a.platform_role,
+        a.account_type,
+        a.demo_expires_at
+      FROM account_sessions s
+      JOIN adult_accounts a ON a.id = s.account_id
+      WHERE s.session_hash = ?
+        AND s.expires_at > ?
+        AND (
+          (
+            COALESCE(s.session_kind, CASE WHEN s.provider = 'demo' THEN 'demo' ELSE 'real' END) <> 'demo'
+            AND s.provider <> 'demo'
+          )
+          OR (
+            COALESCE(a.account_type, 'real') = 'demo'
+            AND a.demo_expires_at > ?
+          )
+        )
+    `, [hash, now, now]);
+  }
   if (!row) return null;
   const accountType = row.account_type || 'real';
   const sessionKind = row.provider === 'demo'
     ? 'demo'
     : (row.session_kind || 'real');
   const demoExpiresAt = Number(row.demo_expires_at) || null;
+  // Phase D / U14: stale-revision check. When the session's
+  // `status_revision_at_issue` is strictly less than the account's
+  // current `status_revision`, the admin bumped the target since this
+  // session was issued — force re-auth via `session_invalidated`.
+  const opsStatus = typeof row.ops_status === 'string' && row.ops_status
+    ? row.ops_status
+    : 'active';
+  const currentStatusRevision = Number(row.current_status_revision);
+  const statusRevisionAtIssue = Number(row.session_status_revision);
+  const enforcementAvailable = Number.isFinite(currentStatusRevision)
+    && Number.isFinite(statusRevisionAtIssue);
+  if (enforcementAvailable && statusRevisionAtIssue < currentStatusRevision) {
+    throw new SessionInvalidatedError();
+  }
   return {
     accountId: row.account_id,
     email: row.email || null,
@@ -526,6 +723,9 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
     accountType,
     demo: sessionKind === 'demo' && accountType === 'demo',
     demoExpiresAt,
+    opsStatus,
+    statusRevision: enforcementAvailable ? currentStatusRevision : 0,
+    statusRevisionAtIssue: enforcementAvailable ? statusRevisionAtIssue : 0,
   };
 }
 
@@ -1125,8 +1325,7 @@ function appOrigin(env, request) {
 export function createDevelopmentSessionProvider() {
   return {
     kind: 'development-stub',
-    // eslint-disable-next-line no-unused-vars
-    async getSession(request, _env, _options = {}) {
+    async getSession(request, env, { capacity = null } = {}) {
       const accountId = cleanText(
         request.headers.get('x-ks2-dev-account-id')
         || request.headers.get('x-ks2-account-id'),
@@ -1141,6 +1340,59 @@ export function createDevelopmentSessionProvider() {
       const demoExpiresAt = Number.isFinite(Number(demoExpiresAtRaw))
         ? Number(demoExpiresAtRaw)
         : null;
+      // Phase D / U14: when the test DB has a metadata row, apply the
+      // same enforcement the production provider applies (suspend /
+      // stale-revision). Tests can exercise the full matrix through the
+      // dev-stub without having to spin up the production auth flow.
+      // Absent D1 binding → no enforcement (unit tests that inject a
+      // header-only session).
+      let opsStatus = 'active';
+      let currentStatusRevision = 0;
+      let statusRevisionAtIssue = 0;
+      let enforcementAvailable = false;
+      const rawBinding = env?.DB;
+      // Route the metadata lookup through the capacity-wrapped D1 handle
+      // so the query is counted in request-level telemetry (mirrors the
+      // P1 #03 pattern that ensures dev-stub queries are not invisible).
+      const dbBinding = rawBinding && capacity != null
+        ? requireDatabaseWithCapacity(env, capacity)
+        : rawBinding;
+      if (dbBinding) {
+        try {
+          const row = await first(dbBinding, `
+            SELECT COALESCE(m.ops_status, 'active') AS ops_status,
+                   COALESCE(m.status_revision, 0) AS current_status_revision
+            FROM adult_accounts a
+            LEFT JOIN account_ops_metadata m ON m.account_id = a.id
+            WHERE a.id = ?
+          `, [accountId]);
+          if (row) {
+            opsStatus = typeof row.ops_status === 'string' && row.ops_status
+              ? row.ops_status
+              : 'active';
+            currentStatusRevision = Math.max(0, Number(row.current_status_revision) || 0);
+            enforcementAvailable = true;
+          }
+        } catch (error) {
+          const message = String(error?.message || '').toLowerCase();
+          if (message.includes('no such column') || message.includes('no such table')) {
+            logEnforcementUnavailable('require_session_dev_stub', 'missing_column_or_table');
+          } else {
+            throw error;
+          }
+        }
+        // The dev-stub has no `account_sessions` row, so use the header
+        // override when provided (lets tests simulate stale sessions).
+        const headerRevision = request.headers.get('x-ks2-dev-status-revision-at-issue');
+        if (headerRevision != null && Number.isFinite(Number(headerRevision))) {
+          statusRevisionAtIssue = Number(headerRevision);
+        } else {
+          statusRevisionAtIssue = currentStatusRevision;
+        }
+      }
+      if (enforcementAvailable && statusRevisionAtIssue < currentStatusRevision) {
+        throw new SessionInvalidatedError();
+      }
       return {
         accountId,
         email: cleanText(request.headers.get('x-ks2-dev-email')),
@@ -1151,6 +1403,9 @@ export function createDevelopmentSessionProvider() {
         accountType: isDemo ? 'demo' : 'real',
         demo: isDemo,
         demoExpiresAt,
+        opsStatus,
+        statusRevision: currentStatusRevision,
+        statusRevisionAtIssue,
       };
     },
   };
@@ -1183,6 +1438,92 @@ export function resolveSessionProvider(env = {}) {
   return createPlaceholderSessionProvider(mode);
 }
 
+/**
+ * Phase D / U14: reject suspended accounts at the auth boundary. Called
+ * implicitly from `requireSession` so every authenticated route (including
+ * GETs) fails fast when the account is suspended — there is no "read-only
+ * access for suspended accounts" mode.
+ *
+ * @param {object|null|undefined} session  Session object returned by
+ *                                         `auth.getSession` / `requireSession`.
+ * @throws {AccountSuspendedError}         When `session.opsStatus === 'suspended'`.
+ */
+export function requireActiveAccount(session) {
+  if (!session) return;
+  // ADV-4 (Phase D reviewer): demo sessions bypass the auth-boundary
+  // enforcement. The P1.5 plan defers ops_status on demo explicitly
+  // (docs/plans/2026-04-25-005-refactor-admin-ops-console-p1-5-hardening-plan.md line 89).
+  // Demo cookies do not carry real user accounts and cannot reach the
+  // ops surfaces that mint/suspend accounts.
+  if (session.demo) return;
+  if (session.opsStatus === 'suspended') {
+    // SEC-Med (Phase D reviewer): structured denial log so returning-
+    // after-suspend + brute-force probes surface in ops dashboards
+    // without leaking account PII. Single line per denial; not rate-
+    // limited (the 403 itself is already rate-gated upstream).
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.request_denied',
+        code: 'account_suspended',
+        opsStatus: session.opsStatus,
+      }));
+    } catch {
+      // Swallow - telemetry is best-effort.
+    }
+    throw new AccountSuspendedError();
+  }
+}
+
+/**
+ * Phase D / U14: reject mutation attempts on payment_hold accounts.
+ * Called explicitly by every mutation-receipt-bearing route in `app.js`
+ * AFTER `requireSession`. Suspended → `AccountSuspendedError` (defence in
+ * depth — `requireActiveAccount` already fired inside `requireSession`,
+ * but the capability helper remains the single entry point for mutation
+ * gating). payment_hold → `AccountPaymentHoldError`.
+ *
+ * @param {object|null|undefined} session
+ * @throws {AccountSuspendedError}    when the account is suspended.
+ * @throws {AccountPaymentHoldError}  when the account is on payment hold.
+ */
+export function requireMutationCapability(session) {
+  if (!session) return;
+  // ADV-4 (Phase D reviewer): demo sessions bypass mutation capability
+  // enforcement. Demo routes have their own separate write-gating
+  // (see demo/sessions.js + the demo-tracked mutation paths) so
+  // layering ops_status enforcement on top of demo would double-gate
+  // without benefit. Plan defers ops_status on demo explicitly.
+  if (session.demo) return;
+  if (session.opsStatus === 'suspended') {
+    // SEC-Med (Phase D reviewer) structured denial log.
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.request_denied',
+        code: 'account_suspended',
+        opsStatus: session.opsStatus,
+      }));
+    } catch {
+      // Swallow - telemetry is best-effort.
+    }
+    throw new AccountSuspendedError();
+  }
+  if (session.opsStatus === 'payment_hold') {
+    try {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        event: 'capacity.auth.request_denied',
+        code: 'account_payment_hold',
+        opsStatus: session.opsStatus,
+      }));
+    } catch {
+      // Swallow - telemetry is best-effort.
+    }
+    throw new AccountPaymentHoldError();
+  }
+}
+
 export function createSessionAuthBoundary({ env = {}, sessionProvider, capacity = null } = {}) {
   const provider = sessionProvider || resolveSessionProvider(env);
 
@@ -1212,6 +1553,10 @@ export function createSessionAuthBoundary({ env = {}, sessionProvider, capacity 
       // the Origin header check (mutation routes keep the explicit strict
       // `requireSameOrigin(request, env)` calls at the app.js boundary).
       requireSameOrigin(request, env, { mode: 'sec-fetch-only' });
+      // Phase D / U14: reject suspended accounts at the boundary so every
+      // authenticated route (including GETs) fails fast. payment_hold is
+      // permitted here — the mutation routes add `requireMutationCapability`.
+      requireActiveAccount(session);
       return session;
     },
   };

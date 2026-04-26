@@ -1,4 +1,9 @@
 import { json } from './http.js';
+import {
+  ACCOUNT_SUSPENDED,
+  ACCOUNT_PAYMENT_HOLD,
+  SESSION_INVALIDATED,
+} from './error-codes.js';
 
 export class HttpError extends Error {
   constructor(status, message, extra = {}) {
@@ -98,6 +103,59 @@ export class AuthConfigurationError extends HttpError {
     super(501, message, {
       ok: false,
       code: 'auth_not_implemented',
+      ...extra,
+    });
+  }
+}
+
+// Phase D / U14: three auth-boundary errors that the admin-refresh-error
+// router (Phase A) already maps to UX. Each one is a subclass so callers
+// can `instanceof`-test without relying on the code string.
+
+/**
+ * Thrown by `requireActiveAccount(session)` when the account's
+ * `ops_status === 'suspended'`. Surfaces 403 `account_suspended`. The
+ * client-side global handler redirects to the unauthenticated shell with
+ * an explanatory banner (Phase A U1 registered the code).
+ */
+export class AccountSuspendedError extends HttpError {
+  constructor(message = 'Account is suspended. Contact operations.', extra = {}) {
+    super(403, message, {
+      ok: false,
+      code: ACCOUNT_SUSPENDED,
+      ...extra,
+    });
+  }
+}
+
+/**
+ * Thrown by `requireMutationCapability(session)` when the account's
+ * `ops_status === 'payment_hold'`. GET routes remain accessible so the
+ * user can reach the billing UI; any mutation-receipt-bearing route
+ * rejects with 403 `account_payment_hold`.
+ */
+export class AccountPaymentHoldError extends HttpError {
+  constructor(message = 'This action requires active billing. Contact ops.', extra = {}) {
+    super(403, message, {
+      ok: false,
+      code: ACCOUNT_PAYMENT_HOLD,
+      ...extra,
+    });
+  }
+}
+
+/**
+ * Thrown by `requireSession` when the session row's
+ * `status_revision_at_issue` is behind the account's current
+ * `account_ops_metadata.status_revision`. The client-side global handler
+ * transitions the app to the sign-in surface; re-auth creates a fresh
+ * session stamp that matches the new revision.
+ */
+export class SessionInvalidatedError extends HttpError {
+  constructor(message = 'Your session is no longer valid. Please sign in again.', extra = {}) {
+    super(401, message, {
+      ok: false,
+      code: SESSION_INVALIDATED,
       ...extra,
     });
   }

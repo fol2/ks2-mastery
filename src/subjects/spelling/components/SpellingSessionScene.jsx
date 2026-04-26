@@ -12,6 +12,7 @@ import {
 import {
   SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
 } from '../service-contract.js';
+import { SoftLockoutBanner, useSoftLockoutState } from './SoftLockoutBanner.jsx';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
 import {
   AnimatedPromptCard,
@@ -36,6 +37,11 @@ import {
 export function SpellingSessionScene({
   learner,
   service,
+  // P2 U5 reviewer-feedback: threaded from SpellingPracticeSurface so the
+  // soft-lockout banner can inject `storageCas` into its steal handler.
+  // Defaults to null so legacy callers / tests rendering SessionScene
+  // directly fall back to the bare steal behaviour.
+  repositories = null,
   ui,
   accent,
   actions,
@@ -186,6 +192,19 @@ export function SpellingSessionScene({
       ?? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
     : '';
 
+  // P2 U5: soft-lockout banner — renders only when another tab holds the
+  // write lock (OTHER_TAB_ACTIVE) or the browser falls back to
+  // SINGLE_TAB_FALLBACK. In THIS_TAB_OWNS the banner is null. Detection
+  // runs in a React effect so SSR / test harnesses that render without
+  // useEffect see the default owned state.
+  //
+  // Reviewer-feedback: `useSoftLockoutState` now returns `{ state, acknowledge }`
+  // so the steal button can flip the detector back to owned without
+  // waiting for the next poll tick. We pass `acknowledge` as
+  // `onAcknowledge` to the banner.
+  const { state: softLockoutState, acknowledge: softLockoutAcknowledge } = useSoftLockoutState();
+  const softLockoutStorageCas = repositories?.storageCas || null;
+
   return (
     <div className={sessionClasses.join(' ')} style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
       <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
@@ -213,6 +232,13 @@ export function SpellingSessionScene({
             </button>
           </div>
         ) : null}
+
+        <SoftLockoutBanner
+          state={softLockoutState}
+          onAcknowledge={softLockoutAcknowledge}
+          storageCas={softLockoutStorageCas}
+        />
+
 
         <AnimatedPromptCard heightKey={questionLayoutKey} lockHeightToKey>
           {infoChips.length ? (
