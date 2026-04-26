@@ -2961,6 +2961,16 @@ textarea:focus-visible {
   padding: 0 24px;
   text-align: center;
 }
+/* SH2-U5: fresh-meadow empty-state wrapper. NOT based on `.monster-meadow`
+ * because that class is absolute-positioned + pointer-events: none for
+ * the decorative sprite layer. The empty-state wrapper sits in the hero's
+ * normal flow so the primitive's `role="status"` announcement lands and
+ * the CTA (when supplied) remains clickable. */
+.monster-meadow-empty {
+  position: relative;
+  margin: 12px 0 16px;
+  z-index: 1;
+}
 .meadow-monster {
   --meadow-render-size: var(--size, 64px);
   position: absolute;
@@ -10303,5 +10313,194 @@ html { scroll-behavior: smooth; }
   .punctuation-setup-scene {
     animation: none;
     transition: none;
+  }
+}
+
+/* --- SH2-U5: shared empty / loading / error state primitives ---------- */
+/* Three small surface templates that every visible panel reuses so loading
+ * / empty / error / read-only copy follows the same three-part pattern:
+ *   1. what happened (neutral),
+ *   2. is progress safe (reassurance),
+ *   3. what action is available (if any).
+ * Only colour tokens already in the palette (`--panel-soft`, `--line`,
+ * `--muted`, `--ink`, `--ink-2`, `--bad`, `--bad-soft`, `--bad-strong`,
+ * `--radius-sm`). No new hex values. Mobile-360 safe via box-sizing + no
+ * fixed widths + wrapping actions. Reduced-motion carve-out below cancels
+ * the skeleton shimmer so learners who asked for motion to stop never see
+ * a 1.4s pulse running underneath a placeholder card. */
+
+.empty-state {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px 22px;
+  margin: 0;
+  background: var(--panel-soft);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  line-height: 0;
+}
+
+.empty-state-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.empty-state-lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.empty-state-actions {
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 380px) {
+  .empty-state {
+    padding: 18px 16px;
+    gap: 10px;
+  }
+}
+
+/* --- Loading skeleton ------------------------------------------------- */
+
+.loading-skeleton {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 18px;
+  margin: 0;
+  background: var(--panel);
+  border-radius: var(--radius-sm);
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.loading-skeleton-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.loading-skeleton-row {
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--panel-soft) 0%,
+    var(--line-soft) 50%,
+    var(--panel-soft) 100%
+  );
+  background-size: 200% 100%;
+  animation: loading-skeleton-shimmer 1.4s ease-in-out infinite;
+  max-width: 100%;
+}
+
+@keyframes loading-skeleton-shimmer {
+  0% { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-skeleton-row {
+    animation: none;
+    background: var(--line-soft);
+  }
+}
+
+@media (max-width: 380px) {
+  .loading-skeleton {
+    padding: 16px 14px;
+  }
+}
+
+/* --- Error card ------------------------------------------------------- */
+
+.error-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 22px 20px;
+  margin: 0;
+  background: color-mix(in oklab, var(--bad-soft) 55%, var(--panel));
+  border: 1px solid color-mix(in oklab, var(--bad) 28%, var(--line));
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.error-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bad-strong);
+  line-height: 0;
+}
+
+.error-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.error-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--bad-strong);
+  line-height: 1.35;
+}
+
+.error-card-lede {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.error-card-actions {
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 380px) {
+  .error-card {
+    padding: 18px 16px;
+    gap: 10px;
   }
 }

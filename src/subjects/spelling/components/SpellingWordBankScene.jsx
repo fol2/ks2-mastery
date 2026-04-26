@@ -3,6 +3,12 @@ import { SearchIcon } from './spelling-icons.jsx';
 import { CountUpValue, SummaryCards } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { SpellingWordDetailModal } from './SpellingWordDetailModal.jsx';
+// SH2-U5: the "no words tracked yet" branch surfaces the shared empty
+// primitive with the canonical copy. The existing `wb-empty` div
+// continues to cover the "filters matched nothing" branch (progress is
+// fine, just a filter change away) — that's not an empty state, just a
+// narrowed view, so it keeps its inline muted copy.
+import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 import {
   WORD_BANK_FILTER_IDS,
   WORD_BANK_GUARDIAN_CHIP_LABELS,
@@ -221,6 +227,11 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
   const groups = Array.isArray(analytics.wordGroups) ? analytics.wordGroups : [];
   const wordBankMeta = analytics.wordBank || {};
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
+  // SH2-U5: when the learner has zero tracked words we short-circuit to
+  // the shared empty-state card. No filters, no toolbar, no group head —
+  // the progress is genuinely empty so the canonical "what happened /
+  // progress safe / action" copy is the whole panel.
+  const totalTrackedWords = allWords.length;
   const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
   // U2 orphan-sanitiser context: wordBankFilterMatchesStatus uses these when
   // checking `guardianDue` / `wobbling` so a row whose slug no longer
@@ -314,6 +325,28 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
       ? `Showing ${visibleWords.length} of ${totalWords} tracked spellings.`
       : `Showing ${visibleWords.length} of ${categoryTotal} ${categoryLabel} spellings.`;
   const learnerName = learner?.name ? `${learner.name}’s` : 'Learner';
+
+  if (totalTrackedWords === 0) {
+    return (
+      <section className="word-bank-card word-bank-card-empty">
+        <div className="wb-card">
+          <header className="wb-head">
+            <p className="eyebrow">Word bank progress</p>
+            <h1 className="title">{learnerName} word bank</h1>
+          </header>
+          <EmptyState
+            title="No words yet"
+            body="No words yet. Your progress is saved. Play a spelling round to add your first word."
+            action={{
+              label: 'Back to spelling',
+              onClick: (event) => renderAction(actions, event, 'spelling-close-word-bank'),
+              dataAction: 'spelling-close-word-bank',
+            }}
+          />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="word-bank-card">
