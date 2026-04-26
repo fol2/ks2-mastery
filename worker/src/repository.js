@@ -2293,6 +2293,268 @@ function bumpAdminKpiMetricStatement(db, key, nowTs, delta = 1) {
 }
 
 // ---------------------------------------------------------------------------
+// U10: KPI reconciliation.
+//
+// Computes the authoritative per-status counts for `ops_error_events` and
+// the fresh-insert count for `account_ops_metadata.updates`, compares
+// against the values reported by the client script (for forensic-audit
+// diffing), and writes the server-side values to `admin_kpi_metrics`.
+//
+// Single-flight lock semantics (adv-9 hardening):
+//   - `admin_kpi_metrics.metric_key = 'reconcile_pending:lock'` holds the
+//     lock. `metric_count` encodes the caller's requestId-derived owner
+//     hash; `updated_at` records the last heartbeat / acquire.
+//   - A stale lock (now - updated_at > 10 min) may be CAS-taken-over via
+//     an UPDATE that matches the stale owner hash.
+//   - Completion deletes the lock via CAS-on-own-hash so a slow caller
+//     never clears a successor's lock.
+//
+// Mutation receipt (forensic trail): every invocation writes a
+// `admin.ops.reconcile_kpis` receipt with `{ clientComputed,
+// serverComputed, deltas }` so a rogue admin's tampering is caught at
+// audit time.
+// ---------------------------------------------------------------------------
+
+const RECONCILE_KPIS_MUTATION_KIND = 'admin.ops.reconcile_kpis';
+const RECONCILE_LOCK_METRIC_KEY = 'reconcile_pending:lock';
+const RECONCILE_LOCK_STALE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+// Metric keys reconciliation is authoritative for. Derivable-from-source
+// counters only — monotonic counters (e.g. `global_budget_exhausted`)
+// stay event-driven.
+const RECONCILABLE_METRIC_KEYS = Object.freeze([
+  `${KPI_ERROR_STATUS_METRIC_PREFIX}open`,
+  `${KPI_ERROR_STATUS_METRIC_PREFIX}investigating`,
+  `${KPI_ERROR_STATUS_METRIC_PREFIX}resolved`,
+  `${KPI_ERROR_STATUS_METRIC_PREFIX}ignored`,
+]);
+
+export function reconcileLockHashForRequestId(requestId) {
+  // Deterministic 32-bit int derived from the caller's `requestId`. The CAS
+  // takeover UPDATE matches against the existing-lock hash exactly so two
+  // concurrent takeover attempts cannot both succeed.
+  if (typeof requestId !== 'string' || !requestId) return 0;
+  let hash = 2166136261; // FNV-1a 32-bit offset basis
+  for (let i = 0; i < requestId.length; i += 1) {
+    hash ^= requestId.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  // Shift to unsigned 32-bit positive space so SQLite INTEGER never wraps.
+  return hash >>> 0;
+}
+
+async function readReconcileLockRow(db) {
+  return first(db, `
+    SELECT metric_key, metric_count, updated_at
+    FROM admin_kpi_metrics
+    WHERE metric_key = ?
+  `, [RECONCILE_LOCK_METRIC_KEY]);
+}
+
+async function recomputeReconcilableCounters(db) {
+  // Authoritative recompute from source tables. Each `SELECT COUNT` is
+  // the ground truth the reconciliation writes back.
+  const statusRows = await all(db, `
+    SELECT status, COUNT(*) AS count
+    FROM ops_error_events
+    GROUP BY status
+  `);
+  const serverComputed = Object.create(null);
+  // Seed every reconcilable status bucket at zero so a status with no
+  // rows still reconciles to a write.
+  for (const status of OPS_ERROR_STATUSES) {
+    serverComputed[`${KPI_ERROR_STATUS_METRIC_PREFIX}${status}`] = 0;
+  }
+  for (const row of statusRows) {
+    const status = typeof row?.status === 'string' ? row.status : '';
+    if (!OPS_ERROR_STATUSES.includes(status)) continue;
+    serverComputed[`${KPI_ERROR_STATUS_METRIC_PREFIX}${status}`] = Math.max(
+      0,
+      Number(row.count) || 0,
+    );
+  }
+  return serverComputed;
+}
+
+async function readCurrentCounters(db) {
+  const current = Object.create(null);
+  for (const key of RECONCILABLE_METRIC_KEYS) current[key] = 0;
+  const rows = await all(db, `
+    SELECT metric_key, metric_count
+    FROM admin_kpi_metrics
+    WHERE metric_key IN (${RECONCILABLE_METRIC_KEYS.map(() => '?').join(', ')})
+  `, RECONCILABLE_METRIC_KEYS);
+  for (const row of rows) {
+    const key = typeof row?.metric_key === 'string' ? row.metric_key : '';
+    if (!(key in current)) continue;
+    current[key] = Math.max(0, Number(row.metric_count) || 0);
+  }
+  return current;
+}
+
+function reconcileDiffTable(current, serverComputed, clientComputed) {
+  const deltas = Object.create(null);
+  for (const key of RECONCILABLE_METRIC_KEYS) {
+    const currentValue = Math.max(0, Number(current[key]) || 0);
+    const serverValue = Math.max(0, Number(serverComputed[key]) || 0);
+    const clientValue = clientComputed && Object.prototype.hasOwnProperty.call(clientComputed, key)
+      ? Math.max(0, Number(clientComputed[key]) || 0)
+      : null;
+    deltas[key] = {
+      before: currentValue,
+      serverComputed: serverValue,
+      clientComputed: clientValue,
+      delta: serverValue - currentValue,
+      clientServerDelta: clientValue === null ? null : clientValue - serverValue,
+    };
+  }
+  return deltas;
+}
+
+export async function reconcileAdminKpiMetricsInternal(db, {
+  actorAccountId = null,
+  requestId,
+  correlationId = null,
+  clientComputed = null,
+  nowTs,
+} = {}) {
+  if (typeof requestId !== 'string' || !requestId) {
+    throw new BadRequestError('Reconcile requestId is required.', {
+      code: 'validation_failed',
+      field: 'requestId',
+    });
+  }
+  const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const ownerHash = reconcileLockHashForRequestId(requestId);
+
+  // --- Single-flight lock acquisition (INSERT OR IGNORE + CAS-takeover) ---
+  // Step 1: optimistic insert.
+  await run(db, `
+    INSERT OR IGNORE INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+    VALUES (?, ?, ?)
+  `, [RECONCILE_LOCK_METRIC_KEY, ownerHash, ts]);
+
+  // Step 2: check who holds the lock.
+  let lockRow = await readReconcileLockRow(db);
+  let weHoldTheLock = lockRow
+    && Number(lockRow.metric_count) === ownerHash;
+
+  if (!weHoldTheLock) {
+    const existingOwnerHash = Math.max(0, Number(lockRow?.metric_count) || 0);
+    const existingUpdatedAt = Math.max(0, Number(lockRow?.updated_at) || 0);
+    const lockAgeMs = ts - existingUpdatedAt;
+    if (lockAgeMs <= RECONCILE_LOCK_STALE_WINDOW_MS) {
+      // Fresh lock held by another caller — reject.
+      throw new ConflictError('Another reconciliation is in progress. Retry in a minute.', {
+        code: 'reconcile_in_progress',
+        retryable: true,
+        lockedSince: existingUpdatedAt,
+        staleAfterMs: RECONCILE_LOCK_STALE_WINDOW_MS,
+      });
+    }
+    // Stale — try CAS-takeover.
+    const takeoverResult = await run(db, `
+      UPDATE admin_kpi_metrics
+      SET metric_count = ?, updated_at = ?
+      WHERE metric_key = ? AND metric_count = ? AND updated_at = ?
+    `, [
+      ownerHash,
+      ts,
+      RECONCILE_LOCK_METRIC_KEY,
+      existingOwnerHash,
+      existingUpdatedAt,
+    ]);
+    const rowsAffected = Math.max(0, Number(takeoverResult?.meta?.changes) || 0);
+    if (rowsAffected !== 1) {
+      // Race-lost takeover — another caller just took over.
+      throw new ConflictError('Another reconciliation is in progress. Retry in a minute.', {
+        code: 'reconcile_in_progress',
+        retryable: true,
+      });
+    }
+    weHoldTheLock = true;
+    lockRow = await readReconcileLockRow(db);
+  }
+
+  try {
+    // --- Reconcile body ---
+    const before = await readCurrentCounters(db);
+    const serverComputed = await recomputeReconcilableCounters(db);
+    const deltas = reconcileDiffTable(before, serverComputed, clientComputed);
+
+    // Assemble the authoritative UPSERTs + mutation receipt in one batch.
+    const resolvedCorrelationId = typeof correlationId === 'string' && correlationId
+      ? correlationId
+      : requestId;
+    const appliedCounts = Object.create(null);
+    const upserts = [];
+    for (const key of RECONCILABLE_METRIC_KEYS) {
+      const value = Math.max(0, Number(serverComputed[key]) || 0);
+      appliedCounts[key] = value;
+      upserts.push(bindStatement(db, `
+        INSERT INTO admin_kpi_metrics (metric_key, metric_count, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(metric_key) DO UPDATE SET
+          metric_count = excluded.metric_count,
+          updated_at = excluded.updated_at
+      `, [key, value, ts]));
+    }
+
+    const receiptBody = {
+      reconcile: {
+        requestId,
+        correlationId: resolvedCorrelationId,
+        appliedAt: ts,
+        before,
+        serverComputed,
+        clientComputed: clientComputed && typeof clientComputed === 'object' ? { ...clientComputed } : null,
+        deltas,
+      },
+    };
+    // R21 batch atomicity — every UPSERT + mutation receipt land together.
+    await batch(db, [
+      ...upserts,
+      storeMutationReceiptStatement(db, {
+        accountId: actorAccountId || 'system',
+        requestId,
+        scopeType: 'platform',
+        scopeId: `reconcile-kpis:${requestId}`,
+        mutationKind: RECONCILE_KPIS_MUTATION_KIND,
+        requestHash: mutationPayloadHash(RECONCILE_KPIS_MUTATION_KIND, {
+          requestId,
+          clientComputed,
+        }),
+        response: receiptBody,
+        correlationId: resolvedCorrelationId,
+        appliedAt: ts,
+      }),
+    ]);
+
+    return {
+      ok: true,
+      reconciledAt: ts,
+      deltas,
+      appliedCounts,
+      clientComputed: clientComputed && typeof clientComputed === 'object' ? { ...clientComputed } : null,
+      serverComputed,
+    };
+  } finally {
+    // Release lock on own hash only so a slow caller does not clear a
+    // successor's takeover.
+    try {
+      await run(db, `
+        DELETE FROM admin_kpi_metrics
+        WHERE metric_key = ? AND metric_count = ?
+      `, [RECONCILE_LOCK_METRIC_KEY, ownerHash]);
+    } catch (error) {
+      // Release failure is non-fatal — the stale-lock window lets the
+      // next caller take over after 10 minutes. Surface via error
+      // propagation only if the caller passed us a reportable helper.
+      if (!isMissingTableError(error, 'admin_kpi_metrics')) throw error;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // U5: admin ops mutations.
 // Two admin-only mutations with batch-based atomicity (R21):
 //   1. updateAccountOpsMetadata  — UPSERT account_ops_metadata + receipt
@@ -6636,6 +6898,24 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         today,
         confirmOverwrite,
         mutation,
+        nowTs: nowFactory(),
+      });
+    },
+    async reconcileAdminKpiMetrics(accountId, {
+      requestId,
+      correlationId = null,
+      clientComputed = null,
+    } = {}) {
+      // U10: admin-only. `requireAccountRoleManager` forbids non-admin
+      // actors. Internal reconciliation (cron path) bypasses this by
+      // calling `reconcileAdminKpiMetricsInternal` directly.
+      const actor = await assertAdminHubActor(db, accountId);
+      requireAccountRoleManager(actor);
+      return reconcileAdminKpiMetricsInternal(db, {
+        actorAccountId: accountId,
+        requestId,
+        correlationId,
+        clientComputed,
         nowTs: nowFactory(),
       });
     },

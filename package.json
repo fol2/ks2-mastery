@@ -38,6 +38,7 @@
     "deploy:ci": "npm run deploy",
     "ops:tail": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format pretty",
     "read-models:backfill": "node ./scripts/backfill-learner-read-models.mjs",
+    "admin:reconcile-kpis": "node ./scripts/admin-reconcile-kpis.mjs",
     "smoke:production:bootstrap": "node ./scripts/probe-production-bootstrap.mjs",
     "smoke:production:effect": "node ./scripts/effect-config-production-smoke.mjs",
     "smoke:production:grammar": "node ./scripts/grammar-production-smoke.mjs",
