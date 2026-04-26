@@ -442,73 +442,71 @@ export function createSpellingPersistence({ repositories, now } = {}) {
           if (current.postMega) return current;
           return { ...current, postMega: parseStoredJson(value, null) };
         }
+        if (parsed.type === 'pattern') {
+          // P2 U11: straight last-writer-wins for Pattern Quest wobble. Unlike
+          // postMega (sticky by contract), pattern.wobbling entries flip
+          // freely as the learner wobbles and recovers; same semantics as
+          // guardian.wobbling. The `parseStoredJson` default { wobbling: {} }
+          // keeps an absent body from collapsing the sibling into null.
+          return { ...current, pattern: parseStoredJson(value, { wobbling: {} }) };
+        }
+        if (parsed.type === 'persistenceWarning') {
+          // P2 U9: unlike `postMega`, the persistence-warning record IS
+          // overwrite-ful. A subsequent failure overwrites `reason` +
+          // `occurredAt` and resets `acknowledged: false`; an acknowledge
+          // dispatcher overwrites with `acknowledged: true`. We persist the
+          // parsed payload directly so the callers (service) own the shape.
+          return { ...current, persistenceWarning: parseStoredJson(value, null) };
+        }
+        if (parsed.type === 'achievements') {
+          // P2 U12 H4 mitigation — INSERT-OR-IGNORE for UNLOCK rows, MONOTONIC
+          // accept-incoming for PROGRESS rows.
+          //
+          // Achievements-map entries are polymorphic:
+          //   1. Unlock rows (`achievement:...` ids) are STICKY: once
+          //      `unlockedAt` is set, it must never change. A concurrent
+          //      second-unlock dispatch with stale currentAchievements could
+          //      otherwise overwrite the original timestamp — we preserve the
+          //      existing row by skipping merge when one is already present.
+          //   2. Progress rows (`_progress:*` ids) are MONOTONIC aggregate
+          //      counters (days set, slugs set, pattern completions). The
+          //      incoming value is the freshly computed superset of prior
+          //      state; retaining the existing value would drop every day
+          //      beyond the most recent and Guardian 7-day would NEVER fire
+          //      through `data.achievements` (reviewer reproduction: 8 missions
+          //      on 8 days -> persisted `{days: [lastDay]}` length 1).
+          //
+          // The branch below distinguishes the two shapes and applies the
+          // correct merge semantics per row. U1 fix (Cluster A): this logic
+          // now runs inside `projectForField` so `current` is freshly read
+          // on every CAS retry, matching the postMega sibling above.
+          const incoming = parseStoredJson(value, {});
+          const existing = current.achievements || {};
+          const merged = { ...incoming };
+          for (const [id, record] of Object.entries(existing)) {
+            if (typeof id !== 'string' || !id) continue;
+            if (id.startsWith('_progress:')) {
+              // Progress rows: accept incoming (freshly computed monotonic
+              // state is always a superset of prior state because the
+              // aggregate sets / arrays only ever add). Keep incoming; DO
+              // NOT overwrite with existing — that would lose accumulation.
+              continue;
+            }
+            // Unlock rows: retain existing (sticky unlockedAt).
+            merged[id] = record;
+          }
+          return { ...current, achievements: merged };
+        }
         return current;
       };
-      if (parsed.type === 'prefs' || parsed.type === 'progress' || parsed.type === 'guardian' || parsed.type === 'postMega') {
-        writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForField });
-      }
-      if (parsed.type === 'pattern') {
-        // P2 U11: straight last-writer-wins for Pattern Quest wobble. Unlike
-        // postMega (sticky by contract), pattern.wobbling entries flip
-        // freely as the learner wobbles and recovers; same semantics as
-        // guardian.wobbling. The `parseStoredJson` default { wobbling: {} }
-        // keeps an absent body from collapsing the sibling into null.
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          pattern: parseStoredJson(value, { wobbling: {} }),
-        }, day);
-      }
-      if (parsed.type === 'persistenceWarning') {
-        // P2 U9: unlike `postMega`, the persistence-warning record IS
-        // overwrite-ful. A subsequent failure overwrites `reason` +
-        // `occurredAt` and resets `acknowledged: false`; an acknowledge
-        // dispatcher overwrites with `acknowledged: true`. We persist the
-        // parsed payload directly so the callers (service) own the shape.
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          persistenceWarning: parseStoredJson(value, null),
-        }, day);
-      }
-      if (parsed.type === 'achievements') {
-        // P2 U12 H4 mitigation — INSERT-OR-IGNORE for UNLOCK rows, MONOTONIC
-        // accept-incoming for PROGRESS rows.
-        //
-        // Achievements-map entries are polymorphic:
-        //   1. Unlock rows (`achievement:...` ids) are STICKY: once
-        //      `unlockedAt` is set, it must never change. A concurrent
-        //      second-unlock dispatch with stale currentAchievements could
-        //      otherwise overwrite the original timestamp — we preserve the
-        //      existing row by skipping merge when one is already present.
-        //   2. Progress rows (`_progress:*` ids) are MONOTONIC aggregate
-        //      counters (days set, slugs set, pattern completions). The
-        //      incoming value is the freshly computed superset of prior
-        //      state; retaining the existing value would drop every day
-        //      beyond the most recent and Guardian 7-day would NEVER fire
-        //      through `data.achievements` (reviewer reproduction: 8 missions
-        //      on 8 days -> persisted `{days: [lastDay]}` length 1).
-        //
-        // The branch below distinguishes the two shapes and applies the
-        // correct merge semantics per row.
-        const incoming = parseStoredJson(value, {});
-        const existing = current.achievements || {};
-        const merged = { ...incoming };
-        for (const [id, record] of Object.entries(existing)) {
-          if (typeof id !== 'string' || !id) continue;
-          if (id.startsWith('_progress:')) {
-            // Progress rows: accept incoming (freshly computed monotonic
-            // state is always a superset of prior state because the
-            // aggregate sets / arrays only ever add). Keep incoming; DO
-            // NOT overwrite with existing — that would lose accumulation.
-            continue;
-          }
-          // Unlock rows: retain existing (sticky unlockedAt).
-          merged[id] = record;
-        }
-        writeSpellingData(repositories, parsed.learnerId, {
-          ...current,
-          achievements: merged,
-        }, day);
-      }
+      // U1 fix (Cluster A): all sibling types now route through a single
+      // CAS-aware call. Previously pattern / persistenceWarning /
+      // achievements had inline writers referencing an out-of-scope
+      // `current` binding, which threw `ReferenceError` on every invocation.
+      // Folding them into `projectForField` re-reads `current` inside the
+      // callback on each retry, matching the shape already used by
+      // postMega.
+      writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForField });
       const afterError = readPersistenceError();
       if (errorSignatureChanged(beforeError, afterError)) {
         const message = afterError?.message || 'storage-setItem-failed';
@@ -530,38 +528,44 @@ export function createSpellingPersistence({ repositories, now } = {}) {
         if (parsed.type === 'prefs') return { ...current, prefs: {} };
         if (parsed.type === 'progress') return { ...current, progress: {} };
         if (parsed.type === 'guardian') return { ...current, guardian: {} };
+        // P2 U11: pattern sibling is clearable through removeItem so
+        // resetLearner and explicit clear paths work symmetrically with the
+        // guardian + progress siblings. (Unlike postMega, pattern.wobbling is
+        // not sticky.)
+        if (parsed.type === 'pattern') {
+          return { ...current, pattern: { wobbling: {} } };
+        }
+        // P2 U9: persistenceWarning can be removed via `resetLearner` (below)
+        // which clears the whole bundle. A direct removeItem on this key is
+        // also honoured — strip the sibling from the normalised bundle. No
+        // sticky-lock constraint applies (the record is overwritable anyway).
+        if (parsed.type === 'persistenceWarning') {
+          const next = { ...current };
+          delete next.persistenceWarning;
+          return next;
+        }
+        // P2 U12: achievements can ONLY be cleared through `resetLearner`
+        // (which goes through writeSpellingData with an empty bundle). A
+        // direct removeItem here is a deliberate reset signal (e.g. admin-ops
+        // tool) — strip the sibling. Unlocks are otherwise append-only; the
+        // setItem path above enforces INSERT-OR-IGNORE so no path outside of
+        // remove / reset can mutate an unlocked id.
+        if (parsed.type === 'achievements') {
+          const next = { ...current };
+          delete next.achievements;
+          return next;
+        }
         return current;
       };
-      if (parsed.type === 'prefs' || parsed.type === 'progress' || parsed.type === 'guardian') {
-        writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForFieldRemoval });
-      }
-      // P2 U11: pattern sibling is clearable through removeItem so
-      // resetLearner and explicit clear paths work symmetrically with the
-      // guardian + progress siblings. (Unlike postMega, pattern.wobbling is
-      // not sticky.)
-      if (parsed.type === 'pattern') {
-        writeSpellingData(repositories, parsed.learnerId, { ...current, pattern: { wobbling: {} } }, day);
-      }
-      // P2 U9: persistenceWarning can be removed via `resetLearner` (below)
-      // which clears the whole bundle. A direct removeItem on this key is
-      // also honoured — strip the sibling from the normalised bundle. No
-      // sticky-lock constraint applies (the record is overwritable anyway).
-      if (parsed.type === 'persistenceWarning') {
-        const next = { ...current };
-        delete next.persistenceWarning;
-        writeSpellingData(repositories, parsed.learnerId, next, day);
-      }
-      // P2 U12: achievements can ONLY be cleared through `resetLearner`
-      // (which goes through writeSpellingData with an empty bundle). A
-      // direct removeItem here is a deliberate reset signal (e.g. admin-ops
-      // tool) — strip the sibling. Unlocks are otherwise append-only; the
-      // setItem path above enforces INSERT-OR-IGNORE so no path outside of
-      // remove / reset can mutate an unlocked id.
-      if (parsed.type === 'achievements') {
-        const next = { ...current };
-        delete next.achievements;
-        writeSpellingData(repositories, parsed.learnerId, next, day);
-      }
+      // U1 fix (Cluster A): all removable sibling types now route through a
+      // single CAS-aware call. Previously pattern / persistenceWarning /
+      // achievements had inline writers referencing an out-of-scope
+      // `current` binding, which threw `ReferenceError` on every
+      // invocation. Folding them into `projectForFieldRemoval` re-reads
+      // `current` inside the callback on each retry. postMega is
+      // intentionally absent here — it is sticky by contract and can only
+      // be cleared via `resetLearner` below.
+      writeSpellingData(repositories, parsed.learnerId, null, day, { project: projectForFieldRemoval });
       // P2 U2: postMega cannot be removed through this path — sticky is
       // permanent by contract. `resetLearner` (below) is the only surface
       // that clears postMega, and it goes through writeSpellingData with an
