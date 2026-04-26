@@ -266,6 +266,35 @@ function assertAchievementsInvariant(currentAchievements, runningSeenUnlocks, co
   }
 }
 
+// P2 U12 progress-monotonic invariant. The `_progress:guardian:days.days` and
+// `_progress:recovery:slugs.slugs` arrays in the achievements sibling must
+// never shrink across actions — each aggregate counter grows monotonically
+// as new Guardian / Recovery events land. A regression that INSERT-OR-IGNORE-
+// merged progress rows (reviewer reproduction: 8 consecutive Guardian
+// missions persisted `{days: [lastDay]}` length 1) would trip the length
+// comparison below within the first few mission-completed actions.
+function readProgressLengths(currentAchievements) {
+  const days = currentAchievements?.['_progress:guardian:days']?.days;
+  const slugs = currentAchievements?.['_progress:recovery:slugs']?.slugs;
+  return {
+    daysLen: Array.isArray(days) ? days.length : 0,
+    slugsLen: Array.isArray(slugs) ? slugs.length : 0,
+  };
+}
+
+function assertProgressMonotonicInvariant(currentAchievements, prior, context) {
+  const now = readProgressLengths(currentAchievements);
+  assert.ok(
+    now.daysLen >= prior.daysLen,
+    `${context}: _progress:guardian:days.days.length regressed (${prior.daysLen} -> ${now.daysLen}) — progress-monotonic invariant violated`,
+  );
+  assert.ok(
+    now.slugsLen >= prior.slugsLen,
+    `${context}: _progress:recovery:slugs.slugs.length regressed (${prior.slugsLen} -> ${now.slugsLen}) — progress-monotonic invariant violated`,
+  );
+  return now;
+}
+
 // -----------------------------------------------------------------------------
 // Action executor. Given the running state (which carries the current session
 // if one is open), apply one action and return the new state. Unresolvable
@@ -648,6 +677,11 @@ function runSequence(harness, actions, { label } = {}) {
   // across subsequent actions. Progress keys (`_progress:*`) are excluded
   // from the assertion — those are cumulative aggregate state.
   const runningSeenUnlocks = new Map();
+  // P2 U12 progress-monotonic: track the max-seen length of each aggregate
+  // progress key so a subsequent action cannot shrink it. Captures the
+  // reviewer's repro where INSERT-OR-IGNORE merged progress keys collapsed
+  // 8 distinct-day writes back to `{days: [lastDay]}` length 1.
+  let priorProgressLengths = { daysLen: 0, slugsLen: 0 };
   for (let i = 0; i < actions.length; i += 1) {
     const action = actions[i];
     const context = `${label || 'sequence'} step=${i + 1}/${actions.length} action='${action}'`;
@@ -680,6 +714,13 @@ function runSequence(harness, actions, { label } = {}) {
         runningSeenUnlocks.set(id, record);
       }
     }
+    // P2 U12 progress-monotonic: after every action, neither
+    // `_progress:guardian:days` nor `_progress:recovery:slugs` may shrink.
+    priorProgressLengths = assertProgressMonotonicInvariant(
+      currentAchievements,
+      priorProgressLengths,
+      context,
+    );
   }
   return { state, events: emitted };
 }

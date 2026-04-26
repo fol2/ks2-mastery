@@ -361,19 +361,38 @@ export function createSpellingPersistence({ repositories, now } = {}) {
         }, day);
       }
       if (parsed.type === 'achievements') {
-        // P2 U12 H4 mitigation — INSERT-OR-IGNORE at the persistence layer.
-        // Merge the incoming achievement map with the current persisted map,
-        // but preserve any id that is ALREADY set. Re-read inside this
-        // critical section so a concurrent second-unlock dispatch with stale
-        // currentAchievements cannot overwrite an original `unlockedAt`
-        // (sticky contract — once unlocked, never changes). The write is
-        // idempotent: writing the same value for an already-set id is a
-        // no-op in merged shape.
+        // P2 U12 H4 mitigation — INSERT-OR-IGNORE for UNLOCK rows, MONOTONIC
+        // accept-incoming for PROGRESS rows.
+        //
+        // Achievements-map entries are polymorphic:
+        //   1. Unlock rows (`achievement:...` ids) are STICKY: once
+        //      `unlockedAt` is set, it must never change. A concurrent
+        //      second-unlock dispatch with stale currentAchievements could
+        //      otherwise overwrite the original timestamp — we preserve the
+        //      existing row by skipping merge when one is already present.
+        //   2. Progress rows (`_progress:*` ids) are MONOTONIC aggregate
+        //      counters (days set, slugs set, pattern completions). The
+        //      incoming value is the freshly computed superset of prior
+        //      state; retaining the existing value would drop every day
+        //      beyond the most recent and Guardian 7-day would NEVER fire
+        //      through `data.achievements` (reviewer reproduction: 8 missions
+        //      on 8 days -> persisted `{days: [lastDay]}` length 1).
+        //
+        // The branch below distinguishes the two shapes and applies the
+        // correct merge semantics per row.
         const incoming = parseStoredJson(value, {});
         const existing = current.achievements || {};
         const merged = { ...incoming };
         for (const [id, record] of Object.entries(existing)) {
-          // Keep original unlockedAt for any id that was already set.
+          if (typeof id !== 'string' || !id) continue;
+          if (id.startsWith('_progress:')) {
+            // Progress rows: accept incoming (freshly computed monotonic
+            // state is always a superset of prior state because the
+            // aggregate sets / arrays only ever add). Keep incoming; DO
+            // NOT overwrite with existing — that would lose accumulation.
+            continue;
+          }
+          // Unlock rows: retain existing (sticky unlockedAt).
           merged[id] = record;
         }
         writeSpellingData(repositories, parsed.learnerId, {

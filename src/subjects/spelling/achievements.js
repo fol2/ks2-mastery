@@ -323,7 +323,16 @@ function evaluateBossCleanSweepOnBossCompleted({ domainEvent, currentAchievement
   if (!Number.isFinite(correct) || !Number.isFinite(length) || length <= 0) return [];
   // 10/10 — every round word landed.
   if (correct !== length) return [];
-  const sessionId = typeof domainEvent.sessionId === 'string' ? domainEvent.sessionId : null;
+  // P2 U12 LOW (u12-adv-04): reject when sessionId is null / empty.
+  // `deriveAchievementId` would otherwise fall back to the literal 'session'
+  // segment and collapse every session-less Boss round into a single shared
+  // unlock row (first one wins; subsequent 10/10 sweeps silently drop
+  // because `currentAchievements[id]` already set). Keep the row valid by
+  // requiring a real sessionId.
+  const sessionId = typeof domainEvent.sessionId === 'string' && domainEvent.sessionId
+    ? domainEvent.sessionId
+    : null;
+  if (!sessionId) return [];
   const id = deriveAchievementId(ACHIEVEMENT_IDS.BOSS_CLEAN_SWEEP, { learnerId, sessionId });
   if (currentAchievements[id]) return [];
   return [newUnlock(id, domainEvent.createdAt, ACHIEVEMENT_IDS.BOSS_CLEAN_SWEEP, { sessionId })];
@@ -352,9 +361,15 @@ function evaluatePatternMasteryOnPatternQuest({ domainEvent, currentAchievements
   // `correctCount === 5`, matching the Pattern Quest round length).
   const allPerfect = prior.every((entry) => Number(entry.correctCount) === 5);
   if (!allPerfect) return [];
-  // Span from first to last must be >= 7 days.
-  const firstMs = Number(prior[0].createdAt);
-  const lastMs = Number(prior[prior.length - 1].createdAt);
+  // P2 U12 LOW (u12-adv-03): sort by `createdAt` before extracting first/last
+  // so arrival order doesn't mask a 7-day chronological span. A learner who
+  // completes 3 quests out of chronological order (remote-sync catch-up,
+  // clock-adjustment, replay) would otherwise trip the 7-day gate with
+  // `prior[0].createdAt > prior[last].createdAt`, producing a negative span
+  // and NEVER unlocking despite qualifying chronologically.
+  const sorted = [...prior].sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
+  const firstMs = Number(sorted[0].createdAt);
+  const lastMs = Number(sorted[sorted.length - 1].createdAt);
   if (!Number.isFinite(firstMs) || !Number.isFinite(lastMs)) return [];
   const spanDays = Math.floor((lastMs - firstMs) / DAY_MS);
   if (spanDays < PATTERN_MASTERY_SPAN_DAYS) return [];

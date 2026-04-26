@@ -283,14 +283,24 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
           }, resolveNow());
         }
         if (parsed.type === 'achievements') {
-          // P2 U12 H4: INSERT-OR-IGNORE — preserve any id already set. The
-          // merge below mirrors the client repository's critical-section
-          // guard so the Worker twin cannot overwrite an original
-          // `unlockedAt` on a stale-state concurrent submit.
+          // P2 U12 H4: INSERT-OR-IGNORE for UNLOCK rows, MONOTONIC
+          // accept-incoming for PROGRESS rows. Mirrors the client repository
+          // semantics — unlock rows are sticky (preserve existing
+          // `unlockedAt`); `_progress:*` rows are monotonic aggregate
+          // counters (accept the freshly computed superset). Without this
+          // split, the Worker twin persists `{days: [lastDay]}` on every
+          // write and Guardian 7-day never unlocks via `data.achievements`.
           const incoming = parseStoredJson(value, {});
           const existing = nextData.achievements || {};
           const merged = { ...incoming };
           for (const [id, record] of Object.entries(existing)) {
+            if (typeof id !== 'string' || !id) continue;
+            if (id.startsWith('_progress:')) {
+              // Progress rows: accept incoming monotonic state; do NOT
+              // overwrite with existing — that would drop accumulation.
+              continue;
+            }
+            // Unlock rows: sticky — retain existing `unlockedAt`.
             merged[id] = record;
           }
           nextData = normaliseServerSpellingData({
