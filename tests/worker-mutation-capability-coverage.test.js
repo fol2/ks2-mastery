@@ -44,6 +44,13 @@ const ALLOWLIST = [
   ['POST', 'oauthCallback', 'OAuth callback is completed before any session exists'],
   ['GET', 'oauthCallback', 'OAuth callback is completed before any session exists'],
   ['POST', "'/api/ops/error-event'", 'Public client-error ingest; authenticated state not required'],
+  // Rebase (main > Phase D): capacity U7 introduced `POST /api/bootstrap` as
+  // a READ bootstrap variant (lastKnownRevision / preferredLearnerId go in
+  // the body, no state mutation, no mutation receipt). The sibling
+  // `GET /api/bootstrap` is not a POST and therefore never reached the
+  // scanner. Exempting the POST variant keeps the coverage test honest
+  // while preserving U7's notModified fast-path.
+  ['POST', "'/api/bootstrap'", 'bootstrap POST is a read variant (body-carried lastKnownRevision); no mutation'],
 ];
 
 // Adapter: convert the legacy `[method, substring, reason]` shape into the
