@@ -59,7 +59,7 @@ The first valid learning evidence on any Grammar monster triggers Egg found (`ca
 
 ### 5. Mega requires retention evidence
 
-100 Stars is only reachable when every assigned concept has earned the `retainedAfterSecure` tier (60% of each concept's Star budget). Secure confidence alone caps at approximately 40% of the budget. A monster cannot reach Mega without every concept demonstrating retention beyond initial secure status.
+100 Stars is only reachable when every assigned concept has earned the `retainedAfterSecure` tier (60% of each concept's Star budget). Secure confidence alone caps at exactly 40% (5% + 10% + 10% + 15%) of the budget. A monster cannot reach Mega without every concept demonstrating retention beyond initial secure status.
 
 **Why:** R5 (Mega is mastery, not just secure). The current system conflates secure with Mega for small-denominator monsters. Phase 5 separates them: secure is necessary but not sufficient. Retention evidence proves the learner can recall under spaced review, not just in the session where they first secured.
 

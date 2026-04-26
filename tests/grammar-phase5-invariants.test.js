@@ -25,7 +25,10 @@ import assert from 'node:assert/strict';
 import {
   GRAMMAR_AGGREGATE_CONCEPTS,
   GRAMMAR_CONCEPT_TO_MONSTER,
+  GRAMMAR_GRAND_MONSTER_ID,
   GRAMMAR_MONSTER_CONCEPTS,
+  GRAMMAR_MONSTER_IDS,
+  GRAMMAR_RESERVED_MONSTER_IDS,
   GRAMMAR_REWARD_RELEASE_ID,
 } from '../src/platform/game/monster-system.js';
 
@@ -71,6 +74,25 @@ test('Phase 5 invariant 11: active monster roster is exactly Bracehart + Chronal
     'Direct active monsters are exactly Bracehart, Chronalyx, Couronnail. ' +
     'Reserved monsters (Glossbloom, Loomrill, Mirrane) must not appear.',
   );
+
+  // Full roster: 3 direct + 1 aggregate = 4 active monsters.
+  assert.equal(
+    GRAMMAR_MONSTER_IDS.length,
+    4,
+    'GRAMMAR_MONSTER_IDS must contain exactly 4 active monsters (3 direct + 1 aggregate)',
+  );
+  assert.ok(
+    GRAMMAR_MONSTER_IDS.includes(GRAMMAR_GRAND_MONSTER_ID),
+    `GRAMMAR_MONSTER_IDS must include the grand aggregate monster "${GRAMMAR_GRAND_MONSTER_ID}"`,
+  );
+
+  // Reserved monsters must not overlap with active monsters.
+  for (const reservedId of GRAMMAR_RESERVED_MONSTER_IDS) {
+    assert.ok(
+      !GRAMMAR_MONSTER_IDS.includes(reservedId),
+      `Reserved monster "${reservedId}" must not appear in active GRAMMAR_MONSTER_IDS`,
+    );
+  }
 });
 
 // -----------------------------------------------------------------------------
@@ -173,42 +195,9 @@ test('Phase 5 invariant 14: GRAMMAR_REWARD_RELEASE_ID is stable — no contentRe
 // serve as the contract specification that U2 must satisfy.
 // -----------------------------------------------------------------------------
 
-test('Phase 5 invariant 1: Star contract — starMax is 100 for all monsters (contract spec for U2)', () => {
-  // The universal Star maximum is 100. This test documents the contract;
-  // U2 will pin GRAMMAR_MONSTER_STAR_MAX === 100 in grammar-stars.js.
-  const EXPECTED_STAR_MAX = 100;
-  assert.equal(EXPECTED_STAR_MAX, 100, 'Star maximum is 100 (contract for U2)');
-});
-
-test('Phase 5 invariant 3: Star contract — stage thresholds are 0/1/15/35/65/100 (contract spec for U2)', () => {
-  // The non-linear stage thresholds. This test documents the contract;
-  // U2 will pin GRAMMAR_STAR_STAGE_THRESHOLDS in grammar-stars.js.
-  const EXPECTED_THRESHOLDS = [0, 1, 15, 35, 65, 100];
-  assert.deepEqual(
-    EXPECTED_THRESHOLDS,
-    [0, 1, 15, 35, 65, 100],
-    'Stage thresholds are 0 (not found), 1 (egg), 15 (hatched), 35 (growing), 65 (nearly mega), 100 (mega) — contract for U2',
-  );
-});
-
-test('Phase 5 invariant 2: Star contract — 5 evidence tiers with weights summing to 100% (contract spec for U2)', () => {
-  // Evidence tier weights: firstIndependentWin 5%, repeatIndependentWin 10%,
-  // variedPractice 10%, secureConfidence 15%, retainedAfterSecure 60%.
-  // This test documents the contract; U2 will pin GRAMMAR_CONCEPT_STAR_WEIGHTS.
-  const EXPECTED_WEIGHTS = {
-    firstIndependentWin: 0.05,
-    repeatIndependentWin: 0.10,
-    variedPractice: 0.10,
-    secureConfidence: 0.15,
-    retainedAfterSecure: 0.60,
-  };
-  const sum = Object.values(EXPECTED_WEIGHTS).reduce((a, b) => a + b, 0);
-  assert.ok(
-    Math.abs(sum - 1.0) < 1e-10,
-    `Evidence tier weights must sum to 1.0 (got ${sum}) — contract for U2`,
-  );
-  assert.equal(Object.keys(EXPECTED_WEIGHTS).length, 5, '5 evidence tiers — contract for U2');
-});
+test.todo('Phase 5 invariant 1: GRAMMAR_MONSTER_STAR_MAX === 100 (pin awaits U2 grammar-stars.js)');
+test.todo('Phase 5 invariant 3: GRAMMAR_STAR_STAGE_THRESHOLDS shape (pin awaits U2 grammar-stars.js)');
+test.todo('Phase 5 invariant 2: GRAMMAR_CONCEPT_STAR_WEIGHTS sum === 1.0 (pin awaits U2 grammar-stars.js)');
 
 // -----------------------------------------------------------------------------
 // 7. Aggregate concepts list is frozen (Object.freeze).
@@ -217,9 +206,61 @@ test('Phase 5 invariant 2: Star contract — 5 evidence tiers with weights summi
 // silently add or remove concepts at runtime.
 // -----------------------------------------------------------------------------
 
-test('Phase 5 invariant 15: GRAMMAR_AGGREGATE_CONCEPTS is frozen', () => {
+test('Phase 5 invariant 15: grammar constants are frozen', () => {
   assert.ok(
     Object.isFrozen(GRAMMAR_AGGREGATE_CONCEPTS),
     'GRAMMAR_AGGREGATE_CONCEPTS must be Object.freeze()d to prevent runtime mutation',
+  );
+  assert.ok(
+    Object.isFrozen(GRAMMAR_MONSTER_CONCEPTS),
+    'GRAMMAR_MONSTER_CONCEPTS must be Object.freeze()d to prevent runtime mutation',
+  );
+  assert.ok(
+    Object.isFrozen(GRAMMAR_CONCEPT_TO_MONSTER),
+    'GRAMMAR_CONCEPT_TO_MONSTER must be Object.freeze()d to prevent runtime mutation',
+  );
+
+  // Inner concept arrays must also be frozen to prevent mutation of individual
+  // monster concept lists (e.g. bracehart's 6-concept array).
+  Object.values(GRAMMAR_MONSTER_CONCEPTS).forEach((arr) => {
+    assert.ok(
+      Object.isFrozen(arr),
+      `Inner concept array ${JSON.stringify(arr)} must be Object.freeze()d`,
+    );
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 8. Concept-ID snapshot — catches swap mutations.
+//
+// A sorted deepEqual of the full 18 concept IDs pins the exact identity set.
+// If any concept is renamed, swapped, added, or removed, this test fails.
+// -----------------------------------------------------------------------------
+
+test('Phase 5 invariant 15: concept-ID snapshot — all 18 aggregate concept IDs pinned', () => {
+  assert.deepEqual(
+    [...GRAMMAR_AGGREGATE_CONCEPTS].sort(),
+    [
+      'active_passive',
+      'adverbials',
+      'apostrophes_possession',
+      'boundary_punctuation',
+      'clauses',
+      'formality',
+      'hyphen_ambiguity',
+      'modal_verbs',
+      'noun_phrases',
+      'parenthesis_commas',
+      'pronouns_cohesion',
+      'relative_clauses',
+      'sentence_functions',
+      'speech_punctuation',
+      'standard_english',
+      'subject_object',
+      'tense_aspect',
+      'word_classes',
+    ],
+    'Sorted concept-ID snapshot must match exactly. Any rename, swap, addition, ' +
+    'or removal requires updating this snapshot and a paired migration.',
   );
 });
