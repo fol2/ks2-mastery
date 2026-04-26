@@ -458,6 +458,11 @@ test('button labels: every statically extractable label is classified', () => {
     // "Hide" for child-friendly copy, "Delete permanently" to emphasise
     // the irreversible step gated behind a confirm dialog.
     'Hide from my list',
+    // U10 follower (HIGH 2): reverse-toggle control on the collapsed
+    // Hidden section. KS2-friendly copy ("Show again") paired with the
+    // existing "Hide from my list" to give the child a symmetric
+    // reverse affordance.
+    'Show again',
     'Archive',
     'Delete permanently',
     // Pre-existing branch-base labels that the scanner now reports. They

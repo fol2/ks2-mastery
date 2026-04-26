@@ -323,3 +323,133 @@ test('U10 non-scored invariant: archive + delete events never consume reward typ
       'every audit event must carry nonScored: true');
   }
 });
+
+// U10 follower (deferred MEDIUM — bounded): archive is capped at 100
+// entries per learner. The 101st archive must reject with
+// `archive_cap_exceeded`. Mirrors `prefs.transferHiddenPromptIds:
+// cap 40` philosophy — bounded, explicit, and surfaced to the admin
+// so they know to clean up before adding more.
+test('U10 deferred MEDIUM: archive cap rejects the 101st archive with archive_cap_exceeded', () => {
+  const state = createInitialGrammarState();
+  // Seed 100 archived entries directly.
+  for (let index = 0; index < 100; index += 1) {
+    state.transferEvidenceArchive[`archived-${index}`] = {
+      promptId: `archived-${index}`,
+      latest: {
+        source: 'transfer-lane',
+        writing: `archived draft ${index}`,
+        selfAssessment: [],
+        savedAt: 1_777_000_000_000 + index,
+      },
+      history: [],
+      updatedAt: 1_777_000_000_000 + index,
+      archivedAt: 1_777_000_000_000 + index,
+    };
+  }
+  // Live entry to be archived.
+  state.transferEvidence['cap-target'] = {
+    promptId: 'cap-target',
+    latest: {
+      source: 'transfer-lane',
+      writing: 'draft that would push the archive above the cap',
+      selfAssessment: [],
+      savedAt: 1_777_000_000_500,
+    },
+    history: [],
+    updatedAt: 1_777_000_000_500,
+  };
+  assert.throws(
+    () => archiveGrammarTransferEvidenceState(state, {
+      promptId: 'cap-target',
+      learnerId: 'learner-cap',
+      requestId: 'tx-cap-exceed',
+      now: 1_777_000_000_600,
+    }),
+    (error) => error?.extra?.code === 'archive_cap_exceeded' && error?.extra?.cap === 100,
+    'archive beyond the cap must raise archive_cap_exceeded',
+  );
+  // Live entry must still exist — rejection must NOT clobber anything.
+  assert.ok(state.transferEvidence['cap-target'],
+    'live entry must remain after archive_cap_exceeded rejection');
+});
+
+// U10 follower (HIGH 1 regression lock): re-archive must reject when an
+// archived entry already exists. Sequence: admin archives P → learner
+// re-saves P → admin re-archives P. Without the guard the second
+// archive silently clobbers the first. With the guard it raises
+// `archive_slot_occupied` and the admin must delete the archived entry
+// first before re-archiving.
+test('U10 HIGH 1: re-archive rejects with archive_slot_occupied when slot is already occupied', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const promptId = GRAMMAR_TRANSFER_PROMPT_IDS[0];
+  const learnerId = 'learner-reclobber';
+
+  // 1) seed + archive the first draft
+  const firstSave = seedEvidence(engine, learnerId, promptId, 'First draft to be archived.');
+  let state = cloneDeep(firstSave.state);
+  archiveGrammarTransferEvidenceState(state, {
+    promptId,
+    learnerId,
+    requestId: 'tx-archive-first',
+    now: 1_777_000_000_100,
+  });
+  assert.equal(state.transferEvidenceArchive[promptId].latest.writing, 'First draft to be archived.');
+
+  // 2) learner re-saves P on top of the empty live slot
+  const secondSave = engine.apply({
+    learnerId,
+    subjectRecord: { data: { ...state } },
+    command: 'save-transfer-evidence',
+    requestId: 'tx-resave',
+    payload: {
+      promptId,
+      writing: 'Second draft that must never clobber the archived original.',
+      selfAssessment: [],
+    },
+  });
+  state = cloneDeep(secondSave.state);
+
+  // 3) admin re-archives — must be rejected with archive_slot_occupied
+  assert.throws(
+    () => archiveGrammarTransferEvidenceState(state, {
+      promptId,
+      learnerId,
+      requestId: 'tx-archive-second',
+      now: 1_777_000_000_300,
+    }),
+    (error) => error?.extra?.code === 'archive_slot_occupied',
+    'second archive on an occupied slot must raise archive_slot_occupied',
+  );
+  // Archive slot still holds the FIRST archived draft — untouched.
+  assert.equal(
+    state.transferEvidenceArchive[promptId].latest.writing,
+    'First draft to be archived.',
+    'archived entry must remain the first draft after the rejection',
+  );
+  // The live evidence is still the learner's second save — untouched.
+  assert.equal(
+    state.transferEvidence[promptId].latest.writing,
+    'Second draft that must never clobber the archived original.',
+    'live evidence must remain the learner\'s second save after the rejection',
+  );
+
+  // 4) after an explicit delete on the archived entry, re-archive succeeds
+  deleteGrammarTransferEvidenceState(state, {
+    promptId,
+    learnerId,
+    requestId: 'tx-delete-first-archive',
+    now: 1_777_000_000_400,
+  });
+  assert.equal(state.transferEvidenceArchive[promptId], undefined);
+  archiveGrammarTransferEvidenceState(state, {
+    promptId,
+    learnerId,
+    requestId: 'tx-archive-after-delete',
+    now: 1_777_000_000_500,
+  });
+  assert.equal(
+    state.transferEvidenceArchive[promptId].latest.writing,
+    'Second draft that must never clobber the archived original.',
+    'after delete, the admin can re-archive the learner\'s second draft',
+  );
+});

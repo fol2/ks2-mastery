@@ -289,3 +289,56 @@ test('U10: cloneDeep helper used in other Phase 4 tests stays stable with the ne
   assert.deepEqual(initial.prefs.transferHiddenPromptIds, [],
     'cloneDeep must not alias the original hidden list');
 });
+
+// U10 follower (HIGH 2 regression lock): the child MUST be able to
+// reverse a hide. `grammar-toggle-transfer-hidden` with `hidden: false`
+// removes the id from `prefs.transferHiddenPromptIds`. The existing
+// scene dispatched only `hidden: true`; the follower adds a paired
+// "Show again" control wired to `hidden: false`. The test below covers
+// the contract end-to-end at the engine layer — add, then remove, the
+// id via the same dispatcher path.
+test('U10 HIGH 2: child can reverse a hide via hidden:false (save-prefs)', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const orphanId = 'retired-prompt-alpha';
+  // 1) add to the hidden list
+  const hidden = engine.apply({
+    learnerId: 'learner-unhide-1',
+    subjectRecord: {},
+    command: 'save-prefs',
+    requestId: 'tx-unhide-1-hide',
+    payload: { prefs: { transferHiddenPromptIds: [orphanId] } },
+  });
+  assert.deepEqual(hidden.state.prefs.transferHiddenPromptIds, [orphanId]);
+  // 2) reverse by writing a list that drops the id (what `hidden: false`
+  //    produces in module.js:715 — `currentList.filter(...)`)
+  const shown = engine.apply({
+    learnerId: 'learner-unhide-1',
+    subjectRecord: { ui: hidden.state, data: hidden.data },
+    command: 'save-prefs',
+    requestId: 'tx-unhide-1-show',
+    payload: { prefs: { transferHiddenPromptIds: [] } },
+  });
+  assert.deepEqual(shown.state.prefs.transferHiddenPromptIds, [],
+    'unhide must remove the id from the hidden list');
+});
+
+test('U10 HIGH 2: partial unhide leaves other hidden entries intact', () => {
+  // Three orphans hidden; unhiding one must not mass-unhide.
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const hidden = engine.apply({
+    learnerId: 'learner-unhide-2',
+    subjectRecord: {},
+    command: 'save-prefs',
+    requestId: 'tx-unhide-2-seed',
+    payload: { prefs: { transferHiddenPromptIds: ['a', 'b', 'c'] } },
+  });
+  const partial = engine.apply({
+    learnerId: 'learner-unhide-2',
+    subjectRecord: { ui: hidden.state, data: hidden.data },
+    command: 'save-prefs',
+    requestId: 'tx-unhide-2-partial',
+    payload: { prefs: { transferHiddenPromptIds: ['a', 'c'] } },
+  });
+  assert.deepEqual(partial.state.prefs.transferHiddenPromptIds, ['a', 'c'],
+    'only the targeted id must be removed from the hidden list');
+});

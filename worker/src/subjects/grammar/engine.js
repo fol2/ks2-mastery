@@ -1716,6 +1716,18 @@ function submitAnswer(state, payload, command, nowTs) {
 // time as the catalogue churns). Excess ids are dropped on write.
 const GRAMMAR_TRANSFER_HIDDEN_PROMPTS_CAP = 40;
 
+// U10 follower (deferred MEDIUM — bounded): cap on the number of
+// archived Writing Try entries per learner. Unbounded growth was the
+// reviewer concern. Picked 100 to mirror the `prefs.transferHiddenPromptIds:
+// cap 40` philosophy (2.5× the max-live cap so long-running accounts
+// still accumulate generous history) while still bounded. When an
+// admin tries to archive into a slot that would push the archive
+// count above the cap, the pure helper raises
+// `archive_cap_exceeded` with the cap value in the error payload.
+// The admin must delete an existing archived entry before archiving
+// another.
+const GRAMMAR_TRANSFER_ARCHIVE_CAP = 100;
+
 function normaliseTransferHiddenPromptIds(value, fallback) {
   const raw = Array.isArray(value) ? value : [];
   const seen = new Set();
@@ -1898,6 +1910,35 @@ export function archiveGrammarTransferEvidenceState(state, {
       code: 'transfer_evidence_not_found',
       subjectId: SUBJECT_ID,
       promptId,
+    });
+  }
+  // U10 follower (HIGH 1): reject re-archive when the archive slot is
+  // already occupied. Without this guard the sequence archive P → learner
+  // re-saves P → admin re-archives P silently clobbers the first archive.
+  // The admin must explicitly delete the existing archive first — this
+  // matches the two-step-delete mental model and preserves forensic
+  // evidence. Alternative considered: merge into a `history` array, but
+  // REJECT is safer (explicit admin intent required before destructive
+  // overwrite). Error code is `archive_slot_occupied`.
+  const existingArchive = state.transferEvidenceArchive[promptId];
+  if (isPlainObject(existingArchive)) {
+    throw new BadRequestError('An archived Writing Try entry already exists for that prompt. Delete the archived entry first.', {
+      code: 'archive_slot_occupied',
+      subjectId: SUBJECT_ID,
+      promptId,
+    });
+  }
+  // U10 follower (deferred MEDIUM — bounded): reject when the archive
+  // already holds the cap number of entries. This bounds the growth
+  // of `transferEvidenceArchive` per learner so a long-running admin
+  // account cannot inflate the state row without bound.
+  const archiveKeys = Object.keys(state.transferEvidenceArchive);
+  if (archiveKeys.length >= GRAMMAR_TRANSFER_ARCHIVE_CAP) {
+    throw new BadRequestError('The Writing Try archive is full. Delete an archived entry before archiving another.', {
+      code: 'archive_cap_exceeded',
+      subjectId: SUBJECT_ID,
+      promptId,
+      cap: GRAMMAR_TRANSFER_ARCHIVE_CAP,
     });
   }
   const nowTs = timestamp(now);

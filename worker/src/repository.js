@@ -977,6 +977,22 @@ function requireMonsterVisualConfigManager(account) {
   }
 }
 
+// U10 follower (MEDIUM — admin-only policy lock): the Grammar Writing
+// Try archive + hard-delete routes are destructive data mutations. The
+// reviewer convergence chose the stricter gate (admin only, ops 403)
+// rather than `requireAdminHubAccess` which grants ops through. Mirrors
+// `requireMonsterVisualConfigManager` and emits a dedicated error code
+// (`grammar_transfer_admin_forbidden`) so the security test can lock
+// the exact policy string.
+function requireGrammarTransferAdmin(account) {
+  if (accountType(account) === 'demo' || accountPlatformRole(account) !== 'admin') {
+    throw new ForbiddenError('Grammar Writing Try archive and delete require an admin account.', {
+      code: 'grammar_transfer_admin_forbidden',
+      required: 'platform-role-admin',
+    });
+  }
+}
+
 function requireSubjectContentExportAccess(account) {
   if (!canViewAdminHub({ platformRole: accountPlatformRole(account) })) {
     throw new ForbiddenError('Spelling content export requires an admin or operations account.', {
@@ -3789,11 +3805,28 @@ async function runAdminGrammarTransferMutation(db, {
   assertAdminGrammarTransferInputs(learnerId, promptId);
 
   // Role gate. `assertAdminHubAccess` rejects demo accounts and any
-  // platformRole outside admin/ops; the payload is never inspected. This
-  // is the ONLY source of truth for the admin role on this path — the
-  // client-supplied body is discarded by the app.js handler, so spoofing
-  // `command.payload.actor.role` has no effect.
+  // platformRole outside admin/ops; then `requireGrammarTransferAdmin`
+  // narrows to admin-only (ops receives 403 `grammar_transfer_admin_
+  // forbidden`). The U10 follower MEDIUM chose admin-only because
+  // destructive data mutations warrant the tightest gate. The payload
+  // is never inspected — the client-supplied body is discarded by the
+  // app.js handler, so spoofing `command.payload.actor.role` has no
+  // effect.
+  //
+  // TODO (U10 follower — deferred MEDIUM, IDOR): no per-family
+  // membership check today. A platform-admin can archive / delete any
+  // learner's Writing Try evidence regardless of their
+  // `account_learner_memberships`. This matches the current single-
+  // family deployment where a platform-admin is implicitly trusted
+  // across every learner. If the product ships multi-family
+  // deployments, add a per-family scope here using
+  // `canViewLearnerDiagnostics` (src/platform/access/roles.js:28-31)
+  // OR a dedicated `requireLearnerFamilyMembership(db, adminId,
+  // learnerId)` primitive. Tracked as follow-up work; not blocking
+  // Phase 4 because the platform is single-family and the admin-only
+  // gate is already narrower than the admin-hub gate.
   const actor = await assertAdminHubActor(db, actorAccountId);
+  requireGrammarTransferAdmin(actor);
 
   const scopeId = `${scopeType}:${learnerId}:${promptId}`;
   const { requestId, correlationId } = normaliseMutationEnvelope(mutation, {
@@ -3829,6 +3862,31 @@ async function runAdminGrammarTransferMutation(db, {
     };
   }
 
+  // U10 follower (HIGH 3): read the learner's `state_revision` up front
+  // so the subject-state UPDATE can CAS against it. A concurrent learner
+  // save races the admin archive; without this guard the admin UPDATE
+  // would silently overwrite the learner's in-flight save. The guard is
+  // the same `learner_profiles.state_revision` primitive the learner
+  // command path uses (runSubjectCommandMutation + guardedValueSource).
+  const learnerRow = await first(
+    db,
+    'SELECT id, state_revision FROM learner_profiles WHERE id = ?',
+    [learnerId],
+  );
+  if (!learnerRow) {
+    // Preserve the pre-follower error code — the security-contract test
+    // asserts `grammar_state_not_found` for an unknown learner. We use
+    // the Grammar-flavoured code because the route namespace is the
+    // admin-grammar path; the learner is missing, which in practice is
+    // indistinguishable from "no grammar subject state" for this
+    // endpoint.
+    throw new NotFoundError('Grammar subject state not found for this learner.', {
+      code: 'grammar_state_not_found',
+      learnerId,
+    });
+  }
+  const learnerExpectedRevision = Number(learnerRow.state_revision) || 0;
+
   // Load the learner's Grammar subject state. Admin paths must not
   // auto-create the row — an admin action on a learner with no Grammar
   // evidence is always a lookup error.
@@ -3843,8 +3901,9 @@ async function runAdminGrammarTransferMutation(db, {
   // Run the pure engine helper against a normalised state. The engine's
   // normaliser defaults `transferEvidence` / `transferEvidenceArchive` to
   // `{}`, so pre-U10 rows without the archive slot are handled safely.
-  // The pure helper throws on "archive required" / "entry not found" with
-  // a stable error code; we let the error bubble up to the HTTP handler.
+  // The pure helper throws on "archive required" / "entry not found" /
+  // "archive_slot_occupied" with a stable error code; we let the error
+  // bubble up to the HTTP handler.
   const initialState = createInitialGrammarState(record.data || {});
   const state = {
     ...initialState,
@@ -3894,21 +3953,88 @@ async function runAdminGrammarTransferMutation(db, {
     grammarTransferMutation: mutationMeta,
   };
 
-  const statements = [
-    bindStatement(db, `
-      UPDATE child_subject_state
-      SET ui_json = ?,
-          data_json = ?,
-          updated_at = ?,
-          updated_by_account_id = ?
-      WHERE learner_id = ? AND subject_id = 'grammar'
+  // U10 follower (HIGH 3): CAS guard on the subject-state UPDATE. The
+  // UPDATE only lands when `learner_profiles.state_revision` still
+  // matches the value we read at the top of this function. If a learner
+  // command slipped in between (save-transfer-evidence bumps the
+  // revision), the UPDATE matches zero rows and we raise `stale_write`.
+  // The admin retries with the fresh state, which re-runs the pure
+  // helper against post-learner-save evidence (so archive no longer
+  // clobbers the learner's save).
+  //
+  // U10 follower (HIGH 4): the archive + delete audit events are now
+  // written to `event_log` inside the SAME batch — forensic trail
+  // restored. Shape matches the existing `buildSubjectRuntimePersistencePlan`
+  // event row: id / learner_id / subject_id / system_id / event_type /
+  // event_json / created_at / actor_account_id. `actor_account_id`
+  // stamps the admin for forensics. No row in `activity_feed` — this
+  // is an admin audit event, not learner activity.
+  const eventStatements = [];
+  for (const rawEvent of events) {
+    const event = cloneSerialisable(rawEvent) || null;
+    if (!event || typeof event !== 'object' || Array.isArray(event)) continue;
+    const id = typeof event.id === 'string' && event.id ? event.id : uid('event');
+    const createdAt = Number.isFinite(Number(event.createdAt)) ? Number(event.createdAt) : ts;
+    const eventType = typeof event.type === 'string' && event.type ? event.type : 'event';
+    event.id = id;
+    event.learnerId = event.learnerId || learnerId;
+    event.subjectId = event.subjectId || 'grammar';
+    event.createdAt = createdAt;
+    event.actorAccountId = actorAccountId;
+    event.actorPlatformRole = accountPlatformRole(actor) || '';
+    eventStatements.push(bindStatement(db, `
+      INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        learner_id = excluded.learner_id,
+        subject_id = excluded.subject_id,
+        system_id = excluded.system_id,
+        event_type = excluded.event_type,
+        event_json = excluded.event_json,
+        created_at = excluded.created_at,
+        actor_account_id = excluded.actor_account_id
     `, [
-      nextUiSource == null ? 'null' : JSON.stringify(nextUiSource),
-      JSON.stringify(nextDataSource),
-      ts,
+      id,
+      event.learnerId,
+      event.subjectId,
+      event.systemId || null,
+      eventType,
+      JSON.stringify(event),
+      createdAt,
       actorAccountId,
-      learnerId,
-    ]),
+    ]));
+  }
+
+  // CAS guard: wraps the subject-state UPDATE in the learner's
+  // `state_revision` check. SQLite fires the UPDATE only when the
+  // current revision equals the value we read above; otherwise the
+  // statement matches zero rows and we detect the race via changes=0.
+  const subjectUpdate = bindStatement(db, `
+    UPDATE child_subject_state
+    SET ui_json = ?,
+        data_json = ?,
+        updated_at = ?,
+        updated_by_account_id = ?
+    WHERE learner_id = ? AND subject_id = 'grammar'
+      AND EXISTS (
+        SELECT 1
+        FROM learner_profiles
+        WHERE id = ?
+          AND state_revision = ?
+      )
+  `, [
+    nextUiSource == null ? 'null' : JSON.stringify(nextUiSource),
+    JSON.stringify(nextDataSource),
+    ts,
+    actorAccountId,
+    learnerId,
+    learnerId,
+    learnerExpectedRevision,
+  ]);
+
+  const statements = [
+    subjectUpdate,
+    ...eventStatements,
     storeMutationReceiptStatement(db, {
       accountId: actorAccountId,
       requestId,
@@ -3921,10 +4047,31 @@ async function runAdminGrammarTransferMutation(db, {
       appliedAt: ts,
     }),
   ];
-  await batch(db, statements);
-  // Suppress the unused `actor` lint — keeping the variable reads the
-  // role at least once so a reviewer sees the RBAC gate explicitly.
-  void actor;
+  const batchResults = await batch(db, statements);
+  const subjectUpdateResult = batchResults[0] || null;
+  const casChanges = Number(subjectUpdateResult?.meta?.changes) || 0;
+  if (casChanges !== 1) {
+    // Concurrent learner save bumped the revision between our read and
+    // the CAS UPDATE — the batch leaves zero rows touched. Re-read the
+    // current revision for the error payload so the admin client can
+    // decide whether to retry.
+    const currentRevision = Number(await scalar(
+      db,
+      'SELECT state_revision FROM learner_profiles WHERE id = ?',
+      [learnerId],
+      'state_revision',
+    )) || 0;
+    throw staleWriteError({
+      kind: mutationKind,
+      scopeType: scopeTypeForReceipt,
+      scopeId,
+      requestId,
+      correlationId,
+      expectedRevision: learnerExpectedRevision,
+      currentRevision,
+    });
+  }
+
   return response;
 }
 
