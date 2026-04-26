@@ -34,7 +34,7 @@
 // Call sites opt in to `X-Forwarded-For` / `X-Real-IP` via
 // `trustXForwardedFor: env.TRUST_XFF === '1'` (dev / staging).
 
-import { bindStatement, first, requireDatabase } from './d1.js';
+import { first, requireDatabase } from './d1.js';
 import { sha256 } from './auth.js';
 
 function currentWindowStart(timestamp, windowMs) {
@@ -63,6 +63,83 @@ function resolveDatabase(envOrDb) {
  * @param {number} [options.now] - Current epoch ms (defaults to Date.now()).
  * @returns {Promise<{ allowed: boolean, retryAfterSeconds: number }>}
  */
+// H3 (reviewer): `request_limits` would otherwise grow unbounded — each
+// unique `limiter_key` leaves a row behind after its window closes. In
+// production with thousands of distinct IPv4 addresses per day that
+// adds rows we never need again. `REQUEST_LIMITS_CLEANUP_*` parameters
+// drive an opportunistic cleanup sweep that fires on ~1% of limiter
+// writes; the sweep deletes up to `CLEANUP_BATCH` rows whose
+// `window_started_at` is older than `CLEANUP_AGE_MS`. SQLite does not
+// support `DELETE ... LIMIT` without a compile-time flag, so the
+// bounded delete is expressed as `DELETE ... WHERE limiter_key IN
+// (SELECT ... LIMIT N)` which is portable and produces a predictable
+// row count per sweep.
+const REQUEST_LIMITS_CLEANUP_AGE_MS = 24 * 60 * 60 * 1000;
+const REQUEST_LIMITS_CLEANUP_BATCH = 500;
+const REQUEST_LIMITS_CLEANUP_PROBABILITY = 0.01;
+
+let cleanupRng = Math.random;
+
+/**
+ * Test-only hook. Swap the RNG driving the opportunistic cleanup sweep
+ * so the 1% branch can be exercised deterministically. Always pass a
+ * function that returns a number in [0, 1).
+ */
+export function __setRequestLimitsCleanupRngForTests(fn) {
+  cleanupRng = typeof fn === 'function' ? fn : Math.random;
+}
+
+async function opportunisticCleanup(db, now) {
+  if (cleanupRng() >= REQUEST_LIMITS_CLEANUP_PROBABILITY) return;
+  const cutoff = now - REQUEST_LIMITS_CLEANUP_AGE_MS;
+  try {
+    await db.prepare(`
+      DELETE FROM request_limits
+      WHERE limiter_key IN (
+        SELECT limiter_key FROM request_limits
+        WHERE window_started_at < ?
+        LIMIT ?
+      )
+    `).bind(cutoff, REQUEST_LIMITS_CLEANUP_BATCH).run();
+  } catch {
+    // Cleanup is a best-effort hygiene sweep. If the table does not yet
+    // exist or the statement fails for any reason, silently drop the
+    // sweep — the rate-limit response must never change shape.
+  }
+}
+
+// -- I1 (reviewer) — shared 429 helper --------------------------------
+//
+// Every rate-limit 429 response on the worker now flows through this
+// helper so the RFC 9110 `Retry-After` header is always emitted. HTTP
+// clients, browsers, and proxies use the header to back off cleanly
+// rather than busy-looping the endpoint. The payload keeps the same
+// JSON shape consumers have relied on (`ok`, `code`, `retryAfterSeconds`)
+// plus any caller-supplied extras (`message`, etc.).
+//
+// `retryAfterSeconds` is coerced to a finite non-negative integer; the
+// fall-back of 0 matches "retry immediately" per RFC 9110 and keeps the
+// rate-limit response consistent even if the caller passes an absurd
+// value.
+
+function sanitiseRetryAfter(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.ceil(n);
+}
+
+export function rateLimitResponse({ code, retryAfterSeconds = 0, extra = {} } = {}) {
+  const seconds = sanitiseRetryAfter(retryAfterSeconds);
+  const body = { ok: false, code, retryAfterSeconds: seconds, ...extra };
+  return new Response(JSON.stringify(body), {
+    status: 429,
+    headers: {
+      'content-type': 'application/json',
+      'retry-after': String(seconds),
+    },
+  });
+}
+
 export async function consumeRateLimit(envOrDb, { bucket, identifier, limit, windowMs, now = Date.now() } = {}) {
   if (!bucket || !identifier || !limit || !windowMs) {
     return { allowed: true, retryAfterSeconds: 0 };
@@ -85,17 +162,12 @@ export async function consumeRateLimit(envOrDb, { bucket, identifier, limit, win
   `, [limiterKey, windowStartedAt, now]);
   const count = Number(row?.request_count || 1);
   const storedWindow = Number(row?.window_started_at || windowStartedAt);
+  await opportunisticCleanup(db, now);
   return {
     allowed: count <= limit,
     retryAfterSeconds: Math.max(1, Math.ceil(((storedWindow + windowMs) - now) / 1000)),
   };
 }
-
-// Re-export the bound statement helper so consumers that want a custom
-// limiter variant (e.g. peek-without-increment) can build one without a
-// second round of duplication. Not used in this unit; kept to keep the
-// extraction boundary explicit.
-export { bindStatement };
 
 // -- U4 (P1.5 Phase B) -------------------------------------------------
 //
@@ -128,13 +200,22 @@ function headerValue(request, name) {
 const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 
 function parseIpv4(value) {
+  // C1 (P1.5 Phase B reviewer finding): canonicalise octets so leading-
+  // zero variants collapse into the same bucket key. Without this,
+  // `01.02.03.04` and `1.2.3.4` hash to different buckets, multiplying
+  // the per-IP budget by up to 81 (3^4 leading-zero permutations) and
+  // letting a single attacker evade the limit. Return `Number(octet)`
+  // for all four parts so the string is re-emitted in its canonical
+  // form regardless of zero-padding.
   const match = IPV4_RE.exec(value);
   if (!match) return null;
+  const octets = [];
   for (let i = 1; i <= 4; i += 1) {
     const octet = Number(match[i]);
     if (!Number.isInteger(octet) || octet < 0 || octet > 255) return null;
+    octets.push(octet);
   }
-  return value;
+  return `${octets[0]}.${octets[1]}.${octets[2]}.${octets[3]}`;
 }
 
 function stripZoneId(value) {
@@ -190,6 +271,11 @@ function expandIpv6Hextets(lower) {
   const total = head.length + tail.length;
   if (total > 8) return null;
   if (doubleIdx === -1 && total !== 8) return null;
+  // I8 (reviewer): a `::` collapses AT LEAST one all-zero hextet, so an
+  // address like `1:2:3:4:5:6:7:8::` (9 hextets in disguise) is
+  // malformed. Reject when the explicit hextets already fill the 8-
+  // wide IPv6 address AND a `::` is still present.
+  if (doubleIdx !== -1 && total === 8) return null;
   const fill = Array(Math.max(0, 8 - total)).fill('0');
   const hextets = [...head, ...fill, ...tail];
   for (const hextet of hextets) {
@@ -251,24 +337,28 @@ function readSubjectHeader(request, trustXForwardedFor) {
  * bucket key so callers can hash a consistent subject identifier
  * through `consumeRateLimit`.
  *
+ * IPv6 buckets always collapse to the first 64 bits; a `/64` hex prefix
+ * is emitted as `v6/64:<16-hex-chars>`. No prefix width parameter is
+ * exposed — a single fixed width keeps every call site consistent.
+ *
  * @param {Request} request
  * @param {object} [options]
- * @param {number} [options.ipv6Prefix=64]
- *   Reserved for future flexibility. Only `/64` is supported in P1.5.
  * @param {boolean} [options.trustXForwardedFor=false]
  *   When true, fall back to the first `X-Forwarded-For` entry and then
  *   `X-Real-IP` if `CF-Connecting-IP` is absent. The caller owns the
- *   trust decision — production Workers pass `false`; dev/staging
- *   behind-origin deployments pass `env.TRUST_XFF === '1'`.
+ *   trust decision — production Workers MUST pass `false` (see the
+ *   env-plus-environment guard in `rateLimitSubject`); dev/staging
+ *   behind-origin deployments opt in via `env.TRUST_XFF === '1'`.
  * @param {string|null} [options.globalBudgetKey=null]
  *   When a non-empty string is provided, the result also carries
  *   `globalKey: 'global:<key>'` so the caller can consume a second
- *   route-wide bucket alongside the per-subject one.
+ *   route-wide bucket alongside the per-subject one. Kept as a caller-
+ *   supplied value (rather than hard-coded) so future routes can
+ *   declare their own global-budget namespace without rewriting this
+ *   helper.
  * @returns {{ bucketKey: string, fallbackReason: string|null, globalKey?: string }}
  */
 export function normaliseRateLimitSubject(request, {
-  // eslint-disable-next-line no-unused-vars
-  ipv6Prefix = 64,
   trustXForwardedFor = false,
   globalBudgetKey = null,
 } = {}) {
@@ -285,11 +375,69 @@ export function normaliseRateLimitSubject(request, {
   return result;
 }
 
+// -- I4 / H1 — TRUST_XFF production foot-gun guard ---------------------
+//
+// `X-Forwarded-For` and `X-Real-IP` are client-writable on a Cloudflare
+// Worker (the client can send any header they like). Honouring them in
+// production lets an attacker spoof `bucketKey` to collide with a
+// victim or to rotate through fresh buckets. The Cloudflare-signed
+// `CF-Connecting-IP` header is the only safe source in production.
+//
+// The TRUST_XFF env flag is a convenience for dev / staging deployments
+// behind a reverse proxy where CF-Connecting-IP is absent. We gate the
+// flag on `env.ENVIRONMENT !== 'production'` so a misconfigured
+// production deployment cannot accidentally flip it and open the door.
+// `warnOnceAboutTrustedXff` emits a Workers log at first use so the
+// operator sees the trust decision in telemetry.
+
+let trustXffWarned = false;
+
+function envTrustsXForwardedFor(env) {
+  if (!env || env.TRUST_XFF !== '1') return false;
+  if (env.ENVIRONMENT === 'production') {
+    if (!trustXffWarned) {
+      trustXffWarned = true;
+      try {
+        // eslint-disable-next-line no-console
+        console.warn(JSON.stringify({
+          event: 'rate_limit.trust_xff_ignored_in_production',
+          reason: 'TRUST_XFF was set to "1" but ENVIRONMENT=production; forwarded-IP headers remain untrusted.',
+        }));
+      } catch {
+        // Worker runtime without console.warn — swallow.
+      }
+    }
+    return false;
+  }
+  if (!trustXffWarned) {
+    trustXffWarned = true;
+    try {
+      // eslint-disable-next-line no-console
+      console.warn(JSON.stringify({
+        event: 'rate_limit.trust_xff_enabled',
+        environment: typeof env.ENVIRONMENT === 'string' ? env.ENVIRONMENT : null,
+      }));
+    } catch {
+      // Worker runtime without console.warn — swallow.
+    }
+  }
+  return true;
+}
+
 /**
- * Call-site convenience wrapper. Plumbs `env.TRUST_XFF === '1'` into
- * `normaliseRateLimitSubject` so auth / demo / TTS / public ingest can
- * route their rate-limit subject through one line instead of
- * duplicating the env read at every call site.
+ * Test-only reset. The `trustXffWarned` latch lives at module scope so
+ * each Worker instance emits exactly one log line per process; tests
+ * that exercise the guard flip the flag back to false.
+ */
+export function __resetTrustXffWarningForTests() {
+  trustXffWarned = false;
+}
+
+/**
+ * Call-site convenience wrapper. Plumbs the production-safe XFF trust
+ * decision into `normaliseRateLimitSubject` so auth / demo / TTS /
+ * public ingest can route their rate-limit subject through one line
+ * instead of duplicating the env read at every call site.
  *
  * @param {Request} request
  * @param {object|null|undefined} env
@@ -298,9 +446,8 @@ export function normaliseRateLimitSubject(request, {
  * @returns {{ bucketKey: string, fallbackReason: string|null, globalKey?: string }}
  */
 export function rateLimitSubject(request, env, { globalBudgetKey = null } = {}) {
-  const trustXForwardedFor = Boolean(env && env.TRUST_XFF === '1');
   return normaliseRateLimitSubject(request, {
-    trustXForwardedFor,
+    trustXForwardedFor: envTrustsXForwardedFor(env),
     globalBudgetKey,
   });
 }
