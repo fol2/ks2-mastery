@@ -2426,7 +2426,8 @@ function emptyOpsErrorEventSummary(generatedAt) {
 }
 
 async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null, limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT } = {}) {
-  await assertAdminHubActor(db, actorAccountId);
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const safeLimit = Math.max(1, Math.min(OPS_ERROR_EVENTS_MAX_LIMIT, Number(limit) || OPS_ERROR_EVENTS_DEFAULT_LIMIT));
   const statusFilter = typeof status === 'string' && OPS_ERROR_STATUSES.includes(status) ? status : null;
@@ -2453,10 +2454,18 @@ async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null
       totals.all += count;
     }
 
+    // U18: drawer-ready SELECT pulls the full column set per row so the
+    // client can render an expandable <details> with release-tracking
+    // timestamps and per-role redaction. The SELECT columns stay a
+    // flat list because the filter-narrowed and total-list paths share
+    // the same shape (U19 wires filter predicates through the same
+    // projection). Ordering: last_seen DESC to match the triage view.
     const entryRows = statusFilter
       ? await all(db, `
         SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
-               account_id, occurrence_count, first_seen, last_seen, status
+               account_id, occurrence_count, first_seen, last_seen, status,
+               first_seen_release, last_seen_release, resolved_in_release,
+               last_status_change_at
         FROM ops_error_events
         WHERE status = ?
         ORDER BY last_seen DESC, id DESC
@@ -2464,11 +2473,20 @@ async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null
       `, [statusFilter, safeLimit])
       : await all(db, `
         SELECT id, error_kind, message_first_line, first_frame, route_name, user_agent,
-               account_id, occurrence_count, first_seen, last_seen, status
+               account_id, occurrence_count, first_seen, last_seen, status,
+               first_seen_release, last_seen_release, resolved_in_release,
+               last_status_change_at
         FROM ops_error_events
         ORDER BY last_seen DESC, id DESC
         LIMIT ?
       `, [safeLimit]);
+
+    // U18 R25 redaction matrix: admin sees every field. ops-role sees the
+    // same metadata but with `accountIdMasked` blanked to null. Public /
+    // parent never reach this surface (admin hub is admin-or-ops-only per
+    // `assertAdminHubActor`). The read-side enforcement mirrors the
+    // `readAccountOpsMetadataDirectory` pattern already in the repo.
+    const isAdmin = actorPlatformRole === 'admin';
 
     return {
       generatedAt: nowTs,
@@ -2480,11 +2498,34 @@ async function readOpsErrorEventSummary(db, { now, actorAccountId, status = null
         firstFrame: typeof row?.first_frame === 'string' ? row.first_frame : null,
         routeName: typeof row?.route_name === 'string' ? row.route_name : null,
         userAgent: typeof row?.user_agent === 'string' ? row.user_agent : null,
-        accountIdMasked: row?.account_id ? maskAccountIdLastN(row.account_id) : null,
+        // R25: ops-role sees accountIdMasked as null; admin sees the last
+        // 6 chars so they can cross-reference to adult_accounts. Parent
+        // hub never reads this endpoint.
+        accountIdMasked: isAdmin && row?.account_id ? maskAccountIdLastN(row.account_id) : null,
         occurrenceCount: Math.max(0, Number(row?.occurrence_count) || 0),
         firstSeen: Number(row?.first_seen) || 0,
         lastSeen: Number(row?.last_seen) || 0,
         status: typeof row?.status === 'string' ? row.status : 'open',
+        // U18 drawer fields — release-tracking columns land unchanged for
+        // both roles (the release string itself is not PII; only the
+        // account attribution is redacted for ops).
+        firstSeenRelease: typeof row?.first_seen_release === 'string' && row.first_seen_release
+          ? row.first_seen_release
+          : null,
+        lastSeenRelease: typeof row?.last_seen_release === 'string' && row.last_seen_release
+          ? row.last_seen_release
+          : null,
+        resolvedInRelease: typeof row?.resolved_in_release === 'string' && row.resolved_in_release
+          ? row.resolved_in_release
+          : null,
+        // `Number(null) === 0` coerces finite, so guard explicitly on the
+        // nullish raw value so legacy events pre-migration-0011 report
+        // `null` rather than the bogus epoch timestamp.
+        lastStatusChangeAt: row?.last_status_change_at == null
+          ? null
+          : (Number.isFinite(Number(row.last_status_change_at))
+            ? Number(row.last_status_change_at)
+            : null),
       })),
     };
   } catch (error) {

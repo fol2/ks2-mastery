@@ -1016,7 +1016,7 @@ function ErrorLogCentrePanel({ model, actions }) {
       {entries.length ? entries.map((entry) => {
         const isSaving = savingEventId === entry.id;
         return (
-          <div className="skill-row" key={entry.id}>
+          <div className="skill-row" key={entry.id} data-testid={`error-event-row-${entry.id}`}>
             <div>
               <strong>{entry.errorKind || 'Error'}</strong>
               <div className="small muted">{entry.messageFirstLine || ''}</div>
@@ -1045,10 +1045,86 @@ function ErrorLogCentrePanel({ model, actions }) {
                 <span className="chip">{entry.status || 'open'}</span>
               )}
             </div>
+            <ErrorEventDetailsDrawer entry={entry} canViewAccount={canManage} />
           </div>
         );
       }) : <p className="small muted">No error events recorded.</p>}
     </section>
+  );
+}
+
+// U18: per-row expandable drawer. Uses the native <details>/<summary>
+// primitive so the drawer state is platform-managed and SSR-friendly
+// (no React useState wiring needed, so server-rendered admin hub pages
+// can hydrate without open/closed flicker). Layout keeps everything
+// text-oriented per R25 "minimal drawer" brief — release columns,
+// timestamps, occurrence counter, and (admin-only) account_id last-6
+// cross-reference.
+//
+// Occurrence-timeline (last 5 event timestamps) is deferred to a
+// follow-up: P1.5 schema stores only `first_seen + last_seen +
+// occurrence_count` and adding an `ops_error_event_occurrences` table
+// is explicitly out of scope per the plan. The drawer surfaces a
+// stable "timeline: occurrence_count aggregated" message so ops
+// readers understand the absence.
+function ErrorEventDetailsDrawer({ entry, canViewAccount }) {
+  if (!entry) return null;
+  const releaseFallback = (value) => (typeof value === 'string' && value ? value : 'unknown');
+  const lastStatusChangeAt = Number.isFinite(Number(entry.lastStatusChangeAt))
+    ? Number(entry.lastStatusChangeAt)
+    : null;
+  return (
+    <details data-testid={`error-event-drawer-${entry.id}`} style={{ gridColumn: '1 / -1', marginTop: 8 }}>
+      <summary className="small muted" style={{ cursor: 'pointer' }}>View event details</summary>
+      <dl className="small" style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '180px 1fr', rowGap: 4 }}>
+        <dt className="muted">Error kind</dt>
+        <dd>{entry.errorKind || '—'}</dd>
+
+        <dt className="muted">Message (first line)</dt>
+        <dd data-testid="error-drawer-message">{entry.messageFirstLine || '—'}</dd>
+
+        <dt className="muted">First frame</dt>
+        <dd style={{ fontFamily: 'monospace' }}>{entry.firstFrame || '—'}</dd>
+
+        <dt className="muted">Route</dt>
+        <dd>{entry.routeName || '—'}</dd>
+
+        <dt className="muted">User agent</dt>
+        <dd style={{ wordBreak: 'break-all' }}>{entry.userAgent || '—'}</dd>
+
+        <dt className="muted">Occurrences</dt>
+        <dd>×{Number(entry.occurrenceCount) || 1} (timeline aggregated — per-event history deferred)</dd>
+
+        <dt className="muted">First seen</dt>
+        <dd>{formatTimestamp(entry.firstSeen)}</dd>
+
+        <dt className="muted">Last seen</dt>
+        <dd>{formatTimestamp(entry.lastSeen)}</dd>
+
+        <dt className="muted">First seen release</dt>
+        <dd data-testid="error-drawer-first-release">{releaseFallback(entry.firstSeenRelease)}</dd>
+
+        <dt className="muted">Last seen release</dt>
+        <dd data-testid="error-drawer-last-release">{releaseFallback(entry.lastSeenRelease)}</dd>
+
+        <dt className="muted">Resolved in release</dt>
+        <dd data-testid="error-drawer-resolved-release">{releaseFallback(entry.resolvedInRelease)}</dd>
+
+        <dt className="muted">Last status change</dt>
+        <dd data-testid="error-drawer-status-change">
+          {lastStatusChangeAt ? formatTimestamp(lastStatusChangeAt) : 'status unchanged'}
+        </dd>
+
+        {canViewAccount ? (
+          <React.Fragment>
+            <dt className="muted">Linked account (last 6)</dt>
+            <dd data-testid="error-drawer-account">
+              {entry.accountIdMasked || 'anonymous'}
+            </dd>
+          </React.Fragment>
+        ) : null}
+      </dl>
+    </details>
   );
 }
 

@@ -291,6 +291,27 @@ function normaliseErrorEventEntry(rawEntry) {
     firstSeen: asTs(raw.firstSeen, 0),
     lastSeen: asTs(raw.lastSeen, 0),
     status: typeof raw.status === 'string' ? raw.status : '',
+    // U18 drawer fields: release-tracking columns + last_status_change_at
+    // flow straight through. All four are nullable — legacy events before
+    // migration 0011 have NULL stamps, and dirty-tree dev builds produce
+    // NULL release stamps that the drawer renders as "unknown".
+    firstSeenRelease: typeof raw.firstSeenRelease === 'string' && raw.firstSeenRelease
+      ? raw.firstSeenRelease
+      : null,
+    lastSeenRelease: typeof raw.lastSeenRelease === 'string' && raw.lastSeenRelease
+      ? raw.lastSeenRelease
+      : null,
+    resolvedInRelease: typeof raw.resolvedInRelease === 'string' && raw.resolvedInRelease
+      ? raw.resolvedInRelease
+      : null,
+    // `Number(null) === 0` is finite — guard explicitly on the nullish
+    // raw so legacy events without a status-change stamp normalise to
+    // null rather than the bogus epoch timestamp.
+    lastStatusChangeAt: raw.lastStatusChangeAt == null
+      ? null
+      : (Number.isFinite(Number(raw.lastStatusChangeAt))
+        ? Number(raw.lastStatusChangeAt)
+        : null),
   };
 }
 
