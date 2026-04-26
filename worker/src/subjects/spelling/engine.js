@@ -4,6 +4,7 @@ import {
 } from '../../../../src/platform/core/repositories/helpers.js';
 import {
   createInitialSpellingState,
+  normaliseAchievementsMap,
   normaliseDurablePersistenceWarning,
   normaliseGuardianMap,
   normalisePatternMap,
@@ -27,6 +28,9 @@ const POST_MEGA_STORAGE_PREFIX = 'ks2-spell-post-mega-';
 const PATTERN_STORAGE_PREFIX = 'ks2-spell-pattern-';
 // P2 U9: mirror client PERSISTENCE_WARNING_STORAGE_PREFIX in src/subjects/spelling/repository.js.
 const PERSISTENCE_WARNING_STORAGE_PREFIX = 'ks2-spell-persistence-warning-';
+// P2 U12: mirror client ACHIEVEMENTS_STORAGE_PREFIX so the Worker twin routes
+// `data.achievements` reads/writes through the same byte-identical key space.
+const ACHIEVEMENTS_STORAGE_PREFIX = 'ks2-spell-achievements-';
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -71,6 +75,13 @@ export function normaliseServerSpellingData(rawValue, nowTs = Date.now()) {
   // remote-sync session does not lose their banner.
   const persistenceWarning = normaliseDurablePersistenceWarning(raw.persistenceWarning);
   if (persistenceWarning) output.persistenceWarning = persistenceWarning;
+  // P2 U12: achievements sibling — `{ [id]: { unlockedAt } }`. Worker twin
+  // must keep the shape byte-identical so a learner who unlocks an
+  // achievement via remote-sync does not see it disappear on the next local
+  // hydration. Only attached when at least one unlock survives, mirroring
+  // `pattern` (U11).
+  const achievements = normaliseAchievementsMap(raw.achievements);
+  if (achievements && Object.keys(achievements).length > 0) output.achievements = achievements;
   return output;
 }
 
@@ -78,6 +89,12 @@ function parseStorageKey(key) {
   if (typeof key !== 'string') return null;
   if (key.startsWith(PREF_STORAGE_PREFIX)) {
     return { type: 'prefs', learnerId: key.slice(PREF_STORAGE_PREFIX.length) || 'default' };
+  }
+  // P2 U12: achievements prefix (`ks2-spell-a...`) — checked first among the
+  // `ks2-spell-` family so it cannot be mis-routed. Prefix is disjoint from
+  // every other sibling (all others start with `ks2-spell-p` or `ks2-spell-g`).
+  if (key.startsWith(ACHIEVEMENTS_STORAGE_PREFIX)) {
+    return { type: 'achievements', learnerId: key.slice(ACHIEVEMENTS_STORAGE_PREFIX.length) || 'default' };
   }
   if (key.startsWith(GUARDIAN_STORAGE_PREFIX)) {
     return { type: 'guardian', learnerId: key.slice(GUARDIAN_STORAGE_PREFIX.length) || 'default' };
@@ -210,6 +227,10 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
         if (parsed.type === 'persistenceWarning') {
           return current.persistenceWarning ? JSON.stringify(current.persistenceWarning) : 'null';
         }
+        // P2 U12: empty `{}` for learners who have not unlocked anything.
+        if (parsed.type === 'achievements') {
+          return JSON.stringify(current.achievements || {});
+        }
         return null;
       },
       setItem(key, value) {
@@ -261,6 +282,22 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
             persistenceWarning: parseStoredJson(value, null),
           }, resolveNow());
         }
+        if (parsed.type === 'achievements') {
+          // P2 U12 H4: INSERT-OR-IGNORE — preserve any id already set. The
+          // merge below mirrors the client repository's critical-section
+          // guard so the Worker twin cannot overwrite an original
+          // `unlockedAt` on a stale-state concurrent submit.
+          const incoming = parseStoredJson(value, {});
+          const existing = nextData.achievements || {};
+          const merged = { ...incoming };
+          for (const [id, record] of Object.entries(existing)) {
+            merged[id] = record;
+          }
+          nextData = normaliseServerSpellingData({
+            ...nextData,
+            achievements: merged,
+          }, resolveNow());
+        }
       },
       removeItem(key) {
         const parsed = parseStorageKey(key);
@@ -275,6 +312,15 @@ function createServerPersistence({ learnerId, data, latestSession, now }) {
           // clear a resolved warning. Strip the sibling from the bundle.
           const stripped = { ...nextData };
           delete stripped.persistenceWarning;
+          nextData = normaliseServerSpellingData(stripped, resolveNow());
+        }
+        if (parsed.type === 'achievements') {
+          // P2 U12: removable via direct removeItem for admin-ops reset
+          // paths. Setting the map empty via setItem above would NOT clear
+          // because of the INSERT-OR-IGNORE merge; removeItem is the
+          // only surface that strips the sibling.
+          const stripped = { ...nextData };
+          delete stripped.achievements;
           nextData = normaliseServerSpellingData(stripped, resolveNow());
         }
         // postMega intentionally not removable — sticky by contract.

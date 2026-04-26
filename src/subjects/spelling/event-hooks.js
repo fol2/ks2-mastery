@@ -1,5 +1,10 @@
 import { monsterIdForSpellingWord, recordMonsterMastery } from '../../platform/game/monster-system.js';
 import { SPELLING_EVENT_TYPES } from './events.js';
+import {
+  ACHIEVEMENT_DEFINITIONS,
+  aggregateAchievementState,
+  evaluateAchievements,
+} from './achievements.js';
 
 // Day arithmetic mirrors shared/spelling/service.js. The subscriber derives a
 // friendly "next check in N days" body from the event's createdAt + nextDueDay
@@ -117,11 +122,100 @@ function patternQuestCompletedToast(event) {
   });
 }
 
-export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
-  return function spellingRewardSubscriber(events = []) {
-    const rewardEvents = [];
+/**
+ * P2 U12: Achievement unlock toast. Carries the achievementId so the event-log's
+ * `seenTokens` dedup (platform/events/runtime.js) drops a second identical toast
+ * regardless of the source domain event id. The `kind: 'reward.achievement'`
+ * routes the ToastShelf renderer to the distinct-styling branch without adding
+ * a new live region (F3 adversarial: nesting role="status" is UB).
+ *
+ * Deterministic toast id: `reward.toast:reward.achievement:<achievementId>` —
+ * derived from the achievement id, NOT the source event, so local-dispatch +
+ * remote-sync echoes of the same domain event produce the exact same toast id
+ * and the eventRuntime dedup drops the duplicate.
+ */
+function achievementUnlockedToast(unlock, sourceEvent) {
+  const def = ACHIEVEMENT_DEFINITIONS[unlock.achievementKey];
+  const title = def?.title || 'Achievement unlocked';
+  const body = def?.body || '';
+  const learnerId = sourceEvent.learnerId || 'default';
+  const sessionId = sourceEvent.sessionId || 'session';
+  const createdAt = Number.isFinite(sourceEvent.createdAt) ? sourceEvent.createdAt : Date.now();
+  return {
+    id: `reward.toast:reward.achievement:${unlock.id}`,
+    type: 'reward.toast',
+    kind: 'reward.achievement',
+    achievementId: unlock.id,
+    achievementKey: unlock.achievementKey,
+    subjectId: 'spelling',
+    learnerId,
+    sessionId,
+    sourceEventId: sourceEvent.id || null,
+    createdAt,
+    toast: { title, body: `Achievement unlocked: ${title}` },
+    // Metadata for future consumers (parent/admin audit views); UI ignores.
+    unlockedAt: Number.isFinite(unlock.unlockedAt) ? unlock.unlockedAt : createdAt,
+  };
+}
 
-    for (const event of Array.isArray(events) ? events : []) {
+// P2 U12: achievement-relevant event types. We only call evaluateAchievements
+// for these to avoid doing aggregate walks on every WORD_SECURED event. Kept
+// as a frozen set so a future achievement-type addition is a single line.
+const ACHIEVEMENT_RELEVANT_TYPES = new Set([
+  SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED,
+  SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED,
+  SPELLING_EVENT_TYPES.BOSS_COMPLETED,
+  SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED,
+]);
+
+export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
+  return function spellingRewardSubscriber(events = [], context = {}) {
+    const rewardEvents = [];
+    const safeEvents = Array.isArray(events) ? events : [];
+
+    // P2 U12: Build the aggregate achievement state by walking the event log
+    // (when available) PLUS the current incoming batch. The event runtime
+    // (platform/events/runtime.js) passes { existingEvents } into the
+    // subscriber so boot-time event history is visible; without it we still
+    // work correctly from in-batch events (tests + fresh hosts).
+    //
+    // `currentAchievements` is derived by walking unlock reaction events we
+    // previously emitted — the subscriber is stateless, so the event log is
+    // our source of truth for "have we already unlocked this id".
+    const existingEvents = Array.isArray(context?.existingEvents) ? context.existingEvents : [];
+
+    // Aggregate over prior domain events so evaluateAchievements sees the full
+    // history. The evaluator for THIS event contributes its own day / slug /
+    // completion entry internally (so it works even if the same event is also
+    // inside priorAggregate — idempotent set.add).
+    const priorAggregate = aggregateAchievementState(existingEvents);
+
+    // Walk prior reaction events for already-emitted achievement toasts so the
+    // evaluator's caller-side idempotency check (`currentAchievements[id]`)
+    // prevents re-unlocking.
+    const currentAchievements = {};
+    for (const prior of existingEvents) {
+      if (
+        prior?.type === 'reward.toast'
+        && prior?.kind === 'reward.achievement'
+        && typeof prior.achievementId === 'string'
+      ) {
+        const unlockedAt = Number(prior.unlockedAt);
+        currentAchievements[prior.achievementId] = {
+          unlockedAt: Number.isFinite(unlockedAt) && unlockedAt >= 0 ? unlockedAt : 0,
+        };
+      }
+    }
+
+    // Track per-id dedup within THIS batch so replaying the same event inside
+    // one publish() call still emits exactly one achievement toast.
+    const emittedAchievementIds = new Set();
+    // Cumulative aggregate that grows as we walk the batch; the evaluator
+    // always works on `cumulativeAggregate + THIS event` via the evaluator's
+    // internal set.add.
+    let cumulativeAggregate = priorAggregate;
+
+    for (const event of safeEvents) {
       if (!event || typeof event.type !== 'string') continue;
 
       // Legacy branch — unchanged. WORD_SECURED drives monster evolution and
@@ -148,23 +242,40 @@ export function createSpellingRewardSubscriber({ gameStateRepository } = {}) {
       // toast ever surfaced at round-end.
       if (event.type === SPELLING_EVENT_TYPES.GUARDIAN_RENEWED) {
         rewardEvents.push(renewedToast(event));
-        continue;
-      }
-      if (event.type === SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED) {
+      } else if (event.type === SPELLING_EVENT_TYPES.GUARDIAN_RECOVERED) {
         rewardEvents.push(recoveredToast(event));
-        continue;
-      }
-      if (event.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED) {
+      } else if (event.type === SPELLING_EVENT_TYPES.GUARDIAN_MISSION_COMPLETED) {
         rewardEvents.push(missionCompletedToast(event));
-        continue;
-      }
-      if (event.type === SPELLING_EVENT_TYPES.BOSS_COMPLETED) {
+      } else if (event.type === SPELLING_EVENT_TYPES.BOSS_COMPLETED) {
         rewardEvents.push(bossCompletedToast(event));
-        continue;
-      }
-      if (event.type === SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED) {
+      } else if (event.type === SPELLING_EVENT_TYPES.PATTERN_QUEST_COMPLETED) {
         rewardEvents.push(patternQuestCompletedToast(event));
-        continue;
+      }
+
+      // P2 U12: achievement evaluation side-branch. Runs AFTER the toast
+      // fan-out so a completed round always surfaces its own completion toast
+      // (e.g. "Mission complete.") before the achievement toast. The evaluator
+      // is pure; we add the event's contribution into cumulativeAggregate
+      // afterwards so the NEXT event in the same batch sees updated state.
+      if (ACHIEVEMENT_RELEVANT_TYPES.has(event.type)) {
+        const learnerId = event.learnerId || 'default';
+        const result = evaluateAchievements(event, currentAchievements, learnerId, {
+          aggregateState: cumulativeAggregate,
+        });
+        for (const unlock of result.unlocks || []) {
+          if (!unlock || typeof unlock.id !== 'string') continue;
+          if (emittedAchievementIds.has(unlock.id)) continue;
+          if (currentAchievements[unlock.id]) continue;
+          emittedAchievementIds.add(unlock.id);
+          currentAchievements[unlock.id] = {
+            unlockedAt: Number.isFinite(unlock.unlockedAt) ? unlock.unlockedAt : 0,
+          };
+          rewardEvents.push(achievementUnlockedToast(unlock, event));
+        }
+        // Accumulate this event's contribution AFTER evaluation so a future
+        // same-kind event in the batch sees its contribution. We pass the
+        // array `[event]` so aggregateAchievementState folds in one entry.
+        cumulativeAggregate = aggregateAchievementState([event], cumulativeAggregate);
       }
 
       // GUARDIAN_WOBBLED, SESSION_COMPLETED, MASTERY_MILESTONE, RETRY_CLEARED,

@@ -1,5 +1,6 @@
 import { cloneSerialisable, normalisePracticeSessionRecord } from '../../platform/core/repositories/helpers.js';
 import {
+  normaliseAchievementsMap,
   normaliseDurablePersistenceWarning,
   normaliseGuardianMap,
   normalisePatternMap,
@@ -23,6 +24,13 @@ const PATTERN_STORAGE_PREFIX = 'ks2-spell-pattern-';
 // `ks2-spell-persistence-warning-` so the `parseStorageKey` startsWith dispatch
 // cannot collide with `ks2-spell-progress-` or `ks2-spell-post-mega-`.
 const PERSISTENCE_WARNING_STORAGE_PREFIX = 'ks2-spell-persistence-warning-';
+// P2 U12: achievements sibling. Mirrors ACHIEVEMENTS_KEY_PREFIX in
+// shared/spelling/service.js — must stay byte-identical. Deliberately a
+// DISTINCT prefix from the `ks2-spell-` family (same reasoning as U9's
+// `ks2-spell-persistence-warning-`) so the `parseStorageKey` startsWith
+// dispatch cannot collide with `ks2-spell-pattern-` / `ks2-spell-progress-`
+// / `ks2-spell-post-mega-` — all four start with `ks2-spell-p`.
+const ACHIEVEMENTS_STORAGE_PREFIX = 'ks2-spell-achievements-';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function todayDayForNow(now) {
@@ -65,10 +73,21 @@ function persistenceWarningKey(learnerId) {
   return `${PERSISTENCE_WARNING_STORAGE_PREFIX}${learnerId || 'default'}`;
 }
 
+// P2 U12: achievements sibling key.
+function achievementsKey(learnerId) {
+  return `${ACHIEVEMENTS_STORAGE_PREFIX}${learnerId || 'default'}`;
+}
+
 function parseStorageKey(key) {
   if (typeof key !== 'string') return null;
   if (key.startsWith(PREF_STORAGE_PREFIX)) {
     return { type: 'prefs', learnerId: key.slice(PREF_STORAGE_PREFIX.length) || 'default' };
+  }
+  // P2 U12: achievements prefix (`ks2-spell-a...`) — checked first among the
+  // `ks2-spell-` family so it cannot be mis-routed. Prefix is disjoint from
+  // every other sibling (all others start with `ks2-spell-p` or `ks2-spell-g`).
+  if (key.startsWith(ACHIEVEMENTS_STORAGE_PREFIX)) {
+    return { type: 'achievements', learnerId: key.slice(ACHIEVEMENTS_STORAGE_PREFIX.length) || 'default' };
   }
   if (key.startsWith(GUARDIAN_STORAGE_PREFIX)) {
     return { type: 'guardian', learnerId: key.slice(GUARDIAN_STORAGE_PREFIX.length) || 'default' };
@@ -144,6 +163,13 @@ export function normaliseSpellingSubjectData(rawValue, todayDay = 0) {
   // only when non-null so pre-failure bundles stay compact.
   const persistenceWarning = normaliseDurablePersistenceWarning(raw.persistenceWarning);
   if (persistenceWarning) output.persistenceWarning = persistenceWarning;
+  // P2 U12: `achievements` is the unlocks sibling — `{ [id]: { unlockedAt } }`.
+  // Once set, an achievement row NEVER reverts (H4 idempotency; INSERT-OR-IGNORE
+  // inside setItem below). Attach only when at least one unlock exists so a
+  // pre-U12 bundle stays compact and the composite invariant test (U8b) can
+  // assert the sibling never reverts from present -> absent.
+  const achievements = normaliseAchievementsMap(raw.achievements);
+  if (achievements && Object.keys(achievements).length > 0) output.achievements = achievements;
   return output;
 }
 
@@ -262,6 +288,13 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       if (parsed.type === 'persistenceWarning') {
         return data.persistenceWarning ? JSON.stringify(data.persistenceWarning) : 'null';
       }
+      // P2 U12: achievements map — empty `{}` for learners who have unlocked
+      // nothing yet (parallel to pattern's `{ wobbling: {} }` shape). The
+      // empty-object return lets the service reader treat a missing record
+      // identically to an empty record without branching on undefined.
+      if (parsed.type === 'achievements') {
+        return JSON.stringify(data.achievements || {});
+      }
       return null;
     },
     setItem(key, value) {
@@ -327,6 +360,27 @@ export function createSpellingPersistence({ repositories, now } = {}) {
           persistenceWarning: parseStoredJson(value, null),
         }, day);
       }
+      if (parsed.type === 'achievements') {
+        // P2 U12 H4 mitigation — INSERT-OR-IGNORE at the persistence layer.
+        // Merge the incoming achievement map with the current persisted map,
+        // but preserve any id that is ALREADY set. Re-read inside this
+        // critical section so a concurrent second-unlock dispatch with stale
+        // currentAchievements cannot overwrite an original `unlockedAt`
+        // (sticky contract — once unlocked, never changes). The write is
+        // idempotent: writing the same value for an already-set id is a
+        // no-op in merged shape.
+        const incoming = parseStoredJson(value, {});
+        const existing = current.achievements || {};
+        const merged = { ...incoming };
+        for (const [id, record] of Object.entries(existing)) {
+          // Keep original unlockedAt for any id that was already set.
+          merged[id] = record;
+        }
+        writeSpellingData(repositories, parsed.learnerId, {
+          ...current,
+          achievements: merged,
+        }, day);
+      }
       const afterError = readPersistenceError();
       if (errorSignatureChanged(beforeError, afterError)) {
         const message = afterError?.message || 'storage-setItem-failed';
@@ -366,6 +420,17 @@ export function createSpellingPersistence({ repositories, now } = {}) {
         delete next.persistenceWarning;
         writeSpellingData(repositories, parsed.learnerId, next, day);
       }
+      // P2 U12: achievements can ONLY be cleared through `resetLearner`
+      // (which goes through writeSpellingData with an empty bundle). A
+      // direct removeItem here is a deliberate reset signal (e.g. admin-ops
+      // tool) — strip the sibling. Unlocks are otherwise append-only; the
+      // setItem path above enforces INSERT-OR-IGNORE so no path outside of
+      // remove / reset can mutate an unlocked id.
+      if (parsed.type === 'achievements') {
+        const next = { ...current };
+        delete next.achievements;
+        writeSpellingData(repositories, parsed.learnerId, next, day);
+      }
       // P2 U2: postMega cannot be removed through this path — sticky is
       // permanent by contract. `resetLearner` (below) is the only surface
       // that clears postMega, and it goes through writeSpellingData with an
@@ -381,6 +446,7 @@ export function createSpellingPersistence({ repositories, now } = {}) {
     postMegaKey,
     patternKey,
     persistenceWarningKey,
+    achievementsKey,
     // U8 review fix: expose the platform persistence channel's `lastError`
     // signal so the spelling service can detect legacy-engine's silent-
     // swallow on Smart Review / SATs submits. Legacy-engine's

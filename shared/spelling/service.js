@@ -32,12 +32,15 @@ import {
   PATTERN_QUEST_ROUND_LENGTH,
   SPELLING_CONTENT_RELEASE_ID,
   SPELLING_PATTERNS,
+  aggregateAchievementState,
   cloneSerialisable,
   computeLaunchedPatternIds,
   createInitialSpellingState,
   defaultLearningStatus,
+  evaluateAchievements,
   isGuardianEligibleSlug,
   isPatternEligibleSlug,
+  normaliseAchievementsMap,
   normaliseBoolean,
   normaliseDurablePersistenceWarning,
   normaliseFeedback,
@@ -298,6 +301,10 @@ const PATTERN_KEY_PREFIX = 'ks2-spell-pattern-';
 // and worker/src/subjects/spelling/engine.js — all three route reads/writes
 // under this key through the `data.persistenceWarning` sibling of the bundle.
 const PERSISTENCE_WARNING_KEY_PREFIX = 'ks2-spell-persistence-warning-';
+// P2 U12: achievements sibling key. Mirrors ACHIEVEMENTS_STORAGE_PREFIX in
+// src/subjects/spelling/repository.js and worker/src/subjects/spelling/engine.js
+// — all three route reads/writes under this key through `data.achievements`.
+const ACHIEVEMENTS_KEY_PREFIX = 'ks2-spell-achievements-';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function createNoopStorage() {
@@ -339,6 +346,13 @@ function patternKey(learnerId) {
 // `data.persistenceWarning` sibling of the subject-state bundle.
 function persistenceWarningKey(learnerId) {
   return `${PERSISTENCE_WARNING_KEY_PREFIX}${learnerId || 'default'}`;
+}
+
+// P2 U12: storage key for the achievements sibling record. The client and
+// Worker storage proxies route reads/writes under this prefix through the
+// `data.achievements` sibling of the subject-state bundle.
+function achievementsKey(learnerId) {
+  return `${ACHIEVEMENTS_KEY_PREFIX}${learnerId || 'default'}`;
 }
 
 function intervalForLevel(level) {
@@ -1546,6 +1560,80 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const normalised = normaliseDurablePersistenceWarning(record);
     if (!normalised) return { ok: true };
     return saveJson(resolvedStorage, persistenceWarningKey(learnerId), normalised);
+  }
+
+  // P2 U12: load/save helpers for the achievements sibling.
+  function loadAchievementsFromStorage(learnerId) {
+    const raw = loadJson(resolvedStorage, achievementsKey(learnerId), {});
+    return normaliseAchievementsMap(raw) || {};
+  }
+
+  function saveAchievementsToStorage(learnerId, record) {
+    const normalised = normaliseAchievementsMap(record) || {};
+    return saveJson(resolvedStorage, achievementsKey(learnerId), normalised);
+  }
+
+  /**
+   * P2 U12: apply achievement evaluation for an emitted-events batch.
+   *
+   * Contract:
+   *   - Called AFTER the caller has pushed the domain events onto its local
+   *     `events` list. We never re-emit duplicates — the reward subscriber
+   *     downstream also de-dups on (achievementId) so local-dispatch +
+   *     remote-sync echo of the same domain event produces at most ONE
+   *     toast at the UI layer.
+   *   - For each achievement-relevant event, invokes the pure evaluator with
+   *     the running `data.achievements` map (which carries both unlock rows
+   *     and `_progress:*` aggregate entries) and merges both new unlocks and
+   *     updated progress entries back into storage via
+   *     `saveAchievementsToStorage`. The storage proxy's critical section
+   *     (INSERT-OR-IGNORE on unlock rows) guarantees H4 idempotency.
+   *   - Best-effort on storage failure: the persistence-warning banner is
+   *     already surfaced by the upstream submit path, and achievement
+   *     unlocks are non-critical (the learner still has the gameplay
+   *     outcome; the badge is cosmetic).
+   */
+  function persistAchievementsForEmittedEvents(learnerId, emittedEvents) {
+    if (!Array.isArray(emittedEvents) || emittedEvents.length === 0) return;
+    const achievementRelevant = emittedEvents.filter((event) => {
+      if (!event || typeof event.type !== 'string') return false;
+      return event.type === 'spelling.guardian.mission-completed'
+        || event.type === 'spelling.guardian.recovered'
+        || event.type === 'spelling.boss.completed'
+        || event.type === 'spelling.pattern.quest-completed';
+    });
+    if (achievementRelevant.length === 0) return;
+
+    // Read the current map once. The evaluator derives aggregate state from
+    // `_progress:*` entries inside this map, so a fresh learner starts with
+    // an empty aggregate and accumulates across submit paths.
+    const merged = { ...loadAchievementsFromStorage(learnerId) };
+    let changed = false;
+
+    for (const event of achievementRelevant) {
+      const result = evaluateAchievements(event, merged, learnerId);
+      // Apply unlocks (INSERT-OR-IGNORE at the caller layer too — the proxy
+      // also guards, but guarding here avoids an unnecessary storage write).
+      for (const unlock of result.unlocks || []) {
+        if (!unlock || typeof unlock.id !== 'string') continue;
+        if (merged[unlock.id]) continue;
+        merged[unlock.id] = {
+          unlockedAt: Number.isFinite(unlock.unlockedAt) ? unlock.unlockedAt : clock(),
+        };
+        changed = true;
+      }
+      // Apply progress updates (monotonic — each subsequent event's aggregate
+      // includes all prior entries, so OVERWRITE is safe and required).
+      for (const update of result.progressUpdates || []) {
+        if (!update || typeof update.id !== 'string') continue;
+        merged[update.id] = update.record;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      saveAchievementsToStorage(learnerId, merged);
+    }
   }
 
   // P2 U9: durable-warning writer. Called from the submit paths whenever
@@ -2816,6 +2904,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     };
 
     persistence.syncPracticeSession(learnerId, nextState);
+    // P2 U12: per-word Guardian events (renewed/recovered) feed the
+    // Recovery Expert progress counter. Evaluator skips non-achievement-
+    // relevant events; calling is safe on any emit shape.
+    persistAchievementsForEmittedEvents(learnerId, events);
     return buildTransition(nextState, { events });
   }
 
@@ -3666,6 +3758,8 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         };
         persistence.syncPracticeSession(learnerId, nextState);
         const events = patternQuestEventsForSession(learnerId, session, summary, clock());
+        // P2 U12: evaluate + persist achievement unlocks from the emitted events.
+        persistAchievementsForEmittedEvents(learnerId, events);
         return buildTransition(nextState, { events });
       }
       const nextCard = cards[cardIndex];
@@ -3723,6 +3817,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       } else {
         events = sessionCompletedEvents({ learnerId, session, summary, createdAt });
       }
+      // P2 U12: evaluate + persist achievements for Guardian mission-completed,
+      // Boss completed, and (via the pattern-quest branch above) Pattern Quest
+      // completed events. Called after the session's storage writes so any
+      // `data.achievements` update reads a coherent post-session snapshot.
+      persistAchievementsForEmittedEvents(learnerId, events);
       return buildTransition(nextState, { events });
     }
 
@@ -3990,6 +4089,18 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     } catch {
       // Swallow — reset is best-effort; a stale warning is a minor UX
       // inconvenience, not a data-loss hazard.
+    }
+    // P2 U12: clear achievements on reset. Unlocks are NOT meant to be
+    // carried across a "reset this learner" action — that's how a parent /
+    // admin re-starts a child's journey. Reset is the only surface that
+    // clears achievements (the setItem INSERT-OR-IGNORE path cannot
+    // overwrite an unlock row). Same best-effort try/catch as the other
+    // siblings.
+    try {
+      resolvedStorage?.removeItem?.(achievementsKey(learnerId));
+    } catch {
+      // Swallow — reset is best-effort; stale achievements are cosmetic
+      // across a reset.
     }
   }
 

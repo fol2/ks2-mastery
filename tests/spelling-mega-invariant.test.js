@@ -168,6 +168,15 @@ function readPostMegaRecord(harness) {
   return record?.data?.postMega || null;
 }
 
+// P2 U12: read the persisted `data.achievements` sibling. Returns an empty
+// map when the bundle has no achievements sibling (the sticky-contract
+// baseline — no unlocks yet is a valid state, but once set, entries must
+// never revert or overwrite).
+function readAchievementsMap(harness) {
+  const record = harness.repositories.subjectStates.read(harness.learnerId, 'spelling');
+  return record?.data?.achievements || {};
+}
+
 // -----------------------------------------------------------------------------
 // Invariant checks — called after every action in every sequence. Each
 // assertion includes the action + step index so a failure locates the exact
@@ -233,6 +242,28 @@ function assertPostMegaInvariant(postMega, seedPostMega, context) {
     seedPostMega.unlockedBy,
     `${context}: postMega.unlockedBy mutated`,
   );
+}
+
+// P2 U12: achievements never-revoked invariant. Every unlock id that has been
+// previously observed in the session's running achievementsMap must still be
+// present with the SAME `unlockedAt` after the action executes. A regression
+// that overwrites `unlockedAt` on replay would trip byte-equality here;
+// dropping the sibling would trip the "previously seen id is now missing"
+// check. Progress keys (`_progress:*`) are NOT checked — those are cumulative
+// aggregate state that grows monotonically and is allowed to change shape.
+function assertAchievementsInvariant(currentAchievements, runningSeenUnlocks, context) {
+  for (const [id, seenRecord] of runningSeenUnlocks.entries()) {
+    const nowRecord = currentAchievements[id];
+    assert.ok(
+      nowRecord,
+      `${context}: achievement id "${id}" previously present with unlockedAt ${seenRecord.unlockedAt} is now MISSING — achievements-never-revoked violated`,
+    );
+    assert.equal(
+      nowRecord.unlockedAt,
+      seenRecord.unlockedAt,
+      `${context}: achievement id "${id}" unlockedAt mutated (${nowRecord.unlockedAt} vs seed ${seenRecord.unlockedAt})`,
+    );
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -612,6 +643,11 @@ function applyAction(harness, state, action) {
 function runSequence(harness, actions, { label } = {}) {
   let state = null;
   const emitted = [];
+  // P2 U12 composite: track every unlock id observed so far so we can assert
+  // the set monotonically grows AND each `unlockedAt` stays byte-identical
+  // across subsequent actions. Progress keys (`_progress:*`) are excluded
+  // from the assertion — those are cumulative aggregate state.
+  const runningSeenUnlocks = new Map();
   for (let i = 0; i < actions.length; i += 1) {
     const action = actions[i];
     const context = `${label || 'sequence'} step=${i + 1}/${actions.length} action='${action}'`;
@@ -631,6 +667,19 @@ function runSequence(harness, actions, { label } = {}) {
     // within the first few actions of seed-42.
     const postMega = readPostMegaRecord(harness);
     assertPostMegaInvariant(postMega, SEED_POST_MEGA, context);
+    // P2 U12 composite: the achievements sibling is append-only. Observed
+    // unlock ids must persist with byte-identical `unlockedAt` across every
+    // subsequent action. First we check that prior observations still hold.
+    const currentAchievements = readAchievementsMap(harness);
+    assertAchievementsInvariant(currentAchievements, runningSeenUnlocks, context);
+    // Then record any NEW unlock rows observed this step into the running
+    // map so the next iteration's assertion covers them.
+    for (const [id, record] of Object.entries(currentAchievements)) {
+      if (typeof id !== 'string' || id.startsWith('_progress:')) continue;
+      if (!runningSeenUnlocks.has(id)) {
+        runningSeenUnlocks.set(id, record);
+      }
+    }
   }
   return { state, events: emitted };
 }
