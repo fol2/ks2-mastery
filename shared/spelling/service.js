@@ -41,6 +41,7 @@ import {
   normaliseSummary,
   normaliseTimestamp,
   normaliseYearFilter,
+  SPELLING_PERSISTENCE_WARNING_REASON,
   SPELLING_ROOT_PHASES,
   SPELLING_SERVICE_STATE_VERSION,
   SPELLING_SESSION_PHASES,
@@ -512,11 +513,30 @@ function loadJson(storage, key, fallback) {
   }
 }
 
+// U8: Storage-failure warning surface.
+//
+// `saveJson` now returns `{ ok, reason? }` instead of swallowing errors
+// silently. The legacy swallow is preserved in spirit (the write still never
+// throws up to the caller), but the caller can now inspect `ok` and surface a
+// `feedback.persistenceWarning` to the learner. The reason string is not
+// user-facing — it is captured for future diagnostic hooks.
+//
+// Every existing caller must either consume the boolean or destructure it
+// explicitly; relying on a truthy/falsy check against the raw return value is
+// a contract violation (the return value is always an object, so `!!saveJson`
+// is always truthy).
+//
+// Known non-self-heal case (documented, accepted MVP gap): if the child
+// closes the tab before the next submit, the warning dies. A durable cross-
+// session warning surface is deferred to a later plan.
 function saveJson(storage, key, value) {
   try {
     storage.setItem(key, JSON.stringify(value));
-  } catch {
-    // local persistence is best-effort in the reference rebuild.
+    return { ok: true };
+  } catch (error) {
+    // Storage quota / private mode / disk-full / IO error all land here.
+    // The caller decides whether this should surface in the UI.
+    return { ok: false, reason: 'setItem-threw', error: error instanceof Error ? error : new Error(String(error)) };
   }
 }
 
@@ -778,6 +798,30 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     resetLearner() {},
   };
   const resolvedStorage = persistence.storage || storage || globalThis.localStorage || createNoopStorage();
+  // U8 review fix: read the platform persistence channel's `lastError`
+  // snapshot when the host exposes it. This is the only reliable way to
+  // observe legacy-engine's silent-swallow on Smart Review / SATs submits
+  // in production, where `storage` is the `createSpellingPersistence`
+  // proxy whose `setItem` DOES throw on persistAll failure (so the
+  // service's own `saveJson` catches it) but legacy-engine's `saveProgress`
+  // catches that throw internally. Comparing the channel's before/after
+  // snapshot on each submit surfaces that hidden failure without probing
+  // storage a second time.
+  //
+  // Bare-storage test hosts (no platform repositories) do not expose this
+  // adapter — `readPersistenceError()` returns null everywhere, and the
+  // submit path falls back to the explicit `saveProgressToStorage` write,
+  // whose `saveJson` try/catch still returns `{ ok: false }` when the
+  // underlying `storage.setItem` throws.
+  const readPersistenceError = typeof persistence.readPersistenceError === 'function'
+    ? () => persistence.readPersistenceError()
+    : () => null;
+  function persistenceErrorSignatureChanged(before, after) {
+    if (!after) return false;
+    if (!before) return true;
+    if (Number(before.at) !== Number(after.at)) return true;
+    return before.message !== after.message;
+  }
   const randomFn = typeof random === 'function' ? random : Math.random;
   const runtimeWords = Array.isArray(contentSnapshot?.words)
     ? cloneSerialisable(contentSnapshot.words)
@@ -801,6 +845,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
 
   function savePrefs(learnerId, prefs) {
     const next = normalisePrefs({ ...getPrefs(learnerId), ...(prefs || {}) });
+    // U8: prefs writes propagate the `{ ok, reason? }` shape through the
+    // storage boundary, but prefs-save is not a submit-path surface (no
+    // persistenceWarning banner), so the result is currently unconsumed.
+    // Kept consistent so every saveJson caller has the same contract shape.
     saveJson(resolvedStorage, prefsKey(learnerId), next);
     return next;
   }
@@ -908,8 +956,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return normaliseGuardianMap(raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}, currentTodayDay());
   }
 
+  // U8: returns `{ ok, reason? }` so callers (submitGuardianAnswer,
+  // skipGuardianWord, resetLearner) can decide whether to surface a
+  // persistenceWarning. The `resetLearner` caller ignores the return because
+  // a warning on a reset path is not actionable. The submit paths consume
+  // it.
   function saveGuardianMap(learnerId, map) {
-    saveJson(resolvedStorage, guardianMapKey(learnerId), map || {});
+    return saveJson(resolvedStorage, guardianMapKey(learnerId), map || {});
   }
 
   // U7 merge-save: per-slug guardian writer.
@@ -940,13 +993,21 @@ export function createSpellingService({ repository, storage, tts, now, random, c
   // go through the merge-save path.
   function saveGuardianRecord(learnerId, slug, record) {
     const safeSlug = typeof slug === 'string' ? slug : '';
-    if (!safeSlug) return;
+    // U8: preserve the existing no-op contract for empty slugs, but now return
+    // the `{ ok, reason? }` shape so callers don't have to special-case a
+    // `void` return against the boolean from real writes. An empty-slug call
+    // is treated as a benign success — nothing was requested to persist.
+    if (!safeSlug) return { ok: true };
     // Reload from storage so any write performed earlier on this same service
     // instance (possibly via a DIFFERENT slug) is preserved through the merge.
     const latest = loadGuardianMap(learnerId);
     // Normalise on write so malformed records don't leak past one load cycle.
     latest[safeSlug] = normaliseGuardianRecord(record, currentTodayDay());
-    saveGuardianMap(learnerId, latest);
+    // U8: propagate persistence outcome. The U7 merge-save path writes twice
+    // in ordinary flow (one load, one save); a failure at the save step is the
+    // only observable persistence error, and we forward it so the submit-path
+    // caller can flag the round with `feedback.persistenceWarning`.
+    return saveGuardianMap(learnerId, latest);
   }
 
   function loadProgressFromStorage(learnerId) {
@@ -954,8 +1015,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   }
 
+  // U8: returns `{ ok, reason? }` so submit paths can raise a
+  // persistenceWarning. The non-Guardian Smart Review / SATs path writes
+  // progress through the legacy engine's own setProgress (not this helper);
+  // submitAnswer uses a light probe via this helper to detect the same
+  // underlying storage failure without mutating state (see submitAnswer).
   function saveProgressToStorage(learnerId, map) {
-    saveJson(resolvedStorage, progressMapKey(learnerId), map || {});
+    return saveJson(resolvedStorage, progressMapKey(learnerId), map || {});
   }
 
   function coreWordCount() {
@@ -1487,7 +1553,21 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     if (correct) nextProgress.correct = (nextProgress.correct || 0) + 1;
     else nextProgress.wrong = (nextProgress.wrong || 0) + 1;
     progressMap[currentSlug] = nextProgress;
-    saveProgressToStorage(learnerId, progressMap);
+    // U8: capture persistence outcomes for both writes so a single warning can
+    // be surfaced on either failure, without demoting Mega. The session
+    // continues in-memory whatever the storage outcome — the invariant
+    // "stage >= 4" holds across the wrong-answer path already, and the
+    // warning is additive on top of feedback.
+    //
+    // U8 review fix: we also snapshot the platform persistence channel's
+    // `lastError` before the writes so a transient failure that the proxy
+    // masked (e.g. a partial bundle write fault) still surfaces even if
+    // the explicit saveJson returns `ok: true`. In production the proxy
+    // rethrows a fresh error via `errorSignatureChanged`, so saveJson
+    // catches it; this pre/post snapshot is belt-and-braces for hosts
+    // that might add extra wrappers in the future.
+    const beforeError = readPersistenceError();
+    const progressSave = saveProgressToStorage(learnerId, progressMap);
 
     // Advance the guardian record. Lazy-create if this is the first Guardian
     // touch for the slug. We load a mutable copy for the read-side
@@ -1523,7 +1603,21 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const updatedRecord = correct
       ? advanceGuardianOnCorrect(beforeRecord, todayDay)
       : advanceGuardianOnWrong(beforeRecord, todayDay);
-    saveGuardianRecord(learnerId, currentSlug, updatedRecord);
+    const guardianSave = saveGuardianRecord(learnerId, currentSlug, updatedRecord);
+    // U8: a single persistenceWarning deduped across progress + guardian
+    // saves. Whichever failed first is sufficient signal for the UI; the
+    // banner is deduped per submit so a double failure still surfaces only
+    // once.
+    //
+    // U8 review fix: also dedupe-in any lastError-channel change. The
+    // sibling write helpers return `ok: false` on direct throw, but if a
+    // host wraps the proxy with its own swallow, the channel diff still
+    // catches the failure.
+    const afterError = readPersistenceError();
+    const lastErrorChanged = persistenceErrorSignatureChanged(beforeError, afterError);
+    const persistenceWarning = (!progressSave?.ok || !guardianSave?.ok || lastErrorChanged)
+      ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
+      : null;
 
     // Record the per-word outcome so the finalisation step can emit the
     // mission-completed event with accurate aggregate counts.
@@ -1585,6 +1679,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
           body: 'Mega stays, but this word will return tomorrow for a Guardian check.',
           attemptedAnswer: rawTyped,
         };
+    // U8: attach persistenceWarning so the UI can surface a subtle banner
+    // without demoting Mega. The feedback normaliser accepts the optional
+    // field; when null it is stripped from the feedback object.
+    if (persistenceWarning) feedback.persistenceWarning = persistenceWarning;
 
     const nextState = {
       version: SPELLING_SERVICE_STATE_VERSION,
@@ -1631,6 +1729,13 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const session = cloneSerialisable(current.session);
     const entryPhase = session.phase;
     const currentSlug = session.currentSlug;
+    // U8 review fix: snapshot the platform persistence channel's lastError
+    // BEFORE calling legacy-engine so we can diff after the engine's write.
+    // Legacy-engine's `saveProgress` has an internal try/catch that swallows
+    // storage throws from the spelling persistence proxy. The channel's
+    // lastError (set by `persistAll` inside `createLocalPlatformRepositories`)
+    // is the authoritative signal for a silent swallow.
+    const beforeError = readPersistenceError();
     const result = session.type === 'test'
       ? engine.submitTest(session, learnerId, rawTyped)
       : engine.submitLearning(session, learnerId, rawTyped);
@@ -1651,6 +1756,39 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         awaitingAdvance: false,
       });
     }
+
+    // U8 review fix: dual-mode persistence detection for Smart Review / SATs.
+    //
+    // (1) Production path: the platform persistence channel's `lastError`
+    //     bumps its `at` timestamp every time `persistAll` fails, even when
+    //     legacy-engine swallows the proxy throw. We capture the channel
+    //     state IMMEDIATELY after `engine.submitLearning` returns — before
+    //     the probe write — because a successful probe would clear the
+    //     error and the before/after comparison across the probe would miss
+    //     a transient failure blip. The mid-submit snapshot is the
+    //     authoritative signal for legacy-engine's silent swallow.
+    //
+    // (2) Bare-storage test path: the service is wired to a raw
+    //     MemoryStorage (no platform repositories / persistence channel), so
+    //     `readPersistenceError()` returns null. To still surface the
+    //     warning on legacy-engine's silent swallow, we write progress once
+    //     through `saveProgressToStorage`, whose `saveJson` try/catch
+    //     returns `{ ok: false }` on throw. On production this is also a
+    //     valid secondary check — if storage recovered between legacy-engine
+    //     and this write, the write succeeds and no warning is surfaced
+    //     (which is the correct behaviour — storage IS consistent now).
+    //
+    // The probe's `progressSnapshot` was previously documented as
+    // idempotent — with the proxy throw-on-error fix in `repository.js`,
+    // it now genuinely detects a broken storage backing on the same submit.
+    // Either signal firing raises the warning.
+    const midError = readPersistenceError();
+    const midErrorChanged = persistenceErrorSignatureChanged(beforeError, midError);
+    const probeProgress = progressSnapshot(learnerId);
+    const probeSave = probeProgress ? saveProgressToStorage(learnerId, probeProgress) : { ok: true };
+    const persistenceWarning = (!probeSave?.ok || midErrorChanged)
+      ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
+      : null;
 
     const eventTime = clock();
     const events = [];
@@ -1695,6 +1833,8 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       feedback: normaliseFeedback({
         ...result.feedback,
         ...(session.type !== 'test' && result.correct === false ? { attemptedAnswer: rawTyped } : {}),
+        // U8: attach warning from the probe. Normaliser strips it when null.
+        persistenceWarning,
       }),
       summary: null,
       error: '',
@@ -1850,7 +1990,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     nextProgress.attempts = (nextProgress.attempts || 0) + 1;
     nextProgress.wrong = (nextProgress.wrong || 0) + 1;
     progressMap[currentSlug] = nextProgress;
-    saveProgressToStorage(learnerId, progressMap);
+    // U8 review fix: snapshot lastError before the writes so we can catch
+    // a wrapped-host swallow. Mirrors submitGuardianAnswer's check.
+    const beforeError = readPersistenceError();
+    const progressSave = saveProgressToStorage(learnerId, progressMap);
 
     // Advance the guardian record the same way a wrong answer does.
     const todayDay = currentTodayDay();
@@ -1858,7 +2001,15 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const beforeRecord = ensureGuardianRecord(guardianMap, currentSlug, todayDay);
     const updatedRecord = advanceGuardianOnWrong(beforeRecord, todayDay);
     guardianMap[currentSlug] = updatedRecord;
-    saveGuardianMap(learnerId, guardianMap);
+    const guardianSave = saveGuardianMap(learnerId, guardianMap);
+    // U8: propagate persistence failures from the "I don't know" branch the
+    // same way submitGuardianAnswer does. A single banner surfaces if either
+    // write failed; the session continues in-memory and Mega is untouched.
+    const afterError = readPersistenceError();
+    const lastErrorChanged = persistenceErrorSignatureChanged(beforeError, afterError);
+    const persistenceWarning = (!progressSave?.ok || !guardianSave?.ok || lastErrorChanged)
+      ? { reason: SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED }
+      : null;
 
     // Record the per-word outcome so guardianMissionEventsForSession counts
     // this as a wobble on the final mission-completed event.
@@ -1891,6 +2042,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         headline: 'Wobbling.',
         answer: baseWord.word,
         body: 'Mega stays, but this word will return tomorrow for a Guardian check.',
+        // U8: attach the warning into the feedback shape so the React banner
+        // surfaces on the "I don't know" branch too. normaliseFeedback drops
+        // it when null/undefined, preserving the pre-U8 shape on happy paths.
+        persistenceWarning,
       }),
       summary: null,
       error: '',
@@ -1979,6 +2134,9 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const currentPrefs = getPrefs(learnerId);
     engine.resetProgress(learnerId);
     persistence.resetLearner?.(learnerId);
+    // U8: reset ignores the saveJson/saveGuardianMap return value — a warning
+    // on a reset path is not actionable, and there is no current submit to
+    // attach feedback to. The shape change is additive here.
     saveJson(resolvedStorage, prefsKey(learnerId), {
       ...defaultSpellingPrefs(),
       ttsProvider: currentPrefs.ttsProvider,

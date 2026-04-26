@@ -8,7 +8,11 @@ import {
   GUARDIAN_MAX_ROUND_LENGTH,
   GUARDIAN_DEFAULT_ROUND_LENGTH,
   SPELLING_MODES,
+  SPELLING_PERSISTENCE_WARNING_COPY,
+  SPELLING_PERSISTENCE_WARNING_REASON,
+  SPELLING_PERSISTENCE_WARNING_REASONS,
   SPELLING_SERVICE_STATE_VERSION,
+  normaliseFeedback,
   normaliseGuardianMap,
   normaliseGuardianRecord,
   normaliseMode,
@@ -38,7 +42,7 @@ import {
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
-import { installMemoryStorage } from './helpers/memory-storage.js';
+import { installMemoryStorage, MemoryStorage } from './helpers/memory-storage.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 import {
   buildSpellingLearnerReadModel,
@@ -2989,6 +2993,290 @@ test('U2 read-model: legacy-demoted slug (stage < GUARDIAN_SECURE_STAGE) exclude
   assert.equal(state.wobblingCount, 0, 'stage-3 record excluded from wobbling count');
 });
 
+// ----- U8: Storage-failure warning surface (Guardian path) ---------------------
+//
+// These tests bypass `createLocalPlatformRepositories` (which wraps its own
+// persist loop in a try/catch and swallows storage errors) and wire the
+// service directly to a bare `MemoryStorage`. That lets the `saveJson`
+// contract change surface a throw to the submit path, and the plan's
+// requirement — `ok: true`, `feedback.persistenceWarning` set, `progress.stage
+// === 4`, no crash — holds end-to-end.
+//
+// `MemoryStorage.throwOnNextSet` arms a one-shot throw on the next matching
+// setItem call; after it fires once, subsequent writes succeed normally,
+// which is what lets the next-submit self-heal test work.
+
+function makeGuardianBareStorageService({ now = () => Date.UTC(2026, 0, 10), random = () => 0.5 } = {}) {
+  const storage = new MemoryStorage();
+  const service = createSpellingService({
+    storage,
+    now,
+    random,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+  return { storage, service };
+}
+
+function seedAllCoreMegaBare(storage, learnerId, todayDay) {
+  const progress = Object.fromEntries(
+    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
+      stage: 4,
+      attempts: 6 + (index % 4),
+      correct: 5 + (index % 4),
+      wrong: 1,
+      dueDay: todayDay + 60,
+      lastDay: todayDay - 7,
+      lastResult: 'correct',
+    }]),
+  );
+  storage.setItem(`ks2-spell-progress-${learnerId}`, JSON.stringify(progress));
+}
+
+test('U8 Guardian: storage throw on guardian key surfaces feedback.persistenceWarning with ok:true and stage=4', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { storage, service } = makeGuardianBareStorageService({ now });
+  seedAllCoreMegaBare(storage, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(started.ok, true, 'guardian session starts when all-mega');
+  const currentSlug = started.state.session.currentSlug;
+  const answer = started.state.session.currentCard.word.word;
+
+  // Arm the guardian-key setItem to throw on the next write. submitGuardianAnswer
+  // writes progress first (succeeds), then guardian (throws); a single warning
+  // surfaces on the submit.
+  storage.throwOnNextSet({ key: 'ks2-spell-guardian-learner-a' });
+
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(submitted.ok, true, 'submit returns ok: true');
+  assert.equal(submitted.state.phase, 'session', 'session continues');
+  assert.equal(submitted.state.feedback?.persistenceWarning?.reason, 'storage-save-failed');
+
+  // Mega-never-revoked: progress.stage stays at 4. We inspect storage directly
+  // because the progress save succeeded (only guardian threw).
+  const progressAfter = JSON.parse(storage.getItem('ks2-spell-progress-learner-a'));
+  assert.equal(progressAfter[currentSlug].stage, 4, 'progress.stage stays at 4 after storage failure');
+});
+
+test('U8 Guardian: storage throw on progress key also surfaces feedback.persistenceWarning', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { storage, service } = makeGuardianBareStorageService({ now });
+  seedAllCoreMegaBare(storage, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const answer = started.state.session.currentCard.word.word;
+
+  // Arm the progress key throw. submitGuardianAnswer writes progress first,
+  // which throws; guardian save still runs and succeeds; warning surfaces.
+  storage.throwOnNextSet({ key: 'ks2-spell-progress-learner-a' });
+
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(submitted.ok, true);
+  assert.equal(submitted.state.phase, 'session');
+  assert.equal(submitted.state.feedback?.persistenceWarning?.reason, 'storage-save-failed');
+});
+
+test('U8 Guardian: happy path has no persistenceWarning on feedback', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { storage, service } = makeGuardianBareStorageService({ now });
+  seedAllCoreMegaBare(storage, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const answer = started.state.session.currentCard.word.word;
+
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(submitted.state.feedback?.persistenceWarning, undefined,
+    'happy-path feedback has no persistenceWarning field');
+});
+
+test('U8 Guardian: both progress + guardian throws produce a single deduped warning', () => {
+  // The throwOnNextSet hook is one-shot. To simulate both writes throwing, we
+  // arm with NO keyFilter so the first setItem (progress) throws. The second
+  // (guardian) succeeds naturally. A second arm fires for the guardian write.
+  //
+  // This test asserts the deduplication contract: even when both saves fail,
+  // the feedback carries ONE persistenceWarning, not a compounded one.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { storage, service } = makeGuardianBareStorageService({ now });
+  seedAllCoreMegaBare(storage, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const answer = started.state.session.currentCard.word.word;
+
+  // Throw on the first progress write.
+  storage.throwOnNextSet({ key: 'ks2-spell-progress-learner-a' });
+  // Manually monkeypatch setItem so the guardian write also throws. We
+  // restore after the call so downstream assertions can read storage.
+  const originalSetItem = storage.setItem.bind(storage);
+  storage.setItem = function chainedSetItem(key, value) {
+    if (key === 'ks2-spell-guardian-learner-a') {
+      // Let it throw but restore so future probes work.
+      throw Object.assign(new Error('QuotaExceededError'), { name: 'QuotaExceededError' });
+    }
+    return originalSetItem(key, value);
+  };
+
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  // Restore storage so downstream teardown / assertions can read the state.
+  storage.setItem = originalSetItem;
+
+  assert.equal(submitted.ok, true);
+  assert.equal(submitted.state.feedback?.persistenceWarning?.reason, 'storage-save-failed',
+    'both-fail case still surfaces exactly one warning');
+  // Shape check: the warning is a flat `{ reason }` object, never nested or
+  // duplicated by being present twice in the feedback.
+  const warningValues = Object.values(submitted.state.feedback.persistenceWarning);
+  assert.equal(warningValues.length, 1, 'persistenceWarning has exactly one field (reason)');
+});
+
+test('U8 Guardian: warning self-heals on next successful submit', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { storage, service } = makeGuardianBareStorageService({ now });
+  seedAllCoreMegaBare(storage, 'learner-a', today);
+
+  let state = service.startSession('learner-a', { mode: 'guardian' }).state;
+  const firstAnswer = state.session.currentCard.word.word;
+
+  // First submit throws on guardian key.
+  storage.throwOnNextSet({ key: 'ks2-spell-guardian-learner-a' });
+  let submitted = service.submitAnswer('learner-a', state, firstAnswer);
+  assert.equal(submitted.state.feedback?.persistenceWarning?.reason, 'storage-save-failed');
+  state = submitted.state;
+
+  // Advance to the next card.
+  state = service.continueSession('learner-a', state).state;
+
+  // Second submit (no throw armed): warning should be absent from the new
+  // feedback; banner unmounts.
+  const secondAnswer = state.session.currentCard.word.word;
+  submitted = service.submitAnswer('learner-a', state, secondAnswer);
+  assert.equal(submitted.state.feedback?.persistenceWarning, undefined,
+    'next successful submit has feedback without persistenceWarning');
+});
+
+test('U8 Guardian: "I don\'t know" (skipWord) surfaces persistenceWarning on storage failure', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { storage, service } = makeGuardianBareStorageService({ now });
+  seedAllCoreMegaBare(storage, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const currentSlug = started.state.session.currentSlug;
+
+  // Arm guardian key throw (skipGuardianWord also writes guardian).
+  storage.throwOnNextSet({ key: 'ks2-spell-guardian-learner-a' });
+
+  const skipped = service.skipWord('learner-a', started.state);
+  assert.equal(skipped.ok, true);
+  assert.equal(skipped.state.phase, 'session', 'session continues after storage failure on "I don\'t know"');
+  assert.equal(skipped.state.feedback?.persistenceWarning?.reason, 'storage-save-failed',
+    'skipGuardianWord surfaces persistenceWarning on guardian-key throw');
+  // Stage invariant: unchanged after storage failure.
+  const progressAfter = JSON.parse(storage.getItem('ks2-spell-progress-learner-a'));
+  assert.equal(progressAfter[currentSlug].stage, 4);
+});
+
+test('U8 Guardian: saveGuardianRecord still returns ok:true on success', () => {
+  // Direct unit test for the U7 merge-save helper's new return shape.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service } = makeGuardianBareStorageService({ now });
+  const result = service.saveGuardianRecord('learner-a', 'possess', {
+    reviewLevel: 1,
+    lastReviewedDay: today,
+    nextDueDay: today + 3,
+    correctStreak: 1,
+    lapses: 0,
+    renewals: 0,
+    wobbling: false,
+  });
+  assert.ok(result && typeof result === 'object', 'saveGuardianRecord returns { ok, ... }');
+  assert.equal(result.ok, true, 'happy-path ok: true');
+});
+
+test('U8 Guardian: saveGuardianRecord returns ok:false when storage throws', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { storage, service } = makeGuardianBareStorageService({ now });
+  storage.throwOnNextSet({ key: 'ks2-spell-guardian-learner-a' });
+  const result = service.saveGuardianRecord('learner-a', 'possess', {
+    reviewLevel: 1,
+    lastReviewedDay: today,
+    nextDueDay: today + 3,
+    correctStreak: 1,
+    lapses: 0,
+    renewals: 0,
+    wobbling: false,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'setItem-threw');
+});
+
+test('U8 normaliseFeedback: accepts and preserves persistenceWarning shape', () => {
+  // Direct unit test for the service-contract change. The feedback object
+  // gains an optional `persistenceWarning` field; unknown reasons are dropped
+  // so a renamed reason never reaches the UI.
+
+  // Valid warning preserved.
+  const withWarning = normaliseFeedback({
+    kind: 'info',
+    headline: 'Guardian strong.',
+    body: 'Secure.',
+    persistenceWarning: { reason: 'storage-save-failed' },
+  });
+  assert.deepEqual(withWarning.persistenceWarning, { reason: 'storage-save-failed' });
+  // Unknown reason dropped.
+  const unknownReason = normaliseFeedback({
+    kind: 'info',
+    headline: 'x',
+    persistenceWarning: { reason: 'unknown-failure' },
+  });
+  assert.equal(unknownReason.persistenceWarning, undefined);
+  // Null warning — field absent from output.
+  const nullWarning = normaliseFeedback({
+    kind: 'info',
+    headline: 'x',
+    persistenceWarning: null,
+  });
+  assert.equal(nullWarning.persistenceWarning, undefined);
+  // Reason allow-list guard: the frozen constant matches the implementation.
+  assert.deepEqual([...SPELLING_PERSISTENCE_WARNING_REASONS], ['storage-save-failed']);
+});
+
+test('U8 review: SPELLING_PERSISTENCE_WARNING_REASON symbolic constants match the allow-list', () => {
+  // Review fix: replaces duplicated 'storage-save-failed' literals across
+  // the service with a named constant. This test locks down the mapping so
+  // a rename cannot silently drift the warning reason identifier.
+  assert.equal(
+    SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED,
+    'storage-save-failed',
+    'symbolic constant matches the allow-listed reason string',
+  );
+  assert.ok(
+    SPELLING_PERSISTENCE_WARNING_REASONS.includes(
+      SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED,
+    ),
+    'symbolic constant resolves to a value present in the frozen allow-list',
+  );
+  // Banner copy constant exists and is non-empty for every reason.
+  for (const reason of SPELLING_PERSISTENCE_WARNING_REASONS) {
+    const copy = SPELLING_PERSISTENCE_WARNING_COPY[reason.replace(/-/g, '_').toUpperCase()];
+    assert.ok(
+      typeof copy === 'string' && copy.length > 0,
+      `banner copy exists for reason "${reason}"`,
+    );
+  }
+});
+
 // ----- U1: computeGuardianMissionState truth table ---------------------------
 // `computeGuardianMissionState` is a pure helper the selector reuses. Tests
 // below hit every documented branch of the state machine (locked, first-patrol,
@@ -3527,6 +3815,125 @@ test('U1 review: deriveGuardianAggregates invariant — wobblingDueCount + nonWo
       `invariant failed for scenario "${scenario.name}": ${aggregates.wobblingDueCount} + ${aggregates.nonWobblingDueCount} !== ${aggregates.guardianDueCount}`,
     );
   }
+});
+
+// ----- U8 review fix: production-path integration coverage --------------------
+//
+// The original U8 tests wire the service to a bare MemoryStorage, which
+// bypasses `createLocalPlatformRepositories`. The adversarial review
+// identified that without this production path, the warning surface was
+// structurally dead code for real learners: the spelling persistence
+// proxy's `setItem` was a void function whose underlying `persistAll`
+// swallowed errors into the persistence channel without rethrowing.
+//
+// The fix in `src/subjects/spelling/repository.js` makes the proxy
+// diff the channel's lastError before/after the `writeData` call and
+// throw when a fresh error appeared. These tests exercise the complete
+// production stack: `createLocalPlatformRepositories` -> proxy ->
+// spelling service -> Guardian submit -> feedback.persistenceWarning.
+//
+// Target: close the test-vs-production gap that made Blocker 1 possible.
+
+test('U8 review: production-path (createLocalPlatformRepositories) surfaces persistenceWarning on Guardian submit when underlying storage throws', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const todayDay = Math.floor(now() / DAY_MS);
+  const storage = new MemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  // Seed an all-Mega progress map through the repository write API. This
+  // installs the record in the subject-state bundle before the session
+  // starts, so the Guardian path sees every core word as Mega.
+  const learnerId = 'learner-a';
+  const allMegaProgress = Object.fromEntries(
+    WORDS.filter((word) => word.spellingPool !== 'extra').map((word, index) => [word.slug, {
+      stage: 4,
+      attempts: 6 + (index % 4),
+      correct: 5 + (index % 4),
+      wrong: 1,
+      dueDay: todayDay + 60,
+      lastDay: todayDay - 7,
+      lastResult: 'correct',
+    }]),
+  );
+  repositories.subjectStates.writeData(learnerId, 'spelling', { progress: allMegaProgress });
+
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random: () => 0.5,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  const started = service.startSession(learnerId, { mode: 'guardian' });
+  assert.equal(started.ok, true, 'guardian session starts in production path');
+  const answer = started.state.session.currentCard.word.word;
+
+  // Arm the UNDERLYING MemoryStorage (not the proxy) to throw on the next
+  // subject-state persist. This is where the real-world quota exceeded /
+  // private mode / IO-error would strike. `persistBundle` writes every
+  // collection sequentially; the first setItem is `meta`, followed by
+  // `learners`, then `subjectStates`. We arm the subject-state key
+  // specifically so the throw happens mid-bundle, matching the realistic
+  // failure shape.
+  storage.throwOnNextSet({ key: 'ks2-platform-v2.repo.child-subject-state' });
+
+  const submitted = service.submitAnswer(learnerId, started.state, answer);
+  assert.equal(submitted.ok, true, 'submit returns ok:true even when backing storage throws');
+  assert.equal(submitted.state.phase, 'session', 'session continues in-memory');
+  // The proxy's lastError-diff throw gets caught by saveJson, which returns
+  // { ok: false }. The service's submitGuardianAnswer sees that and attaches
+  // feedback.persistenceWarning.
+  assert.equal(
+    submitted.state.feedback?.persistenceWarning?.reason,
+    'storage-save-failed',
+    'production-path Guardian submit surfaces feedback.persistenceWarning when the backing storage throws',
+  );
+  // Mega-never-revoked invariant across the production path. The in-memory
+  // progress record must remain at stage 4.
+  const progressAfter = repositories.subjectStates.read(learnerId, 'spelling').data?.progress || {};
+  const submittedSlug = started.state.session.currentSlug;
+  assert.equal(
+    Number(progressAfter[submittedSlug]?.stage),
+    4,
+    'Mega invariant holds in production path even when storage persist failed',
+  );
+});
+
+test('U8 review: wrong-answer Guardian submit with storage throw keeps stage === 4 (Mega invariant)', () => {
+  // Advisory fix coverage (sev 55): the existing Guardian storage-throw tests
+  // only cover correct-answer paths. A wrong answer triggers
+  // `advanceGuardianOnWrong` and writes progress.attempts + progress.wrong.
+  // Mega must still hold even when the storage persist fails.
+  const now = () => Date.UTC(2026, 0, 10);
+  const todayDay = Math.floor(now() / DAY_MS);
+  const { storage, service } = makeGuardianBareStorageService({ now });
+  seedAllCoreMegaBare(storage, 'learner-a', todayDay);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const currentSlug = started.state.session.currentSlug;
+  // Submit a wrong answer — definitely distinct from any prompt. Prepend a
+  // character so even single-letter accepted aliases can't match.
+  const wrongAnswer = `zzz-not-the-answer`;
+
+  storage.throwOnNextSet({ key: 'ks2-spell-progress-learner-a' });
+  const submitted = service.submitAnswer('learner-a', started.state, wrongAnswer);
+
+  assert.equal(submitted.ok, true);
+  assert.equal(submitted.state.phase, 'session');
+  assert.equal(submitted.state.feedback?.persistenceWarning?.reason, 'storage-save-failed');
+  // Mega stays — the wrong-answer path bumps attempts + wrong but never
+  // mutates stage. Even with the storage throw, the progress record we can
+  // re-read must still be at stage 4. Progress storage write failed, so
+  // the persisted record retains its pre-submit shape (still stage 4).
+  const progressAfter = JSON.parse(storage.getItem('ks2-spell-progress-learner-a'));
+  assert.equal(
+    progressAfter[currentSlug].stage,
+    4,
+    'Mega-never-revoked holds across wrong-answer storage failure',
+  );
 });
 
 test('U1 review: deriveGuardianAggregates returns zero counts + null nextDue for empty inputs', () => {

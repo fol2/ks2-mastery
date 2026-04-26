@@ -126,6 +126,36 @@ export function createSpellingPersistence({ repositories, now } = {}) {
 
   const currentDay = () => todayDayForNow(now);
 
+  // U8 review fix: the spelling storage proxy MUST throw on an underlying
+  // persistence failure. `repositories.subjectStates.writeData` discards the
+  // `persistAll` success flag and routes the failure silently into the
+  // persistence channel's `lastError`. Without a throw here, the spelling
+  // service's `saveJson` try/catch never fires in production, and U8's
+  // feedback.persistenceWarning path is structurally unreachable for real
+  // learners (only test fixtures that bypass this proxy could see it).
+  //
+  // We diff the channel's `lastError` reference and `updatedAt` before/after
+  // the `writeData` call. A fresh error raises a throw so `saveJson` can
+  // surface the warning. Any persistent prior error does NOT re-throw (the
+  // reference / timestamp match). This keeps the contract compatible with
+  // the legacy-engine's own saveProgress, whose try/catch silently swallows
+  // the throw — that is desirable: we don't want legacy-engine to change,
+  // only the service's write paths that consume `saveJson`'s return shape.
+  function readPersistenceError() {
+    const snapshot = repositories.persistence?.read?.();
+    return snapshot?.lastError || null;
+  }
+  function errorSignatureChanged(before, after) {
+    if (!after) return false;
+    if (!before) return true;
+    // `persistenceChannel.set` creates a fresh snapshot each call, so a
+    // re-thrown identical-message error still bumps `updatedAt`. Use that
+    // as the primary signal; fall back to message comparison for adapters
+    // that might reuse timestamps.
+    if (Number(before.at) !== Number(after.at)) return true;
+    return before.message !== after.message;
+  }
+
   const storage = {
     getItem(key) {
       const parsed = parseStorageKey(key);
@@ -141,6 +171,7 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       if (!parsed) return;
       const day = currentDay();
       const current = readSpellingData(repositories, parsed.learnerId, day);
+      const beforeError = readPersistenceError();
       if (parsed.type === 'prefs') {
         writeSpellingData(repositories, parsed.learnerId, {
           ...current,
@@ -158,6 +189,14 @@ export function createSpellingPersistence({ repositories, now } = {}) {
           ...current,
           guardian: parseStoredJson(value, {}),
         }, day);
+      }
+      const afterError = readPersistenceError();
+      if (errorSignatureChanged(beforeError, afterError)) {
+        const message = afterError?.message || 'storage-setItem-failed';
+        throw Object.assign(new Error(message), {
+          name: 'PersistenceSetItemError',
+          persistenceError: afterError,
+        });
       }
     },
     removeItem(key) {
@@ -182,6 +221,16 @@ export function createSpellingPersistence({ repositories, now } = {}) {
     progressKey,
     prefsKey,
     guardianKey,
+    // U8 review fix: expose the platform persistence channel's `lastError`
+    // signal so the spelling service can detect legacy-engine's silent-
+    // swallow on Smart Review / SATs submits. Legacy-engine's
+    // `saveProgress` catches the proxy throw; the service cannot observe
+    // the failure through the storage return value, but the channel holds
+    // a fresh error with a bumped `at` timestamp whenever `persistAll`
+    // failed. The service compares before/after `at` on each submit.
+    readPersistenceError() {
+      return repositories.persistence?.read?.()?.lastError || null;
+    },
     syncPracticeSession(learnerId, state) {
       if (state?.phase === 'session') {
         const record = buildActiveRecord(learnerId, state, now);
