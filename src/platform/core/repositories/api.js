@@ -60,6 +60,54 @@ const BOOTSTRAP_V2_REVISION_KEYS = [
 ];
 const LEGACY_RUNTIME_WRITES_ENABLED = typeof process === 'object'
   && process?.env?.NODE_ENV !== 'production';
+
+// U8 (capacity release gates + telemetry): multi-tab coordination
+// counters. The singleton lives on `globalThis.__ks2_capacityMeta__`
+// so the Playwright scene (`tests/playwright/bootstrap-multi-tab.
+// playwright.test.mjs`) and the node unit oracle
+// (`tests/capacity-meta-counters.test.js`) can read the same object.
+//
+// Tree-shake contract: the build pipeline in `scripts/build-client.mjs`
+// feeds `define: { 'process.env.NODE_ENV': '"production"' }` into esbuild,
+// so every occurrence of the literal expression
+// `process.env.NODE_ENV !== 'production'` is statically replaced with
+// `false` in the production bundle. Each guard below reads that exact
+// expression inline (no intermediate `const`) so esbuild's dead-code
+// eliminator folds the `if` body away entirely and no reference to
+// `__ks2_capacityMeta__` or the counter keys survives the minifier
+// pass. The production-bundle audit in
+// `scripts/audit-client-bundle.mjs` enforces this invariant by
+// grepping for `__ks2_capacityMeta__` in the shipped bundle and
+// failing CI if the token ever leaks back in.
+if (process.env.NODE_ENV !== 'production') {
+  const CAPACITY_META_COUNTER_KEYS = [
+    'bootstrapLeaderAcquired',
+    'bootstrapFollowerWaited',
+    'bootstrapFollowerUsedCache',
+    'bootstrapFollowerTimedOut',
+    'bootstrapFallbackFullRefresh',
+    'staleCommandSmallRefresh',
+    'staleCommandFullBootstrapFallback',
+  ];
+  const existing = globalThis.__ks2_capacityMeta__;
+  if (!existing || typeof existing.reset !== 'function') {
+    const meta = {};
+    for (const key of CAPACITY_META_COUNTER_KEYS) meta[key] = 0;
+    meta.reset = function reset() {
+      for (const key of CAPACITY_META_COUNTER_KEYS) meta[key] = 0;
+    };
+    globalThis.__ks2_capacityMeta__ = meta;
+  }
+}
+
+function bumpCapacityMeta(counterKey, amount = 1) {
+  if (process.env.NODE_ENV === 'production') return;
+  const meta = globalThis.__ks2_capacityMeta__;
+  if (!meta) return;
+  const previous = Number(meta[counterKey]) || 0;
+  meta[counterKey] = previous + (Number(amount) || 0);
+}
+
 const LEGACY_RUNTIME_OPERATION_KINDS = new Set([
   'subjectStates.put',
   'subjectStates.delete',
@@ -618,6 +666,31 @@ function readBootstrapCoordination(storage, storageKey, now) {
   };
 }
 
+// U8: detect the follower-timed-out signal. A raw stored lease whose
+// `expiresAt <= now` means a previous leader tab never released its
+// lease (crashed or closed mid-bootstrap). The next tab taking over
+// bumps `bootstrapFollowerTimedOut` before acquiring its own lease.
+function readExpiredBootstrapCoordinationLease(storage, storageKey, now) {
+  let raw;
+  try {
+    raw = storage?.getItem?.(storageKey);
+  } catch {
+    return null;
+  }
+  if (!raw) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const ownerId = typeof parsed?.ownerId === 'string' && parsed.ownerId ? parsed.ownerId : '';
+  const expiresAt = Number(parsed?.expiresAt);
+  if (!ownerId || !Number.isFinite(expiresAt)) return null;
+  if (expiresAt > now) return null;
+  return { ownerId, expiresAt };
+}
+
 function writeBootstrapCoordination(storage, storageKey, lease) {
   try {
     storage?.setItem?.(storageKey, JSON.stringify(lease));
@@ -1164,6 +1237,10 @@ export function createApiPlatformRepositories({
   function backOffForBootstrapCoordination(activeCoordination) {
     const coordinationBackoff = createBootstrapCoordinationBackoff(activeCoordination);
     markRemoteFailure(createBootstrapBackoffError(coordinationBackoff, '/api/bootstrap'));
+    // U8: the follower has observed an active foreign lease and has
+    // chosen to wait rather than race. One increment per observed
+    // foreign lease — the caller controls the "wait" branch transition.
+    bumpCapacityMeta('bootstrapFollowerWaited');
   }
 
   async function confirmBootstrapCoordinationBeforeFetch(lease) {
@@ -1190,6 +1267,18 @@ export function createApiPlatformRepositories({
     const active = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, now);
     if (active && active.ownerId !== bootstrapCoordinationOwnerId) return null;
 
+    // U8: if no live lease is present but a raw expired lease sits in
+    // storage from a previous tab that never released it, this tab has
+    // just detected the timeout. Count it once before claiming the
+    // lease itself. The increment fires BEFORE the write so a failed
+    // acquire still records the timeout signal.
+    if (!active) {
+      const expired = readExpiredBootstrapCoordinationLease(resolvedStorage, bootstrapCoordinationKey, now);
+      if (expired && expired.ownerId !== bootstrapCoordinationOwnerId) {
+        bumpCapacityMeta('bootstrapFollowerTimedOut');
+      }
+    }
+
     const lease = {
       ownerId: bootstrapCoordinationOwnerId,
       startedAt: now,
@@ -1197,7 +1286,14 @@ export function createApiPlatformRepositories({
     };
     if (!writeBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, lease)) return null;
     const confirmed = readBootstrapCoordination(resolvedStorage, bootstrapCoordinationKey, now);
-    return confirmed?.ownerId === bootstrapCoordinationOwnerId ? lease : null;
+    if (confirmed?.ownerId === bootstrapCoordinationOwnerId) {
+      // U8: leader path — this tab owns the fresh lease and will run
+      // the real fetch. Increment once per successful acquisition so
+      // the Playwright scene's "leader count" assertion holds.
+      bumpCapacityMeta('bootstrapLeaderAcquired');
+      return lease;
+    }
+    return null;
   }
 
   function releaseBootstrapCoordination(lease) {
@@ -1672,6 +1768,11 @@ export function createApiPlatformRepositories({
       const activeCoordination = activeBootstrapCoordination();
       if (activeCoordination) {
         backOffForBootstrapCoordination(activeCoordination);
+        // U8: follower served from the previously-warmed local cache
+        // because coordination redirected it away from the network.
+        // Track this path separately so the Playwright scene can
+        // distinguish "waited then cached" from "waited then fetched".
+        bumpCapacityMeta('bootstrapFollowerUsedCache');
         return null;
       }
 
@@ -1680,12 +1781,16 @@ export function createApiPlatformRepositories({
         const lostCoordinationRace = activeBootstrapCoordination();
         if (lostCoordinationRace) {
           backOffForBootstrapCoordination(lostCoordinationRace);
+          bumpCapacityMeta('bootstrapFollowerUsedCache');
           return null;
         }
       }
 
       const confirmedBootstrapLease = await confirmBootstrapCoordinationBeforeFetch(bootstrapLease);
-      if (!confirmedBootstrapLease) return null;
+      if (!confirmedBootstrapLease) {
+        bumpCapacityMeta('bootstrapFollowerUsedCache');
+        return null;
+      }
     }
 
     try {
@@ -1791,6 +1896,11 @@ export function createApiPlatformRepositories({
         if (backoff) persistBootstrapBackoff(cacheScope);
         return null;
       }
+      // U8: no fallback cache + bootstrap threw === the "full refresh"
+      // escape hatch fired. This is the incognito / cold-start path
+      // that skips coordination entirely; Playwright scenario D
+      // (incognito independence) asserts this counter is non-zero.
+      bumpCapacityMeta('bootstrapFallbackFullRefresh');
       throw error;
     } finally {
       releaseBootstrapCoordination(bootstrapLease);

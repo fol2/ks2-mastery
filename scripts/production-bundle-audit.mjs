@@ -91,6 +91,11 @@ const FORBIDDEN_DEPLOYED_TEXT = [
   // in `scripts/audit-client-bundle.mjs` FORBIDDEN_TEXT — dual-gated
   // to catch both local-build regressions and deployed-bundle drift.
   '__ks2_injectFault_TESTS_ONLY__',
+  // U8 (capacity release gates + telemetry): forbid the multi-tab
+  // coordination counter identifier in any production-served bundle.
+  // Paired with the bundle-audit entry; dead-code elimination via the
+  // `NODE_ENV === 'production'` guard keeps the shipped bundle clean.
+  '__ks2_capacityMeta__',
 ];
 
 function argValue(name, fallback) {
