@@ -17,9 +17,17 @@
 //  - Skip `tests/playwright/**` — those run under Playwright's runner.
 //  - Preserve node --test's default flags (concurrency, reporter, etc) by
 //    forwarding unknown args via `process.argv.slice(2)`.
+//  - When the user supplies a positional file path (e.g.
+//    `npm test -- tests/smoke.test.js`), DO NOT append the auto-discovered
+//    file list: the user is asking for a specific target, and prepending
+//    ~100 other files turns a targeted debug run into the whole suite.
+//    A positional arg is anything that does not start with `-` (flags)
+//    and therefore cannot be a `node --test` option value. When this
+//    heuristic mis-fires — e.g. someone passes a raw literal that is
+//    neither a flag nor a file — node --test still rejects it cleanly.
 //  - Non-zero exit propagates.
 import { spawn } from 'node:child_process';
-import { readdir, stat } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -59,21 +67,84 @@ async function resolveTestFiles() {
   return files.sort();
 }
 
-const files = await resolveTestFiles();
-if (!files.length) {
-  console.error('run-node-tests: no test files discovered under tests/ or scripts/.');
-  process.exit(1);
+/**
+ * Detect whether the user passed any positional argument (non-flag).
+ * node --test treats bare words either as test files or spec filters;
+ * when the caller hands us any positional, we trust them and skip
+ * auto-discovery. Flags (`--reporter`, `-t`) and their explicit values
+ * (`--reporter=spec`) pass through untouched.
+ */
+export function hasUserPositional(argv) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (typeof token !== 'string' || token.length === 0) continue;
+    if (token.startsWith('-')) continue;
+    // Flag values: `--reporter spec` → when the previous token is a known
+    // value-bearing flag without `=`, skip this token as its value. We
+    // keep this narrow to avoid over-matching; positional paths that
+    // live alongside flags are flagged by their lack of leading `-`.
+    const prev = index > 0 ? argv[index - 1] : '';
+    if (typeof prev === 'string' && FLAGS_WITH_VALUE.has(prev)) continue;
+    return true;
+  }
+  return false;
 }
 
-const nodeArgs = ['--test', ...process.argv.slice(2), ...files];
-const child = spawn(process.execPath, nodeArgs, {
-  cwd: rootDir,
-  stdio: 'inherit',
-});
-child.on('exit', (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal);
-  } else {
-    process.exit(code ?? 1);
+// `node --test` flags that accept a detached value (`--flag value`). When
+// any of these appears immediately before a non-flag token, we treat the
+// token as its value rather than a positional test path. Extend this
+// list if a new value-bearing flag ever gets used via `npm test --`.
+const FLAGS_WITH_VALUE = new Set([
+  '--test-name-pattern',
+  '--test-reporter',
+  '--test-reporter-destination',
+  '--test-concurrency',
+  '--test-timeout',
+  '--reporter',
+  '--grep',
+  '-t',
+  '-g',
+]);
+
+export async function buildSpawnArgs(argv, discover = resolveTestFiles) {
+  if (hasUserPositional(argv)) {
+    // User-supplied positional path: honour it exactly and do not tack
+    // on auto-discovered files. See the `hasUserPositional` comment.
+    return ['--test', ...argv];
   }
-});
+  const files = await discover();
+  if (!files.length) {
+    throw new Error('run-node-tests: no test files discovered under tests/ or scripts/.');
+  }
+  return ['--test', ...argv, ...files];
+}
+
+// CLI entrypoint. Skip execution when imported by tests.
+const isDirectInvocation = (() => {
+  try {
+    return fileURLToPath(import.meta.url) === path.resolve(process.argv[1] || '');
+  } catch {
+    return false;
+  }
+})();
+
+if (isDirectInvocation) {
+  let nodeArgs;
+  try {
+    nodeArgs = await buildSpawnArgs(process.argv.slice(2));
+  } catch (err) {
+    console.error(err?.message || err);
+    process.exit(1);
+  }
+  const child = spawn(process.execPath, nodeArgs, {
+    cwd: rootDir,
+    stdio: 'inherit',
+  });
+  child.on('exit', (code, signal) => {
+    if (signal) {
+      process.kill(process.pid, signal);
+    } else {
+      process.exit(code ?? 1);
+    }
+  });
+}

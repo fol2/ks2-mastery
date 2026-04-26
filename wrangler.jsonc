@@ -10,9 +10,11 @@
   },
   // U5 (sys-hardening p1): Cloudflare remote-build hosts run `npm install`
   // as part of this command chain. `@playwright/test` is a devDependency but
-  // the deployed Worker never uses the Playwright browser, so the remote
-  // build host should export `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` before
-  // invoking the build to avoid fetching ~300 MB of Chromium per deploy.
+  // the deployed Worker never uses the Playwright browser. The repo root
+  // `.npmrc` sets `playwright_skip_browser_download=true`, which Playwright
+  // treats as equivalent to `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`, so every
+  // `npm install` (including this remote build) skips the ~300 MB Chromium
+  // download by default. No extra env var is required.
   // (See `docs/operations/capacity.md#playwright-test-suite`.)
   "build": {
     "command": "npm run build && npm run assert:build-public && npm run audit:client"

@@ -20,6 +20,15 @@ export default {
   // equivalent in `tests/helpers/node-test-filter.mjs` (see README note).
   testMatch: /tests[\\/]+playwright[\\/].*\.playwright\.test\.(js|mjs)$/,
   snapshotDir: './tests/playwright/__screenshots__',
+  // U5 runs the scenes serially: `tests/helpers/browser-app-server.js`
+  // backs every request with a single in-memory SQLite database and the
+  // demo-session endpoint enforces a 30-request / 10-minute rate limit
+  // per IP. 15 parallel workers × re-runs saturates the rate limit and
+  // can hit SAVEPOINT concurrency inside shared batch queries. Serial
+  // workers keep U5 deterministic; U9/U10 can redesign isolation
+  // (per-worker DB, seeded demo cookie, or relaxed rate limit under a
+  // test-only flag) and bump this back up.
+  workers: 1,
   timeout: 30_000,
   expect: {
     // Start conservative; tune per viewport as real baselines accumulate.

@@ -1,8 +1,21 @@
 // U5 (sys-hardening p1): spelling golden path.
 //
 // Flow: open demo session -> navigate dashboard -> enter spelling ->
-// 1 wrong answer (intentional mis-spelling) + 1 correct answer +
-// end-round-early -> reload and verify progress preserved.
+// two wrong answers (intentional mis-spellings across the retry +
+// correction phases) -> end-round-early -> reload and verify progress
+// preserved.
+//
+// Honesty note: the scene CANNOT actually land a correct answer today.
+// The prompted word is seeded per demo learner from a random vocabulary
+// pool, and the scene has no way to read it — so typing `'practice'`
+// (or anything else) is almost never the right spelling. What the scene
+// exercises is the state-machine contract for two wrong attempts
+// (retry -> correction) plus the end-round-early path. The previous
+// wording ("wrong + correct + end-early") was misleading.
+//
+// TODO(U9+): add a test-only hook (demo template override or cookie
+// flag) that seeds a known word so this scene can exercise the
+// correct-answer path. Today: two wrong attempts + end-round-early only.
 //
 // This scene's initial screenshot baseline is captured on the
 // `mobile-390` project only; wider viewport coverage lands in U9/U10/U12.
@@ -24,7 +37,7 @@ test.describe('spelling golden path', () => {
     await applyDeterminism(page);
   });
 
-  test('demo learner completes a round through wrong + correct + end-early and reload preserves progress', async ({ page }, testInfo) => {
+  test('demo learner completes a round through two wrong attempts + end-early and reload preserves progress', async ({ page }, testInfo) => {
     await createDemoSession(page);
 
     // Dashboard assertion before we descend into the subject. The shell
@@ -46,13 +59,21 @@ test.describe('spelling golden path', () => {
     await start.click();
 
     // Session mounted. Capture the mobile-390 baseline for the
-    // session-start state. The setup masks cover the background
-    // hero and any live timestamp slot so only the deterministic
-    // prompt layout is exercised.
+    // session-start state. The screenshot targets the inner `.session`
+    // card locator rather than the full page because the outer
+    // `.spelling-in-session` container hosts `.spelling-hero-backdrop`
+    // (absolute inset:0 hero art picked from a per-learner rotating
+    // asset set). Scoping to `.session` pins the deterministic prompt
+    // layout — breadcrumb path, info chips, prompt sentence, input,
+    // path progress, and footer — while letting the hero art vary
+    // freely. Masks still apply to any toasts or celebration overlays
+    // that float over the session card mid-capture.
     await expect(page.locator('.spelling-in-session.is-question-revealed input[name="typed"]')).toBeVisible({ timeout: 15_000 });
 
     if (testInfo.project.name === 'mobile-390') {
-      await expect(page).toHaveScreenshot(screenshotName('spelling', 'session-start'), {
+      const sessionCard = page.locator('.spelling-in-session .session').first();
+      await expect(sessionCard).toBeVisible();
+      await expect(sessionCard).toHaveScreenshot(screenshotName('spelling', 'session-start'), {
         mask: defaultMasks(page),
       });
     }
@@ -79,10 +100,12 @@ test.describe('spelling golden path', () => {
       await continueBtn.first().click();
     }
 
-    // Correct-intent leg: type an answer and submit. We cannot know
-    // the prompted word without fixtures, so this is a deterministic
-    // attempt that exercises the input + submit contract. The scene
-    // asserts the state machine, not lexical correctness.
+    // Third attempt leg: type a deterministic string and submit. We
+    // cannot know the prompted word without fixtures (the demo learner
+    // gets a random word out of the pool), so this is almost certainly
+    // another wrong answer. That is fine — the scene exercises the
+    // input + submit contract on the next round, not lexical
+    // correctness. A test-only correct-answer hook lands in U9+.
     const nextInput = page.locator('.spelling-in-session.is-question-revealed input[name="typed"]');
     await expect(nextInput).toBeVisible({ timeout: 10_000 });
     await nextInput.fill('practice');
