@@ -52,6 +52,7 @@
     "test:migration:browser": "KS2_BROWSER_SMOKE=1 node --test tests/browser-react-migration-smoke.test.js",
     "test:mega-invariant:nightly": "node --test tests/spelling-mega-invariant.test.js",
     "test:playwright": "npx playwright test",
+    "journey": "node tests/journeys/_runner.mjs",
     "verify": "npm test && npm run check && npm run capacity:verify-evidence"
   },
   "devDependencies": {

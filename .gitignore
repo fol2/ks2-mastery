@@ -34,3 +34,9 @@ reports/capacity/*
 !reports/capacity/configs/
 !reports/capacity/configs/**
 !reports/capacity/README.md
+
+# Punctuation Phase 4 U8 browser journey artefacts (screenshots + logs).
+# The specs write PNGs here per-step; never commit them — they can
+# carry session/origin hints from the developer's browser profile.
+tests/journeys/artifacts/
+tests/journeys/*.log
