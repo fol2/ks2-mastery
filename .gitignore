@@ -21,7 +21,6 @@ assets/**/*.png
 .gstack/
 .remember/
 .claude/worktrees/
-.worktrees/
 .context/
 
 # Capacity run artefacts: track latest-per-env snapshots and quarterly
