@@ -2568,7 +2568,13 @@ test('Punctuation summary scene: Back to dashboard dispatch returns phase to set
   assert.equal(state.phase, 'setup');
 });
 
-test('Punctuation summary scene: composeIsDisabled=true disables Start again and Practise wobbly spots', () => {
+test('Punctuation summary scene: composeIsDisabled=true disables mutation controls (not navigation after U6)', () => {
+  // Phase 4 U6 contract change: mutation buttons continue to honour
+  // `composeIsDisabled` (correct). The Back to dashboard button now threads
+  // the sibling `composeIsNavigationDisabled` helper and therefore remains
+  // enabled under pendingCommand — so a stalled command never traps the
+  // learner on Summary. The AE7 behaviour is covered by the dedicated U6
+  // block below; this test keeps the mutation-side contract pinned.
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
@@ -2577,7 +2583,6 @@ test('Punctuation summary scene: composeIsDisabled=true disables Start again and
     summary: { total: 4, correct: 3, accuracy: 75, focus: [] },
   });
   const html = harness.render();
-  // Every next-action button renders with `disabled` when composeIsDisabled.
   assert.match(
     html,
     /<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="weak"|<button[^>]*data-action="punctuation-start"[^>]*data-value="weak"[^>]*disabled/,
@@ -2593,10 +2598,11 @@ test('Punctuation summary scene: composeIsDisabled=true disables Start again and
     /<button[^>]*disabled[^>]*data-action="punctuation-open-map"|<button[^>]*data-action="punctuation-open-map"[^>]*disabled/,
     'Open Punctuation Map must be disabled under pendingCommand',
   );
-  assert.match(
+  // U6 inversion: Back to dashboard is NOT disabled under pendingCommand.
+  assert.doesNotMatch(
     html,
     /<button[^>]*disabled[^>]*data-action="punctuation-back"|<button[^>]*data-action="punctuation-back"[^>]*disabled/,
-    'Back to dashboard must be disabled under pendingCommand',
+    'Back to dashboard must remain enabled under pendingCommand (plan R7 / U6)',
   );
 });
 
@@ -3827,4 +3833,179 @@ test('U1 follow-on: parent falls back to "4" when prefs.roundLength is absent', 
       `primary card ${card.mode} must fall back to data-round-length="4" when prefs.roundLength is absent`,
     );
   }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 4 U6 — Navigation hardening. `composeIsNavigationDisabled` must keep
+// every scene's Back / close affordance reachable even under `pendingCommand`
+// / `degraded` / `unavailable` / `readOnly`. Mutation controls on the same
+// scene continue to honour `composeIsDisabled`. Plan R7, R14. AE7.
+// ---------------------------------------------------------------------------
+
+// Compose a ui payload that simultaneously trips every existing
+// `composeIsDisabled` signal. If navigation is ever re-gated on any of
+// these, at least one of the tests below flips red.
+const NAV_STRESS_UI_PATCH = Object.freeze({
+  pendingCommand: 'punctuation-submit-form',
+  availability: Object.freeze({
+    status: 'degraded',
+    code: 'runtime_degraded',
+    message: 'paused',
+  }),
+});
+
+function disabledAttrPresentFor(html, dataAction) {
+  // Order-independent match: attributes may appear before or after `disabled`.
+  // A dedicated helper keeps the assertion expressive and locates the
+  // per-action button by its `data-action` anchor.
+  const beforeRe = new RegExp(`<button[^>]*disabled[^>]*data-action="${dataAction}"`);
+  const afterRe = new RegExp(`<button[^>]*data-action="${dataAction}"[^>]*disabled`);
+  return beforeRe.test(html) || afterRe.test(html);
+}
+
+test('U6 Summary scene: Back to dashboard stays enabled while pendingCommand + degraded', () => {
+  // AE7: `composeIsNavigationDisabled` does NOT disable the Summary Back
+  // button under the composite stress signal; `composeIsDisabled` continues
+  // to disable every sibling mutation button.
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  harness.store.updateSubjectUi('punctuation', NAV_STRESS_UI_PATCH);
+  const html = harness.render();
+
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-back'),
+    false,
+    'Summary Back to dashboard button must stay enabled under pendingCommand + degraded (plan R7)',
+  );
+  // Paired mutation-still-disabled assertion — proves composeIsDisabled
+  // hasn't been accidentally relaxed on the mutation buttons.
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-start'),
+    true,
+    'Summary Practise wobbly spots must remain disabled under pendingCommand + degraded',
+  );
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-open-map'),
+    true,
+    'Summary Open Punctuation Map must remain disabled under pendingCommand + degraded',
+  );
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-start-again'),
+    true,
+    'Summary Start again must remain disabled under pendingCommand + degraded',
+  );
+});
+
+test('U6 Summary scene: Back to dashboard stays enabled when availability is unavailable', () => {
+  // The fully-unavailable state is the worst case for the learner — the
+  // runtime has fallen over but the child must still be able to exit.
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  harness.store.updateSubjectUi('punctuation', {
+    availability: { status: 'unavailable', code: 'runtime_unavailable', message: 'down' },
+  });
+  const html = harness.render();
+
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-back'),
+    false,
+    'Summary Back to dashboard must stay enabled under availability.status==="unavailable"',
+  );
+});
+
+test('U6 Map scene: top-bar Back to dashboard stays enabled while pendingCommand + degraded', () => {
+  // The Map topbar back dispatches `punctuation-close-map`. Under the same
+  // stress signal that trapped learners pre-U6, the back button must remain
+  // clickable while the filter chips and Practise this buttons correctly
+  // stay disabled (mutation controls use composeIsDisabled, unchanged).
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  harness.store.updateSubjectUi('punctuation', NAV_STRESS_UI_PATCH);
+  const html = harness.render();
+
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-close-map'),
+    false,
+    'Map top-bar Back to dashboard must stay enabled under pendingCommand + degraded',
+  );
+  // Mutation-still-disabled paired check on the filter row.
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-action="punctuation-map-status-filter"/,
+    'status filter chips must remain disabled under pendingCommand + degraded (R11)',
+  );
+});
+
+test('U6 Map scene: top-bar Back stays enabled when availability is unavailable', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  harness.store.updateSubjectUi('punctuation', {
+    availability: { status: 'unavailable', code: 'runtime_unavailable', message: 'down' },
+  });
+  const html = harness.render();
+
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-close-map'),
+    false,
+    'Map top-bar Back must stay enabled under availability.status==="unavailable"',
+  );
+});
+
+test('U6 Skill Detail modal: close button stays enabled while pendingCommand + degraded', () => {
+  // The close button dispatches `punctuation-skill-detail-close`. Pre-U6 the
+  // button had no `disabled` attribute at all (modal close is currently
+  // always active), but U6 adds a `disabled={composeIsNavigationDisabled(ui)}`
+  // binding for ARIA + behavioural consistency with the Summary/Map scenes.
+  // It must stay enabled under the composite stress signal.
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  harness.store.updateSubjectUi('punctuation', NAV_STRESS_UI_PATCH);
+  const html = harness.render();
+
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-skill-detail-close'),
+    false,
+    'Modal close button must stay enabled under pendingCommand + degraded (plan R7)',
+  );
+  // Paired: the modal's Practise this mutation button must remain disabled
+  // (composeIsDisabled governs it unchanged).
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  const practiseHtml = harness.render();
+  assert.match(
+    practiseHtml,
+    /<button[^>]*disabled[^>]*data-punctuation-start-skill[^>]*>Practise this<\/button>/,
+    'Practise this inside the modal must remain disabled (mutation path honours composeIsDisabled)',
+  );
+});
+
+test('U6 Skill Detail modal: close button stays enabled when availability is unavailable', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  harness.store.updateSubjectUi('punctuation', {
+    availability: { status: 'unavailable', code: 'runtime_unavailable', message: 'down' },
+  });
+  const html = harness.render();
+
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-skill-detail-close'),
+    false,
+    'Modal close must stay enabled under availability.status==="unavailable"',
+  );
+});
+
+test('U6 Summary scene: Back button also stays enabled under readOnly runtime', () => {
+  // Complete the four-axis stress sweep — readOnly runtime is the fourth
+  // existing composeIsDisabled signal. Navigation continues to pass through.
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness);
+  harness.store.updateSubjectUi('punctuation', {
+    runtime: { readOnly: true },
+  });
+  const html = harness.render();
+
+  assert.equal(
+    disabledAttrPresentFor(html, 'punctuation-back'),
+    false,
+    'Summary Back to dashboard must stay enabled under runtime.readOnly',
+  );
 });

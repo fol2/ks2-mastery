@@ -40,6 +40,7 @@ import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   bellstormSceneForPhase,
   composeIsDisabled,
+  composeIsNavigationDisabled,
   punctuationChildMisconceptionLabel,
   punctuationMonsterDisplayName,
   punctuationSummaryHeadline,
@@ -289,7 +290,15 @@ function GpsReviewBlock({ gps }) {
 // --- Next-action buttons ---------------------------------------------------
 
 function NextActionRow({ ui, actions }) {
+  // Phase 4 U6: mutation controls keep `composeIsDisabled` — they pause while
+  // a command is in flight or the runtime is degraded / unavailable / read-
+  // only. Navigation ("Back to dashboard") threads the sibling
+  // `composeIsNavigationDisabled` so a stalled `pendingCommand` or a
+  // degraded runtime never traps the child on the Summary scene (plan R7 /
+  // AE7). The ghost-button divergence is the canonical example the Map
+  // top-bar and Skill Detail close mirror.
   const isDisabled = composeIsDisabled(ui);
+  const isNavigationDisabled = composeIsNavigationDisabled(ui);
   return (
     <div className="actions punctuation-summary-actions" style={{ marginTop: 16 }}>
       <button
@@ -324,7 +333,7 @@ function NextActionRow({ ui, actions }) {
       <button
         className="btn ghost"
         type="button"
-        disabled={isDisabled}
+        disabled={isNavigationDisabled}
         data-action="punctuation-back"
         onClick={() => actions.dispatch('punctuation-back')}
       >
