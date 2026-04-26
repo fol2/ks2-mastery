@@ -20,7 +20,13 @@
 //  2. Seven named regression shapes (canonical adversarial scenarios under
 //     seed 42).
 //  3. 200 random sequences under seed 42 (length 20..60), each step asserts
-//     the ratchet invariant.
+//     the ratchet invariant. Seed rotation: set env PROPERTY_SEED=<integer>
+//     for nightly probes to explore other slices. Ops nightly workflow should
+//     wire `PROPERTY_SEED=${{ github.run_id }}` (or an equivalent
+//     run-id / date-based rotation) so the canonical suite at seed 42 and
+//     the nightly probe both get exercised. File-level env gate is at line
+//     ~230 below; the pre-mega-seeded ratchet case (see below) covers the
+//     post-mega branch deterministically without depending on seed luck.
 //  4. Adversarial contract tests — stored-caught vs derived-caught, cross-
 //     release direct monster token dedup, import/export round-trip, Spelling
 //     cross-subject regression, integration via F2 end-to-end flow.
@@ -116,6 +122,14 @@ function makeRepository(initialState = {}) {
 // via `progressForGrammarMonster` so both the ratchet (stage / caught never
 // decrements) and the mastered-count monotonicity hold. `maxPrior` is the
 // caller's accumulator so the invariant sees a running high-water mark.
+//
+// INFO (defence-in-depth): `mastered >= maxPrior.mastered` already subsumes
+// caught-stickiness under the derived-caught contract, because derived caught
+// is `mastered.length >= 1` — so as long as mastered is monotonic, caught
+// cannot flip back. The explicit `maxPrior.caught → concordium.caught` check
+// below is intentional redundancy in case the caught contract ever changes
+// (e.g. revert to stored-caught or mixed caught logic), so the ratchet test
+// keeps detecting direct revocations even if mastered monotonicity regresses.
 // -----------------------------------------------------------------------------
 
 function assertConcordiumRatchet(state, maxPrior, context) {
@@ -126,11 +140,9 @@ function assertConcordiumRatchet(state, maxPrior, context) {
     concordium.stage >= maxPrior.stage,
     `${context}: Concordium.stage=${concordium.stage} < priorMax=${maxPrior.stage} — sticky-ratchet violated`,
   );
-  // Once caught flips true, it must never flip back. derived-caught drops
-  // with mastered.length so the ratchet here enforces the stored state
-  // contract (plan names stored-caught as load-bearing but progressForGrammarMonster
-  // returns derived — see the dedicated adversarial test below for the
-  // stored-vs-derived pin).
+  // Once caught flips true, it must never flip back. Defence-in-depth — see
+  // the module-level INFO comment above for why this is redundant with the
+  // mastered-monotonicity check under the current derived-caught contract.
   if (maxPrior.caught) {
     assert.ok(
       concordium.caught,
@@ -148,8 +160,21 @@ function assertConcordiumRatchet(state, maxPrior, context) {
   };
 }
 
-function initialMaxPrior() {
-  return { stage: 0, caught: false, mastered: 0 };
+// Seed the ratchet accumulator from the INITIAL loaded state, not zero. A
+// release-id contract regression that silently drops retired-state concepts
+// from the Concordium view would otherwise satisfy `mastered === 0 >= 0`
+// trivially and pass. By seeding from the initial view, the ratchet compares
+// against the loaded state's Concordium level and catches any decrement
+// relative to the baseline.
+function initialMaxPriorFromState(state) {
+  const concordium = progressForGrammarMonster(state, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+  });
+  return {
+    stage: concordium.stage,
+    caught: Boolean(concordium.caught),
+    mastered: concordium.mastered,
+  };
 }
 
 // -----------------------------------------------------------------------------
@@ -158,20 +183,49 @@ function initialMaxPrior() {
 // recordGrammarConceptMastery for correct-answer secures; for wrong answers
 // the no-op is accurate (wrong answers do not secure a concept, so the
 // reward pipeline never receives a concept-secured event — the ratchet
-// holds trivially). Transfer-save is represented as a literal no-op on the
-// reward state because U3's invariant is that transfer saves never touch
-// the reward pipeline (see the named shape 6 and the dedicated F2 integration
-// test below).
+// holds trivially). Transfer-save dispatches a real grammar.transfer-
+// evidence-saved event through rewardEventsFromGrammarEvents (the production
+// reward subscriber), asserting that zero reward.monster events come out —
+// this is what the plan invariant 5 (Writing Try is non-scored) ACTUALLY
+// means in production: the subscriber filters on type === 'grammar.concept-
+// secured', so a transfer-evidence event is silently dropped at the real
+// production boundary. The 10% transfer-save slice of random sequences now
+// exercises this real production filter on every step instead of being a
+// test-file no-op.
 // -----------------------------------------------------------------------------
 
 function applyAction(repository, action, learnerId) {
   if (action.isTransferSave) {
-    // Plan invariant 5: Writing Try is non-scored. Transfer saves never reach
-    // the reward pipeline. The no-op here reflects the production invariant;
-    // the dedicated named shape 6 below also exercises this through the
-    // Worker engine to prove the Worker-level event list carries no
-    // reward.monster entries.
-    return { events: [] };
+    // Plan invariant 5: Writing Try is non-scored. Build a realistic
+    // transfer-evidence-saved event (exactly the shape the Worker engine's
+    // saveTransferEvidence helper emits at worker/src/subjects/grammar/
+    // engine.js:1783-1789) and dispatch it through the production reward
+    // subscriber. The subscriber is `rewardEventsFromGrammarEvents`, which
+    // at src/subjects/grammar/event-hooks.js:18 short-circuits on
+    // `event.type !== GRAMMAR_EVENT_TYPES.CONCEPT_SECURED`. The assertion
+    // below is the load-bearing production contract: a transfer-evidence
+    // event produces zero reward events.
+    const transferEvent = {
+      id: `grammar.transfer-evidence-saved.${learnerId}.seq-${Date.now()}.${action.conceptId}`,
+      type: 'grammar.transfer-evidence-saved',
+      subjectId: 'grammar',
+      learnerId,
+      contentReleaseId: GRAMMAR_REWARD_RELEASE_ID,
+      promptId: action.conceptId,
+      savedAt: 1,
+      nonScored: true,
+      createdAt: 1,
+    };
+    const events = rewardEventsFromGrammarEvents([transferEvent], {
+      gameStateRepository: repository,
+      random: () => 0,
+    });
+    assert.equal(
+      events.length,
+      0,
+      `transfer-save must not reach reward pipeline — got ${events.length} events for transfer event ${transferEvent.id}`,
+    );
+    return { events };
   }
   if (!action.correct) {
     // Wrong answers do not emit concept-secured events; the reward pipeline
@@ -194,7 +248,14 @@ function applyAction(repository, action, learnerId) {
 // -----------------------------------------------------------------------------
 
 function runSequence(repository, actions, { label, learnerId = 'learner-a' } = {}) {
-  let maxPrior = initialMaxPrior();
+  // Seed the ratchet accumulator from the INITIAL loaded state, so the
+  // ratchet compares against the loaded Concordium level (not zero). This
+  // catches release-id contract regressions that silently drop retired-
+  // state concepts: a regression would produce mastered=0 for a loaded state
+  // that genuinely had mastered=1, and the ratchet would now fire against
+  // maxPrior.mastered=1 from the initial snapshot (was silently passing
+  // under the old `initialMaxPrior()` fresh-zero seed).
+  let maxPrior = initialMaxPriorFromState(repository.state());
   const allEvents = [];
   for (let i = 0; i < actions.length; i += 1) {
     const action = actions[i];
@@ -439,6 +500,24 @@ test('U3 named shape 5: 3 concepts crossing threshold in one batch emit per-mons
   // Total event shape assertion: 5 events total.
   assert.equal(events.length, 5,
     'per-monster events fire per transition boundary (current behaviour pinned); expansion to a 19th concept would need a paired test update');
+
+  // Positional assertion on emission order. recordGrammarConceptMastery
+  // emits direct-before-aggregate per secure (see grammar.js:349-369). A
+  // refactor that swaps this order — so aggregate-caught toast fires before
+  // direct-caught toast — would silently regress UX sequencing without this
+  // positional pin. Sequence is:
+  //   secure #1 sentence_functions → bracehart:caught, then concordium:caught
+  //   secure #2 word_classes       → couronnail:caught (no aggregate event;
+  //                                   level round unchanged)
+  //   secure #3 clauses            → bracehart:levelup, then concordium:levelup
+  const orderedPairs = events.map((e) => `${e.monsterId}:${e.kind}`);
+  assert.deepEqual(orderedPairs, [
+    'bracehart:caught',
+    'concordium:caught',
+    'couronnail:caught',
+    'bracehart:levelup',
+    'concordium:levelup',
+  ], 'direct-before-aggregate emission order pinned (grammar.js:349-369) — a swap would regress toast sequencing');
 });
 
 // ----- Named shape 6: transfer save + scored answer -------------------------
@@ -569,6 +648,74 @@ test(`U3 property: 200 seeded random sequences (seed ${PROPERTY_SEED}, length 20
       throw error;
     }
   }
+});
+
+// -----------------------------------------------------------------------------
+// Pre-mega-seeded ratchet case — covers the post-mega branch deterministically.
+// Seed 42 with sequences of length 20..60 rarely reaches Concordium stage 4
+// from a fresh repository (the adversarial reviewer flagged this as
+// "post-mega ratchet branch effectively untested under the default seed").
+// This test pins the post-mega branch by seeding a state that is ONE secure
+// away from Mega (17/18 aggregate) and then running a 40-step random mutator
+// replay on top — so every step asserts the ratchet from baseline
+// `{ stage: 3, mastered: 17, caught: true }` via initialMaxPriorFromState.
+// A regression that drops mastered below 17 or stage below 3 fails the
+// ratchet at step 1, independent of whether Mega is ever re-emitted.
+// -----------------------------------------------------------------------------
+
+test('U3 post-mega branch: pre-seed 17/18 state + 40-step random replay → ratchet holds from stage 3 baseline', () => {
+  // Build a 17-of-18 aggregate state deterministically. Use
+  // GRAMMAR_AGGREGATE_CONCEPTS.slice(0, 17) so the one unsecured concept is
+  // stable (the last entry in the list). This makes the test deterministic
+  // regardless of PROPERTY_SEED.
+  const pre = GRAMMAR_AGGREGATE_CONCEPTS.slice(0, 17);
+  const remaining = GRAMMAR_AGGREGATE_CONCEPTS[17];
+  assert.ok(remaining, 'pre-mega test precondition: GRAMMAR_AGGREGATE_CONCEPTS has at least 18 entries');
+  const masteredKeys = pre.map((id) => grammarMasteryKey(id));
+  const initialState = {
+    concordium: {
+      mastered: masteredKeys,
+      caught: true,
+      releaseId: GRAMMAR_REWARD_RELEASE_ID,
+    },
+  };
+  const repository = makeRepository(initialState);
+
+  // Baseline sanity: Concordium reads stage=3 (17/18 >= 0.75 but < 1.0).
+  const baseline = progressForGrammarMonster(repository.state(), 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+  });
+  assert.equal(baseline.stage, 3, 'precondition: 17/18 mastered maps to stage 3');
+  assert.equal(baseline.mastered, 17);
+  assert.equal(baseline.caught, true);
+
+  // 40-step random replay. The random sequence may or may not fire the
+  // final secure for `remaining`; either way, ratchet never drops from
+  // baseline (stage>=3, mastered>=17, caught stays true).
+  const actionRng = makeSeededRandom((PROPERTY_SEED * 7919) >>> 0);
+  const actions = randomSequence(actionRng, 40);
+  const { maxPrior } = runSequence(repository, actions, {
+    label: 'post-mega-17-of-18',
+    learnerId: 'learner-pre-mega',
+  });
+
+  // Ratchet accumulator MUST be >= baseline at termination — the initialMax
+  // Prior seed is what makes this assertion load-bearing. Under the old
+  // fresh-zero seed, a contract regression producing mastered=0 would
+  // satisfy `0 >= 0` and pass silently.
+  assert.ok(
+    maxPrior.stage >= 3,
+    `post-mega ratchet: final maxPrior.stage=${maxPrior.stage} below baseline stage=3`,
+  );
+  assert.ok(
+    maxPrior.mastered >= 17,
+    `post-mega ratchet: final maxPrior.mastered=${maxPrior.mastered} below baseline mastered=17`,
+  );
+  assert.equal(
+    maxPrior.caught,
+    true,
+    'post-mega ratchet: caught must remain true throughout the replay',
+  );
 });
 
 // =============================================================================
