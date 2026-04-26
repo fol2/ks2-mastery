@@ -1082,6 +1082,32 @@ function downloadJson(filename, payload) {
   URL.revokeObjectURL(url);
 }
 
+// SH2-U1 (review follow-up, BLOCKER-3): module-scope in-flight guard for
+// Parent Hub export actions. `downloadJson()` above is fully synchronous —
+// Blob + object URL + anchor click all execute in the same microtask. The
+// `useSubmitLock` hook at the ParentHubSurface call site acquires + releases
+// its lock inside a single microtask too, so a human double-click 50 ms
+// apart slips past the JSX-layer guard and fires two downloads. This Set
+// holds the action name while the synchronous dispatch is mid-flight, and
+// a 300 ms `setTimeout` clears it — mirrors the `updateAccountOpsMetadata`
+// savingAccountId pattern at L1705 (admin-ops in-flight guard) but adapted
+// for the synchronous export case. 300 ms is the standard click-debounce
+// window used elsewhere in the codebase; it covers normal double-click
+// cadence while staying invisible to intentional single-click retries.
+const exportActionsInFlight = new Set();
+const EXPORT_DEBOUNCE_MS = 300;
+
+function runExportOnce(action, fn) {
+  if (exportActionsInFlight.has(action)) return false;
+  exportActionsInFlight.add(action);
+  try {
+    fn();
+  } finally {
+    setTimeout(() => exportActionsInFlight.delete(action), EXPORT_DEBOUNCE_MS);
+  }
+  return true;
+}
+
 async function parseApiJson(response) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.ok === false) {
@@ -2565,15 +2591,25 @@ function handleGlobalAction(action, data) {
 
   if (action === 'platform-export-learner') {
     if (blockReadOnlyAdultAction(action)) return true;
-    const payload = exportLearnerSnapshot(repositories, learnerId);
-    downloadJson(`${sanitiseFilenamePart(learner?.name)}-ks2-platform-learner.json`, payload);
+    // SH2-U1 (review follow-up, BLOCKER-3): wrap the synchronous dispatch
+    // in `runExportOnce()` so a human 50 ms double-click only fires one
+    // download. See the exportActionsInFlight comment near downloadJson().
+    runExportOnce('platform-export-learner', () => {
+      const payload = exportLearnerSnapshot(repositories, learnerId);
+      downloadJson(`${sanitiseFilenamePart(learner?.name)}-ks2-platform-learner.json`, payload);
+    });
     return true;
   }
 
   if (action === 'platform-export-app') {
     if (blockReadOnlyAdultAction(action)) return true;
-    const payload = exportPlatformSnapshot(repositories);
-    downloadJson('ks2-platform-data.json', payload);
+    // SH2-U1 (review follow-up, BLOCKER-3): wrap the synchronous dispatch
+    // in `runExportOnce()` so a human 50 ms double-click only fires one
+    // download. See the exportActionsInFlight comment near downloadJson().
+    runExportOnce('platform-export-app', () => {
+      const payload = exportPlatformSnapshot(repositories);
+      downloadJson('ks2-platform-data.json', payload);
+    });
     return true;
   }
 

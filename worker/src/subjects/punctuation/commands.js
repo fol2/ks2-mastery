@@ -9,6 +9,7 @@ import { projectPunctuationRewards } from '../../projections/rewards.js';
 import { requestPunctuationContextPack } from './ai-enrichment.js';
 import { createServerPunctuationEngine } from './engine.js';
 import { buildPunctuationReadModel } from './read-models.js';
+import { resolveProjectionInput } from '../projection-input.js';
 
 const PUNCTUATION_COMMANDS = Object.freeze([
   'start-session',
@@ -61,6 +62,9 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
       context.session.accountId,
       command.learnerId,
       'punctuation',
+      // U6 queryCount budget: runSubjectCommandMutation already ran
+      // requireLearnerWriteAccess; skip the duplicate membership read.
+      { skipAccessCheck: true },
     );
     const engine = createServerPunctuationEngine({
       now: typeof now === 'function' ? now : () => nowValue,
@@ -80,12 +84,20 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
           manifest: PUNCTUATION_CONTENT_MANIFEST,
         })
       : null;
-    const projectionState = result.changed === false
-      ? { gameState: null, events: [] }
-      : await context.repository.readLearnerProjectionState(
-          context.session.accountId,
-          command.learnerId,
-        );
+    // U6: preserve the existing no-op short-circuit — do NOT load the
+    // projection when the engine reported `changed === false`. For mutating
+    // commands, load via the hot-path reader so dedupe reads the token ring
+    // rather than re-scanning event_log.
+    const projectionInput = result.changed === false
+      ? null
+      : await resolveProjectionInput(context, {
+          learnerId: command.learnerId,
+          currentRevision: Number(command.expectedLearnerRevision) || 0,
+          capacity: context.capacity || null,
+        });
+    const projectionState = projectionInput
+      ? projectionInput.projectionState
+      : { gameState: null, events: [] };
     const projectedRewards = result.changed === false
       ? { gameState: projectionState.gameState, changedGameState: null, rewardEvents: [] }
       : projectPunctuationRewards({
@@ -100,6 +112,7 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
           domainEvents: result.events,
           reactionEvents: projectedRewards.rewardEvents,
           existingEvents: projectionState.events,
+          seedTokens: projectionInput?.tokens || [],
         });
     const projections = buildCommandProjectionReadModel({
       gameState: projectedRewards.gameState,
@@ -135,7 +148,16 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
         practiceSession: result.practiceSession,
         gameState: projectedRewards.changedGameState,
         events: projectedEvents.events,
+        // U6 queryCount budget: when the engine re-uses the same
+        // practice session id, tell the persistence plan so the
+        // no-op abandon UPDATE can be elided.
+        previousActiveSessionId: runtimeRecord.latestSession?.status === 'active'
+          ? runtimeRecord.latestSession.id
+          : null,
       };
+      // U6: thread the projection input to the persistence plan (see
+      // spelling/commands.js for the rationale).
+      response.projectionContext = projectionInput;
     }
     return response;
   }

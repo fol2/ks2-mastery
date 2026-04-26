@@ -4,6 +4,7 @@ import { buildCommandProjectionReadModel } from '../../projections/read-models.j
 import { projectGrammarRewards } from '../../projections/rewards.js';
 import { createServerGrammarEngine } from './engine.js';
 import { buildGrammarReadModel } from './read-models.js';
+import { resolveProjectionInput } from '../projection-input.js';
 
 const GRAMMAR_COMMANDS = Object.freeze([
   'start-session',
@@ -38,6 +39,9 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
       context.session.accountId,
       command.learnerId,
       'grammar',
+      // U6 queryCount budget: runSubjectCommandMutation already ran
+      // requireLearnerWriteAccess; skip the duplicate membership read.
+      { skipAccessCheck: true },
     );
     const engine = createServerGrammarEngine({
       now: typeof now === 'function' ? now : () => nowValue,
@@ -50,21 +54,35 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
       payload: command.payload,
       requestId: command.requestId,
     });
-    const projectionState = await context.repository.readLearnerProjectionState(
-      context.session.accountId,
-      command.learnerId,
-    );
-    const projectedRewards = projectGrammarRewards({
-      learnerId: command.learnerId,
-      domainEvents: result.events,
-      gameState: projectionState.gameState,
-      random,
-    });
-    const projectedEvents = combineCommandEvents({
-      domainEvents: result.events,
-      reactionEvents: projectedRewards.rewardEvents,
-      existingEvents: projectionState.events,
-    });
+    // U6: extend the Punctuation no-op short-circuit pattern — skip the
+    // projection load entirely when the engine did not mutate learner
+    // state. Otherwise consume the persisted projection hot-path input.
+    const projectionInput = result.changed === false
+      ? null
+      : await resolveProjectionInput(context, {
+          learnerId: command.learnerId,
+          currentRevision: Number(command.expectedLearnerRevision) || 0,
+          capacity: context.capacity || null,
+        });
+    const projectionState = projectionInput
+      ? projectionInput.projectionState
+      : { gameState: null, events: [] };
+    const projectedRewards = result.changed === false
+      ? { gameState: projectionState.gameState, changedGameState: null, rewardEvents: [] }
+      : projectGrammarRewards({
+          learnerId: command.learnerId,
+          domainEvents: result.events,
+          gameState: projectionState.gameState,
+          random,
+        });
+    const projectedEvents = result.changed === false
+      ? { events: [], domainEvents: [], reactionEvents: [], toastEvents: [] }
+      : combineCommandEvents({
+          domainEvents: result.events,
+          reactionEvents: projectedRewards.rewardEvents,
+          existingEvents: projectionState.events,
+          seedTokens: projectionInput?.tokens || [],
+        });
     const projections = buildCommandProjectionReadModel({
       gameState: projectedRewards.gameState,
       domainEvents: projectedEvents.domainEvents,
@@ -95,7 +113,16 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
           practiceSession: result.practiceSession,
           gameState: projectedRewards.changedGameState,
           events: projectedEvents.events,
+          // U6 queryCount budget: when the engine re-uses the same
+          // practice session id, tell the persistence plan so the
+          // no-op abandon UPDATE can be elided.
+          previousActiveSessionId: runtimeRecord.latestSession?.status === 'active'
+            ? runtimeRecord.latestSession.id
+            : null,
         },
+      // U6: thread the projection input to the persistence plan (see
+      // spelling/commands.js for the rationale).
+      projectionContext: result.changed === false ? null : projectionInput,
     };
   }
 

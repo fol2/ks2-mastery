@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   spellingSessionContextNote,
   spellingSessionInfoChips,
@@ -73,6 +74,15 @@ export function SpellingSessionScene({
   const awaitingAdvance = Boolean(ui.awaitingAdvance);
   const pendingCommand = ui.pendingCommand || '';
   const pending = Boolean(pendingCommand);
+  // SH2-U1: JSX-layer belt-and-braces for non-destructive action buttons.
+  // Submit is already guarded by `pendingCommand` (and adapter-layer
+  // pendingKeys); the hook sits ON TOP of that so a fast double-click or
+  // mobile double-tap on Continue / Skip gets early-returned BEFORE the
+  // adapter round-trips `pendingCommand` back to the JSX. The hook is
+  // NOT applied to End-round-early: that path routes through
+  // `globalThis.confirm()` and is covered by the destructive-action
+  // confirm contract test.
+  const submitLock = useSubmitLock();
   const submitLabel = spellingSessionSubmitLabel(session, awaitingAdvance);
   const effectiveSubmitLabel = pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel;
   const inputPlaceholder = spellingSessionInputPlaceholder(session);
@@ -224,10 +234,19 @@ export function SpellingSessionScene({
                   className="btn good lg"
                   type="button"
                   data-action="spelling-continue"
-                  disabled={runtimeReadOnly || pending}
-                  onClick={(event) => renderAction(actions, event, 'spelling-continue', {
-                    flowTransition: isCompletingRound,
-                  })}
+                  disabled={runtimeReadOnly || pending || submitLock.locked}
+                  onClick={(event) => {
+                    // SH2-U1: the hook's `run()` flips `pendingRef.current`
+                    // synchronously before awaiting, so a second click fired
+                    // in the same microtask tick returns `undefined` without
+                    // invoking `renderAction` a second time. `renderAction`
+                    // runs inside `run(fn)` so the synchronous side effects
+                    // (event.preventDefault, action dispatch, flow-transition
+                    // start) still observe the live React synthetic event.
+                    submitLock.run(async () => renderAction(actions, event, 'spelling-continue', {
+                      flowTransition: isCompletingRound,
+                    }));
+                  }}
                 >
                   Continue <ArrowRightIcon />
                 </button>
@@ -237,8 +256,10 @@ export function SpellingSessionScene({
                   className="btn ghost lg"
                   type="button"
                   data-action="spelling-skip"
-                  disabled={runtimeReadOnly || pending}
-                  onClick={(event) => renderAction(actions, event, 'spelling-skip')}
+                  disabled={runtimeReadOnly || pending || submitLock.locked}
+                  onClick={(event) => {
+                    submitLock.run(async () => renderAction(actions, event, 'spelling-skip'));
+                  }}
                 >
                   {skipLabel}
                 </button>

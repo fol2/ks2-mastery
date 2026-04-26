@@ -7,6 +7,7 @@ import {
   normaliseGuardianMap,
   normalisePostMegaRecord,
 } from '../../../../src/subjects/spelling/service-contract.js';
+import { getSpellingPostMasteryState } from '../../../../src/subjects/spelling/read-model.js';
 import { createSpellingService } from '../../../../shared/spelling/service.js';
 import { BadRequestError } from '../../errors.js';
 
@@ -364,11 +365,42 @@ export function createServerSpellingEngine({
       }
 
       const nextState = markServerOwnedState(transition.state);
+      // P2 U4: emit a canonical `postMastery` block on every command
+      // response so the client can hydrate `subjectUi.spelling.postMastery`
+      // without a second round-trip. Additive by design — old clients that
+      // never read the field continue to work. Fed by `getSpellingPostMasteryState`
+      // from the read-model (same derivation as every other post-mastery
+      // consumer) so Worker and client cannot drift. `sourceHint: 'worker'`
+      // flows into `postMasteryDebug.source` so the Admin hub can tell a
+      // worker-hydrated snapshot apart from a client-only locked-fallback.
+      //
+      // PR #277 MEDIUM (reliability) fix — wrap the derivation in a
+      // try/catch. If the selector throws (unexpected persisted shape,
+      // runtime snapshot corruption, content-bundle drift), fall back to
+      // `postMastery: undefined` so the response still ships and the
+      // client degrades to its own locked-fallback (or the previous
+      // cache via the HIGH adversarial fix in remote-actions.js) instead
+      // of hard-failing every spelling command until the derivation is
+      // patched. Logged via console.warn so the Admin hub + server logs
+      // surface the underlying error.
+      const finalSnapshot = persistence.snapshot();
+      let postMastery;
+      try {
+        postMastery = getSpellingPostMasteryState({
+          subjectStateRecord: { data: finalSnapshot },
+          runtimeSnapshot: contentSnapshot,
+          now: clock,
+          sourceHint: 'worker',
+        });
+      } catch (error) {
+        globalThis.console?.warn?.('[spelling.apply] postMastery derivation failed, omitting from response', error);
+        postMastery = undefined;
+      }
       return {
         ok: transition.ok !== false,
         changed: transition.changed !== false,
         state: nextState,
-        data: persistence.snapshot(),
+        data: finalSnapshot,
         practiceSession: persistence.practiceSession(),
         events: transition.events || [],
         audio: transition.audio || null,
@@ -381,6 +413,7 @@ export function createServerSpellingEngine({
           extra: service.getStats(learnerId, 'extra'),
         },
         analytics: service.getAnalyticsSnapshot(learnerId),
+        postMastery,
       };
     },
   };

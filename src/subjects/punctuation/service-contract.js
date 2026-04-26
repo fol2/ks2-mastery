@@ -1,3 +1,5 @@
+import { SESSION_EPHEMERAL_FIELDS } from '../../platform/core/subject-contract.js';
+
 export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
 export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 
@@ -31,8 +33,16 @@ export const PUNCTUATION_OPEN_MAP_ALLOWED_PHASES = Object.freeze(['setup', 'summ
 // Reserved Punctuation monsters (Colisk / Hyphang / Carillon) are absent
 // from the monster filter list so a rogue payload cannot surface a retired
 // name as a filter option.
+//
+// Phase 4 U3 (review follow-on): `'unknown'` is included so the filter chip
+// row stays consistent with the skill-row status enum once the upstream
+// worker starts emitting `analytics.available === false`. Without this
+// entry the degraded state would trap a learner on any non-"All" chip
+// (every skill is `'unknown'`, but the filter has no matching id → the
+// Map renders zero cards with no empty-state message). The chip is a
+// harmless extra slot while the upstream wiring is still deferred.
 export const PUNCTUATION_MAP_STATUS_FILTER_IDS = Object.freeze([
-  'all', 'new', 'learning', 'due', 'weak', 'secure',
+  'all', 'new', 'learning', 'due', 'weak', 'secure', 'unknown',
 ]);
 
 export const PUNCTUATION_MAP_MONSTER_FILTER_IDS = Object.freeze([
@@ -195,22 +205,60 @@ export function normalisePunctuationMapUi(value = {}) {
   return { statusFilter, monsterFilter, detailOpenSkillId, detailTab, returnTo };
 }
 
-// U5: Rehydrate-time sanitiser for `subjectUi.punctuation`. Called exactly
-// once when the store boots over a persisted `subjectStates` snapshot — the
-// Map phase and its `mapUi` filter state are session-ephemeral by plan
-// (R5 line 565 / line 583), so they must NOT survive a page reload. A live
-// snapshot that carries `phase === 'map'` is coerced back to `'setup'`; the
-// `mapUi` field is stripped entirely so the Map reopens from defaults.
+// U5 + SH2-U2: Rehydrate-time sanitiser for `subjectUi.punctuation`. Called
+// exactly once when the store boots over a persisted `subjectStates`
+// snapshot. Two concerns compose here:
 //
-// This sanitiser runs only on rehydrate — live `updateSubjectUi` dispatches
+//   1. (U5, R5 line 565 / line 583) The Map phase and its `mapUi` filter
+//      state are session-ephemeral by plan, so a snapshot that carries
+//      `phase === 'map'` is coerced back to `'setup'` and `mapUi` is
+//      stripped so the Map reopens from defaults.
+//
+//   2. (SH2-U2, R2) The round-completion transient state -- `summary`,
+//      `transientUi`, `pendingCommand` -- must not survive a reload. The
+//      Summary scene's "Start another round" CTA fires a fresh
+//      `start-session` reusing the prior round's mode; a zombie summary
+//      after reload would silently re-enter a round the learner thought
+//      they had finished. A non-empty `pendingCommand` stranded by a
+//      tab crash mid-command would latch the setup scene's "Starting..."
+//      disabled state with no recovery path (adv-sh2u2-003). Active-
+//      session state (`session`, `feedback`, `awaitingAdvance`) is
+//      INTENTIONALLY preserved so mid-round / mid-feedback reload
+//      resumes the learner's active round. The baseline drop set lives
+//      on `SESSION_EPHEMERAL_FIELDS` in
+//      `platform/core/subject-contract.js` so every subject drops the
+//      same fields; this sanitiser iterates that list directly instead
+//      of hand-inlining individual keys (drift risk flagged by
+//      adv-sh2u2-004).
+//
+//   3. (SH2-U2 phase coercion, adv-sh2u2-002) Dropping `summary` alone
+//      still leaves `phase === 'summary'` intact. After the route
+//      resets to dashboard and the learner re-opens Punctuation, the
+//      SummaryScene re-renders with an empty summary payload and a live
+//      "Start another round" CTA. Coerce `phase === 'summary'` back to
+//      `'setup'` on rehydrate so the scene never mounts with a zombie
+//      summary phase.
+//
+// This sanitiser runs only on rehydrate -- live `updateSubjectUi` dispatches
 // (which build state from the current in-memory entry) bypass it, so the
-// Map phase remains legitimate while the session is active.
+// Map phase + summary / feedback / awaitingAdvance fields remain
+// legitimate while a session is active in memory.
 export function sanitisePunctuationUiOnRehydrate(entry) {
   if (!isPlainObject(entry)) return entry;
-  const needsCoerce = entry.phase === 'map' || 'mapUi' in entry;
-  if (!needsCoerce) return entry;
   const next = { ...entry };
-  if (next.phase === 'map') next.phase = 'setup';
+  // SH2-U2 baseline: drop the post-session-ephemeral fields shared across
+  // all subjects (SESSION_EPHEMERAL_FIELDS = summary, transientUi,
+  // pendingCommand). `session`, `feedback`, `awaitingAdvance` are
+  // intentionally preserved -- see the comment above. Imported rather
+  // than hand-inlined so future additions to the shared list apply here
+  // automatically (adv-sh2u2-004 drift fix).
+  for (const field of SESSION_EPHEMERAL_FIELDS) {
+    if (field in next) delete next[field];
+  }
+  // U5 subject-specific: coerce Map phase + strip mapUi. Also coerce
+  // `phase === 'summary'` so a reload on the summary scene cannot
+  // resurrect the "Start another round" CTA (adv-sh2u2-002).
+  if (next.phase === 'map' || next.phase === 'summary') next.phase = 'setup';
   if ('mapUi' in next) delete next.mapUi;
   return next;
 }
@@ -222,6 +270,15 @@ export function createInitialPunctuationState() {
     session: null,
     feedback: null,
     summary: null,
+    // SH2-U2 (adv-sh2u2-003): pendingCommand is dropped by
+    // `SESSION_EPHEMERAL_FIELDS` on rehydrate to prevent the crash-mid-
+    // command stranding bug. Initialising the field here re-defaults it
+    // to '' on the rehydrate merge `{...DEFAULT, ...initState,
+    // ...sanitised}` so downstream `deepEqual` resume-contract tests
+    // (subject-expansion-harness.js::keeps a live session when switching
+    // learners) still see `pendingCommand === ''` rather than
+    // `undefined`.
+    pendingCommand: '',
     error: '',
     availability: {
       status: 'ready',

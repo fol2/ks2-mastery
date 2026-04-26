@@ -3,6 +3,101 @@ import { cloneSerialisable } from '../../../src/platform/core/repositories/helpe
 export const LEARNER_SUMMARY_MODEL_KEY = 'learner.summary.v1';
 export const PARENT_SUMMARY_MODEL_KEY = 'parent.summary.v1';
 export const COMMAND_PROJECTION_MODEL_KEY = 'command.projection.v1';
+
+// U6: persisted schema version inside the command.projection.v1 payload.
+// Additive-only changes keep version at 1; a breaking shape change would
+// bump to 2 with an explicit migration path.
+export const COMMAND_PROJECTION_SCHEMA_VERSION = 1;
+
+// U6: bounded ring of the most-recent event tokens stored inside the
+// persisted projection shape so the hot-path dedupe (combineCommandEvents)
+// does not need to reload event_log. 250 is a strict superset of
+// PROJECTION_RECENT_EVENT_LIMIT (200) so the token set always covers the
+// bounded-fallback window; a Smart Review session (60-120 commands) fits
+// comfortably inside the ring.
+export const RECENT_EVENT_TOKEN_RING_LIMIT = 250;
+
+function ringClamp(tokens, limit = RECENT_EVENT_TOKEN_RING_LIMIT) {
+  if (!Array.isArray(tokens)) return [];
+  // Keep most-recent, drop oldest. Caller appends new tokens at the tail.
+  const cleaned = tokens.filter((token) => typeof token === 'string' && token);
+  if (cleaned.length <= limit) return cleaned;
+  return cleaned.slice(cleaned.length - limit);
+}
+
+/**
+ * Normalise the persisted command.projection.v1 payload shape. Returns a
+ * plain object with:
+ *   - `version`: number (0 when the row predates U6)
+ *   - `rewards`: passthrough object
+ *   - `eventCounts`: passthrough object
+ *   - `recentEventTokens`: bounded string[] (may be empty)
+ *   - `...rest`: any additional fields from a newer writer are preserved
+ *     so older readers do not silently delete them (U6 newer-opaque path).
+ */
+export function normaliseCommandProjectionPayload(raw, {
+  fallbackVersion = 0,
+  tokenRingLimit = RECENT_EVENT_TOKEN_RING_LIMIT,
+} = {}) {
+  const payload = isPlainObject(raw) ? raw : {};
+  const version = Number.isFinite(Number(payload.version))
+    ? Number(payload.version)
+    : fallbackVersion;
+  const rewards = isPlainObject(payload.rewards) ? payload.rewards : {};
+  const eventCounts = isPlainObject(payload.eventCounts) ? payload.eventCounts : {};
+  const recentEventTokens = ringClamp(payload.recentEventTokens, tokenRingLimit);
+  return {
+    ...payload,
+    version,
+    rewards,
+    eventCounts,
+    recentEventTokens,
+  };
+}
+
+/**
+ * Merge two token rings (winner + loser) keeping uniqueness and capping at
+ * `tokenRingLimit` preserving the most-recent entries. Used by the CAS
+ * retry path when a concurrent writer has already persisted a newer row.
+ */
+export function mergeRecentEventTokens(winnerTokens, loserTokens, {
+  tokenRingLimit = RECENT_EVENT_TOKEN_RING_LIMIT,
+} = {}) {
+  const winner = Array.isArray(winnerTokens) ? winnerTokens : [];
+  const loser = Array.isArray(loserTokens) ? loserTokens : [];
+  const seen = new Set();
+  const output = [];
+  // Preserve winner tokens in order, then append any loser tokens not yet
+  // seen. This keeps the most-recent tokens from the winning writer at
+  // the tail while pulling in the loser's fresh additions.
+  for (const token of winner) {
+    if (typeof token !== 'string' || !token) continue;
+    if (seen.has(token)) continue;
+    seen.add(token);
+    output.push(token);
+  }
+  for (const token of loser) {
+    if (typeof token !== 'string' || !token) continue;
+    if (seen.has(token)) continue;
+    seen.add(token);
+    output.push(token);
+  }
+  if (output.length <= tokenRingLimit) return output;
+  return output.slice(output.length - tokenRingLimit);
+}
+
+/**
+ * Append new tokens to an existing ring, clamped to `tokenRingLimit` keeping
+ * the most-recent entries. Duplicates are skipped so the ring stays a set.
+ */
+export function appendRecentEventTokens(existing, tokens, {
+  tokenRingLimit = RECENT_EVENT_TOKEN_RING_LIMIT,
+} = {}) {
+  const base = Array.isArray(existing) ? existing : [];
+  const incoming = Array.isArray(tokens) ? tokens : [];
+  if (!incoming.length) return ringClamp(base, tokenRingLimit);
+  return mergeRecentEventTokens(base, incoming, { tokenRingLimit });
+}
 export const PUBLIC_ACTIVITY_TYPES = new Set([
   'spelling.retry-cleared',
   'spelling.word-secured',

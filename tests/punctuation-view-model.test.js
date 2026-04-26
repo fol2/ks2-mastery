@@ -123,9 +123,12 @@ test('U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS labels + descriptions use on
 // ---------------------------------------------------------------------------
 
 test('U1 view-model: PUNCTUATION_MAP_STATUS_FILTER_IDS ordered list matches plan', () => {
+  // Phase 4 U3 review follow-on (PR #269): `'unknown'` appended so the
+  // degraded-analytics state is filter-reachable. The other 6 entries stay
+  // in plan-pinned order.
   assert.deepEqual(
     [...PUNCTUATION_MAP_STATUS_FILTER_IDS],
-    ['all', 'new', 'learning', 'due', 'weak', 'secure'],
+    ['all', 'new', 'learning', 'due', 'weak', 'secure', 'unknown'],
   );
   assert.equal(Object.isFrozen(PUNCTUATION_MAP_STATUS_FILTER_IDS), true);
 });

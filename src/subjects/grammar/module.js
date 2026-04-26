@@ -7,6 +7,7 @@ import {
   normaliseGrammarReadModel,
 } from './metadata.js';
 import { normaliseGrammarSpeechRate } from './speech.js';
+import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
 
 // U6a: Child-facing copy for the four known `save-transfer-evidence` error
 // codes emitted by the Worker (worker/src/subjects/grammar/engine.js:1723-1803,
@@ -317,6 +318,33 @@ export const grammarModule = {
   reactPractice: true,
   initState() {
     return normaliseGrammarReadModel();
+  },
+  // SH2-U2 (R2): drop post-session-ephemeral fields on rehydrate so a
+  // reload on a Grammar summary screen never resurrects the "Start
+  // another round" CTA from a round the learner thought was finished.
+  // Baseline set (`summary`, `transientUi`, `pendingCommand`) lives on
+  // `SESSION_EPHEMERAL_FIELDS` in `platform/core/subject-contract.js`.
+  // Active-session state (`session`, `feedback`, `awaitingAdvance`)
+  // is intentionally preserved so mid-round reload resumes the
+  // learner's active round. Preferences, stats, analytics concepts,
+  // capabilities, transferLane (saved evidence), and the `bank` +
+  // `ui.transfer` UI slices all survive. Runs only on rehydrate paths
+  // (bootstrap / reloadFromRepositories / learner-switch); live
+  // dispatches pass `rehydrate: false` and skip this hook.
+  //
+  // Blocker adv-sh2u2-001 (phase coercion): dropping `summary` alone
+  // leaves `phase === 'summary'` intact, which re-renders
+  // `GrammarSummaryScene` with an empty `summary = ui.summary || {}`
+  // payload after the route re-opens Grammar. The "Start another round"
+  // CTA is still active, giving the learner a silent replay hook. Coerce
+  // `phase === 'summary'` back to `'dashboard'` on rehydrate so the
+  // scene never mounts with a zombie phase.
+  sanitiseUiOnRehydrate(entry) {
+    const next = dropSessionEphemeralFields(entry);
+    if (next && typeof next === 'object' && !Array.isArray(next) && next.phase === 'summary') {
+      next.phase = 'dashboard';
+    }
+    return next;
   },
   getDashboardStats(appState) {
     const learnerId = appState.learners?.selectedId || '';

@@ -6,6 +6,7 @@ import { ReadOnlyLearnerNotice } from './ReadOnlyLearnerNotice.jsx';
 import { AccessDeniedCard, formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
 import { decideDirtyResetOnServerUpdate } from '../../platform/hubs/admin-metadata-dirty-registry.js';
+import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 
 function AdminAccountRoles({ model, directory = {}, actions }) {
   const isAdmin = model?.permissions?.platformRole === 'admin';
@@ -467,20 +468,31 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
     if (dirtyRef.current) registerDirty(accountId, false);
   }, [accountId, registerDirty]);
 
+  // SH2-U1: JSX-layer belt-and-braces on top of the existing
+  // `savingAccountId` guard. `submitLock.locked` blocks concurrent
+  // double-clicks within a single frame before the adapter's
+  // `pendingKeys` / `savingAccountId` prop round-trips back. The
+  // `dispatch` here is synchronous (it hands off to the reducer and
+  // queues the network call) so the lock only holds for one microtask
+  // — enough to absorb a double-click burst but not so long that the
+  // next legitimate save is blocked after `savingAccountId` clears.
+  const submitLock = useSubmitLock();
   const handleSave = () => {
-    const parsedTags = tagsText
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0)
-      .slice(0, 10);
-    actions.dispatch('account-ops-metadata-save', {
-      accountId,
-      patch: {
-        opsStatus,
-        planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
-        tags: parsedTags,
-        internalNotes: internalNotes.trim() === '' ? null : internalNotes,
-      },
+    submitLock.run(async () => {
+      const parsedTags = tagsText
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+        .slice(0, 10);
+      actions.dispatch('account-ops-metadata-save', {
+        accountId,
+        patch: {
+          opsStatus,
+          planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
+          tags: parsedTags,
+          internalNotes: internalNotes.trim() === '' ? null : internalNotes,
+        },
+      });
     });
   };
 
@@ -564,7 +576,12 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
         />
       </label>
       <div>
-        <button className="btn secondary" type="button" disabled={isSaving} onClick={handleSave}>
+        <button
+          className="btn secondary"
+          type="button"
+          disabled={isSaving || submitLock.locked}
+          onClick={handleSave}
+        >
           {isSaving ? 'Saving...' : 'Save'}
         </button>
         <div className="small muted" style={{ marginTop: 4 }}>Updated {formatTimestamp(account.updatedAt)}</div>

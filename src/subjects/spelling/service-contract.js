@@ -1,3 +1,12 @@
+/**
+ * P2 versioning convention (H7 synthesis, documented at U10): content-model
+ * versions use EVEN numbers; service-state versions use ODD numbers. The two
+ * version counters live in different files and get bumped on different
+ * cadences, but a collision (e.g. both at 3) would blow an entire day in
+ * triage to re-establish which counter moved. The even/odd split rules out
+ * collisions by construction — see `SPELLING_CONTENT_MODEL_VERSION` in
+ * `src/subjects/spelling/content/model.js` (currently 4).
+ */
 export const SPELLING_SERVICE_STATE_VERSION = 3;
 
 /**
@@ -10,6 +19,22 @@ export const SPELLING_SERVICE_STATE_VERSION = 3;
  * visibility theme).
  */
 export const SPELLING_CONTENT_RELEASE_ID = 'spelling-p2-baseline-2026-04-26';
+
+/**
+ * P2 U10: re-export of the pattern registry identifiers so consumers
+ * (Pattern Quest selector, UI, Admin dashboards) can import a single
+ * constant without reaching into `content/patterns.js`. The canonical
+ * registry definitions stay in that file; this is a narrow re-export
+ * facade — the Array is frozen at definition, and the helpers below are
+ * plain pure functions.
+ */
+export {
+  SPELLING_PATTERN_IDS,
+  SPELLING_PATTERNS,
+  PATTERN_LAUNCH_THRESHOLD,
+  computeLaunchedPatternIds,
+  isPatternEligibleSlug,
+} from './content/patterns.js';
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
 export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);

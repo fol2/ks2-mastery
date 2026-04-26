@@ -142,6 +142,79 @@ test.describe('spelling golden path', () => {
     await expect(reloadedMarker.first()).toBeVisible({ timeout: 15_000 });
   });
 
+  // SH2-U2 (R2): reload-on-summary scene. The `sanitiseUiOnRehydrate()`
+  // hook on `spellingModule` must strip the persisted `summary` field on
+  // bootstrap so that a browser Back / Refresh on the summary screen does
+  // NOT re-render the completion state with its "Start another round"
+  // CTA. After reload the learner must land on a clean setup-phase
+  // surface instead.
+  test('SH2-U2: reload on spelling summary lands on clean setup phase, not "Start another round"', async ({ page }) => {
+    await createDemoSession(page);
+    await expect(page.locator('.subject-grid')).toBeVisible();
+    await openSubject(page, 'spelling');
+
+    const start = page.locator('[data-action="spelling-start"]');
+    await expect(start).toBeVisible();
+    await expect(start).toBeEnabled();
+    await start.click();
+    await expect(page.locator('.spelling-in-session.is-question-revealed input[name="typed"]')).toBeVisible({ timeout: 15_000 });
+
+    // End the round immediately (1 card → 0 answered) via end-round-early
+    // so we land on a summary-equivalent state regardless of the random
+    // demo learner's seed word. End-round-early is a deterministic path
+    // into the post-round rehydrate scenario.
+    const endButton = page.locator('[data-action="spelling-end-early"]');
+    await expect(endButton).toBeVisible();
+    await expect(endButton).toBeEnabled({ timeout: 10_000 });
+    await endButton.click();
+
+    // Wait until the post-round surface renders. Either the explicit
+    // summary with "Start another round" CTA OR the dashboard fallback
+    // (when the end-early flow collapsed straight to dashboard) is
+    // acceptable as the pre-reload state.
+    const postRoundMarker = page.locator(
+      '[data-action="spelling-start-again"], [data-action="spelling-start"]',
+    );
+    await expect(postRoundMarker.first()).toBeVisible({ timeout: 15_000 });
+
+    // Reload -- this is the R2 hazard. After reload, the rehydrate
+    // sanitiser drops the persisted summary and coerces phase='summary'
+    // so the UI CANNOT land on the "Start another round" CTA.
+    await reload(page);
+
+    // Post-reload invariant: "Start another round" (the summary's
+    // completion-state CTA) must NOT be the visible primary. The
+    // learner should either see the home subject grid or the spelling
+    // setup scene with the plain "Start" button -- never the summary-
+    // phase "Start another round" variant.
+    const startAgain = page.locator('[data-action="spelling-start-again"]');
+
+    // At least one of the safe fallback surfaces must be visible.
+    const safeMarker = page.locator(
+      '.subject-grid [data-action="open-subject"][data-subject-id="spelling"], [data-action="spelling-start"]:not([data-action="spelling-start-again"])',
+    ).first();
+    await expect(safeMarker).toBeVisible({ timeout: 15_000 });
+
+    // The summary-only "Start another round" CTA must NOT be visible
+    // on the rehydrated surface (would indicate the summary survived).
+    await expect(startAgain).toHaveCount(0);
+
+    // adv-sh2u2-005 (zombie-phase proof): route resets to dashboard on
+    // bootstrap, so the spelling summary surface is naturally gone.
+    // Re-open the Spelling card -- this exercises the zombie-phase
+    // path. Without the phase coercion, phase='summary' would still be
+    // persisted and the summary-phase "Start another round" CTA would
+    // appear instead of the plain Start button. With the coercion the
+    // surface mounts the dashboard phase instead.
+    const onGrid = page.locator('.subject-grid [data-action="open-subject"][data-subject-id="spelling"]');
+    if (await onGrid.count()) {
+      await onGrid.first().click();
+    }
+    await expect(page.locator('[data-action="spelling-start"]:not([data-action="spelling-start-again"])')).toBeVisible({ timeout: 15_000 });
+    // "Start another round" MUST NOT reappear after re-opening Spelling.
+    await expect(startAgain).toHaveCount(0);
+  });
+
   // U12 (sys-hardening p1): polish regression assertions.
   //
   // These two checks lock the baseline-doc items that cannot be caught
