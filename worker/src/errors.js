@@ -1,4 +1,9 @@
 import { json } from './http.js';
+import {
+  ACCOUNT_SUSPENDED,
+  ACCOUNT_PAYMENT_HOLD,
+  SESSION_INVALIDATED,
+} from './error-codes.js';
 
 export class HttpError extends Error {
   constructor(status, message, extra = {}) {
@@ -117,7 +122,7 @@ export class AccountSuspendedError extends HttpError {
   constructor(message = 'Account is suspended. Contact operations.', extra = {}) {
     super(403, message, {
       ok: false,
-      code: 'account_suspended',
+      code: ACCOUNT_SUSPENDED,
       ...extra,
     });
   }
@@ -133,7 +138,7 @@ export class AccountPaymentHoldError extends HttpError {
   constructor(message = 'This action requires active billing. Contact ops.', extra = {}) {
     super(403, message, {
       ok: false,
-      code: 'account_payment_hold',
+      code: ACCOUNT_PAYMENT_HOLD,
       ...extra,
     });
   }
@@ -150,7 +155,7 @@ export class SessionInvalidatedError extends HttpError {
   constructor(message = 'Your session is no longer valid. Please sign in again.', extra = {}) {
     super(401, message, {
       ok: false,
-      code: 'session_invalidated',
+      code: SESSION_INVALIDATED,
       ...extra,
     });
   }

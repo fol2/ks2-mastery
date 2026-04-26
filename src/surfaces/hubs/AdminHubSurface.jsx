@@ -22,6 +22,10 @@ import {
   buildKeepMineDispatchPayload,
   applyUseTheirsStateUpdate,
 } from '../../platform/hubs/admin-metadata-conflict-actions.js';
+import {
+  decideAccountOpsSave,
+  defaultConfirmOpsStatusChange,
+} from '../../platform/hubs/admin-ops-confirm.js';
 export { buildAccountOpsMetadataConflictDiff };
 const formatConflictValue = formatAccountOpsMetadataConflictValue;
 
@@ -615,27 +619,12 @@ const OPS_STATUS_OPTIONS = ['active', 'suspended', 'payment_hold'];
 // status is enforced on sign-in.
 const ACCOUNT_OPS_ENFORCEMENT_NOTE = 'Status is enforced: suspended accounts cannot sign in, and payment-hold accounts cannot write.';
 
-function lastSixOfAccountId(accountId) {
-  const value = typeof accountId === 'string' ? accountId : '';
-  return value.slice(-6);
-}
-
-// Phase D / U15: confirmation prompt before applying a non-active
-// ops_status. The admin must type the last 6 characters of the target
-// account id. Returns true if confirmed, false if cancelled or mismatched.
-//
-// Extracted so tests can stub `window.prompt` or inject a replacement.
-function defaultConfirmOpsStatusChange(accountId, nextStatus) {
-  if (nextStatus === 'active') return true;
-  if (typeof globalThis === 'undefined') return true;
-  const promptFn = typeof globalThis.prompt === 'function' ? globalThis.prompt : null;
-  if (!promptFn) return true;
-  const expected = lastSixOfAccountId(accountId);
-  const message = `Type the last 6 chars of ${expected} to confirm changing status to ${nextStatus}.`;
-  const typed = promptFn(message);
-  if (typeof typed !== 'string') return false;
-  return typed.trim() === expected;
-}
+// Phase D / U15 + ADV-2 (Phase D reviewer) fix: the confirmation
+// helpers live in `src/platform/hubs/admin-ops-confirm.js` so Node
+// tests can exercise the prompt branch, the last-6 matcher, and the
+// save-decision closure without mounting React or JSDOM. The
+// imported `defaultConfirmOpsStatusChange` fails safe when
+// `globalThis.prompt` is missing.
 
 
 function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions }) {
@@ -730,34 +719,22 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
   // — enough to absorb a double-click burst but not so long that the
   // next legitimate save is blocked after `savingAccountId` clears.
   const submitLock = useSubmitLock();
+  // Phase D / U15 + T-Block-2 (Phase D reviewer) fix: delegate the
+  // save decision to `decideAccountOpsSave`. The pure helper owns the
+  // confirmation gate, tag parsing, and dispatch-envelope shape so
+  // Node tests can verify every branch without JSDOM. Injecting
+  // `actions.confirmOpsStatusChange` remains supported so tests stub
+  // it to simulate confirm vs cancel without touching `window.prompt`.
   const confirmOpsStatusChange = actions?.confirmOpsStatusChange || defaultConfirmOpsStatusChange;
   const handleSave = () => {
     submitLock.run(async () => {
-      // Phase D / U15: when submitting a non-active ops_status, require
-      // the admin to type the last-6 chars of the target account id.
-      // Protects against accidental clicks in the ops_status selector
-      // that would immediately kick a user out of their session. The
-      // prompt is injectable via `actions.confirmOpsStatusChange` so
-      // Node-side tests and adversarial suites can exercise the branch
-      // without a DOM.
-      if (opsStatus !== 'active' && opsStatus !== (account.opsStatus || 'active')) {
-        const confirmed = confirmOpsStatusChange(accountId, opsStatus);
-        if (!confirmed) return;
-      }
-      const parsedTags = tagsText
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0)
-        .slice(0, 10);
-      actions.dispatch('account-ops-metadata-save', {
-        accountId,
-        patch: {
-          opsStatus,
-          planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
-          tags: parsedTags,
-          internalNotes: internalNotes.trim() === '' ? null : internalNotes,
-        },
+      const decision = decideAccountOpsSave({
+        draft: { opsStatus, planLabel, tagsText, internalNotes },
+        account: { accountId, opsStatus: account.opsStatus },
+        confirmOpsStatusChange,
       });
+      if (!decision.shouldDispatch || !decision.dispatchArgs) return;
+      actions.dispatch(decision.dispatchArgs.action, decision.dispatchArgs.data);
     });
   };
 

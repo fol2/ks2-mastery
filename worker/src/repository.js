@@ -81,6 +81,10 @@ import {
   ProjectionUnavailableError,
 } from './errors.js';
 import {
+  SELF_SUSPEND_FORBIDDEN,
+  LAST_ADMIN_LOCKED_OUT,
+} from './error-codes.js';
+import {
   all,
   batch,
   bindStatement,
@@ -3032,9 +3036,12 @@ function validateAccountOpsPatch(rawPatch) {
 }
 
 async function loadAccountOpsMetadataRow(db, targetAccountId) {
+  // ADV-3 (Phase D reviewer): expose `status_revision` so the
+  // stale-session DELETE can gate its EXISTS tuple on the post-bump
+  // revision, preventing false positives on tags-only edits.
   return first(db, `
     SELECT account_id, ops_status, plan_label, tags_json, internal_notes,
-           updated_at, updated_by_account_id, row_version
+           updated_at, updated_by_account_id, row_version, status_revision
     FROM account_ops_metadata
     WHERE account_id = ?
   `, [targetAccountId]);
@@ -3144,7 +3151,7 @@ async function updateAccountOpsMetadata(db, {
     && patch.opsStatus !== null
   ) {
     throw new ForbiddenError('You cannot change your own account status.', {
-      code: 'self_suspend_forbidden',
+      code: SELF_SUSPEND_FORBIDDEN,
       accountId: targetAccountId,
     });
   }
@@ -3236,7 +3243,7 @@ async function updateAccountOpsMetadata(db, {
     `, [targetAccountId], 'n');
     if (!(Number(otherActiveAdmins) > 0)) {
       throw new ConflictError('Cannot change this account — they are the only active administrator.', {
-        code: 'last_admin_locked_out',
+        code: LAST_ADMIN_LOCKED_OUT,
         accountId: targetAccountId,
       });
     }
@@ -3289,6 +3296,22 @@ async function updateAccountOpsMetadata(db, {
     : (typeof existingRow?.internal_notes === 'string' ? existingRow.internal_notes : null);
   const mergedTagsJson = JSON.stringify(mergedTags);
   const nextRowVersion = normalisedExpectedRowVersion + 1;
+  // ADV-3 (Phase D reviewer): mirror the SQL CASE that bumps
+  // `status_revision` only when `ops_status` actually changes.
+  // The stale-session DELETE below is EXISTS-guarded on THIS value
+  // so a tags-only save never fires the sweep, even if the UPSERT
+  // succeeds and bumps `row_version`.
+  const existingStatusRevision = Math.max(0, Number(existingRow?.status_revision) || 0);
+  const existingOpsStatus = typeof existingRow?.ops_status === 'string' ? existingRow.ops_status : 'active';
+  const opsStatusChanged = mergedOpsStatus !== existingOpsStatus;
+  const nextStatusRevision = opsStatusChanged ? existingStatusRevision + 1 : existingStatusRevision;
+  // ADV-3 sweep threshold: when ops_status changed, any session
+  // stamped at status_revision_at_issue < nextStatusRevision is
+  // stale. When ops_status did NOT change, we bind -1 so the
+  // outer WHERE evaluates to false for every session row
+  // (status_revision_at_issue >= 0 always), keeping the sweep off
+  // on tags-only / notes-only edits.
+  const sweepThreshold = opsStatusChanged ? nextStatusRevision : -1;
 
   const appliedRow = {
     accountId: targetAccountId,
@@ -3396,32 +3419,37 @@ async function updateAccountOpsMetadata(db, {
     bumpAdminKpiMetricStatement(db, KPI_ACCOUNT_OPS_UPDATES_METRIC_KEY, ts, 1, { exists: receiptAndCounterExists }),
     // U15 stale-session sweep. When the UPSERT bumps `status_revision`,
     // invalidate every `account_sessions` row on the target that was
-    // stamped at an older revision. EXISTS-guarded on the write-signature
-    // tuple (same shape as the receipt / counter guards) so the DELETE
-    // fires only when the UPSERT actually committed — no ghost DELETE
-    // when the CAS loses. The subquery reads the post-bump
-    // `status_revision` so the DELETE catches every stale session
-    // including the race-loser's prior cookie.
+    // stamped at an older revision.
+    //
+    // ADV-3 (Phase D reviewer) fix: the EXISTS guard tuple now
+    // includes `status_revision = ?`. Without this field the guard
+    // would match on any committed UPSERT (tags-only, notes-only,
+    // etc.) even though the target row stayed at the old revision.
+    // With the extended tuple the DELETE fires IFF the UPSERT
+    // actually bumped `status_revision` AND committed with this
+    // batch's write signature. A race-loser or a tags-only save
+    // consequently writes zero rows here, preserving the existing
+    // sessions.
     bindStatement(db, `
       DELETE FROM account_sessions
       WHERE account_id = ?
-        AND status_revision_at_issue < (
-          SELECT status_revision FROM account_ops_metadata WHERE account_id = ?
-        )
+        AND status_revision_at_issue < ?
         AND EXISTS (
           SELECT 1 FROM account_ops_metadata
           WHERE account_id = ?
             AND updated_at = ?
             AND updated_by_account_id = ?
             AND row_version = ?
+            AND status_revision = ?
         )
     `, [
       targetAccountId,
-      targetAccountId,
+      sweepThreshold,
       targetAccountId,
       ts,
       actorAccountId,
       nextRowVersion,
+      nextStatusRevision,
     ]),
   ]);
 
@@ -5586,13 +5614,23 @@ async function updateManagedAccountRole(db, {
   // Compose the UPDATE statement. The WHERE clause combines repo_revision
   // CAS with the existing last-admin subquery so both invariants are
   // enforced in one SQL round-trip.
+  // CONV-2 (Phase D reviewer) fix: the guard must also require
+  // `COALESCE(m.ops_status, 'active') = 'active'` on the sibling admin
+  // so a suspended-but-still-platform_role-admin account does NOT
+  // count as 'the other active admin'. Without the JOIN, demoting
+  // the only effectively-active admin would succeed whenever a
+  // second admin row existed at any ops_status. The LEFT JOIN lets
+  // accounts with no metadata row (legacy pre-0011 installs) still
+  // count as active via COALESCE.
   const lastAdminGuard = (currentRole === 'admin' && nextRole !== 'admin')
     ? `AND EXISTS (
          SELECT 1
-         FROM adult_accounts
-         WHERE platform_role = 'admin'
-           AND COALESCE(account_type, 'real') <> 'demo'
-           AND id <> ?
+         FROM adult_accounts a
+         LEFT JOIN account_ops_metadata m ON m.account_id = a.id
+         WHERE a.platform_role = 'admin'
+           AND COALESCE(a.account_type, 'real') <> 'demo'
+           AND COALESCE(m.ops_status, 'active') = 'active'
+           AND a.id <> ?
        )`
     : '';
   const lastAdminParams = (currentRole === 'admin' && nextRole !== 'admin') ? [targetAccountId] : [];
