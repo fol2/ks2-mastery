@@ -13,12 +13,32 @@
 
 import { expect } from '@playwright/test';
 
+// SH2-U6 (sys-hardening p2): re-export the mask-coverage invariant
+// helpers so every scene can import both from `./shared.mjs` without
+// adding a second import path. The actual logic lives in
+// `./shared-mask-coverage.mjs` to keep this file from growing past
+// the maintainable threshold. See its module-level comment for the
+// P1 U5 silent-green hazard narrative.
+export {
+  measureMaskCoverage,
+  assertMaskCoverage,
+  expectMaskCoverageWithinLimit,
+} from './shared-mask-coverage.mjs';
+
 export const SUBJECT_IDS = ['spelling', 'grammar', 'punctuation'];
 
 // Screenshot-only CSS override. Injected via `page.addStyleTag()` in
 // `applyDeterminism()` + `reload()` to hide non-deterministic surfaces
 // that otherwise blow past the 2% pixel-diff budget. Kept at module
 // scope so every call site uses the same CSS string.
+//
+// SH2-U6 additions: `.hero-paper` + `.hero-art` carry a
+// `--hero-bg` CSS variable driven by `randomHeroBackground()` keyed on
+// the demo learner id. The learner id is random per `/demo` mint, so
+// two successive runs land on different hero art and the dashboard
+// baseline drifts ~20% of pixels. Hiding `background-image` on these
+// containers is a no-op for layout (the hero copy sits on its own
+// gradient ribbon) and pins the dashboard to a deterministic frame.
 const SCREENSHOT_DETERMINISM_CSS = `
 /* U5 playwright determinism overrides (spelling-golden-path.playwright
    .test.mjs + friends). Never ship via production CSS. */
@@ -33,6 +53,15 @@ const SCREENSHOT_DETERMINISM_CSS = `
 .toast-shelf {
   visibility: hidden !important;
   background-image: none !important;
+}
+/* SH2-U6: home-surface hero art is per-learner-random. Hiding the
+   background-image pins the dashboard baseline without collapsing the
+   hero band's height (the outer .hero-paper + .hero-art keep their
+   width/height via grid layout). */
+.hero-paper,
+.hero-art {
+  background-image: none !important;
+  --hero-bg: none !important;
 }
 `;
 
@@ -63,12 +92,23 @@ export async function createDemoSession(page) {
 /**
  * Open a subject from the home grid. Accepts `spelling`, `grammar`, or
  * `punctuation`.
+ *
+ * SH2-U6 review blocker-6: `[data-action="open-subject"][data-subject-id]`
+ * matches TWO elements on the home surface — the hero CTA button
+ * (`.btn.primary.xl` that auto-targets the recommended subject) AND the
+ * subject-grid card. The hero CTA was added by PR #273 and breaks
+ * Playwright's strict-mode click with "locator resolved to 2 elements".
+ * Scope to `.subject-card` so the grid card is the sole target; the
+ * hero CTA path is still exercised by tests that want it explicitly via
+ * `.hero-cta-row .btn.primary.xl` selectors.
  */
 export async function openSubject(page, subjectId) {
   if (!SUBJECT_IDS.includes(subjectId)) {
     throw new Error(`openSubject: unknown subjectId ${subjectId}`);
   }
-  const card = page.locator(`[data-action="open-subject"][data-subject-id="${subjectId}"]`);
+  const card = page.locator(
+    `.subject-card[data-action="open-subject"][data-subject-id="${subjectId}"]`,
+  );
   await expect(card).toBeVisible();
   await card.click();
 }
@@ -201,12 +241,62 @@ export function screenshotName(subjectId, scene) {
  * `applyDeterminism()` replaces all of them.
  *
  * Per-scene callers can extend this list.
+ *
+ * SH2-U6 (sys-hardening p2): `defaultMasks()` is audited at runtime by
+ * the mask-coverage invariant (see `shared-mask-coverage.mjs`). The
+ * two targeted selectors `.cloze` + `.prompt-sentence` resolve to a
+ * narrow inline-text region within the session card (typically
+ * < 2% of any viewport), so the default comfortably passes the ≤30%
+ * coverage check. Extension by per-scene callers is the only path
+ * that can push the total above the threshold, which is the whole
+ * point of the guard: any new over-broad selector is caught before
+ * the baseline is committed.
  */
 export function defaultMasks(page) {
   return [
     page.locator('.cloze'),
     page.locator('.prompt-sentence'),
+    // SH2-U6 extensions — the grammar + punctuation prompt texts are
+    // per-session random. Masking them keeps baselines stable across
+    // demo runs (the prompt word changes each time /demo mints a new
+    // learner). All locators are small inline-text regions — well
+    // under the 30% coverage limit even when matched across a
+    // viewport.
+    page.locator('.grammar-prompt'),
+    // SH2-U6 review nit-1 fix: the punctuation session renders its
+    // prompt as `<h2 className="section-title">` inside the
+    // `.punctuation-strip` header. The item source text lives in
+    // `[data-punctuation-session-source]` (a `<blockquote>`); both
+    // carry per-item variable content. `.punctuation-prompt` /
+    // `.punctuation-question` never existed in the DOM — removing
+    // the phantom selectors so the default-mask audit (NIT-2) shows
+    // every entry resolves to ≥1 element.
+    page.locator('[data-punctuation-session-source]'),
+    page.locator('.punctuation-strip .section-title'),
   ];
+}
+
+/**
+ * SH2-U6: resolve the active viewport for the currently running
+ * project. Playwright's `testInfo.project.use.viewport` is the static
+ * config, but scenes may change it dynamically via `page.setViewportSize`;
+ * callers should prefer the live size returned by `page.viewportSize()`
+ * and fall back to the config only when the page has not yet rendered.
+ *
+ * Provided here so every scene uses the same resolution logic — the
+ * mask-coverage invariant is brittle when scenes disagree on which
+ * viewport reference they pass.
+ */
+export function resolveViewport(page, testInfo) {
+  const live = typeof page?.viewportSize === 'function' ? page.viewportSize() : null;
+  if (live && Number(live.width) > 0 && Number(live.height) > 0) return live;
+  const configured = testInfo?.project?.use?.viewport;
+  if (configured && Number(configured.width) > 0 && Number(configured.height) > 0) {
+    return { width: Number(configured.width), height: Number(configured.height) };
+  }
+  // Last-resort fallback mirrors the mobile-390 baseline viewport so
+  // the assertion still runs against a sensible ratio.
+  return { width: 390, height: 844 };
 }
 
 /**
