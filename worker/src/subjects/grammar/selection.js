@@ -282,7 +282,12 @@ export function buildGrammarMiniPack({
   seed = 1,
   now = Date.now(),
 } = {}) {
-  const safeSize = Math.max(1, Math.floor(Number(size) || 1));
+  // Contract parity with buildGrammarPracticeQueue: size=0 returns an empty
+  // array rather than silently coercing to a single-item pack. Surfaced by
+  // the U6 seeded simulation suite (tests/grammar-learning-integrity.test.js).
+  const requestedSize = Math.floor(Number(size) || 0);
+  if (requestedSize <= 0) return [];
+  const safeSize = Math.max(1, requestedSize);
   const normalisedFocus = normaliseFocus(focusConceptId);
   const pool = focusAwarePool('satsset', normalisedFocus, safeSize);
   const nowTs = Number(now) || Date.now();
