@@ -192,6 +192,7 @@ export function GrammarConceptBankScene({ grammar, actions }) {
           type="button"
           className="btn ghost sm"
           data-action="grammar-close-concept-bank"
+          aria-label="Back to Grammar Garden dashboard"
           onClick={() => actions?.dispatch?.('grammar-close-concept-bank')}
         >
           &larr; Back to Grammar Garden

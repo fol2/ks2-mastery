@@ -74,6 +74,13 @@ export const punctuationSubjectCommandActions = Object.freeze({
       return withCommandExpectation({}, state);
     },
   },
+  // Retained for a future Parent/Admin surface (origin R34) — NOT dispatched
+  // by any child scene post-Phase-3. The Worker command still exists at
+  // `worker/src/subjects/punctuation/commands.js` (`request-context-pack`) and
+  // the AI enrichment pipeline in `worker/src/subjects/punctuation/ai-enrichment.js`
+  // continues to work. Child-scope read-models intentionally omit the resulting
+  // `contextPack` summary — see `worker/src/subjects/punctuation/read-models.js`
+  // and the belt-and-braces strip in `client-read-models.js`.
   'punctuation-context-pack': {
     mutates: false,
     command: 'request-context-pack',

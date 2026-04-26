@@ -71,6 +71,9 @@ function ParentSummaryDraft({ enrichment }) {
         <span className="chip good">Non-scored</span>
         <strong>{summary.title || 'Parent summary draft'}</strong>
       </div>
+      <p className="grammar-parent-summary-note small muted">
+        Draft for review &mdash; not a grade.
+      </p>
       <p>{summary.body}</p>
       {nextSteps.length ? (
         <ol>
@@ -78,6 +81,49 @@ function ParentSummaryDraft({ enrichment }) {
         </ol>
       ) : null}
     </aside>
+  );
+}
+
+// Phase 3 U7: confidence chips surface the Worker's internal 5-label taxonomy
+// (emerging / building / needs-repair / consolidating / secure) plus the
+// sample size. Adult copy only — child surfaces keep the friendly mapping in
+// `grammar-view-model.js`. Accepts either Worker's new `confidence: {label,
+// sampleSize}` shape or the older flat `confidenceLabel` that some fixtures
+// still seed; falls back to `status` if neither is present so the chip always
+// renders something diagnostic.
+const ADULT_CONFIDENCE_LABELS = new Set([
+  'emerging',
+  'building',
+  'needs-repair',
+  'consolidating',
+  'secure',
+]);
+
+function adultConfidenceFromRow(row) {
+  if (!row || typeof row !== 'object') return null;
+  const confidence = isPlainObject(row.confidence) ? row.confidence : null;
+  const rawLabel = (typeof confidence?.label === 'string' && confidence.label)
+    || (typeof row.confidenceLabel === 'string' && row.confidenceLabel)
+    || '';
+  const label = ADULT_CONFIDENCE_LABELS.has(rawLabel) ? rawLabel : '';
+  const rawSample = confidence?.sampleSize ?? row.attempts;
+  const sampleSize = Number.isFinite(Number(rawSample)) ? Number(rawSample) : 0;
+  if (!label && sampleSize <= 0) return null;
+  return { label: label || 'emerging', sampleSize };
+}
+
+function AdultConfidenceChip({ row }) {
+  const confidence = adultConfidenceFromRow(row);
+  if (!confidence) return null;
+  const suffix = confidence.sampleSize === 1 ? 'attempt' : 'attempts';
+  return (
+    <span
+      className={`grammar-adult-confidence ${confidence.label}`}
+      data-confidence-label={confidence.label}
+      data-sample-size={confidence.sampleSize}
+    >
+      {confidence.label} &middot; {confidence.sampleSize} {suffix}
+    </span>
   );
 }
 
@@ -105,7 +151,10 @@ export function GrammarAnalyticsScene({
       <div className="card-header">
         <div>
           <div className="eyebrow">Evidence snapshot</div>
-          <h3 className="section-title" id="grammar-analytics-title">Grammar analytics</h3>
+          <h3 className="section-title" id="grammar-analytics-title">Grown-up view</h3>
+          <p className="grammar-analytics-intro small muted">
+            Detailed Grammar progress for parents and teachers. Nothing here is a grade.
+          </p>
         </div>
         <div className="grammar-analytics-actions">
           <span className="chip">Stage 1</span>
@@ -182,8 +231,13 @@ export function GrammarAnalyticsScene({
               <strong>{group.domain}</strong>
               <div>
                 {group.concepts.map((concept) => (
-                  <span className={`grammar-mini-concept ${concept.status}`} key={concept.id}>
-                    {concept.name}
+                  <span
+                    className={`grammar-mini-concept ${concept.status}`}
+                    key={concept.id}
+                    data-concept-id={concept.id}
+                  >
+                    <span className="grammar-mini-concept-name">{concept.name}</span>
+                    <AdultConfidenceChip row={concept} />
                   </span>
                 ))}
               </div>
@@ -239,9 +293,10 @@ export function GrammarAnalyticsScene({
           {questionTypeSummary.length ? (
             <ol>
               {questionTypeSummary.map((entry) => (
-                <li key={entry.id}>
+                <li key={entry.id} data-question-type-id={entry.id}>
                   <strong>{entry.label}</strong>
-                  <span>{entry.correct || 0}/{entry.attempts || 0} correct · {entry.status || 'learning'}</span>
+                  <span>{entry.correct || 0}/{entry.attempts || 0} correct &middot; {entry.status || 'learning'}</span>
+                  <AdultConfidenceChip row={entry} />
                 </li>
               ))}
             </ol>

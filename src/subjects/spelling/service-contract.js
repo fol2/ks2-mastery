@@ -8,6 +8,53 @@ export const GUARDIAN_MAX_REVIEW_LEVEL = GUARDIAN_INTERVALS.length - 1;
 export const GUARDIAN_MIN_ROUND_LENGTH = 5;
 export const GUARDIAN_MAX_ROUND_LENGTH = 8;
 export const GUARDIAN_DEFAULT_ROUND_LENGTH = 8;
+// Canonical secure-stage threshold shared by the service layer, the
+// post-mastery read-model, and the Word Bank view-model. Prior to U2 this
+// constant was duplicated as `GUARDIAN_SECURE_STAGE` in shared/spelling/service.js
+// and `SECURE_STAGE` in src/subjects/spelling/read-model.js — consolidating
+// here is a single source of truth so `isGuardianEligibleSlug` (below) and
+// the read-model post-mastery counts cannot drift apart.
+export const GUARDIAN_SECURE_STAGE = 4;
+
+/**
+ * Orphan sanitiser predicate (U2). A slug is a valid Guardian candidate iff:
+ *   1. The current content bundle publishes it (wordBySlug has a record).
+ *   2. The learner's progress stage meets `GUARDIAN_SECURE_STAGE` (Mega).
+ *   3. The published record is in the `core` pool (extra-pool words never
+ *      graduate — `allWordsMega` is a core-pool concept).
+ *
+ * The check is read-side only: orphan records stay in persisted storage so a
+ * content rollback that re-introduces the slug finds its record intact.
+ * The three filters above collapse an orphan entry out of the selector,
+ * the post-mastery counts, and the Word Bank Guardian chips — keeping
+ * selector, read-model, and view-model aligned on a single rule.
+ *
+ * Lives in `service-contract.js` (not `shared/spelling/service.js`) so the
+ * Word Bank view-model can import the predicate without dragging the full
+ * spelling service module (and its statutory-word-data imports) into the
+ * client bundle. See `scripts/audit-client-bundle.mjs` for the bundle-shape
+ * contract this boundary protects.
+ *
+ * Tolerant of null/garbage inputs: returns false rather than throwing so
+ * a partially-corrupt persisted blob cannot crash the read path.
+ *
+ * @param {string} slug           Candidate slug.
+ * @param {object|null} progressMap  slug -> legacy progress record.
+ * @param {object|null} wordBySlug   slug -> word metadata.
+ * @returns {boolean}
+ */
+export function isGuardianEligibleSlug(slug, progressMap, wordBySlug) {
+  if (!slug || typeof slug !== 'string') return false;
+  if (!wordBySlug || typeof wordBySlug !== 'object') return false;
+  const word = wordBySlug[slug];
+  if (!word || typeof word !== 'object') return false;
+  if (word.spellingPool === 'extra') return false;
+  if (!progressMap || typeof progressMap !== 'object') return false;
+  const record = progressMap[slug];
+  const stage = Number(record?.stage);
+  if (!Number.isFinite(stage) || stage < GUARDIAN_SECURE_STAGE) return false;
+  return true;
+}
 export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'extra']);
 export const LEGACY_SPELLING_YEAR_FILTER_ALIASES = Object.freeze({
   all: 'core',

@@ -222,6 +222,32 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
   const wordBankMeta = analytics.wordBank || {};
   const allWords = groups.flatMap((group) => Array.isArray(group.words) ? group.words : []);
   const categoryWords = allWords.filter((word) => wordBankYearFilterMatches(activeYearFilter, word));
+  // U2 orphan-sanitiser context: wordBankFilterMatchesStatus uses these when
+  // checking `guardianDue` / `wobbling` so a row whose slug no longer
+  // publishes at core-pool + stage >= Mega cannot surface under those chips.
+  // The Word Bank's rows are already filtered to runtime-known words, so the
+  // guard is defensive — but it also enforces R10 (wobbling + stage < Mega
+  // never matches). Only built when the guardian chips are even visible.
+  //
+  // Dep note: we key the memo on `groups` (the upstream prop that backs
+  // `allWords`), NOT on `allWords` directly. `allWords` is rebuilt via
+  // `groups.flatMap(...)` on every render, so listing it in the dep array
+  // would bust the memo every render. Keying on `groups` keeps the memo
+  // stable across identical-prop renders while still invalidating whenever
+  // the upstream groups change.
+  const { wordBySlug: orphanWordBySlug, progressMap: orphanProgressMap } = React.useMemo(() => {
+    if (!showGuardianFilters) return { wordBySlug: null, progressMap: null };
+    const wordBySlug = {};
+    const progressMap = {};
+    for (const word of allWords) {
+      if (!word || !word.slug) continue;
+      wordBySlug[word.slug] = word;
+      const stage = Math.max(0, Number(word.progress?.stage) || 0);
+      progressMap[word.slug] = { stage };
+    }
+    return { wordBySlug, progressMap };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see dep note above.
+  }, [showGuardianFilters, groups]);
   const filterOptions = { guardianMap, todayDay };
   const visibleGroups = groups
     .filter((group) => (activeYearFilter === 'all' ? true : group.key === activeYearFilter))
@@ -231,6 +257,9 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
         .filter((word) => wordBankFilterMatchesStatus(activeFilter, word.status, {
           guardian: guardianMap[word.slug] || null,
           todayDay,
+          slug: word.slug,
+          progressMap: orphanProgressMap,
+          wordBySlug: orphanWordBySlug,
         }))
         .filter((word) => wordMatchesSearch(word, query)),
     }))
@@ -238,7 +267,12 @@ function WordBankCard({ learner, analytics, appState, actions, postMastery = nul
   const visibleWords = visibleGroups.flatMap((entry) => entry.words);
   const legacyStats = wordBankAggregateStats(categoryWords);
   const guardianStats = showGuardianFilters
-    ? wordBankAggregateStats(categoryWords, { guardianMap, todayDay })
+    ? wordBankAggregateStats(categoryWords, {
+        guardianMap,
+        todayDay,
+        progressMap: orphanProgressMap,
+        wordBySlug: orphanWordBySlug,
+      })
     : null;
   const counts = {
     all: categoryWords.length,
@@ -360,9 +394,29 @@ function WordBankAggregates({ analytics, postMastery = null }) {
   const todayDay = Number.isFinite(Number(postMastery?.todayDay))
     ? Math.floor(Number(postMastery.todayDay))
     : 0;
+  // U2 orphan-sanitiser context mirrors the Word Bank chip filters so the
+  // summary aggregates track the visible-row counts exactly. Dep is
+  // `groups` (not `allWords`) because `allWords` is rebuilt via
+  // `groups.flatMap(...)` every render — see the WordBankCard memo above
+  // for the same pattern + rationale.
+  const { wordBySlug: orphanWordBySlug, progressMap: orphanProgressMap } = React.useMemo(() => {
+    if (!showGuardianCards) return { wordBySlug: null, progressMap: null };
+    const wordBySlug = {};
+    const progressMap = {};
+    for (const word of allWords) {
+      if (!word || !word.slug) continue;
+      wordBySlug[word.slug] = word;
+      const stage = Math.max(0, Number(word.progress?.stage) || 0);
+      progressMap[word.slug] = { stage };
+    }
+    return { wordBySlug, progressMap };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on `groups` to avoid reference-churn on `allWords`.
+  }, [showGuardianCards, groups]);
   // When showGuardianCards is false we explicitly pass the zero-arg shape
   // so the aggregate keeps its byte-identical six-field legacy output.
-  const statsOptions = showGuardianCards ? { guardianMap, todayDay } : undefined;
+  const statsOptions = showGuardianCards
+    ? { guardianMap, todayDay, progressMap: orphanProgressMap, wordBySlug: orphanWordBySlug }
+    : undefined;
   const cardOptions = showGuardianCards ? { showGuardian: true } : undefined;
   const core = wordBankAggregateStats(allWords.filter((word) => word.spellingPool !== 'extra'), statsOptions);
   const y34 = wordBankAggregateStats(allWords.filter((word) => word.year === '3-4'), statsOptions);

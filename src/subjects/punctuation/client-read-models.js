@@ -15,12 +15,25 @@ function currentUi(getState, learnerId = null) {
   };
 }
 
+// Phase 3 U8 (origin R34): child learner read-model never carries `contextPack`.
+// The Worker `buildPunctuationReadModel` already drops it at assembly time; this
+// belt-and-braces strip catches any future regression (e.g. a synthetic payload
+// loaded from a stale cache or a scope-parameter change) before it reaches the
+// React surface. See docs/plans/2026-04-25-005-*.md U8.
+function stripForbiddenChildScopeFields(state) {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return state;
+  if (!('contextPack' in state)) return state;
+  const { contextPack: _ignored, ...rest } = state;
+  return rest;
+}
+
 export function createPunctuationReadModelService({ getState } = {}) {
   return {
     initState(rawState) {
-      return rawState && typeof rawState === 'object' && !Array.isArray(rawState)
+      const base = rawState && typeof rawState === 'object' && !Array.isArray(rawState)
         ? { ...createInitialPunctuationState(), ...clone(rawState) }
         : createInitialPunctuationState();
+      return stripForbiddenChildScopeFields(base);
     },
     getPrefs(learnerId) {
       return normalisePunctuationPrefs(currentUi(getState, learnerId).ui.prefs);

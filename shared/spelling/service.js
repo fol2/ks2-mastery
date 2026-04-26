@@ -21,9 +21,11 @@ import {
   GUARDIAN_MAX_REVIEW_LEVEL,
   GUARDIAN_MAX_ROUND_LENGTH,
   GUARDIAN_MIN_ROUND_LENGTH,
+  GUARDIAN_SECURE_STAGE,
   cloneSerialisable,
   createInitialSpellingState,
   defaultLearningStatus,
+  isGuardianEligibleSlug,
   normaliseBoolean,
   normaliseFeedback,
   normaliseGuardianMap,
@@ -44,10 +46,16 @@ import {
   SPELLING_SESSION_TYPES,
 } from '../../src/subjects/spelling/service-contract.js';
 
+// Re-export `isGuardianEligibleSlug` at the service layer so callers that
+// already import other helpers from `shared/spelling/service.js` do not
+// need to learn a new module boundary. The canonical definition lives in
+// `service-contract.js` to keep the Word Bank view-model's client bundle
+// free of the full word dataset (see audit-client-bundle.mjs).
+export { isGuardianEligibleSlug };
+
 const PREF_KEY = 'ks2-platform-v2.spelling-prefs';
 const GUARDIAN_PROGRESS_KEY_PREFIX = 'ks2-spell-guardian-';
 const PROGRESS_KEY_PREFIX = 'ks2-spell-progress-';
-const GUARDIAN_SECURE_STAGE = 4;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function createNoopStorage() {
@@ -181,6 +189,11 @@ function deterministicShuffle(items, random) {
  * learner's guardian map + progress map, prioritising wobbling-due → due →
  * lazy-create sample → top-up of non-due guardians.
  *
+ * Every bucket runs its candidates through `isGuardianEligibleSlug` so an
+ * orphan guardian record (content hot-swap removed the slug from the current
+ * bundle, or the learner's stage rolled back below Mega, or the slug was
+ * demoted from core to extra) never escapes into the session round.
+ *
  * @param {object} params
  * @param {object} params.guardianMap  slug -> normalised guardian record
  * @param {object} params.progressMap  slug -> legacy progress record
@@ -205,11 +218,15 @@ export function selectGuardianWords({
     ...record,
   }));
 
+  // U2: orphan sanitiser — applied to every due bucket so a guardianMap
+  // entry that the current content bundle no longer publishes never escapes.
   const wobblingDue = guardianEntries
     .filter((entry) => entry.wobbling === true && entry.nextDueDay <= safeToday)
+    .filter((entry) => isGuardianEligibleSlug(entry.slug, progressMap, wordBySlug))
     .sort(compareByDueDayThenSlug);
   const nonWobblingDue = guardianEntries
     .filter((entry) => entry.wobbling !== true && entry.nextDueDay <= safeToday)
+    .filter((entry) => isGuardianEligibleSlug(entry.slug, progressMap, wordBySlug))
     .sort(compareByDueDayThenSlug);
 
   const selected = [];
@@ -227,16 +244,14 @@ export function selectGuardianWords({
   if (selected.length < target) nonWobblingDue.forEach((entry) => push(entry.slug));
 
   // Lazy-create candidates: mega words (stage >= 4) that are NOT yet in the
-  // guardian map at all. Filter by known slugs in wordBySlug so we never return
-  // a slug the caller can't resolve.
+  // guardian map at all. `isGuardianEligibleSlug` generalises the prior
+  // unknown-slug guard by also rejecting extra-pool words — a content
+  // demotion from core to extra must not silently graduate into Guardian.
   if (selected.length < target) {
     const lazyCandidates = [];
-    for (const [slug, progress] of Object.entries(progressMap || {})) {
-      if (!slug || typeof slug !== 'string') continue;
-      if (!wordBySlug || !wordBySlug[slug]) continue;
+    for (const [slug] of Object.entries(progressMap || {})) {
       if (Object.prototype.hasOwnProperty.call(guardianMap || {}, slug)) continue;
-      const stage = Number(progress?.stage);
-      if (!(Number.isFinite(stage) && stage >= GUARDIAN_SECURE_STAGE)) continue;
+      if (!isGuardianEligibleSlug(slug, progressMap, wordBySlug)) continue;
       lazyCandidates.push(slug);
     }
     // Alphabetical baseline makes the shuffle deterministic under a seeded rng.
@@ -255,7 +270,8 @@ export function selectGuardianWords({
   // visible when scheduling placed it slightly in the future.
   if (selected.length < GUARDIAN_MIN_ROUND_LENGTH) {
     const nonDue = guardianEntries
-      .filter((entry) => entry.nextDueDay > safeToday && !selectedSet.has(entry.slug));
+      .filter((entry) => entry.nextDueDay > safeToday && !selectedSet.has(entry.slug))
+      .filter((entry) => isGuardianEligibleSlug(entry.slug, progressMap, wordBySlug));
     const wobblingNonDue = nonDue
       .filter((entry) => entry.wobbling === true)
       .sort(compareByLastReviewedThenSlug);
@@ -681,6 +697,43 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     saveJson(resolvedStorage, guardianMapKey(learnerId), map || {});
   }
 
+  // U7 merge-save: per-slug guardian writer.
+  //
+  // Narrows the read-to-write window WITHIN A SINGLE SERVICE INSTANCE that
+  // shares one `repositories` object. Instead of "load the whole map into
+  // memory, mutate in-place, save the whole map" (which loses any write that
+  // landed on a different slug inside the same service between the load and
+  // the save), this helper reloads the latest persisted map, merges in a
+  // single slug's record, then saves.
+  //
+  // Stays synchronous on purpose: no `navigator.locks`, no `await`, no Promise.
+  //
+  // This does NOT provide cross-tab protection. In production, each tab calls
+  // `createLocalPlatformRepositories` independently, and each instance holds
+  // its OWN per-tab `collections` cache keyed on subject-state (see
+  // `src/platform/core/repositories/local.js`). There is no `storage` event
+  // listener invalidating that cache, so reads inside tab A never see writes
+  // performed by tab B until tab A restarts. Closing that cross-tab race is
+  // deferred to the `post-mega-spelling-storage-cas` plan (navigator.locks +
+  // BroadcastChannel + writeVersion CAS + lockout banner).
+  //
+  // Same-slug concurrent writes inside one service instance still
+  // last-writer-wins.
+  //
+  // `saveGuardianMap` stays on the API because `resetLearner` (U6) zeros the
+  // whole map in one go; that single-write is the only caller that should NOT
+  // go through the merge-save path.
+  function saveGuardianRecord(learnerId, slug, record) {
+    const safeSlug = typeof slug === 'string' ? slug : '';
+    if (!safeSlug) return;
+    // Reload from storage so any write performed earlier on this same service
+    // instance (possibly via a DIFFERENT slug) is preserved through the merge.
+    const latest = loadGuardianMap(learnerId);
+    // Normalise on write so malformed records don't leak past one load cycle.
+    latest[safeSlug] = normaliseGuardianRecord(record, currentTodayDay());
+    saveGuardianMap(learnerId, latest);
+  }
+
   function loadProgressFromStorage(learnerId) {
     const raw = loadJson(resolvedStorage, progressMapKey(learnerId), {});
     return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
@@ -743,11 +796,16 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const today = currentTodayDay();
     const allWordsMega = isAllWordsMega(progressStore);
 
+    // U2: orphan sanitiser — count only entries whose slug is still a valid
+    // Guardian candidate (known in runtime, stage >= Mega, pool !== extra).
+    // Persisted orphan records stay intact; they simply drop out of counts
+    // and the earliest-due calculation.
     let guardianDueCount = 0;
     let wobblingCount = 0;
     let nextGuardianDueDay = null;
-    for (const record of Object.values(guardianMap)) {
+    for (const [slug, record] of Object.entries(guardianMap)) {
       if (!record) continue;
+      if (!isGuardianEligibleSlug(slug, progressStore, runtimeWordBySlug)) continue;
       if (record.nextDueDay <= today) guardianDueCount += 1;
       if (record.wobbling === true) wobblingCount += 1;
       if (nextGuardianDueDay === null || record.nextDueDay < nextGuardianDueDay) {
@@ -1200,8 +1258,32 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     saveProgressToStorage(learnerId, progressMap);
 
     // Advance the guardian record. Lazy-create if this is the first Guardian
-    // touch for the slug. ensureGuardianRecord mutates the map, so load a
-    // mutable copy first, advance, then save the whole thing.
+    // touch for the slug. We load a mutable copy for the read-side
+    // (`ensureGuardianRecord` plus the wobbling inspection), then commit via
+    // the per-slug `saveGuardianRecord` helper.
+    //
+    // U7 scope: this narrows the read-to-write window within a SINGLE service
+    // instance. Two tabs each hold their own per-tab `repositories` cache, so
+    // `saveGuardianRecord`'s reload only sees writes made through the same
+    // cache — not writes from another tab. Closing the cross-tab race
+    // requires the deferred `post-mega-spelling-storage-cas` plan
+    // (navigator.locks + BroadcastChannel + writeVersion CAS).
+    //
+    // Composition note (U7-02, accepted limitation): `beforeRecord` is
+    // captured here and used below to compute `wasWobbling` for the outcome
+    // event. If another service instance concurrently writes the same slug
+    // between this load and `saveGuardianRecord`'s internal reload, the event
+    // still reports the outcome of THIS submission (renewed / recovered /
+    // wobbled) against the state we observed — which matches user
+    // expectations for the tab that actually produced the answer. The map on
+    // storage ends last-writer-wins per slug. Full same-slug CAS is deferred
+    // with the cross-tab work.
+    //
+    // Note: when U4's "I don't know" branch lands in `skipWord`, it must also
+    // use `saveGuardianRecord` instead of the whole-map writer, otherwise the
+    // "I don't know" wobble and a concurrent correct/wrong submit on the same
+    // service instance can stomp each other. That wiring is owned by U4
+    // itself; this comment is left here so the follow-up is obvious.
     const todayDay = currentTodayDay();
     const guardianMap = loadGuardianMap(learnerId);
     const beforeRecord = ensureGuardianRecord(guardianMap, currentSlug, todayDay);
@@ -1209,8 +1291,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const updatedRecord = correct
       ? advanceGuardianOnCorrect(beforeRecord, todayDay)
       : advanceGuardianOnWrong(beforeRecord, todayDay);
-    guardianMap[currentSlug] = updatedRecord;
-    saveGuardianMap(learnerId, guardianMap);
+    saveGuardianRecord(learnerId, currentSlug, updatedRecord);
 
     // Record the per-word outcome so the finalisation step can emit the
     // mission-completed event with accurate aggregate counts.
@@ -1693,5 +1774,10 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     endSession,
     stageLabel,
     resetLearner,
+    // U7: synchronous per-slug guardian-map writer. Exposed on the service API
+    // so (a) tests can assert the merge-save contract, and (b) future guardian
+    // write sites (e.g. U4's "I don't know" branch) can call it directly
+    // instead of going through a whole-map load/mutate/save.
+    saveGuardianRecord,
   };
 }

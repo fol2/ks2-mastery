@@ -22,7 +22,11 @@ import {
   applyAdminHubDashboardKpisPatch,
   applyAdminHubErrorLogSummaryPatch,
   applyAdminHubOpsActivityPatch,
+  applyAdminHubPanelRefreshError,
 } from './platform/hubs/admin-panel-patches.js';
+import { routeAdminRefreshError } from './platform/hubs/admin-refresh-error-text.js';
+import { createAccountOpsMetadataDirtyRegistry } from './platform/hubs/admin-metadata-dirty-registry.js';
+import { runAdminOpsRefreshCascade } from './platform/hubs/admin-refresh-cascade.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -754,44 +758,200 @@ function applyAdminHubPanelPatch(patchFn) {
   });
 }
 
+// P1.5 Phase A (U1): each narrow refresh carries its own sequence token so a
+// slow-in-flight request whose result arrives after a newer one does not
+// overwrite the fresher panel state. We only apply results whose token is
+// still the latest scheduled one for that panel. The tokens live at module
+// scope because the helpers are module-scope (not closures), and a Map keeps
+// the four panels independent.
+const adminOpsRefreshTokens = new Map();
+let adminOpsRefreshTokenCounter = 0;
+function beginAdminOpsRefreshToken(panelKey) {
+  adminOpsRefreshTokenCounter += 1;
+  const token = adminOpsRefreshTokenCounter;
+  adminOpsRefreshTokens.set(panelKey, token);
+  return token;
+}
+function isAdminOpsRefreshTokenLatest(panelKey, token) {
+  return adminOpsRefreshTokens.get(panelKey) === token;
+}
+
+// P1.5 Phase A (U1): derive the refreshError envelope the `<PanelHeader>`
+// consumes from a thrown hub-api error (see platform/hubs/api.js). `code` is
+// taken verbatim from the Worker payload when present; `network` is the
+// fallback for fetch rejections / malformed envelopes.
+function buildRefreshErrorEnvelope(error) {
+  const code = typeof error?.code === 'string' && error.code ? error.code : 'network';
+  const message = typeof error?.message === 'string' ? error.message : '';
+  const correlationId = error?.payload?.correlationId || error?.correlationId || null;
+  return {
+    code,
+    message,
+    correlationId,
+    at: Date.now(),
+  };
+}
+
+// P1.5 Phase A (U1): when the router hands off to a global handler (session
+// invalidated, account suspended), the panel-level banner is skipped — we
+// emit a structured notice the shell can observe via adultSurfaceState.notice
+// for now. Later phases (U14 for session_invalidated, U13 for account
+// _suspended) will replace this with a dedicated shell transition.
+//
+// M4 reviewer fix: `setAdultSurfaceNotice` routes through the
+// `patchAdultSurfaceState` helper that owns the shared adult-surface slice
+// and triggers a re-render via `store.patch`. It is NOT a raw mutation of
+// `adultSurfaceState.notice` — the patch helper replaces the entire slice
+// object, so parallel-source-of-truth concerns do not apply. The remaining
+// follow-up is to replace the string-typed notice payload with a structured
+// `{ kind, handler, correlationId? }` record once the app shell gains a
+// dedicated global-handler surface. Tracked in the plan's Open Questions
+// under "replace shell-notice side-channel with dispatched action" and
+// shipped with Phase D U14 (session_invalidated) / U13 (account_suspended).
+//
+// TODO(Phase D U14): replace the string notice side-channel with a
+// dispatched action so the reducer is the single source of truth for
+// global-handler transitions. See docs/plans/2026-04-25-005-refactor-admin-
+// ops-console-p1-5-hardening-plan.md § "Open Questions — shell global
+// handler plumbing".
+function maybeRouteToGlobalHandler(envelope) {
+  const routed = routeAdminRefreshError(envelope.code, {
+    correlationId: envelope.correlationId,
+  });
+  if (routed.globalHandler) {
+    setAdultSurfaceNotice(
+      routed.globalHandler === 'global.account-suspended'
+        ? 'This account is suspended. Please contact ops.'
+        : 'Your session has expired. Please sign in again.',
+    );
+    return true;
+  }
+  return false;
+}
+
+function applyAdminOpsRefreshError(panelKey, error) {
+  const envelope = buildRefreshErrorEnvelope(error);
+  if (maybeRouteToGlobalHandler(envelope)) return;
+  applyAdminHubPanelPatch((adminHub) => applyAdminHubPanelRefreshError(adminHub, panelKey, envelope));
+}
+
 async function refreshAdminOpsKpi() {
-  if (!hubApi) return;
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('dashboardKpis');
   try {
     const payload = await hubApi.readAdminOpsKpi();
+    if (!isAdminOpsRefreshTokenLatest('dashboardKpis', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubDashboardKpisPatch(adminHub, payload));
+    return { ok: true };
   } catch (error) {
-    console.error('admin-ops-kpi-refresh failed:', error?.message || error);
+    if (!isAdminOpsRefreshTokenLatest('dashboardKpis', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('dashboardKpis', error);
+    return { ok: false, reason: 'error', error };
   }
 }
 
 async function refreshAdminOpsActivity({ limit = 50 } = {}) {
-  if (!hubApi) return;
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('opsActivityStream');
   try {
     const payload = await hubApi.readAdminOpsActivity({ limit });
+    if (!isAdminOpsRefreshTokenLatest('opsActivityStream', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubOpsActivityPatch(adminHub, payload));
+    return { ok: true };
   } catch (error) {
-    console.error('admin-ops-activity-refresh failed:', error?.message || error);
+    if (!isAdminOpsRefreshTokenLatest('opsActivityStream', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('opsActivityStream', error);
+    return { ok: false, reason: 'error', error };
   }
 }
 
 async function refreshAdminOpsErrorEvents({ status = null, limit = 50 } = {}) {
-  if (!hubApi) return;
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('errorLogSummary');
   try {
     const payload = await hubApi.readAdminOpsErrorEvents({ status, limit });
+    if (!isAdminOpsRefreshTokenLatest('errorLogSummary', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubErrorLogSummaryPatch(adminHub, payload));
+    return { ok: true };
   } catch (error) {
-    console.error('admin-ops-error-events-refresh failed:', error?.message || error);
+    if (!isAdminOpsRefreshTokenLatest('errorLogSummary', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('errorLogSummary', error);
+    return { ok: false, reason: 'error', error };
   }
 }
 
+// P1.5 Phase A (U2): dirty-row registry for the account-ops-metadata panel.
+// Rows register themselves via `actions.registerAccountOpsMetadataRowDirty`
+// whenever their local dirtyRef flips, which is wired through the top-level
+// `actions` object built in buildSurfaceActions(). The registry reports
+// `anyDirty()` to the narrow-refresh helper and records suppressed refresh
+// attempts so the first dirty→clean transition flushes a single follow-up
+// refresh (closes the ghost-change UX where a dirty edit silently diverges
+// from server state while all refresh attempts are dropped).
+const accountOpsMetadataDirtyRegistry = createAccountOpsMetadataDirtyRegistry({
+  onFlushRequested: () => {
+    // We only need a flush on the dirty → clean transition, and only when
+    // the registry's counter indicates at least one suppressed refresh.
+    // The hub API may not exist yet on first boot, so the helper below
+    // short-circuits with its own guard in that case.
+    //
+    // I3 reviewer fix: the unmount-clean path inside
+    // `AccountOpsMetadataRow` calls `setDirty(accountId, false)` when a
+    // dirty row unmounts. If the user had navigated off the admin hub
+    // before the last dirty row flipped clean, the suppression counter
+    // would trigger a flush against a now-off-route state and the live
+    // GET would land against a surface that no longer owns the patch.
+    // Gate the refresh on the current route being admin-hub. The refresh
+    // runs lazily anyway — the next admin-hub mount re-reads through
+    // `loadAdminHub` — so skipping here is safe.
+    const appState = store?.getState?.();
+    if (appState?.route?.screen !== 'admin-hub') return;
+    refreshAdminOpsAccountsMetadata();
+  },
+});
+
+function registerAccountOpsMetadataRowDirty(accountId, isDirty) {
+  accountOpsMetadataDirtyRegistry.setDirty(accountId, Boolean(isDirty));
+}
+
 async function refreshAdminOpsAccountsMetadata() {
-  if (!hubApi) return;
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  // P1.5 Phase A (U2): if any row in the metadata panel is mid-edit we must
+  // not let a refresh clobber the local draft — instead we record that a
+  // refresh would have happened, and the dirty→clean transition in the
+  // registry flushes a single follow-up refresh.
+  if (accountOpsMetadataDirtyRegistry.anyDirty()) {
+    accountOpsMetadataDirtyRegistry.recordSuppressedRefresh();
+    return { ok: false, reason: 'suppressed-dirty' };
+  }
+  const token = beginAdminOpsRefreshToken('accountOpsMetadata');
   try {
     const payload = await hubApi.readAdminOpsAccountsMetadata();
+    if (!isAdminOpsRefreshTokenLatest('accountOpsMetadata', token)) return { ok: false, reason: 'superseded' };
     applyAdminHubPanelPatch((adminHub) => applyAdminHubAccountOpsMetadataPatch(adminHub, payload));
+    return { ok: true };
   } catch (error) {
-    console.error('account-ops-metadata-refresh failed:', error?.message || error);
+    if (!isAdminOpsRefreshTokenLatest('accountOpsMetadata', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('accountOpsMetadata', error);
+    return { ok: false, reason: 'error', error };
   }
+}
+
+// P1.5 Phase A (U2): cascade a successful admin-ops mutation into narrow
+// refreshes of its dependent panels via the shared
+// `runAdminOpsRefreshCascade` helper. Sequential + fail-fast — if an
+// earlier step fails the later steps are suppressed so the refresh-error
+// banner from U1 correlates the user-facing failure with the first broken
+// step. The metadata panel itself is only refreshed when no row is dirty;
+// when it is dirty, the suppression counter in
+// refreshAdminOpsAccountsMetadata tracks the skipped refresh and the
+// dirty→clean transition flushes one follow-up refresh.
+function cascadeAdminOpsRefreshAfterMutation({ includeErrorEvents = false } = {}) {
+  return runAdminOpsRefreshCascade({
+    refreshKpi: refreshAdminOpsKpi,
+    refreshActivity: refreshAdminOpsActivity,
+    refreshErrorEvents: refreshAdminOpsErrorEvents,
+  }, { includeErrorEvents });
 }
 
 function rebuildSpellingService() {
@@ -1585,7 +1745,19 @@ async function updateAccountOpsMetadata({ accountId, patch }) {
           updatedByAccountId: entry.updatedByAccountId ?? row.updatedByAccountId,
         };
       }, 'Account ops metadata saved.');
+      // P1.5 Phase A (U2): clear the dirty flag for this row now that the
+      // server state has been accepted. Any external refresh that arrives
+      // after this point can safely re-hydrate the row; the flush-on-clean
+      // rule in registerAccountOpsMetadataRowDirty fires one follow-up
+      // metadata-panel refresh when the last dirty row becomes clean.
+      registerAccountOpsMetadataRowDirty(accountId, false);
     }
+    // P1.5 Phase A (U2): cascade dependent-panel refresh. KPI first, then
+    // activity (fail-fast — see cascadeAdminOpsRefreshAfterMutation). The
+    // metadata panel itself is already up to date from the optimistic
+    // patch above, and the dirty registry decides whether to skip the
+    // metadata-panel auto-refresh.
+    cascadeAdminOpsRefreshAfterMutation();
   } catch (error) {
     // Roll back to the snapshot.
     if (snapshot) {
@@ -1654,6 +1826,11 @@ async function updateOpsErrorEventStatus({ eventId, status }) {
         };
       }, payload?.noop ? '' : 'Error event status updated.');
     }
+    // P1.5 Phase A (U2): cascade dependent-panel refresh on successful
+    // status transition — error-events totals bucket first (so the chips
+    // update), then KPI, then activity. The sequential chain is fail-fast
+    // per cascadeAdminOpsRefreshAfterMutation's contract.
+    cascadeAdminOpsRefreshAfterMutation({ includeErrorEvents: true });
   } catch (error) {
     if (snapshot) {
       patchAdminHubErrorEventEntry((row) => (
@@ -1827,6 +2004,12 @@ function buildSurfaceActions() {
     openAdminHub: () => dispatchAction('open-admin-hub'),
     logout: () => dispatchAction('platform-logout'),
     retryPersistence: () => dispatchAction('persistence-retry'),
+    // P1.5 Phase A (U2): expose dirty-row registration to the admin surface
+    // so the AccountOpsMetadataRow can flip its dirtyRef through a stable
+    // actions handle. The registry is module-scope (see
+    // registerAccountOpsMetadataRowDirty above) so callers don't need to
+    // thread extra state through the component tree.
+    registerAccountOpsMetadataRowDirty,
   };
 }
 

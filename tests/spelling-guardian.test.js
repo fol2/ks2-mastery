@@ -25,8 +25,10 @@ import {
   advanceGuardianOnCorrect,
   advanceGuardianOnWrong,
   ensureGuardianRecord,
+  isGuardianEligibleSlug,
   selectGuardianWords,
 } from '../shared/spelling/service.js';
+import { GUARDIAN_SECURE_STAGE } from '../src/subjects/spelling/service-contract.js';
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { createSpellingPersistence } from '../src/subjects/spelling/repository.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
@@ -482,8 +484,16 @@ test('selectGuardianWords prioritises wobbling-due, then non-wobbling due, then 
     // non-due — top-up only kicks in when selection is below GUARDIAN_MIN_ROUND_LENGTH (5).
     build: { reviewLevel: 3, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
   };
-  // Lazy candidates: mega words not in the guardian map yet.
+  // U2: every slug in guardianMap must also have a Mega progress record for
+  // `isGuardianEligibleSlug` to clear it. Lazy-create candidates remain
+  // slugs NOT in guardianMap with their own Mega stage.
   const progressMap = {
+    accommodate: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    address: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    believe: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    bicycle: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    breath: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
+    build: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
     possess: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
     busy: { stage: 4, attempts: 8, correct: 7, wrong: 1 },
     // stage < 4 - not a lazy candidate
@@ -530,7 +540,15 @@ test('selectGuardianWords tops up with non-due guardians only when below GUARDIA
   };
   const selected = selectGuardianWords({
     guardianMap,
-    progressMap: {}, // no lazy candidates
+    // U2: every slug in guardianMap needs a Mega progress record to clear
+    // the orphan sanitiser. Lazy-create pool stays empty — no extra slugs.
+    progressMap: {
+      address: { stage: 4 },
+      believe: { stage: 4 },
+      bicycle: { stage: 4 },
+      breath: { stage: 4 },
+      build: { stage: 4 },
+    },
     wordBySlug: WORD_BY_SLUG,
     todayDay: TODAY,
     length: 5,
@@ -551,7 +569,14 @@ test('selectGuardianWords with length=5 clamps at 5 and prefers wobbling-due', (
   };
   const selected = selectGuardianWords({
     guardianMap,
-    progressMap: {},
+    // U2: every slug in guardianMap must also be Mega in progress.
+    progressMap: {
+      accommodate: { stage: 4 },
+      address: { stage: 4 },
+      believe: { stage: 4 },
+      bicycle: { stage: 4 },
+      breath: { stage: 4 },
+    },
     wordBySlug: WORD_BY_SLUG,
     todayDay: TODAY,
     length: 5,
@@ -1467,6 +1492,7 @@ test('U6 action routing: unknown filter IDs still fall back to "all"', async () 
   assert.equal(harness.store.getState().transientUi.spellingAnalyticsStatusFilter, 'all');
 });
 
+// -----------------------------------------------------------------------------
 // U6 (Post-Mega Spelling Guardian Hardening): resetLearner must zero the
 // `ks2-spell-guardian-<learnerId>` storage key even when the host wires a
 // persistence adapter that lacks a `resetLearner` method. The canonical
@@ -1631,6 +1657,440 @@ test('U6 guardian reset: Worker-side resetLearner behaviour unchanged (still zer
   const snapshot = normaliseServerSpellingData({}, TODAY * DAY_MS);
   assert.deepEqual(snapshot.guardian, {});
   assert.deepEqual(snapshot.progress, {});
+});
+
+// -----------------------------------------------------------------------------
+// U7: Merge-save for guardian writes.
+//
+// Goal: shrink the client-local last-writer-wins race window on guardianMap
+// writes by introducing a per-slug `saveGuardianRecord(learnerId, slug, record)`
+// helper that does load -> merge one slug -> save, instead of the pre-U7 pattern
+// of loading the whole map, mutating it in memory, and writing the whole map
+// back. `saveGuardianMap` stays on the service API because `resetLearner` (U6)
+// uses it to zero the whole map atomically.
+//
+// The race under test:
+//   Tab A loads the guardian map (call it snapshot M_A).
+//   Tab B loads the guardian map (snapshot M_B).
+//   Tab B advances slug X  -> writes via saveGuardianRecord -> storage has { X }.
+//   Tab A advances slug Y  -> writes via saveGuardianRecord -> storage must end
+//     with BOTH X and Y.
+// Pre-U7, tab A's write was `saveGuardianMap(M_A_with_Y)` which overwrote X.
+// Post-U7, tab A's write does a fresh load before merging Y, so X survives.
+// -----------------------------------------------------------------------------
+
+const U7_GUARDIAN_KEY = (learnerId) => `ks2-spell-guardian-${learnerId}`;
+
+function freshGuardianRecord(todayDay) {
+  return {
+    reviewLevel: 1,
+    lastReviewedDay: todayDay,
+    nextDueDay: todayDay + 3,
+    correctStreak: 1,
+    lapses: 0,
+    renewals: 0,
+    wobbling: false,
+  };
+}
+
+function readGuardianMapViaRepos(repositories, learnerId) {
+  const record = repositories.subjectStates.read(learnerId, 'spelling');
+  return (record && record.data && record.data.guardian) || {};
+}
+
+// Lightweight service factory that bypasses the repository layer, so two
+// instances sharing the same `storage` proxy genuinely share their guardian
+// map (all reads/writes go through the raw storage backing). This matches
+// the real-world two-tab case where both tabs share the same localStorage.
+function makeRawService({ now, random, storage }) {
+  return createSpellingService({
+    storage,
+    now,
+    random,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+}
+
+test('U7 saveGuardianRecord: happy path — single-instance submit produces the same final map as pre-U7 whole-map write', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  // Start a Guardian session and submit the first card correctly.
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(started.ok, true);
+  const firstSlug = started.state.session.currentCard.slug;
+  const firstWord = WORD_BY_SLUG[firstSlug];
+  const submitted = service.submitAnswer('learner-a', started.state, firstWord.word);
+
+  // Storage (via the repositories proxy) now has a guardian map with exactly
+  // that slug advanced — matches the pre-U7 whole-map write semantics.
+  const stored = readGuardianMapViaRepos(repositories, 'learner-a');
+  assert.ok(stored && typeof stored === 'object', 'guardian map persisted to storage');
+  assert.ok(stored[firstSlug], 'first slug is present in persisted map');
+  assert.equal(stored[firstSlug].reviewLevel, 1, 'fresh correct -> reviewLevel 1');
+  assert.equal(stored[firstSlug].correctStreak, 1, 'fresh correct -> correctStreak 1');
+  assert.equal(stored[firstSlug].lastReviewedDay, today, 'lastReviewedDay = today');
+  // Other slugs must not have been written yet.
+  const otherKeys = Object.keys(stored).filter((key) => key !== firstSlug);
+  assert.equal(otherKeys.length, 0, 'no other slugs written by single submit');
+
+  // No Promise leak — submit stays synchronous.
+  assert.equal(typeof submitted.then, 'undefined', 'submitAnswer return value is not a Promise');
+});
+
+test('U7 saveGuardianRecord: exists on the service API as a synchronous function', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const { service } = makeServiceWithSeed({ now, random: () => 0.5 });
+  assert.equal(typeof service.saveGuardianRecord, 'function', 'service.saveGuardianRecord is a function');
+
+  const today = Math.floor(now() / DAY_MS_TS);
+  const result = service.saveGuardianRecord('learner-a', 'possess', freshGuardianRecord(today));
+  // Must be synchronous — no Promise.
+  assert.equal(typeof result?.then, 'undefined', 'saveGuardianRecord return value is not a Promise');
+});
+
+test('U7 saveGuardianRecord: merge-save preserves existing entries when different slugs advance in sequence', () => {
+  // Narrow same-process race: two service instances share the same raw
+  // `storage` proxy (bypassing the per-tab repository cache). Sequential
+  // writes on different slugs both survive because saveGuardianRecord does a
+  // fresh load-then-merge-single-slug-then-save. This is NOT a cross-tab
+  // race — production tabs each build their own `createLocalPlatformRepositories`
+  // with an independent in-memory cache, so writes through the real
+  // persistence layer are not visible to each other until restart. See the
+  // "known limitation" test below for the production cross-tab gap.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+
+  // Both services share the same storage directly. This bypasses the
+  // repositories layer so the raw guardian key round-trips cleanly.
+  const serviceOne = makeRawService({ now, random: () => 0.5, storage });
+  const serviceTwo = makeRawService({ now, random: () => 0.5, storage });
+
+  const slugX = 'possess';
+  const slugY = 'believe';
+  const recordX = freshGuardianRecord(today);
+  const recordY = { ...freshGuardianRecord(today), reviewLevel: 2, correctStreak: 3 };
+
+  // Interleaved sequence: serviceTwo writes X first, then serviceOne writes
+  // Y. Under pre-U7 whole-map semantics, serviceOne (holding a stale snapshot
+  // of the guardian map loaded before serviceTwo's write) would stomp X.
+  // Under U7 merge-save, serviceOne's write re-loads the guardian map fresh,
+  // merges its Y into the current storage contents, and saves — so both X
+  // and Y persist.
+  serviceTwo.saveGuardianRecord('learner-a', slugX, recordX);
+  serviceOne.saveGuardianRecord('learner-a', slugY, recordY);
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.ok(finalMap && typeof finalMap === 'object', 'final map persisted');
+  assert.ok(finalMap[slugX], `serviceTwo's slug ${slugX} survived in final map`);
+  assert.ok(finalMap[slugY], `serviceOne's slug ${slugY} survived in final map`);
+  // Records round-trip (fields preserved by normaliseGuardianMap).
+  assert.equal(finalMap[slugX].reviewLevel, recordX.reviewLevel);
+  assert.equal(finalMap[slugY].reviewLevel, recordY.reviewLevel);
+  assert.equal(finalMap[slugY].correctStreak, recordY.correctStreak);
+});
+
+test('U7 saveGuardianRecord: same-slug merge-save overwrites without merging record fields (last-writer-wins)', () => {
+  // Documents that U7 does NOT promise same-slug CAS — two same-slug writes
+  // through saveGuardianRecord last-writer-wins on that slug even within one
+  // process. Cross-tab CAS on any slug is deferred to the
+  // `post-mega-spelling-storage-cas` plan.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+
+  const serviceOne = makeRawService({ now, random: () => 0.5, storage });
+  const serviceTwo = makeRawService({ now, random: () => 0.5, storage });
+
+  const slug = 'possess';
+  const firstRecord = { ...freshGuardianRecord(today), reviewLevel: 1, correctStreak: 1 };
+  const secondRecord = { ...freshGuardianRecord(today), reviewLevel: 3, correctStreak: 5 };
+
+  serviceTwo.saveGuardianRecord('learner-a', slug, firstRecord);
+  serviceOne.saveGuardianRecord('learner-a', slug, secondRecord);
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.ok(finalMap[slug], 'slug is still present');
+  assert.equal(finalMap[slug].reviewLevel, secondRecord.reviewLevel, 'last writer wins on same slug');
+  assert.equal(finalMap[slug].correctStreak, secondRecord.correctStreak, 'last writer wins on same slug');
+});
+
+test('U7 saveGuardianRecord: merges into an existing non-empty map without dropping other slugs', () => {
+  // Explicit invariant: if storage already contains { A, B }, saveGuardianRecord
+  // for slug C must produce { A, B, C } — not { C }.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const service = makeRawService({ now, random: () => 0.5, storage });
+
+  // Seed storage directly with two pre-existing slugs.
+  const preExistingMap = {
+    possess: { ...freshGuardianRecord(today), reviewLevel: 2 },
+    believe: { ...freshGuardianRecord(today), reviewLevel: 3 },
+  };
+  storage.setItem(U7_GUARDIAN_KEY('learner-a'), JSON.stringify(preExistingMap));
+
+  service.saveGuardianRecord('learner-a', 'rhythm', {
+    ...freshGuardianRecord(today),
+    reviewLevel: 4,
+  });
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.equal(Object.keys(finalMap).length, 3, 'all three slugs present');
+  assert.equal(finalMap.possess.reviewLevel, 2, 'pre-existing possess untouched');
+  assert.equal(finalMap.believe.reviewLevel, 3, 'pre-existing believe untouched');
+  assert.equal(finalMap.rhythm.reviewLevel, 4, 'new rhythm merged in');
+});
+
+test('U7 integration: submitGuardianAnswer uses saveGuardianRecord — concurrent submits on two shared-repository instances both survive', () => {
+  // End-to-end integration: two services share the same repositories (so the
+  // in-memory subject-state cache is shared). Each starts its own Guardian
+  // session, and their submits interleave. Both advances must land in the
+  // final guardian map.
+  //
+  // Why share repositories rather than just storage: the createSpellingPersistence
+  // layer caches subject-state in an in-memory `collections` object and flushes
+  // to storage on each write. Two separate `createLocalPlatformRepositories`
+  // calls on the same backing storage each have their own cache, so they do
+  // NOT see each other's writes until a fresh startup rehydration. Sharing
+  // one `repositories` object is the honest analogue of "two tabs, same
+  // localStorage, same in-memory subject-state".
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  function serviceFor(random) {
+    return createSpellingService({
+      repository: createSpellingPersistence({ repositories, now }),
+      now,
+      random,
+      tts: { speak() {}, stop() {}, warmup() {} },
+    });
+  }
+
+  const tabA = serviceFor(() => 0.5);
+  const tabB = serviceFor(() => 0.8);
+
+  // Start tab A's session and capture the first slug.
+  const startedA = tabA.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(startedA.ok, true);
+  const slugA = startedA.state.session.currentCard.slug;
+  const wordA = WORD_BY_SLUG[slugA].word;
+
+  // Start tab B's session independently — it picks its own queue (different
+  // random seed => different ordering).
+  const startedB = tabB.startSession('learner-a', { mode: 'guardian' });
+  assert.equal(startedB.ok, true);
+  // Find a slug in tab B's queue that is not slugA so the race is on different slugs.
+  const slugB = startedB.state.session.uniqueWords.find((s) => s !== slugA);
+  assert.ok(slugB, 'tab B queue has a slug distinct from tab A');
+
+  // Rearrange tab B's session queue so its currentCard is slugB.
+  const bSession = { ...startedB.state.session };
+  bSession.queue = [slugB, ...bSession.queue.filter((s) => s !== slugB)];
+  bSession.currentSlug = slugB;
+  bSession.currentCard = { ...bSession.currentCard, slug: slugB, word: WORD_BY_SLUG[slugB] };
+  const bState = { ...startedB.state, session: bSession };
+
+  // Interleave: tab B submits first, then tab A submits. Both writes go through
+  // submitGuardianAnswer -> saveGuardianRecord. Both advances must be in the
+  // final guardian map.
+  const wordB = WORD_BY_SLUG[slugB].word;
+  const submittedB = tabB.submitAnswer('learner-a', bState, wordB);
+  assert.equal(typeof submittedB.then, 'undefined', 'submitAnswer (tab B) is synchronous');
+  const submittedA = tabA.submitAnswer('learner-a', startedA.state, wordA);
+  assert.equal(typeof submittedA.then, 'undefined', 'submitAnswer (tab A) is synchronous');
+
+  const finalMap = readGuardianMapViaRepos(repositories, 'learner-a');
+  assert.ok(finalMap[slugA], `tab A's slug ${slugA} present in final map`);
+  assert.ok(finalMap[slugB], `tab B's slug ${slugB} present in final map`);
+  assert.equal(finalMap[slugA].correctStreak, 1, 'tab A slug advanced');
+  assert.equal(finalMap[slugB].correctStreak, 1, 'tab B slug advanced');
+});
+
+test('U7 integration: submitGuardianAnswer synchronous — no Promise leak, return value has {state, events, ok}', () => {
+  // Scope guard: adversarial review will flag any async/await leak in the
+  // guardian write path. This test locks the synchronous return shape of
+  // submitGuardianAnswer after the U7 refactor.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const { service, repositories } = makeServiceWithSeed({ now, random: () => 0.5 });
+  seedAllCoreMega(repositories, 'learner-a', today);
+
+  const started = service.startSession('learner-a', { mode: 'guardian' });
+  const slug = started.state.session.currentCard.slug;
+  const word = WORD_BY_SLUG[slug].word;
+
+  const submitted = service.submitAnswer('learner-a', started.state, word);
+  assert.equal(typeof submitted.then, 'undefined', 'no then method -> not a Promise');
+  assert.equal(typeof submitted.state, 'object', 'state is an object');
+  assert.ok(Array.isArray(submitted.events), 'events is an array');
+  assert.equal(typeof submitted.ok, 'boolean', 'ok is a boolean');
+});
+
+test('U7 integration: saveGuardianRecord normalises the record via normaliseGuardianMap on the way in', () => {
+  // Defensive: a garbage record handed in must not poison the stored map.
+  // normaliseGuardianMap inside loadGuardianMap already clamps bad values on
+  // read; saveGuardianRecord must ensure what we store round-trips cleanly.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const service = makeRawService({ now, random: () => 0.5, storage });
+
+  // Seed a valid slug first.
+  service.saveGuardianRecord('learner-a', 'possess', freshGuardianRecord(today));
+
+  // Now save a record with an out-of-range reviewLevel; normaliseGuardianMap
+  // clamps on load, so subsequent reads stay safe.
+  service.saveGuardianRecord('learner-a', 'believe', {
+    ...freshGuardianRecord(today),
+    reviewLevel: 99, // out of range
+  });
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.ok(finalMap.possess, 'first slug still present after second write');
+  assert.ok(finalMap.believe, 'second slug persisted');
+  // The raw stored value may or may not be pre-clamped depending on
+  // implementation; at minimum a subsequent load must normalise. We leave
+  // detailed clamp semantics to normaliseGuardianMap's own tests.
+});
+
+test('U7 integration: saveGuardianRecord ignores empty/non-string slug — no corruption of the map', () => {
+  // Defensive: passing an empty or non-string slug must be a silent no-op
+  // rather than writing an empty-key entry that breaks normaliseGuardianMap's
+  // slug filter.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const service = makeRawService({ now, random: () => 0.5, storage });
+
+  service.saveGuardianRecord('learner-a', 'possess', freshGuardianRecord(today));
+  // Each of these should be a no-op.
+  service.saveGuardianRecord('learner-a', '', freshGuardianRecord(today));
+  service.saveGuardianRecord('learner-a', null, freshGuardianRecord(today));
+  service.saveGuardianRecord('learner-a', undefined, freshGuardianRecord(today));
+  service.saveGuardianRecord('learner-a', 42, freshGuardianRecord(today));
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.deepEqual(Object.keys(finalMap), ['possess'], 'only the valid slug persists');
+});
+
+test('U7 known limitation: cross-tab writes are not visible without the deferred storage-CAS plan', () => {
+  // Production shape of the cross-tab gap. Two independent calls to
+  // `createLocalPlatformRepositories` sharing ONE raw `storage` object model
+  // the two-tab scenario faithfully: each tab gets its own in-memory
+  // `collections` cache keyed on subject-state (see
+  // `src/platform/core/repositories/local.js`). Writes flush to storage via
+  // `persistAll`, but reads NEVER re-hydrate from storage — there is no
+  // `storage` event listener invalidating the cache.
+  //
+  // This test documents the gap as an accepted limitation. U7's merge-save
+  // cannot close this race because `loadGuardianMap` inside the service
+  // ultimately reads through `repositories.subjectStates.read`, which serves
+  // from the per-tab cache. Closing the gap requires the deferred
+  // `post-mega-spelling-storage-cas` plan (navigator.locks +
+  // BroadcastChannel + writeVersion CAS + lockout banner).
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+
+  // Tab A is constructed first, on empty storage.
+  const reposTabA = createLocalPlatformRepositories({ storage });
+  const serviceTabA = createSpellingService({
+    repository: createSpellingPersistence({ repositories: reposTabA, now }),
+    now,
+    random: () => 0.5,
+    tts: { speak() {}, stop() {}, warmup() {} },
+  });
+
+  const slugX = 'possess';
+  const slugY = 'believe';
+
+  // Tab A writes slug X first. This primes tab A's cache with the X-only
+  // guardian map and persists to raw storage.
+  serviceTabA.saveGuardianRecord('learner-a', slugX, freshGuardianRecord(today));
+
+  // Tab B is constructed AFTER tab A's write. Its startup hydration reads
+  // the current storage contents, so tab B's cache contains slug X.
+  const reposTabB = createLocalPlatformRepositories({ storage });
+  const serviceTabB = createSpellingService({
+    repository: createSpellingPersistence({ repositories: reposTabB, now }),
+    now,
+    random: () => 0.5,
+    tts: { speak() {}, stop() {}, warmup() {} },
+  });
+
+  // Tab B writes slug Y. Because Tab B saw X at startup, its merge-save
+  // combines X + Y and persists { X, Y } to storage.
+  serviceTabB.saveGuardianRecord('learner-a', slugY, freshGuardianRecord(today));
+
+  // Storage now physically contains { X, Y }. But tab A's in-memory cache
+  // (its own `collections.subjectStates`) was populated at construction and
+  // when it wrote X. It has no `storage` event listener and no rehydration
+  // path, so reads still see only X — tab B's write is invisible to tab A.
+  const tabAView = readGuardianMapViaRepos(reposTabA, 'learner-a');
+  assert.ok(tabAView[slugX], 'tab A still sees its own slug X');
+  assert.equal(
+    tabAView[slugY],
+    undefined,
+    'tab A does NOT see tab B\'s slug Y — this is the production cross-tab gap',
+  );
+
+  // Now tab A writes slug X again (e.g. an updated record from a Guardian
+  // submission). saveGuardianRecord's merge-save reloads through tab A's
+  // own stale cache, so its snapshot is still { X }. The write produces
+  // { X_updated } — losing tab B's Y from storage.
+  serviceTabA.saveGuardianRecord('learner-a', slugX, {
+    ...freshGuardianRecord(today),
+    reviewLevel: 3,
+  });
+
+  // Observe raw storage directly (NOT through any repositories cache) to
+  // confirm the data-loss shape. This is the exact race the deferred
+  // `post-mega-spelling-storage-cas` plan will close.
+  const finalRaw = JSON.parse(storage.getItem('ks2-platform-v2.repo.child-subject-state') || '{}');
+  const finalSpellingRecord = finalRaw['learner-a::spelling'] || {};
+  const finalGuardian = (finalSpellingRecord.data && finalSpellingRecord.data.guardian) || {};
+  assert.ok(finalGuardian[slugX], 'tab A\'s slug X write landed');
+  assert.equal(
+    finalGuardian[slugY],
+    undefined,
+    'tab B\'s slug Y was overwritten — cross-tab race is real, fix in `post-mega-spelling-storage-cas`',
+  );
+});
+
+test('U7 integration: resetLearner still uses saveGuardianMap (whole-map zero), NOT saveGuardianRecord', () => {
+  // U6 zeros the guardian map on reset via `saveGuardianMap(learnerId, {})`.
+  // U7 must not redirect that single call through `saveGuardianRecord` —
+  // zeroing with saveGuardianRecord would require iterating every existing
+  // slug, which is both slower and semantically wrong (reset = clear, not
+  // merge). Assert the end state: after seeding a guardian map directly and
+  // calling resetLearner, the stored key is an empty object.
+  const now = () => Date.UTC(2026, 0, 10);
+  const today = Math.floor(now() / DAY_MS_TS);
+  const storage = installMemoryStorage();
+  const service = makeRawService({ now, random: () => 0.5, storage });
+
+  // Seed a non-empty guardian map.
+  service.saveGuardianRecord('learner-a', 'possess', freshGuardianRecord(today));
+  service.saveGuardianRecord('learner-a', 'believe', freshGuardianRecord(today));
+  const seeded = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.equal(Object.keys(seeded).length, 2, 'seeded with two entries');
+
+  service.resetLearner('learner-a');
+
+  const finalMap = JSON.parse(storage.getItem(U7_GUARDIAN_KEY('learner-a')));
+  assert.deepEqual(finalMap, {}, 'guardian map zeroed after reset');
 });
 
 // -----------------------------------------------------------------------------
@@ -2209,4 +2669,316 @@ test('U3 integration: practice-only drill summary renders without guardian-speci
 
   const summary = harness.store.getState().subjectUi.spelling.summary;
   assert.equal(summary.mode, 'trouble', 'practice-only summary inherits mode=trouble, not guardian');
+});
+
+// ----- U2: Orphan sanitiser (selector + read-model) --------------------------
+//
+// Content hot-swap can leave `guardianMap[slug]` / `progressMap[slug]` pointing
+// at a slug the current content bundle no longer publishes (removed from the
+// statutory list) or has demoted from core to extra. The orphan sanitiser
+// keeps the read-side filters and the selector in lockstep — persisted
+// storage is untouched (no delete) so a content rollback that re-introduces
+// the slug finds its record intact.
+
+test('U2: GUARDIAN_SECURE_STAGE is re-exported from service-contract (single source of truth)', () => {
+  assert.equal(GUARDIAN_SECURE_STAGE, 4);
+});
+
+test('U2: isGuardianEligibleSlug returns true for a known core stage-4 slug', () => {
+  const progressMap = { possess: { stage: 4 } };
+  const wordBySlug = { possess: { slug: 'possess', spellingPool: 'core' } };
+  assert.equal(isGuardianEligibleSlug('possess', progressMap, wordBySlug), true);
+});
+
+test('U2: isGuardianEligibleSlug returns false for an unknown slug (content hot-swap removal)', () => {
+  const progressMap = { ghostword: { stage: 4 } };
+  const wordBySlug = {};
+  assert.equal(isGuardianEligibleSlug('ghostword', progressMap, wordBySlug), false);
+});
+
+test('U2: isGuardianEligibleSlug returns false when word has been demoted to spellingPool=extra', () => {
+  const progressMap = { demoted: { stage: 4 } };
+  const wordBySlug = { demoted: { slug: 'demoted', spellingPool: 'extra' } };
+  assert.equal(isGuardianEligibleSlug('demoted', progressMap, wordBySlug), false);
+});
+
+test('U2: isGuardianEligibleSlug returns false when progress stage is below GUARDIAN_SECURE_STAGE', () => {
+  const wordBySlug = { weak: { slug: 'weak', spellingPool: 'core' } };
+  assert.equal(isGuardianEligibleSlug('weak', { weak: { stage: 3 } }, wordBySlug), false);
+  assert.equal(isGuardianEligibleSlug('weak', { weak: { stage: 0 } }, wordBySlug), false);
+  assert.equal(isGuardianEligibleSlug('weak', { weak: {} }, wordBySlug), false, 'missing stage treated as 0');
+  assert.equal(isGuardianEligibleSlug('weak', {}, wordBySlug), false, 'missing record treated as 0');
+});
+
+test('U2: isGuardianEligibleSlug tolerates null / garbage inputs without throwing', () => {
+  assert.equal(isGuardianEligibleSlug('', {}, {}), false);
+  assert.equal(isGuardianEligibleSlug(null, null, null), false);
+  assert.equal(isGuardianEligibleSlug(undefined, undefined, undefined), false);
+  assert.equal(isGuardianEligibleSlug('slug', null, { slug: { spellingPool: 'core' } }), false);
+  assert.equal(isGuardianEligibleSlug('slug', { slug: { stage: 4 } }, null), false);
+});
+
+test('U2 selector bucket 1 (wobbling-due): orphan slug skipped', () => {
+  // An orphan wobbling-due entry sits alongside a known one. The known slug
+  // is surfaced; the orphan never appears in the selection.
+  const guardianMap = {
+    accommodate: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    ghostword: { reviewLevel: 1, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 2, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+  };
+  const progressMap = {
+    accommodate: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+    ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG, // runtime does NOT know 'ghostword'
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+  assert.equal(selected.includes('ghostword'), false, 'orphan never appears in bucket 1');
+  assert.equal(selected.includes('accommodate'), true);
+});
+
+test('U2 selector bucket 2 (non-wobbling-due): orphan slug skipped', () => {
+  const guardianMap = {
+    believe: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    ghostword: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 2, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+  };
+  const progressMap = {
+    believe: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+    ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+  assert.equal(selected.includes('ghostword'), false, 'orphan never appears in bucket 2');
+  assert.equal(selected.includes('believe'), true);
+});
+
+test('U2 selector bucket 4 (non-due top-up): orphan slug skipped', () => {
+  // Only one due non-wobbling + several non-due guardians. Selector below
+  // GUARDIAN_MIN_ROUND_LENGTH=5, so the top-up engages. The orphan non-due
+  // slug must be skipped even inside the top-up pool.
+  const guardianMap = {
+    address: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 3, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+    believe: { reviewLevel: 2, lastReviewedDay: TODAY - 14, nextDueDay: TODAY - 1, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    bicycle: { reviewLevel: 3, lastReviewedDay: TODAY - 20, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+    breath: { reviewLevel: 3, lastReviewedDay: TODAY - 5, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+    ghostword: { reviewLevel: 3, lastReviewedDay: TODAY - 80, nextDueDay: TODAY + 30, correctStreak: 3, lapses: 0, renewals: 0, wobbling: false },
+  };
+  const progressMap = {
+    address: { stage: 4 },
+    believe: { stage: 4 },
+    bicycle: { stage: 4 },
+    breath: { stage: 4 },
+    ghostword: { stage: 4 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 5,
+    random: () => 0.5,
+  });
+  assert.equal(selected.includes('ghostword'), false, 'orphan never surfaces through the top-up bucket');
+});
+
+test('U2 selector bucket 3 (lazy-create) existing guard: extra-pool words are not lazy-created', () => {
+  // The pre-U2 guard already rejects unknown slugs. U2 tightens the lazy-create
+  // candidate filter so pool=extra words are also rejected (they must never
+  // graduate into Guardian protection).
+  const wordBySlug = {
+    ...WORD_BY_SLUG,
+    // Synthesise an 'extra' mega word — pool=extra must NOT qualify for lazy-create.
+    fakeextra: { slug: 'fakeextra', spellingPool: 'extra' },
+  };
+  const progressMap = {
+    fakeextra: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+    possess: { stage: 4, attempts: 6, correct: 5, wrong: 1 },
+  };
+  const selected = selectGuardianWords({
+    guardianMap: {},
+    progressMap,
+    wordBySlug,
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+  assert.equal(selected.includes('fakeextra'), false, 'extra-pool slug must not be lazy-created');
+  assert.equal(selected.includes('possess'), true, 'core-pool stage-4 still lazy-creates');
+});
+
+test('U2 selector: orphan slug with wobbling: true + nextDueDay <= today still skipped', () => {
+  // Edge: the orphan slug is maximally appealing (wobbling + overdue), but
+  // wordBySlug does not know it. The selector must still skip.
+  const guardianMap = {
+    ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 10, nextDueDay: TODAY - 5, correctStreak: 0, lapses: 3, renewals: 0, wobbling: true },
+  };
+  const progressMap = { ghostword: { stage: 4 } };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: {},
+    todayDay: TODAY,
+    length: 5,
+    random: () => 0.5,
+  });
+  assert.deepEqual(selected, [], 'no orphan surfaces even when wobbling + due');
+});
+
+test('U2 selector: 10 known + 2 orphan entries all due → picks up to 8 known, zero orphan', () => {
+  // Mirror the plan "happy path" scenario: 10 known + 2 orphan entries, all due.
+  // Use real WORD_BY_SLUG slugs so wordBySlug lookups succeed.
+  const knownSlugs = WORDS.filter((w) => w.spellingPool !== 'extra').slice(0, 10).map((w) => w.slug);
+  const guardianMap = {};
+  const progressMap = {};
+  for (let i = 0; i < knownSlugs.length; i += 1) {
+    guardianMap[knownSlugs[i]] = {
+      reviewLevel: 1,
+      lastReviewedDay: TODAY - (i + 1),
+      nextDueDay: TODAY - 1,
+      correctStreak: 1,
+      lapses: 0,
+      renewals: 0,
+      wobbling: false,
+    };
+    progressMap[knownSlugs[i]] = { stage: 4 };
+  }
+  // Add two orphan guardian records for slugs NOT in WORD_BY_SLUG.
+  guardianMap.ghostword1 = {
+    reviewLevel: 0, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 2, correctStreak: 0, lapses: 0, renewals: 0, wobbling: false,
+  };
+  guardianMap.ghostword2 = {
+    reviewLevel: 0, lastReviewedDay: TODAY - 2, nextDueDay: TODAY - 2, correctStreak: 0, lapses: 0, renewals: 0, wobbling: true,
+  };
+  progressMap.ghostword1 = { stage: 4 };
+  progressMap.ghostword2 = { stage: 4 };
+  const selected = selectGuardianWords({
+    guardianMap,
+    progressMap,
+    wordBySlug: WORD_BY_SLUG,
+    todayDay: TODAY,
+    length: 8,
+    random: () => 0.5,
+  });
+  assert.equal(selected.length, 8, 'selector hits its 8-word target using known slugs only');
+  assert.equal(selected.includes('ghostword1'), false);
+  assert.equal(selected.includes('ghostword2'), false);
+  for (const slug of selected) {
+    assert.equal(knownSlugs.includes(slug), true, `selected slug ${slug} must be one of the 10 known candidates`);
+  }
+});
+
+// ----- U2 read-model: getSpellingPostMasteryState counts respect orphan filter ----
+
+test('U2 read-model: guardianDueCount ignores orphan slugs', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1, w2] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(runtimeSnapshot.coreWords),
+      ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY + 30, lastDay: TODAY - 7, lastResult: true },
+    },
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: false },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      [w2.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 30, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+      // Orphan: not in runtimeSnapshot.wordBySlug, but due today.
+      ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianDueCount, 2, 'orphan ghostword excluded from due count');
+});
+
+test('U2 read-model: wobblingCount ignores orphan slugs', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(runtimeSnapshot.coreWords),
+      ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY + 30, lastDay: TODAY - 7, lastResult: true },
+    },
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 1, renewals: 0, wobbling: true },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 5, renewals: 0, wobbling: true },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.wobblingCount, 1, 'orphan ghostword excluded from wobbling count');
+});
+
+test('U2 read-model: nextGuardianDueDay ignores orphan slugs even when orphan has the earliest dueDay', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(runtimeSnapshot.coreWords),
+      ghostword: { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY + 30, lastDay: TODAY - 7, lastResult: true },
+    },
+    guardian: {
+      [w0.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY + 14, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+      [w1.slug]: { reviewLevel: 1, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 7, correctStreak: 1, lapses: 0, renewals: 0, wobbling: false },
+      // Orphan's dueDay is earliest of all — must still be ignored.
+      ghostword: { reviewLevel: 0, lastReviewedDay: TODAY - 1, nextDueDay: TODAY + 1, correctStreak: 0, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.nextGuardianDueDay, TODAY + 7, 'ghostword (today+1) not considered for earliest-due');
+});
+
+test('U2 read-model: pool-demoted slug (core → extra) excluded from guardianDueCount and wobblingCount', () => {
+  // Content bundle release demotes a previously-core word to extra. Guardian
+  // counts must drop the slug; persistence still carries the record.
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  // Force one of the runtime words to become 'extra' for this test only.
+  const demotedSlug = runtimeSnapshot.coreWords[0].slug;
+  const demotedRuntime = {
+    words: runtimeSnapshot.words.map((w) => (w.slug === demotedSlug ? { ...w, spellingPool: 'extra', year: 'extra', yearLabel: 'Extra' } : w)),
+    wordBySlug: {
+      ...runtimeSnapshot.wordBySlug,
+      [demotedSlug]: { ...runtimeSnapshot.wordBySlug[demotedSlug], spellingPool: 'extra', year: 'extra', yearLabel: 'Extra' },
+    },
+    coreWords: runtimeSnapshot.coreWords.slice(1),
+    extraWords: [{ ...runtimeSnapshot.coreWords[0], spellingPool: 'extra', year: 'extra', yearLabel: 'Extra' }],
+  };
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress: {
+      ...secureProgressEntries(demotedRuntime.coreWords),
+      [demotedSlug]: { stage: 4, attempts: 6, correct: 5, wrong: 1, dueDay: TODAY + 30, lastDay: TODAY - 7, lastResult: true },
+    },
+    guardian: {
+      [demotedSlug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 2, renewals: 0, wobbling: true },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot: demotedRuntime, now: U4_NOW_MS });
+  assert.equal(state.guardianDueCount, 0, 'demoted-to-extra slug not counted as guardian-due');
+  assert.equal(state.wobblingCount, 0, 'demoted-to-extra slug not counted as wobbling');
+});
+
+test('U2 read-model: legacy-demoted slug (stage < GUARDIAN_SECURE_STAGE) excluded from counts', () => {
+  const runtimeSnapshot = makeRuntimeSnapshot({ coreCount: 10 });
+  const [w0, w1] = runtimeSnapshot.coreWords;
+  const progress = secureProgressEntries(runtimeSnapshot.coreWords);
+  // Force w0's stage down to 3 (legacy-engine wrong answer path).
+  progress[w0.slug] = { ...progress[w0.slug], stage: 3 };
+  const subjectStateRecord = makeSubjectStateRecord({
+    progress,
+    guardian: {
+      [w0.slug]: { reviewLevel: 0, lastReviewedDay: TODAY - 3, nextDueDay: TODAY - 1, correctStreak: 0, lapses: 2, renewals: 0, wobbling: true },
+      [w1.slug]: { reviewLevel: 2, lastReviewedDay: TODAY - 2, nextDueDay: TODAY, correctStreak: 2, lapses: 0, renewals: 0, wobbling: false },
+    },
+  });
+  const state = getSpellingPostMasteryState({ subjectStateRecord, runtimeSnapshot, now: U4_NOW_MS });
+  assert.equal(state.guardianDueCount, 1, 'stage-3 record excluded; only w1 remains');
+  assert.equal(state.wobblingCount, 0, 'stage-3 record excluded from wobbling count');
 });

@@ -379,6 +379,54 @@ function normaliseGrammarBankUi(raw) {
   };
 }
 
+// Phase 3 U6b: Writing Try scene carries transient UI state — the selected
+// prompt id (null until the learner picks one), the in-progress writing
+// draft, and the self-check ticks keyed by the checklist item's stable
+// `check-<index>` key. We keep the state inside the Grammar read model for
+// the same reason `bank` lives here: every Grammar UI slice routes through
+// `normaliseGrammarReadModel`, so a mixed home would make the dispatcher
+// asymmetric. The writing draft is capped server-side at 2000 chars but we
+// slice again defensively so a malformed upstream value cannot push the
+// textarea over the cap during SSR.
+const EMPTY_GRAMMAR_TRANSFER_UI = Object.freeze({
+  selectedPromptId: '',
+  draft: '',
+  ticks: Object.freeze({}),
+});
+
+function normaliseGrammarTransferTicks(raw) {
+  if (!isPlainObject(raw)) return {};
+  const out = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (typeof key !== 'string' || !key) continue;
+    // Cap keys defensively so a malformed upstream tick map cannot grow
+    // without bound through round-trips.
+    out[key.slice(0, 64)] = Boolean(value);
+  }
+  return out;
+}
+
+// Defensive upper bound for `ui.transfer.draft`. The Worker's writing cap is
+// 2000 chars (GRAMMAR_TRANSFER_WRITING_CAP), but the UI must be able to
+// *detect* an over-cap draft so the Writing Try scene can render the
+// "That is longer than we can save" warning + disable Save. Truncating
+// here would hide the over-cap path from the scene. 5000 is chosen as a
+// generous sanity limit so a runaway upstream value cannot grow without
+// bound — it is more than double the Worker cap and well below any
+// reasonable practical input.
+const GRAMMAR_TRANSFER_DRAFT_HARD_MAX = 5000;
+
+function normaliseGrammarTransferUi(raw) {
+  if (!isPlainObject(raw)) return { selectedPromptId: '', draft: '', ticks: {} };
+  const selectedPromptId = typeof raw.selectedPromptId === 'string' ? raw.selectedPromptId.slice(0, 64) : '';
+  const draft = typeof raw.draft === 'string' ? raw.draft.slice(0, GRAMMAR_TRANSFER_DRAFT_HARD_MAX) : '';
+  return {
+    selectedPromptId,
+    draft,
+    ticks: normaliseGrammarTransferTicks(raw.ticks),
+  };
+}
+
 function normaliseGrammarTransferLane(raw) {
   if (!isPlainObject(raw)) {
     return {
@@ -620,6 +668,14 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
     // read model so filter selections survive StrictMode double-renders and
     // round-trip through the normaliser without stomping unrelated fields.
     bank: normaliseGrammarBankUi(raw.bank),
+    // Phase 3 U6b: persist the Writing Try scene's transient UI state
+    // (selected prompt, draft writing, self-check ticks) in the same slot
+    // for the same reason as `bank` above. The draft is cleared on save
+    // success (the dispatcher handles that) so the textarea returns to an
+    // empty state after the evidence lands.
+    ui: {
+      transfer: normaliseGrammarTransferUi(raw.ui?.transfer),
+    },
     projections: raw.projections || null,
     pendingCommand: raw.pendingCommand || '',
     error: typeof raw.error === 'string' ? raw.error : '',
@@ -633,6 +689,7 @@ export {
   VALID_GRAMMAR_BANK_CLUSTER_FILTERS,
   normaliseGrammarBankUi,
 };
+export { EMPTY_GRAMMAR_TRANSFER_UI, normaliseGrammarTransferUi };
 
 export function groupedGrammarConcepts(concepts = []) {
   const groups = new Map();
