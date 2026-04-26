@@ -4488,6 +4488,15 @@ function normaliseRouteNameServer(raw) {
 // drift between the two sites.
 export const OPS_ERROR_RELEASE_REGEX = /^[a-f0-9]{6,40}$/;
 
+// U17: auto-reopen cooldown window. When a new release posts an event that
+// matches a resolved fingerprint, the auto-reopen rule requires
+// `now - last_status_change_at > OPS_ERROR_AUTO_REOPEN_COOLDOWN_MS` so a
+// just-resolved row cannot flip back and forth inside a single deploy
+// window. 24h is generous for the single-release deploy cadence P1.5
+// targets; canary / blue-green rollouts are documented as "all releases
+// treated equal" per the plan — revisit when canary tooling ships.
+export const OPS_ERROR_AUTO_REOPEN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
 function validateOpsErrorRelease(rawRelease) {
   // Accept three shapes: null / undefined / missing / explicit null literal.
   // Everything else must match the strict regex — we reject malformed
@@ -4661,8 +4670,13 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
   try {
     // R24: dedup authoritative key is the (errorKind, messageFirstLine,
     // firstFrame) tuple. Fingerprint is a UNIQUE index cache only.
+    //
+    // U17 extends the SELECT to pull `resolved_in_release` and
+    // `last_status_change_at` so the auto-reopen rule can evaluate the
+    // 5-condition check inline without a second round-trip.
     const existing = await first(db, `
-      SELECT id, first_seen, occurrence_count, status
+      SELECT id, first_seen, occurrence_count, status,
+             resolved_in_release, last_status_change_at
       FROM ops_error_events
       WHERE error_kind = ?
         AND message_first_line = ?
@@ -4682,6 +4696,76 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
       // records the release that FIRST surfaced this fingerprint and is
       // never rewritten on dedup.
       const storedReleaseValue = redacted.release || null;
+
+      // U17: evaluate the 5-condition auto-reopen rule before committing
+      // the dedup UPDATE. ALL five must hold for reopen to fire:
+      //   1. stored status === 'resolved' (ignored / open / investigating
+      //      never auto-reopen — `ignored` is terminal-until-manual and
+      //      `open` / `investigating` have no resolution to undo).
+      //   2. stored resolved_in_release IS NOT NULL — a legacy resolve
+      //      without a release stamp opts out of auto-reopen.
+      //   3. incoming release IS NOT NULL and SHA-shaped per the U16
+      //      regex. `redacted.release` is already validated by
+      //      serverRedactClientEvent at the top of recordClientErrorEvent,
+      //      so we only need to assert not-null here.
+      //   4. incoming release !== stored resolved_in_release — same-
+      //      release recurrence does NOT reopen (prevents churn inside a
+      //      release window).
+      //   5. now - last_status_change_at > 24h — 24h cooldown. If the
+      //      row was resolved or reopened less than 24h ago, skip the
+      //      reopen and let the dedup path commit normally.
+      const storedStatus = typeof existing.status === 'string' ? existing.status : 'open';
+      const storedResolvedInRelease = typeof existing.resolved_in_release === 'string'
+        && existing.resolved_in_release
+        ? existing.resolved_in_release
+        : null;
+      const storedLastStatusChangeAt = Number.isFinite(Number(existing.last_status_change_at))
+        ? Number(existing.last_status_change_at)
+        : null;
+      const autoReopenEligible = storedStatus === 'resolved'
+        && storedResolvedInRelease !== null
+        && storedReleaseValue !== null
+        && storedReleaseValue !== storedResolvedInRelease
+        && storedLastStatusChangeAt !== null
+        && (ts - storedLastStatusChangeAt) > OPS_ERROR_AUTO_REOPEN_COOLDOWN_MS;
+
+      if (autoReopenEligible) {
+        // R21 batch atomicity: the status flip, last_seen / occurrence
+        // update, and status-counter swap commit together so a crash
+        // between them cannot leave the row's status and the counters
+        // out of sync.
+        //
+        // Note per U17 plan: we deliberately do NOT emit a mutation
+        // receipt. Auto-reopen is triggered by an anonymous public
+        // client event — there is no authenticated actor to scope a
+        // receipt to. The reconciliation job (U10) covers the counter
+        // drift if anything diverges here.
+        //
+        // `resolved_in_release` is preserved — it records which release
+        // previously resolved this fingerprint, and the next auto-reopen
+        // (condition 4) measures against the same column. The forensic
+        // history "resolved in X but regressed at Y" stays intact.
+        await batch(db, [
+          bindStatement(db, `
+            UPDATE ops_error_events
+            SET last_seen = ?,
+                occurrence_count = occurrence_count + 1,
+                last_seen_release = ?,
+                status = 'open',
+                last_status_change_at = ?
+            WHERE id = ?
+          `, [ts, storedReleaseValue, ts, existing.id]),
+          bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}resolved`, ts, -1),
+          bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1),
+        ]);
+        return {
+          eventId: existing.id,
+          deduped: true,
+          unavailable: false,
+          autoReopened: true,
+        };
+      }
+
       await run(db, `
         UPDATE ops_error_events
         SET last_seen = ?,
