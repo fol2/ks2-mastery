@@ -24,6 +24,7 @@ import {
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
   PUNCTUATION_PRIMARY_MODE_CARDS,
   PUNCTUATION_PRIMARY_MODE_IDS,
+  PUNCTUATION_SKILL_MODAL_CONTENT,
   PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE,
   bellstormSceneForPhase,
   buildPunctuationDashboardModel,
@@ -38,10 +39,12 @@ import {
   punctuationMonsterDisplayName,
   punctuationPhaseLabel,
   punctuationPrimaryModeFromPrefs,
+  punctuationSkillHasMultiSkillItems,
+  punctuationSkillModalContent,
   punctuationSkillModalPreferredExample,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 import { MONSTERS_BY_SUBJECT } from '../src/platform/game/monsters.js';
-import { PUNCTUATION_CLUSTERS } from '../shared/punctuation/content.js';
+import { PUNCTUATION_CLUSTERS, PUNCTUATION_ITEMS, PUNCTUATION_SKILLS } from '../shared/punctuation/content.js';
 
 // ---------------------------------------------------------------------------
 // composeIsDisabled (R11) — moved from PunctuationPracticeSurface.jsx in U1.
@@ -726,4 +729,112 @@ test('U5 drift: PUNCTUATION_CLIENT_SKILL_IDS stays in lock-step with PUNCTUATION
       `${skill.id} is in PUNCTUATION_CLIENT_SKILLS but not in PUNCTUATION_CLIENT_SKILL_IDS`,
     );
   }
+});
+
+// ---------------------------------------------------------------------------
+// U6 — PUNCTUATION_SKILL_MODAL_CONTENT drift against shared/punctuation/content.js
+// ---------------------------------------------------------------------------
+
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT mirrors PUNCTUATION_SKILLS pedagogy fields byte-for-byte', () => {
+  // The modal's client-safe mirror must match the shared source exactly. A
+  // drift here would mean the Learn tab renders stale copy against an updated
+  // shared ruleset. Each of the 4 modal fields (rule, workedGood, contrastGood,
+  // contrastBad) is compared string-equality.
+  for (const skill of PUNCTUATION_SKILLS) {
+    const mirror = PUNCTUATION_SKILL_MODAL_CONTENT[skill.id];
+    assert.ok(mirror, `client mirror missing entry for ${skill.id}`);
+    for (const field of ['rule', 'workedGood', 'contrastGood', 'contrastBad']) {
+      assert.strictEqual(
+        mirror[field],
+        skill[field],
+        `PUNCTUATION_SKILL_MODAL_CONTENT.${skill.id}.${field} drifted from shared/punctuation/content.js`,
+      );
+    }
+  }
+});
+
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT covers every published skill', () => {
+  // Symmetric direction: no stale client entry whose source was removed.
+  const sharedIds = new Set(PUNCTUATION_SKILLS.map((skill) => skill.id));
+  for (const id of Object.keys(PUNCTUATION_SKILL_MODAL_CONTENT)) {
+    assert.ok(
+      sharedIds.has(id),
+      `${id} is in PUNCTUATION_SKILL_MODAL_CONTENT but not in shared PUNCTUATION_SKILLS`,
+    );
+  }
+  assert.equal(
+    Object.keys(PUNCTUATION_SKILL_MODAL_CONTENT).length,
+    PUNCTUATION_SKILLS.length,
+    'client mirror count diverged from shared source',
+  );
+});
+
+test('U6 drift: PUNCTUATION_SKILL_MODAL_CONTENT entries expose only 4 pedagogy keys', () => {
+  // No other field (workedBad, phase, prereq, published, clusterId, name, id)
+  // leaks into the modal mirror. Keeps the modal payload structurally
+  // incapable of rendering an adult-surface key.
+  const allowedKeys = new Set(['rule', 'workedGood', 'contrastGood', 'contrastBad']);
+  for (const [id, entry] of Object.entries(PUNCTUATION_SKILL_MODAL_CONTENT)) {
+    for (const key of Object.keys(entry)) {
+      assert.ok(
+        allowedKeys.has(key),
+        `${id} exposes disallowed key "${key}" — modal must ship only rule + workedGood + contrastGood + contrastBad`,
+      );
+    }
+  }
+});
+
+test('U6: punctuationSkillModalContent returns null for unknown ids', () => {
+  assert.strictEqual(punctuationSkillModalContent(''), null);
+  assert.strictEqual(punctuationSkillModalContent(null), null);
+  assert.strictEqual(punctuationSkillModalContent('not_a_skill'), null);
+});
+
+test('U6: punctuationSkillModalContent returns the 4-field entry for a published skill', () => {
+  const entry = punctuationSkillModalContent('speech');
+  assert.ok(entry);
+  assert.equal(typeof entry.rule, 'string');
+  assert.equal(typeof entry.workedGood, 'string');
+  assert.equal(typeof entry.contrastGood, 'string');
+  assert.equal(typeof entry.contrastBad, 'string');
+});
+
+// ---------------------------------------------------------------------------
+// U6 — punctuationSkillHasMultiSkillItems drift against PUNCTUATION_ITEMS.
+// ---------------------------------------------------------------------------
+
+test('U6 drift: punctuationSkillHasMultiSkillItems matches every multi-skill PUNCTUATION_ITEMS entry', () => {
+  // Derive the expected set from the live shared source — every skill that
+  // appears in an item with `skillIds.length > 1`. The helper must report
+  // true for exactly that set and false for every other published skill.
+  const expected = new Set();
+  for (const item of PUNCTUATION_ITEMS) {
+    if (Array.isArray(item.skillIds) && item.skillIds.length > 1) {
+      for (const id of item.skillIds) expected.add(id);
+    }
+  }
+  // Every skill in the expected set must return true.
+  for (const id of expected) {
+    assert.strictEqual(
+      punctuationSkillHasMultiSkillItems(id),
+      true,
+      `${id} appears in a multi-skill PUNCTUATION_ITEMS entry but helper returned false`,
+    );
+  }
+  // Every published skill NOT in the expected set must return false.
+  for (const skill of PUNCTUATION_SKILLS) {
+    if (expected.has(skill.id)) continue;
+    assert.strictEqual(
+      punctuationSkillHasMultiSkillItems(skill.id),
+      false,
+      `${skill.id} has no multi-skill PUNCTUATION_ITEMS entry but helper returned true`,
+    );
+  }
+});
+
+test('U6: punctuationSkillHasMultiSkillItems returns false for non-string / empty / unknown input', () => {
+  assert.strictEqual(punctuationSkillHasMultiSkillItems(''), false);
+  assert.strictEqual(punctuationSkillHasMultiSkillItems(null), false);
+  assert.strictEqual(punctuationSkillHasMultiSkillItems(undefined), false);
+  assert.strictEqual(punctuationSkillHasMultiSkillItems('not_a_skill'), false);
 });

@@ -10,8 +10,11 @@ import {
   PUNCTUATION_CHILD_FORBIDDEN_TERMS,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
+  PUNCTUATION_SKILL_MODAL_CONTENT,
+  PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 import { PUNCTUATION_MODES } from '../src/subjects/punctuation/service-contract.js';
+import { FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS } from './helpers/forbidden-keys.mjs';
 
 function createPunctuationHarness() {
   return createAppHarness({
@@ -735,4 +738,318 @@ test('punctuation Map scene live-region count reflects a monster filter flip', (
     /role="status"[^>]*>Showing 5 of 14 skills\.<|>Showing 5 of 14 skills\.<[^>]*role="status"/,
     'live-region summary must reflect the narrowed monster filter',
   );
+});
+
+// ---------------------------------------------------------------------------
+// U6 — Punctuation Skill Detail modal. Renders on top of the Map scene when
+// `mapUi.detailOpenSkillId` is a published Punctuation skill id. Two tabs
+// (Learn / Practise) consume U5's `mapUi.detailTab` state. "Practise this"
+// dispatches `punctuation-start` with `{ mode: 'guided', guidedSkillId,
+// roundLength: '4' }` — cluster-mode is explicitly verified against (plan
+// adv-219-005 deepening against `shared/punctuation/service.js:1281-1283`).
+// ---------------------------------------------------------------------------
+
+function openSkillDetailForSpeech(harness) {
+  openMapScene(harness);
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'speech' });
+}
+
+// React escapes `"` as `&quot;` and `'` as `&#x27;` in SSR output. Tests that
+// compare raw pedagogy strings against rendered HTML must escape through the
+// same transformation so the assertion is byte-for-byte comparable. We only
+// handle the five characters React escapes; any future escape drift would
+// show up as a false-negative here and alert us to extend the helper.
+function escapeForReactSsr(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+test('punctuation Skill Detail modal renders with role=dialog, aria-modal, labelledby', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  const html = harness.render();
+
+  // Scrim carries the dialog semantics (learning #6 — SSR cannot assert focus
+  // trap, only static ARIA).
+  assert.match(html, /role="dialog"/);
+  assert.match(html, /aria-modal="true"/);
+  assert.match(html, /aria-labelledby="punctuation-skill-detail-title"/);
+  assert.match(
+    html,
+    /id="punctuation-skill-detail-title"[^>]*>Inverted commas and speech punctuation</,
+    'modal title must read the speech skill name',
+  );
+});
+
+test('punctuation Skill Detail modal renders exactly 3 pedagogy fields per skill (rule + contrastBad + preferred example)', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  const html = harness.render();
+
+  const speechContent = PUNCTUATION_SKILL_MODAL_CONTENT.speech;
+  // rule + contrastBad + workedGood must appear. contrastGood (different from
+  // workedGood for speech) must NOT appear in the Learn body. Every raw
+  // string runs through the React-SSR escape helper first so the assertion
+  // matches the actual rendered HTML byte-for-byte.
+  assert.ok(html.includes(escapeForReactSsr(speechContent.rule)), 'rule must render');
+  assert.ok(html.includes(escapeForReactSsr(speechContent.contrastBad)), 'contrastBad must render');
+  assert.ok(
+    html.includes(escapeForReactSsr(speechContent.workedGood)),
+    'workedGood must render for speech (default preferred example)',
+  );
+  // For speech, workedGood !== contrastGood, so the absence check is rigorous.
+  assert.notStrictEqual(speechContent.workedGood, speechContent.contrastGood);
+  assert.ok(
+    !html.includes(escapeForReactSsr(speechContent.contrastGood)),
+    'contrastGood must NOT render when preferred example is workedGood',
+  );
+});
+
+test('punctuation Skill Detail modal overrides to workedGood for comma_clarity (plan-specified)', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'comma_clarity' });
+  const html = harness.render();
+
+  const content = PUNCTUATION_SKILL_MODAL_CONTENT.comma_clarity;
+  // comma_clarity's `contrastGood` is byte-for-byte identical to
+  // `cc_insert_time_travellers.accepted[0]`. The override to `workedGood`
+  // ("Let's eat, Grandma.") ensures the learner-facing modal does not leak
+  // the accepted answer string (plan R13 + Key Technical Decisions).
+  assert.equal(PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE.comma_clarity, 'workedGood');
+  assert.ok(
+    html.includes(escapeForReactSsr(content.workedGood)),
+    'workedGood override must render',
+  );
+  assert.ok(
+    !html.includes(escapeForReactSsr(content.contrastGood)),
+    'contrastGood must NOT render when override is workedGood (comma_clarity)',
+  );
+});
+
+test('punctuation Skill Detail modal "Practise this" dispatches Guided + guidedSkillId (plan R3)', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  // Flip to the Practise tab so the "Practise this" button appears.
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  const html = harness.render();
+  assert.match(
+    html,
+    /<button[^>]*data-punctuation-start-skill[^>]*data-skill-id="speech"[^>]*>Practise this<\/button>/,
+    '"Practise this" button must mark the skill id',
+  );
+
+  // Simulate the button's dispatch chain: close modal, then start.
+  harness.dispatch('punctuation-skill-detail-close');
+  harness.dispatch('punctuation-start', {
+    mode: 'guided',
+    guidedSkillId: 'speech',
+    roundLength: '4',
+  });
+
+  // Paired state-level assertion: catches the cluster-mode silent-drop bug.
+  // If a future refactor reverts to `{ mode: 'speech', skillId: 'speech' }`,
+  // `prefs.mode !== 'guided'` would null the guidedSkillId in the service.
+  const state = harness.store.getState().subjectUi.punctuation;
+  assert.strictEqual(state.session.mode, 'guided', 'session must land in guided mode');
+  assert.strictEqual(
+    state.session.guidedSkillId,
+    'speech',
+    'session must pin guidedSkillId to the tapped skill',
+  );
+});
+
+test('punctuation Skill Detail modal "Practise this" pins the correct skill in a multi-skill cluster (apostrophe)', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  // apostrophe cluster contains BOTH apostrophe_contractions AND
+  // apostrophe_possession. The old cluster-mode dispatch would silently pick
+  // either one; Guided-focus must pin the exact skill the learner tapped.
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'apostrophe_contractions' });
+  harness.dispatch('punctuation-skill-detail-close');
+  harness.dispatch('punctuation-start', {
+    mode: 'guided',
+    guidedSkillId: 'apostrophe_contractions',
+    roundLength: '4',
+  });
+
+  const state = harness.store.getState().subjectUi.punctuation;
+  assert.strictEqual(state.session.mode, 'guided');
+  assert.strictEqual(
+    state.session.guidedSkillId,
+    'apostrophe_contractions',
+    'multi-skill cluster must pin the tapped skill, not the sibling',
+  );
+  assert.notStrictEqual(
+    state.session.guidedSkillId,
+    'apostrophe_possession',
+    'sibling skill must not surface via cluster-mode drift',
+  );
+});
+
+test('punctuation Skill Detail modal regression-locks skill-detail-open state delta (skillId: speech)', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'speech' });
+  // Paired state assertion — learning #7: a handler that silently drops the
+  // dispatch would show nothing in the HTML AND nothing in state; this check
+  // fails loudly if either slips.
+  assert.strictEqual(
+    harness.store.getState().subjectUi.punctuation.mapUi.detailOpenSkillId,
+    'speech',
+  );
+});
+
+test('punctuation Skill Detail modal close button dispatches skill-detail-close', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  const openHtml = harness.render();
+  // The close button is authored in the modal with this data-action.
+  assert.match(
+    openHtml,
+    /<button[^>]*data-action="punctuation-skill-detail-close"[^>]*aria-label="Close skill detail">/,
+  );
+
+  harness.dispatch('punctuation-skill-detail-close');
+  assert.strictEqual(
+    harness.store.getState().subjectUi.punctuation.mapUi.detailOpenSkillId,
+    null,
+  );
+});
+
+test('punctuation Skill Detail modal tab switch to Practise mutates detailTab state', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  assert.strictEqual(
+    harness.store.getState().subjectUi.punctuation.mapUi.detailTab,
+    'practise',
+  );
+  // Flip back — the regression-lock check for the learn default.
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'learn' });
+  assert.strictEqual(
+    harness.store.getState().subjectUi.punctuation.mapUi.detailTab,
+    'learn',
+  );
+});
+
+test('punctuation Skill Detail modal rejects invalid tab value (handler regression-lock)', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  // Seed a known state so we can verify the invalid dispatch is a no-op.
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  assert.strictEqual(
+    harness.store.getState().subjectUi.punctuation.mapUi.detailTab,
+    'practise',
+  );
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'garbage' });
+  // Invalid payload: handler returns false, the store is untouched.
+  assert.strictEqual(
+    harness.store.getState().subjectUi.punctuation.mapUi.detailTab,
+    'practise',
+  );
+});
+
+test('punctuation Skill Detail modal SSR contains none of the 12 FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  const html = harness.render();
+  // Render both tabs so we cover the Practise body too.
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  const practiseHtml = harness.render();
+  const combinedHtml = `${html}\n${practiseHtml}`;
+
+  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+    // Word-boundary match so we don't false-positive on substrings like
+    // "generator" appearing inside "generational" (no such copy in the modal,
+    // but the match is still rigorous against future drift).
+    const pattern = new RegExp(`\\b${key}\\b`);
+    assert.ok(
+      !pattern.test(combinedHtml),
+      `forbidden read-model key "${key}" must not appear in Skill Detail modal HTML`,
+    );
+  }
+});
+
+test('punctuation Skill Detail modal SSR contains no PUNCTUATION_CHILD_FORBIDDEN_TERMS', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  const learnHtml = harness.render();
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  const practiseHtml = harness.render();
+
+  // Exclude the Map scene chrome from the scan — the Modal's own HTML is
+  // sufficient for this test's intent. We slice from the modal root.
+  const extractModal = (html) => {
+    const start = html.indexOf('<div class="punctuation-skill-modal-scrim"');
+    return start === -1 ? '' : html.slice(start);
+  };
+  const learnLeaks = forbiddenTermsInHtml(extractModal(learnHtml));
+  const practiseLeaks = forbiddenTermsInHtml(extractModal(practiseHtml));
+  assert.deepEqual(learnLeaks, [], `forbidden terms leaked in Learn tab: ${learnLeaks.join(', ')}`);
+  assert.deepEqual(practiseLeaks, [], `forbidden terms leaked in Practise tab: ${practiseLeaks.join(', ')}`);
+});
+
+test('punctuation Skill Detail modal "Practise this" disables under degraded availability (R11)', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  harness.store.updateSubjectUi('punctuation', {
+    availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' },
+  });
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  const html = harness.render();
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-punctuation-start-skill[^>]*>Practise this<\/button>/,
+    '"Practise this" must be disabled under degraded availability',
+  );
+});
+
+test('punctuation Skill Detail modal renders multi-skill footnote for Speech (paragraph caveat)', () => {
+  const harness = createPunctuationHarness();
+  openSkillDetailForSpeech(harness);
+  // speech appears in sp_fa_transfer_at_last_speech + pg_fronted_speech +
+  // pg_parenthesis_speech — i.e. PUNCTUATION_ITEMS entries with
+  // `skillIds.length > 1`. The caveat footnote must render on Practise.
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  const html = harness.render();
+  assert.match(
+    html,
+    /Some practice questions may also include other punctuation skills\./,
+    'Speech must surface the multi-skill caveat footnote',
+  );
+  assert.match(html, /data-punctuation-skill-modal-multi-skill-note="true"/);
+});
+
+test('punctuation Skill Detail modal does NOT render multi-skill footnote for a single-skill skill (hyphen)', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'hyphen' });
+  harness.dispatch('punctuation-skill-detail-tab', { value: 'practise' });
+  const html = harness.render();
+  // hyphen only appears in single-skill PUNCTUATION_ITEMS entries — no
+  // caveat footnote in the HTML.
+  assert.doesNotMatch(
+    html,
+    /Some practice questions may also include other punctuation skills\./,
+    'hyphen must NOT surface the multi-skill caveat footnote',
+  );
+});
+
+test('punctuation Skill Detail modal only renders when mapUi.detailOpenSkillId is set', () => {
+  const harness = createPunctuationHarness();
+  openMapScene(harness);
+  const closedHtml = harness.render();
+  // No modal in the Map scene default render.
+  assert.doesNotMatch(closedHtml, /role="dialog"/);
+  assert.doesNotMatch(closedHtml, /data-punctuation-skill-modal/);
+
+  harness.dispatch('punctuation-skill-detail-open', { skillId: 'speech' });
+  const openHtml = harness.render();
+  assert.match(openHtml, /role="dialog"/);
+  assert.match(openHtml, /data-punctuation-skill-modal/);
 });
