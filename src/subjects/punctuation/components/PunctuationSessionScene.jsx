@@ -44,6 +44,7 @@
 
 import React, { useState } from 'react';
 
+import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   bellstormSceneForPhase,
   composeIsDisabled,
@@ -308,6 +309,13 @@ function GpsDelayedFeedbackChips({ session }) {
 // --- Active-item branch ----------------------------------------------------
 
 function ActiveItemBranch({ ui, actions }) {
+  // SH2-U1: JSX-layer guard for Skip. The primary Submit is inside
+  // `ChoiceItem` / `TextItem` sub-components and already uses the
+  // shared `composeIsDisabled` adapter-state gate; the hook is
+  // belt-and-braces on the non-destructive Skip only. End-round-early
+  // is treated as destructive per plan (see SH2-U1 "Do NOT touch
+  // destructive actions" note) and is not wrapped.
+  const submitLock = useSubmitLock();
   const session = ui.session || {};
   const item = session.currentItem || {};
   const isGps = session.mode === 'gps';
@@ -403,9 +411,9 @@ function ActiveItemBranch({ ui, actions }) {
         <button
           className="btn ghost"
           type="button"
-          disabled={isDisabled}
+          disabled={isDisabled || submitLock.locked}
           data-punctuation-skip
-          onClick={() => actions.dispatch('punctuation-skip')}
+          onClick={() => submitLock.run(async () => actions.dispatch('punctuation-skip'))}
         >
           Skip
         </button>
@@ -432,6 +440,13 @@ function ActiveItemBranch({ ui, actions }) {
 //   - `<details>` → "Show more" revealing up to 2 child-labelled facet chips
 //     and any `misconceptionTags` that pass `punctuationChildMisconceptionLabel`.
 function FeedbackBranch({ ui, actions }) {
+  // SH2-U1: JSX-layer guard for Continue (minimal GPS + normal branches).
+  // The hook instance is shared across the two Continue buttons because
+  // only one branch renders at a time — a learner cannot tap a GPS
+  // Continue and a post-feedback Continue in the same round.
+  // End-round-early ("Finish now") is treated as destructive per plan
+  // and is not wrapped.
+  const submitLock = useSubmitLock();
   const feedback = ui.feedback || {};
   const session = ui.session || {};
   const scene = bellstormSceneForPhase('feedback');
@@ -481,9 +496,9 @@ function FeedbackBranch({ ui, actions }) {
           <button
             className="btn primary"
             type="button"
-            disabled={isDisabled}
+            disabled={isDisabled || submitLock.locked}
             data-punctuation-continue
-            onClick={() => actions.dispatch('punctuation-continue')}
+            onClick={() => submitLock.run(async () => actions.dispatch('punctuation-continue'))}
           >
             Continue
           </button>
@@ -587,9 +602,9 @@ function FeedbackBranch({ ui, actions }) {
         <button
           className="btn primary"
           type="button"
-          disabled={isDisabled}
+          disabled={isDisabled || submitLock.locked}
           data-punctuation-continue
-          onClick={() => actions.dispatch('punctuation-continue')}
+          onClick={() => submitLock.run(async () => actions.dispatch('punctuation-continue'))}
         >
           Continue
         </button>

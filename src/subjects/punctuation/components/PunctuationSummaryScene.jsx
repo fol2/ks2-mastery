@@ -36,6 +36,7 @@
 
 import React from 'react';
 
+import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   bellstormSceneForPhase,
@@ -289,7 +290,13 @@ function GpsReviewBlock({ gps }) {
 // --- Next-action buttons ---------------------------------------------------
 
 function NextActionRow({ ui, actions }) {
-  const isDisabled = composeIsDisabled(ui);
+  // SH2-U1: JSX-layer guard for all four non-destructive next-action
+  // buttons. Sharing one lock means a double-tap across the row (an
+  // unlikely but possible "thumb drift" pattern on narrow mobile
+  // viewports) early-returns the second dispatch — which is the right
+  // UX outcome since any of these actions unmounts the summary.
+  const submitLock = useSubmitLock();
+  const isDisabled = composeIsDisabled(ui) || submitLock.locked;
   return (
     <div className="actions punctuation-summary-actions" style={{ marginTop: 16 }}>
       <button
@@ -298,7 +305,7 @@ function NextActionRow({ ui, actions }) {
         disabled={isDisabled}
         data-action="punctuation-start"
         data-value="weak"
-        onClick={() => actions.dispatch('punctuation-start', { mode: 'weak' })}
+        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-start', { mode: 'weak' }))}
       >
         Practise wobbly spots
       </button>
@@ -307,7 +314,7 @@ function NextActionRow({ ui, actions }) {
         type="button"
         disabled={isDisabled}
         data-action="punctuation-open-map"
-        onClick={() => actions.dispatch('punctuation-open-map')}
+        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-open-map'))}
       >
         Open Punctuation Map
       </button>
@@ -317,7 +324,7 @@ function NextActionRow({ ui, actions }) {
         disabled={isDisabled}
         data-action="punctuation-start-again"
         data-punctuation-start-again
-        onClick={() => actions.dispatch('punctuation-start-again')}
+        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-start-again'))}
       >
         Start again
       </button>
@@ -326,7 +333,7 @@ function NextActionRow({ ui, actions }) {
         type="button"
         disabled={isDisabled}
         data-action="punctuation-back"
-        onClick={() => actions.dispatch('punctuation-back')}
+        onClick={() => submitLock.run(async () => actions.dispatch('punctuation-back'))}
       >
         Back to dashboard
       </button>
