@@ -89,9 +89,9 @@ if (process.env.NODE_ENV !== 'production') {
     'staleCommandSmallRefresh',
     'staleCommandFullBootstrapFallback',
     // U8 round 1 adv-u8-r1-002: coordination-bypass signal when the
-    // lease `localStorage.setItem` throws (quota exhausted, managed-
-    // profile Chromebook with site storage disabled). Classroom-scale
-    // metric for the U9 circuit breaker.
+    // bootstrap-lease write to browser local storage throws (quota
+    // exhausted, managed-profile Chromebook with site storage
+    // disabled). Classroom-scale metric for the U9 circuit breaker.
     'bootstrapCoordinationStorageUnavailable',
   ];
   const existing = globalThis.__ks2_capacityMeta__;
