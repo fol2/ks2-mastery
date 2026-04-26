@@ -23,6 +23,7 @@ import {
 import { SUBJECTS } from '../src/platform/core/subject-registry.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { flushMicrotasks } from './helpers/microtasks.js';
 
 function typedFormData(value) {
   const formData = new FormData();
@@ -482,7 +483,7 @@ test('controller retry preserves the current route and clears runtime boundaries
   });
 
   controller.dispatch('persistence-retry');
-  await Promise.resolve();
+  await flushMicrotasks();
 
   assert.equal(controller.store.getState().route.screen, 'subject');
   assert.equal(controller.runtimeBoundary.list().length, 0);
