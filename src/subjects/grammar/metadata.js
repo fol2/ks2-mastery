@@ -252,9 +252,13 @@ function statsFromConcepts(concepts) {
       : 'new';
     counts[status] += 1;
   }
+  // Phase 4 U1: client mirror of the Worker's `contentStats` emit. The key is
+  // renamed from the forbidden `templates` so the universal forbidden-key
+  // floor is honoured end-to-end; see worker/src/subjects/grammar/read-models.js
+  // `statsFromConcepts` for the authoritative shape.
   return {
     concepts: counts,
-    templates: {
+    contentStats: {
       total: 51,
       selectedResponse: 31,
       constructedResponse: 20,
@@ -592,14 +596,27 @@ function normaliseAiEnrichment(rawValue) {
 export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
   const raw = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
   const concepts = mergeConcepts(raw.analytics?.concepts);
-  const stats = raw.stats && typeof raw.stats === 'object' && !Array.isArray(raw.stats)
-    ? {
-      ...statsFromConcepts(concepts),
-      ...raw.stats,
-      concepts: { ...statsFromConcepts(concepts).concepts, ...(raw.stats.concepts || {}) },
-      templates: { ...statsFromConcepts(concepts).templates, ...(raw.stats.templates || {}) },
-    }
-    : statsFromConcepts(concepts);
+  // Phase 4 U1: explicit allow-list picker. The previous `{ ...statsFromConcepts(), ...raw.stats }`
+  // spread silently re-introduced any forbidden keys the Worker might still
+  // emit (historically `templates`) by merging them back onto the client
+  // read-model. The allow-list below keeps only the two keys the UI actually
+  // consumes (`stats.concepts` and `stats.contentStats`); `raw.stats` itself
+  // is never spread, so legacy or mis-shaped Worker payloads cannot leak
+  // forbidden keys through this path.
+  const fallbackStats = statsFromConcepts(concepts);
+  const rawStats = raw.stats && typeof raw.stats === 'object' && !Array.isArray(raw.stats)
+    ? raw.stats
+    : {};
+  const rawStatsConcepts = rawStats.concepts && typeof rawStats.concepts === 'object' && !Array.isArray(rawStats.concepts)
+    ? rawStats.concepts
+    : {};
+  const rawStatsContentStats = rawStats.contentStats && typeof rawStats.contentStats === 'object' && !Array.isArray(rawStats.contentStats)
+    ? rawStats.contentStats
+    : {};
+  const stats = {
+    concepts: { ...fallbackStats.concepts, ...rawStatsConcepts },
+    contentStats: { ...fallbackStats.contentStats, ...rawStatsContentStats },
+  };
   // Phase 3 U1 widens the whitelist to accept `'bank'` and `'transfer'` so
   // that the U1 dashboard can dispatch `grammar-open-concept-bank` /
   // `grammar-open-transfer` before U2 + U6b land. The downstream scene files

@@ -522,9 +522,14 @@ function statsFromConcepts(concepts) {
   for (const concept of concepts) {
     counts[concept.status] = (counts[concept.status] || 0) + 1;
   }
+  // Phase 4 U1: internal template counts are surfaced under `contentStats` so
+  // the client read-model contract never exposes a `templates` key. The
+  // forbidden-key universal floor bans `templates` on every authenticated
+  // response surface; renaming the emit here is the Worker-side half of the
+  // two-layer fix (the client normaliser's allow-list picker is the other).
   return {
     concepts: counts,
-    templates: {
+    contentStats: {
       total: GRAMMAR_TEMPLATE_METADATA.length,
       selectedResponse: GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length,
       constructedResponse: GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length,
