@@ -1,10 +1,11 @@
 ---
 title: "feat: Post-Mega Spelling P1.5 — Guardian Hardening + Boss Dictation MVP"
 type: feat
-status: active
+status: completed
 date: 2026-04-25
 origin: docs/plans/james/post-mega-spelling/post-mega-spelling-p2.md
 deepened: 2026-04-25
+completed: 2026-04-26
 ---
 
 # feat: Post-Mega Spelling P1.5 — Guardian Hardening + Boss Dictation MVP
