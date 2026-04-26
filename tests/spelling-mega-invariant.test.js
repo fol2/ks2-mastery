@@ -1,6 +1,7 @@
 // Tests for U8b — Mega-never-revoked composite invariant property test.
 //
 // Plan: docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md (U8b).
+// Plan: docs/plans/2026-04-26-006-feat-post-mega-spelling-p2-visibility-pattern-foundation-plan.md (U8).
 //
 // The single top-level assertion this file exists to prove:
 // **No code path touching `progress.stage` demotes a Mega word (stage >= 4).**
@@ -16,10 +17,20 @@
 // "reset" is explicitly NOT in the action set (R11).
 //
 // Two-layer structure:
-//  1. Canonical CI suite (this file): seed 42, 200 random sequences (length
-//     5..15), plus six named regression shapes. Runs on every PR.
-//  2. Nightly variable-seed probe: documented as a follow-up in the PR body
-//     (the repo has no existing .github/workflows/ directory to extend).
+//  1. Canonical CI suite (this file): seed 42 (or PROPERTY_SEED env), 200
+//     random sequences (length 5..15), plus six named regression shapes.
+//     Runs on every PR with fixed seed 42 for fast deterministic regression
+//     coverage.
+//  2. Nightly variable-seed probe (.github/workflows/mega-invariant-nightly.yml):
+//     runs this file with a random `PROPERTY_SEED` every night; on failure
+//     opens a dedup'd GitHub Issue via `gh issue list/create/comment`. The
+//     seed is logged on any failure so maintainers can reproduce locally
+//     with `PROPERTY_SEED=<seed> npm run test:mega-invariant:nightly`.
+//
+// Promoted counterexamples: when the nightly probe finds a failure, the
+// maintainer copies the shrunk counterexample into the PROMOTED_EXAMPLES
+// array below. Those examples run FIRST in the canonical suite so the
+// regression is caught in <1s on every PR thereafter.
 //
 // After every action we assert:
 //   - Object.values(progressMap).every(p => p.stage >= 4)
@@ -431,20 +442,115 @@ function randomSequence(random, length, pool = ACTION_SET) {
   return out;
 }
 
+// -----------------------------------------------------------------------------
+// Seed resolution — the canonical suite uses seed 42 by default so CI runs
+// deterministically and fast. The nightly workflow sets `PROPERTY_SEED` to a
+// random integer so a wider slice of the state space is explored every
+// night. When PROPERTY_SEED is set, the seed is logged on first test entry
+// so maintainers can copy-paste the seed into a local repro command.
+// -----------------------------------------------------------------------------
+
+const CANONICAL_SEED = 42;
+const PROPERTY_SEED_RAW = process.env.PROPERTY_SEED;
+const PROPERTY_SEED = PROPERTY_SEED_RAW !== undefined && PROPERTY_SEED_RAW !== ''
+  ? Number(PROPERTY_SEED_RAW)
+  : CANONICAL_SEED;
+// Hard fail on NaN — `Number('fourty-two')` silently becomes NaN, which then
+// coerces to 0 under `>>> 0` in makeSeededRandom. Catch it at module load so
+// a typo in PROPERTY_SEED surfaces immediately instead of running as seed 0.
+if (PROPERTY_SEED_RAW !== undefined && PROPERTY_SEED_RAW !== '' && !Number.isFinite(PROPERTY_SEED)) {
+  throw new Error(`PROPERTY_SEED must be a finite integer, got raw value: ${JSON.stringify(PROPERTY_SEED_RAW)}`);
+}
+if (PROPERTY_SEED_RAW !== undefined && PROPERTY_SEED_RAW !== '' && Number.isFinite(PROPERTY_SEED)) {
+  // Log on test entry so the seed is always captured in CI output even if
+  // the run passes. The nightly workflow's failure path greps this line too.
+  console.log(`[mega-invariant] PROPERTY_SEED=${PROPERTY_SEED}`);
+}
+
+// -----------------------------------------------------------------------------
+// Promoted counterexamples (Hall of Fame) — when the nightly variable-seed
+// probe finds a failing sequence, the maintainer shrinks it by hand and
+// pastes the minimal reproducer here. Promoted examples run FIRST so the
+// regression is caught in <1s on every PR, before the 200-sequence random
+// sweep even starts.
+//
+// Shape:
+//   { label: string, seed: number, actions: string[] }
+//
+// Empty by default — new entries accumulate as the nightly probe surfaces
+// real counterexamples.
+// -----------------------------------------------------------------------------
+
+const PROMOTED_EXAMPLES = Object.freeze([
+  // Example (kept as a template, not an actual regression):
+  // {
+  //   label: 'nightly-2026-05-01-boss-wrong-then-storage-failure',
+  //   seed: 1527422598337,
+  //   actions: ['boss-wrong', 'storage-quota-failure', 'guardian-dontknow'],
+  // },
+]);
+
+// Module-load-time validation of PROMOTED_EXAMPLES — if a typo lands in a
+// promoted counterexample (e.g. 'guardian-wrongx'), every PR and every nightly
+// would cascade-block. Validate against ACTION_SET up front with a clear error
+// so the root cause is obvious in the failure output.
+for (const example of PROMOTED_EXAMPLES) {
+  for (const action of example.actions) {
+    if (!ACTION_SET.includes(action)) {
+      throw new Error(
+        `[PROMOTED_EXAMPLES] Unknown action "${action}" in example "${example.label}" — check shrunk counterexample for typos (valid actions: ${ACTION_SET.join(', ')})`,
+      );
+    }
+  }
+}
+
 // =============================================================================
-// 1. Canonical CI suite — 200 seeded random sequences under seed 42
+// 1. Canonical CI suite — PROMOTED_EXAMPLES first, then 200 seeded random
+// sequences. When PROPERTY_SEED is set the whole sweep re-runs under that
+// seed (nightly variable-seed probe). Default is seed 42 for fast regression.
 // =============================================================================
 
-test('U8b canonical: 200 seeded random sequences (seed 42, length 5..15) hold Mega-never-revoked across every action', () => {
-  // Use a dedicated sequence-selection RNG seeded from the same seed the plan
-  // names (42). The service's own random remains independently seeded per
-  // harness so selection logic stays deterministic too.
-  const sequenceRng = makeSeededRandom(42);
-  for (let seqIndex = 0; seqIndex < 200; seqIndex += 1) {
+if (PROMOTED_EXAMPLES.length > 0) {
+  test('U8b canonical: promoted counterexamples from nightly variable-seed probe hold Mega-never-revoked', () => {
+    try {
+      for (const example of PROMOTED_EXAMPLES) {
+        const harness = makeHarness({ seed: example.seed, learnerId: `learner-promoted-${example.label}` });
+        runSequence(harness, example.actions, { label: `promoted-${example.label}` });
+      }
+    } catch (err) {
+      // Distinct prefix from [mega-invariant] so the workflow Issue body
+      // accurately attributes the failure to the promoted-examples slot.
+      const message = err && err.message ? err.message : String(err);
+      throw new Error(`[promoted-examples] FAILED :: ${message}`);
+    }
+  });
+}
+
+test(`U8b canonical: 200 seeded random sequences (seed ${PROPERTY_SEED}, length 5..15) hold Mega-never-revoked across every action`, (t) => {
+  // Use a dedicated sequence-selection RNG seeded from PROPERTY_SEED (default
+  // 42). The service's own random remains independently seeded per harness
+  // so selection logic stays deterministic too. When the nightly probe
+  // shadows PROPERTY_SEED with a random value, this same test explores a
+  // new slice of the action-sequence space; any failure message is
+  // prefixed with the seed so the maintainer can reproduce it locally.
+  const sequenceRng = makeSeededRandom(PROPERTY_SEED);
+  for (let i = 0; i < 200; i += 1) {
     const length = 5 + Math.floor(sequenceRng() * 11); // 5..15
     const actions = randomSequence(sequenceRng, length);
-    const harness = makeHarness({ seed: 42 + seqIndex, learnerId: `learner-seq-${seqIndex}` });
-    runSequence(harness, actions, { label: `canonical-seq-${seqIndex}` });
+    const harness = makeHarness({ seed: PROPERTY_SEED + i, learnerId: `learner-seq-${i}` });
+    try {
+      runSequence(harness, actions, { label: `canonical-seq-${i}` });
+    } catch (error) {
+      // Narrow the catch: only re-label AssertionError with the seed + seq
+      // index so the nightly workflow's failure path can extract them.
+      // Other errors (TypeError, RangeError, etc.) re-throw as-is so the
+      // workflow Issue body shows the actual root-cause class instead of
+      // misattributing it as an invariant violation.
+      if (error instanceof assert.AssertionError) {
+        throw new Error(`[mega-invariant] FAILED seed=${PROPERTY_SEED} seq=${i} :: ${error.message}`);
+      }
+      throw error;
+    }
   }
 });
 

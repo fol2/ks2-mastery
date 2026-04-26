@@ -47,6 +47,7 @@
     "pretest": "node ./scripts/preflight-test.mjs",
     "test": "node ./scripts/run-node-tests.mjs",
     "test:migration:browser": "KS2_BROWSER_SMOKE=1 node --test tests/browser-react-migration-smoke.test.js",
+    "test:mega-invariant:nightly": "node --test tests/spelling-mega-invariant.test.js",
     "test:playwright": "npx playwright test",
     "verify": "npm test && npm run check && npm run capacity:verify-evidence"
   },
