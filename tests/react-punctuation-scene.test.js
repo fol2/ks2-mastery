@@ -3094,3 +3094,114 @@ test('punctuation remote dispatch (adv-234-006 MEDIUM): Worker save-prefs failur
   // command failed — factory keeps parity with the previous behaviour.
   assert.ok(subjectErrors.length >= 1, 'save-prefs failure must surface a subject error');
 });
+
+// ---------------------------------------------------------------------------
+// Phase 3 U10 — cluster-mode behavioural goldens (R16).
+//
+// Each of the six cluster focus modes (endmarks / apostrophe / speech /
+// comma_flow / boundary / structure) has a paired state-level assertion
+// that a direct `punctuation-start` dispatch:
+//
+//   1. Transitions phase setup → active-item (paired HTML-agnostic state
+//      assertion that catches the silent-no-op failure mode — learning
+//      #7).
+//   2. Lands session.mode on the requested cluster id (proves the mode
+//      string survived the dispatch unaltered).
+//   3. Lands session.currentItem.skillIds on a skill that belongs to the
+//      cluster's canonical cluster id (proves the scheduler honoured
+//      the cluster constraint — not a generic smart/weak fallback).
+//
+// Plan Key Technical Decision (line 877): The Modal's "Practise this"
+// uses Guided mode + guidedSkillId — NOT cluster mode — because cluster
+// mode would silently drop `skillId` for multi-skill clusters. The
+// cluster modes therefore remain reachable only via direct
+// `punctuation-start` dispatch, which is exactly what the Phase 2 U9
+// matrix preserved. This U10 block locks that behavioural contract
+// against any future refactor that might drop a cluster mode from the
+// scheduler.
+//
+// SSR blind spots (learning #6): focus, pointer-capture, IME, and
+// scroll are not observable here — every assertion is a paired
+// state-level check.
+// ---------------------------------------------------------------------------
+
+const PUNCTUATION_CLUSTER_MODE_MATRIX = Object.freeze([
+  Object.freeze({ mode: 'endmarks', skillIdsSubset: ['sentence_endings'] }),
+  Object.freeze({ mode: 'apostrophe', skillIdsSubset: ['apostrophe_contractions', 'apostrophe_possession'] }),
+  Object.freeze({ mode: 'speech', skillIdsSubset: ['speech'] }),
+  Object.freeze({ mode: 'comma_flow', skillIdsSubset: ['list_commas', 'fronted_adverbial', 'comma_clarity'] }),
+  Object.freeze({ mode: 'boundary', skillIdsSubset: ['semicolon', 'dash_clause', 'hyphen'] }),
+  Object.freeze({ mode: 'structure', skillIdsSubset: ['parenthesis', 'colon_list', 'semicolon_list', 'bullet_points'] }),
+]);
+
+test('U10 cluster matrix: frozen list covers the six cluster focus modes exactly', () => {
+  // A drifted matrix that dropped or added a cluster mode would silently
+  // shrink or inflate the behavioural coverage. Pin the shape before
+  // iterating — the same guard the Grammar P3 U10 precedent uses.
+  assert.equal(Object.isFrozen(PUNCTUATION_CLUSTER_MODE_MATRIX), true);
+  assert.equal(PUNCTUATION_CLUSTER_MODE_MATRIX.length, 6);
+  assert.deepEqual(
+    PUNCTUATION_CLUSTER_MODE_MATRIX.map((entry) => entry.mode),
+    ['endmarks', 'apostrophe', 'speech', 'comma_flow', 'boundary', 'structure'],
+  );
+  // Every cluster mode in the matrix is present in the frozen
+  // PUNCTUATION_MODES enum. A cluster mode that slipped off the enum
+  // but stayed in the matrix would land a session that rounds back to
+  // `'smart'` at the service boundary — which is exactly the silent-
+  // no-op failure mode the paired assertions below catch.
+  for (const entry of PUNCTUATION_CLUSTER_MODE_MATRIX) {
+    assert.ok(
+      PUNCTUATION_MODES.includes(entry.mode),
+      `cluster mode ${entry.mode} must be present in PUNCTUATION_MODES`,
+    );
+  }
+});
+
+for (const entry of PUNCTUATION_CLUSTER_MODE_MATRIX) {
+  test(`U10 cluster ${entry.mode}: punctuation-start lands a session with the matching cluster and a cluster-member skill`, () => {
+    const harness = createPunctuationHarness();
+    harness.dispatch('open-subject', { subjectId: 'punctuation' });
+    // Seed the setup phase explicitly — this is the entry point the
+    // Phase 2 U9 matrix exercises and the most learner-realistic state
+    // for a cluster-start dispatch. Direct dispatch (NOT via the
+    // Skill Detail modal, which uses Guided mode + skill id per plan
+    // Key Technical Decision line 877).
+    harness.dispatch('punctuation-start', {
+      mode: entry.mode,
+      roundLength: '1',
+    });
+
+    const state = harness.store.getState().subjectUi.punctuation;
+
+    // (1) State-level phase transition. A silent-no-op that dropped the
+    // dispatch would leave phase on `'setup'`; this catches it.
+    assert.equal(
+      state.phase,
+      'active-item',
+      `punctuation-start with mode=${entry.mode} must transition phase to active-item`,
+    );
+
+    // (2) session.mode honours the dispatched cluster id. If the
+    // service ever rewrites cluster mode to `'smart'` (regression
+    // risk the plan flags), this fails loudly.
+    assert.equal(
+      state.session?.mode,
+      entry.mode,
+      `session.mode must equal the dispatched cluster mode for ${entry.mode}`,
+    );
+
+    // (3) The current item belongs to a skill that maps to the cluster.
+    // `skillIds[0]` is the canonical skill for per-item routing (the
+    // multi-skill clusters carry additional ids on paragraph items).
+    const currentSkillId = state.session?.currentItem?.skillIds?.[0];
+    assert.ok(
+      typeof currentSkillId === 'string' && currentSkillId,
+      `session must carry a concrete currentItem.skillIds[0] for mode=${entry.mode}`,
+    );
+    assert.ok(
+      entry.skillIdsSubset.includes(currentSkillId),
+      `session.currentItem.skillIds[0] (${currentSkillId}) must belong to the ${entry.mode} cluster ` +
+      `(expected one of: ${entry.skillIdsSubset.join(', ')})`,
+    );
+  });
+}

@@ -13,9 +13,11 @@
 // them here once and every child surface inherits the guard through U10's
 // fixture-driven sweep.
 //
-// Parity guard: `composeIsDisabled` deliberately lives here and nowhere else.
-// Grammar and Spelling each keep their own copy. Any shared extraction must
-// prove Spelling byte-for-byte parity in the PR (AGENTS.md:14).
+// Parity guard: `composeIsDisabled` deliberately lives here and nowhere else
+// in Punctuation's surface. Grammar and Spelling do NOT carry an equivalent
+// export today — their scenes inline the same pending/availability gate. Any
+// future shared extraction must prove Spelling byte-for-byte parity in the PR
+// (AGENTS.md:14).
 
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { MONSTERS_BY_SUBJECT } from '../../../platform/game/monsters.js';
