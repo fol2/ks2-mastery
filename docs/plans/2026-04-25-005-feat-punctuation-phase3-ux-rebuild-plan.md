@@ -1,7 +1,7 @@
 ---
 title: "feat: Punctuation Phase 3 UX/UI rebuild (child dashboard, Punctuation Map, scene split, per-item-type input, AI context-pack gating)"
 type: feat
-status: active
+status: completed
 date: 2026-04-25
 deepened: 2026-04-25
 origin: docs/plans/james/punctuation/punctuation-p3.md
