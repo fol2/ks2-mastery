@@ -92,3 +92,31 @@ export const FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS = Object.freeze([
   'response',
   'typed',
 ]);
+
+// Spelling read-model surface. Mirrors the disjoint keys used by punctuation
+// so spelling's post-submit evidence path cannot accidentally expose the raw
+// word, target spelling, rubric, or hidden-queue contents. Overlaps with the
+// universal floor via `accepted` / `answers`; the remaining entries are
+// spelling-specific rename-class risks (e.g. a future refactor renaming
+// `currentCard.word` to `canonical` or `target` must still trip this oracle).
+//
+// `model` is intentionally omitted from this set — it appears legitimately in
+// subject read models (e.g. `subjectReadModel.session`) and a blanket ban
+// would false-positive. The smoke instead asserts the raw-word and raw-
+// sentence positions directly via assertSpellingStartModelShape.
+export const FORBIDDEN_SPELLING_READ_MODEL_KEYS = Object.freeze([
+  ...FORBIDDEN_KEYS_EVERYWHERE,
+  'canonical',
+  'target',
+  'spelling',
+  'correctAnswer',
+  'expectedAnswer',
+  'expected',
+  'typed',
+  'rawResponse',
+  'answer',
+  'validator',
+  'rubric',
+  'hiddenQueue',
+  'queueItemIds',
+]);
