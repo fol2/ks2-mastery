@@ -1418,3 +1418,156 @@ test('U3 remote-sync: legacy non-Guardian drill-single does NOT set practiceOnly
   assert.equal(sent[0].payload.mode, 'single');
   assert.notEqual(sent[0].payload.practiceOnly, true, 'non-Guardian remote drill-single must keep legacy behaviour (practiceOnly !== true)');
 });
+
+// -----------------------------------------------------------------------------
+// U10 review blockers 2 + 3 — remote-sync Boss-shortcut parity.
+//
+// Blocker 2: the remote-sync `spelling-shortcut-start` handler used to
+// unconditionally send `length: prefs.roundLength` to the Worker, ignoring
+// `data.length`. That made Alt+5 and the Begin button diverge under
+// remote-sync: the Begin button dispatches `{ mode: 'boss', length: 10 }`,
+// Alt+5 now dispatches the same — both MUST arrive at the Worker as
+// `length: 10`, not `prefs.roundLength`.
+//
+// Blocker 3: the remote-sync handler used to run `save-prefs` BEFORE
+// `start-session`. If `start-session` failed, `prefs.mode` stayed
+// persisted as 'boss' — leaving the dashboard pointing at a mode the
+// learner never actually landed in. The fix mirrors module.js U9: run
+// `start-session` first, `save-prefs` only on success, and rollback the
+// optimistic patch if the start rejects.
+// -----------------------------------------------------------------------------
+
+function createBossShortcutHarness({
+  startResponse = { subjectReadModel: { phase: 'session' } },
+  startRejection = null,
+  saveResponse = { subjectReadModel: { phase: 'session' } },
+  prefs = { mode: 'smart', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+} = {}) {
+  const { getState, store } = createStoreHarness({
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        prefs,
+        analytics: null,
+        error: '',
+      },
+    },
+  });
+  const sent = [];
+  const handler = createRemoteSpellingActionHandler({
+    store,
+    services: {
+      spelling: {
+        getPrefs() {
+          return getState().subjectUi.spelling.prefs;
+        },
+        // `allWordsMega: true` — the Boss gate lets the shortcut through.
+        getPostMasteryState() {
+          return { allWordsMega: true };
+        },
+      },
+    },
+    tts: createTtsHarness(),
+    readModels: { readJson: async () => ({}) },
+    subjectCommands: {
+      send(request) {
+        sent.push(request);
+        if (request.command === 'start-session') {
+          if (startRejection) return Promise.reject(startRejection);
+          return Promise.resolve(startResponse);
+        }
+        if (request.command === 'save-prefs') return Promise.resolve(saveResponse);
+        return Promise.resolve({});
+      },
+    },
+    preferenceSaveDebounceMs: 0,
+  });
+  return { handler, sent, getState };
+}
+
+test('U10 remote-sync: shortcut-start forwards explicit data.length to the Worker (Blocker 2)', async () => {
+  const { handler, sent } = createBossShortcutHarness({
+    prefs: { mode: 'smart', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+  });
+  // Explicit length mirrors Begin-button + Alt+5 resolver payload.
+  assert.equal(handler.handle('spelling-shortcut-start', { mode: 'boss', length: 10 }), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  const startSession = sent.find((request) => request.command === 'start-session');
+  assert.ok(startSession, 'start-session command sent');
+  assert.equal(startSession.payload.length, 10,
+    'data.length must survive onto the start-session payload — not clobbered by prefs.roundLength');
+  assert.equal(startSession.payload.mode, 'boss');
+});
+
+test('U10 remote-sync: shortcut-start without data.length falls back to prefs.roundLength (characterisation)', async () => {
+  const { handler, sent } = createBossShortcutHarness({
+    prefs: { mode: 'smart', yearFilter: 'core', roundLength: '20', extraWordFamilies: false },
+  });
+  // No `length` — the handler falls back to prefs.roundLength. The Boss
+  // SERVICE on the Worker is then responsible for clamping '20' down to
+  // BOSS_MAX_ROUND_LENGTH = 12 — this characterisation test documents
+  // the fallback path explicitly so a future edit that breaks it is loud.
+  assert.equal(handler.handle('spelling-shortcut-start', { mode: 'boss' }), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  const startSession = sent.find((request) => request.command === 'start-session');
+  assert.ok(startSession, 'start-session command sent');
+  assert.equal(startSession.payload.length, '20',
+    'missing data.length → forwards prefs.roundLength verbatim; Worker clamps to 12 at submit.');
+});
+
+test('U10 remote-sync: shortcut-start runs start-session FIRST, then save-prefs (Blocker 3 ordering)', async () => {
+  const { handler, sent } = createBossShortcutHarness();
+  assert.equal(handler.handle('spelling-shortcut-start', { mode: 'boss', length: 10 }), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  const orderedCommands = sent.map((request) => request.command);
+  assert.deepEqual(orderedCommands, ['start-session', 'save-prefs'],
+    'start-session must run before save-prefs so a failed start cannot leave prefs.mode = "boss"');
+});
+
+test('U10 remote-sync: failed start-session skips save-prefs entirely (Blocker 3 rollback)', async () => {
+  const originalWarn = globalThis.console?.warn;
+  if (globalThis.console) globalThis.console.warn = () => {};
+  try {
+    const { handler, sent } = createBossShortcutHarness({
+      startRejection: new Error('start-session rejected'),
+    });
+    assert.equal(handler.handle('spelling-shortcut-start', { mode: 'boss', length: 10 }), true);
+    await flushPromises();
+    await flushPromises();
+    await flushPromises();
+
+    const commands = sent.map((request) => request.command);
+    assert.deepEqual(commands, ['start-session'],
+      'start-session failure must NOT fire save-prefs — prefs.mode must not be mutated to "boss"');
+    assert.equal(commands.includes('save-prefs'), false,
+      'explicit inverse: save-prefs must not appear in the command list on start failure');
+  } finally {
+    if (globalThis.console) globalThis.console.warn = originalWarn;
+  }
+});
+
+test('U10 remote-sync: non-session start response skips save-prefs (dashboard bounce rollback)', async () => {
+  // The Worker may reject a start inline by returning a response whose read
+  // model phase is not 'session' (e.g. ok:false, validation error). In that
+  // case save-prefs must NOT run — mirror of module.js `transition?.ok !== false`.
+  const { handler, sent } = createBossShortcutHarness({
+    startResponse: { ok: false, subjectReadModel: { phase: 'dashboard' } },
+  });
+  assert.equal(handler.handle('spelling-shortcut-start', { mode: 'boss', length: 10 }), true);
+  await flushPromises();
+  await flushPromises();
+  await flushPromises();
+
+  const commands = sent.map((request) => request.command);
+  assert.deepEqual(commands, ['start-session'],
+    'server-level start rejection (phase !== session) must also skip save-prefs');
+});
