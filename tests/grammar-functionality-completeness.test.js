@@ -20,6 +20,7 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const baselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/legacy-baseline.json');
 const perfectionPassBaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/perfection-pass-baseline.json');
 const phase3BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-phase3-baseline.json');
+const phase4BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-phase4-baseline.json');
 const livePlanPath = path.join(rootDir, 'docs/plans/2026-04-24-001-feat-grammar-mastery-region-plan.md');
 const completenessPlanPath = path.join(rootDir, 'docs/plans/2026-04-25-001-feat-grammar-functionality-completeness-plan.md');
 const perfectionPassPlanPath = path.join(rootDir, 'docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md');
@@ -37,6 +38,10 @@ function readPerfectionPassBaseline() {
 
 function readPhase3Baseline() {
   return JSON.parse(fs.readFileSync(phase3BaselinePath, 'utf8'));
+}
+
+function readPhase4Baseline() {
+  return JSON.parse(fs.readFileSync(phase4BaselinePath, 'utf8'));
 }
 
 function capabilityById(baseline, id) {
@@ -403,5 +408,111 @@ test('Grammar Phase 3 release gate is recorded with existing evidence files', ()
   for (const evidencePath of gate.evidence) {
     assert.ok(fs.existsSync(path.join(rootDir, evidencePath)),
       `Phase 3 release gate cites missing evidence file ${evidencePath}`);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// Phase 4 gate — U13 completeness fixture + validator
+// -----------------------------------------------------------------------------
+
+test('Grammar Phase 4 baseline is internally owned and well-formed', () => {
+  const baseline = readPhase4Baseline();
+  assert.equal(baseline.id, 'grammar-phase4-learning-hardening');
+  assert.equal(baseline.ownerPlan, 'docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md');
+  assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID,
+    'Phase 4 must not touch contentReleaseId (hard rule from the plan).');
+
+  const phaseRows = baseline.phase4;
+  assert.ok(Array.isArray(phaseRows) && phaseRows.length === 13,
+    'Phase 4 baseline must list exactly 13 unit rows (U0..U12).');
+
+  const expectedUnits = new Set(['U0', 'U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7', 'U8', 'U9', 'U10', 'U11', 'U12']);
+  const seenUnits = new Set();
+
+  for (const row of phaseRows) {
+    assert.match(row.unit, /^U(?:0|1|2|3|4|5|6|7|8|9|10|11|12)$/,
+      `${row.unit} is not a valid Phase 4 unit id.`);
+    assert.equal(seenUnits.has(row.unit), false, `Duplicate Phase 4 unit row: ${row.unit}`);
+    seenUnits.add(row.unit);
+    assert.ok(expectedUnits.has(row.ownerUnit),
+      `${row.unit} ownerUnit "${row.ownerUnit}" is not in the Phase 4 unit allowlist.`);
+    assert.ok(row.topic, `${row.unit} needs a topic.`);
+    assert.ok(['planned', 'completed'].includes(row.resolutionStatus),
+      `${row.unit} has unsupported resolutionStatus ${row.resolutionStatus}`);
+    assert.ok(row.plannedReason, `${row.unit} needs a plannedReason.`);
+    assert.ok(Array.isArray(row.supportingTests) && row.supportingTests.length > 0,
+      `${row.unit} needs at least one supportingTests entry.`);
+    for (const testPath of row.supportingTests) {
+      assert.ok(fs.existsSync(path.join(rootDir, testPath)),
+        `${row.unit} cites missing supporting test ${testPath}`);
+    }
+  }
+
+  assert.equal(seenUnits.size, expectedUnits.size,
+    `Phase 4 baseline must cover every unit U0..U12; saw ${[...seenUnits].sort().join(', ')}`);
+});
+
+test('Grammar Phase 4 gate: every phase4[] row is completed (no planned rows remain)', () => {
+  const baseline = readPhase4Baseline();
+  const planned = baseline.phase4.filter((row) => row.resolutionStatus === 'planned');
+  assert.equal(planned.length, 0,
+    `All Phase 4 unit rows must be completed at gate time; ${planned.length} still planned: ${planned.map((r) => r.unit).join(', ')}.`);
+});
+
+test('Grammar Phase 4 gate: every completed row cites a landedIn PR number and existing supporting tests', () => {
+  const baseline = readPhase4Baseline();
+  for (const row of baseline.phase4) {
+    if (row.resolutionStatus !== 'completed') continue;
+    assert.ok(typeof row.landedIn === 'string' && row.landedIn.length > 0,
+      `${row.unit} is completed; landedIn must reference the merged PR.`);
+    assert.match(row.landedIn, /^PR #\d+$/,
+      `${row.unit} landedIn must match "PR #<number>"; saw "${row.landedIn}"`);
+    for (const testPath of row.supportingTests) {
+      assert.ok(fs.existsSync(path.join(rootDir, testPath)),
+        `${row.unit} cites missing supporting test ${testPath}`);
+    }
+  }
+});
+
+test('Grammar Phase 4 gate: invariants[] rows are completed + cite existing tests', () => {
+  const baseline = readPhase4Baseline();
+  assert.ok(Array.isArray(baseline.invariants) && baseline.invariants.length === 3,
+    'Phase 4 baseline must list exactly three cross-cutting invariants (concordium-never-revoked, confidence-label-shared-module, release-id-impact-none).');
+
+  const expectedNames = new Set(['concordium-never-revoked', 'confidence-label-shared-module', 'release-id-impact-none']);
+  const seenNames = new Set();
+
+  for (const row of baseline.invariants) {
+    assert.equal(row.unit, 'invariant', `${row.name} must have unit: "invariant"`);
+    assert.ok(expectedNames.has(row.name), `${row.name} is not a recognised Phase 4 invariant name.`);
+    assert.equal(seenNames.has(row.name), false, `Duplicate Phase 4 invariant: ${row.name}`);
+    seenNames.add(row.name);
+    assert.equal(row.resolutionStatus, 'completed',
+      `${row.name} must be completed at gate time; saw ${row.resolutionStatus}`);
+    assert.match(row.landedIn || '', /^PR #\d+$/,
+      `${row.name} landedIn must match "PR #<number>"`);
+    assert.ok(Array.isArray(row.supportingTests) && row.supportingTests.length > 0,
+      `${row.name} needs supportingTests entries.`);
+    for (const testPath of row.supportingTests) {
+      assert.ok(fs.existsSync(path.join(rootDir, testPath)),
+        `${row.name} cites missing supporting test ${testPath}`);
+    }
+  }
+
+  assert.equal(seenNames.size, expectedNames.size,
+    `Phase 4 baseline must cover every invariant; saw ${[...seenNames].sort().join(', ')}`);
+});
+
+test('Grammar Phase 4 release gate is recorded with existing evidence files', () => {
+  const baseline = readPhase4Baseline();
+  const gate = baseline.phase4ReleaseGate;
+  assert.ok(gate, 'Phase 4 baseline must record a release gate block.');
+  assert.equal(gate.ownerUnit, 'U13');
+  assert.equal(gate.status, 'completed');
+  assert.ok(Array.isArray(gate.evidence) && gate.evidence.length > 0,
+    'Phase 4 release-gate evidence must cite the landed files.');
+  for (const evidencePath of gate.evidence) {
+    assert.ok(fs.existsSync(path.join(rootDir, evidencePath)),
+      `Phase 4 release gate cites missing evidence file ${evidencePath}`);
   }
 });

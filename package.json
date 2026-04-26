@@ -45,6 +45,7 @@
     "smoke:production:punctuation": "node ./scripts/punctuation-production-smoke.mjs",
     "smoke:production:admin-ops": "node ./scripts/admin-ops-production-smoke.mjs",
     "smoke:production:spelling-dense": "node ./scripts/spelling-dense-history-smoke.mjs",
+    "smoke:production:spelling-audio": "node ./scripts/spelling-audio-production-smoke.mjs",
     "spelling:word-audio": "node ./scripts/build-spelling-word-audio.mjs",
     "pretest": "node ./scripts/preflight-test.mjs",
     "test": "node ./scripts/run-node-tests.mjs",

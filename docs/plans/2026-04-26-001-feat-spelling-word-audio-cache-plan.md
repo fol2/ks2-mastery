@@ -1422,3 +1422,37 @@ completion report)
   distinct from the Gemini API-error budget. The retry budget knob
   (`--max-retries`) is currently reserved for upload-side 5xx; this
   future lane would also consume from it.
+
+### Tech debt deferred from U3 review (2026-04-26)
+
+* **Demo session cleanup.** Three new demo sessions are created per smoke
+  run (one for word/sentence probes + two for the cross-account probe)
+  with no teardown. Future: confirm `/api/demo/session` is server-side
+  TTL-bounded; if not, add a teardown POST or document the leak so the
+  smoke does not silently inflate the demo-account table on each run.
+* **Single-retry on transient 5xx.** Current zero-retry policy makes a
+  single 0.1% blip an `EXIT_TRANSPORT`. Future: at most one retry per
+  probe with 500ms delay, gated behind an explicit flag (default 0 to
+  preserve current behaviour) so the smoke stays deterministic by
+  default but operators can opt into modest noise tolerance.
+* **Real binary body-bytes test.** Cross-account body-bytes assertion
+  uses mock UTF-8 fixtures via the test harness's infinitely-re-readable
+  `arrayBuffer()`. Production responses are one-shot binary streams.
+  Future: add a test using a real binary buffer + one-shot stream
+  consumption to exercise the actual `arrayBuffer()` semantics.
+* **Defensive validator coverage.** `runWordProbe` carries new
+  `model !== SPELLING_AUDIO_MODEL` and `responseVoice !== voice`
+  validators with no test coverage. Future: add tests for both mismatch
+  branches so a regression in the response-header schema cannot slip
+  past CI.
+* **Fetch-throw classification test.** `postTtsRequest` catch block
+  converts thrown errors (timeout AbortError, DNS failure) into
+  `transportError`, but no test exercises the throwing-fetch path.
+  Future: add a fetch-spy that throws and assert the resulting probe is
+  tagged `kind: 'transport'`.
+* **R2 key parity overstated.** Header comment claims "byte-matches
+  Worker's `bufferedAudioKey`" but the test only asserts smoke-side
+  self-consistency, not parity with the Worker symbol. Future: import
+  the Worker helper directly (or re-export via `shared/`) and assert
+  byte-equal output for the same input. This pairs with maint-001
+  (test-only re-exports from `worker/src/tts.js`).
