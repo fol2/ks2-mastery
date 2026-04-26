@@ -1,0 +1,102 @@
+# SH2-U11: nightly full 5-viewport Playwright matrix.
+#
+# Plan: docs/plans/2026-04-26-001-feat-sys-hardening-p2-plan.md (lines 747-799, R11).
+#
+# Runs every visual-regression scene across all five viewports
+# (`mobile-360`, `mobile-390`, `tablet`, `desktop-1024`, `desktop-1440`)
+# once per day. PR-time coverage stays narrow to bound latency; this
+# workflow is the wider-matrix safety net.
+#
+# Security posture (deepening S-02 + S-03):
+#  - `permissions: contents: read` only. This workflow MUST NOT commit
+#    to the repository — baseline write-back is always a human-reviewed
+#    PR so a flaky nightly cannot silently normalise a regression into
+#    the committed baselines.
+#  - NO `CLOUDFLARE_API_TOKEN` / `CF_*` environment variables anywhere.
+#  - Trace + screenshot artefacts are uploaded (retention 14 days) so
+#    a maintainer can download the nightly output and open a manual
+#    regen PR per viewport.
+#
+# Baselines-as-artefact policy:
+#  - On schedule, the nightly job uploads the CURRENT committed
+#    `tests/playwright/__screenshots__/` tree alongside any failure
+#    output so reviewers have a reference snapshot without checking
+#    out the repo. The workflow NEVER writes updated snapshots back.
+#    Baseline regen is a separate human-opened PR per viewport.
+
+name: Playwright (Nightly)
+
+on:
+  schedule:
+    # 03:07 UTC — off the :00 boundary per GitHub scheduled-queue guidance.
+    # Well clear of the mega-invariant-nightly 02:37 slot so a runner
+    # outage affects one, not both.
+    - cron: '7 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playwright-nightly
+  cancel-in-progress: false
+
+jobs:
+  full-matrix:
+    name: Full 5-viewport Playwright matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright (all 5 viewports)
+        run: npx playwright test
+
+      - name: Upload trace + screenshot artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Reviewer NIT-A1 (cli-agent #1): run_attempt + sha in the name
+          # so a manual re-run via `workflow_dispatch` does not overwrite
+          # the scheduled run's artefact. For the scheduled cron the sha
+          # stays the same across attempts on the same HEAD, so the
+          # run_attempt suffix provides the uniqueness.
+          name: playwright-nightly-trace-${{ github.run_attempt }}-${{ github.sha }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload Playwright HTML report
+        # Reviewer NIT-A2 (cli-agent #2): browsable trace viewer on every
+        # nightly run (including green ones — the nightly matrix is the
+        # 5-viewport safety net, and a reviewer may want to inspect the
+        # report even after a passing run when tracking a flake).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-nightly-report-${{ github.run_attempt }}-${{ github.sha }}
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload current baseline snapshots for reviewer reference
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-nightly-baselines-${{ github.run_attempt }}-${{ github.sha }}
+          path: tests/playwright/__screenshots__/
+          retention-days: 14
+          if-no-files-found: ignore

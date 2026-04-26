@@ -697,3 +697,58 @@ served under test keeps the counter object alive
 `production` mode and the counter identifier is stripped — verified by
 both `scripts/audit-client-bundle.mjs` (local bundle) and
 `scripts/production-bundle-audit.mjs` (post-deploy).
+
+### GitHub Actions matrix schedule (SH2-U11)
+
+Playwright runs in CI under `.github/workflows/`. The split is:
+
+- **`playwright.yml`** — PR-time: Chromium + `mobile-390` only. Trace +
+  screenshot artefacts upload on failure (retention 7 days).
+- **`playwright-nightly.yml`** — scheduled at 03:07 UTC daily: full
+  5-viewport matrix across every scene. Trace artefacts retain 14 days;
+  current baseline snapshots also upload as an artefact so reviewers
+  have a reference without checking out the repo.
+- **`node-test.yml`** — PR-time: `npm test` + `npm run check`. The
+  check step is a schema-drift canary; a missing OAuth token is the
+  expected failure mode and runs under `continue-on-error`.
+- **`audit.yml`** — PR-time: `npm run audit:client`.
+
+Security posture (SH2-U11 deepening S-02 + S-03):
+
+- Every workflow declares `permissions: contents: read` only. See
+  `.github/workflows/README.md` for the policy doc.
+- NO `CLOUDFLARE_API_TOKEN` / `CF_*` secrets configured in Actions
+  secrets scope. Deploy-capable credentials stay on the developer
+  machine behind OAuth.
+- Baselines are NEVER auto-committed. The nightly workflow uploads
+  artefacts only; write-back is always a human-reviewed PR opened
+  per viewport so the diff is reviewable per-surface.
+
+Expected follow-up after SH2-U11 lands: 2-3 baseline-regen PRs as
+Linux-CI font hinting at narrow viewports surfaces drift. The
+`playwright.config.mjs` per-project `maxDiffPixelRatio: 0.035`
+override on `mobile-360` / `mobile-390` reduces the regen frequency;
+wider viewports keep the tighter 0.02 default.
+
+### Isolated Playwright subset (SH2-U11)
+
+`tests/playwright/isolated/` is an opt-in subfolder for scenes that
+can run with parallel workers. Every scene there:
+
+1. Spawns its own migrated SQLite via `tests/helpers/playwright-isolated-db.js`.
+2. Passes the handle into `browser-app-server.js` via the
+   `KS2_TEST_DB_HANDLE` env var.
+3. Closes the handle in `afterEach` so the next worker slot starts
+   from a clean slate.
+
+Run the isolated subset locally:
+
+```sh
+npx playwright test --project isolated-mobile-390 --workers=4
+```
+
+The main serial suite (`tests/playwright/*.playwright.test.mjs`) still
+runs at `workers: 1` because the shared DB + demo rate-limit bucket
+serialise on the default `127.0.0.1` origin. See
+`tests/playwright/isolated/README.md` for the detailed rules that
+scenes in the isolated subset must follow.
