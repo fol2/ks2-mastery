@@ -144,8 +144,31 @@ export function normaliseStringArray(value, filterFn = null) {
  * allow-list so a renamed or typo'd reason never reaches the UI. The only
  * reason today is `storage-save-failed`; new entries land here before the
  * service + UI accept them.
+ *
+ * `SPELLING_PERSISTENCE_WARNING_REASONS` is the frozen array (iteration /
+ * contains). `SPELLING_PERSISTENCE_WARNING_REASON` is a frozen record of
+ * named constants so every call site can refer to the reason symbolically
+ * rather than duplicating the literal — review-fix for the sev-60
+ * maintainability finding.
  */
 export const SPELLING_PERSISTENCE_WARNING_REASONS = Object.freeze(['storage-save-failed']);
+export const SPELLING_PERSISTENCE_WARNING_REASON = Object.freeze({
+  STORAGE_SAVE_FAILED: 'storage-save-failed',
+});
+
+/**
+ * U8 review fix: banner copy extracted so future wording tweaks live in one
+ * place. The wording was updated from the original "Progress could not be
+ * saved on this device. Export or free storage." to the more accurate
+ * partial-write message below. On a Guardian submit where the progress
+ * write succeeded but the guardian write failed (or vice versa), the
+ * learner's answer WAS counted in-memory for this round, but the storage
+ * state is partially stale — they may see the same word re-appear after a
+ * reload. The copy acknowledges that accurately.
+ */
+export const SPELLING_PERSISTENCE_WARNING_COPY = Object.freeze({
+  STORAGE_SAVE_FAILED: 'We could not save your progress on this device. Your answer counted for this round, but you may see this word again after a reload. Free up storage or export your progress.',
+});
 
 function normalisePersistenceWarning(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;

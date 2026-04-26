@@ -154,14 +154,95 @@ test('U8 session scene renders storage-failure banner when feedback.persistenceW
   const warningHtml = harness.render();
   assert.match(warningHtml, /spelling-persistence-warning/,
     'banner element renders when feedback.persistenceWarning is set');
-  assert.match(warningHtml, /Progress could not be saved on this device\./,
-    'banner copy matches the planned wording');
+  // Review fix: banner copy now warns explicitly that the answer counted
+  // but may re-appear after a reload. Copy is sourced from
+  // SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED.
+  assert.match(warningHtml, /could not save your progress on this device/,
+    'banner copy matches the planned wording (opening phrase)');
+  assert.match(warningHtml, /Your answer counted for this round/,
+    'banner copy acknowledges that the in-memory answer was recorded');
+  assert.match(warningHtml, /see this word again after a reload/,
+    'banner copy warns about the partial-write re-ask');
   assert.match(warningHtml, /role="status"/,
     'banner uses role="status" (ARIA live-polite)');
   assert.match(warningHtml, /aria-live="polite"/,
     'banner announces once via aria-live="polite"');
   assert.match(warningHtml, /data-testid="spelling-persistence-warning"/,
     'banner exposes a data-testid for downstream integration tests');
+});
+
+// ----- U8 review fix: banner unmounts when warning clears ----------------------
+//
+// The banner is conditionally rendered on `ui.feedback?.persistenceWarning`.
+// When the next submit produces feedback without the warning, the banner
+// element must disappear from the DOM. Advisory fix for the sev-60 test
+// finding that exercises the set → undefined unmount contract.
+
+test('U8 session scene unmounts persistenceWarning banner when feedback clears', () => {
+  const harness = createAppHarness({ storage: installMemoryStorage() });
+  const learnerId = harness.store.getState().learners.selectedId;
+
+  harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+  harness.dispatch('open-subject', { subjectId: 'spelling' });
+  harness.dispatch('spelling-start');
+
+  // Inject warning.
+  harness.store.patch((current) => ({
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        ...current.subjectUi.spelling,
+        feedback: {
+          kind: 'info',
+          headline: 'Guardian strong.',
+          answer: 'possess',
+          attemptedAnswer: '',
+          body: '',
+          footer: '',
+          familyWords: [],
+          persistenceWarning: { reason: 'storage-save-failed' },
+        },
+      },
+    },
+  }));
+  assert.match(harness.render(), /data-testid="spelling-persistence-warning"/,
+    'banner mounts on first inject');
+
+  // Transition feedback to a warning-free shape — the service returns a new
+  // feedback object after the next successful submit.
+  harness.store.patch((current) => ({
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        ...current.subjectUi.spelling,
+        feedback: {
+          kind: 'info',
+          headline: 'Guardian strong.',
+          answer: 'possess',
+          attemptedAnswer: '',
+          body: '',
+          footer: '',
+          familyWords: [],
+          // persistenceWarning intentionally absent.
+        },
+      },
+    },
+  }));
+  assert.doesNotMatch(harness.render(), /data-testid="spelling-persistence-warning"/,
+    'banner unmounts when feedback.persistenceWarning is cleared');
+
+  // Also verify feedback → null removes the banner.
+  harness.store.patch((current) => ({
+    subjectUi: {
+      ...current.subjectUi,
+      spelling: {
+        ...current.subjectUi.spelling,
+        feedback: null,
+      },
+    },
+  }));
+  assert.doesNotMatch(harness.render(), /data-testid="spelling-persistence-warning"/,
+    'banner unmounts when feedback itself is null');
 });
 
 test('word-bank modal spike keeps drill isolated and Escape closes back to the word bank', () => {

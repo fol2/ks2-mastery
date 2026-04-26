@@ -862,3 +862,90 @@ test('U8 saveJson contract: returns { ok: true } on success and { ok: false, rea
   const result2 = service2.savePrefs('learner-b', { showCloze: false });
   assert.ok(result2 && typeof result2 === 'object', 'prefs write does not throw even when storage throws');
 });
+
+// ----- U8 review fix: production-path Smart Review integration -----------------
+//
+// Closes Blocker 2: the adversarial review flagged that the idempotent probe
+// combined with legacy-engine's silent swallow meant the Smart Review warning
+// was structurally unreachable in production. This test wires the service
+// through the complete production stack (`createLocalPlatformRepositories`
+// -> `createSpellingPersistence` proxy -> service) and arms the backing
+// storage to throw on the subject-state bundle key — which is where the
+// real-world quota / private-mode / IO error would surface in production.
+
+test('U8 review: production-path Smart Review submit surfaces feedback.persistenceWarning on backing storage throw', () => {
+  const now = () => Date.UTC(2026, 0, 10);
+  const storage = new MemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random: () => 0.5,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  const started = service.startSession('learner-a', {
+    mode: 'smart',
+    words: ['possess'],
+    length: 1,
+  });
+  assert.equal(started.ok, true);
+  const answer = started.state.session.currentCard.word.word;
+
+  // Arm the UNDERLYING MemoryStorage (not the spelling proxy) to throw on
+  // the next subject-state bundle write. This is what a quota-exceeded
+  // event looks like in real browsers when `persistBundle` calls
+  // `setItem('ks2-platform-v2.repo.child-subject-state', ...)`.
+  storage.throwOnNextSet({ key: 'ks2-platform-v2.repo.child-subject-state' });
+
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(submitted.ok, true, 'submit returns ok:true even on backing-storage failure');
+  assert.equal(submitted.state.phase, 'session', 'session continues in-memory');
+  // The production-path detection runs at two levels:
+  // (1) The proxy's lastError-diff throws when writeData's persistAll fails.
+  //     That throw is caught by legacy-engine's saveProgress's try/catch
+  //     (silent swallow) AND by saveJson's try/catch on the probe write.
+  // (2) The submit path checks the `lastError` channel mid-submit — so even
+  //     when the probe write clears the error (one-shot throw consumed),
+  //     the earlier failure is still captured via the mid-error snapshot.
+  assert.equal(
+    submitted.state.feedback?.persistenceWarning?.reason,
+    'storage-save-failed',
+    'Smart Review production path surfaces persistenceWarning even though legacy-engine swallows the proxy throw',
+  );
+});
+
+test('U8 review: production-path Smart Review happy path has feedback.persistenceWarning === undefined', () => {
+  // Ensure my lastError-diff detection does not false-positive on the
+  // happy path when the backing storage has no prior or current error.
+  const now = () => Date.UTC(2026, 0, 10);
+  const storage = new MemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const service = createSpellingService({
+    repository: createSpellingPersistence({ repositories, now }),
+    now,
+    random: () => 0.5,
+    tts: {
+      speak() {},
+      stop() {},
+      warmup() {},
+    },
+  });
+
+  const started = service.startSession('learner-a', {
+    mode: 'smart',
+    words: ['possess'],
+    length: 1,
+  });
+  const answer = started.state.session.currentCard.word.word;
+  const submitted = service.submitAnswer('learner-a', started.state, answer);
+  assert.equal(
+    submitted.state.feedback?.persistenceWarning,
+    undefined,
+    'happy-path production feedback has no persistenceWarning',
+  );
+});

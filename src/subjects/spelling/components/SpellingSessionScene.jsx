@@ -7,6 +7,10 @@ import {
   spellingSessionSubmitLabel,
   spellingSessionVoiceNote,
 } from '../session-ui.js';
+import {
+  SPELLING_PERSISTENCE_WARNING_COPY,
+  SPELLING_PERSISTENCE_WARNING_REASON,
+} from '../service-contract.js';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
 import {
   AnimatedPromptCard,
@@ -125,7 +129,18 @@ export function SpellingSessionScene({
   // banner unmounts. Accepted MVP gap: if the child closes the tab before
   // another submit, the warning does not persist across sessions — a durable
   // cross-session surface is deferred to a later plan.
+  //
+  // Review fix: banner copy is sourced from `SPELLING_PERSISTENCE_WARNING_COPY`
+  // in service-contract.js so a single edit updates every site. The reason
+  // key is the enum from `SPELLING_PERSISTENCE_WARNING_REASON` — the
+  // normaliser guarantees the reason is one of the allow-listed values, so
+  // the copy map always resolves.
   const persistenceWarning = ui.feedback?.persistenceWarning || null;
+  const persistenceWarningCopy = persistenceWarning
+    ? (persistenceWarning.reason === SPELLING_PERSISTENCE_WARNING_REASON.STORAGE_SAVE_FAILED
+      ? SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED
+      : SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
+    : '';
 
   return (
     <div className={sessionClasses.join(' ')} style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
@@ -143,7 +158,7 @@ export function SpellingSessionScene({
             aria-live="polite"
             data-testid="spelling-persistence-warning"
           >
-            Progress could not be saved on this device. Export or free storage.
+            {persistenceWarningCopy}
           </div>
         ) : null}
 
