@@ -65,6 +65,12 @@ function loadRenderer() {
         openAdminHub() { controller.store.openAdminHub(); },
         logout() {},
         retryPersistence() { controller.dispatch('persistence-retry'); },
+        // adv-234 (HIGH 1): mirror the production buildSurfaceActions shape so
+        // components that need a store-merge latch (Punctuation Setup's
+        // prefsMigrated guard) behave the same way under SSR as in the browser.
+        updateSubjectUi(subjectId, updater) {
+          controller.store.updateSubjectUi(subjectId, updater);
+        },
       };
     }
 
