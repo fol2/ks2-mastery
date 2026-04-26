@@ -1,28 +1,57 @@
 ---
 name: Main-branch regression sweep — 2026-04-26
-description: 15 `npm test` failures on `main` caused by 5 same-day PR merges (#300/#301/#303/#305/#308) landing without a CI gate. Fix all 7 root-cause clusters in one bundled PR and re-install a minimum `test-on-pr.yml` workflow so the ecosystem cannot regress the same way again.
+description: 14 `npm test` failures on `main` after 5 same-day PR merges (#300/#301/#303/#305/#308) plus SH2-U10 code-split (#322) landed without a PR test gate. Fix six remaining root-cause clusters in one sequential scrum-master sprint (Cluster B already patched by merged PR #320 via seeded-default pattern) and install a minimum `test-on-pr.yml` workflow so the ecosystem cannot regress the same way again.
 type: fix
-status: draft
+status: approved
 date: 2026-04-26
 sessions: [radiant-sprouting-sunrise worktree]
+revision: "2 — 2026-04-26 19:48 rebased after #320/#321/#322 merged; Cluster B dropped; Cluster H added for code-split test regression"
 ---
 
 # Main-branch regression sweep — 2026-04-26
 
 ## Overview
 
-After a cluster of five same-day merges to `main` on 2026-04-26
-(PRs #300, #301, #303, #305, #308), `npm test` on a fresh `main`
-checkout reports **15 failing tests out of 3909**. Every failure maps to
-one of seven disjoint root-cause clusters. The repository's only active
-workflow is `mega-invariant-nightly.yml` — the previous `Delivery
-pipeline` workflow was deleted 2026-04-19, so PR merges were gated only
-by Copilot code review and GitGuardian, neither of which runs the test
-suite. PR #301 in fact merged with a GitGuardian **FAILURE** check.
+After a cluster of same-day merges to `main` on 2026-04-26 (PRs
+#300/#301/#303/#305/#308 and later #321/#322), `npm test` reports **14
+failing tests out of 3965** on a fresh post-rebase `main`. The
+repository's only active workflows are `mega-invariant-nightly.yml`
+(scheduled) and `SH2-U11 Playwright CI` (#321, journey only) — the
+previous `Delivery pipeline` workflow that ran the node test suite was
+deleted 2026-04-19. PR #301 merged with a GitGuardian **FAILURE**
+check; #300/#305/#308 merged without test coverage at all.
 
-This document specifies a single bundled fix PR that resolves all
-seven clusters and installs a minimum `test-on-pr.yml` workflow so
-future PRs cannot land with broken tests or forbidden bundle content.
+During spec authoring, one cluster was resolved by a separate merged
+hotfix (**Cluster B** — client bundle leaking the full spelling
+dataset; fixed by PR #320 via a seeded-default pattern now captured
+in memory: `project_client_bundle_audit_input_graph.md`). One new
+cluster (**Cluster H** — `public build emits the React app bundle
+entrypoint` assertion stale after #322's code-split moved the monster
+`manifestHash` from `app.bundle.js` into `chunk-SZHUV5JR.js`) was
+discovered during the rebase.
+
+This document specifies a scrum-master-driven sequential sprint that
+resolves all six remaining clusters and installs a minimum
+`test-on-pr.yml` workflow so future PRs cannot land with broken
+tests or forbidden bundle content.
+
+### Execution model
+
+The implementation runs as a **fully autonomous scrum-master cycle**:
+
+1. Orchestrator dispatches each unit to an independent worker
+   subagent (fresh context, single unit scope).
+2. Worker creates a PR against `main`.
+3. Orchestrator runs ce-* reviewer subagents in parallel against the
+   PR diff.
+4. Orchestrator dispatches an independent follower subagent that
+   addresses reviewer blockers.
+5. Orchestrator re-runs targeted ce-* reviewers on the fresh diff.
+6. When no blockers remain, PR merges.
+7. Next unit starts from a rebased `main`.
+
+Stop condition: all 7 units merged, `npm test` green, `npm run
+audit:client` green, completion report written.
 
 ---
 
@@ -64,37 +93,24 @@ PRs that landed the regression:
   inline-writer shape and is fixed alongside U9 and U12 for internal
   consistency; its tests currently fail in the same full-suite run.
 
-### Cluster B — client bundle leaks the full spelling dataset (critical security, 1 test failure)
+### Cluster B — client bundle leaks the full spelling dataset (resolved by PR #320, no unit)
 
-`npm run audit:client` against `src/bundles/app.bundle.meta.json`
-reports three forbidden modules:
+**Status: resolved before spec finalised.** A parallel hotfix branch
+(`hotfix/spelling-events-decouple-word-dataset`, merged as PR #320 at
+2026-04-26 19:46 UTC) decoupled `events.js` from `word-data.js` via a
+**seeded-default** pattern rather than a file split:
+`__defaultWordBySlug` is a module-scoped `let`, exported setter
+`__setDefaultSpellingWordBySlug(map)` is called once per test file
+via `tests/helpers/seed-spelling-events-default.js`. Production
+callers always pass `wordMeta` explicitly, so the seed stays `null`
+in production and the dataset never crosses the client boundary. A
+source-level regression pin in `tests/bundle-audit.test.js` fires at
+`npm test` without needing a full build.
 
-```
-src/subjects/spelling/data/content-data.js
-src/subjects/spelling/data/word-data.js  (×2 reason codes)
-```
-
-The import chain inside the client bundle is:
-
-```
-service-contract.js
-  → achievements.js
-    → events.js
-      → ./data/word-data.js  (≈ 450 KB)
-        → ./data/content-data.js  (full seeded dataset with answers)
-```
-
-`achievements.js:34` imports only `SPELLING_EVENT_TYPES` from
-`events.js`, but `events.js:1` top-level-imports `WORD_BY_SLUG` from
-`data/word-data.js`. ESM static import pulls the entire transitive
-graph into the tree-shaken bundle output regardless of which symbols
-are used, so the full word-bank (with per-word answer metadata) ships
-to every client.
-
-Production impact: every signed-in learner's browser receives the
-complete spelling answer key in the main bundle. This also blocks the
-`public build emits the React app bundle entrypoint` test, which
-calls `audit-client-bundle.mjs` and expects exit code 0.
+The pattern is captured in
+`project_client_bundle_audit_input_graph.md` memory — future spec
+reviews must check for default-parameter imports of heavy datasets
+reachable from client entry points.
 
 ### Cluster C — `wrangler.jsonc` parsed as strict JSON (test-infra, 1 test failure)
 
@@ -150,12 +166,34 @@ proxy mean 0.04ms. The threshold is mean ≤ +10% and p95 ≤ +15%. At
 sub-0.1ms timings, scheduler jitter under concurrent-test load
 (`node --test` parallelises) produces mean deltas of 20-30% routinely.
 
-### Cluster G — `client-error-capture` backoff timer flake (flake, 1 test failure)
+### Cluster G — `client-error-capture` backoff timer flake (flake, 0-1 test failures)
 
 `tests/client-error-capture.test.js:391` — the 2.8s wait for a
 scheduled retry is tight under full-suite load. Runs in isolation:
 green. Runs in suite: intermittently fails with
-`consecutive-failure counter reset` off by one schedule tick.
+`consecutive-failure counter reset` off by one schedule tick. Not
+always reproducible; included as a defensive fix.
+
+### Cluster H — `public build` test asserts manifestHash in pre-split bundle (regression, 1 test failure)
+
+PR #322 (SH2-U10 bundle hygiene, 2026-04-26) introduced code-splitting
+for three adult surfaces. esbuild now emits the bulk of the React
+runtime and shared React helpers into `chunk-SZHUV5JR.js`, with
+`app.bundle.js` containing only the critical-path entry code.
+
+`tests/build-public.test.js:28` asserts:
+```js
+assert.match(appBundle, new RegExp(manifestHash));
+```
+where `appBundle = readFileSync('dist/public/src/bundles/app.bundle.js')`.
+The monster visual manifest hash (`3a5e0d699d815b618fb66964` at the
+time of writing) now lives in `chunk-SZHUV5JR.js`, not
+`app.bundle.js`. The assertion fires a 700+ KB regex mismatch log.
+
+Fix: assert the hash appears in any `.js` chunk under
+`dist/public/src/bundles/`. Functionally equivalent — the client
+still loads the chunk — and aligned with the audit script's own
+`FORBIDDEN_MODULES` scan which walks all chunks from the metafile.
 
 ### Ecosystem gap — no PR test gate
 
@@ -172,8 +210,9 @@ discipline does not substitute for an automated test gate.
 
 - **R1.** `npm test` on `main` exits 0 with zero failing tests on
   Windows and Linux.
-- **R2.** `npm run audit:client` reports zero forbidden modules after
-  a fresh `npm run build`.
+- **R2.** `npm run audit:client` continues to report zero forbidden
+  modules (guaranteed by PR #320; new code must not reintroduce a
+  top-level import of heavy datasets).
 - **R3.** Pattern Quest wobble, persistenceWarning, and achievements
   write paths do not throw `ReferenceError` at runtime on any
   supported browser.
@@ -186,9 +225,9 @@ discipline does not substitute for an automated test gate.
 - **R6.** Existing PR #305 U12 achievements INSERT-OR-IGNORE for
   unlock rows and MONOTONIC accept-incoming for progress rows remain
   intact; only the scope of `current` changes.
-- **R7.** Existing events.js consumer contract (server side + tests
-  that import `wordFields`) remains intact; only the import surface
-  changes.
+- **R7.** Existing PR #322 SH2-U10 code-split contract remains intact
+  (byte budget 214 KB gzip, chunk boundaries). Cluster H fix only
+  relaxes the test's bundle-location assumption.
 - **R8.** New CI workflow does NOT require Cloudflare secrets or
   wrangler OAuth — PR gate is hermetic.
 
@@ -220,15 +259,6 @@ discipline does not substitute for an automated test gate.
   binding lives only inside `projectForField()` (line 420-446). All
   siblings that need to merge with existing bundle state must compute
   inside that callback for CAS correctness.
-- `src/subjects/spelling/events.js:1` — top-level import of
-  `WORD_BY_SLUG`.
-- `src/subjects/spelling/achievements.js:34` — only needs
-  `SPELLING_EVENT_TYPES`.
-- `src/subjects/spelling/service-contract.js` — entry point that
-  transitively pulls `achievements.js` into the client bundle.
-- `shared/spelling/service.js:16` — server-side consumer of
-  `events.js`; can tolerate the import graph (server does not ship
-  the client bundle).
 - `src/platform/core/repositories/local.js:407-416` — `retryPersistence`
   post-U5.
 - `src/platform/app/create-app-controller.js:398-411` —
@@ -239,8 +269,13 @@ discipline does not substitute for an automated test gate.
 - `tests/capacity-proxy.test.js` — U3 overhead benchmark.
 - `tests/client-error-capture.test.js:391-414` — consecutive-failure
   reset test.
+- `tests/build-public.test.js:28` — stale `manifestHash` assertion
+  against `app.bundle.js` post-code-split.
 - `.github/workflows/mega-invariant-nightly.yml` — reference shape for
   a new YAML (node 20, ubuntu-latest, `npm ci --no-audit --no-fund`).
+- `.github/workflows/playwright-ci.yml` (PR #321) — second reference
+  shape, confirms the repository accepts Ubuntu-latest + node 20
+  workflow invocations.
 
 ### Institutional learnings
 
@@ -251,10 +286,19 @@ discipline does not substitute for an automated test gate.
   races" already documented; U5 reuses the retry-with-backoff
   playbook.
 - `feedback_autonomous_sdlc_cycle.md` — names the
-  "test-harness-vs-production pattern" that this PR demonstrates
-  (three inline writers added without running the tests).
+  "test-harness-vs-production pattern" that this sprint demonstrates
+  (three inline writers added without running the tests) and the
+  scrum-master cycle at 12-14 unit scale.
+- `feedback_subagent_tool_availability.md` — ce-* reviewers are
+  orchestrator-only; workers need distinct worktrees when parallel.
+  This sprint is **sequential**, so workers share the session
+  worktree.
 - `feedback_git_fetch_before_branch_work.md` — followed at session
-  start; worktree clean on `main`.
+  start and at rebase checkpoint; session picked up #320/#321/#322
+  merges.
+- `project_client_bundle_audit_input_graph.md` — seeded-default
+  pattern from PR #320; U8 includes `audit:client` in the PR gate
+  so this class of regression is caught automatically.
 
 ### External references
 
@@ -285,25 +329,17 @@ Rationale: option A (chosen) preserves the CAS contract. Option B
 race window that U5's HIGH-priority reviewer findings explicitly
 closed.
 
-### D2 — Cluster B fix: split `events.js` into two files
+### D2 — Cluster B: superseded by merged PR #320
 
-Create `src/subjects/spelling/events/types.js` with
-`SPELLING_EVENT_TYPES` and `SPELLING_MASTERY_MILESTONES` (both pure
-constants, no imports). Create `src/subjects/spelling/events/word-enricher.js`
-with `wordFields()` and the event constructors that require
-`WORD_BY_SLUG`. The existing `src/subjects/spelling/events.js` becomes
-a barrel re-export: `export * from './events/types.js'; export * from
-'./events/word-enricher.js';` so every existing consumer
-(`shared/spelling/service.js`, tests) continues to work unchanged.
+Revision 1 of this spec proposed splitting `events.js` into a
+`types.js` + `word-enricher.js` pair. PR #320 landed first with a
+different approach — the seeded-default pattern — and resolved the
+audit failure without a file-split. D2 is retained in the decision
+log as historical context but produces no work in this sprint.
 
-`achievements.js:34` changes to import from `./events/types.js`
-directly. This breaks the static import chain from the client bundle
-to `word-data.js`.
-
-Rationale: option C (single constants file, leave events.js
-untouched) was rejected because the `events/` directory better
-reflects the two-file reality; the barrel re-export preserves
-consumer contracts.
+Future recurrences: prefer the seeded-default pattern (module-scoped
+`let` + exported setter) for default-parameter imports of heavy
+datasets. See `project_client_bundle_audit_input_graph.md`.
 
 ### D3 — Cluster C fix: strip comments before `JSON.parse`
 
@@ -368,40 +404,71 @@ The workflow does NOT replace `mega-invariant-nightly.yml`. It does
 NOT attempt deployment or capacity verification (those require
 secrets + manual review).
 
-Rationale: option C (test + audit) was upgraded from the recommended
-baseline because Cluster B specifically requires the audit step to
-catch bundle-leak regressions. `npm run build` is the prerequisite.
+Rationale: include `audit:client` so a future recurrence of
+Cluster B (any static import of a heavy dataset) is caught on every
+PR — the same mechanism that surfaced the PR #320 hotfix in the
+first place. `npm run build` is the prerequisite.
+
+### D9 — Cluster H fix: assert manifestHash in any bundle chunk
+
+`tests/build-public.test.js:28` changes from:
+
+```js
+assert.match(appBundle, new RegExp(manifestHash));
+```
+
+to a walk of every `.js` file under `dist/public/src/bundles/`:
+
+```js
+const bundleChunks = readdirSync('dist/public/src/bundles/')
+  .filter((f) => f.endsWith('.js'))
+  .map((f) => readFileSync(`dist/public/src/bundles/${f}`, 'utf8'));
+assert.ok(
+  bundleChunks.some((content) => content.includes(manifestHash)),
+  'manifestHash must be present in at least one production bundle chunk',
+);
+```
+
+Rationale: after PR #322's code-split, the manifest content is in
+`chunk-SZHUV5JR.js`, not `app.bundle.js`. The invariant the test
+protects — "the manifest hash reaches the client" — is preserved;
+only the chunk location is no longer fixed. Other assertions on the
+same test (home.bundle.js absence, spelling dataset absence, grammar
+runtime absence) remain unchanged since they are about what MUST NOT
+be present, which is independent of the code-split.
 
 ---
 
 ## Unit breakdown
 
-| U  | Cluster  | Files touched                                                                       | Review gates                                                                              |
-|----|----------|-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| U1 | A        | `src/subjects/spelling/repository.js`                                               | ce-correctness, ce-data-integrity-guardian, ce-testing                                    |
-| U2 | B        | `src/subjects/spelling/events/types.js` (new), `src/subjects/spelling/events/word-enricher.js` (new), `src/subjects/spelling/events.js`, `src/subjects/spelling/achievements.js` | ce-security-reviewer, ce-correctness, ce-maintainability                                  |
-| U3 | C        | `tests/punctuation-release-smoke.test.js`                                           | ce-testing, ce-maintainability                                                            |
-| U4 | D        | `tests/app-controller.test.js`, `tests/route-change-audio-cleanup.test.js`, `tests/helpers/microtasks.js` (new) | ce-testing, ce-julik-frontend-races                                                       |
-| U5 | E        | `scripts/build-spelling-word-audio.mjs`                                             | ce-reliability-reviewer, ce-testing                                                       |
-| U6 | F        | `tests/capacity-proxy.test.js`                                                      | ce-testing, ce-performance-reviewer                                                       |
-| U7 | G        | `tests/client-error-capture.test.js`                                                | ce-testing                                                                                |
-| U8 | CI gate  | `.github/workflows/test-on-pr.yml` (new)                                            | ce-cli-readiness-reviewer, ce-reliability-reviewer                                        |
+| U  | Cluster | Files touched | Review gates |
+|----|---------|---------------|--------------|
+| U1 | A       | `src/subjects/spelling/repository.js` | ce-correctness, ce-data-integrity-guardian, ce-testing |
+| U3 | C       | `tests/punctuation-release-smoke.test.js` | ce-testing, ce-maintainability |
+| U4 | D       | `tests/app-controller.test.js`, `tests/route-change-audio-cleanup.test.js`, `tests/helpers/microtasks.js` (new) | ce-testing, ce-julik-frontend-races |
+| U5 | E       | `scripts/build-spelling-word-audio.mjs` | ce-reliability-reviewer, ce-testing |
+| U6 | F       | `tests/capacity-proxy.test.js` | ce-testing, ce-performance-reviewer |
+| U7 | G       | `tests/client-error-capture.test.js` | ce-testing |
+| U8 | CI gate | `.github/workflows/test-on-pr.yml` (new) | ce-cli-readiness-reviewer, ce-reliability-reviewer |
+| U9 | H       | `tests/build-public.test.js` | ce-testing, ce-maintainability |
 
-Units are implemented sequentially on a single branch
-`fix/main-regression-sweep-2026-04-26`. One PR.
+Numbering preserves the original unit IDs — U2 is intentionally
+vacant (resolved by PR #320). Each unit ships as its own PR per the
+scrum-master execution model; seven PRs total, merged sequentially.
 
 ---
 
 ## Build sequence
 
 1. **U1** — highest severity (production crash path).
-2. **U2** — client-bundle leak (security + blocking the audit gate).
+2. **U9** — unblocks `npm test` green baseline (trivial one-line test fix).
 3. **U3** — wrangler.jsonc (isolated).
 4. **U4** — microtask helper (isolated).
 5. **U5** — Windows rename retry (isolated).
 6. **U6** — benchmark threshold (isolated).
 7. **U7** — backoff wait (isolated).
-8. **U8** — CI workflow last, after all tests green.
+8. **U8** — CI workflow last, only after all tests green so the gate
+   does not immediately fire red on its own PR.
 
 ---
 
@@ -412,10 +479,6 @@ Units are implemented sequentially on a single branch
 - **U1**: `node --test tests/spelling-persistence-warning.test.js
   tests/spelling-achievements.test.js tests/spelling-pattern-quest.test.js`
   → all green.
-- **U2**: `npm run build && npm run audit:client` → exit 0.
-  `node --test tests/spelling-achievements.test.js
-  tests/spelling-guardian.test.js tests/spelling-boss.test.js`
-  (barrel re-export still resolves).
 - **U3**: `node --test tests/punctuation-release-smoke.test.js` → green.
 - **U4**: `node --test tests/app-controller.test.js
   tests/route-change-audio-cleanup.test.js` → green in isolation AND
@@ -426,8 +489,11 @@ Units are implemented sequentially on a single branch
   consecutive runs.
 - **U7**: `npm test -- tests/client-error-capture.test.js` → green
   two consecutive runs under concurrent-test load.
-- **U8**: local `gh workflow view` + a throwaway PR push to confirm
-  the new workflow fires.
+- **U8**: local `gh workflow view` + the workflow fires green on the
+  PR that introduces it (no post-merge throwaway PR required since
+  U8 itself is a PR).
+- **U9**: `node --test tests/build-public.test.js` → green; then
+  `npm test` full-suite confirms the chunk-assertion is stable.
 
 ### Final gate
 
@@ -444,10 +510,11 @@ failing tests.
   semantics?** CAS-aware (D1). U5 storage-CAS is a recent
   investment; weakening it for a bug fix would undo deliberate
   reviewer-closed HIGH findings.
-- **Should Cluster B use lazy import or file split?** File split
-  (D2). Lazy import at module-load time would re-introduce the
-  dependency when any caller awaits the event constructor, which is
-  exactly what the bundle audit is designed to prevent.
+- **Should we still re-do Cluster B with the file-split approach
+  proposed in revision 1?** No. PR #320 (seeded-default pattern)
+  already merged and is memorialised in
+  `project_client_bundle_audit_input_graph.md`. Re-splitting would
+  churn files a second time for the same outcome.
 - **Should Cluster D change product code or test code?** Test code
   (D4). Product code correctly awaits `navigator.locks`; the test's
   microtask count was an accidental coincidence pre-U5.
@@ -473,14 +540,16 @@ failing tests.
 
 ## Success Criteria
 
-- `npm test` exits 0 on the fix branch and on `main` after merge.
-- `npm run build && npm run audit:client` reports zero forbidden
-  modules on the fix branch.
+- `npm test` exits 0 on `main` after all 7 unit PRs merge.
+- `npm run build && npm run audit:client` continues to report zero
+  forbidden modules (preserved from PR #320).
 - The new `.github/workflows/test-on-pr.yml` runs to completion on
-  the fix PR itself and on one subsequent throwaway PR.
+  its own PR (U8), green.
 - No learner-visible behaviour change: all storage-CAS semantics,
   achievement unlock rules, persistence-retry guarantees, and
   audio-cleanup contracts preserved.
-- PR description lists all seven clusters with one-line fix
-  summaries, links to the owning prior PRs (#300, #301, #305), and
-  cites this design doc.
+- Each unit's PR description cites this design doc and names the
+  cluster it addresses.
+- Completion report under `docs/plans/` summarises the 7-unit sprint
+  including wall-clock, ce-reviewer blocker counts, and any new
+  learnings promoted to memory.
