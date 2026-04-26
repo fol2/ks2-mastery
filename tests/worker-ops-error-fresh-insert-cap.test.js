@@ -101,6 +101,52 @@ test('fresh-insert cap: attacker rotating first_frame hits 429 on the 11th fresh
 
     const counter = kpiRow(server, 'ops_error_events.fresh_insert_throttled');
     assert.ok(counter?.metric_count >= 1, 'fresh-insert throttle counter must bump');
+
+    // H2 (reviewer) invariant: the 11th fingerprint is NEVER persisted.
+    // With the repository preflight in place the bucket rejects BEFORE
+    // `recordClientErrorEvent` writes, so the table holds exactly the
+    // configured cap of 10 rows for 11 fresh attempts from one subject.
+    assert.equal(
+      countErrorRows(server),
+      10,
+      'fresh-insert preflight must prevent the 11th row from being persisted',
+    );
+  } finally {
+    server.close();
+  }
+});
+
+test('fresh-insert cap: dedup replays do NOT consume the bucket — probe request_count directly', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const headers = { 'cf-connecting-ip': '203.0.113.52' };
+    const body = {
+      errorKind: 'TypeError',
+      messageFirstLine: 'steady-state probe',
+      firstFrame: 'at probeFrame (line:1)',
+      routeName: '/dashboard',
+      userAgent: 'ProbeUA',
+    };
+
+    // One fresh insert followed by 50 dedup replays. Only the first
+    // consumes the fresh-insert bucket; the 50 dedups must not bump
+    // the counter because the preflight sees `wouldBeDedup=true`.
+    for (let i = 0; i < 51; i += 1) {
+      const response = await postErrorEvent(server, body, headers);
+      assert.equal(response.status, 200, `request ${i + 1} should succeed`);
+    }
+
+    // Probe the limiter bucket row directly — its `request_count`
+    // should be exactly 1 (one fresh consume), not 51.
+    const limiterKey = `ops-error-fresh-insert:${await sha256('v4:203.0.113.52')}`;
+    const row = server.DB.db.prepare(`
+      SELECT request_count FROM request_limits WHERE limiter_key = ?
+    `).get(limiterKey);
+    assert.equal(
+      row?.request_count ?? 0,
+      1,
+      'dedup replays must not consume the fresh-insert bucket',
+    );
   } finally {
     server.close();
   }

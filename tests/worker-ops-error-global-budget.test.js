@@ -176,3 +176,58 @@ test('global budget: happy path — normal traffic does not trip the budget', as
     server.close();
   }
 });
+
+// -- I7 (reviewer) — additional coverage ------------------------------
+
+test('global budget: per-request admissions bump the global bucket request_count', async () => {
+  const server = createWorkerRepositoryServer({ env: { OPS_ERROR_GLOBAL_LIMIT: '3' } });
+  try {
+    // 3 admitted requests from 3 different /64s. The global bucket
+    // (identified by `global:ops-error-capture`) should carry
+    // `request_count = 3` by the end.
+    for (let i = 0; i < 3; i += 1) {
+      const response = await postErrorEvent(
+        server,
+        { errorKind: 'Err', messageFirstLine: `probe-${i}`, firstFrame: `frame-${i}` },
+        { 'cf-connecting-ip': `2001:db8:${100 + i}::1` },
+      );
+      assert.equal(response.status, 200, `admitted request ${i + 1} should succeed`);
+    }
+
+    const limiterKey = `ops-error-capture-global:${await sha256('global:ops-error-capture')}`;
+    const row = server.DB.db.prepare(`
+      SELECT request_count FROM request_limits WHERE limiter_key = ?
+    `).get(limiterKey);
+    assert.equal(row?.request_count ?? 0, 3, 'global bucket request_count must advance on each admitted request');
+  } finally {
+    server.close();
+  }
+});
+
+test('global budget: per-bucket-category KPI split bumps ops_error_events.global_budget_exhausted.v6_64 when a /64 triggers exhaustion', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    // Pre-seed the global bucket at the 6000 default. Any request
+    // trips it. The attacker is on an IPv6 /64, so the category split
+    // must increment `.v6_64`.
+    await seedRateLimit(server, 'ops-error-capture-global', 'global:ops-error-capture', 6000);
+
+    const response = await postErrorEvent(
+      server,
+      { errorKind: 'Error', messageFirstLine: 'v6-exhaustion' },
+      { 'cf-connecting-ip': '2001:db8::1' },
+    );
+    assert.equal(response.status, 429);
+
+    const baseCounter = kpiRow(server, 'ops_error_events.global_budget_exhausted');
+    assert.ok(baseCounter?.metric_count >= 1, 'base counter must bump');
+
+    const splitCounter = kpiRow(server, 'ops_error_events.global_budget_exhausted.v6_64');
+    assert.ok(
+      splitCounter?.metric_count >= 1,
+      'per-bucket-category .v6_64 counter must bump when an IPv6 /64 source triggers exhaustion',
+    );
+  } finally {
+    server.close();
+  }
+});

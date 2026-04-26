@@ -194,3 +194,136 @@ test('csp-report endpoint: IPv6 /64 bucketing shared with ops-error helper', asy
     server.close();
   }
 });
+
+// -- I7 (reviewer) — auth / demo / tts propagation ---------------------
+//
+// The ops-error + CSP propagation tests above prove the helper is wired
+// to the public ingest routes. These three tests add one call-site per
+// remaining consumer so the "single attacker on a /64 rotates low-64
+// bits" regression is locked in across the full rate-limit surface.
+
+test('auth login: IPv6 /64 bucketing — two low-64 suffixes share the bucket and trip 429', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+    },
+  });
+  try {
+    // `login` has `ip: 10` over a 10-minute window.
+    await seedRateLimit(server, 'auth-login-ip', 'v6/64:20010db800000000', 10);
+
+    const response = await server.fetchRaw('https://repo.test/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://repo.test',
+        'cf-connecting-ip': '2001:db8::dead:beef',
+      },
+      body: JSON.stringify({ email: 'never-hits-db@example.test', password: 'hunter2' }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    assert.equal(response.status, 400, 'login should return a BadRequestError when rate-limited');
+    assert.equal(payload.code, 'rate_limited', 'login rate-limit code must propagate');
+  } finally {
+    server.close();
+  }
+});
+
+test('demo create: IPv6 /64 bucketing — low-64 rotation still hits the seeded bucket', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      AUTH_MODE: 'production',
+      ENVIRONMENT: 'production',
+      APP_HOSTNAME: 'repo.test',
+    },
+  });
+  try {
+    // `demo-create-ip` has `createIp: 30` over a 10-minute window.
+    await seedRateLimit(server, 'demo-create-ip', 'v6/64:20010db800000000', 30);
+
+    const response = await server.fetchRaw('https://repo.test/api/demo/session', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://repo.test',
+        'cf-connecting-ip': '2001:db8::face:feed',
+      },
+      body: JSON.stringify({}),
+    });
+    const payload = await response.json().catch(() => ({}));
+    assert.equal(response.status, 400, 'demo create should return a BadRequestError when rate-limited');
+    assert.equal(payload.code, 'demo_rate_limited', 'demo rate-limit code must propagate');
+  } finally {
+    server.close();
+  }
+});
+
+test('tts endpoint: IPv6 /64 bucketing — rotated low-64 still hits the seeded ip bucket', async () => {
+  // TTS requires a valid spelling prompt before `protectTts` fires.
+  // Seed the minimum learner + adult + membership rows so the prompt
+  // command succeeds, then start a session to obtain a prompt token,
+  // then seed the tts-ip /64 bucket over its 240-event cap. The next
+  // `/api/tts` POST with a distinct low-64 suffix must still hit the
+  // seeded bucket and return `tts_rate_limited`.
+  const server = createWorkerRepositoryServer();
+  try {
+    const accountId = 'adult-a';
+    const learnerId = 'learner-a';
+    const ts = Date.UTC(2026, 0, 1);
+    server.DB.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    `).run(learnerId, ts, ts);
+    server.DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES (?, ?, ?, 'parent', ?, ?, ?, 0)
+    `).run(accountId, `${accountId}@example.test`, 'Adult A', learnerId, ts, ts);
+    server.DB.db.prepare(`
+      INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+      VALUES (?, ?, 'owner', 0, ?, ?)
+    `).run(accountId, learnerId, ts, ts);
+
+    const startResponse = await server.fetchAs(accountId, 'https://repo.test/api/subjects/spelling/command', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        command: 'start-session',
+        learnerId,
+        requestId: 'propagation-tts-start',
+        expectedLearnerRevision: 0,
+        payload: { mode: 'single', slug: 'early', length: 1 },
+      }),
+    });
+    const startPayload = await startResponse.json();
+    assert.equal(startResponse.status, 200, JSON.stringify(startPayload));
+    const promptToken = startPayload?.audio?.promptToken;
+    assert.ok(promptToken, 'prompt token must be present');
+
+    // `cacheLookupOnly: true` routes through `protectTtsLookup` which
+    // consumes `tts-lookup-ip`. Seed that bucket at its 480/10-min cap
+    // so the next request hits 429 purely on the /64 identifier.
+    await seedRateLimit(server, 'tts-lookup-ip', 'v6/64:20010db800000000', 480);
+
+    const response = await server.fetchAs(accountId, 'https://repo.test/api/tts', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://repo.test',
+        'cf-connecting-ip': '2001:db8::cafe:babe',
+      },
+      body: JSON.stringify({
+        learnerId,
+        promptToken,
+        provider: 'gemini',
+        cacheLookupOnly: true,
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    assert.equal(response.status, 400, 'tts should return a BadRequestError when rate-limited');
+    assert.equal(payload.code, 'tts_lookup_rate_limited', 'tts lookup rate-limit code must propagate');
+  } finally {
+    server.close();
+  }
+});
