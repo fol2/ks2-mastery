@@ -9,6 +9,7 @@ import {
   SPELLING_AUDIO_MODEL,
   buildAudioAssetKey,
   buildBufferedSpeechPrompt,
+  buildBufferedWordSpeechPrompt,
   buildLegacyAudioAssetKey,
   buildWordAudioAssetKey,
   normaliseBufferedGeminiVoice,
@@ -555,7 +556,10 @@ async function storeBufferedGeminiAudio(env, payload, response, options = {}) {
 function geminiPrompt(payload = {}) {
   const { transcript, slow = false, wordOnly = false } = payload;
   if (wordOnly) {
-    return `Read exactly this KS2 spelling word once in natural British English. Do not add any extra words:\n\n${transcript}`;
+    // U1: delegate to the shared helper so the batch pre-fill script and the
+    // Worker live-regen path produce byte-equal prompt strings (and therefore
+    // byte-equal Gemini audio for the same `(slug, word)` input).
+    return buildBufferedWordSpeechPrompt({ wordText: transcript });
   }
   if (payload.word && payload.sentence) {
     return buildBufferedSpeechPrompt({
@@ -569,6 +573,12 @@ function geminiPrompt(payload = {}) {
     : 'at a calm classroom pace, with clear pauses between the word and sentence';
   return `Read exactly this KS2 spelling dictation in natural British English ${pace}. Do not add any extra words:\n\n${transcript}`;
 }
+
+// U1: re-export internal helpers for unit tests that need to assert
+// Worker-side hash + R2 key parity against the shared prompt helper. Tests are
+// the only consumer; production callers continue to reach `bufferedAudioKey`
+// only through `handleTextToSpeechRequest`.
+export { bufferedAudioMetadata, bufferedAudioKey, geminiPrompt };
 
 function base64ToBytes(value) {
   const binary = atob(value);
