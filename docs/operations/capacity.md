@@ -48,6 +48,48 @@ npm run check
 npm run deploy
 ```
 
+## Local-worker integration runs (U4)
+
+`npm run capacity:local-worker` orchestrates a real `wrangler dev --local` subprocess and runs `scripts/classroom-load-test.mjs --local-fixture` against it, bridging the gap between mocked-fetch unit tests and a full production load run. The orchestrator is an optional pre-deploy gate; it is **not** wired into `npm run check` or `npm run verify` — release pipelines keep the faster mocked-fetch tests as the default gate and reach for this script when evaluating U3/U5/U6/U7 against a real Worker.
+
+### Invocation
+
+```sh
+npm run capacity:local-worker -- --learners 5 --bootstrap-burst 5 --rounds 1 --require-zero-signals --max-network-failures 0
+```
+
+Every argument after the `--` separator is forwarded unchanged to `scripts/classroom-load-test.mjs`; the orchestrator itself only accepts `--fresh`, `--port-start <n>`, and `--readiness-timeout-ms <n>`.
+
+### What the script does
+
+1. Applies local D1 migrations via `npm run db:migrate:local` (equivalent to `wrangler d1 migrations apply ks2-mastery-db --local` routed through `scripts/wrangler-oauth.mjs`).
+2. Picks a free port in the `8787 → 8788 → 8789` range and logs the chosen port to stdout AND into the evidence JSON `safety.originResolved` field.
+3. Spawns `wrangler dev --local --port <chosen>` via `scripts/wrangler-oauth.mjs` so `CLOUDFLARE_API_TOKEN` never reaches the child-process env (a unit test asserts the child env does not contain the token).
+4. Polls readiness with a two-stage check — first `GET /api/health` (or the `ASSETS` root), then `POST /api/demo/session` — to avoid the "auth-401 treated as ready" false positive. Readiness has a 30-second hard cap with exponential backoff (100 ms → 200 ms → 400 ms → capped at 1 s).
+5. Runs the classroom load driver with `--local-fixture --origin http://localhost:<port> --demo-sessions`, appending every operator-supplied passthrough arg.
+6. Tears down the wrangler subprocess cleanly on the way out: `SIGINT` on POSIX, `taskkill /F /PID <pid> /T` on Windows.
+
+### Evidence and logs
+
+- Evidence JSON: `reports/capacity/latest-local.json` — written by the load driver's own `--output` path. The orchestrator does not write evidence itself; it just ensures the driver did.
+- Redacted log: `reports/capacity/local-worker-stdout.log` — wrangler stdout/stderr scrubbed through the shared redaction filter (`scripts/lib/log-redaction.mjs`). Cookies (`ks2_session=<value>`), `Bearer <token>` headers, and `CLOUDFLARE_API_TOKEN=<value>` assignments are replaced with `[redacted]`. The log file is gitignored.
+
+### Windows pre-step
+
+Windows CI runners leak wrangler subprocesses after a previous `SIGKILL` because `taskkill /F` is not always cascaded. Before invoking `npm run capacity:local-worker` on Windows, run:
+
+```powershell
+taskkill /F /IM wrangler.exe
+```
+
+This is a safety pass, not a prerequisite; the orchestrator's own teardown still uses `taskkill /F /PID <pid> /T` on exit.
+
+### Operator checklist
+
+- No other wrangler process bound to 8787–8789 (otherwise the orchestrator will pick the next free port and record it in the evidence JSON — not an error, but worth noticing).
+- `reports/capacity/latest-local.json` exists after a clean run.
+- No dangling `wrangler.exe` / `wrangler` process after exit.
+
 ## Capacity Telemetry Environment Variables (Phase 2 U3)
 
 The Worker exposes per-request capacity telemetry on every response. Two surfaces render the same collector state: a `meta.capacity` block on capacity-relevant JSON responses (`/api/bootstrap`, `/api/subjects/:subject/command`, `/api/hubs/parent/*`, `/api/classroom/*`) and a structured `[ks2-worker] {event: "capacity.request", ...}` log line. Both shapes follow a closed allowlist; per-statement breakdown NEVER appears in `meta.capacity`.
