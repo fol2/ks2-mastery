@@ -11,6 +11,15 @@ import {
   validateClassroomLoadOptions,
 } from '../scripts/classroom-load-test.mjs';
 import { createGrammarQuestion } from '../worker/src/subjects/grammar/content.js';
+import {
+  buildTeardownCommand,
+  buildWranglerSpawnCommand,
+  parseLocalWorkerArgs,
+  runLocalWorkerOrchestrator,
+  sanitiseWranglerEnv,
+  selectAvailablePort,
+} from '../scripts/capacity-local-worker.mjs';
+import { redactLogLine } from '../scripts/lib/log-redaction.mjs';
 
 function jsonResponse(payload, init = {}) {
   const status = Number(init.status) || 200;
@@ -828,3 +837,647 @@ test('classroom load CLI threshold override beats config value (CLI precedence)'
   }
 });
 
+// -----------------------------------------------------------------------------
+// U4: capacity-local-worker orchestrator
+// -----------------------------------------------------------------------------
+//
+// These tests mock the subprocess + network boundary so `wrangler dev` is
+// never actually spawned. They exercise the port-selection, readiness-poll,
+// teardown, redaction, and evidence-passthrough logic in isolation.
+
+import { EventEmitter } from 'node:events';
+
+// A deterministic fake child-process handle. Tests drive stdout/stderr and
+// exit events explicitly so the orchestrator's polling + teardown paths are
+// reproducible.
+function createFakeChild({ pid = 9999 } = {}) {
+  const child = new EventEmitter();
+  child.pid = pid;
+  child.killed = false;
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  child.kill = (signal) => {
+    child.killed = true;
+    child.lastSignal = signal || 'SIGTERM';
+    return true;
+  };
+  return child;
+}
+
+// A fake port-bind probe. `busyPorts` is a Set of port numbers that should
+// report EADDRINUSE; every other port succeeds immediately.
+function createFakePortProbe(busyPorts = new Set()) {
+  return (port) => {
+    if (busyPorts.has(port)) {
+      return Promise.resolve(false);
+    }
+    return Promise.resolve(true);
+  };
+}
+
+// Happy-path readiness fetch mock. Two-stage: first call to /api/health → 200,
+// second call to /api/demo/session (POST) → 200. Subsequent calls echo 200.
+function createReadyFetch() {
+  return async (url, init = {}) => {
+    const parsed = new URL(String(url));
+    if (parsed.pathname === '/api/health') {
+      return { ok: true, status: 200, async text() { return 'ok'; } };
+    }
+    if (parsed.pathname === '/api/demo/session') {
+      return {
+        ok: true,
+        status: 200,
+        async text() { return JSON.stringify({ ok: true }); },
+      };
+    }
+    return { ok: true, status: 200, async text() { return ''; } };
+  };
+}
+
+test('parseLocalWorkerArgs: --help, --fresh, --port-start, --readiness-timeout-ms, -- passthrough', () => {
+  const a = parseLocalWorkerArgs([
+    '--fresh',
+    '--port-start', '9000',
+    '--readiness-timeout-ms', '5000',
+    '--',
+    '--learners', '5',
+    '--bootstrap-burst', '5',
+    '--rounds', '1',
+  ]);
+  assert.equal(a.fresh, true);
+  assert.equal(a.portStart, 9000);
+  assert.equal(a.readinessTimeoutMs, 5000);
+  assert.deepEqual(a.driverArgs, ['--learners', '5', '--bootstrap-burst', '5', '--rounds', '1']);
+
+  const defaults = parseLocalWorkerArgs([]);
+  assert.equal(defaults.fresh, false);
+  assert.equal(defaults.portStart, 8787);
+  assert.equal(defaults.readinessTimeoutMs, 30000);
+  assert.deepEqual(defaults.driverArgs, []);
+
+  const help = parseLocalWorkerArgs(['--help']);
+  assert.equal(help.help, true);
+});
+
+test('sanitiseWranglerEnv strips CLOUDFLARE_API_TOKEN by default (defence-in-depth)', () => {
+  const source = {
+    PATH: '/usr/bin',
+    CLOUDFLARE_API_TOKEN: 'secret-token-value',
+    CLOUDFLARE_ACCOUNT_ID: 'acct-123',
+  };
+  const cleaned = sanitiseWranglerEnv(source);
+  assert.equal(Object.prototype.hasOwnProperty.call(cleaned, 'CLOUDFLARE_API_TOKEN'), false);
+  assert.equal(cleaned.PATH, '/usr/bin');
+  assert.equal(cleaned.CLOUDFLARE_ACCOUNT_ID, 'acct-123');
+  // Defensive: source object must not be mutated.
+  assert.equal(source.CLOUDFLARE_API_TOKEN, 'secret-token-value');
+});
+
+test('sanitiseWranglerEnv keeps CLOUDFLARE_API_TOKEN when WORKERS_CI=1 (matches wrangler-oauth.mjs)', () => {
+  const cleaned = sanitiseWranglerEnv({
+    PATH: '/usr/bin',
+    WORKERS_CI: '1',
+    CLOUDFLARE_API_TOKEN: 'ci-token',
+  });
+  assert.equal(cleaned.CLOUDFLARE_API_TOKEN, 'ci-token');
+});
+
+test('buildWranglerSpawnCommand routes through scripts/wrangler-oauth.mjs', () => {
+  const { cmd, args } = buildWranglerSpawnCommand({ port: 8787, platform: 'linux' });
+  // Must invoke node on wrangler-oauth.mjs; never raw npx wrangler. This keeps
+  // the oauth env stripper in the critical path.
+  assert.equal(cmd, process.execPath);
+  assert.ok(args[0] && args[0].endsWith('wrangler-oauth.mjs'), `expected oauth script, got ${args[0]}`);
+  assert.ok(args.includes('dev'), 'must spawn wrangler dev');
+  assert.ok(args.includes('--local'), 'must pass --local');
+  assert.ok(args.includes('--port'), 'must specify --port');
+  const portIndex = args.indexOf('--port');
+  assert.equal(args[portIndex + 1], '8787');
+});
+
+test('buildTeardownCommand returns SIGINT descriptor on POSIX, taskkill descriptor on Windows', () => {
+  const posix = buildTeardownCommand({ platform: 'linux', pid: 12345 });
+  assert.equal(posix.kind, 'signal');
+  assert.equal(posix.signal, 'SIGINT');
+
+  const windows = buildTeardownCommand({ platform: 'win32', pid: 12345 });
+  assert.equal(windows.kind, 'spawn');
+  assert.equal(windows.cmd, 'taskkill');
+  // /F force + /PID must be present; /T (tree) kills wrangler's child processes.
+  assert.ok(windows.args.includes('/F'));
+  assert.ok(windows.args.includes('/PID'));
+  const pidIndex = windows.args.indexOf('/PID');
+  assert.equal(windows.args[pidIndex + 1], '12345');
+});
+
+test('buildTeardownCommand rejects pids that are not positive integers (no injection via spaces)', () => {
+  // Guard against any future code path that might accidentally pass a
+  // string with spaces into taskkill's argv. argv-style spawn already avoids
+  // shell quoting issues, but reject the malformed input early.
+  assert.throws(
+    () => buildTeardownCommand({ platform: 'win32', pid: '12345; evil.exe' }),
+    /pid/i,
+  );
+  assert.throws(
+    () => buildTeardownCommand({ platform: 'win32', pid: '' }),
+    /pid/i,
+  );
+});
+
+test('selectAvailablePort probes candidates in order and returns first free port', async () => {
+  const probe = createFakePortProbe(new Set());
+  const chosen = await selectAvailablePort([8787, 8788, 8789], { probe });
+  assert.equal(chosen, 8787);
+});
+
+test('selectAvailablePort falls through busy ports to the next free one', async () => {
+  const probe = createFakePortProbe(new Set([8787]));
+  const chosen = await selectAvailablePort([8787, 8788, 8789], { probe });
+  assert.equal(chosen, 8788);
+});
+
+test('selectAvailablePort returns null when every candidate is busy', async () => {
+  const probe = createFakePortProbe(new Set([8787, 8788, 8789]));
+  const chosen = await selectAvailablePort([8787, 8788, 8789], { probe });
+  assert.equal(chosen, null);
+});
+
+test('redactLogLine scrubs ks2_session cookies, Bearer tokens, CLOUDFLARE_API_TOKEN assignments', () => {
+  assert.equal(
+    redactLogLine('cookie: ks2_session=abc.def.ghi; Path=/'),
+    'cookie: ks2_session=[redacted]; Path=/',
+  );
+  assert.equal(
+    redactLogLine('Authorization: Bearer eyJhbGci.realjwt.value'),
+    'Authorization: Bearer [redacted]',
+  );
+  assert.equal(
+    redactLogLine('env CLOUDFLARE_API_TOKEN=abc123xyz loaded'),
+    'env CLOUDFLARE_API_TOKEN=[redacted] loaded',
+  );
+  // Idempotent: already-redacted strings must not be re-tagged.
+  assert.equal(
+    redactLogLine('cookie: ks2_session=[redacted]; Path=/'),
+    'cookie: ks2_session=[redacted]; Path=/',
+  );
+  // Benign strings untouched.
+  assert.equal(redactLogLine('wrangler ready on http://localhost:8787'), 'wrangler ready on http://localhost:8787');
+});
+
+test('redactLogLine redacts all three artefact classes in the same line', () => {
+  // Matches the scenario-10 requirement: one line can carry all three leaks.
+  const line = 'sent cookie: ks2_session=tok1; Authorization: Bearer tok2; CLOUDFLARE_API_TOKEN=tok3';
+  const out = redactLogLine(line);
+  assert.ok(!out.includes('tok1'), `token tok1 leaked: ${out}`);
+  assert.ok(!out.includes('tok2'), `token tok2 leaked: ${out}`);
+  assert.ok(!out.includes('tok3'), `token tok3 leaked: ${out}`);
+  assert.ok(out.includes('[redacted]'));
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 1: happy path
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: happy path selects 8787, ready, driver runs, teardown, exit 0', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+
+  const child = createFakeChild({ pid: 11111 });
+  const spawnCalls = [];
+  const migrationCalls = [];
+  const driverCalls = [];
+  const killCalls = [];
+
+  // Write fake evidence eagerly when the driver "runs" so the orchestrator's
+  // output check can find it.
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: true, reportMeta: { environment: 'local' } }));
+
+  const injections = {
+    platform: 'linux',
+    spawn: (cmd, args, opts) => {
+      spawnCalls.push({ cmd, args, env: opts && opts.env });
+      // Emit a ready banner shortly so readiness log line is captured.
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready on http://localhost:8787\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: (env) => {
+      migrationCalls.push({ env: { ...env } });
+      return Promise.resolve({ exitCode: 0 });
+    },
+    runDriver: ({ argv, env }) => {
+      driverCalls.push({ argv: [...argv], env: { ...env } });
+      // Schedule child exit so teardown path completes.
+      setImmediate(() => child.emit('exit', 0, null));
+      return Promise.resolve({ exitCode: 0 });
+    },
+    killChild: (c, plan) => {
+      killCalls.push({ pid: c.pid, plan });
+      c.emit('exit', 0, null);
+      return Promise.resolve();
+    },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.originResolved, 'http://localhost:8787');
+  assert.equal(result.port, 8787);
+  // Migrations ran before wrangler spawn.
+  assert.equal(migrationCalls.length, 1);
+  // Exactly one wrangler spawn (through oauth wrapper).
+  assert.equal(spawnCalls.length, 1);
+  const oauthScriptArg = spawnCalls[0].args[0];
+  assert.ok(typeof oauthScriptArg === 'string' && oauthScriptArg.endsWith('wrangler-oauth.mjs'));
+  // Driver invoked with --local-fixture and --origin localhost:8787.
+  assert.equal(driverCalls.length, 1);
+  assert.ok(driverCalls[0].argv.includes('--local-fixture'));
+  assert.ok(driverCalls[0].argv.includes('--origin'));
+  const originIdx = driverCalls[0].argv.indexOf('--origin');
+  assert.equal(driverCalls[0].argv[originIdx + 1], 'http://localhost:8787');
+  assert.ok(driverCalls[0].argv.includes('--demo-sessions'));
+  // Teardown was invoked.
+  assert.equal(killCalls.length, 1);
+  // Evidence file exists.
+  assert.ok(readFileSync(evidencePath, 'utf8'));
+
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 2: 8787 busy → falls through to 8788, logs chosen port
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: port 8787 busy falls through to 8788 and records in safety.originResolved', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: true, reportMeta: { environment: 'local' } }));
+
+  const child = createFakeChild();
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready on http://localhost:8788\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set([8787])),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => {
+      setImmediate(() => child.emit('exit', 0, null));
+      return Promise.resolve({ exitCode: 0 });
+    },
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.port, 8788);
+  assert.equal(result.originResolved, 'http://localhost:8788');
+
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 3: wrangler fails to start within 30s → kill, exit 2
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: readiness timeout kills subprocess, writes partial log, exits 2', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+
+  const child = createFakeChild();
+  const killCalls = [];
+  // Fetch never returns ok (simulating wrangler never reaching readiness).
+  const neverReadyFetch = async () => ({ ok: false, status: 503, async text() { return 'not ready'; } });
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('starting...\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: neverReadyFetch,
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    // Readiness timeout should prevent runDriver from being called at all.
+    runDriver: () => { throw new Error('runDriver MUST NOT be called after readiness timeout'); },
+    killChild: (c, plan) => { killCalls.push({ plan }); c.emit('exit', 1, 'SIGTERM'); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    // Crank nowMs so the 30 000 ms hard cap is exceeded after the first few polls.
+    nowMs: (() => {
+      let n = 0;
+      return () => {
+        n += 5000;
+        return n;
+      };
+    })(),
+    sleep: () => Promise.resolve(),
+    readinessTimeoutMs: 1000,
+  };
+
+  const result = await runLocalWorkerOrchestrator(['--readiness-timeout-ms', '1000'], injections);
+  assert.equal(result.exitCode, 2, `expected exit 2, got ${result.exitCode}`);
+  assert.equal(killCalls.length, 1);
+  assert.ok(result.error && /readiness/i.test(result.error), `expected readiness error, got ${result.error}`);
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 4: load driver exits non-zero → still tears down, propagates exit
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: driver non-zero exit tears down wrangler and propagates exit code', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: false }));
+
+  const child = createFakeChild();
+  const killCalls = [];
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => Promise.resolve({ exitCode: 7 }),
+    killChild: (c, plan) => { killCalls.push({ plan }); c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 7);
+  assert.equal(killCalls.length, 1, 'must still tear down wrangler when driver fails');
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 5: --fresh passthrough to driver, no auto-reset of .wrangler/state
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: --fresh is forwarded to the load driver, never auto-resets .wrangler/state', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: true }));
+
+  const child = createFakeChild();
+  let driverArgv = null;
+  let stateResetCalled = false;
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: ({ argv }) => { driverArgv = [...argv]; return Promise.resolve({ exitCode: 0 }); },
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    resetWranglerState: () => { stateResetCalled = true; },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator(['--fresh', '--', '--learners', '2'], injections);
+  assert.equal(result.exitCode, 0);
+  assert.ok(driverArgv.includes('--fresh'), `expected --fresh to be forwarded, got ${JSON.stringify(driverArgv)}`);
+  assert.ok(driverArgv.includes('--learners'));
+  assert.equal(stateResetCalled, false, 'v1 MUST NOT auto-reset .wrangler/state');
+
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 6: SIGINT during load → both children shut down, temp files cleaned
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: SIGINT during load tears down wrangler + driver and cleans temp files', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: false }));
+
+  const child = createFakeChild();
+  const killCalls = [];
+  let driverAborted = false;
+
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: ({ signal } = {}) => new Promise((resolve) => {
+      // Listen for abort to mimic a real AbortController wiring.
+      if (signal) {
+        signal.addEventListener('abort', () => { driverAborted = true; resolve({ exitCode: 130 }); });
+      }
+    }),
+    killChild: (c, plan) => { killCalls.push({ plan }); c.emit('exit', 130, 'SIGINT'); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+    triggerSigint: true, // tells the orchestrator test-hook to fire SIGINT once readiness confirmed
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(killCalls.length, 1, 'wrangler child torn down on SIGINT');
+  assert.equal(driverAborted, true, 'driver abort signalled on SIGINT');
+  assert.equal(result.exitCode, 130);
+
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 7: Windows path with spaces → taskkill argv array quoted safely
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: Windows teardown passes pid via argv array (never shell-quoted string)', () => {
+  // Regression against shell-string injection: the teardown descriptor MUST be
+  // argv-style so a path with spaces or shell metacharacters in the operator
+  // environment cannot interact with taskkill's argv parser.
+  const plan = buildTeardownCommand({ platform: 'win32', pid: 4567 });
+  assert.equal(plan.kind, 'spawn');
+  assert.ok(Array.isArray(plan.args), 'args MUST be argv array, not a concatenated string');
+  // No entry should look like a concatenated PID-with-surrounding-whitespace.
+  assert.ok(!plan.args.some((arg) => typeof arg === 'string' && /\s/.test(arg.trim()) && arg.trim() !== arg));
+  // PID value specifically must be an exact match.
+  const pidIdx = plan.args.indexOf('/PID');
+  assert.equal(plan.args[pidIdx + 1], '4567');
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 8: integration — evidence JSON has env=local, origin=http://localhost:<port>
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: result reports env=local and origin=http://localhost:<port>', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({
+    ok: true,
+    reportMeta: { environment: 'local', origin: 'http://localhost:8789' },
+  }));
+
+  const child = createFakeChild();
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+      return child;
+    },
+    probePort: createFakePortProbe(new Set([8787, 8788])),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => Promise.resolve({ exitCode: 0 }),
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.environment, 'local');
+  assert.equal(result.originResolved, 'http://localhost:8789');
+  assert.equal(result.port, 8789);
+  rmSync(tempDir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 9 (CRITICAL): child-process env does NOT contain CLOUDFLARE_API_TOKEN
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: wrangler spawn env MUST NOT contain CLOUDFLARE_API_TOKEN', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: true }));
+
+  const child = createFakeChild();
+  let spawnEnv = null;
+
+  // Seed a CLOUDFLARE_API_TOKEN in process.env for the duration of this test.
+  const previousToken = process.env.CLOUDFLARE_API_TOKEN;
+  const previousWorkersCi = process.env.WORKERS_CI;
+  process.env.CLOUDFLARE_API_TOKEN = 'secret-that-must-not-leak';
+  delete process.env.WORKERS_CI; // force stripper path (non-CI)
+
+  try {
+    const injections = {
+      platform: 'linux',
+      spawn: (_cmd, _args, opts) => {
+        spawnEnv = opts && opts.env ? { ...opts.env } : null;
+        setImmediate(() => child.stdout.emit('data', Buffer.from('Ready\n')));
+        return child;
+      },
+      probePort: createFakePortProbe(new Set()),
+      fetch: createReadyFetch(),
+      runMigrations: () => Promise.resolve({ exitCode: 0 }),
+      runDriver: () => Promise.resolve({ exitCode: 0 }),
+      killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+      logPath,
+      evidencePath,
+      nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+      sleep: () => Promise.resolve(),
+    };
+
+    const result = await runLocalWorkerOrchestrator([], injections);
+    assert.equal(result.exitCode, 0);
+    assert.ok(spawnEnv, 'spawn was not invoked');
+    assert.equal(
+      Object.prototype.hasOwnProperty.call(spawnEnv, 'CLOUDFLARE_API_TOKEN'),
+      false,
+      'CLOUDFLARE_API_TOKEN leaked into wrangler child-process env',
+    );
+    // Defence: stringifying the env must not contain the literal secret.
+    assert.equal(
+      JSON.stringify(spawnEnv).includes('secret-that-must-not-leak'),
+      false,
+      'secret token value leaked into spawn env',
+    );
+  } finally {
+    if (previousToken === undefined) delete process.env.CLOUDFLARE_API_TOKEN;
+    else process.env.CLOUDFLARE_API_TOKEN = previousToken;
+    if (previousWorkersCi === undefined) delete process.env.WORKERS_CI;
+    else process.env.WORKERS_CI = previousWorkersCi;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U4 scenario 10 (CRITICAL): log redaction, end-to-end write-through
+// ---------------------------------------------------------------------------
+test('capacity-local-worker orchestrator: redaction filter scrubs wrangler stdout before writing log file', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-localworker-'));
+  const logPath = join(tempDir, 'local-worker-stdout.log');
+  const evidencePath = join(tempDir, 'latest-local.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(evidencePath, JSON.stringify({ ok: true }));
+
+  const child = createFakeChild();
+  const injections = {
+    platform: 'linux',
+    spawn: () => {
+      // Seed leaking lines into wrangler stdout BEFORE readiness resolves, so
+      // the redaction filter has to handle them in the real write path.
+      setImmediate(() => {
+        child.stdout.emit('data', Buffer.from('cookie: ks2_session=leaky.jwt.here; Path=/\n'));
+        child.stdout.emit('data', Buffer.from('Authorization: Bearer leaky-bearer-value\n'));
+        child.stderr.emit('data', Buffer.from('env CLOUDFLARE_API_TOKEN=leaky-env-value active\n'));
+        child.stdout.emit('data', Buffer.from('Ready on http://localhost:8787\n'));
+      });
+      return child;
+    },
+    probePort: createFakePortProbe(new Set()),
+    fetch: createReadyFetch(),
+    runMigrations: () => Promise.resolve({ exitCode: 0 }),
+    runDriver: () => Promise.resolve({ exitCode: 0 }),
+    killChild: (c) => { c.emit('exit', 0, null); return Promise.resolve(); },
+    logPath,
+    evidencePath,
+    nowMs: (() => { let n = 0; return () => { n += 50; return n; }; })(),
+    sleep: () => Promise.resolve(),
+  };
+
+  const result = await runLocalWorkerOrchestrator([], injections);
+  assert.equal(result.exitCode, 0);
+  const written = readFileSync(logPath, 'utf8');
+  assert.ok(!written.includes('leaky.jwt.here'), `cookie value leaked: ${written}`);
+  assert.ok(!written.includes('leaky-bearer-value'), `bearer token leaked: ${written}`);
+  assert.ok(!written.includes('leaky-env-value'), `api token leaked: ${written}`);
+  assert.ok(written.includes('[redacted]'), 'redaction marker missing');
+  // Benign content preserved.
+  assert.ok(written.includes('Ready on http://localhost:8787'));
+
+  rmSync(tempDir, { recursive: true, force: true });
+});
