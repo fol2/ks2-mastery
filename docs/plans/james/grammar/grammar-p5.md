@@ -1,315 +1,810 @@
-我先透明講：我照你建議試咗 clone / pull repo，但呢個 workspace 解析唔到 `github.com`，所以 clone 失敗：`Could not resolve host: github.com`。所以今次我係用 GitHub / raw file 重新掃最新 main、Phase 4 report、reward code、Grammar UI model、README 同 open PR 狀態。
+你呢個方向我同意，而且我會正式改口：**用 Star，好過用 XP。** XP 會令人覺得「做多啲題就一定升級」，好容易變成 grind。Star 可以定義成「學習證據」，即係小朋友唔係靠刷題，而係靠真正掌握、隔一段時間仍然做到、不同題型都做到，先攞到 Star。
 
-結論係：**Grammar Phase 4 本身係做完，而且做得幾紮實；但成個 repo 目前唔可以簡單話「完全 production-ready / 可以收工」。** Grammar 功能已經係 Worker-backed、已經有 child UX、Grammar Bank、Mini Test、Writing Try、reward wiring、Playwright golden paths；但 repo 而家有 open regression sweep PR 講明 `main` 曾經有 14 個 `npm test` failures，所以我會將下一 phase 定為 **no-new-feature release hardening + monster progression audit**，唔好再加功能住。Phase 4 report 話 14 個 implementation units 全部 merge、Grammar test surface 到 562/562 passing，而且 Phase 4 係 integrity gate；但 open PR #323 又明確講 `main` 有 14 個 `npm test` failures，要 regression sweep 後先做到 final zero failures。([GitHub][1]) ([GitHub][2])
+我亦確認返你講最新 PR：你之前提到嘅 failure 已經有 regression sweep 收咗。PR #339 已 merge，寫明 `npm test` 由 14 failing 變 0 failing，結果係 3990 pass / 0 fail，`audit.yml` 亦升級做 hard PR gate。呢點我會喺之後 plan 入面當成已解決，不再當 primary blocker。([GitHub][1])
 
-## 1. 小朋友入 Grammar，應該 expect 見到咩 flow？
+## 核心改動：所有 Grammar monsters 都用 100 Stars 滿分
 
-而家正確 child flow 應該係咁：
+我建議 Grammar reward curve 改成：
 
-小朋友入去會見到 **Grammar Garden dashboard**，唔應該見到 Worker、read model、Stage 1、denominator、evidence snapshot 呢啲 developer / adult 字眼。Dashboard 主要有四個大入口：**Smart Practice**、**Fix Trouble Spots**、**Mini Test**、**Grammar Bank**。Smart Practice 係 default，描述係「Due · weak · one fresh concept」；Fix Trouble Spots 係做常錯概念；Mini Test 係短 timed set，到最後先出 marks；Grammar Bank 係好似 Spelling Word Bank 咁樣，畀小朋友睇自己每個 grammar concept 嘅狀態。([GitHub][3])
+**每隻 active Grammar monster 都係 100 Stars = Mega。**
 
-下面有「More practice」但係 secondary：**Learn a concept**、**Sentence Surgery**、**Sentence Builder**、**Worked Examples**、**Faded Guidance**。Phase 4 已經特別標示 Surgery / Builder 係 **Mixed practice**，即係佢哋唔會保證跟某一個 focused concept，避免小朋友按咗「relative clauses」但實際出咗 mixed practice 會覺得被呃。([GitHub][3])
+唔好再出現「Couronnail 12 Stars 已經 Mega，但 Bracehart 12 Stars 只係 Kid」呢種心理落差。你講得啱，小朋友同大人都應該有一個統一預期：**100 Stars 就係 Mega**。
 
-如果小朋友按 **Smart Practice**，正常 flow 係：先有一題，先自己試，未答之前唔應該有 AI、worked solution、similar problem、faded help。答啱就短 feedback 然後下一題；答錯就先畀一個細 nudge，再 retry，之後先可以 optional support。Phase 4 已經用 learning-flow matrix 測咗呢啲規則，包括 pending state、mode flip、AI after marking、faded scaffold 唔漏答案、Mini Test timer expiry 等情況。([GitHub][1])
+但要注意一點：**100 Stars 係 display scale，不係 raw skill count。**
+背後每隻 monster 的 concept 數量唔同，所以系統要做 normalization。
 
-如果小朋友按 **Mini Test**，佢應該感覺似一個短測驗：有 timer、有題目 navigation、答案可以保存，未 finish 前唔應該見到 feedback / hint / support / answer。Finish 後先 review，未答嘅會顯示 Blank。Phase 4 Playwright golden paths 已經測咗 Mini Test navigate → preserve → finish → review。([GitHub][1])
+現時 active Grammar roster 係 Bracehart、Chronalyx、Couronnail、Concordium；Glossbloom、Loomrill、Mirrane 已經係 reserve。repo 入面 `MONSTERS_BY_SUBJECT.grammar` 亦係呢四隻 active grammar monsters。([GitHub][2])
 
-如果小朋友按 **Grammar Bank**，佢應該見到全部 18 個 Grammar concepts，可以 filter：All、Due、Trouble、Learning、Nearly secure、Secure、New；亦可以按 monster cluster filter：Bracehart、Chronalyx、Couronnail、Concordium。Concept card 會有概念名、summary、child-friendly status、monster cluster、example sentence、attempt / correct / wrong tally，唔會直接用 percentage 嚇小朋友。([GitHub][3]) ([GitHub][3])
+現時 Grammar direct mapping 係 Bracehart 6 concepts、Chronalyx 4 concepts、Couronnail 3 concepts，Concordium aggregate 18 concepts；而現有 staging 係用 secure concept ratio 去計 stage，所以細 denominator monster 會好容易跳 stage，尤其 Couronnail 3 concepts 會由 2/3 stage 2 直接 3/3 Mega。([GitHub][3])
 
-如果小朋友按 **Writing Try**，呢個係 non-scored writing transfer。佢可以寫句子 / paragraph、tick checklist、save。Save 咗唔會加 mastery、唔會出 monster reward、唔會改 misconception、唔會影響 Concordium。Phase 4 已經加咗 hide / unhide；成人 admin 先可以 archive / delete，而且 learner-facing projection 唔會 expose archive。([GitHub][1]) ([GitHub][1])
+所以新 plan 要解決兩件事：
 
-Adult / parent / admin report 係另一條路，唔應該放喺小朋友主 flow。Phase 4 已經加咗 adult confidence chips、Parent/Admin hub confidence wiring，同時 child copy forbidden terms 有 gate，避免小朋友畫面出現「Worker」「Stage 1」「read model」「denominator」呢類字眼。([GitHub][1]) ([GitHub][3])
+第一，**全部 monster display 都係 100 Stars**。
+第二，**Star 唔係 linear 加上去；越後期越難。**
 
-用一句講：**小朋友應該見到一個好簡單嘅學習產品：今日做咩、我邊度弱、邊啲 secure、我隻 monster 去到邊。複雜 adaptive engine、confidence、reward evidence、read model 全部應該喺背後。**
+## 新 progression curve
 
-## 2. 而家 Grammar 有咩 functionality？
+我建議固定用呢個 curve：
 
-而家 Grammar 已經唔係 HTML prototype。README 話 Grammar 係 **Stage 1 Worker-command-backed practice surface**，經 Worker subject command and read-model boundary，React render setup/session/feedback/summary/analytics states；production app 亦係 Worker-backed auth、API repositories、subject commands、server read models，`?local=1` 已經唔係 browser-local production runtime。([GitHub][4])
+| State      | Child-facing name | Star requirement |
+| ---------- | ----------------- | ---------------: |
+| Not caught | Not found yet     |                0 |
+| Egg        | Egg found         |   catch gate met |
+| Hatch      | Hatched           |         15 Stars |
+| Evolve 2   | Growing           |         35 Stars |
+| Evolve 3   | Nearly Mega       |         65 Stars |
+| Mega       | Mega              |        100 Stars |
 
-現有功能大概係：
+呢條 curve 係 deliberate non-linear：
 
-**Smart Practice**：adaptive practice，應該混 due、weak、fresh concept。
-**Fix Trouble Spots**：針對錯得多 / 需要 repair 嘅概念。
-**Mini Test**：timed strict set，finish 前無 feedback。
-**Grammar Bank**：好似 Spelling Word Bank，睇 18 個 concepts、status、examples、filter、focused practice。
-**Learn / Worked / Faded**：教學支援 mode，但 support 會影響 mastery credit。
-**Sentence Surgery / Sentence Builder**：mixed practice，唔假扮 focused practice。
-**Writing Try**：non-scored transfer writing，save evidence 但唔改 mastery/reward。
-**Read aloud / accessibility**：session / mini-test flow 有相關 coverage。
-**AI enrichment**：只可以 post-marking，唔係 score-bearing，亦唔應該 pre-answer 出現。Phase 4 invariant 明確寫 AI 係 post-marking enrichment only。([GitHub][1])
-**Adult / Parent / Admin view**：confidence labels、recent attempts、Writing Try admin archive/delete。([GitHub][1])
+Egg → Hatch：最容易，15 Stars。
+Hatch → Evolve 2：再要 20 Stars。
+Evolve 2 → Evolve 3：再要 30 Stars。
+Evolve 3 → Mega：最後再要 35 Stars，而且要有 retention evidence。
 
-學習上，佢而家方向係啱：先獨立嘗試，再短 feedback，再必要時 worked/faded support，再 retry，再 spaced return。呢個同你一開始 KS2 reasoning prototype 入面講嘅「mixed retrieval、genuine independent attempt、minimal corrective feedback、worked/faded support only when needed、retry、spaced mixed return」一致。
+即係越後越難，但不是不可能。小朋友一開始會較快見到 Egg / Hatch，有 motivation；但 Mega 要真正 durable mastery，唔係兩三日刷題刷出嚟。
 
-## 3. Grammar 而家係咪 in production？
+## Star 唔應該係「答啱一題 +1」
 
-我會分開三層講，因為呢度好易混亂。
+呢點好重要。
 
-**技術上：Grammar 已經入咗 production architecture。** README 講 production 用 Worker-backed auth、server read models、subject commands，而 Grammar 已經 crossed deterministic learning engine boundary for Stage 1 practice surface。([GitHub][4])
+Star 唔應該像 XP 咁「每答啱一題就加」。如果咁做，小朋友可以靠重複低難度題目刷上 Mega，學習價值會變差。
 
-**Phase 4 Grammar 本身：完成，而且測試好強。** Phase 4 report 話 14 PRs merged、zero blocking findings、Grammar tests 562/562 passing、production-smoke `stats.templates` leak 已修、Playwright golden paths 已加、reward wiring / Concordium invariant / Writing Try non-scored 都有 gate。([GitHub][1]) ([GitHub][1])
+Star 應該由 **evidence tiers** 產生。每個 concept 有一個 Star budget。假設 Bracehart 有 6 concepts，每個 concept budget 約 16.7 Stars；Chronalyx 有 4 concepts，每個 concept budget 25 Stars；Couronnail 有 3 concepts，每個 concept budget 約 33.3 Stars；Concordium 18 concepts，每個 concept budget 約 5.56 Stars。
 
-**但成個 repo / release 狀態：我唔會話完全 green。** Open PR #323 明確話 main 有 14 個 `npm test` failures，係 after 一批 PR merge without test gate；PR #326 亦話 14 pre-existing main fails unchanged。即係就算 Grammar P4 自己完成，整個 main branch 仍然有 repo-level regression sweep 要收尾。([GitHub][2]) ([GitHub][5])
+但每個 concept budget 唔係一次過攞晒。要逐層解鎖。
 
-所以我會咁定義而家狀態：
+我建議每個 concept 的 Star budget 分成：
 
-**Grammar：Worker-backed Stage 1 + Phase 4 hardened，已經係 production path 入面。**
-**但：未應該叫 full finished Grammar subject / release-stamped production-ready，直到 repo-level `npm test`、`npm run check`、`audit:client`、`audit:production` 全部綠。** README 本身都講 Grammar crossed Stage 1 boundary，但 Grammar / Punctuation 都未係 finished full-subject product layer。([GitHub][4])
+| Evidence tier          | Share of that concept’s Star budget | Meaning                                       |
+| ---------------------- | ----------------------------------: | --------------------------------------------- |
+| First independent win  |                                  5% | 第一次真正自己答啱                                     |
+| Repeat independent win |                                 10% | 之後再獨立答啱一次                                     |
+| Varied practice        |                                 10% | 不同 template / question shape 都做到              |
+| Secure confidence      |                                 15% | 達到現有 secure 定義                                |
+| Retained after secure  |                                 60% | secure 後隔一段時間，在 mixed review / mini-test 仍然做到 |
 
-## 4. Monster 係點攞？現行 code 係點安排？
+呢個分配係特登設計成後段重。因為 Grammar concept 少，如果「secure」本身已經畀太多 Star，monster 會升得太快。現在 secure 只係代表「你已經好穩」，但 Mega 要再證明「隔咗時間都仲穩」。
 
-而家 active Grammar monsters 係四隻：
+現有 repo 的 `secure` 定義本身唔係鬆：要 strength ≥ 0.82、correct streak ≥ 3、spacing interval ≥ 7 days；attempts ≤ 2 仍然係 emerging，weak 或 recent misses 會變 needs-repair。即係 secure 已經係有 spaced evidence 的狀態，不是一題答啱就 secure。([GitHub][4])
+
+但我哋而家再加一層：**secure 不是 Mega；retention after secure 才是 Mega 的主力。**
+
+## 例子：點解第一個 secure 只係 Egg，不會即刻 Hatch
+
+用新 formula：
+
+一個 concept 去到 secure，但未做 retention，大約只攞到：
+
+5% + 10% + 10% + 15% = 40% of that concept budget。
+
+即係：
+
+Bracehart：一個 secure concept 約 6.7 Stars。
+Chronalyx：一個 secure concept 約 10 Stars。
+Couronnail：一個 secure concept 約 13.3 Stars。
+Concordium：一個 secure concept 約 2.2 Stars。
+
+所以第一個 secure concept 會觸發 **Egg found**，但通常未夠 15 Stars Hatch。呢個就同 Spelling 的感覺一致：第一個 secure 給你一隻蛋，但唔係即刻大爆升級。
+
+如果之後小朋友對同一 concept 做到 retention check，呢個 concept 就可以補埋後面 60% budget。咁 Egg → Hatch 就會好自然：小朋友再證明一次，蛋就孵化。
+
+## Concordium 要特別處理
+
+Concordium 係 grand monster，不應該第一個 secure concept 就出蛋。
+
+Direct monsters 可以：
+
+1 secure concept = Egg found。
+
+但 Concordium 應該代表 whole-subject breadth，所以我建議：
+
+**Concordium Egg gate：至少 6 個 secure concepts，而且要橫跨至少 2 隻 direct monsters。**
+
+例如只做晒 Bracehart 一個 cluster，都唔應該即刻搵到 Concordium。Concordium 應該係「你開始掌握整個 Grammar Garden」先出現。
+
+Concordium 後面仍然用同一個 100-Star scale：
+
+15 Stars = Hatch
+35 Stars = Evolve 2
+65 Stars = Evolve 3
+100 Stars = Grand Concordium
+
+但 Mega / Grand Concordium 必須要 all 18 concepts 達到 full evidence，包括 retention after secure。
+
+咁做有三個好處：
+
+第一，direct monsters 給短中期 motivation。
+第二，Concordium 保持 legendary / grand reward 感覺。
+第三，全部都係 100 Stars，認知上簡單。
+
+## Landing Page 亦要跟呢個改
+
+你覺得 Landing Page 有啲 messy，我同意。現時 Grammar dashboard 已經比以前好，但結構仍然有 hero、today cards、Concordium progress、4 primary mode cards、round length、speech rate、Begin round、Writing Try、More practice。repo comment 都明確寫咗呢個 structure。([GitHub][5])
+
+我建議下一版 Landing Page 用呢個 hierarchy：
+
+第一屏只見到：
+
+**Grammar Garden**
+“Fix tricky sentences. Grow your creatures.”
+
+一個大 CTA：
+
+**Start Smart Practice**
+
+三個細 status：
+
+Due today
+Trouble spots
+Secure skills
+
+一條 compact monster strip：
+
+Bracehart · Egg found · 8/100 Stars
+Chronalyx · Not found yet · 0/100 Stars
+Couronnail · Hatched · 18/100 Stars
+Concordium · Not found yet · 4/100 Stars
+
+下面 secondary links：
+
+Grammar Bank
+Mini Test
+Fix Trouble Spots
+
+再下面 collapsed：
+
+More practice: Learn, Surgery, Builder, Worked, Faded, Writing Try
+
+現時 dashboard 有四個 primary mode cards，Smart Practice、Fix Trouble Spots、Mini Test、Grammar Bank；Smart Practice 已經被標示為 obvious default action，Grammar Bank 亦係 primary card。([GitHub][6])
+我建議再簡化一步：**Smart Practice 成為唯一 primary card / button，其他三個變 secondary links。**
+
+理由好簡單：Spelling 清楚，係因為小朋友不用先理解多個模式先開始。Grammar 更複雜，所以更需要一條 default path。
+
+## Revised plan：Grammar Phase 5 — 100-Star Monster Curve & Landing Simplification
+
+### U0 — Freeze product contract
+
+建立：
+
+`docs/plans/james/grammar/grammar-phase5-star-curve-landing-plan.md`
+
+Scope 寫清楚：
+
+No new content.
+No new learning mode.
+No answer-spec migration.
+No contentReleaseId bump unless marking changes.
+This phase only changes reward display/progression logic and dashboard information architecture.
+
+Invariants：
+
+Star is not XP.
+Stars are learning-evidence milestones, not per-question currency.
+Writing Try gives 0 Stars.
+AI explanation gives 0 Stars.
+Worked/faded supported answers cannot unlock independent-win or retention Stars.
+No monster downgrades after deployment.
+Adult learning confidence may still show “needs repair” even if child reward stage is not removed.
+
+### U1 — Add 100-Star display model
+
+Create new helper, probably:
+
+`src/platform/game/mastery/grammar-stars.js`
+
+Core constants:
+
+```js
+export const GRAMMAR_MONSTER_STAR_MAX = 100;
+
+export const GRAMMAR_STAR_STAGE_THRESHOLDS = Object.freeze({
+  hatch: 15,
+  evolve2: 35,
+  evolve3: 65,
+  mega: 100,
+});
+
+export const GRAMMAR_CONCEPT_STAR_WEIGHTS = Object.freeze({
+  firstIndependentWin: 0.05,
+  repeatIndependentWin: 0.10,
+  variedPractice: 0.10,
+  secureConfidence: 0.15,
+  retainedAfterSecure: 0.60,
+});
+```
+
+Important: **do not overload raw `mastered` count**. Existing `mastered` still means secure concepts. New field should be display-facing:
+
+```js
+{
+  stars: 42,
+  starMax: 100,
+  stageName: 'Growing',
+  displayStage: 2,
+  nextMilestoneStars: 65,
+  nextMilestoneLabel: 'Nearly Mega',
+}
+```
+
+### U2 — Define concept evidence tiers
+
+Implement a pure function:
+
+```js
+deriveGrammarConceptStarEvidence({
+  conceptId,
+  conceptNode,
+  templateNodes,
+  questionTypeNodes,
+  recentAttempts,
+  now,
+})
+```
+
+It should return:
+
+```js
+{
+  firstIndependentWin: true,
+  repeatIndependentWin: true,
+  variedPractice: false,
+  secureConfidence: true,
+  retainedAfterSecure: false,
+}
+```
+
+Rules:
+
+`firstIndependentWin` only counts first-attempt independent correct, support level 0.
+
+`repeatIndependentWin` needs another independent correct on a later attempt/session.
+
+`variedPractice` needs distinct template/question shape. For thin-pool concepts, fallback to distinct generated items is acceptable, but mark this in tests.
+
+`secureConfidence` uses the existing confidence/status system.
+
+`retainedAfterSecure` needs a later independent correct after the concept has been secure and due again, preferably in Smart Practice mixed review or Mini Test.
+
+Supported worked/faded success can help learning confidence, but should not unlock independent / retention Stars at full value. This protects the learning loop: genuine first attempt, corrective feedback, support only when needed, retry, spaced return. That is aligned with the research-backed design brief you gave earlier. 
+
+### U3 — Convert evidence into 100 Stars
+
+For each monster:
+
+```js
+conceptBudget = 100 / conceptCount
+conceptStars =
+  conceptBudget * sum(unlockedEvidenceWeights)
+monsterStars = floor(sum(conceptStars))
+```
+
+Example for Couronnail:
+
+3 concepts, so each concept budget ≈ 33.3 Stars.
+
+One secure concept without retention:
+
+33.3 × 0.40 = 13.3 Stars.
+
+So:
+
+First secure concept → Egg found.
+Still under 15 Stars → not hatched yet.
+Retention or another concept pushes it over 15 → Hatch.
+
+This fixes the exact problem you spotted: no tiny monster jumps from early progress straight to Mega.
+
+### U4 — Stage gates
+
+Direct monsters:
+
+| Stage     | Requirement               |
+| --------- | ------------------------- |
+| Not found | 0 secure concepts         |
+| Egg found | at least 1 secure concept |
+| Hatch     | at least 15 Stars         |
+| Evolve 2  | at least 35 Stars         |
+| Evolve 3  | at least 65 Stars         |
+| Mega      | 100 Stars                 |
+
+Concordium:
+
+| Stage            | Requirement                                                  |
+| ---------------- | ------------------------------------------------------------ |
+| Not found        | below broad-coverage gate                                    |
+| Egg found        | at least 6 secure concepts across at least 2 direct monsters |
+| Hatch            | at least 15 Stars and broad gate met                         |
+| Evolve 2         | at least 35 Stars                                            |
+| Evolve 3         | at least 65 Stars                                            |
+| Grand Concordium | 100 Stars, all 18 concepts fully evidenced                   |
+
+For Concordium, broad coverage matters. It should not be possible to grind only one cluster and unlock the grand monster early.
+
+### U5 — No downgrade migration
+
+Changing the display curve can make some existing learners look like they moved backwards. Avoid that.
+
+Add a migration/normaliser:
+
+```js
+normaliseGrammarStarRewardState(previousState, computedProgress)
+```
+
+Rules:
+
+If learner already caught a monster, keep Egg found.
+
+If learner already saw stage 2, never display below stage 2.
+
+If learner already saw Mega, keep Mega.
+
+If new Star calculation is higher, move forward.
+
+Never emit catch/evolve/mega toasts during read-time migration.
+
+Reserved monsters remain hidden.
+
+This keeps trust. We can improve the curve without punishing existing progress.
+
+### U6 — Update dashboard monster strip
+
+Landing Page should show compact, aligned progress:
+
+Bracehart — Egg found — 8/100 Stars
+Chronalyx — Growing — 42/100 Stars
+Couronnail — Not found yet — 0/100 Stars
+Concordium — Not found yet — 6/100 Stars
+
+Child copy:
+
+“100 Stars = Mega”
+“Stars come from secure skills and later review.”
+
+No raw evidence labels on the child dashboard. Adult report can show details.
+
+### U7 — Simplify Landing Page
+
+Update:
+
+`GrammarSetupScene.jsx`
+`grammar-view-model.js`
+
+Current dashboard already removed old adult/developer copy and has child-facing hero, today cards, Concordium progress, primary modes, Writing Try, More practice, and quiet controls.([GitHub][5])
+
+New layout:
+
+One primary CTA:
+
+**Start Smart Practice**
+
+Secondary row:
+
+Grammar Bank
+Mini Test
+Fix Trouble Spots
+
+Monster strip:
+
+4 active monsters, 100-Star progress.
+
+Collapsed More practice:
+
+Learn
+Sentence Surgery
+Sentence Builder
+Worked Examples
+Faded Guidance
+Writing Try
+
+Move Writing Try out of the primary area. It is valuable, but it is non-scored transfer, not the main daily path.
+
+Acceptance criteria:
+
+A child can start in one click.
+
+The first screen does not require choosing among 8 modes.
+
+All active monsters use 100-Star language.
+
+No Worker / read model / denominator / evidence technical language in child dashboard.
+
+### U8 — Reward event semantics
+
+Events should become clearer:
+
+First secure direct concept:
+
+`caught` → “You found Bracehart’s Egg!”
+
+15 Stars:
+
+`hatch` or `evolve` → “Bracehart hatched!”
+
+35 Stars:
+
+`evolve`
+
+65 Stars:
+
+`evolve`
+
+100 Stars:
+
+`mega`
+
+For Concordium:
+
+No `caught` until broad gate is met.
+
+Important: first secure concept should not fire both `caught` and `hatch` in one go. If the computed Stars cross 15 at the same time, queue the higher event for a later clear learning moment, or display only the most meaningful event. For motivation, I prefer:
+
+First event: Egg found.
+Next qualifying round: Hatch.
+
+That gives the child a clearer story.
+
+### U9 — Simulation before final thresholds
+
+Before implementing final values blindly, add deterministic simulation:
+
+`docs/plans/james/grammar/grammar-star-curve-simulation.md`
+
+Scenarios:
+
+Ideal learner: mostly independent correct.
+Typical learner: 75–85% correct, occasional support.
+Struggling learner: repeated misses and support.
+Daily 5-question round.
+Daily 10-question round.
+
+Report:
+
+Days to first direct Egg.
+Days to first Hatch.
+Days to first direct Mega.
+Days to Concordium Egg.
+Days to Grand Concordium.
+Number of sessions.
+Number of independent attempts.
+Support usage impact.
+
+Target feel:
+
+First direct Egg: within 1–2 weeks.
+First direct Hatch: 2–3 weeks.
+First direct Mega: 5–8 weeks.
+Concordium Egg: after broad progress, maybe 4–6 weeks.
+Grand Concordium: 10–14+ weeks for realistic daily use.
+
+If simulation shows Mega in 2 weeks, curve is too easy.
+If simulation shows Egg only after 6 weeks, curve is too hard.
+
+### U10 — Tests
+
+Add tests for:
+
+All active Grammar monsters have `starMax: 100`.
+
+Couronnail no longer jumps straight to Mega from 3 secure concepts without retention.
+
+First direct secure concept catches Egg but does not hatch.
+
+Hatch threshold is 15 Stars.
+
+Evolve 2 threshold is 35 Stars.
+
+Evolve 3 threshold is 65 Stars.
+
+Mega requires 100 Stars.
+
+Concordium does not catch at 1 secure concept.
+
+Concordium requires broad coverage.
+
+Writing Try gives no Stars.
+
+AI explanations give no Stars.
+
+Supported worked/faded attempts do not unlock full independent Star tiers.
+
+Legacy progress never displays lower than before.
+
+Reserved monsters remain hidden.
+
+Dashboard shows one primary Start Smart Practice action.
+
+## My final recommendation
+
+你提議「100 Stars = Mega」係正確方向。
+我會將 Grammar monster progression 由：
+
+**secure concept count → stage**
+
+改成：
+
+**secure concept + independent evidence + variation + retention → normalized 100 Stars → stage**
+
+咁樣就會同時解決：
+
+小朋友睇得明。
+大人睇得明。
+不同 monster denominator 唔同但 display 一致。
+小 monster 不會太快 Mega。
+Mega 真係代表 durable mastery，而唔係短期刷題。
+Landing Page 可以簡化成 Spelling 那種「一眼知做咩」的模式。
+
+下一版 plan 名稱我會改成：
+
+**Grammar Phase 5 — 100-Star Monster Curve & Landing Simplification**
+
+呢個 phase 唔係加功能，而係將現有 Grammar 變得更清楚、更公平、更有學習曲線。
+
+[1]: https://github.com/fol2/ks2-mastery/pull/339 "docs(regression-sweep): completion report — 14→0 failures, 9 PRs, 3.5h by fol2 · Pull Request #339 · fol2/ks2-mastery · GitHub"
+[2]: https://raw.githubusercontent.com/fol2/ks2-mastery/main/src/platform/game/monsters.js "raw.githubusercontent.com"
+[3]: https://raw.githubusercontent.com/fol2/ks2-mastery/main/src/platform/game/mastery/grammar.js "raw.githubusercontent.com"
+[4]: https://raw.githubusercontent.com/fol2/ks2-mastery/main/shared/grammar/confidence.js "raw.githubusercontent.com"
+[5]: https://raw.githubusercontent.com/fol2/ks2-mastery/main/src/subjects/grammar/components/GrammarSetupScene.jsx "raw.githubusercontent.com"
+[6]: https://raw.githubusercontent.com/fol2/ks2-mastery/main/src/subjects/grammar/components/grammar-view-model.js "raw.githubusercontent.com"
+
+---
+
+同意，呢個改法更好。
+
+我會將 monster progression 改成：
+
+**0 Stars = Not found yet**
+**1 Star = Egg found**
+**15 Stars = Hatch**
+**35 Stars = Evolve 2**
+**65 Stars = Evolve 3**
+**100 Stars = Mega**
+
+咁樣就清楚好多：小朋友一開始有一個早期成功，就即刻見到「我搵到隻蛋」。之後先慢慢養大隻 monster。呢個比「等到 secure 先有蛋」好，因為 secure 本身已經係一個比較後期、比較穩定嘅學習狀態；如果蛋都要等到 secure，早期 motivation 會太慢。
+
+我會保留你講嘅重點：**Egg 易攞，Mega 難但 achievable。**
+
+## 更新後嘅 Monster Star Curve
+
+新版本應該係：
+
+| Stars | Stage     | Child-facing meaning |
+| ----: | --------- | -------------------- |
+|     0 | Not found | 仲未搵到                 |
+|     1 | Egg found | 搵到隻蛋                 |
+|    15 | Hatch     | 孵化                   |
+|    35 | Evolve 2  | 長大一階                 |
+|    65 | Evolve 3  | 接近 Mega              |
+|   100 | Mega      | 完全進化                 |
+
+呢條 curve 仍然係 non-linear：
+
+1 → 15 最容易，因為要畀小朋友快啲有成功感。
+15 → 35 需要更多穩定練習。
+35 → 65 開始要求不同題型、不同情境都做到。
+65 → 100 最難，要有 secure + later retention，但唔應該難到放棄。
+
+## Star 點樣攞？
+
+我會改成：**Star 係學習證據，不是每答一題 +1 XP。**
+
+但第一粒 Star 要容易攞。
+
+建議規則：
+
+第一粒 Star 可以由以下其中一種觸發：
+
+1. 第一次 independent first-attempt correct；或者
+2. 在 Learn / Worked / Faded 後，完成一條 clean retry；或者
+3. Mini Test 中有一條相關 concept 答啱。
+
+即係唔需要 secure。只要系統有一個合理學習證據，就可以畀 1 Star，然後 catch egg。
+
+但之後的 Stars 要慢慢嚴格：
+
+| Evidence                           | Star role            |
+| ---------------------------------- | -------------------- |
+| First win                          | 拎到第一粒 Star，catch egg |
+| Repeat independent success         | 慢慢加 Stars            |
+| Different template / question type | 加更多 Stars            |
+| Concept reaches secure             | 加一批 Stars            |
+| Retention after secure             | 後段大 Stars，推向 Mega    |
+
+呢個好處係：小朋友初期唔會等太耐，但後面仍然需要真正 mastery。
+
+呢個仍然符合我哋一直講嘅 learning loop：先有真實嘗試，之後有簡短 feedback，需要時先有 worked/faded support，再 retry，再 spaced return。Star 應該獎勵呢啲有效學習證據，而唔係純粹刷題數量。
+
+## 更新後嘅 Phase 5 Plan 重點
+
+我會將 plan 改成：
+
+**Grammar Phase 5 — 1-Star Egg, 100-Star Monster Curve & Landing Simplification**
+
+Scope 不變：
+
+No new content.
+No new learning modes.
+No answer-spec migration.
+No contentReleaseId bump unless marking behaviour changes.
+This phase only changes landing clarity and reward progression display.
+
+## Revised U1 — 1 Star catches the Egg
+
+新 rule：
+
+```js
+0 Stars = not caught
+>= 1 Star = caught egg
+```
+
+不再用：
+
+```js
+first secure concept = caught egg
+```
+
+Acceptance criteria：
+
+任何 active Grammar monster 攞到第 1 粒 Star，就顯示 Egg found。
+
+第一粒 Star 不需要 concept secure。
+
+Writing Try 不給 Star。
+
+AI explanation 不給 Star。
+
+純粹打開 lesson / read explanation 不給 Star。
+
+Wrong answer 不給 Star。
+
+## Revised U2 — 100-Star common scale
+
+所有 active monsters 都係：
+
+```js
+starMax: 100
+```
+
+包括：
 
 Bracehart
 Chronalyx
 Couronnail
 Concordium
 
-Reserve monsters 係 Glossbloom、Loomrill、Mirrane，資產仍然存在，但唔應該出現喺 learner-facing active Grammar summary。Repo active roster 已經係 `grammar: ['bracehart', 'chronalyx', 'couronnail', 'concordium']`，reserve 係 `grammarReserve: ['glossbloom', 'loomrill', 'mirrane']`。([GitHub][6])
+Display 一律：
 
-概念分配係：
+`23 / 100 Stars`
 
-Bracehart：6 個 concepts，包括 sentence functions、clauses、relative clauses、noun phrases、active/passive、subject/object。
-Chronalyx：4 個 concepts，包括 tense/aspect、modal verbs、adverbials、pronouns/cohesion。
-Couronnail：3 個 concepts，包括 word classes、standard English、formality。
-Concordium：18 個 Grammar aggregate concepts，包括 5 個 punctuation-for-grammar concepts。([GitHub][7])
+咁小朋友同大人都容易明白。
 
-**而家攞 monster 嘅核心規則係：concept secure 咗，先會記入 reward mastery。** Writing Try 唔會計；普通 scored practice / mini-test 如果令 concept cross 到 secure threshold，就會 record Grammar concept mastery。Reward layer 只 react to committed secured evidence，唔控制 learning flow。Phase 4 invariant 已經寫明呢點。([GitHub][1])
+## Revised U3 — Non-linear stage thresholds
 
-現行 code 嘅 `caught` 規則好簡單：`mastered >= 1` 就 caught。Stage 則係用 ratio 計：0% = stage 0；>0% = stage 1；>=50% = stage 2；>=75% = stage 3；100% = stage 4。([GitHub][7]) ([GitHub][7])
+固定 thresholds：
 
-所以現行實際 thresholds 係：
+```js
+const GRAMMAR_STAR_STAGE_THRESHOLDS = {
+  egg: 1,
+  hatch: 15,
+  evolve2: 35,
+  evolve3: 65,
+  mega: 100,
+};
+```
 
-| Monster    | Total secure concepts | Not caught | Caught / stage 1 | Stage 2 | Stage 3 | Stage 4 / Mega |
-| ---------- | --------------------: | ---------: | ---------------: | ------: | ------: | -------------: |
-| Bracehart  |                     6 |          0 |              1–2 |     3–4 |       5 |              6 |
-| Chronalyx  |                     4 |          0 |                1 |       2 |       3 |              4 |
-| Couronnail |                     3 |          0 |                1 |       2 |       — |              3 |
-| Concordium |                    18 |          0 |              1–8 |    9–13 |   14–17 |             18 |
+Stage copy：
 
-呢度有一個我覺得**好重要、好值得下一 phase 即刻處理嘅怪位**：你講嘅 product story 係「未有蛋 / not caught → 捉到蛋 → kid → 再 evolve → Mega」。但現行 code 其實係：stage 0 有 Egg 名稱 / asset，例如 `Bracehart Egg`、`Chronalyx Egg`、`Couronnail Egg`、`Concordium Egg`；但 `caught` 要 mastered >= 1 先 true。即係第一個 secure concept 發生時，event 係 `caught`，但 progress stage 已經係 stage 1，而唔係「caught egg but not hatched」。Event code 亦係先 check caught，再 check stage increase；所以第一個 secure 會 emit `caught`，唔會同時 emit `evolve`。([GitHub][6]) ([GitHub][7])
+0 Stars: “Not found yet”
+1–14 Stars: “Egg found”
+15–34 Stars: “Hatched”
+35–64 Stars: “Growing”
+65–99 Stars: “Nearly Mega”
+100 Stars: “Mega”
 
-最明顯 bug / design mismatch 係 **Couronnail stage 3 永遠到唔到**。因為 total 得 3 個 concepts：1/3 係 stage 1，2/3 係 stage 2，3/3 直接 stage 4。`Formacrest` 呢個 stage 3 名稱理論上存在，但按現行 ratio staging 係 unreachable。([GitHub][6]) ([GitHub][7])
+## Revised U4 — Star weighting
 
-所以答案係：**而家係 secure concept 攞 monster，不係答一題啱就攞。第一個 secure 會 catch；全部 relevant concepts secure 會 Mega。** 但如果你想要 Spelling 嗰種「先搵到蛋，再孵化，再 kid，再 Mega」嘅感覺，現行 Grammar reward stage model 要再 harden。
+我會調整上次提過嘅 evidence weighting，令第一粒 Star 更早出現。
 
-## 5. 我搵到嘅 bug / flaw / regression risk
+不是：
 
-第一，**repo-level test gate 仍然係最大 release blocker**。Grammar P4 自己 green，但 open regression PR 講 main 有 14 個 `npm test` failures，呢個唔可以忽視。即使 failures 未必係 Grammar，都會影響你話「production ready」嘅信心。([GitHub][2])
+First independent win = 5% of concept budget
 
-第二，**monster stage story 同 product expectation 唔一致**。你想「not caught → catch egg → hatch / grow → Mega」，但現行係 first secure already caught + stage 1。Egg stage 有 asset 名，但 caught false，所以小朋友可能永遠無一個清楚「我剛剛捉到蛋」嘅持續狀態，只係見到 caught toast。([GitHub][7]) ([GitHub][6])
+而係：
 
-第三，**Couronnail stage 3 unreachable**。呢個係具體 bug，因為 3-concept denominator 配 ratio staging 會跳過 75% stage。([GitHub][7])
+First valid learning evidence = at least 1 displayed Star.
 
-第四，**Phase 4 自己承認 Mega-on-18th-secure Playwright assertion 被弱化**。本來想測「Concordium 第 18 個 secure 變 Mega」，但 UI driving 17 concepts 超時，所以最後只測 monotone non-decreasing。呢個係 reward UI 最重要嘅 full-path gap。([GitHub][1])
-
-第五，**adaptive freshness 仍有一個已知 soft-penalty 弱點**。Phase 4 report 寫 seed 13 仍然可以出 3 次 consecutive `word_classes`，因為 concept freshness 只係 soft penalty，唔係 hard serialisation guard。對小朋友嚟講，連續三題同概念會覺得奇怪 / repetitive。([GitHub][1])
-
-第六，**admin transfer mutation 嘅 IDOR membership check deferred**。Phase 4 report 明確講 U10 IDOR membership check deferred，如果 multi-family deployment 真係行，就要補 membership check。([GitHub][1])
-
-第七，**`.grammar-secondary-mode-label` CSS 未寫**。功能上冇事，但 Surgery / Builder “Mixed practice” label 可能視覺上唔夠清楚。([GitHub][1])
-
-第八，**content thin-pool 係已知問題，但我唔建議下一 phase 做內容擴充**。Phase 4 audit 確認 6 個 thin-pool concepts 同 explain question-type gap；但你而家話唔加新 feature，要 hardening，所以應該只保留為 known limitation，唔好下一 phase 直接加 30 templates。([GitHub][1])
-
-## 6. 下一 phase 我建議：Grammar Phase 5 — Release Hardening & Monster Progression Audit
-
-呢個 phase 唔加新功能。只做 hardening、bug fixing、release confidence、monster progression alignment。
-
-### U0 — Freeze scope and define release claim
-
-寫一份：
-
-`docs/plans/james/grammar/grammar-phase5-release-hardening-plan.md`
-
-第一段要講清楚：
-
-No new learner features.
-No content expansion.
-No answer-spec migration.
-No contentReleaseId bump unless marking behaviour changes.
-Goal is release confidence, reward correctness, monster-stage correctness, and production audit.
-
-同時定義 repo 對外可以講咩：
-
-“Grammar is Worker-backed Stage 1 with Phase 4 learning-integrity gates.”
-唔好講 “full finished Grammar subject” 住，因為 README 本身都話未係 finished full-subject product layer。([GitHub][4])
-
-### U1 — Main branch regression sweep first
-
-呢個要排第一。等 PR #323 / related unit PRs 收尾，或者開 Phase 5 第一 unit 專門做 final verification。
-
-Acceptance criteria：
-
-`npm test` green
-`npm run check` green
-`npm run audit:client` green
-`npm run audit:production` green
-No known “14 pre-existing main fails” remains
-Test-on-PR workflow installed / enforced
-
-呢個唔係 Grammar glamour work，但係而家最重要。Open PR 已經講明 final target 係 main post-sweep zero failures。([GitHub][2])
-
-### U2 — Monster progression contract
-
-先唔好改 code，先寫 contract。要決定：
-
-Stage 0 係咪「not caught / silhouette」？
-First secure 係咪「catch egg」？
-Egg caught 後會唔會 persist 一段時間？
-幾多 secure 先 hatch？
-Direct monsters denominator 太細時，係咪仍然要 5 visual stages？
-Concordium 18 concepts 係咪 full Grammar Mega 唯一 final boss？我建議係 yes。
-
-我建議 product contract 改成：
-
-0 secure：Not caught，唔顯示已擁有 egg；可以顯示 silhouette / “not found yet”。
-1st secure：Caught egg。
-Next milestone：Hatch / kid stage。
-Later milestone：evolve。
-Full denominator：Mega.
-
-### U3 — Fix Grammar stage calculation for 3 + 1 model
-
-現行 ratio stage 對 Concordium okay，對 3-concept Couronnail 唔 okay。下一 phase 要揀其中一個：
-
-**Option A：Decouple `caught` from visual `stage`。**
-`caught: true` 可以同 `stage: 0` coexist，即係 stage 0 係「caught egg」，而 not-caught 係另一個 flag / display state。呢個最貼你講嘅「捉咗隻蛋」。
-
-**Option B：Add `displayStage`，保留 reward `stage`。**
-Reward engine 繼續 monotonic 0–4，但 UI 用 `displayStage` 去顯示 egg / hatch / grow。呢個比較安全，唔會太大機會破壞既有 reward tests。
-
-**Option C：繼續 ratio，但承認 Couronnail 無 stage 3。**
-我唔建議，因為你已經明確覺得奇怪，而呢個確實係產品感覺上唔完整。
-
-我偏向 **Option B**。原因係 Phase 4 已經加咗好多 reward invariant，直接改 stage semantics 風險高；用 display mapping 可以保留 `recordGrammarConceptMastery` 同 event monotonicity，同時修正小朋友見到嘅 progression story。
-
-### U4 — Write exact threshold tests for every active monster
-
-要有明確 tests：
-
-Bracehart：0 / 1 / 2 / 3 / 4 / 5 / 6 secure 每個 display stage 應該係咩。
-Chronalyx：0 / 1 / 2 / 3 / 4 secure。
-Couronnail：0 / 1 / 2 / 3 secure，唔可以 skip intended display stage unless contract 寫明。
-Concordium：0 / 1 / 9 / 14 / 18 secure。
-First secure emits caught once only。
-Full denominator emits mega once only。
-Re-secure same concept emits no duplicate reward。
-Transfer evidence emits no reward。
-Reserved monsters never toast / appear.
-
-目前 code 已經有 Concordium never revoked property tests，但 Phase 4 自己講 Playwright 未 full assert 18th secure → Mega，所以呢度要補。([GitHub][1]) ([GitHub][1])
-
-### U5 — Add demo seed hook for monster reward UI testing
-
-Phase 4 避免加 `/demo?seedSecuredCount=17`，所以 18th secure UI path 測唔實。下一 phase hardening 可以加 **testing-only / demo-only seed hook**，唔係 learner feature。
+之後才用 budget / normalized scoring 慢慢加上去。
 
 例如：
 
-`/demo?subject=grammar&seedConcordiumSecured=17`
+```js
+firstValidWin: grants at least 1 Star
+repeatIndependentWin: adds small Stars
+variedPractice: adds more Stars
+secureConfidence: adds bigger Stars
+retainedAfterSecure: adds largest Stars
+```
 
-或者更安全：
+即係「第一粒 Star」係 guarantee catch egg；但「後面 99 Stars」仍然要靠真正掌握。
 
-`/demo?fixture=grammar-concordium-premega`
+## Revised U5 — Concordium 都跟 1-Star Egg
 
-用嚟測：
+我會跟你今次意思改埋 Concordium：
 
-Dashboard before：17/18, not Mega
-做一題 secure final concept
-Toast：Concordium Mega
-Codex / dashboard / summary 全部變 Grand Concordium
-Refresh 後仍然 Mega
-Re-answer 唔 duplicate toast
+**Concordium 也可以 1 Star = Egg found。**
 
-呢個係 hardening hook，唔係新 product feature。
+但 Concordium 後面會升得慢，因為佢的 100 Stars 應該來自全 18 concepts 的 aggregate evidence，而不是單一 cluster。
 
-### U6 — Monster UI audit across all surfaces
+所以：
 
-要檢查所有地方一致：
+一開始可能小朋友見到 Concordium Egg。
+但 Hatch / Evolve / Mega 會慢好多。
+Mega 仍然要 whole-subject mastery。
 
-Dashboard monster card
-Summary reward section
-Codex / Meadow
-Toast
-Grammar Bank cluster filters
-Adult report
-Legacy migrated state
+呢個比之前「Concordium 要 6 secure concepts 先出蛋」更一致，也更易理解。
 
-特別要睇：not caught 係咪顯示 egg？如果 product story 係「未捉到蛋」，not caught 就唔應該顯示 “Bracehart Egg” 好似已擁有咁。Egg asset/name 應該係 caught egg stage，而 not-caught 應該係 silhouette / unknown / not found。
+## Revised U6 — Landing Page copy
 
-### U7 — Adaptive serialisation hardening
+Landing Page monster strip 可以好簡單：
 
-唔係要重寫 engine，只係修 known residual：避免同一 concept 連續三題，除非 pool 真係 forced。
+Bracehart — Egg found — 1/100 Stars
+Chronalyx — Not found yet — 0/100 Stars
+Couronnail — Hatched — 18/100 Stars
+Concordium — Egg found — 2/100 Stars
 
-Acceptance criteria：
+加一句 child-friendly copy：
 
-Normal Smart Practice：same concept max 2 in a row。
-Same template max 1 in a short window unless forced。
-Due / weak priority 仍然高過 cosmetic variety。
-Seed 13 `word_classes` 3× consecutive regression fixed。
-Simulation tests prove no overcorrection.
+**“Get 1 Star to find the Egg. Reach 100 Stars for Mega.”**
 
-呢個符合學習設計：interleaving 要真，唔係表面上叫 adaptive 但實際連續同一概念。Spacing / interleaving / independent attempt 係你原先 learning loop 嘅核心。
+呢句夠清楚。
 
-### U8 — Admin security hardening
+成人版可以再補：
 
-補 U10 deferred IDOR membership check：
+“Stars come from correct practice, varied questions, secure skills, and later review.”
 
-`runAdminGrammarTransferMutation` 要 verify admin account 對 learner 有權限，而唔只係 platformRole admin。Phase 4 report 已經講 TODO 應該用 membership check / `canViewLearnerDiagnostics` primitive。([GitHub][1])
+但 child landing 唔需要解釋太多。
 
-Also improve audit identity：
+## Revised tests
 
-event_log 除 actor_account_id / platformRole，可以 snapshot email/display name，如果 repo privacy policy 容許。唔係 blocker，但 admin audit 用起上嚟會清楚好多。
+要加 / 改 tests：
 
-### U9 — Child UI polish bugs only, no new features
+0 Stars shows Not found.
 
-只修 bug / glitch：
+1 Star shows Egg found.
 
-`.grammar-secondary-mode-label` CSS。
-Unknown confidence label 唔好 fallback 做 “Learning” 太自然；可以用 “Check status” 或 fail test。Current child helper unknown label returns `Learning`，雖然成人 taxonomy 已 harden，但 child UI 呢度可以再保守啲。([GitHub][3])
-Check all child surfaces still pass forbidden terms。
-Check mobile Monster card layout。
-Check read aloud does not read answer / feedback before allowed.
+1 Star does not require secure confidence.
 
-### U10 — Release evidence pack
+1 Star does not require secure concept count.
 
-最後生成一份：
+15 Stars shows Hatched.
 
-`docs/plans/james/grammar/grammar-phase5-release-evidence.md`
+35 Stars shows Evolve 2 / Growing.
 
-入面要有：
+65 Stars shows Evolve 3 / Nearly Mega.
 
-Git commit / PR list
-`npm test` result
-`npm run check` result
-`audit:client` result
-`audit:production` result
-Grammar golden paths result
-Monster threshold table
-Known limitations accepted
-No contentReleaseId bump confirmation
-Production URL smoke result
-Screenshots or Playwright artifact references
+100 Stars shows Mega.
 
-呢個好重要，因為而家 repo PR 太密，靠口講「done」好容易亂。下一個 phase 要將「done」變成 evidence。
+Couronnail can go through every stage and no longer jumps straight to Mega.
 
-## 7. 我嘅實際建議
+Concordium also follows 1-Star Egg rule.
 
-我會即刻做兩件事：
+Writing Try gives 0 Stars.
 
-第一，**唔加新 functionality，先清 repo-level red tests**。只要 open PR 仲話 main 有 14 npm failures，我哋就唔應該再講「production perfected」。([GitHub][2])
+AI explanation gives 0 Stars.
 
-第二，**將 monster progression 當成 Phase 5 主題之一**。你覺得怪係合理，因為現行 code 係工程上可用，但 product story 唔夠清楚：第一個 secure 已經 caught + stage 1；Couronnail stage 3 unreachable；Concordium 18th secure UI full path 未被 Playwright 強測。呢啲唔係 cosmetic，係小朋友 motivation loop 嘅核心。
+Worked/faded support can contribute only after a valid retry, not just by viewing support.
 
-我會將下一 phase 叫：
+Legacy caught monsters remain caught.
 
-**Grammar Phase 5 — Release Hardening, Monster Progression Contract & Production Evidence**
+No existing visible stage is downgraded.
 
-而唔叫 content expansion。Grammar 之後的確需要 content expansion，但唔係而家。現在最重要係：**每條 flow 都可信、每個 reward 都講得通、每個 test gate 都綠、每個小朋友見到嘅狀態都同實際 learning evidence 一致。**
+## Final adjusted principle
 
-[1]: https://raw.githubusercontent.com/fol2/ks2-mastery/main/docs/plans/james/grammar/grammar-phase4-implementation-report.md "raw.githubusercontent.com"
-[2]: https://github.com/fol2/ks2-mastery/pull/323 "docs(regression-sweep): main-branch regression sweep design 2026-04-26 by fol2 · Pull Request #323 · fol2/ks2-mastery · GitHub"
-[3]: https://github.com/fol2/ks2-mastery/blob/main/src/subjects/grammar/components/grammar-view-model.js "ks2-mastery/src/subjects/grammar/components/grammar-view-model.js at main · fol2/ks2-mastery · GitHub"
-[4]: https://raw.githubusercontent.com/fol2/ks2-mastery/main/README.md "raw.githubusercontent.com"
-[5]: https://github.com/fol2/ks2-mastery/pull/326 "feat(capacity): U9 circuit breakers + graceful degradation (Phase 2 final) by fol2 · Pull Request #326 · fol2/ks2-mastery · GitHub"
-[6]: https://github.com/fol2/ks2-mastery/blob/main/src/platform/game/monsters.js "ks2-mastery/src/platform/game/monsters.js at main · fol2/ks2-mastery · GitHub"
-[7]: https://github.com/fol2/ks2-mastery/blob/main/src/platform/game/mastery/grammar.js "ks2-mastery/src/platform/game/mastery/grammar.js at main · fol2/ks2-mastery · GitHub"
+我會咁寫死喺 plan 入面：
+
+**Egg is encouragement. Mega is mastery.**
+
+所以 Egg 要容易，1 Star 就夠。
+但 Mega 要慢慢嚟，要有 repeated, varied, spaced evidence。
+
+呢個係最好 balance：小朋友早期有成功感，大人又清楚見到 100-Star curve，系統亦唔會變成純刷題 XP。
