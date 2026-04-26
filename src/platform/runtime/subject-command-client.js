@@ -19,10 +19,25 @@ function isStaleWriteConflict(error) {
     && error.code === 'stale_write';
 }
 
+// U6: classifier that identifies a server-side `projection_unavailable`
+// rejection. Returns `true` ONLY when the response payload carries
+// `error === 'projection_unavailable'`. This is deliberately a narrower
+// signal than `retryable`: the worker rejects with 503 and the client
+// MUST NOT transport-retry, jitter, or try a bootstrap recovery — the
+// command moves to the existing pending queue so the user can retry
+// when the backend is healthy.
+export function isCommandBackendExhausted(error) {
+  if (!(error instanceof SubjectCommandClientError)) return false;
+  const payload = error.payload;
+  if (!payload || typeof payload !== 'object') return false;
+  return payload.error === 'projection_unavailable';
+}
+
 function isRetryableTransportFailure(error) {
   return error instanceof SubjectCommandClientError
     && error.retryable
-    && !isStaleWriteConflict(error);
+    && !isStaleWriteConflict(error)
+    && !isCommandBackendExhausted(error);
 }
 
 function sleep(ms) {
@@ -83,7 +98,18 @@ export class SubjectCommandClientError extends Error {
     this.status = Number(status) || 0;
     this.payload = payload;
     this.code = payload?.code || null;
-    this.retryable = status >= 500 || status === 0 || (status === 409 && this.code === 'stale_write');
+    // U6: when the server stamps `retryable: false` on the payload (e.g.
+    // projection_unavailable), honour it so transport-retry cannot
+    // accidentally storm the backend. Otherwise fall back to the default
+    // "retry on 5xx/network" heuristic.
+    const explicitRetryable = payload && typeof payload === 'object'
+      ? payload.retryable
+      : undefined;
+    if (explicitRetryable === false) {
+      this.retryable = false;
+    } else {
+      this.retryable = status >= 500 || status === 0 || (status === 409 && this.code === 'stale_write');
+    }
   }
 }
 
