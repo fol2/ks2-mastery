@@ -139,7 +139,14 @@ async function readJsonBody(response) {
 // this test fails. Manual bump means manual snapshot regen in the same PR.
 // ---------------------------------------------------------------------------
 test('U7 scenario 15: envelope shape snapshot matches BOOTSTRAP_CAPACITY_VERSION', () => {
-  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 2, 'U7 bumps BOOTSTRAP_CAPACITY_VERSION to 2.');
+  // U1 follow-up 2026-04-26: BOOTSTRAP_CAPACITY_VERSION bumped 2 → 3 in
+  // the same PR that (a) adds `bootstrapCapacity.subjectStatesBounded`
+  // (required-field addition — capacity release-gate plan line 167),
+  // (b) extends the revision-hash input set with
+  // `writableLearnerStatesDigest` (B1 blocker fix — sibling
+  // `writeSubjectState` now invalidates `bootstrapNotModifiedProbe`).
+  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 3,
+    'U1 follow-up: bumps BOOTSTRAP_CAPACITY_VERSION 2→3 because the envelope gained subjectStatesBounded AND the hash input set changed.');
   // Closed union for meta.capacity.bootstrapMode (canonical U7 enum).
   assert.deepEqual(
     [...BOOTSTRAP_MODES].sort(),
@@ -398,12 +405,31 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
         selected: i === 0,
       });
       // Only the selected learner gets heavy history; the test exercises
-      // that unselected learner bundles are NOT fetched.
+      // that unselected learner bundles are NOT fetched. Reviewer
+      // testing_gap #4 (correctness): seed sessions + events for two
+      // sibling learners too so the negative assertion below ("no
+      // sibling session/event ships") actually has teeth — the pre-
+      // existing version only seeded the selected learner, making the
+      // bound assertion vacuous.
       if (i === 0) {
         insertSubjectState(server, 'adult-u7', id, { sessions: 30 });
         seedEvents(server, 'adult-u7', id, 200);
       } else {
         insertSubjectState(server, 'adult-u7', id);
+        if (i === 1 || i === 2) {
+          // Seed a few sessions + events for two siblings so the
+          // "bounded to selected" negative assertion below actually
+          // has teeth. We cannot call `insertSubjectState` with
+          // `sessions > 0` here because the subject_state row was
+          // already inserted on the line above (unique constraint
+          // violation); seed the session/event rows directly.
+          for (let s = 0; s < 3; s += 1) {
+            insertPracticeSessionFor(server, 'adult-u7', id, { id: `${id}-sess-${s}` });
+          }
+          for (let e = 0; e < 5; e += 1) {
+            insertEventFor(server, 'adult-u7', id, { id: `${id}-event-${e}` });
+          }
+        }
       }
     }
 
@@ -413,13 +439,33 @@ test('U7 scenario 2: 30-learner bounded bootstrap ≤ 150 KB; others in learnerL
     assert.equal(payload.ok, true);
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
 
-    // Only the selected learner's subject state + sessions ship.
+    // U1 hotfix 2026-04-26: subject states ship for every writable learner
+    // (unbounded) so Setup stats are correct on learner switch. Sessions +
+    // events remain bounded to the selected learner — those are the heavy
+    // payloads the bounded envelope is protecting against.
     const selectedLearnerId = payload.account.selectedLearnerId;
     assert.equal(selectedLearnerId, 'learner-00');
     const subjectKeys = Object.keys(payload.subjectStates || {});
+    assert.equal(subjectKeys.length, 30,
+      'U1: all 30 learners have a spelling subject state row');
     for (const key of subjectKeys) {
-      assert.ok(key.startsWith('learner-00:'), `Only selected learner's subject state: got ${key}`);
+      assert.ok(key.endsWith('::spelling'), `expected spelling subject state key, got ${key}`);
     }
+    // Sessions + events bounded: only learner-00 ships. Two sibling
+    // learners (learner-01 + learner-02) are also seeded with
+    // sessions/events so this assertion has teeth — pre-hotfix the
+    // bounded query only sees learner-00, but a regression that
+    // widens the sessions/events queries would now flunk here.
+    assert.ok(payload.practiceSessions.every((s) => s.learnerId === 'learner-00'),
+      'U1: practiceSessions still bounded to selected learner (no sibling sessions leak)');
+    assert.ok(payload.eventLog.every((e) => e.learnerId === 'learner-00'),
+      'U1: eventLog still bounded to selected learner (no sibling events leak)');
+    assert.ok(payload.practiceSessions.length > 0,
+      'defence-in-depth: learner-00 sessions present (sanity — test seeds 30)');
+    assert.ok(payload.eventLog.length > 0,
+      'defence-in-depth: learner-00 events present (sanity — test seeds 200)');
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
+      'U1: subjectStatesBounded contract marker stamped false');
 
     // account.learnerList has the other 29.
     assert.equal(payload.account.learnerList.length, 29);
@@ -771,6 +817,279 @@ test('U7 scenario 22: POST notModified does not rotate session cookies', async (
     assert.equal(response.headers.get('set-cookie'), null);
     const payload = await readJsonBody(response);
     assert.equal(payload.notModified, true);
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U1 hotfix 2026-04-26: child_subject_state must ship for EVERY writable
+// learner on a multi-learner account, not just the selected one. The
+// selected-learner-bounded envelope still bounds practice_sessions and
+// event_log (those are the payloads that blow past 150 KB), but
+// child_subject_state is a compact per-(learner,subject) slot that powers
+// the Spelling/Grammar/Punctuation "Where You Stand" setup stats. Without
+// this carve-out, switching between siblings shows 0 stats until the user
+// triggers a Worker command that refetches.
+//
+// New contract marker: bootstrapCapacity.subjectStatesBounded === false.
+// Spec: docs/superpowers/specs/2026-04-26-bootstrap-learner-stats-hotfix-
+// design.md.
+// ---------------------------------------------------------------------------
+
+function insertSubjectStateFor(server, accountId, learnerId, subjectId) {
+  runSql(server, `
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `, [
+    learnerId,
+    subjectId,
+    JSON.stringify({ phase: 'idle' }),
+    JSON.stringify({ prefs: { mode: 'smart' }, progress: { possess: { stage: 3 } } }),
+    NOW,
+    accountId,
+  ]);
+}
+
+function insertPracticeSessionFor(server, accountId, learnerId, { id, subjectId = 'spelling' }) {
+  runSql(server, `
+    INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
+    VALUES (?, ?, ?, 'learning', 'completed', ?, ?, ?, ?, ?)
+  `, [
+    id,
+    learnerId,
+    subjectId,
+    JSON.stringify({}),
+    JSON.stringify({ cards: [] }),
+    NOW,
+    NOW,
+    accountId,
+  ]);
+}
+
+function insertEventFor(server, accountId, learnerId, { id }) {
+  runSql(server, `
+    INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+    VALUES (?, ?, 'spelling', 'spelling', 'spelling.word-secured', ?, ?, ?)
+  `, [
+    id,
+    learnerId,
+    JSON.stringify({ id, type: 'spelling.word-secured', learnerId, secureCount: 1 }),
+    NOW,
+    accountId,
+  ]);
+}
+
+test('U1 hotfix: child_subject_state ships for all writable learners (multi-learner account)', async () => {
+  const server = createServer();
+  try {
+    // A is selected; B + C are siblings.
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertLearner(server, 'adult-u7', { id: 'learner-b', name: 'Beta', sortIndex: 1 });
+    insertLearner(server, 'adult-u7', { id: 'learner-c', name: 'Gamma', sortIndex: 2 });
+
+    // Non-default subject state across two subjects for each learner.
+    for (const learnerId of ['learner-a', 'learner-b', 'learner-c']) {
+      insertSubjectStateFor(server, 'adult-u7', learnerId, 'spelling');
+      insertSubjectStateFor(server, 'adult-u7', learnerId, 'grammar');
+    }
+
+    // Sessions + events for all three (only A's should ship).
+    for (const learnerId of ['learner-a', 'learner-b', 'learner-c']) {
+      insertPracticeSessionFor(server, 'adult-u7', learnerId, { id: `${learnerId}-sess-1` });
+      insertEventFor(server, 'adult-u7', learnerId, { id: `${learnerId}-event-1` });
+    }
+
+    const response = await postBootstrap(server, {});
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    // subjectStates MUST contain every (learner, subject) pair, keyed by
+    // subjectStateKey(learnerId, subjectId) → `${learner}::${subject}`.
+    const subjectKeys = Object.keys(payload.subjectStates || {}).sort();
+    const expectedKeys = [
+      'learner-a::grammar',
+      'learner-a::spelling',
+      'learner-b::grammar',
+      'learner-b::spelling',
+      'learner-c::grammar',
+      'learner-c::spelling',
+    ];
+    assert.deepEqual(subjectKeys, expectedKeys,
+      `U1: subjectStates must include all writable learners across both subjects, got ${JSON.stringify(subjectKeys)}`);
+
+    // practiceSessions stays bounded to the selected learner only.
+    assert.equal(payload.practiceSessions.length, 1, 'only learner-a session ships');
+    assert.equal(payload.practiceSessions[0].learnerId, 'learner-a');
+
+    // eventLog stays bounded to the selected learner only.
+    assert.equal(payload.eventLog.length, 1, 'only learner-a event ships');
+    assert.equal(payload.eventLog[0].learnerId, 'learner-a');
+
+    // bootstrapMode label unchanged (describes sessions/events bound).
+    assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
+
+    // New contract marker: subjectStatesBounded === false.
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
+      'bootstrapCapacity.subjectStatesBounded must be stamped false (U1 contract)');
+
+    // M1 follow-up 2026-04-26: value-level assertion. Prove the seeded
+    // `data_json` marker actually flows through for a non-selected
+    // sibling — not an empty placeholder keyed only by learnerId. We
+    // use `grammar` because `publicSubjectStateRowToRecord` only
+    // redacts `data` on `spelling`/`punctuation` (per the private-
+    // prompt leak test at scenario 21); `grammar` falls through to
+    // `subjectStateRowToRecord`, which preserves `data` verbatim.
+    const siblingGrammar = payload.subjectStates['learner-b::grammar'];
+    assert.ok(siblingGrammar, 'sibling grammar subject-state row present');
+    assert.equal(siblingGrammar?.data?.prefs?.mode, 'smart',
+      `M1: sibling subjectState.data carries the seeded prefs.mode marker, got ${JSON.stringify(siblingGrammar)}`);
+    assert.equal(siblingGrammar?.data?.progress?.possess?.stage, 3,
+      'M1: sibling subjectState.data carries the seeded progress.possess.stage marker');
+  } finally {
+    server.close();
+  }
+});
+
+test('U1 hotfix: GET /api/bootstrap also ships child_subject_state for all writable learners', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertLearner(server, 'adult-u7', { id: 'learner-b', name: 'Beta', sortIndex: 1 });
+    insertLearner(server, 'adult-u7', { id: 'learner-c', name: 'Gamma', sortIndex: 2 });
+
+    for (const learnerId of ['learner-a', 'learner-b', 'learner-c']) {
+      insertSubjectStateFor(server, 'adult-u7', learnerId, 'spelling');
+      insertSubjectStateFor(server, 'adult-u7', learnerId, 'grammar');
+      insertPracticeSessionFor(server, 'adult-u7', learnerId, { id: `${learnerId}-sess-1` });
+      insertEventFor(server, 'adult-u7', learnerId, { id: `${learnerId}-event-1` });
+    }
+
+    const response = await getBootstrap(server);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const subjectKeys = Object.keys(payload.subjectStates || {}).sort();
+    assert.deepEqual(subjectKeys, [
+      'learner-a::grammar',
+      'learner-a::spelling',
+      'learner-b::grammar',
+      'learner-b::spelling',
+      'learner-c::grammar',
+      'learner-c::spelling',
+    ], 'GET path: subjectStates unbounded across all writable learners');
+
+    assert.equal(payload.practiceSessions.length, 1);
+    assert.equal(payload.practiceSessions[0].learnerId, 'learner-a');
+    assert.equal(payload.eventLog.length, 1);
+    assert.equal(payload.eventLog[0].learnerId, 'learner-a');
+
+    assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false);
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U1 follow-up B1 (HIGH) 2026-04-26: the `bootstrapNotModifiedProbe`
+// short-circuit MUST invalidate when a NON-selected (sibling) learner's
+// subject_state is mutated. Before this fix, the 4-input revision hash
+// (accountRevision, selectedLearnerRevision, accountLearnerListRevision,
+// bootstrapCapacityVersion) did not include any sibling state_revision,
+// so `writeSubjectState → withLearnerMutation` on learner B silently
+// returned `notModified: true` while the client kept showing 0 stats.
+// The fix extends the hash with a `writableLearnerStatesDigest` input.
+// ---------------------------------------------------------------------------
+test('U1 follow-up B1: sibling subject_state write invalidates lastKnownRevision hash', async () => {
+  const server = createServer();
+  try {
+    // A is the persisted selected learner; B is a writable sibling.
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertLearner(server, 'adult-u7', { id: 'learner-b', name: 'Beta', sortIndex: 1 });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'spelling');
+    insertSubjectStateFor(server, 'adult-u7', 'learner-b', 'grammar');
+
+    // Probe for baseline hash.
+    const probe = await getBootstrap(server);
+    const H1 = (await readJsonBody(probe)).revision.hash;
+    assert.match(H1, /^[0-9a-f]{32}$/, 'baseline hash present');
+
+    // Sanity: the lastKnownRevision short-circuit works on H1 (nothing
+    // has changed).
+    const unchanged = await postBootstrap(server, { lastKnownRevision: H1 });
+    const unchangedPayload = await readJsonBody(unchanged);
+    assert.equal(unchangedPayload.notModified, true,
+      'pre-mutation: matching hash returns notModified');
+
+    // Simulate `writeSubjectState → withLearnerMutation` on sibling B:
+    // (a) bump learner_profiles.state_revision for B only (mirrors the CAS
+    //     update in repository.js:7594-7600),
+    // (b) mutate B's child_subject_state data_json directly. NOTE:
+    //     adult_accounts.repo_revision is intentionally NOT bumped —
+    //     this reproduces the exact failure path where only the
+    //     per-learner revision advances.
+    runSql(server, `
+      UPDATE learner_profiles
+      SET state_revision = state_revision + 1, updated_at = ?
+      WHERE id = ?
+    `, [NOW + 1, 'learner-b']);
+    runSql(server, `
+      UPDATE child_subject_state
+      SET data_json = ?, updated_at = ?
+      WHERE learner_id = ? AND subject_id = ?
+    `, [
+      JSON.stringify({ prefs: { mode: 'smart' }, progress: { possess: { stage: 4 } } }),
+      NOW + 1,
+      'learner-b',
+      'grammar',
+    ]);
+
+    // Re-post with the old H1. The probe MUST miss; the client MUST
+    // receive a full bundle carrying B's mutated data.
+    const response = await postBootstrap(server, { lastKnownRevision: H1 });
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.notEqual(payload.notModified, true,
+      'B1: sibling state_revision bump must invalidate the probe short-circuit');
+    assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
+    assert.notEqual(payload.revision.hash, H1,
+      'B1: new revision hash differs from H1 after sibling write');
+
+    // Value-level check: B's mutated data ships through on the full bundle.
+    const siblingGrammar = payload.subjectStates?.['learner-b::grammar'];
+    assert.ok(siblingGrammar, 'B1: sibling grammar state present in full bundle');
+    assert.equal(siblingGrammar?.data?.progress?.possess?.stage, 4,
+      'B1: mutated stage marker ships in the full bundle after probe miss');
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U1 follow-up M3 (medium) 2026-04-26: single-learner accounts still ship
+// subject_state and still stamp `subjectStatesBounded: false`. Guards
+// against accidental regression where the derived `subjectStatesBounded`
+// flag (B4) is flipped to `true` on the solo path.
+// ---------------------------------------------------------------------------
+test('U1 follow-up M3: single-learner account still ships subject_state + subjectStatesBounded=false', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-solo', name: 'Solo', sortIndex: 0, selected: true });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-solo', 'spelling');
+
+    const response = await getBootstrap(server);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const subjectKeys = Object.keys(payload.subjectStates || {});
+    assert.deepEqual(subjectKeys, ['learner-solo::spelling'],
+      'M3: single-learner solo account ships exactly one subject state row');
+    assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false,
+      'M3: contract marker false even on solo path');
+    assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
   } finally {
     server.close();
   }

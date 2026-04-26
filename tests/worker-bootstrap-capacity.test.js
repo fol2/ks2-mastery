@@ -317,8 +317,11 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   assert.ok(payload.meta.capacity.bootstrapCapacity, 'bootstrapCapacity must be stamped on collector for public bootstrap.');
   // U7: BOOTSTRAP_CAPACITY_VERSION bumped from 1 to 2 when the
   // selected-learner-bounded envelope landed (plan line 750 release
-  // rule).
-  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 2);
+  // rule). U1 follow-up 2026-04-26: bumped 2 → 3 when the envelope
+  // gained `subjectStatesBounded` AND the revision-hash input set
+  // changed (added `writableLearnerStatesDigest` to close B1 — sibling
+  // subject_state writes now invalidate the notModified probe).
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 3);
   assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
 
   server.close();
