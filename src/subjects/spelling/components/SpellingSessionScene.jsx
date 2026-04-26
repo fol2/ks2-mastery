@@ -110,6 +110,14 @@ export function SpellingSessionScene({
   const promptInstr = session.type === 'test'
     ? 'Type the word dictated by the audio.'
     : 'Spell the word you hear.';
+  // SH2-U3 input preservation contract: `pendingCommand` is DELIBERATELY
+  // absent from this key. When a 401 mid-command clears `pendingCommand`
+  // (via the auth-required path or SH2-U2's `sanitiseUiOnRehydrate`), the
+  // React tree keeps the same `key` for this scene's `<input name="typed">`,
+  // so the uncontrolled input DOM node is retained and its typed value
+  // survives the re-bootstrap. Adding `pendingCommand` or any auth-derived
+  // state here would regress the contract enforced by
+  // `tests/demo-expiry-banner.test.js::input-preservation`.
   const inputKey = [
     session.id,
     session.currentSlug,

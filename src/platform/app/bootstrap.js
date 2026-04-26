@@ -56,13 +56,14 @@ export function createLocalOnlySession() {
   return createAuthRequiredSession({ error: 'auth-required' });
 }
 
-export function createAuthRequiredSession({ error = '' } = {}) {
+export function createAuthRequiredSession({ error = '', code = '' } = {}) {
   return {
     signedIn: false,
     mode: 'auth-required',
     platformRole: 'parent',
     authRequired: true,
     error,
+    code,
   };
 }
 
@@ -105,7 +106,14 @@ export async function createRepositoriesForBrowserRuntime({
 
   if (!sessionResponse.ok || !sessionPayload?.session?.accountId) {
     const error = locationSearchParams(location).get('auth_error') || '';
+    // SH2-U3: read `code` from the 401 body once and thread it through
+    // `onAuthRequired` so AuthSurface can branch on `demo_session_expired`
+    // vs the generic `unauthenticated` path. Body has already been parsed
+    // above into `sessionPayload` so this is a single JSON read — no
+    // double-parse risk noted in the plan's risk register.
+    const code = typeof sessionPayload?.code === 'string' ? sessionPayload.code : '';
     await onAuthRequired({
+      code,
       error,
       response: sessionResponse,
       payload: sessionPayload,
@@ -115,7 +123,7 @@ export async function createRepositoriesForBrowserRuntime({
     }
     return {
       repositories: null,
-      session: createAuthRequiredSession({ error }),
+      session: createAuthRequiredSession({ error, code }),
     };
   }
 

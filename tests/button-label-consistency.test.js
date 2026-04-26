@@ -434,6 +434,12 @@ test('button labels: every statically extractable label is classified', () => {
     'Refresh',
     'Retry refresh',
     'Save learner profile',
+    // SH2-U3 DemoExpiryBanner: bespoke, S-04-compliant CTAs for the
+    // demo-expired UX branch. Both labels are intentional — "Sign in"
+    // sends the learner back to the generic AuthSurface and "Start new
+    // demo" posts to /demo. See src/surfaces/auth/DemoExpiryBanner.jsx.
+    'Sign in',
+    'Start new demo',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

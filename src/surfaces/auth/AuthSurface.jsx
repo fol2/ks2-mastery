@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
+import { DemoExpiryBanner } from './DemoExpiryBanner.jsx';
 
 const SOCIAL_PROVIDERS = ['google', 'facebook', 'x', 'apple'];
 
@@ -7,9 +8,48 @@ function providerLabel(provider) {
   return provider === 'x' ? 'X' : provider[0].toUpperCase() + provider.slice(1);
 }
 
-export function AuthSurface({ initialMode = 'login', initialError = '', onSubmit, onSocialStart, onDemoStart }) {
+// SH2-U3: pull the `code` field out of `initialError` whether it arrived as a
+// plain string (legacy callers: `initialError="expired"`) or as a richer object
+// (`initialError={ code: 'demo_session_expired', message: 'demo expired' }`).
+// Keeping the adapter here lets the caller in `main.js` evolve without forcing
+// every other consumer of `AuthSurface` to change shape.
+function extractAuthErrorCode(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return '';
+  if (typeof value === 'object' && typeof value.code === 'string') return value.code;
+  return '';
+}
+
+function extractAuthErrorMessage(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && typeof value.message === 'string') return value.message;
+  return '';
+}
+
+export function AuthSurface(props) {
+  // SH2-U3: branch BEFORE any hook runs to keep React's Rules of Hooks
+  // intact. The banner is a render-branch, not a submit handler, so it
+  // never shares hook state with the rest of the AuthSurface. Delegating
+  // to a sibling component means `useSubmitLock` (below) only runs on the
+  // standard sign-in path.
+  const initialErrorCode = extractAuthErrorCode(props?.initialError);
+  if (initialErrorCode === 'demo_session_expired') {
+    return (
+      <DemoExpiryBanner
+        onStartDemo={props?.onDemoStart}
+        // "Sign in" falls back to navigating /auth (without the expired
+        // code) so the standard panel renders. We do not need an explicit
+        // onSignIn handler — the caller reloads the auth route.
+      />
+    );
+  }
+  return <AuthSurfaceStandard {...props} />;
+}
+
+function AuthSurfaceStandard({ initialMode = 'login', initialError = '', onSubmit, onSocialStart, onDemoStart }) {
   const [mode, setMode] = useState(initialMode === 'register' ? 'register' : 'login');
-  const [error, setError] = useState(initialError || '');
+  const [error, setError] = useState(extractAuthErrorMessage(initialError));
   // SH2-U1: replaces the local `busy`/`setBusy` useState — see
   // `src/platform/react/use-submit-lock.js`. The hook returns
   // `{ locked, run }`; `locked` replaces `busy` in every `disabled`

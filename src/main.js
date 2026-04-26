@@ -193,10 +193,17 @@ async function startDemoSession() {
   globalThis.location.href = '/';
 }
 
-function renderAuthRoot({ error = '' } = {}) {
+function renderAuthRoot({ error = '', code = '' } = {}) {
+  // SH2-U3: pass `code` + `message` as a structured initialError when the
+  // bootstrap surfaces a recognised 401 code. Legacy callers still pass a
+  // plain string, and AuthSurface's `extractAuthErrorCode`/
+  // `extractAuthErrorMessage` helpers handle both shapes.
+  const initialError = code
+    ? { code, message: error || '' }
+    : error || '';
   createRoot(root).render(
     <AuthSurface
-      initialError={error}
+      initialError={initialError}
       onSubmit={submitAuthCredentials}
       onSocialStart={startSocialAuth}
       onDemoStart={startDemoSession}
@@ -215,7 +222,10 @@ async function createRepositoriesForCurrentRuntime() {
 
 const boot = await createRepositoriesForCurrentRuntime();
 if (!boot.repositories) {
-  renderAuthRoot({ error: boot.session?.error || '' });
+  renderAuthRoot({
+    error: boot.session?.error || '',
+    code: boot.session?.code || '',
+  });
   await new Promise(() => {});
 }
 const repositories = boot.repositories;
