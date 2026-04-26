@@ -26,9 +26,27 @@ export function DemoExpiryBanner({ onSignIn, onStartDemo }) {
       await onSignIn();
       return;
     }
-    // Fallback: the generic auth route when no callback is supplied.
-    if (typeof globalThis !== 'undefined' && globalThis.location) {
-      globalThis.location.assign('/');
+    // Fallback: navigate back to `/` so the standard AuthSurface renders.
+    // SH2-U3 review NIT-1: clear the expired demo cookie server-side
+    // BEFORE the reload. Without the logout POST, the reloaded page would
+    // still resolve `session.code === 'demo_session_expired'` and re-render
+    // this same banner — trapping the learner in a loop. This mirrors the
+    // `platform-logout` path in `main.js` (POST `/api/auth/logout` then
+    // navigate). The `.catch(() => {})` swallows transport errors because
+    // the navigation is the authoritative recovery — a failed logout call
+    // should NOT block the reload (the server will re-evaluate the cookie
+    // on next request anyway). See review comment NIT-1 on PR #284.
+    if (typeof globalThis !== 'undefined') {
+      const doFetch = typeof globalThis.fetch === 'function' ? globalThis.fetch : null;
+      if (doFetch) {
+        await doFetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'same-origin',
+        }).catch(() => {});
+      }
+      if (globalThis.location) {
+        globalThis.location.assign('/');
+      }
     }
   }
 

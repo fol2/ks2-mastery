@@ -111,7 +111,21 @@ export async function createRepositoriesForBrowserRuntime({
     // vs the generic `unauthenticated` path. Body has already been parsed
     // above into `sessionPayload` so this is a single JSON read — no
     // double-parse risk noted in the plan's risk register.
-    const code = typeof sessionPayload?.code === 'string' ? sessionPayload.code : '';
+    let code = typeof sessionPayload?.code === 'string' ? sessionPayload.code : '';
+    // SH2-U3 review blocker-3: when the session endpoint returns 500 (or
+    // a transport error leaves `sessionResponse.ok` false without a parsed
+    // body), synthesise an `internal_error` code so the AuthSurface can
+    // render the human transient-error banner. We do NOT leak the raw
+    // status integer into the UI — the banner copy avoids "500" entirely.
+    if (!code) {
+      const status = Number(sessionResponse?.status);
+      if (Number.isFinite(status) && status >= 500 && status < 600) {
+        code = 'internal_error';
+      } else if (sessionResponse && sessionResponse.ok === false && !Number.isFinite(status)) {
+        // Transport failure (e.g. `fetch` rejected): treat as transient.
+        code = 'internal_error';
+      }
+    }
     await onAuthRequired({
       code,
       error,

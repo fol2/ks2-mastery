@@ -440,6 +440,13 @@ test('button labels: every statically extractable label is classified', () => {
     // demo" posts to /demo. See src/surfaces/auth/DemoExpiryBanner.jsx.
     'Sign in',
     'Start new demo',
+    // SH2-U3 review TEST-BLOCKER-2 / TEST-BLOCKER-3: bespoke CTAs for
+    // the 403 friendly card and the 500 transient-error banner.
+    // "Return home" escapes the 403 without leaking which feature is
+    // restricted; "Try again" is the retry affordance on the transient
+    // banner. See src/surfaces/auth/AuthSurface.jsx.
+    'Return home',
+    'Try again',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to
