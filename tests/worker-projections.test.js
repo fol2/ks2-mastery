@@ -305,11 +305,13 @@ test('no-op spelling command avoids historical projection reads and learner writ
   }
 });
 
-test('dense-history projection command keeps queryCount within the U3 soft budget (<= 15)', async () => {
+test('dense-history projection command keeps queryCount within the U3 soft budget (<= 16)', async () => {
   // Soft budget per plan U3 test scenarios: while projection is still
   // bounded-fallback-based (pre-U6), a common projection command on a
-  // dense-history learner must stay within 15 queries/request. U6 will
-  // tighten this to <= 12 once the read model becomes the hot-path input.
+  // dense-history learner must stay within 16 queries/request (Phase D
+  // / U14 lifted the budget from 15 by adding the ops_status JOIN to
+  // session lookup). U6 tightens this further once the read model
+  // becomes the hot-path input.
   //
   // We use /api/subjects/spelling/command because it is capacity-relevant
   // (so meta.capacity is attached) and it drives the projection engine.
@@ -329,9 +331,11 @@ test('dense-history projection command keeps queryCount within the U3 soft budge
     const capacity = result.body.meta?.capacity;
     assert.ok(capacity, 'command response must carry meta.capacity (U3).');
     assert.ok(typeof capacity.queryCount === 'number', 'meta.capacity.queryCount must be numeric.');
+    // Phase D / U14 added one query to the session-lookup path so the soft
+    // budget lifts from 15 to 16 on dense-history projection commands.
     assert.ok(
-      capacity.queryCount <= 15,
-      `U3 soft budget: queryCount must be <= 15 on dense-history projection command; got ${capacity.queryCount}.`,
+      capacity.queryCount <= 16,
+      `U3 soft budget: queryCount must be <= 16 on dense-history projection command; got ${capacity.queryCount}.`,
     );
   } finally {
     harness.close();

@@ -22,6 +22,10 @@ import {
   buildKeepMineDispatchPayload,
   applyUseTheirsStateUpdate,
 } from '../../platform/hubs/admin-metadata-conflict-actions.js';
+import {
+  decideAccountOpsSave,
+  defaultConfirmOpsStatusChange,
+} from '../../platform/hubs/admin-ops-confirm.js';
 export { buildAccountOpsMetadataConflictDiff };
 const formatConflictValue = formatAccountOpsMetadataConflictValue;
 
@@ -609,9 +613,18 @@ function RecentActivityStreamPanel({ model, actions }) {
 }
 
 const OPS_STATUS_OPTIONS = ['active', 'suspended', 'payment_hold'];
-// R27: prominent, UK-English non-enforcement notice rendered beside the
-// ops_status control. Do NOT reword — the string is asserted verbatim.
-const ACCOUNT_OPS_R27_CALLOUT = 'Status labels are informational only. Suspension, payment-hold, and deactivation are not currently enforced by sign-in. Enforcement is planned for a later release.';
+// Phase D / U15: R27's non-enforcement callout is RETIRED. The plan
+// requires the UI to reflect the new auth-boundary enforcement. A small
+// read-only note now sits next to the selector explaining that the
+// status is enforced on sign-in.
+const ACCOUNT_OPS_ENFORCEMENT_NOTE = 'Status is enforced: suspended accounts cannot sign in, and payment-hold accounts cannot write.';
+
+// Phase D / U15 + ADV-2 (Phase D reviewer) fix: the confirmation
+// helpers live in `src/platform/hubs/admin-ops-confirm.js` so Node
+// tests can exercise the prompt branch, the last-6 matcher, and the
+// save-decision closure without mounting React or JSDOM. The
+// imported `defaultConfirmOpsStatusChange` fails safe when
+// `globalThis.prompt` is missing.
 
 
 function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions }) {
@@ -706,22 +719,22 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
   // — enough to absorb a double-click burst but not so long that the
   // next legitimate save is blocked after `savingAccountId` clears.
   const submitLock = useSubmitLock();
+  // Phase D / U15 + T-Block-2 (Phase D reviewer) fix: delegate the
+  // save decision to `decideAccountOpsSave`. The pure helper owns the
+  // confirmation gate, tag parsing, and dispatch-envelope shape so
+  // Node tests can verify every branch without JSDOM. Injecting
+  // `actions.confirmOpsStatusChange` remains supported so tests stub
+  // it to simulate confirm vs cancel without touching `window.prompt`.
+  const confirmOpsStatusChange = actions?.confirmOpsStatusChange || defaultConfirmOpsStatusChange;
   const handleSave = () => {
     submitLock.run(async () => {
-      const parsedTags = tagsText
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0)
-        .slice(0, 10);
-      actions.dispatch('account-ops-metadata-save', {
-        accountId,
-        patch: {
-          opsStatus,
-          planLabel: planLabel.trim() === '' ? null : planLabel.trim(),
-          tags: parsedTags,
-          internalNotes: internalNotes.trim() === '' ? null : internalNotes,
-        },
+      const decision = decideAccountOpsSave({
+        draft: { opsStatus, planLabel, tagsText, internalNotes },
+        account: { accountId, opsStatus: account.opsStatus },
+        confirmOpsStatusChange,
       });
+      if (!decision.shouldDispatch || !decision.dispatchArgs) return;
+      actions.dispatch(decision.dispatchArgs.action, decision.dispatchArgs.data);
     });
   };
 
@@ -786,8 +799,10 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
   };
 
   if (!canManage) {
-    // Read-only render preserved verbatim from U4. Ops-role viewers also see
-    // the R27 callout so they understand the informational nature of the flag.
+    // Read-only render for ops-role viewers. Phase D / U15 replaces the
+    // R27 non-enforcement callout with a short confirmation that the
+    // status is ACTUALLY enforced now (suspended → no sign-in;
+    // payment_hold → no writes).
     return (
       <div className="skill-row" key={accountId}>
         <div>
@@ -796,7 +811,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
         </div>
         <div>
           <span className="chip">{account.opsStatus || 'active'}</span>
-          <div className="callout warn small" style={{ marginTop: 6 }}>{ACCOUNT_OPS_R27_CALLOUT}</div>
+          <div className="small muted" style={{ marginTop: 6 }} data-testid="ops-status-enforcement-note">{ACCOUNT_OPS_ENFORCEMENT_NOTE}</div>
         </div>
         <div className="small muted">{account.planLabel || '—'}</div>
         <div className="small muted">{(account.tags || []).join(', ') || '—'}</div>
@@ -873,7 +888,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
             ))}
           </select>
         </label>
-        <div className="callout warn small" style={{ marginTop: 6 }}>{ACCOUNT_OPS_R27_CALLOUT}</div>
+        <div className="small muted" style={{ marginTop: 6 }} data-testid="ops-status-enforcement-note">{ACCOUNT_OPS_ENFORCEMENT_NOTE}</div>
       </div>
       <label className="field" style={{ minWidth: 140 }}>
         <span>Plan label</span>
@@ -928,8 +943,9 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
 function AccountOpsMetadataPanel({ model, actions }) {
   const directory = model?.accountOpsMetadata || {};
   const accounts = Array.isArray(directory.accounts) ? directory.accounts : [];
-  // R27/R2: admin-only edit controls; ops-role users see read-only rows but
-  // still get the non-enforcement callout.
+  // Phase D / U15: admin-only edit controls; ops-role users see read-only
+  // rows. The R27 non-enforcement callout has been retired now that the
+  // auth boundary enforces suspended + payment_hold.
   const canManage = model?.permissions?.platformRole === 'admin';
   const savingAccountId = directory.savingAccountId || '';
   return (
