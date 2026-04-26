@@ -1117,6 +1117,8 @@ function ErrorLogCentrePanel({ model, actions }) {
         <label className="field">
           <span>New in release (SHA)</span>
           <input
+            id="error-filter-release"
+            aria-describedby="error-filter-release-hint"
             type="text"
             className="input"
             name="errorFilterRelease"
@@ -1127,6 +1129,7 @@ function ErrorLogCentrePanel({ model, actions }) {
             data-testid="error-centre-filter-release"
           />
           <span
+            id="error-filter-release-hint"
             className="small muted"
             data-testid="error-centre-filter-release-hint"
           >
