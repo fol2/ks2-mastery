@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 
 const SOCIAL_PROVIDERS = ['google', 'facebook', 'x', 'apple'];
 
@@ -9,45 +10,55 @@ function providerLabel(provider) {
 export function AuthSurface({ initialMode = 'login', initialError = '', onSubmit, onSocialStart, onDemoStart }) {
   const [mode, setMode] = useState(initialMode === 'register' ? 'register' : 'login');
   const [error, setError] = useState(initialError || '');
-  const [busy, setBusy] = useState(false);
+  // SH2-U1: replaces the local `busy`/`setBusy` useState — see
+  // `src/platform/react/use-submit-lock.js`. The hook returns
+  // `{ locked, run }`; `locked` replaces `busy` in every `disabled`
+  // expression, and `run(async () => { ... })` wraps the prior
+  // setBusy(true)/onSubmit/setBusy(false) block so concurrent
+  // double-clicks / Enter-key repeats / mobile double-taps early-return
+  // without firing a second dispatch. Error paths still surface via
+  // `setError` in the caller; the hook intentionally does not own
+  // error state so Auth keeps its existing `feedback bad` panel copy.
+  const submitLock = useSubmitLock();
+  const busy = submitLock.locked;
   const isRegister = mode === 'register';
 
   async function submit(event) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    setBusy(true);
     setError('');
     try {
-      await onSubmit?.({
-        mode,
-        email: formData.get('email'),
-        password: formData.get('password'),
+      await submitLock.run(async () => {
+        await onSubmit?.({
+          mode,
+          email: formData.get('email'),
+          password: formData.get('password'),
+        });
       });
     } catch (submitError) {
       setError(submitError?.message || 'Sign-in failed.');
-      setBusy(false);
     }
   }
 
   async function startProvider(provider) {
-    setBusy(true);
     setError('');
     try {
-      await onSocialStart?.(provider);
+      await submitLock.run(async () => {
+        await onSocialStart?.(provider);
+      });
     } catch (providerError) {
       setError(providerError?.message || 'Could not start social sign-in.');
-      setBusy(false);
     }
   }
 
   async function startDemo() {
-    setBusy(true);
     setError('');
     try {
-      await onDemoStart?.();
+      await submitLock.run(async () => {
+        await onDemoStart?.();
+      });
     } catch (demoError) {
       setError(demoError?.message || 'Could not start the demo.');
-      setBusy(false);
     }
   }
 
