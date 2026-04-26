@@ -128,9 +128,10 @@ test.describe('grammar golden path', () => {
     // Wait for summary scene.
     await expect(page.locator('.grammar-summary-shell, .grammar-dashboard')).toBeVisible({ timeout: 15_000 });
 
-    // Reload — this is the R2 hazard. After reload, the rehydrate
-    // sanitiser drops the persisted summary so the UI CANNOT land on
-    // the completion summary shell.
+    // Reload -- this is the R2 hazard. After reload, the rehydrate
+    // sanitiser drops the persisted summary and coerces phase='summary'
+    // back to 'dashboard' so the UI CANNOT land on the completion
+    // summary shell.
     await reload(page);
 
     // Post-reload invariant: the grammar summary shell must NOT be
@@ -143,6 +144,22 @@ test.describe('grammar golden path', () => {
 
     // The summary shell must NOT be visible on the rehydrated page
     // (would indicate the summary survived through the sanitiser).
+    await expect(page.locator('.grammar-summary-shell')).toHaveCount(0);
+
+    // adv-sh2u2-005 (zombie-phase proof): route resets to dashboard on
+    // bootstrap, so the summary shell is naturally gone. Re-open the
+    // Grammar card -- this exercises the zombie-phase path. Without
+    // the phase coercion, phase='summary' would still be persisted and
+    // GrammarPracticeSurface (line 84) would mount GrammarSummaryScene
+    // with `summary = ui.summary || {}` = {} and an active
+    // "Start another round" CTA. With the phase coerced to 'dashboard'
+    // on rehydrate, the surface mounts the dashboard phase instead.
+    const onGrid = page.locator('.subject-grid [data-action="open-subject"][data-subject-id="grammar"]');
+    if (await onGrid.count()) {
+      await onGrid.first().click();
+    }
+    await expect(page.locator('.grammar-dashboard')).toBeVisible({ timeout: 15_000 });
+    // Summary shell MUST NOT reappear after re-opening Grammar.
     await expect(page.locator('.grammar-summary-shell')).toHaveCount(0);
   });
 });

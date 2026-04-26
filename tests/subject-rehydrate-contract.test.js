@@ -81,22 +81,59 @@ function bootstrapWithSeededUi(subjectId, persistedEntry) {
 }
 
 // ---------------------------------------------------------------------------
-// Scenario 1 — Happy path (spelling): completed-session UI sanitised on
-// rehydrate. The persisted entry has `phase: 'dashboard'` (the summary-
-// equivalent post-round phase for spelling) with summary populated;
-// after rehydrate the summary field must drop. This is the core R2
-// hazard — without this drop, a reload on the summary scene leaves the
-// "Start another round" CTA visible.
+// Scenario 1 -- Happy path across all three subjects: zombie-phase + summary
+// fixture. This is the core R2 hazard (plan line 378, adversarial
+// adv-sh2u2-001 / adv-sh2u2-002): the persisted entry has
+// `phase: 'summary'` with summary populated plus a non-empty
+// pendingCommand. After rehydrate:
+//
+//   1. `summary` must drop -- core R2 hazard.
+//   2. `phase` must NOT be `'summary'` -- zombie-phase coercion.
+//      Grammar + Spelling coerce to `'dashboard'`; Punctuation coerces
+//      to `'setup'` (its dashboard-equivalent rest phase).
+//   3. `pendingCommand` must be `''` -- stranding recovery (adv-sh2u2-003).
+//
+// Without (2) the SummaryScene re-renders once the learner re-opens
+// the subject card with an empty `summary = ui.summary || {}` payload
+// and a live "Start another round" CTA. Without (3) a tab crash
+// mid-command latches the setup scene's "Starting..." disabled state
+// with no recovery.
 // ---------------------------------------------------------------------------
 
-test('SH2-U2 spelling: rehydrate drops summary from a completed-round fixture', () => {
-  const { store } = bootstrapWithSeededUi('spelling', {
-    phase: 'dashboard',
-    summary: { total: 20, correct: 15, mistakes: [{ slug: 'because' }] },
-    session: null,
-  });
-  const ui = store.getState().subjectUi.spelling;
-  assert.equal(ui.summary, null, 'summary must drop — R2 core hazard');
+const EXPECTED_REST_PHASE_BY_SUBJECT = Object.freeze({
+  spelling: 'dashboard',
+  grammar: 'dashboard',
+  punctuation: 'setup',
+});
+
+test('SH2-U2 zombie-phase: rehydrate coerces phase=\'summary\' + drops summary + resets pendingCommand for all subjects', () => {
+  for (const subjectId of Object.keys(SUBJECT_MODULES)) {
+    const { store } = bootstrapWithSeededUi(subjectId, {
+      phase: 'summary',
+      summary: { total: 20, correct: 15, mistakes: [{ slug: 'because' }] },
+      pendingCommand: 'start-session',
+      session: null,
+    });
+    const ui = store.getState().subjectUi[subjectId];
+    // Zombie-phase coercion: phase must NOT be 'summary'.
+    assert.notEqual(ui.phase, 'summary',
+      `${subjectId}: phase='summary' must be coerced away on rehydrate (zombie-phase hazard)`);
+    assert.equal(ui.phase, EXPECTED_REST_PHASE_BY_SUBJECT[subjectId],
+      `${subjectId}: phase coerces to '${EXPECTED_REST_PHASE_BY_SUBJECT[subjectId]}'`);
+    // Summary drop: core R2 hazard.
+    assert.equal(ui.summary, null, `${subjectId}: summary must drop -- R2 core hazard`);
+    // pendingCommand reset: stranding recovery. Spelling does not carry
+    // pendingCommand inside its subject UI (it lives on top-level
+    // `transientUi.spellingPendingCommand`), so the key is absent after
+    // the merge. Grammar + Punctuation re-default to '' via their
+    // initState / normaliseGrammarReadModel contracts.
+    assert.notEqual(ui.pendingCommand, 'start-session',
+      `${subjectId}: stranded pendingCommand must NOT survive rehydrate`);
+    if (subjectId !== 'spelling') {
+      assert.equal(ui.pendingCommand, '',
+        `${subjectId}: pendingCommand re-defaults to '' on rehydrate merge`);
+    }
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -198,8 +235,22 @@ test('SH2-U2 rehydrate: mid-flight session + feedback + awaitingAdvance are ALL 
 // ---------------------------------------------------------------------------
 
 test('SH2-U2 fallback: subject without sanitiseUiOnRehydrate uses the generic shallow-merge path', () => {
+  // testing-02 nit follow-up: exercise the real `buildSubjectUiState`
+  // path via createStore rather than a hand-rolled merge. The mock
+  // subject opts out of the hook, so the store must fall back to the
+  // plain `{...DEFAULT, ...initState, ...persisted}` merge with NO
+  // silent stripping -- this locks the plan's "preserve backwards
+  // compatibility" clause (line 382). A hand-rolled merge in the test
+  // is tautological (testing-02); wiring through createStore ensures
+  // any drift in store.js's fallback branch actually surfaces here.
+
+  // Track whether our mock's hook is called. We install a spy-hook on
+  // a second mock subject to positively assert the hook-present branch
+  // fires while this test's hook-absent branch does NOT.
   const mockSubject = {
-    id: 'mock-no-hook',
+    id: 'spelling', // reuse spelling slot so the local platform
+                    // repositories seed a learner + subjectStates adapter
+                    // without requiring a custom repository wiring.
     name: 'Mock',
     blurb: 'test-fixture subject with no rehydrate sanitiser',
     reactPractice: true,
@@ -208,44 +259,73 @@ test('SH2-U2 fallback: subject without sanitiseUiOnRehydrate uses the generic sh
     },
     getDashboardStats() { return { pct: 0, due: 0, streak: 0, nextUp: 'Start' }; },
     handleAction() { return false; },
+    // Deliberately no `sanitiseUiOnRehydrate`.
   };
 
-  // Hand-rolled registry so we do not have to ship a persistence adapter
-  // for the fake subject. We exercise buildSubjectUiState directly via a
-  // tiny in-memory repositories stub so the fallback path fires.
-  const registry = buildSubjectRegistry([mockSubject]);
-  assert.equal(typeof registry[0].sanitiseUiOnRehydrate, 'undefined',
+  assert.equal(typeof mockSubject.sanitiseUiOnRehydrate, 'undefined',
     'mock subject must NOT have a sanitiseUiOnRehydrate hook');
 
-  // We cannot stand up a full store without all three repositories; use
-  // the sanitiser directly through the exported `buildSubjectUiTree`
-  // equivalent: the store.js sanitiseState pathway only uses the hook
-  // when it is defined, and otherwise falls back to shallow-merge. We
-  // assert that by re-running the same merge by hand.
+  // Stand up a store with just the mock subject + a seeded persisted
+  // entry. If the fallback path were silently stripping, `ui.summary`
+  // would come back null; if it's preserving (expected), the persisted
+  // summary should echo through unchanged.
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const bootStore = createStore(buildSubjectRegistry([mockSubject]), { repositories });
+  const learnerId = bootStore.getState().learners.selectedId;
   const persisted = {
     phase: 'dashboard',
     session: { id: 'legacy' },
     summary: { total: 3 },
     awaitingAdvance: true,
   };
-  // Fallback path: no hook → rehydrate returns the entry untouched and
-  // the store's merge is `{ ...DEFAULT, ...initState, ...persisted }`.
-  // Assert no silent strip happens in the "no hook" case.
-  assert.equal(typeof mockSubject.sanitiseUiOnRehydrate, 'undefined');
-  // Simulated merge (matches store.js line 66-70):
-  const DEFAULT_SUBJECT_UI = {
-    phase: 'dashboard',
-    session: null,
-    feedback: null,
-    summary: null,
-    error: '',
-  };
-  const merged = { ...DEFAULT_SUBJECT_UI, ...mockSubject.initState(), ...persisted };
-  // All fields from `persisted` echo through — this is the legacy
+  repositories.subjectStates.writeUi(learnerId, 'spelling', persisted);
+
+  // Bring up a fresh store over the same repositories so the rehydrate
+  // path fires against a subject with no hook.
+  const store = createStore(buildSubjectRegistry([mockSubject]), { repositories });
+  const ui = store.getState().subjectUi.spelling;
+
+  // All fields from `persisted` echo through -- this is the legacy
   // behaviour subjects opt out of by implementing the hook.
-  assert.deepEqual(merged.session, persisted.session, 'fallback: persisted session echoes through (no sanitiser)');
-  assert.deepEqual(merged.summary, persisted.summary, 'fallback: persisted summary echoes through (no sanitiser)');
-  assert.equal(merged.awaitingAdvance, true, 'fallback: persisted awaitingAdvance echoes through (no sanitiser)');
+  assert.deepEqual(ui.session, persisted.session,
+    'fallback: persisted session echoes through (no sanitiser)');
+  assert.deepEqual(ui.summary, persisted.summary,
+    'fallback: persisted summary echoes through (no sanitiser)');
+  assert.equal(ui.awaitingAdvance, true,
+    'fallback: persisted awaitingAdvance echoes through (no sanitiser)');
+
+  // Positive control: assert the hook-present branch of store.js:62-64
+  // actually fires when the subject opts in. Install a spy hook on a
+  // fresh mock and prove it gets called with the persisted entry.
+  let hookCalledWithEntry = null;
+  const spyMockSubject = {
+    ...mockSubject,
+    sanitiseUiOnRehydrate(entry) {
+      hookCalledWithEntry = entry;
+      return { ...entry, summary: null }; // strip summary to prove the
+                                            // hook's return value wins.
+    },
+  };
+  const storage2 = installMemoryStorage();
+  const repositories2 = createLocalPlatformRepositories({ storage: storage2 });
+  const bootStore2 = createStore(buildSubjectRegistry([spyMockSubject]), { repositories: repositories2 });
+  const learnerId2 = bootStore2.getState().learners.selectedId;
+  repositories2.subjectStates.writeUi(learnerId2, 'spelling', persisted);
+  const store2 = createStore(buildSubjectRegistry([spyMockSubject]), { repositories: repositories2 });
+  assert.notEqual(hookCalledWithEntry, null,
+    'spy hook: sanitiseUiOnRehydrate MUST be invoked on rehydrate when defined');
+  // The persisted entry may be augmented with defaults (feedback: null,
+  // error: '') by the local platform repositories before reaching the
+  // hook. Assert the fields we explicitly seeded survive verbatim.
+  assert.deepEqual(hookCalledWithEntry.session, persisted.session,
+    'spy hook: sanitiser receives persisted session verbatim');
+  assert.deepEqual(hookCalledWithEntry.summary, persisted.summary,
+    'spy hook: sanitiser receives persisted summary verbatim');
+  assert.equal(hookCalledWithEntry.awaitingAdvance, true,
+    'spy hook: sanitiser receives persisted awaitingAdvance verbatim');
+  assert.equal(store2.getState().subjectUi.spelling.summary, null,
+    'spy hook: the sanitiser\'s return value wins over the raw persisted entry');
 });
 
 // ---------------------------------------------------------------------------
@@ -276,16 +356,16 @@ test('SH2-U2 punctuation: existing Map phase + mapUi strip still works (no U5 re
 // isolation plus the shared helper.
 // ---------------------------------------------------------------------------
 
-test('SH2-U2 dropSessionEphemeralFields: strips the two baseline fields and preserves everything else', () => {
+test('SH2-U2 dropSessionEphemeralFields: strips every baseline field and preserves everything else', () => {
   const entry = {
     // Post-session-ephemeral (must drop):
     summary: { total: 5 },
     transientUi: { someKey: 'value' },
+    pendingCommand: 'start-session',
     // Active-session state (must preserve):
     session: { id: 'live-session' },
     feedback: { kind: 'success' },
     awaitingAdvance: true,
-    pendingCommand: '',
     // Other non-ephemeral fields (must preserve):
     phase: 'setup',
     prefs: { mode: 'smart', roundLength: '10' },
@@ -299,13 +379,11 @@ test('SH2-U2 dropSessionEphemeralFields: strips the two baseline fields and pres
   }
   // Active-session resume contract fields:
   assert.deepEqual(next.session, entry.session,
-    'session is NOT in the ephemeral baseline — it must be preserved (resume contract)');
+    'session is NOT in the ephemeral baseline -- it must be preserved (resume contract)');
   assert.deepEqual(next.feedback, entry.feedback,
-    'feedback is NOT in the ephemeral baseline — it must be preserved (resume contract)');
+    'feedback is NOT in the ephemeral baseline -- it must be preserved (resume contract)');
   assert.equal(next.awaitingAdvance, true,
-    'awaitingAdvance is NOT in the ephemeral baseline — it must be preserved (resume contract)');
-  assert.equal(next.pendingCommand, '',
-    'pendingCommand is NOT in the ephemeral baseline — subject adapters handle it');
+    'awaitingAdvance is NOT in the ephemeral baseline -- it must be preserved (resume contract)');
   // Other non-ephemeral fields:
   assert.equal(next.phase, 'setup', 'non-ephemeral phase must be preserved');
   assert.deepEqual(next.prefs, entry.prefs, 'non-ephemeral prefs must be preserved');
@@ -313,25 +391,67 @@ test('SH2-U2 dropSessionEphemeralFields: strips the two baseline fields and pres
   assert.equal(next.extraStaticField, 'preserved', 'unknown non-ephemeral fields must be preserved');
 });
 
+// ---------------------------------------------------------------------------
+// Scenario adv-sh2u2-003: pendingCommand stranding recovery. A tab that
+// crashes between "write pendingCommand" and "Worker responds + clear"
+// must NOT leave a non-empty `pendingCommand` echoing across reload -- the
+// setup / session scenes gate `setupDisabled = Boolean(pendingCommand)`,
+// so a stranded value latches "Starting..." permanently.
+// ---------------------------------------------------------------------------
+
+test('SH2-U2 pendingCommand stranding: non-empty pendingCommand is dropped on rehydrate for all subjects', () => {
+  const fixture = {
+    phase: 'dashboard',
+    pendingCommand: 'start-session',
+    session: null,
+  };
+  for (const subjectId of Object.keys(SUBJECT_MODULES)) {
+    const { store } = bootstrapWithSeededUi(subjectId, fixture);
+    const ui = store.getState().subjectUi[subjectId];
+    // The rehydrate merge re-defaults pendingCommand via
+    // `{...DEFAULT, ...initState, ...sanitised}` -- initState supplies
+    // `pendingCommand: ''` for Grammar (normaliseGrammarReadModel) and
+    // Punctuation (createInitialPunctuationState) explicitly. Spelling
+    // does not carry pendingCommand inside its subject UI (it lives on
+    // the top-level `transientUi.spellingPendingCommand`), so the key
+    // is absent.
+    assert.notEqual(ui.pendingCommand, 'start-session',
+      `${subjectId}: stranded pendingCommand must NOT survive rehydrate`);
+    // Grammar + Punctuation re-default to ''. Spelling: field is absent
+    // (undefined is acceptable; downstream reads are Boolean() guarded).
+    if (subjectId !== 'spelling') {
+      assert.equal(ui.pendingCommand, '',
+        `${subjectId}: pendingCommand re-defaults to '' on merge`);
+    }
+  }
+});
+
 test('SH2-U2 SESSION_EPHEMERAL_FIELDS list: does NOT include any resume-contract field', () => {
-  // Locks the resume contract: `session`, `feedback`, `awaitingAdvance`,
-  // `pendingCommand` are all deliberately NOT in the ephemeral baseline
-  // so the pre-existing resume invariants stay green:
+  // Locks the resume contract: `session`, `feedback`, `awaitingAdvance`
+  // are deliberately NOT in the ephemeral baseline so the pre-existing
+  // resume invariants stay green:
   //   - `tests/store.test.js::serialisable spelling state survives store
-  //     persistence for resume` — `session` must preserve.
+  //     persistence for resume` -- `session` must preserve.
   //   - `tests/spelling-parity.test.js::restored completed spelling card
-  //     caps progress and resumes auto-advance` — `awaitingAdvance` must
+  //     caps progress and resumes auto-advance` -- `awaitingAdvance` must
   //     preserve so the auto-advance scheduler fires on rehydrate.
-  //   - `tests/subject-expansion.test.js::Punctuation production subject
-  //     keeps a live session when switching learners` — `pendingCommand`
-  //     must preserve to satisfy the deepEqual round-trip.
   //   - `feedback` surfaces alongside `awaitingAdvance` on the mid-round
   //     feedback card; dropping it would strand a reloading learner on a
   //     Continue-awaiting view with no feedback.
-  for (const resumeField of ['session', 'feedback', 'awaitingAdvance', 'pendingCommand']) {
+  //
+  // `pendingCommand` IS in the ephemeral list (adv-sh2u2-003 stranding
+  // recovery). `tests/subject-expansion.test.js::keeps a live session
+  // when switching learners` captures a post-response snapshot where
+  // pendingCommand is already `''`, and each subject's initState() re-
+  // defaults the field on merge, so the deepEqual round-trip stays green
+  // even with the drop.
+  for (const resumeField of ['session', 'feedback', 'awaitingAdvance']) {
     assert.equal(SESSION_EPHEMERAL_FIELDS.includes(resumeField), false,
       `${resumeField} must NOT be in SESSION_EPHEMERAL_FIELDS (resume contract)`);
   }
+  // Positive assertion: pendingCommand IS in the ephemeral list.
+  assert.equal(SESSION_EPHEMERAL_FIELDS.includes('pendingCommand'), true,
+    'pendingCommand MUST be in SESSION_EPHEMERAL_FIELDS (adv-sh2u2-003 stranding recovery)');
 });
 
 test('SH2-U2 dropSessionEphemeralFields: pass-through on non-plain-object inputs', () => {
@@ -341,47 +461,55 @@ test('SH2-U2 dropSessionEphemeralFields: pass-through on non-plain-object inputs
   assert.equal(dropSessionEphemeralFields(arr), arr, 'arrays pass through unchanged');
 });
 
-test('SH2-U2 spelling.sanitiseUiOnRehydrate: drops summary and preserves resume-contract fields', () => {
-  const entry = {
-    phase: 'dashboard',
-    session: { id: 'live-session' },
-    summary: { total: 5 },
-    feedback: { kind: 'success' },
-    awaitingAdvance: true,
-    prefs: { mode: 'smart' },
-  };
-  const next = spellingModule.sanitiseUiOnRehydrate(entry);
-  assert.equal(Object.prototype.hasOwnProperty.call(next, 'summary'), false,
-    'summary must drop (R2 core hazard)');
-  assert.deepEqual(next.session, entry.session, 'session preserved (resume contract)');
-  assert.deepEqual(next.feedback, entry.feedback, 'feedback preserved (resume contract)');
-  assert.equal(next.awaitingAdvance, true, 'awaitingAdvance preserved (resume contract)');
-  assert.deepEqual(next.prefs, { mode: 'smart' }, 'prefs preserved');
-});
-
-test('SH2-U2 grammar.sanitiseUiOnRehydrate: drops summary and preserves resume-contract fields', () => {
+test('SH2-U2 spelling.sanitiseUiOnRehydrate: drops summary + pendingCommand, coerces phase=summary, preserves resume-contract fields', () => {
   const entry = {
     phase: 'summary',
     session: { id: 'live-session' },
     summary: { total: 5 },
     feedback: { kind: 'success' },
     awaitingAdvance: true,
-    pendingCommand: '',
+    pendingCommand: 'start-session',
+    prefs: { mode: 'smart' },
+  };
+  const next = spellingModule.sanitiseUiOnRehydrate(entry);
+  assert.equal(Object.prototype.hasOwnProperty.call(next, 'summary'), false,
+    'summary must drop (R2 core hazard)');
+  assert.equal(Object.prototype.hasOwnProperty.call(next, 'pendingCommand'), false,
+    'pendingCommand must drop (adv-sh2u2-003 stranding recovery)');
+  assert.equal(next.phase, 'dashboard',
+    'phase=summary must coerce to dashboard (adv-sh2u2-001 zombie-phase)');
+  assert.deepEqual(next.session, entry.session, 'session preserved (resume contract)');
+  assert.deepEqual(next.feedback, entry.feedback, 'feedback preserved (resume contract)');
+  assert.equal(next.awaitingAdvance, true, 'awaitingAdvance preserved (resume contract)');
+  assert.deepEqual(next.prefs, { mode: 'smart' }, 'prefs preserved');
+});
+
+test('SH2-U2 grammar.sanitiseUiOnRehydrate: drops summary + pendingCommand, coerces phase=summary, preserves resume-contract fields', () => {
+  const entry = {
+    phase: 'summary',
+    session: { id: 'live-session' },
+    summary: { total: 5 },
+    feedback: { kind: 'success' },
+    awaitingAdvance: true,
+    pendingCommand: 'start-session',
     prefs: { mode: 'learn', roundLength: 8 },
     analytics: { concepts: [] },
   };
   const next = grammarModule.sanitiseUiOnRehydrate(entry);
   assert.equal(Object.prototype.hasOwnProperty.call(next, 'summary'), false,
     'summary must drop (R2 core hazard)');
+  assert.equal(Object.prototype.hasOwnProperty.call(next, 'pendingCommand'), false,
+    'pendingCommand must drop (adv-sh2u2-003 stranding recovery)');
+  assert.equal(next.phase, 'dashboard',
+    'phase=summary must coerce to dashboard (adv-sh2u2-001 zombie-phase)');
   assert.deepEqual(next.session, entry.session, 'session preserved (resume contract)');
   assert.deepEqual(next.feedback, entry.feedback, 'feedback preserved (resume contract)');
   assert.equal(next.awaitingAdvance, true, 'awaitingAdvance preserved (resume contract)');
-  assert.equal(next.pendingCommand, '', 'pendingCommand preserved (safe empty default)');
   assert.deepEqual(next.prefs, { mode: 'learn', roundLength: 8 }, 'prefs are preserved');
   assert.deepEqual(next.analytics, { concepts: [] }, 'analytics are preserved');
 });
 
-test('SH2-U2 sanitisePunctuationUiOnRehydrate: drops summary + Map phase + mapUi, preserves resume-contract fields', () => {
+test('SH2-U2 sanitisePunctuationUiOnRehydrate: drops summary + pendingCommand + Map phase + mapUi, preserves resume-contract fields', () => {
   const entry = {
     phase: 'map',
     mapUi: { statusFilter: 'weak' },
@@ -389,7 +517,7 @@ test('SH2-U2 sanitisePunctuationUiOnRehydrate: drops summary + Map phase + mapUi
     summary: { total: 3 },
     feedback: { kind: 'success' },
     awaitingAdvance: true,
-    pendingCommand: '',
+    pendingCommand: 'start-session',
     prefs: { mode: 'smart' },
     prefsMigrated: true,
   };
@@ -397,6 +525,8 @@ test('SH2-U2 sanitisePunctuationUiOnRehydrate: drops summary + Map phase + mapUi
   // SH2-U2 baseline drops:
   assert.equal(Object.prototype.hasOwnProperty.call(next, 'summary'), false,
     'summary must drop (R2 core hazard)');
+  assert.equal(Object.prototype.hasOwnProperty.call(next, 'pendingCommand'), false,
+    'pendingCommand must drop (adv-sh2u2-003 stranding recovery)');
   // U5 layer:
   assert.equal(next.phase, 'setup', 'Map phase coerced to setup');
   assert.equal(Object.prototype.hasOwnProperty.call(next, 'mapUi'), false, 'mapUi stripped');
@@ -404,18 +534,36 @@ test('SH2-U2 sanitisePunctuationUiOnRehydrate: drops summary + Map phase + mapUi
   assert.deepEqual(next.session, entry.session, 'session preserved (resume contract)');
   assert.deepEqual(next.feedback, entry.feedback, 'feedback preserved (resume contract)');
   assert.equal(next.awaitingAdvance, true, 'awaitingAdvance preserved (resume contract)');
-  assert.equal(next.pendingCommand, '', 'pendingCommand preserved (safe empty default)');
   assert.deepEqual(next.prefs, { mode: 'smart' }, 'prefs preserved');
   assert.equal(next.prefsMigrated, true, 'prefsMigrated latch preserved (persists by design)');
 });
 
-test('SH2-U2 sanitisePunctuationUiOnRehydrate: non-Map phase still drops summary but preserves active-session state', () => {
+test('SH2-U2 sanitisePunctuationUiOnRehydrate: phase=summary coerces to setup', () => {
+  // adv-sh2u2-002: phase='summary' without coercion would re-render the
+  // Summary scene's active "Start another round" CTA after re-opening
+  // the subject. The Punctuation sanitiser coerces phase=summary to
+  // 'setup' (its dashboard-equivalent rest phase) to close the hazard.
+  const entry = {
+    phase: 'summary',
+    summary: { total: 10, correct: 9 },
+    feedback: { kind: 'success' },
+    awaitingAdvance: true,
+    prefs: { mode: 'smart' },
+  };
+  const next = sanitisePunctuationUiOnRehydrate(entry);
+  assert.equal(next.phase, 'setup',
+    'Summary phase coerced to setup (adv-sh2u2-002 zombie-phase)');
+  assert.equal(Object.prototype.hasOwnProperty.call(next, 'summary'), false,
+    'summary must drop (R2 core hazard)');
+});
+
+test('SH2-U2 sanitisePunctuationUiOnRehydrate: non-Map non-Summary phase still drops summary but preserves active-session state', () => {
   // Covers the case where the prior sanitiser bailed out early via the
   // `if (!needsCoerce) return entry;` short-circuit. After SH2-U2 the
   // sanitiser must ALWAYS drop the summary baseline, whether or not the
   // entry happens to be in the Map phase.
   const entry = {
-    phase: 'setup',
+    phase: 'active-item',
     summary: { total: 10, correct: 9 },
     feedback: { kind: 'success' },
     awaitingAdvance: true,
@@ -426,8 +574,34 @@ test('SH2-U2 sanitisePunctuationUiOnRehydrate: non-Map phase still drops summary
     'summary must drop (R2 core hazard)');
   assert.deepEqual(next.feedback, entry.feedback, 'feedback preserved (resume contract)');
   assert.equal(next.awaitingAdvance, true, 'awaitingAdvance preserved (resume contract)');
-  assert.equal(next.phase, 'setup', 'non-Map phase is preserved');
+  assert.equal(next.phase, 'active-item', 'non-Map non-Summary phase is preserved');
   assert.deepEqual(next.prefs, { mode: 'smart' }, 'prefs preserved');
+});
+
+// ---------------------------------------------------------------------------
+// Scenario adv-sh2u2-004 drift: the Punctuation sanitiser must stay in
+// sync with `SESSION_EPHEMERAL_FIELDS` -- inline field lists can drift
+// when the baseline grows. The sanitiser loops the shared list, but this
+// test asserts the set equivalence directly via a probe fixture carrying
+// every baseline field.
+// ---------------------------------------------------------------------------
+
+test('SH2-U2 sanitisePunctuationUiOnRehydrate: drop set matches SESSION_EPHEMERAL_FIELDS exactly (adv-sh2u2-004)', () => {
+  const probe = {};
+  for (const field of SESSION_EPHEMERAL_FIELDS) {
+    probe[field] = `probe-${field}`;
+  }
+  // Include a couple of non-ephemeral fields to make sure the sanitiser
+  // does NOT silently strip anything outside the baseline.
+  probe.phase = 'active-item';
+  probe.awaitingAdvance = true;
+  const next = sanitisePunctuationUiOnRehydrate(probe);
+  for (const field of SESSION_EPHEMERAL_FIELDS) {
+    assert.equal(Object.prototype.hasOwnProperty.call(next, field), false,
+      `Punctuation sanitiser must drop '${field}' (SESSION_EPHEMERAL_FIELDS baseline)`);
+  }
+  assert.equal(next.phase, 'active-item', 'non-baseline phase preserved');
+  assert.equal(next.awaitingAdvance, true, 'non-baseline awaitingAdvance preserved');
 });
 
 // ---------------------------------------------------------------------------

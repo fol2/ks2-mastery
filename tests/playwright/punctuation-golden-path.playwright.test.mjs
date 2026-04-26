@@ -114,9 +114,10 @@ test.describe('punctuation golden path', () => {
     // Wait for summary scene.
     await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
 
-    // Reload — this is the R2 hazard. After reload, the rehydrate
-    // sanitiser drops the persisted summary so the UI CANNOT land on
-    // the summary completion surface.
+    // Reload -- this is the R2 hazard. After reload, the rehydrate
+    // sanitiser drops the persisted summary and coerces phase='summary'
+    // back to 'setup' so the UI CANNOT land on the summary completion
+    // surface.
     await reload(page);
 
     // Post-reload invariant: the summary surface must NOT be visible.
@@ -129,6 +130,21 @@ test.describe('punctuation golden path', () => {
 
     // The summary surface must NOT be visible on the rehydrated page
     // (would indicate the summary survived through the sanitiser).
+    await expect(page.locator('[data-punctuation-summary]')).toHaveCount(0);
+
+    // adv-sh2u2-005 (zombie-phase proof): route resets to dashboard on
+    // bootstrap, so the summary surface is naturally gone. Re-open the
+    // Punctuation card -- this exercises the zombie-phase path. Without
+    // the phase coercion to 'setup', phase='summary' would still be
+    // persisted and PunctuationPracticeSurface (line 71) would mount
+    // SummaryScene with an active "Start another round" CTA. With the
+    // coercion the surface mounts the setup phase instead.
+    const onGrid = page.locator('.subject-grid [data-action="open-subject"][data-subject-id="punctuation"]');
+    if (await onGrid.count()) {
+      await onGrid.first().click();
+    }
+    await expect(page.locator('[data-punctuation-start]')).toBeVisible({ timeout: 15_000 });
+    // Summary surface MUST NOT reappear after re-opening Punctuation.
     await expect(page.locator('[data-punctuation-summary]')).toHaveCount(0);
   });
 });

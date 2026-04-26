@@ -177,19 +177,17 @@ test.describe('spelling golden path', () => {
     );
     await expect(postRoundMarker.first()).toBeVisible({ timeout: 15_000 });
 
-    // Reload — this is the R2 hazard. After reload, the rehydrate
-    // sanitiser drops the persisted summary so the UI CANNOT land on the
-    // "Start another round" CTA.
+    // Reload -- this is the R2 hazard. After reload, the rehydrate
+    // sanitiser drops the persisted summary and coerces phase='summary'
+    // so the UI CANNOT land on the "Start another round" CTA.
     await reload(page);
 
     // Post-reload invariant: "Start another round" (the summary's
     // completion-state CTA) must NOT be the visible primary. The
     // learner should either see the home subject grid or the spelling
-    // setup scene with the plain "Start" button — never the summary-
+    // setup scene with the plain "Start" button -- never the summary-
     // phase "Start another round" variant.
     const startAgain = page.locator('[data-action="spelling-start-again"]');
-    const setupStart = page.locator('[data-action="spelling-start"]');
-    const subjectCard = page.locator('.subject-grid [data-action="open-subject"][data-subject-id="spelling"]');
 
     // At least one of the safe fallback surfaces must be visible.
     const safeMarker = page.locator(
@@ -199,6 +197,21 @@ test.describe('spelling golden path', () => {
 
     // The summary-only "Start another round" CTA must NOT be visible
     // on the rehydrated surface (would indicate the summary survived).
+    await expect(startAgain).toHaveCount(0);
+
+    // adv-sh2u2-005 (zombie-phase proof): route resets to dashboard on
+    // bootstrap, so the spelling summary surface is naturally gone.
+    // Re-open the Spelling card -- this exercises the zombie-phase
+    // path. Without the phase coercion, phase='summary' would still be
+    // persisted and the summary-phase "Start another round" CTA would
+    // appear instead of the plain Start button. With the coercion the
+    // surface mounts the dashboard phase instead.
+    const onGrid = page.locator('.subject-grid [data-action="open-subject"][data-subject-id="spelling"]');
+    if (await onGrid.count()) {
+      await onGrid.first().click();
+    }
+    await expect(page.locator('[data-action="spelling-start"]:not([data-action="spelling-start-again"])')).toBeVisible({ timeout: 15_000 });
+    // "Start another round" MUST NOT reappear after re-opening Spelling.
     await expect(startAgain).toHaveCount(0);
   });
 

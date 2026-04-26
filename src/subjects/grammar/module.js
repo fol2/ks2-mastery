@@ -322,18 +322,29 @@ export const grammarModule = {
   // SH2-U2 (R2): drop post-session-ephemeral fields on rehydrate so a
   // reload on a Grammar summary screen never resurrects the "Start
   // another round" CTA from a round the learner thought was finished.
-  // Baseline set (`summary`, `transientUi`) lives on
+  // Baseline set (`summary`, `transientUi`, `pendingCommand`) lives on
   // `SESSION_EPHEMERAL_FIELDS` in `platform/core/subject-contract.js`.
-  // Active-session state (`session`, `feedback`, `awaitingAdvance`,
-  // `pendingCommand`) is intentionally preserved so mid-round reload
-  // resumes the learner's active round. Preferences, stats, analytics
-  // concepts, capabilities, transferLane (saved evidence), and the
-  // `bank` + `ui.transfer` UI slices all survive. Runs only on
-  // rehydrate paths (bootstrap / reloadFromRepositories / learner-
-  // switch); live dispatches pass `rehydrate: false` and skip this
-  // hook.
+  // Active-session state (`session`, `feedback`, `awaitingAdvance`)
+  // is intentionally preserved so mid-round reload resumes the
+  // learner's active round. Preferences, stats, analytics concepts,
+  // capabilities, transferLane (saved evidence), and the `bank` +
+  // `ui.transfer` UI slices all survive. Runs only on rehydrate paths
+  // (bootstrap / reloadFromRepositories / learner-switch); live
+  // dispatches pass `rehydrate: false` and skip this hook.
+  //
+  // Blocker adv-sh2u2-001 (phase coercion): dropping `summary` alone
+  // leaves `phase === 'summary'` intact, which re-renders
+  // `GrammarSummaryScene` with an empty `summary = ui.summary || {}`
+  // payload after the route re-opens Grammar. The "Start another round"
+  // CTA is still active, giving the learner a silent replay hook. Coerce
+  // `phase === 'summary'` back to `'dashboard'` on rehydrate so the
+  // scene never mounts with a zombie phase.
   sanitiseUiOnRehydrate(entry) {
-    return dropSessionEphemeralFields(entry);
+    const next = dropSessionEphemeralFields(entry);
+    if (next && typeof next === 'object' && !Array.isArray(next) && next.phase === 'summary') {
+      next.phase = 'dashboard';
+    }
+    return next;
   },
   getDashboardStats(appState) {
     const learnerId = appState.learners?.selectedId || '';

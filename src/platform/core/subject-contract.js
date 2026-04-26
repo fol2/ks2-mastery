@@ -14,38 +14,50 @@ const REACT_PRACTICE_FIELDS = ['PracticeComponent', 'renderPracticeComponent'];
 //
 // What STAYS (NOT in this list):
 //
-//   `session`, `feedback`, `awaitingAdvance`, `pendingCommand` — all
-//   part of the resume contract for an in-flight session. A learner
-//   who reloads mid-round (or mid-feedback) must be able to pick up
-//   where they left off; dropping `awaitingAdvance` / `feedback` would
-//   strand them on a session-phase view with no Continue button, and
-//   dropping `session` / `pendingCommand` is already locked out by
-//   existing resume invariants (`tests/store.test.js::serialisable
-//   spelling state survives store persistence for resume`,
-//   `tests/spelling-parity.test.js::restored completed spelling card
-//   caps progress and resumes auto-advance`,
-//   `tests/subject-expansion.test.js::Punctuation production subject
-//   keeps a live session when switching learners`).
+//   `session`, `feedback`, `awaitingAdvance` -- all part of the resume
+//   contract for an in-flight session. A learner who reloads mid-round
+//   (or mid-feedback) must be able to pick up where they left off;
+//   dropping `awaitingAdvance` / `feedback` would strand them on a
+//   session-phase view with no Continue button, and dropping `session`
+//   is already locked out by existing resume invariants
+//   (`tests/store.test.js::serialisable spelling state survives store
+//   persistence for resume`, `tests/spelling-parity.test.js::restored
+//   completed spelling card caps progress and resumes auto-advance`).
 //
-//   The post-round hazard R2 describes — a zombie summary surfacing a
-//   "Start another round" CTA after reload — is fully addressed by the
-//   summary drop below. Stripping the active-session state fields would
-//   break the resume contract without adding any additional R2 safety.
+//   The post-round hazard R2 describes -- a zombie summary surfacing a
+//   "Start another round" CTA after reload -- is fully addressed by the
+//   summary + phase-coercion drops below. Stripping the remaining
+//   active-session state fields (`session`, `feedback`,
+//   `awaitingAdvance`) would break the resume contract without adding
+//   any additional R2 safety.
 //
 // What DROPS, and why:
 //
-//   summary — the round-completion screen. Its "Start another round"
+//   summary -- the round-completion screen. Its "Start another round"
 //   button fires a fresh `start-session` reusing the prior round's mode,
 //   so a zombie summary after reload can silently re-enter a round the
 //   learner thought they had finished. This is the core post-completion
 //   hazard called out explicitly by R2.
 //
-//   transientUi — subject-local transient UI (e.g. search drafts, modal
+//   transientUi -- subject-local transient UI (e.g. search drafts, modal
 //   states) that tests treat as session-ephemeral. Most subjects do not
 //   actually nest a transientUi object under their subject UI slice
 //   (transient UI lives at `state.transientUi` top-level), but dropping
 //   any nested transientUi that accidentally got persisted keeps the
 //   fallback safe.
+//
+//   pendingCommand -- the in-flight-Worker-command guard for subject
+//   command adapters (Grammar + Punctuation). If a tab crashes between
+//   "set pendingCommand" and "Worker responds / clear pendingCommand"
+//   (adversarial adv-sh2u2-003), a non-empty value echoes across reload
+//   and the setup scene's `setupDisabled = Boolean(pendingCommand)`
+//   gate latches "Starting..." permanently with no recovery path short
+//   of clearing localStorage. No existing test requires non-empty
+//   survival -- `tests/subject-expansion.test.js::Punctuation production
+//   subject keeps a live session when switching learners` captures a
+//   post-response snapshot where `pendingCommand` is `''` and the
+//   subject's `initState()` / `normaliseGrammarReadModel()` re-defaults
+//   the field on merge.
 //
 // Subjects are free to strip additional subject-specific ephemeral fields
 // on top (e.g. Punctuation's `phase: 'map'` + `mapUi` in
@@ -56,6 +68,7 @@ const REACT_PRACTICE_FIELDS = ['PracticeComponent', 'renderPracticeComponent'];
 export const SESSION_EPHEMERAL_FIELDS = Object.freeze([
   'summary',
   'transientUi',
+  'pendingCommand',
 ]);
 
 // SH2-U2 helper: drops the baseline session-ephemeral fields on a persisted

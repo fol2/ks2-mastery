@@ -128,12 +128,12 @@ export const spellingModule = {
   // SH2-U2 (R2): drop post-session-ephemeral fields on rehydrate so
   // browser Back / Refresh on a completed-session summary screen cannot
   // resurrect the summary's "Start another round" CTA. Baseline drop
-  // set (`summary`, `transientUi`) lives on `SESSION_EPHEMERAL_FIELDS`
-  // in `platform/core/subject-contract.js`. Active-session state
-  // (`session`, `feedback`, `awaitingAdvance`) is intentionally
-  // preserved so a mid-round reload picks up where the learner left
-  // off — `tests/store.test.js::serialisable spelling state survives
-  // store persistence for resume` and
+  // set (`summary`, `transientUi`, `pendingCommand`) lives on
+  // `SESSION_EPHEMERAL_FIELDS` in `platform/core/subject-contract.js`.
+  // Active-session state (`session`, `feedback`, `awaitingAdvance`) is
+  // intentionally preserved so a mid-round reload picks up where the
+  // learner left off -- `tests/store.test.js::serialisable spelling
+  // state survives store persistence for resume` and
   // `tests/spelling-parity.test.js::restored completed spelling card
   // caps progress and resumes auto-advance` lock both the session-
   // resume and awaitingAdvance-resume invariants. Preferences (mode,
@@ -142,8 +142,19 @@ export const spellingModule = {
   // only on the rehydrate path (`rehydrate: true`); live
   // `updateSubjectUi` dispatches bypass this hook so sessions mid-
   // flight are unaffected.
+  //
+  // Blocker parity (adv-sh2u2-001 analog): Spelling also coerces
+  // `phase === 'summary'` back to `'dashboard'` so reload on a spelling
+  // summary never re-renders the "Start another round" CTA even when
+  // `normaliseSubjectEntryForOpen` (store.js:235) is bypassed (e.g. if
+  // a route-open path changes upstream). Parity drop-set across
+  // Grammar + Spelling + Punctuation keeps the invariant uniform.
   sanitiseUiOnRehydrate(entry) {
-    return dropSessionEphemeralFields(entry);
+    const next = dropSessionEphemeralFields(entry);
+    if (next && typeof next === 'object' && !Array.isArray(next) && next.phase === 'summary') {
+      next.phase = 'dashboard';
+    }
+    return next;
   },
   getDashboardStats(appState, { service }) {
     const learner = appState.learners.byId[appState.learners.selectedId];
