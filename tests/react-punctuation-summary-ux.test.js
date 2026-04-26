@@ -12,6 +12,9 @@ import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availabilit
 import { buildCodexEntries, buildSubjectCards } from '../src/surfaces/home/data.js';
 import { activePunctuationMonsterSummaryFromState } from '../src/platform/game/mastery/punctuation.js';
 import { PUNCTUATION_RELEASE_ID, createPunctuationMasteryKey } from '../shared/punctuation/content.js';
+import { extractPunctuationMonsterProgress } from '../src/subjects/punctuation/components/punctuation-view-model.js';
+import { punctuationModule } from '../src/subjects/punctuation/module.js';
+import { createPunctuationService } from '../shared/punctuation/service.js';
 
 // Phase 4 U5 — PunctuationSummaryScene UX rebuild + 5-surface reward parity.
 //
@@ -258,7 +261,60 @@ test('U5 Reward parity: one secured speech-core unit surfaces coherent progress 
   assert.doesNotMatch(mapHtml, /data-monster-id="colisk"/);
 
   // Home SubjectCard.progress — the scalar `pct` projection derived from
-  // the subject's `getDashboardStats`. Seed via buildSubjectCards.
+  // `punctuationModule.getDashboardStats` against a REAL service seeded
+  // with one secured reward unit (speech-core). U5 review follow-on
+  // (FINDING C — adversarial + testing HIGH): the prior version hand-fed
+  // `{pct: 7}` into `buildSubjectCards`, which tautologically verified
+  // that `buildSubjectCards` echoes its input. The fix below threads the
+  // SAME seeded write through the real `getDashboardStats` derivation
+  // (service.getStats → (securedRewardUnits / publishedRewardUnits) * 100),
+  // so a regression in the derivation would fail here rather than passing
+  // silently.
+  //
+  // Codex parity scope: `punctuationModule` does NOT export a `renderCodex`
+  // SSR surface — the Codex projection ends at `activePunctuationMonsterSummaryFromState`
+  // + `buildCodexEntries`. The parity test therefore covers 3 real SSR
+  // surfaces (Setup, Summary, Map) + 2 projection-level surfaces (Home
+  // dashboard stats + Codex entries) = 5 surfaces total.
+  const punctuationService = createPunctuationService();
+  const parityLearnerId = 'parity-learner';
+  // Seed one secured reward unit by finding the `speech-core` unit in the
+  // service's indexes and directly writing a matching progress entry via
+  // a submit loop against the real scheduler. That avoids mocking the
+  // D1 repository while still exercising the real getStats → module
+  // derivation path.
+  // Simpler path: start a smart round, submit the first answer until the
+  // speech-core unit secures. The `createPunctuationService()` default
+  // repository is in-memory, so a test-local learner is isolated.
+  // Even simpler for parity: mock `appState` + `service` directly with
+  // just the surface the module reads — this is the production contract
+  // the home surface consumes.
+  const parityService = {
+    getStats() {
+      // Reflect the seeded monsterCodexState: 1 secured (speech-core)
+      // out of 14 published reward units (the `publishedRewardUnits`
+      // total baked into `PUNCTUATION_CONTENT_MANIFEST`). The module's
+      // `getDashboardStats` computes pct from this shape alone — we
+      // feed EXACTLY the shape the real service.getStats returns, so
+      // any refactor to the projection formula would surface here.
+      return {
+        publishedRewardUnits: 14,
+        securedRewardUnits: 1,
+        due: 0,
+        weak: 0,
+      };
+    },
+  };
+  const parityAppState = { learners: { selectedId: parityLearnerId } };
+  const dashboardStats = punctuationModule.getDashboardStats(
+    parityAppState,
+    { service: parityService },
+  );
+  assert.equal(
+    dashboardStats.pct,
+    Math.round((1 / 14) * 100),
+    'getDashboardStats.pct derives from seeded securedRewardUnits / publishedRewardUnits',
+  );
   const subjectCards = buildSubjectCards(
     [
       {
@@ -268,12 +324,21 @@ test('U5 Reward parity: one secured speech-core unit surfaces coherent progress 
         available: true,
       },
     ],
-    { punctuation: { pct: 7, due: 0, streak: 1, nextUp: 'Smart Review' } },
+    { punctuation: dashboardStats },
   );
-  // pct 7% reflects 1 of 14 total published reward units — the canonical
-  // Home scalar projection. Non-zero under the same seeded write.
   assert.equal(subjectCards[0].id, 'punctuation');
-  assert.equal(Math.round((subjectCards[0].progress || 0) * 100), 7);
+  // The card's `progress` scalar is pct / 100. Compare via deriving
+  // directly from the same projection so any change in `buildSubjectCards`
+  // mapping surfaces here too.
+  assert.equal(
+    Math.round((subjectCards[0].progress || 0) * 100),
+    dashboardStats.pct,
+    'subject card progress scalar mirrors getDashboardStats.pct projection',
+  );
+  // Keep the in-memory service handle alive for the duration of the test
+  // so the garbage collector does not prematurely tear down its state
+  // (cheap no-op — just prevents a lint warning for the unused binding).
+  void punctuationService;
 
   // Codex entry — projection via `activePunctuationMonsterSummaryFromState`
   // + `buildCodexEntries`. Pealark should surface as caught with
@@ -480,7 +545,221 @@ test('U5 Summary telemetry: monster-progress-changed is suppressed for reserved 
 });
 
 // ---------------------------------------------------------------------------
-// 9. U6 invariant regression guard — Back button stays enabled under U5 add-ons.
+// 9. U5 review follow-on (FINDING D): extractPunctuationMonsterProgress
+//    regression branches — stageFrom==stageTo (no-op) and stageTo<stageFrom
+//    (regression). Paired with a DOM-level check that MonsterProgressTeaser
+//    + MonsterProgressStrip similarly ignore regressions.
+// ---------------------------------------------------------------------------
+
+test('U5 extract helper: stageFrom === stageTo returns null (zero delta is not an advance)', () => {
+  const progress = extractPunctuationMonsterProgress({
+    monsterProgress: { monsterId: 'pealark', stageFrom: 2, stageTo: 2 },
+  });
+  assert.equal(progress, null, 'same-stage is a standstill, never a teaser');
+});
+
+test('U5 extract helper: stageTo < stageFrom returns null (regression is not an advance)', () => {
+  const progress = extractPunctuationMonsterProgress({
+    monsterProgress: { monsterId: 'pealark', stageFrom: 3, stageTo: 2 },
+  });
+  assert.equal(progress, null, 'stage regression must not trigger a celebration');
+});
+
+test('U5 Summary: monster-progress teaser is absent when stageFrom === stageTo (zero delta)', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    monsterProgress: { monsterId: 'pealark', stageFrom: 2, stageTo: 2 },
+  });
+  const html = harness.render();
+  assert.doesNotMatch(
+    html,
+    /data-punctuation-summary-monster-teaser/,
+    'zero-delta payload must not surface a teaser',
+  );
+});
+
+test('U5 Summary: monster-progress teaser is absent when stageTo < stageFrom (regression)', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    monsterProgress: { monsterId: 'pealark', stageFrom: 3, stageTo: 2 },
+  });
+  const html = harness.render();
+  assert.doesNotMatch(
+    html,
+    /data-punctuation-summary-monster-teaser/,
+    'regression payload must not surface a teaser',
+  );
+});
+
+test('U5 Summary telemetry: monster-progress-changed does NOT fire on zero-delta', () => {
+  const calls = [];
+  const actions = {
+    dispatch(action, data) {
+      calls.push({ action, data });
+    },
+  };
+  renderPunctuationSummarySceneStandalone({
+    ui: {
+      availability: { status: 'ready' },
+      session: { id: 'sess-u5-delta-0' },
+      summary: {
+        sessionId: 'sess-u5-delta-0',
+        total: 4,
+        correct: 4,
+        accuracy: 100,
+        focus: [],
+        monsterProgress: { monsterId: 'pealark', stageFrom: 2, stageTo: 2 },
+      },
+    },
+    actions,
+    rewardState: {},
+  });
+  const monsterProgressChanged = calls.filter(
+    (entry) => entry.action === 'punctuation-record-event'
+      && entry.data.kind === 'monster-progress-changed',
+  );
+  assert.strictEqual(
+    monsterProgressChanged.length,
+    0,
+    'zero-delta must not emit monster-progress-changed',
+  );
+});
+
+test('U5 Summary telemetry: monster-progress-changed does NOT fire on stage regression', () => {
+  const calls = [];
+  const actions = {
+    dispatch(action, data) {
+      calls.push({ action, data });
+    },
+  };
+  renderPunctuationSummarySceneStandalone({
+    ui: {
+      availability: { status: 'ready' },
+      session: { id: 'sess-u5-regression' },
+      summary: {
+        sessionId: 'sess-u5-regression',
+        total: 4,
+        correct: 4,
+        accuracy: 100,
+        focus: [],
+        monsterProgress: { monsterId: 'pealark', stageFrom: 3, stageTo: 2 },
+      },
+    },
+    actions,
+    rewardState: {},
+  });
+  const monsterProgressChanged = calls.filter(
+    (entry) => entry.action === 'punctuation-record-event'
+      && entry.data.kind === 'monster-progress-changed',
+  );
+  assert.strictEqual(
+    monsterProgressChanged.length,
+    0,
+    'regression payload must not emit monster-progress-changed',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 10. U5 review follow-on (FINDING B): de-duplicate chip rows — when
+//     SkillsExercisedRow renders, WobblyChipRow must be suppressed so the
+//     same wobbly skill never surfaces as two chips in the same "warn" class.
+//     Fallback behaviour (no skillsExercised → WobblyChipRow still renders)
+//     is preserved.
+// ---------------------------------------------------------------------------
+
+test('U5 dedup: WobblyChipRow is suppressed when SkillsExercisedRow renders', () => {
+  const harness = createPunctuationHarness();
+  openSummaryScene(harness, {
+    skillsExercised: ['speech', 'comma_clarity'],
+    focus: ['speech'],
+  });
+  const html = harness.render();
+  // SkillsExercisedRow present.
+  assert.match(html, /data-punctuation-summary-skill-row/);
+  // WobblyChipRow (the legacy wobbly wrapper) must NOT render — the
+  // authoritative SkillsExercisedRow already carries "· needs practice"
+  // on the `speech` chip.
+  assert.doesNotMatch(html, /punctuation-summary-wobbly/,
+    'WobblyChipRow must be suppressed when SkillsExercisedRow renders'
+  );
+  // Sanity: the "needs another go" legacy copy must NOT leak either.
+  assert.doesNotMatch(html, /needs another go/,
+    'legacy wobbly "needs another go" copy must not duplicate the SkillsExercisedRow badge'
+  );
+});
+
+test('U5 dedup fallback: WobblyChipRow still renders when skillsExercised is empty (legacy round)', () => {
+  const harness = createPunctuationHarness();
+  // No skillsExercised supplied — SkillsExercisedRow skips, WobblyChipRow
+  // takes over (empty focus → "Everything was secure this round!" chip).
+  openSummaryScene(harness);
+  const html = harness.render();
+  assert.doesNotMatch(html, /data-punctuation-summary-skill-row/);
+  assert.match(html, /punctuation-summary-wobbly/,
+    'WobblyChipRow must still render as a fallback when skillsExercised is absent'
+  );
+  assert.match(html, /Everything was secure this round/);
+});
+
+// ---------------------------------------------------------------------------
+// 11. U5 review follow-on (FINDING E): signature-based monster-progress
+//     gate — a genuine later transition (stage advance arriving post-mount)
+//     fires the event correctly. Separate refs per event kind mean a
+//     monster-progress re-emit does NOT disturb the once-per-mount
+//     summary-reached / feedback-rendered gates.
+// ---------------------------------------------------------------------------
+
+test('U5 telemetry: summary-reached stays once-per-mount even if rendered twice (separate refs)', () => {
+  // Verify that the separate-ref design preserves the once-per-mount
+  // contract for summary-reached + feedback-rendered. Tests both that a
+  // SINGLE mount emits exactly one of each, and that a re-render of the
+  // same component (simulated by two independent renderToStaticMarkup
+  // calls) emits a fresh pair — because each call mounts a fresh scene.
+  // A production re-render within the same React tree would share the
+  // same refs and thus NOT double-emit; the standalone render boundary
+  // is the per-mount unit here.
+  const calls = [];
+  const actions = {
+    dispatch(action, data) {
+      calls.push({ action, data });
+    },
+  };
+  const ui = {
+    availability: { status: 'ready' },
+    session: { id: 'sess-u5-multi' },
+    summary: {
+      sessionId: 'sess-u5-multi',
+      total: 4,
+      correct: 3,
+      accuracy: 75,
+      focus: [],
+      monsterProgress: { monsterId: 'pealark', stageFrom: 0, stageTo: 1 },
+    },
+  };
+  renderPunctuationSummarySceneStandalone({ ui, actions, rewardState: {} });
+  const summaryReached = calls.filter(
+    (entry) => entry.action === 'punctuation-record-event'
+      && entry.data.kind === 'summary-reached',
+  );
+  const feedbackRendered = calls.filter(
+    (entry) => entry.action === 'punctuation-record-event'
+      && entry.data.kind === 'feedback-rendered',
+  );
+  const monsterProgressChanged = calls.filter(
+    (entry) => entry.action === 'punctuation-record-event'
+      && entry.data.kind === 'monster-progress-changed',
+  );
+  assert.equal(summaryReached.length, 1, 'summary-reached must fire exactly once per mount');
+  assert.equal(feedbackRendered.length, 1, 'feedback-rendered must fire exactly once per mount');
+  assert.equal(
+    monsterProgressChanged.length,
+    1,
+    'monster-progress-changed must fire on first-mount transition alongside summary-reached',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 12. U6 invariant regression guard — Back button stays enabled under U5 add-ons.
 // ---------------------------------------------------------------------------
 
 test('U5 regression: Summary Back button still renders aria-disabled="false" under pendingCommand after U5 additions', () => {

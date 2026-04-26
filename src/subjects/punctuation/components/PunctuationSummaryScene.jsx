@@ -65,6 +65,7 @@ import {
   bellstormSceneForPhase,
   composeIsDisabled,
   composeIsNavigationDisabled,
+  extractPunctuationMonsterProgress,
   punctuationChildMisconceptionLabel,
   punctuationMonsterDisplayName,
   punctuationSummaryHeadline,
@@ -112,32 +113,10 @@ function rewardStateForPunctuation(ui, propRewardState) {
   return {};
 }
 
-// U5: frozen set of active monster ids for the teaser filter. Reserved
-// monsters (Colisk / Hyphang / Carillon) are never in this set — a
-// `summary.monsterProgress` payload pointing at one of them results in
-// zero render (no teaser) and zero telemetry (no monster-progress-changed
-// event). Mirrors U2's home-companion filter which reads `MONSTERS_BY_SUBJECT
-// .punctuation` for the same reason; `ACTIVE_PUNCTUATION_MONSTER_IDS` is the
-// view-model export derived from that platform table.
-const ACTIVE_MONSTER_ID_SET = new Set(ACTIVE_PUNCTUATION_MONSTER_IDS);
-
-// U5: detect an "advancing" stage delta. The teaser only renders and the
-// `monster-progress-changed` telemetry only fires when `stageTo > stageFrom`
-// on an active monster id with finite numeric stages. A zero-delta or a
-// regression (stageTo <= stageFrom) is a no-op — a teaser celebrates an
-// advance, never a standstill.
-function extractMonsterProgress(summary) {
-  if (!summary || typeof summary !== 'object' || Array.isArray(summary)) return null;
-  const raw = summary.monsterProgress;
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const monsterId = typeof raw.monsterId === 'string' ? raw.monsterId : '';
-  if (!monsterId || !ACTIVE_MONSTER_ID_SET.has(monsterId)) return null;
-  const stageFrom = Number(raw.stageFrom);
-  const stageTo = Number(raw.stageTo);
-  if (!Number.isFinite(stageFrom) || !Number.isFinite(stageTo)) return null;
-  if (stageTo <= stageFrom) return null;
-  return { monsterId, stageFrom, stageTo };
-}
+// U5 review follow-on (FINDING F): the scene-local `ACTIVE_MONSTER_ID_SET`
+// and `extractMonsterProgress` helper moved to `punctuation-view-model.js`.
+// Single source of truth for the active roster filter so U9 Worker-side or
+// any non-React consumer can share the same gate.
 
 // --- Correct-count copy line (U5) ------------------------------------------
 
@@ -574,33 +553,47 @@ export function PunctuationSummaryScene({
   // teaser render AND the `monster-progress-changed` telemetry emit so
   // the two call sites can never drift (teaser visible but no event
   // fired, or event fired but no teaser rendered).
-  const monsterProgress = extractMonsterProgress(summary);
+  const monsterProgress = extractPunctuationMonsterProgress(summary);
 
   // Phase 4 U5 — telemetry emission. Fire `summary-reached` + `feedback-
-  // rendered` exactly once per mount; fire `monster-progress-changed` when
-  // a stage delta landed. The useRef gate prevents React 18 strict-mode's
-  // double-invoke from doubling the emit; since `renderToStaticMarkup`
-  // never runs effects, the gate + render-body emit is the only way to
-  // drive telemetry through the same pathway as production.
+  // rendered` exactly once per mount; fire `monster-progress-changed` on
+  // every genuine stage-delta transition.
+  //
+  // U5 review follow-on (FINDING E — medium correctness): three separate
+  // refs per event kind, NOT a single `telemetryRef`. A shared ref-guard
+  // drops a legitimate `monster-progress-changed` emit whenever
+  // `monsterProgress` arrives on a later render after first mount (e.g. a
+  // reward subscriber flush lands after the initial SSR pass). The signature-
+  // based monster-progress gate additionally protects against a
+  // stage 2→3→2→3 back-and-forth edge case: a genuine re-entry into a
+  // higher stage DOES fire a fresh event even if the same-signature event
+  // fired earlier, only because the signature comparison distinguishes the
+  // two transitions. `summary-reached` and `feedback-rendered` retain
+  // once-per-mount semantics (mounting is the event boundary for those).
   //
   // Pattern follows U4's Setup-mount precedent at
   // `PunctuationSetupScene.jsx:292-299` — emit is fire-and-forget through
   // `emitPunctuationEvent`; any downstream failure short-circuits inside
   // `createPunctuationOnCommandError` so the learner never sees an error
   // banner from a telemetry dispatch.
-  const telemetryRef = useRef(false);
-  if (!telemetryRef.current) {
-    telemetryRef.current = true;
-    const sessionId = typeof summary.sessionId === 'string' ? summary.sessionId : null;
-    const total = Number.isFinite(Number(summary.total)) ? Number(summary.total) : 0;
-    const correct = Number.isFinite(Number(summary.correct)) ? Number(summary.correct) : 0;
-    const accuracy = Number.isFinite(Number(summary.accuracy)) ? Number(summary.accuracy) : 0;
+  const summaryReachedRef = useRef(false);
+  const feedbackRenderedRef = useRef(false);
+  const monsterProgressSignatureRef = useRef(null);
+  const sessionId = typeof summary.sessionId === 'string' ? summary.sessionId : null;
+  const total = Number.isFinite(Number(summary.total)) ? Number(summary.total) : 0;
+  const correct = Number.isFinite(Number(summary.correct)) ? Number(summary.correct) : 0;
+  const accuracy = Number.isFinite(Number(summary.accuracy)) ? Number(summary.accuracy) : 0;
+  if (!summaryReachedRef.current) {
+    summaryReachedRef.current = true;
     emitPunctuationEvent('summary-reached', {
       sessionId,
       total,
       correct,
       accuracy,
     }, { actions });
+  }
+  if (!feedbackRenderedRef.current) {
+    feedbackRenderedRef.current = true;
     // `feedback-rendered` uses itemId as a round-scoped marker — the Summary
     // render is the terminal feedback surface for the whole round, so we
     // emit with sessionId + a synthetic `summary` itemId so the event is
@@ -613,7 +606,11 @@ export function PunctuationSummaryScene({
       itemId: 'summary',
       correct: correct > 0,
     }, { actions });
-    if (monsterProgress) {
+  }
+  if (monsterProgress) {
+    const signature = `${monsterProgress.monsterId}:${monsterProgress.stageFrom}->${monsterProgress.stageTo}`;
+    if (monsterProgressSignatureRef.current !== signature) {
+      monsterProgressSignatureRef.current = signature;
       emitPunctuationEvent('monster-progress-changed', {
         monsterId: monsterProgress.monsterId,
         stageFrom: monsterProgress.stageFrom,
@@ -649,7 +646,25 @@ export function PunctuationSummaryScene({
       <CorrectCountLine summary={summary} />
       <ScoreChipRow summary={summary} />
       <SkillsExercisedRow summary={summary} />
-      <WobblyChipRow focus={summary.focus} />
+      {/*
+        U5 review follow-on (FINDING B — design-lens HIGH): when the per-skill
+        SkillsExercisedRow renders (i.e. `summary.skillsExercised` is non-
+        empty), it already surfaces each wobbly skill with a "· needs
+        practice" badge. The legacy WobblyChipRow below would then re-render
+        the same skills with "needs another go" labels — duplicated chips in
+        the same class ("warn") for a KS2 reader. Suppress WobblyChipRow in
+        that case. SkillsExercisedRow is the new authoritative display (one
+        chip per exercised skill, status encoded). WobblyChipRow stays as a
+        fallback ONLY when `skillsExercised` is empty — covers pre-U9
+        production rounds that haven't yet flowed through the producer
+        (defensive) and the degraded-payload branch where `skillsExercised`
+        is absent. The "Everything was secure this round!" empty-chip fallback
+        in WobblyChipRow still fires via this branch when a round had no
+        wobbly skills AND no `skillsExercised` (legacy rounds).
+      */}
+      {(Array.isArray(summary.skillsExercised) && summary.skillsExercised.length > 0)
+        ? null
+        : <WobblyChipRow focus={summary.focus} />}
       <MonsterProgressTeaser progress={monsterProgress} />
       <NextReviewHint ui={ui} />
       <MonsterProgressStrip ui={ui} rewardState={rewardState} />
