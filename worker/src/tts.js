@@ -337,15 +337,20 @@ function bufferedAudioKey(metadata, extension = 'mp3') {
 }
 
 function legacyBufferedAudioKey(metadata, extension = 'mp3') {
-  if (metadata?.kind === 'word') return '';
+  if (metadata?.kind === 'word') return null;
   return buildLegacyAudioAssetKey({
     ...metadata,
     extension,
   });
 }
 
-function bufferedAudioHeaders({ metadata, cacheState, contentType }) {
-  return {
+function bufferedAudioHeaders({
+  metadata,
+  cacheState,
+  contentType,
+  cacheSource = '',
+}) {
+  const headers = {
     'content-type': contentType,
     'cache-control': 'private, max-age=86400',
     'x-ks2-tts-provider': 'gemini',
@@ -353,6 +358,8 @@ function bufferedAudioHeaders({ metadata, cacheState, contentType }) {
     'x-ks2-tts-voice': metadata.voice,
     'x-ks2-tts-cache': cacheState,
   };
+  if (cacheSource) headers['x-ks2-tts-cache-source'] = cacheSource;
+  return headers;
 }
 
 function objectContentType(object, extension) {
@@ -361,6 +368,17 @@ function objectContentType(object, extension) {
       || object?.httpMetadata?.content_type
       || object?.customMetadata?.contentType,
   ) || contentTypeForExtension(extension);
+}
+
+function audioCacheErrorFields(error) {
+  const name = cleanText(error?.name);
+  const message = cleanText(error?.message || error);
+  const stack = cleanText(error?.stack);
+  return {
+    ...(name ? { name } : {}),
+    ...(message ? { message } : {}),
+    ...(stack ? { stack: stack.slice(0, 1000) } : {}),
+  };
 }
 
 async function readBufferedGeminiAudio(env, payload, options = {}) {
@@ -380,16 +398,24 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
 
   for (const extension of BUFFERED_AUDIO_EXTENSIONS) {
     const key = bufferedAudioKey(metadata, extension);
-    const fallbackKey = extension === 'mp3' ? legacyBufferedAudioKey(metadata, extension) : '';
+    const fallbackKey = extension === 'mp3' ? legacyBufferedAudioKey(metadata, extension) : null;
     let object = null;
     let objectKey = key;
+    let source = 'primary';
     try {
       object = await bucket.get(key);
       if (!object && fallbackKey) {
         object = await bucket.get(fallbackKey);
         objectKey = fallbackKey;
+        if (object) source = 'legacy';
       }
-    } catch {
+    } catch (error) {
+      console.error('[ks2-tts] R2 audio read failed', {
+        extension,
+        keyKind: metadata.kind || 'sentence',
+        triedFallback: Boolean(fallbackKey),
+        ...audioCacheErrorFields(error),
+      });
       return {
         object: null,
         metadata,
@@ -400,12 +426,16 @@ async function readBufferedGeminiAudio(env, payload, options = {}) {
       };
     }
     if (!object) continue;
+    const responseMetadata = source === 'legacy'
+      ? { ...metadata, model: SPELLING_AUDIO_MODEL }
+      : metadata;
     return {
       object,
-      metadata,
+      metadata: responseMetadata,
       key: objectKey,
       extension,
       contentType: objectContentType(object, extension),
+      source,
     };
   }
   return {
@@ -424,6 +454,7 @@ function cachedGeminiAudioResponse(cacheHit) {
       metadata: cacheHit.metadata,
       cacheState: 'hit',
       contentType: cacheHit.contentType,
+      cacheSource: cacheHit.source,
     }),
   });
 }
@@ -435,6 +466,7 @@ function cacheOnlyResponse(cacheState, cacheHit = null) {
   });
   if (cacheHit?.metadata?.model) headers.set('x-ks2-tts-model', cacheHit.metadata.model);
   if (cacheHit?.metadata?.voice) headers.set('x-ks2-tts-voice', cacheHit.metadata.voice);
+  if (cacheHit?.source) headers.set('x-ks2-tts-cache-source', cacheHit.source);
   return new Response(null, { status: 204, headers });
 }
 
@@ -502,7 +534,12 @@ async function storeBufferedGeminiAudio(env, payload, response, options = {}) {
       key: cacheSlot.key,
       metadata: cacheSlot.metadata,
     };
-  } catch {
+  } catch (error) {
+    console.error('[ks2-tts] R2 audio write failed', {
+      extension: cacheSlot.extension,
+      keyKind: cacheSlot.metadata.kind || 'sentence',
+      ...audioCacheErrorFields(error),
+    });
     const headers = new Headers(response.headers);
     headers.set('x-ks2-tts-cache', 'store_failed');
     return {

@@ -141,14 +141,13 @@ export function buildAudioAssetKey({
 }
 
 export function buildLegacyAudioAssetKey({
-  model = SPELLING_AUDIO_MODEL,
   voice,
   speed,
   slug,
   sentenceIndex,
   extension = DEFAULT_AUDIO_EXTENSION,
 }) {
-  const safeModel = encodeURIComponent(String(model || SPELLING_AUDIO_MODEL).trim());
+  const safeModel = encodeURIComponent(SPELLING_AUDIO_MODEL);
   const safeVoice = encodeURIComponent(String(voice || '').trim());
   const safeSpeed = encodeURIComponent(String(speed || '').trim());
   const safeSlug = encodeURIComponent(String(slug || '').trim());
