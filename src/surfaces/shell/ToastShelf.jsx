@@ -73,8 +73,13 @@ function ToastContent({ toast }) {
 
 export function ToastShelf({ toasts = [], onDismiss }) {
   if (!toasts.length) return null;
+  // U10 (sys-hardening p1): `data-testid="toast-shelf"` anchors the
+  // accessibility Playwright scene so keyboard-only round-trips can
+  // assert the `aria-live="polite"` container is announced. Existing
+  // `role="status"` on each toast and `aria-live` on the container
+  // are the WCAG 2.2 contract under test.
   return (
-    <div className="toast-shelf" aria-live="polite" aria-label="Notifications">
+    <div className="toast-shelf" role="status" aria-live="polite" aria-label="Notifications" data-testid="toast-shelf">
       {toasts.map((toast, index) => {
         const kind = toast?.type === 'reward.monster' && toast?.kind === 'caught' ? 'catch' : 'info';
         return (
