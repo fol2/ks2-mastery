@@ -31,6 +31,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import './helpers/seed-spelling-events-default.js';
+
 import {
   ACHIEVEMENT_DEFINITIONS,
   ACHIEVEMENT_IDS,

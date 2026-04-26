@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { computeInlineScriptHash } from './compute-inline-script-hash.mjs';
 
@@ -79,12 +79,24 @@ try {
     });
   }
 
+  // SH2-U10: esbuild `splitting: true` emits `app.bundle.js` plus sibling
+  // `.js` chunks (shared content-hashed chunks + lazy-entry chunks for
+  // adult-only hubs). Copy every `.js` file under `src/bundles/` into the
+  // public output so the Worker/ASSETS allowlist (prefix match on
+  // `/src/bundles/*.js`) resolves all chunks. The metafile artefact
+  // (`app.bundle.meta.json`) is intentionally excluded — it never ships.
   await mkdir(path.join(tmpDir, 'src', 'bundles'), { recursive: true });
-  await cp(
-    path.join(rootDir, 'src', 'bundles', 'app.bundle.js'),
-    path.join(tmpDir, 'src', 'bundles', 'app.bundle.js'),
-    { force: true },
-  );
+  const bundlesSourceDir = path.join(rootDir, 'src', 'bundles');
+  const bundleEntries = await readdir(bundlesSourceDir, { withFileTypes: true });
+  for (const entry of bundleEntries) {
+    if (!entry.isFile()) continue;
+    if (!entry.name.endsWith('.js')) continue;
+    await cp(
+      path.join(bundlesSourceDir, entry.name),
+      path.join(tmpDir, 'src', 'bundles', entry.name),
+      { force: true },
+    );
+  }
 
   // Render-effect CSS lives next to its effect modules so visual + behaviour
   // stay co-located. Mirror it into the public styles directory so the

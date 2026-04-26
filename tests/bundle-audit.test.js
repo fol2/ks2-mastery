@@ -422,6 +422,60 @@ test('worker spelling runtime imports the shared domain service instead of the b
   assert.match(browserService, /shared\/spelling\/service\.js/);
 });
 
+// Regression pin for the 2026-04-26 deploy failure: events.js is reachable
+// from the client entry via achievements.js, so any reference to the
+// `./data/` dataset modules drags the full spelling content dataset into
+// `src/bundles/app.bundle.js`. The pin runs at `npm test`, so a regression
+// fails locally without waiting for `audit:client` to run on deploy.
+//
+// The regex is path-anchored (not import-keyword-anchored) so it catches
+// every reachable form: static `import`, `import ... from`, re-export
+// (`export ... from`), dynamic `await import(...)`, side-effect import,
+// and template-literal dynamic import (esbuild bundles these when they
+// contain no interpolation). Every one of those produces an esbuild edge
+// that `audit:client` would reject, and every one is caught here.
+const WORD_DATA_PIN_REGEX = /['"`]\.\/data\/(?:word-data|content-data)\.js['"`]/;
+
+test('spelling events factory does not reference the spelling content dataset', async () => {
+  const events = await readFile('src/subjects/spelling/events.js', 'utf8');
+  assert.doesNotMatch(
+    events,
+    WORD_DATA_PIN_REGEX,
+    'src/subjects/spelling/events.js must not reference ./data/word-data.js '
+      + 'or ./data/content-data.js — the dataset is reachable from the client '
+      + 'entry and would inflate app.bundle.js past the audit boundary '
+      + '(see scripts/audit-client-bundle.mjs).',
+  );
+});
+
+// Self-test: verify the pin's regex would actually catch each bypass form.
+// Without this, a future typo (e.g. `world-data` for `word-data`) silently
+// passes the pin above forever. Mirrors the positive+negative pattern used
+// by the FORBIDDEN_SHARED_PUNCTUATION_MODULES loop earlier in this file.
+const FORBIDDEN_EVENTS_DATASET_SOURCE_FIXTURES = [
+  `import { WORD_BY_SLUG } from './data/word-data.js';`,
+  `import WORDS from "./data/word-data.js";`,
+  `import { SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from './data/content-data.js';`,
+  `export { WORD_BY_SLUG } from './data/word-data.js';`,
+  `const { WORD_BY_SLUG } = await import('./data/word-data.js');`,
+  `import './data/word-data.js';`,
+  'const { WORD_BY_SLUG } = await import(`./data/word-data.js`);',
+];
+
+for (const fixture of FORBIDDEN_EVENTS_DATASET_SOURCE_FIXTURES) {
+  test(`WORD_DATA_PIN_REGEX matches forbidden form: ${fixture}`, () => {
+    assert.match(fixture, WORD_DATA_PIN_REGEX);
+  });
+}
+
+test('WORD_DATA_PIN_REGEX does not match benign references', () => {
+  // Benign strings that should not trip the pin — a neighbouring path, a
+  // comment mentioning the module, and a different relative-path root.
+  assert.doesNotMatch(`import x from './data/other.js';`, WORD_DATA_PIN_REGEX);
+  assert.doesNotMatch(`// previously imported ./data/word-data.js here`, WORD_DATA_PIN_REGEX);
+  assert.doesNotMatch(`import x from '../data/word-data.js';`, WORD_DATA_PIN_REGEX);
+});
+
 test('worker-first asset routing keeps demo and source lockdown routes out of SPA fallback', async () => {
   const expectedRoutes = [
     '/api/*',
@@ -831,4 +885,249 @@ test('production bundle audit fails when live manifest Cache-Control drifts off 
     server.closeAllConnections?.();
     await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
   }
+});
+
+// ---------------------------------------------------------------------------
+// SH2-U10: split-chunk forbidden-token scan + CLS monster-image width/height.
+// ---------------------------------------------------------------------------
+
+test('production bundle audit walks dynamic import chunks referenced only via import()', async () => {
+  // Prove the S-01 mirror: a split chunk loaded via `import("./chunk-x.js")`
+  // from the HTML-referenced entry is still scanned for forbidden tokens
+  // by `scripts/production-bundle-audit.mjs`. Without the walk-all-chunks
+  // upgrade, the pre-U10 auditor would only scan `app.bundle.js` and the
+  // forbidden token in the split chunk would escape undetected.
+  const server = createServer((request, response) => {
+    const url = request.url || '/';
+    if (url === '/' || url === '/index.html') {
+      response.writeHead(200, { 'content-type': 'text/html', 'cache-control': 'no-store' });
+      response.end('<!doctype html><script type="module" src="/src/bundles/app.bundle.js"></script>');
+      return;
+    }
+    if (url === '/src/bundles/app.bundle.js') {
+      // The entry chunk itself is clean, but it dynamically imports the
+      // split chunk. Esbuild emits `import("./chunk-CAFEBABE.js")` here.
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('const m = import("./chunk-CAFEBABE.js"); console.log(m);');
+      return;
+    }
+    if (url === '/src/bundles/chunk-CAFEBABE.js') {
+      // Forbidden token buried in the split chunk. Pre-U10 audit missed this.
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('console.log("PUNCTUATION_CONTENT_MANIFEST");');
+      return;
+    }
+    if (url === '/assets/app-icons/favicon-32.png') {
+      response.writeHead(200, {
+        'content-type': 'image/png',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('');
+      return;
+    }
+    if (url === '/manifest.webmanifest') {
+      response.writeHead(200, {
+        'content-type': 'application/manifest+json',
+        'cache-control': 'public, max-age=3600',
+      });
+      response.end('{}');
+      return;
+    }
+    response.writeHead(404, { 'content-type': 'text/plain' });
+    response.end('not found');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      // Audit must name the SPLIT chunk path + the forbidden token.
+      assert.match(
+        error.stderr,
+        /Production bundle \/src\/bundles\/chunk-CAFEBABE\.js includes forbidden deployed token: PUNCTUATION_CONTENT_MANIFEST/,
+        `expected split-chunk failure in stderr; got: ${error.stderr}`,
+      );
+      return true;
+    });
+  } finally {
+    server.closeAllConnections?.();
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
+});
+
+// SH2-U10 reviewer-follow-up (BLOCKER-1): the production bundle audit MUST
+// walk chunks referenced via minified zero-whitespace static imports. The
+// pre-follow-up regex required `\s+` between `import` and the clause, which
+// missed esbuild's real minified output of `import{X as Y}from"./chunk-X.js"`
+// — leaving every shared `chunk-*.js` un-scanned in production. This test
+// stages a stub origin serving the exact zero-whitespace form and asserts
+// the auditor follows the reference into the referenced chunk and reports
+// the forbidden token. Also covers the side-effect form `import"./side.js"`
+// with zero whitespace.
+test('production audit walks chunks referenced via minified static imports (no whitespace)', async () => {
+  const server = createServer((request, response) => {
+    const url = request.url || '/';
+    if (url === '/' || url === '/index.html') {
+      response.writeHead(200, { 'content-type': 'text/html', 'cache-control': 'no-store' });
+      response.end('<!doctype html><script type="module" src="/src/bundles/app.bundle.js"></script>');
+      return;
+    }
+    if (url === '/src/bundles/app.bundle.js') {
+      // Exactly the minified form esbuild emits: zero whitespace between
+      // `import`, the clause, and `from`. Two chunk refs here — a named
+      // static import AND a side-effect import — both zero-whitespace.
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end(
+        'import{X as a,Y as b}from"./chunk-static.js";import"./side-effect.js";console.log(a,b);',
+      );
+      return;
+    }
+    if (url === '/src/bundles/chunk-static.js') {
+      // Forbidden token in the minified-static-import-referenced chunk.
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('const x="PUNCTUATION_CONTENT_MANIFEST";export{x as X,x as Y};');
+      return;
+    }
+    if (url === '/src/bundles/side-effect.js') {
+      // Separate forbidden token in the side-effect-import-referenced chunk.
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('console.log("createPunctuationService");');
+      return;
+    }
+    if (url === '/assets/app-icons/favicon-32.png') {
+      response.writeHead(200, {
+        'content-type': 'image/png',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      response.end('');
+      return;
+    }
+    if (url === '/manifest.webmanifest') {
+      response.writeHead(200, {
+        'content-type': 'application/manifest+json',
+        'cache-control': 'public, max-age=3600',
+      });
+      response.end('{}');
+      return;
+    }
+    response.writeHead(404, { 'content-type': 'text/plain' });
+    response.end('not found');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      // Both chunks must be visited + scanned. If the regex misses either
+      // form, the corresponding forbidden token never lands in stderr.
+      assert.match(
+        error.stderr,
+        /Production bundle \/src\/bundles\/chunk-static\.js includes forbidden deployed token: PUNCTUATION_CONTENT_MANIFEST/,
+        `expected minified static-import chunk to be scanned; stderr: ${error.stderr}`,
+      );
+      assert.match(
+        error.stderr,
+        /Production bundle \/src\/bundles\/side-effect\.js includes forbidden deployed token: createPunctuationService/,
+        `expected minified side-effect-import chunk to be scanned; stderr: ${error.stderr}`,
+      );
+      return true;
+    });
+  } finally {
+    server.closeAllConnections?.();
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
+});
+
+// SH2-U10 CLS: monster image primitives must declare intrinsic `width` +
+// `height` so the browser reserves the sprite box before the .webp decodes.
+// The grep-backed list keeps the intent static: each file is checked against
+// the presence of both attributes in an `<img>` tag. A future refactor that
+// rips out either attribute falls into this test with a pointed message.
+test('monster image primitives declare intrinsic width/height for CLS', async () => {
+  const targets = [
+    // Main shell sprite — covers Codex cards, hero, lightbox, because
+    // MonsterRender + BaseSprite render the image for all three surfaces.
+    'src/platform/game/render/BaseSprite.jsx',
+    // Home hero meadow (standalone <img>; not via BaseSprite).
+    'src/surfaces/home/MonsterMeadow.jsx',
+    // Toast portrait (standalone <img>).
+    'src/surfaces/shell/ToastShelf.jsx',
+  ];
+  for (const file of targets) {
+    const source = await readFile(path.join(REPO_ROOT, file), 'utf8');
+    const imgTagMatch = source.match(/<img\b[\s\S]*?\/>/m);
+    assert.ok(imgTagMatch, `${file}: expected a self-closing <img /> tag`);
+    const tag = imgTagMatch[0];
+    assert.match(
+      tag,
+      /\bwidth=/,
+      `${file}: <img> must declare width="..." for CLS (no layout shift during decode)`,
+    );
+    assert.match(
+      tag,
+      /\bheight=/,
+      `${file}: <img> must declare height="..." for CLS (no layout shift during decode)`,
+    );
+  }
+});
+
+// SH2-U10: the Worker allowlist must use prefix + extension match so split
+// chunks resolve in production. Parser-level test so a future refactor that
+// accidentally restores the exact-equality check (or forgets the `.js`
+// suffix gate) fails with an actionable message rather than a silent 404.
+test('Worker publicSourceAssetResponse allowlist matches /src/bundles/*.js by prefix (F-01)', async () => {
+  const workerSource = await readFile(path.join(REPO_ROOT, 'worker', 'src', 'app.js'), 'utf8');
+  // The ALLOWLIST gate must not be a plain string equality check on the
+  // main bundle filename — that would 404 every split chunk.
+  assert.doesNotMatch(
+    workerSource,
+    /url\.pathname\s*===\s*['"]\/src\/bundles\/app\.bundle\.js['"]/,
+    'exact-equality check reintroduced; would 404 split chunks (F-01)',
+  );
+  // Positive check: prefix + extension match is present.
+  assert.match(
+    workerSource,
+    /url\.pathname\.startsWith\(['"]\/src\/bundles\/['"]\)/,
+    'Worker allowlist must prefix-match /src/bundles/ (F-01)',
+  );
+  assert.match(
+    workerSource,
+    /url\.pathname\.endsWith\(['"]\.js['"]\)/,
+    'Worker allowlist must gate on the .js extension so metafile JSON cannot leak (F-01)',
+  );
 });

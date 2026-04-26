@@ -13,8 +13,19 @@ export function createWorkerRepositoryServer({
   env: envOverrides = {},
   defaultAccountId = 'adult-a',
   defaultHeaders = {},
+  // SH2-U11 (sys-hardening p2): allow a caller (e.g. the isolated
+  // Playwright subset) to inject a pre-existing migrated DB instance
+  // so the server uses a per-test SQLite fixture instead of the
+  // default shared one. When `db` is not provided, behaviour is
+  // unchanged — the server creates its own `createMigratedSqliteD1Database()`.
+  // When `db` IS provided, the server does NOT own the lifecycle:
+  // `close()` on the server skips closing the injected DB so the
+  // test harness that created it can still reuse / teardown via
+  // `playwright-isolated-db.js::close()`.
+  db = null,
 } = {}) {
-  const DB = createMigratedSqliteD1Database();
+  const ownsDb = db === null;
+  const DB = ownsDb ? createMigratedSqliteD1Database() : db;
   const env = {
     DB,
     ENVIRONMENT: 'test',
@@ -34,7 +45,13 @@ export function createWorkerRepositoryServer({
     env,
     DB,
     close() {
-      DB.close();
+      // SH2-U11: only close the DB we own. An injected per-test DB
+      // is owned by the caller (tests/helpers/playwright-isolated-db.js)
+      // and MUST NOT be closed here or the caller's `afterEach` teardown
+      // would double-close a sqlite handle.
+      if (ownsDb) {
+        DB.close();
+      }
     },
     async fetchRaw(input, init = {}) {
       return fetchWithHeaders(input, init, defaultHeaders);

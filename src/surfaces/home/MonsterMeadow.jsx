@@ -89,7 +89,20 @@ export function MonsterMeadow({ monsters = [], maxSlots = 10 }) {
                 filter: visual.filter && visual.filter !== 'none' ? visual.filter : undefined,
               }}
             >
-              <img src={src} srcSet={srcSet} sizes={`${size}px`} alt="" />
+              {/* SH2-U10 CLS: explicit width/height attributes reserve the
+                  sprite's intrinsic 1:1 box so the browser never reflows the
+                  meadow layer while the .webp is still decoding. `size` is
+                  already the computed CSS pixel footprint of this monster —
+                  passing it to `width`/`height` keeps layout in sync with the
+                  CSS `--size` variable consumed by `.meadow-monster`. */}
+              <img
+                src={src}
+                srcSet={srcSet}
+                sizes={`${size}px`}
+                width={size}
+                height={size}
+                alt=""
+              />
             </span>
           </div>
         );

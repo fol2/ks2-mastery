@@ -11,6 +11,16 @@ import { createWorkerRepositoryServer } from './worker-server.js';
 // with a `TESTS_ONLY` suffix so the production bundle audit denies
 // any accidental leak into a shipped bundle.
 import { __ks2_injectFault_TESTS_ONLY__ as faultInjection } from './fault-injection.mjs';
+// SH2-U11 (sys-hardening p2): per-test DB handle registry for the
+// isolated Playwright subset (`tests/playwright/isolated/`). When
+// `process.env.KS2_TEST_DB_HANDLE` is set AND resolves to a known
+// registered handle, the server threads that DB instance into
+// `createWorkerRepositoryServer({ db })` so the scene runs against
+// its own migrated-but-empty SQLite instance. When the env var is
+// absent, or the handle does not resolve, the server falls back to
+// the default shared-DB path and emits a one-line warning so the
+// fallback is observable in CI logs.
+import { resolveIsolatedDb } from './playwright-isolated-db.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -101,6 +111,25 @@ export async function startBrowserAppServer({
   withWorkerApi = false,
 } = {}) {
   const resolvedPublicDir = path.resolve(publicDir);
+  // SH2-U11: read the isolated-DB handle from env BEFORE constructing
+  // the worker server. When `KS2_TEST_DB_HANDLE` is set AND resolves
+  // against the in-process registry, we inject that DB so the scene
+  // runs against a per-test migrated fixture. When the env var is set
+  // but the handle does not resolve, we log a warning and fall back to
+  // the shared default so a mis-wired fixture is visible in CI logs
+  // rather than silently green.
+  const testDbHandle = typeof process.env.KS2_TEST_DB_HANDLE === 'string'
+    ? process.env.KS2_TEST_DB_HANDLE
+    : null;
+  let isolatedDb = null;
+  if (testDbHandle) {
+    isolatedDb = resolveIsolatedDb(testDbHandle);
+    if (!isolatedDb) {
+      console.warn(
+        '[browser-app-server] KS2_TEST_DB_HANDLE set but handle did not resolve; falling back to shared DB.',
+      );
+    }
+  }
   const workerServer = withWorkerApi
     ? createWorkerRepositoryServer({
       env: {
@@ -108,6 +137,9 @@ export async function startBrowserAppServer({
         ENVIRONMENT: 'production',
         PUNCTUATION_SUBJECT_ENABLED: 'true',
       },
+      // null => worker-server creates its own shared DB (unchanged).
+      // non-null => per-test DB injected by playwright-isolated-db.js.
+      db: isolatedDb,
     })
     : null;
   // U9 follow-up (review blocker-2 + major-1): per-process consumption

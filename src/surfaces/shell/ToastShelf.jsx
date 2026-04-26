@@ -60,11 +60,17 @@ function ToastContent({ toast }) {
     return (
       <>
         <div className="cm-port" aria-hidden="true">
+          {/* SH2-U10 CLS: toast portrait has a fixed 56 px CSS slot
+              (`sizes="56px"`); declaring `width`/`height` at the same
+              value reserves the box so the toast does not jump while
+              the .webp decodes. */}
           <img
             alt={`${toast.monster.name || 'Monster'} portrait`}
             src={visual.src}
             srcSet={visual.srcSet}
             sizes="56px"
+            width={56}
+            height={56}
             style={portraitStyle(visual)}
           />
         </div>

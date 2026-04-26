@@ -1,4 +1,8 @@
 // U5 (sys-hardening p1): Playwright adoption for golden-path scenes.
+// SH2-U11 (sys-hardening p2): per-project `maxDiffPixelRatio` override
+// for narrow-viewport Linux-CI font-hinting drift + isolated-subset
+// project that runs `workers: 4` against per-test migrated SQLite
+// instances under `tests/playwright/isolated/`.
 //
 // The webServer command now passes `--with-worker-api` to
 // `tests/helpers/browser-app-server.js` so `/api/*` routes respond during
@@ -9,6 +13,36 @@
 // Wrangler remote-build host: the `wrangler.jsonc` build command runs
 // `npm install`, which would otherwise fetch ~300 MB of Playwright
 // browsers that the deployed Worker never uses.
+//
+// SH2-U11 (sys-hardening p2): `maxDiffPixelRatio` per project.
+// Linux-CI font hinting at narrow viewports (`mobile-360`, `mobile-390`)
+// routinely exceeds the 0.02 default — glyph anti-aliasing differences
+// between macOS / Windows / Linux make a ~3% diff expected even when
+// the layout is identical. The per-project override below loosens only
+// those two to 0.035; wider viewports keep the tighter 0.02 because
+// Linux rendering there matches the developer-machine baselines closely
+// enough. F-04 deepening.
+//
+// Interaction with U6 per-surface table (reviewer NIT-CR1):
+//  - `tests/playwright/visual-baselines.playwright.test.mjs` defines
+//    its OWN per-surface ratio table: `LOOSE_RATIO = 0.25` for four
+//    demo-seed-variant surfaces (dashboard-home + spelling-{setup,
+//    session,summary}), `TIGHT_RATIO = 0.001` for the reverse-case
+//    mask-porosity contract, and project-default (0.02 / 0.035 at
+//    narrow viewports) for everything else. That per-capture override
+//    is ORTHOGONAL to the per-project override here: Playwright
+//    resolves `toHaveScreenshot` ratios using the call-site value when
+//    provided, then the project-level `expect.toHaveScreenshot.
+//    maxDiffPixelRatio`, then the top-level `expect` block. So:
+//      * Explicit capture ratio (LOOSE_RATIO / TIGHT_RATIO) — wins.
+//      * No explicit override on a `mobile-360` / `mobile-390` project
+//        run — resolves to 0.035 below.
+//      * No explicit override on tablet / desktop / isolated — resolves
+//        to 0.02 from the top-level `expect` block.
+//    The per-surface table will take priority for the four LOOSE_RATIO
+//    surfaces and the reverse-case regardless of viewport. When a
+//    future surface is added to the U6 table, there is NO need to
+//    touch this config block — the per-call override already dominates.
 export default {
   testDir: './tests',
   // Playwright scenes live under `tests/playwright/*.playwright.test.mjs`.
@@ -25,9 +59,12 @@ export default {
   // demo-session endpoint enforces a 30-request / 10-minute rate limit
   // per IP. 15 parallel workers × re-runs saturates the rate limit and
   // can hit SAVEPOINT concurrency inside shared batch queries. Serial
-  // workers keep U5 deterministic; U9/U10 can redesign isolation
-  // (per-worker DB, seeded demo cookie, or relaxed rate limit under a
-  // test-only flag) and bump this back up.
+  // workers keep U5 deterministic; SH2-U11 redesigns isolation for the
+  // opt-in subset under `tests/playwright/isolated/` via
+  // `tests/helpers/playwright-isolated-db.js`. Isolated-subset scenes
+  // bypass the shared DB and the demo rate-limit path so they can run
+  // `workers: 4`. The main serial suite still uses `workers: 1` by
+  // default (set at the per-project level below).
   workers: 1,
   timeout: 30_000,
   // SH2-U6 (sys-hardening p2): never auto-write snapshots on CI. The
@@ -40,9 +77,8 @@ export default {
   // and the change must be reviewed before a human regenerates.
   updateSnapshots: 'none',
   expect: {
-    // Start conservative; tune per viewport as real baselines accumulate.
-    // Follow-up units (U9 / U10 / U12) extend the matrix to all five
-    // viewports and may lower this per project.
+    // Start conservative; per-project overrides below loosen the
+    // narrow-viewport threshold to account for Linux-CI font hinting.
     toHaveScreenshot: {
       maxDiffPixelRatio: 0.02,
       animations: 'disabled',
@@ -87,10 +123,74 @@ export default {
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'mobile-360', use: { viewport: { width: 360, height: 740 } } },
-    { name: 'mobile-390', use: { viewport: { width: 390, height: 844 } } },
-    { name: 'tablet', use: { viewport: { width: 768, height: 1024 } } },
-    { name: 'desktop-1024', use: { viewport: { width: 1024, height: 768 } } },
-    { name: 'desktop-1440', use: { viewport: { width: 1440, height: 900 } } },
+    // SH2-U11: per-project `maxDiffPixelRatio` override. Narrow
+    // viewports (360 / 390) allow a 0.035 ratio to absorb Linux-CI
+    // font-hinting drift; wider viewports keep the 0.02 default.
+    {
+      name: 'mobile-360',
+      testIgnore: /tests[\\/]+playwright[\\/]+isolated[\\/]/,
+      use: { viewport: { width: 360, height: 740 } },
+      expect: {
+        toHaveScreenshot: {
+          maxDiffPixelRatio: 0.035,
+        },
+      },
+    },
+    {
+      name: 'mobile-390',
+      testIgnore: /tests[\\/]+playwright[\\/]+isolated[\\/]/,
+      use: { viewport: { width: 390, height: 844 } },
+      expect: {
+        toHaveScreenshot: {
+          maxDiffPixelRatio: 0.035,
+        },
+      },
+    },
+    {
+      name: 'tablet',
+      testIgnore: /tests[\\/]+playwright[\\/]+isolated[\\/]/,
+      use: { viewport: { width: 768, height: 1024 } },
+    },
+    {
+      name: 'desktop-1024',
+      testIgnore: /tests[\\/]+playwright[\\/]+isolated[\\/]/,
+      use: { viewport: { width: 1024, height: 768 } },
+    },
+    {
+      name: 'desktop-1440',
+      testIgnore: /tests[\\/]+playwright[\\/]+isolated[\\/]/,
+      use: { viewport: { width: 1440, height: 900 } },
+    },
+    // SH2-U11: isolated subset. Scenes under `tests/playwright/isolated/`
+    // use `tests/helpers/playwright-isolated-db.js` to spawn a per-test
+    // migrated SQLite instance, which unlocks parallel execution. The
+    // main projects above `testIgnore` this folder so a scene never
+    // runs twice.
+    //
+    // `workers` is a top-level Playwright config option, not per-project;
+    // isolated runs therefore supply `--workers=4` on the CLI. The
+    // `fullyParallel: true` flag here ensures tests within a single file
+    // are also parallelised under that worker count. The PR-time
+    // `playwright.yml` workflow only exercises the main `mobile-390`
+    // project; operators who want to flex the isolated subset locally
+    // run:
+    //
+    //   npx playwright test --project isolated-mobile-390 --workers=4
+    //
+    // The subset is opt-in today; it does not run by default on PR. A
+    // follow-up PR wires the isolated subset into `playwright.yml` once
+    // at least one isolated scene lands (SH2-U11 ships the isolation
+    // contract + helper; isolated scenes are authored in follow-ups).
+    {
+      name: 'isolated-mobile-390',
+      testMatch: /tests[\\/]+playwright[\\/]+isolated[\\/].*\.playwright\.test\.(js|mjs)$/,
+      use: { viewport: { width: 390, height: 844 } },
+      expect: {
+        toHaveScreenshot: {
+          maxDiffPixelRatio: 0.035,
+        },
+      },
+      fullyParallel: true,
+    },
   ],
 };

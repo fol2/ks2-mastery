@@ -1,4 +1,16 @@
-import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
+// No static import of the spelling content dataset here: it is reachable
+// from the client entry via `achievements.js` and would fail `audit:client`
+// (see scripts/audit-client-bundle.mjs FORBIDDEN_MODULES). Production
+// callers pass `wordMeta` explicitly; tests seed a default via the setter
+// below from `tests/helpers/seed-spelling-events-default.js`.
+let __defaultWordBySlug = null;
+
+// Test-only setter. Non-object inputs coerce to `null` so a misuse surfaces
+// as the documented "unknown slug -> null event" path instead of a silent
+// `undefined` dereference. In production the seed stays `null`.
+export function __setDefaultSpellingWordBySlug(wordBySlug) {
+  __defaultWordBySlug = wordBySlug && typeof wordBySlug === 'object' ? wordBySlug : null;
+}
 
 export const SPELLING_EVENT_TYPES = Object.freeze({
   RETRY_CLEARED: 'spelling.retry-cleared',
@@ -21,8 +33,10 @@ function safeTimestamp(value) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : Date.now();
 }
 
-function wordFields(slug, wordMeta = DEFAULT_WORD_BY_SLUG) {
-  const word = wordMeta[slug];
+function wordFields(slug, wordMeta) {
+  const map = wordMeta || __defaultWordBySlug;
+  if (!map) return null;
+  const word = map[slug];
   if (!word) return null;
   return {
     wordSlug: word.slug,

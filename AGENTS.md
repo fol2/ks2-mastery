@@ -28,5 +28,5 @@
 ## Verification
 
 - Before deployment, run `npm test` and `npm run check`.
-- When working from a fresh git worktree, run `npm install` once before `npm test` or `npm run check`. Git worktrees do not share `node_modules` with the primary checkout; the `pretest` preflight will flag this clearly if missed.
+- When working from a fresh git worktree, run `node scripts/worktree-setup.mjs` once before `npm test` or `npm run check`. This symlinks `node_modules` from the primary checkout when `package.json` and `package-lock.json` are identical, avoiding a full reinstall (saves ~184 MB per worktree). It falls back to `npm install` automatically if the package files diverge.
 - After deployment, verify the production UI on `https://ks2.eugnel.uk` with a logged-in browser session when the change affects user-facing flows.

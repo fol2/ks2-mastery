@@ -278,3 +278,375 @@ test('parser sanity: extractRuleBlock + extractKeyframeBlock return non-empty bl
   const fadeOut = extractKeyframeBlock(css, 'toast-fade-out');
   assert.ok(fadeOut && fadeOut.length > 20, 'expected @keyframes toast-fade-out to contain frame declarations');
 });
+
+// ---------------------------------------------------------------------------
+// SH2-U12 extension: one-toast-per-user-action invariant.
+//
+// Plan §U12 (lines 818 + 827-828): "One toast per user action — grep for
+// `dispatch('toast-*', ...)` call sites — assert no two toasts fired for
+// the same user action within a single dispatch cycle."
+//
+// Structural invariant:
+//
+//   Each user-action handler (subject module, platform controller, grammar/
+//   spelling/punctuation remote-actions, the main controller action map)
+//   may push AT MOST ONE batch of toasts per dispatch. The batch itself is
+//   a single `store.pushToasts(events)` call whose argument is an ARRAY of
+//   reward/info events projected from the underlying operation.
+//
+// Scanner: walk the JS source under `src/subjects/**/*.js`, the platform
+// controllers, and `src/main.js`, locate every `pushToasts(` call, find
+// the enclosing function body via brace-balancing, and assert that NO
+// function body contains two `pushToasts(` calls — a second call in the
+// same function body would stack a second toast on top of the first
+// within the same dispatch, which is exactly the regression the plan
+// flags.
+//
+// Additionally: every `pushToasts(` argument must be a variable or a
+// property access (e.g. `toastEvents`, `response.projections.rewards.toastEvents`),
+// not an array literal built inline with multiple entries. An inline
+// `pushToasts([a, b])` is the cheapest way to accidentally fire two
+// toasts for the same action, so we reject that syntactic shape too.
+// ---------------------------------------------------------------------------
+
+const SRC_ROOTS_FOR_TOAST_SCAN = [
+  path.join(rootDir, 'src/main.js'),
+  path.join(rootDir, 'src/subjects/grammar/module.js'),
+  path.join(rootDir, 'src/subjects/spelling/module.js'),
+  path.join(rootDir, 'src/subjects/spelling/remote-actions.js'),
+  path.join(rootDir, 'src/subjects/punctuation/module.js'),
+  path.join(rootDir, 'src/subjects/punctuation/command-actions.js'),
+  path.join(rootDir, 'src/platform/app/create-app-controller.js'),
+];
+
+function stripCommentsForToastScan(source) {
+  // Simple comment stripper — mirrors the one in
+  // `tests/error-copy-oracle.test.js` but inlined here to avoid a cross-test
+  // dependency. Lossless character count where a line comment is replaced
+  // by spaces so `pushToasts(` offsets remain aligned for error reports.
+  const out = [];
+  let i = 0;
+  const len = source.length;
+  let stringChar = null;
+  let escaped = false;
+  while (i < len) {
+    const ch = source[i];
+    if (escaped) { out.push(ch); escaped = false; i += 1; continue; }
+    if (stringChar) {
+      if (ch === '\\') { out.push(ch); escaped = true; }
+      else if (ch === stringChar) { out.push(ch); stringChar = null; }
+      else { out.push(ch); }
+      i += 1;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      stringChar = ch;
+      out.push(ch);
+      i += 1;
+      continue;
+    }
+    if (ch === '/' && source[i + 1] === '/') {
+      while (i < len && source[i] !== '\n') { out.push(' '); i += 1; }
+      continue;
+    }
+    if (ch === '/' && source[i + 1] === '*') {
+      out.push(' '); out.push(' ');
+      i += 2;
+      while (i < len && !(source[i] === '*' && source[i + 1] === '/')) {
+        out.push(source[i] === '\n' ? '\n' : ' ');
+        i += 1;
+      }
+      if (i < len) { out.push(' '); out.push(' '); i += 2; }
+      continue;
+    }
+    out.push(ch);
+    i += 1;
+  }
+  return out.join('');
+}
+
+function lineNumberFor(source, offset) {
+  if (!Number.isFinite(offset) || offset < 0) return 0;
+  let count = 1;
+  for (let i = 0; i < offset && i < source.length; i += 1) {
+    if (source.charCodeAt(i) === 10) count += 1;
+  }
+  return count;
+}
+
+// Find the enclosing `function` / arrow-function / method body for a
+// given source offset. Returns `{ start, end }` delimiting the body
+// braces, or null when the offset sits at the top level.
+//
+// Heuristic: walk backwards from the offset collecting `{` / `}` bracket
+// depths. Each time we cross a `{` at depth 0 we record the candidate
+// start. Similarly walk forward to find the matching `}`.
+function enclosingBraceBody(source, offset) {
+  let i = offset;
+  let depth = 0;
+  let start = -1;
+  let stringChar = null;
+  // Walk backwards. We intentionally do a simplified string tracker:
+  // the source has already been run through `stripCommentsForToastScan`
+  // so comments cannot contaminate the scan, but string literals still
+  // need skipping.
+  while (i >= 0) {
+    const ch = source[i];
+    if (stringChar) {
+      if (ch === stringChar && source[i - 1] !== '\\') stringChar = null;
+      i -= 1;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      stringChar = ch;
+      i -= 1;
+      continue;
+    }
+    if (ch === '}') depth += 1;
+    else if (ch === '{') {
+      if (depth === 0) { start = i; break; }
+      depth -= 1;
+    }
+    i -= 1;
+  }
+  if (start === -1) return null;
+
+  // Walk forwards from start + 1 to find the matching `}`.
+  let j = start + 1;
+  depth = 1;
+  stringChar = null;
+  let end = -1;
+  while (j < source.length) {
+    const ch = source[j];
+    if (stringChar) {
+      if (ch === stringChar && source[j - 1] !== '\\') stringChar = null;
+      j += 1;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      stringChar = ch;
+      j += 1;
+      continue;
+    }
+    if (ch === '{') depth += 1;
+    else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) { end = j; break; }
+    }
+    j += 1;
+  }
+  if (end === -1) return null;
+  return { start, end };
+}
+
+test('one toast per user action: no single function body contains more than one `pushToasts(` call', () => {
+  const violations = [];
+  for (const file of SRC_ROOTS_FOR_TOAST_SCAN) {
+    let source;
+    try {
+      source = readFileSync(file, 'utf8');
+    } catch (error) {
+      // A missing source file means the scanner list drifted from the
+      // codebase shape — fail loudly so the drift is visible.
+      violations.push({
+        file: path.relative(rootDir, file),
+        reason: `source file not readable: ${error?.message || 'unknown'}`,
+      });
+      continue;
+    }
+    const stripped = stripCommentsForToastScan(source);
+    const callRegex = /\bpushToasts\s*\(/g;
+    const offsets = [];
+    let match;
+    while ((match = callRegex.exec(stripped)) !== null) {
+      offsets.push(match.index);
+    }
+    if (offsets.length < 2) continue;
+    // Group offsets by their enclosing body. Any group with > 1 call
+    // fires the violation.
+    const bodies = new Map();
+    for (const offset of offsets) {
+      const body = enclosingBraceBody(stripped, offset);
+      const key = body ? `${body.start}-${body.end}` : 'top-level';
+      const list = bodies.get(key) || [];
+      list.push(offset);
+      bodies.set(key, list);
+    }
+    for (const [key, callOffsets] of bodies) {
+      if (callOffsets.length < 2) continue;
+      violations.push({
+        file: path.relative(rootDir, file).split(path.sep).join('/'),
+        body: key,
+        lines: callOffsets.map((offset) => lineNumberFor(stripped, offset)),
+        count: callOffsets.length,
+      });
+    }
+  }
+  assert.deepEqual(
+    violations,
+    [],
+    violations.length === 0
+      ? ''
+      : `functions with more than one `
+        + '`pushToasts(` call detected — each would stack an additional toast within the same dispatch cycle, which violates the one-toast-per-user-action invariant. Consolidate the two calls into a single `store.pushToasts(events)` with an array, or route one of them through a long-lived `PersistenceBanner` instead of a second toast:\n'
+        + violations
+          .map((v) => `  - ${v.file} body=${v.body} lines=[${v.lines.join(', ')}] count=${v.count}`)
+          .join('\n'),
+  );
+});
+
+test('one toast per user action: no `pushToasts([inline-array])` call site with multiple literal elements', () => {
+  // A caller that writes `pushToasts([entryA, entryB])` is inline-fusing
+  // two toast events that would not otherwise be grouped. That is
+  // syntactically equivalent to two `pushToasts` calls from the plan's
+  // invariant perspective — both stack a second toast the learner sees
+  // for the same user action. The projection pipeline already returns
+  // an array of events from a single source of truth; hand-written
+  // multi-element arrays at call sites are the regression shape this
+  // assertion forbids.
+  const violations = [];
+  for (const file of SRC_ROOTS_FOR_TOAST_SCAN) {
+    let source;
+    try { source = readFileSync(file, 'utf8'); } catch { continue; }
+    const stripped = stripCommentsForToastScan(source);
+    const callRegex = /\bpushToasts\s*\(\s*\[([^\]]*)\]\s*\)/g;
+    let match;
+    while ((match = callRegex.exec(stripped)) !== null) {
+      const body = match[1] || '';
+      // Count top-level commas inside the brackets, ignoring commas
+      // nested inside braces or parens. A top-level comma count of >= 1
+      // means the inline array has 2+ entries.
+      let depth = 0;
+      let stringChar = null;
+      let escaped = false;
+      let topLevelCommas = 0;
+      for (let i = 0; i < body.length; i += 1) {
+        const ch = body[i];
+        if (escaped) { escaped = false; continue; }
+        if (stringChar) {
+          if (ch === '\\') escaped = true;
+          else if (ch === stringChar) stringChar = null;
+          continue;
+        }
+        if (ch === '"' || ch === "'" || ch === '`') { stringChar = ch; continue; }
+        if (ch === '{' || ch === '(' || ch === '[') depth += 1;
+        else if (ch === '}' || ch === ')' || ch === ']') depth -= 1;
+        else if (ch === ',' && depth === 0) topLevelCommas += 1;
+      }
+      if (topLevelCommas >= 1) {
+        violations.push({
+          file: path.relative(rootDir, file).split(path.sep).join('/'),
+          line: lineNumberFor(stripped, match.index),
+          body: body.trim().slice(0, 160),
+        });
+      }
+    }
+  }
+  assert.deepEqual(
+    violations,
+    [],
+    violations.length === 0
+      ? ''
+      : `inline-array `
+        + '`pushToasts([a, b, ...])` call sites detected. Stack the events through a single source of truth (projection pipeline) and pass the resulting array, or use `pushToasts([entry])` with exactly one element. Multi-element inline arrays bypass the one-toast-per-action invariant:\n'
+        + violations.map((v) => `  - ${v.file}:${v.line} body=${v.body}`).join('\n'),
+  );
+});
+
+test('one toast per user action: synthetic fixture with two `pushToasts` calls in one body trips the scanner (regression guard)', () => {
+  // Plan §U12 test scenario 6: "Integration: one toast per user action —
+  // a synthetic action that pushes two toasts → fails." We exercise the
+  // scanner end-to-end so a future edit that breaks the enclosing-body
+  // detector (e.g. `enclosingBraceBody` returns `null` when it shouldn't)
+  // surfaces here, not silently in the production scan above.
+  const synthetic = `
+    function handleAction(action, context) {
+      if (action === 'synthetic-two-toasts') {
+        context.store.pushToasts([{ id: 'a', title: 'First' }]);
+        context.store.pushToasts([{ id: 'b', title: 'Second' }]);
+        return true;
+      }
+      return false;
+    }
+  `;
+  const stripped = stripCommentsForToastScan(synthetic);
+  const callRegex = /\bpushToasts\s*\(/g;
+  const offsets = [];
+  let match;
+  while ((match = callRegex.exec(stripped)) !== null) {
+    offsets.push(match.index);
+  }
+  assert.equal(
+    offsets.length,
+    2,
+    'synthetic fixture should expose exactly two `pushToasts` calls for the scanner to group.',
+  );
+  const bodies = new Map();
+  for (const offset of offsets) {
+    const body = enclosingBraceBody(stripped, offset);
+    const key = body ? `${body.start}-${body.end}` : 'top-level';
+    const list = bodies.get(key) || [];
+    list.push(offset);
+    bodies.set(key, list);
+  }
+  const clustered = [...bodies.values()].filter((list) => list.length >= 2);
+  assert.ok(
+    clustered.length === 1,
+    `expected exactly one body to cluster both synthetic calls. Got ${clustered.length}. If this fails, `
+      + '`enclosingBraceBody` has regressed — the real codebase invariant would also start passing vacuously.',
+  );
+});
+
+test('one toast per user action: every `pushToasts(` call site is preceded by a length or projection guard', () => {
+  // The plan says: "One toast per user action — enforced via extension of
+  // tests/toast-positioning-contract.test.js". The structural rule above
+  // prevents TWO `pushToasts` calls per body; this rule layers a second
+  // guard: every call site must be gated by at least one length check
+  // or a conditional on the source of events. Otherwise the source-event
+  // array could be empty, causing `pushToasts` to be a no-op — visible,
+  // but the intent was that when there IS something to toast, it is
+  // bounded and intentional.
+  //
+  // The guard patterns we accept (heuristic — intentionally permissive
+  // because the real invariant is "no unbounded push"):
+  //   - `toastEvents?.length` within 300 characters before the call
+  //   - `.length` + conditional within 300 characters
+  //   - `if (...) pushToasts(...)` directly on the preceding line
+  //   - `isSelectedLearner` gate (remote-actions uses this)
+  //
+  // When none of the accepted guards appear, we fail with the call site
+  // and a note for the reviewer to either add a guard or document why
+  // the call is unconditional (e.g. static one-shot bootstrap toast).
+  const violations = [];
+  for (const file of SRC_ROOTS_FOR_TOAST_SCAN) {
+    let source;
+    try { source = readFileSync(file, 'utf8'); } catch { continue; }
+    const stripped = stripCommentsForToastScan(source);
+    const callRegex = /\bpushToasts\s*\(/g;
+    let match;
+    while ((match = callRegex.exec(stripped)) !== null) {
+      const lookbackStart = Math.max(0, match.index - 400);
+      const lookback = stripped.slice(lookbackStart, match.index);
+      const hasGuard = /toastEvents\??\.length/.test(lookback)
+        || /\.length\s*[<>]?=?\s*\d/.test(lookback)
+        || /isSelectedLearner/.test(lookback)
+        || /if\s*\(/.test(lookback);
+      if (!hasGuard) {
+        violations.push({
+          file: path.relative(rootDir, file).split(path.sep).join('/'),
+          line: lineNumberFor(stripped, match.index),
+          preceding: lookback.slice(-120).replace(/\s+/g, ' ').trim(),
+        });
+      }
+    }
+  }
+  assert.deepEqual(
+    violations,
+    [],
+    violations.length === 0
+      ? ''
+      : `unguarded `
+        + '`pushToasts(` call sites detected. Gate each call by a `.length` / selected-learner / projection guard so the push is never unconditional:\n'
+        + violations.map((v) => `  - ${v.file}:${v.line} preceding="${v.preceding}"`).join('\n'),
+  );
+});

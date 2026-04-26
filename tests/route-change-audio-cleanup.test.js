@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import React from 'react';
 
 import { installMemoryStorage } from './helpers/memory-storage.js';
+import { flushMicrotasks } from './helpers/microtasks.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { createSubjectRuntimeBoundary } from '../src/platform/core/subject-runtime.js';
 import { SUBJECTS } from '../src/platform/core/subject-registry.js';
@@ -372,9 +373,9 @@ test('route-change audio cleanup: persistence-retry success fires BOTH stop + ab
   controller.dispatch('open-subject', { subjectId: 'spelling' });
   tts.clear();
   controller.dispatch('persistence-retry');
-  // The retry resolves on a microtask; await once to let the .then fire.
-  await Promise.resolve();
-  await Promise.resolve();
+  // The retry resolves on a microtask chain; flush generously so the
+  // .then fires regardless of the U5 storage-CAS lock-feature-detect depth.
+  await flushMicrotasks();
   assert.equal(
     tts.stopCalls.length, 1,
     'persistence-retry success: stop() must fire after the retry resolves so the audio element is released before reloadFromRepositories runs.',

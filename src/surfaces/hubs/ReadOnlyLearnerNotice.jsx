@@ -19,13 +19,15 @@ export function ReadOnlyLearnerNotice({ access, writableLearner }) {
   const writableNote = writableLearner
     ? `${writableLearner.name} remains the writable shell learner.`
     : 'This account has no writable learner in the main shell right now.';
+  // SH2-U8: inline style props migrated to `.read-only-learner-notice*` classes
+  // (see docs/hardening/csp-inline-style-inventory.md).
   return (
-    <div className="callout warn" style={{ marginTop: 16 }} data-testid="read-only-learner-notice">
+    <div className="callout warn read-only-learner-notice" data-testid="read-only-learner-notice">
       <strong>{access.learnerName || 'This learner'} is read-only in this adult surface.</strong>
-      <div style={{ marginTop: 8 }}>
+      <div className="read-only-learner-notice-detail">
         Practice, learner profile changes, reset/import flows, and current-learner export stay blocked for viewer memberships. {writableNote}
       </div>
-      <div style={{ marginTop: 8 }} data-testid="read-only-learner-notice-capabilities">
+      <div className="read-only-learner-notice-detail" data-testid="read-only-learner-notice-capabilities">
         Some settings are managed by account administrators and are not available in this view.
       </div>
     </div>

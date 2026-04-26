@@ -34,10 +34,12 @@ export function isBlocked(action, accessContext) {
 }
 
 export function AccessDeniedCard({ title, detail, onBack, code = '' }) {
+  // SH2-U8: inline style prop migrated to `.access-denied-actions` class
+  // (see docs/hardening/csp-inline-style-inventory.md).
   return (
     <section className="card access-denied-card">
       <ErrorCard title={title} body={detail} code={code} />
-      <div className="actions" style={{ marginTop: 16 }}>
+      <div className="actions access-denied-actions">
         <button className="btn secondary" type="button" onClick={onBack}>Back to dashboard</button>
       </div>
     </section>

@@ -167,6 +167,7 @@ body {
 }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
+img { -webkit-user-drag: none; user-select: none; }
 input:focus, select:focus, textarea:focus, button:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
@@ -10515,3 +10516,90 @@ html { scroll-behavior: smooth; }
     gap: 10px;
   }
 }
+
+/* SH2-U8: inline-style migration (see docs/hardening/csp-inline-style-inventory.md).
+   Every class below replaces a static `style={}` inline object. Classes are
+   intentionally scoped (no generic `.mt-8`-style utilities) so the budget
+   test in tests/csp-inline-style-budget.test.js catches "revert to inline"
+   drift and the adversarial reviewer can diff each replacement 1-to-1
+   against the prior inline value. Values are identical to the replaced
+   inline values so SH2-U6 visual baselines stay green. */
+
+.persistence-banner-card {
+  margin-bottom: 20px;
+}
+
+.persistence-banner-summary {
+  margin-top: 8px;
+}
+
+.persistence-banner-chips {
+  margin-top: 14px;
+}
+
+.persistence-banner-actions {
+  margin-top: 16px;
+}
+
+.persistence-banner-details {
+  margin-top: 16px;
+}
+
+.persistence-banner-debug {
+  margin-top: 12px;
+  white-space: pre-wrap;
+}
+
+.error-boundary-body {
+  margin-top: 8px;
+}
+
+.unknown-route-main {
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.unknown-route-actions {
+  margin-top: 16px;
+}
+
+.auth-panel-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.auth-standard-error {
+  margin-top: 16px;
+}
+
+.access-denied-actions {
+  margin-top: 16px;
+}
+
+.read-only-learner-notice {
+  margin-top: 16px;
+}
+
+.read-only-learner-notice-detail {
+  margin-top: 8px;
+}
+
+.subject-runtime-fallback-footer {
+  margin-top: 12px;
+}
+
+.monster-visual-field-controls-actions {
+  margin-top: 12px;
+}
+
+.platform-import-file-input {
+  display: none;
+}
+
+.admin-panel-header-title {
+  font-size: 1.2rem;
+}
+

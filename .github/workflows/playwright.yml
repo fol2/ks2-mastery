@@ -1,0 +1,102 @@
+# SH2-U11: Playwright golden-path scenes on every PR.
+#
+# Plan: docs/plans/2026-04-26-001-feat-sys-hardening-p2-plan.md (lines 747-799, R11).
+#
+# Runs the PR-time Playwright subset: Chromium only on the `mobile-390`
+# project — the existing default baseline surface from U5. The full
+# 5-viewport matrix runs nightly in `playwright-nightly.yml` so PR
+# latency stays bounded.
+#
+# Security posture (deepening S-02 + S-03):
+#  - `permissions: contents: read` only. No `packages`, no `issues`, no
+#    `id-token`. This workflow neither reads secrets nor writes to the
+#    repository.
+#  - NO `CLOUDFLARE_API_TOKEN` / `CF_*` environment variables anywhere.
+#    Deploy-capable credentials MUST NOT be in Actions secrets scope;
+#    the deploy path owns OAuth via `scripts/wrangler-oauth.mjs`
+#    locally only.
+#  - Baselines are NEVER auto-committed. Failure uploads the
+#    `test-results/` directory as an artifact so a maintainer can
+#    download the trace + screenshot and open a manual regen PR.
+#
+# Expected baseline drift note (F-04 deepening):
+#  - Linux-CI font hinting can push `mobile-360` / `mobile-390`
+#    beyond the 2% default `maxDiffPixelRatio`. `playwright.config.mjs`
+#    overrides those two projects to 0.035 so the PR-time run is
+#    stable. Wider viewports keep the 0.02 default because Linux
+#    rendering there matches macOS / Windows more closely.
+#  - Expect 2-3 follow-up baseline-regen PRs after SH2-U11 lands
+#    (`docs(sys-hardening): regenerate Playwright baselines on Linux CI — <viewport>`),
+#    one per viewport so each change is reviewable.
+
+name: Playwright (PR)
+
+on:
+  pull_request:
+  # Reviewer NIT-A3 (cli-agent #3): `workflow_dispatch` lets a maintainer
+  # manually re-run the Playwright job (e.g. transient Chromium download
+  # failure) without pushing a new commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playwright-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    name: Chromium + mobile-390 golden paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Chromium
+        # `.npmrc` defaults `playwright_skip_browser_download=true` so
+        # `npm ci` above skipped the ~300 MB Chromium download. Install
+        # explicitly here — PR jobs need the browser available.
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright (mobile-390)
+        run: npx playwright test --project mobile-390
+
+      - name: Upload trace + screenshot artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          # Reviewer NIT-A1 (cli-agent #1): include `run_attempt` + `sha`
+          # in the artefact name so re-running a failed run does not
+          # overwrite the previous artefact (GitHub Actions rejects
+          # duplicate names within a workflow run). The retention window
+          # (7d) is unchanged.
+          name: playwright-trace-mobile-390-${{ github.run_attempt }}-${{ github.sha }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload Playwright HTML report on failure
+        # Reviewer NIT-A2 (cli-agent #2): the HTML report gives a
+        # reviewer a browsable trace viewer without needing to reproduce
+        # the failure locally. Uploaded only on failure because a green
+        # run would just add noise + storage cost. The report directory
+        # is `.gitignore`d (`playwright-report/`) so it is never
+        # committed.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-mobile-390-${{ github.run_attempt }}-${{ github.sha }}
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
