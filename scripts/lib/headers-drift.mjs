@@ -108,8 +108,19 @@ export function assertHeadersBlockIsFresh(headersContent, { allowPlaceholderHash
 //   - `worker/src/security-headers.js` (`/src/bundles/*` immutable override)
 //   - `scripts/production-bundle-audit.mjs` (live HEAD checks)
 //   - `docs/operations/capacity.md` (post-deploy cache-split check)
+//
+// Note: the `/*` block intentionally carries NO `Cache-Control`. Cloudflare
+// Workers Static Assets merges matching `_headers` blocks by appending
+// distinct values for the same header name, so a `/*` `Cache-Control` is
+// concatenated onto every more-specific block (observed live as
+// `no-store, public, max-age=...` on `/manifest.webmanifest`,
+// `/assets/app-icons/*`, etc., breaking the production audit). Fallback
+// for paths matched only by `/*` is supplied by
+// `worker/src/security-headers.js::FALLBACK_CACHE_CONTROL` for any path
+// routed through `run_worker_first`; ASSETS-direct unmatched paths fall
+// back to the browser's heuristic cache, which is acceptable because
+// every cacheable asset in `dist/public` already has its own block.
 export const CACHE_SPLIT_RULES = Object.freeze([
-  { path: '/*', cacheControl: 'no-store' },
   { path: '/assets/bundles/*', cacheControl: 'public, max-age=31536000, immutable' },
   { path: '/assets/app-icons/*', cacheControl: 'public, max-age=31536000, immutable' },
   { path: '/styles/*', cacheControl: 'public, max-age=31536000, immutable' },
@@ -178,6 +189,20 @@ export function assertCacheSplitRules(headersContent, { rules = CACHE_SPLIT_RULE
       throw new Error(`Published _headers has duplicate path group: ${block.path}`);
     }
     byPath.set(block.path, block);
+  }
+  // The `/*` block must NOT carry a `Cache-Control` line. Cloudflare Workers
+  // Static Assets appends matching block headers, so a `/*` `Cache-Control`
+  // would prepend onto every more-specific block (observed live as
+  // `no-store, public, max-age=3600` on `/manifest.webmanifest`,
+  // breaking the production cache-split audit).
+  const wildcardBlock = byPath.get('/*');
+  if (wildcardBlock) {
+    const wildcardCacheLines = wildcardBlock.body.match(/^\s*Cache-Control:\s*(.+)$/gmu) || [];
+    if (wildcardCacheLines.length > 0) {
+      throw new Error(
+        `Published _headers /* block must NOT have a Cache-Control line (Cloudflare appends it onto every more-specific block); found: ${wildcardCacheLines.join(', ')}`,
+      );
+    }
   }
   for (const rule of rules) {
     const block = byPath.get(rule.path);

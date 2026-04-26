@@ -324,7 +324,19 @@ async function auditProduction(origin) {
   for (const check of SECURITY_HEADER_CHECKS) {
     const target = new URL(check.path, base);
     try {
-      const response = await fetch(target.href, { method: 'HEAD' });
+      // Logout is a same-origin POST mutation in production
+      // (`worker/src/app.js` `/api/auth/logout` accepts POST only and gates on
+      // `requireSameOrigin`). A HEAD probe falls through and never reaches
+      // the handler that emits Clear-Site-Data, so the audit must mirror the
+      // browser's real call shape: POST + same-origin Origin + JSON content
+      // type. The handler is idempotent for unauthenticated probes —
+      // `deleteCurrentSession` is a no-op without a session cookie — so this
+      // adds no production side effect beyond an extra capacity log line.
+      const probeMethod = check.expectClearSiteData ? 'POST' : 'HEAD';
+      const probeHeaders = check.expectClearSiteData
+        ? { origin: base.origin, 'content-type': 'application/json' }
+        : undefined;
+      const response = await fetch(target.href, { method: probeMethod, headers: probeHeaders });
       if (!check.allowAnyStatus && (response.status < 200 || response.status >= 400)) {
         failures.push(`Security header HEAD check failed (${response.status}): ${target.href}`);
         continue;
