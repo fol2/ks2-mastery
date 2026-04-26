@@ -277,15 +277,20 @@ test('punctuation React surface renders GPS active progress and final review', (
 });
 
 test('punctuation text input remounts when the current text item changes', async () => {
-  // Phase 3 U3: text-input remount lives in `PunctuationSessionScene.jsx`.
-  // The monolith's `TextItem` moved into the scene with the same `key`
-  // pattern so item-level state (typed content) resets on a new item.
+  // Phase 3 U3 adv-232-002: text-input remount lives in
+  // `PunctuationSessionScene.jsx`. The `key` uses `session.answeredCount`
+  // as a monotonic counter so every item transition forces remount
+  // regardless of item id / prompt content. The previous `item.id ||
+  // item.prompt || 'text-item'` pattern collided on empty id +
+  // shared-prompt items (paragraph repair / combine) and carried the
+  // prior typed answer into the next item — the learning #9 regression
+  // U3 was meant to fix.
   const source = await readFile(
     new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
     'utf8',
   );
 
-  assert.match(source, /<TextItem[^>]*key=\{item\.id \|\| item\.prompt/);
+  assert.match(source, /<TextItem[^>]*key=\{`text-item-\$\{session\.answeredCount \|\| 0\}`\}/);
 });
 
 test('punctuation React surface renders combine tasks as text-entry rewrites', () => {
@@ -1603,6 +1608,297 @@ test('U3 session scene: every cluster focus mode still starts a session via punc
     assert.ok(
       state.phase === 'active-item' || state.session?.mode === mode,
       `punctuation-start with mode=${mode} did not land on a recognised session state`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3 U3 adv-232 review-follower block.
+//
+// Five blockers (3 HIGH + 2 MEDIUM) raised on PR #232:
+//
+//   adv-232-001 HIGH: `pendingCommand` never flips for punctuation —
+//     `composeIsDisabled` reads `ui?.pendingCommand` but no code path
+//     writes `subjectUi.punctuation.pendingCommand`. Wiring test
+//     dispatches `punctuation-submit-form` through the real action
+//     handler and observes the store snapshot sequence — a production
+//     wire has to write `pendingCommand` before clearing it.
+//
+//   adv-232-002 HIGH: `TextItem` key collision on empty id + shared prompt.
+//     Two consecutive items with the same prompt + empty id reuse the same
+//     TextItem instance and the previously-typed answer carries over. The
+//     key pattern must force remount on every item transition regardless
+//     of item content — `session.answeredCount` is the monotonic counter
+//     that guarantees this.
+//
+//   adv-232-003 HIGH: `ChoiceItem` has no `key` prop at all. Same class as
+//     002 but affects every consecutive `choose` item (not just same-
+//     prompt ones). Radio selection from item N carries over to item N+1.
+//
+//   adv-232-004 MEDIUM: GPS contract literal `session.mode === 'gps'` gate
+//     in `FeedbackBranch`. Switch to the authoritative `!help.showFeedback`
+//     signal so any future read-model shape that sets `showFeedback: false`
+//     also hides `feedback.displayCorrection`, not just the literal GPS
+//     mode string.
+//
+//   design-lens HIGH: combine/transfer blockquote lacks `aria-label` and
+//     bridging copy between source text and textarea. Session-phase
+//     forbidden-terms sweep must cover every item mode, not just `insert`.
+// ---------------------------------------------------------------------------
+
+test('adv-232-001 HIGH: punctuation-submit-form writes pendingCommand through the real action handler', () => {
+  // Dispatches through the real pipeline (not a seed) and observes the
+  // store snapshot sequence via `store.subscribe`. A production wire must
+  // set `pendingCommand === 'punctuation-submit-form'` on at least one
+  // snapshot between `dispatch()` entering and returning. Seeding
+  // `pendingCommand` on the initial state would not prove this — only an
+  // observed intermediate snapshot during dispatch does.
+  const harness = sessionHarnessWithItem({
+    mode: 'insert',
+    sessionMode: 'smart',
+    item: {
+      id: 'se_pending_wiring',
+      mode: 'insert',
+      inputKind: 'text',
+      prompt: 'Add end punctuation.',
+      stem: 'the cat sat',
+    },
+  });
+  const snapshots = [];
+  const unsubscribe = harness.store.subscribe((state) => {
+    snapshots.push(state.subjectUi.punctuation?.pendingCommand || '');
+  });
+  harness.dispatch('punctuation-submit-form', { typed: 'The cat sat.' });
+  unsubscribe();
+  assert.ok(
+    snapshots.some((value) => value === 'punctuation-submit-form'),
+    `expected an intermediate snapshot with pendingCommand='punctuation-submit-form'; got ${JSON.stringify(snapshots)}`,
+  );
+  // Final state must clear pendingCommand so the UI re-enables after the
+  // command settles.
+  const finalState = harness.store.getState().subjectUi.punctuation;
+  assert.equal(finalState.pendingCommand || '', '', 'pendingCommand must clear once the synchronous transition settles');
+});
+
+test('adv-232-002 HIGH: consecutive combine items with shared prompt + empty id do NOT carry prior typed answer', async () => {
+  // Pre-fix: `key={item.id || item.prompt || 'text-item'}` falls back to
+  // `item.prompt` when `item.id` is empty, so two items sharing the same
+  // prompt reuse the React TextItem instance and the previously-typed
+  // answer stays in the textarea. Post-fix: key includes
+  // `session.answeredCount` so every item transition forces remount.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'carryover-ui',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 0,
+      currentItem: {
+        id: '',
+        mode: 'combine',
+        inputKind: 'text',
+        prompt: 'Combine the clauses.',
+        stem: 'The rain fell.\nThe pitch was wet.',
+      },
+    },
+  });
+  // Simulate learner having typed an answer into the mounted textarea.
+  // SSR cannot capture typed state, so we prove the contract at the key
+  // level: after advancing to a second item sharing the same prompt +
+  // empty id, the rendered textarea body must be empty (i.e. a new
+  // component instance with its own useState('')).
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'carryover-ui',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 1,
+      currentItem: {
+        id: '',
+        mode: 'combine',
+        inputKind: 'text',
+        prompt: 'Combine the clauses.',
+        stem: 'The wind blew.\nThe flag waved.',
+      },
+    },
+  });
+  const html = harness.render();
+  const textarea = extractTextarea(html);
+  assert.ok(textarea, 'expected a textarea on the second combine item');
+  assert.equal(textarea.body.trim(), '', 'second combine item textarea must start blank — no carry-over from item 1');
+  // The key pattern must include the monotonic answeredCount so every
+  // transition forces remount regardless of item content.
+  const sceneSource = await readFile(
+    new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    sceneSource,
+    /<TextItem[^>]*key=\{`text-item-\$\{session\.answeredCount \|\| 0\}`\}/,
+    'TextItem key must derive from session.answeredCount so consecutive items remount (adv-232-002)',
+  );
+});
+
+test('adv-232-003 HIGH: ChoiceItem has a key prop that forces remount on every item transition', async () => {
+  // Pre-fix: `<ChoiceItem>` is rendered with NO key, so two consecutive
+  // `choose` items reuse the same component instance and the radio
+  // selection from item N carries over to item N+1. Post-fix: key uses
+  // `session.answeredCount` as a monotonic counter.
+  const sceneSource = await readFile(
+    new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    sceneSource,
+    /<ChoiceItem[^>]*key=\{`choice-item-\$\{session\.answeredCount \|\| 0\}`\}/,
+    'ChoiceItem key must derive from session.answeredCount so consecutive items remount (adv-232-003)',
+  );
+  // Paired SSR assertion: the first render shows no pre-selected radio
+  // (choiceIndex starts at ''). The second render after advancing
+  // answeredCount must render the same contract — no server-side carry.
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'active-item',
+    session: {
+      id: 'choice-carryover-ui',
+      mode: 'smart',
+      length: 2,
+      answeredCount: 1,
+      currentItem: {
+        id: '',
+        mode: 'choose',
+        inputKind: 'choice',
+        prompt: 'Which ending is correct?',
+        options: [
+          { index: 0, text: 'She asked "where is the key"' },
+          { index: 1, text: 'She asked, "Where is the key?"' },
+        ],
+      },
+    },
+  });
+  const html = harness.render();
+  // No radio input carries the `checked` attribute on SSR render (the
+  // scene's ChoiceItem starts with useState('') so no pre-selection).
+  assert.doesNotMatch(html, /<input[^>]*type="radio"[^>]*checked/);
+});
+
+test('adv-232-004 MEDIUM: FeedbackBranch gate uses !help.showFeedback (authoritative) not session.mode==="gps"', async () => {
+  // Pre-fix: the GPS minimal branch gates on the literal string
+  // `session.mode === 'gps'`. Post-fix: it gates on `!help.showFeedback`
+  // which matches the session-ui help-visibility table (the authoritative
+  // source for whether the feedback panel is visible in a given phase).
+  const sceneSource = await readFile(
+    new URL('../src/subjects/punctuation/components/PunctuationSessionScene.jsx', import.meta.url),
+    'utf8',
+  );
+  // The gate must use the authoritative `!help.showFeedback` flag.
+  assert.match(
+    sceneSource,
+    /if \(!help\.showFeedback\) \{/,
+    'FeedbackBranch must gate the minimal branch on !help.showFeedback (adv-232-004)',
+  );
+  // And the literal-GPS gate must be gone.
+  assert.doesNotMatch(
+    sceneSource,
+    /if \(session\.mode === 'gps' && !help\.showFeedback\)/,
+    'literal session.mode === "gps" gate must be removed (adv-232-004)',
+  );
+  // Paired behavioural check: the existing GPS feedback-phase scenario
+  // still hides per-item feedback (mode='gps' makes help.showFeedback false).
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.store.updateSubjectUi('punctuation', {
+    phase: 'feedback',
+    session: {
+      id: 'gps-fb-ui',
+      mode: 'gps',
+      length: 2,
+      answeredCount: 1,
+      currentItem: { id: 'x', mode: 'insert', inputKind: 'text', prompt: 'p', stem: '' },
+    },
+    feedback: {
+      kind: 'warn',
+      headline: 'Should not render',
+      body: 'Should not render either.',
+      displayCorrection: 'Hidden by the gate.',
+    },
+  });
+  const html = harness.render();
+  assert.doesNotMatch(html, /Should not render/);
+  assert.doesNotMatch(html, /Hidden by the gate\./);
+});
+
+test('design-lens HIGH: combine/transfer source blockquote carries aria-label and a bridging paragraph', () => {
+  // The blockquote is read-only source material. Screen readers need a
+  // label so a learner landing on it knows it is source (not an input
+  // field), and sighted learners need a bridging sentence between the
+  // source block and the `<label>Your answer</label>` so the connection
+  // between "read this" and "write below" is explicit.
+  const harness = sessionHarnessWithItem({
+    mode: 'combine',
+    item: {
+      id: 'sc_bridge',
+      mode: 'combine',
+      inputKind: 'text',
+      prompt: 'Combine the clauses.',
+      stem: 'A one.\nA two.',
+    },
+  });
+  const html = harness.render();
+  assert.match(
+    html,
+    /<blockquote[^>]*aria-label="Source text — read only"/,
+    'combine source blockquote must carry aria-label="Source text — read only"',
+  );
+  // Bridging copy sits between the blockquote and the Your-answer label.
+  assert.match(
+    html,
+    /Read the text above, then write your answer below\./,
+    'combine source must be followed by a visible bridging paragraph',
+  );
+});
+
+test('design-lens HIGH: every item mode passes the PUNCTUATION_CHILD_FORBIDDEN_TERMS sweep in the session scene', () => {
+  // U3 must render every item mode without leaking any adult / internal
+  // terms. The pre-existing sweep covered only `insert`. We iterate every
+  // mode so a regression in any branch (combine / transfer / paragraph /
+  // choose / fix) fails loudly.
+  const scenarios = [
+    { mode: 'insert', inputKind: 'text', prompt: 'Fix the end punctuation.', stem: 'the bell rang' },
+    { mode: 'fix', inputKind: 'text', prompt: 'Fix the speech punctuation.', stem: 'Mia said look out' },
+    { mode: 'paragraph', inputKind: 'text', prompt: 'Repair the whole passage.', stem: 'Line one.\nLine two.' },
+    { mode: 'combine', inputKind: 'text', prompt: 'Combine the clauses.', stem: 'The rain fell.\nThe pitch was wet.' },
+    { mode: 'transfer', inputKind: 'text', prompt: 'Write one accurate sentence.', stem: 'Fact: the wind blew.' },
+    {
+      mode: 'choose',
+      inputKind: 'choice',
+      prompt: 'Which ending is correct?',
+      options: [
+        { index: 0, text: 'She asked "where is the key"' },
+        { index: 1, text: 'She asked, "Where is the key?"' },
+      ],
+    },
+  ];
+  for (const extra of scenarios) {
+    const harness = sessionHarnessWithItem({
+      mode: extra.mode,
+      sessionMode: 'smart',
+      item: {
+        id: `sweep_${extra.mode}`,
+        skillIds: ['sentence_endings'],
+        ...extra,
+      },
+    });
+    const html = harness.render();
+    const leaks = forbiddenTermsInHtml(html);
+    assert.deepEqual(
+      leaks,
+      [],
+      `forbidden term leak in session scene (${extra.mode}): ${leaks.join(', ')}`,
     );
   }
 });

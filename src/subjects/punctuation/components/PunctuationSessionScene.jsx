@@ -186,13 +186,19 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit }) {
       }}
     >
       {showSource && item.stem ? (
-        <blockquote
-          className="punctuation-session-source"
-          data-punctuation-session-source
-          style={{ marginTop: 0, ...newlineTextStyle(item.stem) }}
-        >
-          {item.stem}
-        </blockquote>
+        <>
+          <blockquote
+            className="punctuation-session-source"
+            data-punctuation-session-source
+            aria-label="Source text — read only"
+            style={{ marginTop: 0, ...newlineTextStyle(item.stem) }}
+          >
+            {item.stem}
+          </blockquote>
+          <p className="small muted" data-punctuation-session-source-bridge>
+            Read the text above, then write your answer below.
+          </p>
+        </>
       ) : null}
       <label className="field">
         <span>Your answer</span>
@@ -351,9 +357,31 @@ function ActiveItemBranch({ ui, actions }) {
       {isGps ? <GpsDelayedFeedbackChips session={session} /> : null}
       {help.showTeachBox ? <CollapsedTeachBox guided={session.guided} /> : null}
 
+      {/*
+       * adv-232-002 / adv-232-003: TextItem and ChoiceItem keys use
+       * `session.answeredCount` as a monotonic counter so every item
+       * transition forces a fresh React mount regardless of item content.
+       *
+       * The previous TextItem key `item.id || item.prompt || 'text-item'`
+       * collided when two consecutive items shared the same prompt AND
+       * carried an empty id (common for paragraph-repair + combine items
+       * that cycle through the same stem shape). The collision reused the
+       * existing component instance so the prior typed answer persisted
+       * into the next item — exactly the learning #9 regression U3 was
+       * meant to FIX.
+       *
+       * ChoiceItem previously had NO key at all — every consecutive
+       * `choose` item reused the same instance, carrying the radio
+       * selection from item N into item N+1.
+       *
+       * `answeredCount` increments on every submit (shared/punctuation/
+       * service.js) so it is the robust per-transition counter — it does
+       * not depend on item id or prompt content.
+       */}
       <div className="punctuation-session-body" style={{ marginTop: 16 }}>
         {item.inputKind === 'choice' ? (
           <ChoiceItem
+            key={`choice-item-${session.answeredCount || 0}`}
             item={item}
             disabled={isDisabled}
             submitLabel={submitLabel}
@@ -361,7 +389,7 @@ function ActiveItemBranch({ ui, actions }) {
           />
         ) : (
           <TextItem
-            key={item.id || item.prompt || 'text-item'}
+            key={`text-item-${session.answeredCount || 0}`}
             item={item}
             disabled={isDisabled}
             submitLabel={submitLabel}
@@ -411,11 +439,23 @@ function FeedbackBranch({ ui, actions }) {
   const help = punctuationSessionHelpVisibility(session, 'feedback');
   const borderColor = feedback.kind === 'success' ? '#2E8479' : '#B8873F';
 
-  // GPS's scheduler skips the `feedback` phase by design (learning #10).
-  // If we land here anyway, the help visibility contract hides the feedback
-  // body — fall back to the minimal "Continue" action surface so the
-  // learner never sees per-item feedback in a GPS round.
-  if (session.mode === 'gps' && !help.showFeedback) {
+  // adv-232-004: the minimal-feedback branch gates on the authoritative
+  // `!help.showFeedback` signal from `punctuationSessionHelpVisibility`,
+  // not the literal string `session.mode === 'gps'`. `help` is the
+  // single source of truth for whether the feedback panel renders in a
+  // given phase — gating on it keeps the two in lock-step, so any future
+  // read-model shape that flips `showFeedback: false` (today only GPS
+  // mode does, but the contract is open-ended) also hides
+  // `feedback.displayCorrection` rather than leaking it behind a
+  // `<details>`. Behaviourally identical to the old gate today; future-
+  // proof against any `session.mode` coercion / re-label (e.g. a legacy-
+  // cluster mode being normalised to `'smart'` by
+  // `punctuationPrimaryModeFromPrefs`).
+  //
+  // GPS's scheduler still skips the `feedback` phase by design (learning
+  // #10). If we land here anyway, the minimal "Continue" surface fires
+  // so the learner never sees per-item feedback in a GPS round.
+  if (!help.showFeedback) {
     return (
       <section
         className="card border-top punctuation-surface punctuation-session-scene"
