@@ -8,6 +8,14 @@
 // esbuild on first call and reuses the bundle for subsequent renders. No
 // controller / store / subject-command-client plumbing; the caller owns all
 // that.
+//
+// U1 (Phase 4) also exposes `renderPrimaryModeCardElement(props)` — returns
+// the raw React element for a single `PrimaryModeCard`. Tests can read
+// `element.props.onClick` and invoke it directly to exercise the real click
+// closure without needing jsdom. This is the coverage gap the Phase 3 SSR
+// harness had: `renderToStaticMarkup` discards event-handler props, so a
+// regression in the click target (e.g. dispatching `punctuation-set-mode`
+// instead of `punctuation-start`) was invisible.
 
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -38,10 +46,19 @@ function loadRenderer() {
   writeFileSync(entryPath, `
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
-    import { PunctuationSetupScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'))};
+    import { PrimaryModeCard, PunctuationSetupScene } from ${JSON.stringify(path.join(rootDir, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'))};
 
     export function renderPunctuationSetupSceneStandalone(props) {
       return renderToStaticMarkup(React.createElement(PunctuationSetupScene, props));
+    }
+
+    // Returns the raw React element for PrimaryModeCard so tests can
+    // invoke the real onClick closure. PrimaryModeCard is a pure
+    // function component (no hooks), so calling it directly is
+    // equivalent to what React would do on mount — but we get the
+    // element back with its onClick prop intact.
+    export function renderPrimaryModeCardElement(props) {
+      return PrimaryModeCard(props);
     }
   `);
   buildSync({
@@ -64,6 +81,10 @@ function loadRenderer() {
 
 export function renderPunctuationSetupSceneStandalone(props) {
   return loadRenderer().renderPunctuationSetupSceneStandalone(props);
+}
+
+export function renderPrimaryModeCardElement(props) {
+  return loadRenderer().renderPrimaryModeCardElement(props);
 }
 
 export function cleanupPunctuationSceneRenderer() {

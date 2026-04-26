@@ -84,7 +84,32 @@ function TodayCard({ card }) {
   );
 }
 
-function PrimaryModeCard({ card, selected, disabled, actions }) {
+// Exported so `tests/react-punctuation-scene.test.js` can exercise the real
+// onClick closure directly (calling the component as a plain function and
+// invoking the returned element's `props.onClick`). The Phase 3 SSR harness
+// could only grep the rendered HTML, so a regression that swapped the click
+// dispatch target (`punctuation-start` → `punctuation-set-mode`) slipped
+// through. The click-through test below that export is U1's guard.
+//
+// U1 (Phase 4, R1): primary cards are ACTION buttons, not radio buttons.
+// Tapping one starts a session immediately via `punctuation-start` with
+// `{ mode, roundLength }` — NOT `punctuation-set-mode` (which is a
+// preference-save no-op from Setup's perspective). `aria-pressed` is
+// intentionally omitted for the same reason: no "selected" state to
+// announce, because the click fires a session rather than toggling a
+// preference. The only remaining caller of `punctuation-set-mode` from
+// this scene is the one-shot stale-prefs migration (lines 251-270).
+//
+// `data-round-length` encodes the parent-threaded `roundLength` on the
+// button DOM so SSR tests can verify the parent → card prop threading
+// without needing to fire the onClick closure. Without this attribute
+// the click-through tests (which mount PrimaryModeCard in isolation
+// with a directly-supplied roundLength) would still pass if a future
+// regression dropped the `roundLength={selectedLengthValue}` prop from
+// the parent — production would dispatch `{mode, roundLength: undefined}`
+// but unit tests would stay green. See the "parent prop-threading"
+// SSR assertions in `tests/react-punctuation-scene.test.js`.
+export function PrimaryModeCard({ card, selected, disabled, roundLength, actions }) {
   const classes = ['punctuation-primary-mode'];
   if (selected) classes.push('selected');
   if (disabled) classes.push('is-disabled');
@@ -94,14 +119,14 @@ function PrimaryModeCard({ card, selected, disabled, actions }) {
       type="button"
       className={classes.join(' ')}
       data-mode-id={card.id}
-      data-action="punctuation-set-mode"
+      data-action="punctuation-start"
       data-value={card.id}
-      aria-pressed={selected ? 'true' : 'false'}
+      data-round-length={roundLength}
       disabled={disabled}
       aria-disabled={disabled ? 'true' : undefined}
       onClick={() => {
         if (disabled) return;
-        actions.dispatch('punctuation-set-mode', { value: card.id });
+        actions.dispatch('punctuation-start', { mode: card.id, roundLength });
       }}
     >
       {card.badge ? <span className="punctuation-primary-mode-eyebrow">{card.badge}</span> : null}
@@ -322,6 +347,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
               card={card}
               selected={card.id === primaryMode}
               disabled={disabled}
+              roundLength={selectedLengthValue}
               actions={actions}
               key={card.id}
             />

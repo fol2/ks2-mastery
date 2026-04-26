@@ -10,6 +10,7 @@ import {
   PUNCTUATION_CHILD_FORBIDDEN_TERMS,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
+  PUNCTUATION_PRIMARY_MODE_CARDS,
   PUNCTUATION_SKILL_MODAL_CONTENT,
   PUNCTUATION_SKILL_MODAL_PREFERRED_EXAMPLE,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
@@ -62,7 +63,10 @@ test('punctuation React surface renders setup, active item, feedback and summary
   assert.match(setupHtml, />Smart Review</);
   assert.match(setupHtml, />Wobbly Spots</);
   assert.match(setupHtml, />GPS Check</);
-  assert.match(setupHtml, /data-action="punctuation-set-mode"/);
+  // U1 (Phase 4, R1): primary cards dispatch `punctuation-start` on click,
+  // not `punctuation-set-mode`. The old assertion was the SSR blind spot
+  // the Phase 3 regression slipped through.
+  assert.match(setupHtml, /data-action="punctuation-start"/);
 
   startOneItemPunctuationSession(harness);
   const activeHtml = harness.render();
@@ -445,9 +449,11 @@ test('punctuation setup view disables primary mode cards when availability is de
     availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' },
   });
   const html = harness.render();
+  // U1 (Phase 4): `data-action` is now `punctuation-start`. The disabled
+  // guard itself is unchanged.
   assert.match(
     html,
-    /<button[^>]*disabled[^>]*data-action="punctuation-set-mode"[^>]*data-value="smart"|<button[^>]*data-action="punctuation-set-mode"[^>]*data-value="smart"[^>]*disabled/,
+    /<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="smart"|<button[^>]*data-action="punctuation-start"[^>]*data-value="smart"[^>]*disabled/,
     'Smart Review card must be disabled under degraded availability',
   );
 });
@@ -2422,11 +2428,12 @@ test('punctuation Setup scene renders 3 primary mode cards + Open Map secondary 
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   const html = harness.render();
 
-  // Three primary journey cards, each tagged by mode id.
+  // Three primary journey cards, each tagged by mode id. U1 (Phase 4):
+  // tapping a card starts a session — `data-action` is `punctuation-start`.
   for (const modeId of ['smart', 'weak', 'gps']) {
     assert.match(
       html,
-      new RegExp(`data-action="punctuation-set-mode"[^>]*data-value="${modeId}"`),
+      new RegExp(`data-action="punctuation-start"[^>]*data-value="${modeId}"`),
       `missing primary mode card for ${modeId}`,
     );
   }
@@ -2460,7 +2467,13 @@ test('punctuation Setup scene does not render the 6 cluster focus buttons (plan 
   assert.doesNotMatch(html, /data-punctuation-gps-start/);
 });
 
-test('punctuation Setup scene Smart Review card has aria-pressed="true" when prefs.mode is smart', () => {
+// U1 (Phase 4, R1): primary cards are action buttons, not radio buttons,
+// so `aria-pressed` is removed from the primary-card element. The
+// display-collapse signal (Smart Review "feels selected" when prefs
+// collapse to smart) is now the `selected` CSS class — the tests below
+// assert on that class instead. The legacy cluster-mode → `'smart'`
+// migration still runs through `punctuation-set-mode` (unchanged).
+test('punctuation Setup scene Smart Review card carries `selected` class when prefs.mode is smart', () => {
   const harness = createPunctuationHarness();
   const learnerId = harness.store.getState().learners.selectedId;
   harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
@@ -2471,32 +2484,32 @@ test('punctuation Setup scene Smart Review card has aria-pressed="true" when pre
 
   assert.match(
     html,
-    /data-value="smart"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-value="smart"/,
-    'Smart Review card should be aria-pressed="true" when prefs.mode === "smart"',
+    /class="punctuation-primary-mode selected[^"]*"[^>]*data-mode-id="smart"/,
+    'Smart Review card should carry the `selected` class when prefs.mode === "smart"',
   );
 });
 
-test('punctuation Setup scene Wobbly card has aria-pressed="true" when prefs.mode is weak', () => {
+test('punctuation Setup scene Wobbly card carries `selected` class when prefs.mode is weak', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.dispatch('punctuation-set-mode', { value: 'weak' });
   const html = harness.render();
   assert.match(
     html,
-    /data-value="weak"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-value="weak"/,
-    'Wobbly Spots card should be aria-pressed="true" when prefs.mode === "weak"',
+    /class="punctuation-primary-mode selected[^"]*"[^>]*data-mode-id="weak"/,
+    'Wobbly Spots card should carry the `selected` class when prefs.mode === "weak"',
   );
 });
 
-test('punctuation Setup scene GPS card has aria-pressed="true" when prefs.mode is gps', () => {
+test('punctuation Setup scene GPS card carries `selected` class when prefs.mode is gps', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.dispatch('punctuation-set-mode', { value: 'gps' });
   const html = harness.render();
   assert.match(
     html,
-    /data-value="gps"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-value="gps"/,
-    'GPS Check card should be aria-pressed="true" when prefs.mode === "gps"',
+    /class="punctuation-primary-mode selected[^"]*"[^>]*data-mode-id="gps"/,
+    'GPS Check card should carry the `selected` class when prefs.mode === "gps"',
   );
 });
 
@@ -2543,11 +2556,12 @@ test('punctuation Setup scene: degraded availability disables every primary and 
   });
   const html = harness.render();
 
-  // Each primary mode card is disabled.
+  // Each primary mode card is disabled. U1 (Phase 4): `data-action` is
+  // now `punctuation-start`.
   for (const modeId of ['smart', 'weak', 'gps']) {
     assert.match(
       html,
-      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"[^>]*disabled`),
+      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"[^>]*disabled`),
       `primary mode card ${modeId} should be disabled under degraded availability`,
     );
   }
@@ -2567,10 +2581,13 @@ test('punctuation Setup scene: pendingCommand disables every primary and seconda
   });
   const html = harness.render();
 
+  // U1 (Phase 4): `data-action` is now `punctuation-start`, not
+  // `punctuation-set-mode`. The pending-command guard is unchanged —
+  // still renders each card with `disabled`.
   for (const modeId of ['smart', 'weak', 'gps']) {
     assert.match(
       html,
-      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-set-mode"[^>]*data-value="${modeId}"[^>]*disabled`),
+      new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"[^>]*disabled`),
       `primary mode card ${modeId} should be disabled while pendingCommand is set`,
     );
   }
@@ -2636,10 +2653,17 @@ test('punctuation Setup scene SSR HTML contains no forbidden child terms', () =>
 });
 
 test('punctuation Setup scene stale-prefs migration: endmarks prefs collapse to smart on first render', () => {
-  // Pre-Phase-3 stored `prefs.mode === 'endmarks'` → Setup renders with
-  // Smart Review aria-pressed="true" (display normaliser) AND first
-  // render dispatches `punctuation-set-mode` with `{ value: 'smart' }`
-  // to migrate stored state once.
+  // Pre-Phase-3 stored `prefs.mode === 'endmarks'` → the display
+  // normaliser collapses legacy cluster values to `'smart'` so the
+  // Smart Review card visually reads as the active selection, AND
+  // first render dispatches `punctuation-set-mode` with
+  // `{ value: 'smart' }` to migrate stored state once.
+  //
+  // U1 (Phase 4): primary cards are action buttons (no `aria-pressed`
+  // — R1), so the visual-selection signal is the `selected` CSS class
+  // on the Smart Review button rather than an ARIA attribute. The
+  // migration behaviour itself (stored prefs collapse to `'smart'`)
+  // is unchanged.
   const harness = createPunctuationHarness();
   const learnerId = harness.store.getState().learners.selectedId;
   harness.services.punctuation.savePrefs(learnerId, { mode: 'endmarks', roundLength: '4' });
@@ -2647,11 +2671,13 @@ test('punctuation Setup scene stale-prefs migration: endmarks prefs collapse to 
 
   // First render — the effect dispatches the migration.
   const html = harness.render();
-  // Display collapse: Smart Review reads as aria-pressed="true".
+  // Display collapse: Smart Review receives the `selected` CSS class
+  // (U1 replaces the removed `aria-pressed` attribute as the visual-
+  // selection signal).
   assert.match(
     html,
-    /data-value="smart"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-value="smart"/,
-    'Smart Review must render as aria-pressed="true" when prefs.mode is a legacy cluster value',
+    /class="punctuation-primary-mode selected[^"]*"[^>]*data-mode-id="smart"|class="punctuation-primary-mode[^"]* selected"[^>]*data-mode-id="smart"/,
+    'Smart Review must render with the `selected` class when prefs.mode is a legacy cluster value',
   );
   // Migration persisted — stored prefs.mode is now 'smart'.
   assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'smart');
@@ -3205,3 +3231,246 @@ for (const entry of PUNCTUATION_CLUSTER_MODE_MATRIX) {
     );
   });
 }
+
+// ---------------------------------------------------------------------------
+// Phase 4 U1 — primary-mode card click-through (R1, R14).
+//
+// The Phase 3 SSR harness could only grep the rendered HTML — it could not
+// fire an onClick handler, so a regression that swapped the primary card's
+// dispatch target from `punctuation-start` to `punctuation-set-mode` slipped
+// through.  The fix: tapping a primary card must start a session immediately
+// with `{ mode: <cardId>, roundLength: <prefs.roundLength> }`.
+//
+// These tests exercise the REAL onClick closure (via
+// `renderPrimaryModeCardElement`, which returns the React element straight
+// from the component function).  Invoking `element.props.onClick()` is the
+// same code path the browser would run — no SSR blind spot.
+//
+// Coverage matrix:
+//   - Each of the three primary card ids (smart / weak / gps) must dispatch
+//     `punctuation-start` with `{ mode: <id>, roundLength: '4' }`.
+//   - Non-default round lengths ('8', '12') flow through to the payload.
+//   - `disabled=true` short-circuits the dispatch entirely.
+//   - The button MUST NOT carry `aria-pressed` — primary cards are action
+//     buttons, not radio buttons.
+//   - `data-action` must be `"punctuation-start"` (not `"punctuation-set-mode"`).
+// ---------------------------------------------------------------------------
+
+function createDispatchSpy() {
+  const calls = [];
+  function dispatch(action, data) {
+    calls.push({ action, data });
+  }
+  return { dispatch, calls };
+}
+
+for (const card of PUNCTUATION_PRIMARY_MODE_CARDS) {
+  test(`U1 primary card ${card.id} onClick dispatches punctuation-start with {mode, roundLength}`, async () => {
+    const { renderPrimaryModeCardElement } = await import(
+      './helpers/punctuation-scene-render.js'
+    );
+    const spy = createDispatchSpy();
+    const element = renderPrimaryModeCardElement({
+      card,
+      selected: false,
+      disabled: false,
+      roundLength: '4',
+      actions: { dispatch: spy.dispatch },
+    });
+
+    assert.equal(typeof element.props.onClick, 'function', 'card must expose an onClick handler');
+    element.props.onClick();
+
+    assert.equal(spy.calls.length, 1, 'expected exactly one dispatch call');
+    assert.equal(
+      spy.calls[0].action,
+      'punctuation-start',
+      `card click must dispatch 'punctuation-start' (got '${spy.calls[0].action}' — Phase 3 regression used 'punctuation-set-mode')`,
+    );
+    assert.deepEqual(spy.calls[0].data, { mode: card.id, roundLength: '4' });
+  });
+}
+
+test('U1 primary card onClick carries prefs.roundLength=8 through to the start dispatch', async () => {
+  const { renderPrimaryModeCardElement } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const spy = createDispatchSpy();
+  const element = renderPrimaryModeCardElement({
+    card: PUNCTUATION_PRIMARY_MODE_CARDS[0],
+    selected: false,
+    disabled: false,
+    roundLength: '8',
+    actions: { dispatch: spy.dispatch },
+  });
+  element.props.onClick();
+  assert.equal(spy.calls.length, 1);
+  assert.deepEqual(spy.calls[0].data, { mode: 'smart', roundLength: '8' });
+});
+
+test('U1 primary card onClick carries prefs.roundLength=12 through to the start dispatch', async () => {
+  const { renderPrimaryModeCardElement } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const spy = createDispatchSpy();
+  const element = renderPrimaryModeCardElement({
+    card: PUNCTUATION_PRIMARY_MODE_CARDS[2], // gps
+    selected: false,
+    disabled: false,
+    roundLength: '12',
+    actions: { dispatch: spy.dispatch },
+  });
+  element.props.onClick();
+  assert.equal(spy.calls.length, 1);
+  assert.deepEqual(spy.calls[0].data, { mode: 'gps', roundLength: '12' });
+});
+
+test('U1 primary card onClick is a no-op when disabled=true (pending-command guard)', async () => {
+  const { renderPrimaryModeCardElement } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const spy = createDispatchSpy();
+  const element = renderPrimaryModeCardElement({
+    card: PUNCTUATION_PRIMARY_MODE_CARDS[0],
+    selected: false,
+    disabled: true,
+    roundLength: '4',
+    actions: { dispatch: spy.dispatch },
+  });
+  element.props.onClick();
+  assert.equal(spy.calls.length, 0, 'disabled card must not dispatch on click');
+});
+
+test('U1 primary card data-action is "punctuation-start" and does NOT carry aria-pressed', async () => {
+  const { renderPrimaryModeCardElement } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const spy = createDispatchSpy();
+  const element = renderPrimaryModeCardElement({
+    card: PUNCTUATION_PRIMARY_MODE_CARDS[0],
+    selected: true, // even when visually "selected", no aria-pressed — action buttons, not radios
+    disabled: false,
+    roundLength: '4',
+    actions: { dispatch: spy.dispatch },
+  });
+  assert.equal(
+    element.props['data-action'],
+    'punctuation-start',
+    `data-action must be 'punctuation-start' (got '${element.props['data-action']}' — preference-save leaked through from Phase 3)`,
+  );
+  assert.equal(
+    element.props['aria-pressed'],
+    undefined,
+    'primary cards are action buttons, not radio buttons — aria-pressed must be absent',
+  );
+});
+
+// Phase 4 U1 follow-on — parent → PrimaryModeCard prop-threading guard.
+//
+// Convergent review MEDIUM (correctness + testing): the seven click-through
+// tests above mount `PrimaryModeCard` in isolation with a directly-supplied
+// `roundLength`. That leaves a production blind spot — if a future
+// regression drops the `roundLength={selectedLengthValue}` prop from the
+// parent (PunctuationSetupScene ~line 339), production would dispatch
+// `{mode, roundLength: undefined}` but every isolation test would still
+// pass. Phase 3's SSR blind-spot bug was exactly this shape.
+//
+// Fix: PrimaryModeCard now emits `data-round-length={roundLength}` on its
+// button. Full-tree SSR (via harness.render()) routes through the real
+// `PunctuationSetupScene` parent, so the rendered attribute reflects the
+// parent-supplied `selectedLengthValue`. If a regression drops the prop,
+// `roundLength` becomes undefined and the attribute disappears from the
+// serialised markup — these assertions fail.
+//
+// Coverage:
+//   - prefs.roundLength = '4' (default) → each primary card's
+//     data-round-length is "4".
+//   - prefs.roundLength = '8' → each primary card's data-round-length is
+//     "8".
+//   - No roundLength pref at all → falls back to '4' per
+//     selectedRoundLength().
+// ---------------------------------------------------------------------------
+
+function extractPrimaryCardRoundLengths(html) {
+  const regex = /<button\b[^>]*\bdata-action="punctuation-start"[^>]*?>/g;
+  const cards = [];
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    const buttonTag = match[0];
+    const modeMatch = buttonTag.match(/\bdata-value="([^"]*)"/);
+    const roundLengthMatch = buttonTag.match(/\bdata-round-length="([^"]*)"/);
+    cards.push({
+      mode: modeMatch ? modeMatch[1] : null,
+      roundLength: roundLengthMatch ? roundLengthMatch[1] : null,
+    });
+  }
+  return cards;
+}
+
+test('U1 follow-on: parent threads prefs.roundLength="4" to every primary card (default)', () => {
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-round-length', { value: '4' });
+  const html = harness.render();
+
+  const cards = extractPrimaryCardRoundLengths(html);
+  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
+  for (const card of cards) {
+    assert.equal(
+      card.roundLength,
+      '4',
+      `primary card ${card.mode} must carry data-round-length="4" (parent prop-threading regression if missing)`,
+    );
+  }
+});
+
+test('U1 follow-on: parent threads prefs.roundLength="8" to every primary card', () => {
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '8' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-round-length', { value: '8' });
+  const html = harness.render();
+
+  const cards = extractPrimaryCardRoundLengths(html);
+  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
+  for (const card of cards) {
+    assert.equal(
+      card.roundLength,
+      '8',
+      `primary card ${card.mode} must carry data-round-length="8" (parent prop-threading regression if missing)`,
+    );
+  }
+});
+
+test('U1 follow-on: parent falls back to "4" when prefs.roundLength is absent', async () => {
+  // Bypass `createPunctuationHarness` so we control `prefs` exactly and
+  // exercise `selectedRoundLength()`'s default branch (no roundLength key
+  // at all). Uses the standalone SSR helper so the full parent tree runs.
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const html = renderPunctuationSetupSceneStandalone({
+    ui: { availability: { status: 'ready' } },
+    actions: {
+      dispatch: () => {},
+      updateSubjectUi: () => {},
+    },
+    prefs: { mode: 'smart' }, // deliberately omit roundLength
+    stats: {},
+    learner: null,
+    rewardState: {},
+  });
+
+  const cards = extractPrimaryCardRoundLengths(html);
+  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
+  for (const card of cards) {
+    assert.equal(
+      card.roundLength,
+      '4',
+      `primary card ${card.mode} must fall back to data-round-length="4" when prefs.roundLength is absent`,
+    );
+  }
+});
