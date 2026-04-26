@@ -1851,6 +1851,37 @@ async function updateOpsErrorEventStatus({ eventId, status }) {
   }
 }
 
+// P2 U3: admin-gated QA seed harness. Pipes through the Admin Ops P1
+// mutation-receipt path (`scopeType='platform'`, `scopeId='post-mega-seed:<learnerId>'`)
+// so cross-origin CSRF attempts fail at the receipt header check. No
+// optimistic patching — the seed's effect lives in child_subject_state, not
+// in the admin hub read-model, so the UI only shows a notice. After a
+// successful seed, the hub's learner diagnostics panel will reflect the new
+// state on its next refresh.
+async function applyPostMegaSeed({ learnerId, shapeName }) {
+  if (!hubApi) return;
+  if (!(typeof learnerId === 'string' && learnerId)) return;
+  if (!(typeof shapeName === 'string' && shapeName)) return;
+
+  const requestId = uid('post-mega-seed');
+  const mutation = { requestId, correlationId: requestId };
+  try {
+    const payload = await hubApi.seedPostMegaLearnerState({
+      learnerId,
+      shapeName,
+      mutation,
+    });
+    const summary = payload?.postMegaSeed || {};
+    const createdCopy = summary.createdLearner ? ' (learner created)' : '';
+    patchAdultSurfaceState((state) => ({
+      ...state,
+      notice: `Post-Mega seed applied: ${shapeName} → ${learnerId}${createdCopy}.`,
+    }));
+  } catch (error) {
+    globalThis.alert?.(`Post-Mega seed failed: ${error?.message || 'Unknown error.'}`);
+  }
+}
+
 function ensureSpellingAutoAdvanceFromCurrentState() {
   return controller.ensureSpellingAutoAdvanceFromCurrentState();
 }
@@ -2375,6 +2406,14 @@ function handleGlobalAction(action, data) {
     updateOpsErrorEventStatus({
       eventId: data?.eventId,
       status: data?.status,
+    });
+    return true;
+  }
+
+  if (action === 'post-mega-seed-apply') {
+    applyPostMegaSeed({
+      learnerId: data?.learnerId,
+      shapeName: data?.shapeName,
     });
     return true;
   }

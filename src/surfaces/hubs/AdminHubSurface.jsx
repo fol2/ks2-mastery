@@ -127,6 +127,125 @@ function PostMegaSpellingDebugPanel({ debug = null }) {
   );
 }
 
+// P2 U3: admin-only QA seed harness panel. Renders a shape dropdown +
+// learner picker + "Apply seed" button. The dropdown contents come from
+// `model.postMegaSeedHarness.shapes` (server-provided so a bundle-less local
+// fallback still gets the canonical list). Gated on platform-role = admin;
+// ops accounts see a read-only "Admin-only" notice so the panel's presence
+// in the read-model stays shape-stable.
+//
+// Accessibility: the `<label>` wraps the `<select>` so screen readers
+// announce the field name; the learner picker is a native `<select>` tied
+// by `htmlFor` via the `AdultLearnerSelect` helper used elsewhere on the
+// hub. The Apply button disables while no shape or learner is chosen.
+function PostMegaSeedHarnessPanel({ model, actions }) {
+  const isAdmin = model?.permissions?.platformRole === 'admin';
+  const shapes = Array.isArray(model?.postMegaSeedHarness?.shapes)
+    ? model.postMegaSeedHarness.shapes
+    : [];
+  const accessibleLearners = Array.isArray(model?.learnerSupport?.accessibleLearners)
+    ? model.learnerSupport.accessibleLearners
+    : [];
+  const defaultLearnerId = model?.learnerSupport?.selectedLearnerId || '';
+  const [shapeName, setShapeName] = React.useState(shapes[0] || '');
+  const [learnerId, setLearnerId] = React.useState(defaultLearnerId);
+  const [manualLearnerId, setManualLearnerId] = React.useState('');
+
+  React.useEffect(() => {
+    if (!shapeName && shapes.length) setShapeName(shapes[0]);
+  }, [shapes, shapeName]);
+  React.useEffect(() => {
+    if (!learnerId && defaultLearnerId) setLearnerId(defaultLearnerId);
+  }, [defaultLearnerId, learnerId]);
+
+  if (!isAdmin) {
+    return (
+      <section className="card" style={{ marginBottom: 20 }} data-panel="post-mega-seed-harness">
+        <div className="eyebrow">QA · post-Mega seed</div>
+        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Admin-only seed harness</h3>
+        <div className="feedback warn">Only admin accounts can apply QA seed shapes. Ops-role viewers keep read-only access to the diagnostic panels.</div>
+      </section>
+    );
+  }
+
+  const effectiveLearnerId = manualLearnerId.trim() || learnerId;
+  const canApply = Boolean(effectiveLearnerId) && Boolean(shapeName);
+
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-panel="post-mega-seed-harness">
+      <div className="eyebrow">QA · post-Mega seed</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Post-Mega learner seed harness</h3>
+      <p className="small muted">
+        Write a deterministic post-Mega learner state into the child subject
+        store. Useful for reproducing the 8 canonical fixtures without playing
+        a round. Each apply writes a mutation receipt and is reversible by
+        re-seeding a different shape.
+      </p>
+      <div className="skill-row">
+        <label className="field" style={{ minWidth: 220 }}>
+          <span>Seed shape</span>
+          <select
+            className="select"
+            name="postMegaSeedShape"
+            value={shapeName}
+            onChange={(event) => setShapeName(event.target.value)}
+          >
+            {shapes.map((shape) => (
+              <option value={shape} key={shape}>{shape}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field" style={{ minWidth: 220 }}>
+          <span>Existing learner</span>
+          <select
+            className="select"
+            name="postMegaSeedLearnerId"
+            value={learnerId}
+            onChange={(event) => setLearnerId(event.target.value)}
+          >
+            <option value="">— choose learner —</option>
+            {accessibleLearners.map((entry) => (
+              <option value={entry.learnerId} key={entry.learnerId}>
+                {entry.learnerName} · {entry.yearGroup}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field" style={{ minWidth: 220 }}>
+          <span>…or new learner id</span>
+          <input
+            className="input"
+            type="text"
+            name="postMegaSeedManualLearnerId"
+            value={manualLearnerId}
+            maxLength={64}
+            onChange={(event) => setManualLearnerId(event.target.value)}
+            placeholder="seed-learner-2026-04-26"
+          />
+        </label>
+        <div>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={!canApply}
+            onClick={() => actions.dispatch('post-mega-seed-apply', {
+              learnerId: effectiveLearnerId,
+              shapeName,
+            })}
+          >
+            Apply seed
+          </button>
+          <div className="small muted" style={{ marginTop: 6 }}>
+            {canApply
+              ? `Will write ${shapeName} → ${effectiveLearnerId}.`
+              : 'Choose a shape and learner to apply.'}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function DemoOperationsSummary({ summary = {} }) {
   const items = [
     ['Demo sessions created', summary.sessionsCreated],
@@ -678,6 +797,7 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
       <AccountOpsMetadataPanel model={model} actions={actions} />
       <ErrorLogCentrePanel model={model} actions={actions} />
       <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
+      <PostMegaSeedHarnessPanel model={model} actions={actions} />
 
       <section className="two-col" style={{ marginBottom: 20 }}>
         <article className="card">

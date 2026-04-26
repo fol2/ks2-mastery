@@ -11,6 +11,7 @@ import {
 } from '../access/roles.js';
 import { buildSpellingContentSummary, validateSpellingContentBundle } from '../../subjects/spelling/content/model.js';
 import { getSpellingPostMasteryState } from '../../subjects/spelling/read-model.js';
+import { POST_MEGA_SEED_SHAPES } from '../../../shared/spelling/post-mastery-seed-shapes.js';
 import { buildParentHubReadModel } from './parent-read-model.js';
 
 // U1 (P2): neutral "empty" debug envelope for the admin hub when no
@@ -497,7 +498,16 @@ export function buildAdminHubReadModel({
       monsterVisualConfig: monsterVisualConfig ? 'real' : 'placeholder',
       learnerSupport: 'real',
       postMasteryDebug: adminCanViewDebug && selectedDiagnostics ? 'real' : 'placeholder',
+      postMegaSeedHarness: resolvedPlatformRole === 'admin' ? 'real' : 'placeholder',
     },
     postMasteryDebug,
+    // P2 U3: seed-harness dropdown contents. Emitted as a cloned array so
+    // mutating the returned payload cannot pollute the frozen source list.
+    // The UI gates the panel on `permissions.platformRole === 'admin'`; ops
+    // accounts receive the list (needed so their admin hub read model stays
+    // shape-stable) but the React surface suppresses the control.
+    postMegaSeedHarness: {
+      shapes: [...POST_MEGA_SEED_SHAPES],
+    },
   };
 }

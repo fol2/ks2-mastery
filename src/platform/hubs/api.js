@@ -209,6 +209,25 @@ export function createHubApi({
         body: JSON.stringify(body),
       }, authSession);
     },
+    // P2 U3: admin-gated seed harness. Caller supplies learnerId, one of the
+    // 8 canonical shape names, optional day-epoch `today`, and a mutation
+    // envelope. Server responds with `{ok, postMegaSeed, postMegaSeedMutation}`
+    // where `postMegaSeed.dataKeys` is the sorted list of keys written so the
+    // UI can render a diff hint ("Wrote progress + guardian + postMega").
+    async seedPostMegaLearnerState({ learnerId, shapeName, today, mutation } = {}) {
+      const url = buildRequestUrl(baseUrl, '/api/admin/spelling/seed-post-mega');
+      const body = {
+        learnerId,
+        shapeName,
+        mutation,
+        ...(Number.isFinite(Number(today)) ? { today: Number(today) } : {}),
+      };
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      }, authSession);
+    },
     async postClientErrorEvent(event) {
       const url = buildRequestUrl(baseUrl, '/api/ops/error-event');
       // R11/R15: public endpoint — must NOT reuse the admin auth session.
