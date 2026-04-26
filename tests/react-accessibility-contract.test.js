@@ -15,6 +15,7 @@ import {
 } from './helpers/grammar-subject-harness.js';
 import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
 import { normaliseGrammarReadModel } from '../src/subjects/grammar/metadata.js';
+import { renderPunctuationSessionSceneStandalone } from './helpers/punctuation-scene-render.js';
 
 // ----------------------------------------------------------------------------
 // Phase 3 U9 — Grammar accessibility contract.
@@ -189,6 +190,21 @@ test('Grammar session error banner carries role="alert" so assistive tech announ
   }));
   const html = harness.render();
   assert.match(html, /role="alert"/);
+  // SH2-U7: the error banner id + the input's `aria-describedby`
+  // must line up so screen readers announce the error when focus
+  // lands on the input. Both attributes carry the same session-
+  // scoped id string (e.g. `grammar-session-error-sess-a11y`).
+  const bannerIdMatch = html.match(/id="(grammar-session-error-[A-Za-z0-9_-]+)"/);
+  assert.ok(bannerIdMatch, 'banner must carry a session-scoped id for aria-describedby linkage');
+  const bannerId = bannerIdMatch[1];
+  const expectedPattern = new RegExp(
+    `data-autofocus="true"[^>]*aria-describedby="${bannerId}"[^>]*aria-invalid="true"`,
+  );
+  assert.match(
+    html,
+    expectedPattern,
+    'grammar input must describe the error banner and carry aria-invalid when an error is present',
+  );
 });
 
 test('Grammar mini-test nav exposes aria-current=step + aria-pressed for assistive tech', () => {
@@ -372,4 +388,113 @@ test('home dashboard subject-grid carries keyboard-reachable open-subject button
   assert.match(html, /<button[^>]*data-action="open-subject"/);
   // Every subject card advertises its subject id (scene query uses it).
   assert.match(html, /data-action="open-subject"[^>]*data-subject-id="spelling"/);
+});
+
+// ----------------------------------------------------------------------------
+// SH2-U7 (sys-hardening p2) — Punctuation accessibility-golden contract
+// entries. Complements the Grammar entries above and the P1 U10
+// spelling-only anchor. Pins the data attributes the new
+// `tests/playwright/punctuation-accessibility-golden.playwright.test.mjs`
+// scene relies on (autofocus shim on the textarea, live-region anchor on
+// the feedback-phase heading block, aria-describedby linkage on the
+// session controls when an error is present).
+// ----------------------------------------------------------------------------
+
+test('Punctuation session textarea carries the autofocus shim and feedback live anchor for the a11y scene', () => {
+  const html = renderPunctuationSessionSceneStandalone({
+    ui: {
+      phase: 'active-item',
+      session: {
+        id: 'sess-a11y',
+        mode: 'smart',
+        answeredCount: 0,
+        length: 4,
+        currentItem: {
+          id: 'item-a11y-1',
+          prompt: 'Fix the punctuation in this sentence.',
+          inputKind: 'text',
+          mode: 'fix',
+          stem: 'hello world',
+          skillIds: [],
+        },
+      },
+    },
+    actions: { dispatch() {} },
+  });
+  // `data-autofocus="true"` on the textarea is the SSR-visible shim the
+  // runtime autofocus handler reads so keyboard-only learners land on
+  // the primary input on session mount.
+  assert.match(
+    html,
+    /<textarea[^>]*data-autofocus="true"[^>]*data-punctuation-session-input/,
+    'punctuation session textarea must carry data-autofocus for the a11y-golden scene',
+  );
+});
+
+test('Punctuation feedback heading block exposes role="status" + aria-live="polite" for assistive tech', () => {
+  const html = renderPunctuationSessionSceneStandalone({
+    ui: {
+      phase: 'feedback',
+      session: {
+        id: 'sess-a11y',
+        mode: 'smart',
+        answeredCount: 1,
+        length: 4,
+        currentItem: null,
+      },
+      feedback: {
+        kind: 'success',
+        headline: 'Nice work',
+        body: 'You nailed that one.',
+        displayCorrection: '',
+        facets: [],
+        misconceptionTags: [],
+      },
+    },
+    actions: { dispatch() {} },
+  });
+  // The live anchor sits on the inner text-block <div> — a sibling to the
+  // decorative hero image (which is aria-hidden). Screen readers announce
+  // `feedback.headline` + `feedback.body` when the phase transitions.
+  assert.match(
+    html,
+    /data-punctuation-session-feedback-live[^>]*role="status"[^>]*aria-live="polite"|role="status"[^>]*aria-live="polite"[^>]*data-punctuation-session-feedback-live/,
+    'feedback heading block must carry role=status + aria-live=polite so SR announces the headline',
+  );
+});
+
+test('Punctuation session input links to error banner via aria-describedby when ui.errorMessage is present', () => {
+  const html = renderPunctuationSessionSceneStandalone({
+    ui: {
+      phase: 'active-item',
+      errorMessage: 'Punctuation is unavailable right now.',
+      session: {
+        id: 'sess-a11y',
+        mode: 'smart',
+        answeredCount: 0,
+        length: 4,
+        currentItem: {
+          id: 'item-err-1',
+          prompt: 'Fix the punctuation in this sentence.',
+          inputKind: 'text',
+          mode: 'fix',
+          stem: 'hello world',
+          skillIds: [],
+        },
+      },
+    },
+    actions: { dispatch() {} },
+  });
+  assert.match(html, /role="alert"[^>]*aria-live="assertive"/);
+  const bannerIdMatch = html.match(/id="(punctuation-session-error-[A-Za-z0-9_-]+)"/);
+  assert.ok(bannerIdMatch, 'banner must carry a session-scoped id for aria-describedby linkage');
+  const bannerId = bannerIdMatch[1];
+  const expectedPattern = new RegExp(
+    `data-punctuation-session-input[^>]*aria-describedby="${bannerId}"[^>]*aria-invalid="true"`,
+  );
+  assert.match(
+    html,
+    expectedPattern,
+    'punctuation textarea must describe the error banner and carry aria-invalid when an error is present',
+  );
 });

@@ -123,7 +123,7 @@ function MultiField({ field, required = true, response = {} }) {
   );
 }
 
-function GrammarInput({ inputSpec, required = true, response = {} }) {
+function GrammarInput({ inputSpec, required = true, response = {}, describedBy = '' }) {
   if (inputSpec?.type === 'single_choice' || inputSpec?.type === 'checkbox_list') {
     return <ChoiceList inputSpec={inputSpec} required={required} response={response} />;
   }
@@ -144,6 +144,8 @@ function GrammarInput({ inputSpec, required = true, response = {} }) {
           placeholder={inputSpec.placeholder || ''}
           data-autofocus="true"
           required={required}
+          aria-describedby={describedBy || undefined}
+          aria-invalid={describedBy ? 'true' : undefined}
           defaultValue={String(response.answer ?? '')}
         />
       </label>
@@ -159,6 +161,8 @@ function GrammarInput({ inputSpec, required = true, response = {} }) {
         data-autofocus="true"
         autoComplete="off"
         required={required}
+        aria-describedby={describedBy || undefined}
+        aria-invalid={describedBy ? 'true' : undefined}
         defaultValue={String(response.answer ?? '')}
       />
     </label>
@@ -532,6 +536,14 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const sessionTitle = progressLabel || 'Grammar practice';
   const infoChips = grammarSessionInfoChips(session);
   const submitLabel = grammarSessionSubmitLabel(session, grammar.awaitingAdvance);
+  // SH2-U7: wire the session error banner to the primary answer input via
+  // `aria-describedby` + `aria-invalid`. Screen readers announce the banner
+  // text when focus lands on the input, so a failed submit is not silent.
+  // Stable per session id so the key is predictable for tests that assert
+  // the linkage and robust against parallel sessions in the store.
+  const errorMessageId = grammar.error
+    ? `grammar-session-error-${String(session.id || 'current').replace(/[^A-Za-z0-9_-]/g, '-')}`
+    : '';
 
   return (
     <section
@@ -614,7 +626,12 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             actions.dispatch('grammar-submit-form', { formData });
           }}
         >
-          <GrammarInput inputSpec={item.inputSpec || { type: 'text' }} required={!isMiniTest} response={currentResponse} />
+          <GrammarInput
+            inputSpec={item.inputSpec || { type: 'text' }}
+            required={!isMiniTest}
+            response={currentResponse}
+            describedBy={errorMessageId}
+          />
           {!isMiniTest ? <FeedbackPanel feedback={grammar.feedback} /> : null}
           {!isMiniTest && help.showWorkedSolution ? (
             <WorkedSolutionPanel solution={grammar.feedback?.workedSolution} />
@@ -629,7 +646,13 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             actions={actions}
           />
           {grammar.error ? (
-            <div className="feedback bad" role="alert">
+            <div
+              className="feedback bad"
+              role="alert"
+              aria-live="assertive"
+              id={errorMessageId}
+              data-grammar-session-error
+            >
               <strong>Something went wrong</strong>
               <div>{translateGrammarSessionError(grammar.error)}</div>
             </div>

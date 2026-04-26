@@ -2553,8 +2553,12 @@ test('U3 follower: error banner renders child copy with role="alert"', () => {
   assert.match(grammar.error, /Choose or type an answer/);
 
   const sessionHtml = u3ScopeToSessionHtml(harness.render());
-  // Banner preserves `role="alert"` (assistive tech contract).
-  assert.match(sessionHtml, /<div class="feedback bad" role="alert">/);
+  // Banner preserves `role="alert"` (assistive tech contract). SH2-U7
+  // also threads `aria-live="assertive"` + a session-scoped id for the
+  // `aria-describedby` linkage on the input; match the opening tag
+  // loosely so future attribute additions (e.g. a data-test-id) do
+  // not crack the assertion.
+  assert.match(sessionHtml, /<div class="feedback bad" role="alert"[^>]*>/);
   // Banner renders the child-copy translation, NOT the adult-diagnostic
   // `Grammar command failed` title the pre-follower JSX used.
   assert.doesNotMatch(sessionHtml, /Grammar command failed/);
