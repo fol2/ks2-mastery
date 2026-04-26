@@ -64,7 +64,14 @@ export function SpellingPracticeSurface(props) {
     subject,
     actions,
     runtimeReadOnly = false,
+    // P2 U1: `session` is spread from routeContext in SubjectRoute — its
+    // `platformRole` gates the adult-only "Why is Guardian locked?" link on
+    // the setup scene. Child / parent roles pass undefined and the link
+    // never renders; admin / ops adults see it and can jump into the admin
+    // hub diagnostic panel.
+    session = null,
   } = props;
+  const platformRole = typeof session?.platformRole === 'string' ? session.platformRole : '';
   const spelling = buildSpellingContext({ appState, service, repositories, subject });
   const learnerId = spelling.learner?.id || '';
   const [setupHeroTone, setSetupHeroTone] = React.useState(() => (
@@ -156,6 +163,7 @@ export function SpellingPracticeSurface(props) {
       previousHeroBg={previousHeroBg}
       actions={actions}
       runtimeReadOnly={runtimeReadOnly}
+      platformRole={platformRole}
     />
   );
 }

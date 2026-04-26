@@ -110,6 +110,34 @@ function sessionLabel(kind) {
 
 const POST_MASTERY_PREVIEW_LENGTH = 8;
 
+// U1 (P2): allowlist regex for `blockingCoreSlugsPreview`. The preview ships
+// to the Admin hub UI where (a) it could be screenshot / pasted into Slack,
+// and (b) browser URL history could cache a malformed slug that survives
+// beyond the in-memory admin state. Every slug is scrubbed through this
+// regex before it joins the preview array — anything outside the expected
+// KS2-slug shape is dropped, not rendered. H8 adversarial finding from the
+// P2 plan §U1 reviewer pass.
+//
+// The tightened shape accepts only lowercase-letter/digit segments separated
+// by single hyphens, each segment >=1 char, with at most 3 hyphens (i.e.
+// up to 4 segments total). Overall length is capped at 32 characters. This
+// keeps realistic KS2 curriculum slugs like `suffix-tion`, `i-before-e`,
+// `prefix-un-in-im` but rejects editorial accidents such as
+// `rude-word-test-do-not-ship` (5 segments, >32 chars), `abc---def`
+// (double hyphen), `a-` (trailing hyphen), `TESTING-UPPER` (uppercase),
+// `admin_internal` (underscore).
+//
+// Note: release-level publication state is enforced by the publisher; per-
+// word publication is not a production contract (content producers do not
+// set `word.published` per-word — `published` lives at release level only).
+// Relying on a `word.published !== false` guard here would be vacuously true
+// in production and give false confidence. The scrub therefore relies on
+// shape + length only. A future follow-up could add a slug allowlist at
+// the bundle publisher layer; that is out of scope for U1.
+const BLOCKING_CORE_SLUG_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+){0,3}$/;
+const BLOCKING_CORE_SLUG_MAX_LENGTH = 32;
+const BLOCKING_CORE_SLUGS_PREVIEW_LIMIT = 10;
+
 /**
  * Pure post-mastery selector. No side effects, no event-log replay — just
  * derives the aggregates the Setup / Summary / Word Bank scenes need from the
@@ -119,11 +147,19 @@ const POST_MASTERY_PREVIEW_LENGTH = 8;
  * `now` defaults to `Date.now` so callers that don't care about determinism
  * can omit it; the U4 tests always inject a fixed `now` to keep assertions
  * reproducible.
+ *
+ * U1 (P2): `sourceHint` is an optional diagnostic label ('service' | 'worker'
+ * | 'locked-fallback') that flows into `postMasteryDebug.source`. Callers
+ * set this so the Admin hub "Post-mega diagnostic panel" can distinguish
+ * a live service read from a remote-sync locked-fallback stub. Defaults to
+ * 'service' because most callers are the synchronous service path; the
+ * locked-fallback factory overrides to 'locked-fallback' explicitly.
  */
 export function getSpellingPostMasteryState({
   subjectStateRecord = null,
   runtimeSnapshot = null,
   now = Date.now,
+  sourceHint = 'service',
 } = {}) {
   const nowTs = typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now());
   const currentDay = todayDay(nowTs);
@@ -215,6 +251,93 @@ export function getSpellingPostMasteryState({
       })
     : [];
 
+  // U1 (P2): post-mastery diagnostic panel support. These aggregates are
+  // additive — every existing caller keeps its existing fields, and the
+  // new sibling lets the Admin hub surface *why* a learner's post-Mega
+  // dashboard is (or isn't) unlocked. PII-minimised: only slug strings
+  // (curriculum-public) and integer counts. No learner name, email, or
+  // adult account data flows through this object.
+  //
+  // Field definitions:
+  //  - `source`: where the snapshot came from — 'service' (direct selector
+  //     call), 'worker' (Worker engine response), 'locked-fallback' (the
+  //     shared locked-state factory). Threaded in via `sourceHint`.
+  //  - `publishedCoreCount` / `secureCoreCount` / `blockingCoreCount`: the
+  //     raw integers behind the `allWordsMega` gate. `blockingCoreCount`
+  //     is `publishedCoreCount - secureCoreCount` clamped at zero.
+  //  - `blockingCoreSlugsPreview`: first N=10 core slugs (alphabetical)
+  //     whose `progress[slug]?.stage !== 4` — i.e. what's preventing
+  //     graduation. Filtered through `BLOCKING_CORE_SLUG_PATTERN` and
+  //     `BLOCKING_CORE_SLUG_MAX_LENGTH` (shape + length scrub only —
+  //     release-level publication is enforced by the publisher; per-word
+  //     `published` is not a production contract) so misshapen slugs
+  //     never surface in admin screenshots.
+  //  - `extraWordsIgnoredCount`: count of progress entries whose word is
+  //     in the extra pool. `allWordsMega` excludes the extra pool from
+  //     either side of its comparison, so this value confirms the
+  //     exclusion count for debugging an unexpected allWordsMega value.
+  //  - `guardianMapCount`: size of the persisted guardian map (post
+  //     normalisation). Useful when a learner has orphan entries that
+  //     do not affect counts.
+  //  - `contentReleaseId`: placeholder for U2 (which introduces
+  //     `SPELLING_CONTENT_RELEASE_ID`). Null pre-U2 merge; shape in place
+  //     so U2 populates without schema churn.
+  //  - `allWordsMega`: mirror of the gate, so the admin panel does not
+  //     need to correlate with the legacy top-level field.
+  //  - `stickyUnlocked`: reads `data.postMega != null` on the persisted
+  //     subject-state record. False pre-U2 merge; U2 sets it.
+  const blockingCoreSlugsPreview = (() => {
+    const stageBySlug = Object.create(null);
+    for (const [slug, entry] of Object.entries(progressMap)) {
+      stageBySlug[slug] = normaliseProgressRecord(entry).stage;
+    }
+    const blocking = [];
+    for (const word of runtime.words) {
+      if (!word || typeof word !== 'object') continue;
+      const pool = word.spellingPool === 'extra' ? 'extra' : 'core';
+      if (pool !== 'core') continue;
+      // Release-level publication state is enforced by the publisher; per-
+      // word publication is not a production contract — the shape + length
+      // scrub below is the only line of defence in this selector.
+      const slug = typeof word.slug === 'string' ? word.slug : '';
+      if (!slug || slug.length > BLOCKING_CORE_SLUG_MAX_LENGTH || !BLOCKING_CORE_SLUG_PATTERN.test(slug)) continue;
+      const stage = stageBySlug[slug];
+      if (Number.isFinite(stage) && stage >= SECURE_STAGE) continue;
+      blocking.push(slug);
+    }
+    blocking.sort((a, b) => a.localeCompare(b));
+    return blocking.slice(0, BLOCKING_CORE_SLUGS_PREVIEW_LIMIT);
+  })();
+
+  const blockingCoreCount = Math.max(0, publishedCoreCount - secureCoreCount);
+
+  let extraWordsIgnoredCount = 0;
+  for (const [slug] of Object.entries(progressMap)) {
+    const word = runtime.bySlug[slug] || DEFAULT_WORD_BY_SLUG[slug];
+    const pool = word ? (word.spellingPool === 'extra' ? 'extra' : 'core') : 'core';
+    if (pool === 'extra') extraWordsIgnoredCount += 1;
+  }
+
+  const guardianMapCount = Object.keys(guardianMap).length;
+  const stickyUnlocked = isPlainObject(stateRecord?.data?.postMega);
+
+  const resolvedSource = sourceHint === 'worker' || sourceHint === 'locked-fallback'
+    ? sourceHint
+    : 'service';
+
+  const postMasteryDebug = {
+    source: resolvedSource,
+    publishedCoreCount,
+    secureCoreCount,
+    blockingCoreCount,
+    blockingCoreSlugsPreview,
+    extraWordsIgnoredCount,
+    guardianMapCount,
+    contentReleaseId: null,
+    allWordsMega,
+    stickyUnlocked,
+  };
+
   return {
     allWordsMega,
     guardianDueCount,
@@ -227,6 +350,7 @@ export function getSpellingPostMasteryState({
     guardianMissionAvailable,
     recommendedWords,
     nextGuardianDueDay,
+    postMasteryDebug,
   };
 }
 

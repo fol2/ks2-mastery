@@ -1024,7 +1024,10 @@ const controller = createAppController({
   runtimeBoundary,
   autoAdvanceDispatchContinue: () => handleRemoteSpellingAction('spelling-continue'),
   extraContext: () => ({
-    session: boot.session,
+    // Re-evaluate the session platformRole on every controller action so a
+    // self-demotion landed earlier in the same runtime is reflected in the
+    // context subjects receive.
+    session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
   }),
   tts,
@@ -1874,7 +1877,11 @@ function contextFor(subjectId = null) {
     runtimeBoundary,
     subjects: exposedSubjects(SUBJECTS, subjectExposureGates),
     subjectExposureGates,
-    session: boot.session,
+    // Thread the mutable `shellPlatformRole` into the session spread so
+    // downstream consumers (e.g. SpellingSetupScene role gating) see the
+    // current role after a self-demotion / role change — not the stale
+    // `boot.session.platformRole` captured at boot time.
+    session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     ...buildHubModels(appState),
@@ -1957,7 +1964,10 @@ function buildSurfaceChromeModel(appState) {
     ttsProvider: learnerId ? selectedTtsProvider() : DEFAULT_TTS_PROVIDER,
     bufferedGeminiVoice: learnerId ? selectedBufferedGeminiVoice() : DEFAULT_BUFFERED_GEMINI_VOICE,
     signedInAs: boot.session.signedIn ? (boot.session.email || '') : null,
-    session: boot.session,
+    // Thread the mutable `shellPlatformRole` so the surface chrome reflects
+    // the current role post-self-demotion rather than the stale boot-time
+    // value.
+    session: { ...boot.session, platformRole: shellPlatformRole },
     persistence: {
       mode: persistenceSnapshot?.mode || 'local-only',
       label: homePersistenceLabel(persistenceSnapshot),
