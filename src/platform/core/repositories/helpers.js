@@ -96,10 +96,18 @@ export function emptyRepositoryMeta() {
 
 export function normaliseRepositoryMeta(rawValue) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
-  return {
+  const meta = {
     version: Number.isInteger(Number(raw.version)) && Number(raw.version) > 0 ? Number(raw.version) : 1,
     migratedAt: Number.isFinite(Number(raw.migratedAt)) ? Number(raw.migratedAt) : 0,
   };
+  // P2 U5: preserve the monotonic writeVersion through normalisation so a
+  // bundle loaded from storage keeps its counter. Missing / non-finite /
+  // negative inputs collapse to 0 — the next persistAll bumps to 1.
+  const wv = Number(raw.writeVersion);
+  if (Number.isFinite(wv) && wv > 0) {
+    meta.writeVersion = Math.floor(wv);
+  }
+  return meta;
 }
 
 export function currentRepositoryMeta(now = Date.now) {

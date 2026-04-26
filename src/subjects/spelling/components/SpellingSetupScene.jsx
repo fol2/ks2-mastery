@@ -4,6 +4,7 @@ import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
 import { BOSS_DEFAULT_ROUND_LENGTH } from '../service-contract.js';
+import { SoftLockoutBanner, useSoftLockoutState } from './SoftLockoutBanner.jsx';
 import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
@@ -366,8 +367,15 @@ export function SpellingSetupScene({
   // to the admin hub where the post-mega debug panel explains the counts.
   const showPostMasteryDebugLink = adultCanSeePostMasteryDebug(platformRole) && !isPostMega;
 
+  // P2 U5: soft-lockout banner state. Renders above the setup hero when a
+  // sibling tab holds the write lock, or when the browser has no Web Locks
+  // support (fallback). Mounted once per setup render; the detector
+  // cleans up on unmount.
+  const softLockoutState = useSoftLockoutState();
+
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
+      <SoftLockoutBanner state={softLockoutState} />
       <section
         className={setupClasses.join(' ')}
         data-react-hero-contrast="true"

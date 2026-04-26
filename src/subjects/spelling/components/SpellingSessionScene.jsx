@@ -12,6 +12,7 @@ import {
   SPELLING_PERSISTENCE_WARNING_COPY,
   SPELLING_PERSISTENCE_WARNING_REASON,
 } from '../service-contract.js';
+import { SoftLockoutBanner, useSoftLockoutState } from './SoftLockoutBanner.jsx';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
 import {
   AnimatedPromptCard,
@@ -152,6 +153,13 @@ export function SpellingSessionScene({
       : SPELLING_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
     : '';
 
+  // P2 U5: soft-lockout banner — renders only when another tab holds the
+  // write lock (OTHER_TAB_ACTIVE) or the browser falls back to
+  // SINGLE_TAB_FALLBACK. In THIS_TAB_OWNS the banner is null. Detection
+  // runs in a React effect so SSR / test harnesses that render without
+  // useEffect see the default owned state.
+  const softLockoutState = useSoftLockoutState();
+
   return (
     <div className={sessionClasses.join(' ')} style={{ gridColumn: '1/-1', ...heroBgStyle(heroBg) }}>
       <SpellingHeroBackdrop url={heroBg} previousUrl={previousHeroBg} />
@@ -171,6 +179,9 @@ export function SpellingSessionScene({
             {persistenceWarningCopy}
           </div>
         ) : null}
+
+        <SoftLockoutBanner state={softLockoutState} />
+
 
         <AnimatedPromptCard heightKey={questionLayoutKey} lockHeightToKey>
           {infoChips.length ? (

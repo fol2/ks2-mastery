@@ -28,6 +28,13 @@ import {
   PERSISTENCE_TRUSTED_STATES,
 } from './persistence.js';
 import { validatePlatformRepositories } from './contract.js';
+import {
+  nextWriteVersion,
+  readWriteVersion,
+  assertNotStale,
+  WriteVersionStaleError,
+} from './locks/write-version.js';
+import { createBroadcastInvalidator } from './locks/broadcast-invalidator.js';
 
 const LEGACY_KEYS = Object.freeze({
   appState: 'ks2-platform-v2.app-state',
@@ -172,7 +179,16 @@ function createCollections(storage) {
     })
     : normaliseRepositoryBundle(loadLegacySeed(storage));
 
+  // P2 U5: preserve the persisted writeVersion across startup. Without this
+  // snapshot, a newly-constructed repository would reset its in-memory
+  // writeVersion to 0 and race a sibling tab whose disk counter is higher.
+  const persistedWriteVersion = Number(bundle.meta?.writeVersion) > 0
+    ? Math.floor(Number(bundle.meta.writeVersion))
+    : 0;
   bundle.meta = currentRepositoryMeta();
+  if (persistedWriteVersion > 0) {
+    bundle.meta.writeVersion = persistedWriteVersion;
+  }
   const error = persistBundle(storage, bundle);
   return { bundle, error };
 }
@@ -201,7 +217,14 @@ function localPersistenceSnapshot({ lastSyncAt, lastError = null, updatedAt = Da
   };
 }
 
-export function createLocalPlatformRepositories({ storage } = {}) {
+export function createLocalPlatformRepositories({
+  storage,
+  // P2 U5: pluggable broadcast / writeVersion telemetry hooks. In production
+  // they default to the real BroadcastChannel adapter + a no-op telemetry
+  // sink; tests can inject stubs to drive cross-tab scenarios.
+  broadcastInvalidator = null,
+  onWriteVersionWraparound = null,
+} = {}) {
   const resolvedStorage = storage || globalThis.localStorage || createNoopStorage();
   const { bundle: collections, error: startupError } = createCollections(resolvedStorage);
   let lastSyncAt = startupError ? 0 : nowTs();
@@ -216,6 +239,57 @@ export function createLocalPlatformRepositories({ storage } = {}) {
       })
       : null,
   }));
+
+  // P2 U5: BroadcastChannel-backed cache invalidator. In fallback hosts
+  // (BroadcastChannel unavailable) the returned adapter is a no-op — the
+  // writeVersion monotonic CAS still catches cross-tab races, just without
+  // the immediate invalidation nudge.
+  const broadcaster = broadcastInvalidator || createBroadcastInvalidator();
+
+  // P2 U5: late-acquired writeVersion from the bundle meta. On first write
+  // after this repository instance is constructed, the counter advances
+  // from whatever the disk says (or 0 for pre-U5 data).
+  if (!collections.meta || typeof collections.meta !== 'object') {
+    collections.meta = currentRepositoryMeta();
+  }
+  if (!Number.isFinite(Number(collections.meta.writeVersion))) {
+    collections.meta.writeVersion = readWriteVersion(collections.meta);
+  }
+
+  // P2 U5: subscribe to sibling-tab broadcasts. When another tab writes,
+  // invalidate our in-memory cache by re-hydrating from storage. The
+  // broadcast carries the writing tab's `writeVersion`; if ours is already
+  // ahead (shouldn't happen under normal operation — duplicate-leader
+  // edge case), skip the re-read.
+  let lastBroadcastWriteVersion = collections.meta.writeVersion || 0;
+  broadcaster.subscribe((message) => {
+    if (!message || message.kind !== 'write') return;
+    const incoming = Number(message.writeVersion) || 0;
+    if (incoming <= lastBroadcastWriteVersion) return;
+    // Re-hydrate from raw storage. This is the single point that closes
+    // the per-tab cache gap documented by tests/spelling-guardian.test.js
+    // U7's "known limitation" test.
+    try {
+      const fresh = normaliseRepositoryBundle({
+        meta: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.meta, null),
+        learners: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.learners, emptyLearnersSnapshot()),
+        subjectStates: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.subjectStates, {}),
+        practiceSessions: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.practiceSessions, []),
+        gameState: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.gameState, {}),
+        eventLog: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.eventLog, []),
+      });
+      collections.meta = fresh.meta;
+      collections.learners = fresh.learners;
+      collections.subjectStates = fresh.subjectStates;
+      collections.practiceSessions = fresh.practiceSessions;
+      collections.gameState = fresh.gameState;
+      collections.eventLog = fresh.eventLog;
+      lastBroadcastWriteVersion = Number(fresh.meta?.writeVersion) || incoming;
+    } catch (_error) {
+      /* Re-hydration failures are swallowed — next write will attempt to
+       * fix storage anyway and writeVersion CAS will catch any drift. */
+    }
+  });
 
   function updateLocalPersistence(error = null, phase = 'local-write', scope = 'localStorage') {
     if (error) {
@@ -234,14 +308,46 @@ export function createLocalPlatformRepositories({ storage } = {}) {
     return persistenceChannel.set(localPersistenceSnapshot({ lastSyncAt }));
   }
 
+  // P2 U5: wraparound telemetry hook. Forwarded to writeVersion.js on each
+  // ceiling hit. Caller can opt-in via the `onWriteVersionWraparound`
+  // factory option; default is a no-op.
+  function onWraparound(event) {
+    if (typeof onWriteVersionWraparound === 'function') {
+      try {
+        onWriteVersionWraparound(event);
+      } catch (_error) {
+        /* Telemetry failures never break the write path. */
+      }
+    }
+  }
+
   function persistAll(phase = 'local-write', scope = 'localStorage') {
-    collections.meta = currentRepositoryMeta();
+    // P2 U5: pre-write re-read of the persisted writeVersion to close the
+    // duplicate-leader race. If someone else bumped the on-disk counter
+    // between the last read and now, the CAS catches it — callers that
+    // manage their own optimistic snapshot (see `withCas` below) throw a
+    // WriteVersionStaleError. The `persistAll` baseline path just merges
+    // forward: take the max of in-memory and on-disk, then bump.
+    const diskMeta = loadCollection(resolvedStorage, REPO_STORAGE_KEYS.meta, null);
+    const diskVersion = readWriteVersion(diskMeta);
+    const memVersion = readWriteVersion(collections.meta);
+    const baseVersion = Math.max(diskVersion, memVersion);
+    collections.meta = {
+      ...currentRepositoryMeta(),
+      writeVersion: nextWriteVersion(baseVersion, { telemetry: onWraparound }),
+    };
     const error = persistBundle(resolvedStorage, collections);
     if (error) {
       updateLocalPersistence(error, phase, scope);
       return false;
     }
     updateLocalPersistence(null, phase, scope);
+    lastBroadcastWriteVersion = collections.meta.writeVersion;
+    try {
+      broadcaster.broadcast({ writeVersion: collections.meta.writeVersion });
+    } catch (_error) {
+      /* Broadcast failures never break the write path. */
+    }
     return true;
   }
 
@@ -263,6 +369,68 @@ export function createLocalPlatformRepositories({ storage } = {}) {
         return persistenceChannel.subscribe(listener);
       },
       retry: retryPersistence,
+    },
+    // P2 U5: storage-CAS metadata surface. The spelling repository reads the
+    // current writeVersion before each Guardian merge-save, passes it back
+    // on the next writeData call via `{ expectedWriteVersion }`, and maps
+    // any `WriteVersionStaleError` into a retry (re-hydrate, re-compute,
+    // re-commit with the fresher snapshot). Broadcast surface is exposed so
+    // a lock-wrapped caller can opt into notifying sibling tabs without
+    // routing through writeData (e.g. a clearAll / reset action).
+    storageCas: {
+      readWriteVersion() {
+        // Always read from raw storage so a sibling tab's write is visible
+        // even when our in-memory cache is stale. The BroadcastChannel
+        // invalidation path eventually re-hydrates the cache, but the CAS
+        // must not depend on that async propagation — it is the cross-tab
+        // correctness boundary.
+        const diskMeta = loadCollection(resolvedStorage, REPO_STORAGE_KEYS.meta, null);
+        const diskVersion = readWriteVersion(diskMeta);
+        const memVersion = readWriteVersion(collections.meta);
+        return Math.max(diskVersion, memVersion);
+      },
+      // P2 U5: rehydrate the in-memory cache from raw storage. Used by the
+      // spelling repository's CAS retry loop to ensure the next re-
+      // projection sees the winning-tab's state, not the stale cache.
+      rehydrateFromStorage() {
+        try {
+          const fresh = normaliseRepositoryBundle({
+            meta: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.meta, null),
+            learners: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.learners, emptyLearnersSnapshot()),
+            subjectStates: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.subjectStates, {}),
+            practiceSessions: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.practiceSessions, []),
+            gameState: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.gameState, {}),
+            eventLog: loadCollection(resolvedStorage, REPO_STORAGE_KEYS.eventLog, []),
+          });
+          collections.meta = fresh.meta;
+          collections.learners = fresh.learners;
+          collections.subjectStates = fresh.subjectStates;
+          collections.practiceSessions = fresh.practiceSessions;
+          collections.gameState = fresh.gameState;
+          collections.eventLog = fresh.eventLog;
+          lastBroadcastWriteVersion = readWriteVersion(fresh.meta);
+        } catch (_error) {
+          /* Ignore — next write will bump writeVersion and catch drift. */
+        }
+      },
+      broadcast(writeVersion) {
+        try {
+          broadcaster.broadcast({
+            writeVersion: Number(writeVersion) || readWriteVersion(collections.meta),
+          });
+        } catch (_error) {
+          /* Broadcast failures are swallowed; writeVersion CAS still protects writes. */
+        }
+      },
+      subscribe(listener) {
+        return broadcaster.subscribe(listener);
+      },
+      isBroadcastAvailable() {
+        return Boolean(broadcaster?.available);
+      },
+      close() {
+        if (typeof broadcaster?.close === 'function') broadcaster.close();
+      },
     },
     async hydrate() {
       return undefined;
@@ -331,7 +499,26 @@ export function createLocalPlatformRepositories({ storage } = {}) {
         persistAll('local-write', `subjectStates:${key}`);
         return normaliseSubjectStateRecord(next);
       },
-      writeData(learnerId, subjectId, data) {
+      writeData(learnerId, subjectId, data, options = {}) {
+        // P2 U5: optional optimistic-CAS. Callers that pass
+        // `{ expectedWriteVersion: N }` trigger a stale-read check before
+        // the write commits — used by the spelling service for Guardian
+        // merge-saves under two-tab contention. Hosts that don't care
+        // about CAS (legacy callers, every existing test) skip the
+        // option and the write path stays byte-for-byte compatible.
+        //
+        // Duplicate-leader handling (RxDB edge): both tabs read a stale
+        // snapshot with writeVersion=N. Tab A's pre-commit re-read sees
+        // the on-disk value jumped to N+1 (tab B already wrote) so the
+        // CAS throws WriteVersionStaleError. Tab A's caller retries,
+        // loading the fresh snapshot (via the broadcaster-triggered
+        // cache invalidation OR a direct re-read of storage), computes
+        // N+2 from it, and succeeds — both tabs' writes survive.
+        if (options && typeof options.expectedWriteVersion === 'number') {
+          const onDiskMeta = loadCollection(resolvedStorage, REPO_STORAGE_KEYS.meta, null);
+          const actual = readWriteVersion(onDiskMeta);
+          assertNotStale({ expected: options.expectedWriteVersion, actual });
+        }
         const key = subjectStateKey(learnerId, subjectId);
         const next = mergeSubjectData(collections.subjectStates[key], data, nowTs());
         collections.subjectStates[key] = next;
