@@ -3364,3 +3364,113 @@ test('U1 primary card data-action is "punctuation-start" and does NOT carry aria
     'primary cards are action buttons, not radio buttons — aria-pressed must be absent',
   );
 });
+
+// Phase 4 U1 follow-on — parent → PrimaryModeCard prop-threading guard.
+//
+// Convergent review MEDIUM (correctness + testing): the seven click-through
+// tests above mount `PrimaryModeCard` in isolation with a directly-supplied
+// `roundLength`. That leaves a production blind spot — if a future
+// regression drops the `roundLength={selectedLengthValue}` prop from the
+// parent (PunctuationSetupScene ~line 339), production would dispatch
+// `{mode, roundLength: undefined}` but every isolation test would still
+// pass. Phase 3's SSR blind-spot bug was exactly this shape.
+//
+// Fix: PrimaryModeCard now emits `data-round-length={roundLength}` on its
+// button. Full-tree SSR (via harness.render()) routes through the real
+// `PunctuationSetupScene` parent, so the rendered attribute reflects the
+// parent-supplied `selectedLengthValue`. If a regression drops the prop,
+// `roundLength` becomes undefined and the attribute disappears from the
+// serialised markup — these assertions fail.
+//
+// Coverage:
+//   - prefs.roundLength = '4' (default) → each primary card's
+//     data-round-length is "4".
+//   - prefs.roundLength = '8' → each primary card's data-round-length is
+//     "8".
+//   - No roundLength pref at all → falls back to '4' per
+//     selectedRoundLength().
+// ---------------------------------------------------------------------------
+
+function extractPrimaryCardRoundLengths(html) {
+  const regex = /<button\b[^>]*\bdata-action="punctuation-start"[^>]*?>/g;
+  const cards = [];
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    const buttonTag = match[0];
+    const modeMatch = buttonTag.match(/\bdata-value="([^"]*)"/);
+    const roundLengthMatch = buttonTag.match(/\bdata-round-length="([^"]*)"/);
+    cards.push({
+      mode: modeMatch ? modeMatch[1] : null,
+      roundLength: roundLengthMatch ? roundLengthMatch[1] : null,
+    });
+  }
+  return cards;
+}
+
+test('U1 follow-on: parent threads prefs.roundLength="4" to every primary card (default)', () => {
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-round-length', { value: '4' });
+  const html = harness.render();
+
+  const cards = extractPrimaryCardRoundLengths(html);
+  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
+  for (const card of cards) {
+    assert.equal(
+      card.roundLength,
+      '4',
+      `primary card ${card.mode} must carry data-round-length="4" (parent prop-threading regression if missing)`,
+    );
+  }
+});
+
+test('U1 follow-on: parent threads prefs.roundLength="8" to every primary card', () => {
+  const harness = createPunctuationHarness();
+  const learnerId = harness.store.getState().learners.selectedId;
+  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '8' });
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  harness.dispatch('punctuation-set-round-length', { value: '8' });
+  const html = harness.render();
+
+  const cards = extractPrimaryCardRoundLengths(html);
+  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
+  for (const card of cards) {
+    assert.equal(
+      card.roundLength,
+      '8',
+      `primary card ${card.mode} must carry data-round-length="8" (parent prop-threading regression if missing)`,
+    );
+  }
+});
+
+test('U1 follow-on: parent falls back to "4" when prefs.roundLength is absent', async () => {
+  // Bypass `createPunctuationHarness` so we control `prefs` exactly and
+  // exercise `selectedRoundLength()`'s default branch (no roundLength key
+  // at all). Uses the standalone SSR helper so the full parent tree runs.
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const html = renderPunctuationSetupSceneStandalone({
+    ui: { availability: { status: 'ready' } },
+    actions: {
+      dispatch: () => {},
+      updateSubjectUi: () => {},
+    },
+    prefs: { mode: 'smart' }, // deliberately omit roundLength
+    stats: {},
+    learner: null,
+    rewardState: {},
+  });
+
+  const cards = extractPrimaryCardRoundLengths(html);
+  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
+  for (const card of cards) {
+    assert.equal(
+      card.roundLength,
+      '4',
+      `primary card ${card.mode} must fall back to data-round-length="4" when prefs.roundLength is absent`,
+    );
+  }
+});

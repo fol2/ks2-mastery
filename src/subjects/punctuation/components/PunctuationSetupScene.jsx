@@ -99,6 +99,16 @@ function TodayCard({ card }) {
 // announce, because the click fires a session rather than toggling a
 // preference. The only remaining caller of `punctuation-set-mode` from
 // this scene is the one-shot stale-prefs migration (lines 251-270).
+//
+// `data-round-length` encodes the parent-threaded `roundLength` on the
+// button DOM so SSR tests can verify the parent → card prop threading
+// without needing to fire the onClick closure. Without this attribute
+// the click-through tests (which mount PrimaryModeCard in isolation
+// with a directly-supplied roundLength) would still pass if a future
+// regression dropped the `roundLength={selectedLengthValue}` prop from
+// the parent — production would dispatch `{mode, roundLength: undefined}`
+// but unit tests would stay green. See the "parent prop-threading"
+// SSR assertions in `tests/react-punctuation-scene.test.js`.
 export function PrimaryModeCard({ card, selected, disabled, roundLength, actions }) {
   const classes = ['punctuation-primary-mode'];
   if (selected) classes.push('selected');
@@ -111,6 +121,7 @@ export function PrimaryModeCard({ card, selected, disabled, roundLength, actions
       data-mode-id={card.id}
       data-action="punctuation-start"
       data-value={card.id}
+      data-round-length={roundLength}
       disabled={disabled}
       aria-disabled={disabled ? 'true' : undefined}
       onClick={() => {
