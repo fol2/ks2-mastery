@@ -22,28 +22,52 @@
 //   0 — all steps green.
 //   1 — one or more steps returned non-2xx. stdout includes the
 //       correlation id + status of the first failure.
-//   2 — usage error (missing env var, malformed base URL).
+//   2 — usage error (missing env var, malformed base URL, or
+//       `SMOKE_ACCOUNT_DIRTY` pre-run canary failure).
+//   3 — `STATE_DRIFT_DETECTED`: the forward mutation stamped the smoke
+//       account but the reverse mutation failed even after one retry.
+//       Operator must manually reset the smoke account's `plan_label`
+//       before the next run — see the runbook's "State drift recovery"
+//       section in `docs/hardening/admin-ops-smoke-setup.md`.
 //
 // CLI entrypoint guard uses `pathToFileURL(process.argv[1]).href ===
 // import.meta.url` per Windows hygiene — avoids the POSIX-only form
 // that misbehaves on Windows where drive letters diverge.
 
 import { pathToFileURL } from 'node:url';
+import { randomUUID } from 'node:crypto';
 
 export const EXIT_OK = 0;
 export const EXIT_FAILURE = 1;
 export const EXIT_USAGE = 2;
+// I3 (reviewer): state-drift is a distinct failure mode — the forward
+// mutation succeeded but the reverse did not, so the smoke account is
+// left with a stamped `smoke-<iso>` plan label that will be captured
+// as the "original" on the next run. Loud, grep-friendly exit code so
+// operators can alert on it in CI without parsing the JSON envelope.
+// `3` is used rather than overloading `2` (usage error) so the two
+// root causes stay separable at the shell level.
+export const EXIT_STATE_DRIFT = 3;
 
 const DEFAULT_BASE_URL = 'https://ks2.eugnel.uk';
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 function resolveBaseUrl(env = process.env) {
   const raw = env.KS2_SMOKE_BASE_URL || DEFAULT_BASE_URL;
+  let parsed;
   try {
-    return new URL(raw).origin;
+    parsed = new URL(raw);
   } catch (error) {
     throw new Error(`KS2_SMOKE_BASE_URL is not a valid URL: ${raw} (${error?.message || error})`);
   }
+  // I7 (reviewer): HTTPS-only. The smoke run POSTs the smoke account
+  // password to `/api/auth/login`; allowing an HTTP base URL would let
+  // a misconfigured runner leak the credential in plain text. Reject
+  // any non-HTTPS scheme at startup with a clear message.
+  if (parsed.protocol !== 'https:') {
+    throw new Error(`KS2_SMOKE_BASE_URL must use https:// (got ${parsed.protocol}//${parsed.host})`);
+  }
+  return parsed.origin;
 }
 
 function resolveTimeout(env = process.env) {
@@ -91,8 +115,14 @@ async function readJsonSafe(response) {
 }
 
 function makeRequestId(sequence) {
+  // I2 (reviewer): previously `smoke-<YYYY-MM-DD>-<sequence>`, which
+  // collides between two same-day runs so the receipt cache keyed on
+  // (accountId, requestId) sees replay ambiguity. Append the first
+  // 8 hex chars of a UUID to guarantee per-invocation uniqueness while
+  // keeping the request id human-scannable in the admin activity panel.
   const today = new Date().toISOString().slice(0, 10);
-  return `smoke-${today}-${sequence}`;
+  const uuid = randomUUID();
+  return `smoke-${today}-${sequence}-${uuid.slice(0, 8)}`;
 }
 
 function sameOriginHeaders(origin, cookie, extra = {}) {
@@ -159,10 +189,25 @@ function assertStepOk(step, { response, payload }) {
 }
 
 function assertAdminHubPanels(payload) {
-  // The four P1.5 panels must be present on the admin hub envelope.
-  const panels = payload?.panels || payload?.adminOps || payload;
-  const requiredKeys = ['kpi', 'activity', 'errorEvents', 'accountsMetadata'];
-  const missing = requiredKeys.filter((key) => !panels?.[key] && !payload?.[key]);
+  // B1 (reviewer): the admin hub emits `{ ok, adminHub: { dashboardKpis,
+  // opsActivityStream, accountOpsMetadata, errorLogSummary, ... } }`
+  // (see `worker/src/repository.js::readAdminHub`). The previous shape
+  // (`panels`, `adminOps`, top-level `kpi`/`activity`) never existed, so
+  // the assertion was effectively a no-op. Read from `payload.adminHub`
+  // and check the four canonical keys. Reject explicitly if `adminHub`
+  // is missing too — absent-envelope is a distinct failure mode and
+  // deserves its own error message.
+  const adminHub = payload && typeof payload === 'object' ? payload.adminHub : null;
+  if (!adminHub || typeof adminHub !== 'object') {
+    throw new SmokeFailure({
+      step: 'admin-hub panels',
+      status: 200,
+      correlationId: correlationIdFromPayload(payload),
+      payload: { missing: ['adminHub'] },
+    });
+  }
+  const requiredKeys = ['dashboardKpis', 'opsActivityStream', 'errorLogSummary', 'accountOpsMetadata'];
+  const missing = requiredKeys.filter((key) => adminHub[key] === undefined || adminHub[key] === null);
   if (missing.length > 0) {
     throw new SmokeFailure({
       step: 'admin-hub panels',
@@ -263,42 +308,124 @@ export async function runSmoke({
       });
     }
     const originalPlanLabel = typeof smokeRow.planLabel === 'string' ? smokeRow.planLabel : '';
+    // I3 (reviewer) pre-run canary: a stamped `smoke-<iso>` label on the
+    // smoke account means the previous run's reverse mutation never
+    // landed. Treating that value as the "original" would propagate the
+    // drift forever. Refuse to run and emit a `SMOKE_ACCOUNT_DIRTY`
+    // error with clear remediation instructions.
+    if (originalPlanLabel.startsWith('smoke-')) {
+      emit({
+        ok: false,
+        exit_code: EXIT_USAGE,
+        base_url: baseUrl,
+        error: 'SMOKE_ACCOUNT_DIRTY',
+        details: {
+          accountId: smokeRow.accountId,
+          currentPlanLabel: originalPlanLabel,
+          hint:
+            'The smoke account\'s plan_label still carries a smoke-<iso> stamp from a '
+            + 'prior run whose reverse mutation did not land. Reset it manually to a '
+            + 'non-smoke value via the admin hub before re-running. See '
+            + '`docs/hardening/admin-ops-smoke-setup.md` "State drift recovery".',
+        },
+        steps,
+      });
+      return EXIT_USAGE;
+    }
     const stampedPlanLabel = `smoke-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}`;
 
     // 5. PUT no-op `plan_label` update on the smoke account only — then
     //    PUT the inverse so the post-smoke state equals the pre-smoke
     //    state. Idempotency keys use the smoke-<iso>-<seq> convention.
+    // I3 (reviewer): the forward/reverse pair is wrapped in a try/finally
+    // so a failing reverse PUT still gets retried exactly once. If the
+    // retry also fails, the script exits with `EXIT_STATE_DRIFT` so CI
+    // can alert on the distinct failure mode. The forward mutation
+    // tracks success via `forwardApplied` so the finally block only
+    // attempts cleanup when a stamp actually landed.
     const forwardRequestId = makeRequestId(sequence + 1);
-    const forward = await apiSend({
-      baseUrl,
-      method: 'PUT',
-      path: `/api/admin/accounts/${encodeURIComponent(smokeRow.accountId)}/ops-metadata`,
-      cookie,
-      timeoutMs,
-      body: {
-        patch: { planLabel: stampedPlanLabel },
-        requestId: forwardRequestId,
-        correlationId: forwardRequestId,
-      },
-    });
-    assertStepOk('account-ops-metadata forward update', forward);
-    recordStep('account-ops-metadata forward update', { requestId: forwardRequestId });
+    let forwardApplied = false;
+    let reverseApplied = false;
+    try {
+      const forward = await apiSend({
+        baseUrl,
+        method: 'PUT',
+        path: `/api/admin/accounts/${encodeURIComponent(smokeRow.accountId)}/ops-metadata`,
+        cookie,
+        timeoutMs,
+        body: {
+          patch: { planLabel: stampedPlanLabel },
+          requestId: forwardRequestId,
+          correlationId: forwardRequestId,
+        },
+      });
+      assertStepOk('account-ops-metadata forward update', forward);
+      forwardApplied = true;
+      recordStep('account-ops-metadata forward update', { requestId: forwardRequestId });
 
-    const reverseRequestId = makeRequestId(sequence + 1);
-    const reverse = await apiSend({
-      baseUrl,
-      method: 'PUT',
-      path: `/api/admin/accounts/${encodeURIComponent(smokeRow.accountId)}/ops-metadata`,
-      cookie,
-      timeoutMs,
-      body: {
-        patch: { planLabel: originalPlanLabel },
-        requestId: reverseRequestId,
-        correlationId: reverseRequestId,
-      },
-    });
-    assertStepOk('account-ops-metadata reverse update', reverse);
-    recordStep('account-ops-metadata reverse update', { requestId: reverseRequestId });
+      const reverseRequestId = makeRequestId(sequence + 1);
+      const reverse = await apiSend({
+        baseUrl,
+        method: 'PUT',
+        path: `/api/admin/accounts/${encodeURIComponent(smokeRow.accountId)}/ops-metadata`,
+        cookie,
+        timeoutMs,
+        body: {
+          patch: { planLabel: originalPlanLabel },
+          requestId: reverseRequestId,
+          correlationId: reverseRequestId,
+        },
+      });
+      assertStepOk('account-ops-metadata reverse update', reverse);
+      reverseApplied = true;
+      recordStep('account-ops-metadata reverse update', { requestId: reverseRequestId });
+    } finally {
+      // If we stamped the smoke account but the reverse never landed,
+      // retry once. If that second attempt still fails, emit a loud
+      // `STATE_DRIFT_DETECTED` envelope and exit with `EXIT_STATE_DRIFT`.
+      if (forwardApplied && !reverseApplied) {
+        const retryRequestId = makeRequestId(sequence + 1);
+        try {
+          const retry = await apiSend({
+            baseUrl,
+            method: 'PUT',
+            path: `/api/admin/accounts/${encodeURIComponent(smokeRow.accountId)}/ops-metadata`,
+            cookie,
+            timeoutMs,
+            body: {
+              patch: { planLabel: originalPlanLabel },
+              requestId: retryRequestId,
+              correlationId: retryRequestId,
+            },
+          });
+          if (retry.response.ok && retry.payload?.ok !== false) {
+            reverseApplied = true;
+            recordStep('account-ops-metadata reverse retry', { requestId: retryRequestId });
+          }
+        } catch {
+          // Fall through — drift envelope follows.
+        }
+        if (!reverseApplied) {
+          emit({
+            ok: false,
+            exit_code: EXIT_STATE_DRIFT,
+            base_url: baseUrl,
+            error: 'STATE_DRIFT_DETECTED',
+            details: {
+              accountId: smokeRow.accountId,
+              lastKnownGoodPlanLabel: originalPlanLabel,
+              stampedPlanLabel,
+              hint:
+                'The forward mutation stamped the smoke account, both reverse '
+                + 'attempts failed, and the account plan_label remains smoke-<iso>. '
+                + 'Manually reset the plan_label via the admin hub before re-running.',
+            },
+            steps,
+          });
+          return EXIT_STATE_DRIFT;
+        }
+      }
+    }
 
     // 6. POST a synthetic error event from a fake SHA release so the
     //    ingest path is exercised end-to-end. Receipt accepts or dedups
@@ -315,7 +442,12 @@ export async function runSmoke({
         firstFrame: 'at smokeProducer (smoke.mjs:1)',
         routeName: '/smoke',
         userAgent: 'ks2-admin-ops-smoke',
-        release: 'smoke-release-0000000',
+        // I10 (reviewer): Phase E validates `release` against
+        // `/^[a-f0-9]{6,40}$/` (SHA-shaped). `smoke-release-0000000`
+        // will fail that regex once shipped. `0000000` is a 7-char hex
+        // string that passes validation, is clearly a placeholder, and
+        // still lets the admin hub filter out smoke ingest by release.
+        release: '0000000',
       },
     });
     assertStepOk('ops-error-event ingest', errorIngest);
