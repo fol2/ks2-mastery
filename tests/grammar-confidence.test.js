@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   deriveGrammarConfidence,
   GRAMMAR_CONFIDENCE_LABELS,
-} from '../worker/src/subjects/grammar/read-models.js';
+} from '../shared/grammar/confidence.js';
 
 test('U6: GRAMMAR_CONFIDENCE_LABELS lists all five labels', () => {
   assert.deepEqual(GRAMMAR_CONFIDENCE_LABELS.slice().sort(), [

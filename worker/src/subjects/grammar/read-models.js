@@ -9,8 +9,13 @@ import {
   GRAMMAR_ENABLED_MODES,
   GRAMMAR_LOCKED_MODES,
   GRAMMAR_SERVER_AUTHORITY,
-  grammarConceptStatus,
 } from './engine.js';
+import {
+  deriveGrammarConfidence,
+  GRAMMAR_CONFIDENCE_LABELS,
+  GRAMMAR_RECENT_ATTEMPT_HORIZON,
+  grammarConceptStatus,
+} from '../../../../shared/grammar/confidence.js';
 import {
   GRAMMAR_TRANSFER_PROMPTS,
   GRAMMAR_TRANSFER_MAX_PROMPTS as GRAMMAR_TRANSFER_MAX_PROMPTS_LIMIT,
@@ -384,7 +389,9 @@ function safeSession(session, now = Date.now()) {
 }
 
 // U6 confidence taxonomy — five labels driven by strength, streak, recent
-// misses, and spacing. Derived read-model projection; never mutates state.
+// misses, and spacing. See `shared/grammar/confidence.js` for the single
+// source of truth (U8 lifted the derivation + label array + status machine
+// into that shared module so client and Worker can never drift).
 //
 //   emerging     <= 2 attempts (thin evidence, show as "Emerging")
 //   needs-repair weak status OR >= 2 recent misses
@@ -392,29 +399,6 @@ function safeSession(session, now = Date.now()) {
 //   consolidating strength >= 0.82 AND correctStreak >= 3 AND intervalDays < 7
 //                (heavy same-week practice, not yet spaced)
 //   building     everything else
-//
-// Notes:
-// - Low-strength detection is delegated to `status === 'weak'`, not to a raw
-//   strength threshold. The grammarConceptStatus machine is the authoritative
-//   source for "weak"; if it declares a node weak, needs-repair follows.
-//   Raw strength alone does not trigger needs-repair because strength can
-//   drift below a threshold momentarily after a single wrong answer without
-//   the status machine escalating it.
-// - The label order is "weakest-to-strongest then needs-repair" by semantic
-//   intent. Consumers iterating the frozen array get that semantic order.
-export const GRAMMAR_CONFIDENCE_LABELS = Object.freeze([
-  'emerging',
-  'building',
-  'consolidating',
-  'secure',
-  'needs-repair',
-]);
-
-// Shared horizon for "recent" windows in the confidence projection.
-// Exposed so parent hubs and other consumers can describe the signal
-// consistently ("missed 2 of the last N attempts"). The engine caps
-// state.recentAttempts at 80 at write time; this is the read-side slice.
-export const GRAMMAR_RECENT_ATTEMPT_HORIZON = 12;
 
 function intervalDaysFromNode(node) {
   if (!node) return 0;
@@ -457,22 +441,6 @@ function distinctTemplatesFor(recentAttempts, matcher) {
     }
   }
   return seen.size;
-}
-
-export function deriveGrammarConfidence(raw) {
-  const input = isPlainObject(raw) ? raw : {};
-  const { status, attempts, strength, correctStreak, intervalDays, recentMisses } = input;
-  const attemptCount = Math.max(0, Number(attempts) || 0);
-  const strengthValue = Number.isFinite(Number(strength)) ? Number(strength) : 0.25;
-  const streak = Math.max(0, Number(correctStreak) || 0);
-  const spacingDays = Math.max(0, Number(intervalDays) || 0);
-  const misses = Math.max(0, Number(recentMisses) || 0);
-
-  if (attemptCount <= 2) return 'emerging';
-  if (status === 'weak' || misses >= 2) return 'needs-repair';
-  if (strengthValue >= 0.82 && streak >= 3 && spacingDays >= 7) return 'secure';
-  if (strengthValue >= 0.82 && streak >= 3 && spacingDays < 7) return 'consolidating';
-  return 'building';
 }
 
 function conceptMap(state, now) {

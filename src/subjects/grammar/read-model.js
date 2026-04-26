@@ -1,3 +1,4 @@
+import { grammarConceptStatus } from '../../../shared/grammar/confidence.js';
 import { GRAMMAR_CLIENT_CONCEPTS } from './metadata.js';
 
 const QUESTION_TYPE_LABELS = Object.freeze({
@@ -47,15 +48,6 @@ function normaliseMasteryNode(rawValue) {
     lastWrongAt: typeof raw.lastWrongAt === 'string' ? raw.lastWrongAt : null,
     correctStreak: Math.max(0, Math.floor(Number(raw.correctStreak) || 0)),
   };
-}
-
-function grammarConceptStatus(node, nowTs) {
-  const value = normaliseMasteryNode(node);
-  if (!value.attempts) return 'new';
-  if (value.strength < 0.42 || value.wrong > value.correct + 1) return 'weak';
-  if ((value.dueAt || 0) <= nowTs) return 'due';
-  if (value.strength >= 0.82 && value.intervalDays >= 7 && value.correctStreak >= 3) return 'secured';
-  return 'learning';
 }
 
 function accuracyPercent(correct, wrong) {
