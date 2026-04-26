@@ -23,14 +23,25 @@ function optionValue(option) {
   return String(option?.value ?? '');
 }
 
-function ChoiceList({ inputSpec, required = true, response = {} }) {
+function ChoiceList({ inputSpec, required = true, response = {}, describedBy = '' }) {
   const options = Array.isArray(inputSpec?.options) ? inputSpec.options : [];
   const type = inputSpec?.type === 'checkbox_list' ? 'checkbox' : 'radio';
   const name = inputSpec?.type === 'checkbox_list' ? 'selected' : 'answer';
   const selectedValues = new Set(Array.isArray(response.selected) ? response.selected.map(String) : []);
   const selectedAnswer = String(response.answer ?? '');
+  // SH2-U7 review follow-up (FIX-1): thread `describedBy` + `aria-invalid` to
+  // the role wrapper so a screen reader announces `grammar.error` when focus
+  // lands on any of the inner radios/checkboxes. Punctuation's ChoiceItem
+  // applies the same pattern on its radiogroup wrapper — grammar was
+  // previously asymmetric (text / textarea threaded, choices dropped).
+  const role = type === 'checkbox' ? 'group' : 'radiogroup';
   return (
-    <div className={`grammar-choice-list ${inputSpec?.asTokens ? 'tokens' : ''}`}>
+    <div
+      className={`grammar-choice-list ${inputSpec?.asTokens ? 'tokens' : ''}`}
+      role={role}
+      aria-describedby={describedBy || undefined}
+      aria-invalid={describedBy ? 'true' : undefined}
+    >
       {options.map((option) => {
         const value = optionValue(option);
         const checked = type === 'checkbox' ? selectedValues.has(value) : selectedAnswer === value;
@@ -45,11 +56,20 @@ function ChoiceList({ inputSpec, required = true, response = {} }) {
   );
 }
 
-function TableChoice({ inputSpec, required = true, response = {} }) {
+function TableChoice({ inputSpec, required = true, response = {}, describedBy = '' }) {
   const rows = Array.isArray(inputSpec?.rows) ? inputSpec.rows : [];
   const columns = Array.isArray(inputSpec?.columns) ? inputSpec.columns : [];
+  // SH2-U7 review follow-up (FIX-1): describedBy + aria-invalid anchored to
+  // the wrapping `<div>` so assistive tech announces the error when focus
+  // moves into any of the inner radios. Each row already carries its own
+  // `aria-label` ("Sentence X: statement"); this adds the banner linkage on
+  // top of those without touching the per-row labelling.
   return (
-    <div className="grammar-table-wrap">
+    <div
+      className="grammar-table-wrap"
+      aria-describedby={describedBy || undefined}
+      aria-invalid={describedBy ? 'true' : undefined}
+    >
       <table className="grammar-table-choice">
         <thead>
           <tr>
@@ -123,16 +143,45 @@ function MultiField({ field, required = true, response = {} }) {
   );
 }
 
-function GrammarInput({ inputSpec, required = true, response = {} }) {
+function GrammarInput({ inputSpec, required = true, response = {}, describedBy = '' }) {
   if (inputSpec?.type === 'single_choice' || inputSpec?.type === 'checkbox_list') {
-    return <ChoiceList inputSpec={inputSpec} required={required} response={response} />;
+    return (
+      <ChoiceList
+        inputSpec={inputSpec}
+        required={required}
+        response={response}
+        describedBy={describedBy}
+      />
+    );
   }
   if (inputSpec?.type === 'table_choice') {
-    return <TableChoice inputSpec={inputSpec} required={required} response={response} />;
+    return (
+      <TableChoice
+        inputSpec={inputSpec}
+        required={required}
+        response={response}
+        describedBy={describedBy}
+      />
+    );
   }
   if (inputSpec?.type === 'multi') {
     const fields = Array.isArray(inputSpec?.fields) ? inputSpec.fields : [];
-    return <div className="grammar-multi-fields">{fields.map((field) => <MultiField field={field} required={required} response={response} key={field.key} />)}</div>;
+    // SH2-U7 review follow-up (FIX-1): describedBy + aria-invalid on the
+    // wrapping container so the grouped fields inherit the error linkage.
+    // Each inner field keeps its own label (implicit via `<label>` + `<span>`)
+    // — the container anchor is the authoritative banner reference.
+    return (
+      <div
+        className="grammar-multi-fields"
+        role="group"
+        aria-describedby={describedBy || undefined}
+        aria-invalid={describedBy ? 'true' : undefined}
+      >
+        {fields.map((field) => (
+          <MultiField field={field} required={required} response={response} key={field.key} />
+        ))}
+      </div>
+    );
   }
   if (inputSpec?.type === 'textarea') {
     return (
@@ -144,6 +193,8 @@ function GrammarInput({ inputSpec, required = true, response = {} }) {
           placeholder={inputSpec.placeholder || ''}
           data-autofocus="true"
           required={required}
+          aria-describedby={describedBy || undefined}
+          aria-invalid={describedBy ? 'true' : undefined}
           defaultValue={String(response.answer ?? '')}
         />
       </label>
@@ -159,6 +210,8 @@ function GrammarInput({ inputSpec, required = true, response = {} }) {
         data-autofocus="true"
         autoComplete="off"
         required={required}
+        aria-describedby={describedBy || undefined}
+        aria-invalid={describedBy ? 'true' : undefined}
         defaultValue={String(response.answer ?? '')}
       />
     </label>
@@ -168,8 +221,18 @@ function GrammarInput({ inputSpec, required = true, response = {} }) {
 function FeedbackPanel({ feedback }) {
   if (!feedback?.result) return null;
   const result = feedback.result;
+  // SH2-U7 review follow-up (FIX-3): `data-grammar-session-feedback-live`
+  // mirrors Punctuation's `data-punctuation-session-feedback-live` anchor
+  // so agent-native / a11y scenes can query the live region deterministically
+  // instead of coupling to the `.feedback.good` class bag (which the shared
+  // surface uses for many other panels).
   return (
-    <div className={`feedback ${result.correct ? 'good' : 'warn'}`} role="status" aria-live="polite">
+    <div
+      className={`feedback ${result.correct ? 'good' : 'warn'}`}
+      role="status"
+      aria-live="polite"
+      data-grammar-session-feedback-live
+    >
       <strong>{result.feedbackShort || (result.correct ? 'Correct.' : 'Not quite.')}</strong>
       <div>{result.feedbackLong || result.minimalHint || ''}</div>
       {result.answerText ? <div className="small muted">Answer: {result.answerText}</div> : null}
@@ -532,6 +595,14 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
   const sessionTitle = progressLabel || 'Grammar practice';
   const infoChips = grammarSessionInfoChips(session);
   const submitLabel = grammarSessionSubmitLabel(session, grammar.awaitingAdvance);
+  // SH2-U7: wire the session error banner to the primary answer input via
+  // `aria-describedby` + `aria-invalid`. Screen readers announce the banner
+  // text when focus lands on the input, so a failed submit is not silent.
+  // Stable per session id so the key is predictable for tests that assert
+  // the linkage and robust against parallel sessions in the store.
+  const errorMessageId = grammar.error
+    ? `grammar-session-error-${String(session.id || 'current').replace(/[^A-Za-z0-9_-]/g, '-')}`
+    : '';
 
   return (
     <section
@@ -614,7 +685,12 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             actions.dispatch('grammar-submit-form', { formData });
           }}
         >
-          <GrammarInput inputSpec={item.inputSpec || { type: 'text' }} required={!isMiniTest} response={currentResponse} />
+          <GrammarInput
+            inputSpec={item.inputSpec || { type: 'text' }}
+            required={!isMiniTest}
+            response={currentResponse}
+            describedBy={errorMessageId}
+          />
           {!isMiniTest ? <FeedbackPanel feedback={grammar.feedback} /> : null}
           {!isMiniTest && help.showWorkedSolution ? (
             <WorkedSolutionPanel solution={grammar.feedback?.workedSolution} />
@@ -629,7 +705,13 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             actions={actions}
           />
           {grammar.error ? (
-            <div className="feedback bad" role="alert">
+            <div
+              className="feedback bad"
+              role="alert"
+              aria-live="assertive"
+              id={errorMessageId}
+              data-grammar-session-error
+            >
               <strong>Something went wrong</strong>
               <div>{translateGrammarSessionError(grammar.error)}</div>
             </div>

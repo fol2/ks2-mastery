@@ -115,7 +115,7 @@ function newlineTextStyle(value) {
 
 // --- Choice input branch ---------------------------------------------------
 
-function ChoiceItem({ item, disabled, submitLabel, onSubmit }) {
+function ChoiceItem({ item, disabled, submitLabel, onSubmit, errorMessageId = '' }) {
   const [choiceIndex, setChoiceIndex] = useState('');
   return (
     <form
@@ -126,7 +126,13 @@ function ChoiceItem({ item, disabled, submitLabel, onSubmit }) {
         onSubmit({ choiceIndex });
       }}
     >
-      <div className="choice-list" role="radiogroup" aria-label="Punctuation choices">
+      <div
+        className="choice-list"
+        role="radiogroup"
+        aria-label="Punctuation choices"
+        aria-describedby={errorMessageId || undefined}
+        aria-invalid={errorMessageId ? 'true' : undefined}
+      >
         {(item.options || []).map((option) => (
           <label className="choice-card" key={`${item.id}-${option.index}`}>
             <input
@@ -170,7 +176,7 @@ function ChoiceItem({ item, disabled, submitLabel, onSubmit }) {
 // `TextItem` seeded `useState(item.stem || '')` for every mode, which hands
 // combine / transfer learners the source material to edit instead of the
 // blank answer box they expect.
-function TextItem({ item, disabled, submitLabel, shape, onSubmit }) {
+function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId = '' }) {
   const mode = typeof item.mode === 'string' ? item.mode : '';
   const prefillStem = shape?.prefill === 'stem';
   const showSource = shape?.prefill === 'blank' && shape.showSource === true;
@@ -214,6 +220,8 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit }) {
           data-punctuation-session-input
           placeholder={placeholder}
           disabled={disabled}
+          aria-describedby={errorMessageId || undefined}
+          aria-invalid={errorMessageId ? 'true' : undefined}
           onChange={(event) => setTyped(event.target.value)}
         />
       </label>
@@ -337,6 +345,17 @@ function ActiveItemBranch({ ui, actions }) {
   const scene = bellstormSceneForPhase('active-item');
   const shape = punctuationSessionInputShape(item.mode);
   const submit = (payload) => actions.dispatch('punctuation-submit-form', payload);
+  // SH2-U7: surface a session error banner via `role="alert"` and link it
+  // to the primary input via `aria-describedby`. Screen readers announce
+  // the banner text when focus lands on the input, so a failed submit is
+  // not silent. Stable per session id so the id is predictable and unique
+  // across parallel sessions.
+  const errorMessage = typeof ui.errorMessage === 'string' && ui.errorMessage
+    ? ui.errorMessage
+    : (typeof ui.error === 'string' ? ui.error : '');
+  const errorMessageId = errorMessage
+    ? `punctuation-session-error-${String(session.id || 'current').replace(/[^A-Za-z0-9_-]/g, '-')}`
+    : '';
 
   // Header line: `Question N of M · Skill · Mode`. Skill collapses when
   // the item carries no mapped skillIds (fresh / non-canonical payloads),
@@ -417,6 +436,7 @@ function ActiveItemBranch({ ui, actions }) {
             disabled={isDisabled}
             submitLabel={submitLabel}
             onSubmit={submit}
+            errorMessageId={errorMessageId}
           />
         ) : (
           <TextItem
@@ -426,9 +446,24 @@ function ActiveItemBranch({ ui, actions }) {
             submitLabel={submitLabel}
             shape={shape}
             onSubmit={submit}
+            errorMessageId={errorMessageId}
           />
         )}
       </div>
+
+      {errorMessage ? (
+        <div
+          className="feedback bad"
+          role="alert"
+          aria-live="assertive"
+          id={errorMessageId}
+          data-punctuation-session-error
+          style={{ marginTop: 12 }}
+        >
+          <strong>Something went wrong</strong>
+          <div>{errorMessage}</div>
+        </div>
+      ) : null}
 
       <div className="actions punctuation-session-secondary-actions" style={{ marginTop: 16 }}>
         <button
@@ -515,7 +550,11 @@ function FeedbackBranch({ ui, actions }) {
             alt=""
             aria-hidden="true"
           />
-          <div>
+          <div
+            role="status"
+            aria-live="polite"
+            data-punctuation-session-feedback-live
+          >
             <div className="eyebrow">{punctuationPhaseLabel('feedback')}</div>
             <h2 className="section-title">Saved</h2>
             <p className="subtitle">Your answer is locked in. Answers come at the end of the round.</p>
@@ -568,7 +607,11 @@ function FeedbackBranch({ ui, actions }) {
           alt=""
           aria-hidden="true"
         />
-        <div>
+        <div
+          role="status"
+          aria-live="polite"
+          data-punctuation-session-feedback-live
+        >
           <div className="eyebrow">{punctuationPhaseLabel('feedback')}</div>
           <h2 className="section-title">{feedback.headline || 'Feedback'}</h2>
           {feedback.body ? <p className="subtitle">{feedback.body}</p> : null}
