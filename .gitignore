@@ -34,3 +34,12 @@ reports/capacity/*
 !reports/capacity/configs/
 !reports/capacity/configs/**
 !reports/capacity/README.md
+
+# Punctuation Phase 4 U8 browser journey artefacts (screenshots + logs).
+# The specs write PNGs here per-step; never commit them — they can
+# carry session/origin hints from the developer's browser profile.
+# Historical directory name `artifacts/` kept in the ignore list so prior
+# local runs do not start leaking into commits after the UK-English rename.
+tests/journeys/artefacts/
+tests/journeys/artifacts/
+tests/journeys/*.log

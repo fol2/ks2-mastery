@@ -1,7 +1,7 @@
 ---
 title: "feat: Punctuation Phase 4 — Visible child journey, learning flow, reward wiring, telemetry"
 type: feat
-status: active
+status: completed
 date: 2026-04-26
 deepened: 2026-04-26
 origin: docs/plans/james/punctuation/punctuation-p4.md

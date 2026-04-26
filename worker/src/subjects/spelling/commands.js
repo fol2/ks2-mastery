@@ -163,6 +163,15 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       learnerId: command.learnerId,
       domainEvents: result.events,
       gameState: projectionState.gameState,
+      // P2 U12 MEDIUM (u12-corr-02): thread the bounded-fallback event list
+      // so the achievement subscriber sees prior Guardian mission history +
+      // Pattern Quest completions from earlier commands. Without this, the
+      // Worker-twin achievement path never unlocks Guardian 7-day — each
+      // command starts from an empty `existingEvents` list and cumulative
+      // state collapses to just `result.events`. Matches client path at
+      // `src/platform/events/runtime.js:69` where `existingEvents` is
+      // `repositories.eventLog.list()`.
+      existingEvents: projectionState.events,
     });
     let replayEvents = [];
     if (result.state?.phase === 'summary') {

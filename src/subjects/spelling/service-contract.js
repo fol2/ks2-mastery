@@ -36,6 +36,27 @@ export {
   isPatternEligibleSlug,
 } from './content/patterns.js';
 
+/**
+ * P2 U12: re-export of the achievement-framework canonical identifiers so
+ * downstream consumers (reward subscriber, repository normaliser, Worker
+ * twin, future admin panel) can import from a single service-contract
+ * boundary without reaching into the achievements module itself. Mirrors
+ * the U10 pattern-registry re-export above.
+ */
+export {
+  ACHIEVEMENT_IDS,
+  ACHIEVEMENT_DEFINITIONS,
+  ACHIEVEMENT_PROGRESS_KEYS,
+  deriveAchievementId,
+  evaluateAchievements,
+  aggregateAchievementState,
+  isAchievementProgressKey,
+  normaliseAchievementsMap,
+  normaliseAchievementRecord,
+  readAggregateStateFromAchievements,
+  serialiseAggregateStateToProgressEntries,
+} from './achievements.js';
+
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
 export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss', 'pattern-quest']);
 

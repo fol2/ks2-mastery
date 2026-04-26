@@ -160,8 +160,29 @@ export function createHubApi({
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/activity', { limit });
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
-    async readAdminOpsErrorEvents({ status = null, limit = 50 } = {}) {
-      const url = buildRequestUrl(baseUrl, '/api/admin/ops/error-events', { status, limit });
+    async readAdminOpsErrorEvents({
+      status = null,
+      limit = 50,
+      route = null,
+      kind = null,
+      lastSeenAfter = null,
+      lastSeenBefore = null,
+      release = null,
+      reopenedAfterResolved = false,
+    } = {}) {
+      // U19: thread filter query params through the same GET as the
+      // legacy status-only call. `buildRequestUrl` drops null / undefined
+      // keys so an unset filter does not appear in the URL.
+      const url = buildRequestUrl(baseUrl, '/api/admin/ops/error-events', {
+        status,
+        limit,
+        route: route || null,
+        kind: kind || null,
+        lastSeenAfter: lastSeenAfter == null ? null : String(lastSeenAfter),
+        lastSeenBefore: lastSeenBefore == null ? null : String(lastSeenBefore),
+        release: release || null,
+        reopenedAfterResolved: reopenedAfterResolved ? 'true' : null,
+      });
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
     // PR #188 H1: dedicated narrow GET for the account-ops-metadata panel

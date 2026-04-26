@@ -27,7 +27,14 @@ function toastTitle(toast) {
     if (toast.kind === 'evolve') return `${toast.monster?.name || 'Monster'} evolved`;
     if (toast.kind === 'mega') return `${toast.monster?.name || 'Monster'} reached its final form`;
   }
-  return toast?.title || 'Notification';
+  // P2 U12: reward.achievement surfaces the toast.title directly — the
+  // subscriber (event-hooks.js) already pre-composes from the achievement
+  // definition. Keeping the title verbatim avoids double-wrapping the
+  // "Achievement unlocked:" phrasing.
+  if (toast?.type === 'reward.toast' && toast?.kind === 'reward.achievement') {
+    return toast.toast?.title || toast.title || 'Achievement unlocked';
+  }
+  return toast?.toast?.title || toast?.title || 'Notification';
 }
 
 function toastBody(toast) {
@@ -36,7 +43,12 @@ function toastBody(toast) {
     if (toast.kind === 'evolve') return `${toast.monster?.name || 'A monster'} grew stronger after that mastery milestone.`;
     if (toast.kind === 'mega') return `${toast.monster?.name || 'A monster'} reached its mega form.`;
   }
-  return toast?.body || toast?.message || '';
+  if (toast?.type === 'reward.toast' && toast?.kind === 'reward.achievement') {
+    // Body comes pre-composed from the subscriber. MVP copy: "Achievement
+    // unlocked: <title>". No SVG badge art per F3; text-only styling.
+    return toast.toast?.body || toast.body || '';
+  }
+  return toast?.toast?.body || toast?.body || toast?.message || '';
 }
 
 function ToastContent({ toast }) {
@@ -71,6 +83,15 @@ function ToastContent({ toast }) {
   );
 }
 
+// P2 U12: kind class mapping. `catch` for monster caught (existing), new
+// `achievement` for reward.achievement kind (distinct CSS hook without
+// changing the DOM structure — still the same single-live-region container).
+function toastKindClass(toast) {
+  if (toast?.type === 'reward.monster' && toast?.kind === 'caught') return 'catch';
+  if (toast?.type === 'reward.toast' && toast?.kind === 'reward.achievement') return 'achievement';
+  return 'info';
+}
+
 export function ToastShelf({ toasts = [], onDismiss }) {
   if (!toasts.length) return null;
   // U10 (sys-hardening p1): the container is the single live region.
@@ -80,13 +101,24 @@ export function ToastShelf({ toasts = [], onDismiss }) {
   // (WAI-ARIA does not define nested-live-region semantics; NVDA and
   // VoiceOver can double-announce or skip). U10 review adversarial
   // review finding #6 prompted flattening to a single live region.
+  //
+  // P2 U12: achievement toasts reuse this SAME container (F3 adversarial
+  // finding). No new `role="status"` region. The `.toast.achievement` kind
+  // class is the only styling hook — DOM structure is identical to info
+  // and catch toasts so AT announcement remains a single emit per new toast.
+  //
   // `data-testid="toast-shelf"` anchors the accessibility scene.
   return (
     <div className="toast-shelf" role="status" aria-live="polite" aria-label="Notifications" data-testid="toast-shelf">
       {toasts.map((toast, index) => {
-        const kind = toast?.type === 'reward.monster' && toast?.kind === 'caught' ? 'catch' : 'info';
+        const kind = toastKindClass(toast);
         return (
-          <aside className={`toast ${kind}`} data-toast-id={toast?.id || undefined} key={toast?.id || index}>
+          <aside
+            className={`toast ${kind}`}
+            data-toast-id={toast?.id || undefined}
+            data-toast-kind={toast?.kind || undefined}
+            key={toast?.id || index}
+          >
             <ToastContent toast={toast} />
             <button
               className="cm-close"

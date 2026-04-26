@@ -2012,21 +2012,28 @@ test('U7 integration: saveGuardianRecord ignores empty/non-string slug — no co
   assert.deepEqual(Object.keys(finalMap), ['possess'], 'only the valid slug persists');
 });
 
-test('U7 known limitation: cross-tab writes are not visible without the deferred storage-CAS plan', () => {
-  // Production shape of the cross-tab gap. Two independent calls to
-  // `createLocalPlatformRepositories` sharing ONE raw `storage` object model
-  // the two-tab scenario faithfully: each tab gets its own in-memory
-  // `collections` cache keyed on subject-state (see
-  // `src/platform/core/repositories/local.js`). Writes flush to storage via
-  // `persistAll`, but reads NEVER re-hydrate from storage — there is no
-  // `storage` event listener invalidating the cache.
+test('U7 gap closed by U5: cross-tab writes both survive via writeVersion CAS + re-hydration (invariant)', () => {
+  // Flipped from "known limitation" to "invariant proof" per P2 U5
+  // (docs/plans/2026-04-26-006-feat-post-mega-spelling-p2-visibility-pattern-foundation-plan.md §U5).
   //
-  // This test documents the gap as an accepted limitation. U7's merge-save
-  // cannot close this race because `loadGuardianMap` inside the service
-  // ultimately reads through `repositories.subjectStates.read`, which serves
-  // from the per-tab cache. Closing the gap requires the deferred
-  // `post-mega-spelling-storage-cas` plan (navigator.locks +
-  // BroadcastChannel + writeVersion CAS + lockout banner).
+  // The P1.5 U7 iteration landed the merge-save helper that narrowed the
+  // single-service read-to-write window, but two separately-constructed
+  // platform repositories sharing one storage still LOST the sibling tab's
+  // write because each in-memory cache never re-hydrated.
+  //
+  // P2 U5 closes the gap at two layers:
+  //   (a) `storageCas.readWriteVersion` reads the on-disk writeVersion, so
+  //       Tab A sees Tab B's bumped counter even before BroadcastChannel
+  //       invalidation propagates.
+  //   (b) The spelling repository's CAS retry loop rehydrates the in-memory
+  //       cache on every attempt and uses a merge-semantic projector for
+  //       multi-slug maps (progress + guardian), so Tab B's slug Y is
+  //       preserved when Tab A's next write lands.
+  //
+  // This test asserts the positive invariant: both tabs' writes survive the
+  // race. Same-slug contention still follows last-writer-wins, which is the
+  // intentional local semantic — Guardian slugs advance monotonically on
+  // correct answers so "last writer" matches "most-progressed writer".
   const now = () => Date.UTC(2026, 0, 10);
   const today = Math.floor(now() / DAY_MS_TS);
   const storage = installMemoryStorage();
@@ -2043,12 +2050,10 @@ test('U7 known limitation: cross-tab writes are not visible without the deferred
   const slugX = 'possess';
   const slugY = 'believe';
 
-  // Tab A writes slug X first. This primes tab A's cache with the X-only
-  // guardian map and persists to raw storage.
+  // Tab A writes slug X first.
   serviceTabA.saveGuardianRecord('learner-a', slugX, freshGuardianRecord(today));
 
-  // Tab B is constructed AFTER tab A's write. Its startup hydration reads
-  // the current storage contents, so tab B's cache contains slug X.
+  // Tab B is constructed AFTER tab A's write.
   const reposTabB = createLocalPlatformRepositories({ storage });
   const serviceTabB = createSpellingService({
     repository: createSpellingPersistence({ repositories: reposTabB, now }),
@@ -2057,43 +2062,29 @@ test('U7 known limitation: cross-tab writes are not visible without the deferred
     tts: { speak() {}, stop() {}, warmup() {} },
   });
 
-  // Tab B writes slug Y. Because Tab B saw X at startup, its merge-save
-  // combines X + Y and persists { X, Y } to storage.
+  // Tab B writes slug Y.
   serviceTabB.saveGuardianRecord('learner-a', slugY, freshGuardianRecord(today));
 
-  // Storage now physically contains { X, Y }. But tab A's in-memory cache
-  // (its own `collections.subjectStates`) was populated at construction and
-  // when it wrote X. It has no `storage` event listener and no rehydration
-  // path, so reads still see only X — tab B's write is invisible to tab A.
-  const tabAView = readGuardianMapViaRepos(reposTabA, 'learner-a');
-  assert.ok(tabAView[slugX], 'tab A still sees its own slug X');
-  assert.equal(
-    tabAView[slugY],
-    undefined,
-    'tab A does NOT see tab B\'s slug Y — this is the production cross-tab gap',
-  );
-
-  // Now tab A writes slug X again (e.g. an updated record from a Guardian
-  // submission). saveGuardianRecord's merge-save reloads through tab A's
-  // own stale cache, so its snapshot is still { X }. The write produces
-  // { X_updated } — losing tab B's Y from storage.
+  // Tab A writes slug X again — this is the write that MUST NOT clobber Y.
+  // Under U5, the repository's CAS-aware setItem re-hydrates Tab A's cache
+  // from storage (which now holds {X, Y}), re-projects on the fresh
+  // baseline, and merges slug X on top. Both slugs end up on disk.
   serviceTabA.saveGuardianRecord('learner-a', slugX, {
     ...freshGuardianRecord(today),
     reviewLevel: 3,
   });
 
-  // Observe raw storage directly (NOT through any repositories cache) to
-  // confirm the data-loss shape. This is the exact race the deferred
-  // `post-mega-spelling-storage-cas` plan will close.
+  // Observe raw storage directly (NOT through any repositories cache).
   const finalRaw = JSON.parse(storage.getItem('ks2-platform-v2.repo.child-subject-state') || '{}');
   const finalSpellingRecord = finalRaw['learner-a::spelling'] || {};
   const finalGuardian = (finalSpellingRecord.data && finalSpellingRecord.data.guardian) || {};
   assert.ok(finalGuardian[slugX], 'tab A\'s slug X write landed');
-  assert.equal(
+  assert.ok(
     finalGuardian[slugY],
-    undefined,
-    'tab B\'s slug Y was overwritten — cross-tab race is real, fix in `post-mega-spelling-storage-cas`',
+    'tab B\'s slug Y survived — P2 U5 invariant: no cross-tab data loss',
   );
+  // Tab A's update to slug X is reflected (last-writer-wins on same-slug).
+  assert.equal(finalGuardian[slugX].reviewLevel, 3, 'slug X carries tab A\'s latest update');
 });
 
 test('U7 integration: resetLearner still uses saveGuardianMap (whole-map zero), NOT saveGuardianRecord', () => {
