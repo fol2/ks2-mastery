@@ -224,13 +224,17 @@ test('module.js pct derives from corrected securedRewardUnits, not tracked count
     practiceSessions: [],
     now: () => now,
   });
-  // Replicate the module.js getDashboardStats formula:
-  // pct = securedRewardUnits / totalRewardUnits * 100
+  // Mirrors the module.js getDashboardStats formula:
+  //   pct = securedRewardUnits / publishedRewardUnits * 100
+  // (read-model exposes publishedRewardUnitCount via releaseDiagnostics;
+  // totalRewardUnits is the same constant but the service denominator is
+  // publishedRewardUnits — use it here to stay faithful to the code path)
   const stats = model.progressSnapshot;
-  const pct = stats.totalRewardUnits
-    ? Math.round((stats.securedRewardUnits / stats.totalRewardUnits) * 100)
+  const publishedRewardUnits = model.releaseDiagnostics.publishedRewardUnitCount;
+  const pct = publishedRewardUnits
+    ? Math.round((stats.securedRewardUnits / publishedRewardUnits) * 100)
     : 0;
-  // 2 secured out of 14 total = ~14%
+  // 2 secured out of 14 published = ~14%
   assert.equal(stats.securedRewardUnits, 2, 'only 2 of 5 tracked units have valid securedAt');
   assert.equal(stats.trackedRewardUnits, 5);
   assert.equal(pct, 14, 'dashboard pct must derive from secured count (2/14), not tracked count (5/14)');

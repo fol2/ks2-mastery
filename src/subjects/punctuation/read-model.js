@@ -438,7 +438,7 @@ export function buildPunctuationLearnerReadModel({
   const trackedRewardUnitEntries = currentPublishedRewardUnits(rewardUnits);
   const trackedRewardUnitCount = trackedRewardUnitEntries.length;
   const securedRewardUnitCount = trackedRewardUnitEntries.filter(
-    (entry) => Number.isFinite(Number(entry.securedAt)) && Number(entry.securedAt) > 0,
+    (entry) => asTs(entry.securedAt, 0) > 0,
   ).length;
   // Placeholder for U3 — deep-secure projection not yet wired.
   const deepSecuredRewardUnitCount = 0;

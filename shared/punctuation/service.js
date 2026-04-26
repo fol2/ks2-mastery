@@ -453,7 +453,10 @@ function statsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.n
   const snaps = publishedItems.map((item) => memorySnapshot(data.progress.items[item.id], now));
   const attempts = data.progress.attempts.length;
   const correct = data.progress.attempts.filter((attempt) => attempt.correct).length;
-  const securedRewardUnits = currentPublishedRewardUnits(data, indexes);
+  const trackedRewardUnits = currentPublishedRewardUnits(data, indexes);
+  const securedRewardUnitCount = trackedRewardUnits.filter(
+    (entry) => normaliseTimestamp(entry.securedAt, 0) > 0,
+  ).length;
   return {
     total: publishedItems.length,
     secure: snaps.filter((snap) => snap.bucket === 'secure').length,
@@ -464,7 +467,8 @@ function statsFromData(data, indexes = PUNCTUATION_CONTENT_INDEXES, now = Date.n
     correct,
     accuracy: attempts ? Math.round((correct / attempts) * 100) : 0,
     publishedRewardUnits: indexes.publishedRewardUnits.length,
-    securedRewardUnits: securedRewardUnits.length,
+    trackedRewardUnits: trackedRewardUnits.length,
+    securedRewardUnits: securedRewardUnitCount,
     sessionsCompleted: data.progress.sessionsCompleted,
   };
 }
