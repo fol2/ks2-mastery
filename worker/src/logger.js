@@ -85,6 +85,48 @@ const BOOTSTRAP_MODE_ALLOWED = new Set([
   'public-bounded',
 ]);
 
+// U6: closed allowlist of `projectionFallback` tokens that may appear on
+// `meta.capacity.projectionFallback`. Extends U3's boolean-era stamp into
+// a documented union:
+//   - `'hit'` — persisted projection read model satisfied the command
+//   - `'miss-rehydrated'` — row absent; bounded 200-event fallback rebuilt it
+//   - `'stale-catchup'` — row present but source_revision too old; bounded
+//     catch-up refreshed it
+//   - `'rejected'` — projection missing AND bounded fallback itself failed;
+//     command returned 503 projection_unavailable
+//   - `'newer-opaque'` — persisted row version is newer than reader knows;
+//     command continues without the `recentEventTokens` optimisation and
+//     does NOT overwrite the newer row (rollback safety)
+//
+// Non-matching strings are silently rejected and the collector value stays
+// at its prior state — mirrors the "silent reject" pattern used for
+// bootstrapMode and addSignal. Booleans are accepted for backwards
+// compatibility with U3's boolean-only contract (converted to null).
+const PROJECTION_FALLBACK_ALLOWED = new Set([
+  'hit',
+  'miss-rehydrated',
+  'stale-catchup',
+  'rejected',
+  'newer-opaque',
+]);
+
+// U6: closed allowlist of `derivedWriteSkipped.reason` tokens. This
+// replaces U3's boolean-only derivedWriteSkipped stamp with a structured
+// signal so operators can distinguish silent tolerance ('missing-table')
+// from concurrency loss ('concurrent-retry-exhausted') from transient D1
+// failure ('write-failed') from future circuit-breaker suppression
+// ('breaker-open'). Any other reason is rejected by a schema assertion
+// test in `tests/worker-projection-hot-path.test.js` (U6 scenario 11).
+const DERIVED_WRITE_SKIPPED_REASONS = new Set([
+  'missing-table',
+  'concurrent-retry-exhausted',
+  'write-failed',
+  'breaker-open',
+]);
+
+export const PROJECTION_FALLBACK_ALLOWED_TOKENS = PROJECTION_FALLBACK_ALLOWED;
+export const DERIVED_WRITE_SKIPPED_ALLOWED_REASONS = DERIVED_WRITE_SKIPPED_REASONS;
+
 // U3 round 1 (P0 #02): measure UTF-8 byte length without referencing the
 // Node-only `Buffer` global. Cloudflare Workers does not expose `Buffer`
 // unless `nodejs_compat` is enabled, and the rest of the worker (auth.js,
@@ -268,24 +310,64 @@ export class CapacityCollector {
   }
 
   /**
-   * Boolean-only setter for `projectionFallback`. Non-booleans are
-   * silently ignored — retains the previous value (null on first call).
+   * Setter for `projectionFallback`. U6 broadens this from U3's
+   * boolean-only contract to accept closed-union string tokens
+   * (`PROJECTION_FALLBACK_ALLOWED`). Booleans are still accepted but
+   * stored as `null` — the string token is the source of truth. Non-
+   * matching strings are silently rejected and the value stays at its
+   * prior state.
    *
-   * @param {boolean|null} value
+   * @param {string|boolean|null} value
    */
   setProjectionFallback(value) {
     if (value === null) { this.projectionFallback = null; return; }
-    if (typeof value === 'boolean') this.projectionFallback = value;
+    if (typeof value === 'string') {
+      if (PROJECTION_FALLBACK_ALLOWED.has(value)) {
+        this.projectionFallback = value;
+      }
+      return;
+    }
+    if (typeof value === 'boolean') {
+      // Back-compat for U3 callers that still pass booleans. A boolean
+      // is not enough information on its own — pin to null so future
+      // code has to pass a string token.
+      this.projectionFallback = null;
+    }
   }
 
   /**
-   * Boolean-only setter for `derivedWriteSkipped`.
+   * Setter for `derivedWriteSkipped`. U6 extends U3's boolean-only
+   * contract to a structured `{reason}` object where `reason` is drawn
+   * from `DERIVED_WRITE_SKIPPED_REASONS`. Any other reason string is
+   * silently rejected (the value stays at its prior state) so a typo
+   * cannot leak through. Booleans are tolerated for back-compat and
+   * stored as `null` so callers are forced to migrate to the closed
+   * union.
    *
-   * @param {boolean|null} value
+   * @param {{reason: string}|boolean|null} value
    */
   setDerivedWriteSkipped(value) {
     if (value === null) { this.derivedWriteSkipped = null; return; }
-    if (typeof value === 'boolean') this.derivedWriteSkipped = value;
+    if (typeof value === 'boolean') {
+      // U3 callers passed booleans. Pin to null so the closed-union
+      // contract is the only path forward.
+      this.derivedWriteSkipped = null;
+      return;
+    }
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const reason = typeof value.reason === 'string' ? value.reason : null;
+      if (!reason || !DERIVED_WRITE_SKIPPED_REASONS.has(reason)) return;
+      const output = { reason };
+      // Pass through numeric revision hints so operators can correlate
+      // concurrent-retry-exhausted events with the CAS race.
+      if (Number.isFinite(Number(value.baseRevision))) {
+        output.baseRevision = Number(value.baseRevision);
+      }
+      if (Number.isFinite(Number(value.currentRevision))) {
+        output.currentRevision = Number(value.currentRevision);
+      }
+      this.derivedWriteSkipped = output;
+    }
   }
 
   /**

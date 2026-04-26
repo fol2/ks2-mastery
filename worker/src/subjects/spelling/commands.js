@@ -13,6 +13,7 @@ import { buildSpellingAudioCue } from './audio.js';
 import { createServerSpellingEngine } from './engine.js';
 import { buildSpellingReadModel } from './read-models.js';
 import { checkSpellingWordBankAnswer } from '../../content/spelling-read-models.js';
+import { resolveProjectionInput } from '../projection-input.js';
 
 const SPELLING_COMMANDS = Object.freeze([
   'start-session',
@@ -97,6 +98,9 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       context.session.accountId,
       command.learnerId,
       'spelling',
+      // U6 queryCount budget: runSubjectCommandMutation already ran
+      // requireLearnerWriteAccess; skip the duplicate membership read.
+      { skipAccessCheck: true },
     );
     const contentResult = await readRuntimeContent(context);
     const snapshot = contentResult.snapshot;
@@ -108,6 +112,10 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
     }
 
     if (command.command === 'check-word-bank-drill') {
+      // U6: pure read-model command that does not alter learner state.
+      // Short-circuit BEFORE touching the projection; leave
+      // `meta.capacity.projectionFallback` at null so operators can
+      // distinguish "no-op" from "hit" in telemetry.
       return {
         learnerId: command.learnerId,
         changed: false,
@@ -141,10 +149,16 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
       command: command.command,
       payload: command.payload,
     });
-    const projectionState = await context.repository.readLearnerProjectionState(
-      context.session.accountId,
-      command.learnerId,
-    );
+    // U6: consume the persisted projection read model as the hot-path
+    // input. The loader throws `ProjectionUnavailableError` when both the
+    // row and the bounded fallback fail; that flows up to the 503
+    // `projection_unavailable` response in the route handler.
+    const projectionInput = await resolveProjectionInput(context, {
+      learnerId: command.learnerId,
+      currentRevision: Number(command.expectedLearnerRevision) || 0,
+      capacity: context.capacity || null,
+    });
+    const projectionState = projectionInput.projectionState;
     const projectedRewards = projectSpellingRewards({
       learnerId: command.learnerId,
       domainEvents: result.events,
@@ -162,10 +176,17 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         now: nowValue,
       });
     }
+    // On the hot path (`hit`), `projectionState.events` is empty and we
+    // pass the persisted token ring as `seedTokens` so
+    // `combineCommandEvents` can dedupe without re-scanning the event log.
+    // On miss/stale/newer-opaque the events list is populated from the
+    // bounded fallback and tokens are either the refreshed ring or null
+    // (newer-opaque).
     const projectedEvents = combineCommandEvents({
       domainEvents: result.events,
       reactionEvents: [...projectedRewards.rewardEvents, ...replayEvents],
       existingEvents: projectionState.events,
+      seedTokens: projectionInput.tokens || [],
     });
     const replayAudioCue = await buildSpellingAudioCue({
       learnerId: command.learnerId,
@@ -208,7 +229,17 @@ export function createSpellingCommandHandlers({ now, random } = {}) {
         practiceSession: result.practiceSession,
         gameState: projectedRewards.changedGameState,
         events: projectedEvents.events,
+        // U6 queryCount budget: when the engine re-uses the same
+        // practice session id, tell the persistence plan so the
+        // no-op abandon UPDATE can be elided.
+        previousActiveSessionId: runtimeRecord.latestSession?.status === 'active'
+          ? runtimeRecord.latestSession.id
+          : null,
       },
+      // U6: share the projection input shape with the persistence plan so
+      // the `recentEventTokens` ring is appended (not overwritten) and any
+      // non-v1 fields from a newer writer are preserved on overwrite.
+      projectionContext: projectionInput,
     };
   }
 

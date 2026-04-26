@@ -347,16 +347,134 @@ test('P1#05 setBootstrapMode only accepts closed-set strings', () => {
   assert.equal(collector.bootstrapMode, 'fresh');
 });
 
-test('P1#05 setProjectionFallback / setDerivedWriteSkipped only accept boolean', () => {
-  const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
-  collector.setProjectionFallback(true);
-  assert.equal(collector.projectionFallback, true);
-  collector.setProjectionFallback({ ok: false });
-  assert.equal(collector.projectionFallback, true, 'non-boolean must be ignored');
-  collector.setDerivedWriteSkipped(false);
-  assert.equal(collector.derivedWriteSkipped, false);
-  collector.setDerivedWriteSkipped('true');
-  assert.equal(collector.derivedWriteSkipped, false);
+test('P1#05 setProjectionFallback / setDerivedWriteSkipped accept documented closed-union values; reject others', () => {
+  // U6 update: the U3 boolean-only contract is obsolete. U6 broadens
+  // both setters to closed-union tokens and structured reasons. The
+  // test preserves the original spirit (type safety / rejection of
+  // arbitrary vocabulary) and updates the accepted values.
+  const PROJECTION_FALLBACK_ACCEPTED = [
+    'hit',
+    'miss-rehydrated',
+    'stale-catchup',
+    'rejected',
+    'newer-opaque',
+  ];
+  const DERIVED_WRITE_SKIPPED_ACCEPTED_REASONS = [
+    'missing-table',
+    'concurrent-retry-exhausted',
+    'write-failed',
+    'breaker-open',
+  ];
+
+  // --- setProjectionFallback ---
+  for (const token of PROJECTION_FALLBACK_ACCEPTED) {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setProjectionFallback(token);
+    assert.equal(collector.projectionFallback, token, `token ${token} must be accepted`);
+  }
+  // Unknown strings are silently rejected (value stays at prior state).
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setProjectionFallback('hit');
+    collector.setProjectionFallback('not-a-real-token');
+    assert.equal(
+      collector.projectionFallback,
+      'hit',
+      'unknown projectionFallback token must be dropped (not silently accepted)',
+    );
+  }
+  // null explicitly clears.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setProjectionFallback('hit');
+    collector.setProjectionFallback(null);
+    assert.equal(collector.projectionFallback, null);
+  }
+  // Booleans are tolerated for back-compat but stored as null so callers
+  // are forced onto the closed-union contract.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setProjectionFallback(true);
+    assert.equal(collector.projectionFallback, null, 'boolean back-compat must pin to null');
+  }
+  // Non-string non-boolean non-null is silently ignored.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setProjectionFallback('hit');
+    collector.setProjectionFallback({ ok: false });
+    assert.equal(collector.projectionFallback, 'hit', 'object payload must be ignored');
+  }
+
+  // --- setDerivedWriteSkipped ---
+  for (const reason of DERIVED_WRITE_SKIPPED_ACCEPTED_REASONS) {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setDerivedWriteSkipped({ reason });
+    assert.deepEqual(
+      collector.derivedWriteSkipped,
+      { reason },
+      `reason ${reason} must be accepted`,
+    );
+  }
+  // Unknown reason silently dropped.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setDerivedWriteSkipped({ reason: 'write-failed' });
+    collector.setDerivedWriteSkipped({ reason: 'not-a-real-reason' });
+    assert.deepEqual(
+      collector.derivedWriteSkipped,
+      { reason: 'write-failed' },
+      'unknown derivedWriteSkipped.reason must be dropped',
+    );
+  }
+  // Missing reason silently dropped.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setDerivedWriteSkipped({ reason: 'write-failed' });
+    collector.setDerivedWriteSkipped({});
+    assert.deepEqual(
+      collector.derivedWriteSkipped,
+      { reason: 'write-failed' },
+      'missing reason must be dropped',
+    );
+  }
+  // null explicitly clears.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setDerivedWriteSkipped({ reason: 'write-failed' });
+    collector.setDerivedWriteSkipped(null);
+    assert.equal(collector.derivedWriteSkipped, null);
+  }
+  // Booleans pin to null for back-compat.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setDerivedWriteSkipped(false);
+    assert.equal(collector.derivedWriteSkipped, null, 'boolean back-compat must pin to null');
+  }
+  // Strings (not objects) are ignored.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setDerivedWriteSkipped({ reason: 'write-failed' });
+    collector.setDerivedWriteSkipped('true');
+    assert.deepEqual(
+      collector.derivedWriteSkipped,
+      { reason: 'write-failed' },
+      'string payload must be ignored',
+    );
+  }
+  // Optional numeric hints are preserved.
+  {
+    const collector = new CapacityCollector({ requestId: VALID_REQUEST_ID });
+    collector.setDerivedWriteSkipped({
+      reason: 'concurrent-retry-exhausted',
+      baseRevision: 7,
+      currentRevision: 8,
+    });
+    assert.deepEqual(collector.derivedWriteSkipped, {
+      reason: 'concurrent-retry-exhausted',
+      baseRevision: 7,
+      currentRevision: 8,
+    });
+  }
 });
 
 //

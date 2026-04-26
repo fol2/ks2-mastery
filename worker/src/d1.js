@@ -136,6 +136,10 @@ export function withCapacityCollector(db, collector) {
 
   return new Proxy(db, {
     get(target, property, receiver) {
+      // U6 hot-path optimisation: expose the unwrapped D1 handle so
+      // per-request proxies still resolve to a single WeakMap cache
+      // key for long-lived lookups like sqlite_master table checks.
+      if (property === '__rawDb') return target;
       if (property === 'prepare') {
         return (sql) => new CollectingStatement(target.prepare(sql), { sql, collector });
       }
