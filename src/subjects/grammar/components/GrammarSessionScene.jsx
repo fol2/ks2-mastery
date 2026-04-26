@@ -583,6 +583,15 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         <form
           id={answerFormId}
           className="grammar-answer-form"
+          // SH2-U3 input preservation contract: `pendingCommand` and any
+          // auth-derived state is DELIBERATELY absent from this key. A
+          // mid-type 401 clears `pendingCommand` through the auth-required
+          // or rehydrate path (SH2-U2); because the key stays stable, the
+          // uncontrolled `<input>` / `<textarea>` DOM nodes under this form
+          // are retained and the learner's typed answer survives. Adding
+          // `pendingCommand`, `awaitingRehydrate`, or similar here would
+          // regress the contract covered by
+          // `tests/demo-expiry-banner.test.js::input-preservation`.
           key={`${session.id || 'grammar'}-${session.currentIndex || 0}`}
           onSubmit={(event) => {
             event.preventDefault();

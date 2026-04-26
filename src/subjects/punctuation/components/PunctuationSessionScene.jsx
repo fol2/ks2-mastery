@@ -386,6 +386,14 @@ function ActiveItemBranch({ ui, actions }) {
        * service.js) so it is the robust per-transition counter — it does
        * not depend on item id or prompt content.
        */}
+      {/* SH2-U3 input preservation contract: `pendingCommand` is
+         DELIBERATELY absent from these keys. When a mid-type 401 clears
+         `pendingCommand` (auth-required path or SH2-U2 rehydrate), the
+         React keys tied to `session.answeredCount` stay stable so the
+         uncontrolled `<input>` / `<textarea>` inside `ChoiceItem` /
+         `TextItem` is retained and the learner's typed answer survives.
+         Adding `pendingCommand` here would regress the contract covered
+         by `tests/demo-expiry-banner.test.js::input-preservation`. */}
       <div className="punctuation-session-body" style={{ marginTop: 16 }}>
         {item.inputKind === 'choice' ? (
           <ChoiceItem
