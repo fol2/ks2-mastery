@@ -49,24 +49,24 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `shared-pattern-available` | 141 |
+| `shared-pattern-available` | 146 |
 | `dynamic-content-driven` | 111 |
 | `css-var-ready` | 3 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **257** |
+| **TOTAL** | **262** |
 
 ## Per-file inventory
 
 | File | `style={` count | Category | Migrated in SH2-U8 |
 | --- | --- | --- | --- |
-| `src/surfaces/hubs/AdminHubSurface.jsx` | 85 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminHubSurface.jsx` | 88 | `shared-pattern-available` | no |
 | `src/subjects/punctuation/components/PunctuationSessionScene.jsx` | 27 | `dynamic-content-driven` | no |
 | `src/subjects/punctuation/components/PunctuationSummaryScene.jsx` | 19 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/MonsterEffectCatalogPanel.jsx` | 19 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterEffectBindingsPanel.jsx` | 12 | `shared-pattern-available` | no |
 | `src/subjects/spelling/components/SpellingSetupScene.jsx` | 11 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/MonsterVisualConfigPanel.jsx` | 10 | `dynamic-content-driven` | no |
-| `src/surfaces/hubs/ParentHubSurface.jsx` | 8 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/ParentHubSurface.jsx` | 10 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterEffectCelebrationPanel.jsx` | 7 | `shared-pattern-available` | no |
 | `src/surfaces/profile/ProfileSettingsSurface.jsx` | 5 | `shared-pattern-available` | yes |
 | `src/surfaces/subject/SubjectRoute.jsx` | 5 | `dynamic-content-driven` | no |

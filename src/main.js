@@ -525,7 +525,17 @@ let adminAccountDirectory = {
   savingAccountId: '',
 };
 const hubApi = boot.session.signedIn
-  ? createHubApi({ baseUrl: '', fetch: credentialFetch })
+  ? createHubApi({
+    baseUrl: '',
+    fetch: credentialFetch,
+    // U9 round 1 fix (adv-u9-r1-002): hand the 3 client-side breakers to
+    // the hub API so 5xx / network failures on Parent Hub recent-sessions,
+    // Parent Hub activity, and Admin Hub classroom-summary self-trip the
+    // matching breaker. The `breakers` handle is exposed on the repository
+    // persistence surface (`repositories.persistence.breakers`) and is the
+    // only runtime path that reaches the primitive outside tests.
+    breakers: repositories?.persistence?.breakers || null,
+  })
   : null;
 
 function createHubLoadState() {

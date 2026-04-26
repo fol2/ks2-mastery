@@ -58,6 +58,26 @@ The snapshot also carries:
 - `inFlightWriteCount`
 - `lastSyncAt`
 - `lastError`
+- `breakers` (U9) — internal sub-namespace. A map keyed by breaker name
+  (`parentHubRecentSessions`, `parentHubActivity`, `classroomSummary`,
+  `readModelDerivedWrite`, `bootstrapCapacityMetadata`). Each entry is
+  `{ name, state: 'closed' | 'half-open' | 'open', failureCount,
+  openedAt, cooldownUntil, cooldownMs }`. Meant for operator
+  observability and Playwright scenes; UI components MUST NOT read
+  this surface.
+- `breakersDegraded` (U9) — minimal boolean map exposed to UI
+  components: `{ parentHub, classroomSummary, derivedWrite,
+  bootstrapCapacity }`. Aggregates the 5 underlying breakers into 4
+  public booleans. Rendering degraded UX (Parent Hub "Recent history
+  temporarily unavailable", Admin Hub "Classroom summary temporarily
+  unavailable", operator escalation banner for `bootstrapCapacity`)
+  reads this alone and never the full state.
+
+The `breakers.*` state vocabulary maps onto the existing
+`cacheState` / `mode` grammar rather than inventing new terms: when a
+breaker is `open`, the associated read path is effectively a
+`stale-copy` regardless of the underlying sync state; the operator
+visibility layer is the breaker, not a new cacheState value.
 
 That lets the shell say something truthful about what state is currently safe to trust.
 

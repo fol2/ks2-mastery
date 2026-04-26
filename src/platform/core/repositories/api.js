@@ -35,6 +35,10 @@ import {
   normaliseMonsterVisualRuntimeConfig,
   resolveMonsterVisualConfigFromPointer,
 } from '../../game/monster-visual-config.js';
+import {
+  buildBreakersDegradedMap,
+  createCircuitBreaker,
+} from '../circuit-breaker.js';
 
 const MUTATION_POLICY_VERSION = 1;
 const OPERATION_STATUS_PENDING = 'pending';
@@ -1464,6 +1468,68 @@ export function createApiPlatformRepositories({
     trustedState: countPending(pendingOperations) ? PERSISTENCE_TRUSTED_STATES.LOCAL_CACHE : PERSISTENCE_TRUSTED_STATES.REMOTE,
   });
 
+  // U9: five named circuit breakers. State lives under
+  // `persistenceChannel.read().breakers.*` for internal observability;
+  // UI components only read `persistenceChannel.read().breakersDegraded`
+  // (the minimal boolean map) per plan line 878.
+  //
+  // `bootstrapCapacityMetadata` is the only breaker with `cooldownMaxMs:
+  // Infinity` — it never auto-recovers; operator action resumes the
+  // surface. All other breakers use the default 500ms base / 30s cap /
+  // 2x curve + failureThreshold=3.
+  const breakerStorage = resolvedStorage;
+  const scheduleBreakerRecompute = () => {
+    // Transitions touch the persistence snapshot; recompute lazily so
+    // subscribers observe the new `breakersDegraded` map.
+    recomputePersistence();
+  };
+  const breakers = {
+    parentHubRecentSessions: createCircuitBreaker({
+      name: 'parentHubRecentSessions',
+      now: () => currentTime(),
+      storage: breakerStorage,
+      onTransition: scheduleBreakerRecompute,
+    }),
+    parentHubActivity: createCircuitBreaker({
+      name: 'parentHubActivity',
+      now: () => currentTime(),
+      storage: breakerStorage,
+      onTransition: scheduleBreakerRecompute,
+    }),
+    classroomSummary: createCircuitBreaker({
+      name: 'classroomSummary',
+      now: () => currentTime(),
+      storage: breakerStorage,
+      onTransition: scheduleBreakerRecompute,
+    }),
+    readModelDerivedWrite: createCircuitBreaker({
+      name: 'readModelDerivedWrite',
+      now: () => currentTime(),
+      storage: breakerStorage,
+      onTransition: scheduleBreakerRecompute,
+    }),
+    bootstrapCapacityMetadata: createCircuitBreaker({
+      name: 'bootstrapCapacityMetadata',
+      failureThreshold: 3,
+      cooldownMaxMs: Infinity,
+      now: () => currentTime(),
+      storage: breakerStorage,
+      onTransition: scheduleBreakerRecompute,
+    }),
+  };
+
+  function currentBreakersSnapshot() {
+    const output = {};
+    for (const [key, breaker] of Object.entries(breakers)) {
+      output[key] = breaker.snapshot();
+    }
+    return output;
+  }
+
+  function currentBreakersDegradedMap() {
+    return buildBreakersDegradedMap(breakers);
+  }
+
   function persistLocalCache(scope = 'api-cache') {
     cache.meta = currentRepositoryMeta();
     const error = persistCachedState(
@@ -1554,6 +1620,11 @@ export function createApiPlatformRepositories({
     const pendingWriteCount = countPending(pendingOperations);
     const lastError = currentLastError();
     const blocked = hasBlockedOperations(pendingOperations);
+    // U9: include breaker snapshots + aggregate boolean map in every
+    // recompute so subscribers observe transition edges without a
+    // separate channel.
+    const breakersSnapshot = currentBreakersSnapshot();
+    const breakersDegraded = currentBreakersDegradedMap();
 
     if (lastError || blocked) {
       const trustedState = lastCacheError
@@ -1572,6 +1643,8 @@ export function createApiPlatformRepositories({
         lastSyncAt,
         lastError,
         updatedAt: nowTs(),
+        breakers: breakersSnapshot,
+        breakersDegraded,
       });
     }
 
@@ -1585,6 +1658,8 @@ export function createApiPlatformRepositories({
       lastSyncAt,
       lastError: null,
       updatedAt: nowTs(),
+      breakers: breakersSnapshot,
+      breakersDegraded,
     });
   }
 
@@ -2047,10 +2122,16 @@ export function createApiPlatformRepositories({
             code: 'bootstrap_metadata_missing',
             consecutiveMisses: consecutiveMissingBootstrapMetadata,
           };
+          // U9: trip the `bootstrapCapacityMetadata` breaker and pin it
+          // open. Breaker is configured with `cooldownMaxMs: Infinity`
+          // so `forceOpen(sticky: true)` is belt-and-braces — operator
+          // action is required before retries resume.
+          breakers.bootstrapCapacityMetadata.forceOpen({ sticky: true });
         }
       } else {
         consecutiveMissingBootstrapMetadata = 0;
         bootstrapMetadataOperatorError = null;
+        breakers.bootstrapCapacityMetadata.reset();
       }
       // U7: notModified short-circuit. Validate the revision envelope
       // is structurally sound before honouring — a missing field
@@ -2223,6 +2304,10 @@ export function createApiPlatformRepositories({
       subscribe(listener) {
         return persistenceChannel.subscribe(listener);
       },
+      // U9: low-level breaker access for hub API adapters and tests.
+      // UI components MUST NOT import this — they read the aggregate
+      // `breakersDegraded` boolean map from `read()` instead.
+      breakers,
       async retry() {
         const blocked = hasBlockedOperations(pendingOperations);
         await repositories.hydrate({

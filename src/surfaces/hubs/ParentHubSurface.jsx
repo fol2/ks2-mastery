@@ -509,6 +509,11 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
   const recentSessionsError = hubState.recentSessionsStatus === 'error'
     ? (hubState.recentSessionsError || 'Recent sessions could not be loaded.')
     : '';
+  // U9 capacity: Parent Hub's recent-sessions widget and activity feed
+  // degrade gracefully when the aggregate parentHub breaker is open.
+  // Only the minimal boolean is exposed to components per plan line 878 —
+  // never the full breaker state with endpoint names.
+  const parentHubDegraded = appState?.persistence?.breakersDegraded?.parentHub === true;
   const strengths = Array.isArray(model.strengths) ? model.strengths : [];
   const weaknesses = Array.isArray(model.weaknesses) ? model.weaknesses : [];
   const patterns = Array.isArray(model.misconceptionPatterns) ? model.misconceptionPatterns : [];
@@ -632,20 +637,40 @@ export function ParentHubSurface({ appState, model, hubState = {}, accessContext
         note="Recent sessions and the misconceptions they keep uncovering."
       />
       <section className="two-col parent-hub-grid">
-        <article className="card parent-hub-card">
+        <article className="card parent-hub-card" data-parent-hub-panel="recent-sessions">
           <div className="parent-hub-card-head">
             <p className="eyebrow">Recent sessions</p>
             <h3 className="parent-hub-card-title">Latest durable session records</h3>
           </div>
-          {recentSessionsError ? <div className="feedback warn">{recentSessionsError}</div> : null}
-          <RecentSessionList sessions={recentSessions} />
+          {parentHubDegraded ? (
+            <div className="feedback warn" data-parent-hub-degraded="recent-sessions">
+              <strong>Recent history temporarily unavailable</strong>
+              <div style={{ marginTop: 8 }}>
+                The recent-sessions summary is taking too long to load right now. Practice is unaffected — this widget will reappear automatically once the feed recovers.
+              </div>
+            </div>
+          ) : (
+            <>
+              {recentSessionsError ? <div className="feedback warn">{recentSessionsError}</div> : null}
+              <RecentSessionList sessions={recentSessions} />
+            </>
+          )}
         </article>
-        <article className="card parent-hub-card">
+        <article className="card parent-hub-card" data-parent-hub-panel="activity-feed">
           <div className="parent-hub-card-head">
             <p className="eyebrow">Misconception patterns</p>
             <h3 className="parent-hub-card-title">Where correction is clustering</h3>
           </div>
-          <MisconceptionList patterns={patterns} />
+          {parentHubDegraded ? (
+            <div className="feedback warn" data-parent-hub-degraded="activity-feed">
+              <strong>Activity feed temporarily unavailable</strong>
+              <div style={{ marginTop: 8 }}>
+                Misconception patterns will reappear automatically once the feed recovers. Student practice is unaffected.
+              </div>
+            </div>
+          ) : (
+            <MisconceptionList patterns={patterns} />
+          )}
         </article>
       </section>
 

@@ -53,14 +53,66 @@ async function fetchHubJson(fetchFn, url, init, authSession) {
   return payload;
 }
 
+// U9 round 1 fix (adv-u9-r1-002): wrap a hub fetch with named circuit-breaker
+// accounting. HTTP 5xx and network failures trip the breaker; HTTP 2xx/3xx
+// record a success; HTTP 4xx are user errors (auth / validation) and record
+// NEITHER so user fault cannot degrade the surface for other users.
+//
+// The wrapper re-throws every error after recording so callers observe the
+// same control flow as the pre-U9 unwrapped path.
+async function fetchHubJsonWithBreaker(fetchFn, url, init, authSession, breaker) {
+  if (!breaker || typeof breaker.recordFailure !== 'function') {
+    return fetchHubJson(fetchFn, url, init, authSession);
+  }
+  try {
+    const requestInit = await applyRepositoryAuthSession(authSession, init);
+    const response = await fetchFn(url, requestInit);
+    if (response.status >= 500 && response.status <= 599) {
+      breaker.recordFailure();
+    } else if (response.ok) {
+      breaker.recordSuccess();
+    }
+    // 4xx: neither — client-side error (auth / validation).
+    const payload = await parseResponse(response);
+    if (!response.ok) {
+      const message = payload?.message || `Hub request failed (${response.status}).`;
+      const error = new Error(message);
+      error.status = response.status;
+      error.code = payload?.code || null;
+      error.payload = payload;
+      throw error;
+    }
+    return payload;
+  } catch (error) {
+    // Re-throw without double-recording: 5xx already recorded above, and
+    // only genuine network failures (no response.status on the thrown error)
+    // should trip the breaker here. When a 5xx throws further down the
+    // parsing path, `error.status` is set — skip the second recordFailure.
+    if (error && typeof error === 'object' && typeof error.status === 'number') {
+      throw error;
+    }
+    breaker.recordFailure();
+    throw error;
+  }
+}
+
 export function createHubApi({
   baseUrl,
   fetch = globalThis.fetch?.bind(globalThis),
   authSession = createNoopRepositoryAuthSession(),
+  // U9 round 1 fix (adv-u9-r1-002): optional breaker handles. When supplied,
+  // the hub API records 5xx / network failures via `recordFailure` and 2xx
+  // via `recordSuccess` against the matching surface. When absent (e.g. tests
+  // that do not need circuit-breaker wiring), the pre-U9 fetch path is used.
+  breakers = null,
 } = {}) {
   if (typeof fetch !== 'function') {
     throw new TypeError('Hub API requires a fetch implementation.');
   }
+
+  const parentHubRecentSessionsBreaker = breakers?.parentHubRecentSessions || null;
+  const parentHubActivityBreaker = breakers?.parentHubActivity || null;
+  const classroomSummaryBreaker = breakers?.classroomSummary || null;
 
   async function readParentRecentSessions({ learnerId = null, limit = 6, cursor = null } = {}) {
     const url = buildRequestUrl(baseUrl, '/api/hubs/parent/recent-sessions', {
@@ -68,7 +120,13 @@ export function createHubApi({
       limit,
       cursor,
     });
-    return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    return fetchHubJsonWithBreaker(
+      fetch,
+      url,
+      { method: 'GET' },
+      authSession,
+      parentHubRecentSessionsBreaker,
+    );
   }
 
   async function readParentActivity({ learnerId = null, limit = 20, cursor = null } = {}) {
@@ -77,7 +135,13 @@ export function createHubApi({
       limit,
       cursor,
     });
-    return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    return fetchHubJsonWithBreaker(
+      fetch,
+      url,
+      { method: 'GET' },
+      authSession,
+      parentHubActivityBreaker,
+    );
   }
 
   return {
@@ -126,7 +190,18 @@ export function createHubApi({
         requestId,
         auditLimit,
       });
-      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+      // U9 round 1 fix (adv-u9-r1-002): the Admin Hub read surfaces the
+      // per-learner Grammar/Punctuation/Spelling summary stats. When the
+      // derived-read path goes hot the `classroomSummary` breaker opens so
+      // the admin UX degrades to the "learner-list-only" banner per plan
+      // line 882.
+      return fetchHubJsonWithBreaker(
+        fetch,
+        url,
+        { method: 'GET' },
+        authSession,
+        classroomSummaryBreaker,
+      );
     },
     async saveMonsterVisualConfigDraft({ draft, mutation } = {}) {
       const url = buildRequestUrl(baseUrl, '/api/admin/monster-visual-config/draft');
