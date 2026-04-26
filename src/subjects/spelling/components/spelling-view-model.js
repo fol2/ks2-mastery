@@ -28,12 +28,27 @@ export const MODE_CARDS = Object.freeze([
   },
 ]);
 
-/* Post-Mega dashboard cards. Guardian Mission is the only active card in MVP;
- * Boss Dictation / Word Detective / Story Challenge are preview placeholders
- * that set the P2+ roadmap without promising dates. Icons stay null because
- * the Guardian / future-mode art has not been drawn yet — the component
- * renders a typographic glyph placeholder in its place so we never ship an
- * off-brand generic icon. */
+/* Post-Mega dashboard cards. Guardian Mission and Boss Dictation are both
+ * active in U10 — they are the two primary post-Mega paths. Word Detective /
+ * Story Challenge remain preview placeholders that set the P2+ roadmap
+ * without promising dates. Icons stay null because the Guardian / Boss /
+ * future-mode art has not been drawn yet — the component renders a
+ * typographic glyph placeholder in its place so we never ship an off-brand
+ * generic icon.
+ *
+ * U10: Boss Dictation flips from `disabled: true` (Phase P1 placeholder) to
+ * `disabled: false` with its own `ariaLabel`. The PostMegaSetupContent scene
+ * branches on `card.id === 'boss-dictation'` to render the Boss variant with
+ * its own Begin button — same three-state variant system established by
+ * Guardian (`active` / `rested` / `placeholder`). Copy landed via the
+ * /frontend-design invocation (plan reference:
+ * docs/plans/2026-04-25-005-feat-post-mega-spelling-guardian-hardening-plan.md).
+ *
+ * Design framing rules (both active cards must honour):
+ *   - Glyph is a single letter, matches the pill frame established by Guardian.
+ *   - Description is grounded and child-specific; no "Coming soon" stub copy.
+ *   - `ariaLabel` is required on every active card so screen readers read the
+ *     full intent rather than just the glyph + title + description. */
 export const POST_MEGA_MODE_CARDS = Object.freeze([
   {
     id: 'guardian',
@@ -48,8 +63,13 @@ export const POST_MEGA_MODE_CARDS = Object.freeze([
     iconSrc: null,
     glyph: 'B',
     title: 'Boss Dictation',
-    desc: 'Coming soon — one-shot dictation challenges against a bigger boss.',
-    disabled: true,
+    // "Ten Mega words. One spelling each. Miss one — it still stays Mega."
+    // reinforces the Mega-never-revoked invariant on the card face itself so
+    // a child who hesitates before pressing Begin already knows a Boss round
+    // cannot punish them into Guardian recovery.
+    desc: 'Ten Mega words. One spelling each. Miss one — it still stays Mega.',
+    ariaLabel: 'Boss Dictation — ten-word one-shot dictation from your Mega words. Mega status never drops.',
+    disabled: false,
   },
   {
     id: 'word-detective',
@@ -621,6 +641,11 @@ export function summaryModeLabel(mode) {
   if (mode === 'test') return 'SATs Test';
   if (mode === 'single') return 'Single-word Drill';
   if (mode === 'guardian') return 'Guardian Mission';
+  // U10: Boss Dictation lives alongside Guardian Mission as a post-Mega
+  // surface. Without this branch `summaryRibbonSub` would display "Smart
+  // Review" on the Boss summary mode chip, leaking legacy copy into the
+  // graduated surface.
+  if (mode === 'boss') return 'Boss Dictation';
   return 'Smart Review';
 }
 

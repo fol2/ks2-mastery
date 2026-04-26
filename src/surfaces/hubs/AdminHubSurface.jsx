@@ -68,6 +68,65 @@ function AdminAccountRoles({ model, directory = {}, actions }) {
   );
 }
 
+// U1 (P2): Post-Mega Spelling diagnostic panel. Answers the recurring
+// question "why is Guardian Mission still locked for this learner?" in
+// one glance — published vs secure core counts, the first 10 blocking
+// slugs, and sticky-unlock state (populated by U2 once the
+// `SPELLING_CONTENT_RELEASE_ID` sticky graduation lands).
+//
+// Accessibility: uses a `<dl>/<dt>/<dd>` pair for the debug aggregates so
+// screen readers announce label-value pairs coherently. The card inherits
+// the admin hub's existing `.card` + `.small muted` utility classes so
+// the visual rhythm stays consistent with other admin panels.
+//
+// PII posture: only curriculum-public slug strings and integer counts
+// render here. No learner name / email / account id touches this surface,
+// so a later screenshot / Slack paste stays ICO-compliant even for a
+// real production learner.
+function PostMegaSpellingDebugPanel({ debug = null }) {
+  const safe = debug && typeof debug === 'object' && !Array.isArray(debug) ? debug : {};
+  const source = typeof safe.source === 'string' && safe.source ? safe.source : 'locked-fallback';
+  const preview = Array.isArray(safe.blockingCoreSlugsPreview) ? safe.blockingCoreSlugsPreview : [];
+  const items = [
+    ['Source', source],
+    ['All core Mega', safe.allWordsMega ? 'true' : 'false'],
+    ['Sticky unlocked', safe.stickyUnlocked ? 'true' : 'false'],
+    ['Published core count', String(Number(safe.publishedCoreCount) || 0)],
+    ['Secure core count', String(Number(safe.secureCoreCount) || 0)],
+    ['Blocking core count', String(Number(safe.blockingCoreCount) || 0)],
+    ['Guardian map count', String(Number(safe.guardianMapCount) || 0)],
+    ['Extra words ignored', String(Number(safe.extraWordsIgnoredCount) || 0)],
+    ['Content release id', safe.contentReleaseId ? String(safe.contentReleaseId) : '—'],
+  ];
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-panel="post-mega-spelling-debug">
+      <div className="eyebrow">Spelling · post-mega</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Why is Guardian locked?</h3>
+      <p className="small muted">
+        Diagnostic snapshot for the currently selected learner. Surfaces the post-mega gate inputs so
+        an operator can see which core words still block graduation. No personal data is rendered —
+        only curriculum-public slug strings and integer counts.
+      </p>
+      <dl className="post-mega-debug-dl">
+        {items.map(([label, value]) => (
+          <div className="post-mega-debug-row" key={label}>
+            <dt className="small muted">{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+        <div className="post-mega-debug-row" key="blockingCoreSlugsPreview">
+          <dt className="small muted">Blocking slugs (first 10)</dt>
+          <dd>
+            {preview.length
+              ? <code className="small">{preview.join(', ')}</code>
+              : <span className="small muted">None — every core slug is secure.</span>}
+          </dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
 function DemoOperationsSummary({ summary = {} }) {
   const items = [
     ['Demo sessions created', summary.sessionsCreated],
@@ -618,6 +677,7 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
 
       <AccountOpsMetadataPanel model={model} actions={actions} />
       <ErrorLogCentrePanel model={model} actions={actions} />
+      <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
 
       <section className="two-col" style={{ marginBottom: 20 }}>
         <article className="card">

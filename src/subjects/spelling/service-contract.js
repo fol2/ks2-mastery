@@ -1,4 +1,15 @@
-export const SPELLING_SERVICE_STATE_VERSION = 2;
+export const SPELLING_SERVICE_STATE_VERSION = 3;
+
+/**
+ * P2 U2: Spelling content-release identifier. Stamped into `data.postMega` at
+ * first-graduation so a later content shake-up (new core words, retirements)
+ * can diff against the release the learner graduated under. Pattern mirrors
+ * Grammar's `GRAMMAR_CONTENT_RELEASE_ID` in `worker/src/subjects/grammar/content.js`
+ * — an opaque string constant, bumped by hand when the content bundle changes
+ * in a way learners should feel. Bump day: 2026-04-26 (baseline for P2
+ * visibility theme).
+ */
+export const SPELLING_CONTENT_RELEASE_ID = 'spelling-p2-baseline-2026-04-26';
 
 export const SPELLING_ROOT_PHASES = Object.freeze(['dashboard', 'session', 'summary', 'word-bank']);
 export const SPELLING_MODES = Object.freeze(['smart', 'trouble', 'test', 'single', 'guardian', 'boss']);
@@ -66,7 +77,17 @@ export const GUARDIAN_MISSION_STATES = Object.freeze([
  */
 export function createLockedPostMasteryState() {
   return {
+    // P2 U2: `allWordsMega` is kept as an alias to `allWordsMegaNow` for one
+    // release. Consumers gating on dashboard availability should prefer
+    // `postMegaDashboardAvailable` (sticky OR live); `allWordsMega` is a
+    // legacy surface that is scheduled for removal once every caller has
+    // migrated. The stub returns false for both because a locked fallback
+    // represents a pre-graduation learner — no live Mega, no sticky bit.
     allWordsMega: false,
+    allWordsMegaNow: false,
+    postMegaUnlockedEver: false,
+    postMegaDashboardAvailable: false,
+    newCoreWordsSinceGraduation: 0,
     guardianDueCount: 0,
     wobblingCount: 0,
     wobblingDueCount: 0,
@@ -79,6 +100,32 @@ export function createLockedPostMasteryState() {
     todayDay: 0,
     guardianMap: {},
     recommendedWords: [],
+  };
+}
+
+/**
+ * P2 U2: Normalise a `data.postMega` record to the canonical shape. Returns
+ * `null` for any garbage / array / missing input so `data.postMega === null`
+ * is the unambiguous "never graduated" marker. Callers (client repository,
+ * Worker twin) stop the sibling-record spread when the result is null so
+ * the subject-state bundle stays compact.
+ */
+export function normalisePostMegaRecord(rawValue) {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return null;
+  const unlockedAt = Number(rawValue.unlockedAt);
+  const unlockedPublishedCoreCount = Number(rawValue.unlockedPublishedCoreCount);
+  const unlockedContentReleaseId = typeof rawValue.unlockedContentReleaseId === 'string'
+    ? rawValue.unlockedContentReleaseId
+    : '';
+  const unlockedBy = typeof rawValue.unlockedBy === 'string' ? rawValue.unlockedBy : '';
+  if (!Number.isFinite(unlockedAt) || unlockedAt < 0) return null;
+  if (!Number.isFinite(unlockedPublishedCoreCount) || unlockedPublishedCoreCount < 0) return null;
+  if (!unlockedContentReleaseId) return null;
+  return {
+    unlockedAt: Math.floor(unlockedAt),
+    unlockedContentReleaseId,
+    unlockedPublishedCoreCount: Math.floor(unlockedPublishedCoreCount),
+    unlockedBy: unlockedBy || 'all-core-stage-4',
   };
 }
 
@@ -128,6 +175,45 @@ export function isGuardianEligibleSlug(slug, progressMap, wordBySlug) {
   const stage = Number(record?.stage);
   if (!Number.isFinite(stage) || stage < GUARDIAN_SECURE_STAGE) return false;
   return true;
+}
+
+/**
+ * Shared mode predicates (U6). Three shapes:
+ *   - `isPostMasteryMode` — requires graduation (gates shortcut-start).
+ *   - `isMegaSafeMode` — cannot demote `progress.stage` / `dueDay` /
+ *     `lastDay` / `lastResult`; includes trouble+practiceOnly.
+ *   - `isSingleAttemptMegaSafeMode` — runs one submit per card, no retry.
+ *
+ * Contract: add a new post-Mega mode here and it applies everywhere that
+ * gates shortcut-start.
+ *
+ * @param {string} mode
+ * @returns {boolean}
+ */
+export function isPostMasteryMode(mode) {
+  return mode === 'guardian' || mode === 'boss';
+}
+
+/**
+ * @param {string} mode
+ * @param {object} [options]
+ * @param {boolean} [options.practiceOnly]  Strict boolean; trouble+practiceOnly
+ *   is Mega-safe (never demote).
+ * @returns {boolean}
+ */
+export function isMegaSafeMode(mode, options = {}) {
+  if (isPostMasteryMode(mode)) return true;
+  if (mode !== 'trouble') return false;
+  if (!options || typeof options !== 'object') return false;
+  return options.practiceOnly === true;
+}
+
+/**
+ * @param {string} mode
+ * @returns {boolean}
+ */
+export function isSingleAttemptMegaSafeMode(mode) {
+  return isPostMasteryMode(mode);
 }
 export const SPELLING_YEAR_FILTERS = Object.freeze(['core', 'y3-4', 'y5-6', 'extra']);
 export const LEGACY_SPELLING_YEAR_FILTER_ALIASES = Object.freeze({
@@ -307,7 +393,14 @@ function deriveSummaryTotals(mode, cards, mistakes) {
   let totalWords = 0;
   let correct = 0;
 
-  if (mode === 'test') {
+  // Boss (U10) and SATs Test share the same testSummary card shape
+  // (`Score: 7/10`, `Accuracy: 70%`, `Correct: 7`, `Needs more work: 3`). The
+  // score-card "N/M" parse therefore applies to both; without adding 'boss'
+  // here the else-branch would fall back to `firstValue = '7/10'` →
+  // Number.parseInt → 7, which would lead to `totalWords = 7` and
+  // `correct = 7 - mistakes.length = 4`. That would surface as a Boss summary
+  // claiming only 7 words landed when 10 were played.
+  if (mode === 'test' || mode === 'boss') {
     const scoreCard = cards.find((card) => card.label === 'Score');
     if (scoreCard && typeof scoreCard.value === 'string') {
       const match = /^(\d+)\s*\/\s*(\d+)$/.exec(scoreCard.value);

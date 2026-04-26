@@ -42,6 +42,7 @@ import {
   punctuationSkillHasMultiSkillItems,
   punctuationSkillModalContent,
   punctuationSkillModalPreferredExample,
+  punctuationSummaryHeadline,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 import { MONSTERS_BY_SUBJECT } from '../src/platform/game/monsters.js';
 import { PUNCTUATION_CLUSTERS, PUNCTUATION_ITEMS, PUNCTUATION_SKILLS } from '../shared/punctuation/content.js';
@@ -122,9 +123,12 @@ test('U1 view-model: PUNCTUATION_PRIMARY_MODE_CARDS labels + descriptions use on
 // ---------------------------------------------------------------------------
 
 test('U1 view-model: PUNCTUATION_MAP_STATUS_FILTER_IDS ordered list matches plan', () => {
+  // Phase 4 U3 review follow-on (PR #269): `'unknown'` appended so the
+  // degraded-analytics state is filter-reachable. The other 6 entries stay
+  // in plan-pinned order.
   assert.deepEqual(
     [...PUNCTUATION_MAP_STATUS_FILTER_IDS],
-    ['all', 'new', 'learning', 'due', 'weak', 'secure'],
+    ['all', 'new', 'learning', 'due', 'weak', 'secure', 'unknown'],
   );
   assert.equal(Object.isFrozen(PUNCTUATION_MAP_STATUS_FILTER_IDS), true);
 });
@@ -520,6 +524,32 @@ test('U1 view-model: buildPunctuationDashboardModel surfaces non-zero stats', ()
   assert.equal(model.primaryMode, 'smart');
 });
 
+test('U2 view-model (adv-234 HIGH 3): Today-card detail strings are child-register', () => {
+  // Original Phase 3 U2 copy leaked "Reward units you own" / "This release"
+  // — the former exposes the internal "reward unit" token, the latter the
+  // release-id bookkeeping term. Both are adult-register and must not
+  // render to a child learner. This test locks the replacements so a
+  // future copy drift that reinstates either string fails loudly.
+  const model = buildPunctuationDashboardModel(
+    { due: 1, weak: 1, securedRewardUnits: 1, accuracy: 50 },
+    { prefs: { mode: 'smart' } },
+    {},
+  );
+  const byId = Object.fromEntries(model.todayCards.map((card) => [card.id, card]));
+  // Forbidden adult strings must not reappear.
+  assert.notEqual(byId.secure.detail, 'Reward units you own');
+  assert.notEqual(byId.accuracy.detail, 'This release');
+  // Every detail string is non-empty and short (the 3-5 word slot the
+  // dashboard grid was designed around).
+  for (const card of model.todayCards) {
+    assert.equal(typeof card.detail, 'string');
+    assert.ok(card.detail.length > 0, `card ${card.id} detail is empty`);
+    // Child-register sanity: no raw "release" / "reward unit" tokens.
+    assert.ok(!/reward units?/i.test(card.detail), `card ${card.id} detail references "reward unit"`);
+    assert.ok(!/\brelease\b/i.test(card.detail), `card ${card.id} detail references "release"`);
+  }
+});
+
 test('U1 view-model: buildPunctuationDashboardModel activeMonsters iterate only the 4 active ids', () => {
   const rewardState = {
     pealark: { mastered: ['m1', 'm2'] },
@@ -895,4 +925,58 @@ test('U6: punctuationSkillHasMultiSkillItems returns false for non-string / empt
   assert.strictEqual(punctuationSkillHasMultiSkillItems(null), false);
   assert.strictEqual(punctuationSkillHasMultiSkillItems(undefined), false);
   assert.strictEqual(punctuationSkillHasMultiSkillItems('not_a_skill'), false);
+});
+
+// ---------------------------------------------------------------------------
+// U4 follower — accuracy-bucketed celebration headline (design-lens HIGH 2).
+// Replaces the clinical `summary.label` default with child-facing copy that
+// matches the round's emotional register.
+// ---------------------------------------------------------------------------
+
+test('U4 follower: punctuationSummaryHeadline returns celebratory copy for accuracy >= 80', () => {
+  assert.equal(punctuationSummaryHeadline({ accuracy: 80 }), 'Great round!');
+  assert.equal(punctuationSummaryHeadline({ accuracy: 95 }), 'Great round!');
+  assert.equal(punctuationSummaryHeadline({ accuracy: 100 }), 'Great round!');
+});
+
+test('U4 follower: punctuationSummaryHeadline returns encouraging copy for 50 <= accuracy < 80', () => {
+  assert.equal(punctuationSummaryHeadline({ accuracy: 50 }), "Good try! Here's what you got.");
+  assert.equal(punctuationSummaryHeadline({ accuracy: 75 }), "Good try! Here's what you got.");
+  assert.equal(punctuationSummaryHeadline({ accuracy: 79 }), "Good try! Here's what you got.");
+});
+
+test('U4 follower: punctuationSummaryHeadline returns supportive copy for accuracy < 50', () => {
+  assert.equal(punctuationSummaryHeadline({ accuracy: 0 }), 'Keep going — every round helps.');
+  assert.equal(punctuationSummaryHeadline({ accuracy: 25 }), 'Keep going — every round helps.');
+  assert.equal(punctuationSummaryHeadline({ accuracy: 49 }), 'Keep going — every round helps.');
+});
+
+test('U4 follower: punctuationSummaryHeadline returns null for missing / malformed summary', () => {
+  // A null return is the caller's signal to fall back to `summary.label`.
+  assert.equal(punctuationSummaryHeadline(null), null);
+  assert.equal(punctuationSummaryHeadline(undefined), null);
+  assert.equal(punctuationSummaryHeadline([]), null);
+  assert.equal(punctuationSummaryHeadline({}), null);
+  assert.equal(punctuationSummaryHeadline({ accuracy: 'not-a-number' }), null);
+  assert.equal(punctuationSummaryHeadline({ accuracy: NaN }), null);
+});
+
+test('U4 follower: punctuationSummaryHeadline clamps out-of-range accuracy to [0, 100]', () => {
+  // Defensive — if a broken projection ever emits 150% or -10%, the helper
+  // still produces child-friendly copy rather than propagating the outlier.
+  assert.equal(punctuationSummaryHeadline({ accuracy: 150 }), 'Great round!');
+  assert.equal(punctuationSummaryHeadline({ accuracy: -10 }), 'Keep going — every round helps.');
+});
+
+test('U4 follower: punctuationSummaryHeadline never emits forbidden child terms', () => {
+  // Every bucket's output must pass U10's forbidden-term sweep so a scene
+  // regression cannot slip an adult / Worker term into the headline.
+  const samples = [
+    punctuationSummaryHeadline({ accuracy: 95 }),
+    punctuationSummaryHeadline({ accuracy: 60 }),
+    punctuationSummaryHeadline({ accuracy: 10 }),
+  ];
+  for (const text of samples) {
+    assert.equal(isPunctuationChildCopy(text), true, `headline ${JSON.stringify(text)} leaked forbidden term`);
+  }
 });

@@ -79,6 +79,49 @@ test('client bundle audit fails when Grammar server runtime, engine, content, or
   }, /server-authoritative Grammar runtime, engine, content, and enrichment code/);
 });
 
+// U9 follow-up (review minor-1): self-test for the fault-injection
+// token denial. The literal export name
+// `__ks2_injectFault_TESTS_ONLY__` is listed in both
+// `scripts/audit-client-bundle.mjs::FORBIDDEN_TEXT` and
+// `scripts/production-bundle-audit.mjs::FORBIDDEN_DEPLOYED_TEXT`.
+// This test pins the client-side arm so any future mistype of the
+// token — or an accidental delete of the entry — fails loudly rather
+// than silently allowing the chaos middleware to smuggle into a
+// shipped bundle. The deployed arm is covered implicitly by the
+// `production-bundle-audit.mjs` drift tests in this same file.
+test('client bundle audit forbids the fault-injection token via the forbidden-text list', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
+  const bundle = path.join(dir, 'app.bundle.js');
+  const metafile = path.join(dir, 'app.bundle.meta.json');
+  const publicDir = path.join(dir, 'public');
+  await mkdir(publicDir, { recursive: true });
+  // Synthetic bundle: the forbidden token embedded in what would
+  // otherwise be a benign console log line. Any accidental import of
+  // `tests/helpers/fault-injection.mjs` into a production bundle would
+  // emit this symbol; the audit must flag it.
+  await writeFile(bundle, 'console.log("__ks2_injectFault_TESTS_ONLY__");\n');
+  await writeFile(metafile, JSON.stringify({
+    inputs: {
+      'src/main.js': { bytes: 1 },
+    },
+  }));
+
+  assert.throws(() => {
+    execFileSync(process.execPath, [
+      './scripts/audit-client-bundle.mjs',
+      '--bundle',
+      bundle,
+      '--metafile',
+      metafile,
+      '--public-dir',
+      publicDir,
+    ], {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    });
+  }, /__ks2_injectFault_TESTS_ONLY__|fault-injection middleware/);
+});
+
 test('client bundle audit fails on browser-side AI provider key tokens', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ks2-runtime-boundary-'));
   const bundle = path.join(dir, 'app.bundle.js');

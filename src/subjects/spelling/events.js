@@ -10,6 +10,7 @@ export const SPELLING_EVENT_TYPES = Object.freeze({
   GUARDIAN_RECOVERED: 'spelling.guardian.recovered',
   GUARDIAN_MISSION_COMPLETED: 'spelling.guardian.mission-completed',
   BOSS_COMPLETED: 'spelling.boss.completed',
+  POST_MEGA_UNLOCKED: 'spelling.post-mega.unlocked',
 });
 
 export const SPELLING_MASTERY_MILESTONES = Object.freeze([1, 5, 10, 25, 50, 100, 150, 200]);
@@ -260,5 +261,44 @@ export function createSpellingBossCompletedEvent({
     correct,
     wrong,
     seedSlugs: safeSeedSlugs,
+  };
+}
+
+/**
+ * P2 U2: Emitted exactly once per learner, on the moment they first achieve
+ * `allWordsMega: true` via a submit that transitioned a slug `< 4 → === 4`.
+ * Carries the content-release-id the learner graduated under so downstream
+ * consumers (U3 seed harness, U12 reward subscriber) can diff against the
+ * current content bundle.
+ *
+ * Deterministic id format: `spelling.post-mega.unlocked:<learnerId>:<unlockedAt>`.
+ * Idempotent at the persistence layer (H3 guard) AND at the event layer: the
+ * service never emits this event twice because the pre/post submit-caused-this
+ * guard fails on any subsequent Mega-producing submit (stage was already
+ * at 4 pre-submit).
+ */
+export function createSpellingPostMegaUnlockedEvent({
+  learnerId,
+  unlockedAt,
+  contentReleaseId,
+  publishedCoreCount,
+} = {}) {
+  const safeLearnerId = learnerId || 'default';
+  const safeUnlockedAt = safeTimestamp(unlockedAt);
+  const safePublished = Number.isInteger(Number(publishedCoreCount)) && Number(publishedCoreCount) >= 0
+    ? Number(publishedCoreCount)
+    : 0;
+  const safeReleaseId = typeof contentReleaseId === 'string' && contentReleaseId
+    ? contentReleaseId
+    : '';
+  return {
+    ...baseSpellingEvent(
+      SPELLING_EVENT_TYPES.POST_MEGA_UNLOCKED,
+      { learnerId: safeLearnerId, createdAt: safeUnlockedAt },
+      [safeLearnerId, safeUnlockedAt],
+    ),
+    unlockedAt: safeUnlockedAt,
+    contentReleaseId: safeReleaseId,
+    publishedCoreCount: safePublished,
   };
 }

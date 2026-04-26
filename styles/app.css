@@ -9603,12 +9603,430 @@ html { scroll-behavior: smooth; }
   }
 }
 
-/* ---------- Phase 3 U6 · Punctuation Skill Detail modal (minimal) ----------
-   Review-follower MEDIUM 4: co-ship the smallest-surface CSS needed for the
-   modal to be tappable + identifiable. Full styling sweep lands in U10. The
-   Bellstorm top border is the subject accent; the 44x44 close button meets
-   the KS2 touch-target floor; the reduced-motion guard is defence-in-depth
-   for the scrim/modal animations U10 will author. */
+/* ========================================================================
+   Punctuation — Phase 3
+   ------------------------------------------------------------------------
+   Dedicated class-namespaced styling block for the Phase 3 UX rebuild:
+     - Setup dashboard (hero, today cards, primary/secondary mode cards,
+       round-length toggle, active-monster strip).
+     - Session scene (teach-box, prompt, feedback, secondary actions).
+     - Summary scene (wobbly chips, monster progress strip, GPS review,
+       primary/secondary actions).
+     - Map scene (topbar, filter chip rows, monster group headers, skill
+       card grid, empty states).
+     - Skill Detail modal (scrim, dialog, tabs, Learn / Practise bodies).
+   Mobile-first stacking collapses grid layouts to a single column at
+   max-width 760px. `@media (prefers-reduced-motion: reduce)` disables
+   scene transitions across every Phase 3 surface. Bellstorm Coast
+   accent #B8873F is the subject colour for top borders; the rest of
+   the block inherits --panel / --line / --muted so a future theme
+   pass can re-skin without touching this file.
+   ======================================================================== */
+
+/* --- Setup — today cards + primary / secondary mode cards ------------- */
+.punctuation-today-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.punctuation-today-card {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+  display: grid;
+  gap: 4px;
+}
+.punctuation-today-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+.punctuation-today-value {
+  font-size: 1.6rem;
+  line-height: 1;
+  font-weight: 900;
+}
+.punctuation-today-detail {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.punctuation-today-empty {
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+.punctuation-primary-modes {
+  display: grid;
+  gap: 14px;
+}
+.punctuation-primary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.punctuation-primary-mode-card {
+  appearance: none;
+  display: grid;
+  gap: 6px;
+  min-height: 120px;
+  padding: 16px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+  color: var(--ink);
+  cursor: pointer;
+}
+.punctuation-primary-mode-card:hover:not(:disabled),
+.punctuation-primary-mode-card:focus-visible {
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
+.punctuation-primary-mode-card[aria-pressed="true"] {
+  border-color: #B8873F;
+  background: color-mix(in oklab, #B8873F 8%, var(--panel));
+}
+.punctuation-primary-mode-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.64;
+}
+.punctuation-primary-mode-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #8a6628;
+  text-transform: uppercase;
+}
+.punctuation-primary-mode-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+.punctuation-primary-mode-desc {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.punctuation-secondary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.punctuation-secondary-mode-card {
+  appearance: none;
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+  color: var(--ink);
+  cursor: pointer;
+}
+.punctuation-secondary-mode-card:hover:not(:disabled),
+.punctuation-secondary-mode-card:focus-visible {
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
+.punctuation-secondary-mode-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+}
+.punctuation-secondary-mode-desc {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.punctuation-round-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.punctuation-round-label {
+  font-weight: 800;
+  color: var(--muted);
+}
+.punctuation-length-toggle {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+/* KS2 touch-target floor for the round-length 4/8/12 toggle. Mirrors
+   the `.punctuation-skill-modal-close` 44×44 target. */
+.punctuation-length-toggle button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 14px;
+}
+.punctuation-length-toggle button:focus-visible {
+  outline: none;
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
+
+/* --- Setup — active monster strip -------------------------------------- */
+.punctuation-monsters-section {
+  display: grid;
+  gap: 10px;
+}
+.punctuation-monsters-heading {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+}
+.punctuation-active-monsters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+.punctuation-active-monster {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+.punctuation-active-monster-name {
+  font-weight: 800;
+}
+.punctuation-active-monster-progress {
+  font-size: 0.82rem;
+}
+
+/* --- Session — teach box, source block, feedback reveals --------------- */
+.punctuation-session-scene {
+  display: grid;
+  gap: 16px;
+}
+.punctuation-session-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.punctuation-session-source {
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.punctuation-session-teach-rule {
+  margin: 0;
+  font-weight: 800;
+}
+.punctuation-session-teach-details {
+  margin-top: 8px;
+}
+.punctuation-session-body {
+  display: grid;
+  gap: 10px;
+}
+.punctuation-session-secondary-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.punctuation-session-feedback-model,
+.punctuation-session-feedback-more {
+  margin-top: 10px;
+}
+.punctuation-session-progress {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+/* --- Summary — score chips, wobbly chips, monster progress, actions ---- */
+.punctuation-summary-score {
+  margin-top: 16px;
+}
+.punctuation-summary-wobbly {
+  margin-top: 14px;
+}
+.punctuation-summary-wobbly--empty {
+  color: var(--good-ink, #1c5f4a);
+}
+.punctuation-summary-monsters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.punctuation-summary-monster {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+.punctuation-summary-monster-name {
+  font-weight: 800;
+}
+.punctuation-summary-monster-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.punctuation-summary-monster-stage {
+  color: var(--muted);
+}
+.punctuation-summary-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.punctuation-gps-review {
+  display: grid;
+  gap: 10px;
+}
+
+/* --- Map — topbar, filter chip rows, monster groups, skill cards ------- */
+.punctuation-map-scene {
+  display: grid;
+  gap: 16px;
+}
+.punctuation-map-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.punctuation-map-filters {
+  display: grid;
+  gap: 10px;
+}
+.punctuation-map-filter-group {
+  display: grid;
+  gap: 6px;
+}
+.punctuation-map-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* KS2 touch-target floor for the Map filter chips (status + monster
+   rows). The `.chip` base sets `padding: 6px 10px` which is below the
+   44×44 target; raise the button-only child selector to the KS2 floor
+   without disturbing other `.chip` consumers. Mirrors
+   `.punctuation-skill-modal-close`. */
+.punctuation-map-chips button {
+  min-height: 44px;
+  padding: 10px 14px;
+}
+.punctuation-map-chips button:focus-visible {
+  outline: none;
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
+.punctuation-map-summary {
+  margin: 0;
+}
+.punctuation-map-body {
+  display: grid;
+  gap: 16px;
+}
+.punctuation-map-monster-group {
+  display: grid;
+  gap: 10px;
+}
+.punctuation-map-monster-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.punctuation-map-monster-group-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+.punctuation-map-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+.punctuation-map-skill-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+.punctuation-map-skill-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.punctuation-map-skill-card-head h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.punctuation-map-skill-rule {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+.punctuation-map-skill-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.punctuation-map-skill-status--secure {
+  background: var(--good-soft, #e6f3ec);
+  color: #1c5f4a;
+}
+.punctuation-map-skill-status--weak {
+  background: var(--bad-soft, #fbe8e6);
+  color: #7a2e2a;
+}
+.punctuation-map-skill-status--due {
+  background: var(--warn-soft, #fdf1db);
+  color: #805614;
+}
+/* Phase 4 U3 — degraded-analytics state. Muted slate hint so it reads as
+   "waiting on evidence" rather than the warn/alert warmth of Due/Weak.
+   Distinct from the default New chip (no custom class) so a reviewer can
+   tell at a glance whether the Map is rendering an honest empty roster or
+   the unknown fallback. */
+.punctuation-map-skill-status--unknown {
+  background: var(--panel-soft, #eef0f3);
+  color: var(--muted, #4b5563);
+  border: 1px dashed var(--line, #c9ced6);
+}
+.punctuation-map-skill-unknown-helper {
+  margin: -2px 0 8px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+.punctuation-map-empty {
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+
+/* --- Skill Detail modal — scrim, dialog, tabs, bodies ------------------ */
 .punctuation-skill-modal-scrim {
   position: fixed;
   inset: 0;
@@ -9639,13 +10057,112 @@ html { scroll-behavior: smooth; }
   overflow: auto;
   padding: 28px 32px 22px;
 }
+.punctuation-skill-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.punctuation-skill-modal-eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a6628;
+}
+.punctuation-skill-modal-title {
+  margin: 0;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  font-weight: 900;
+}
 .punctuation-skill-modal-close {
   min-width: 44px;
   min-height: 44px; /* KS2 touch target floor */
 }
+.punctuation-skill-modal-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.punctuation-skill-modal-body {
+  display: grid;
+  gap: 14px;
+  padding-top: 16px;
+}
+.punctuation-skill-modal-section {
+  display: grid;
+  gap: 6px;
+}
+.punctuation-skill-modal-section-label {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.punctuation-skill-modal-rule {
+  margin: 0;
+  line-height: 1.5;
+}
+.punctuation-skill-modal-example,
+.punctuation-skill-modal-contrast-bad {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid #B8873F;
+  background: var(--panel-soft);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.punctuation-skill-modal-contrast-bad {
+  border-left-color: #c84d42;
+  background: var(--bad-soft, #fbe8e6);
+}
+.punctuation-skill-modal-practise-copy {
+  margin: 0;
+  line-height: 1.5;
+}
+.punctuation-skill-modal-multi-skill-note {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.punctuation-skill-modal-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* --- Mobile-first stacking for all Phase 3 Punctuation surfaces -------- */
+@media (max-width: 760px) {
+  .punctuation-primary-grid,
+  .punctuation-today-grid,
+  .punctuation-active-monsters,
+  .punctuation-summary-monsters,
+  .punctuation-map-skill-grid {
+    grid-template-columns: 1fr;
+  }
+  .punctuation-skill-modal {
+    padding: 20px 20px 16px;
+    max-height: calc(100vh - 24px);
+  }
+  .punctuation-skill-modal-head {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+/* --- Reduced-motion guard across every Phase 3 animation --------------- */
 @media (prefers-reduced-motion: reduce) {
   .punctuation-skill-modal-scrim,
-  .punctuation-skill-modal {
+  .punctuation-skill-modal,
+  .punctuation-map-scene,
+  .punctuation-session-scene,
+  .punctuation-setup-scene {
     animation: none;
+    transition: none;
   }
 }

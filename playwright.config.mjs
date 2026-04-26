@@ -45,6 +45,17 @@ export default {
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    // U9 follow-up (review major-1): defence-in-depth env gate for the
+    // fault-injection middleware. `isFaultInjectionAllowed()` checks
+    // `KS2_TEST_HARNESS=1` in addition to the per-request header opt-in
+    // so a production worker build never honours chaos plans. Playwright
+    // propagates `env` into the child process that runs the browser-app
+    // server; the golden-path scenes never toggle the opt-in header
+    // anyway, so the only surface effect is that chaos scenes actually
+    // get their plans honoured.
+    env: {
+      KS2_TEST_HARNESS: '1',
+    },
   },
   use: {
     baseURL: 'http://127.0.0.1:4173',

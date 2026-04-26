@@ -10,6 +10,11 @@ import { createSpellingPersistence } from '../src/subjects/spelling/repository.j
 import { createSpellingService } from '../src/subjects/spelling/service.js';
 import { resolveSpellingShortcut } from '../src/subjects/spelling/shortcuts.js';
 import { spellingAutoAdvanceDelay } from '../src/subjects/spelling/auto-advance.js';
+import {
+  BOSS_DEFAULT_ROUND_LENGTH,
+  isPostMasteryMode,
+  SPELLING_MODES,
+} from '../src/subjects/spelling/service-contract.js';
 import { WORDS, WORD_BY_SLUG } from '../src/subjects/spelling/data/word-data.js';
 
 function typedFormData(value) {
@@ -294,6 +299,83 @@ test('shortcut resolver matches preserved spelling shortcuts and ignores unrelat
     focusSelector: 'input[name="typed"]',
     preventDefault: true,
   });
+});
+
+// U10: Alt+1/2/3/4 behaviour unchanged; Alt+5 is additive and routes to Boss.
+// The resolver stays dumb (no allWordsMega inspection); the gate lives inside
+// module.js::spelling-shortcut-start so non-graduated learners get a no-op
+// rather than a stale fallback session.
+test('U10 resolver: Alt+2/3/4 preserved + Alt+5 resolves to boss without breaking Alt+1-4', () => {
+  const appState = {
+    route: { subjectId: 'spelling', tab: 'practice' },
+    subjectUi: {
+      spelling: {
+        phase: 'dashboard',
+        awaitingAdvance: false,
+        session: null,
+      },
+    },
+  };
+
+  // Alt+1 → smart (regression spot check — already covered elsewhere)
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '1', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'smart' },
+    preventDefault: true,
+  });
+
+  // Alt+2 → trouble
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '2', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'trouble' },
+    preventDefault: true,
+  });
+
+  // Alt+3 → test
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '3', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'test' },
+    preventDefault: true,
+  });
+
+  // Alt+4 → guardian (preserved from U1)
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '4', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'guardian' },
+    preventDefault: true,
+  });
+
+  // Alt+5 → boss (new in U10). The resolver MUST emit the canonical Boss
+  // round length so Alt+5 and the Begin button produce identical payloads —
+  // otherwise the module handler falls back to `prefs.roundLength` (default
+  // '20') and the Boss service clamps down to 12, not the spec-mandated 10.
+  assert.deepEqual(resolveSpellingShortcut({
+    key: '5', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'DIV' },
+  }, appState), {
+    action: 'spelling-shortcut-start',
+    data: { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH },
+    preventDefault: true,
+  });
+
+  // Alt+5 inside an unrelated typing field (search, not 'typed') still
+  // resolves to null — matches the Alt+1 typing-guard established upstream.
+  assert.equal(resolveSpellingShortcut({
+    key: '5', altKey: true, shiftKey: false, ctrlKey: false, metaKey: false,
+    target: { tagName: 'INPUT', name: 'search' },
+  }, appState), null);
 });
 
 test('legacy auto-advance delay is preserved for learning and SATs saves', () => {
@@ -690,4 +772,52 @@ test('spelling-shortcut-start with mode:boss when allWordsMega=true starts a Bos
   assert.equal(state.session.mode, 'boss');
   assert.equal(state.session.type, 'test');
   assert.equal(state.session.label, 'Boss Dictation');
+});
+
+// U6: tightened parity — every mode in `SPELLING_MODES` for which
+// `isPostMasteryMode(mode) === true` MUST be gated by the shortcut-start
+// handler when `allWordsMega === false`; every mode for which
+// `isPostMasteryMode(mode) === false` MUST NOT be gated.
+//
+// This replaces the previous pair of per-mode assertions ({mode:'guardian',
+// mode:'boss'}) with an invariant sweep across the canonical modes list so
+// that when U11 lands Pattern Quest — extending `isPostMasteryMode` — this
+// parity test automatically asserts the new mode is gated in both
+// dispatchers. Without this sweep, a future post-Mega mode addition could
+// regress the `module.js`/`remote-actions.js` parity silently because the
+// old assertion only named the two specific literals.
+test('U6 parity sweep: module.js shortcut-start gates every isPostMasteryMode() mode on allWordsMega', () => {
+  // Pre-U11 baseline sanity: the canonical modes list contains the two
+  // post-Mega modes we expect. This guards the sweep from silently passing
+  // if `SPELLING_MODES` were trimmed.
+  const postMasteryModes = SPELLING_MODES.filter(isPostMasteryMode);
+  assert.deepEqual([...postMasteryModes].sort(), ['boss', 'guardian']);
+
+  for (const mode of SPELLING_MODES) {
+    const storage = installMemoryStorage();
+    const harness = createAppHarness({ storage });
+    const learnerId = harness.store.getState().learners.selectedId;
+    harness.services.spelling.savePrefs(learnerId, { mode: 'smart', roundLength: '1' });
+    harness.dispatch('open-subject', { subjectId: 'spelling' });
+
+    harness.dispatch('spelling-shortcut-start', { mode });
+
+    const after = harness.store.getState().subjectUi.spelling;
+    if (isPostMasteryMode(mode)) {
+      // Gated: no session must start when !allWordsMega.
+      assert.equal(after.session, null,
+        `post-mastery mode '${mode}' must be gate-level no-op without allWordsMega`);
+    } else {
+      // Not gated: a session MUST start (the Mega gate is bypassed for
+      // legacy modes). Note: `after.session.mode` may not match the
+      // requested `mode` verbatim — e.g. Trouble Drill with no backlog
+      // legitimately falls back to Smart Review. This sweep only asserts
+      // the Mega gate does not short-circuit the handler; mode-specific
+      // fallback semantics are covered elsewhere.
+      assert.equal(after.phase, 'session',
+        `non-post-mastery mode '${mode}' must not be gated by the Mega check`);
+      assert.notEqual(after.session, null,
+        `non-post-mastery mode '${mode}' must produce a session record`);
+    }
+  }
 });

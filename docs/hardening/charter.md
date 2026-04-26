@@ -72,3 +72,5 @@ The `/api/auth/logout` response emits `Clear-Site-Data: "cache", "cookies", "sto
 ## Sign-off
 
 Signed at sprint start by James To — 2026-04-25.
+
+Phase 2 baseline reference: `docs/hardening/p2-baseline.md`

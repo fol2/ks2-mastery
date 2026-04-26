@@ -31,8 +31,16 @@ export const PUNCTUATION_OPEN_MAP_ALLOWED_PHASES = Object.freeze(['setup', 'summ
 // Reserved Punctuation monsters (Colisk / Hyphang / Carillon) are absent
 // from the monster filter list so a rogue payload cannot surface a retired
 // name as a filter option.
+//
+// Phase 4 U3 (review follow-on): `'unknown'` is included so the filter chip
+// row stays consistent with the skill-row status enum once the upstream
+// worker starts emitting `analytics.available === false`. Without this
+// entry the degraded state would trap a learner on any non-"All" chip
+// (every skill is `'unknown'`, but the filter has no matching id → the
+// Map renders zero cards with no empty-state message). The chip is a
+// harmless extra slot while the upstream wiring is still deferred.
 export const PUNCTUATION_MAP_STATUS_FILTER_IDS = Object.freeze([
-  'all', 'new', 'learning', 'due', 'weak', 'secure',
+  'all', 'new', 'learning', 'due', 'weak', 'secure', 'unknown',
 ]);
 
 export const PUNCTUATION_MAP_MONSTER_FILTER_IDS = Object.freeze([
@@ -158,12 +166,20 @@ export function normalisePunctuationPrefs(value = {}) {
 //
 // Defaults when the Map phase first opens:
 //   { statusFilter: 'all', monsterFilter: 'all', detailOpenSkillId: null,
-//     detailTab: 'learn' }
+//     detailTab: 'learn', returnTo: 'setup' }
 //
 // `detailOpenSkillId` is either a published skill id (currently one of 14)
 // or `null`. `detailTab` is either `'learn'` or `'practise'`; invalid input
 // falls back to `'learn'`.
+//
+// U4 follower (adv-238-003): `returnTo` remembers the source phase so
+// `punctuation-close-map` can route the learner back to the Summary scene
+// instead of always collapsing to Setup. Only `'setup'` and `'summary'` are
+// accepted values — any other input falls back to `'setup'` so a rogue
+// payload never strands the learner on a dead phase. `punctuation-open-map`
+// seeds this from the current phase before flipping to `phase: 'map'`.
 const PUNCTUATION_MAP_DETAIL_TABS = new Set(PUNCTUATION_MAP_DETAIL_TAB_IDS);
+const PUNCTUATION_MAP_RETURN_PHASES = Object.freeze(['setup', 'summary']);
 
 export function normalisePunctuationMapUi(value = {}) {
   const raw = isPlainObject(value) ? value : {};
@@ -182,7 +198,9 @@ export function normalisePunctuationMapUi(value = {}) {
     : null;
   const rawDetailTab = typeof raw.detailTab === 'string' ? raw.detailTab : 'learn';
   const detailTab = PUNCTUATION_MAP_DETAIL_TABS.has(rawDetailTab) ? rawDetailTab : 'learn';
-  return { statusFilter, monsterFilter, detailOpenSkillId, detailTab };
+  const rawReturnTo = typeof raw.returnTo === 'string' ? raw.returnTo : 'setup';
+  const returnTo = PUNCTUATION_MAP_RETURN_PHASES.includes(rawReturnTo) ? rawReturnTo : 'setup';
+  return { statusFilter, monsterFilter, detailOpenSkillId, detailTab, returnTo };
 }
 
 // U5: Rehydrate-time sanitiser for `subjectUi.punctuation`. Called exactly

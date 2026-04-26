@@ -10,7 +10,28 @@ import {
   platformRoleLabel,
 } from '../access/roles.js';
 import { buildSpellingContentSummary, validateSpellingContentBundle } from '../../subjects/spelling/content/model.js';
+import { getSpellingPostMasteryState } from '../../subjects/spelling/read-model.js';
 import { buildParentHubReadModel } from './parent-read-model.js';
+
+// U1 (P2): neutral "empty" debug envelope for the admin hub when no
+// learner is selected or when the role check forbids debug fields. The
+// shape mirrors the populated `postMasteryDebug` returned by the selector
+// so the React surface can render a single definition-list template
+// without having to branch on the "empty" case.
+function emptyPostMasteryDebug() {
+  return {
+    source: 'locked-fallback',
+    publishedCoreCount: 0,
+    secureCoreCount: 0,
+    blockingCoreCount: 0,
+    blockingCoreSlugsPreview: [],
+    extraWordsIgnoredCount: 0,
+    guardianMapCount: 0,
+    contentReleaseId: null,
+    allWordsMega: false,
+    stickyUnlocked: false,
+  };
+}
 
 function asTs(value, fallback = 0) {
   const numeric = Number(value);
@@ -360,6 +381,35 @@ export function buildAdminHubReadModel({
     membershipRole: selectedDiagnostics?.membershipRole || 'viewer',
   });
 
+  // U1 (P2): additive `postMasteryDebug` panel. Gated on `canViewAdminHub`
+  // (admin + ops platform roles only) — child and parent surfaces never
+  // receive a populated envelope. When the role check fails or when no
+  // learner is selected, we emit `emptyPostMasteryDebug()` so the hub
+  // response shape stays stable across role changes (the React surface
+  // conditionally renders the panel on `permissions.canViewAdminHub`).
+  //
+  // PII posture: the selector output only contains slug strings (curriculum-
+  // public) and integer counts. No learner name / email flows through this
+  // sibling, so ICO data-minimisation stays intact even if a later reviewer
+  // widens the read to parent-role adults.
+  const adminCanViewDebug = canViewAdminHub({ platformRole: resolvedPlatformRole });
+  let postMasteryDebug = emptyPostMasteryDebug();
+  if (adminCanViewDebug && selectedDiagnostics) {
+    const selectedLearnerBundle = learnerBundles[selectedDiagnostics.learnerId] || null;
+    const selectedSubjectState = selectedLearnerBundle && isPlainObject(selectedLearnerBundle.subjectStates)
+      ? selectedLearnerBundle.subjectStates.spelling
+      : null;
+    const selectorOutput = getSpellingPostMasteryState({
+      subjectStateRecord: isPlainObject(selectedSubjectState) ? selectedSubjectState : null,
+      runtimeSnapshot: runtimeSnapshots.spelling || null,
+      now,
+      sourceHint: 'service',
+    });
+    if (selectorOutput?.postMasteryDebug) {
+      postMasteryDebug = selectorOutput.postMasteryDebug;
+    }
+  }
+
   return {
     generatedAt,
     permissions: {
@@ -446,6 +496,8 @@ export function buildAdminHubReadModel({
       demoOperations: demoOperations ? 'real' : 'placeholder',
       monsterVisualConfig: monsterVisualConfig ? 'real' : 'placeholder',
       learnerSupport: 'real',
+      postMasteryDebug: adminCanViewDebug && selectedDiagnostics ? 'real' : 'placeholder',
     },
+    postMasteryDebug,
   };
 }

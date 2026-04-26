@@ -1,4 +1,7 @@
 // Phase 3 U5 — Punctuation Map scene.
+// Phase 4 U3 — `analytics.available` signal → `'unknown'` status with a
+//              child-friendly helper sub-line when the Worker projection
+//              fails or is missing.
 //
 // Browsing surface over the 14 published Punctuation skills, grouped under
 // the 4 active monsters (Pealark / Claspin / Curlune / Quoral). Learners
@@ -15,8 +18,12 @@
 //     forbidden from the browser bundle (bundle-audit rule), so the
 //     mapping is copied here and tested against the plan's fixture.
 //   - Per-skill status: derived client-side from the analytics snapshot's
-//     `skillRows` when available (ui.analytics.skillRows), falling back
-//     to every skill reading as `'new'` for fresh learners.
+//     `skillRows` when `ui.analytics.available === true`. Fresh learners
+//     (`'empty'`) render as `'new'`. A DEGRADED payload (`false`) renders
+//     as `'unknown'` across every skill with a "We'll unlock this after
+//     your next round." helper line (Phase 4 U3 / plan R4 / AE4). The
+//     `analytics.available` signal is attached by the client read-model's
+//     `initState` (`src/subjects/punctuation/client-read-models.js`).
 //   - Active monster state: `buildPunctuationMapModel` iterates only
 //     `ACTIVE_PUNCTUATION_MONSTER_IDS`, full stop — reserved monsters
 //     (Colisk / Hyphang / Carillon) never surface even if the reward
@@ -39,10 +46,12 @@ import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
   PUNCTUATION_DASHBOARD_HERO,
+  assembleSkillRows,
   bellstormSceneForPhase,
   buildPunctuationMapModel,
   composeIsDisabled,
   punctuationChildStatusLabel,
+  punctuationChildUnknownHelperCopy,
   punctuationMonsterDisplayName,
   punctuationSkillRuleOneLiner,
 } from './punctuation-view-model.js';
@@ -51,8 +60,13 @@ import {
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
   normalisePunctuationMapUi,
 } from '../service-contract.js';
-import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
 import { PunctuationSkillDetailModal } from './PunctuationSkillDetailModal.jsx';
+
+// Re-export so tests that historically imported `assembleSkillRows` from
+// the scene file keep working. The canonical definition lives in the
+// view-model (`.js`) so test modules can `await import(...)` it without
+// paying the esbuild-bundled JSX loader cost.
+export { assembleSkillRows };
 
 // Child-facing labels for the status filter chips. `'all'` is a literal
 // "All"; the other five ids reach for the shared child-copy mapping in
@@ -77,36 +91,16 @@ function monsterFilterLabel(id) {
 // against the single source of truth and lets future changes to the shape
 // (e.g. new filter ids) land once.
 
-// Build the 14 skill-row inputs for `buildPunctuationMapModel`. When the
-// Worker-projected analytics snapshot carries `skillRows`, we enrich each
-// row with the client-held name / clusterId (so a rogue payload can't
-// substitute adult copy). Fresh learners or degraded runtimes fall back to
-// "status: 'new'" across every skill, which keeps the Map populated and
-// browsable while the analytics snapshot is empty.
-function assembleSkillRows(ui) {
-  const analytics = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui.analytics : null;
-  const snapshotRows = analytics && Array.isArray(analytics.skillRows) ? analytics.skillRows : [];
-  const snapshotById = new Map();
-  for (const row of snapshotRows) {
-    if (row && typeof row === 'object' && !Array.isArray(row) && typeof row.skillId === 'string') {
-      snapshotById.set(row.skillId, row);
-    }
-  }
-  return PUNCTUATION_CLIENT_SKILLS.map((skill) => {
-    const snap = snapshotById.get(skill.id) || null;
-    const rawStatus = snap && typeof snap.status === 'string' ? snap.status : 'new';
-    return {
-      skillId: skill.id,
-      name: skill.name,
-      clusterId: skill.clusterId,
-      status: rawStatus,
-      attempts: Number(snap?.attempts) || 0,
-      accuracy: Number.isFinite(Number(snap?.accuracy)) ? Number(snap.accuracy) : null,
-      mastery: Number(snap?.mastery) || 0,
-      dueAt: Number(snap?.dueAt) || 0,
-    };
-  });
-}
+// `assembleSkillRows` lives in `./punctuation-view-model.js` so tests can
+// import it via the `.js` loader path. Re-exported at the top of this file
+// so the historical scene-scoped import stays valid.
+
+// Phase 4 U3: module-level latch so the degraded-analytics console warning
+// fires once per process-lifetime, not on every render. The Map re-renders
+// on every filter / detail-state transition; without this latch the
+// devtools console would flood. Resetting to `false` happens only in tests
+// that explicitly re-import the module.
+let analyticsUnavailableWarned = false;
 
 function StatusFilterChips({ activeFilter, disabled, actions }) {
   return (
@@ -165,6 +159,15 @@ function MonsterFilterChips({ activeFilter, disabled, actions }) {
 }
 
 function SkillCard({ skill, disabled, actions }) {
+  // Phase 4 U3: when analytics is degraded, every skill arrives with
+  // `status: 'unknown'`. The card renders a child-friendly helper line
+  // underneath the rule one-liner so a learner understands they haven't
+  // done anything wrong — the system is waiting on evidence. The string
+  // is routed through `punctuationChildUnknownHelperCopy()` so the copy
+  // lands under the same governance as the chip label (helper sits in
+  // `punctuation-view-model.js`); a future forbidden-term sweep or copy
+  // tune lands in one place.
+  const isUnknown = skill.status === 'unknown';
   return (
     <article className="punctuation-map-skill-card" data-skill-id={skill.skillId}>
       <header className="punctuation-map-skill-card-head">
@@ -174,6 +177,11 @@ function SkillCard({ skill, disabled, actions }) {
         </span>
       </header>
       <p className="punctuation-map-skill-rule">{punctuationSkillRuleOneLiner(skill.skillId)}</p>
+      {isUnknown ? (
+        <p className="punctuation-map-skill-unknown-helper muted">
+          {punctuationChildUnknownHelperCopy()}
+        </p>
+      ) : null}
       <div className="punctuation-map-skill-actions actions">
         <button
           type="button"
@@ -248,6 +256,23 @@ export function PunctuationMapScene({ ui, actions }) {
     && typeof ui.rewardState === 'object' && !Array.isArray(ui.rewardState)
     ? ui.rewardState
     : {};
+  // Phase 4 U3: surface a one-time console warning when analytics is
+  // unavailable so the degraded state is discoverable during development
+  // and in production devtools. Lives inside a useEffect so SSR never
+  // emits the warning (and the test harness's `renderToStaticMarkup`
+  // pathway stays silent). The module-level `analyticsUnavailableWarned`
+  // latch bounds the warning to once per process lifetime.
+  const analyticsAvailable = ui && typeof ui === 'object' && !Array.isArray(ui) && ui.analytics
+    && typeof ui.analytics === 'object' && !Array.isArray(ui.analytics)
+    ? ui.analytics.available
+    : undefined;
+  React.useEffect(() => {
+    if (analyticsAvailable === false && !analyticsUnavailableWarned) {
+      analyticsUnavailableWarned = true;
+      // eslint-disable-next-line no-console
+      console.warn('[punctuation] analytics unavailable — Map is rendering the "unknown" state');
+    }
+  }, [analyticsAvailable]);
   const skillRows = assembleSkillRows(ui);
   const model = buildPunctuationMapModel(
     skillRows,

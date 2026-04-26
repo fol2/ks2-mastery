@@ -13,12 +13,15 @@
 // them here once and every child surface inherits the guard through U10's
 // fixture-driven sweep.
 //
-// Parity guard: `composeIsDisabled` deliberately lives here and nowhere else.
-// Grammar and Spelling each keep their own copy. Any shared extraction must
-// prove Spelling byte-for-byte parity in the PR (AGENTS.md:14).
+// Parity guard: `composeIsDisabled` deliberately lives here and nowhere else
+// in Punctuation's surface. Grammar and Spelling do NOT carry an equivalent
+// export today — their scenes inline the same pending/availability gate. Any
+// future shared extraction must prove Spelling byte-for-byte parity in the PR
+// (AGENTS.md:14).
 
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { MONSTERS_BY_SUBJECT } from '../../../platform/game/monsters.js';
+import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
 import {
   PUNCTUATION_MAP_DETAIL_TAB_IDS,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
@@ -244,6 +247,33 @@ export function punctuationMonsterDisplayName(monsterId) {
   return ACTIVE_PUNCTUATION_MONSTER_DISPLAY_NAMES[monsterId] || titlecase(monsterId);
 }
 
+// --- Summary headline ------------------------------------------------------
+
+// Child-facing celebration copy for the Punctuation Summary scene hero. The
+// session-summary payload from `shared/punctuation/service.js` carries a
+// clinical `summary.label` of `'Punctuation session summary'` — a Year 3-6
+// child reading "Session complete." after a round gets zero sense of the
+// round's tone. The helper branches on `summary.accuracy` to produce a copy
+// register that mirrors the child's experience:
+//
+//  - accuracy >= 80  → celebratory ("Great round!")
+//  - accuracy >= 50  → encouraging ("Good try! Here's what you got.")
+//  - accuracy  < 50  → supportive ("Keep going — every round helps.")
+//
+// Returns `null` when the summary payload is missing / malformed so the
+// caller can fall back to `summary.label` without a string-comparison dance.
+// No adult register, no dotted tags, no Worker terms — U10's forbidden-term
+// sweep treats every string emitted here as child copy.
+export function punctuationSummaryHeadline(summary) {
+  if (!summary || typeof summary !== 'object' || Array.isArray(summary)) return null;
+  const rawAccuracy = Number(summary.accuracy);
+  if (!Number.isFinite(rawAccuracy)) return null;
+  const accuracy = Math.max(0, Math.min(100, rawAccuracy));
+  if (accuracy >= 80) return 'Great round!';
+  if (accuracy >= 50) return "Good try! Here's what you got.";
+  return 'Keep going — every round helps.';
+}
+
 // --- Dashboard hero copy ---------------------------------------------------
 
 // Hero headline + subheadline for the Setup / dashboard scene. Frozen so U1
@@ -254,6 +284,18 @@ export const PUNCTUATION_DASHBOARD_HERO = Object.freeze({
   headline: 'Punctuation practice',
   subtitle: "Pick a short round — we'll queue what matters next.",
 });
+
+// --- Setup round-length toggle options -------------------------------------
+
+// The three stops the child Setup toggle exposes. Tighter subset of the
+// service-contract `PUNCTUATION_ROUND_LENGTHS` superset (which accepts
+// 1 / 2 / 3 / 4 / 6 / 8 / 12 / 'all' so the /start Worker command can still
+// honour legacy per-skill drills). The Setup dispatch handler validates
+// against THIS narrower enum so a rogue payload cannot smuggle an off-menu
+// length (e.g. 'all' or '1') in via the primary dashboard control
+// (adv-234-001). Shared so the Scene and the module handler agree byte-
+// for-byte on what a legitimate Setup round-length dispatch looks like.
+export const PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS = Object.freeze(['4', '8', '12']);
 
 // --- Forbidden-terms fixture -----------------------------------------------
 
@@ -339,6 +381,20 @@ const PUNCTUATION_CHILD_STATUS_LABELS = Object.freeze({
   due: 'Due today',
   weak: 'Wobbly',
   secure: 'Secure',
+  // Phase 4 U3 — degraded-analytics state. Distinct from `'new'` (fresh
+  // learner) so a payload-failure does not masquerade as an empty-evidence
+  // Map. Paired with the helper sub-line the Map scene renders under each
+  // unknown row (see `punctuationChildUnknownHelperCopy`).
+  //
+  // Review follow-on (PR #269): the original 'Unknown' label was adult /
+  // clinical register and fired against EVERY fresh learner because the
+  // default null-branch in `deriveAnalyticsAvailability` produced `false`.
+  // Flipping the null-branch to `'empty'` means this label now only ever
+  // surfaces when the upstream EXPLICITLY emits degraded state — so the
+  // wording can relax into child register per plan R4 (line 541:
+  // "`punctuationChildStatusLabel('unknown')` → 'Check back later' or
+  // similar"). Chose the plan's first-suggested wording verbatim.
+  unknown: 'Check back later',
 });
 
 /**
@@ -349,6 +405,21 @@ const PUNCTUATION_CHILD_STATUS_LABELS = Object.freeze({
 export function punctuationChildStatusLabel(status) {
   if (typeof status !== 'string' || !status) return 'New';
   return PUNCTUATION_CHILD_STATUS_LABELS[status] || 'New';
+}
+
+// Phase 4 U3 (review follow-on): the helper sub-line that renders under
+// every `'unknown'` skill row. Routed through this helper so the copy
+// lands under the same governance layer as `punctuationChildStatusLabel`
+// — a future forbidden-term sweep over the helper text lands here, not
+// in a JSX literal inside the scene file. The wording softens away from
+// the original "We'll unlock this after your next round." because the
+// upstream worker does NOT currently wire `ui.analytics` on round
+// complete (that upstream emission is deferred by plan R4 to a future
+// PR). Until that wiring lands, a causal "next round" promise would be
+// broken. The replacement phrasing keeps the reassuring tone (nothing
+// the learner did wrong) without the unhonourable causal claim.
+export function punctuationChildUnknownHelperCopy() {
+  return "We're still loading your progress.";
 }
 
 // --- Misconception-tag → child label ---------------------------------------
@@ -719,11 +790,16 @@ export function buildPunctuationDashboardModel(stats, learner, rewardState) {
   const secureCount = safeNumber(safeStats.securedRewardUnits ?? safeStats.secure, 0);
   const accuracyValue = safeNumber(safeStats.accuracy, 0);
 
+  // HIGH 3 (adv-234 follow-up): child-register `detail` strings. The
+  // previous "Reward units you own" / "This release" wording was adult-
+  // register (the former leaks the internal "reward unit" token, the
+  // latter the release-id token). Child copy stays in the same 3-5 word
+  // slot so the card grid layout is unchanged.
   const todayCards = Object.freeze([
-    Object.freeze({ id: 'secure', label: 'Secure', value: secureCount, detail: 'Reward units you own' }),
+    Object.freeze({ id: 'secure', label: 'Secure', value: secureCount, detail: 'Skills you know well' }),
     Object.freeze({ id: 'due', label: 'Due', value: dueCount, detail: 'Come back to these today' }),
     Object.freeze({ id: 'weak', label: 'Wobbly', value: weakCount, detail: 'Needs another go' }),
-    Object.freeze({ id: 'accuracy', label: 'Accuracy', value: accuracyValue, detail: 'This release' }),
+    Object.freeze({ id: 'accuracy', label: 'Accuracy', value: accuracyValue, detail: 'Your best so far' }),
   ]);
 
   const prefs = learner && typeof learner === 'object' && !Array.isArray(learner)
@@ -744,6 +820,53 @@ export function buildPunctuationDashboardModel(stats, learner, rewardState) {
 
 // --- Punctuation Map model builder -----------------------------------------
 
+/**
+ * Build the 14 skill-row inputs for `buildPunctuationMapModel`. Called
+ * once per Map render from `PunctuationMapScene`. When the analytics
+ * snapshot carries `skillRows`, each client-held skill (name + clusterId)
+ * is enriched with its per-skill status / attempts / accuracy / mastery
+ * row. Fresh learners fall back to `status: 'new'` per-skill (pre-U3
+ * behaviour preserved). A DEGRADED analytics state
+ * (`analytics.available === false`) now coerces every skill to
+ * `status: 'unknown'` — the Map no longer pretends a payload failure is
+ * an empty evidence roster (plan R4 / Phase 4 U3, origin R4).
+ *
+ * Pure function over plain data — no React, no SSR. Exported so
+ * `tests/react-punctuation-scene.test.js` can exercise the three
+ * branches (true / false / 'empty') directly without the full render
+ * cost, and so the scene file imports it as a plain helper.
+ */
+export function assembleSkillRows(ui) {
+  const analytics = ui && typeof ui === 'object' && !Array.isArray(ui) ? ui.analytics : null;
+  // `available === false` means the Worker projection failed or was
+  // omitted entirely. Surface the degraded state honestly: every skill
+  // reads as `'unknown'` with the helper sub-line the SkillCard renders.
+  const degraded = analytics && analytics.available === false;
+  const snapshotRows = analytics && Array.isArray(analytics.skillRows) ? analytics.skillRows : [];
+  const snapshotById = new Map();
+  for (const row of snapshotRows) {
+    if (row && typeof row === 'object' && !Array.isArray(row) && typeof row.skillId === 'string') {
+      snapshotById.set(row.skillId, row);
+    }
+  }
+  return PUNCTUATION_CLIENT_SKILLS.map((skill) => {
+    const snap = snapshotById.get(skill.id) || null;
+    const rawStatus = degraded
+      ? 'unknown'
+      : (snap && typeof snap.status === 'string' ? snap.status : 'new');
+    return {
+      skillId: skill.id,
+      name: skill.name,
+      clusterId: skill.clusterId,
+      status: rawStatus,
+      attempts: Number(snap?.attempts) || 0,
+      accuracy: Number.isFinite(Number(snap?.accuracy)) ? Number(snap.accuracy) : null,
+      mastery: Number(snap?.mastery) || 0,
+      dueAt: Number(snap?.dueAt) || 0,
+    };
+  });
+}
+
 function normaliseSkillRow(row) {
   if (!row || typeof row !== 'object' || Array.isArray(row)) return null;
   const skillId = typeof row.skillId === 'string' ? row.skillId : '';
@@ -762,6 +885,11 @@ function normaliseSkillRow(row) {
 
 function deriveStatusForSkill(row) {
   if (!row) return 'new';
+  // Phase 4 U3: preserve the explicit `'unknown'` signal when the Map has
+  // coerced every skill to unknown because analytics is unavailable. The
+  // `attempts === 0` branch below would otherwise silently downgrade
+  // unknown rows to `'new'` and re-introduce the exact bug U3 fixes.
+  if (row.status === 'unknown') return 'unknown';
   if (row.attempts === 0) return 'new';
   return row.status;
 }

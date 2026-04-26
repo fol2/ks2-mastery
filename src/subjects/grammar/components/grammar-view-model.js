@@ -11,6 +11,10 @@
 // inline. When new forbidden terms appear we add them here once and every
 // child surface inherits the guard through U10's fixture-driven test.
 
+import {
+  grammarChildConfidenceLabel as grammarChildConfidenceLabelShared,
+  isGrammarConfidenceLabel,
+} from '../../../../shared/grammar/confidence.js';
 import { GRAMMAR_CLIENT_CONCEPTS } from '../metadata.js';
 import {
   GRAMMAR_AGGREGATE_CONCEPTS,
@@ -326,14 +330,11 @@ export function isGrammarChildCopy(text) {
 }
 
 // --- Child confidence label mapping -----------------------------------------
-
-const CHILD_CONFIDENCE_LABELS = Object.freeze({
-  emerging: 'New',
-  building: 'Learning',
-  'needs-repair': 'Trouble spot',
-  consolidating: 'Nearly secure',
-  secure: 'Secure',
-});
+// The internal-label → child-copy mapping lives in `shared/grammar/confidence.js`
+// (U8 consolidation). The tone map stays local because tone is CSS-class
+// vocabulary the shared module has no opinion about. Validation of incoming
+// labels uses `isGrammarConfidenceLabel` so we never silently accept an
+// out-of-taxonomy label.
 
 const CHILD_CONFIDENCE_TONES = Object.freeze({
   emerging: 'new',
@@ -344,15 +345,15 @@ const CHILD_CONFIDENCE_TONES = Object.freeze({
 });
 
 /**
- * Translates the internal five-label taxonomy (`emerging | building |
- * consolidating | secure | needs-repair`) into child-friendly copy. Input
- * shape accepts `{ label }` so callers can pass the entire confidence
- * projection. Unknown labels fall back to `Learning`, matching the Spelling
- * wording default.
+ * Translates the internal five-label taxonomy into child-friendly copy.
+ * Thin wrapper over the shared helper so existing view-model imports
+ * continue to work; validates the incoming label via
+ * `isGrammarConfidenceLabel` first (defensive against fixture drift) and
+ * delegates the actual mapping to `shared/grammar/confidence.js`.
  */
 export function grammarChildConfidenceLabel({ label } = {}) {
-  if (typeof label !== 'string') return 'Learning';
-  return CHILD_CONFIDENCE_LABELS[label] || 'Learning';
+  if (!isGrammarConfidenceLabel(label)) return 'Learning';
+  return grammarChildConfidenceLabelShared({ label });
 }
 
 /**

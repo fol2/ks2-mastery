@@ -2,11 +2,14 @@ import {
   createInitialPunctuationState,
   isPublishedPunctuationSkillId,
   normalisePunctuationMapUi,
+  normalisePunctuationPrefs,
   sanitisePunctuationUiOnRehydrate,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
+  PUNCTUATION_MODES,
   PUNCTUATION_OPEN_MAP_ALLOWED_PHASES,
 } from './service-contract.js';
+import { PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS } from './components/punctuation-view-model.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../platform/core/subject-availability.js';
 
 function applyTransition(context, transition) {
@@ -94,8 +97,79 @@ export const punctuationModule = {
     const ui = currentUi(context, learnerId);
 
     if (action === 'punctuation-set-mode') {
-      service.savePrefs(learnerId, { mode: data.value });
-      store.updateSubjectUi('punctuation', { phase: 'setup', error: '' });
+      // adv-234-004 (MEDIUM): phase guard. `punctuation-set-mode` is a Setup-
+      // scoped affordance (the three primary mode cards + the one-shot
+      // stale-prefs migration dispatch that fires from the Setup-phase render).
+      // Admin / Parent-Hub surfaces that want to write prefs on a learner's
+      // behalf should go through the Worker `save-prefs` command directly, not
+      // through this module action — respecting the same Map-phase discipline
+      // (adv-219-007). Refuse from non-Setup phases so a stray dispatch treats
+      // as a miss rather than a silent success (learning #7). Safe for the
+      // Setup render-time migration dispatch: the scene itself renders under
+      // `ui.phase === 'setup'`.
+      if (ui.phase !== 'setup') return false;
+      // U2: reject invalid mode values so a rogue payload cannot smuggle a
+      // non-enum mode into stored prefs. `PUNCTUATION_MODES` stays at 10
+      // entries (R17); Phase 3's stale-prefs migration explicitly dispatches
+      // `'smart'` / `'weak'` / `'gps'` from the Setup scene and relies on
+      // this guard to refuse garbage.
+      if (!PUNCTUATION_MODES.includes(data?.value)) return false;
+      const nextPrefs = service.savePrefs(learnerId, { mode: data.value });
+      // U2: mirror the saved prefs into `ui.prefs` so downstream scenes and
+      // tests can read the canonical value from `state.subjectUi.punctuation.prefs`.
+      // The service writes to the data repository; without this update the
+      // next render (and the Phase 3 test that asserts
+      // `state.subjectUi.punctuation.prefs.mode === 'smart'`) would see stale
+      // ui state. Mirrors Grammar's `resetToDashboardWithPrefs`.
+      //
+      // Stale-prefs migration latch: ANY successful `punctuation-set-mode`
+      // dispatch flips `prefsMigrated` to `true`. This latch prevents the
+      // Setup scene's one-shot stale-prefs migration from re-firing on
+      // subsequent renders, even if stored prefs somehow revert.
+      //
+      // `prefsMigrated` persists across reloads via `subjectStates.writeUi`
+      // — once a learner has migrated from a legacy cluster mode to `'smart'`,
+      // we never re-migrate them, even if a data-restore path later writes
+      // a cluster value back into their prefs. This matches the plan's
+      // intent that migration is a one-shot, per-learner event (plan R1,
+      // line 408). A fresh learner (different selectedId) starts without
+      // the latch; switching back to a migrated learner re-hydrates it.
+      //
+      // Parent-Hub backup restore that rolls stored prefs back to a legacy
+      // cluster mode while leaving `prefsMigrated: true` in place is an
+      // accepted edge case — see the PR body's "Accepted risk" section
+      // (adv-234-003). A manual dispatch of `punctuation-set-mode`
+      // `{ value: 'smart' }` re-runs the save cleanly.
+      store.updateSubjectUi('punctuation', {
+        phase: 'setup',
+        error: '',
+        prefs: normalisePunctuationPrefs(nextPrefs || {}),
+        prefsMigrated: true,
+      });
+      return true;
+    }
+
+    if (action === 'punctuation-set-round-length') {
+      // adv-234-001 (MEDIUM): phase guard. Round-length is a Setup-scoped
+      // affordance (the compact 4 / 8 / 12 toggle on the Setup scene). A
+      // dispatch from session / feedback / summary / map would otherwise save
+      // prefs mid-session without any reflection in the active session's
+      // `length`. Refuse so the caller treats the dispatch as a miss rather
+      // than a silent success (learning #7).
+      if (ui.phase !== 'setup') return false;
+      // adv-234-001 (MEDIUM): validate against the narrow UI enum
+      // `PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS = ['4', '8', '12']` rather
+      // than the storage-level `normalisePunctuationRoundLength` which also
+      // accepts 1 / 2 / 3 / 6 / 'all' (the superset kept for `/start-session`
+      // payloads that still honour legacy per-skill drills). The Setup toggle
+      // exposes exactly three stops; a rogue payload carrying 'all' or '1'
+      // bypasses the primary-dashboard contract and must be rejected here.
+      const value = typeof data?.value === 'string' ? data.value : '';
+      if (!PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(value)) return false;
+      const nextPrefs = service.savePrefs(learnerId, { roundLength: value });
+      store.updateSubjectUi('punctuation', {
+        prefs: normalisePunctuationPrefs(nextPrefs || {}),
+      });
       return true;
     }
 
@@ -176,6 +250,14 @@ export const punctuationModule = {
       if (!PUNCTUATION_OPEN_MAP_ALLOWED_PHASES.includes(ui.phase)) {
         return false;
       }
+      // U4 follower (adv-238-003): seed `mapUi.returnTo` with the source
+      // phase so `punctuation-close-map` routes the learner back to the
+      // same scene they opened Map from. Without this, closing the Map
+      // always collapses to Setup and the learner loses the Summary
+      // completion screen after a Map detour. Only 'setup' and 'summary'
+      // are valid source phases (per PUNCTUATION_OPEN_MAP_ALLOWED_PHASES),
+      // and `normalisePunctuationMapUi` rejects anything else.
+      const mapUi = normalisePunctuationMapUi({ returnTo: ui.phase });
       store.updateSubjectUi('punctuation', {
         phase: 'map',
         error: '',
@@ -184,7 +266,7 @@ export const punctuationModule = {
         // belt-and-braces reset here means no open-map path ever lands on
         // a feedback payload from an earlier session.
         feedback: null,
-        mapUi: normalisePunctuationMapUi(),
+        mapUi,
       });
       return true;
     }
@@ -205,12 +287,21 @@ export const punctuationModule = {
       // otherwise clear). Refuse from non-map phases so the caller treats
       // the dispatch as a miss rather than a silent success (learning #7).
       if (ui.phase !== 'map') return false;
-      const nextMapUi = {
-        ...normalisePunctuationMapUi(ui.mapUi),
-        detailOpenSkillId: null,
-      };
+      const currentMapUi = normalisePunctuationMapUi(ui.mapUi);
+      const nextMapUi = { ...currentMapUi, detailOpenSkillId: null };
+      // U4 follower (adv-238-003): route back to the phase recorded when
+      // the Map was opened. `returnTo` only accepts 'setup' or 'summary'
+      // (validated in normalisePunctuationMapUi), so a learner who opened
+      // the Map from the Summary scene lands back on Summary with their
+      // completion screen intact. A 'summary' return-to path requires a
+      // non-null summary payload under ui.summary; otherwise fall back to
+      // Setup so the learner never strands on an empty Summary (no
+      // session to summarise post-reload).
+      const canReturnToSummary = currentMapUi.returnTo === 'summary'
+        && ui.summary && typeof ui.summary === 'object' && !Array.isArray(ui.summary);
+      const nextPhase = canReturnToSummary ? 'summary' : 'setup';
       store.updateSubjectUi('punctuation', {
-        phase: 'setup',
+        phase: nextPhase,
         error: '',
         mapUi: nextMapUi,
       });

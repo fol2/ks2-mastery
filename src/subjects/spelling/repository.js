@@ -1,10 +1,13 @@
 import { cloneSerialisable, normalisePracticeSessionRecord } from '../../platform/core/repositories/helpers.js';
-import { normaliseGuardianMap } from './service-contract.js';
+import { normaliseGuardianMap, normalisePostMegaRecord } from './service-contract.js';
 
 const SUBJECT_ID = 'spelling';
 const PREF_STORAGE_PREFIX = 'ks2-platform-v2.spelling-prefs.';
 const PROGRESS_STORAGE_PREFIX = 'ks2-spell-progress-';
 const GUARDIAN_STORAGE_PREFIX = 'ks2-spell-guardian-';
+// P2 U2: sticky-graduation sibling. Mirrors POST_MEGA_KEY_PREFIX in
+// shared/spelling/service.js — must stay byte-identical with that constant.
+const POST_MEGA_STORAGE_PREFIX = 'ks2-spell-post-mega-';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function todayDayForNow(now) {
@@ -34,6 +37,10 @@ function guardianKey(learnerId) {
   return `${GUARDIAN_STORAGE_PREFIX}${learnerId || 'default'}`;
 }
 
+function postMegaKey(learnerId) {
+  return `${POST_MEGA_STORAGE_PREFIX}${learnerId || 'default'}`;
+}
+
 function parseStorageKey(key) {
   if (typeof key !== 'string') return null;
   if (key.startsWith(PREF_STORAGE_PREFIX)) {
@@ -41,6 +48,13 @@ function parseStorageKey(key) {
   }
   if (key.startsWith(GUARDIAN_STORAGE_PREFIX)) {
     return { type: 'guardian', learnerId: key.slice(GUARDIAN_STORAGE_PREFIX.length) || 'default' };
+  }
+  // P2 U2: order matters — POST_MEGA_STORAGE_PREFIX must be checked BEFORE
+  // PROGRESS_STORAGE_PREFIX because `ks2-spell-post-mega-` starts with
+  // `ks2-spell-p`, the same first 11 chars as progress. We keep the unique
+  // second-segment prefix check (`post-mega`) to disambiguate.
+  if (key.startsWith(POST_MEGA_STORAGE_PREFIX)) {
+    return { type: 'postMega', learnerId: key.slice(POST_MEGA_STORAGE_PREFIX.length) || 'default' };
   }
   if (key.startsWith(PROGRESS_STORAGE_PREFIX)) {
     return { type: 'progress', learnerId: key.slice(PROGRESS_STORAGE_PREFIX.length) || 'default' };
@@ -68,11 +82,21 @@ function normaliseProgressMap(rawValue) {
 
 export function normaliseSpellingSubjectData(rawValue, todayDay = 0) {
   const raw = isPlainObject(rawValue) ? rawValue : {};
-  return {
+  const output = {
     prefs: isPlainObject(raw.prefs) ? cloneSerialisable(raw.prefs) : {},
     progress: normaliseProgressMap(raw.progress),
     guardian: normaliseGuardianMap(raw.guardian, todayDay),
   };
+  // P2 U2: `postMega` is a sibling of progress/guardian/prefs inside the
+  // subject-state record. It is written once (at first-graduation) and
+  // thereafter read-only for the lifetime of the learner. Persisted storage
+  // format: `data.postMega = { unlockedAt, unlockedContentReleaseId,
+  // unlockedPublishedCoreCount, unlockedBy }`. We only attach the sibling
+  // when it normalises to a non-null record — keeps the bundle shape stable
+  // for pre-graduation learners (no `postMega` key at all).
+  const postMega = normalisePostMegaRecord(raw.postMega);
+  if (postMega) output.postMega = postMega;
+  return output;
 }
 
 function readSpellingData(repositories, learnerId, todayDay = 0) {
@@ -175,6 +199,9 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       if (parsed.type === 'prefs') return JSON.stringify(data.prefs || {});
       if (parsed.type === 'progress') return JSON.stringify(data.progress || {});
       if (parsed.type === 'guardian') return JSON.stringify(data.guardian || {});
+      // P2 U2: postMega is null for never-graduated learners; stringify
+      // preserves null-vs-object distinction for the service-layer reader.
+      if (parsed.type === 'postMega') return data.postMega ? JSON.stringify(data.postMega) : 'null';
       return null;
     },
     setItem(key, value) {
@@ -201,6 +228,23 @@ export function createSpellingPersistence({ repositories, now } = {}) {
           guardian: parseStoredJson(value, {}),
         }, day);
       }
+      if (parsed.type === 'postMega') {
+        // P2 U2 H3 mitigation guard — idempotency in the persistence
+        // critical section. Re-read `current.postMega`; if already set,
+        // skip the write so a concurrent second Mega-producing submit
+        // cannot overwrite the original `unlockedAt`. This guard survives
+        // the U2-to-U5 window where full storage-CAS is not yet in place;
+        // U5 later reinforces it with `navigator.locks` serialisation.
+        if (current.postMega) {
+          // Already sticky — treat as benign no-op, preserving the
+          // original record.
+        } else {
+          writeSpellingData(repositories, parsed.learnerId, {
+            ...current,
+            postMega: parseStoredJson(value, null),
+          }, day);
+        }
+      }
       const afterError = readPersistenceError();
       if (errorSignatureChanged(beforeError, afterError)) {
         const message = afterError?.message || 'storage-setItem-failed';
@@ -224,6 +268,10 @@ export function createSpellingPersistence({ repositories, now } = {}) {
       if (parsed.type === 'guardian') {
         writeSpellingData(repositories, parsed.learnerId, { ...current, guardian: {} }, day);
       }
+      // P2 U2: postMega cannot be removed through this path — sticky is
+      // permanent by contract. `resetLearner` (below) is the only surface
+      // that clears postMega, and it goes through writeSpellingData with an
+      // explicit empty bundle.
     },
   };
 
@@ -232,6 +280,7 @@ export function createSpellingPersistence({ repositories, now } = {}) {
     progressKey,
     prefsKey,
     guardianKey,
+    postMegaKey,
     // U8 review fix: expose the platform persistence channel's `lastError`
     // signal so the spelling service can detect legacy-engine's silent-
     // swallow on Smart Review / SATs submits. Legacy-engine's

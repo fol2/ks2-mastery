@@ -140,6 +140,54 @@ export function buildAudioAssetKey({
   return `${SPELLING_AUDIO_ROOT_PREFIX}/${safeModel}/${safeVoice}/${safeSpeed}/${safeContentKey}/${safeSlug}/${safeSentenceIndex}.${safeExtension}`;
 }
 
+export function buildLegacyAudioAssetKey({
+  voice,
+  speed,
+  slug,
+  sentenceIndex,
+  extension = DEFAULT_AUDIO_EXTENSION,
+}) {
+  const safeModel = encodeURIComponent(SPELLING_AUDIO_MODEL);
+  const safeVoice = encodeURIComponent(String(voice || '').trim());
+  const safeSpeed = encodeURIComponent(String(speed || '').trim());
+  const safeSlug = encodeURIComponent(String(slug || '').trim());
+  const safeSentenceIndex = Number(sentenceIndex);
+  const safeExtension = String(extension || DEFAULT_AUDIO_EXTENSION).replace(/^\./, '');
+
+  if (
+    !safeModel
+    || !safeVoice
+    || !safeSpeed
+    || !safeSlug
+    || !Number.isInteger(safeSentenceIndex)
+    || safeSentenceIndex < 0
+  ) {
+    throw new Error('A valid model, voice, speed, slug, and sentence index are required.');
+  }
+
+  return `${SPELLING_AUDIO_ROOT_PREFIX}/${safeModel}/${safeVoice}/${safeSpeed}/${safeSlug}/${safeSentenceIndex}.${safeExtension}`;
+}
+
+export function buildWordAudioAssetKey({
+  model = SPELLING_AUDIO_MODEL,
+  voice,
+  contentKey,
+  slug,
+  extension = DEFAULT_AUDIO_EXTENSION,
+}) {
+  const safeModel = encodeURIComponent(String(model || SPELLING_AUDIO_MODEL).trim());
+  const safeVoice = encodeURIComponent(String(voice || '').trim());
+  const safeContentKey = encodeURIComponent(String(contentKey || '').trim());
+  const safeSlug = encodeURIComponent(String(slug || '').trim());
+  const safeExtension = String(extension || DEFAULT_AUDIO_EXTENSION).replace(/^\./, '');
+
+  if (!safeModel || !safeVoice || !safeContentKey || !safeSlug) {
+    throw new Error('A valid model, voice, content key, and slug are required.');
+  }
+
+  return `${SPELLING_AUDIO_ROOT_PREFIX}/${safeModel}/${safeVoice}/word/${safeContentKey}/${safeSlug}.${safeExtension}`;
+}
+
 export function buildIndexedAudioFilename({
   sentenceIndex,
   sentence,

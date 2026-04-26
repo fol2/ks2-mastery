@@ -38,7 +38,10 @@ import { createSubjectCommandActionHandler } from './platform/runtime/subject-co
 import { createSubjectCommandClient } from './platform/runtime/subject-command-client.js';
 import { createReadModelClient } from './platform/runtime/read-model-client.js';
 import { createPunctuationReadModelService } from './subjects/punctuation/client-read-models.js';
-import { punctuationSubjectCommandActions } from './subjects/punctuation/command-actions.js';
+import {
+  createPunctuationOnCommandError,
+  punctuationSubjectCommandActions,
+} from './subjects/punctuation/command-actions.js';
 import { createRemoteSpellingActionHandler } from './subjects/spelling/remote-actions.js';
 import { createPlatformTts } from './subjects/spelling/tts.js';
 import {
@@ -1021,7 +1024,10 @@ const controller = createAppController({
   runtimeBoundary,
   autoAdvanceDispatchContinue: () => handleRemoteSpellingAction('spelling-continue'),
   extraContext: () => ({
-    session: boot.session,
+    // Re-evaluate the session platformRole on every controller action so a
+    // self-demotion landed earlier in the same runtime is reflected in the
+    // context subjects receive.
+    session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
   }),
   tts,
@@ -1871,7 +1877,11 @@ function contextFor(subjectId = null) {
     runtimeBoundary,
     subjects: exposedSubjects(SUBJECTS, subjectExposureGates),
     subjectExposureGates,
-    session: boot.session,
+    // Thread the mutable `shellPlatformRole` into the session spread so
+    // downstream consumers (e.g. SpellingSetupScene role gating) see the
+    // current role after a self-demotion / role change — not the stale
+    // `boot.session.platformRole` captured at boot time.
+    session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
     ...buildHubModels(appState),
@@ -1954,7 +1964,10 @@ function buildSurfaceChromeModel(appState) {
     ttsProvider: learnerId ? selectedTtsProvider() : DEFAULT_TTS_PROVIDER,
     bufferedGeminiVoice: learnerId ? selectedBufferedGeminiVoice() : DEFAULT_BUFFERED_GEMINI_VOICE,
     signedInAs: boot.session.signedIn ? (boot.session.email || '') : null,
-    session: boot.session,
+    // Thread the mutable `shellPlatformRole` so the surface chrome reflects
+    // the current role post-self-demotion rather than the stale boot-time
+    // value.
+    session: { ...boot.session, platformRole: shellPlatformRole },
     persistence: {
       mode: persistenceSnapshot?.mode || 'local-only',
       label: homePersistenceLabel(persistenceSnapshot),
@@ -2004,6 +2017,18 @@ function buildSurfaceActions() {
     openAdminHub: () => dispatchAction('open-admin-hub'),
     logout: () => dispatchAction('platform-logout'),
     retryPersistence: () => dispatchAction('persistence-retry'),
+    // adv-234 (HIGH 1): expose a direct store-merge handle so client-only
+    // UI latches (e.g. Punctuation Setup's `prefsMigrated` store-level gate)
+    // can land BEFORE a dispatch that routes through `handleRemotePunctuationAction`
+    // into `punctuationCommandActions.handle` — which returns true on every
+    // punctuation-set-mode call and short-circuits the module's fall-through
+    // to `handleSubjectAction`. Without this handle, the module handler that
+    // sets `prefsMigrated: true` is only exercised by the test harness, so
+    // the stale-prefs migration re-fires on every Setup SSR in production.
+    // Component-level callers should only use this for tightly scoped UI
+    // latches that the plan explicitly calls out — mutation-of-record still
+    // flows through `dispatch`.
+    updateSubjectUi: (subjectId, updater) => store.updateSubjectUi(subjectId, updater),
     // P1.5 Phase A (U2): expose dirty-row registration to the admin surface
     // so the AccountOpsMetadataRow can flip its dirtyRef through a stable
     // actions handle. The registry is module-scope (see
@@ -2682,10 +2707,13 @@ const punctuationCommandActions = createSubjectCommandActionHandler({
   setSubjectError: setPunctuationRuntimeError,
   pendingKeys: pendingPunctuationCommandKeys,
   onCommandResult: applyPunctuationCommandResponse,
-  onCommandError(error) {
-    globalThis.console?.warn?.('Punctuation command failed.', error);
-    setPunctuationRuntimeError(error?.payload?.message || error?.message || 'The punctuation command could not be completed.');
-  },
+  // adv-234-006 MEDIUM: on `save-prefs` failure, clear the `prefsMigrated`
+  // latch so the Setup scene's one-shot stale-prefs migration can retry
+  // on the next render. See `createPunctuationOnCommandError`.
+  onCommandError: createPunctuationOnCommandError({
+    store,
+    setSubjectError: setPunctuationRuntimeError,
+  }),
   actions: punctuationSubjectCommandActions,
 });
 

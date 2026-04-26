@@ -2,6 +2,7 @@ import {
   cloneSerialisable,
   normalisePracticeSessionRecord,
 } from '../../../../src/platform/core/repositories/helpers.js';
+import { grammarConceptStatus } from '../../../../shared/grammar/confidence.js';
 import { BadRequestError, NotFoundError } from '../../errors.js';
 import { compileGrammarAiEnrichment } from './ai-enrichment.js';
 import {
@@ -332,16 +333,6 @@ export function normaliseServerGrammarData(rawValue) {
     transferEvidence: isPlainObject(raw.transferEvidence) ? cloneSerialisable(raw.transferEvidence) : {},
     aiEnrichment: normalisePersistentAiEnrichment(raw.aiEnrichment),
   };
-}
-
-export function grammarConceptStatus(node, now = Date.now()) {
-  const current = Number(now) || Date.now();
-  const value = normaliseNode(node);
-  if (!value.attempts) return 'new';
-  if (value.strength < 0.42 || value.wrong > value.correct + 1) return 'weak';
-  if ((value.dueAt || 0) <= current) return 'due';
-  if (value.strength >= 0.82 && value.intervalDays >= 7 && value.correctStreak >= 3) return 'secured';
-  return 'learning';
 }
 
 export function createInitialGrammarState(data = {}) {
@@ -1921,3 +1912,8 @@ export {
   LOCKED_MODES as GRAMMAR_LOCKED_MODES,
   SERVER_AUTHORITY as GRAMMAR_SERVER_AUTHORITY,
 };
+
+// Re-export the status machine from the shared module so Worker-side consumers
+// that import from engine.js (e.g., `./read-models.js`, tests) keep working.
+// The single source of truth lives in `shared/grammar/confidence.js`.
+export { grammarConceptStatus };

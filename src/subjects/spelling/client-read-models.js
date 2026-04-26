@@ -133,6 +133,14 @@ export function createSpellingReadModelService({ getState = () => null } = {}) {
       // 'locked' result never drift. `todayDay` is populated from the live
       // clock so UI copy that formats "next check in N days" renders a
       // sensible (albeit zero-delta) value before hydration.
+      //
+      // U1 (P2): when falling through to the locked factory, we also attach
+      // a `postMasteryDebug` sibling with `source: 'locked-fallback'` so the
+      // Admin hub can distinguish a Worker-hydrated snapshot ('worker') from
+      // a client-only fallback stub. The other debug scalars default to
+      // zero / false because the client shell has no guardian data to reason
+      // about — if the admin sees this on production it's a strong signal
+      // the Worker hydration hasn't completed yet for the selected learner.
       const cached = readModel(learnerId).postMastery;
       if (cached && typeof cached === 'object' && !Array.isArray(cached)) {
         return cloneSerialisable(cached);
@@ -140,6 +148,18 @@ export function createSpellingReadModelService({ getState = () => null } = {}) {
       return {
         ...createLockedPostMasteryState(),
         todayDay: Math.floor(Date.now() / (24 * 60 * 60 * 1000)),
+        postMasteryDebug: {
+          source: 'locked-fallback',
+          publishedCoreCount: 0,
+          secureCoreCount: 0,
+          blockingCoreCount: 0,
+          blockingCoreSlugsPreview: [],
+          extraWordsIgnoredCount: 0,
+          guardianMapCount: 0,
+          contentReleaseId: null,
+          allWordsMega: false,
+          stickyUnlocked: false,
+        },
       };
     },
     getAudioCue(learnerId) {

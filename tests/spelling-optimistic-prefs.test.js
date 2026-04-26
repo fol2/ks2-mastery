@@ -39,7 +39,8 @@ test('optimistic spelling prefs leave completed flows on setup without waiting f
   const next = applyOptimisticSpellingPrefs({
     subjectId: 'spelling',
     learnerId: 'learner-a',
-    version: 2,
+    // P2 U2: state version bumped 2 -> 3.
+    version: 3,
     phase: 'summary',
     session: null,
     feedback: { kind: 'success', headline: 'Done' },

@@ -1,7 +1,9 @@
 import { WORD_BY_SLUG as DEFAULT_WORD_BY_SLUG } from './data/word-data.js';
 import {
   GUARDIAN_SECURE_STAGE,
+  SPELLING_CONTENT_RELEASE_ID,
   normaliseGuardianMap,
+  normalisePostMegaRecord,
   normaliseYearFilter,
 } from './service-contract.js';
 import {
@@ -110,6 +112,34 @@ function sessionLabel(kind) {
 
 const POST_MASTERY_PREVIEW_LENGTH = 8;
 
+// U1 (P2): allowlist regex for `blockingCoreSlugsPreview`. The preview ships
+// to the Admin hub UI where (a) it could be screenshot / pasted into Slack,
+// and (b) browser URL history could cache a malformed slug that survives
+// beyond the in-memory admin state. Every slug is scrubbed through this
+// regex before it joins the preview array — anything outside the expected
+// KS2-slug shape is dropped, not rendered. H8 adversarial finding from the
+// P2 plan §U1 reviewer pass.
+//
+// The tightened shape accepts only lowercase-letter/digit segments separated
+// by single hyphens, each segment >=1 char, with at most 3 hyphens (i.e.
+// up to 4 segments total). Overall length is capped at 32 characters. This
+// keeps realistic KS2 curriculum slugs like `suffix-tion`, `i-before-e`,
+// `prefix-un-in-im` but rejects editorial accidents such as
+// `rude-word-test-do-not-ship` (5 segments, >32 chars), `abc---def`
+// (double hyphen), `a-` (trailing hyphen), `TESTING-UPPER` (uppercase),
+// `admin_internal` (underscore).
+//
+// Note: release-level publication state is enforced by the publisher; per-
+// word publication is not a production contract (content producers do not
+// set `word.published` per-word — `published` lives at release level only).
+// Relying on a `word.published !== false` guard here would be vacuously true
+// in production and give false confidence. The scrub therefore relies on
+// shape + length only. A future follow-up could add a slug allowlist at
+// the bundle publisher layer; that is out of scope for U1.
+const BLOCKING_CORE_SLUG_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+){0,3}$/;
+const BLOCKING_CORE_SLUG_MAX_LENGTH = 32;
+const BLOCKING_CORE_SLUGS_PREVIEW_LIMIT = 10;
+
 /**
  * Pure post-mastery selector. No side effects, no event-log replay — just
  * derives the aggregates the Setup / Summary / Word Bank scenes need from the
@@ -119,11 +149,19 @@ const POST_MASTERY_PREVIEW_LENGTH = 8;
  * `now` defaults to `Date.now` so callers that don't care about determinism
  * can omit it; the U4 tests always inject a fixed `now` to keep assertions
  * reproducible.
+ *
+ * U1 (P2): `sourceHint` is an optional diagnostic label ('service' | 'worker'
+ * | 'locked-fallback') that flows into `postMasteryDebug.source`. Callers
+ * set this so the Admin hub "Post-mega diagnostic panel" can distinguish
+ * a live service read from a remote-sync locked-fallback stub. Defaults to
+ * 'service' because most callers are the synchronous service path; the
+ * locked-fallback factory overrides to 'locked-fallback' explicitly.
  */
 export function getSpellingPostMasteryState({
   subjectStateRecord = null,
   runtimeSnapshot = null,
   now = Date.now,
+  sourceHint = 'service',
 } = {}) {
   const nowTs = typeof now === 'function' ? asTs(now(), Date.now()) : asTs(now, Date.now());
   const currentDay = todayDay(nowTs);
@@ -134,6 +172,14 @@ export function getSpellingPostMasteryState({
   const rawGuardianMap = isPlainObject(stateRecord?.data?.guardian) ? stateRecord.data.guardian : {};
   const guardianMap = normaliseGuardianMap(rawGuardianMap, currentDay);
   const runtime = runtimeWordMap(runtimeSnapshot);
+  // P2 U2: persisted sticky-graduation record. Null means "never graduated"
+  // — fresh learners, pre-P2 persisted records (no migration needed because
+  // `normalisePostMegaRecord` tolerates absent / malformed input), and any
+  // legitimate pre-graduation state all map to null here.
+  //
+  // Declared with `let` so the pre-v3 backfill path below can mint an
+  // in-memory record for learners who graduated before U2 shipped.
+  let postMegaRecord = normalisePostMegaRecord(stateRecord?.data?.postMega);
 
   // allWordsMega requires BOTH: (1) the secure-core count equals the
   // published-core count, AND (2) the published core count is non-zero.
@@ -198,13 +244,57 @@ export function getSpellingPostMasteryState({
   });
   const guardianMissionAvailable = guardianMissionState !== 'locked' && guardianMissionState !== 'rested';
 
+  // P2 U2: Derive the three sticky-graduation surfaces from the persisted
+  // `postMegaRecord` plus the live `allWordsMega` (renamed to allWordsMegaNow
+  // internally to make the "live vs sticky" distinction loud). The dashboard
+  // gate is a logical OR — a graduated learner keeps dashboard access even
+  // if the content bundle later adds words they haven't drilled yet.
+  //
+  // `newCoreWordsSinceGraduation` is clamped at 0 for the retirement case
+  // (publishedCoreCount < unlockedPublishedCoreCount). Retirements are
+  // invisible to the child (M3 adversarial finding — keeps emotional
+  // contract simple).
+  const allWordsMegaNow = allWordsMega;
+
+  // Pre-v3 graduated cohort backfill: if the learner is currently fully Mega
+  // AND has no sticky record, mint one in-memory so postMegaDashboardAvailable
+  // reflects their current graduation. The service layer writes the persisted
+  // sticky-bit lazily on the next genuine submit via
+  // detectAndPersistFirstGraduation (which now also accepts the pre-v3 path —
+  // see service.js change). Without this, pre-v3 graduates silently lose the
+  // dashboard when content adds a new core word because:
+  //   1. They have `data.postMega: null` (never persisted under P1/P1.5).
+  //   2. H1's first conjunct (`preSubmitAllMega === false`) rejects every
+  //      submit because they're already at full Mega, so they never mint a
+  //      sticky bit via normal play.
+  //   3. A later content-add flips `allWordsMegaNow` to false,
+  //      `postMegaUnlockedEver` stays false, `postMegaDashboardAvailable`
+  //      becomes false — dashboard disappears (the exact emotional
+  //      regression U2 exists to prevent).
+  if (allWordsMegaNow && postMegaRecord === null) {
+    postMegaRecord = {
+      unlockedAt: (currentDay || 0) * DAY_MS,
+      unlockedContentReleaseId: SPELLING_CONTENT_RELEASE_ID,
+      unlockedPublishedCoreCount: publishedCoreCount,
+      unlockedBy: 'pre-v3-backfill',
+    };
+  }
+
+  const postMegaUnlockedEver = postMegaRecord != null;
+  const postMegaDashboardAvailable = allWordsMegaNow || postMegaUnlockedEver;
+  const unlockedPublishedCoreCount = postMegaRecord
+    ? Number(postMegaRecord.unlockedPublishedCoreCount) || 0
+    : 0;
+  const newCoreWordsSinceGraduation = postMegaUnlockedEver
+    ? Math.max(0, publishedCoreCount - unlockedPublishedCoreCount)
+    : 0;
+
   // Recommended words — a deterministic preview for UI consumers. We only
-  // produce this when the learner has actually graduated; otherwise the
-  // preview would be meaningless (no Guardian surface to consume it yet).
-  // A constant seeded random (() => 0.5) keeps the output deterministic
-  // across renders and test runs; the UI is explicitly documented as a
-  // snapshot preview, not a stochastic reselection.
-  const recommendedWords = allWordsMega
+  // produce this when the learner is currently Mega or post-graduation;
+  // otherwise the preview would be meaningless (no Guardian surface to
+  // consume it yet). A constant seeded random (() => 0.5) keeps the output
+  // deterministic across renders and test runs.
+  const recommendedWords = postMegaDashboardAvailable
     ? selectGuardianWords({
         guardianMap,
         progressMap,
@@ -215,8 +305,104 @@ export function getSpellingPostMasteryState({
       })
     : [];
 
-  return {
+  // U1 (P2): post-mastery diagnostic panel support. These aggregates are
+  // additive — every existing caller keeps its existing fields, and the
+  // new sibling lets the Admin hub surface *why* a learner's post-Mega
+  // dashboard is (or isn't) unlocked. PII-minimised: only slug strings
+  // (curriculum-public) and integer counts. No learner name, email, or
+  // adult account data flows through this object.
+  //
+  // Field definitions:
+  //  - `source`: where the snapshot came from — 'service' (direct selector
+  //     call), 'worker' (Worker engine response), 'locked-fallback' (the
+  //     shared locked-state factory). Threaded in via `sourceHint`.
+  //  - `publishedCoreCount` / `secureCoreCount` / `blockingCoreCount`: the
+  //     raw integers behind the `allWordsMega` gate. `blockingCoreCount`
+  //     is `publishedCoreCount - secureCoreCount` clamped at zero.
+  //  - `blockingCoreSlugsPreview`: first N=10 core slugs (alphabetical)
+  //     whose `progress[slug]?.stage !== 4` — i.e. what's preventing
+  //     graduation. Filtered through `BLOCKING_CORE_SLUG_PATTERN` and
+  //     `BLOCKING_CORE_SLUG_MAX_LENGTH` (shape + length scrub only —
+  //     release-level publication is enforced by the publisher; per-word
+  //     `published` is not a production contract) so misshapen slugs
+  //     never surface in admin screenshots.
+  //  - `extraWordsIgnoredCount`: count of progress entries whose word is
+  //     in the extra pool. `allWordsMega` excludes the extra pool from
+  //     either side of its comparison, so this value confirms the
+  //     exclusion count for debugging an unexpected allWordsMega value.
+  //  - `guardianMapCount`: size of the persisted guardian map (post
+  //     normalisation). Useful when a learner has orphan entries that
+  //     do not affect counts.
+  //  - `contentReleaseId`: placeholder for U2 (which introduces
+  //     `SPELLING_CONTENT_RELEASE_ID`). Null pre-U2 merge; shape in place
+  //     so U2 populates without schema churn.
+  //  - `allWordsMega`: mirror of the gate, so the admin panel does not
+  //     need to correlate with the legacy top-level field.
+  //  - `stickyUnlocked`: reads `data.postMega != null` on the persisted
+  //     subject-state record. False pre-U2 merge; U2 sets it.
+  const blockingCoreSlugsPreview = (() => {
+    const stageBySlug = Object.create(null);
+    for (const [slug, entry] of Object.entries(progressMap)) {
+      stageBySlug[slug] = normaliseProgressRecord(entry).stage;
+    }
+    const blocking = [];
+    for (const word of runtime.words) {
+      if (!word || typeof word !== 'object') continue;
+      const pool = word.spellingPool === 'extra' ? 'extra' : 'core';
+      if (pool !== 'core') continue;
+      // Release-level publication state is enforced by the publisher; per-
+      // word publication is not a production contract — the shape + length
+      // scrub below is the only line of defence in this selector.
+      const slug = typeof word.slug === 'string' ? word.slug : '';
+      if (!slug || slug.length > BLOCKING_CORE_SLUG_MAX_LENGTH || !BLOCKING_CORE_SLUG_PATTERN.test(slug)) continue;
+      const stage = stageBySlug[slug];
+      if (Number.isFinite(stage) && stage >= SECURE_STAGE) continue;
+      blocking.push(slug);
+    }
+    blocking.sort((a, b) => a.localeCompare(b));
+    return blocking.slice(0, BLOCKING_CORE_SLUGS_PREVIEW_LIMIT);
+  })();
+
+  const blockingCoreCount = Math.max(0, publishedCoreCount - secureCoreCount);
+
+  let extraWordsIgnoredCount = 0;
+  for (const [slug] of Object.entries(progressMap)) {
+    const word = runtime.bySlug[slug] || DEFAULT_WORD_BY_SLUG[slug];
+    const pool = word ? (word.spellingPool === 'extra' ? 'extra' : 'core') : 'core';
+    if (pool === 'extra') extraWordsIgnoredCount += 1;
+  }
+
+  const guardianMapCount = Object.keys(guardianMap).length;
+  const stickyUnlocked = isPlainObject(stateRecord?.data?.postMega);
+
+  const resolvedSource = sourceHint === 'worker' || sourceHint === 'locked-fallback'
+    ? sourceHint
+    : 'service';
+
+  const postMasteryDebug = {
+    source: resolvedSource,
+    publishedCoreCount,
+    secureCoreCount,
+    blockingCoreCount,
+    blockingCoreSlugsPreview,
+    extraWordsIgnoredCount,
+    guardianMapCount,
+    contentReleaseId: null,
     allWordsMega,
+    stickyUnlocked,
+  };
+
+  return {
+    // P2 U2: `allWordsMega` is kept as an ALIAS of `allWordsMegaNow` for
+    // one release. Legacy consumers (Alt+4 gate in remote-actions.js,
+    // module.js) still read this field; new consumers should gate on
+    // `postMegaDashboardAvailable` instead.
+    allWordsMega: allWordsMegaNow,
+    allWordsMegaNow,
+    postMegaUnlockedEver,
+    postMegaDashboardAvailable,
+    newCoreWordsSinceGraduation,
+    publishedCoreCount,
     guardianDueCount,
     wobblingCount,
     wobblingDueCount,
@@ -227,6 +413,7 @@ export function getSpellingPostMasteryState({
     guardianMissionAvailable,
     recommendedWords,
     nextGuardianDueDay,
+    postMasteryDebug,
   };
 }
 
@@ -473,7 +660,12 @@ export function buildSpellingLearnerReadModel({
   });
   const postMastery = {
     ...postMasteryState,
-    recommendedMode: postMasteryState.allWordsMega && postMasteryState.guardianDueCount > 0
+    // P2 U2: gate on the dashboard-availability flag (sticky OR live) rather
+    // than `allWordsMega` alone. A learner who graduated before a content
+    // release and has guardian work due should still land on Guardian as
+    // the recommended mode even if `allWordsMegaNow` is false because a
+    // handful of new core words were published since they graduated.
+    recommendedMode: postMasteryState.postMegaDashboardAvailable && postMasteryState.guardianDueCount > 0
       ? 'guardian'
       : currentFocus.recommendedMode,
   };

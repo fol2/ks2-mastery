@@ -1,3 +1,16 @@
+// U9 (sys-hardening p1): node-level persistence scenarios remain the
+// oracle for repository-layer contracts (stale-write rebase, bootstrap
+// backoff, coordination lease, in-flight-degraded-rescue, api-cache
+// scoping). The browser-level degraded-mode UI contract (persistence
+// banner visibility, pending-write localStorage rehydration, no-crash
+// under 401/403/409/429/500/timeout/malformed-JSON/slow-TTS/offline /
+// refresh-during-submit) now lives in
+// `tests/playwright/chaos-http-boundary.playwright.test.mjs` and is
+// exercised against the real Chromium adapter via
+// `tests/helpers/fault-injection.mjs`. Keep the node-level scenarios
+// below intact — they run two orders of magnitude faster than a
+// browser scene, and they cover internal state transitions the
+// Playwright scenes cannot observe cheaply.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -986,7 +999,9 @@ test('subject command responses update the api cache without queuing broad runti
         subjectReadModel: {
           subjectId: 'spelling',
           learnerId: body.learnerId,
-          version: 2,
+          // P2 U2: spelling service state version bumped 2 -> 3 when
+          // data.postMega sibling + sticky graduation fields landed.
+          version: 3,
           phase: 'session',
           session: {
             id: 'server-session',
@@ -1098,7 +1113,8 @@ test('subject commands refresh stale learner revision without a second bootstrap
         subjectReadModel: {
           subjectId: 'spelling',
           learnerId: body.learnerId,
-          version: 2,
+          // P2 U2: version bump 2 -> 3.
+          version: 3,
           phase: 'session',
           session: {
             id: 'server-session',

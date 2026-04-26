@@ -63,6 +63,12 @@ const FORBIDDEN_TEXT = [
   { token: 'correctResponse', reason: 'Grammar hidden answer oracle field' },
   { token: 'grammar-legacy-oracle', reason: 'Grammar legacy oracle fixture path' },
   { token: 'extract-grammar-legacy-oracle', reason: 'Grammar legacy oracle extraction helper' },
+  // U9 (sys-hardening p1): named export from tests/helpers/fault-injection.mjs.
+  // The fault-injection middleware is test-only; if a future import accidentally
+  // drags the module into a shipped bundle, this token lands in the client
+  // bundle and the audit fails. Security F-11 prompted explicit token
+  // specification rather than relying on a path-based FORBIDDEN_MODULES rule.
+  { token: '__ks2_injectFault_TESTS_ONLY__', reason: 'fault-injection middleware must never ship in the production client bundle (U9)' },
 ];
 
 const REVIEW_ALLOWLIST = [

@@ -3,6 +3,7 @@ import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConf
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
+import { BOSS_DEFAULT_ROUND_LENGTH } from '../service-contract.js';
 import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
@@ -286,6 +287,20 @@ function SetupStatGrid({ stats }) {
   );
 }
 
+// P2 U1: admin / ops only affordance. When the learner's post-mega gate
+// is closed, adult operators need a one-click path into the Admin hub's
+// post-mega debug panel to see *why*. Child (`learner`) and parent
+// (`parent`) roles render absolutely nothing — the link is gated on the
+// platform role set. Keeping the whitelist explicit (not a generic
+// "non-learner" check) guards against future roles slipping past the
+// check; a brand-new role (e.g. 'demo') will render the link only after
+// an explicit code change here, matching the P2 plan's §U1 ICO posture.
+const POST_MASTERY_DEBUG_ROLES = new Set(['admin', 'ops']);
+
+function adultCanSeePostMasteryDebug(platformRole) {
+  return POST_MASTERY_DEBUG_ROLES.has(String(platformRole || ''));
+}
+
 export function SpellingSetupScene({
   learner,
   service,
@@ -300,6 +315,10 @@ export function SpellingSetupScene({
   setupHeroTone = '',
   previousHeroBg = '',
   runtimeReadOnly = false,
+  // P2 U1: threaded through from `SpellingPracticeSurface` -> `session.platformRole`.
+  // Defaults to empty string so a prop-less caller (tests, legacy shells)
+  // renders the child-safe view with the link absent.
+  platformRole = '',
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
@@ -312,9 +331,25 @@ export function SpellingSetupScene({
   const preferenceControlsDisabled = runtimeReadOnly || Boolean(pendingCommand && pendingCommand !== 'save-prefs');
   const startDisabled = runtimeReadOnly || Boolean(pendingCommand);
   if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
-  const isPostMega = Boolean(postMastery?.allWordsMega);
+  // P2 U2: dashboard gate migrates from live `allWordsMega` to the sticky
+  // `postMegaDashboardAvailable` (sticky-or-live). A learner who graduated
+  // under release N-1 and now sees 3 new core words from release N still
+  // lands on the post-Mega dashboard rather than getting kicked back into
+  // the legacy Smart Review setup. Fallback to `allWordsMega` keeps
+  // pre-U2 callers stable for one release.
+  const isPostMega = Boolean(
+    postMastery?.postMegaDashboardAvailable
+    ?? postMastery?.allWordsMega,
+  );
   const contentClasses = ['setup-content'];
   if (isPostMega) contentClasses.push('setup-content--post-mega');
+
+  // P2 U1: admin / ops adults see a "Why is Guardian locked?" diagnostic
+  // link right below the setup hero when Guardian Mission is NOT unlocked
+  // (i.e. `isPostMega === false`). Child / parent surfaces get `platformRole`
+  // empty (defaulted) or === 'parent' and the link never renders. Routed
+  // to the admin hub where the post-mega debug panel explains the counts.
+  const showPostMasteryDebugLink = adultCanSeePostMasteryDebug(platformRole) && !isPostMega;
 
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
@@ -353,6 +388,21 @@ export function SpellingSetupScene({
               startDisabled={startDisabled}
             />
           )}
+          {showPostMasteryDebugLink ? (
+            <p className="small muted post-mastery-debug-link" data-adult-debug="post-mastery">
+              <button
+                type="button"
+                className="btn ghost"
+                data-action="open-admin-hub"
+                onClick={(event) => renderAction(actions, event, 'open-admin-hub')}
+              >
+                Why is Guardian locked?
+              </button>
+              <span className="small muted" style={{ marginLeft: 8 }}>
+                Adult-only diagnostic. Opens the Admin / Operations hub post-mega debug panel.
+              </span>
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -502,7 +552,28 @@ function PostMegaSetupContent({
   runtimeReadOnly,
 }) {
   const guardianCard = POST_MEGA_MODE_CARDS.find((mode) => mode.id === 'guardian') || POST_MEGA_MODE_CARDS[0];
-  const otherCards = POST_MEGA_MODE_CARDS.filter((mode) => mode.id !== 'guardian');
+  // U10: Boss Dictation is the second active post-Mega surface. Pull it out
+  // of POST_MEGA_MODE_CARDS by id rather than by index so future reorderings
+  // don't silently pick up the wrong card.
+  const bossCard = POST_MEGA_MODE_CARDS.find((mode) => mode.id === 'boss-dictation');
+  const placeholderCards = POST_MEGA_MODE_CARDS.filter((mode) => mode.id !== 'guardian' && mode.id !== 'boss-dictation');
+  // Boss active-state gate. Boss requires genuine `allWordsMegaNow === true`
+  // (not sticky). A learner in the "graduated but content-added" state has
+  // `postMegaDashboardAvailable === true` but `allWordsMegaNow === false`,
+  // and Boss must NOT be offerable because the Boss pool would include only
+  // the words that ARE currently Mega — not the handful of new-arrival core
+  // slugs still at stage < 4. Falling back through `allWordsMega` (the
+  // legacy alias) keeps pre-U2 callers stable.
+  const bossActive = Boolean(
+    postMastery?.allWordsMegaNow
+    ?? postMastery?.allWordsMega,
+  );
+  const newCoreWordsSinceGraduation = Math.max(
+    0,
+    Number(postMastery?.newCoreWordsSinceGraduation) || 0,
+  );
+  const bossDescription = bossCard?.desc || '';
+  const bossBadge = 'BOSS READY';
   // U1: branch copy + gating on `guardianMissionState`. Fall back to the
   // legacy `guardianDueCount > 0` signal when the read-model has not yet
   // populated the new scalars so remote-sync and any pre-U1 caller remain
@@ -580,6 +651,17 @@ function PostMegaSetupContent({
     : pendingCommand === 'save-prefs'
       ? 'Saving...'
       : 'Begin Guardian Mission';
+  // U10: Boss Begin button shares the same pending-command gating as the
+  // Guardian Begin — both go through `spelling-shortcut-start` and both
+  // collide on the same `start-session` pending slot. Sharing `beginText`'s
+  // "Starting..." branch would conflate which button is spinning, so Boss
+  // owns its own label but reuses the same disable predicate.
+  const bossBeginDisabled = startDisabled || runtimeReadOnly || !bossActive;
+  const bossBeginText = pendingCommand === 'start-session'
+    ? 'Starting...'
+    : pendingCommand === 'save-prefs'
+      ? 'Saving...'
+      : 'Begin Boss Dictation';
 
   function handleBegin(event) {
     if (beginDisabled) {
@@ -588,6 +670,20 @@ function PostMegaSetupContent({
       return;
     }
     renderAction(actions, event, 'spelling-shortcut-start', { mode: 'guardian' });
+  }
+
+  function handleBossBegin(event) {
+    if (bossBeginDisabled) {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      return;
+    }
+    // The service normalises `length` against BOSS_MIN/MAX; the explicit
+    // payload here matches the plan's Alt+5 spec (`length: BOSS_DEFAULT_ROUND_LENGTH`)
+    // without reaching back into the view-model for the constant. Keeping
+    // the length explicit at the dispatch site makes the begin-button
+    // contract self-documenting for a future reader.
+    renderAction(actions, event, 'spelling-shortcut-start', { mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH });
   }
 
   return (
@@ -599,6 +695,15 @@ function PostMegaSetupContent({
         words you already own. Smart Review, Trouble Drill, and the SATs Test have done their work.
       </p>
       <GraduationStatRibbon postMastery={postMastery} secureCount={secureCount} />
+      {newCoreWordsSinceGraduation > 0 ? (
+        <p
+          className="post-mega-new-arrivals"
+          data-test-id="post-mega-new-arrivals"
+          role="status"
+        >
+          {newCoreWordsSinceGraduation} new core word{newCoreWordsSinceGraduation === 1 ? ' has' : 's have'} arrived since graduation. Add {newCoreWordsSinceGraduation === 1 ? 'it' : 'them'} to the Vault when ready.
+        </p>
+      ) : null}
       <div
         className="mode-row mode-row-post-mega"
         data-variant={guardianActive ? 'active' : 'rested'}
@@ -613,12 +718,34 @@ function PostMegaSetupContent({
           active={guardianActive}
           disabled={!guardianActive}
         />
-        {otherCards.map((mode, index) => (
+        {/* U10: Boss Dictation active card. The variant matches Guardian's
+            active/rested split — `active` when `allWordsMega === true`
+            (always true inside PostMegaSetupContent), `rested` otherwise. We
+            pass the Boss description straight from POST_MEGA_MODE_CARDS so a
+            future copy tweak is a one-line change in the view-model, and keep
+            the badge in this file so a future variant (e.g. "RECENT SCORE
+            9/10") can render conditionally without touching the view-model
+            frozen array. */}
+        {bossCard ? (
+          <PostMegaModeCard
+            mode={bossCard}
+            variant={bossActive ? 'active' : 'rested'}
+            description={bossDescription}
+            badge={bossActive ? bossBadge : null}
+            textTone={heroContrast.contrast.cards?.[1] || heroContrast.contrast.shell}
+            active={bossActive}
+            disabled={!bossActive}
+          />
+        ) : null}
+        {placeholderCards.map((mode, index) => (
           <PostMegaModeCard
             mode={mode}
             variant="placeholder"
-            index={index + 1}
-            textTone={heroContrast.contrast.cards?.[index + 1] || heroContrast.contrast.shell}
+            // Roadmap index bumps to 2 / 3 because Guardian (#0) and Boss
+            // (#1) occupy slots 0 and 1; the "Next 03" / "Next 04" chips on
+            // the placeholders communicate the P2 roadmap position.
+            index={index + 2}
+            textTone={heroContrast.contrast.cards?.[index + 2] || heroContrast.contrast.shell}
             disabled
             key={mode.id}
           />
@@ -642,6 +769,34 @@ function PostMegaSetupContent({
         >
           {beginText} <ArrowRightIcon />
         </button>
+        {/* U10: Boss Begin row. Mirrors the Guardian begin-row structure —
+            hint chip + primary CTA — but dispatches `spelling-shortcut-start`
+            with `{ mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH }`. The
+            Alt+5 hint is aria-hidden when Boss is inactive so screen readers
+            don't announce a shortcut that won't work; the begin button
+            itself stays disabled with a conservative CTA label. */}
+        {bossCard ? (
+          <>
+            <div className="post-mega-begin-hint" aria-hidden={bossActive ? undefined : 'true'}>
+              <kbd>Alt</kbd>
+              <span className="post-mega-begin-hint-join">+</span>
+              <kbd>5</kbd>
+              <span className="post-mega-begin-hint-label">quick-start Boss Dictation</span>
+            </div>
+            <button
+              type="button"
+              className="btn primary xl"
+              style={{ '--btn-accent': accent }}
+              data-action="spelling-shortcut-start"
+              data-mode="boss"
+              disabled={bossBeginDisabled}
+              onClick={handleBossBegin}
+              aria-label={bossCard.ariaLabel || 'Begin Boss Dictation'}
+            >
+              {bossBeginText} <ArrowRightIcon />
+            </button>
+          </>
+        ) : null}
       </div>
     </>
   );

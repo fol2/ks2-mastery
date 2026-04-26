@@ -1,0 +1,194 @@
+# Nightly variable-seed Mega invariant probe.
+#
+# Plan: docs/plans/2026-04-26-006-feat-post-mega-spelling-p2-visibility-pattern-foundation-plan.md (U8).
+#
+# The canonical CI suite (tests/spelling-mega-invariant.test.js) runs under a
+# fixed seed (42) on every PR for fast deterministic regression coverage.
+# This workflow runs the same file with a RANDOM PROPERTY_SEED every night
+# so a wider slice of the action-sequence state space is explored over time.
+#
+# On failure: extracts the seed from the test output and opens a GitHub
+# Issue with a stable title (`[nightly-probe] Mega invariant failed seed
+# <seed>`). If an open Issue already exists with the same title, the run
+# appends a comment instead of creating a duplicate. Maintainers copy the
+# shrunk counterexample from the Issue body into `PROMOTED_EXAMPLES` at the
+# top of the canonical test file; fast-check-style `examples` run FIRST so
+# every PR thereafter catches the regression in <1s.
+#
+# Notes:
+#  - Cron is off the :00 boundary per GitHub peak-queue guidance.
+#  - GitHub disables scheduled workflows after 60 days of no repository
+#    activity — applies to ALL repos (public AND private). This repo has
+#    daily commits so the risk is low.
+#  - The `permissions` block MUST declare `issues: write` explicitly.
+#    GitHub's 2023 default-permissions tightening does not grant `issues:
+#    write` to `GITHUB_TOKEN` automatically; without this, `gh issue
+#    list/create/comment` silently fails on fresh repos.
+#  - Optional Slack notification via `SLACK_WEBHOOK_URL` secret — the step
+#    is skipped silently when the secret is unset, so maintainers can opt
+#    in without touching this file.
+
+name: mega-invariant-nightly
+
+on:
+  schedule:
+    # 02:37 UTC — off the :00 boundary to dodge peak scheduled-job queue.
+    - cron: '37 2 * * *'
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: 'Optional explicit PROPERTY_SEED (leave blank for random).'
+        required: false
+        default: ''
+
+# F8 feasibility finding — explicit least-privilege grant. Required because
+# GitHub's 2023 tightening no longer grants `issues: write` by default.
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: mega-invariant-nightly
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Variable-seed Mega invariant probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # workflow_dispatch can override the seed; otherwise the job picks a
+      # random one at shell level so each nightly run explores a new slice.
+      DISPATCH_SEED: ${{ inputs.seed }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Resolve PROPERTY_SEED
+        id: seed
+        run: |
+          set -euo pipefail
+          if [ -n "${DISPATCH_SEED:-}" ]; then
+            seed="${DISPATCH_SEED}"
+            echo "Using dispatch-supplied seed: $seed"
+          else
+            seed="$(shuf -i 1-999999999 -n 1)"
+            echo "Using random seed: $seed"
+          fi
+          # Validate seed — workflow_dispatch accepts any string so a typo like
+          # "fourty-two" would silently run as seed 0 (NaN >>> 0). Fail fast.
+          if ! [[ "$seed" =~ ^[0-9]+$ ]]; then
+            echo "::error::PROPERTY_SEED must be a non-negative integer, got: $seed"
+            exit 1
+          fi
+          if [ "$seed" -gt 4294967295 ]; then
+            echo "::error::PROPERTY_SEED must fit in UINT32 (<= 4294967295), got: $seed"
+            exit 1
+          fi
+          echo "seed=$seed" >> "$GITHUB_OUTPUT"
+          echo "PROPERTY_SEED=$seed" >> "$GITHUB_ENV"
+
+      - name: Run Mega invariant property test
+        id: probe
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node --test tests/spelling-mega-invariant.test.js 2>&1 | tee probe-output.log
+
+      - name: Upload probe output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mega-invariant-probe-${{ steps.seed.outputs.seed }}
+          path: probe-output.log
+          retention-days: 14
+
+      - name: Ensure nightly-probe label exists
+        if: steps.probe.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create nightly-probe \
+            --description "Nightly Mega invariant probe counterexample" \
+            --color "d76e00" \
+            --force || true
+
+      - name: Open or comment on dedup'd GitHub Issue on failure
+        if: steps.probe.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SEED: ${{ steps.seed.outputs.seed }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title="[nightly-probe] Mega invariant failed seed ${SEED}"
+
+          # Dedup: search for an open Issue with the stable title. Filter on
+          # exact match in the jq pass so near-misses (e.g. "seed 1" vs
+          # "seed 10") do not collapse onto each other.
+          existing="$(gh issue list \
+            --search "${title} in:title state:open" \
+            --state open \
+            --json number,title \
+            --jq ".[] | select(.title == \"${title}\") | .number" \
+            --limit 5 || true)"
+
+          # Build the body in probe-body.md so we can use --body-file. Avoids
+          # heredoc-indentation pitfalls inside YAML block scalars.
+          {
+            printf "The nightly Mega invariant probe failed under seed \`%s\`.\n\n" "${SEED}"
+            printf "**Run:** %s\n\n" "${RUN_URL}"
+            printf "**Local repro:**\n\n\`\`\`sh\nPROPERTY_SEED=%s npm run test:mega-invariant:nightly\n\`\`\`\n\n" "${SEED}"
+            printf "**Promote this counterexample:** once shrunk, paste it into \`PROMOTED_EXAMPLES\` at the top of \`tests/spelling-mega-invariant.test.js\`. Fast-check-style examples run first, so every PR thereafter catches the regression in <1s.\n\n"
+            printf "**Last 80 lines of probe output:**\n\n\`\`\`\n"
+            tail -n 80 probe-output.log || true
+            printf "\n\`\`\`\n"
+          } > probe-body.md
+
+          if [ -n "${existing}" ]; then
+            issue_number="$(echo "${existing}" | head -n 1)"
+            echo "Duplicate seed — commenting on existing Issue #${issue_number}."
+            gh issue comment "${issue_number}" --body-file probe-body.md
+          else
+            echo "No existing Issue — creating a new one."
+            gh issue create \
+              --title "${title}" \
+              --body-file probe-body.md \
+              --label "nightly-probe"
+          fi
+
+      # Optional Slack notification — runs only when both conditions hold:
+      #  (a) the probe failed, and
+      #  (b) a SLACK_WEBHOOK_URL secret is configured on the repo.
+      # Maintainers can opt in by adding the secret; no workflow edit needed.
+      - name: Optional Slack notification on failure
+        if: steps.probe.outcome == 'failure' && env.HAS_SLACK_WEBHOOK == 'true'
+        env:
+          HAS_SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+          SEED: ${{ steps.seed.outputs.seed }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        # Plan U8 pins slackapi/slack-github-action@v3.0.2 (webhook mode).
+        uses: slackapi/slack-github-action@v3.0.2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Nightly Mega invariant probe failed — seed ${{ env.SEED }}\n${{ env.RUN_URL }}"
+            }
+
+      - name: Fail the job if the probe failed
+        if: steps.probe.outcome == 'failure'
+        run: |
+          echo "Mega invariant probe failed under seed ${{ steps.seed.outputs.seed }} — see Issue and artefact."
+          exit 1

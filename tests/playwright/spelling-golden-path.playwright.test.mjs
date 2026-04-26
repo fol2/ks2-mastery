@@ -141,4 +141,127 @@ test.describe('spelling golden path', () => {
     );
     await expect(reloadedMarker.first()).toBeVisible({ timeout: 15_000 });
   });
+
+  // U12 (sys-hardening p1): polish regression assertions.
+  //
+  // These two checks lock the baseline-doc items that cannot be caught
+  // by a parser-level test. Both run on mobile-390 where the viewport
+  // constraint is tightest — a 360 project would be equivalent, but the
+  // current playwright config wires mobile-390 + desktop sizes.
+  //
+  //   1. Mobile overflow: a long learner name + long prompt sentence
+  //      must not push the practice-session card beyond the viewport.
+  //      `document.documentElement.scrollWidth <= clientWidth` is the
+  //      canonical check for "no horizontal scrollbar". A regression
+  //      that removes `min-width: 0` / `overflow: hidden` / the toast
+  //      ellipsis contract surfaces here before the learner hits it.
+  //   2. Toast-during-submit: when a toast is rendered while the input
+  //      is focused, the toast's bounding box MUST NOT overlap the
+  //      submit button's bounding box. The spelling surface fires
+  //      reward toasts mid-session (R11, U11); a CSS regression that
+  //      moved the shelf to top-right at the same height as the submit
+  //      button row would read as "toast covers submit" exactly as the
+  //      baseline doc described.
+  test('mobile-390 practice surface does not overflow horizontally, and toasts do not overlap submit button', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile-390', 'U12 polish overflow + toast-overlap assertion is mobile-390-only');
+    await createDemoSession(page);
+    await expect(page.locator('.subject-grid')).toBeVisible();
+    await openSubject(page, 'spelling');
+    const start = page.locator('[data-action="spelling-start"]');
+    await expect(start).toBeVisible();
+    await expect(start).toBeEnabled();
+    await start.click();
+
+    // Wait for the live session input so the surface is actually
+    // rendering a prompt card. Avoid racing the is-question-revealed
+    // transition.
+    await expect(page.locator('.spelling-in-session.is-question-revealed input[name="typed"]')).toBeVisible({ timeout: 15_000 });
+
+    // Overflow check: neither the viewport root nor the practice-card
+    // inner container should report a scrollWidth larger than its
+    // clientWidth. The viewport check covers the outer chrome; the
+    // session-card check covers the inner prompt layout (sentence +
+    // input + buttons) where long words historically caused overflow.
+    const viewportOverflow = await page.evaluate(() => {
+      const root = document.documentElement;
+      return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth };
+    });
+    expect(viewportOverflow.scrollWidth).toBeLessThanOrEqual(viewportOverflow.clientWidth);
+
+    const sessionCardOverflow = await page.evaluate(() => {
+      const card = document.querySelector('.spelling-in-session .session');
+      if (!card) return null;
+      return { scrollWidth: card.scrollWidth, clientWidth: card.clientWidth };
+    });
+    expect(sessionCardOverflow).not.toBeNull();
+    expect(sessionCardOverflow.scrollWidth).toBeLessThanOrEqual(sessionCardOverflow.clientWidth + 1);
+
+    // Toast-during-submit check: inject a synthetic toast shelf into
+    // the DOM directly. The store's `toasts` array is internal to the
+    // React controller and there is no test-only hook today that lets
+    // a scene push a toast without a real reward firing — waiting for
+    // a reward is non-deterministic because the demo learner's
+    // prompted word is random. The DOM injection mirrors the exact
+    // markup that `src/surfaces/shell/ToastShelf.jsx` renders (class
+    // names + `data-testid` + `role="status"`), so every CSS rule that
+    // applies to the real shelf also applies here. This gives us the
+    // geometric contract (toast vs submit overlap) without inventing a
+    // production hook.
+    await page.evaluate(() => {
+      // Remove any pre-existing shelf so the measurement only sees the
+      // fixture we control.
+      const existing = document.querySelector('[data-testid="toast-shelf"]');
+      if (existing) existing.remove();
+      const shelf = document.createElement('div');
+      shelf.className = 'toast-shelf';
+      shelf.setAttribute('role', 'status');
+      shelf.setAttribute('aria-live', 'polite');
+      shelf.setAttribute('aria-label', 'Notifications');
+      shelf.setAttribute('data-testid', 'toast-shelf');
+      shelf.innerHTML = `
+        <aside class="toast catch" data-toast-id="u12-polish-toast">
+          <div class="cm-port" aria-hidden="true"></div>
+          <div class="cm-copy">
+            <div class="cm-title">Inklet the Many-Syllable Very Long Monster Name for Overflow Testing joined your Codex</div>
+            <div class="cm-body">You caught a new friend!</div>
+          </div>
+          <button class="cm-close" type="button" aria-label="Dismiss notification">×</button>
+        </aside>
+      `;
+      document.body.appendChild(shelf);
+    });
+
+    // The DOM-level injection renders immediately; the determinism
+    // stylesheet set `visibility: hidden` on `.toast-shelf` — drop
+    // that so the geometric measurement reflects the production
+    // layout (visibility: hidden does not affect layout but does
+    // prevent Playwright's .toBeVisible() from resolving).
+    await page.addStyleTag({
+      content: `[data-testid="toast-shelf"] { visibility: visible !important; background-image: none !important; }`,
+    });
+    const toast = page.locator('[data-testid="toast-shelf"] .toast');
+    await expect(toast).toBeVisible({ timeout: 5_000 });
+    const submit = page.locator('.action-row .btn.primary[type="submit"]').first();
+    await expect(submit).toBeVisible();
+
+    const boxes = await page.evaluate(() => {
+      const toastEl = document.querySelector('[data-testid="toast-shelf"] .toast');
+      const submitEl = document.querySelector('.action-row .btn.primary[type="submit"]');
+      if (!toastEl || !submitEl) return null;
+      const toastBox = toastEl.getBoundingClientRect();
+      const submitBox = submitEl.getBoundingClientRect();
+      return {
+        toast: { left: toastBox.left, right: toastBox.right, top: toastBox.top, bottom: toastBox.bottom },
+        submit: { left: submitBox.left, right: submitBox.right, top: submitBox.top, bottom: submitBox.bottom },
+      };
+    });
+    expect(boxes).not.toBeNull();
+    // Overlap = rectangles share a non-empty intersection.
+    // Two rects overlap iff (leftA < rightB AND rightA > leftB) AND
+    // (topA < bottomB AND bottomA > topB). The inverse (no overlap)
+    // is the assertion we need: the two rects share no pixels.
+    const overlapsHorizontally = boxes.toast.left < boxes.submit.right && boxes.toast.right > boxes.submit.left;
+    const overlapsVertically = boxes.toast.top < boxes.submit.bottom && boxes.toast.bottom > boxes.submit.top;
+    expect(overlapsHorizontally && overlapsVertically).toBe(false);
+  });
 });
