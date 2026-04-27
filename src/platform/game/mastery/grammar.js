@@ -264,11 +264,18 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
   const starDerivedStage = grammarStarStageFor(displayStars);
   const stage = Math.max(legacyStage, starDerivedStage);
 
+  // Level calculation: max of legacy ratio-based level and Star-based level.
+  // Legacy: Math.round(mastered/total * 10), capped at 10.
+  // Star-based: every 10 Stars is one level, capped at 10.
+  const legacyLevel = Math.min(10, Math.round((mastered / Math.max(1, total)) * 10));
+  const starLevel = Math.min(10, Math.floor(displayStars / 10));
+  const level = Math.max(legacyLevel, starLevel);
+
   return {
     mastered,
     conceptTotal: total,
     stage,
-    level: Math.min(10, Math.round((mastered / Math.max(1, total)) * 10)),
+    level,
     caught: mastered >= 1 || displayStars >= 1,
     branch: branchForMonster(state, monsterId),
     masteredList: grammarMasteredList(entry, releaseId),
