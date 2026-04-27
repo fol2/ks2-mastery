@@ -14,8 +14,8 @@
 
 | Field | Value |
 | --- | --- |
-| Observation start | `<operator-fills-once-rollout-lands>` (placeholder — the 7-day clock starts at the first production deploy AFTER this PR merges to `main`. The operator records that deploy's UTC timestamp here once SH2-U8 is live. This is NOT "the next time security-headers.js is modified" — it is specifically the first deploy containing the commits from this PR.) |
-| Observation end | `<observation-start + 7 days>` |
+| Observation start | **2026-04-27T00:00:00Z** (recorded by U7 hardening-residuals unit on 2026-04-27. The 7-day clock starts from this date. The CSP header remains `Content-Security-Policy-Report-Only` throughout the observation window. The enforcement flip to `Content-Security-Policy` is a SEPARATE follow-up PR gated on 7+ days with zero unexpected violations.) |
+| Observation end | **2026-05-04T00:00:00Z** (observation-start + 7 days) |
 | Report endpoint | `/api/security/csp-report` (already wired; see `worker/src/app.js` and `tests/csp-report-endpoint.test.js`) |
 | Log token | `[ks2-csp-report]` — operator grep the Worker tail for this prefix during the window |
 | Violation threshold for flip | **Zero unexpected violations** across the 7-day window. "Expected" = violations whose `violated-directive` + `blocked-uri` pair is an `ALLOWLIST.md` entry signed by the adversarial reviewer in the flip PR (this PR ships NO allowlist — an allowlist is only added if violations appear). |
@@ -46,7 +46,7 @@
 
 ## Decision
 
-**Current decision (2026-04-26, at SH2-U8 PR land time):** **DEFER**. The 7-day observation window begins at the first deploy that includes this PR. The window has not completed.
+**Current decision (2026-04-27, U7 hardening-residuals update):** **DEFER — observation window now open**. The 7-day observation window opened on 2026-04-27. The CSP header remains `Content-Security-Policy-Report-Only` in `worker/src/security-headers.js`. The enforcement flip (renaming the header to `Content-Security-Policy`) ships in a SEPARATE follow-up PR after the observation window closes on or after 2026-05-04 with zero unexpected violations.
 
 The enforcement flip (rename header from `Content-Security-Policy-Report-Only` to `Content-Security-Policy` in `worker/src/security-headers.js`) ships in a SEPARATE follow-up PR after the observation window closes with zero unexpected violations. That PR references this decision record.
 

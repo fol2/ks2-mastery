@@ -246,19 +246,26 @@ export function App({ controller, runtime }) {
         </>
       )}
 
+      {/* U7 hardening-residuals: each lazy-loaded adult hub surface gets its
+          own inner ErrorBoundary wrapping the Suspense. If a chunk-load failure
+          occurs (stale deploy, offline, cache eviction), the ErrorBoundary
+          renders a "Reload" CTA instead of the generic app-level fallback.
+          The outer ErrorBoundary (line 206) still catches non-chunk errors. */}
       {screen === 'parent-hub' && (
         <div className="app-shell">
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-          <Suspense fallback={<LoadingSkeleton rows={6} />}>
-            <ParentHubSurface
-              appState={appState}
-              model={context.parentHub}
-              hubState={context.parentHubState}
-              accessContext={context}
-              actions={actions}
-            />
-          </Suspense>
+          <ErrorBoundary onError={handleBoundaryError}>
+            <Suspense fallback={<LoadingSkeleton rows={6} />}>
+              <ParentHubSurface
+                appState={appState}
+                model={context.parentHub}
+                hubState={context.parentHubState}
+                accessContext={context}
+                actions={actions}
+              />
+            </Suspense>
+          </ErrorBoundary>
           <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}
@@ -267,16 +274,18 @@ export function App({ controller, runtime }) {
         <div className="app-shell">
           <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-          <Suspense fallback={<LoadingSkeleton rows={6} />}>
-            <AdminHubSurface
-              appState={appState}
-              model={context.adminHub}
-              hubState={context.adminHubState}
-              accountDirectory={context.adminAccountDirectory}
-              accessContext={context}
-              actions={actions}
-            />
-          </Suspense>
+          <ErrorBoundary onError={handleBoundaryError}>
+            <Suspense fallback={<LoadingSkeleton rows={6} />}>
+              <AdminHubSurface
+                appState={appState}
+                model={context.adminHub}
+                hubState={context.adminHubState}
+                accountDirectory={context.adminAccountDirectory}
+                accessContext={context}
+                actions={actions}
+              />
+            </Suspense>
+          </ErrorBoundary>
           <SharedOverlays appState={appState} actions={actions} controller={controller} />
         </div>
       )}

@@ -1,7 +1,7 @@
 # HSTS Preload Audit — Phase 2
 
-**Date:** 2026-04-26
-**Status:** DRAFT — awaiting operator DNS/TLS review and sign-off
+**Date:** 2026-04-27 (updated by U7 hardening-residuals unit)
+**Status:** DRAFT — DNS audit incomplete; operator sign-off still required before preload submission
 **Owning unit:** SH2-U9 (`docs/plans/2026-04-26-001-feat-sys-hardening-p2-plan.md` lines 669-697)
 **Requirement:** R9 — "HSTS preload is evaluated honestly via a signed subdomain audit deliverable; submission is a gated follow-up."
 **Baseline row:** `docs/hardening/p2-baseline.md` — Access / privacy faults — "HSTS `preload` directive is not set".
@@ -134,6 +134,23 @@ _To be completed by the operator. Until every field is non-empty, preload submis
 - **Operator decision:** _proceed with preload submission PR_ / _continue deferral_ (strike whichever does not apply)
 - **If proceeding:** link to follow-up PR that flips `HSTS_VALUE`: ________________________________
 - **If deferring:** reason and planned re-review date: ________________________________
+
+---
+
+## U7 Hardening-Residuals Status Update (2026-04-27)
+
+**Assessment:** The DNS audit remains incomplete. All `TBD-operator` cells in the subdomain enumeration table above are still unfilled. No HSTS header change is warranted at this time.
+
+**Current HSTS header:** `max-age=63072000; includeSubDomains` (confirmed in `worker/src/security-headers.js::HSTS_VALUE` on 2026-04-27 — no `preload` directive present).
+
+**What is needed before preload can proceed:**
+1. Operator must enumerate the full `eugnel.uk` DNS zone and fill every `TBD-operator` cell above.
+2. Operator must verify apex `eugnel.uk` serves HTTPS with a valid HSTS header.
+3. Operator must verify `dev-ks2.eugnel.uk` is HTTPS-only.
+4. Operator must confirm no legacy or third-party subdomain depends on plaintext HTTP.
+5. Operator must complete the sign-off block above.
+
+**No header changes made by this unit.** The `preload` directive will be added in a separate operator-gated PR that cites this audit with a completed sign-off block.
 
 ---
 
