@@ -64,6 +64,9 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
         onLogout={actions.logout}
         persistenceMode={model.persistence?.mode || 'local-only'}
         persistenceLabel={model.persistence?.label || ''}
+        platformRole={model.session?.platformRole}
+        onOpenAdmin={actions.openAdminHub}
+        currentScreen="dashboard"
       />
 
       <div className="hero-paper" style={{ '--hero-bg': `url('${heroBg}')` }}>

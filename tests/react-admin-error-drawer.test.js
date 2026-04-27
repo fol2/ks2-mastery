@@ -106,6 +106,7 @@ function drawerFixture({ platformRole, entry }) {
           navigateHome: () => {},
           registerAccountOpsMetadataRowDirty: () => {},
         }}
+        initialSection="debug"
       />
     );
     console.log(html);

@@ -481,6 +481,10 @@ test('button labels: every statically extractable label is classified', () => {
     // filter form (route / kind / date-range / release / reopened).
     'Apply filters',
     'Clear filters',
+    // P2 U3: TopNav admin entry point — visible only to admin/ops platform
+    // roles. Bespoke label: "Admin" is the short navigation affordance, not
+    // a canonical verb.
+    'Admin',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

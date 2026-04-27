@@ -61,6 +61,9 @@ export function CodexSurface({ model, actions }) {
         onLogout={actions.logout}
         persistenceMode={model.persistence?.mode || 'local-only'}
         persistenceLabel={model.persistence?.label || ''}
+        platformRole={model.session?.platformRole}
+        onOpenAdmin={actions.openAdminHub}
+        currentScreen="codex"
       />
 
       <main className="codex-page">
