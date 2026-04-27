@@ -1,4 +1,17 @@
 import { SESSION_EPHEMERAL_FIELDS } from '../../platform/core/subject-contract.js';
+import {
+  PUNCTUATION_CLIENT_SKILL_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_DETAIL_TAB_IDS,
+} from './punctuation-manifest.js';
+
+export {
+  PUNCTUATION_CLIENT_SKILL_IDS,
+  PUNCTUATION_MAP_STATUS_FILTER_IDS,
+  PUNCTUATION_MAP_MONSTER_FILTER_IDS,
+  PUNCTUATION_MAP_DETAIL_TAB_IDS,
+};
 
 export const PUNCTUATION_SERVICE_STATE_VERSION = 1;
 export const PUNCTUATION_CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
@@ -25,54 +38,6 @@ export const PUNCTUATION_PHASES = Object.freeze([
 // the transition to prevent an orphan session / stale feedback from leaking
 // into phase=map (adversarial reviewer adv-219-002).
 export const PUNCTUATION_OPEN_MAP_ALLOWED_PHASES = Object.freeze(['setup', 'summary']);
-
-// U5: Map filter chip rows and detail-tab ids. These frozen lists are the
-// single source of truth — `normalisePunctuationMapUi` validates inputs
-// against them, module handlers guard dispatched values against them, and
-// the view-model / scene re-exports them for render-time chip iteration.
-// Reserved Punctuation monsters (Colisk / Hyphang / Carillon) are absent
-// from the monster filter list so a rogue payload cannot surface a retired
-// name as a filter option.
-//
-// Phase 4 U3 (review follow-on): `'unknown'` is included so the filter chip
-// row stays consistent with the skill-row status enum once the upstream
-// worker starts emitting `analytics.available === false`. Without this
-// entry the degraded state would trap a learner on any non-"All" chip
-// (every skill is `'unknown'`, but the filter has no matching id → the
-// Map renders zero cards with no empty-state message). The chip is a
-// harmless extra slot while the upstream wiring is still deferred.
-export const PUNCTUATION_MAP_STATUS_FILTER_IDS = Object.freeze([
-  'all', 'new', 'learning', 'due', 'weak', 'secure', 'unknown',
-]);
-
-export const PUNCTUATION_MAP_MONSTER_FILTER_IDS = Object.freeze([
-  'all', 'pealark', 'claspin', 'curlune', 'quoral',
-]);
-
-export const PUNCTUATION_MAP_DETAIL_TAB_IDS = Object.freeze(['learn', 'practise']);
-
-// U5: Published skill ids. Client-safe mirror of the 14 skills that ship in
-// the current Punctuation release. Defined here (rather than read-model.js)
-// so the normaliser + module handler can validate a dispatched `skillId`
-// without reaching into a client-only module. The full skill metadata (name +
-// clusterId) lives on `PUNCTUATION_CLIENT_SKILLS` in read-model.js; this set
-// must stay in lock-step with that list (drift-tested).
-export const PUNCTUATION_CLIENT_SKILL_IDS = Object.freeze([
-  'sentence_endings',
-  'list_commas',
-  'apostrophe_contractions',
-  'apostrophe_possession',
-  'speech',
-  'fronted_adverbial',
-  'parenthesis',
-  'comma_clarity',
-  'colon_list',
-  'semicolon',
-  'dash_clause',
-  'semicolon_list',
-  'bullet_points',
-  'hyphen',
-]);
 
 const PUNCTUATION_CLIENT_SKILL_ID_SET = new Set(PUNCTUATION_CLIENT_SKILL_IDS);
 
