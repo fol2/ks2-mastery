@@ -488,6 +488,21 @@ export function createStore(
     return true;
   }
 
+  // P4/U7: wire clearStaleFetchGuards into the composition root's breaker
+  // reset hook. When the api repositories provide `registerBreakerResetHook`,
+  // every breaker transition to `closed` from an explicit reset() call site
+  // clears the sticky learner-fetch guard so sibling learner stats can be
+  // re-fetched. Local-only repositories do not expose this hook, so the
+  // guard degrades to no-op (no breakers exist in local-only mode).
+  function clearStaleFetchGuards() {
+    attemptedLearnerFetches.clear();
+  }
+  if (typeof resolvedRepositories.persistence?.registerBreakerResetHook === 'function') {
+    resolvedRepositories.persistence.registerBreakerResetHook(() => {
+      clearStaleFetchGuards();
+    });
+  }
+
   return {
     repositories: resolvedRepositories,
     getState() {
@@ -781,5 +796,13 @@ export function createStore(
       reloadFromRepositories();
     },
     resetSubjectUi,
+    // P4/U7: clear the sticky per-session "already attempted" guard so that
+    // the next `selectLearner` on an empty-cache sibling fires a fresh
+    // fetch. Called by the composition root after a breaker transitions
+    // to `closed` (e.g. operator reset of `bootstrapCapacityMetadata`).
+    // The breaker outage may have caused sibling learner fetches to fail
+    // and get recorded in the sticky Set — without clearing, the store
+    // would never retry those learners for the remainder of the session.
+    clearStaleFetchGuards,
   };
 }

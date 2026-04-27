@@ -1530,6 +1530,20 @@ export function createApiPlatformRepositories({
     }),
   };
 
+  // P4/U7: registered listeners for breaker-reset events. Fired from the
+  // composition root's explicit `reset()` call sites (NOT from the
+  // breaker primitive's `onTransition`) whenever a breaker transitions
+  // to `closed`. The store's `clearStaleFetchGuards()` is the primary
+  // consumer — it clears the sticky per-session learner-fetch guard so
+  // sibling learner stats can be re-fetched after recovery.
+  const breakerResetListeners = new Set();
+
+  function fireBreakerResetListeners(breakerName) {
+    for (const listener of breakerResetListeners) {
+      try { listener({ breakerName }); } catch { /* listener throw swallowed */ }
+    }
+  }
+
   function currentBreakersSnapshot() {
     const output = {};
     for (const [key, breaker] of Object.entries(breakers)) {
@@ -2144,6 +2158,10 @@ export function createApiPlatformRepositories({
         consecutiveMissingBootstrapMetadata = 0;
         bootstrapMetadataOperatorError = null;
         breakers.bootstrapCapacityMetadata.reset();
+        // P4/U7: fire reset listeners so the store clears its sticky
+        // learner-fetch guard. Sibling learner stats that failed to
+        // fetch while the breaker was open can now be retried.
+        fireBreakerResetListeners('bootstrapCapacityMetadata');
       }
       // U9.1 item 2: `forceBreakerReset` via bootstrap response. When an
       // admin header triggers the server to include this field, the client
@@ -2156,6 +2174,10 @@ export function createApiPlatformRepositories({
         const targetBreaker = breakers[forceBreakerResetName];
         if (targetBreaker && typeof targetBreaker.reset === 'function') {
           targetBreaker.reset();
+          // P4/U7: fire reset listeners for operator-initiated resets
+          // (the `forceBreakerReset` admin path). Same rationale as
+          // the auto-recovery path above.
+          fireBreakerResetListeners(forceBreakerResetName);
         }
       }
       // U9.1 item 3: surface server-side `readModelDerivedWrite` breaker
@@ -2352,6 +2374,15 @@ export function createApiPlatformRepositories({
       // UI components MUST NOT import this — they read the aggregate
       // `breakersDegraded` boolean map from `read()` instead.
       breakers,
+      // P4/U7: register a callback that fires whenever a breaker is
+      // explicitly reset to `closed` from a composition-root call site.
+      // Returns an unsubscribe function. Primary consumer is the
+      // store's `clearStaleFetchGuards()`.
+      registerBreakerResetHook(listener) {
+        if (typeof listener !== 'function') return () => {};
+        breakerResetListeners.add(listener);
+        return () => breakerResetListeners.delete(listener);
+      },
       async retry() {
         const blocked = hasBlockedOperations(pendingOperations);
         await repositories.hydrate({
