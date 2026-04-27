@@ -20,6 +20,7 @@ import {
   grammarStarDisplayStage,
   grammarStarStageFor,
   grammarStarStageName,
+  legacyStarFloorFromStage,
 } from './grammar-stars.js';
 
 export const GRAMMAR_REWARD_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
@@ -95,6 +96,26 @@ function grammarStageFor(mastered, total) {
 function safeStarHighWater(value) {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+/**
+ * Seed the starHighWater value for a monster entry during writes.
+ *
+ * If the entry already has a starHighWater field (post-P5 learner), preserve
+ * it via safeStarHighWater. If absent (pre-P5 learner), compute the legacy
+ * floor from the ratio-based stage so that writing starHighWater for the first
+ * time does not erase the learner's visual floor. Without this, safeStarHighWater
+ * would return 0 for undefined, permanently disabling the legacy floor on
+ * subsequent reads.
+ */
+function seedStarHighWater(entry, total) {
+  if (entry.starHighWater !== undefined && entry.starHighWater !== null) {
+    return safeStarHighWater(entry.starHighWater);
+  }
+  // Pre-P5 learner: seed from legacy floor.
+  const mastered = grammarMasteredCount(entry);
+  const legacyStage = grammarStageFor(mastered, total);
+  return legacyStarFloorFromStage(legacyStage);
 }
 
 function grammarMonsterConceptTotal(monsterId) {
@@ -377,10 +398,13 @@ export function recordGrammarConceptMastery({
     : null;
 
   // Ratchet starHighWater: preserve the existing high-water mark on each
-  // monster entry. The actual Star computation happens on the client read
-  // path (which has access to concept nodes); the reward layer only
-  // preserves the latch field so it survives round-trips.
-  const aggregateHW = safeStarHighWater(aggregateEntry.starHighWater);
+  // monster entry. For pre-P5 learners (no starHighWater field), seed the
+  // value from the legacy floor so that writing it for the first time does
+  // not erase the learner's visual stage. The actual Star computation
+  // happens on the client read path (which has access to concept nodes);
+  // the reward layer only preserves the latch field so it survives
+  // round-trips.
+  const aggregateHW = seedStarHighWater(aggregateEntry, GRAMMAR_AGGREGATE_CONCEPTS.length);
 
   const after = {
     ...before,
@@ -397,7 +421,7 @@ export function recordGrammarConceptMastery({
   };
 
   if (directMonsterId) {
-    const directHW = safeStarHighWater(directEntry.starHighWater);
+    const directHW = seedStarHighWater(directEntry, grammarMonsterConceptTotal(directMonsterId));
     after[directMonsterId] = {
       ...directEntry,
       caught: true,

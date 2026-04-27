@@ -420,7 +420,8 @@ test('U4 record: recordGrammarConceptMastery preserves existing starHighWater on
     'starHighWater preserved on direct entry after write');
 });
 
-test('U4 record: recordGrammarConceptMastery initialises starHighWater to 0 when absent', () => {
+test('U4 record: recordGrammarConceptMastery seeds starHighWater from legacy floor when absent (pre-P5 learner)', () => {
+  // A fresh learner with no prior state: 0 mastered -> legacy stage 0 -> floor 0.
   const repository = makeRepository();
   recordGrammarConceptMastery({
     learnerId: 'learner-fresh',
@@ -429,8 +430,12 @@ test('U4 record: recordGrammarConceptMastery initialises starHighWater to 0 when
     random: () => 0,
   });
   const state = repository.state();
-  assert.equal(state.concordium.starHighWater, 0, 'aggregate starHighWater initialised to 0');
-  assert.equal(state.bracehart.starHighWater, 0, 'direct starHighWater initialised to 0');
+  // After recording the first concept, the entry now has 1 mastered key.
+  // But seedStarHighWater reads mastered count BEFORE the new key is appended
+  // (from the aggregateEntry snapshot), so for a truly fresh learner the
+  // pre-write mastered count is 0 -> legacy stage 0 -> floor 0.
+  assert.equal(state.concordium.starHighWater, 0, 'aggregate starHighWater seeded from legacy floor (0 mastered -> 0)');
+  assert.equal(state.bracehart.starHighWater, 0, 'direct starHighWater seeded from legacy floor (0 mastered -> 0)');
 });
 
 test('U4 record: recordGrammarConceptMastery normalises corrupted starHighWater to 0', () => {
@@ -735,4 +740,165 @@ test('U4 integration: starHighWater survives across multiple recordGrammarConcep
   const state2 = repository.state();
   assert.ok(state2.bracehart.starHighWater >= 30,
     'starHighWater still preserved after third concept mastered');
+});
+
+// =============================================================================
+// 12. HIGH fix: pre-P5 Concordium round-trip — starHighWater seeded from legacy floor
+// =============================================================================
+
+test('U4 review fix: pre-P5 Concordium 14/18 mastered -> read (stars>=35) -> record concept 15 -> read again -> stars>=35', () => {
+  // Pre-P5 learner with 14 of 18 Concordium concepts mastered.
+  // Legacy stage: 14/18 = 0.778 -> stage 3 -> floor = 35 Stars.
+  const keys = GRAMMAR_AGGREGATE_CONCEPTS.slice(0, 14).map((c) => grammarMasteryKey(c));
+  const repository = makeRepository({
+    concordium: {
+      mastered: keys,
+      caught: true,
+      conceptTotal: 18,
+      // No starHighWater — pre-P5 learner.
+    },
+  });
+
+  // Step 1: read progress — expect stars >= 35 from legacy floor.
+  const state1 = repository.state();
+  const progress1 = progressForGrammarMonster(state1, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+  });
+  assert.ok(progress1.stars >= 35,
+    `Before record: stars=${progress1.stars} should be >= 35 from legacy floor`);
+
+  // Step 2: record concept 15 via recordGrammarConceptMastery.
+  const concept15 = GRAMMAR_AGGREGATE_CONCEPTS[14];
+  recordGrammarConceptMastery({
+    learnerId: 'learner-pre-p5-roundtrip',
+    conceptId: concept15,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Step 3: read progress again — stars must still be >= 35.
+  const state2 = repository.state();
+  const progress2 = progressForGrammarMonster(state2, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+  });
+  assert.ok(progress2.stars >= 35,
+    `After record: stars=${progress2.stars} should be >= 35 — legacy floor must not be erased by write`);
+  // The written starHighWater must be at least the legacy floor.
+  assert.ok(state2.concordium.starHighWater >= 35,
+    `Persisted starHighWater=${state2.concordium.starHighWater} should be >= 35`);
+});
+
+// =============================================================================
+// 13. P1: Chronalyx legacy migration — pre-P5 with 2/4 mastered
+// =============================================================================
+
+test('U4 review: pre-P5 Chronalyx 2/4 mastered (stage 2) -> floor Stars=15 -> "Hatched" preserved', () => {
+  const state = {
+    chronalyx: {
+      mastered: [
+        grammarMasteryKey('tense_aspect'),
+        grammarMasteryKey('modal_verbs'),
+      ],
+      caught: true,
+      conceptTotal: 4,
+      // No starHighWater — pre-P5 learner.
+    },
+  };
+  const progress = progressForGrammarMonster(state, 'chronalyx', {
+    conceptTotal: 4,
+  });
+  // Legacy stage: 2/4 = 0.5 -> stage 2 -> floor = 15 Stars.
+  assert.ok(progress.stars >= 15,
+    `Chronalyx stars=${progress.stars} should be >= 15 from legacy floor`);
+  assert.ok(progress.stageName === 'Hatched' || progress.stageName === 'Growing' || progress.stageName === 'Nearly Mega' || progress.stageName === 'Mega',
+    `stageName="${progress.stageName}" should be at least Hatched`);
+  assert.ok(progress.displayStage >= 2,
+    `displayStage=${progress.displayStage} should be >= 2 (Hatched)`);
+});
+
+// =============================================================================
+// 14. P2: String-typed starHighWater from D1
+// =============================================================================
+
+test('U4 review: string-typed starHighWater ("42") treated as numeric 42', () => {
+  const state = {
+    bracehart: {
+      mastered: [grammarMasteryKey('sentence_functions')],
+      caught: true,
+      starHighWater: '42',  // D1 returns strings for numeric columns.
+    },
+  };
+  const progress = progressForGrammarMonster(state, 'bracehart', {
+    conceptTotal: 6,
+  });
+  assert.equal(progress.stars, 42,
+    'String "42" treated as numeric 42 via Number coercion');
+  assert.equal(progress.starHighWater, 42);
+});
+
+test('U4 review: string-typed starHighWater ("42") preserved through recordGrammarConceptMastery', () => {
+  const repository = makeRepository({
+    concordium: {
+      mastered: [grammarMasteryKey('sentence_functions')],
+      caught: true,
+      starHighWater: '42',
+    },
+    bracehart: {
+      mastered: [grammarMasteryKey('sentence_functions')],
+      caught: true,
+      starHighWater: '15',
+    },
+  });
+  recordGrammarConceptMastery({
+    learnerId: 'learner-string-hw',
+    conceptId: 'clauses',
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  assert.ok(state.concordium.starHighWater >= 42,
+    `aggregate starHighWater=${state.concordium.starHighWater} should be >= 42`);
+  assert.ok(state.bracehart.starHighWater >= 15,
+    `direct starHighWater=${state.bracehart.starHighWater} should be >= 15`);
+});
+
+// =============================================================================
+// 15. P2: Concordium conceptNodes — all 18 concepts with full evidence -> 100 Stars
+// =============================================================================
+
+test('U4 review: Concordium with full conceptNodes evidence for all 18 concepts -> 100 Stars', () => {
+  const state = {
+    concordium: {
+      mastered: GRAMMAR_AGGREGATE_CONCEPTS.map((c) => grammarMasteryKey(c)),
+      caught: true,
+    },
+  };
+  // Build conceptNodes with full evidence signals for every aggregate concept.
+  const conceptNodes = {};
+  const recentAttempts = [];
+  for (const conceptId of GRAMMAR_AGGREGATE_CONCEPTS) {
+    conceptNodes[conceptId] = {
+      attempts: 10,
+      correct: 8,
+      wrong: 2,
+      strength: 0.90,
+      intervalDays: 14,
+      correctStreak: 5,
+    };
+    // Two independent corrects with different templates.
+    recentAttempts.push(
+      { conceptId, templateId: `${conceptId}-tmpl-1`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+      { conceptId, templateId: `${conceptId}-tmpl-2`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    );
+  }
+  const progress = progressForGrammarMonster(state, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+    conceptNodes,
+    recentAttempts,
+  });
+  assert.equal(progress.stars, 100,
+    'Full evidence on all 18 Concordium concepts = 100 Stars');
+  assert.equal(progress.stage, 4, 'Mega stage');
+  assert.equal(progress.stageName, 'Mega');
+  assert.equal(progress.displayStage, 5);
 });

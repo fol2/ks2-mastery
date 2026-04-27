@@ -126,10 +126,13 @@ function makeRepository(initialState = {}) {
 // INFO (defence-in-depth): `mastered >= maxPrior.mastered` already subsumes
 // caught-stickiness under the derived-caught contract, because derived caught
 // is `mastered.length >= 1` — so as long as mastered is monotonic, caught
-// cannot flip back. The explicit `maxPrior.caught → concordium.caught` check
-// below is intentional redundancy in case the caught contract ever changes
-// (e.g. revert to stored-caught or mixed caught logic), so the ratchet test
-// keeps detecting direct revocations even if mastered monotonicity regresses.
+// cannot flip back. P5 widened the caught contract to
+// `mastered >= 1 || displayStars >= 1`, so a learner with zero mastered keys
+// but a non-zero starHighWater latch is also considered caught. The explicit
+// `maxPrior.caught → concordium.caught` check below is intentional redundancy
+// in case the caught contract ever changes (e.g. revert to stored-caught or
+// mixed caught logic), so the ratchet test keeps detecting direct revocations
+// even if mastered monotonicity regresses.
 // -----------------------------------------------------------------------------
 
 function assertConcordiumRatchet(state, maxPrior, context) {
@@ -726,11 +729,14 @@ test('U3 post-mega branch: pre-seed 17/18 state + 40-step random replay → ratc
 // ----- Stored-caught vs derived-caught adversarial ---------------------------
 //
 // Plan §U3 §506: state `{ concordium: { caught: true, mastered: [] } }` —
-// `progressForGrammarMonster` returns `caught = (mastered.length >= 1) = false`.
-// Stored flag is `true`, derived flag is `false`. Test pins which is
-// authoritative; plan names stored-caught as load-bearing, but the current
-// production contract derives caught from mastered. This test pins the
-// current contract and names the deviation from the plan explicitly.
+// `progressForGrammarMonster` returns `caught = (mastered >= 1 || displayStars >= 1)`.
+// P5 widened the caught contract: a learner with zero mastered keys but a
+// non-zero starHighWater latch is also considered caught. Without either
+// signal, caught is false despite the stored flag. Stored flag is `true`,
+// derived flag is `false`. Test pins which is authoritative; plan names
+// stored-caught as load-bearing, but the current production contract derives
+// caught from mastered + Stars. This test pins the current contract and names
+// the deviation from the plan explicitly.
 
 test('U3 adversarial: stored-caught vs derived-caught — progressForGrammarMonster returns derived-caught (mastered.length>=1); stored flag IGNORED', () => {
   const state = { concordium: { caught: true, mastered: [] } };
