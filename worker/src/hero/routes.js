@@ -68,6 +68,7 @@ export async function handleHeroReadModel({
     learnerId,
     subjectReadModels,
     now: nowTs,
+    env,
   });
 
   return json({ ok: true, hero: result });
