@@ -404,6 +404,7 @@ function redactPunctuationUiForClient(ui, data = {}, learnerId = '', { now = Dat
     prefs: service.getPrefs(learnerId),
     stats: service.getStats(learnerId),
     analytics: service.getAnalyticsSnapshot(learnerId),
+    data,
   });
   if (readModel.summary?.gps) {
     readModel.summary = publicPunctuationPracticeSessionSummary(readModel.summary);

@@ -152,6 +152,7 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
         stats: result.stats,
         analytics: result.analytics,
         content: contentMeta(),
+        data: result.data,
         contextPack,
       }),
       projections,
