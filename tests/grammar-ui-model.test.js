@@ -728,17 +728,28 @@ test('U8 view-model: grammarSummaryCards returns five cards with correct order',
 
 test('U8 view-model: grammarSummaryCards monster-progress surfaces 4 active monsters only (R15)', () => {
   const cards = grammarSummaryCards({}, {
-    bracehart: { mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:clauses'] },
-    concordium: { mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:clauses'] },
-    glossbloom: { mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:noun_phrases'] }, // retired
+    bracehart: { mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:clauses'], caught: true, starHighWater: 10 },
+    concordium: { mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:clauses'], caught: true, starHighWater: 5 },
+    glossbloom: { mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:noun_phrases'], caught: true, starHighWater: 50 }, // retired
   });
   const monsterCard = cards.find((card) => card.id === 'monster-progress');
   assert.ok(Array.isArray(monsterCard.value));
   assert.equal(monsterCard.value.length, 4);
-  const ids = monsterCard.value.map((entry) => entry.id);
+  const ids = monsterCard.value.map((entry) => entry.monsterId);
   assert.deepEqual(ids, ['bracehart', 'chronalyx', 'couronnail', 'concordium']);
   for (const id of ['glossbloom', 'loomrill', 'mirrane']) {
     assert.equal(ids.includes(id), false, `retired ${id} leaked into monster progress`);
+  }
+  // Entries carry Star shape, not legacy mastered/total.
+  for (const entry of monsterCard.value) {
+    assert.equal(typeof entry.monsterId, 'string');
+    assert.equal(typeof entry.stageName, 'string');
+    assert.equal(typeof entry.stars, 'number');
+    assert.equal(entry.starMax, 100);
+    assert.equal(typeof entry.stageIndex, 'number');
+    assert.equal(typeof entry.accentColor, 'string');
+    assert.equal(entry.mastered, undefined, `entry ${entry.monsterId} must not have legacy mastered`);
+    assert.equal(entry.total, undefined, `entry ${entry.monsterId} must not have legacy total`);
   }
 });
 
@@ -757,6 +768,80 @@ test('U8 view-model: grammarSummaryCards accuracy detail is computed from answer
   const correctCard = cards.find((card) => card.id === 'correct');
   assert.equal(correctCard.value, 3);
   assert.ok(correctCard.detail.includes('75%'));
+});
+
+// =============================================================================
+// P7-U2: Summary monster progress uses Star display model (not concept counts)
+// =============================================================================
+
+test('P7-U2 view-model: fresh learner summary shows 0 / 100 Stars with "Not found yet" stage', () => {
+  const cards = grammarSummaryCards({}, {});
+  const monsterCard = cards.find((card) => card.id === 'monster-progress');
+  assert.ok(Array.isArray(monsterCard.value));
+  assert.equal(monsterCard.value.length, 4);
+  for (const entry of monsterCard.value) {
+    assert.equal(entry.stars, 0, `${entry.monsterId} starts at 0 Stars`);
+    assert.equal(entry.starMax, 100, `${entry.monsterId} starMax is 100`);
+    assert.equal(entry.stageName, 'Not found yet', `${entry.monsterId} stage is "Not found yet"`);
+  }
+});
+
+test('P7-U2 view-model: 42-Star Bracehart summary shows "Hatched" stage name (actually Growing at 42)', () => {
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 42 },
+  };
+  const cards = grammarSummaryCards({}, rewardState);
+  const monsterCard = cards.find((card) => card.id === 'monster-progress');
+  const bracehart = monsterCard.value.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehart.stars, 42);
+  assert.equal(bracehart.starMax, 100);
+  assert.equal(bracehart.stageName, 'Growing');
+});
+
+test('P7-U2 view-model: Concordium at 100 Stars shows "Mega" stage', () => {
+  const rewardState = {
+    concordium: { mastered: [], caught: true, starHighWater: 100 },
+  };
+  const cards = grammarSummaryCards({}, rewardState);
+  const monsterCard = cards.find((card) => card.id === 'monster-progress');
+  const concordium = monsterCard.value.find((e) => e.monsterId === 'concordium');
+  assert.equal(concordium.stars, 100);
+  assert.equal(concordium.starMax, 100);
+  assert.equal(concordium.stageName, 'Mega');
+});
+
+test('P7-U2 view-model: null/missing rewardState produces safe empty entries with 0 Stars', () => {
+  const cards = grammarSummaryCards({}, null);
+  const monsterCard = cards.find((card) => card.id === 'monster-progress');
+  assert.ok(Array.isArray(monsterCard.value));
+  assert.equal(monsterCard.value.length, 4);
+  for (const entry of monsterCard.value) {
+    assert.equal(entry.stars, 0, `${entry.monsterId} safe at 0 Stars`);
+    assert.equal(entry.starMax, 100);
+    assert.equal(typeof entry.stageName, 'string');
+    assert.equal(typeof entry.accentColor, 'string');
+  }
+});
+
+test('P7-U2 view-model: monster-progress card entries do NOT have mastered or total properties', () => {
+  const rewardState = {
+    bracehart: { mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:clauses'], caught: true, starHighWater: 15 },
+    concordium: { mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:clauses'], caught: true, starHighWater: 5 },
+  };
+  const cards = grammarSummaryCards({}, rewardState);
+  const monsterCard = cards.find((card) => card.id === 'monster-progress');
+  for (const entry of monsterCard.value) {
+    assert.equal(entry.mastered, undefined, `${entry.monsterId} must not carry legacy "mastered" property`);
+    assert.equal(entry.total, undefined, `${entry.monsterId} must not carry legacy "total" property`);
+    assert.equal(entry.id, undefined, `${entry.monsterId} uses monsterId, not legacy "id" property`);
+    // Must have the Star shape instead.
+    assert.equal(typeof entry.monsterId, 'string');
+    assert.equal(typeof entry.stars, 'number');
+    assert.equal(entry.starMax, 100);
+    assert.equal(typeof entry.stageName, 'string');
+    assert.equal(typeof entry.stageIndex, 'number');
+    assert.equal(typeof entry.accentColor, 'string');
+  }
 });
 
 // -----------------------------------------------------------------------------

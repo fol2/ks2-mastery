@@ -805,7 +805,7 @@ export function buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, 
 
 // --- Summary cards builder --------------------------------------------------
 
-export function grammarSummaryCards(summary, rewardState) {
+export function grammarSummaryCards(summary, rewardState, masteryConceptNodes = null, recentAttempts = null) {
   const safeSummary = summary && typeof summary === 'object' && !Array.isArray(summary) ? summary : {};
   const answered = safeNumber(safeSummary.answered, 0);
   const correct = safeNumber(safeSummary.correct, 0);
@@ -820,7 +820,7 @@ export function grammarSummaryCards(summary, rewardState) {
     Object.freeze({
       id: 'monster-progress',
       label: 'Monster progress',
-      value: masteredSummaryFromReward(rewardState),
+      value: buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, recentAttempts),
       detail: 'Your four Grammar creatures',
     }),
   ]);
