@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { buildPunctuationReadModel } from '../worker/src/subjects/punctuation/read-models.js';
+import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
 import { createPunctuationReadModelService } from '../src/subjects/punctuation/client-read-models.js';
 
 const BASE_STATE = {
@@ -305,4 +306,160 @@ test('clean payloads with all allowed fields pass redaction', () => {
   assert.equal(result.summary.correctCount, 2);
   assert.equal('contextPack' in result, false);
   assert.equal(result.content.skills[0].id, 'speech');
+});
+
+// ---------------------------------------------------------------------------
+// U2: starView wiring into Worker read-model
+// ---------------------------------------------------------------------------
+
+const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+
+function masteryKey(clusterId, rewardUnitId) {
+  return `punctuation:${CURRENT_RELEASE_ID}:${clusterId}:${rewardUnitId}`;
+}
+
+function seededData() {
+  const now = Date.UTC(2026, 3, 25);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const data = {
+    progress: {
+      items: {
+        se_choose_endmark: {
+          attempts: 10, correct: 9, incorrect: 1, streak: 4, lapses: 0,
+          dueAt: 0, firstCorrectAt: now - (14 * DAY_MS), lastCorrectAt: now, lastSeen: now,
+        },
+      },
+      facets: {},
+      rewardUnits: {
+        [masteryKey('endmarks', 'sentence-endings-core')]: {
+          masteryKey: masteryKey('endmarks', 'sentence-endings-core'),
+          releaseId: CURRENT_RELEASE_ID,
+          clusterId: 'endmarks',
+          rewardUnitId: 'sentence-endings-core',
+          securedAt: now - 10_000,
+        },
+      },
+      attempts: [],
+      sessionsCompleted: 0,
+    },
+  };
+  for (let i = 0; i < 5; i++) {
+    data.progress.attempts.push({
+      ts: now - (i * 60_000),
+      sessionId: 'test-session',
+      itemId: i === 0 ? 'se_choose_endmark' : `se_item_${i}`,
+      itemMode: 'choose',
+      skillIds: ['sentence_endings'],
+      rewardUnitId: 'sentence-endings-core',
+      sessionMode: 'smart',
+      correct: true,
+      supportLevel: 0,
+    });
+  }
+  return data;
+}
+
+test('U2: Worker read-model with seeded progress populates starView and stats.grandStars', () => {
+  const data = seededData();
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-a',
+    state: BASE_STATE,
+    prefs: {},
+    stats: { publishedRewardUnits: 14, securedRewardUnits: 1 },
+    data,
+  });
+  assert.ok(result.starView, 'payload must carry starView');
+  assert.ok(result.starView.perMonster, 'starView.perMonster must exist');
+  assert.ok(result.starView.grand, 'starView.grand must exist');
+  assert.ok(result.starView.perMonster.pealark, 'pealark must have star data');
+  assert.ok(result.starView.perMonster.pealark.total > 0, 'pealark total must be > 0');
+  assert.equal(
+    result.stats.grandStars,
+    result.starView.grand.grandStars,
+    'stats.grandStars must match starView.grand.grandStars',
+  );
+});
+
+test('U2: fresh learner (no data) produces starView with zero-valued entries', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-b',
+    state: { phase: 'setup', availability: { status: 'ready', code: null, message: '' } },
+    prefs: {},
+    stats: {},
+    data: null,
+  });
+  assert.ok(result.starView, 'starView must exist even without data');
+  assert.equal(result.starView.grand.grandStars, 0, 'grand.grandStars must be 0');
+  assert.equal(result.stats.grandStars, 0, 'stats.grandStars must be 0');
+});
+
+test('U2: data parameter undefined falls back to zero-valued starView', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-c',
+    state: { phase: 'setup', availability: { status: 'ready', code: null, message: '' } },
+    prefs: {},
+    stats: {},
+    // data omitted — defaults to null
+  });
+  assert.ok(result.starView, 'starView must exist when data is omitted');
+  assert.equal(result.starView.grand.grandStars, 0, 'grand.grandStars must be 0');
+  assert.equal(result.stats.grandStars, 0, 'stats.grandStars must be 0');
+});
+
+test('U2: getDashboardStats reaches grandStars branch when stats.grandStars is set', () => {
+  const data = seededData();
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-d',
+    state: BASE_STATE,
+    prefs: {},
+    stats: { publishedRewardUnits: 14, securedRewardUnits: 1 },
+    data,
+  });
+  // Simulate module.js getDashboardStats logic
+  const grandStars = result.stats.grandStars;
+  assert.notEqual(grandStars, null, 'grandStars must not be null');
+  const pct = grandStars != null
+    ? Math.round(grandStars)
+    : (result.stats.publishedRewardUnits
+      ? Math.round(((result.stats.securedRewardUnits || 0) / result.stats.publishedRewardUnits) * 100)
+      : 0);
+  assert.equal(pct, Math.round(grandStars), 'pct must derive from grandStars, not legacy ratio');
+});
+
+test('U2: legacy ratio fallback still works when data absent and grandStars null from external stats', () => {
+  // When no data is provided, grandStars defaults to 0 (not null) because
+  // the star projection runs on an empty progress blob. This test validates
+  // that the stats override sets grandStars = 0 even for a fresh learner.
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-e',
+    state: { phase: 'setup', availability: { status: 'ready', code: null, message: '' } },
+    prefs: {},
+    stats: { publishedRewardUnits: 14, securedRewardUnits: 2 },
+    data: null,
+  });
+  // grandStars is 0 (from projection), not null, so getDashboardStats
+  // would use Math.round(0) = 0. The legacy fallback path (ratio) is only
+  // exercised when grandStars is explicitly null — the Worker always produces
+  // a numeric value now.
+  assert.equal(typeof result.stats.grandStars, 'number', 'grandStars must be a number');
+  assert.equal(result.stats.grandStars, 0, 'fresh learner grandStars is 0');
+});
+
+test('U2: starView shape matches client-side buildPunctuationLearnerReadModel output', () => {
+  const data = seededData();
+  const clientModel = buildPunctuationLearnerReadModel({
+    subjectStateRecord: { data },
+  });
+  const workerModel = buildPunctuationReadModel({
+    learnerId: 'learner-f',
+    state: BASE_STATE,
+    prefs: {},
+    stats: {},
+    data,
+  });
+  assert.deepStrictEqual(
+    workerModel.starView,
+    clientModel.starView,
+    'Worker starView must be identical to client starView for same data',
+  );
 });

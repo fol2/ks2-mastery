@@ -1,4 +1,5 @@
 import { cloneSerialisable } from '../../../../src/platform/core/repositories/helpers.js';
+import { buildPunctuationLearnerReadModel } from '../../../../src/subjects/punctuation/read-model.js';
 import {
   PUNCTUATION_CONTENT_MANIFEST,
   PUNCTUATION_RELEASE_ID,
@@ -231,6 +232,11 @@ export function buildPunctuationReadModel({
   stats,
   analytics = null,
   content = null,
+  // U2: `data` is the full progress blob persisted by the engine. When
+  // present, `buildPunctuationLearnerReadModel` projects starView from
+  // learning evidence so the Worker read-model carries the same Star
+  // truth as the client bootstrap path.
+  data = null,
   // contextPack is accepted for forward compatibility with a future Parent/Admin
   // scope, but Phase 3 U8 (origin R34) never attaches it to the default child
   // payload — the child surface never renders it. `safeContextPackSummary` and
@@ -264,6 +270,19 @@ export function buildPunctuationReadModel({
       skills: safeContentSkills(),
     },
   };
+  // U2: project starView from learning evidence when `data` is available.
+  // `buildPunctuationLearnerReadModel` is the single source of truth for
+  // star projection; delegating to it guarantees Worker command responses
+  // and bootstrap/refresh paths produce identical Star totals (R1, R11).
+  const learnerReadModel = buildPunctuationLearnerReadModel({
+    subjectStateRecord: data != null ? { data } : {},
+  });
+  payload.starView = learnerReadModel.starView;
+  // R12: stats.grandStars must match starView so module.js:getDashboardStats
+  // reaches the `grandStars != null` branch and renders the star-derived pct.
+  if (!payload.stats) payload.stats = {};
+  payload.stats.grandStars = learnerReadModel.starView.grand.grandStars;
+
   // Recursive fail-closed scan across every branch of the payload. Catches
   // leaked keys introduced by upstream service-state changes that bypass the
   // per-phase allowlists (e.g. new validator field added inside a review row,
