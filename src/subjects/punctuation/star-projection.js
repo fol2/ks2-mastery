@@ -51,6 +51,26 @@ for (const skill of PUNCTUATION_CLIENT_SKILLS) {
   SKILL_TO_CLUSTER.set(skill.id, skill.clusterId);
 }
 
+// Exact rewardUnitId -> Set<clusterId> lookup.
+// Mirrors `PUNCTUATION_CLIENT_REWARD_UNITS` from read-model.js (not exported).
+// Eliminates substring-match collisions (e.g. `semicolon` vs `semicolon-lists`).
+const RU_TO_CLUSTERS = new Map([
+  ['sentence-endings-core', new Set(['endmarks'])],
+  ['apostrophe-contractions-core', new Set(['apostrophe'])],
+  ['apostrophe-possession-core', new Set(['apostrophe'])],
+  ['speech-core', new Set(['speech'])],
+  ['list-commas-core', new Set(['comma_flow'])],
+  ['fronted-adverbials-core', new Set(['comma_flow'])],
+  ['comma-clarity-core', new Set(['comma_flow'])],
+  ['semicolons-core', new Set(['boundary'])],
+  ['dash-clauses-core', new Set(['boundary'])],
+  ['hyphens-core', new Set(['boundary'])],
+  ['parenthesis-core', new Set(['structure'])],
+  ['colons-core', new Set(['structure'])],
+  ['semicolon-lists-core', new Set(['structure'])],
+  ['bullet-points-core', new Set(['structure'])],
+]);
+
 // Star category caps per direct monster.
 const TRY_CAP = 10;
 const PRACTICE_CAP = 30;
@@ -106,12 +126,11 @@ function clustersForAttempt(attempt) {
       if (clusterId) clusters.add(clusterId);
     }
   }
-  // If none matched, fall back to reward-unit lookup.
+  // If none matched, fall back to exact reward-unit lookup.
   if (clusters.size === 0 && typeof attempt.rewardUnitId === 'string') {
-    for (const skill of PUNCTUATION_CLIENT_SKILLS) {
-      if (attempt.rewardUnitId.includes(skill.id.replace(/_/g, '-'))) {
-        clusters.add(skill.clusterId);
-      }
+    const mapped = RU_TO_CLUSTERS.get(attempt.rewardUnitId);
+    if (mapped) {
+      for (const c of mapped) clusters.add(c);
     }
   }
   return clusters;
@@ -207,7 +226,7 @@ function computePracticeStars(monsterAttempts) {
   }
   for (const [, attempts] of itemAttemptOrder) {
     for (let i = 1; i < attempts.length && i < MAX_ATTEMPTS_PER_ITEM; i++) {
-      if (!attempts[i - 1].correct && attempts[i].correct) {
+      if (!attempts[i - 1].correct && attempts[i].correct && (attempts[i].supportLevel || 0) === 0) {
         nearRetryCorrections += 1;
       }
     }
