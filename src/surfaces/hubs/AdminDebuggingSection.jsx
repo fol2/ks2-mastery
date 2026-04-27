@@ -492,12 +492,13 @@ function LearnerSupportPanel({ model, appState, accessContext, actions }) {
 // disclosure).
 // ---------------------------------------------------------------------------
 
+// Values must match DENIAL_* constants in worker/src/error-codes.js (lines 20-24).
 const DENIAL_REASON_OPTIONS = [
-  'suspended_account',
-  'rate_limited',
-  'forbidden',
-  'invalid_session',
-  'demo_expired',
+  { value: 'account_suspended',   label: 'Account Suspended' },
+  { value: 'payment_hold',        label: 'Payment Hold' },
+  { value: 'session_invalidated', label: 'Session Invalidated' },
+  { value: 'csrf_rejection',      label: 'CSRF / Same-Origin' },
+  { value: 'rate_limit_exceeded', label: 'Rate Limited' },
 ];
 
 function DenialLogPanel({ model, actions }) {
@@ -549,8 +550,8 @@ function DenialLogPanel({ model, actions }) {
             data-testid="denial-filter-reason"
           >
             <option value="">All reasons</option>
-            {DENIAL_REASON_OPTIONS.map((reason) => (
-              <option value={reason} key={reason}>{reason}</option>
+            {DENIAL_REASON_OPTIONS.map(({ value, label }) => (
+              <option value={value} key={value}>{label}</option>
             ))}
           </select>
         </label>

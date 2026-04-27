@@ -176,7 +176,7 @@ function fullModel(overrides = {}) {
         {
           id: 'deny-char-001',
           deniedAt: Date.UTC(2026, 3, 26, 10, 30),
-          denialReason: 'suspended_account',
+          denialReason: 'account_suspended',
           routeName: '/api/bootstrap',
           accountIdMasked: 'abcd1234',
           isDemo: false,
@@ -185,7 +185,7 @@ function fullModel(overrides = {}) {
         {
           id: 'deny-char-002',
           deniedAt: Date.UTC(2026, 3, 26, 11, 0),
-          denialReason: 'rate_limited',
+          denialReason: 'rate_limit_exceeded',
           routeName: '/api/subject/command',
           accountIdMasked: 'efgh5678',
           isDemo: true,
@@ -194,7 +194,7 @@ function fullModel(overrides = {}) {
         {
           id: 'deny-char-003',
           deniedAt: Date.UTC(2026, 3, 26, 12, 0),
-          denialReason: 'forbidden',
+          denialReason: 'csrf_rejection',
           routeName: '/api/admin/hub',
           accountIdMasked: null,
           isDemo: false,
@@ -371,10 +371,10 @@ test('denial log panel renders entries with reason, route, and timestamp', async
   assert.match(html, /data-testid="denial-row-deny-char-002"/, 'Second denial row renders');
   assert.match(html, /data-testid="denial-row-deny-char-003"/, 'Third denial row renders');
 
-  // Denial reasons
-  assert.match(html, /suspended_account/, 'First denial reason renders');
-  assert.match(html, /rate_limited/, 'Second denial reason renders');
-  assert.match(html, /forbidden/, 'Third denial reason renders');
+  // Denial reasons (canonical DENIAL_* codes)
+  assert.match(html, /account_suspended/, 'First denial reason renders');
+  assert.match(html, /rate_limit_exceeded/, 'Second denial reason renders');
+  assert.match(html, /csrf_rejection/, 'Third denial reason renders');
 
   // Routes
   assert.match(html, /\/api\/bootstrap/, 'Route renders for first denial');
@@ -585,12 +585,19 @@ test('denial filter reason dropdown has exactly 5 entries matching current value
   // "All reasons" default option (React SSR may add selected="" attribute)
   assert.match(html, /<option value=""[^>]*>All reasons<\/option>/, 'Default "All reasons" option renders');
 
-  // The 5 denial reason values (pinning current codebase values)
-  assert.match(html, /<option value="suspended_account"/, 'suspended_account option renders');
-  assert.match(html, /<option value="rate_limited"/, 'rate_limited option renders');
-  assert.match(html, /<option value="forbidden"/, 'forbidden option renders');
-  assert.match(html, /<option value="invalid_session"/, 'invalid_session option renders');
-  assert.match(html, /<option value="demo_expired"/, 'demo_expired option renders');
+  // The 5 denial reason values — canonical DENIAL_* codes from worker/src/error-codes.js
+  assert.match(html, /<option value="account_suspended"/, 'account_suspended option renders');
+  assert.match(html, /<option value="payment_hold"/, 'payment_hold option renders');
+  assert.match(html, /<option value="session_invalidated"/, 'session_invalidated option renders');
+  assert.match(html, /<option value="csrf_rejection"/, 'csrf_rejection option renders');
+  assert.match(html, /<option value="rate_limit_exceeded"/, 'rate_limit_exceeded option renders');
+
+  // Operator-friendly display labels
+  assert.match(html, />Account Suspended<\/option>/, 'Account Suspended label renders');
+  assert.match(html, />Payment Hold<\/option>/, 'Payment Hold label renders');
+  assert.match(html, />Session Invalidated<\/option>/, 'Session Invalidated label renders');
+  assert.match(html, />CSRF \/ Same-Origin<\/option>/, 'CSRF / Same-Origin label renders');
+  assert.match(html, />Rate Limited<\/option>/, 'Rate Limited label renders');
 
   // Count the option elements inside the denial reason select to confirm
   // exactly 6 total (1 default "All reasons" + 5 reason values). We extract
@@ -719,7 +726,7 @@ test('ops role does not see account linkage in error drawer or denial rows', asy
 
   // Denial rows render
   assert.match(html, /data-testid="denial-row-deny-char-001"/, 'Denial row renders for ops');
-  assert.match(html, /suspended_account/, 'Denial reason renders for ops');
+  assert.match(html, /account_suspended/, 'Denial reason renders for ops');
 
   // Ops does NOT see account linkage in denial rows
   assert.ok(
