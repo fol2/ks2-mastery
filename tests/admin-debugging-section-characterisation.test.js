@@ -19,6 +19,10 @@
 //   7. Denial filter dropdown — has exactly 5 entries matching current values
 //   8. Empty model — graceful empty states, not crashes
 //   9. Null subsections — render without error
+//  10. Ops role — account linkage redaction
+//  11. Classroom summary degraded — hides per-learner stats
+//  12. DebugBundleResult rendering — populated bundle data (ADV-001)
+//  13. Error centre filter controls — structural pins (ADV-002)
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -781,4 +785,188 @@ test('classroom summary degraded hides per-learner stats but keeps learner list'
   // Selected diagnostics callout survives degradation
   assert.match(html, /Grammar diagnostics/, 'Grammar diagnostics callout survives degradation');
   assert.match(html, /Punctuation diagnostics/, 'Punctuation diagnostics callout survives degradation');
+});
+
+// =================================================================
+// 12. DebugBundleResult rendering — populated bundle data (ADV-001)
+// =================================================================
+
+test('debug bundle result renders populated sections, tables, and copy buttons', async () => {
+  const bundleModel = fullModel({
+    debugBundle: {
+      loading: false,
+      error: null,
+      data: {
+        canExportJson: true,
+        humanSummary: 'Account acct-bundle-001 — 1 error, 1 occurrence.',
+        bundle: {
+          generatedAt: Date.UTC(2026, 3, 27, 10, 0),
+          buildHash: 'deadbeef12345678',
+          accountSummary: {
+            accountId: 'acct-bundle-001',
+            email: 'debug-user@example.com',
+            displayName: 'Debug User',
+            platformRole: 'admin',
+            accountType: 'school',
+          },
+          linkedLearners: [
+            {
+              learnerName: 'Bundle Learner A',
+              learnerId: 'learner-bnd-a',
+              yearGroup: 'Y4',
+              membershipRole: 'Owner',
+            },
+          ],
+          recentErrors: [
+            {
+              id: 'err-bnd-001',
+              status: 'open',
+              errorKind: 'SyntaxError',
+              messageFirstLine: 'Unexpected token <',
+              occurrenceCount: 3,
+              routeName: '/api/render',
+            },
+            {
+              id: 'err-bnd-002',
+              status: 'investigating',
+              errorKind: 'RangeError',
+              messageFirstLine: 'Maximum call stack size exceeded',
+              occurrenceCount: 1,
+              routeName: '/api/deep-recurse',
+            },
+          ],
+          errorOccurrences: [
+            {
+              id: 'occ-bnd-001',
+              occurredAt: Date.UTC(2026, 3, 26, 14, 0),
+              routeName: '/api/render',
+              release: 'abc1234def5678',
+            },
+          ],
+          recentDenials: [],
+          recentMutations: [],
+          capacityState: [],
+        },
+      },
+      prefill: null,
+    },
+  });
+
+  const html = await renderFixture(buildFixture({ model: bundleModel }));
+
+  // --- Result container ---
+  assert.match(html, /data-testid="debug-bundle-result"/, 'DebugBundleResult container renders');
+
+  // --- Generated-at and build hash ---
+  assert.match(html, /Generated:/, 'Generated timestamp label renders');
+  assert.match(html, /deadbee/, 'Build hash renders (first 7 chars)');
+
+  // --- Collapsible section testids ---
+  assert.match(html, /data-testid="bundle-section-accountSummary"/, 'accountSummary section renders');
+  assert.match(html, /data-testid="bundle-section-linkedLearners"/, 'linkedLearners section renders');
+  assert.match(html, /data-testid="bundle-section-recentErrors"/, 'recentErrors section renders');
+  assert.match(html, /data-testid="bundle-section-errorOccurrences"/, 'errorOccurrences section renders');
+  assert.match(html, /data-testid="bundle-section-recentDenials"/, 'recentDenials section renders');
+  assert.match(html, /data-testid="bundle-section-recentMutations"/, 'recentMutations section renders');
+  assert.match(html, /data-testid="bundle-section-capacityState"/, 'capacityState section renders');
+
+  // --- Section labels ---
+  assert.match(html, /Account Summary/, 'Account Summary label renders');
+  assert.match(html, /Linked Learners/, 'Linked Learners label renders');
+  assert.match(html, /Recent Errors/, 'Recent Errors label renders');
+  assert.match(html, /Error Occurrences/, 'Error Occurrences label renders');
+  assert.match(html, /Recent Denials/, 'Recent Denials label renders');
+  assert.match(html, /Recent Mutations/, 'Recent Mutations label renders');
+  assert.match(html, /Capacity Metrics/, 'Capacity Metrics label renders');
+
+  // --- Empty sections show "(empty)" marker ---
+  // recentDenials, recentMutations, capacityState are empty arrays
+  assert.match(html, /Recent Denials.*?\(empty\)/s, 'Empty recentDenials shows (empty) marker');
+  assert.match(html, /Recent Mutations.*?\(empty\)/s, 'Empty recentMutations shows (empty) marker');
+  assert.match(html, /Capacity Metrics.*?\(empty\)/s, 'Empty capacityState shows (empty) marker');
+
+  // --- accountSummary <dl> fields ---
+  assert.match(html, /acct-bundle-001/, 'Account ID renders in accountSummary');
+  assert.match(html, /debug-user@example\.com/, 'Email renders in accountSummary');
+  assert.match(html, /Debug User/, 'Display name renders in accountSummary');
+
+  // --- linkedLearners table ---
+  assert.match(html, /Bundle Learner A/, 'Linked learner name renders in table');
+  assert.match(html, /learner-bnd-a/, 'Linked learner ID renders in table');
+  assert.match(html, /Y4/, 'Linked learner year group renders in table');
+
+  // --- recentErrors table ---
+  assert.match(html, /SyntaxError/, 'Error kind renders in recentErrors table');
+  assert.match(html, /Unexpected token/, 'Error message renders in recentErrors table');
+  assert.match(html, /RangeError/, 'Second error kind renders in recentErrors table');
+  assert.match(html, /\/api\/render/, 'Route renders in recentErrors table');
+  assert.match(html, /\/api\/deep-recurse/, 'Second route renders in recentErrors table');
+
+  // --- errorOccurrences table ---
+  assert.match(html, /\/api\/render/, 'Route renders in errorOccurrences table');
+
+  // --- Copy JSON button (canExportJson is true) ---
+  assert.match(html, /data-testid="bundle-copy-json-btn"/, 'Copy JSON button renders when canExportJson is true');
+  assert.match(html, /Copy JSON/, 'Copy JSON button label renders');
+
+  // --- Copy Summary button ---
+  assert.match(html, /data-testid="bundle-copy-summary-btn"/, 'Copy Summary button renders');
+  assert.match(html, /Copy Summary/, 'Copy Summary button label renders');
+
+  // --- Empty state should NOT render when bundle data is present ---
+  assert.ok(
+    !html.includes('data-testid="debug-bundle-empty-state"'),
+    'Empty state does not render when bundle data is present',
+  );
+});
+
+// =================================================================
+// 13. Error centre filter controls — structural pins (ADV-002)
+// =================================================================
+
+test('error centre filter controls render with expected structure and testids', async () => {
+  const html = await renderFixture(buildFixture());
+
+  // --- Filter container ---
+  assert.match(html, /data-testid="error-centre-filters"/, 'error-centre-filters container renders');
+
+  // --- Apply and Reset buttons ---
+  assert.match(html, /data-testid="error-centre-filter-apply"/, 'Apply filters button renders');
+  assert.match(html, /Apply filters/, 'Apply filters button label renders');
+  assert.match(html, /data-testid="error-centre-filter-reset"/, 'Clear filters button renders');
+  assert.match(html, /Clear filters/, 'Clear filters button label renders');
+
+  // --- Release filter input and hint ---
+  assert.match(html, /data-testid="error-centre-filter-release"/, 'Release filter input renders');
+  assert.match(html, /data-testid="error-centre-filter-release-hint"/, 'Release filter hint renders');
+
+  // --- Route filter input by name ---
+  assert.match(html, /name="errorFilterRoute"/, 'Route filter input name attribute present');
+
+  // --- Kind filter input by name ---
+  assert.match(html, /name="errorFilterKind"/, 'Kind filter input name attribute present');
+
+  // --- Last seen date range filters by name ---
+  assert.match(html, /name="errorFilterLastSeenAfter"/, 'Last seen after filter input name present');
+  assert.match(html, /name="errorFilterLastSeenBefore"/, 'Last seen before filter input name present');
+
+  // --- Release filter input by name ---
+  assert.match(html, /name="errorFilterRelease"/, 'Release filter input name attribute present');
+
+  // --- Reopened checkbox by name ---
+  assert.match(html, /name="errorFilterReopened"/, 'Reopened filter checkbox name present');
+
+  // --- Filter labels ---
+  assert.match(html, /Route contains/, 'Route filter label renders');
+  assert.match(html, /Kind/, 'Kind filter label renders');
+  assert.match(html, /Last seen after/, 'Last seen after filter label renders');
+  assert.match(html, /Last seen before/, 'Last seen before filter label renders');
+  assert.match(html, /New in release \(SHA\)/, 'Release filter label renders');
+  assert.match(html, /Reopened after resolved/, 'Reopened filter label renders');
+
+  // --- Filters-active chip should NOT render with default (unfiltered) model ---
+  assert.ok(
+    !html.includes('data-testid="error-centre-filters-active-chip"'),
+    'Filters-active chip does not render when no filters are applied',
+  );
 });
