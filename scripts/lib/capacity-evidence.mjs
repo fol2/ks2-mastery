@@ -163,19 +163,27 @@ export function evaluateThresholds(summary = {}, thresholds = {}, { dryRun = fal
     const hasEndpoint = bootstrapKey != null;
     const qc = bootstrapEntry.queryCount;
     const rows = bootstrapEntry.d1RowsRead;
-    const queryCountPresent = qc !== undefined && qc !== null;
-    const d1RowsReadPresent = rows !== undefined && rows !== null;
-    const allPresent = hasEndpoint && queryCountPresent && d1RowsReadPresent;
+    const queryCountValid = typeof qc === 'number' && Number.isFinite(qc) && qc >= 0;
+    const d1RowsReadValid = typeof rows === 'number' && Number.isFinite(rows) && rows >= 0;
+    const allPresent = hasEndpoint && queryCountValid && d1RowsReadValid;
 
-    evaluated.requireBootstrapCapacity = {
-      configured: true,
-      observed: allPresent
-        ? { queryCount: qc, d1RowsRead: rows }
-        : hasEndpoint
-          ? { queryCount: qc ?? null, d1RowsRead: rows ?? null }
-          : 'no-bootstrap-endpoint',
-      passed: allPresent,
-    };
+    if (!hasEndpoint && dryRun) {
+      evaluated.requireBootstrapCapacity = {
+        configured: true,
+        observed: 'no-bootstrap-endpoint (dry-run)',
+        passed: true,
+      };
+    } else {
+      evaluated.requireBootstrapCapacity = {
+        configured: true,
+        observed: allPresent
+          ? { queryCount: qc, d1RowsRead: rows }
+          : hasEndpoint
+            ? { queryCount: qc ?? null, d1RowsRead: rows ?? null }
+            : 'no-bootstrap-endpoint',
+        passed: allPresent,
+      };
+    }
   }
 
   for (const [name, value] of Object.entries(evaluated)) {

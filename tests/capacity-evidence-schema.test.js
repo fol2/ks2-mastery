@@ -176,6 +176,41 @@ test('bootstrap endpoint with null queryCount and null d1RowsRead fails', () => 
   assert.ok(result.failures.includes('requireBootstrapCapacity'));
 });
 
+test('NaN queryCount is rejected by hardened type check (ADV-U1-002)', () => {
+  const summary = {
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 300, maxResponseBytes: 80_000,
+        queryCount: NaN, d1RowsRead: 42,
+      },
+    },
+    signals: {},
+  };
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+});
+
+test('negative d1RowsRead is rejected by hardened type check (ADV-U1-002)', () => {
+  const summary = {
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 300, maxResponseBytes: 80_000,
+        queryCount: 5, d1RowsRead: -1,
+      },
+    },
+    signals: {},
+  };
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+});
+
+test('dryRun with empty endpoints passes requireBootstrapCapacity (ADV-U1-003)', () => {
+  const summary = { endpoints: {}, signals: {} };
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true }, { dryRun: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, true);
+  assert.deepEqual(result.failures, []);
+});
+
 test('requireBootstrapCapacity gate does not interfere with other thresholds', () => {
   const summary = {
     endpoints: {

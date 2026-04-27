@@ -733,11 +733,19 @@ export function summariseCapacityResults(measurements = [], plan = {}) {
       wallMs: [],
       responseBytes: [],
       maxResponseBytes: 0,
+      queryCount: [],
+      d1RowsRead: [],
     };
     metrics.count += 1;
     metrics.wallMs.push(Number(entry.wallMs) || 0);
     metrics.responseBytes.push(Number(entry.responseBytes) || 0);
     metrics.maxResponseBytes = Math.max(metrics.maxResponseBytes, Number(entry.responseBytes) || 0);
+    if (entry.capacity && typeof entry.capacity === 'object') {
+      const qc = entry.capacity.queryCount;
+      const rows = entry.capacity.d1RowsRead;
+      if (typeof qc === 'number' && Number.isFinite(qc)) metrics.queryCount.push(qc);
+      if (typeof rows === 'number' && Number.isFinite(rows)) metrics.d1RowsRead.push(rows);
+    }
     endpointMetrics[endpointKey] = metrics;
 
     const signal = signalFor(entry);
@@ -754,12 +762,21 @@ export function summariseCapacityResults(measurements = [], plan = {}) {
     }
   }
 
-  const endpoints = Object.fromEntries(Object.entries(endpointMetrics).map(([key, metrics]) => [key, {
-    count: metrics.count,
-    p50WallMs: percentile(metrics.wallMs, 50),
-    p95WallMs: percentile(metrics.wallMs, 95),
-    maxResponseBytes: metrics.maxResponseBytes,
-  }]));
+  const endpoints = Object.fromEntries(Object.entries(endpointMetrics).map(([key, metrics]) => {
+    const entry = {
+      count: metrics.count,
+      p50WallMs: percentile(metrics.wallMs, 50),
+      p95WallMs: percentile(metrics.wallMs, 95),
+      maxResponseBytes: metrics.maxResponseBytes,
+    };
+    if (metrics.queryCount.length > 0) {
+      entry.queryCount = Math.max(...metrics.queryCount);
+    }
+    if (metrics.d1RowsRead.length > 0) {
+      entry.d1RowsRead = Math.max(...metrics.d1RowsRead);
+    }
+    return [key, entry];
+  }));
 
   return {
     ok: failures.length === 0,

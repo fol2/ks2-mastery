@@ -15,6 +15,7 @@ import {
   persistEvidenceFile,
   validateThresholdConfigKeys,
 } from '../scripts/lib/capacity-evidence.mjs';
+import { summariseCapacityResults } from '../scripts/classroom-load-test.mjs';
 
 function makeSummary(overrides = {}) {
   return {
@@ -480,4 +481,174 @@ test('requireBootstrapCapacity: bootstrap endpoint present but both fields null 
   const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
   assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
   assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+// ---------------------------------------------------------------------------
+// ADV-U1-002: NaN, false, empty string, negative numbers must fail the gate
+// ---------------------------------------------------------------------------
+
+test('requireBootstrapCapacity: NaN queryCount fails gate (ADV-U1-002)', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 320, maxResponseBytes: 80_000,
+        queryCount: NaN, d1RowsRead: 42,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+test('requireBootstrapCapacity: NaN d1RowsRead fails gate (ADV-U1-002)', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 320, maxResponseBytes: 80_000,
+        queryCount: 5, d1RowsRead: NaN,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+test('requireBootstrapCapacity: false queryCount fails gate (ADV-U1-002)', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 320, maxResponseBytes: 80_000,
+        queryCount: false, d1RowsRead: 42,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+test('requireBootstrapCapacity: empty string queryCount fails gate (ADV-U1-002)', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 320, maxResponseBytes: 80_000,
+        queryCount: '', d1RowsRead: 42,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+test('requireBootstrapCapacity: negative queryCount fails gate (ADV-U1-002)', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 320, maxResponseBytes: 80_000,
+        queryCount: -1, d1RowsRead: 42,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+test('requireBootstrapCapacity: negative d1RowsRead fails gate (ADV-U1-002)', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 320, maxResponseBytes: 80_000,
+        queryCount: 5, d1RowsRead: -1,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+// ---------------------------------------------------------------------------
+// ADV-U1-003: dryRun exempts requireBootstrapCapacity when no endpoint data
+// ---------------------------------------------------------------------------
+
+test('requireBootstrapCapacity: dryRun with no bootstrap endpoint passes gate (ADV-U1-003)', () => {
+  const summary = { ok: true, totalRequests: 0, endpoints: {}, signals: {} };
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true }, { dryRun: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, true);
+  assert.deepEqual(result.failures, []);
+});
+
+test('requireBootstrapCapacity: dryRun with invalid data still fails gate (data present but wrong)', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10, p95WallMs: 320, maxResponseBytes: 80_000,
+        queryCount: NaN, d1RowsRead: 42,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true }, { dryRun: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+// ---------------------------------------------------------------------------
+// ADV-U1-001: summariseCapacityResults aggregates capacity metrics
+// ---------------------------------------------------------------------------
+
+test('summariseCapacityResults aggregates queryCount and d1RowsRead from measurements (ADV-U1-001)', () => {
+  const measurements = [
+    {
+      method: 'GET', endpoint: '/api/bootstrap', status: 200, ok: true,
+      wallMs: 100, responseBytes: 5000,
+      capacity: { queryCount: 3, d1RowsRead: 20 },
+    },
+    {
+      method: 'GET', endpoint: '/api/bootstrap', status: 200, ok: true,
+      wallMs: 150, responseBytes: 6000,
+      capacity: { queryCount: 5, d1RowsRead: 42 },
+    },
+    {
+      method: 'GET', endpoint: '/api/bootstrap', status: 200, ok: true,
+      wallMs: 120, responseBytes: 5500,
+      capacity: { queryCount: 4, d1RowsRead: 30 },
+    },
+  ];
+  const summary = summariseCapacityResults(measurements, { expectedRequests: 3 });
+  const bootstrap = summary.endpoints['GET /api/bootstrap'];
+  assert.equal(bootstrap.queryCount, 5, 'queryCount is max across measurements');
+  assert.equal(bootstrap.d1RowsRead, 42, 'd1RowsRead is max across measurements');
+});
+
+test('summariseCapacityResults omits queryCount/d1RowsRead when no measurements have capacity (ADV-U1-001)', () => {
+  const measurements = [
+    {
+      method: 'GET', endpoint: '/api/bootstrap', status: 200, ok: true,
+      wallMs: 100, responseBytes: 5000,
+      capacity: null,
+    },
+  ];
+  const summary = summariseCapacityResults(measurements, { expectedRequests: 1 });
+  const bootstrap = summary.endpoints['GET /api/bootstrap'];
+  assert.equal(bootstrap.queryCount, undefined, 'queryCount absent when no capacity data');
+  assert.equal(bootstrap.d1RowsRead, undefined, 'd1RowsRead absent when no capacity data');
+});
+
+test('end-to-end: summarise then evaluate — pipeline populates capacity for gate (ADV-U1-001)', () => {
+  const measurements = [
+    {
+      method: 'GET', endpoint: '/api/bootstrap', status: 200, ok: true,
+      wallMs: 100, responseBytes: 5000,
+      capacity: { queryCount: 7, d1RowsRead: 55 },
+    },
+  ];
+  const summary = summariseCapacityResults(measurements, { expectedRequests: 1 });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, true);
+  assert.deepEqual(result.thresholds.requireBootstrapCapacity.observed, { queryCount: 7, d1RowsRead: 55 });
+  assert.deepEqual(result.failures, []);
 });
