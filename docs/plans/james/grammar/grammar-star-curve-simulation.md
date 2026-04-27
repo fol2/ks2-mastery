@@ -96,7 +96,7 @@ With 18 concepts (13 Grammar + 5 Punctuation), Concordium requires `retainedAfte
 
 ### 1. Support-Only Ceiling = 25 Stars
 
-Without independent correct answers, the maximum reachable weight is `variedPractice (10%) + secureConfidence (15%) = 25%`. This caps Stars at 25 for any monster — well below Hatch (15) but never approaching Mega (100). **R9 (supported answers cannot unlock independent-win tiers) is structurally sound.**
+Without independent correct answers, the maximum reachable weight is `variedPractice (10%) + secureConfidence (15%) = 25%`. This caps Stars at 25 per monster — above Hatch (15) but well below Mega (100). A support-only learner can see their monsters hatch but cannot reach Growing (35) or beyond. **R9 (supported answers cannot unlock independent-win tiers) is structurally sound.**
 
 ### 2. Monotonicity Verified
 
@@ -114,6 +114,17 @@ At 5 questions/day, most seeds never reach Mega within 150 days. This is because
 ### 4. Couronnail is the "First Mega" Monster
 
 With only 3 concepts, Couronnail consistently reaches Mega first. This replaces the old problem (Couronnail jumped to Mega after 3 concept-secured events) with a graduated curve that still naturally favours the smallest monster.
+
+---
+
+## Model Limitations
+
+The simulation is a simplified model of the production system. Known divergences:
+
+1. **secureConfidence latch:** The simulation latches secureConfidence permanently via `wasSecured`. Production re-evaluates from live node state on every call. This makes the simulation optimistic for the struggling profile.
+2. **retainedAfterSecure temporal model:** The simulation requires a post-secure-day independent correct. Production uses `independentCorrects.length >= 2` with no timestamp. This makes the simulation slightly pessimistic, partially offsetting #1.
+3. **Monotonicity:** The simulation produces monotonic Stars by construction (latched tiers). Production Stars CAN decrease from live derivation — the `starHighWater` latch in U4 is the production monotonicity guarantee.
+4. **Early review credit:** The simulation grants full interval credit for reviews before due date. A real SM-2 system may penalise early reviews.
 
 ---
 

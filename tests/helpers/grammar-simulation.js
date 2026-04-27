@@ -703,7 +703,7 @@ function applySimAttempt(node, correct, independent, rng, currentDay) {
     // SM-2-like interval advancement:
     //   0 -> 1 -> 2 -> 4 -> 7 -> 12 -> 21 -> 37 -> 64 -> 90
     // This models the real engine's graduated spacing. Reaching
-    // intervalDays >= 7 takes at least 5 consecutive correct reviews
+    // intervalDays >= 7 takes at least 4 consecutive correct reviews
     // across different days.
     if (node.intervalDays === 0) {
       node.intervalDays = 1;

@@ -18,6 +18,10 @@ import {
   CANONICAL_SEEDS,
 } from './helpers/grammar-simulation.js';
 
+import {
+  GRAMMAR_CONCEPT_STAR_WEIGHTS,
+} from '../shared/grammar/grammar-stars.js';
+
 // ---------------------------------------------------------------------------
 // Calibrated target timelines
 // ---------------------------------------------------------------------------
@@ -213,20 +217,44 @@ test('Concordium Egg arrives on or after first direct Egg', () => {
   }
 });
 
-test('Grand Concordium is the hardest milestone — not reached within 42 days', () => {
+test('Concordium Stars at day 150 show genuine progress but lag behind direct monsters', () => {
   // Grand Concordium (100 Stars on Concordium = 18 concepts fully evidenced)
-  // should be the longest milestone. Verify it doesn't happen too quickly.
+  // is never reached within 150 days across any seed. Rather than guard with
+  // an `if` that never fires, assert on the median Concordium Stars at day 150:
+  // they should show genuine progress (>= 60) but remain below Mega (< 100).
   const { results } = runProfile('ideal', 10);
-  for (const r of results) {
-    if (r.daysToGrandConcordium !== null) {
-      assert.ok(
-        r.daysToGrandConcordium >= 42,
-        `Seed ${r.seed}: Grand Concordium in ${r.daysToGrandConcordium} days is too fast`,
-      );
-    }
-  }
-  // Also verify the median Stars at day 150 — Concordium should lag behind
-  // direct monsters.
+
+  // Extract Concordium Stars at day 150 from the last dayLog entry per seed.
+  const concordiumStarsAtEnd = results.map((r) => {
+    const lastDay = r.dayLog[r.dayLog.length - 1];
+    return lastDay?.stars?.concordium ?? 0;
+  });
+
+  // Extract the fastest direct monster Stars at day 150 per seed.
+  const fastestDirectStarsAtEnd = results.map((r) => {
+    const lastDay = r.dayLog[r.dayLog.length - 1];
+    if (!lastDay?.stars) return 0;
+    return Math.max(
+      lastDay.stars.bracehart || 0,
+      lastDay.stars.chronalyx || 0,
+      lastDay.stars.couronnail || 0,
+    );
+  });
+
+  const medianConcordium = medianOf(concordiumStarsAtEnd);
+  const medianFastestDirect = medianOf(fastestDirectStarsAtEnd);
+
+  // Concordium should show genuine progress (60-99) but stay below Mega.
+  assert.ok(
+    medianConcordium >= 60 && medianConcordium < 100,
+    `Median Concordium Stars at day 150 = ${medianConcordium}, expected 60-99`,
+  );
+
+  // Concordium should lag behind the fastest direct monster.
+  assert.ok(
+    medianConcordium < medianFastestDirect,
+    `Concordium (${medianConcordium}) should lag behind fastest direct (${medianFastestDirect})`,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -241,11 +269,12 @@ test('learner who always uses support never reaches Mega (structural)', () => {
   //   variedPractice = true (template diversity, no independence requirement)
   //   secureConfidence = true (strength can reach 0.82 from supported corrects)
   //
-  // Max weight without independent tiers: 0.10 + 0.15 = 0.25
-  // Max Stars: floor(100 * 0.25) = 25, well below Mega (100).
+  // Max weight without independent tiers = variedPractice + secureConfidence.
+  // Max Stars: floor(100 * that sum) = 25, well below Mega (100).
 
-  const maxWeightWithoutIndependent = 0.10 + 0.15;
-  const maxStarsWithoutIndependent = Math.floor(100 * maxWeightWithoutIndependent + 1e-9);
+  const weights = GRAMMAR_CONCEPT_STAR_WEIGHTS;
+  const supportCeiling = (weights.variedPractice + weights.secureConfidence) * 100;
+  const maxStarsWithoutIndependent = Math.floor(supportCeiling);
   assert.ok(
     maxStarsWithoutIndependent < 100,
     `Support-only max Stars = ${maxStarsWithoutIndependent}, which would reach Mega!`,
