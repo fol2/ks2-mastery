@@ -15,14 +15,22 @@ import {
   grammarChildConfidenceLabel as grammarChildConfidenceLabelShared,
   isGrammarConfidenceLabel,
 } from '../../../../shared/grammar/confidence.js';
+import {
+  grammarStarStageName,
+  grammarStarDisplayStage,
+  GRAMMAR_MONSTER_STAR_MAX,
+} from '../../../../shared/grammar/grammar-stars.js';
 import { GRAMMAR_CLIENT_CONCEPTS } from '../metadata.js';
 import {
   GRAMMAR_AGGREGATE_CONCEPTS,
   GRAMMAR_CONCEPT_TO_MONSTER,
   GRAMMAR_REWARD_RELEASE_ID,
   grammarConceptIdFromMasteryKey,
+  progressForGrammarMonster,
+  GRAMMAR_MONSTER_CONCEPTS,
 } from '../../../platform/game/mastery/grammar.js';
 import { GRAMMAR_GRAND_MONSTER_ID } from '../../../platform/game/mastery/shared.js';
+import { MONSTERS } from '../../../platform/game/monsters.js';
 
 // --- Frozen option lists ----------------------------------------------------
 
@@ -48,10 +56,10 @@ export function isGrammarFocusAllowedMode(mode) {
   return GRAMMAR_FOCUS_ALLOWED_MODES.has(mode);
 }
 
-// The dashboard's four primary mode cards. `Smart Practice` sits first so it
-// is the obvious default action (R2). `Grammar Bank` is the fourth card and
-// routes into U2's new bank scene. `satsset` maps to the existing mode id so
-// the module dispatcher does not need renaming.
+// U8 Phase 5: Smart Practice is the sole primary CTA. The dashboard renders
+// this as a prominent button above the fold with `data-featured="true"`.
+// Grammar Bank, Mini Test, and Fix Trouble Spots are demoted to secondary
+// links below the monster strip.
 export const GRAMMAR_PRIMARY_MODE_CARDS = Object.freeze([
   Object.freeze({
     id: 'smart',
@@ -59,39 +67,45 @@ export const GRAMMAR_PRIMARY_MODE_CARDS = Object.freeze([
     desc: 'Due · weak · one fresh concept.',
     featured: true,
   }),
+]);
+
+// U8 Phase 5: Three modes demoted from primary cards to secondary links.
+// Order: Grammar Bank · Mini Test · Fix Trouble Spots. The JSX renders these
+// as text links below the monster strip — still accessible, but no longer
+// primary decision-weight buttons.
+export const GRAMMAR_SECONDARY_MODE_LINKS = Object.freeze([
   Object.freeze({
-    id: 'trouble',
-    title: 'Fix Trouble Spots',
-    desc: 'Only the concepts you usually miss.',
-    featured: false,
+    id: 'bank',
+    title: 'Grammar Bank',
+    desc: 'Browse every concept with child-friendly statuses.',
+    action: 'grammar-open-concept-bank',
   }),
   Object.freeze({
     id: 'satsset',
     title: 'Mini Test',
     desc: 'Short timed set. Marks at the end.',
-    featured: false,
+    action: 'grammar-set-mode',
   }),
   Object.freeze({
-    id: 'bank',
-    title: 'Grammar Bank',
-    desc: 'Browse every concept with child-friendly statuses.',
-    featured: false,
+    id: 'trouble',
+    title: 'Fix Trouble Spots',
+    desc: 'Only the concepts you usually miss.',
+    action: 'grammar-set-mode',
   }),
 ]);
 
 // Secondary modes disclosed under the dashboard's "More practice" details
-// block. Order follows the plan: Learn → Sentence Surgery → Sentence Builder
-// → Worked Examples → Faded Guidance. U5 Phase 4: Surgery and Builder carry
-// a `label: 'Mixed practice'` so the dashboard surfaces the child-facing
-// truth that these modes do not honour a focused concept id. The label is
-// ~12 chars and does not change the mode's behaviour — it is rendered by
-// `GrammarSetupScene.jsx` under the mode title.
+// block. U8 Phase 5: Writing Try moves here from the primary area, joining
+// Learn → Sentence Surgery → Sentence Builder → Worked Examples → Faded
+// Guidance → Writing Try. Surgery and Builder carry a `label: 'Mixed
+// practice'` per Phase 4 U5 decision.
 export const GRAMMAR_MORE_PRACTICE_MODES = Object.freeze([
   Object.freeze({ id: 'learn', title: 'Learn a concept', desc: 'Focused retrieval on one concept at a time.' }),
   Object.freeze({ id: 'surgery', title: 'Sentence Surgery', desc: 'Fix and rewrite sentence-level errors.', label: 'Mixed practice' }),
   Object.freeze({ id: 'builder', title: 'Sentence Builder', desc: 'Build sentences from structured prompts.', label: 'Mixed practice' }),
   Object.freeze({ id: 'worked', title: 'Worked Examples', desc: 'See a modelled answer before your turn.' }),
   Object.freeze({ id: 'faded', title: 'Faded Guidance', desc: 'Less help each round. You do the reasoning.' }),
+  Object.freeze({ id: 'transfer', title: 'Writing Try', desc: 'Non-scored free writing with grammar targets.' }),
 ]);
 
 // Grammar Bank status filter ids. `all` is the default; `due` surfaces
@@ -530,6 +544,7 @@ export function buildGrammarDashboardModel(grammar, _learner, rewardState) {
 
   return {
     modeCards: GRAMMAR_PRIMARY_MODE_CARDS,
+    secondaryLinks: GRAMMAR_SECONDARY_MODE_LINKS,
     todayCards: Object.freeze(todayCards),
     isEmpty,
     concordiumProgress: concordiumProgressFromReward(rewardState),
@@ -720,6 +735,68 @@ function masteredSummaryFromReward(rewardState) {
  * (4 active only). Reserved monsters never appear in the monster progress
  * entry, matching R15. Safe on empty summary and empty reward state.
  */
+// --- Monster strip child-facing copy ------------------------------------------
+
+export const GRAMMAR_MONSTER_STRIP_CHILD_COPY = Object.freeze(
+  'Get 1 Star to find the Egg. Reach 100 Stars for Mega.',
+);
+
+// --- Monster strip model builder ---------------------------------------------
+
+/**
+ * Builds the compact monster progress strip for the Grammar dashboard.
+ * Returns an array of 4 entries (one per active Grammar monster) in the
+ * canonical order: Bracehart, Chronalyx, Couronnail, Concordium.
+ *
+ * Each entry:
+ *   {
+ *     monsterId:   string,
+ *     name:        string,
+ *     stageName:   string,   // child-facing label from grammarStarStageName
+ *     stars:       number,   // 0–100
+ *     starMax:     100,
+ *     stageIndex:  number,   // display stage 0–5
+ *     accentColor: string,   // CSS hex colour from MONSTERS registry
+ *   }
+ *
+ * @param {object} rewardState — learner's Grammar reward state (monster entries)
+ * @param {object} masteryConceptNodes — map of conceptId → mastery node
+ * @param {Array}  recentAttempts — engine recentAttempts array
+ */
+export function buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, recentAttempts) {
+  const safeReward = rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState)
+    ? rewardState : {};
+  const safeConcepts = masteryConceptNodes && typeof masteryConceptNodes === 'object'
+    && !Array.isArray(masteryConceptNodes) ? masteryConceptNodes : null;
+  const safeAttempts = Array.isArray(recentAttempts) ? recentAttempts : [];
+
+  return ACTIVE_GRAMMAR_MONSTER_IDS.map((monsterId) => {
+    const conceptTotal = ACTIVE_GRAMMAR_MONSTER_CONCEPT_COUNTS[monsterId] || 1;
+    const progress = progressForGrammarMonster(safeReward, monsterId, {
+      conceptTotal,
+      conceptNodes: safeConcepts,
+      recentAttempts: safeAttempts,
+    });
+
+    const stars = typeof progress.stars === 'number' && Number.isFinite(progress.stars)
+      ? progress.stars : 0;
+    const monster = MONSTERS[monsterId];
+    const accentColor = monster?.accent || '#888888';
+
+    return Object.freeze({
+      monsterId,
+      name: ACTIVE_GRAMMAR_MONSTER_DISPLAY_NAMES[monsterId] || monsterId,
+      stageName: grammarStarStageName(stars),
+      stars,
+      starMax: GRAMMAR_MONSTER_STAR_MAX,
+      stageIndex: grammarStarDisplayStage(stars),
+      accentColor,
+    });
+  });
+}
+
+// --- Summary cards builder --------------------------------------------------
+
 export function grammarSummaryCards(summary, rewardState) {
   const safeSummary = summary && typeof summary === 'object' && !Array.isArray(summary) ? summary : {};
   const answered = safeNumber(safeSummary.answered, 0);
