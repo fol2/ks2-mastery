@@ -132,10 +132,24 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
   const node = isPlainObject(conceptNode) ? conceptNode : null;
   const attempts = Array.isArray(recentAttempts) ? recentAttempts : [];
 
+  // ---------------------------------------------------------------------------
+  // Normaliser: production attempts use { conceptIds: [...], result: { correct } }
+  // while legacy test fixtures use { conceptId, correct }. Accept both shapes.
+  // Mirrors the pattern in src/subjects/grammar/read-model.js:106.
+  // ---------------------------------------------------------------------------
+  function matchesConcept(a) {
+    if (!isPlainObject(a)) return false;
+    if (Array.isArray(a.conceptIds)) return a.conceptIds.includes(conceptId);
+    return a.conceptId === conceptId;
+  }
+
+  function readCorrect(a) {
+    if (isPlainObject(a.result)) return a.result.correct;
+    return a.correct;
+  }
+
   // Filter to matching concept entries.
-  const conceptAttempts = attempts.filter(
-    (a) => isPlainObject(a) && a.conceptId === conceptId,
-  );
+  const conceptAttempts = attempts.filter(matchesConcept);
 
   // --- firstIndependentWin: at least 1 independent correct ---
   // ADV-001: Use firstAttemptIndependent as the sole gate. A nudge attempt
@@ -146,7 +160,7 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
   // it is true only when the child answered correctly on the first attempt
   // with no support of any kind.
   const independentCorrects = conceptAttempts.filter(
-    (a) => a.correct === true && a.firstAttemptIndependent === true,
+    (a) => readCorrect(a) === true && a.firstAttemptIndependent === true,
   );
   if (independentCorrects.length >= 1) {
     result.firstIndependentWin = true;
