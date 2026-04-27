@@ -328,3 +328,59 @@ export function grammarStarDisplayStage(stars) {
 export function grammarStarStageName(stars) {
   return DISPLAY_STAGE_NAMES[grammarStarDisplayStage(stars)] || 'Not found yet';
 }
+
+// ---------------------------------------------------------------------------
+// Legacy migration — Star floor from pre-P5 ratio-based stage
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps a pre-P5 legacy stage (0-4 from the old ratio-based grammarStageFor)
+ * to a Star floor so existing learners never see a stage regression after
+ * the P5 Star curve ships.
+ *
+ * Legacy stage mapping:
+ *   stage 0 → 0 Stars floor (not found)
+ *   stage 1 → 1 Star floor  (egg found preserved)
+ *   stage 2 → 15 Stars floor (hatched preserved)
+ *   stage 3 → 35 Stars floor (growing preserved)
+ *   stage 4 → 100 Stars floor (mega preserved)
+ */
+const LEGACY_STAGE_STAR_FLOOR = Object.freeze([0, 1, 15, 35, 100]);
+
+export function legacyStarFloorFromStage(legacyStage) {
+  const s = Math.max(0, Math.min(4, Math.floor(safeNum(legacyStage))));
+  return LEGACY_STAGE_STAR_FLOOR[s] || 0;
+}
+
+// ---------------------------------------------------------------------------
+// starHighWater latch — monotonicity guarantee
+// ---------------------------------------------------------------------------
+
+/**
+ * Applies the `starHighWater` latch to produce the final display Stars.
+ *
+ * The latch guarantees Stars are monotonically non-decreasing:
+ *   displayStars = max(computedStars, starHighWater, legacyFloor)
+ *
+ * @param {object} params
+ * @param {number} params.computedStars — Stars derived from concept evidence
+ *   (0 when no concept nodes are available on the reward-layer read path).
+ * @param {number} params.starHighWater — persisted high-water mark from the
+ *   reward state entry. Absent or corrupted values treated as 0.
+ * @param {number} params.legacyStage — the old ratio-based stage (0-4) for
+ *   pre-P5 learners who have no starHighWater field. Pass 0 for post-P5.
+ * @returns {{ displayStars: number, updatedHighWater: number }}
+ */
+export function applyStarHighWaterLatch({ computedStars = 0, starHighWater = 0, legacyStage = 0 } = {}) {
+  const computed = Math.max(0, Math.floor(safeNum(computedStars)));
+  const hw = Math.max(0, Math.floor(safeNum(starHighWater)));
+  const floor = legacyStarFloorFromStage(legacyStage);
+
+  const displayStars = Math.min(
+    GRAMMAR_MONSTER_STAR_MAX,
+    Math.max(computed, hw, floor),
+  );
+  const updatedHighWater = Math.min(GRAMMAR_MONSTER_STAR_MAX, Math.max(hw, displayStars));
+
+  return { displayStars, updatedHighWater };
+}

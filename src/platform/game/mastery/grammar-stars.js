@@ -12,4 +12,6 @@ export {
   grammarStarStageFor,
   grammarStarDisplayStage,
   grammarStarStageName,
+  legacyStarFloorFromStage,
+  applyStarHighWaterLatch,
 } from '../../../../shared/grammar/grammar-stars.js';
