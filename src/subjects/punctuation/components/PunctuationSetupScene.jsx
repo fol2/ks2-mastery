@@ -255,8 +255,13 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   // Progress row values
   const dueCount = Number(stats?.due) || 0;
   const weakCount = Number(stats?.weak) || 0;
+  // U3 review follow-up (HIGH 1): use displayStars (monotonic) for the
+  // aggregate, matching MonsterStarMeter which already reads displayStars.
+  // Prior code used raw totalStars, causing a mismatch between the
+  // progress-row aggregate and the individual meter values after evidence
+  // lapse.
   const totalStarsEarned = dashboard.activeMonsters.reduce(
-    (sum, m) => sum + (m.totalStars || 0), 0,
+    (sum, m) => sum + (m.displayStars ?? m.totalStars ?? 0), 0,
   );
 
   const learnerName = learner && typeof learner === 'object' && !Array.isArray(learner)

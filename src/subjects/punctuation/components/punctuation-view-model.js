@@ -1147,6 +1147,31 @@ function safeNumber(value, fallback = 0) {
   return Number.isFinite(num) && num >= 0 ? Math.floor(num) : fallback;
 }
 
+// U3 review follow-up: shared monotonic merge helper. Combines live Star
+// projection values (from starView) with persisted codex high-water marks
+// (maxStageEver / starHighWater from rewardState) so every scene displays
+// the max of (live, persisted) for both stage and Stars. This guarantees a
+// monster never appears to de-evolve after evidence lapse.
+//
+// Parameters:
+//   liveStars      — current Star total from the read-model (starView)
+//   liveStage      — current starDerivedStage from the read-model
+//   codexEntry     — the rewardState entry for this monster (carries
+//                    maxStageEver + starHighWater)
+//
+// Returns: { displayStars, displayStage } — the monotonic-max values
+//          safe for child-facing rendering.
+export function mergeMonotonicDisplay(liveStars, liveStage, codexEntry) {
+  const stars = safeNumber(liveStars, 0);
+  const stage = safeNumber(liveStage, 0);
+  const maxStageEver = safeNumber(codexEntry?.maxStageEver, 0);
+  const starHighWater = safeNumber(codexEntry?.starHighWater, 0);
+  return {
+    displayStars: Math.max(stars, starHighWater),
+    displayStage: Math.max(stage, maxStageEver),
+  };
+}
+
 function activeMonsterProgressFromReward(rewardState, starView) {
   const safeReward = rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState)
     ? rewardState
@@ -1178,15 +1203,12 @@ function activeMonsterProgressFromReward(rewardState, starView) {
       : 0;
     const starDerivedStage = starEntry ? safeNumber(starEntry.starDerivedStage, 0) : 0;
 
-    // U3 (Phase 6): monotonic display values. The codex (rewardState)
-    // persists maxStageEver and starHighWater per monster — these survive
-    // evidence lapse so the child never sees a monster de-evolve. The
-    // read-model computes live Star values; the view-model merges the
-    // codex high-water marks here for child-facing display.
-    const maxStageEver = safeNumber(entry?.maxStageEver, 0);
-    const starHighWater = safeNumber(entry?.starHighWater, 0);
-    const displayStage = Math.max(starDerivedStage, maxStageEver);
-    const displayStars = Math.max(totalStars, starHighWater);
+    // U3 (Phase 6): monotonic display values via shared helper. The codex
+    // (rewardState) persists maxStageEver and starHighWater per monster —
+    // these survive evidence lapse so the child never sees a monster
+    // de-evolve. mergeMonotonicDisplay centralises the Math.max merge so
+    // Setup, Map, and Summary all use one sanitisation path.
+    const { displayStage, displayStars } = mergeMonotonicDisplay(totalStars, starDerivedStage, entry);
 
     return Object.freeze({
       id: monsterId,

@@ -51,6 +51,7 @@ import {
   buildPunctuationMapModel,
   composeIsDisabled,
   composeIsNavigationDisabled,
+  mergeMonotonicDisplay,
   punctuationChildStatusLabel,
   punctuationChildUnknownHelperCopy,
   punctuationMonsterDisplayName,
@@ -244,14 +245,11 @@ function MonsterGroup({ monster, statusFilter, disabled, actions, starView, rewa
   const starDerivedStage = starEntry
     ? Math.max(0, Math.floor(Number(starEntry.starDerivedStage) || 0))
     : 0;
-  // U3 (Phase 6): monotonic display — merge codex high-water marks so the
-  // Map scene never shows a monster at a lower stage than previously seen.
+  // U3 review follow-up (MEDIUM ADV-395-2/3): use shared monotonic merge
+  // helper so sanitisation is consistent with the view-model and Summary.
   const safeReward = rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState) ? rewardState : {};
   const codexEntry = safeReward[monster.monsterId];
-  const maxStageEver = Math.max(0, Math.floor(Number(codexEntry?.maxStageEver) || 0));
-  const starHighWater = Math.max(0, Math.floor(Number(codexEntry?.starHighWater) || 0));
-  const displayStars = Math.max(totalStars, starHighWater);
-  const displayStage = Math.max(starDerivedStage, maxStageEver);
+  const { displayStars, displayStage } = mergeMonotonicDisplay(totalStars, starDerivedStage, codexEntry);
   const starsLabel = isGrand ? 'Grand Stars' : 'Stars';
   const stageText = punctuationStageLabel(displayStage, displayStars);
   return (

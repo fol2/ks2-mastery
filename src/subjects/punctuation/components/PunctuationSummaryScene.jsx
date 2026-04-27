@@ -66,6 +66,7 @@ import {
   composeIsDisabled,
   composeIsNavigationDisabled,
   extractPunctuationMonsterProgress,
+  mergeMonotonicDisplay,
   punctuationChildMisconceptionLabel,
   punctuationChildNextReviewCopy,
   punctuationChildRegisterOverrideString,
@@ -391,16 +392,12 @@ function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
         const starDerivedStage = starEntry
           ? Math.max(0, Math.floor(Number(starEntry.starDerivedStage) || 0))
           : 0;
-        // U3 (Phase 6): monotonic display — merge codex high-water marks
-        // so the Summary scene never shows a monster at a lower stage than
-        // previously seen. rewardState carries maxStageEver / starHighWater
-        // persisted by the mastery layer.
-        const safeReward = rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState) ? rewardState : {};
-        const codexEntry = safeReward[monsterId];
-        const maxStageEver = Math.max(0, Math.floor(Number(codexEntry?.maxStageEver) || 0));
-        const starHighWater = Math.max(0, Math.floor(Number(codexEntry?.starHighWater) || 0));
-        const displayStars = Math.max(totalStars, starHighWater);
-        const displayStage = Math.max(starDerivedStage, maxStageEver);
+        // U3 review follow-up (MEDIUM ADV-395-2/3): use shared monotonic
+        // merge helper so sanitisation is consistent across all scenes.
+        // Finding 3: rewardState is already resolved at the function top
+        // via rewardStateForPunctuation — no redundant re-validation needed.
+        const codexEntry = rewardState?.[monsterId];
+        const { displayStars, displayStage } = mergeMonotonicDisplay(totalStars, starDerivedStage, codexEntry);
         const cap = 100;
         const starsLabel = isGrand ? 'Grand Stars' : 'Stars';
         const stageText = punctuationStageLabel(displayStage, displayStars);
