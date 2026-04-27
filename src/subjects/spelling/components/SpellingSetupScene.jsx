@@ -458,6 +458,21 @@ export function SpellingSetupScene({
       ?? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
     : '';
 
+  // Post-Mega setup view switch (2026-04-27 redesign): a graduated learner
+  // can flip between the Vault layer (Guardian / Boss / Pattern Quest cards
+  // with inline CTAs) and the Workshop layer (full legacy setup with round
+  // length / pool / showCloze / autoSpeak controls). Defaults to Vault for
+  // post-Mega learners; the switch hides entirely for pre-Mega so they
+  // only ever see the Workshop. Local React state keeps the toggle simple
+  // — resets on navigation, no schema bump.
+  const [postMegaView, setPostMegaView] = React.useState('vault');
+  // Render the Vault layer only when the learner is post-Mega AND has
+  // chosen the Vault view. Otherwise fall through to the legacy Workshop
+  // layer (which carries every legacy mode + tweak control). The
+  // hydration-checking placeholder stays gated on the Vault view too.
+  const showVaultLayer = isPostMega && postMegaView === 'vault';
+  const showWorkshopLayer = !showVaultLayer && !isHydrationChecking;
+
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
       <SoftLockoutBanner
@@ -495,6 +510,11 @@ export function SpellingSetupScene({
             </div>
           ) : null}
           {isPostMega ? (
+            <SetupViewSwitch view={postMegaView} onChange={setPostMegaView} />
+          ) : null}
+          {isHydrationChecking ? (
+            <CheckingWordVaultContent />
+          ) : showVaultLayer ? (
             <PostMegaSetupContent
               prefs={prefs}
               accent={accent}
@@ -506,8 +526,6 @@ export function SpellingSetupScene({
               startDisabled={startDisabled}
               runtimeReadOnly={runtimeReadOnly}
             />
-          ) : isHydrationChecking ? (
-            <CheckingWordVaultContent />
           ) : (
             <LegacySetupContent
               prefs={prefs}
@@ -1002,127 +1020,54 @@ function PostMegaSetupContent({
           </span>
         </p>
       ) : null}
-      <WorkshopSection
-        prefs={prefs}
-        actions={actions}
-        startDisabled={startDisabled}
-        runtimeReadOnly={runtimeReadOnly}
-      />
     </>
   );
 }
 
-/* The Workshop — floating upper-right toggle on the post-Mega hero card.
+/* SetupViewSwitch — a two-tab segmented control floating in the upper-right
+ * clear zone of the post-Mega hero card.
  *
- * Design intent (revised after first ship):
- *  - The original below-the-fold section was clipped by the hero card's
- *    `min-height: 610px; overflow: hidden;` envelope. Moving the toggle
- *    into the upper-right clear zone keeps the affordance discoverable
- *    without growing the card. The popover floats above the layout, so
- *    nothing else moves.
- *  - Place metaphor still matches the post-Mega vocabulary (Word Vault,
- *    Codex, Meadow). "The Workshop" reads as a small tool shed in the
- *    corner of the hero, not a demoted classics rack.
- *  - The chip is a quiet pill with paper-translucent backdrop blur. The
- *    chevron telegraphs the open/closed state; rotating it on toggle is
- *    the only animation the chip itself needs.
- *  - Popover anchors to the chip's bottom edge, ~320px wide, with three
- *    list-row cards. Clicking a card dispatches the same
- *    `spelling-shortcut-start` payload that Alt+1/2/3 use, so the engine
- *    path is byte-identical and Mega never drops.
- *  - Auto-dismiss on outside click + Esc keeps the popover from competing
- *    with the rest of the hero. Selecting a card also closes the popover
- *    before the session navigation kicks in. */
-function WorkshopSection({ prefs, actions, startDisabled, runtimeReadOnly }) {
-  const [open, setOpen] = React.useState(false);
-  const sectionRef = React.useRef(null);
-  const disabled = Boolean(startDisabled || runtimeReadOnly);
-  const popoverId = 'spelling-workshop-popover';
-
-  React.useEffect(() => {
-    if (!open || typeof document === 'undefined') return undefined;
-    function handlePointerDown(event) {
-      const root = sectionRef.current;
-      if (!root || root.contains(event.target)) return;
-      setOpen(false);
-    }
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open]);
-
-  function handleCardClick(event, modeId) {
-    if (disabled) {
-      event?.preventDefault?.();
-      event?.stopPropagation?.();
-      return;
-    }
-    setOpen(false);
-    renderAction(actions, event, 'spelling-shortcut-start', { mode: modeId });
-  }
-
+ * Replaces the earlier Workshop popover (which only quick-launched legacy
+ * modes — graduated learners still wanted access to round length / pool /
+ * showCloze / autoSpeak controls). The switch flips the entire setup
+ * content between two layers:
+ *
+ *   - Vault: PostMegaSetupContent (Guardian / Boss / Pattern Quest cards
+ *     with inline Begin pills). The graduation surface.
+ *   - Workshop: LegacySetupContent (Smart / Trouble / Test cards with
+ *     full tweak controls). Same layer pre-Mega learners see.
+ *
+ * Hidden entirely for pre-Mega learners — they only ever see the Workshop
+ * layer, so a switch with one option is just chrome. */
+function SetupViewSwitch({ view, onChange }) {
+  const tabs = [
+    { id: 'vault', label: 'Vault' },
+    { id: 'workshop', label: 'Workshop' },
+  ];
   return (
     <div
-      ref={sectionRef}
-      className={`workshop-section${open ? ' is-open' : ''}`}
-      data-test-id="spelling-workshop"
-      data-state={open ? 'open' : 'closed'}
+      className="setup-view-switch"
+      role="tablist"
+      aria-label="Setup view"
+      data-test-id="setup-view-switch"
     >
-      <button
-        type="button"
-        className="workshop-chip"
-        aria-expanded={open}
-        aria-haspopup="true"
-        aria-controls={popoverId}
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        <span className="workshop-chip-label">Workshop</span>
-        <span className="workshop-chip-chevron" aria-hidden="true" />
-      </button>
-      <div
-        id={popoverId}
-        className="workshop-popover"
-        role="region"
-        aria-label="The Workshop — earlier practice modes"
-        data-mode-current={prefs?.mode || ''}
-        hidden={!open}
-      >
-        <p className="workshop-popover-eyebrow">Earlier modes · keep them sharp</p>
-        <ul className="workshop-popover-list">
-          {MODE_CARDS.map((mode) => (
-            <li key={mode.id}>
-              <button
-                type="button"
-                className="workshop-popover-card"
-                data-action="spelling-shortcut-start"
-                data-mode={mode.id}
-                data-test-id={`workshop-card-${mode.id}`}
-                disabled={disabled}
-                onClick={(event) => handleCardClick(event, mode.id)}
-              >
-                <span className="workshop-popover-card-title">{mode.title}</span>
-                <span className="workshop-popover-card-desc">{mode.desc}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <p className="workshop-popover-hint" aria-hidden="true">
-          <span className="workshop-popover-hint-prefix">Quick keys</span>
-          <kbd>Alt</kbd>
-          <kbd>1</kbd>
-          <kbd>2</kbd>
-          <kbd>3</kbd>
-        </p>
-      </div>
+      {tabs.map((tab) => {
+        const isActive = view === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            className={`setup-view-switch-tab${isActive ? ' is-active' : ''}`}
+            aria-selected={isActive}
+            data-tab={tab.id}
+            data-test-id={`setup-view-switch-${tab.id}`}
+            onClick={() => onChange(tab.id)}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -495,18 +495,19 @@ test('U3 edge case: Guardian summary with zero mistakes does not render the Prac
   assert.doesNotMatch(html, /summary-drill-chips/, 'zero-mistake Guardian summary must not render the drill chips container');
 });
 
-// ----- The Workshop — floating upper-right toggle on the post-Mega scene ----
+// ----- Setup view switch — Vault ↔ Workshop on the post-Mega scene -----------
 //
-// Lets a graduated learner reach the legacy practice modes (Smart Review /
-// Trouble Drill / SATs Test) without exiting the post-Mega dashboard. The
-// chip lives in the hero card's upper-right clear zone (top:24, right:28)
-// so it does not push siblings or overflow the card's `min-height: 610px`
-// envelope. Popover anchors to the chip's bottom-right corner and is
-// hidden via the HTML `hidden` attribute until the chip is clicked. Cards
-// dispatch `spelling-shortcut-start` with the legacy mode payload so the
-// entry-point parity with Alt+1/2/3 stays byte-identical. Mega never drops.
+// Lets a graduated learner flip the entire setup content between two
+// layers without exiting the page:
+//   - Vault: Guardian / Boss / Pattern Quest cards with inline Begin
+//     pills (the post-Mega graduation surface).
+//   - Workshop: full legacy setup with round length / pool / showCloze /
+//     autoSpeak controls + Smart / Trouble / SATs Test cards (the same
+//     layer pre-Mega learners see).
+// Hidden entirely for pre-Mega learners — they only ever see the Workshop
+// layer, so a single-option switch would just be chrome.
 
-test('Workshop chip renders on the post-Mega setup scene, default-closed', async () => {
+test('Setup view switch renders on the post-Mega scene with Vault active by default', async () => {
   const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
   const html = await renderSpellingSurfaceFixture({
     phase: 'setup',
@@ -525,63 +526,32 @@ test('Workshop chip renders on the post-Mega setup scene, default-closed', async
     },
   });
 
-  // Section + chip render alongside the post-Mega dashboard.
-  assert.match(html, /data-test-id="spelling-workshop"/);
-  assert.match(html, /class="workshop-chip"[^>]*aria-expanded="false"/);
-  assert.match(html, /data-state="closed"/);
-  assert.match(html, /aria-haspopup="true"/);
-  // Place metaphor (paper aesthetic place vocabulary) survives the render.
-  assert.match(html, />Workshop</);
-  // Popover is hidden on first render — markup exists in the DOM but the
-  // `hidden` attribute keeps it out of the accessibility tree until the
-  // learner clicks the chip.
-  assert.match(html, /id="spelling-workshop-popover"[^>]*hidden/);
+  // Switch shell + both tabs render with role="tablist".
+  assert.match(html, /data-test-id="setup-view-switch"/);
+  assert.match(html, /role="tablist"/);
+  // Both tab buttons present.
+  assert.match(html, /data-test-id="setup-view-switch-vault"/);
+  assert.match(html, /data-test-id="setup-view-switch-workshop"/);
+  // Vault is the default active tab on first render for a graduated learner.
+  const vaultTab = html.match(/<button[^>]*data-test-id="setup-view-switch-vault"[^>]*>/);
+  const workshopTab = html.match(/<button[^>]*data-test-id="setup-view-switch-workshop"[^>]*>/);
+  assert.ok(vaultTab, 'Vault tab must render');
+  assert.ok(workshopTab, 'Workshop tab must render');
+  assert.match(vaultTab[0], /aria-selected="true"/);
+  assert.match(vaultTab[0], /class="[^"]*\bis-active\b/);
+  assert.match(workshopTab[0], /aria-selected="false"/);
+  assert.doesNotMatch(workshopTab[0], /class="[^"]*\bis-active\b/);
+  // The Vault layer (post-Mega cards) is what renders by default; the
+  // legacy Smart Review setup ledes are absent.
+  assert.match(html, /Graduated · Spelling Guardian/);
+  assert.doesNotMatch(html, /Choose today/, 'Workshop layer copy must not appear under Vault view');
 });
 
-test('Workshop chip is absent when the legacy dashboard renders (allWordsMega=false)', async () => {
-  // Pre-Mega learner: setup scene renders the legacy 3-mode row directly. The
-  // Workshop is post-Mega-only — surfacing it on the legacy view would
-  // duplicate the same three cards twice on the same page.
+test('Setup view switch is absent when the legacy dashboard renders (allWordsMega=false)', async () => {
+  // Pre-Mega learner: setup scene renders the legacy 3-mode row directly.
+  // The view switch is post-Mega-only — pre-Mega learners only have one
+  // layer, so a switch with one option would just be chrome.
   const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
-  assert.doesNotMatch(html, /data-test-id="spelling-workshop"/);
-  assert.doesNotMatch(html, /class="workshop-chip"/);
-});
-
-test('Workshop popover wires Smart / Trouble / Test through spelling-shortcut-start', async () => {
-  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
-  const html = await renderSpellingSurfaceFixture({
-    phase: 'setup',
-    postMega: {
-      guardian: {
-        possess: {
-          reviewLevel: 2,
-          lastReviewedDay: today - 7,
-          nextDueDay: today,
-          correctStreak: 2,
-          lapses: 0,
-          renewals: 0,
-          wobbling: false,
-        },
-      },
-    },
-  });
-
-  // All three legacy modes get a list-row inside the popover, each wired
-  // through the same `spelling-shortcut-start` action that Alt+1/2/3 use.
-  // React's renderer does not preserve a stable JSX-prop attribute order, so
-  // assert each attribute independently rather than as a single ordered run.
-  for (const modeId of ['smart', 'trouble', 'test']) {
-    const cardRegex = new RegExp(`<button[^>]*data-test-id="workshop-card-${modeId}"[^>]*>`);
-    const match = html.match(cardRegex);
-    assert.ok(match, `Workshop popover card for mode "${modeId}" should render`);
-    const cardOpenTag = match[0];
-    assert.match(cardOpenTag, /data-action="spelling-shortcut-start"/);
-    assert.match(cardOpenTag, new RegExp(`data-mode="${modeId}"`));
-  }
-  // The Alt+1/2/3 quick-key hint sits at the foot of the popover so kids
-  // can discover the keyboard parity without pressing the button.
-  assert.match(html, /<kbd>Alt<\/kbd>/);
-  assert.match(html, /<kbd>1<\/kbd>/);
-  assert.match(html, /<kbd>2<\/kbd>/);
-  assert.match(html, /<kbd>3<\/kbd>/);
+  assert.doesNotMatch(html, /data-test-id="setup-view-switch"/);
+  assert.doesNotMatch(html, /class="setup-view-switch"/);
 });

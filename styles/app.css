@@ -5059,218 +5059,76 @@ textarea:focus-visible {
   .post-mega-hydration-skeleton__card { animation: none; opacity: 0.9; }
 }
 
-/* The Workshop — floating upper-right toggle on the post-Mega hero card.
- * Anchors to `.setup-main` (which already has `position: relative`) so the
- * chip + popover float over the hero backdrop without growing the card or
- * pushing siblings. Aesthetic notes:
- *  - Chip is a paper-translucent pill with backdrop-blur. Fraunces serif
- *    label + chevron. Subtle border. Hover lifts and warms the border.
- *  - Popover anchors to the chip's bottom-right corner, paper-cream with
- *    drop shadow + backdrop blur, ~320px wide. Three list-rows.
- *  - Each list-row has a dotted indent stripe revealed on hover — the
- *    workshop-drawer affordance, not another mode card.
- *  - kbd hint at the foot rewards keyboard explorers (Alt+1/2/3 still
- *    work whether the popover is open or closed). */
-.workshop-section {
+/* Setup view switch — segmented two-tab pill in the upper-right clear
+ * zone of the post-Mega hero card. Lets a graduated learner flip the
+ * entire setup content between the Vault layer (Guardian / Boss / Pattern
+ * Quest) and the Workshop layer (full legacy setup with round length,
+ * pool, showCloze, autoSpeak controls). Replaces the earlier Workshop
+ * popover, which only quick-launched modes without exposing any options.
+ *
+ * Anchors absolute to `.setup-main` (which already has `position: relative`)
+ * so the switch floats over the hero backdrop without affecting layout.
+ * Paper-translucent pill with backdrop blur; the active tab gets the
+ * brand fill + white text while the inactive tab stays subdued. */
+.setup-view-switch {
   position: absolute;
   top: 24px;
   right: 28px;
   z-index: 4;
-}
-.workshop-chip {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 14px 6px 16px;
+  gap: 2px;
+  padding: 3px;
   background: color-mix(in oklab, var(--panel) 60%, transparent);
   border: 1px solid color-mix(in oklab, var(--brand) 26%, var(--line));
   border-radius: 999px;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
-  transition:
-    transform 200ms ease,
-    border-color 200ms ease,
-    background 200ms ease,
-    box-shadow 200ms ease;
+  box-shadow: 0 4px 14px -10px color-mix(in oklab, var(--ink) 30%, transparent);
 }
-.workshop-chip:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in oklab, var(--brand) 50%, transparent);
-  background: color-mix(in oklab, var(--panel) 78%, transparent);
-  box-shadow: 0 8px 20px -16px color-mix(in oklab, var(--brand) 56%, transparent);
-}
-.workshop-chip:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--brand) 64%, transparent);
-  outline-offset: 3px;
-}
-.workshop-chip-label {
-  font-family: var(--font-serif);
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  color: color-mix(in oklab, var(--brand) 78%, var(--ink));
-}
-.workshop-chip-chevron {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-bottom: 1px;
-  border-right: 1.5px solid color-mix(in oklab, var(--brand) 70%, var(--ink));
-  border-bottom: 1.5px solid color-mix(in oklab, var(--brand) 70%, var(--ink));
-  transform: rotate(45deg);
-  transition: transform 220ms ease;
-}
-.workshop-section.is-open .workshop-chip-chevron {
-  transform: rotate(-135deg);
-  margin-bottom: -3px;
-}
-.workshop-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 320px;
-  padding: 18px 18px 14px;
-  background: color-mix(in oklab, var(--panel) 92%, white 8%);
-  border: 1px solid color-mix(in oklab, var(--brand) 20%, var(--line));
-  border-radius: var(--radius);
-  box-shadow:
-    0 24px 48px -22px color-mix(in oklab, var(--ink) 32%, transparent),
-    0 4px 8px -4px color-mix(in oklab, var(--ink) 18%, transparent);
-  backdrop-filter: blur(18px) saturate(1.2);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  animation: workshopPopoverReveal 200ms ease both;
-  z-index: 12;
-}
-.workshop-popover[hidden] { display: none; }
-.workshop-popover-eyebrow {
-  margin: 0 0 12px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, var(--brand) 60%, var(--muted));
-}
-.workshop-popover-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.workshop-popover-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 100%;
-  padding: 10px 12px 10px 18px;
+.setup-view-switch-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: calc(var(--radius) - 6px);
-  text-align: left;
+  border: 0;
+  border-radius: 999px;
   cursor: pointer;
   font: inherit;
-  color: inherit;
+  font-family: var(--font-serif);
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: color-mix(in oklab, var(--brand) 60%, var(--ink));
   transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease;
+    background 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
 }
-.workshop-popover-card::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 12px;
-  bottom: 12px;
-  width: 2px;
-  border-radius: 2px;
-  background: color-mix(in oklab, var(--brand) 40%, transparent);
-  opacity: 0;
-  transition: opacity 180ms ease;
+.setup-view-switch-tab:hover {
+  color: color-mix(in oklab, var(--brand) 86%, var(--ink));
 }
-.workshop-popover-card:hover {
-  background: color-mix(in oklab, var(--brand-soft) 28%, transparent);
-  border-color: color-mix(in oklab, var(--brand) 28%, var(--line));
-  transform: translateX(1px);
-}
-.workshop-popover-card:hover::before { opacity: 1; }
-.workshop-popover-card:focus-visible {
+.setup-view-switch-tab:focus-visible {
   outline: 2px solid color-mix(in oklab, var(--brand) 64%, transparent);
   outline-offset: 2px;
 }
-.workshop-popover-card[disabled] {
-  cursor: not-allowed;
-  opacity: 0.55;
-  filter: saturate(0.7);
-}
-.workshop-popover-card[disabled]:hover {
-  background: transparent;
-  border-color: transparent;
-  transform: none;
-}
-.workshop-popover-card-title {
-  font-family: var(--font-serif);
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  color: color-mix(in oklab, var(--brand) 78%, var(--ink));
-}
-.workshop-popover-card-desc {
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: color-mix(in oklab, var(--ink) 70%, var(--muted));
-}
-.workshop-popover-hint {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin: 12px 0 0;
-  padding-top: 10px;
-  border-top: 1px dashed color-mix(in oklab, var(--brand) 16%, var(--line));
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, var(--ink) 60%, var(--muted));
-}
-.workshop-popover-hint-prefix {
-  margin-right: 4px;
-  font-weight: 700;
-  opacity: 0.78;
-}
-.workshop-popover-hint kbd {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-family: var(--font-mono, ui-monospace, 'SFMono-Regular', Menlo, monospace);
-  font-size: 0.68rem;
-  font-weight: 600;
-  line-height: 1.1;
-  background: color-mix(in oklab, var(--panel) 38%, transparent);
-  border: 1px solid color-mix(in oklab, var(--brand) 22%, transparent);
-  color: color-mix(in oklab, var(--brand) 72%, var(--ink));
-}
-@keyframes workshopPopoverReveal {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+.setup-view-switch-tab.is-active {
+  background: color-mix(in oklab, var(--brand) 88%, transparent);
+  color: #fff;
+  box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand) 58%, transparent);
 }
 @media (max-width: 540px) {
-  .workshop-section {
+  .setup-view-switch {
     top: 18px;
     right: 18px;
   }
-  .workshop-popover {
-    width: min(calc(100vw - 48px), 320px);
+  .setup-view-switch-tab {
+    padding: 4px 12px;
+    font-size: 0.82rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .workshop-chip,
-  .workshop-chip-chevron,
-  .workshop-popover,
-  .workshop-popover-card { transition: none; animation: none; }
+  .setup-view-switch-tab { transition: none; }
 }
 
 .setup-control-stack {
