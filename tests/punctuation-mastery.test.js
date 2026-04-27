@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   stageFor,
   PUNCTUATION_MASTERED_THRESHOLDS,
+  PUNCTUATION_STAR_THRESHOLDS,
 } from '../src/platform/game/monsters.js';
 import {
   createPunctuationMasteryKey,
@@ -395,4 +396,281 @@ test('punctuationSessionSummaryStage matches stageFor(n, PUNCTUATION_MASTERED_TH
       `Parity mismatch at n=${n}: stageFor returned ${fromStageFor}, punctuationSessionSummaryStage returned ${fromSummary}`,
     );
   }
+});
+
+// ---------------------------------------------------------------------------
+// 8. starHighWater monotonicity latch (Phase 6 U1)
+// ---------------------------------------------------------------------------
+
+test('starHighWater: fresh learner secures first unit -> starHighWater seeded from legacy floor', () => {
+  const repository = makeRepository();
+  recordPunctuationRewardUnitMastery({
+    learnerId: 'learner-hw-1',
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    masteryKey: masteryKey('endmarks', 'sentence-endings-core'),
+    monsterId: 'pealark',
+    publishedTotal: 5,
+    aggregatePublishedTotal: 14,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  // Fresh learner's directEntry before the write has 0 mastered -> stage 0.
+  // Stage 0 legacy floor = 0. The seedStarHighWater captures the pre-write
+  // snapshot, so starHighWater is seeded to 0 for the very first unit.
+  assert.equal(state.pealark.starHighWater, 0);
+  assert.equal(state.quoral.starHighWater, 0);
+  // Verify the field is present and a number (not undefined).
+  assert.equal(typeof state.pealark.starHighWater, 'number');
+  assert.equal(typeof state.quoral.starHighWater, 'number');
+});
+
+test('starHighWater: learner with existing progress secures another unit -> ratchets to max(existing, new)', () => {
+  const repository = makeRepository({
+    pealark: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: 25,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 14,
+      starHighWater: 25,
+      branch: 'b1',
+    },
+  });
+  recordPunctuationRewardUnitMastery({
+    learnerId: 'learner-hw-2',
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    masteryKey: masteryKey('speech', 'speech-core'),
+    monsterId: 'pealark',
+    publishedTotal: 5,
+    aggregatePublishedTotal: 14,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  // Existing starHighWater (25) is preserved because seedStarHighWater
+  // sees the field is already defined and returns safeStarHighWater(25) = 25.
+  assert.equal(state.pealark.starHighWater, 25);
+  assert.equal(state.quoral.starHighWater, 25);
+});
+
+test('starHighWater: pre-P6 learner (no starHighWater field, has mastered count) -> seeds from legacy stage floor', () => {
+  // Simulate a pre-P6 learner with 2 mastered (stage 2) but no starHighWater field.
+  const repository = makeRepository({
+    claspin: {
+      mastered: [
+        masteryKey('apostrophe', 'apostrophe-contractions-core'),
+      ],
+      caught: true,
+      publishedTotal: 2,
+      branch: 'b1',
+      // No starHighWater field — pre-P6 learner.
+    },
+    quoral: {
+      mastered: [
+        masteryKey('apostrophe', 'apostrophe-contractions-core'),
+      ],
+      caught: true,
+      publishedTotal: 14,
+      branch: 'b1',
+      // No starHighWater field — pre-P6 learner.
+    },
+  });
+  recordPunctuationRewardUnitMastery({
+    learnerId: 'learner-hw-3',
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'apostrophe',
+    rewardUnitId: 'apostrophe-possession-core',
+    masteryKey: masteryKey('apostrophe', 'apostrophe-possession-core'),
+    monsterId: 'claspin',
+    publishedTotal: 2,
+    aggregatePublishedTotal: 14,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  // Claspin had 1 mastered before write -> stage 1 -> legacy floor = PUNCTUATION_STAR_THRESHOLDS[1] = 10.
+  assert.equal(state.claspin.starHighWater, PUNCTUATION_STAR_THRESHOLDS[1]);
+  // Quoral had 1 mastered before write -> stage 1 -> legacy floor = 10.
+  assert.equal(state.quoral.starHighWater, PUNCTUATION_STAR_THRESHOLDS[1]);
+});
+
+test('starHighWater: does not decrease when existing value is higher than new computed (lapse scenario)', () => {
+  // Simulate a monster with a high starHighWater from a previous session.
+  const repository = makeRepository({
+    pealark: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: 80,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 14,
+      starHighWater: 80,
+      branch: 'b1',
+    },
+  });
+  recordPunctuationRewardUnitMastery({
+    learnerId: 'learner-hw-4',
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    masteryKey: masteryKey('speech', 'speech-core'),
+    monsterId: 'pealark',
+    publishedTotal: 5,
+    aggregatePublishedTotal: 14,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  // starHighWater must not decrease from 80.
+  assert.equal(state.pealark.starHighWater, 80, 'starHighWater must not decrease');
+  assert.equal(state.quoral.starHighWater, 80, 'aggregate starHighWater must not decrease');
+});
+
+test('starHighWater: NaN or negative starHighWater in stored state -> normalised to 0', () => {
+  // Test the read path: progressForPunctuationMonster normalises corrupted values.
+  const nanState = {
+    pealark: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: NaN,
+    },
+  };
+  assert.equal(
+    progressForPunctuationMonster(nanState, 'pealark', { publishedTotal: 5 }).starHighWater,
+    0,
+    'NaN normalises to 0',
+  );
+
+  const negativeState = {
+    pealark: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: -10,
+    },
+  };
+  assert.equal(
+    progressForPunctuationMonster(negativeState, 'pealark', { publishedTotal: 5 }).starHighWater,
+    0,
+    'negative normalises to 0',
+  );
+});
+
+test('starHighWater: aggregate (Quoral) entry ratchets independently of direct monster', () => {
+  // Give aggregate a higher starHighWater than direct to confirm independence.
+  const repository = makeRepository({
+    pealark: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: 15,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 14,
+      starHighWater: 50,
+      branch: 'b1',
+    },
+  });
+  recordPunctuationRewardUnitMastery({
+    learnerId: 'learner-hw-5',
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    masteryKey: masteryKey('speech', 'speech-core'),
+    monsterId: 'pealark',
+    publishedTotal: 5,
+    aggregatePublishedTotal: 14,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  assert.equal(state.pealark.starHighWater, 15, 'direct preserves its own HW');
+  assert.equal(state.quoral.starHighWater, 50, 'aggregate preserves its own independent HW');
+});
+
+test('starHighWater: missing gameStateRepository -> returns empty events (no crash)', () => {
+  const events = recordPunctuationRewardUnitMastery({
+    learnerId: 'learner-hw-6',
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    masteryKey: masteryKey('endmarks', 'sentence-endings-core'),
+    monsterId: 'pealark',
+    publishedTotal: 5,
+    aggregatePublishedTotal: 14,
+    // gameStateRepository intentionally omitted
+  });
+  // Should return events (the function still operates on in-memory state)
+  // and not throw. The exact event count depends on the default path.
+  assert.ok(Array.isArray(events), 'must return an array without crashing');
+});
+
+test('starHighWater: persists in codex entries and never decreases across multiple mastery events', () => {
+  const repository = makeRepository();
+  const units = [
+    ['endmarks', 'sentence-endings-core', 'pealark', 5],
+    ['speech', 'speech-core', 'pealark', 5],
+    ['apostrophe', 'apostrophe-contractions-core', 'claspin', 2],
+    ['comma_flow', 'list-commas-core', 'curlune', 7],
+    ['comma_flow', 'fronted-adverbials-core', 'curlune', 7],
+  ];
+
+  let prevPealarkHW = 0;
+  let prevQuoralHW = 0;
+  for (const [clusterId, rewardUnitId, monsterId, publishedTotal] of units) {
+    recordPunctuationRewardUnitMastery({
+      learnerId: 'learner-hw-7',
+      releaseId: PUNCTUATION_RELEASE_ID,
+      clusterId,
+      rewardUnitId,
+      masteryKey: masteryKey(clusterId, rewardUnitId),
+      monsterId,
+      publishedTotal,
+      aggregatePublishedTotal: 14,
+      gameStateRepository: repository,
+      random: () => 0,
+    });
+    const state = repository.state();
+    if (state.pealark?.starHighWater !== undefined) {
+      assert.ok(
+        state.pealark.starHighWater >= prevPealarkHW,
+        `pealark starHighWater must not decrease: was ${prevPealarkHW}, now ${state.pealark.starHighWater}`,
+      );
+      prevPealarkHW = state.pealark.starHighWater;
+    }
+    assert.ok(
+      state.quoral.starHighWater >= prevQuoralHW,
+      `quoral starHighWater must not decrease: was ${prevQuoralHW}, now ${state.quoral.starHighWater}`,
+    );
+    prevQuoralHW = state.quoral.starHighWater;
+  }
+  // After all units, starHighWater must be present on all written entries.
+  const finalState = repository.state();
+  assert.ok(typeof finalState.pealark.starHighWater === 'number');
+  assert.ok(typeof finalState.quoral.starHighWater === 'number');
+  assert.ok(typeof finalState.claspin.starHighWater === 'number');
+  assert.ok(typeof finalState.curlune.starHighWater === 'number');
+});
+
+test('starHighWater: read path returns 0 for empty state (no starHighWater field)', () => {
+  const progress = progressForPunctuationMonster({}, 'pealark', { publishedTotal: 5 });
+  assert.equal(progress.starHighWater, 0, 'empty state starHighWater should be 0');
 });
