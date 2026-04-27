@@ -112,9 +112,10 @@ function conceptIdsForMonster(monsterId) {
  * @param {string} params.conceptId - The concept to evaluate.
  * @param {object|null} params.conceptNode - The mastery node for this concept
  *   (shape: { attempts, correct, wrong, strength, intervalDays, correctStreak }).
- * @param {Array} params.recentAttempts - The engine's recentAttempts array
- *   (entries have { conceptId, templateId, correct, firstAttemptIndependent,
- *   supportLevelAtScoring, ... }).
+ * @param {Array} params.recentAttempts - The engine's recentAttempts array.
+ *   Production shape: { conceptIds: string[], result: { correct: boolean },
+ *   templateId, firstAttemptIndependent, supportLevelAtScoring, ... }.
+ *   Legacy flat shape also accepted: { conceptId, correct, ... }.
  * @returns {{ firstIndependentWin: boolean, repeatIndependentWin: boolean,
  *   variedPractice: boolean, secureConfidence: boolean,
  *   retainedAfterSecure: boolean }}
