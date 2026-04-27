@@ -285,6 +285,30 @@ test('decodePlan preserves durationMs when the field is a finite number', () => 
 // Test: stall is fundamentally different from timeout (408 immediate)
 // ---------------------------------------------------------------------------
 
+test('decodePlan treats durationMs <= 0 as undefined (falls to default)', () => {
+  const negativeEncoded = Buffer.from(JSON.stringify({
+    kind: 'stall-punctuation-command',
+    pathPattern: '/api/subjects/punctuation/command',
+    durationMs: -1,
+  }), 'utf8').toString('base64');
+  const negativeDecoded = faultInjection.decodePlan(negativeEncoded);
+  assert.ok(negativeDecoded, 'plan with durationMs: -1 must decode successfully');
+  assert.equal(negativeDecoded.durationMs, undefined, 'negative durationMs must be omitted from decoded plan');
+
+  const zeroEncoded = Buffer.from(JSON.stringify({
+    kind: 'stall-punctuation-command',
+    pathPattern: '/api/subjects/punctuation/command',
+    durationMs: 0,
+  }), 'utf8').toString('base64');
+  const zeroDecoded = faultInjection.decodePlan(zeroEncoded);
+  assert.ok(zeroDecoded, 'plan with durationMs: 0 must decode successfully');
+  assert.equal(zeroDecoded.durationMs, undefined, 'zero durationMs must be omitted from decoded plan');
+});
+
+// ---------------------------------------------------------------------------
+// Test: stall is fundamentally different from timeout (408 immediate)
+// ---------------------------------------------------------------------------
+
 test('timeout returns immediate 408 respond; stall returns a stall action', () => {
   const stallPlan = {
     kind: 'stall-punctuation-command',

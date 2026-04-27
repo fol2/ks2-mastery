@@ -93,7 +93,7 @@ function decodePlan(encoded) {
     // `stall-punctuation-command` kind to configure how long the
     // middleware hangs before releasing the socket. When absent or
     // non-numeric, `applyFault` falls back to the 30 000 ms default.
-    const durationMs = typeof parsed.durationMs === 'number' && Number.isFinite(parsed.durationMs)
+    const durationMs = typeof parsed.durationMs === 'number' && Number.isFinite(parsed.durationMs) && parsed.durationMs > 0
       ? parsed.durationMs
       : undefined;
     const result = {
@@ -292,7 +292,7 @@ function applyFault(plan, request) {
       // assertion without risking CI timeout.
       return {
         action: 'stall',
-        durationMs: typeof plan.durationMs === 'number' && Number.isFinite(plan.durationMs)
+        durationMs: typeof plan.durationMs === 'number' && Number.isFinite(plan.durationMs) && plan.durationMs > 0
           ? plan.durationMs
           : 30_000,
       };
