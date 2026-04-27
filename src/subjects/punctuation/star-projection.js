@@ -39,7 +39,7 @@ const PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER = Object.freeze({
 
 // Re-export the mapping so downstream consumers can import from this
 // module without reaching into the view-model.
-export { PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER, ACTIVE_PUNCTUATION_MONSTER_IDS };
+export { PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER, ACTIVE_PUNCTUATION_MONSTER_IDS, CLASPIN_REQUIRED_SKILLS };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -83,6 +83,16 @@ const SKILL_TO_CLUSTER = new Map([
   ['bullet_points', 'structure'],
   ['hyphen', 'boundary'],
 ]);
+
+// P6-U6: Derive the set of skill IDs required for the Claspin Mega gate
+// from the canonical SKILL_TO_CLUSTER mapping rather than hardcoding them.
+// If a new apostrophe skill is added to SKILL_TO_CLUSTER, this constant
+// will automatically include it — no code change needed.
+const CLASPIN_REQUIRED_SKILLS = Object.freeze(
+  Array.from(SKILL_TO_CLUSTER.entries())
+    .filter(([, c]) => c === 'apostrophe')
+    .map(([s]) => s),
+);
 
 // Exact rewardUnitId -> Set<clusterId> lookup.
 // Mirrors `PUNCTUATION_CLIENT_REWARD_UNITS` from read-model.js (not exported).
@@ -412,8 +422,7 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnits, monsterId) 
     const totalUnitsForMonster = MONSTER_UNIT_COUNT.claspin; // 2
     const hasAllUnitsSecured = securedUnitCount >= totalUnitsForMonster;
     const hasBothSkillsDeepSecure =
-      skillsWithDeepSecure.has('apostrophe_contractions') &&
-      skillsWithDeepSecure.has('apostrophe_possession');
+      CLASPIN_REQUIRED_SKILLS.every(s => skillsWithDeepSecure.has(s));
     const hasMixedModes = itemModes.size >= 2;
 
     const meetsDeepSecureGate =
