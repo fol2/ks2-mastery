@@ -5,6 +5,7 @@ import {
   stageFor,
   PUNCTUATION_MASTERED_THRESHOLDS,
   PUNCTUATION_STAR_THRESHOLDS,
+  PUNCTUATION_GRAND_STAR_THRESHOLDS,
 } from '../src/platform/game/monsters.js';
 import {
   createPunctuationMasteryKey,
@@ -1207,4 +1208,74 @@ test('U8 integration: mega toast body matches expected label', () => {
   assert.ok(megaEvent, 'mega event must fire for quoral');
   assert.equal(megaEvent.toast.body, 'Maximum evolution reached.',
     'mega toast body matches expected label');
+});
+
+// ---------------------------------------------------------------------------
+// 11. ADV-U8-1 review follow-up: Quoral starStage uses GRAND thresholds
+//     PUNCTUATION_STAR_THRESHOLDS = [1,10,30,60,100]
+//     PUNCTUATION_GRAND_STAR_THRESHOLDS = [1,10,25,50,100]
+//     Divergent ranges: [25,30) and [50,60) produce different stages.
+// ---------------------------------------------------------------------------
+
+test('ADV-U8-1: Quoral starHighWater=28 -> starStage 2 (GRAND thresholds: 28 >= 25)', () => {
+  // Under STAR thresholds [1,10,30,60,100], 28 < 30 -> stage 1.
+  // Under GRAND thresholds [1,10,25,50,100], 28 >= 25 -> stage 2.
+  // Quoral must use GRAND thresholds to match the read-model display.
+  const state = {
+    quoral: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 14,
+      starHighWater: 28,
+    },
+  };
+  const progress = progressForPunctuationMonster(state, 'quoral', { publishedTotal: 14 });
+  assert.equal(progress.starStage, 2,
+    'Quoral starHighWater=28 must be stage 2 via GRAND thresholds (28 >= 25), not stage 1');
+  // Verify thresholds differ: STAR would give stage 1.
+  assert.equal(stageFor(28, PUNCTUATION_STAR_THRESHOLDS), 1,
+    'sanity: STAR thresholds give stage 1 at 28');
+  assert.equal(stageFor(28, PUNCTUATION_GRAND_STAR_THRESHOLDS), 2,
+    'sanity: GRAND thresholds give stage 2 at 28');
+});
+
+test('ADV-U8-1: Quoral starHighWater=55 -> starStage 3 (GRAND thresholds: 55 >= 50)', () => {
+  // Under STAR thresholds [1,10,30,60,100], 55 < 60 -> stage 2.
+  // Under GRAND thresholds [1,10,25,50,100], 55 >= 50 -> stage 3.
+  // Quoral must use GRAND thresholds to match the read-model display.
+  const state = {
+    quoral: {
+      mastered: [
+        masteryKey('endmarks', 'sentence-endings-core'),
+        masteryKey('speech', 'speech-core'),
+      ],
+      caught: true,
+      publishedTotal: 14,
+      starHighWater: 55,
+    },
+  };
+  const progress = progressForPunctuationMonster(state, 'quoral', { publishedTotal: 14 });
+  assert.equal(progress.starStage, 3,
+    'Quoral starHighWater=55 must be stage 3 via GRAND thresholds (55 >= 50), not stage 2');
+  // Verify thresholds differ: STAR would give stage 2.
+  assert.equal(stageFor(55, PUNCTUATION_STAR_THRESHOLDS), 2,
+    'sanity: STAR thresholds give stage 2 at 55');
+  assert.equal(stageFor(55, PUNCTUATION_GRAND_STAR_THRESHOLDS), 3,
+    'sanity: GRAND thresholds give stage 3 at 55');
+});
+
+test('ADV-U8-1: Pealark (direct) starHighWater=28 -> starStage 1 (STAR thresholds unchanged)', () => {
+  // Direct monsters continue to use PUNCTUATION_STAR_THRESHOLDS.
+  // Under STAR thresholds [1,10,30,60,100], 28 < 30 -> stage 1.
+  const state = {
+    pealark: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: 28,
+    },
+  };
+  const progress = progressForPunctuationMonster(state, 'pealark', { publishedTotal: 5 });
+  assert.equal(progress.starStage, 1,
+    'Pealark starHighWater=28 must remain stage 1 via STAR thresholds (28 < 30)');
 });

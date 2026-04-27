@@ -1,4 +1,4 @@
-import { MONSTERS, stageFor, PUNCTUATION_MASTERED_THRESHOLDS, PUNCTUATION_STAR_THRESHOLDS } from '../monsters.js';
+import { MONSTERS, stageFor, PUNCTUATION_MASTERED_THRESHOLDS, PUNCTUATION_STAR_THRESHOLDS, PUNCTUATION_GRAND_STAR_THRESHOLDS } from '../monsters.js';
 import { PUNCTUATION_CURRENT_RELEASE_ID } from '../../../subjects/punctuation/service-contract.js';
 import {
   branchForMonster,
@@ -183,7 +183,14 @@ export function progressForPunctuationMonster(state, monsterId, { publishedTotal
     // Used by punctuationEventFromTransition to align toast events
     // with the Star surface so a child never sees a toast that
     // contradicts the Star-derived stage.
-    starStage: stageFor(persistedHW, PUNCTUATION_STAR_THRESHOLDS),
+    // Quoral (grand monster) uses GRAND thresholds [1,10,25,50,100]
+    // while direct monsters use STAR thresholds [1,10,30,60,100].
+    starStage: stageFor(
+      persistedHW,
+      monsterId === PUNCTUATION_GRAND_MONSTER_ID
+        ? PUNCTUATION_GRAND_STAR_THRESHOLDS
+        : PUNCTUATION_STAR_THRESHOLDS,
+    ),
   };
 }
 
