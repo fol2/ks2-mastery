@@ -17,6 +17,10 @@
 //   6. Bootstrap capacity degraded state renders degradation banner
 //   7. Classroom summary degraded state hides per-learner stats
 //   8. Non-admin/non-ops role renders Access Denied card
+//  11. Loading-remote early return renders loading card
+//  12. Hub-error early return renders error card
+//  13. Cron-failure banner renders when lastFailureAt > lastSuccessAt
+//  14. Error log empty-state renders fallback
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -251,8 +255,8 @@ function baseModel(overrides = {}) {
         grammarEvidence: {
           progressSnapshot: { dueConcepts: 3, weakConcepts: 1, securedConcepts: 10 },
           conceptStatus: [
-            { id: 'noun-phrases', name: 'Noun phrases', domain: 'Grammar', confidence: { label: 'Secure', level: 3 } },
-            { id: 'verb-tenses', name: 'Verb tenses', domain: 'Grammar', confidence: { label: 'Due', level: 1 } },
+            { id: 'noun-phrases', name: 'Noun phrases', domain: 'Grammar', confidence: { label: 'secure', level: 3 } },
+            { id: 'verb-tenses', name: 'Verb tenses', domain: 'Grammar', confidence: { label: 'emerging', level: 1 } },
           ],
           questionTypeSummary: [{ id: 'gap-fill', label: 'Gap fill' }],
         },
@@ -278,8 +282,9 @@ function baseModel(overrides = {}) {
       },
       punctuationReleaseDiagnostics: null,
       entryPoints: [
-        { action: 'open-subject', label: 'Open Spelling', subjectId: 'spelling', tab: 'practice' },
-        { action: 'open-subject', label: 'Open Grammar', subjectId: 'grammar', tab: 'practice' },
+        { action: 'open-subject', label: 'Open Spelling analytics', subjectId: 'spelling', tab: 'analytics' },
+        { action: 'open-subject', label: 'Open Punctuation analytics', subjectId: 'punctuation', tab: 'analytics' },
+        { action: 'platform-export-learner', label: 'Export current learner snapshot' },
       ],
     },
     ...overrides,
@@ -325,8 +330,8 @@ function baseAccountDirectory() {
   };
 }
 
-function buildEntry({ model, appState, accessContext, accountDirectory, hubState, refreshStatus, activeOpsMetadataSavingId } = {}) {
-  const m = model || baseModel();
+function buildEntry({ model, appState, accessContext, accountDirectory, hubState, refreshStatus, activeOpsMetadataSavingId, modelExplicitNull } = {}) {
+  const m = modelExplicitNull ? null : (model || baseModel());
   const as = appState || baseAppState();
   const ac = accessContext || baseAccessContext();
   const ad = accountDirectory || baseAccountDirectory();
@@ -437,6 +442,20 @@ test('full admin model renders all 15 panels without error', async () => {
   assert.match(html, /data-panel="grammar-writing-try-admin"/, 'GrammarWritingTryAdminPanel renders');
   assert.match(html, /Writing Try/, 'GrammarWritingTryAdminPanel title renders');
   assert.match(html, /prompt-live-1/, 'Writing Try live entry renders');
+  // Finding 7: archive toggle renders in SSR (archiveOpen defaults false)
+  assert.match(html, /Show archive/, 'GrammarWritingTry archive toggle button renders');
+
+  // --- GrammarConceptConfidencePanel: chip label fidelity ---
+  // Finding 4: canonical labels render through AdultConfidenceChip
+  assert.match(html, /data-confidence-label="secure"/, 'Confidence chip renders canonical "secure" label');
+  assert.match(html, /data-confidence-label="emerging"/, 'Confidence chip renders canonical "emerging" label');
+
+  // --- SelectedDiagnostics callout ---
+  // Finding 6: diagnostics callout renders for selected learner
+  assert.match(html, /Grammar diagnostics/, 'SelectedDiagnostics callout includes Grammar diagnostics');
+  assert.match(html, /Punctuation diagnostics/, 'SelectedDiagnostics callout includes Punctuation diagnostics');
+  // The callout renders the selected learner name in a <strong> tag
+  assert.match(html, /<strong>Ava<\/strong>/, 'SelectedDiagnostics callout renders learner name');
 
   // --- AuditLogLookup (two-col left) ---
   assert.match(html, /Audit-log lookup/, 'AuditLogLookup eyebrow renders');
@@ -684,14 +703,15 @@ test('classroom summary degraded state hides per-learner stats but shows learner
 
   // Per-learner stats are hidden: Grammar/Punctuation due/weak lines
   // should not appear inside the learner roster row when degraded.
-  // The classroom-summary panel attribute is present, so the conditional
-  // hides the stats columns. Check that the roster-level
-  // "Grammar: X due / Y weak" detail does NOT render.
+  // Finding 9: simplified regex — the "Grammar: 3 due" format only comes
+  // from the roster row, so a flat doesNotMatch suffices.
   assert.doesNotMatch(
     html,
-    /data-admin-hub-panel="classroom-summary"[^]*?Grammar: 3 due/,
+    /Grammar: 3 due/,
     'Per-learner grammar stats hidden when classroom summary degraded',
   );
+  // Finding 9: positive assertion — selectedDiagnostics callout survives degradation
+  assert.match(html, /Grammar diagnostics/, 'Grammar diagnostics callout survives classroom-summary degradation');
 });
 
 // =================================================================
@@ -758,8 +778,10 @@ test('key interactive elements render: role selector, refresh buttons, status ch
   assert.match(html, /Open settings tab/, 'Open settings tab button renders');
   assert.match(html, /Export content/, 'Export content button renders');
 
-  // Subject entry points
-  assert.match(html, /Open Grammar/, 'Grammar entry point button renders');
+  // Subject entry points (Finding 5: labels match admin-read-model.js)
+  assert.match(html, /Open Spelling analytics/, 'Spelling analytics entry point button renders');
+  assert.match(html, /Open Punctuation analytics/, 'Punctuation analytics entry point button renders');
+  assert.match(html, /Export current learner snapshot/, 'Export learner snapshot entry point button renders');
 
   // Header chips
   assert.match(html, /Repo revision/, 'Repo revision chip renders');
@@ -791,4 +813,81 @@ test('error event details drawer renders with release columns and timestamps', a
   // Content values
   assert.match(html, /Cannot read properties of undefined/, 'Error message content renders');
   assert.match(html, /at getProgress/, 'First frame renders in drawer');
+});
+
+// =================================================================
+// 11. Guard branch: Loading-remote early return
+// =================================================================
+
+test('loading-remote early return renders loading card when model is null', async () => {
+  const html = await renderFixture(buildEntry({
+    modelExplicitNull: true,
+    hubState: { status: 'loading' },
+    accessContext: { shellAccess: { source: 'worker-session' }, activeAdultLearnerContext: null },
+  }));
+
+  assert.match(html, /Loading Admin \/ Operations/, 'Loading card heading renders');
+  assert.match(html, /Loading live Worker diagnostics/, 'Loading card detail text renders');
+  // No admin panels should render in loading state
+  assert.doesNotMatch(html, /Dashboard KPI/, 'KPI panel does not render during loading');
+  assert.doesNotMatch(html, /access-denied-card/, 'Access denied card does not render during loading');
+});
+
+// =================================================================
+// 12. Guard branch: Hub-error early return
+// =================================================================
+
+test('hub-error early return renders error card when model is null and status is error', async () => {
+  const html = await renderFixture(buildEntry({
+    modelExplicitNull: true,
+    hubState: { status: 'error', error: 'Worker timed out' },
+    accessContext: { shellAccess: { source: 'worker-session' }, activeAdultLearnerContext: null },
+  }));
+
+  assert.match(html, /could not be loaded right now/, 'Error card title renders');
+  assert.match(html, /Worker timed out/, 'Error card detail renders custom error message');
+  // No admin panels should render in error state
+  assert.doesNotMatch(html, /Dashboard KPI/, 'KPI panel does not render during error');
+});
+
+// =================================================================
+// 13. Cron-failure banner
+// =================================================================
+
+test('cron-failure banner renders when lastFailureAt exceeds lastSuccessAt', async () => {
+  const cronFailModel = baseModel({
+    dashboardKpis: {
+      ...baseModel().dashboardKpis,
+      cronReconcile: {
+        lastSuccessAt: 1000,
+        lastFailureAt: 2000,
+      },
+    },
+  });
+  const html = await renderFixture(buildEntry({ model: cronFailModel }));
+
+  assert.match(html, /data-testid="dashboard-cron-failure-banner"/, 'Cron failure banner renders');
+  assert.match(html, /Automated reconciliation/, 'Cron failure banner identifies reconciliation leg');
+  // The banner should still appear within the KPI panel
+  assert.match(html, /Dashboard KPI/, 'KPI panel still renders alongside cron failure banner');
+});
+
+// =================================================================
+// 14. Error log empty-state
+// =================================================================
+
+test('error log empty-state renders when entries array is empty', async () => {
+  const emptyErrorsModel = baseModel({
+    errorLogSummary: {
+      generatedAt: 1,
+      totals: { open: 0, investigating: 0, resolved: 0, ignored: 0, all: 0 },
+      entries: [],
+    },
+  });
+  const html = await renderFixture(buildEntry({ model: emptyErrorsModel }));
+
+  assert.match(html, /data-testid="error-centre-empty-state"/, 'Error centre empty state element renders');
+  assert.match(html, /No error events recorded/, 'Error centre empty state message renders');
+  // Error centre still renders its structure
+  assert.match(html, /Error log centre/, 'Error log centre title still renders with empty entries');
 });
