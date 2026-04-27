@@ -12,6 +12,16 @@ import {
   saveMonsterState,
   toastBodyFor,
 } from './shared.js';
+import {
+  GRAMMAR_MONSTER_STAR_MAX,
+  applyStarHighWaterLatch,
+  computeGrammarMonsterStars,
+  deriveGrammarConceptStarEvidence,
+  grammarStarDisplayStage,
+  grammarStarStageFor,
+  grammarStarStageName,
+  legacyStarFloorFromStage,
+} from './grammar-stars.js';
 
 export const GRAMMAR_REWARD_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
 // Phase 3 U0 cluster remap. The six pre-flip direct clusters collapse into
@@ -81,6 +91,31 @@ function grammarStageFor(mastered, total) {
   if (ratio >= 0.5) return 2;
   if (ratio > 0) return 1;
   return 0;
+}
+
+function safeStarHighWater(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+/**
+ * Seed the starHighWater value for a monster entry during writes.
+ *
+ * If the entry already has a starHighWater field (post-P5 learner), preserve
+ * it via safeStarHighWater. If absent (pre-P5 learner), compute the legacy
+ * floor from the ratio-based stage so that writing starHighWater for the first
+ * time does not erase the learner's visual floor. Without this, safeStarHighWater
+ * would return 0 for undefined, permanently disabling the legacy floor on
+ * subsequent reads.
+ */
+function seedStarHighWater(entry, total) {
+  if (entry.starHighWater !== undefined && entry.starHighWater !== null) {
+    return safeStarHighWater(entry.starHighWater);
+  }
+  // Pre-P5 learner: seed from legacy floor.
+  const mastered = grammarMasteredCount(entry);
+  const legacyStage = grammarStageFor(mastered, total);
+  return legacyStarFloorFromStage(legacyStage);
 }
 
 function grammarMonsterConceptTotal(monsterId) {
@@ -179,18 +214,70 @@ function grammarMasteredCount(entry, releaseId = GRAMMAR_REWARD_RELEASE_ID) {
   return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
 }
 
-export function progressForGrammarMonster(state, monsterId, { conceptTotal = null, releaseId = GRAMMAR_REWARD_RELEASE_ID } = {}) {
+export function progressForGrammarMonster(state, monsterId, { conceptTotal = null, releaseId = GRAMMAR_REWARD_RELEASE_ID, conceptNodes = null, recentAttempts = null } = {}) {
   const entry = isPlainObject(state?.[monsterId]) ? state[monsterId] : { mastered: [], caught: false };
   const mastered = grammarMasteredCount(entry, releaseId);
   const total = grammarTotal(entry, conceptTotal || grammarMonsterConceptTotal(monsterId));
+
+  // Legacy ratio-based stage — always computed for backward compat.
+  const legacyStage = grammarStageFor(mastered, total);
+
+  // --- Star computation ---
+  // When conceptNodes are provided (client read path), derive Stars from
+  // evidence tiers. When absent (reward-layer callers), fall back to 0
+  // computed Stars + legacy floor from the old stage — existing callers
+  // that don't pass conceptNodes still get correct legacy staging.
+  let computedStars = 0;
+  if (conceptNodes && typeof conceptNodes === 'object') {
+    const conceptIds = monsterId === GRAMMAR_GRAND_MONSTER_ID
+      ? GRAMMAR_AGGREGATE_CONCEPTS
+      : (GRAMMAR_MONSTER_CONCEPTS[monsterId] || []);
+    const evidenceMap = {};
+    const attempts = Array.isArray(recentAttempts) ? recentAttempts : [];
+    for (const conceptId of conceptIds) {
+      evidenceMap[conceptId] = deriveGrammarConceptStarEvidence({
+        conceptId,
+        conceptNode: conceptNodes[conceptId] || null,
+        recentAttempts: attempts,
+      });
+    }
+    const starResult = computeGrammarMonsterStars(monsterId, evidenceMap);
+    computedStars = starResult.stars;
+  }
+
+  // Persisted high-water mark. Corrupted values (NaN, negative) → 0.
+  const rawHW = Number(entry.starHighWater);
+  const persistedHW = Number.isFinite(rawHW) && rawHW > 0 ? Math.floor(rawHW) : 0;
+
+  // Determine legacy floor for pre-P5 learners (no starHighWater field).
+  // Post-P5 learners with starHighWater present skip the legacy floor.
+  const hasStarHighWater = entry.starHighWater !== undefined && entry.starHighWater !== null;
+  const legacyFloor = hasStarHighWater ? 0 : legacyStage;
+
+  const { displayStars, updatedHighWater } = applyStarHighWaterLatch({
+    computedStars,
+    starHighWater: persistedHW,
+    legacyStage: legacyFloor,
+  });
+
+  // Star-derived stage for backward compat: max(legacyStage, starDerivedStage).
+  const starDerivedStage = grammarStarStageFor(displayStars);
+  const stage = Math.max(legacyStage, starDerivedStage);
+
   return {
     mastered,
     conceptTotal: total,
-    stage: grammarStageFor(mastered, total),
+    stage,
     level: Math.min(10, Math.round((mastered / Math.max(1, total)) * 10)),
-    caught: mastered >= 1,
+    caught: mastered >= 1 || displayStars >= 1,
     branch: branchForMonster(state, monsterId),
     masteredList: grammarMasteredList(entry, releaseId),
+    // Star fields
+    stars: displayStars,
+    starMax: GRAMMAR_MONSTER_STAR_MAX,
+    displayStage: grammarStarDisplayStage(displayStars),
+    stageName: grammarStarStageName(displayStars),
+    starHighWater: updatedHighWater,
   };
 }
 
@@ -310,6 +397,15 @@ export function recordGrammarConceptMastery({
     })
     : null;
 
+  // Ratchet starHighWater: preserve the existing high-water mark on each
+  // monster entry. For pre-P5 learners (no starHighWater field), seed the
+  // value from the legacy floor so that writing it for the first time does
+  // not erase the learner's visual stage. The actual Star computation
+  // happens on the client read path (which has access to concept nodes);
+  // the reward layer only preserves the latch field so it survives
+  // round-trips.
+  const aggregateHW = seedStarHighWater(aggregateEntry, GRAMMAR_AGGREGATE_CONCEPTS.length);
+
   const after = {
     ...before,
     [GRAMMAR_GRAND_MONSTER_ID]: {
@@ -320,10 +416,12 @@ export function recordGrammarConceptMastery({
       mastered: aggregateMastered.includes(masteryKey)
         ? aggregateMastered
         : [...aggregateMastered, masteryKey],
+      starHighWater: aggregateHW,
     },
   };
 
   if (directMonsterId) {
+    const directHW = seedStarHighWater(directEntry, grammarMonsterConceptTotal(directMonsterId));
     after[directMonsterId] = {
       ...directEntry,
       caught: true,
@@ -332,6 +430,7 @@ export function recordGrammarConceptMastery({
       mastered: directMastered.includes(masteryKey)
         ? directMastered
         : [...directMastered, masteryKey],
+      starHighWater: directHW,
     };
   }
 
