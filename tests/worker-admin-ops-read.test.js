@@ -676,3 +676,64 @@ test('GET /api/admin/ops/accounts-metadata without session returns 401', async (
   }
 });
 
+// P3 U1: readAdminHub actor dedup — the assertAdminHubActor SELECT fires
+// exactly once per readAdminHub invocation (not once per downstream helper).
+// ADV-1 review: strict assertion — the test must fail if the capacity
+// structured log is not emitted (guards against silent dedup regression).
+test('P3 U1: readAdminHub dedup — assertAdminHubActor SELECT appears once in capacity trace', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+
+    // Intercept structured capacity log (statements are in the log, not
+    // the public JSON — toPublicJSON intentionally omits per-statement
+    // breakdown). Capture [ks2-worker] lines emitted during the request.
+    const logLines = [];
+    const originalLog = console.log;
+    console.log = (...args) => {
+      if (args[0] === '[ks2-worker]') logLines.push(args[1]);
+      originalLog.apply(console, args);
+    };
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+    console.log = originalLog;
+    assert.equal(response.status, 200);
+
+    // Find the structured log for /api/hubs/admin.
+    const adminLog = logLines
+      .map((line) => { try { return JSON.parse(line); } catch { return null; } })
+      .find((entry) => entry?.endpoint === '/api/hubs/admin');
+    assert.ok(adminLog, 'capacity structured log must be emitted for /api/hubs/admin');
+
+    const statements = adminLog.statements;
+    assert.ok(Array.isArray(statements), 'capacity statements must be present in structured log for dedup verification');
+
+    // The assertAdminHubActor query is the only SELECT that fetches
+    // individual columns (id, email, display_name, platform_role,
+    // repo_revision, account_type, selected_learner_id) from
+    // adult_accounts. Statement names are truncated at 80 chars by
+    // statementNameFromSql, so we match on the unique prefix.
+    const actorSelects = statements.filter(
+      (s) => typeof s.name === 'string'
+        && s.name.startsWith('first:SELECT id, email, display_name, platform_role, repo_revision, account_type'),
+    );
+    assert.equal(
+      actorSelects.length,
+      1,
+      `assertAdminHubActor should fire exactly once; found ${actorSelects.length}`,
+    );
+
+    // Structural: all four ops panels present regardless of capacity trace.
+    assert.ok(payload.adminHub.dashboardKpis);
+    assert.ok(payload.adminHub.opsActivityStream);
+    assert.ok(payload.adminHub.accountOpsMetadata);
+    assert.ok(payload.adminHub.errorLogSummary);
+  } finally {
+    server.close();
+  }
+});
+
