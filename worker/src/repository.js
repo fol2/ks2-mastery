@@ -8435,6 +8435,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         kind: options.kind || null,
         sinceMs: options.sinceMs ?? null,
         limit: options.limit ?? null,
+        nowMs: nowFactory(),
         audit: async ({ resultCount, readAtMs }) => {
           const appliedAt = Number.isFinite(readAtMs) ? readAtMs : nowFactory();
           await db.prepare(`
@@ -8445,7 +8446,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).bind(
             accountId,
-            `telemetry-read-${appliedAt}`,
+            `telemetry-read-${appliedAt}-${Math.random().toString(36).slice(2, 8)}`,
             'learner',
             learnerId,
             'punctuation.telemetry-read',

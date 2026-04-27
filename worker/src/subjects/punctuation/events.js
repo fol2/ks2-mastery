@@ -454,6 +454,11 @@ const EVENT_TIMELINE_READ_HARD_LIMIT = 500;
  * P7-U6: `audit` callback. When provided, called after the query with
  * `{ learnerId, kind, appliedLimit, resultCount, readAtMs }` so the
  * caller (repository layer) can record the read in the ops audit surface.
+ *
+ * `nowMs` injectable clock for the audit `readAtMs` value. When finite
+ * the callback receives this value instead of `Date.now()`, keeping the
+ * read timestamp consistent with the repository's injectable clock for
+ * testability. Falls back to `Date.now()` when omitted.
  */
 export async function listPunctuationEvents({
   db,
@@ -462,6 +467,7 @@ export async function listPunctuationEvents({
   sinceMs = null,
   limit = null,
   audit = null,
+  nowMs = null,
 }) {
   const cleanLearner = typeof learnerId === 'string' ? learnerId : '';
   if (!cleanLearner) {
@@ -519,7 +525,7 @@ export async function listPunctuationEvents({
         kind: kind || null,
         appliedLimit,
         resultCount: events.length,
-        readAtMs: Date.now(),
+        readAtMs: Number.isFinite(nowMs) ? nowMs : Date.now(),
       });
     } catch {
       // Audit write failure is non-fatal — the read still returns.
