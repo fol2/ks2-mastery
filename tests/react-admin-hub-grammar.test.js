@@ -109,6 +109,7 @@ async function renderAdminHub({ conceptStatus }) {
           accountDirectory={accountDirectory}
           accessContext={accessContext}
           actions={actions}
+          initialSection="content"
         />,
       );
       console.log(html);

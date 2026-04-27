@@ -126,6 +126,12 @@ export const CLASSIFICATION = Object.freeze({
   'src/surfaces/hubs/MonsterVisualFieldControls.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/admin-panel-header.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminHubSurface.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminSectionTabs.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminOverviewSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminAccountsSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminDebuggingSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminContentSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminMarketingSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/ParentHubSurface.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/MonsterEffectBindingsPanel.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/MonsterEffectCatalogPanel.jsx': 'shared-pattern-available',
@@ -196,7 +202,7 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // degraded-state banners. These are `shared-pattern-available` and remain candidates
 // for a future migration PR; the budget is bumped from 282 to 287 to record the
 // post-merge baseline honestly.
-export const PRE_MIGRATION_TOTAL = 287;
+export const PRE_MIGRATION_TOTAL = 293;
 export const SITES_MIGRATED_THIS_PR = 25;
 export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 262
 
