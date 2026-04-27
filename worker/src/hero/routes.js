@@ -82,6 +82,11 @@ export async function handleHeroReadModel({
     }));
   } catch { /* best-effort */ }
 
-  return json({ ok: true, hero: result });
+  // Strip debug block from the child-visible response — debug data is
+  // useful for shadow/internal diagnostics but must not leak to the child browser.
+  const { debug, ...safeResult } = result;
+  const responseHero = envFlagEnabled(env.HERO_MODE_CHILD_UI_ENABLED) ? safeResult : result;
+
+  return json({ ok: true, hero: responseHero });
 }
 

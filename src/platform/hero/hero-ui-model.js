@@ -36,8 +36,8 @@ export function buildHeroHomeModel(heroUi) {
   const canContinue = enabled && activeHeroSession !== null;
 
   const effortPlanned = readModel?.dailyQuest?.effortPlanned || 0;
-  const eligibleSubjects = readModel?.eligibleSubjects || [];
-  const lockedSubjects = readModel?.lockedSubjects || [];
+  const eligibleSubjects = (readModel?.eligibleSubjects || []).map(e => typeof e === 'string' ? e : e?.subjectId || '').filter(Boolean);
+  const lockedSubjects = (readModel?.lockedSubjects || []).map(e => typeof e === 'string' ? e : e?.subjectId || '').filter(Boolean);
 
   return {
     status,

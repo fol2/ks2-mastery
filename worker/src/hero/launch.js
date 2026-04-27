@@ -131,7 +131,6 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     throw new ConflictError('Hero quest is stale — the daily quest has changed.', {
       code: 'hero_quest_stale',
       clientQuestId: questId,
-      serverQuestId: quest?.questId || null,
     });
   }
 
@@ -141,7 +140,6 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
       throw new ConflictError('Quest fingerprint mismatch — the quest has changed since the client read it.', {
         code: 'hero_quest_fingerprint_mismatch',
         clientFingerprint: clientQuestFingerprint.trim(),
-        serverFingerprint: heroReadModel.questFingerprint,
       });
     }
   }

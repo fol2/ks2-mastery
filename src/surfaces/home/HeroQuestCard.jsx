@@ -51,6 +51,7 @@ export function HeroQuestCard({ hero, actions }) {
   // (d) Active Hero session — "Continue Hero task" CTA (navigation only, no POST)
   if (hero.canContinue) {
     const session = hero.activeHeroSession;
+    if (!session) return null;
     const subjectName = HERO_SUBJECT_LABELS[session.subjectId] || session.subjectId;
     return (
       <div className="hero-quest-card hero-quest-card--continue" data-hero-card>

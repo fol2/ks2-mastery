@@ -826,7 +826,7 @@ async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 }
 function patchHeroUi(updater) {
   const patch = typeof updater === 'function' ? updater(heroUi) : updater;
   heroUi = { ...heroUi, ...patch };
-  store?.patch(() => ({}));
+  store?.patch((s) => ({ ...s, heroUi }));
 }
 
 async function loadHeroReadModel({ learnerId, force = false } = {}) {
@@ -2830,6 +2830,9 @@ function handleGlobalAction(action, data) {
       );
     }
     store.goHome();
+    // P2 review: clear lastLaunch so stale HeroTaskBanner does not
+    // re-appear when the user re-enters a subject from home.
+    patchHeroUi({ lastLaunch: null });
     // P2 U4: trigger Hero read-model refresh when navigating home.
     if (boot.session.signedIn && learnerId) {
       queueMicrotask(() => loadHeroReadModel({ learnerId }));

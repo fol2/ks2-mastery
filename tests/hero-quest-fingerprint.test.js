@@ -39,12 +39,7 @@ test('deriveHeroQuestFingerprint: output matches hero-qf-{hex12} format', () => 
 test('deriveHeroQuestFingerprint: pinned hex value for fixture', () => {
   const fp = deriveHeroQuestFingerprint(FIXTURE);
   // Pin the exact value so any input-string change is detected.
-  assert.equal(typeof fp, 'string');
-  assert.ok(fp.startsWith('hero-qf-'));
-  assert.equal(fp.length, 'hero-qf-'.length + 12);
-  // Re-derive to confirm pin
-  const fp2 = deriveHeroQuestFingerprint(FIXTURE);
-  assert.equal(fp, fp2, 'pinned value must be stable across calls');
+  assert.equal(fp, 'hero-qf-000030a4bd24', 'pinned hex must match hardcoded fixture digest');
 });
 
 // ── Sensitivity: changes to each input field ───────────────────────────

@@ -389,8 +389,7 @@ test('E2E P2: launch → launch different taskId → 409 hero_active_session_con
   const tasks = quest?.tasks?.filter((t) => t.launchStatus === 'launchable') || [];
   if (tasks.length < 2) {
     server.close();
-    // Need at least 2 launchable tasks to test conflict — skip gracefully
-    return;
+    assert.fail('Fixture must produce at least 2 launchable tasks to exercise the different-task conflict path');
   }
 
   const fingerprint = readModelPayload.hero.questFingerprint;
@@ -421,9 +420,8 @@ test('E2E P2: launch → launch different taskId → 409 hero_active_session_con
   // Find a task that is different from task1 (by taskId)
   const differentTask = refreshedTasks.find((t) => t.taskId !== task1.taskId);
   if (!differentTask) {
-    // After the state change, only one task remains launchable — skip gracefully.
     server.close();
-    return;
+    assert.fail('After first launch, fixture must still have a different launchable task to exercise the conflict path');
   }
 
   const revision2 = getLearnerRevision(server);
