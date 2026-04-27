@@ -2141,6 +2141,10 @@ export function createApiPlatformRepositories({
       // and let the higher layer decide whether to surface it (plan
       // line 752).
       const capacityMeta = payload?.meta?.capacity;
+      // adv-u7-001: track whether the natural recovery path already fired
+      // reset listeners for a breaker name in this bootstrap handler, so
+      // the forceBreakerReset path below can skip the duplicate fire.
+      let naturalResetFiredFor = null;
       if (!capacityMeta || !capacityMeta.bootstrapCapacity) {
         consecutiveMissingBootstrapMetadata += 1;
         if (consecutiveMissingBootstrapMetadata >= BOOTSTRAP_MISSING_METADATA_ESCALATION_LIMIT) {
@@ -2157,11 +2161,20 @@ export function createApiPlatformRepositories({
       } else {
         consecutiveMissingBootstrapMetadata = 0;
         bootstrapMetadataOperatorError = null;
+        // adv-u7-002: only fire reset listeners when actually recovering
+        // from an open/half-open breaker, not on every normal bootstrap.
+        // Firing unconditionally clears attemptedLearnerFetches on every
+        // cycle, partially defeating the R2 storm-prevention contract.
+        const wasNonClosed = breakers.bootstrapCapacityMetadata.isOpen
+          || breakers.bootstrapCapacityMetadata.state === 'half-open';
         breakers.bootstrapCapacityMetadata.reset();
-        // P4/U7: fire reset listeners so the store clears its sticky
-        // learner-fetch guard. Sibling learner stats that failed to
-        // fetch while the breaker was open can now be retried.
-        fireBreakerResetListeners('bootstrapCapacityMetadata');
+        if (wasNonClosed) {
+          // P4/U7: fire reset listeners so the store clears its sticky
+          // learner-fetch guard. Sibling learner stats that failed to
+          // fetch while the breaker was open can now be retried.
+          fireBreakerResetListeners('bootstrapCapacityMetadata');
+          naturalResetFiredFor = 'bootstrapCapacityMetadata';
+        }
       }
       // U9.1 item 2: `forceBreakerReset` via bootstrap response. When an
       // admin header triggers the server to include this field, the client
@@ -2174,10 +2187,17 @@ export function createApiPlatformRepositories({
         const targetBreaker = breakers[forceBreakerResetName];
         if (targetBreaker && typeof targetBreaker.reset === 'function') {
           targetBreaker.reset();
-          // P4/U7: fire reset listeners for operator-initiated resets
-          // (the `forceBreakerReset` admin path). Same rationale as
-          // the auto-recovery path above.
-          fireBreakerResetListeners(forceBreakerResetName);
+          // adv-u7-001: skip duplicate fire if the natural recovery path
+          // above already fired listeners for this same breaker name.
+          // Without this guard, every listener executes twice when a
+          // bootstrap response has both valid bootstrapCapacity AND
+          // forceBreakerReset targeting the same breaker.
+          if (forceBreakerResetName !== naturalResetFiredFor) {
+            // P4/U7: fire reset listeners for operator-initiated resets
+            // (the `forceBreakerReset` admin path). Same rationale as
+            // the auto-recovery path above.
+            fireBreakerResetListeners(forceBreakerResetName);
+          }
         }
       }
       // U9.1 item 3: surface server-side `readModelDerivedWrite` breaker
