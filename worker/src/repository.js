@@ -2003,7 +2003,9 @@ function maskMutationReceiptScopeId(scopeType, scopeId) {
 async function assertAdminHubActor(db, actorAccountId) {
   const actor = await first(
     db,
-    'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?',
+    // P3 U1: include selected_learner_id so the actor row can double as the
+    // account row inside readAdminHub — avoids a second adult_accounts query.
+    'SELECT id, email, display_name, platform_role, repo_revision, account_type, selected_learner_id FROM adult_accounts WHERE id = ?',
     [actorAccountId],
   );
   requireAdminHubAccess(actor);
@@ -2056,8 +2058,13 @@ async function scalarCountSafe(db, sql, params, tableName) {
   }
 }
 
-async function readDashboardKpis(db, { now, actorAccountId } = {}) {
-  await assertAdminHubActor(db, actorAccountId);
+async function readDashboardKpis(db, { now, actorAccountId, actor = null } = {}) {
+  // P3 U1: when a pre-resolved actor row is supplied (from readAdminHub's
+  // single assertAdminHubActor call), skip the redundant DB lookup + role
+  // check. When absent (narrow-read route path), resolve independently.
+  if (!actor) {
+    await assertAdminHubActor(db, actorAccountId);
+  }
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const cutoff7d = nowTs - KPI_WINDOW_7D_MS;
   const cutoff30d = nowTs - KPI_WINDOW_30D_MS;
@@ -2336,8 +2343,11 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
   };
 }
 
-async function listRecentMutationReceipts(db, { now, actorAccountId, limit = OPS_ACTIVITY_STREAM_DEFAULT_LIMIT } = {}) {
-  await assertAdminHubActor(db, actorAccountId);
+async function listRecentMutationReceipts(db, { now, actorAccountId, actor = null, limit = OPS_ACTIVITY_STREAM_DEFAULT_LIMIT } = {}) {
+  // P3 U1: skip redundant actor lookup when pre-resolved actor is threaded.
+  if (!actor) {
+    await assertAdminHubActor(db, actorAccountId);
+  }
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const safeLimit = Math.max(1, Math.min(OPS_ACTIVITY_STREAM_MAX_LIMIT, Number(limit) || OPS_ACTIVITY_STREAM_DEFAULT_LIMIT));
   const rows = await all(db, `
@@ -2374,9 +2384,10 @@ function normaliseTagsJson(tagsJson) {
   }
 }
 
-async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorPlatformRole = null } = {}) {
-  const actor = await assertAdminHubActor(db, actorAccountId);
-  const resolvedPlatformRole = normalisePlatformRole(actorPlatformRole || actor?.platform_role);
+async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorPlatformRole = null, actor = null } = {}) {
+  // P3 U1: accept a pre-resolved actor to avoid redundant DB round-trip.
+  const resolvedActor = actor || await assertAdminHubActor(db, actorAccountId);
+  const resolvedPlatformRole = normalisePlatformRole(actorPlatformRole || resolvedActor?.platform_role);
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   let rows = [];
   try {
@@ -2587,11 +2598,13 @@ function normaliseOpsErrorFilter(rawFilter, { nowTs }) {
 async function readOpsErrorEventSummary(db, {
   now,
   actorAccountId,
+  actor: preResolvedActor = null,
   status = null,
   limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT,
   filter = null,
 } = {}) {
-  const actor = await assertAdminHubActor(db, actorAccountId);
+  // P3 U1: accept a pre-resolved actor to skip the redundant DB lookup.
+  const actor = preResolvedActor || await assertAdminHubActor(db, actorAccountId);
   const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const safeLimit = Math.max(1, Math.min(OPS_ERROR_EVENTS_MAX_LIMIT, Number(limit) || OPS_ERROR_EVENTS_DEFAULT_LIMIT));
@@ -8862,8 +8875,15 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       };
     },
     async readAdminHub(accountId, { learnerId = null, requestId = null, auditLimit = 20 } = {}) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
-      requireAdminHubAccess(account);
+      // P3 U1 (R22): single assertAdminHubActor call — the resolved actor
+      // row is threaded to every downstream helper so the admin-role DB
+      // lookup fires exactly once per readAdminHub invocation.
+      const actor = await assertAdminHubActor(db, accountId);
+      const account = actor;
+
+      // Sequential: memberships depend on account lookup, learner bundles
+      // depend on membership list, content bundle is an independent read
+      // but must complete before buildAdminHubReadModel.
       const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
       const contentBundle = await readSubjectContentBundle(db, accountId, 'spelling');
       const learnerBundles = {};
@@ -8879,24 +8899,41 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         limit: auditLimit,
       });
       const nowTs = nowFactory();
-      const demoOperations = await readDemoOperationSummary(db, nowTs);
-      const monsterVisualConfig = await readMonsterVisualConfigState(db, nowTs);
-      const dashboardKpis = await readDashboardKpis(db, { now: nowTs, actorAccountId: accountId });
-      const opsActivityStream = await listRecentMutationReceipts(db, {
-        now: nowTs,
-        actorAccountId: accountId,
-        limit: OPS_ACTIVITY_STREAM_DEFAULT_LIMIT,
-      });
-      const accountOpsMetadata = await readAccountOpsMetadataDirectory(db, {
-        now: nowTs,
-        actorAccountId: accountId,
-        actorPlatformRole: accountPlatformRole(account),
-      });
-      const errorLogSummary = await readOpsErrorEventSummary(db, {
-        now: nowTs,
-        actorAccountId: accountId,
-        limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
-      });
+
+      // P3 U1 (R22): parallelise independent queries. These share no
+      // read-dependency after the learner bundles are loaded. The pre-
+      // resolved `actor` row is threaded so none of them re-query
+      // adult_accounts for the admin-role check.
+      const [
+        demoOperations,
+        monsterVisualConfig,
+        dashboardKpis,
+        opsActivityStream,
+        accountOpsMetadata,
+        errorLogSummary,
+      ] = await Promise.all([
+        readDemoOperationSummary(db, nowTs),
+        readMonsterVisualConfigState(db, nowTs),
+        readDashboardKpis(db, { now: nowTs, actorAccountId: accountId, actor }),
+        listRecentMutationReceipts(db, {
+          now: nowTs,
+          actorAccountId: accountId,
+          actor,
+          limit: OPS_ACTIVITY_STREAM_DEFAULT_LIMIT,
+        }),
+        readAccountOpsMetadataDirectory(db, {
+          now: nowTs,
+          actorAccountId: accountId,
+          actorPlatformRole: accountPlatformRole(account),
+          actor,
+        }),
+        readOpsErrorEventSummary(db, {
+          now: nowTs,
+          actorAccountId: accountId,
+          actor,
+          limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
+        }),
+      ]);
       // Phase E UX-1: surface the build's current release hash on the
       // admin hub payload so `ErrorLogCentrePanel` can pre-fill the
       // "New in release" filter and the drawer helper text. The value

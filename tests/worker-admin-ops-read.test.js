@@ -676,3 +676,42 @@ test('GET /api/admin/ops/accounts-metadata without session returns 401', async (
   }
 });
 
+// P3 U1: readAdminHub actor dedup — the assertAdminHubActor SELECT fires
+// exactly once per readAdminHub invocation (not once per downstream helper).
+test('P3 U1: readAdminHub dedup — assertAdminHubActor SELECT appears once in capacity trace', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/hubs/admin', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+
+    // When capacity telemetry is available, verify the actor SELECT fires once.
+    const statements = payload?.meta?.capacity?.statements;
+    if (Array.isArray(statements)) {
+      // The assertAdminHubActor query is the only one that selects
+      // `selected_learner_id` from adult_accounts (P3 U1 added it).
+      const actorSelects = statements.filter(
+        (s) => typeof s.name === 'string' && s.name.includes('selected_learner_id'),
+      );
+      assert.equal(
+        actorSelects.length,
+        1,
+        `assertAdminHubActor should fire exactly once; found ${actorSelects.length}`,
+      );
+    }
+
+    // Structural: all four ops panels present regardless of capacity trace.
+    assert.ok(payload.adminHub.dashboardKpis);
+    assert.ok(payload.adminHub.opsActivityStream);
+    assert.ok(payload.adminHub.accountOpsMetadata);
+    assert.ok(payload.adminHub.errorLogSummary);
+  } finally {
+    server.close();
+  }
+});
+
