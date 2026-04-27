@@ -5,6 +5,17 @@ import { projectGrammarRewards } from '../../projections/rewards.js';
 import { createServerGrammarEngine } from './engine.js';
 import { buildGrammarReadModel } from './read-models.js';
 import { resolveProjectionInput } from '../projection-input.js';
+import {
+  deriveGrammarConceptStarEvidence,
+  computeGrammarMonsterStars,
+} from '../../../../shared/grammar/grammar-stars.js';
+import { GRAMMAR_EVENT_TYPES } from '../../../../src/subjects/grammar/event-hooks.js';
+import {
+  GRAMMAR_AGGREGATE_CONCEPTS,
+  GRAMMAR_MONSTER_CONCEPTS,
+  monsterIdForGrammarConcept,
+} from '../../../../src/platform/game/mastery/grammar.js';
+import { GRAMMAR_GRAND_MONSTER_ID } from '../../../../src/platform/game/mastery/shared.js';
 
 const GRAMMAR_COMMANDS = Object.freeze([
   'start-session',
@@ -23,6 +34,106 @@ const GRAMMAR_COMMANDS = Object.freeze([
   'save-transfer-evidence',
   'reset-learner',
 ]);
+
+/**
+ * Derives star-evidence-updated events for concepts affected by an answer.
+ *
+ * For each concept touched by answer-submitted events, computes Stars from
+ * the post-answer engine state. For each monster whose computed Stars exceed
+ * the current starHighWater from the game state, emits a star-evidence-updated
+ * event that the reward subscriber will handle to persist the latch.
+ *
+ * The engine remains Star-unaware; this derivation happens at the command
+ * handler layer, preserving the P5 architecture boundary.
+ */
+function deriveStarEvidenceEvents({ domainEvents, engineState, learnerId, gameState }) {
+  // Collect concept IDs from answer-submitted events.
+  const answerEvents = domainEvents.filter(
+    (e) => e && e.type === 'grammar.answer-submitted',
+  );
+  if (!answerEvents.length) return [];
+
+  const affectedConceptIds = new Set();
+  for (const event of answerEvents) {
+    const ids = Array.isArray(event.conceptIds) ? event.conceptIds : [];
+    for (const id of ids) {
+      if (GRAMMAR_AGGREGATE_CONCEPTS.includes(id)) affectedConceptIds.add(id);
+    }
+  }
+  if (!affectedConceptIds.size) return [];
+
+  // For each affected concept, derive evidence tiers from the post-answer
+  // engine state.
+  const concepts = engineState?.mastery?.concepts || {};
+  const recentAttempts = Array.isArray(engineState?.recentAttempts)
+    ? engineState.recentAttempts
+    : [];
+
+  // Determine which monsters are affected by the answered concepts.
+  const monsterConceptMap = new Map(); // monsterId → Set<conceptId>
+  for (const conceptId of affectedConceptIds) {
+    // Always add to Concordium.
+    if (!monsterConceptMap.has(GRAMMAR_GRAND_MONSTER_ID)) {
+      monsterConceptMap.set(GRAMMAR_GRAND_MONSTER_ID, new Set());
+    }
+    monsterConceptMap.get(GRAMMAR_GRAND_MONSTER_ID).add(conceptId);
+
+    // Add to direct monster.
+    const directId = monsterIdForGrammarConcept(conceptId);
+    if (directId) {
+      if (!monsterConceptMap.has(directId)) monsterConceptMap.set(directId, new Set());
+      monsterConceptMap.get(directId).add(conceptId);
+    }
+  }
+
+  const starEvents = [];
+  const codexState = gameState || {};
+
+  for (const [monsterId, _affectedConcepts] of monsterConceptMap) {
+    // Compute evidence for ALL concepts of this monster (not just the affected
+    // ones) because computeGrammarMonsterStars aggregates across all concepts.
+    const monsterConceptIds = monsterId === GRAMMAR_GRAND_MONSTER_ID
+      ? GRAMMAR_AGGREGATE_CONCEPTS
+      : (GRAMMAR_MONSTER_CONCEPTS[monsterId] || []);
+
+    const evidenceMap = {};
+    for (const conceptId of monsterConceptIds) {
+      evidenceMap[conceptId] = deriveGrammarConceptStarEvidence({
+        conceptId,
+        conceptNode: concepts[conceptId] || null,
+        recentAttempts,
+      });
+    }
+
+    const starResult = computeGrammarMonsterStars(monsterId, evidenceMap);
+    if (starResult.stars < 1) continue;
+
+    // Read current starHighWater from monster codex state.
+    const monsterEntry = codexState[monsterId];
+    const existingHW = monsterEntry && typeof monsterEntry === 'object'
+      ? Math.max(0, Math.floor(Number(monsterEntry.starHighWater) || 0))
+      : 0;
+
+    if (starResult.stars > existingHW) {
+      // Emit for the first affected concept that maps to this monster.
+      // The subscriber looks up the direct monster from the conceptId.
+      const representativeConcept = [..._affectedConcepts][0];
+      starEvents.push({
+        id: `grammar.star-evidence.${learnerId || 'learner'}.${monsterId}.${Date.now()}`,
+        type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+        subjectId: 'grammar',
+        learnerId,
+        conceptId: representativeConcept,
+        monsterId,
+        computedStars: starResult.stars,
+        previousStarHighWater: existingHW,
+        createdAt: Date.now(),
+      });
+    }
+  }
+
+  return starEvents;
+}
 
 export function createGrammarCommandHandlers({ now, random } = {}) {
   async function handleGrammarCommand(command, context) {
@@ -67,18 +178,33 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
     const projectionState = projectionInput
       ? projectionInput.projectionState
       : { gameState: null, events: [] };
+    // U4 (Phase 6): derive star-evidence-updated events from the post-answer
+    // engine state. These are injected into the domain event stream before
+    // the reward projection so the subscriber can persist starHighWater at
+    // evidence time rather than deferring to concept-secured.
+    const starEvidenceEvents = result.changed === false
+      ? []
+      : deriveStarEvidenceEvents({
+          domainEvents: result.events,
+          engineState: result.state,
+          learnerId: command.learnerId,
+          gameState: projectionState.gameState?.['monster-codex'] || null,
+        });
+    const allDomainEvents = starEvidenceEvents.length
+      ? [...result.events, ...starEvidenceEvents]
+      : result.events;
     const projectedRewards = result.changed === false
       ? { gameState: projectionState.gameState, changedGameState: null, rewardEvents: [] }
       : projectGrammarRewards({
           learnerId: command.learnerId,
-          domainEvents: result.events,
+          domainEvents: allDomainEvents,
           gameState: projectionState.gameState,
           random,
         });
     const projectedEvents = result.changed === false
       ? { events: [], domainEvents: [], reactionEvents: [], toastEvents: [] }
       : combineCommandEvents({
-          domainEvents: result.events,
+          domainEvents: allDomainEvents,
           reactionEvents: projectedRewards.rewardEvents,
           existingEvents: projectionState.events,
           seedTokens: projectionInput?.tokens || [],

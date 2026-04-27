@@ -477,6 +477,92 @@ export function recordGrammarConceptMastery({
   return events;
 }
 
+/**
+ * Lightweight latch-write for sub-secure Star evidence.
+ *
+ * Updates `starHighWater = max(existing, computedStars)` on the specified
+ * monster only, without touching the `mastered[]` array (that stays exclusive
+ * to concept-secured via `recordGrammarConceptMastery`).
+ *
+ * The caller (event-hooks subscriber) is responsible for passing the correct
+ * `monsterId` from each `star-evidence-updated` event. The command handler
+ * emits one event per monster with monster-specific `computedStars`, so each
+ * call updates exactly one monster — preventing cross-inflation where a
+ * direct monster's higher Stars would overwrite Concordium's lower value.
+ *
+ * Sets `caught: true` if Stars >= 1 and was previously false, emitting a
+ * `caught` reward event for the newly-caught monster.
+ *
+ * Returns an array of reward events (caught event if the monster newly
+ * crossed the threshold, otherwise empty).
+ */
+export function updateGrammarStarHighWater({
+  learnerId,
+  monsterId,
+  conceptId,
+  computedStars,
+  gameStateRepository,
+  random = Math.random,
+} = {}) {
+  if (!GRAMMAR_AGGREGATE_CONCEPTS.includes(conceptId)) return [];
+  const stars = Math.max(0, Math.floor(Number(computedStars) || 0));
+  if (stars < 1) return [];
+
+  // Resolve the target monster. When monsterId is provided, use it directly.
+  // Fall back to the direct monster for the concept (backward compat).
+  const targetMonsterId = monsterId || monsterIdForGrammarConcept(conceptId) || GRAMMAR_GRAND_MONSTER_ID;
+
+  const before = ensureMonsterBranches(learnerId, gameStateRepository, {
+    random,
+    monsterIds: GRAMMAR_MONSTER_IDS,
+  });
+
+  const entry = isPlainObject(before[targetMonsterId])
+    ? before[targetMonsterId]
+    : { mastered: [], caught: false };
+  const existingHW = safeStarHighWater(entry.starHighWater);
+  if (stars <= existingHW) {
+    // No change needed — existing high-water already covers this update.
+    return [];
+  }
+
+  const wasCaught = entry.caught === true;
+  const nowCaught = wasCaught || stars >= 1;
+  const total = grammarMonsterConceptTotal(targetMonsterId);
+  const after = {
+    ...before,
+    [targetMonsterId]: {
+      ...entry,
+      caught: nowCaught,
+      conceptTotal: total,
+      starHighWater: Math.min(GRAMMAR_MONSTER_STAR_MAX, stars),
+    },
+  };
+
+  saveMonsterState(learnerId, after, gameStateRepository);
+
+  const events = [];
+  if (!wasCaught && nowCaught) {
+    const beforeProgress = progressForGrammarMonster(before, targetMonsterId, {
+      conceptTotal: total,
+    });
+    const afterProgress = progressForGrammarMonster(after, targetMonsterId, {
+      conceptTotal: total,
+    });
+    const ev = grammarEventFromTransition({
+      learnerId,
+      monsterId: targetMonsterId,
+      releaseId: GRAMMAR_REWARD_RELEASE_ID,
+      conceptId,
+      masteryKey: grammarMasteryKey(conceptId),
+      createdAt: Date.now(),
+    }, beforeProgress, afterProgress);
+    if (ev) events.push(ev);
+  }
+
+  return events;
+}
+
 export function activeGrammarMonsterSummaryFromState(state = {}) {
   return grammarMonsterSummaryFromState(state)
     .filter((entry) => entry.progress.caught || entry.progress.mastered > 0);

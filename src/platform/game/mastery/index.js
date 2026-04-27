@@ -34,6 +34,7 @@ export {
   normaliseGrammarRewardState,
   progressForGrammarMonster,
   recordGrammarConceptMastery,
+  updateGrammarStarHighWater,
 } from './grammar.js';
 export {
   GRAMMAR_GRAND_MONSTER_ID,
