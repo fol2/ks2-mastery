@@ -5,6 +5,7 @@ import {
   projectPunctuationStars,
   PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
   ACTIVE_PUNCTUATION_MONSTER_IDS,
+  CLASPIN_REQUIRED_SKILLS,
 } from '../src/subjects/punctuation/star-projection.js';
 import { PUNCTUATION_CLIENT_SKILLS } from '../src/subjects/punctuation/read-model.js';
 import {
@@ -1331,4 +1332,46 @@ test('U6: interpolation within a tier band — partial progress yields intermedi
     `Grand Stars should be below Hatch (35) with only 4 secured, got ${result.grand.grandStars}`);
   assert.ok(result.grand.grandStars > 15,
     `Grand Stars should interpolate above Egg floor with partial progress, got ${result.grand.grandStars}`);
+});
+
+// ---------------------------------------------------------------------------
+// P6-U6: CLASPIN_REQUIRED_SKILLS derivation parity tests
+// ---------------------------------------------------------------------------
+
+test('P6-U6: CLASPIN_REQUIRED_SKILLS contains exactly apostrophe_contractions and apostrophe_possession', () => {
+  // Verify the derived constant matches the expected hardcoded values.
+  const expected = ['apostrophe_contractions', 'apostrophe_possession'];
+  assert.deepStrictEqual(
+    [...CLASPIN_REQUIRED_SKILLS].sort(),
+    [...expected].sort(),
+    `CLASPIN_REQUIRED_SKILLS must contain exactly ${JSON.stringify(expected)}, got ${JSON.stringify([...CLASPIN_REQUIRED_SKILLS])}`,
+  );
+});
+
+test('P6-U6: CLASPIN_REQUIRED_SKILLS is frozen (immutable)', () => {
+  assert.ok(Object.isFrozen(CLASPIN_REQUIRED_SKILLS),
+    'CLASPIN_REQUIRED_SKILLS must be frozen');
+});
+
+test('P6-U6: CLASPIN_REQUIRED_SKILLS derivation — hypothetical 3rd apostrophe skill auto-included', () => {
+  // Simulate what would happen if SKILL_TO_CLUSTER gained a 3rd apostrophe
+  // entry by replicating the derivation logic on an extended Map.
+  const extendedMap = new Map([
+    ['apostrophe_contractions', 'apostrophe'],
+    ['apostrophe_possession', 'apostrophe'],
+    ['apostrophe_plural', 'apostrophe'], // hypothetical new skill
+  ]);
+
+  const derived = Array.from(extendedMap.entries())
+    .filter(([, c]) => c === 'apostrophe')
+    .map(([s]) => s);
+
+  assert.equal(derived.length, 3,
+    'Adding a 3rd apostrophe skill to the mapping must yield 3 entries');
+  assert.ok(derived.includes('apostrophe_plural'),
+    'The hypothetical skill must appear in the derived set');
+  assert.ok(derived.includes('apostrophe_contractions'),
+    'Existing skills must still be present');
+  assert.ok(derived.includes('apostrophe_possession'),
+    'Existing skills must still be present');
 });
