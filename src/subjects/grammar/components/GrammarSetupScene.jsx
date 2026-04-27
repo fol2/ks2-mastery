@@ -12,7 +12,6 @@ import {
   GRAMMAR_SECONDARY_MODE_LINKS,
   GRAMMAR_MONSTER_STRIP_CHILD_COPY,
   buildGrammarDashboardModel,
-  buildGrammarMonsterStripModel,
 } from './grammar-view-model.js';
 // SH2-U5: fresh-learner `dashboard.isEmpty` branch surfaces the canonical
 // three-part copy through the shared primitive. The pre-U5 bespoke
@@ -155,21 +154,10 @@ function MoreModeCard({ card, selected, disabled, actions }) {
 }
 
 export function GrammarSetupScene({ learner, grammar, rewardState, actions, runtimeReadOnly }) {
-  const dashboard = buildGrammarDashboardModel(grammar, learner, rewardState);
-  const selectedMode = dashboard.primaryMode;
-  const miniTestMode = selectedMode === 'satsset';
-  const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
-  const lengthOptions = miniTestMode ? [8, 12] : [3, 5, 8, 10, 15];
-  const selectedLength = miniTestMode
-    ? (Number(grammar.prefs?.roundLength) >= 10 ? 12 : 8)
-    : (Number(grammar.prefs?.roundLength) || 5);
-  const selectedSpeechRate = normaliseGrammarSpeechRate(grammar.prefs?.speechRate);
-  const { title: heroTitle, subtitle: heroSubtitle } = GRAMMAR_DASHBOARD_HERO;
-
-  // U7 Phase 5: build monster strip from reward state + mastery concept nodes.
-  // The grammar read-model carries concept nodes under analytics.concepts as
-  // a flat array; we index by id for the strip builder. recentAttempts come
-  // from the engine state if available.
+  // U6 Phase 6: build concept nodes map + recent attempts from the grammar
+  // read-model, then thread them into the dashboard model so that
+  // dashboard.monsterStrip reflects live evidence derivation rather than
+  // only the persisted starHighWater latch.
   const conceptNodesMap = {};
   const analyticsConcepts = Array.isArray(grammar?.analytics?.concepts)
     ? grammar.analytics.concepts : [];
@@ -179,7 +167,17 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
     }
   }
   const recentAttempts = Array.isArray(grammar?.recentAttempts) ? grammar.recentAttempts : [];
-  const monsterStrip = buildGrammarMonsterStripModel(rewardState, conceptNodesMap, recentAttempts);
+
+  const dashboard = buildGrammarDashboardModel(grammar, learner, rewardState, conceptNodesMap, recentAttempts);
+  const selectedMode = dashboard.primaryMode;
+  const miniTestMode = selectedMode === 'satsset';
+  const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
+  const lengthOptions = miniTestMode ? [8, 12] : [3, 5, 8, 10, 15];
+  const selectedLength = miniTestMode
+    ? (Number(grammar.prefs?.roundLength) >= 10 ? 12 : 8)
+    : (Number(grammar.prefs?.roundLength) || 5);
+  const selectedSpeechRate = normaliseGrammarSpeechRate(grammar.prefs?.speechRate);
+  const { title: heroTitle, subtitle: heroSubtitle } = GRAMMAR_DASHBOARD_HERO;
 
   return (
     <section
@@ -207,7 +205,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
 
       {/* U7: Monster strip — 4 active monsters with Star progress */}
       <section className="grammar-monster-strip" aria-label="Your Grammar creatures">
-        {monsterStrip.map((entry) => (
+        {dashboard.monsterStrip.map((entry) => (
           <MonsterStripEntry entry={entry} key={entry.monsterId} />
         ))}
         <p className="grammar-monster-strip-hint">{GRAMMAR_MONSTER_STRIP_CHILD_COPY}</p>

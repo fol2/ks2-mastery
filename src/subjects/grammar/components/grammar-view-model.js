@@ -518,7 +518,7 @@ function concordiumProgressFromReward(rewardState) {
  * `concordiumProgress.mastered / total`. New Star-aware consumers read
  * `monsterStrip[i].stars / starMax` instead.
  */
-export function buildGrammarDashboardModel(grammar, _learner, rewardState) {
+export function buildGrammarDashboardModel(grammar, _learner, rewardState, masteryConceptNodes = null, recentAttempts = null) {
   const safeGrammar = grammar && typeof grammar === 'object' && !Array.isArray(grammar) ? grammar : {};
   const progressSnapshot = safeGrammar.analytics?.progressSnapshot && typeof safeGrammar.analytics.progressSnapshot === 'object'
     ? safeGrammar.analytics.progressSnapshot
@@ -555,7 +555,7 @@ export function buildGrammarDashboardModel(grammar, _learner, rewardState) {
     todayCards: Object.freeze(todayCards),
     isEmpty,
     concordiumProgress: concordiumProgressFromReward(rewardState),
-    monsterStrip: buildGrammarMonsterStripModel(rewardState, null, null),
+    monsterStrip: buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, recentAttempts),
     primaryMode,
     moreModes: GRAMMAR_MORE_PRACTICE_MODES,
     writingTryAvailable: aiEnabled,
