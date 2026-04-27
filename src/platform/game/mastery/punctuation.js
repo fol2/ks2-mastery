@@ -55,7 +55,7 @@ function punctuationLegacyStarFloor(stage) {
  * would return 0 for undefined, permanently disabling the legacy floor on
  * subsequent reads.
  */
-function seedStarHighWater(entry, total) {
+function seedStarHighWater(entry) {
   if (entry.starHighWater !== undefined && entry.starHighWater !== null) {
     return safeStarHighWater(entry.starHighWater);
   }
@@ -268,8 +268,8 @@ export function recordPunctuationRewardUnitMastery({
   // not erase the learner's visual stage. The actual Star computation
   // happens on the client read path; the reward layer only preserves the
   // latch field so it survives round-trips.
-  const directHW = seedStarHighWater(directEntry, publishedTotal);
-  const aggregateHW = seedStarHighWater(aggregateEntry, aggregatePublishedTotal);
+  const directHW = seedStarHighWater(directEntry);
+  const aggregateHW = seedStarHighWater(aggregateEntry);
 
   const after = {
     ...before,

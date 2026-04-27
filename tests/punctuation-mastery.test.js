@@ -674,3 +674,127 @@ test('starHighWater: read path returns 0 for empty state (no starHighWater field
   const progress = progressForPunctuationMonster({}, 'pealark', { publishedTotal: 5 });
   assert.equal(progress.starHighWater, 0, 'empty state starHighWater should be 0');
 });
+
+// ---------------------------------------------------------------------------
+// 9. Review follow-up tests (Phase 6 U1)
+// ---------------------------------------------------------------------------
+
+test('starHighWater: explicit starHighWater=0 skips legacy floor (post-P6 at zero)', () => {
+  const repository = makeRepository({
+    pealark: {
+      mastered: [
+        masteryKey('endmarks', 'sentence-endings-core'),
+        masteryKey('speech', 'speech-core'),
+        masteryKey('boundary', 'semicolons-core'),
+        masteryKey('boundary', 'dash-clauses-core'),
+        masteryKey('boundary', 'hyphens-core'),
+      ],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: 0,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [
+        masteryKey('endmarks', 'sentence-endings-core'),
+        masteryKey('speech', 'speech-core'),
+        masteryKey('boundary', 'semicolons-core'),
+        masteryKey('boundary', 'dash-clauses-core'),
+        masteryKey('boundary', 'hyphens-core'),
+      ],
+      caught: true,
+      publishedTotal: 14,
+      starHighWater: 0,
+      branch: 'b1',
+    },
+  });
+  // 5 mastered on pealark -> stage 3, legacy floor would be 60.
+  // But starHighWater: 0 is explicitly present, so seedStarHighWater returns
+  // safeStarHighWater(0) = 0, NOT legacy floor 60.
+  recordPunctuationRewardUnitMastery({
+    learnerId: 'learner-explicit-zero',
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'comma_flow',
+    rewardUnitId: 'list-commas-core',
+    masteryKey: masteryKey('comma_flow', 'list-commas-core'),
+    monsterId: 'curlune',
+    publishedTotal: 7,
+    aggregatePublishedTotal: 14,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  assert.equal(state.quoral.starHighWater, 0,
+    'explicit starHighWater: 0 must NOT be replaced by legacy floor');
+  assert.equal(state.pealark.starHighWater, 0,
+    'pealark starHighWater: 0 survives unchanged through spread');
+});
+
+test('starHighWater: epsilon guard — 9.999999999999998 rounds to 10 on read path', () => {
+  // Floating-point arithmetic can produce values like 9.999999999999998
+  // that should logically be 10. The safeStarHighWater function uses
+  // Math.floor(n + 1e-9) to guard against this.
+  const state = {
+    pealark: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: 9.999999999999998,
+    },
+  };
+  const progress = progressForPunctuationMonster(state, 'pealark', { publishedTotal: 5 });
+  assert.equal(progress.starHighWater, 10,
+    'safeStarHighWater must round 9.999999999999998 to 10, not truncate to 9');
+});
+
+test('starHighWater: Carillon pre-flip seed derives from raw Quoral entry, not normalised union', () => {
+  // A pre-flip Carillon-only learner has mastered keys only on Carillon
+  // (the old grand monster). The normaliser unions those into Quoral for
+  // display, but seedStarHighWater reads the raw Quoral entry (before
+  // normalisation) because it is called on directEntry/aggregateEntry
+  // which come from the raw stored state.
+  //
+  // This is acceptable: pre-flip Carillon-only learners exist only in
+  // dev/test, never production. The test documents the current behaviour
+  // explicitly so that any future change to the seed source is caught.
+  const repository = makeRepository({
+    carillon: {
+      mastered: [
+        masteryKey('endmarks', 'sentence-endings-core'),
+        masteryKey('speech', 'speech-core'),
+        masteryKey('boundary', 'semicolons-core'),
+        masteryKey('boundary', 'dash-clauses-core'),
+        masteryKey('boundary', 'hyphens-core'),
+      ],
+      caught: true,
+      publishedTotal: 14,
+    },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+    },
+  });
+  recordPunctuationRewardUnitMastery({
+    learnerId: 'learner-carillon-preflip',
+    releaseId: PUNCTUATION_RELEASE_ID,
+    clusterId: 'comma_flow',
+    rewardUnitId: 'list-commas-core',
+    masteryKey: masteryKey('comma_flow', 'list-commas-core'),
+    monsterId: 'curlune',
+    publishedTotal: 7,
+    aggregatePublishedTotal: 14,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  // Raw Quoral had 0 mastered before the write -> stage 0 -> legacy floor 0.
+  // Even though the normaliser would union Carillon's 5 keys into Quoral
+  // (giving mastered=5 -> stage 3 -> floor 60), seedStarHighWater reads
+  // the raw aggregateEntry, not the normalised view.
+  assert.equal(state.quoral.starHighWater, 0,
+    'Quoral starHighWater must derive from raw entry (0 mastered -> floor 0), not normalised union');
+  const progress = progressForPunctuationMonster(state, 'quoral', { publishedTotal: 14 });
+  assert.equal(progress.mastered, 6,
+    'normalised Quoral shows 5 Carillon + 1 new = 6 mastered on read');
+});
