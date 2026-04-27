@@ -1,6 +1,6 @@
 import React from 'react';
 import { renderRestrictedMarkdown } from '../../platform/ops/active-messages.js';
-import { normaliseMarketingMessage } from '../../platform/hubs/admin-read-model.js';
+import { normaliseMarketingMessage } from '../../platform/hubs/admin-marketing-message.js';
 import { createAdminMarketingApi } from '../../platform/hubs/admin-marketing-api.js';
 import { uid } from '../../platform/core/utils.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';

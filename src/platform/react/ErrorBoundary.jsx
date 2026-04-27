@@ -1,5 +1,6 @@
 import React from 'react';
 import { isChunkLoadError } from './chunk-load-detect.js';
+import { clearChunkReloadAttempt, scheduleChunkReloadOnce } from './chunk-load-recovery.js';
 
 export function DefaultErrorFallback({ error }) {
   // SH2-U8: inline style prop migrated to `.error-boundary-body` class
@@ -46,6 +47,7 @@ export function ChunkLoadErrorFallback() {
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
+    clearChunkReloadAttempt();
     this.state = { error: null, isChunkError: false };
   }
 
@@ -55,6 +57,7 @@ export class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     this.props.onError?.(error, info);
+    scheduleChunkReloadOnce(error);
   }
 
   render() {

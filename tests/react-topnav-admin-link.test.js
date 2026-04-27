@@ -6,17 +6,19 @@ import { renderTopNavFixture } from './helpers/react-render.js';
 test('Admin user sees "Admin" link in TopNav', async () => {
   const html = await renderTopNavFixture({ platformRole: 'admin' });
 
-  assert.match(html, /class="topnav-admin-link"/);
+  assert.match(html, /class="topnav-link topnav-admin-link"/);
   assert.match(html, /data-action="open-admin-hub"/);
-  assert.match(html, />Admin<\/button>/);
+  assert.match(html, /href="\/admin"/);
+  assert.match(html, />Admin<\/a>/);
 });
 
 test('Ops user sees "Admin" link in TopNav', async () => {
   const html = await renderTopNavFixture({ platformRole: 'ops' });
 
-  assert.match(html, /class="topnav-admin-link"/);
+  assert.match(html, /class="topnav-link topnav-admin-link"/);
   assert.match(html, /data-action="open-admin-hub"/);
-  assert.match(html, />Admin<\/button>/);
+  assert.match(html, /href="\/admin"/);
+  assert.match(html, />Admin<\/a>/);
 });
 
 test('Parent user does NOT see "Admin" link in TopNav', async () => {
@@ -40,14 +42,13 @@ test('Undefined platformRole does NOT show "Admin" link', async () => {
   assert.doesNotMatch(html, /data-action="open-admin-hub"/);
 });
 
-test('Clicking Admin link targets open-admin-hub action', async () => {
+test('Clicking Admin link targets the no-store /admin document route', async () => {
   const html = await renderTopNavFixture({ platformRole: 'admin' });
 
-  // SSR cannot fire click handlers, but the data-action attribute confirms
-  // the button is wired to the correct action dispatch target.
+  // Use a document navigation so stale app shells do not fetch an old
+  // code-split AdminHubSurface chunk after a deploy.
   assert.match(html, /data-action="open-admin-hub"/);
-  // The button must also be a real <button> element for accessibility.
-  assert.match(html, /<button[^>]*class="topnav-admin-link"[^>]*>/);
+  assert.match(html, /<a[^>]*class="topnav-link topnav-admin-link"[^>]*href="\/admin"[^>]*>/);
 });
 
 test('When on admin screen, link shows active state', async () => {
@@ -60,7 +61,7 @@ test('When on admin screen, link shows active state', async () => {
 test('When NOT on admin screen, link does not show active state', async () => {
   const html = await renderTopNavFixture({ platformRole: 'admin', currentScreen: 'dashboard' });
 
-  assert.match(html, /class="topnav-admin-link"/);
+  assert.match(html, /class="topnav-link topnav-admin-link"/);
   assert.doesNotMatch(html, /is-active/);
   assert.doesNotMatch(html, /aria-current/);
 });

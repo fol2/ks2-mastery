@@ -2453,6 +2453,8 @@ textarea:focus-visible {
 .topnav-link,
 .profile-nav-link {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
   min-height: 38px;
   padding: 7px 13px;
   border: 1px solid var(--line);
@@ -2462,6 +2464,7 @@ textarea:focus-visible {
   font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
+  text-decoration: none;
   transition: border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
 }
 
@@ -11590,4 +11593,3 @@ html { scroll-behavior: smooth; }
 .admin-registry-section-eyebrow {
   margin-bottom: 12px;
 }
-
