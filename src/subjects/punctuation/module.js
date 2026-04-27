@@ -83,8 +83,18 @@ export const punctuationModule = {
   getDashboardStats(appState, { service }) {
     const learnerId = appState.learners.selectedId;
     const stats = service?.getStats?.(learnerId) || {};
+    // U4: pct derives from starView.grand.grandStars when available (0-100
+    // scale, already a percentage). Falls back to the legacy
+    // securedRewardUnits ratio when the star projection is not yet wired
+    // into the Worker stats path.
+    const grandStars = stats.grandStars;
+    const pct = grandStars != null
+      ? Math.round(grandStars)
+      : (stats.publishedRewardUnits
+        ? Math.round(((stats.securedRewardUnits || 0) / stats.publishedRewardUnits) * 100)
+        : 0);
     return {
-      pct: stats.publishedRewardUnits ? Math.round(((stats.securedRewardUnits || 0) / stats.publishedRewardUnits) * 100) : 0,
+      pct,
       due: stats.due || 0,
       streak: stats.securedRewardUnits || 0,
       nextUp: stats.weak ? 'Repair weak punctuation' : stats.due ? 'Due review' : 'Smart Review',

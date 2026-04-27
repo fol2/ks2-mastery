@@ -255,3 +255,142 @@ test('fourteen published units with zero secured keeps overview and dashboard ac
   );
   assert.equal(dashboardPct, 0);
 });
+
+// ---------------------------------------------------------------------------
+// U4: starView wiring tests
+// ---------------------------------------------------------------------------
+
+test('U4: fresh learner starView has all-zero entries for direct monsters and grand', () => {
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: freshSubjectState(),
+    practiceSessions: [],
+    now: () => Date.UTC(2026, 3, 25),
+  });
+  assert.ok(model.starView, 'starView must exist on the read-model');
+  assert.ok(model.starView.perMonster, 'starView.perMonster must exist');
+  assert.ok(model.starView.grand, 'starView.grand must exist');
+
+  for (const monsterId of ['pealark', 'claspin', 'curlune']) {
+    const m = model.starView.perMonster[monsterId];
+    assert.ok(m, `starView.perMonster.${monsterId} must exist`);
+    assert.equal(m.tryStars, 0, `${monsterId} tryStars`);
+    assert.equal(m.practiceStars, 0, `${monsterId} practiceStars`);
+    assert.equal(m.secureStars, 0, `${monsterId} secureStars`);
+    assert.equal(m.masteryStars, 0, `${monsterId} masteryStars`);
+    assert.equal(m.total, 0, `${monsterId} total`);
+    assert.equal(m.starDerivedStage, 0, `${monsterId} starDerivedStage`);
+  }
+
+  assert.equal(model.starView.grand.grandStars, 0, 'grand.grandStars');
+  assert.equal(model.starView.grand.total, 100, 'grand.total');
+  assert.equal(model.starView.grand.starDerivedStage, 0, 'grand.starDerivedStage');
+});
+
+test('U4: starView shape includes all expected fields per direct monster', () => {
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: freshSubjectState(),
+    practiceSessions: [],
+    now: () => Date.UTC(2026, 3, 25),
+  });
+  const expectedFields = ['tryStars', 'practiceStars', 'secureStars', 'masteryStars', 'total', 'starDerivedStage'];
+  for (const monsterId of ['pealark', 'claspin', 'curlune']) {
+    const m = model.starView.perMonster[monsterId];
+    for (const field of expectedFields) {
+      assert.ok(field in m, `starView.perMonster.${monsterId} must have field ${field}`);
+    }
+  }
+  const grandFields = ['grandStars', 'total', 'starDerivedStage'];
+  for (const field of grandFields) {
+    assert.ok(field in model.starView.grand, `starView.grand must have field ${field}`);
+  }
+});
+
+test('U4: seeded secured units produce non-zero starView values', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const subjectState = freshSubjectState();
+
+  // Seed items that are secure (meet the streak/accuracy/span gates).
+  subjectState.data.progress.items['se_choose_endmark'] = {
+    attempts: 10, correct: 9, incorrect: 1, streak: 4, lapses: 0,
+    dueAt: 0, firstCorrectAt: now - (14 * DAY_MS), lastCorrectAt: now, lastSeen: now,
+  };
+
+  // Seed secured reward unit.
+  const k1 = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1, releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks', rewardUnitId: 'sentence-endings-core', securedAt: now - 10_000,
+  };
+
+  // Seed attempts so the star projection maps items to Pealark.
+  for (let i = 0; i < 5; i++) {
+    subjectState.data.progress.attempts.push({
+      ts: now - (i * 60_000),
+      sessionId: 'test-session',
+      itemId: i === 0 ? 'se_choose_endmark' : `se_item_${i}`,
+      itemMode: 'choose',
+      skillIds: ['sentence_endings'],
+      rewardUnitId: 'sentence-endings-core',
+      sessionMode: 'smart',
+      correct: true,
+      supportLevel: 0,
+    });
+  }
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  const pealark = model.starView.perMonster.pealark;
+  assert.ok(pealark.tryStars > 0, 'Pealark tryStars must be > 0 with attempts');
+  assert.ok(pealark.total > 0, 'Pealark total must be > 0');
+  assert.ok(pealark.secureStars > 0, 'Pealark secureStars must be > 0 with secured evidence');
+  // Claspin should remain at zero — no apostrophe evidence.
+  assert.equal(model.starView.perMonster.claspin.total, 0);
+});
+
+test('U4: starDerivedStage follows PUNCTUATION_STAR_THRESHOLDS', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const subjectState = freshSubjectState();
+
+  // Seed enough evidence for Pealark to reach at least stage 1 (threshold[1]=10 stars).
+  // Many distinct items + secured unit should push tryStars + practiceStars + secureStars >= 10.
+  for (let i = 0; i < 15; i++) {
+    subjectState.data.progress.items[`se_item_${i}`] = {
+      attempts: 6, correct: 5, incorrect: 1, streak: 4, lapses: 0,
+      dueAt: 0, firstCorrectAt: now - (14 * DAY_MS), lastCorrectAt: now, lastSeen: now,
+    };
+    subjectState.data.progress.attempts.push({
+      ts: now - (i * 60_000),
+      sessionId: 'test-session',
+      itemId: `se_item_${i}`,
+      itemMode: 'choose',
+      skillIds: ['sentence_endings'],
+      rewardUnitId: 'sentence-endings-core',
+      sessionMode: 'smart',
+      correct: true,
+      supportLevel: 0,
+    });
+  }
+
+  const k1 = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1, releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks', rewardUnitId: 'sentence-endings-core', securedAt: now - 10_000,
+  };
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  const pealark = model.starView.perMonster.pealark;
+  // With 15 distinct correct items + 1 secured reward unit, expect total >= 10 → stage >= 1.
+  assert.ok(pealark.total >= 10, `Pealark total should be >= 10, got ${pealark.total}`);
+  assert.ok(pealark.starDerivedStage >= 1, `Pealark starDerivedStage should be >= 1, got ${pealark.starDerivedStage}`);
+});

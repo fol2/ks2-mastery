@@ -14,18 +14,34 @@
 // Grand Stars derive from breadth + deep-secure evidence across ALL clusters,
 // not from summing direct Stars.
 
-import { PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER, ACTIVE_PUNCTUATION_MONSTER_IDS }
-  from './components/punctuation-view-model.js';
+import { MONSTERS_BY_SUBJECT } from '../../platform/game/monsters.js';
 
-// Re-export the mapping so downstream consumers (U4) can import from this
+// U4: import monster roster and cluster→monster mapping directly from
+// monsters.js / inline to avoid circular dependency. read-model.js imports
+// star-projection.js, and punctuation-view-model.js imports from
+// read-model.js — routing through punctuation-view-model.js creates a TDZ.
+const ACTIVE_PUNCTUATION_MONSTER_IDS = Object.freeze(
+  Array.isArray(MONSTERS_BY_SUBJECT?.punctuation)
+    ? [...MONSTERS_BY_SUBJECT.punctuation]
+    : ['pealark', 'curlune', 'claspin', 'quoral'],
+);
+
+// Client-safe cluster → monster mapping. Must stay in lock-step with
+// `PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER` in `punctuation-view-model.js`.
+const PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER = Object.freeze({
+  endmarks: 'pealark',
+  speech: 'pealark',
+  boundary: 'pealark',
+  apostrophe: 'claspin',
+  comma_flow: 'curlune',
+  structure: 'curlune',
+});
+
+// Re-export the mapping so downstream consumers can import from this
 // module without reaching into the view-model.
-export { PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER };
+export { PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER, ACTIVE_PUNCTUATION_MONSTER_IDS };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-// Reward-unit definitions per cluster (client mirror of shared content).
-// Imported from the read-model constant rather than duplicated.
-import { PUNCTUATION_CLIENT_SKILLS } from './read-model.js';
 
 // ---------------------------------------------------------------------------
 // Internal constants
@@ -45,11 +61,28 @@ for (const [clusterId, monsterId] of Object.entries(CLUSTER_TO_MONSTER)) {
   MONSTER_CLUSTERS.get(monsterId).add(clusterId);
 }
 
-// Build skill -> clusterId lookup.
-const SKILL_TO_CLUSTER = new Map();
-for (const skill of PUNCTUATION_CLIENT_SKILLS) {
-  SKILL_TO_CLUSTER.set(skill.id, skill.clusterId);
-}
+// Skill -> clusterId lookup. Inlined here (rather than imported from
+// read-model.js) to avoid a circular dependency: read-model.js imports
+// star-projection.js (U4), and star-projection.js previously imported
+// PUNCTUATION_CLIENT_SKILLS from read-model.js, causing a TDZ error.
+// This mirror must stay in lock-step with `PUNCTUATION_CLIENT_SKILLS`
+// in `read-model.js`; the star-projection tests validate the mapping.
+const SKILL_TO_CLUSTER = new Map([
+  ['sentence_endings', 'endmarks'],
+  ['list_commas', 'comma_flow'],
+  ['apostrophe_contractions', 'apostrophe'],
+  ['apostrophe_possession', 'apostrophe'],
+  ['speech', 'speech'],
+  ['fronted_adverbial', 'comma_flow'],
+  ['parenthesis', 'structure'],
+  ['comma_clarity', 'comma_flow'],
+  ['colon_list', 'structure'],
+  ['semicolon', 'boundary'],
+  ['dash_clause', 'boundary'],
+  ['semicolon_list', 'structure'],
+  ['bullet_points', 'structure'],
+  ['hyphen', 'boundary'],
+]);
 
 // Exact rewardUnitId -> Set<clusterId> lookup.
 // Mirrors `PUNCTUATION_CLIENT_REWARD_UNITS` from read-model.js (not exported).

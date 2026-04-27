@@ -1114,17 +1114,43 @@ function safeNumber(value, fallback = 0) {
   return Number.isFinite(num) && num >= 0 ? Math.floor(num) : fallback;
 }
 
-function activeMonsterProgressFromReward(rewardState) {
+function activeMonsterProgressFromReward(rewardState, starView) {
   const safeReward = rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState)
     ? rewardState
     : {};
+  const safeStarView = starView && typeof starView === 'object' && !Array.isArray(starView)
+    ? starView
+    : null;
+  const perMonster = safeStarView && typeof safeStarView.perMonster === 'object'
+    && !Array.isArray(safeStarView.perMonster)
+    ? safeStarView.perMonster
+    : {};
+  const grand = safeStarView && typeof safeStarView.grand === 'object'
+    && !Array.isArray(safeStarView.grand)
+    ? safeStarView.grand
+    : null;
+
   return ACTIVE_PUNCTUATION_MONSTER_IDS.map((monsterId) => {
     const entry = safeReward[monsterId];
     const masteredList = Array.isArray(entry?.mastered) ? entry.mastered : [];
+    const mastered = masteredList.length || safeNumber(entry?.masteredCount, 0);
+
+    // U4: merge star projection data when available. Direct monsters read
+    // from perMonster[monsterId].total; the grand monster (quoral) reads
+    // from grand.grandStars (NOT grand.total — that field is the cap).
+    const isGrand = monsterId === 'quoral';
+    const starEntry = isGrand ? grand : perMonster[monsterId];
+    const totalStars = starEntry
+      ? safeNumber(isGrand ? starEntry.grandStars : starEntry.total, 0)
+      : 0;
+    const starDerivedStage = starEntry ? safeNumber(starEntry.starDerivedStage, 0) : 0;
+
     return Object.freeze({
       id: monsterId,
       name: punctuationMonsterDisplayName(monsterId),
-      mastered: masteredList.length || safeNumber(entry?.masteredCount, 0),
+      mastered,
+      totalStars,
+      starDerivedStage,
     });
   });
 }
@@ -1142,7 +1168,7 @@ function activeMonsterProgressFromReward(rewardState) {
  *     isEmpty:         boolean, // true when every Today count is zero
  *   }
  */
-export function buildPunctuationDashboardModel(stats, learner, rewardState) {
+export function buildPunctuationDashboardModel(stats, learner, rewardState, starView) {
   const safeStats = stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : {};
   const dueCount = safeNumber(safeStats.due, 0);
   const weakCount = safeNumber(safeStats.weak, 0);
@@ -1171,7 +1197,7 @@ export function buildPunctuationDashboardModel(stats, learner, rewardState) {
 
   return {
     todayCards,
-    activeMonsters: Object.freeze(activeMonsterProgressFromReward(rewardState)),
+    activeMonsters: Object.freeze(activeMonsterProgressFromReward(rewardState, starView)),
     primaryMode,
     isEmpty,
   };
