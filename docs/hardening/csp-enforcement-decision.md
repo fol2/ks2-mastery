@@ -59,6 +59,26 @@ The flip PR is in scope IF AND ONLY IF all of the following are true:
 3. The operator has added an `Operator sign-off` row under **Sign-off** below dated within the 7 days preceding the flip PR's open date.
 4. `tests/csp-inline-style-budget.test.js` still passes (the migration from SH2-U8 has not regressed).
 
+### Violation volume thresholds (P4-U4 addendum)
+
+The flip criteria above require zero unexpected violations. The following
+thresholds formalise what "unexpected" means in terms of volume and origin:
+
+| Category | Threshold | Action |
+| --- | --- | --- |
+| **Third-party** `violated-directive` + `blocked-uri` pairs (e.g. CDN, analytics, browser extension) | **≤ 5 unique pairs** across the full 7-day window | Add each pair to ALLOWLIST.md with adversarial-reviewer sign-off; proceed with flip. |
+| **Third-party** pairs | **> 5 unique pairs** | Defer flip; investigate whether the CSP allowlist is incomplete for the production request mix. Restart the observation window after allowlist PR lands. |
+| **First-party** violation — any `blocked-uri` that is `self`, relative, or matches the repo production domain | **Any (≥ 1)** | **Defer flip unconditionally.** First-party blocks mean the policy is stricter than our own assets require. The correct response is an inventory-driven migration (style/script extraction) or a narrow allowlist, not the enforcement flip. |
+
+#### Inline style count prerequisite
+
+The enforcement flip additionally requires `tests/csp-inline-style-budget.test.js`
+to pass at merge time. This test guards the `style-src 'unsafe-inline'`
+surface — if the inline-style count has regressed above the committed budget,
+enforcement would generate a flood of first-party `style-src-elem` violations
+that drown genuine attack signal. The budget test acts as a mechanical gate:
+no ratchet regression, no flip.
+
 ### Deferral criteria (no flip — stay on Report-Only)
 
 The flip does NOT happen in a follow-up PR if any of the following appear during the window:
