@@ -11,6 +11,7 @@ import { MonsterEffectConfigProvider } from '../platform/game/MonsterEffectConfi
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { LoadingSkeleton } from '../platform/ui/LoadingSkeleton.jsx';
 import { captureClientError } from '../platform/ops/error-capture.js';
+import { ActiveMessagesBar } from '../platform/ops/active-messages.js';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
 import { CelebrationLayer } from '../platform/game/render/CelebrationLayer.jsx';
 import { runtimeRegistration } from '../platform/game/render/runtime-registration.js';
@@ -207,6 +208,10 @@ export function App({ controller, runtime }) {
     <MonsterVisualConfigProvider value={monsterVisualConfig}>
       <MonsterEffectConfigProvider value={monsterEffectConfig}>
       <ErrorBoundary onError={handleBoundaryError}>
+      {/* U12: active message banners render at app-shell top level, above all
+          route surfaces. The bar polls GET /api/ops/active-messages every 5 min
+          and fail-open (no banner on fetch error). */}
+      <ActiveMessagesBar fetchActiveMessages={runtime.fetchActiveMessages} />
       {screen === 'dashboard' && (
         <>
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
