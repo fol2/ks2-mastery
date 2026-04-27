@@ -17,6 +17,7 @@ import { requestPunctuationContextPack } from './ai-enrichment.js';
 import { createServerPunctuationEngine } from './engine.js';
 import { buildPunctuationReadModel } from './read-models.js';
 import { applyRecordEventCommand } from './events.js';
+import { buildPunctuationDiagnostic } from './diagnostic.js';
 import { resolveProjectionInput } from '../projection-input.js';
 
 // U9: `record-event` is a new telemetry-only command. It routes through
@@ -26,6 +27,12 @@ import { resolveProjectionInput } from '../projection-input.js';
 // `./events.js:applyRecordEventCommand` validates the per-kind payload
 // allowlist and writes a single row to `punctuation_events`.
 const PUNCTUATION_TELEMETRY_COMMAND = 'record-event';
+
+// P7-U8: Punctuation Doctor diagnostic read model. Routes through the
+// same `repository.runSubjectCommand` path (so `requireLearnerWriteAccess`
+// fires) but does NOT engage the engine/projection pipeline — its handler
+// reads state and returns a safe diagnostic payload.
+const PUNCTUATION_DIAGNOSTIC_COMMAND = 'punctuation-diagnostic';
 
 const PUNCTUATION_COMMANDS = Object.freeze([
   'start-session',
@@ -37,6 +44,7 @@ const PUNCTUATION_COMMANDS = Object.freeze([
   'reset-learner',
   'request-context-pack',
   PUNCTUATION_TELEMETRY_COMMAND,
+  PUNCTUATION_DIAGNOSTIC_COMMAND,
 ]);
 
 function contentMeta() {
@@ -132,6 +140,49 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
     // transiently fails validation (e.g. during a content hotfix).
     if (command.command === PUNCTUATION_TELEMETRY_COMMAND) {
       return applyRecordEventCommand({ command, context });
+    }
+
+    // P7-U8: Punctuation Doctor diagnostic read model. Reads state but
+    // does NOT mutate it — branches early like `record-event` to bypass
+    // the engine/projection pipeline. Gated behind admin auth: the
+    // caller must have `platformRole: 'admin'` in the session context.
+    if (command.command === PUNCTUATION_DIAGNOSTIC_COMMAND) {
+      if (context.session?.platformRole !== 'admin') {
+        throw new NotFoundError('Punctuation diagnostic requires admin access.', {
+          code: 'subject_command_not_found',
+          subjectId: 'punctuation',
+          command: command.command,
+        });
+      }
+      const runtimeRecord = await context.repository.readSubjectRuntime(
+        context.session.accountId,
+        command.learnerId,
+        'punctuation',
+        { skipAccessCheck: true },
+      );
+      // readSubjectRuntimeBundle returns { subjectRecord, latestSession } —
+      // it does NOT include gameState. Load the learner's projection state
+      // separately to get the monster-codex entries (starHighWater, maxStageEver).
+      const projectionBundle = await context.repository.readLearnerProjectionState(
+        context.session.accountId,
+        command.learnerId,
+      );
+      const codexEntries = projectionBundle?.gameState?.['monster-codex'] || {};
+      const rawStats = command.payload?.telemetryStats;
+      const telemetryStats = rawStats && typeof rawStats === 'object' && !Array.isArray(rawStats)
+        ? rawStats
+        : {};
+      const diagnostic = buildPunctuationDiagnostic(
+        runtimeRecord.subjectRecord,
+        codexEntries,
+        telemetryStats,
+      );
+      return {
+        learnerId: command.learnerId,
+        ok: true,
+        changed: false,
+        diagnostic,
+      };
     }
 
     if (!PUNCTUATION_MANIFEST_VALIDATION.ok) {
