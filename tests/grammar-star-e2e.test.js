@@ -6,7 +6,7 @@
 // Plan: docs/plans/2026-04-27-001-feat-grammar-phase5-star-curve-landing-plan.md (U11).
 //
 // Patterns followed:
-//   - tests/grammar-rewards.test.js — makeRepository, securedEvent, rewardEventsFromGrammarEvents
+//   - tests/grammar-rewards.test.js — makeRepository, rewardEventsFromGrammarEvents
 //   - tests/grammar-star-staging.test.js — progressForGrammarMonster with conceptNodes
 //
 // Verifies:
@@ -33,8 +33,6 @@ import {
   recordGrammarConceptMastery,
 } from '../src/platform/game/monster-system.js';
 import {
-  GRAMMAR_MONSTER_STAR_MAX,
-  GRAMMAR_STAR_STAGE_THRESHOLDS,
   computeGrammarMonsterStars,
   deriveGrammarConceptStarEvidence,
 } from '../shared/grammar/grammar-stars.js';
@@ -66,20 +64,6 @@ function makeRepository(initialState = {}) {
   };
 }
 
-function securedEvent(conceptId, overrides = {}) {
-  return {
-    id: `grammar.secured.learner-e2e.${conceptId}.request-1`,
-    type: 'grammar.concept-secured',
-    subjectId: 'grammar',
-    learnerId: 'learner-e2e',
-    contentReleaseId: GRAMMAR_REWARD_RELEASE_ID,
-    conceptId,
-    masteryKey: grammarMasteryKey(conceptId),
-    createdAt: Date.now(),
-    ...overrides,
-  };
-}
-
 /**
  * Build full-evidence conceptNodes and recentAttempts for a list of concepts.
  * Each concept gets: secure strength/interval/streak + 2 independent corrects
@@ -102,21 +86,6 @@ function fullEvidenceForConcepts(conceptIds) {
       { conceptId, templateId: `${conceptId}-tmpl-2`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
     );
   }
-  return { conceptNodes, recentAttempts };
-}
-
-/**
- * Build partial evidence (firstIndependentWin only) for a single concept.
- */
-function firstWinEvidenceForConcept(conceptId) {
-  const conceptNodes = {
-    [conceptId]: {
-      attempts: 1, correct: 1, wrong: 0, strength: 0.3, intervalDays: 0, correctStreak: 1,
-    },
-  };
-  const recentAttempts = [
-    { conceptId, templateId: `${conceptId}-tmpl-1`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-  ];
   return { conceptNodes, recentAttempts };
 }
 
@@ -199,8 +168,11 @@ test('star e2e: full 0->100 Star journey for Couronnail (3 concepts) — gradual
   const allEvents = [];
   const starSnapshots = [];
 
-  // Secure concepts one by one.
-  for (const conceptId of concepts) {
+  let prevStars = 0;
+
+  // Secure concepts one by one, building incremental evidence each step.
+  for (let i = 0; i < concepts.length; i += 1) {
+    const conceptId = concepts[i];
     const events = recordGrammarConceptMastery({
       learnerId: 'learner-couronnail-e2e',
       conceptId,
@@ -210,20 +182,24 @@ test('star e2e: full 0->100 Star journey for Couronnail (3 concepts) — gradual
     const couronnailEvents = events.filter((e) => e.monsterId === 'couronnail');
     allEvents.push(...couronnailEvents);
 
+    // Build evidence for all concepts secured so far.
+    const securedSoFar = concepts.slice(0, i + 1);
+    const { conceptNodes, recentAttempts } = fullEvidenceForConcepts(securedSoFar);
+
     const progress = progressForGrammarMonster(repository.state(), 'couronnail', {
       conceptTotal: 3,
+      conceptNodes,
+      recentAttempts,
     });
     starSnapshots.push(progress.stars);
+
+    // Stars increase monotonically (evidence-driven, not legacy floor jumps).
+    assert.ok(progress.stars >= prevStars,
+      `step ${i}: stars ${progress.stars} >= prev ${prevStars}`);
+    prevStars = progress.stars;
   }
 
-  // Monotonic increase in Stars.
-  for (let i = 1; i < starSnapshots.length; i += 1) {
-    assert.ok(starSnapshots[i] >= starSnapshots[i - 1],
-      `star snapshot ${i}: ${starSnapshots[i]} >= ${starSnapshots[i - 1]}`);
-  }
-
-  // With 3 concepts secured but NO evidence tiers (conceptNodes not passed),
-  // Stars come from the legacy floor. Now test with full evidence.
+  // After all 3 concepts with full evidence: should reach 100 Stars.
   const { conceptNodes, recentAttempts } = fullEvidenceForConcepts(concepts);
   const finalProgress = progressForGrammarMonster(repository.state(), 'couronnail', {
     conceptTotal: 3,
