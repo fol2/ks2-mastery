@@ -160,8 +160,9 @@ test('evidence tier: retainedAfterSecure requires secure + post-secure independe
 });
 
 test('evidence tier: retainedAfterSecure false with only 1 independent correct (ADV-003, production shape)', () => {
-  // Concept is secured but only 1 independent correct — insufficient to prove
-  // post-secure retention (that single correct could predate secure status).
+  // The attempt lacks createdAt, so it is excluded from the temporal scan.
+  // Under the U3 temporal gate, retainedAfterSecure requires at least one
+  // independent correct with createdAt after the estimated secure date.
   const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
   const recentAttempts = [
     { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
@@ -705,20 +706,26 @@ test('U1 CHAR: missing both conceptId and conceptIds → 0 evidence, no crash', 
 });
 
 test('U1 CONTRACT: production-shape and flat-shape produce identical Stars', () => {
+  // ADV-U3-005: Include createdAt + nowTs so retainedAfterSecure exercises the
+  // actual temporal gate, not the degenerate "no createdAt" fallback.
+  const nowTs = Date.now();
+  const createdAt = nowTs - 3 * 86400000; // 3 days ago; intervalDays: 14 → securedAtTs = nowTs - 14d → post-secure
   const conceptNode = { attempts: 15, correct: 14, wrong: 1, strength: 0.90, intervalDays: 14, correctStreak: 8 };
   const productionAttempts = [
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt },
   ];
   const flatAttempts = [
-    { conceptId: 'clauses', correct: true, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', correct: true, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', correct: true, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', correct: true, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt },
+    { conceptId: 'clauses', correct: true, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt },
+    { conceptId: 'clauses', correct: true, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt },
   ];
-  const productionResult = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts: productionAttempts });
-  const flatResult = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts: flatAttempts });
+  const productionResult = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts: productionAttempts, nowTs });
+  const flatResult = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts: flatAttempts, nowTs });
   assert.deepEqual(productionResult, flatResult, 'Production-shape and flat-shape must produce identical evidence');
+  // Verify retainedAfterSecure was actually exercised through the temporal gate.
+  assert.equal(productionResult.retainedAfterSecure, true, 'CONTRACT: retainedAfterSecure must be true via temporal gate');
 });
 
 test('U1 CHAR: production-shape repeatIndependentWin with 2+ independent correct', () => {
@@ -994,4 +1001,33 @@ test('U3: recentAttempts entry missing createdAt → excluded from temporal scan
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
   assert.equal(result.secureConfidence, true);
   assert.equal(result.retainedAfterSecure, false, 'Missing createdAt entries cannot provide temporal proof');
+});
+
+test('TG-001: createdAt: 0 (legacy epoch) does NOT satisfy temporal gate', () => {
+  // createdAt: 0 is a valid number (typeof 0 === "number", isFinite(0) === true),
+  // so it is NOT excluded from the temporal scan. However, epoch 1970 is always
+  // before any modern securedAtTs, so 0 > securedAtTs is false.
+  const nowTs = 1_700_000_000_000;
+  const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, false, 'Epoch-zero createdAt must not satisfy temporal gate');
+});
+
+test('TG-002: createdAt exactly equal to securedAtTs → retainedAfterSecure = false (strict >)', () => {
+  // The temporal gate uses strict > (createdAt > securedAtTs). An attempt
+  // created at exactly the estimated secure moment does not count as post-secure.
+  const nowTs = 1_700_000_000_000;
+  const intervalDays = 14;
+  const securedAtTs = nowTs - intervalDays * 86400000;
+  const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays, correctStreak: 6 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: securedAtTs },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, false, 'Boundary-equal createdAt must not satisfy strict > temporal gate');
 });
