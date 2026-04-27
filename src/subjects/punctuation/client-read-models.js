@@ -108,6 +108,10 @@ export function createPunctuationReadModelService({ getState } = {}) {
         accuracy: Number(stats.accuracy) || 0,
         publishedRewardUnits: Number(stats.publishedRewardUnits) || 14,
         securedRewardUnits: Number(stats.securedRewardUnits) || 0,
+        // U4: expose grandStars from star projection (0-100 scale, already
+        // a percentage). Falls back to null when the Worker has not yet
+        // pushed starView data into stats.
+        grandStars: Number.isFinite(Number(stats.grandStars)) ? Number(stats.grandStars) : null,
       };
     },
     getAnalyticsSnapshot(learnerId) {
