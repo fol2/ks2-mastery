@@ -3685,26 +3685,26 @@ for (const entry of PUNCTUATION_CLUSTER_MODE_MATRIX) {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 4 U1 — primary-mode card click-through (R1, R14).
+// Phase 4 U1 — mission-dashboard CTA click-through (R1, R14).
 //
 // The Phase 3 SSR harness could only grep the rendered HTML — it could not
-// fire an onClick handler, so a regression that swapped the primary card's
-// dispatch target from `punctuation-start` to `punctuation-set-mode` slipped
-// through.  The fix: tapping a primary card must start a session immediately
-// with `{ mode: <cardId>, roundLength: <prefs.roundLength> }`.
+// fire an onClick handler, so a regression that swapped the mission-dashboard
+// CTA's dispatch target from `punctuation-start` to `punctuation-set-mode`
+// slipped through.  The fix: tapping a mission-dashboard CTA must start a
+// session immediately with `{ mode: <ctaId>, roundLength: <prefs.roundLength> }`.
 //
 // These tests exercise the REAL onClick closure (via
-// `renderPrimaryModeCardElement`, which returns the React element straight
+// `renderMissionDashboardCTAElement`, which returns the React element straight
 // from the component function).  Invoking `element.props.onClick()` is the
 // same code path the browser would run — no SSR blind spot.
 //
 // Coverage matrix:
-//   - Each of the three primary card ids (smart / weak / gps) must dispatch
-//     `punctuation-start` with `{ mode: <id>, roundLength: '4' }`.
+//   - Each of the three mission-dashboard CTA ids (smart / weak / gps) must
+//     dispatch `punctuation-start` with `{ mode: <id>, roundLength: '4' }`.
 //   - Non-default round lengths ('8', '12') flow through to the payload.
 //   - `disabled=true` short-circuits the dispatch entirely.
-//   - The button MUST NOT carry `aria-pressed` — primary cards are action
-//     buttons, not radio buttons.
+//   - The button MUST NOT carry `aria-pressed` — mission-dashboard CTAs are
+//     action buttons, not radio buttons.
 //   - `data-action` must be `"punctuation-start"` (not `"punctuation-set-mode"`).
 // ---------------------------------------------------------------------------
 
