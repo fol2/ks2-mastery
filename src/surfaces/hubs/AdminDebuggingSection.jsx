@@ -501,6 +501,11 @@ const DENIAL_REASON_OPTIONS = [
   { value: 'rate_limit_exceeded', label: 'Rate Limited' },
 ];
 
+/** Reverse-lookup: code → friendly label for denial row rendering. */
+const DENIAL_REASON_LABEL_MAP = Object.fromEntries(
+  DENIAL_REASON_OPTIONS.map(({ value, label }) => [value, label]),
+);
+
 function DenialLogPanel({ model, actions }) {
   const denialLog = model?.denialLog || {};
   const rawEntries = Array.isArray(denialLog.entries) ? denialLog.entries : [];
@@ -633,7 +638,7 @@ function DenialLogPanel({ model, actions }) {
       {entries.length ? entries.map((entry) => (
         <div className="skill-row" key={entry.id} data-testid={`denial-row-${entry.id}`}>
           <div>
-            <strong>{entry.denialReason || 'unknown'}</strong>
+            <strong>{DENIAL_REASON_LABEL_MAP[entry.denialReason] || entry.denialReason || 'unknown'}</strong>
           </div>
           <div className="small muted">{entry.routeName || '—'}</div>
           <div className="small muted">{formatTimestamp(entry.deniedAt)}</div>
