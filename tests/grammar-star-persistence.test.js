@@ -534,3 +534,214 @@ test('GRAMMAR_EVENT_TYPES includes STAR_EVIDENCE_UPDATED', () => {
     'Event type constant is correct',
   );
 });
+
+// =============================================================================
+// U5 — 1-Star Egg as persisted reward state (persistence-focused verifications)
+// =============================================================================
+// These tests verify that the Egg transition from U4's updateGrammarStarHighWater
+// persists correctly across writes, reads, and state round-trips.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// U5-P1. starHighWater=1 persists caught:true through state round-trip
+// ---------------------------------------------------------------------------
+
+test('U5 persistence: starHighWater=1 persists caught:true through write-read round-trip', () => {
+  const repository = makeRepository();
+
+  // Write via updateGrammarStarHighWater
+  updateGrammarStarHighWater({
+    learnerId: 'learner-u5-p1',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // First read
+  const read1 = repository.read();
+  assert.equal(read1.bracehart.caught, true, 'caught:true on first read');
+  assert.equal(read1.bracehart.starHighWater, 1, 'starHighWater=1 on first read');
+
+  // Second read (simulates navigation or session restore)
+  const read2 = repository.read();
+  assert.equal(read2.bracehart.caught, true, 'caught:true on second read');
+  assert.equal(read2.bracehart.starHighWater, 1, 'starHighWater=1 on second read');
+
+  // progressForGrammarMonster reads correctly
+  const progress = progressForGrammarMonster(read2, 'bracehart', { conceptTotal: 6 });
+  assert.equal(progress.caught, true, 'progress.caught=true from persisted state');
+  assert.ok(progress.stars >= 1, 'progress.stars >= 1 from starHighWater latch');
+});
+
+// ---------------------------------------------------------------------------
+// U5-P2. Egg caught:true survives interleaved concept-secured write
+// ---------------------------------------------------------------------------
+
+test('U5 persistence: Egg caught:true survives interleaved concept-secured write', () => {
+  const repository = makeRepository();
+
+  // Step 1: Catch via star-evidence
+  updateGrammarStarHighWater({
+    learnerId: 'learner-u5-p2',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 3,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  updateGrammarStarHighWater({
+    learnerId: 'learner-u5-p2',
+    monsterId: 'concordium',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Verify pre-state
+  const preState = repository.state();
+  assert.equal(preState.bracehart.caught, true, 'pre: Bracehart caught');
+  assert.equal(preState.bracehart.starHighWater, 3, 'pre: Bracehart starHighWater=3');
+
+  // Step 2: concept-secured writes mastered[] (interleaved write)
+  recordGrammarConceptMastery({
+    learnerId: 'learner-u5-p2',
+    conceptId: 'sentence_functions',
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Step 3: Verify caught and starHighWater survived the interleaved write
+  const postState = repository.state();
+  assert.equal(postState.bracehart.caught, true, 'post: Bracehart caught survived');
+  // seedStarHighWater preserves existing value (entry.starHighWater !== undefined)
+  assert.ok(postState.bracehart.starHighWater >= 3, 'post: Bracehart starHighWater preserved >= 3');
+  assert.equal(postState.concordium.caught, true, 'post: Concordium caught survived');
+  assert.ok(postState.concordium.starHighWater >= 1, 'post: Concordium starHighWater preserved >= 1');
+});
+
+// ---------------------------------------------------------------------------
+// U5-P3. Multiple monsters: Egg fires independently per monster
+// ---------------------------------------------------------------------------
+
+test('U5 persistence: Egg fires independently per monster — catching one does not catch another', () => {
+  const repository = makeRepository();
+
+  // Catch only Bracehart
+  const bracehartEvents = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-p3',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  assert.ok(
+    bracehartEvents.some((e) => e.monsterId === 'bracehart' && e.kind === 'caught'),
+    'Bracehart caught event',
+  );
+
+  const state = repository.state();
+  assert.equal(state.bracehart.caught, true, 'Bracehart caught');
+
+  // Chronalyx should NOT be caught (different monster)
+  const chronalyxEntry = state.chronalyx;
+  if (chronalyxEntry) {
+    assert.notEqual(chronalyxEntry.caught, true,
+      'Chronalyx not caught by Bracehart star-evidence');
+  }
+
+  // Couronnail should NOT be caught
+  const couronnailEntry = state.couronnail;
+  if (couronnailEntry) {
+    assert.notEqual(couronnailEntry.caught, true,
+      'Couronnail not caught by Bracehart star-evidence');
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U5-P4. Concordium Egg from punctuation-for-grammar concept persists
+// ---------------------------------------------------------------------------
+
+test('U5 persistence: Concordium Egg from punctuation-for-grammar concept persists', () => {
+  const repository = makeRepository();
+
+  // speech_punctuation is a punctuation-for-grammar concept (no direct monster)
+  const events = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-p4',
+    monsterId: 'concordium',
+    conceptId: 'speech_punctuation',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  assert.ok(
+    events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
+    'Concordium caught from punctuation-for-grammar concept',
+  );
+
+  // Persists
+  const state = repository.state();
+  assert.equal(state.concordium.caught, true, 'Concordium caught persisted');
+  assert.equal(state.concordium.starHighWater, 1, 'Concordium starHighWater=1');
+
+  // No direct monster created for the punctuation concept
+  assert.equal(state.quoral, undefined, 'Quoral not created');
+});
+
+// ---------------------------------------------------------------------------
+// U5-P5. Egg caught:true is a one-way latch — cannot be set back to false
+// ---------------------------------------------------------------------------
+
+test('U5 persistence: caught:true is a one-way latch — subsequent writes never revert to false', () => {
+  const repository = makeRepository();
+
+  // Catch via star-evidence
+  updateGrammarStarHighWater({
+    learnerId: 'learner-u5-p5',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 2,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Verify caught
+  assert.equal(repository.state().bracehart.caught, true, 'caught after star-evidence');
+
+  // Apply more star-evidence at higher value
+  updateGrammarStarHighWater({
+    learnerId: 'learner-u5-p5',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 5,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  assert.equal(repository.state().bracehart.caught, true, 'caught after higher star-evidence');
+
+  // Apply concept-secured
+  recordGrammarConceptMastery({
+    learnerId: 'learner-u5-p5',
+    conceptId: 'sentence_functions',
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  assert.equal(repository.state().bracehart.caught, true, 'caught after concept-secured');
+
+  // Apply more concept-secured for a different concept
+  recordGrammarConceptMastery({
+    learnerId: 'learner-u5-p5',
+    conceptId: 'clauses',
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  assert.equal(repository.state().bracehart.caught, true, 'caught after second concept-secured');
+});

@@ -1,4 +1,5 @@
 // Tests for U6 — Reward event semantics: caught-wins-over-hatch.
+// Extended by U5 — 1-Star Egg as persisted reward state.
 //
 // Plan: docs/plans/2026-04-27-001-feat-grammar-phase5-star-curve-landing-plan.md (U6).
 //
@@ -12,6 +13,10 @@
 //  7. Level calculation uses max(legacyLevel, starLevel).
 //  8. Concordium caught fires at 1 Star.
 //  9. No double-fire for the same monster in a single recordGrammarConceptMastery call.
+//  U5-10. Egg persists after fresh read (no re-fire on refresh).
+//  U5-11. Legacy caught:true from concept-secured -> star-evidence no-op for caught.
+//  U5-12. Cross-path deduplication: star-evidence catches, concept-secured does not re-catch.
+//  U5-13. Egg fires from sub-secure evidence (Stars=1 without any concept-secured).
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,7 +28,13 @@ import {
   grammarMasteryKey,
   progressForGrammarMonster,
   recordGrammarConceptMastery,
+  updateGrammarStarHighWater,
 } from '../src/platform/game/monster-system.js';
+
+import {
+  GRAMMAR_EVENT_TYPES,
+  rewardEventsFromGrammarEvents,
+} from '../src/subjects/grammar/event-hooks.js';
 
 import {
   GRAMMAR_MONSTER_STAR_MAX,
@@ -713,4 +724,510 @@ test('U6 star event: duplicate concept mastery returns no events', () => {
     random: () => 0,
   });
   assert.deepEqual(events, [], 'duplicate concept mastery returns empty events');
+});
+
+// =============================================================================
+// U5 — 1-Star Egg as persisted reward state
+// =============================================================================
+// U4 added updateGrammarStarHighWater which sets caught:true and emits a
+// caught event when Stars >= 1 on a previously-uncaught monster. U5 verifies
+// this behaviour as a persisted reward state with no duplicate emissions
+// across the star-evidence and concept-secured code paths.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// U5-1. Fresh Bracehart: star-evidence Stars=1 -> caught event + caught:true
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: fresh Bracehart, star-evidence Stars=1 fires caught and persists caught:true', () => {
+  const repository = makeRepository();
+
+  const events = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-bracehart-egg',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // caught event emitted
+  assert.equal(events.length, 1, 'exactly one event');
+  assert.equal(events[0].kind, 'caught', 'event kind is caught');
+  assert.equal(events[0].monsterId, 'bracehart', 'event targets Bracehart');
+
+  // caught:true persisted in state
+  const state = repository.state();
+  assert.equal(state.bracehart.caught, true, 'Bracehart caught persisted');
+  assert.equal(state.bracehart.starHighWater, 1, 'starHighWater latched to 1');
+
+  // mastered[] untouched (star-evidence does not add to mastered[])
+  assert.deepEqual(state.bracehart.mastered || [], [], 'mastered[] remains empty');
+});
+
+// ---------------------------------------------------------------------------
+// U5-2. Fresh Concordium: star-evidence Stars=1 -> Concordium caught event
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: fresh Concordium, star-evidence Stars=1 fires Concordium caught', () => {
+  const repository = makeRepository();
+
+  const events = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-concordium-egg',
+    monsterId: 'concordium',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  assert.equal(events.length, 1, 'exactly one event');
+  assert.equal(events[0].kind, 'caught', 'event kind is caught');
+  assert.equal(events[0].monsterId, 'concordium', 'event targets Concordium');
+
+  const state = repository.state();
+  assert.equal(state.concordium.caught, true, 'Concordium caught persisted');
+  assert.equal(state.concordium.starHighWater, 1, 'Concordium starHighWater=1');
+});
+
+// ---------------------------------------------------------------------------
+// U5-3. caught already true -> no duplicate event on subsequent Star increases
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: caught already true, subsequent Star increase emits no caught event', () => {
+  const repository = makeRepository({
+    bracehart: { caught: true, starHighWater: 1, mastered: [] },
+  });
+
+  const events = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-no-dup-star',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 5,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // No caught event (already caught)
+  assert.equal(
+    events.some((e) => e.kind === 'caught'),
+    false,
+    'no duplicate caught event when already caught',
+  );
+
+  // starHighWater updated
+  const state = repository.state();
+  assert.equal(state.bracehart.starHighWater, 5, 'starHighWater raised to 5');
+  assert.equal(state.bracehart.caught, true, 'caught remains true');
+});
+
+// ---------------------------------------------------------------------------
+// U5-4. Refresh after Egg: re-reading state does not re-fire caught
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: refresh after Egg — re-reading state and re-applying same Stars does not re-fire caught', () => {
+  const repository = makeRepository();
+
+  // First call: catch the monster
+  const firstEvents = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-refresh',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(firstEvents.length, 1, 'first call fires caught');
+  assert.equal(firstEvents[0].kind, 'caught', 'first call is caught');
+
+  // Simulate refresh: re-apply same Stars (client re-derives after page load)
+  const refreshEvents = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-refresh',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Stars <= existing starHighWater -> early return, no events, no write
+  assert.deepEqual(refreshEvents, [], 'refresh with same Stars produces no events');
+
+  // State unchanged
+  const state = repository.state();
+  assert.equal(state.bracehart.caught, true, 'caught still true after refresh');
+  assert.equal(state.bracehart.starHighWater, 1, 'starHighWater still 1 after refresh');
+});
+
+// ---------------------------------------------------------------------------
+// U5-5. Legacy learner with caught:true from concept-secured ->
+//        star-evidence path is no-op for caught
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: legacy learner caught via concept-secured, star-evidence at 1 Star is no-op', () => {
+  // Legacy learner: caught via recordGrammarConceptMastery (concept-secured path).
+  // starHighWater seeded at 1 (from legacy stage 1 via seedStarHighWater).
+  const repository = makeRepository({
+    bracehart: {
+      caught: true,
+      mastered: [grammarMasteryKey('sentence_functions')],
+      conceptTotal: 6,
+      starHighWater: 1,
+    },
+  });
+
+  // star-evidence arrives with Stars=1 (same as existing starHighWater)
+  const events = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-legacy-caught',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Stars <= existing starHighWater -> early return, no events
+  assert.deepEqual(events, [], 'no events when legacy learner already caught with same Stars');
+});
+
+test('U5 Egg: legacy learner caught via concept-secured, star-evidence at higher Stars does not re-catch', () => {
+  const repository = makeRepository({
+    bracehart: {
+      caught: true,
+      mastered: [grammarMasteryKey('sentence_functions')],
+      conceptTotal: 6,
+      starHighWater: 1,
+    },
+  });
+
+  // star-evidence at higher Stars: starHighWater updated, but no caught event
+  const events = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-legacy-higher',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 3,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // No caught event (already caught)
+  assert.equal(
+    events.some((e) => e.kind === 'caught'),
+    false,
+    'no caught event on legacy learner with higher Stars',
+  );
+
+  // starHighWater updated
+  const state = repository.state();
+  assert.equal(state.bracehart.starHighWater, 3, 'starHighWater raised to 3');
+});
+
+// ---------------------------------------------------------------------------
+// U5-6. Cross-path deduplication: star-evidence catches monster, then
+//        concept-secured fires — no duplicate caught event
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: star-evidence catches Bracehart, then concept-secured does not re-catch', () => {
+  const repository = makeRepository();
+
+  // Step 1: star-evidence catches the monster (sub-secure evidence)
+  const starEvents = updateGrammarStarHighWater({
+    learnerId: 'learner-u5-cross-path',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 2,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.ok(
+    starEvents.some((e) => e.monsterId === 'bracehart' && e.kind === 'caught'),
+    'star-evidence fires Bracehart caught',
+  );
+
+  // Also catch Concordium via star-evidence
+  updateGrammarStarHighWater({
+    learnerId: 'learner-u5-cross-path',
+    monsterId: 'concordium',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Step 2: concept-secured fires later (concept reaches secure status)
+  const securedEvents = recordGrammarConceptMastery({
+    learnerId: 'learner-u5-cross-path',
+    conceptId: 'sentence_functions',
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // No caught events from concept-secured path (both monsters already caught)
+  assert.equal(
+    securedEvents.some((e) => e.kind === 'caught'),
+    false,
+    'concept-secured does not re-catch already-caught monsters',
+  );
+
+  // mastered[] updated by concept-secured
+  const state = repository.state();
+  const key = grammarMasteryKey('sentence_functions');
+  assert.ok(state.bracehart.mastered.includes(key), 'Bracehart mastered[] updated');
+  assert.ok(state.concordium.mastered.includes(key), 'Concordium mastered[] updated');
+
+  // caught persisted on both
+  assert.equal(state.bracehart.caught, true, 'Bracehart still caught');
+  assert.equal(state.concordium.caught, true, 'Concordium still caught');
+});
+
+// ---------------------------------------------------------------------------
+// U5-7. Egg fires from sub-secure evidence (no concept-secured needed)
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: Egg fires from sub-secure evidence without any concept-secured event', () => {
+  const repository = makeRepository();
+
+  // Only star-evidence, no concept-secured event at all.
+  // This simulates a learner who answered correctly once (sub-secure)
+  // but has not reached secure status on any concept.
+  const events = rewardEventsFromGrammarEvents([
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-sub-secure',
+      conceptId: 'tense_aspect',
+      monsterId: 'chronalyx',
+      computedStars: 1,
+      createdAt: Date.now(),
+    },
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-sub-secure',
+      conceptId: 'tense_aspect',
+      monsterId: 'concordium',
+      computedStars: 1,
+      createdAt: Date.now(),
+    },
+  ], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // caught events for both Chronalyx and Concordium
+  assert.ok(
+    events.some((e) => e.monsterId === 'chronalyx' && e.kind === 'caught'),
+    'Chronalyx caught from sub-secure evidence',
+  );
+  assert.ok(
+    events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
+    'Concordium caught from sub-secure evidence',
+  );
+
+  // mastered[] remains empty (no concept-secured fired)
+  const state = repository.state();
+  assert.deepEqual(state.chronalyx.mastered || [], [], 'Chronalyx mastered[] empty (sub-secure)');
+  assert.deepEqual(state.concordium.mastered || [], [], 'Concordium mastered[] empty (sub-secure)');
+
+  // caught persisted
+  assert.equal(state.chronalyx.caught, true, 'Chronalyx caught persisted from sub-secure');
+  assert.equal(state.concordium.caught, true, 'Concordium caught persisted from sub-secure');
+});
+
+// ---------------------------------------------------------------------------
+// U5-8. Egg toast fires exactly once via event-hooks subscriber (integration)
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: event-hooks subscriber fires Egg toast exactly once, then no more on repeat', () => {
+  const repository = makeRepository();
+
+  // First event stream: initial evidence
+  const firstEvents = rewardEventsFromGrammarEvents([
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-toast',
+      conceptId: 'word_classes',
+      monsterId: 'couronnail',
+      computedStars: 1,
+      createdAt: Date.now(),
+    },
+  ], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Exactly one caught event with toast
+  const caughtEvents = firstEvents.filter(
+    (e) => e.monsterId === 'couronnail' && e.kind === 'caught',
+  );
+  assert.equal(caughtEvents.length, 1, 'exactly one Couronnail caught event');
+  assert.ok(caughtEvents[0].toast, 'caught event includes toast');
+  assert.ok(caughtEvents[0].toast.title, 'toast has title');
+  assert.ok(caughtEvents[0].toast.body, 'toast has body');
+
+  // Second event stream: same or higher Stars
+  const secondEvents = rewardEventsFromGrammarEvents([
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-toast',
+      conceptId: 'word_classes',
+      monsterId: 'couronnail',
+      computedStars: 3,
+      createdAt: Date.now(),
+    },
+  ], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // No caught events on second pass
+  assert.equal(
+    secondEvents.some((e) => e.kind === 'caught'),
+    false,
+    'no duplicate caught on second evidence',
+  );
+
+  // Third event stream: same Stars as existing (refresh scenario)
+  const thirdEvents = rewardEventsFromGrammarEvents([
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-toast',
+      conceptId: 'word_classes',
+      monsterId: 'couronnail',
+      computedStars: 3,
+      createdAt: Date.now(),
+    },
+  ], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  assert.deepEqual(thirdEvents, [], 'no events on refresh with same Stars');
+});
+
+// ---------------------------------------------------------------------------
+// U5-9. Egg persists after navigation (progressForGrammarMonster read)
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: caught:true persists in progressForGrammarMonster after star-evidence write', () => {
+  const repository = makeRepository();
+
+  // Catch via star-evidence
+  updateGrammarStarHighWater({
+    learnerId: 'learner-u5-nav',
+    monsterId: 'bracehart',
+    conceptId: 'sentence_functions',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Read progress (simulates what the view-model does after navigation)
+  const state = repository.state();
+  const progress = progressForGrammarMonster(state, 'bracehart', {
+    conceptTotal: 6,
+  });
+
+  assert.equal(progress.caught, true, 'progress.caught is true after star-evidence Egg');
+  assert.ok(progress.stars >= 1, 'progress.stars >= 1');
+  assert.equal(progress.starHighWater, 1, 'progress.starHighWater is 1');
+
+  // stage should be at least 1 (Egg found)
+  assert.ok(progress.stage >= 1, 'stage >= 1 (Egg found)');
+});
+
+// ---------------------------------------------------------------------------
+// U5-10. Full cross-path integration: sub-secure -> Egg -> concept-secured -> no re-Egg
+// ---------------------------------------------------------------------------
+
+test('U5 Egg: full integration — sub-secure evidence catches, concept-secured later adds mastery without re-catching', () => {
+  const repository = makeRepository();
+
+  // Phase 1: sub-secure evidence (learner answered correctly once, not yet secure)
+  const phase1Events = rewardEventsFromGrammarEvents([
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-full-int',
+      conceptId: 'sentence_functions',
+      monsterId: 'bracehart',
+      computedStars: 2,
+      createdAt: 1,
+    },
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-full-int',
+      conceptId: 'sentence_functions',
+      monsterId: 'concordium',
+      computedStars: 1,
+      createdAt: 1,
+    },
+  ], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Both monsters caught
+  const phase1Caught = phase1Events.filter((e) => e.kind === 'caught');
+  assert.equal(phase1Caught.length, 2, 'phase 1: two caught events (Bracehart + Concordium)');
+
+  // Verify persisted state
+  const stateAfterPhase1 = repository.state();
+  assert.equal(stateAfterPhase1.bracehart.caught, true, 'Bracehart caught after phase 1');
+  assert.equal(stateAfterPhase1.concordium.caught, true, 'Concordium caught after phase 1');
+  assert.deepEqual(stateAfterPhase1.bracehart.mastered || [], [], 'Bracehart mastered[] empty after phase 1');
+
+  // Phase 2: concept-secured (learner reaches secure status)
+  const phase2Events = rewardEventsFromGrammarEvents([
+    {
+      type: GRAMMAR_EVENT_TYPES.CONCEPT_SECURED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-full-int',
+      contentReleaseId: GRAMMAR_REWARD_RELEASE_ID,
+      conceptId: 'sentence_functions',
+      masteryKey: grammarMasteryKey('sentence_functions'),
+      createdAt: 2,
+    },
+  ], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // No caught events (both already caught)
+  assert.equal(
+    phase2Events.some((e) => e.kind === 'caught'),
+    false,
+    'phase 2: no duplicate caught events',
+  );
+
+  // mastered[] now updated
+  const stateAfterPhase2 = repository.state();
+  const key = grammarMasteryKey('sentence_functions');
+  assert.ok(stateAfterPhase2.bracehart.mastered.includes(key), 'Bracehart mastered[] updated in phase 2');
+  assert.ok(stateAfterPhase2.concordium.mastered.includes(key), 'Concordium mastered[] updated in phase 2');
+
+  // starHighWater preserved (seedStarHighWater preserves existing)
+  assert.ok(stateAfterPhase2.bracehart.starHighWater >= 2, 'Bracehart starHighWater preserved');
+  assert.ok(stateAfterPhase2.concordium.starHighWater >= 1, 'Concordium starHighWater preserved');
+
+  // Phase 3: refresh (re-derive same Stars)
+  const phase3Events = rewardEventsFromGrammarEvents([
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u5-full-int',
+      conceptId: 'sentence_functions',
+      monsterId: 'bracehart',
+      computedStars: 2,
+      createdAt: 3,
+    },
+  ], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.deepEqual(phase3Events, [], 'phase 3: no events on refresh');
 });
