@@ -32,10 +32,11 @@ import {
 } from './demo/sessions.js';
 import { normaliseSubjectCommandRequest } from './subjects/command-contract.js';
 import { createWorkerSubjectRuntime } from './subjects/runtime.js';
-import { ForbiddenError, NotFoundError } from './errors.js';
+import { ConflictError, ForbiddenError, NotFoundError } from './errors.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../src/platform/core/subject-availability.js';
 import { consumeRateLimit, rateLimitResponse, rateLimitSubject } from './rate-limit.js';
 import { handleHeroReadModel } from './hero/routes.js';
+import { resolveHeroStartTaskCommand } from './hero/launch.js';
 
 
 // U7 (sys-hardening p1): CSP report endpoint constants. The endpoint
@@ -560,6 +561,7 @@ async function opsErrorThrottleTelemetry(env, subject, { code, bucketKey, retryA
 const CAPACITY_RELEVANT_PATH_PATTERNS = [
   /^\/api\/bootstrap$/,
   /^\/api\/subjects\/[^/]+\/command$/,
+  /^\/api\/hero\/command$/,
   /^\/api\/hubs\/parent(\/.*)?$/,
   /^\/api\/classroom(\/.*)?$/,
 ];
@@ -1322,6 +1324,73 @@ export function createWorkerApp({
 
         if (url.pathname === '/api/hero/read-model' && request.method === 'GET') {
           return handleHeroReadModel({ request, url, session, account, repository, env, now, capacity });
+        }
+
+        if (url.pathname === '/api/hero/command' && request.method === 'POST') {
+          if (!envFlagEnabled(env.HERO_MODE_LAUNCH_ENABLED)) {
+            throw new NotFoundError('Hero launch is not available.', {
+              code: 'hero_launch_disabled',
+            });
+          }
+          if (!envFlagEnabled(env.HERO_MODE_SHADOW_ENABLED)) {
+            throw new ConflictError('Hero launch requires shadow mode to be enabled.', {
+              code: 'hero_launch_misconfigured',
+            });
+          }
+          requireSameOrigin(request, env);
+          requireMutationCapability(session);
+          const body = await readJson(request);
+          const heroLearnerId = body?.learnerId || '';
+          await repository.requireLearnerReadAccess(session.accountId, heroLearnerId);
+          const { heroLaunch, subjectCommand } = await resolveHeroStartTaskCommand({
+            body,
+            repository,
+            env,
+            now: now(),
+          });
+          requireSubjectCommandAvailable(subjectCommand, env);
+          await protectDemoSubjectCommand({
+            env,
+            request,
+            session,
+            command: subjectCommand,
+            now: now(),
+            capacity,
+          });
+          try {
+            const result = await repository.runSubjectCommand(
+              session.accountId,
+              subjectCommand,
+              () => subjectRuntime.dispatch(subjectCommand, {
+                env,
+                request,
+                session,
+                account,
+                repository,
+                now: now(),
+                capacity,
+              }),
+            );
+            return json({
+              ok: true,
+              heroLaunch,
+              ...result,
+            });
+          } catch (error) {
+            if (error?.name === 'ProjectionUnavailableError') {
+              if (typeof capacity?.setProjectionFallback === 'function') {
+                capacity.setProjectionFallback('rejected');
+              }
+              return json({
+                ok: false,
+                error: 'projection_unavailable',
+                retryable: false,
+                requestId: body?.requestId || '',
+                ...(error.extra && typeof error.extra === 'object' ? { cause: error.extra.cause } : {}),
+              }, 503);
+            }
+            throw error;
+          }
         }
 
         if (url.pathname === '/api/demo/reset' && request.method === 'POST') {

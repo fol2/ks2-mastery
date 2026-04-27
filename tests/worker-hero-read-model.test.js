@@ -55,10 +55,10 @@ test('hero read-model: flag on + authenticated returns shadow read model', async
   assert.equal(payload.hero.childVisible, false);
   assert.equal(payload.hero.coinsEnabled, false);
   assert.equal(payload.hero.writesEnabled, false);
-  assert.equal(payload.hero.version, 1);
+  assert.equal(payload.hero.version, 2);
   assert.equal(typeof payload.hero.dateKey, 'string');
   assert.equal(payload.hero.timezone, 'Europe/London');
-  assert.equal(payload.hero.schedulerVersion, 'hero-p0-shadow-v1');
+  assert.equal(payload.hero.schedulerVersion, 'hero-p1-launch-v1');
 
   server.close();
 });

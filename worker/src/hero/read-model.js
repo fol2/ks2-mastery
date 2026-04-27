@@ -1,4 +1,4 @@
-// Hero Mode P0 — Shadow read-model assembler.
+// Hero Mode — Shadow read-model assembler.
 //
 // Orchestrates providers, eligibility, and the scheduler into a complete
 // shadow response. Pure read-only path — MUST NOT mutate any state, write
@@ -7,7 +7,7 @@
 import {
   HERO_DEFAULT_EFFORT_TARGET,
   HERO_DEFAULT_TIMEZONE,
-  HERO_SCHEDULER_VERSION,
+  HERO_P1_SCHEDULER_VERSION,
   HERO_SAFETY_FLAGS,
   HERO_READY_SUBJECT_IDS,
 } from '../../../shared/hero/constants.js';
@@ -15,25 +15,48 @@ import {
 import { resolveEligibility } from '../../../shared/hero/eligibility.js';
 import { generateHeroSeed, deriveDateKey } from '../../../shared/hero/seed.js';
 import { scheduleShadowQuest } from '../../../shared/hero/scheduler.js';
+import { deriveTaskId } from '../../../shared/hero/task-envelope.js';
+import { buildHeroContext } from '../../../shared/hero/launch-context.js';
+import { determineLaunchStatus } from '../../../shared/hero/launch-status.js';
+import { mapHeroEnvelopeToSubjectPayload } from './launch-adapters/index.js';
 import { runProvider } from './providers/index.js';
+
+function envFlagEnabled(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+function buildCapabilityRegistry(tasks) {
+  const registry = {};
+  for (const task of tasks) {
+    const subjectId = task.subjectId;
+    if (!subjectId) continue;
+    if (!registry[subjectId]) {
+      registry[subjectId] = { launchers: {} };
+    }
+    const result = mapHeroEnvelopeToSubjectPayload(task);
+    if (result.launchable) {
+      registry[subjectId].launchers[task.launcher] = true;
+    }
+  }
+  return registry;
+}
 
 /**
  * Assemble the full Hero shadow read model for a learner.
- *
- * This is the P0 shadow-only path: no writes, no coins, no child UI.
- * The response shape matches origin doc section 2.
  *
  * @param {Object} params
  * @param {string} params.learnerId
  * @param {Object} params.subjectReadModels — keyed by subjectId, each the
  *   per-subject read-model (or null when absent)
  * @param {number} params.now — epoch milliseconds
+ * @param {Object} [params.env] — Worker environment bindings (optional for P0 compat)
  * @returns {Object} shadow read model
  */
 export function buildHeroShadowReadModel({
   learnerId,
   subjectReadModels = {},
   now,
+  env,
 } = {}) {
   const dateKey = deriveDateKey(now, HERO_DEFAULT_TIMEZONE);
 
@@ -61,7 +84,7 @@ export function buildHeroShadowReadModel({
     learnerId,
     dateKey,
     timezone: HERO_DEFAULT_TIMEZONE,
-    schedulerVersion: HERO_SCHEDULER_VERSION,
+    schedulerVersion: HERO_P1_SCHEDULER_VERSION,
     contentReleaseFingerprint: null,
   });
 
@@ -70,18 +93,47 @@ export function buildHeroShadowReadModel({
     eligibleSnapshots,
     effortTarget: HERO_DEFAULT_EFFORT_TARGET,
     seed,
-    schedulerVersion: HERO_SCHEDULER_VERSION,
+    schedulerVersion: HERO_P1_SCHEDULER_VERSION,
     dateKey,
   });
 
-  // 6. Assemble the full response shape (origin doc section 2)
+  // 6. Enrich tasks with taskId, launchStatus, and heroContext
+  const capabilityRegistry = buildCapabilityRegistry(quest.tasks);
+  const enrichedTasks = quest.tasks.map((task, ordinal) => {
+    const taskId = deriveTaskId(quest.questId, ordinal, task);
+
+    const launchResult = determineLaunchStatus(
+      task.subjectId,
+      task.launcher,
+      capabilityRegistry,
+    );
+
+    const heroContext = buildHeroContext({
+      quest: { questId: quest.questId, dateKey, timezone: HERO_DEFAULT_TIMEZONE },
+      task,
+      taskId,
+      requestId: null,
+      now,
+      schedulerVersion: HERO_P1_SCHEDULER_VERSION,
+    });
+
+    return {
+      ...task,
+      taskId,
+      launchStatus: launchResult.status,
+      launchStatusReason: launchResult.reason || null,
+      heroContext,
+    };
+  });
+
+  // 7. Assemble the full response shape
   return {
-    version: 1,
+    version: 2,
     mode: 'shadow',
     ...HERO_SAFETY_FLAGS,
     dateKey,
     timezone: HERO_DEFAULT_TIMEZONE,
-    schedulerVersion: HERO_SCHEDULER_VERSION,
+    schedulerVersion: HERO_P1_SCHEDULER_VERSION,
     eligibleSubjects: eligibility.eligible,
     lockedSubjects: eligibility.locked,
     dailyQuest: {
@@ -89,7 +141,14 @@ export function buildHeroShadowReadModel({
       status: quest.status,
       effortTarget: quest.effortTarget,
       effortPlanned: quest.effortPlanned,
-      tasks: quest.tasks,
+      tasks: enrichedTasks,
+    },
+    launch: {
+      enabled: env ? envFlagEnabled(env.HERO_MODE_LAUNCH_ENABLED) : false,
+      commandRoute: '/api/hero/command',
+      command: 'start-task',
+      claimEnabled: false,
+      heroStatePersistenceEnabled: false,
     },
     debug: quest.debug,
   };

@@ -1024,6 +1024,7 @@ function startSession(state, payload, nowTs, learnerId) {
         questions,
         finished: false,
       },
+      heroContext: payload.heroContext || null,
       serverAuthority: SERVER_AUTHORITY,
     };
     return [];
@@ -1071,6 +1072,7 @@ function startSession(state, payload, nowTs, learnerId) {
       retryingCurrent: false,
       similarProblems: 0,
     },
+    heroContext: payload.heroContext || null,
     serverAuthority: SERVER_AUTHORITY,
   };
   return [];

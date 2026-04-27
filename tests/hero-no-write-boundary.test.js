@@ -1,16 +1,19 @@
-// Hero Mode P0 — No-write boundary tests.
+// Hero Mode — No-write boundary tests.
 //
-// Structural and behavioural tests proving the P0 Hero code layer cannot
-// write reward or subject state. These guard against accidental future
-// drift that would violate the read-only contract.
+// Structural and behavioural tests proving the Hero code layer cannot
+// directly write reward or subject state. These guard against accidental
+// drift that would violate the architectural contract.
 //
-// Structural tests (1-6): use fs.readFileSync to scan the import graph
+// Structural tests (S1-S6): use fs.readFileSync to scan the import graph
 // and source content of every .js file under shared/hero/ and
 // worker/src/hero/. No file IO at test-time beyond reading local source.
+// New P1 files (launch.js, launch-adapters/, launch-context.js,
+// launch-status.js) are automatically included via collectJsFiles().
 //
-// Behavioural tests (7-8): use the Worker test server to prove the
-// route does not mutate any database table and that no command endpoint
-// exists.
+// Behavioural tests (B7-B8): B7 proves GET read-model writes zero rows.
+// B8 proves POST /api/hero/command returns 404 when the launch flag is
+// off. The flag-on path is covered in worker-hero-command.test.js and
+// hero-launch-boundary.test.js.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -277,11 +280,14 @@ test('B7: GET /api/hero/read-model does not write to any state table', async () 
   server.close();
 });
 
-// ── Behavioural test 8: POST /api/hero/command returns 404 ───────────────────
+// ── Behavioural test 8: POST /api/hero/command gate — flag off returns 404 ────
 
-test('B8: POST /api/hero/command returns 404 (route does not exist)', async () => {
+test('B8: POST /api/hero/command with HERO_MODE_LAUNCH_ENABLED=false returns 404', async () => {
   const server = createWorkerRepositoryServer({
-    env: { HERO_MODE_SHADOW_ENABLED: 'true' },
+    env: {
+      HERO_MODE_SHADOW_ENABLED: 'true',
+      HERO_MODE_LAUNCH_ENABLED: 'false',
+    },
   });
 
   const response = await server.fetch(
@@ -289,15 +295,17 @@ test('B8: POST /api/hero/command returns 404 (route does not exist)', async () =
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'test' }),
+      body: JSON.stringify({ command: 'start-task' }),
     },
   );
+  const payload = await response.json();
 
   assert.equal(
     response.status,
     404,
-    `POST /api/hero/command must return 404 — P0 Hero has no write endpoint; got ${response.status}`,
+    `POST /api/hero/command with launch flag off must return 404; got ${response.status}`,
   );
+  assert.equal(payload.code, 'hero_launch_disabled');
 
   server.close();
 });

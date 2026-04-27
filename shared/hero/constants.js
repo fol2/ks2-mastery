@@ -1,5 +1,17 @@
 export const HERO_SCHEDULER_VERSION = 'hero-p0-shadow-v1';
 
+export const HERO_P1_SCHEDULER_VERSION = 'hero-p1-launch-v1';
+
+export const HERO_LAUNCH_CONTRACT_VERSION = 1;
+
+export const HERO_LAUNCH_STATUSES = Object.freeze([
+  'launchable',
+  'not-launchable',
+  'subject-unavailable',
+  'stale',
+  'blocked',
+]);
+
 export const HERO_DEFAULT_TIMEZONE = 'Europe/London';
 
 export const HERO_DEFAULT_EFFORT_TARGET = 18;
@@ -66,6 +78,7 @@ export const HERO_MAINTENANCE_INTENTS = Object.freeze(new Set([
 
 const INTENT_SET = new Set(HERO_INTENTS);
 const LAUNCHER_SET = new Set(HERO_LAUNCHERS);
+const LAUNCH_STATUS_SET = new Set(HERO_LAUNCH_STATUSES);
 
 export function isValidIntent(intent) {
   return typeof intent === 'string' && INTENT_SET.has(intent);
@@ -73,4 +86,8 @@ export function isValidIntent(intent) {
 
 export function isValidLauncher(launcher) {
   return typeof launcher === 'string' && LAUNCHER_SET.has(launcher);
+}
+
+export function isValidLaunchStatus(status) {
+  return typeof status === 'string' && LAUNCH_STATUS_SET.has(status);
 }
