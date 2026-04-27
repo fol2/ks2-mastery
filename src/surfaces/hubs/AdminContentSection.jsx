@@ -384,12 +384,16 @@ function AssetRegistryCard({ entry, model, actions }) {
     ? 'good'
     : entry.reviewStatus === 'has-blockers'
       ? 'bad'
-      : '';
+      : entry.reviewStatus === 'clean'
+        ? 'warn'
+        : '';
   const statusChipLabel = entry.reviewStatus === 'publishable'
     ? 'Publishable'
     : entry.reviewStatus === 'has-blockers'
       ? `${entry.validationState.errorCount} blocker${entry.validationState.errorCount === 1 ? '' : 's'}`
-      : 'Unknown';
+      : entry.reviewStatus === 'clean'
+        ? 'Warnings Only'
+        : 'No Validation';
 
   const visual = model?.monsterVisualConfig || {};
   const status = visual?.status || {};
@@ -421,18 +425,6 @@ function AssetRegistryCard({ entry, model, actions }) {
           </div>
         </div>
         <div className="actions" style={{ justifyContent: 'flex-end' }}>
-          <button
-            className="btn primary"
-            type="button"
-            disabled={!entry.canManage || !entry.hasDraft}
-            data-action="registry-save-draft"
-            onClick={() => actions.dispatch('monster-visual-config-save', {
-              draft: visual.draft,
-              expectedDraftRevision: status.draftRevision,
-            })}
-          >
-            Save draft
-          </button>
           <button
             className="btn good"
             type="button"

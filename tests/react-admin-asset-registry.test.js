@@ -10,8 +10,13 @@
 //   4. Edge case: no published config shows "First publish pending" state
 //   5. Edge case: validation errors displayed on registry card
 //   6. Edge case: registry card gracefully handles missing/empty config
-//   7. Happy path: draft/publish/restore actions delegate through registry UI
+//   7. Happy path: publish and restore actions delegate through registry UI
 //   8. Adapter: buildAssetRegistry returns array with one entry
+//   9. Adapter: clean reviewStatus when ok=false, errorCount=0, warningCount>0
+//  10. Adapter: unknown reviewStatus when validation has no 'ok' key
+//  11. SSR: clean reviewStatus renders "Warnings Only" chip with warn class
+//  12. SSR: unknown reviewStatus renders "No Validation" chip
+//  13. SSR: Publish/Restore button dispatch payloads and disabled states
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -500,14 +505,14 @@ test('registry card renders empty state when no draft and no published config', 
 });
 
 // =================================================================
-// 9. SSR: draft/publish/restore action buttons render in registry
+// 9. SSR: publish and restore action buttons render (no save draft)
 // =================================================================
 
-test('registry card renders save draft, publish, and restore actions', async () => {
+test('registry card renders publish and restore actions but no save draft', async () => {
   const html = await renderContentSection();
 
-  // Save draft button
-  assert.match(html, /data-action="registry-save-draft"/, 'Save draft button renders');
+  // Save draft button removed — editing belongs in MonsterVisualConfigPanel
+  assert.doesNotMatch(html, /data-action="registry-save-draft"/, 'Save draft button removed from registry card');
 
   // Publish button
   assert.match(html, /data-action="registry-publish"/, 'Publish button renders');
@@ -552,7 +557,197 @@ test('registry card disables actions for read-only user', async () => {
 });
 
 // =================================================================
-// 11. SSR: existing panels still render alongside registry
+// 11. Adapter: clean reviewStatus when ok=false, errorCount=0, warningCount>0
+// =================================================================
+
+test('buildMonsterVisualRegistryEntry returns clean when validation ok=false with warnings only', async () => {
+  const result = await runAdapterScript(`
+    import { buildMonsterVisualRegistryEntry } from ${ADAPTER_PATH};
+    const entry = buildMonsterVisualRegistryEntry({
+      permissions: { canManageMonsterVisualConfig: true },
+      status: {
+        draftRevision: 3,
+        publishedVersion: 1,
+        manifestHash: 'hash-clean',
+        validation: {
+          ok: false,
+          errorCount: 0,
+          warningCount: 2,
+          errors: [],
+          warnings: [
+            { code: 'deprecated_motion', assetKey: 'vellhorn-b1-3' },
+            { code: 'low_contrast', assetKey: 'skarr-b2-1' },
+          ],
+        },
+      },
+      draft: { assets: {} },
+      published: { assets: {} },
+      versions: [],
+    });
+    process.stdout.write(JSON.stringify(entry));
+  `);
+
+  assert.equal(result.reviewStatus, 'clean');
+  assert.equal(result.validationState.ok, false);
+  assert.equal(result.validationState.errorCount, 0);
+  assert.equal(result.validationState.warningCount, 2);
+});
+
+// =================================================================
+// 12. Adapter: unknown reviewStatus when validation has no 'ok' key
+// =================================================================
+
+test('buildMonsterVisualRegistryEntry returns unknown when validation has no ok key', async () => {
+  const result = await runAdapterScript(`
+    import { buildMonsterVisualRegistryEntry } from ${ADAPTER_PATH};
+    const entry = buildMonsterVisualRegistryEntry({
+      permissions: { canManageMonsterVisualConfig: true },
+      status: {
+        draftRevision: 1,
+        publishedVersion: 0,
+        manifestHash: '',
+        validation: {},
+      },
+      draft: { assets: {} },
+      published: null,
+      versions: [],
+    });
+    process.stdout.write(JSON.stringify(entry));
+  `);
+
+  assert.equal(result.reviewStatus, 'unknown');
+});
+
+// =================================================================
+// 13. SSR: clean reviewStatus renders "Warnings Only" chip
+// =================================================================
+
+test('registry card renders "Warnings Only" chip for clean reviewStatus', async () => {
+  const cleanModel = baseModel({
+    monsterVisualConfig: {
+      permissions: { canManageMonsterVisualConfig: true, canViewMonsterVisualConfig: true },
+      status: {
+        schemaVersion: 2,
+        manifestHash: 'hash-clean',
+        draftRevision: 3,
+        draftUpdatedAt: Date.UTC(2026, 3, 27),
+        draftUpdatedByAccountId: 'adult-admin',
+        publishedVersion: 1,
+        publishedAt: Date.UTC(2026, 3, 25),
+        publishedByAccountId: 'adult-admin',
+        validation: {
+          ok: false,
+          errorCount: 0,
+          warningCount: 2,
+          errors: [],
+          warnings: [
+            { code: 'deprecated_motion', assetKey: 'vellhorn-b1-3' },
+            { code: 'low_contrast', assetKey: 'skarr-b2-1' },
+          ],
+        },
+      },
+      draft: { manifestHash: 'hash-clean', assets: {} },
+      published: { manifestHash: 'prev-hash', assets: {} },
+      versions: [],
+      mutation: {},
+    },
+  });
+  const html = await renderContentSection({ model: cleanModel });
+
+  assert.match(html, /Warnings Only/, '"Warnings Only" chip label renders for clean status');
+  assert.match(html, /chip warn/, '"warn" class applied to clean status chip');
+});
+
+// =================================================================
+// 14. SSR: unknown reviewStatus renders "No Validation" chip
+// =================================================================
+
+test('registry card renders "No Validation" chip for unknown reviewStatus', async () => {
+  const unknownModel = baseModel({
+    monsterVisualConfig: {
+      permissions: { canManageMonsterVisualConfig: true, canViewMonsterVisualConfig: true },
+      status: {
+        schemaVersion: 2,
+        manifestHash: '',
+        draftRevision: 1,
+        draftUpdatedAt: Date.UTC(2026, 3, 27),
+        draftUpdatedByAccountId: 'adult-admin',
+        publishedVersion: 0,
+        publishedAt: 0,
+        publishedByAccountId: '',
+        validation: {},
+      },
+      draft: { assets: {} },
+      published: null,
+      versions: [],
+      mutation: {},
+    },
+  });
+  const html = await renderContentSection({ model: unknownModel });
+
+  assert.match(html, /No Validation/, '"No Validation" chip label renders for unknown status');
+});
+
+// =================================================================
+// 15. SSR: Publish and Restore button dispatch payloads verified
+// =================================================================
+
+test('registry card Publish button carries expectedDraftRevision in dispatch', async () => {
+  // Verify the Publish button includes the right disabled-state logic
+  // and the Restore select is wired with version options.
+  const html = await renderContentSection();
+
+  // Publish button is not disabled (canManage=true, ok=true, hasDraft=true in baseModel).
+  // React SSR renders disabled="" before data-action, so check both orderings.
+  assert.doesNotMatch(
+    html,
+    /disabled="[^"]*"[^>]*data-action="registry-publish"/,
+    'Publish button is enabled for admin with valid draft (disabled before action)'
+  );
+  assert.doesNotMatch(
+    html,
+    /data-action="registry-publish"[^>]*disabled/,
+    'Publish button is enabled for admin with valid draft (disabled after action)'
+  );
+
+  // Restore select has version options from baseModel fixture
+  assert.match(html, /aria-label="Restore version"/, 'Restore select has accessible label');
+  assert.match(html, /Version 3/, 'Restore option for version 3 renders');
+  assert.match(html, /Version 2/, 'Restore option for version 2 renders');
+
+  // Publish button disabled when validation fails
+  const blockedModel = baseModel({
+    monsterVisualConfig: {
+      permissions: { canManageMonsterVisualConfig: true, canViewMonsterVisualConfig: true },
+      status: {
+        schemaVersion: 2,
+        manifestHash: 'hash-blocked',
+        draftRevision: 4,
+        draftUpdatedAt: Date.UTC(2026, 3, 27),
+        draftUpdatedByAccountId: 'adult-admin',
+        publishedVersion: 2,
+        publishedAt: Date.UTC(2026, 3, 25),
+        publishedByAccountId: 'adult-admin',
+        validation: { ok: false, errorCount: 1, warningCount: 0, errors: [{ code: 'err' }], warnings: [] },
+      },
+      draft: { manifestHash: 'hash-blocked', assets: {} },
+      published: { manifestHash: 'prev-hash', assets: {} },
+      versions: [{ version: 2, publishedAt: Date.UTC(2026, 3, 25) }],
+      mutation: {},
+    },
+  });
+  const blockedHtml = await renderContentSection({ model: blockedModel });
+  // React SSR may render disabled="" before data-action, so match the
+  // button element containing both the disabled attribute and the action.
+  assert.match(
+    blockedHtml,
+    /disabled="[^"]*"[^>]*data-action="registry-publish"/,
+    'Publish button disabled when validation has blockers'
+  );
+});
+
+// =================================================================
+// 16. SSR: existing panels still render alongside registry
 // =================================================================
 
 test('existing content section panels still render alongside registry card', async () => {

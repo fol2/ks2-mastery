@@ -204,9 +204,12 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // post-merge baseline honestly.
 // P5-U7: Monster strip progress bar uses 1 inline `style={{ width, backgroundColor }}`
 // site in GrammarSetupScene.jsx for accent-coloured star bars. Budget 293 → 294.
-export const PRE_MIGRATION_TOTAL = 294;
+// U10 (Admin P3): Asset & Effect Registry card + MonsterVisualConfigPanel added
+// 11 inline style sites for registry detail grid, card layout, and editor panel.
+// Budget 294 → 305.
+export const PRE_MIGRATION_TOTAL = 305;
 export const SITES_MIGRATED_THIS_PR = 25;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 269
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 280
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';
