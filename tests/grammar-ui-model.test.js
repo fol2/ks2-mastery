@@ -1048,3 +1048,115 @@ test('P5-U8 view-model: all forbidden terms absent from simplified layout labels
     assert.equal(isGrammarChildCopy(label), true, `"${label}" contains forbidden term`);
   }
 });
+
+// =============================================================================
+// P5-U10: View-model integration — additive Star fields
+// =============================================================================
+
+test('P5-U10 view-model: buildGrammarDashboardModel includes monsterStrip with 4 entries alongside concordiumProgress', () => {
+  const model = buildGrammarDashboardModel({}, null, {});
+  // monsterStrip is present and has 4 active monsters.
+  assert.ok(Array.isArray(model.monsterStrip), 'monsterStrip is an array');
+  assert.equal(model.monsterStrip.length, 4, 'monsterStrip has 4 entries');
+  assert.deepEqual(
+    model.monsterStrip.map((e) => e.monsterId),
+    ['bracehart', 'chronalyx', 'couronnail', 'concordium'],
+  );
+  // concordiumProgress coexists — backward compatibility.
+  assert.equal(typeof model.concordiumProgress, 'object');
+  assert.equal(typeof model.concordiumProgress.mastered, 'number');
+  assert.equal(typeof model.concordiumProgress.total, 'number');
+});
+
+test('P5-U10 view-model: concordiumProgress shape is UNCHANGED ({ mastered, total }) — backward compatibility', () => {
+  const rewardState = {
+    concordium: {
+      mastered: [
+        'grammar:grammar-legacy-reviewed-2026-04-24:word_classes',
+        'grammar:grammar-legacy-reviewed-2026-04-24:noun_phrases',
+        'grammar:grammar-legacy-reviewed-2026-04-24:clauses',
+      ],
+    },
+  };
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  // concordiumProgress shape has exactly { mastered, total }, no extra keys.
+  const keys = Object.keys(model.concordiumProgress).sort();
+  assert.deepEqual(keys, ['mastered', 'total'], 'concordiumProgress has exactly mastered + total');
+  assert.equal(model.concordiumProgress.mastered, 3);
+  assert.equal(model.concordiumProgress.total, 18);
+});
+
+test('P5-U10 view-model: monsterStrip entries carry Star fields (stars, starMax, stageName, stageIndex)', () => {
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 42 },
+    couronnail: { mastered: [], caught: true, starHighWater: 100 },
+  };
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  for (const entry of model.monsterStrip) {
+    assert.equal(typeof entry.stars, 'number', `${entry.monsterId} has numeric stars`);
+    assert.equal(entry.starMax, 100, `${entry.monsterId} starMax is 100`);
+    assert.equal(typeof entry.stageName, 'string', `${entry.monsterId} has string stageName`);
+    assert.equal(typeof entry.stageIndex, 'number', `${entry.monsterId} has numeric stageIndex`);
+    assert.equal(typeof entry.accentColor, 'string', `${entry.monsterId} has accentColor`);
+  }
+  // Specific star values from starHighWater.
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehart.stars, 42);
+  assert.equal(bracehart.stageName, 'Growing');
+  const couronnail = model.monsterStrip.find((e) => e.monsterId === 'couronnail');
+  assert.equal(couronnail.stars, 100);
+  assert.equal(couronnail.stageName, 'Mega');
+});
+
+test('P5-U10 view-model: fresh learner with no Grammar data -> monsterStrip shows 0 Stars for all 4 monsters', () => {
+  const model = buildGrammarDashboardModel(null, null, null);
+  assert.equal(model.monsterStrip.length, 4);
+  for (const entry of model.monsterStrip) {
+    assert.equal(entry.stars, 0, `${entry.monsterId} starts at 0 Stars`);
+    assert.equal(entry.stageName, 'Not found yet', `${entry.monsterId} starts "Not found yet"`);
+    assert.equal(entry.stageIndex, 0, `${entry.monsterId} starts at stageIndex 0`);
+  }
+  // concordiumProgress also safe.
+  assert.equal(model.concordiumProgress.mastered, 0);
+  assert.equal(model.concordiumProgress.total, 18);
+});
+
+test('P5-U10 view-model: monsterStrip + concordiumProgress do not conflict — both return valid shapes', () => {
+  const rewardState = {
+    concordium: {
+      mastered: [
+        'grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions',
+        'grammar:grammar-legacy-reviewed-2026-04-24:word_classes',
+      ],
+      caught: true,
+      starHighWater: 5,
+    },
+    bracehart: {
+      mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions'],
+      caught: true,
+      starHighWater: 15,
+    },
+  };
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  // Legacy concordiumProgress reads mastered count.
+  assert.equal(model.concordiumProgress.mastered, 2);
+  assert.equal(model.concordiumProgress.total, 18);
+  // monsterStrip reads Star-based progress from starHighWater.
+  const concordiumEntry = model.monsterStrip.find((e) => e.monsterId === 'concordium');
+  assert.equal(concordiumEntry.stars, 5);
+  const bracehartEntry = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehartEntry.stars, 15);
+  assert.equal(bracehartEntry.stageName, 'Hatched');
+});
+
+test('P5-U10 view-model: reserved monsters never leak into monsterStrip from dashboard model', () => {
+  const rewardState = {
+    glossbloom: { mastered: ['something'], caught: true, starHighWater: 50 },
+    loomrill: { mastered: ['something'], caught: true, starHighWater: 30 },
+  };
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  const ids = model.monsterStrip.map((e) => e.monsterId);
+  assert.equal(ids.includes('glossbloom'), false, 'glossbloom excluded from dashboard monsterStrip');
+  assert.equal(ids.includes('loomrill'), false, 'loomrill excluded from dashboard monsterStrip');
+  assert.equal(ids.length, 4, 'exactly 4 active monsters in strip');
+});

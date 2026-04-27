@@ -506,10 +506,17 @@ function concordiumProgressFromReward(rewardState) {
  *     todayCards:    Array<{ id, label, value, detail }>,
  *     isEmpty:       boolean, // true when all four Today counts are zero
  *     concordiumProgress: { mastered: number, total: number },
+ *     monsterStrip:  Array<{ monsterId, name, stageName, stars, starMax, stageIndex, accentColor }>,
  *     primaryMode:   string,  // grammar.prefs.mode
  *     moreModes:     Frozen copy of GRAMMAR_MORE_PRACTICE_MODES,
  *     writingTryAvailable: boolean,
  *   }
+ *
+ * U10 Phase 5: `monsterStrip` is wired into the dashboard model alongside
+ * the legacy `concordiumProgress` shape. The legacy shape is preserved for
+ * backward compatibility — existing JSX consumers continue to read
+ * `concordiumProgress.mastered / total`. New Star-aware consumers read
+ * `monsterStrip[i].stars / starMax` instead.
  */
 export function buildGrammarDashboardModel(grammar, _learner, rewardState) {
   const safeGrammar = grammar && typeof grammar === 'object' && !Array.isArray(grammar) ? grammar : {};
@@ -548,6 +555,7 @@ export function buildGrammarDashboardModel(grammar, _learner, rewardState) {
     todayCards: Object.freeze(todayCards),
     isEmpty,
     concordiumProgress: concordiumProgressFromReward(rewardState),
+    monsterStrip: buildGrammarMonsterStripModel(rewardState, null, null),
     primaryMode,
     moreModes: GRAMMAR_MORE_PRACTICE_MODES,
     writingTryAvailable: aiEnabled,
