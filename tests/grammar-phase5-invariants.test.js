@@ -42,6 +42,11 @@ import {
 import { GRAMMAR_EVENT_TYPES } from '../src/subjects/grammar/event-hooks.js';
 import { updateGrammarStarHighWater } from '../src/platform/game/mastery/grammar.js';
 
+import {
+  GRAMMAR_BANK_STATUS_CHIPS,
+  buildGrammarDashboardModel,
+} from '../src/subjects/grammar/components/grammar-view-model.js';
+
 // -----------------------------------------------------------------------------
 // 1. Denominator-freeze hard gate.
 //
@@ -485,4 +490,44 @@ test('P6 invariant 4: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED exists', () => {
 test('P6 invariant 4: updateGrammarStarHighWater exists and is exported', () => {
   assert.equal(typeof updateGrammarStarHighWater, 'function',
     'P6-4: updateGrammarStarHighWater must be a function exported from grammar.js');
+});
+
+// ---------------------------------------------------------------------------
+// Phase 7 invariant pins
+// ---------------------------------------------------------------------------
+
+test('P7-5: shared/grammar/grammar-stars.js has zero imports from src/', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const content = await readFile(new URL('../shared/grammar/grammar-stars.js', import.meta.url), 'utf8');
+  const srcImports = content.match(/from\s+['"][^'"]*src\//g);
+  assert.equal(srcImports, null, 'grammar-stars.js must not import from src/');
+});
+
+test('P7-5: shared/grammar/grammar-concept-roster.js has zero imports from src/', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const content = await readFile(new URL('../shared/grammar/grammar-concept-roster.js', import.meta.url), 'utf8');
+  const srcImports = content.match(/from\s+['"][^'"]*src\//g);
+  assert.equal(srcImports, null, 'grammar-concept-roster.js must not import from src/');
+});
+
+test('P7-3: GRAMMAR_BANK_STATUS_CHIPS due entry has label Practise next', () => {
+  const dueChip = GRAMMAR_BANK_STATUS_CHIPS.find((c) => c.id === 'due');
+  assert.ok(dueChip, 'due chip must exist');
+  assert.equal(dueChip.label, 'Practise next');
+});
+
+test('P7-2: writingTryAvailable does not depend on AI — model returns true when AI disabled', () => {
+  const model = buildGrammarDashboardModel(
+    { capabilities: { aiEnrichment: { enabled: false } } },
+    null,
+    {},
+  );
+  assert.equal(model.writingTryAvailable, true);
+});
+
+test('P7: no contentReleaseId bump in Phase 7 files', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { readdir } = await import('node:fs/promises');
+  // Verify the release ID constant hasn't changed
+  assert.equal(GRAMMAR_REWARD_RELEASE_ID, 'grammar-legacy-reviewed-2026-04-24');
 });
