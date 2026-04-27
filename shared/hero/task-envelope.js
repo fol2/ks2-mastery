@@ -8,6 +8,33 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+// Duplicated from seed.js — kept module-private for purity (see P0 L6)
+function djb2Hash(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+  }
+  return hash >>> 0;
+}
+
+export function deriveTaskId(questId, ordinal, envelope) {
+  const obj = isPlainObject(envelope) ? envelope : {};
+  const tags = Array.isArray(obj.reasonTags)
+    ? [...obj.reasonTags].sort().join(',')
+    : '';
+  const input = [
+    String(questId ?? ''),
+    String(ordinal ?? 0),
+    String(obj.subjectId ?? ''),
+    String(obj.intent ?? ''),
+    String(obj.launcher ?? ''),
+    String(obj.effortTarget ?? 0),
+    tags,
+  ].join('|');
+  const hex8 = djb2Hash(input).toString(16).padStart(8, '0');
+  return 'hero-task-' + hex8;
+}
+
 function clampEffort(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return HERO_EFFORT_RANGE.min;
