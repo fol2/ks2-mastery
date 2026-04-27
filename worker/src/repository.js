@@ -9159,5 +9159,31 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       const rows = await listMembershipRows(db, accountId, { writableOnly: true });
       return rows.map((row) => row.id);
     },
+    // Hero Mode P0: public authz gate so the route handler can validate
+    // learner access before any data read. Delegates to the module-private
+    // `requireLearnerReadAccess` which throws ForbiddenError on failure.
+    async requireLearnerReadAccess(accountId, learnerId) {
+      return requireLearnerReadAccess(db, accountId, learnerId);
+    },
+    // Hero Mode P0: read per-subject read-model data for the hero
+    // providers. Reads `child_subject_state` rows and returns the
+    // parsed `data` objects keyed by subject_id. Providers handle
+    // null/empty gracefully, so subjects without state simply return
+    // available:false from the provider.
+    async readHeroSubjectReadModels(learnerId) {
+      const rows = await all(db, `
+        SELECT subject_id, data_json
+        FROM child_subject_state
+        WHERE learner_id = ?
+      `, [learnerId]);
+      const result = {};
+      for (const row of rows) {
+        const data = safeJsonParse(row.data_json, null);
+        if (data) {
+          result[row.subject_id] = data;
+        }
+      }
+      return result;
+    },
   };
 }
