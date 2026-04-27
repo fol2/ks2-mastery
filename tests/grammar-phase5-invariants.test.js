@@ -32,6 +32,12 @@ import {
   GRAMMAR_REWARD_RELEASE_ID,
 } from '../src/platform/game/monster-system.js';
 
+import {
+  GRAMMAR_MONSTER_STAR_MAX,
+  GRAMMAR_STAR_STAGE_THRESHOLDS,
+  GRAMMAR_CONCEPT_STAR_WEIGHTS,
+} from '../shared/grammar/grammar-stars.js';
+
 // -----------------------------------------------------------------------------
 // 1. Denominator-freeze hard gate.
 //
@@ -195,9 +201,41 @@ test('Phase 5 invariant 14: GRAMMAR_REWARD_RELEASE_ID is stable — no contentRe
 // serve as the contract specification that U2 must satisfy.
 // -----------------------------------------------------------------------------
 
-test.todo('Phase 5 invariant 1: GRAMMAR_MONSTER_STAR_MAX === 100 (pin awaits U2 grammar-stars.js)');
-test.todo('Phase 5 invariant 3: GRAMMAR_STAR_STAGE_THRESHOLDS shape (pin awaits U2 grammar-stars.js)');
-test.todo('Phase 5 invariant 2: GRAMMAR_CONCEPT_STAR_WEIGHTS sum === 1.0 (pin awaits U2 grammar-stars.js)');
+test('Phase 5 invariant 1: GRAMMAR_MONSTER_STAR_MAX === 100', () => {
+  assert.equal(
+    GRAMMAR_MONSTER_STAR_MAX,
+    100,
+    'Phase 5 universal Star cap is exactly 100. Changing this value ' +
+    'requires updating all downstream stage thresholds and migration logic.',
+  );
+});
+
+test('Phase 5 invariant 3: GRAMMAR_STAR_STAGE_THRESHOLDS shape', () => {
+  assert.deepEqual(
+    GRAMMAR_STAR_STAGE_THRESHOLDS,
+    { egg: 1, hatch: 15, evolve2: 35, evolve3: 65, mega: 100 },
+    'Stage thresholds must match the plan. Any change requires updating ' +
+    'grammarStarStageFor, grammarStarDisplayStage, and the migration normaliser.',
+  );
+  assert.ok(
+    Object.isFrozen(GRAMMAR_STAR_STAGE_THRESHOLDS),
+    'GRAMMAR_STAR_STAGE_THRESHOLDS must be Object.freeze()d',
+  );
+});
+
+test('Phase 5 invariant 2: GRAMMAR_CONCEPT_STAR_WEIGHTS sum === 1.0', () => {
+  const sum = Object.values(GRAMMAR_CONCEPT_STAR_WEIGHTS).reduce((a, b) => a + b, 0);
+  assert.equal(
+    sum,
+    1.0,
+    `Evidence-tier weights must sum to exactly 1.0 so that a fully-evidenced ` +
+    `concept earns its full budget. Current sum: ${sum}`,
+  );
+  assert.ok(
+    Object.isFrozen(GRAMMAR_CONCEPT_STAR_WEIGHTS),
+    'GRAMMAR_CONCEPT_STAR_WEIGHTS must be Object.freeze()d',
+  );
+});
 
 // -----------------------------------------------------------------------------
 // 7. Aggregate concepts list is frozen (Object.freeze).
