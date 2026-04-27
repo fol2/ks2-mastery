@@ -18,8 +18,27 @@ import {
   heroBgStyle,
   heroToneForBg,
   monsterImageVisual,
+  normalisePostMegaBranch,
   renderAction,
 } from './spelling-view-model.js';
+
+// Setup scene picks the post-Mega vista (`f` region) directly when it
+// detects a graduated learner, so the parent surface does not need to
+// thread separate `postMega` props down. The branch is read once from the
+// monster-codex state — Phaeton is the spelling grand master — so the
+// vista stays in sync with the Codex creature on the learner's home tile.
+const SPELLING_GRAND_MASTER_MONSTER_ID = 'phaeton';
+const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+
+function postMegaBranchFromRepositories(repositories, learnerId) {
+  if (!learnerId || !repositories?.gameState?.read) return normalisePostMegaBranch();
+  try {
+    const state = repositories.gameState.read(learnerId, MONSTER_CODEX_SYSTEM_ID);
+    return normalisePostMegaBranch(state?.[SPELLING_GRAND_MASTER_MONSTER_ID]?.branch);
+  } catch (_error) {
+    return normalisePostMegaBranch();
+  }
+}
 
 function ModeCard({ mode, selected, disabled = false, description, badge, actions, textTone = 'dark' }) {
   const desc = description != null ? description : mode.desc;
@@ -356,7 +375,22 @@ export function SpellingSetupScene({
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
-  const heroBg = heroBgForSetup(learner.id, prefs, { tone: setupHeroTone });
+  // Post-Mega gating for the hero backdrop. When the learner has a sticky
+  // graduation record (or is currently fully Mega), swap the legacy
+  // mode-driven region for the post-Mega `f` vista bound to Phaeton's
+  // branch (b1 / b2). Pre-Mega learners stay on the legacy regions.
+  const isPostMegaSetup = Boolean(
+    postMastery?.postMegaDashboardAvailable
+    ?? postMastery?.allWordsMega,
+  );
+  const setupPostMegaBranch = isPostMegaSetup
+    ? postMegaBranchFromRepositories(repositories, learner.id)
+    : '';
+  const heroBg = heroBgForSetup(learner.id, prefs, {
+    tone: setupHeroTone,
+    postMega: isPostMegaSetup,
+    postMegaBranch: setupPostMegaBranch,
+  });
   const mergedHeroStyle = { ...heroBgStyle(heroBg) };
   const heroContrast = useSetupHeroContrast(heroBg, prefs.mode);
   const heroTone = heroContrast.contrast.tone || heroToneForBg(heroBg);

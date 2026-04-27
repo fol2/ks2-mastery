@@ -198,6 +198,20 @@ test('React spelling setup scene renders the post-Mega dashboard with Guardian M
   assert.match(html, /The Word Vault is yours/);
   assert.match(html, /Guardian Mission/);
   assert.match(html, /Boss Dictation/);
+  // Post-Mega vista: setup hero must render the f-region URL with the
+  // learner's grand-master Phaeton branch suffix. The fixture skips
+  // seeding monster-codex state so the branch falls through to the
+  // default b1 — but the f-region prefix must always be present.
+  assert.match(
+    html,
+    /the-scribe-downs-f[1-3]-b[12]\.1280\.webp/,
+    'post-Mega setup hero must use the f-region vista, not the legacy a-c regions',
+  );
+  assert.doesNotMatch(
+    html,
+    /the-scribe-downs-[a-e][1-3]\.1280\.webp/,
+    'post-Mega setup hero must NOT fall back to the legacy mode-driven regions',
+  );
   // Roadmap placeholders (Word Detective / Story Challenge) collapse from
   // full mode cards into a single quiet "Coming next" footer line so the
   // post-Mega scene no longer carries two empty striped cards on row 2.

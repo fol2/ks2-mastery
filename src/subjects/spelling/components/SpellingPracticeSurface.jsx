@@ -172,6 +172,7 @@ export function SpellingPracticeSurface(props) {
       <SpellingSummaryScene
         {...spelling}
         previousHeroBg={previousHeroBg}
+        repositories={repositories}
         actions={actions}
         runtimeReadOnly={runtimeReadOnly}
       />
@@ -189,6 +190,7 @@ export function SpellingPracticeSurface(props) {
           {...spelling}
           previousHeroBg={previousHeroBg}
           service={service}
+          repositories={repositories}
           actions={actions}
           runtimeReadOnly={runtimeReadOnly}
         />
