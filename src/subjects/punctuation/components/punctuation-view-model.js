@@ -1197,6 +1197,7 @@ function activeMonsterProgressFromReward(rewardState, starView) {
  *     activeMonsters:  Frozen array of { id, name, mastered },
  *     primaryMode:     string,  // normalised via punctuationPrimaryModeFromPrefs
  *     isEmpty:         boolean, // true when every Today count is zero
+ *     grandStars:      number,  // Quoral Grand Stars (P7-U7)
  *   }
  */
 export function buildPunctuationDashboardModel(stats, learner, rewardState, starView) {
@@ -1226,11 +1227,22 @@ export function buildPunctuationDashboardModel(stats, learner, rewardState, star
   // Fresh learner: zero attempts, zero secure units, zero wobbly, zero due.
   const isEmpty = (dueCount + weakCount + secureCount + accuracyValue) === 0;
 
+  const activeMonsters = Object.freeze(activeMonsterProgressFromReward(rewardState, starView));
+
+  // P7-U7: extract Quoral's Grand Stars for the progress row. The previous
+  // aggregate summed direct monster Stars + Grand Stars into one ambiguous
+  // number. Now the progress row shows Quoral Grand Stars only — overall
+  // cross-monster progress. Individual monster meters already carry per-
+  // monster Star totals, so the aggregate is redundant and confusing.
+  const quoralEntry = activeMonsters.find((m) => m.id === 'quoral');
+  const grandStars = quoralEntry ? (quoralEntry.displayStars ?? quoralEntry.totalStars ?? 0) : 0;
+
   return {
     todayCards,
-    activeMonsters: Object.freeze(activeMonsterProgressFromReward(rewardState, starView)),
+    activeMonsters,
     primaryMode,
     isEmpty,
+    grandStars,
   };
 }
 
