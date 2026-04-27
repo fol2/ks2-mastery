@@ -574,9 +574,12 @@ function computeGrandStars(progress, releaseId) {
  *   record: `{ items, facets, rewardUnits, attempts }`.
  * @param {string} releaseId - The current release identifier (used for
  *   reward-unit filtering).
+ * @param {Object} [options] - Optional configuration.
+ * @param {boolean} [options.debug] - When true, attaches `_debugMeta` to the
+ *   returned starView so the Doctor (U8) can report projection source.
  * @returns {Object} Star breakdown per monster + grand total.
  */
-export function projectPunctuationStars(progress, releaseId) {
+export function projectPunctuationStars(progress, releaseId, options) {
   const safeProgress = isPlainObject(progress) ? progress : {};
   const items = isPlainObject(safeProgress.items) ? safeProgress.items : {};
   const facets = isPlainObject(safeProgress.facets) ? safeProgress.facets : {};
@@ -640,5 +643,14 @@ export function projectPunctuationStars(progress, releaseId) {
   // Grand Stars.
   const grand = computeGrandStars(safeProgress, releaseId);
 
-  return { perMonster, grand };
+  const result = { perMonster, grand };
+
+  // P7-U5: When debug mode is requested, attach source metadata so the
+  // Punctuation Doctor (U8) can report whether a starView came from
+  // fresh projection or a future cache layer.
+  if (options?.debug) {
+    result._debugMeta = { source: 'fresh' };
+  }
+
+  return result;
 }
