@@ -75,6 +75,8 @@ import {
   PLATFORM_EXPORT_KIND_LEARNER,
 } from './platform/core/data-transfer.js';
 import { installGlobalErrorCapture } from './platform/ops/error-capture.js';
+import { createHeroModeClient } from './platform/hero/hero-client.js';
+import { buildHeroHomeModel } from './platform/hero/hero-ui-model.js';
 
 const root = document.getElementById('app');
 const credentialFetch = createCredentialFetch();
@@ -536,6 +538,29 @@ const subjectCommands = createSubjectCommandClient({
     repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
   },
 });
+
+// ---------------------------------------------------------------------------
+// Hero Mode client (P2 U4)
+// ---------------------------------------------------------------------------
+const heroClient = createHeroModeClient({
+  fetch: credentialFetch,
+  getLearnerRevision: (learnerId) => repositories.runtime?.readLearnerRevision?.(learnerId) || 0,
+  onLaunchApplied: (/* response — wired via applyHeroLaunchResponse below */) => {},
+  onStaleWrite: (/* { error, learnerId } — handled in startHeroTask catch */) => {},
+});
+
+// Non-persistent Hero UI state — lost on reload (quest is recomputed fresh),
+// reset on learner switch, never written to repositories / gameState / D1.
+let heroUi = {
+  status: 'idle',
+  learnerId: '',
+  requestToken: 0,
+  readModel: null,
+  error: '',
+  pendingTaskKey: '',
+  lastLaunch: null,
+};
+
 let shellPlatformRole = normalisePlatformRole(boot.session.platformRole || 'parent');
 let adminAccountDirectory = {
   status: 'idle',
@@ -787,6 +812,153 @@ async function loadAdminHub({ learnerId = null, force = false, auditLimit = 20 }
       },
     }));
     return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hero Mode — read-model loading, task launch, response application (P2 U4)
+// ---------------------------------------------------------------------------
+
+function patchHeroUi(updater) {
+  const patch = typeof updater === 'function' ? updater(heroUi) : updater;
+  heroUi = { ...heroUi, ...patch };
+  store?.patch(() => ({}));
+}
+
+async function loadHeroReadModel({ learnerId, force = false } = {}) {
+  if (!learnerId) return;
+
+  // Increment requestToken — stale responses from prior loads are discarded.
+  const requestToken = (Number(heroUi.requestToken) || 0) + 1;
+  patchHeroUi({
+    status: 'loading',
+    learnerId,
+    requestToken,
+    error: '',
+  });
+
+  try {
+    const response = await heroClient.readModel({ learnerId });
+
+    // Stale token guard — learner changed while request was in-flight.
+    if (heroUi.requestToken !== requestToken) return;
+
+    patchHeroUi({
+      status: 'ready',
+      readModel: response?.hero || null,
+      error: '',
+    });
+  } catch (error) {
+    // Stale token guard.
+    if (heroUi.requestToken !== requestToken) return;
+
+    patchHeroUi({
+      status: 'error',
+      error: error?.code || error?.message || 'Hero read-model could not be loaded.',
+    });
+  }
+}
+
+function applyHeroLaunchResponse(response) {
+  const heroLaunch = response?.heroLaunch;
+  if (!heroLaunch) return;
+
+  const learnerId = String(response?.learnerId || store?.getState()?.learners?.selectedId || '');
+  const subjectId = heroLaunch.subjectId;
+
+  // Apply the subject command result through the existing shared path.
+  repositories.runtime?.applySubjectCommandResult?.({ learnerId, subjectId, response });
+
+  // Record the launch metadata for the HeroTaskBanner (U6).
+  patchHeroUi({
+    lastLaunch: {
+      questId: heroLaunch.questId || response.questId || '',
+      questFingerprint: heroLaunch.questFingerprint || response.questFingerprint || '',
+      taskId: heroLaunch.taskId || response.taskId || '',
+      subjectId: heroLaunch.subjectId || '',
+      intent: heroLaunch.intent || '',
+      launcher: heroLaunch.launcher || '',
+      launchedAt: new Date().toISOString(),
+    },
+  });
+}
+
+const HERO_STALE_ERROR_CODES = new Set([
+  'hero_quest_stale',
+  'hero_quest_fingerprint_mismatch',
+  'hero_active_session_conflict',
+]);
+
+async function startHeroTask({ questId, questFingerprint, taskId } = {}) {
+  const appState = store.getState();
+  const learnerId = appState.learners.selectedId;
+  if (!learnerId || !questId || !taskId) return;
+
+  // Double-click guard — if a launch is already in-flight, bail.
+  if (heroUi.pendingTaskKey) return;
+
+  // Persistence degraded guard.
+  if (appState.persistence?.mode === 'degraded') {
+    patchHeroUi({
+      error: 'Practice is temporarily read-only. Try again when sync recovers.',
+    });
+    return;
+  }
+
+  const pendingTaskKey = `${learnerId}|${questId}|${taskId}`;
+  const requestId = uid('hero-start-task');
+
+  patchHeroUi({
+    status: 'launching',
+    pendingTaskKey,
+    error: '',
+  });
+
+  try {
+    const response = await heroClient.startTask({
+      learnerId,
+      questId,
+      questFingerprint: questFingerprint ?? null,
+      taskId,
+      requestId,
+    });
+
+    applyHeroLaunchResponse(response);
+
+    patchHeroUi({
+      status: 'ready',
+      pendingTaskKey: '',
+    });
+
+    // Route to the launched subject.
+    const subjectId = response?.heroLaunch?.subjectId;
+    if (subjectId) {
+      dispatchAction('open-subject', { subjectId });
+    }
+
+    // Deferred non-blocking read-model refresh.
+    queueMicrotask(() => loadHeroReadModel({ learnerId }));
+  } catch (error) {
+    const code = error?.code || '';
+
+    if (HERO_STALE_ERROR_CODES.has(code)) {
+      // Stale quest / fingerprint mismatch / active session conflict:
+      // clear pending, refetch read model, show gentle message.
+      patchHeroUi({
+        status: 'ready',
+        pendingTaskKey: '',
+        error: code === 'hero_active_session_conflict'
+          ? 'hero_active_session_conflict'
+          : 'hero_quest_refreshed',
+      });
+      queueMicrotask(() => loadHeroReadModel({ learnerId, force: true }));
+    } else {
+      patchHeroUi({
+        status: 'error',
+        pendingTaskKey: '',
+        error: code || error?.message || 'Hero task could not be started.',
+      });
+    }
   }
 }
 
@@ -2257,6 +2429,7 @@ function buildHomeModel(appState, context) {
     roundNumber: 1,
     now: new Date(),
     permissions: { canOpenParentHub },
+    hero: buildHeroHomeModel(heroUi || {}),
   };
 }
 
@@ -2302,6 +2475,19 @@ function buildSurfaceActions() {
     // registerAccountOpsMetadataRowDirty above) so callers don't need to
     // thread extra state through the component tree.
     registerAccountOpsMetadataRowDirty,
+    // P2 U4: Hero Mode surface actions
+    startHeroQuestTask: (taskId) => {
+      const rm = heroUi?.readModel;
+      const task = rm?.dailyQuest?.tasks?.find((t) => t.taskId === taskId);
+      if (!task) return;
+      dispatchAction('hero-start-task', {
+        questId: rm?.dailyQuest?.questId,
+        questFingerprint: rm?.questFingerprint,
+        taskId,
+      });
+    },
+    continueHeroTask: (subjectId) => dispatchAction('hero-open-active-session', { subjectId }),
+    refreshHeroQuest: () => dispatchAction('hero-read-model-refresh'),
   };
 }
 
@@ -2550,6 +2736,19 @@ createRoot(root).render(
   />,
 );
 
+/* P2 U4: Initial bootstrap — fire Hero read-model load when the user is signed
+   in and the initial screen is the dashboard (not admin-hub or other route). */
+{
+  const bootState = store.getState();
+  if (
+    boot.session.signedIn
+    && bootState.route.screen === 'dashboard'
+    && bootState.learners.selectedId
+  ) {
+    queueMicrotask(() => loadHeroReadModel({ learnerId: bootState.learners.selectedId }));
+  }
+}
+
 /* Ambient toast auto-dismiss — toasts are designed to live in the
    learner's periphery, not interrupt typing. Ten seconds after a toast
    enters the queue we silently drop it. Timers are keyed on `toast.id`
@@ -2610,6 +2809,31 @@ function handleGlobalAction(action, data) {
       );
     }
     store.goHome();
+    // P2 U4: trigger Hero read-model refresh when navigating home.
+    if (boot.session.signedIn && learnerId) {
+      queueMicrotask(() => loadHeroReadModel({ learnerId }));
+    }
+    return true;
+  }
+
+  // -------------------------------------------------------------------------
+  // Hero Mode actions (P2 U4)
+  // -------------------------------------------------------------------------
+  if (action === 'hero-read-model-refresh') {
+    loadHeroReadModel({ learnerId: appState.learners.selectedId, force: true });
+    return true;
+  }
+
+  if (action === 'hero-start-task') {
+    startHeroTask(data);
+    return true;
+  }
+
+  if (action === 'hero-open-active-session') {
+    // Navigate to the active Hero subject session — no POST, just routing.
+    if (data?.subjectId) {
+      dispatchAction('open-subject', { subjectId: data.subjectId });
+    }
     return true;
   }
 
@@ -2897,6 +3121,19 @@ function handleGlobalAction(action, data) {
     if (boot.session.signedIn) {
       if (appState.route.screen === 'parent-hub') loadParentHub({ learnerId: nextLearnerId, force: true });
       if (appState.route.screen === 'admin-hub') loadAdminHub({ learnerId: nextLearnerId, force: true });
+    }
+    // P2 U4: reset Hero UI and trigger fresh read-model load for the new learner.
+    heroUi = {
+      status: 'idle',
+      learnerId: '',
+      requestToken: (Number(heroUi.requestToken) || 0) + 1,
+      readModel: null,
+      error: '',
+      pendingTaskKey: '',
+      lastLaunch: null,
+    };
+    if (boot.session.signedIn && nextLearnerId) {
+      queueMicrotask(() => loadHeroReadModel({ learnerId: nextLearnerId }));
     }
     return true;
   }
