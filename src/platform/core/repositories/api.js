@@ -1530,6 +1530,20 @@ export function createApiPlatformRepositories({
     }),
   };
 
+  // P4/U7: registered listeners for breaker-reset events. Fired from the
+  // composition root's explicit `reset()` call sites (NOT from the
+  // breaker primitive's `onTransition`) whenever a breaker transitions
+  // to `closed`. The store's `clearStaleFetchGuards()` is the primary
+  // consumer — it clears the sticky per-session learner-fetch guard so
+  // sibling learner stats can be re-fetched after recovery.
+  const breakerResetListeners = new Set();
+
+  function fireBreakerResetListeners(breakerName) {
+    for (const listener of breakerResetListeners) {
+      try { listener({ breakerName }); } catch { /* listener throw swallowed */ }
+    }
+  }
+
   function currentBreakersSnapshot() {
     const output = {};
     for (const [key, breaker] of Object.entries(breakers)) {
@@ -2127,6 +2141,10 @@ export function createApiPlatformRepositories({
       // and let the higher layer decide whether to surface it (plan
       // line 752).
       const capacityMeta = payload?.meta?.capacity;
+      // adv-u7-001: track whether the natural recovery path already fired
+      // reset listeners for a breaker name in this bootstrap handler, so
+      // the forceBreakerReset path below can skip the duplicate fire.
+      let naturalResetFiredFor = null;
       if (!capacityMeta || !capacityMeta.bootstrapCapacity) {
         consecutiveMissingBootstrapMetadata += 1;
         if (consecutiveMissingBootstrapMetadata >= BOOTSTRAP_MISSING_METADATA_ESCALATION_LIMIT) {
@@ -2143,7 +2161,20 @@ export function createApiPlatformRepositories({
       } else {
         consecutiveMissingBootstrapMetadata = 0;
         bootstrapMetadataOperatorError = null;
+        // adv-u7-002: only fire reset listeners when actually recovering
+        // from an open/half-open breaker, not on every normal bootstrap.
+        // Firing unconditionally clears attemptedLearnerFetches on every
+        // cycle, partially defeating the R2 storm-prevention contract.
+        const wasNonClosed = breakers.bootstrapCapacityMetadata.isOpen
+          || breakers.bootstrapCapacityMetadata.state === 'half-open';
         breakers.bootstrapCapacityMetadata.reset();
+        if (wasNonClosed) {
+          // P4/U7: fire reset listeners so the store clears its sticky
+          // learner-fetch guard. Sibling learner stats that failed to
+          // fetch while the breaker was open can now be retried.
+          fireBreakerResetListeners('bootstrapCapacityMetadata');
+          naturalResetFiredFor = 'bootstrapCapacityMetadata';
+        }
       }
       // U9.1 item 2: `forceBreakerReset` via bootstrap response. When an
       // admin header triggers the server to include this field, the client
@@ -2156,6 +2187,17 @@ export function createApiPlatformRepositories({
         const targetBreaker = breakers[forceBreakerResetName];
         if (targetBreaker && typeof targetBreaker.reset === 'function') {
           targetBreaker.reset();
+          // adv-u7-001: skip duplicate fire if the natural recovery path
+          // above already fired listeners for this same breaker name.
+          // Without this guard, every listener executes twice when a
+          // bootstrap response has both valid bootstrapCapacity AND
+          // forceBreakerReset targeting the same breaker.
+          if (forceBreakerResetName !== naturalResetFiredFor) {
+            // P4/U7: fire reset listeners for operator-initiated resets
+            // (the `forceBreakerReset` admin path). Same rationale as
+            // the auto-recovery path above.
+            fireBreakerResetListeners(forceBreakerResetName);
+          }
         }
       }
       // U9.1 item 3: surface server-side `readModelDerivedWrite` breaker
@@ -2352,6 +2394,15 @@ export function createApiPlatformRepositories({
       // UI components MUST NOT import this — they read the aggregate
       // `breakersDegraded` boolean map from `read()` instead.
       breakers,
+      // P4/U7: register a callback that fires whenever a breaker is
+      // explicitly reset to `closed` from a composition-root call site.
+      // Returns an unsubscribe function. Primary consumer is the
+      // store's `clearStaleFetchGuards()`.
+      registerBreakerResetHook(listener) {
+        if (typeof listener !== 'function') return () => {};
+        breakerResetListeners.add(listener);
+        return () => breakerResetListeners.delete(listener);
+      },
       async retry() {
         const blocked = hasBlockedOperations(pendingOperations);
         await repositories.hydrate({
