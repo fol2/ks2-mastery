@@ -215,14 +215,23 @@ Current behaviour:
 
 ### Admin ops console routes
 
-The Admin / Operations surface also exposes a small additional slice for KPI, activity, error-log, and account ops metadata:
+The Admin Console exposes routes for KPI, activity, error-log, account ops metadata, debugging, account management, content overview, and marketing:
 
 - `GET /api/admin/ops/kpi` — dashboard KPI counters (admin + ops)
 - `GET /api/admin/ops/activity?limit=N` — recent mutation receipts across accounts (admin + ops)
 - `GET /api/admin/ops/error-events?status=X&limit=N` — ops error events with optional status filter (admin + ops)
+- `GET /api/admin/ops/error-occurrences/:eventId` — error occurrence timeline for a fingerprint (admin + ops, rate-limited 60/min)
+- `GET /api/admin/ops/request-denials` — request denial log with reason/route/time/account filters (admin + ops; ops sees no account/learner linkage)
+- `GET /api/admin/debug-bundle` — Worker-authoritative evidence packet aggregating errors, occurrences, denials, mutations, account/learner state, capacity (admin + ops with role-based redaction; rate-limited 10/min)
+- `GET /api/admin/accounts/search?q=term&ops_status=X&platform_role=Y&limit=50` — account search by email/ID/display name (admin sees full email; ops sees masked last 6)
+- `GET /api/admin/accounts/:id/detail` — account detail with linked learners, recent errors, denials, mutations, ops metadata (admin full; ops masked + no internal notes + no denials)
 - `PUT /api/admin/accounts/:accountId/ops-metadata` — update account ops metadata (admin only)
 - `PUT /api/admin/ops/error-events/:eventId/status` — transition error event status (admin only)
+- `POST /api/admin/marketing/messages` — create a marketing message (admin only)
+- `PUT /api/admin/marketing/messages` — update/transition marketing message lifecycle (admin only)
+- `GET /api/admin/marketing/messages` — list marketing messages with status filter (admin + ops)
 - `POST /api/ops/error-event` — public ingest for client runtime errors (rate-limited, no auth)
+- `GET /api/ops/active-messages` — public endpoint for active announcement/maintenance banners (no auth, schema-bound safe fields only)
 
 ## Current access rules
 

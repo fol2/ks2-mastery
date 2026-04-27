@@ -281,7 +281,11 @@ test('U5 Reward parity: one secured speech-core unit surfaces coherent progress 
     rewardState: monsterCodexState,
   });
   assert.match(setupHtml, /data-monster-id="pealark"/);
-  assert.match(setupHtml, /1\/5 secure/);
+  // Phase 5 U7: the Setup scene no longer shows "X/Y secure" per monster.
+  // Instead it renders star meters (X / 100 Stars) via starView. With no
+  // starView seeded, the meter reads "0 / 100 Stars" — still proves the
+  // monster renders and the reserved-monster filter is intact.
+  assert.match(setupHtml, /Pealark/);
   assert.doesNotMatch(setupHtml, /data-monster-id="colisk"/);
 
   // Summary — same rewardState prop; the strip reads pealark's stage.
@@ -291,19 +295,22 @@ test('U5 Reward parity: one secured speech-core unit surfaces coherent progress 
     rewardState: monsterCodexState,
   });
   assert.match(summaryHtml, /data-monster-id="pealark"/);
-  // 1 of 5 secured → stage 1 (>0 but <1/3 of 5 (~1.67)).
-  assert.match(summaryHtml, /aria-label="Pealark stage 1 of 4"/);
+  // Phase 5 U8: Summary now renders star meters, not "Stage X of 4".
+  // Without starView seeded, the meter reads "0 / 100 Stars" + "Not caught".
+  assert.match(summaryHtml, /punctuation-monster-meter-count/);
+  assert.doesNotMatch(summaryHtml, /Stage \d+ of 4/, 'old Stage text must not appear');
   assert.doesNotMatch(summaryHtml, /data-monster-id="colisk"/);
 
-  // Map — rewardState feeds the MonsterGroup mastered-count.
+  // Map — starView feeds the MonsterGroup header star meter.
   const mapHtml = renderPunctuationMapSceneStandalone({
     ui: { availability: { status: 'ready' }, rewardState: monsterCodexState },
     actions: { dispatch() {} },
   });
   assert.match(mapHtml, /aria-label="Pealark skills"/);
-  // Mastered count surfaces on the group header — 1 from the seeded key.
+  // Phase 5 U8: Map header shows star meter — without starView, reads
+  // "0 / 100 Stars · Not caught".
   const pealarkGroup = mapHtml.match(/data-monster-id="pealark"[\s\S]*?class="punctuation-map-skill-grid"/);
-  assert.ok(pealarkGroup && /1 mastered/.test(pealarkGroup[0]), 'Map Pealark group should show 1 mastered');
+  assert.ok(pealarkGroup && /0 \/ 100 Stars/.test(pealarkGroup[0]), 'Map Pealark group should show star meter');
   assert.doesNotMatch(mapHtml, /data-monster-id="colisk"/);
 
   // Home SubjectCard.progress — the scalar `pct` projection derived from

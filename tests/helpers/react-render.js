@@ -605,6 +605,11 @@ export function renderHubSurfaceFixture({
   // so tests can verify the breaker-open UX branches in
   // ParentHubSurface / AdminHubSurface.
   breakersDegraded = null,
+  // U4+U5: AdminHubSurface now renders sections based on a tab key.
+  // Pass a specific section name to render only that section, or 'all'
+  // to concatenate every section (used by comprehensive render tests).
+  // Defaults to 'all' for backward compatibility with pre-extraction tests.
+  initialSection = null,
 } = {}) {
   return renderFixture(`
     import React from 'react';
@@ -790,9 +795,22 @@ export function renderHubSurfaceFixture({
       status: 'loaded',
       accounts: [{ id: 'adult-a', email: 'admin@example.com', displayName: 'Admin', providers: ['email'], learnerCount: 1, platformRole: 'admin', updatedAt: Date.UTC(2026, 3, 22, 12, 0) }],
     };
-    const html = ${JSON.stringify(surface)} === 'admin'
-      ? renderToStaticMarkup(<AdminHubSurface appState={appState} model={adminModel} hubState={{ status: 'loaded' }} accountDirectory={accountDirectory} accessContext={accessContext} actions={actions} />)
-      : renderToStaticMarkup(<ParentHubSurface appState={appState} model={parentModel} hubState={{ status: 'loaded' }} accessContext={accessContext} actions={actions} />);
+    const __initialSection = ${JSON.stringify(initialSection)};
+    let html;
+    if (${JSON.stringify(surface)} === 'admin') {
+      const adminProps = { appState, model: adminModel, hubState: { status: 'loaded' }, accountDirectory, accessContext, actions };
+      if (!__initialSection || __initialSection === 'all') {
+        // Render each section individually and concatenate for comprehensive tests.
+        const sections = ['overview', 'accounts', 'debug', 'content', 'marketing'];
+        html = sections.map((section) =>
+          renderToStaticMarkup(<AdminHubSurface {...adminProps} initialSection={section} />)
+        ).join('');
+      } else {
+        html = renderToStaticMarkup(<AdminHubSurface {...adminProps} initialSection={__initialSection} />);
+      }
+    } else {
+      html = renderToStaticMarkup(<ParentHubSurface appState={appState} model={parentModel} hubState={{ status: 'loaded' }} accessContext={accessContext} actions={actions} />);
+    }
     console.log(html);
   `);
 }
@@ -1035,6 +1053,40 @@ export function renderSpellingClozeFixture({ sentence, answer = '', revealAnswer
         sentence=${JSON.stringify(sentence || '')}
         answer=${JSON.stringify(answer)}
         revealAnswer={${revealAnswer ? 'true' : 'false'}}
+      />
+    );
+    console.log(html);
+  `);
+}
+
+export function renderTopNavFixture({
+  platformRole = 'parent',
+  currentScreen = 'dashboard',
+  demo = false,
+} = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { TopNav } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/TopNav.jsx'))};
+
+    let adminClicked = false;
+    const html = renderToStaticMarkup(
+      <TopNav
+        theme="light"
+        onToggleTheme={() => {}}
+        learners={[{ id: 'learner-a', name: 'Ava', yearGroup: 'Y5' }]}
+        selectedLearnerId="learner-a"
+        learnerLabel="Ava · Y5"
+        signedInAs=${JSON.stringify(demo ? '' : 'user@example.test')}
+        onNavigateHome={() => {}}
+        onSelectLearner={() => {}}
+        onOpenProfileSettings={() => {}}
+        onLogout={() => {}}
+        persistenceMode="local-only"
+        persistenceLabel="Local-only"
+        platformRole={${JSON.stringify(platformRole)}}
+        onOpenAdmin={() => { adminClicked = true; }}
+        currentScreen={${JSON.stringify(currentScreen)}}
       />
     );
     console.log(html);

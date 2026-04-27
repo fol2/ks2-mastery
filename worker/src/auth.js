@@ -709,7 +709,12 @@ async function accountSessionFromToken(env, token, now = Date.now(), capacity = 
   const enforcementAvailable = Number.isFinite(currentStatusRevision)
     && Number.isFinite(statusRevisionAtIssue);
   if (enforcementAvailable && statusRevisionAtIssue < currentStatusRevision) {
-    throw new SessionInvalidatedError();
+    const err = new SessionInvalidatedError();
+    Object.defineProperty(err, '__denialSession', {
+      value: { accountId: row.account_id, sessionId: row.session_id },
+      enumerable: false,
+    });
+    throw err;
   }
   return {
     accountId: row.account_id,
@@ -1471,7 +1476,11 @@ export function requireActiveAccount(session) {
     } catch {
       // Swallow - telemetry is best-effort.
     }
-    throw new AccountSuspendedError();
+    const error = new AccountSuspendedError();
+    // P3 U4: attach the session so app.js denial capture can extract
+    // accountId / sessionId without re-reading from DB.
+    Object.defineProperty(error, '__denialSession', { value: session, enumerable: false });
+    throw error;
   }
 }
 
@@ -1507,7 +1516,10 @@ export function requireMutationCapability(session) {
     } catch {
       // Swallow - telemetry is best-effort.
     }
-    throw new AccountSuspendedError();
+    const error = new AccountSuspendedError();
+    // P3 U4: attach the session so app.js denial capture can extract context.
+    Object.defineProperty(error, '__denialSession', { value: session, enumerable: false });
+    throw error;
   }
   if (session.opsStatus === 'payment_hold') {
     try {
@@ -1520,7 +1532,10 @@ export function requireMutationCapability(session) {
     } catch {
       // Swallow - telemetry is best-effort.
     }
-    throw new AccountPaymentHoldError();
+    const error = new AccountPaymentHoldError();
+    // P3 U4: attach the session so app.js denial capture can extract context.
+    Object.defineProperty(error, '__denialSession', { value: session, enumerable: false });
+    throw error;
   }
 }
 

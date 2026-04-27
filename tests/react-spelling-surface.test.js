@@ -198,14 +198,35 @@ test('React spelling setup scene renders the post-Mega dashboard with Guardian M
   assert.match(html, /The Word Vault is yours/);
   assert.match(html, /Guardian Mission/);
   assert.match(html, /Boss Dictation/);
+  // Post-Mega vista: setup hero must render the f-region URL with the
+  // learner's grand-master Phaeton branch suffix. The fixture skips
+  // seeding monster-codex state so the branch falls through to the
+  // default b1 — but the f-region prefix must always be present.
+  assert.match(
+    html,
+    /the-scribe-downs-f[1-3]-b[12]\.1280\.webp/,
+    'post-Mega setup hero must use the f-region vista, not the legacy a-c regions',
+  );
+  assert.doesNotMatch(
+    html,
+    /the-scribe-downs-[a-e][1-3]\.1280\.webp/,
+    'post-Mega setup hero must NOT fall back to the legacy mode-driven regions',
+  );
+  // Roadmap placeholders (Word Detective / Story Challenge) collapse from
+  // full mode cards into a single quiet "Coming next" footer line so the
+  // post-Mega scene no longer carries two empty striped cards on row 2.
+  // The titles remain in the markup (still part of the journey signal),
+  // just rendered as inline serif italic items instead of cards.
   assert.match(html, /Word Detective/);
   assert.match(html, /Story Challenge/);
-  // Placeholder roadmap labels should show "Next 02/03/04" rather than a
-  // single generic "Coming soon" shield, so the codex reads as planned steps.
-  assert.match(html, /mc-badge-roadmap/);
-  // The begin button explicitly routes through spelling-shortcut-start with
-  // mode=guardian so the module-level gate is the one source of truth.
+  assert.match(html, /post-mega-coming-next/);
+  assert.match(html, />Coming next</);
+  // The Guardian Begin CTA now lives INSIDE the Guardian mode card as an
+  // inline pill, replacing the previous stacked Begin button row beneath
+  // the cards. Still routes through spelling-shortcut-start so the
+  // module-level gate stays the single source of truth.
   assert.match(html, /data-action="spelling-shortcut-start"[^>]*data-mode="guardian"/);
+  assert.match(html, /class="mode-card-post-cta"/);
   assert.match(html, /ACTIVE DUTY/);
   assert.doesNotMatch(html, /Choose today/);
 });
@@ -241,9 +262,11 @@ test('U1: React setup scene shows optional-patrol copy when post-Mega but no wor
   assert.match(html, /No urgent duties\. Optional patrol available/);
   assert.match(html, /OPTIONAL PATROL/);
   assert.match(html, /data-mission-state="optional-patrol"/);
-  // The Begin CTA must be enabled in optional-patrol so the learner can
-  // choose to run a warm-up round.
-  assert.match(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*>Begin Guardian Mission/);
+  // The Begin CTA (now an inline pill inside the Guardian card) must be
+  // enabled in optional-patrol so the learner can choose to run a warm-up
+  // round. Label is "Begin patrol" — the inline-card scope no longer needs
+  // to repeat "Guardian Mission" because the surrounding card carries it.
+  assert.match(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*>(?:[^<]|<(?!\/button))*Begin patrol/);
   assert.doesNotMatch(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
 });
 
@@ -470,4 +493,65 @@ test('U3 edge case: Guardian summary with zero mistakes does not render the Prac
   const html = await renderSpellingGuardianSummaryFixture({ correct: true });
   assert.doesNotMatch(html, /Practice wobbling words/, 'zero-mistake Guardian summary must not render the Practice button');
   assert.doesNotMatch(html, /summary-drill-chips/, 'zero-mistake Guardian summary must not render the drill chips container');
+});
+
+// ----- Setup view switch — Vault ↔ Workshop on the post-Mega scene -----------
+//
+// Lets a graduated learner flip the entire setup content between two
+// layers without exiting the page:
+//   - Vault: Guardian / Boss / Pattern Quest cards with inline Begin
+//     pills (the post-Mega graduation surface).
+//   - Workshop: full legacy setup with round length / pool / showCloze /
+//     autoSpeak controls + Smart / Trouble / SATs Test cards (the same
+//     layer pre-Mega learners see).
+// Hidden entirely for pre-Mega learners — they only ever see the Workshop
+// layer, so a single-option switch would just be chrome.
+
+test('Setup view switch renders on the post-Mega scene with Vault active by default', async () => {
+  const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const html = await renderSpellingSurfaceFixture({
+    phase: 'setup',
+    postMega: {
+      guardian: {
+        possess: {
+          reviewLevel: 2,
+          lastReviewedDay: today - 7,
+          nextDueDay: today,
+          correctStreak: 2,
+          lapses: 0,
+          renewals: 0,
+          wobbling: false,
+        },
+      },
+    },
+  });
+
+  // Switch shell + both tabs render with role="tablist".
+  assert.match(html, /data-test-id="setup-view-switch"/);
+  assert.match(html, /role="tablist"/);
+  // Both tab buttons present.
+  assert.match(html, /data-test-id="setup-view-switch-vault"/);
+  assert.match(html, /data-test-id="setup-view-switch-workshop"/);
+  // Vault is the default active tab on first render for a graduated learner.
+  const vaultTab = html.match(/<button[^>]*data-test-id="setup-view-switch-vault"[^>]*>/);
+  const workshopTab = html.match(/<button[^>]*data-test-id="setup-view-switch-workshop"[^>]*>/);
+  assert.ok(vaultTab, 'Vault tab must render');
+  assert.ok(workshopTab, 'Workshop tab must render');
+  assert.match(vaultTab[0], /aria-selected="true"/);
+  assert.match(vaultTab[0], /class="[^"]*\bis-active\b/);
+  assert.match(workshopTab[0], /aria-selected="false"/);
+  assert.doesNotMatch(workshopTab[0], /class="[^"]*\bis-active\b/);
+  // The Vault layer (post-Mega cards) is what renders by default; the
+  // legacy Smart Review setup ledes are absent.
+  assert.match(html, /Graduated · Spelling Guardian/);
+  assert.doesNotMatch(html, /Choose today/, 'Workshop layer copy must not appear under Vault view');
+});
+
+test('Setup view switch is absent when the legacy dashboard renders (allWordsMega=false)', async () => {
+  // Pre-Mega learner: setup scene renders the legacy 3-mode row directly.
+  // The view switch is post-Mega-only — pre-Mega learners only have one
+  // layer, so a switch with one option would just be chrome.
+  const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
+  assert.doesNotMatch(html, /data-test-id="setup-view-switch"/);
+  assert.doesNotMatch(html, /class="setup-view-switch"/);
 });

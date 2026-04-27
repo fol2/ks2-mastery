@@ -8,6 +8,9 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App.jsx';
 import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
+import { VALID_ADMIN_SECTIONS } from './platform/core/store.js';
+import { parseAdminSectionFromHash } from './platform/core/admin-hash.js';
+import { stashAdminReturn, popAdminReturn, clearAdminReturn } from './platform/core/admin-return-stash.js';
 import {
   exposedSubjects,
   isSubjectExposed,
@@ -164,10 +167,17 @@ async function submitAuthCredentials({ mode = 'login', email, password, convertD
   if (!response.ok) {
     throw new Error(payload.message || 'Sign-in failed.');
   }
-  globalThis.location.href = '/';
+  /* U2: after successful auth, check for a stashed admin return target.
+     If valid, redirect there instead of the default `/`. */
+  const adminReturn = popAdminReturn();
+  globalThis.location.href = adminReturn || '/';
 }
 
 async function startSocialAuth(provider) {
+  /* ADV-001: clear any leftover admin-return stash before the OAuth redirect.
+     Matches the defensive pattern in startDemoSession — prevents a stale stash
+     from persisting across provider switches or repeated auth attempts. */
+  clearAdminReturn();
   const response = await credentialFetch(`/api/auth/${provider}/start`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -181,6 +191,9 @@ async function startSocialAuth(provider) {
 }
 
 async function startDemoSession() {
+  /* U2: demo sessions must NOT restore admin return — clear the stash
+     unconditionally before the redirect. */
+  clearAdminReturn();
   const response = await credentialFetch('/api/demo/session', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -222,6 +235,13 @@ async function createRepositoriesForCurrentRuntime() {
 
 const boot = await createRepositoriesForCurrentRuntime();
 if (!boot.repositories) {
+  /* U2: stash the pre-auth admin URL so we can return the user to the
+     correct admin section after a successful sign-in. Only stashes for
+     `/admin` pathnames — anything else is ignored by the helper. */
+  stashAdminReturn({
+    pathname: globalThis.location?.pathname,
+    hash: globalThis.location?.hash,
+  });
   renderAuthRoot({
     error: boot.session?.error || '',
     code: boot.session?.code || '',
@@ -2451,7 +2471,77 @@ const appRuntime = {
   buildSurfaceChromeModel,
   buildSurfaceActions,
   afterRender: afterReactRender,
+  // U12: active message delivery — expose the hub API fetch so the
+  // <ActiveMessagesBar> in App.jsx can poll the Worker-authoritative
+  // endpoint. Null when not signed in (matches the hubApi guard).
+  fetchActiveMessages: hubApi?.fetchActiveMessages?.bind(hubApi) || null,
 };
+
+/* U2: SPA boot — detect `/admin` pathname and dispatch `open-admin-hub` with
+   the hash-derived section BEFORE the first React render so the initial paint
+   lands on the admin hub rather than flashing the dashboard. Cloudflare's
+   `not_found_handling: "single-page-application"` already serves `index.html`
+   for `/admin`, so no Worker changes are needed. */
+{
+  const bootPath = (globalThis.location?.pathname || '').replace(/\/+$/, '').toLowerCase();
+  if (bootPath === '/admin') {
+    const bootSection = parseAdminSectionFromHash(globalThis.location?.hash);
+    store.openAdminHub({ adminSection: bootSection });
+    if (boot.session.signedIn) loadAdminHub({ force: true });
+    loadAdminAccounts();
+    // Consume any leftover stash — the user landed on /admin directly
+    clearAdminReturn();
+  } else {
+    /* U2: social-auth return path — after OAuth callback the browser lands
+       on `/` with a valid session. If a stash exists AND the user has
+       admin/ops role, restore the admin route without a full-page redirect
+       by dispatching into the store. Non-admin users get the stash
+       discarded silently (ADV-002). */
+    const stashedReturn = popAdminReturn();
+    if (stashedReturn && (shellPlatformRole === 'admin' || shellPlatformRole === 'ops')) {
+      const stashedHash = stashedReturn.includes('#')
+        ? stashedReturn.slice(stashedReturn.indexOf('#'))
+        : '';
+      const stashedSection = parseAdminSectionFromHash(stashedHash);
+      store.openAdminHub({ adminSection: stashedSection });
+      if (boot.session.signedIn) loadAdminHub({ force: true });
+      loadAdminAccounts();
+      // Update the URL bar to match the restored admin route
+      const newUrl = stashedReturn;
+      globalThis.history?.replaceState?.(null, '', newUrl);
+    } else if (stashedReturn) {
+      // Non-admin user — discard the stash, do not open admin hub
+      clearAdminReturn(globalThis.sessionStorage);
+    }
+  }
+}
+
+/* U2: SPA boot URL routing — hash-based admin section navigation.
+   `_programmaticHashSkips` is a counter (not boolean) so that two rapid
+   programmatic hash writes (e.g. `open-admin-hub` immediately followed
+   by `admin-section-change`) each consume exactly one skip rather than
+   the second clobbering the first's guard.
+   Declared above the hashchange listener to eliminate the TDZ gap. */
+let _programmaticHashSkips = 0;
+
+/* U2: hashchange listener — when the user is on admin-hub, changing the hash
+   updates the active section in state. The `_programmaticHashSkips` counter
+   prevents feedback loops from programmatic hash writes. */
+const handleAdminHashChange = () => {
+  if (_programmaticHashSkips > 0) {
+    _programmaticHashSkips -= 1;
+    return;
+  }
+  const appState = store.getState();
+  if (appState.route.screen !== 'admin-hub') return;
+  const section = parseAdminSectionFromHash(globalThis.location?.hash);
+  if (section !== null) {
+    store.patch((current) => ({
+      route: { ...current.route, adminSection: section },
+    }));
+  }
+};
+globalThis.addEventListener('hashchange', handleAdminHashChange);
 
 createRoot(root).render(
   <App
@@ -2512,6 +2602,13 @@ function handleGlobalAction(action, data) {
     // returns the full set of route-exit handlers.
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.goHome();
     return true;
   }
@@ -2526,6 +2623,13 @@ function handleGlobalAction(action, data) {
     }
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.openSubject(subject.id, data.tab || 'practice');
     return true;
   }
@@ -2534,6 +2638,13 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.openCodex();
     return true;
   }
@@ -2542,6 +2653,13 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.openParentHub();
     if (boot.session.signedIn) loadParentHub({ force: true });
     return true;
@@ -2551,6 +2669,13 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.openProfileSettings();
     return true;
   }
@@ -2559,9 +2684,33 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
-    store.openAdminHub();
+    store.openAdminHub({ adminSection: data?.section });
+    // U2-R1: sync location.hash so the URL reflects the active section
+    if (data?.section) {
+      _programmaticHashSkips += 1;
+      globalThis.location.hash = `section=${data.section}`;
+    } else {
+      // No explicit section — clear any stale hash fragment
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     if (boot.session.signedIn) loadAdminHub({ force: true });
     loadAdminAccounts();
+    return true;
+  }
+
+  if (action === 'admin-section-change') {
+    const section = typeof data?.section === 'string' && VALID_ADMIN_SECTIONS.has(data.section)
+      ? data.section
+      : 'overview';
+    store.patch((current) => ({
+      route: { ...current.route, adminSection: section },
+    }));
+    // Write hash with programmatic guard to prevent hashchange feedback loop
+    _programmaticHashSkips += 1;
+    globalThis.location.hash = `section=${section}`;
     return true;
   }
 

@@ -9,10 +9,25 @@ import {
   guardianSummaryCopy,
   heroBgForSession,
   heroBgStyle,
+  normalisePostMegaBranch,
   renderAction,
   summaryHeadline,
   summaryRibbonSub,
 } from './spelling-view-model.js';
+import { isPostMasteryMode } from '../service-contract.js';
+
+const SPELLING_GRAND_MASTER_MONSTER_ID = 'phaeton';
+const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+
+function postMegaBranchFromRepositories(repositories, learnerId) {
+  if (!learnerId || !repositories?.gameState?.read) return normalisePostMegaBranch();
+  try {
+    const state = repositories.gameState.read(learnerId, MONSTER_CODEX_SYSTEM_ID);
+    return normalisePostMegaBranch(state?.[SPELLING_GRAND_MASTER_MONSTER_ID]?.branch);
+  } catch (_error) {
+    return normalisePostMegaBranch();
+  }
+}
 
 function SummaryStatGrid({ cards = [] }) {
   return (
@@ -132,7 +147,7 @@ function SummaryPatternQuestMissList({ mistakes = [] }) {
   );
 }
 
-export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery = null, previousHeroBg = '', runtimeReadOnly = false }) {
+export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery = null, previousHeroBg = '', runtimeReadOnly = false, repositories = null }) {
   const summary = ui.summary;
   // SH2-U1: JSX-layer guard for non-destructive next-action buttons.
   // Drill/Start-again/Drill-all all route through the subject adapter
@@ -147,10 +162,22 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
   const pendingCommand = ui.pendingCommand || '';
   const pending = Boolean(pendingCommand);
   const progressTotal = Math.max(1, summary.totalWords || 1);
+  // Post-Mega summary swap. The Worker stamps `summary.mode` from the
+  // session that produced the summary, so guardian / boss / pattern-quest
+  // results flow through the f-region vista. Pre-Mega summaries (smart /
+  // trouble / test) keep the legacy region.
+  const isPostMegaSummary = isPostMasteryMode(summary.mode);
+  const summaryPostMegaBranch = isPostMegaSummary
+    ? postMegaBranchFromRepositories(repositories, learner.id)
+    : '';
   const heroBg = heroBgForSession(learner.id, {
     mode: summary.mode,
     progress: { done: progressTotal, total: progressTotal },
-  }, { complete: true });
+  }, {
+    complete: true,
+    postMega: isPostMegaSummary,
+    postMegaBranch: summaryPostMegaBranch,
+  });
   const toneGood = !summary.mistakes.length;
   const isGuardianSummary = summary.mode === 'guardian';
   // U10: Boss rounds render a dedicated summary branch — no drill-all, no

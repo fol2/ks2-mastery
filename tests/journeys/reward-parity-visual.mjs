@@ -122,4 +122,63 @@ export default async function run({ driver, artifacts, log, assert }) {
   } else {
     log('Parity assertion skipped: one or more surfaces did not expose the "N/M secure" phrase.');
   }
+
+  // --- Phase 5 U9: star-count consistency across surfaces ---
+
+  log('verify star-count consistency: landing monster row uses star meters');
+  await driver.click('[data-action="punctuation-close-map"]');
+  await driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000);
+
+  const starMeterPattern = /\d+ \/ 100 Stars/;
+
+  // Extract star meter values from the monster row on the landing page.
+  const landingMonsterRowText = await driver.eval(
+    "(() => { const el = document.querySelector('[data-section=\"monster-row\"]'); return el ? el.textContent : ''; })()",
+  );
+  log(`Landing monster row text (star meters): "${landingMonsterRowText.slice(0, 200)}"`);
+  assert(starMeterPattern.test(landingMonsterRowText),
+    `Landing monster row must use star meters (X / 100 Stars), not "Stage X of 4". Got: "${landingMonsterRowText.slice(0, 200)}"`);
+
+  // Negative: no "Stage X of 4" copy on the landing page.
+  const stageOfPattern = /Stage \d+ of 4/;
+  assert(!stageOfPattern.test(landingMonsterRowText),
+    `Landing monster row must NOT contain "Stage X of 4". Got: "${landingMonsterRowText.slice(0, 200)}"`);
+
+  // Navigate back into Summary to verify star meter there too.
+  log('re-enter Smart Review to drive to Summary for star parity check');
+  await driver.click('[data-action="punctuation-start"][data-mode-id="smart"]');
+  await driver.waitForSelector('[data-punctuation-submit]', 15_000);
+
+  // Drive round again to reach Summary.
+  const roundStart = Date.now();
+  while (Date.now() - roundStart < 20_000) {
+    const phase = await driver.eval(
+      "(() => { const el = document.querySelector('[data-punctuation-phase]'); return el ? el.getAttribute('data-punctuation-phase') : ''; })()",
+    );
+    if (/summary/.test(phase)) break;
+    await driver.eval(
+      "(() => {" +
+        " const choice = document.querySelector('.choice-card');" +
+        " if (choice) choice.click();" +
+        " const submit = document.querySelector('[data-punctuation-submit]');" +
+        " if (submit && !submit.disabled) submit.click();" +
+        " const cont = document.querySelector('[data-punctuation-continue]');" +
+        " if (cont && !cont.disabled) cont.click();" +
+        " return 'nudged';" +
+      " })()",
+    );
+    await new Promise((r) => setTimeout(r, 400));
+  }
+
+  await driver.waitForSelector('[data-punctuation-phase="summary"]', 10_000);
+  await driver.screenshot(artifacts.path('04-summary-star-check'));
+
+  const summaryFullText = await driver.eval(
+    "(() => { const el = document.querySelector('[data-punctuation-phase=\"summary\"]'); return el ? el.textContent : ''; })()",
+  );
+  log(`Summary text (star meters): "${summaryFullText.slice(0, 200)}"`);
+  assert(starMeterPattern.test(summaryFullText),
+    `Summary scene must use star meters (X / 100 Stars). Got: "${summaryFullText.slice(0, 200)}"`);
+  assert(!stageOfPattern.test(summaryFullText),
+    `Summary scene must NOT contain "Stage X of 4". Got: "${summaryFullText.slice(0, 200)}"`);
 }

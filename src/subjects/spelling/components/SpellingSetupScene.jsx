@@ -18,8 +18,27 @@ import {
   heroBgStyle,
   heroToneForBg,
   monsterImageVisual,
+  normalisePostMegaBranch,
   renderAction,
 } from './spelling-view-model.js';
+
+// Setup scene picks the post-Mega vista (`f` region) directly when it
+// detects a graduated learner, so the parent surface does not need to
+// thread separate `postMega` props down. The branch is read once from the
+// monster-codex state — Phaeton is the spelling grand master — so the
+// vista stays in sync with the Codex creature on the learner's home tile.
+const SPELLING_GRAND_MASTER_MONSTER_ID = 'phaeton';
+const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+
+function postMegaBranchFromRepositories(repositories, learnerId) {
+  if (!learnerId || !repositories?.gameState?.read) return normalisePostMegaBranch();
+  try {
+    const state = repositories.gameState.read(learnerId, MONSTER_CODEX_SYSTEM_ID);
+    return normalisePostMegaBranch(state?.[SPELLING_GRAND_MASTER_MONSTER_ID]?.branch);
+  } catch (_error) {
+    return normalisePostMegaBranch();
+  }
+}
 
 function ModeCard({ mode, selected, disabled = false, description, badge, actions, textTone = 'dark' }) {
   const desc = description != null ? description : mode.desc;
@@ -70,6 +89,7 @@ function PostMegaModeCard({
   textTone = 'dark',
   disabled = false,
   active = false,
+  cta = null,
 }) {
   const classes = ['mode-card', 'mode-card-post'];
   if (variant) classes.push(`mode-card-post--${variant}`);
@@ -96,11 +116,34 @@ function PostMegaModeCard({
       </div>
       <h4>{mode.title}</h4>
       <p>{description != null ? description : mode.desc}</p>
-      {/* The Guardian card intentionally does NOT host an inline Begin button
-       * — a single primary CTA lives in the setup-begin-row below so there
-       * is one clear "start now" affordance per scene. In the rested state
-       * we surface a static "Rested" chip instead. */}
-      {variant === 'rested' ? (
+      {/* Inline CTA + kbd hint. Each active card now carries its own "Begin →"
+       * affordance so the scene no longer needs three stacked Begin buttons
+       * underneath. The kbd hint pairs with the CTA visually so kids can
+       * connect the click and the keyboard shortcut at the point of action. */}
+      {cta ? (
+        <div className="mode-card-post-cta-row">
+          <button
+            type="button"
+            className="mode-card-post-cta"
+            data-action={cta.action || 'spelling-shortcut-start'}
+            data-mode={cta.modeId || mode.id}
+            data-pattern-id={cta.patternId || undefined}
+            data-testid={cta.testId || undefined}
+            aria-label={cta.ariaLabel || mode.ariaLabel || `Begin ${mode.title}`}
+            disabled={cta.disabled || false}
+            onClick={cta.onClick}
+          >
+            <span>{cta.label || 'Begin'}</span>
+            <ArrowRightIcon />
+          </button>
+          {cta.altKey ? (
+            <span className="mode-card-post-cta-key" aria-hidden="true">
+              <kbd>Alt</kbd>
+              <kbd>{cta.altKey}</kbd>
+            </span>
+          ) : null}
+        </div>
+      ) : variant === 'rested' ? (
         <span className="mode-card-post-status" role="status">Rested</span>
       ) : null}
     </div>
@@ -299,11 +342,12 @@ function SetupStatGrid({ stats }) {
 // "non-learner" check) guards against future roles slipping past the
 // check; a brand-new role (e.g. 'demo') will render the link only after
 // an explicit code change here, matching the P2 plan's §U1 ICO posture.
-const POST_MASTERY_DEBUG_ROLES = new Set(['admin', 'ops']);
-
-function adultCanSeePostMasteryDebug(platformRole) {
-  return POST_MASTERY_DEBUG_ROLES.has(String(platformRole || ''));
-}
+//
+// 2026-04-27 update: the inline "Why is Guardian locked?" link is removed.
+// The diagnostic panel itself stays in the Admin hub for ops use; we just
+// stop pitching it from the spelling setup scene. Admins land in the Admin
+// hub through the existing nav, so the inline footnote was redundant noise
+// for the very small audience that could see it.
 
 export function SpellingSetupScene({
   learner,
@@ -331,7 +375,22 @@ export function SpellingSetupScene({
 }) {
   const statsFilter = prefs.mode === 'test' ? 'core' : prefs.yearFilter;
   const stats = service.getStats(learner.id, statsFilter);
-  const heroBg = heroBgForSetup(learner.id, prefs, { tone: setupHeroTone });
+  // Post-Mega gating for the hero backdrop. When the learner has a sticky
+  // graduation record (or is currently fully Mega), swap the legacy
+  // mode-driven region for the post-Mega `f` vista bound to Phaeton's
+  // branch (b1 / b2). Pre-Mega learners stay on the legacy regions.
+  const isPostMegaSetup = Boolean(
+    postMastery?.postMegaDashboardAvailable
+    ?? postMastery?.allWordsMega,
+  );
+  const setupPostMegaBranch = isPostMegaSetup
+    ? postMegaBranchFromRepositories(repositories, learner.id)
+    : '';
+  const heroBg = heroBgForSetup(learner.id, prefs, {
+    tone: setupHeroTone,
+    postMega: isPostMegaSetup,
+    postMegaBranch: setupPostMegaBranch,
+  });
   const mergedHeroStyle = { ...heroBgStyle(heroBg) };
   const heroContrast = useSetupHeroContrast(heroBg, prefs.mode);
   const heroTone = heroContrast.contrast.tone || heroToneForBg(heroBg);
@@ -368,13 +427,6 @@ export function SpellingSetupScene({
   if (isPostMega) contentClasses.push('setup-content--post-mega');
   if (isHydrationChecking) contentClasses.push('setup-content--checking');
 
-  // P2 U1: admin / ops adults see a "Why is Guardian locked?" diagnostic
-  // link right below the setup hero when Guardian Mission is NOT unlocked
-  // (i.e. `isPostMega === false`). Child / parent surfaces get `platformRole`
-  // empty (defaulted) or === 'parent' and the link never renders. Routed
-  // to the admin hub where the post-mega debug panel explains the counts.
-  const showPostMasteryDebugLink = adultCanSeePostMasteryDebug(platformRole) && !isPostMega;
-
   // P2 U5: soft-lockout banner state. Renders above the setup hero when a
   // sibling tab holds the write lock, or when the browser has no Web Locks
   // support (fallback). Mounted once per setup render; the detector
@@ -405,6 +457,21 @@ export function SpellingSetupScene({
     ? (SPELLING_DURABLE_PERSISTENCE_WARNING_COPY[persistenceWarning.reason]
       ?? SPELLING_DURABLE_PERSISTENCE_WARNING_COPY.STORAGE_SAVE_FAILED)
     : '';
+
+  // Post-Mega setup view switch (2026-04-27 redesign): a graduated learner
+  // can flip between the Vault layer (Guardian / Boss / Pattern Quest cards
+  // with inline CTAs) and the Workshop layer (full legacy setup with round
+  // length / pool / showCloze / autoSpeak controls). Defaults to Vault for
+  // post-Mega learners; the switch hides entirely for pre-Mega so they
+  // only ever see the Workshop. Local React state keeps the toggle simple
+  // — resets on navigation, no schema bump.
+  const [postMegaView, setPostMegaView] = React.useState('vault');
+  // Render the Vault layer only when the learner is post-Mega AND has
+  // chosen the Vault view. Otherwise fall through to the legacy Workshop
+  // layer (which carries every legacy mode + tweak control). The
+  // hydration-checking placeholder stays gated on the Vault view too.
+  const showVaultLayer = isPostMega && postMegaView === 'vault';
+  const showWorkshopLayer = !showVaultLayer && !isHydrationChecking;
 
   return (
     <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
@@ -443,6 +510,11 @@ export function SpellingSetupScene({
             </div>
           ) : null}
           {isPostMega ? (
+            <SetupViewSwitch view={postMegaView} onChange={setPostMegaView} />
+          ) : null}
+          {isHydrationChecking ? (
+            <CheckingWordVaultContent />
+          ) : showVaultLayer ? (
             <PostMegaSetupContent
               prefs={prefs}
               accent={accent}
@@ -454,8 +526,6 @@ export function SpellingSetupScene({
               startDisabled={startDisabled}
               runtimeReadOnly={runtimeReadOnly}
             />
-          ) : isHydrationChecking ? (
-            <CheckingWordVaultContent />
           ) : (
             <LegacySetupContent
               prefs={prefs}
@@ -468,21 +538,6 @@ export function SpellingSetupScene({
               startDisabled={startDisabled}
             />
           )}
-          {showPostMasteryDebugLink ? (
-            <p className="small muted post-mastery-debug-link" data-adult-debug="post-mastery">
-              <button
-                type="button"
-                className="btn ghost"
-                data-action="open-admin-hub"
-                onClick={(event) => renderAction(actions, event, 'open-admin-hub')}
-              >
-                Why is Guardian locked?
-              </button>
-              <span className="small muted" style={{ marginLeft: 8 }}>
-                Adult-only diagnostic. Opens the Admin / Operations hub post-mega debug panel.
-              </span>
-            </p>
-          ) : null}
         </div>
       </section>
 
@@ -803,22 +858,11 @@ function PostMegaSetupContent({
   }
 
   const beginDisabled = startDisabled || runtimeReadOnly || !guardianActive;
-  const beginText = pendingCommand === 'start-session'
-    ? 'Starting...'
-    : pendingCommand === 'save-prefs'
-      ? 'Saving...'
-      : 'Begin Guardian Mission';
-  // U10: Boss Begin button shares the same pending-command gating as the
-  // Guardian Begin — both go through `spelling-shortcut-start` and both
-  // collide on the same `start-session` pending slot. Sharing `beginText`'s
-  // "Starting..." branch would conflate which button is spinning, so Boss
-  // owns its own label but reuses the same disable predicate.
+  // Boss Dictation Begin gate. Each card now hosts its own inline CTA so
+  // there is no separate Begin button row — the per-card CTA reads its
+  // disabled state from these gates and labels itself locally via the
+  // shared "pendingCommand === 'start-session'" branch in the cta prop.
   const bossBeginDisabled = startDisabled || runtimeReadOnly || !bossActive;
-  const bossBeginText = pendingCommand === 'start-session'
-    ? 'Starting...'
-    : pendingCommand === 'save-prefs'
-      ? 'Saving...'
-      : 'Begin Boss Dictation';
 
   // U11: Pattern Quest Begin gate. Requires at least one launched pattern
   // (≥4 tagged core words). `launchedPatternIds` comes from
@@ -832,11 +876,6 @@ function PostMegaSetupContent({
   const patternQuestActive = bossActive && launchedPatternIds.length > 0;
   const firstLaunchedPatternId = launchedPatternIds[0] || '';
   const patternQuestBeginDisabled = startDisabled || runtimeReadOnly || !patternQuestActive;
-  const patternQuestBeginText = pendingCommand === 'start-session'
-    ? 'Starting...'
-    : pendingCommand === 'save-prefs'
-      ? 'Saving...'
-      : 'Begin Pattern Quest';
 
   function handleBegin(event) {
     if (beginDisabled) {
@@ -906,15 +945,17 @@ function PostMegaSetupContent({
           textTone={heroContrast.contrast.cards?.[0] || heroContrast.contrast.shell}
           active={guardianActive}
           disabled={!guardianActive}
+          cta={guardianActive ? {
+            label: pendingCommand === 'start-session' ? 'Starting…' : 'Begin patrol',
+            onClick: handleBegin,
+            disabled: beginDisabled,
+            altKey: '4',
+            ariaLabel: 'Begin Guardian Mission',
+          } : null}
         />
-        {/* U10: Boss Dictation active card. The variant matches Guardian's
-            active/rested split — `active` when `allWordsMega === true`
-            (always true inside PostMegaSetupContent), `rested` otherwise. We
-            pass the Boss description straight from POST_MEGA_MODE_CARDS so a
-            future copy tweak is a one-line change in the view-model, and keep
-            the badge in this file so a future variant (e.g. "RECENT SCORE
-            9/10") can render conditionally without touching the view-model
-            frozen array. */}
+        {/* U10: Boss Dictation card now hosts its own inline Begin CTA
+            ("Begin Boss") + Alt+5 hint when active, replacing the previous
+            stacked button under the row. */}
         {bossCard ? (
           <PostMegaModeCard
             mode={bossCard}
@@ -924,12 +965,18 @@ function PostMegaSetupContent({
             textTone={heroContrast.contrast.cards?.[1] || heroContrast.contrast.shell}
             active={bossActive}
             disabled={!bossActive}
+            cta={bossActive ? {
+              label: pendingCommand === 'start-session' ? 'Starting…' : 'Begin Boss',
+              onClick: handleBossBegin,
+              disabled: bossBeginDisabled,
+              altKey: '5',
+              ariaLabel: bossCard.ariaLabel || 'Begin Boss Dictation',
+            } : null}
           />
         ) : null}
-        {/* U11: Pattern Quest active card — sits alongside Guardian + Boss
-            on the post-Mega dashboard. Active variant when at least one
-            pattern has ≥4 tagged core words (launchedPatternIds.length > 0);
-            rested otherwise with copy explaining the threshold. */}
+        {/* U11: Pattern Quest card — `active` when at least one pattern has
+            ≥4 tagged core words. Rested state shows the threshold copy
+            without a CTA; active state surfaces the inline Begin Quest. */}
         {patternQuestCard ? (
           <PostMegaModeCard
             mode={patternQuestCard}
@@ -941,90 +988,86 @@ function PostMegaSetupContent({
             textTone={heroContrast.contrast.cards?.[2] || heroContrast.contrast.shell}
             active={patternQuestActive}
             disabled={!patternQuestActive}
+            cta={patternQuestActive ? {
+              label: pendingCommand === 'start-session' ? 'Starting…' : 'Begin Quest',
+              onClick: handlePatternQuestBegin,
+              disabled: patternQuestBeginDisabled,
+              modeId: 'pattern-quest',
+              patternId: firstLaunchedPatternId,
+              testId: 'pattern-quest-begin',
+              ariaLabel: patternQuestCard.ariaLabel || 'Begin Pattern Quest',
+            } : null}
           />
         ) : null}
-        {placeholderCards.map((mode, index) => (
-          <PostMegaModeCard
-            mode={mode}
-            variant="placeholder"
-            // Roadmap index bumps to 3 / 4 because Guardian (#0), Boss (#1),
-            // and Pattern Quest (#2) occupy slots 0, 1, 2; the "Next 04" /
-            // "Next 05" chips on the placeholders communicate the P2
-            // roadmap position.
-            index={index + 3}
-            textTone={heroContrast.contrast.cards?.[index + 3] || heroContrast.contrast.shell}
-            disabled
-            key={mode.id}
-          />
-        ))}
       </div>
-      <div className="setup-begin-row post-mega-begin-row">
-        <div className="post-mega-begin-hint" aria-hidden={guardianActive ? undefined : 'true'}>
-          <kbd>Alt</kbd>
-          <span className="post-mega-begin-hint-join">+</span>
-          <kbd>4</kbd>
-          <span className="post-mega-begin-hint-label">quick-start Guardian Mission</span>
-        </div>
-        <button
-          type="button"
-          className="btn primary xl"
-          style={{ '--btn-accent': accent }}
-          data-action="spelling-shortcut-start"
-          data-mode="guardian"
-          disabled={beginDisabled}
-          onClick={handleBegin}
+      {/* Coming-next footer — placeholder modes (Word Detective / Story
+          Challenge) collapse from full mode cards into a single quiet line
+          that preserves the roadmap signal without taking real estate. The
+          eyebrow + serif italic titles read as a magazine "Up next" footer. */}
+      {placeholderCards.length > 0 ? (
+        <p
+          className="post-mega-coming-next"
+          data-test-id="post-mega-coming-next"
         >
-          {beginText} <ArrowRightIcon />
-        </button>
-        {/* U10: Boss Begin row. Mirrors the Guardian begin-row structure —
-            hint chip + primary CTA — but dispatches `spelling-shortcut-start`
-            with `{ mode: 'boss', length: BOSS_DEFAULT_ROUND_LENGTH }`. The
-            Alt+5 hint is aria-hidden when Boss is inactive so screen readers
-            don't announce a shortcut that won't work; the begin button
-            itself stays disabled with a conservative CTA label. */}
-        {bossCard ? (
-          <>
-            <div className="post-mega-begin-hint" aria-hidden={bossActive ? undefined : 'true'}>
-              <kbd>Alt</kbd>
-              <span className="post-mega-begin-hint-join">+</span>
-              <kbd>5</kbd>
-              <span className="post-mega-begin-hint-label">quick-start Boss Dictation</span>
-            </div>
-            <button
-              type="button"
-              className="btn primary xl"
-              style={{ '--btn-accent': accent }}
-              data-action="spelling-shortcut-start"
-              data-mode="boss"
-              disabled={bossBeginDisabled}
-              onClick={handleBossBegin}
-              aria-label={bossCard.ariaLabel || 'Begin Boss Dictation'}
-            >
-              {bossBeginText} <ArrowRightIcon />
-            </button>
-          </>
-        ) : null}
-        {/* U11: Pattern Quest Begin row. Alt+6 shortcut is deferred to a
-            follow-up; the button still dispatches `spelling-shortcut-start`
-            with `{ mode: 'pattern-quest', patternId }` so the service
-            selector receives the first launched pattern id. */}
-        {patternQuestCard ? (
-          <button
-            type="button"
-            className="btn primary xl"
-            style={{ '--btn-accent': accent }}
-            data-action="spelling-shortcut-start"
-            data-mode="pattern-quest"
-            data-pattern-id={firstLaunchedPatternId}
-            data-testid="pattern-quest-begin"
-            disabled={patternQuestBeginDisabled}
-            onClick={handlePatternQuestBegin}
-            aria-label={patternQuestCard.ariaLabel || 'Begin Pattern Quest'}
-          >
-            {patternQuestBeginText} <ArrowRightIcon />
-          </button>
-        ) : null}
-      </div>
+          <span className="post-mega-coming-next-eyebrow">Coming next</span>
+          <span className="post-mega-coming-next-list">
+            {placeholderCards.map((mode, idx) => (
+              <React.Fragment key={mode.id}>
+                {idx > 0 ? <span className="post-mega-coming-next-sep" aria-hidden="true">·</span> : null}
+                <span className="post-mega-coming-next-title">{mode.title}</span>
+              </React.Fragment>
+            ))}
+          </span>
+        </p>
+      ) : null}
     </>
+  );
+}
+
+/* SetupViewSwitch — a two-tab segmented control floating in the upper-right
+ * clear zone of the post-Mega hero card.
+ *
+ * Replaces the earlier Workshop popover (which only quick-launched legacy
+ * modes — graduated learners still wanted access to round length / pool /
+ * showCloze / autoSpeak controls). The switch flips the entire setup
+ * content between two layers:
+ *
+ *   - Vault: PostMegaSetupContent (Guardian / Boss / Pattern Quest cards
+ *     with inline Begin pills). The graduation surface.
+ *   - Workshop: LegacySetupContent (Smart / Trouble / Test cards with
+ *     full tweak controls). Same layer pre-Mega learners see.
+ *
+ * Hidden entirely for pre-Mega learners — they only ever see the Workshop
+ * layer, so a switch with one option is just chrome. */
+function SetupViewSwitch({ view, onChange }) {
+  const tabs = [
+    { id: 'vault', label: 'Vault' },
+    { id: 'workshop', label: 'Workshop' },
+  ];
+  return (
+    <div
+      className="setup-view-switch"
+      role="tablist"
+      aria-label="Setup view"
+      data-test-id="setup-view-switch"
+    >
+      {tabs.map((tab) => {
+        const isActive = view === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            className={`setup-view-switch-tab${isActive ? ' is-active' : ''}`}
+            aria-selected={isActive}
+            data-tab={tab.id}
+            data-test-id={`setup-view-switch-${tab.id}`}
+            onClick={() => onChange(tab.id)}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }

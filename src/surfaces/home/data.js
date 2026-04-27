@@ -579,6 +579,11 @@ function percentageNumber(value) {
 /**
  * Lay out subject cards for the home grid. Subjects with region artwork use
  * responsive cover banners; fallback subjects keep a solid accent banner.
+ *
+ * Spelling adds a post-Mega-aware banner: graduated learners see the
+ * `cover-post-mega-{branch}` cover so the home tile matches the Guardian /
+ * Boss / Pattern Quest vista they will land on. The branch follows the
+ * grand-master Phaeton (b1 / b2). Other subjects keep the legacy cover.
  */
 export function buildSubjectCards(subjects = [], dashboardStats = {}) {
   return subjects.map((subject) => {
@@ -588,6 +593,11 @@ export function buildSubjectCards(subjects = [], dashboardStats = {}) {
     const status = available ? 'live' : 'soon';
     const pctRaw = Number(stats.pct);
     const pct = Number.isFinite(pctRaw) ? Math.max(0, Math.min(100, pctRaw)) : 0;
+    let regionBase = decor.regionBase || null;
+    if (regionBase && stats.postMega && subject.id === 'spelling') {
+      const branch = stats.postMegaBranch === 'b2' ? 'b2' : 'b1';
+      regionBase = `${regionBase}-post-mega-${branch}`;
+    }
     return {
       id: subject.id,
       name: subject.name,
@@ -596,7 +606,7 @@ export function buildSubjectCards(subjects = [], dashboardStats = {}) {
       status,
       glyph: decor.glyph,
       accent: decor.accent,
-      regionBase: decor.regionBase || null,
+      regionBase,
       progress: pct / 100,
       progressLabel: buildProgressLabel(status, stats),
     };

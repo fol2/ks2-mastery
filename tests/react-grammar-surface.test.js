@@ -38,8 +38,9 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   // Phase 3 U1: hero copy comes from `GRAMMAR_DASHBOARD_HERO`.
   assert.match(html, /Grammar Garden/);
   assert.match(html, /Grow your Grammar creatures/);
-  // Four primary mode cards are present exactly.
+  // U8 Phase 5: Smart Practice is the sole primary CTA.
   assert.match(html, /Smart Practice/);
+  // U8 Phase 5: Grammar Bank, Mini Test, Fix Trouble Spots are secondary links.
   assert.match(html, /Fix Trouble Spots/);
   assert.match(html, /Mini Test/);
   assert.match(html, /Grammar Bank/);
@@ -50,16 +51,19 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   assert.match(html, /data-mode-id="smart"[^>]*data-featured="true"/);
   assert.match(html, /class="grammar-primary-mode[^"]*is-recommended[^"]*"[^>]*data-mode-id="smart"/);
   assert.match(html, /Recommended/);
-  // Concordium progress string (U1 follower: renamed "Grow Concordium").
-  assert.match(html, /Grow Concordium/);
-  assert.match(html, /\d+\/18/);
+  // U7 Phase 5: Monster strip with 4 active creatures + child-facing copy.
+  assert.match(html, /grammar-monster-strip/);
+  assert.match(html, /data-monster-id="bracehart"/);
+  assert.match(html, /data-monster-id="concordium"/);
+  assert.match(html, /0 \/ 100 Stars/);
+  assert.match(html, /Get 1 Star to find the Egg\. Reach 100 Stars for Mega\./);
   // More practice disclosure is present and closed by default.
   assert.match(html, /<details class="grammar-more-practice"><summary>More practice<\/summary>/);
-  // Writing Try secondary entry.
+  // U8 Phase 5: Writing Try now inside More practice (not primary area).
   assert.match(html, /data-action="grammar-open-transfer"/);
   assert.match(html, /Writing Try/);
-  // Primary Begin round CTA.
-  assert.match(html, /Begin round/);
+  // U8 Phase 5: Primary CTA is "Start Smart Practice".
+  assert.match(html, /Start Smart Practice/);
   assert.doesNotMatch(html, /Future subject module/);
 });
 
@@ -838,13 +842,12 @@ test('Grammar dashboard disables mode cards, controls, and Begin button while a 
   }));
 
   const html = harness.render();
-  // Primary mode cards carry `disabled` when setup is pending. Smart card
-  // also carries `is-recommended` + `data-featured="true"` (U1 follower).
+  // U8 Phase 5: Smart Practice is the sole primary card, disabled during pending.
   assert.match(html, /<button type="button" class="grammar-primary-mode selected is-disabled is-recommended" data-mode-id="smart" data-action="grammar-set-mode" data-featured="true" aria-pressed="true" disabled="">/);
   // Round length select is disabled and shows the default 5 value selected.
   assert.match(html, /<select class="input" disabled=""[^>]*><option value="3">3<\/option><option value="5" selected="">5<\/option>/);
-  // Begin button renders the pending label.
-  assert.match(html, /<button class="btn primary xl" type="button" disabled="">Starting\.\.\.<\/button>/);
+  // U8 Phase 5: Begin button renders the pending label.
+  assert.match(html, /<button class="btn primary xl" type="button" data-featured="true" disabled="">Starting\.\.\.<\/button>/);
 });
 
 test('Grammar dashboard hides adult-diagnostic goal/teaching toggles but preserves the preference round-trip', () => {
@@ -1491,9 +1494,10 @@ test('Grammar setup can start trouble drill mode', () => {
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.mode, 'trouble');
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');
 
-  // U1 dashboard: `Fix Trouble Spots` card reflects the selected mode.
+  // U8 Phase 5: `Fix Trouble Spots` is now a secondary link, not a primary card.
+  // Verify the mode is set correctly (dispatch still works).
   const html = harness.render();
-  assert.match(html, /<button type="button" class="grammar-primary-mode selected" data-mode-id="trouble"/);
+  assert.match(html, /data-mode-id="trouble"/);
 
   harness.dispatch('grammar-set-focus', { value: 'word_classes' });
   assert.equal(harness.store.getState().subjectUi.grammar.prefs.focusConceptId, '');

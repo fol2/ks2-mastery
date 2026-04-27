@@ -29,10 +29,29 @@ import {
 import {
   heroBgForSession,
   heroBgStyle,
+  normalisePostMegaBranch,
   renderAction,
   renderFormAction,
   spellingSessionProgressIndex,
 } from './spelling-view-model.js';
+import { isPostMasteryMode } from '../service-contract.js';
+
+// Self-contained post-Mega branch lookup — Phaeton (the spelling grand
+// master) anchors the f-region vista regardless of the rest of the
+// monster set. Pulling it inside the scene keeps the hero swap working
+// even if a future caller forgets to thread `postMega` props.
+const SPELLING_GRAND_MASTER_MONSTER_ID = 'phaeton';
+const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+
+function postMegaBranchFromRepositories(repositories, learnerId) {
+  if (!learnerId || !repositories?.gameState?.read) return normalisePostMegaBranch();
+  try {
+    const state = repositories.gameState.read(learnerId, MONSTER_CODEX_SYSTEM_ID);
+    return normalisePostMegaBranch(state?.[SPELLING_GRAND_MASTER_MONSTER_ID]?.branch);
+  } catch (_error) {
+    return normalisePostMegaBranch();
+  }
+}
 
 export function SpellingSessionScene({
   learner,
@@ -119,7 +138,19 @@ export function SpellingSessionScene({
     : spellingSessionProgressIndex(session, { awaitingAdvance });
   const pathDone = Math.min(progressTotal, done);
   const pathCurrent = Math.min(Math.max(progressCurrent - 1, 0), progressTotal);
-  const heroBg = heroBgForSession(learner.id, session, { awaitingAdvance });
+  // Post-Mega session vista swap. Guardian / Boss / Pattern Quest sessions
+  // always belong to a graduated learner so the f-region is correct
+  // (mode-driven post-Mega vs legacy split). Pre-Mega sessions stay on
+  // the legacy regions.
+  const isPostMegaSession = isPostMasteryMode(session?.mode);
+  const sessionPostMegaBranch = isPostMegaSession
+    ? postMegaBranchFromRepositories(repositories, learner.id)
+    : '';
+  const heroBg = heroBgForSession(learner.id, session, {
+    awaitingAdvance,
+    postMega: isPostMegaSession,
+    postMegaBranch: sessionPostMegaBranch,
+  });
   const isCompletingRound = awaitingAdvance && progressTotal > 0 && done >= progressTotal;
   const showingCorrection = session.phase === 'correction';
   const promptInstr = session.type === 'test'

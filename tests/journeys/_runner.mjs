@@ -44,6 +44,7 @@ const SKIP_SENTINEL = Symbol.for('ks2.journey.skipped');
 // The journey registry. Order matters for the default "run all" flow — we
 // run the simplest happy path first so a failure there surfaces fast.
 const JOURNEYS = [
+  { name: 'punctuation-landing-skeleton', module: './punctuation-landing-skeleton.mjs' },
   { name: 'smart-review', module: './smart-review.mjs' },
   { name: 'wobbly-spots', module: './wobbly-spots.mjs' },
   { name: 'gps-check', module: './gps-check.mjs' },

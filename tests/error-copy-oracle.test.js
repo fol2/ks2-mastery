@@ -145,16 +145,16 @@ const FORBIDDEN_TOKENS = Object.freeze([
 
 const ALLOWLIST = Object.freeze([
   {
-    file: 'src/surfaces/hubs/AdminHubSurface.jsx',
+    file: 'src/surfaces/hubs/AdminDebuggingSection.jsx',
     literal: 'TypeError',
     reason:
-      'Admin-only Error Centre filter placeholder. Used to let an operator search `error_events.kind` for "TypeError" rows; the placeholder is a hint, not a user-facing diagnosis. Scoped to AdminHubSurface.jsx so a child-facing surface cannot reuse the word without triage.',
+      'Admin-only Error Centre filter placeholder. Used to let an operator search `error_events.kind` for "TypeError" rows; the placeholder is a hint, not a user-facing diagnosis. Scoped to AdminDebuggingSection.jsx so a child-facing surface cannot reuse the word without triage.',
   },
   {
-    file: 'src/surfaces/hubs/AdminHubSurface.jsx',
+    file: 'src/surfaces/hubs/AdminDebuggingSection.jsx',
     literal: '/api/',
     reason:
-      'Admin-only Error Centre filter placeholder. Lets an operator filter error rows by route prefix. Scoped to AdminHubSurface.jsx; scoped to this admin surface because the Error Centre is gated by platform role.',
+      'Admin-only Error Centre filter placeholder. Lets an operator filter error rows by route prefix. Scoped to AdminDebuggingSection.jsx; scoped to this admin surface because the Error Centre is gated by platform role.',
   },
 ]);
 

@@ -4645,16 +4645,24 @@ textarea:focus-visible {
   letter-spacing: 0.22em;
   font-weight: 700;
   color: color-mix(in oklab, var(--brand) 72%, var(--ink));
+  /* Resilience shadow — engine sets `--mode-card-copy-shadow` per shell
+     tone (light shadow for dark hero, dark shadow for light hero). The
+     fallback handles the rare case where the engine misdetects luminance
+     on a mixed backdrop image (e.g. light sky + dark mountains). */
+  text-shadow: var(--mode-card-copy-shadow, 0 1px 10px rgba(0, 0, 0, 0.22));
 }
 .setup-content--post-mega .title.post-mega-title {
   font-family: var(--font-serif);
   letter-spacing: -0.018em;
   line-height: 1.05;
   max-width: 22ch;
+  color: var(--mode-card-title, var(--ink));
+  text-shadow: var(--mode-card-heading-shadow, 0 1px 12px rgba(0, 0, 0, 0.22));
 }
 .setup-content--post-mega .lede.post-mega-lede {
   max-width: 58ch;
-  color: var(--mode-card-copy, var(--muted));
+  color: var(--mode-card-copy, var(--ink));
+  text-shadow: var(--mode-card-copy-shadow, 0 1px 10px rgba(0, 0, 0, 0.22));
 }
 .post-mega-stat-ribbon {
   margin: 18px 0 4px;
@@ -4699,8 +4707,11 @@ textarea:focus-visible {
 .post-mega-stat--wobbling dd { color: color-mix(in oklab, var(--bad-strong, #b3372c) 88%, var(--ink)); }
 
 .mode-row.mode-row-post-mega {
-  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
-  grid-auto-rows: minmax(196px, auto);
+  /* Three-column layout — Guardian wide (1.6fr) + Boss + Pattern Quest.
+     Roadmap placeholders moved to the `.post-mega-coming-next` footer
+     line so the active triad sits on a single row at most viewports. */
+  grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(204px, auto);
   gap: 14px;
   margin-top: 22px;
 }
@@ -4845,12 +4856,81 @@ textarea:focus-visible {
   letter-spacing: 0.02em;
   color: color-mix(in oklab, var(--brand) 72%, var(--ink));
 }
-.mode-card-post-cta {
+/* Inline mode-card CTA — each active post-Mega card carries its own
+   "Begin →" pill at the bottom of the card, paired with a small Alt+N
+   kbd hint. Replaces the old stacked Begin button row beneath the cards
+   (see post-Mega Workshop redesign 2026-04-27). The pill is anchored to
+   the brand accent so the eye reads it as the primary action regardless
+   of hero backdrop tone. */
+.mode-card-post-cta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: auto;
-  align-self: flex-start;
-  padding: 8px 14px;
-  font-size: 0.92rem;
-  border-radius: calc(var(--radius) - 6px);
+  padding-top: 12px;
+}
+.mode-card-post-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px 7px 16px;
+  background: color-mix(in oklab, var(--brand) 88%, transparent);
+  border: 1px solid color-mix(in oklab, white 36%, transparent);
+  border-radius: 999px;
+  color: #fff;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    box-shadow 200ms ease;
+}
+.mode-card-post-cta:hover {
+  transform: translateY(-1px);
+  background: color-mix(in oklab, var(--brand) 96%, transparent);
+  box-shadow: 0 14px 26px -18px color-mix(in oklab, var(--brand) 70%, transparent);
+}
+.mode-card-post-cta:focus-visible {
+  outline: 2px solid color-mix(in oklab, white 78%, transparent);
+  outline-offset: 2px;
+}
+.mode-card-post-cta[disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: saturate(0.7);
+  box-shadow: none;
+  transform: none;
+}
+.mode-card-post-cta svg {
+  width: 14px;
+  height: 14px;
+}
+.mode-card-post-cta-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  color: var(--mode-card-copy, color-mix(in oklab, var(--brand) 60%, var(--muted)));
+  opacity: 0.78;
+  text-shadow: var(--mode-card-copy-shadow, none);
+}
+.mode-card-post-cta-key kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: var(--font-mono, ui-monospace, 'SFMono-Regular', Menlo, monospace);
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1.1;
+  background: color-mix(in oklab, var(--panel) 40%, transparent);
+  border: 1px solid color-mix(in oklab, var(--brand) 22%, transparent);
+  color: color-mix(in oklab, var(--brand) 78%, var(--ink));
 }
 .mode-card-post-status {
   margin-top: auto;
@@ -4864,39 +4944,45 @@ textarea:focus-visible {
   letter-spacing: 0.04em;
   border: 1px dashed color-mix(in oklab, var(--brand) 36%, transparent);
 }
-.setup-begin-row.post-mega-begin-row {
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 28px;
-  gap: 18px;
+
+/* Coming-next footer — placeholder modes (Word Detective / Story Challenge)
+   collapse into a single quiet line so the post-Mega scene no longer carries
+   two empty striped cards on a second row. Eyebrow + serif italic titles
+   read as a magazine "Up next" footer rather than a carousel of stubs. */
+.post-mega-coming-next {
+  display: flex;
+  align-items: baseline;
   flex-wrap: wrap;
+  gap: 12px;
+  margin: 22px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in oklab, var(--brand) 16%, var(--line));
+  font-size: 0.84rem;
+  color: var(--mode-card-copy, var(--muted));
+  text-shadow: var(--mode-card-copy-shadow, none);
 }
-.post-mega-begin-hint {
+.post-mega-coming-next-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--brand) 56%, var(--muted));
+  opacity: 0.92;
+}
+.post-mega-coming-next-list {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: color-mix(in oklab, var(--mode-card-copy, var(--muted)) 88%, transparent);
-  opacity: 0.86;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.96rem;
+  letter-spacing: -0.005em;
+  color: color-mix(in oklab, var(--mode-card-copy, var(--ink)) 88%, transparent);
 }
-.post-mega-begin-hint[aria-hidden="true"] { opacity: 0.3; }
-.post-mega-begin-hint kbd {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 5px;
-  font-family: var(--font-mono, ui-monospace, 'SFMono-Regular', Menlo, monospace);
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.1;
-  background: color-mix(in oklab, var(--panel) 45%, transparent);
-  border: 1px solid color-mix(in oklab, var(--brand) 28%, transparent);
-  color: color-mix(in oklab, var(--brand) 80%, var(--ink));
-  box-shadow: inset 0 -1px 0 color-mix(in oklab, black 10%, transparent);
-}
-.post-mega-begin-hint-join { opacity: 0.55; font-weight: 600; }
-.post-mega-begin-hint-label {
-  letter-spacing: 0.02em;
-  margin-left: 4px;
+.post-mega-coming-next-sep {
+  opacity: 0.45;
+  font-style: normal;
 }
 
 /* P2 U4: "Checking Word Vault..." skeleton scene for the ~500ms hydration
@@ -4971,6 +5057,78 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .post-mega-hydration-skeleton__title-fill { animation: none; background-position: 50% 50%; }
   .post-mega-hydration-skeleton__card { animation: none; opacity: 0.9; }
+}
+
+/* Setup view switch — segmented two-tab pill in the upper-right clear
+ * zone of the post-Mega hero card. Lets a graduated learner flip the
+ * entire setup content between the Vault layer (Guardian / Boss / Pattern
+ * Quest) and the Workshop layer (full legacy setup with round length,
+ * pool, showCloze, autoSpeak controls). Replaces the earlier Workshop
+ * popover, which only quick-launched modes without exposing any options.
+ *
+ * Anchors absolute to `.setup-main` (which already has `position: relative`)
+ * so the switch floats over the hero backdrop without affecting layout.
+ * Paper-translucent pill with backdrop blur; the active tab gets the
+ * brand fill + white text while the inactive tab stays subdued. */
+.setup-view-switch {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: color-mix(in oklab, var(--panel) 60%, transparent);
+  border: 1px solid color-mix(in oklab, var(--brand) 26%, var(--line));
+  border-radius: 999px;
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow: 0 4px 14px -10px color-mix(in oklab, var(--ink) 30%, transparent);
+}
+.setup-view-switch-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--font-serif);
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: color-mix(in oklab, var(--brand) 60%, var(--ink));
+  transition:
+    background 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
+}
+.setup-view-switch-tab:hover {
+  color: color-mix(in oklab, var(--brand) 86%, var(--ink));
+}
+.setup-view-switch-tab:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--brand) 64%, transparent);
+  outline-offset: 2px;
+}
+.setup-view-switch-tab.is-active {
+  background: color-mix(in oklab, var(--brand) 88%, transparent);
+  color: #fff;
+  box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand) 58%, transparent);
+}
+@media (max-width: 540px) {
+  .setup-view-switch {
+    top: 18px;
+    right: 18px;
+  }
+  .setup-view-switch-tab {
+    padding: 4px 12px;
+    font-size: 0.82rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .setup-view-switch-tab { transition: none; }
 }
 
 .setup-control-stack {
@@ -8258,6 +8416,242 @@ textarea:focus-visible {
   font-size: 0.88rem;
 }
 
+/* ---------- Grammar Phase 5 — dashboard landing ---------- */
+
+/* Monster strip — horizontal row of active grammar creatures */
+.grammar-monster-strip {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.grammar-monster-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 5rem;
+}
+
+.grammar-monster-entry-image {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.grammar-monster-entry-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.grammar-monster-entry-stage {
+  font-size: 0.7rem;
+  color: #666;
+}
+
+.grammar-star-bar {
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  width: 100%;
+  max-width: 6rem;
+}
+
+.grammar-star-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.grammar-monster-entry-stars {
+  font-size: 0.7rem;
+  color: #888;
+}
+
+.grammar-monster-strip-hint {
+  font-size: 0.75rem;
+  color: #888;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* Primary CTA — featured start button */
+.grammar-start-row [data-featured="true"] {
+  font-size: 1.1rem;
+  padding: 0.9rem 2rem;
+  font-weight: 700;
+  max-width: 20rem;
+  width: 100%;
+  margin: 0.75rem auto;
+}
+
+/* Secondary mode links — Grammar Bank, Mini Test, Fix Trouble Spots */
+.grammar-secondary-links {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 0.75rem 0;
+}
+
+.grammar-secondary-link {
+  font-size: 0.85rem;
+  color: var(--accent, #3E6FA8);
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.grammar-secondary-link.selected,
+.grammar-secondary-link[aria-pressed="true"] {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  font-weight: 600;
+}
+
+/* Today cards grid */
+.grammar-today-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.grammar-today-card {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  padding: 0.75rem;
+  border: 1px solid var(--line, #e0e0e0);
+  border-radius: 8px;
+}
+
+.grammar-today-label {
+  font-size: 0.78rem;
+  color: var(--muted, #666);
+}
+
+.grammar-today-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.grammar-today-detail {
+  font-size: 0.75rem;
+  color: var(--muted, #666);
+}
+
+/* Primary mode cards grid */
+.grammar-primary-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.grammar-primary-mode {
+  display: grid;
+  gap: 6px;
+  padding: 12px 16px;
+  border: 1px solid var(--line, #e0e0e0);
+  border-radius: 8px;
+  background: var(--panel-soft, #fafafa);
+  cursor: pointer;
+  text-align: left;
+}
+
+.grammar-primary-mode.selected {
+  border-color: var(--accent, #3E6FA8);
+  background: color-mix(in srgb, var(--accent, #3E6FA8) 6%, transparent);
+}
+
+.grammar-primary-mode.is-disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.grammar-primary-mode.is-recommended {
+  border-color: var(--accent, #3E6FA8);
+}
+
+.grammar-primary-mode-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent, #3E6FA8);
+}
+
+.grammar-primary-mode-title {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.grammar-primary-mode-desc {
+  font-size: 0.85rem;
+  color: var(--muted, #666);
+  margin: 0;
+}
+
+/* Round controls — length + speech rate selectors */
+.grammar-round-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+/* More practice disclosure */
+.grammar-more-practice {
+  margin-top: 0.75rem;
+}
+
+.grammar-more-practice summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+
+.grammar-more-practice-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 0.5rem;
+}
+
+.grammar-secondary-mode {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--line, #e0e0e0);
+  border-radius: 8px;
+  background: var(--panel-soft, #fafafa);
+  cursor: pointer;
+  text-align: left;
+}
+
+.grammar-secondary-mode.selected {
+  border-color: var(--accent, #3E6FA8);
+  background: color-mix(in srgb, var(--accent, #3E6FA8) 6%, transparent);
+}
+
+.grammar-secondary-mode.is-disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.grammar-secondary-mode-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.grammar-secondary-mode-label {
+  font-size: 0.75rem;
+  color: var(--muted, #666);
+}
+
+.grammar-secondary-mode-desc {
+  font-size: 0.82rem;
+  color: var(--muted, #666);
+  margin: 0;
+}
+
 @media (max-width: 980px) {
   .grammar-setup-grid,
   .grammar-analytics-grid,
@@ -8298,6 +8692,20 @@ textarea:focus-visible {
   .grammar-choice-list.tokens,
   .grammar-choice-list.compact {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Phase 5 dashboard responsive — narrow screens */
+@media (max-width: 600px) {
+  .grammar-monster-strip {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .grammar-today-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grammar-secondary-links {
+    flex-wrap: wrap;
   }
 }
 
@@ -9965,6 +10373,187 @@ html { scroll-behavior: smooth; }
 }
 .punctuation-active-monster-progress {
   font-size: 0.82rem;
+}
+
+/* --- Setup — mission dashboard (Phase 5 U7) ------------------------------ */
+/* The mission dashboard replaces the three-card button wall with a hero +
+   progress row + monster star meters + map link + secondary drawer. Layout
+   mirrors the Spelling Setup's hero pattern, adapted for Bellstorm Coast. */
+
+.punctuation-mission-dashboard {
+  display: grid;
+  gap: 20px;
+}
+
+/* Hero: Bellstorm backdrop + headline + primary CTA */
+.punctuation-dashboard-hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: 18px;
+}
+.punctuation-dashboard-hero img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-soft);
+}
+.punctuation-dashboard-hero-content {
+  display: grid;
+  gap: 10px;
+}
+.punctuation-dashboard-cta-row {
+  margin-top: 8px;
+}
+@media (max-width: 760px) {
+  .punctuation-dashboard-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Progress row — compact stats strip */
+.punctuation-progress-row {
+  padding: 0;
+}
+.punctuation-progress-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+.punctuation-progress-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.punctuation-progress-item dt {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.punctuation-progress-item dd {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Monster row — 4 monsters with star-meter progress bars */
+.punctuation-monster-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.punctuation-monster-meter {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+.punctuation-monster-meter-name {
+  font-weight: 800;
+  font-size: 1rem;
+}
+.punctuation-monster-meter-stage {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.punctuation-monster-meter-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+.punctuation-monster-meter-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #B8873F;
+  transition: width var(--dur-slow) var(--ease-out);
+}
+.punctuation-monster-meter-count {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Map link */
+.punctuation-map-link {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.punctuation-map-link:hover:not(:disabled),
+.punctuation-map-link:focus-visible {
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
+.punctuation-map-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.64;
+}
+
+/* Secondary practice drawer */
+.punctuation-secondary-drawer {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+.punctuation-secondary-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.punctuation-secondary-action {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.punctuation-secondary-action:hover:not(:disabled),
+.punctuation-secondary-action:focus-visible {
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
+.punctuation-secondary-action.is-disabled,
+.punctuation-secondary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.64;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punctuation-monster-meter-fill {
+    transition: none;
+  }
 }
 
 /* --- Session — teach box, source block, feedback reveals --------------- */

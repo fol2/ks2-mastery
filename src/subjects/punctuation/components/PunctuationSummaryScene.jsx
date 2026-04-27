@@ -66,16 +66,17 @@ import {
   composeIsDisabled,
   composeIsNavigationDisabled,
   extractPunctuationMonsterProgress,
+  mergeMonotonicDisplay,
   punctuationChildMisconceptionLabel,
   punctuationChildNextReviewCopy,
   punctuationChildRegisterOverrideString,
   punctuationChildSkillBadgeLabel,
   punctuationChildTeaserSubLine,
   punctuationMonsterDisplayName,
+  punctuationStageLabel,
   punctuationSummaryHeadline,
 } from './punctuation-view-model.js';
 import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
-import { progressForPunctuationMonster } from '../../../platform/game/mastery/index.js';
 import { emitPunctuationEvent } from '../telemetry.js';
 
 // --- Local helpers ---------------------------------------------------------
@@ -353,13 +354,27 @@ function WobblyChipRow({ focus }) {
 
 // --- Active monster progress strip -----------------------------------------
 
-// Iterates the frozen `ACTIVE_PUNCTUATION_MONSTER_IDS` roster only —
-// reserved monsters (Colisk / Hyphang / Carillon) never surface here even
-// if the reward state contains them (plan R10 / learning #5). Progress is
-// rendered as 5 stage dots (0–4) per monster so the strip keeps its shape
-// across fresh learners and secure releases.
+// Phase 5 U8: replaces the dots + "Stage X of 4" with star meters matching
+// the Setup scene's `MonsterStarMeter` pattern. Each monster renders its
+// creature name + "X / 100 Stars" + a stage label via `punctuationStageLabel`.
+// Star counts are sourced from `ui.starView.perMonster[monsterId].total`
+// when available (the read-model populates this on every Worker round-trip);
+// falls back to 0 for fresh learners. Reserved monsters never render.
+// The grand monster (quoral) reads from `ui.starView.grand.grandStars`.
 function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
   const rewardState = rewardStateForPunctuation(ui, propRewardState);
+  const starView = ui && typeof ui === 'object' && !Array.isArray(ui) && ui.starView
+    && typeof ui.starView === 'object' && !Array.isArray(ui.starView)
+    ? ui.starView
+    : null;
+  const perMonster = starView && typeof starView.perMonster === 'object'
+    && !Array.isArray(starView.perMonster)
+    ? starView.perMonster
+    : {};
+  const grand = starView && typeof starView.grand === 'object'
+    && !Array.isArray(starView.grand)
+    ? starView.grand
+    : null;
   return (
     <div
       className="punctuation-summary-monsters"
@@ -368,30 +383,44 @@ function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
       style={{ marginTop: 16 }}
     >
       {ACTIVE_PUNCTUATION_MONSTER_IDS.map((monsterId) => {
-        const progress = progressForPunctuationMonster(rewardState, monsterId);
-        const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
         const name = punctuationMonsterDisplayName(monsterId);
+        const isGrand = monsterId === 'quoral';
+        const starEntry = isGrand ? grand : perMonster[monsterId];
+        const totalStars = starEntry
+          ? Math.max(0, Math.floor(Number(isGrand ? starEntry.grandStars : starEntry.total) || 0))
+          : 0;
+        const starDerivedStage = starEntry
+          ? Math.max(0, Math.floor(Number(starEntry.starDerivedStage) || 0))
+          : 0;
+        // U3 review follow-up (MEDIUM ADV-395-2/3): use shared monotonic
+        // merge helper so sanitisation is consistent across all scenes.
+        // Finding 3: rewardState is already resolved at the function top
+        // via rewardStateForPunctuation — no redundant re-validation needed.
+        const codexEntry = rewardState?.[monsterId];
+        const { displayStars, displayStage } = mergeMonotonicDisplay(totalStars, starDerivedStage, codexEntry);
+        const cap = 100;
+        const starsLabel = isGrand ? 'Grand Stars' : 'Stars';
+        const stageText = punctuationStageLabel(displayStage, displayStars);
+        const pct = Math.min(100, Math.max(0, Math.round((displayStars / cap) * 100)));
         return (
           <div
-            className="punctuation-summary-monster"
+            className="punctuation-summary-monster punctuation-monster-meter"
             data-monster-id={monsterId}
             key={`monster-${monsterId}`}
           >
-            <div className="punctuation-summary-monster-name">{name}</div>
-            <div
-              className="punctuation-summary-monster-dots"
-              aria-label={`${name} stage ${stage} of 4`}
-            >
-              {[0, 1, 2, 3].map((index) => (
-                <span
-                  key={`dot-${monsterId}-${index}`}
-                  className={`punctuation-summary-monster-dot${index < stage ? ' on' : ''}`}
-                  aria-hidden="true"
-                />
-              ))}
+            <div className="punctuation-monster-meter-name">{name}</div>
+            <div className="punctuation-monster-meter-stage">{stageText}</div>
+            <div className="punctuation-monster-meter-bar" aria-hidden="true">
+              <div
+                className="punctuation-monster-meter-fill"
+                style={{ width: `${pct}%` }}
+              />
             </div>
-            <div className="punctuation-summary-monster-stage small muted">
-              Stage {stage} of 4
+            <div
+              className="punctuation-monster-meter-count"
+              aria-label={`${name} ${displayStars} of ${cap} ${starsLabel}`}
+            >
+              {`${displayStars} / ${cap} ${starsLabel}`}
             </div>
           </div>
         );

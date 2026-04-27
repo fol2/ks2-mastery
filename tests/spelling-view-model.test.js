@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   MODE_CARDS,
   POST_MEGA_MODE_CARDS,
+  SPELLING_HERO_BACKGROUNDS,
   WORD_BANK_FILTER_IDS,
   WORD_BANK_GUARDIAN_CHIP_LABELS,
   WORD_BANK_GUARDIAN_FILTER_HINTS,
@@ -12,6 +13,13 @@ import {
   guardianPracticeActionLabel,
   guardianSummaryCopy,
   guardianSummaryCards,
+  heroBgForPostMega,
+  heroBgForSession,
+  heroBgForSetup,
+  heroBgPreloadUrls,
+  heroContrastProfileForBg,
+  heroToneForBg,
+  normalisePostMegaBranch,
   renderAction,
   summaryModeLabel,
   wordBankAggregateCards,
@@ -842,4 +850,113 @@ test('U2 view-model: orphan sanitiser options are opt-in — omitting slug/progr
     true,
     'legacy call shape (no orphan context) keeps pre-U2 behaviour',
   );
+});
+
+// --------------------------------------------------------------------------
+// Post-Mega hero backgrounds (`f` region with branch suffix).
+// --------------------------------------------------------------------------
+//
+// Graduated learners draw the Guardian / Boss / Pattern Quest vista from
+// the `f` region. The branch suffix (b1 / b2) tracks the learner's
+// grand-master Phaeton so the painting matches the Codex creature even
+// when the rest of the monster set happens to be on the other branch.
+
+test('normalisePostMegaBranch falls back to b1 for unknown / empty input', () => {
+  assert.equal(normalisePostMegaBranch('b1'), 'b1');
+  assert.equal(normalisePostMegaBranch('b2'), 'b2');
+  assert.equal(normalisePostMegaBranch(''), 'b1');
+  assert.equal(normalisePostMegaBranch(null), 'b1');
+  assert.equal(normalisePostMegaBranch('b3'), 'b1', 'unknown branches collapse to the default');
+  assert.equal(normalisePostMegaBranch('B2'), 'b1', 'case-sensitive — capitalised input is rejected');
+});
+
+test('heroBgForPostMega returns the f-region URL with branch suffix and a valid tone', () => {
+  assert.equal(
+    heroBgForPostMega('b2', '1', 'learner-eugenia'),
+    '/assets/regions/the-scribe-downs/the-scribe-downs-f1-b2.1280.webp',
+  );
+  assert.equal(
+    heroBgForPostMega('b1', '3', 'learner-nelson'),
+    '/assets/regions/the-scribe-downs/the-scribe-downs-f3-b1.1280.webp',
+  );
+  // Unknown tone falls through to the learner-deterministic tone (1/2/3),
+  // never an out-of-range value.
+  const fallback = heroBgForPostMega('b1', 'rogue', 'learner-eugenia');
+  assert.match(fallback, /the-scribe-downs-f[1-3]-b1\.1280\.webp$/);
+});
+
+test('heroBgForSetup routes graduated learners to the f-region when postMega flag is set', () => {
+  const learnerId = 'learner-eugenia';
+  const prefs = { mode: 'smart' };
+  const legacyUrl = heroBgForSetup(learnerId, prefs, { tone: '1' });
+  assert.match(legacyUrl, /the-scribe-downs-[a-c]1\.1280\.webp$/, 'pre-Mega learner stays on the legacy region');
+  const postMegaUrl = heroBgForSetup(learnerId, prefs, { tone: '1', postMega: true, postMegaBranch: 'b2' });
+  assert.equal(
+    postMegaUrl,
+    '/assets/regions/the-scribe-downs/the-scribe-downs-f1-b2.1280.webp',
+    'post-Mega flag swaps the picker to the f-region with branch suffix',
+  );
+});
+
+test('heroBgForSession routes graduated sessions to the f-region with branch suffix', () => {
+  const session = { mode: 'guardian', progress: { done: 0, total: 5 } };
+  const url = heroBgForSession('learner-eugenia', session, {
+    tone: '2',
+    postMega: true,
+    postMegaBranch: 'b2',
+  });
+  assert.equal(url, '/assets/regions/the-scribe-downs/the-scribe-downs-f2-b2.1280.webp');
+  // Without the flag the picker still falls back to the legacy mode-driven
+  // region — this is the path Workshop sessions take (Smart / Trouble /
+  // Test still feel like classic practice rather than a graduation vista).
+  const classicUrl = heroBgForSession('learner-eugenia', { mode: 'smart' }, { tone: '2' });
+  assert.match(classicUrl, /the-scribe-downs-[a-c]2\.1280\.webp$/);
+});
+
+test('heroBgPreloadUrls includes f-region tones when the learner is post-Mega', () => {
+  const urls = heroBgPreloadUrls('learner-eugenia', { mode: 'smart' }, {
+    setupTone: '1',
+    postMega: true,
+    postMegaBranch: 'b2',
+  });
+  // Three post-Mega URLs (one per tone), each anchored to the b2 branch.
+  assert.ok(urls.includes('/assets/regions/the-scribe-downs/the-scribe-downs-f1-b2.1280.webp'));
+  assert.ok(urls.includes('/assets/regions/the-scribe-downs/the-scribe-downs-f2-b2.1280.webp'));
+  assert.ok(urls.includes('/assets/regions/the-scribe-downs/the-scribe-downs-f3-b2.1280.webp'));
+  // Pre-Mega learners keep the legacy preload list — no f-region URLs.
+  const classic = heroBgPreloadUrls('learner-nelson', { mode: 'smart' }, { setupTone: '1' });
+  assert.equal(classic.some((url) => /-f[1-3]-b[12]\.1280\.webp$/.test(url)), false);
+});
+
+test('heroToneForBg matches both legacy a–e and post-Mega f-region URLs', () => {
+  assert.equal(heroToneForBg('/assets/regions/the-scribe-downs/the-scribe-downs-c2.1280.webp'), '2');
+  assert.equal(heroToneForBg('/assets/regions/the-scribe-downs/the-scribe-downs-f3-b1.1280.webp'), '3');
+  assert.equal(heroToneForBg('/assets/regions/the-scribe-downs/the-scribe-downs-f1-b2.1280.webp'), '1');
+  assert.equal(heroToneForBg('/missing-region/foo.1280.webp'), '');
+});
+
+test('heroContrastProfileForBg honours the post-Mega tone envelope', () => {
+  // Tone 1 = dark shell on both regions.
+  const tone1Legacy = heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-a1.1280.webp');
+  const tone1PostMega = heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-f1-b2.1280.webp');
+  assert.equal(tone1Legacy?.shell, 'dark');
+  assert.equal(tone1PostMega?.shell, 'dark');
+  // Tone 3 = light shell.
+  const tone3PostMega = heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-f3-b1.1280.webp');
+  assert.equal(tone3PostMega?.shell, 'light');
+  // Branch suffix must not bleed into the tone — both b1 and b2 share envelope.
+  const f2b1 = heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-f2-b1.1280.webp');
+  const f2b2 = heroContrastProfileForBg('/assets/regions/the-scribe-downs/the-scribe-downs-f2-b2.1280.webp');
+  assert.deepEqual(f2b1?.cards, f2b2?.cards);
+});
+
+test('SPELLING_HERO_BACKGROUNDS exposes a postMega catalogue with branch × tone coverage', () => {
+  const postMega = SPELLING_HERO_BACKGROUNDS.postMega || [];
+  // 2 branches × 3 tones = 6 unique URLs.
+  assert.equal(postMega.length, 6);
+  assert.equal(new Set(postMega).size, 6);
+  // Every entry hits the `-fN-bM.1280.webp` shape.
+  for (const url of postMega) {
+    assert.match(url, /the-scribe-downs-f[1-3]-b[12]\.1280\.webp$/);
+  }
 });

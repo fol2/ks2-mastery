@@ -94,75 +94,121 @@ Parent Hub requires:
 
 That keeps the surface explicitly separate from Operations-only accounts while letting admins inspect parent-facing learner views for learners they can read.
 
-## Admin / Operations
+## Admin Console
 
-Admin / Operations is a thin operator skeleton.
-It currently shows:
+The Admin Console is a five-section command centre for support, debugging, content operations, and live ops.
 
-- monster visual config draft/review/publish controls
-- spelling content release status
-- draft import / validation status
-- mutation-receipt audit lookup
-- admin-only account role management
-- learner diagnostics entry points
-- selected learner support summary
+Direct entry at `/admin` with hash-based section deep-linking (`/admin#section=debug`, `/admin#section=accounts`, `/admin#section=content`, `/admin#section=marketing`). TopNav shows an "Admin" button for admin/ops users. Login redirect preservation via sessionStorage stash returns admins to the intended section after sign-in.
+
+### Section layout
+
+**Overview** — on-demand KPI counters (accounts, learners, demos, sessions 7d/30d, event log, mutation receipts, error events by status), recent operations activity stream (last 50 mutation receipts, masked identifiers), demo health.
+
+**Accounts** — account search (email/ID/display name with ops_status and platform_role filters), account detail view (linked learners, recent errors, denials, mutations, ops metadata), account role management, ops metadata editing (status, plan label, tags, internal notes), mutation receipt/audit lookup. Account detail links into Debug Bundle generation.
+
+**Debugging & Logs** — Debug Bundle (Worker-authoritative evidence packet aggregating errors, occurrences, denials, mutations, account/learner state, capacity metrics with per-section error boundary), error log centre (status filter, route/kind/date/release/reopened filters, auto-reopen on release transition, build-hash attribution), error occurrence timeline (per-fingerprint history with release context), request denial log (filterable by reason, route, time range), learner support/diagnostics.
+
+**Content** — cross-subject content overview (live/placeholder/gated status per subject, error counts, release state), spelling content release/import status, post-Mega spelling debug, post-Mastery seed harness, grammar/punctuation diagnostics panels, Asset & Effect Registry (registry-shaped UI over Monster Visual Config with asset list, effect catalog, bindings, tunables — data model unchanged).
+
+**Marketing / Live Ops** — announcement and maintenance banner lifecycle (draft, scheduled, published, paused, archived), body_text validation (restricted-safe subset, no raw HTML/JS/CSS), active message delivery via public endpoint for client-runtime banner rendering.
 
 ### Current data source
 
-Admin / Operations reuses:
+Admin Console reuses:
 
-- `platform_monster_visual_config`
-- `platform_monster_visual_config_versions`
+- `platform_monster_visual_config` and `platform_monster_visual_config_versions`
 - `account_subject_content`
-- spelling content validation results
+- spelling, grammar, and punctuation content validation results
 - `mutation_receipts`
 - `adult_accounts.platform_role`
+- `account_ops_metadata` with `ops_status`, `plan_label`, `tags_json`, `internal_notes`
+- `ops_error_events` and `ops_error_event_occurrences`
+- `admin_request_denials`
+- `admin_marketing_messages`
+- `admin_kpi_metrics`
 - learner profiles + memberships
-- learner spelling read models for support diagnostics
+- learner read models across subjects for support diagnostics
+- practice sessions and event log for support context
 
 ### Current permission rule
 
-Admin / Operations requires:
+Admin Console requires:
 
 - platform role `admin` or `ops`
 
 This surface is not available to `parent` accounts.
 
-Account role management inside Operations is narrower:
+**`ops_status` is enforced at the auth boundary** (P1.5 Phase D): `requireActiveAccount` runs on every authenticated request; `requireMutationCapability` runs on every `POST/PUT/DELETE`. Suspended accounts cannot create sessions (redirect to `/?auth=account_suspended`). Payment-held accounts can read but cannot mutate. Status transitions trigger `status_revision` bump for session invalidation.
+
+Account role management inside the console is narrower:
 
 - listing and changing adult account roles requires platform role `admin`
-- `ops` can open Operations, but cannot change account roles
+- `ops` can open the console, but cannot change account roles
 - the Worker blocks demoting the last remaining admin
 - role changes are written to `adult_accounts.platform_role`
-- role changes are recorded in `mutation_receipts`
+- role changes are idempotent by request id and recorded in `mutation_receipts`
+
+Account search and detail:
+
+- `admin` sees full email and identifiers
+- `ops` sees masked email (last 6 chars), masked account ID (last 8 chars), no internal notes, no denial account/learner linkage
+
+Debug Bundle:
+
+- Worker-authoritative aggregation from 7 tables via `/api/admin/debug-bundle`
+- per-section error boundary (single table failure returns `null` for that section, not full 500)
+- admin sees full identifiers; ops sees masked with no account/learner linkage on denials
+- JSON copy is admin-only; human summary copy is available to both roles
+- rate-limited at 10 requests/min per session
 
 Monster visual + effect config management is admin-only:
 
 - `admin` can edit the browser-local draft buffer, save the shared cloud draft, publish, and restore a retained version into draft
 - `ops` can inspect previews, validation state, changed assets, and blockers, but cannot mutate the config
 - the latest 20 published versions are retained for rollback-to-draft
+- the Asset & Effect Registry UI presents this through a registry-shaped interface (asset list, effect catalog, bindings, tunables) with the underlying data model unchanged
+
+Marketing / Live Ops:
+
+- only `admin` can create, edit, publish, pause, or archive messages
+- `ops` can view live/scheduled messages but cannot mutate
+- lifecycle state machine: `draft -> scheduled -> published -> paused -> archived` (Worker-enforced, client cannot skip states)
+- `GET /api/ops/active-messages` is a public unauthenticated endpoint for banner delivery (fail-open: fetch failure shows no banner, does not block the app)
+- marketing messages have zero imports from subject engines — structural invariant enforced by test
 
 See `docs/monster-visual-config.md` for the authoritative publish-blocker list, authoring workflow, bundled-fallback coverage, and the `npm run smoke:production:effect` post-deploy probe.
 
-## Admin ops console P1 extensions
+## Admin console data infrastructure
 
-The Admin / Operations surface carries four additional panels on top of the existing thin operator skeleton:
-
-- **Dashboard overview** — on-demand KPI counters (accounts, learners, demos, practice sessions 7d/30d, event log 7d, mutation receipts 7d, error events by status, account-ops updates). Computed via live `COUNT(*)` with dedicated indexes on `event_log.created_at`, `practice_sessions.updated_at`, `mutation_receipts.applied_at`; state-derived counters sourced from `admin_kpi_metrics`.
-- **Recent operations activity** — last 50 `mutation_receipts` across all accounts, manual refresh only. Account IDs masked to last 6 characters; learner-scoped `scope_id` masked to last 8 characters; platform-scoped IDs shown in full.
-- **Account ops metadata** — admin-only edits to `ops_status` (active / suspended / payment_hold), `plan_label`, `tags_json`, `internal_notes`. GM-facing only; **not wired into sign-in enforcement** in P1. A persistent UI callout reflects the deferred enforcement status.
-- **Error log centre** — last 50 `ops_error_events`, filterable by status. Admin can transition status among open / investigating / resolved / ignored.
+The Admin Console data infrastructure grew across P1 through P3.
 
 ### Public error-capture endpoint
 
 `POST /api/ops/error-event` ingests client-side runtime errors from any surface (adult / learner / demo / signed-out). Unauthenticated, rate-limited per source IP (60 / 10 min via `request_limits`), byte-capped at 8KB via `request.arrayBuffer()` length check, redacted on both sides via closed allowlist + all-caps word scrubbing. Fingerprint dedup authoritative on `(error_kind, message_first_line, first_frame)` tuple; fingerprint SHA-256 is cache-only.
 
+### Public active-messages endpoint
+
+`GET /api/ops/active-messages` delivers published announcement and maintenance banners. Unauthenticated so banners can reach users during auth outages. Returns only schema-bound safe fields (`type`, `title`, `body_text`, `severity`). The client banner component fails open.
+
+### Request denial logging
+
+Auth/role/rate-limit denials are logged via `ctx.waitUntil()` so the log write happens after the response. Sampling is configurable (default 100%). Denial entries include reason, route, masked identifiers, and timestamp. Bounded retention.
+
+### Error occurrence timeline
+
+Each error fingerprint carries occurrence-level history in `ops_error_event_occurrences`. Occurrences are bounded per fingerprint and pruned on capture. The timeline shows release/build context, route, auth state, and auto-reopen evidence.
+
 ### Permission rules
 
-- KPI / activity / error-log read: admin + ops.
+- KPI / activity / error-log / denial-log / occurrence / content-overview read: admin + ops.
+- Debug Bundle generation: admin + ops (with role-based redaction).
+- Account search: admin + ops (ops sees masked email/ID).
+- Account detail: admin + ops (ops sees masked email, no internal notes, no denial account linkage).
 - Account ops metadata view: admin + ops; `internal_notes` redacted to `null` for ops-role readers.
 - Account ops metadata edit: admin only.
 - Error-event status transition: admin only.
+- Marketing message mutations: admin only.
+- Marketing message view: admin + ops.
 
 ## Local reference build versus Worker API
 
@@ -232,9 +278,9 @@ The hub read models consume durable records after the fact.
 
 ### Real now
 
-- route-level Parent Hub and Admin / Operations surfaces in the shell
+- route-level Parent Hub and Admin Console surfaces in the shell
 - explicit platform roles and helper rules
-- Worker-backed hub endpoints
+- Worker-backed hub endpoints with parallelised admin hub reads and deduped actor resolution
 - parent/admin permission tests
 - spelling-backed learner summary read model
 - admin-only account role assignment backed by D1
@@ -246,18 +292,31 @@ The hub read models consume durable records after the fact.
 - global published monster visual config delivered through bootstrap for learner rendering
 - viewer membership diagnostics with read-only write affordance blocking
 - zero-writable signed-in shell state that does not fabricate a learner
+- direct `/admin` URL entry with hash-based section deep-linking
+- login redirect preservation via sessionStorage stash
+- Worker-authoritative Debug Bundle aggregating 7 evidence tables
+- error occurrence timeline per fingerprint with release context
+- request denial logging via `ctx.waitUntil` with configurable sampling
+- account search by email/ID/display name with ops_status and platform_role filters
+- account detail view with linked learners, recent errors, denials, mutations
+- cross-subject content overview with live/placeholder/gated status per subject
+- Asset & Effect Registry UI over Monster Visual Config
+- Marketing/Live Ops V0 with lifecycle state machine (draft/scheduled/published/paused/archived)
+- active message banner delivery via public endpoint with fail-open client rendering
+- `ops_status` enforcement at auth boundary: suspended accounts cannot create sessions; payment-held accounts can read but not mutate
 
 ### Still intentionally thin or placeholder
 
-- no billing, messaging, or marketing surfaces
+- no billing or subscription surfaces
 - no full parent reporting suite
-- no editorial CMS
+- no editorial CMS for content authoring
 - no heavy cross-subject analytics warehouse
-- no push-updating dashboards
-- no worker-backed audit search UI beyond basic lookup output
-- no invite flow, organisation model, or rich admin account management beyond basic platform-role assignment
+- no push-updating / WebSocket dashboards
+- no invite flow, organisation model, or rich admin account management beyond search + detail + role assignment
 - no viewer learner promotion into the writable subject shell yet
-- `ops_status` enforcement at auth boundary: suspended → 403 `account_suspended` on every authenticated request (session creation refused with redirect to `/?auth=account_suspended`); payment_hold → 403 `account_payment_hold` on mutation-receipt paths (GETs remain accessible); session invalidation via `status_revision` bump on every transition. See `docs/plans/2026-04-25-005-refactor-admin-ops-console-p1-5-hardening-plan.md` for the full matrix.
+- no scheduled auto-publish for marketing messages (requires Cron Trigger or Durable Object timer)
+- no audience targeting beyond "all" for marketing banners
+- no per-child marketing personalisation or reward manipulation
 
 ## Why this pass stops here
 

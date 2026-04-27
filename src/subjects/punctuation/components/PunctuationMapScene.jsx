@@ -51,10 +51,12 @@ import {
   buildPunctuationMapModel,
   composeIsDisabled,
   composeIsNavigationDisabled,
+  mergeMonotonicDisplay,
   punctuationChildStatusLabel,
   punctuationChildUnknownHelperCopy,
   punctuationMonsterDisplayName,
   punctuationSkillRuleOneLiner,
+  punctuationStageLabel,
 } from './punctuation-view-model.js';
 import {
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
@@ -217,10 +219,39 @@ function SkillCard({ skill, disabled, actions }) {
   );
 }
 
-function MonsterGroup({ monster, statusFilter, disabled, actions }) {
+function MonsterGroup({ monster, statusFilter, disabled, actions, starView, rewardState }) {
   const filteredSkills = statusFilter === 'all'
     ? monster.skills
     : monster.skills.filter((skill) => skill.status === statusFilter);
+  // Phase 5 U8: star meter in the group header replaces `X mastered`.
+  // Reads from `starView.perMonster[monsterId].total` for direct monsters
+  // and `starView.grand.grandStars` for the grand monster (quoral).
+  const safeStarView = starView && typeof starView === 'object' && !Array.isArray(starView)
+    ? starView
+    : null;
+  const isGrand = monster.monsterId === 'quoral';
+  const perMonster = safeStarView && typeof safeStarView.perMonster === 'object'
+    && !Array.isArray(safeStarView.perMonster)
+    ? safeStarView.perMonster
+    : {};
+  const grand = safeStarView && typeof safeStarView.grand === 'object'
+    && !Array.isArray(safeStarView.grand)
+    ? safeStarView.grand
+    : null;
+  const starEntry = isGrand ? grand : perMonster[monster.monsterId];
+  const totalStars = starEntry
+    ? Math.max(0, Math.floor(Number(isGrand ? starEntry.grandStars : starEntry.total) || 0))
+    : 0;
+  const starDerivedStage = starEntry
+    ? Math.max(0, Math.floor(Number(starEntry.starDerivedStage) || 0))
+    : 0;
+  // U3 review follow-up (MEDIUM ADV-395-2/3): use shared monotonic merge
+  // helper so sanitisation is consistent with the view-model and Summary.
+  const safeReward = rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState) ? rewardState : {};
+  const codexEntry = safeReward[monster.monsterId];
+  const { displayStars, displayStage } = mergeMonotonicDisplay(totalStars, starDerivedStage, codexEntry);
+  const starsLabel = isGrand ? 'Grand Stars' : 'Stars';
+  const stageText = punctuationStageLabel(displayStage, displayStars);
   return (
     <section
       className="punctuation-map-monster-group"
@@ -230,7 +261,7 @@ function MonsterGroup({ monster, statusFilter, disabled, actions }) {
       <header className="punctuation-map-monster-group-head">
         <h3>{monster.name}</h3>
         <p className="muted">
-          {monster.skills.length} skill{monster.skills.length === 1 ? '' : 's'} · {monster.mastered} mastered
+          {`${displayStars} / 100 ${starsLabel}`} · {stageText}
         </p>
       </header>
       <div className="punctuation-map-skill-grid">
@@ -263,6 +294,11 @@ export function PunctuationMapScene({ ui, actions }) {
     && typeof ui.rewardState === 'object' && !Array.isArray(ui.rewardState)
     ? ui.rewardState
     : {};
+  // Phase 5 U8: thread starView so MonsterGroup headers can show star meters.
+  const starView = ui && typeof ui === 'object' && !Array.isArray(ui) && ui.starView
+    && typeof ui.starView === 'object' && !Array.isArray(ui.starView)
+    ? ui.starView
+    : null;
   // Phase 4 U3: surface a one-time console warning when analytics is
   // unavailable so the degraded state is discoverable during development
   // and in production devtools. Lives inside a useEffect so SSR never
@@ -377,6 +413,8 @@ export function PunctuationMapScene({ ui, actions }) {
               statusFilter={mapUi.statusFilter}
               disabled={disabled}
               actions={actions}
+              starView={starView}
+              rewardState={rewardState}
             />
           ))
           : <div className="punctuation-map-empty muted">No matching skills yet.</div>}

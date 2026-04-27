@@ -55,11 +55,19 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+// Keys that the snapshot helper explicitly PRESERVES even though they look
+// like timestamps. `starHighWater` is a monotonic latch, not a timestamp —
+// it must survive deep-equal assertions so ratchet tests can verify the
+// latch is persisted correctly across steps.
+const PRESERVED_ENTRY_KEYS = new Set([
+  'starHighWater',
+]);
+
 function stripEntry(entry) {
   if (!isPlainObject(entry)) return entry;
   const stripped = {};
   for (const [key, value] of Object.entries(entry)) {
-    if (CHANGING_ENTRY_KEYS.has(key)) continue;
+    if (CHANGING_ENTRY_KEYS.has(key) && !PRESERVED_ENTRY_KEYS.has(key)) continue;
     stripped[key] = value;
   }
   return stripped;

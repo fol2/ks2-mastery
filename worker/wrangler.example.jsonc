@@ -26,7 +26,9 @@
     "AUTH_MODE": "production-placeholder",
     "ENVIRONMENT": "production",
     "PUNCTUATION_SUBJECT_ENABLED": "false",
-    "PUNCTUATION_EVENTS_ENABLED": "false"
+    "PUNCTUATION_EVENTS_ENABLED": "false",
+    "HERO_MODE_SHADOW_ENABLED": "false",
+    "HERO_MODE_LAUNCH_ENABLED": "false"
   },
   "d1_databases": [
     {

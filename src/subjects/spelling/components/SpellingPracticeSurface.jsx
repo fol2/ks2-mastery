@@ -11,9 +11,14 @@ import {
   heroBgPreloadUrls,
   heroBgForSession,
   heroBgForSetup,
+  normalisePostMegaBranch,
   selectSpellingSetupTone,
   spellingHeroTone,
 } from './spelling-view-model.js';
+import { isPostMasteryMode } from '../service-contract.js';
+
+const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+const SPELLING_GRAND_MASTER_MONSTER_ID = 'phaeton';
 
 function setupToneMemoryKey(learnerId) {
   return `ks2.spelling.setupTone.${learnerId || 'anonymous'}`;
@@ -38,12 +43,31 @@ function rememberSetupTone(learnerId, tone) {
   }
 }
 
-function heroBgForPhase(spelling, setupHeroTone) {
+// Reads the learner's grand-master monster (Phaeton) branch from the
+// codex `monster-codex` system state. Falls back to the default branch
+// when the system state is missing (fresh learner, no Phaeton entry yet).
+// Returns 'b1' or 'b2' — the only branches MONSTER_BRANCHES emits today.
+function postMegaBranchForLearner(repositories, learnerId) {
+  if (!learnerId || !repositories?.gameState?.read) return normalisePostMegaBranch();
+  try {
+    const state = repositories.gameState.read(learnerId, MONSTER_CODEX_SYSTEM_ID);
+    return normalisePostMegaBranch(state?.[SPELLING_GRAND_MASTER_MONSTER_ID]?.branch);
+  } catch (_error) {
+    return normalisePostMegaBranch();
+  }
+}
+
+function heroBgForPhase(spelling, setupHeroTone, { postMega = false, postMegaBranch = '' } = {}) {
   const learnerId = spelling.learner?.id;
   if (!learnerId) return '';
+  // Post-Mega learners draw the Guardian / Boss / Pattern Quest vista
+  // (the `f` region) for both setup and session phases. Branch follows
+  // the learner's Phaeton — see `postMegaBranchForLearner`.
   if (spelling.ui.phase === 'session') {
     return heroBgForSession(learnerId, spelling.ui.session, {
       awaitingAdvance: Boolean(spelling.ui.awaitingAdvance),
+      postMega,
+      postMegaBranch,
     });
   }
   if (spelling.ui.phase === 'summary') {
@@ -51,10 +75,10 @@ function heroBgForPhase(spelling, setupHeroTone) {
     return heroBgForSession(learnerId, {
       mode: spelling.ui.summary?.mode,
       progress: { done: progressTotal, total: progressTotal },
-    }, { complete: true });
+    }, { complete: true, postMega, postMegaBranch });
   }
   if (spelling.ui.phase === 'word-bank') return heroBgForLearner(learnerId);
-  return heroBgForSetup(learnerId, spelling.prefs, { tone: setupHeroTone });
+  return heroBgForSetup(learnerId, spelling.prefs, { tone: setupHeroTone, postMega, postMegaBranch });
 }
 
 export function SpellingPracticeSurface(props) {
@@ -98,8 +122,32 @@ export function SpellingPracticeSurface(props) {
   React.useEffect(() => {
     rememberSetupTone(learnerId, setupHeroTone);
   }, [learnerId, setupHeroTone]);
-  const heroBg = heroBgForPhase(spelling, setupHeroTone);
-  const preloadedHeroUrls = heroBgPreloadUrls(spelling.learner?.id, spelling.prefs, { setupTone: setupHeroTone });
+  // Post-Mega gating + branch resolution. The dashboard / sessions follow
+  // the learner's Phaeton branch (b1 / b2) so the vista matches the
+  // grand-master Codex creature even when the rest of the monster set
+  // happens to be on the other branch.
+  //
+  // `postMastery` is hydrated for dashboard/summary/word-bank phases only
+  // (see `buildSpellingContext` — session-phase builds skip the read for
+  // hot-path cost). For session phase we fall back to the session's mode:
+  // Guardian / Boss / Pattern Quest sessions always belong to a graduated
+  // learner, so `isPostMasteryMode` is a sufficient signal.
+  const isPostMegaScene = Boolean(
+    spelling?.postMastery?.postMegaDashboardAvailable
+    ?? spelling?.postMastery?.allWordsMega,
+  ) || isPostMasteryMode(spelling.ui.session?.mode);
+  const postMegaBranch = isPostMegaScene
+    ? postMegaBranchForLearner(repositories, learnerId)
+    : '';
+  const heroBg = heroBgForPhase(spelling, setupHeroTone, {
+    postMega: isPostMegaScene,
+    postMegaBranch,
+  });
+  const preloadedHeroUrls = heroBgPreloadUrls(spelling.learner?.id, spelling.prefs, {
+    setupTone: setupHeroTone,
+    postMega: isPostMegaScene,
+    postMegaBranch,
+  });
   const preloadKey = preloadedHeroUrls.join('|');
   const previousHeroBgRef = React.useRef('');
   const previousHeroBg = previousHeroBgRef.current && previousHeroBgRef.current !== heroBg
@@ -124,6 +172,7 @@ export function SpellingPracticeSurface(props) {
       <SpellingSummaryScene
         {...spelling}
         previousHeroBg={previousHeroBg}
+        repositories={repositories}
         actions={actions}
         runtimeReadOnly={runtimeReadOnly}
       />
@@ -141,6 +190,7 @@ export function SpellingPracticeSurface(props) {
           {...spelling}
           previousHeroBg={previousHeroBg}
           service={service}
+          repositories={repositories}
           actions={actions}
           runtimeReadOnly={runtimeReadOnly}
         />

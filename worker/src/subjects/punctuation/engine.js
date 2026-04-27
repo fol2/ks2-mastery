@@ -148,6 +148,9 @@ export function createServerPunctuationEngine({ now = Date.now, random = Math.ra
       try {
         if (command === 'start-session') {
           transition = service.startSession(learnerId, payload);
+          if (transition.state?.session && payload.heroContext) {
+            transition.state.session.heroContext = payload.heroContext;
+          }
         } else if (command === 'submit-answer') {
           transition = service.submitAnswer(
             learnerId,

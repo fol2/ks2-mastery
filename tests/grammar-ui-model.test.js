@@ -24,7 +24,9 @@ import {
 } from '../src/subjects/grammar/session-ui.js';
 import {
   GRAMMAR_PRIMARY_MODE_CARDS,
+  GRAMMAR_SECONDARY_MODE_LINKS,
   GRAMMAR_MORE_PRACTICE_MODES,
+  GRAMMAR_MONSTER_STRIP_CHILD_COPY,
   GRAMMAR_BANK_STATUS_FILTER_IDS,
   GRAMMAR_BANK_CLUSTER_FILTER_IDS,
   GRAMMAR_DASHBOARD_HERO,
@@ -36,6 +38,7 @@ import {
   grammarBankFilterMatchesStatus,
   buildGrammarDashboardModel,
   buildGrammarBankModel,
+  buildGrammarMonsterStripModel,
   grammarSummaryCards,
   isGrammarChildCopy,
   isGrammarFocusAllowedMode,
@@ -257,34 +260,49 @@ test('U8 session-ui: grammarFeedbackTone neutral returns neutral', () => {
 // GRAMMAR_PRIMARY_MODE_CARDS — roster + shape contract
 // -----------------------------------------------------------------------------
 
-test('U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS has exactly four cards (plan requirement)', () => {
-  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS.length, 4);
+// U8 Phase 5: GRAMMAR_PRIMARY_MODE_CARDS is now Smart Practice only.
+test('P5-U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS has exactly one card (Smart Practice)', () => {
+  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS.length, 1);
+  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS[0].id, 'smart');
+  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS[0].featured, true);
 });
 
-test('U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS ids match active-mode set', () => {
-  const ids = GRAMMAR_PRIMARY_MODE_CARDS.map((card) => card.id);
-  assert.deepEqual(ids, ['smart', 'trouble', 'satsset', 'bank']);
+test('P5-U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS title is Smart Practice', () => {
+  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS[0].title, 'Smart Practice');
 });
 
-test('U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS titles match child copy', () => {
-  const titles = Object.fromEntries(GRAMMAR_PRIMARY_MODE_CARDS.map((card) => [card.id, card.title]));
-  assert.equal(titles.smart, 'Smart Practice');
-  assert.equal(titles.trouble, 'Fix Trouble Spots');
-  assert.equal(titles.satsset, 'Mini Test');
-  assert.equal(titles.bank, 'Grammar Bank');
-});
-
-test('U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS is frozen and deeply frozen', () => {
+test('P5-U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS is frozen and deeply frozen', () => {
   assert.equal(Object.isFrozen(GRAMMAR_PRIMARY_MODE_CARDS), true);
   for (const card of GRAMMAR_PRIMARY_MODE_CARDS) {
     assert.equal(Object.isFrozen(card), true);
   }
 });
 
-test('U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS titles use only child copy', () => {
+test('P5-U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS titles use only child copy', () => {
   for (const card of GRAMMAR_PRIMARY_MODE_CARDS) {
     assert.equal(isGrammarChildCopy(card.title), true, `title "${card.title}" contains forbidden term`);
     assert.equal(isGrammarChildCopy(card.desc), true, `desc "${card.desc}" contains forbidden term`);
+  }
+});
+
+// U8 Phase 5: Three demoted modes as secondary links.
+test('P5-U8 view-model: GRAMMAR_SECONDARY_MODE_LINKS has Grammar Bank, Mini Test, Fix Trouble Spots', () => {
+  assert.equal(GRAMMAR_SECONDARY_MODE_LINKS.length, 3);
+  const ids = GRAMMAR_SECONDARY_MODE_LINKS.map((link) => link.id);
+  assert.deepEqual(ids, ['bank', 'satsset', 'trouble']);
+});
+
+test('P5-U8 view-model: GRAMMAR_SECONDARY_MODE_LINKS is frozen and deeply frozen', () => {
+  assert.equal(Object.isFrozen(GRAMMAR_SECONDARY_MODE_LINKS), true);
+  for (const link of GRAMMAR_SECONDARY_MODE_LINKS) {
+    assert.equal(Object.isFrozen(link), true);
+  }
+});
+
+test('P5-U8 view-model: GRAMMAR_SECONDARY_MODE_LINKS titles use only child copy', () => {
+  for (const link of GRAMMAR_SECONDARY_MODE_LINKS) {
+    assert.equal(isGrammarChildCopy(link.title), true, `title "${link.title}" contains forbidden term`);
+    assert.equal(isGrammarChildCopy(link.desc), true, `desc "${link.desc}" contains forbidden term`);
   }
 });
 
@@ -292,15 +310,15 @@ test('U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS titles use only child copy', () 
 // GRAMMAR_MORE_PRACTICE_MODES
 // -----------------------------------------------------------------------------
 
-test('U8 view-model: GRAMMAR_MORE_PRACTICE_MODES has exactly five secondary modes', () => {
-  assert.equal(GRAMMAR_MORE_PRACTICE_MODES.length, 5);
+test('P5-U8 view-model: GRAMMAR_MORE_PRACTICE_MODES has exactly six secondary modes (Writing Try added)', () => {
+  assert.equal(GRAMMAR_MORE_PRACTICE_MODES.length, 6);
   assert.deepEqual(
     GRAMMAR_MORE_PRACTICE_MODES.map((mode) => mode.id),
-    ['learn', 'surgery', 'builder', 'worked', 'faded'],
+    ['learn', 'surgery', 'builder', 'worked', 'faded', 'transfer'],
   );
 });
 
-test('U8 view-model: GRAMMAR_MORE_PRACTICE_MODES are frozen', () => {
+test('P5-U8 view-model: GRAMMAR_MORE_PRACTICE_MODES are frozen', () => {
   assert.equal(Object.isFrozen(GRAMMAR_MORE_PRACTICE_MODES), true);
   for (const mode of GRAMMAR_MORE_PRACTICE_MODES) {
     assert.equal(Object.isFrozen(mode), true);
@@ -319,10 +337,11 @@ test('U5 view-model: GRAMMAR_MORE_PRACTICE_MODES carries "Mixed practice" label 
   // will not stick in these modes.
   assert.equal(byId.surgery.label, 'Mixed practice');
   assert.equal(byId.builder.label, 'Mixed practice');
-  // Learn / Worked / Faded all honour focus — no label required.
+  // Learn / Worked / Faded / Transfer all honour focus or are non-scored — no label required.
   assert.equal(byId.learn.label ?? '', '', 'learn has no Mixed practice label');
   assert.equal(byId.worked.label ?? '', '', 'worked has no Mixed practice label');
   assert.equal(byId.faded.label ?? '', '', 'faded has no Mixed practice label');
+  assert.equal(byId.transfer.label ?? '', '', 'transfer has no Mixed practice label');
 });
 
 test('U5 view-model: Mixed practice label stays ~12 chars to fit under the mode title', () => {
@@ -568,24 +587,25 @@ test('U8 view-model: isGrammarChildCopy safe on empty / non-string', () => {
 // buildGrammarDashboardModel
 // -----------------------------------------------------------------------------
 
-test('U8 view-model: buildGrammarDashboardModel returns safe empty shape on null inputs', () => {
+test('P5-U8 view-model: buildGrammarDashboardModel returns safe empty shape on null inputs', () => {
   const model = buildGrammarDashboardModel(null, null, null);
   assert.equal(Array.isArray(model.modeCards), true);
-  assert.equal(model.modeCards.length, 4);
+  // U8 Phase 5: modeCards now contains only Smart Practice.
+  assert.equal(model.modeCards.length, 1);
+  assert.equal(model.modeCards[0].id, 'smart');
+  assert.equal(model.modeCards[0].featured, true);
   assert.equal(model.todayCards.length, 4);
   assert.equal(model.isEmpty, true);
   assert.equal(model.concordiumProgress.mastered, 0);
   assert.equal(model.concordiumProgress.total, 18);
   assert.equal(model.primaryMode, 'smart');
   assert.equal(Array.isArray(model.moreModes), true);
-  assert.equal(model.moreModes.length, 5);
+  // U8 Phase 5: moreModes now includes Writing Try (6 total).
+  assert.equal(model.moreModes.length, 6);
   assert.equal(typeof model.writingTryAvailable, 'boolean');
-  // U1 follower: Smart Practice card is flagged as featured so U9 can style it.
-  const smartCard = model.modeCards.find((card) => card.id === 'smart');
-  assert.equal(smartCard.featured, true);
-  for (const card of model.modeCards) {
-    if (card.id !== 'smart') assert.notEqual(card.featured, true);
-  }
+  // U8 Phase 5: secondaryLinks has 3 demoted modes.
+  assert.equal(Array.isArray(model.secondaryLinks), true);
+  assert.equal(model.secondaryLinks.length, 3);
 });
 
 test('U8 view-model: buildGrammarDashboardModel surfaces concept counts', () => {
@@ -877,4 +897,374 @@ test('U2 view-model: buildGrammarBankModel exposes clusterCounts for chip badges
   assert.equal(model.clusterCounts.chronalyx, 4);
   assert.equal(model.clusterCounts.couronnail, 3);
   assert.equal(model.clusterCounts.concordium, 18);
+});
+
+// =============================================================================
+// P5-U7: buildGrammarMonsterStripModel — monster strip view-model
+// =============================================================================
+
+test('P5-U7 view-model: buildGrammarMonsterStripModel returns 4 active monsters in order', () => {
+  const strip = buildGrammarMonsterStripModel(null, null, null);
+  assert.equal(strip.length, 4);
+  assert.deepEqual(strip.map((e) => e.monsterId), ['bracehart', 'chronalyx', 'couronnail', 'concordium']);
+});
+
+test('P5-U7 view-model: monster with 0 Stars shows "Not found yet"', () => {
+  const strip = buildGrammarMonsterStripModel({}, null, null);
+  for (const entry of strip) {
+    assert.equal(entry.stars, 0);
+    assert.equal(entry.stageName, 'Not found yet');
+    assert.equal(entry.starMax, 100);
+    assert.equal(entry.stageIndex, 0);
+  }
+});
+
+test('P5-U7 view-model: monster with starHighWater=42 shows "Growing" (42 Stars)', () => {
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 42 },
+  };
+  const strip = buildGrammarMonsterStripModel(rewardState, null, null);
+  const bracehart = strip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehart.stars, 42);
+  assert.equal(bracehart.stageName, 'Growing');
+  assert.equal(bracehart.stageIndex, 3);
+});
+
+test('P5-U7 view-model: monster with starHighWater=100 shows "Mega"', () => {
+  const rewardState = {
+    couronnail: { mastered: [], caught: true, starHighWater: 100 },
+  };
+  const strip = buildGrammarMonsterStripModel(rewardState, null, null);
+  const couronnail = strip.find((e) => e.monsterId === 'couronnail');
+  assert.equal(couronnail.stars, 100);
+  assert.equal(couronnail.stageName, 'Mega');
+  assert.equal(couronnail.stageIndex, 5);
+});
+
+test('P5-U7 view-model: reserved monsters never appear in strip', () => {
+  const rewardState = {
+    glossbloom: { mastered: ['something'], caught: true, starHighWater: 50 },
+    loomrill: { mastered: ['something'], caught: true, starHighWater: 30 },
+    mirrane: { mastered: ['something'], caught: true, starHighWater: 20 },
+  };
+  const strip = buildGrammarMonsterStripModel(rewardState, null, null);
+  const ids = strip.map((e) => e.monsterId);
+  assert.equal(ids.includes('glossbloom'), false);
+  assert.equal(ids.includes('loomrill'), false);
+  assert.equal(ids.includes('mirrane'), false);
+  assert.equal(ids.length, 4);
+});
+
+test('P5-U7 view-model: child-facing copy in monster strip contains no forbidden terms', () => {
+  const strip = buildGrammarMonsterStripModel({}, null, null);
+  for (const entry of strip) {
+    assert.equal(isGrammarChildCopy(entry.name), true, `name "${entry.name}" contains forbidden term`);
+    assert.equal(isGrammarChildCopy(entry.stageName), true, `stageName "${entry.stageName}" contains forbidden term`);
+  }
+  assert.equal(isGrammarChildCopy(GRAMMAR_MONSTER_STRIP_CHILD_COPY), true);
+});
+
+test('P5-U7 view-model: each monster entry has a valid accentColor from MONSTERS registry', () => {
+  const strip = buildGrammarMonsterStripModel({}, null, null);
+  for (const entry of strip) {
+    assert.ok(typeof entry.accentColor === 'string');
+    assert.match(entry.accentColor, /^#[0-9A-Fa-f]{6}$/, `${entry.monsterId} accent must be hex colour`);
+  }
+});
+
+test('P5-U7 view-model: monster strip entries are frozen', () => {
+  const strip = buildGrammarMonsterStripModel({}, null, null);
+  for (const entry of strip) {
+    assert.equal(Object.isFrozen(entry), true, `${entry.monsterId} entry must be frozen`);
+  }
+});
+
+test('P5-U7 view-model: GRAMMAR_MONSTER_STRIP_CHILD_COPY is correct child-facing sentence', () => {
+  assert.equal(GRAMMAR_MONSTER_STRIP_CHILD_COPY, 'Get 1 Star to find the Egg. Reach 100 Stars for Mega.');
+});
+
+test('P5-U7 view-model: buildGrammarMonsterStripModel + buildGrammarDashboardModel compose without conflict', () => {
+  const dashboard = buildGrammarDashboardModel({}, null, {});
+  const strip = buildGrammarMonsterStripModel({}, null, null);
+  // Both return valid shapes without overwriting each other.
+  assert.equal(dashboard.modeCards.length, 1);
+  assert.equal(strip.length, 4);
+  assert.equal(dashboard.concordiumProgress.total, 18);
+});
+
+// =============================================================================
+// P5-U8: Landing page simplification — Smart Practice sole CTA
+// =============================================================================
+
+test('P5-U8 view-model: Smart Practice is the only data-featured=true element', () => {
+  // In GRAMMAR_PRIMARY_MODE_CARDS, only Smart Practice has featured=true.
+  const featuredCards = GRAMMAR_PRIMARY_MODE_CARDS.filter((c) => c.featured === true);
+  assert.equal(featuredCards.length, 1);
+  assert.equal(featuredCards[0].id, 'smart');
+});
+
+test('P5-U8 view-model: Grammar Bank, Mini Test, Fix Trouble Spots appear as secondary links', () => {
+  const ids = GRAMMAR_SECONDARY_MODE_LINKS.map((link) => link.id);
+  assert.ok(ids.includes('bank'), 'Grammar Bank in secondary links');
+  assert.ok(ids.includes('satsset'), 'Mini Test in secondary links');
+  assert.ok(ids.includes('trouble'), 'Fix Trouble Spots in secondary links');
+});
+
+test('P5-U8 view-model: Writing Try appears inside collapsed More practice', () => {
+  const moreIds = GRAMMAR_MORE_PRACTICE_MODES.map((mode) => mode.id);
+  assert.ok(moreIds.includes('transfer'), 'Writing Try (transfer) in More practice');
+  // Writing Try is NOT in primary or secondary.
+  const primaryIds = GRAMMAR_PRIMARY_MODE_CARDS.map((c) => c.id);
+  const secondaryIds = GRAMMAR_SECONDARY_MODE_LINKS.map((l) => l.id);
+  assert.equal(primaryIds.includes('transfer'), false, 'Writing Try not in primary');
+  assert.equal(secondaryIds.includes('transfer'), false, 'Writing Try not in secondary links');
+});
+
+test('P5-U8 view-model: More practice disclosure contains all 6 secondary modes', () => {
+  assert.deepEqual(
+    GRAMMAR_MORE_PRACTICE_MODES.map((mode) => mode.id),
+    ['learn', 'surgery', 'builder', 'worked', 'faded', 'transfer'],
+  );
+});
+
+test('P5-U8 view-model: fresh learner (no progress) still produces valid dashboard with Smart Practice accessible', () => {
+  const model = buildGrammarDashboardModel({}, null, null);
+  assert.equal(model.isEmpty, true);
+  assert.equal(model.modeCards.length, 1);
+  assert.equal(model.modeCards[0].id, 'smart');
+  assert.equal(model.secondaryLinks.length, 3);
+  assert.equal(model.moreModes.length, 6);
+});
+
+test('P5-U8 view-model: all forbidden terms absent from simplified layout labels', () => {
+  // Primary, secondary, and more-practice titles + descs.
+  const allLabels = [
+    ...GRAMMAR_PRIMARY_MODE_CARDS.flatMap((c) => [c.title, c.desc]),
+    ...GRAMMAR_SECONDARY_MODE_LINKS.flatMap((l) => [l.title, l.desc]),
+    ...GRAMMAR_MORE_PRACTICE_MODES.flatMap((m) => [m.title, m.desc]),
+    GRAMMAR_MONSTER_STRIP_CHILD_COPY,
+  ];
+  for (const label of allLabels) {
+    assert.equal(isGrammarChildCopy(label), true, `"${label}" contains forbidden term`);
+  }
+});
+
+// =============================================================================
+// P5-U10: View-model integration — additive Star fields
+// =============================================================================
+
+test('P5-U10 view-model: buildGrammarDashboardModel includes monsterStrip with 4 entries alongside concordiumProgress', () => {
+  const model = buildGrammarDashboardModel({}, null, {});
+  // monsterStrip is present and has 4 active monsters.
+  assert.ok(Array.isArray(model.monsterStrip), 'monsterStrip is an array');
+  assert.equal(model.monsterStrip.length, 4, 'monsterStrip has 4 entries');
+  assert.deepEqual(
+    model.monsterStrip.map((e) => e.monsterId),
+    ['bracehart', 'chronalyx', 'couronnail', 'concordium'],
+  );
+  // concordiumProgress coexists — backward compatibility.
+  assert.equal(typeof model.concordiumProgress, 'object');
+  assert.equal(typeof model.concordiumProgress.mastered, 'number');
+  assert.equal(typeof model.concordiumProgress.total, 'number');
+});
+
+test('P5-U10 view-model: concordiumProgress shape is UNCHANGED ({ mastered, total }) — backward compatibility', () => {
+  const rewardState = {
+    concordium: {
+      mastered: [
+        'grammar:grammar-legacy-reviewed-2026-04-24:word_classes',
+        'grammar:grammar-legacy-reviewed-2026-04-24:noun_phrases',
+        'grammar:grammar-legacy-reviewed-2026-04-24:clauses',
+      ],
+    },
+  };
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  // concordiumProgress shape has exactly { mastered, total }, no extra keys.
+  const keys = Object.keys(model.concordiumProgress).sort();
+  assert.deepEqual(keys, ['mastered', 'total'], 'concordiumProgress has exactly mastered + total');
+  assert.equal(model.concordiumProgress.mastered, 3);
+  assert.equal(model.concordiumProgress.total, 18);
+});
+
+test('P5-U10 view-model: monsterStrip entries carry Star fields (stars, starMax, stageName, stageIndex)', () => {
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 42 },
+    couronnail: { mastered: [], caught: true, starHighWater: 100 },
+  };
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  for (const entry of model.monsterStrip) {
+    assert.equal(typeof entry.stars, 'number', `${entry.monsterId} has numeric stars`);
+    assert.equal(entry.starMax, 100, `${entry.monsterId} starMax is 100`);
+    assert.equal(typeof entry.stageName, 'string', `${entry.monsterId} has string stageName`);
+    assert.equal(typeof entry.stageIndex, 'number', `${entry.monsterId} has numeric stageIndex`);
+    assert.equal(typeof entry.accentColor, 'string', `${entry.monsterId} has accentColor`);
+  }
+  // Specific star values from starHighWater.
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehart.stars, 42);
+  assert.equal(bracehart.stageName, 'Growing');
+  const couronnail = model.monsterStrip.find((e) => e.monsterId === 'couronnail');
+  assert.equal(couronnail.stars, 100);
+  assert.equal(couronnail.stageName, 'Mega');
+});
+
+test('P5-U10 view-model: fresh learner with no Grammar data -> monsterStrip shows 0 Stars for all 4 monsters', () => {
+  const model = buildGrammarDashboardModel(null, null, null);
+  assert.equal(model.monsterStrip.length, 4);
+  for (const entry of model.monsterStrip) {
+    assert.equal(entry.stars, 0, `${entry.monsterId} starts at 0 Stars`);
+    assert.equal(entry.stageName, 'Not found yet', `${entry.monsterId} starts "Not found yet"`);
+    assert.equal(entry.stageIndex, 0, `${entry.monsterId} starts at stageIndex 0`);
+  }
+  // concordiumProgress also safe.
+  assert.equal(model.concordiumProgress.mastered, 0);
+  assert.equal(model.concordiumProgress.total, 18);
+});
+
+test('P5-U10 view-model: monsterStrip + concordiumProgress do not conflict — both return valid shapes', () => {
+  const rewardState = {
+    concordium: {
+      mastered: [
+        'grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions',
+        'grammar:grammar-legacy-reviewed-2026-04-24:word_classes',
+      ],
+      caught: true,
+      starHighWater: 5,
+    },
+    bracehart: {
+      mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions'],
+      caught: true,
+      starHighWater: 15,
+    },
+  };
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  // Legacy concordiumProgress reads mastered count.
+  assert.equal(model.concordiumProgress.mastered, 2);
+  assert.equal(model.concordiumProgress.total, 18);
+  // monsterStrip reads Star-based progress from starHighWater.
+  const concordiumEntry = model.monsterStrip.find((e) => e.monsterId === 'concordium');
+  assert.equal(concordiumEntry.stars, 5);
+  const bracehartEntry = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehartEntry.stars, 15);
+  assert.equal(bracehartEntry.stageName, 'Hatched');
+});
+
+test('P5-U10 view-model: reserved monsters never leak into monsterStrip from dashboard model', () => {
+  const rewardState = {
+    glossbloom: { mastered: ['something'], caught: true, starHighWater: 50 },
+    loomrill: { mastered: ['something'], caught: true, starHighWater: 30 },
+  };
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  const ids = model.monsterStrip.map((e) => e.monsterId);
+  assert.equal(ids.includes('glossbloom'), false, 'glossbloom excluded from dashboard monsterStrip');
+  assert.equal(ids.includes('loomrill'), false, 'loomrill excluded from dashboard monsterStrip');
+  assert.equal(ids.length, 4, 'exactly 4 active monsters in strip');
+});
+
+// =============================================================================
+// P6-U6: Dashboard model passes evidence to monster strip
+// =============================================================================
+
+test('P6-U6 view-model: dashboard model with evidence → monsterStrip Stars match live derivation', () => {
+  // Bracehart has 6 concepts. Provide mastery nodes showing a secured concept
+  // with 2 independent corrects across 2 templates → all 5 evidence tiers
+  // should be true for that concept, yielding floor(100/6 * 1.0) = 16 Stars.
+  const rewardState = {
+    bracehart: { mastered: [], caught: false, starHighWater: 0 },
+  };
+  const conceptNodes = {
+    clauses: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+  };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  // 1 concept fully evidenced out of 6: floor(100/6 * 1.0) = floor(16.667) = 16
+  assert.equal(bracehart.stars, 16, 'Live evidence yields 16 Stars for 1 fully-evidenced concept');
+  assert.equal(bracehart.stageName, 'Hatched', '16 Stars = Hatched stage');
+});
+
+test('P6-U6 view-model: dashboard model without evidence (null, null) → graceful fallback to starHighWater', () => {
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 42 },
+  };
+  // No evidence args — the 4th and 5th parameters default to null.
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehart.stars, 42, 'Falls back to persisted starHighWater when no evidence supplied');
+  assert.equal(bracehart.stageName, 'Growing', '42 Stars = Growing stage');
+});
+
+test('P6-U6 view-model: live evidence > persisted starHighWater → dashboard shows higher Stars', () => {
+  // starHighWater is 5, but live evidence computes to more than 5.
+  const rewardState = {
+    couronnail: { mastered: [], caught: true, starHighWater: 5 },
+  };
+  // Couronnail has 3 concepts. Give word_classes all 5 tiers:
+  // floor(100/3 * 1.0) = floor(33.333) = 33 Stars.
+  const conceptNodes = {
+    word_classes: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+  };
+  const recentAttempts = [
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const couronnail = model.monsterStrip.find((e) => e.monsterId === 'couronnail');
+  assert.ok(couronnail.stars > 5, `Live evidence (${couronnail.stars}) must exceed persisted starHighWater (5)`);
+  assert.equal(couronnail.stars, 33, '1 fully-evidenced Couronnail concept = 33 Stars');
+});
+
+test('P6-U6 view-model: live evidence < persisted starHighWater → dashboard shows starHighWater (latch holds)', () => {
+  // starHighWater is 50, but live evidence only computes to 1 Star
+  // (one concept with firstIndependentWin only → floor guarantee 1).
+  // The latch must hold — display should be 50.
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 50 },
+  };
+  const conceptNodes = {
+    clauses: { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 },
+  };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehart.stars, 50, 'Latch holds — starHighWater 50 preserved despite lower live evidence');
+  assert.equal(bracehart.stageName, 'Growing', '50 Stars = Growing stage');
+});
+
+test('P6-U6 view-model: dashboard Stars match direct buildGrammarMonsterStripModel Stars when same evidence supplied', () => {
+  // Integration test: the dashboard model and the direct strip builder must
+  // produce identical results when given the same inputs.
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 10 },
+    chronalyx: { mastered: [], caught: false, starHighWater: 0 },
+    couronnail: { mastered: [], caught: true, starHighWater: 20 },
+    concordium: { mastered: [], caught: false, starHighWater: 0 },
+  };
+  const conceptNodes = {
+    clauses: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+    word_classes: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+  };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-d', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const dashboardModel = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const directStrip = buildGrammarMonsterStripModel(rewardState, conceptNodes, recentAttempts);
+
+  assert.equal(dashboardModel.monsterStrip.length, directStrip.length, 'Same number of entries');
+  for (let i = 0; i < directStrip.length; i++) {
+    const dashEntry = dashboardModel.monsterStrip[i];
+    const directEntry = directStrip[i];
+    assert.equal(dashEntry.monsterId, directEntry.monsterId, `Same monster id at index ${i}`);
+    assert.equal(dashEntry.stars, directEntry.stars, `${dashEntry.monsterId}: dashboard Stars match direct strip Stars`);
+    assert.equal(dashEntry.stageName, directEntry.stageName, `${dashEntry.monsterId}: dashboard stageName matches direct strip`);
+    assert.equal(dashEntry.stageIndex, directEntry.stageIndex, `${dashEntry.monsterId}: dashboard stageIndex matches direct strip`);
+  }
 });

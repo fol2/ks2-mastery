@@ -11,6 +11,7 @@ import { MonsterEffectConfigProvider } from '../platform/game/MonsterEffectConfi
 import { ErrorBoundary } from '../platform/react/ErrorBoundary.jsx';
 import { LoadingSkeleton } from '../platform/ui/LoadingSkeleton.jsx';
 import { captureClientError } from '../platform/ops/error-capture.js';
+import { ActiveMessagesBar } from '../platform/ops/active-messages.js';
 import { usePlatformStore } from '../platform/react/use-platform-store.js';
 import { CelebrationLayer } from '../platform/game/render/CelebrationLayer.jsx';
 import { runtimeRegistration } from '../platform/game/render/runtime-registration.js';
@@ -80,7 +81,7 @@ function SharedOverlays({ appState, actions, controller }) {
   );
 }
 
-function SubjectTopNav({ chrome, actions }) {
+function SubjectTopNav({ chrome, actions, currentScreen }) {
   return (
     <TopNav
       theme={chrome.theme}
@@ -95,6 +96,9 @@ function SubjectTopNav({ chrome, actions }) {
       onLogout={actions.logout}
       persistenceMode={chrome.persistence?.mode || 'local-only'}
       persistenceLabel={chrome.persistence?.label || ''}
+      platformRole={chrome.session?.platformRole}
+      onOpenAdmin={actions.openAdminHub}
+      currentScreen={currentScreen}
     />
   );
 }
@@ -204,6 +208,10 @@ export function App({ controller, runtime }) {
     <MonsterVisualConfigProvider value={monsterVisualConfig}>
       <MonsterEffectConfigProvider value={monsterEffectConfig}>
       <ErrorBoundary onError={handleBoundaryError}>
+      {/* U12: active message banners render at app-shell top level, above all
+          route surfaces. The bar polls GET /api/ops/active-messages every 5 min
+          and fail-open (no banner on fetch error). */}
+      <ActiveMessagesBar fetchActiveMessages={runtime.fetchActiveMessages} />
       {screen === 'dashboard' && (
         <>
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
@@ -226,7 +234,7 @@ export function App({ controller, runtime }) {
 
       {screen === 'subject' && (
         <div className={subjectShellClassName}>
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <SubjectRoute key={routedSubjectId} appState={appState} context={context} actions={actions} />
           <SharedOverlays appState={appState} actions={actions} controller={controller} />
@@ -253,7 +261,7 @@ export function App({ controller, runtime }) {
           The outer ErrorBoundary (line 206) still catches non-chunk errors. */}
       {screen === 'parent-hub' && (
         <div className="app-shell">
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <ErrorBoundary onError={handleBoundaryError}>
             <Suspense fallback={<LoadingSkeleton rows={6} />}>
@@ -272,7 +280,7 @@ export function App({ controller, runtime }) {
 
       {screen === 'admin-hub' && (
         <div className="app-shell">
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <ErrorBoundary onError={handleBoundaryError}>
             <Suspense fallback={<LoadingSkeleton rows={6} />}>
@@ -292,7 +300,7 @@ export function App({ controller, runtime }) {
 
       {!REACT_ROUTES.has(screen) && (
         <div className="app-shell">
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <UnknownRouteSurface screen={screen} actions={actions} />
           <SharedOverlays appState={appState} actions={actions} controller={controller} />

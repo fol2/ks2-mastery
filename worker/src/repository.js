@@ -94,6 +94,7 @@ import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
+import { getSpellingPostMasteryState } from '../../src/subjects/spelling/read-model.js';
 import {
   activityFeedRowFromEventRow,
   appendRecentEventTokens,
@@ -282,6 +283,31 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
   const progressPools = contentSnapshot
     ? buildSpellingProgressPools({ contentSnapshot, data, now })
     : null;
+  // P2 hotfix: derive `postMastery` on the bootstrap path so a graduated
+  // learner whose D1 record has the sticky bit lands on the post-Mega
+  // dashboard on first render — without waiting for the first command
+  // round-trip to populate `subjectUi.spelling.postMastery`. Pre-v3
+  // graduates (sticky bit minted via the read-model backfill on first
+  // hydration, or seeded directly into D1) would otherwise stay on the
+  // legacy Smart Review setup until they fired a command. The selector is
+  // shared with the `applyCommandResponse` path (engine.js), so the
+  // bootstrap-derived snapshot and the Worker authoritative response use
+  // byte-identical logic. `sourceHint: 'worker'` matches the existing
+  // hydrated path so the Admin diagnostic panel does not need to branch.
+  let postMastery = null;
+  if (contentSnapshot) {
+    try {
+      postMastery = getSpellingPostMasteryState({
+        subjectStateRecord: { data, ui: raw },
+        runtimeSnapshot: contentSnapshot,
+        now,
+        sourceHint: 'worker',
+      });
+    } catch (error) {
+      globalThis.console?.warn?.('[spelling.bootstrap] postMastery derivation failed, omitting from response', error);
+      postMastery = null;
+    }
+  }
   return {
     subjectId: 'spelling',
     learnerId,
@@ -313,6 +339,7 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
     analytics: publicSpellingAnalytics(progressPools, now),
     audio: audio ? cloneSerialisable(audio) : null,
     content: null,
+    postMastery,
   };
 }
 
@@ -337,6 +364,7 @@ function redactPunctuationUiForClient(ui, data = {}, learnerId = '', { now = Dat
     prefs: service.getPrefs(learnerId),
     stats: service.getStats(learnerId),
     analytics: service.getAnalyticsSnapshot(learnerId),
+    data,
   });
   if (readModel.summary?.gps) {
     readModel.summary = publicPunctuationPracticeSessionSummary(readModel.summary);
@@ -1597,7 +1625,10 @@ const OPS_ERROR_EVENTS_DEFAULT_LIMIT = 50;
 const OPS_ERROR_EVENTS_MAX_LIMIT = 50;
 const OPS_ACCOUNT_DIRECTORY_LIMIT = 200;
 const ACCOUNT_ID_MASK_LAST_N = 6;
+const DENIAL_ACCOUNT_ID_MASK_LAST_N = 8;
 const LEARNER_SCOPE_ID_MASK_LAST_N = 8;
+const DENIAL_DEFAULT_LIMIT = 50;
+const DENIAL_MAX_LIMIT = 200;
 const KPI_WINDOW_7D_MS = 7 * 24 * 60 * 60 * 1000;
 const KPI_WINDOW_30D_MS = 30 * 24 * 60 * 60 * 1000;
 const KPI_ERROR_STATUS_METRIC_PREFIX = 'ops_error_events.status.';
@@ -1631,7 +1662,9 @@ function maskMutationReceiptScopeId(scopeType, scopeId) {
 async function assertAdminHubActor(db, actorAccountId) {
   const actor = await first(
     db,
-    'SELECT id, email, display_name, platform_role, repo_revision, account_type FROM adult_accounts WHERE id = ?',
+    // P3 U1: include selected_learner_id so the actor row can double as the
+    // account row inside readAdminHub — avoids a second adult_accounts query.
+    'SELECT id, email, display_name, platform_role, repo_revision, account_type, selected_learner_id FROM adult_accounts WHERE id = ?',
     [actorAccountId],
   );
   requireAdminHubAccess(actor);
@@ -1684,8 +1717,13 @@ async function scalarCountSafe(db, sql, params, tableName) {
   }
 }
 
-async function readDashboardKpis(db, { now, actorAccountId } = {}) {
-  await assertAdminHubActor(db, actorAccountId);
+async function readDashboardKpis(db, { now, actorAccountId, actor = null } = {}) {
+  // P3 U1: when a pre-resolved actor row is supplied (from readAdminHub's
+  // single assertAdminHubActor call), skip the redundant DB lookup + role
+  // check. When absent (narrow-read route path), resolve independently.
+  if (!actor) {
+    await assertAdminHubActor(db, actorAccountId);
+  }
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const cutoff7d = nowTs - KPI_WINDOW_7D_MS;
   const cutoff30d = nowTs - KPI_WINDOW_30D_MS;
@@ -1964,8 +2002,11 @@ async function readDashboardKpis(db, { now, actorAccountId } = {}) {
   };
 }
 
-async function listRecentMutationReceipts(db, { now, actorAccountId, limit = OPS_ACTIVITY_STREAM_DEFAULT_LIMIT } = {}) {
-  await assertAdminHubActor(db, actorAccountId);
+async function listRecentMutationReceipts(db, { now, actorAccountId, actor = null, limit = OPS_ACTIVITY_STREAM_DEFAULT_LIMIT } = {}) {
+  // P3 U1: skip redundant actor lookup when pre-resolved actor is threaded.
+  if (!actor) {
+    await assertAdminHubActor(db, actorAccountId);
+  }
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const safeLimit = Math.max(1, Math.min(OPS_ACTIVITY_STREAM_MAX_LIMIT, Number(limit) || OPS_ACTIVITY_STREAM_DEFAULT_LIMIT));
   const rows = await all(db, `
@@ -1989,6 +2030,165 @@ async function listRecentMutationReceipts(db, { now, actorAccountId, limit = OPS
   };
 }
 
+// U9 (P3): cross-subject content overview query. Returns a status
+// envelope per subject WITHOUT importing subject engines or content
+// datasets. The live subjects (spelling, grammar, punctuation) are
+// probed via lightweight table queries; future subjects are returned
+// as placeholders with static metadata.
+//
+// R16 compliance: this function performs zero mastery mutations —
+// every statement is a SELECT or a COUNT.
+const CONTENT_OVERVIEW_SUBJECTS = [
+  { subjectKey: 'spelling', displayName: 'Spelling', queryLive: true },
+  { subjectKey: 'grammar', displayName: 'Grammar', queryLive: true },
+  { subjectKey: 'punctuation', displayName: 'Punctuation', queryLive: true },
+  { subjectKey: 'arithmetic', displayName: 'Arithmetic', queryLive: false },
+  { subjectKey: 'reasoning', displayName: 'Reasoning', queryLive: false },
+  { subjectKey: 'reading', displayName: 'Reading', queryLive: false },
+];
+
+async function readSubjectContentOverviewData(db, { now, actorAccountId, actor = null } = {}) {
+  if (!actor) {
+    await assertAdminHubActor(db, actorAccountId);
+  }
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const cutoff7d = nowTs - KPI_WINDOW_7D_MS;
+
+  // Parallel queries for live subject signals. Each query is independent
+  // and uses existing tables. We soft-fail on missing tables so the hub
+  // loads before the relevant migrations land.
+
+  // Spelling: release version + validation from account_subject_content, errors from ops_error_events.
+  // Note: account_id is intentionally omitted — for the cross-subject overview the
+  // admin wants to see "any" content state, not a specific account's content.
+  const spellingContentRowP = first(db,
+    `SELECT content_json, updated_at FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
+    [],
+  ).catch(() => null);
+
+  const spellingErrorsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM ops_error_events
+    WHERE (lower(route_name) LIKE '%spelling%' OR lower(message_first_line) LIKE '%spelling%')
+      AND last_seen > ?
+      AND status <> 'resolved' AND status <> 'ignored'
+  `, [cutoff7d], 'ops_error_events');
+
+  // Grammar: errors from ops_error_events
+  const grammarErrorsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM ops_error_events
+    WHERE (lower(route_name) LIKE '%grammar%' OR lower(message_first_line) LIKE '%grammar%')
+      AND last_seen > ?
+      AND status <> 'resolved' AND status <> 'ignored'
+  `, [cutoff7d], 'ops_error_events');
+
+  // Punctuation: errors from ops_error_events
+  const punctuationErrorsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM ops_error_events
+    WHERE (lower(route_name) LIKE '%punctuation%' OR lower(message_first_line) LIKE '%punctuation%')
+      AND last_seen > ?
+      AND status <> 'resolved' AND status <> 'ignored'
+  `, [cutoff7d], 'ops_error_events');
+
+  const [
+    spellingContentRow,
+    spellingErrors,
+    grammarErrors,
+    punctuationErrors,
+  ] = await Promise.all([
+    spellingContentRowP,
+    spellingErrorsP,
+    grammarErrorsP,
+    punctuationErrorsP,
+  ]);
+
+  // Derive spelling release version and validation errors from content_json.
+  // The bundle stores publication.publishedVersion (numeric) set at publish time.
+  // Falls back to updated_at as a proxy release indicator when no version exists.
+  let spellingReleaseVersion = null;
+  let spellingValidationErrors = 0;
+  if (spellingContentRow?.content_json) {
+    try {
+      const bundle = JSON.parse(spellingContentRow.content_json);
+      if (bundle && typeof bundle === 'object') {
+        const pubVersion = Number(bundle?.publication?.publishedVersion);
+        if (pubVersion > 0) {
+          spellingReleaseVersion = String(pubVersion);
+        } else if (spellingContentRow.updated_at) {
+          // No explicit version — use updated_at as a proxy release indicator
+          spellingReleaseVersion = `updated:${spellingContentRow.updated_at}`;
+        }
+        if (Array.isArray(bundle.errors)) {
+          spellingValidationErrors = bundle.errors.length;
+        }
+      }
+    } catch {
+      // Soft-fail: version and validation count stay at defaults.
+    }
+  }
+
+  // Derive support load signal: simple heuristic based on 7d error count.
+  function supportSignal(errorCount) {
+    if (errorCount >= 10) return 'high';
+    if (errorCount >= 3) return 'medium';
+    if (errorCount >= 1) return 'low';
+    return 'none';
+  }
+
+  const subjects = CONTENT_OVERVIEW_SUBJECTS.map((subject) => {
+    if (subject.subjectKey === 'spelling') {
+      return {
+        subjectKey: 'spelling',
+        displayName: 'Spelling',
+        status: 'live',
+        releaseVersion: spellingReleaseVersion,
+        validationErrors: spellingValidationErrors,
+        errorCount7d: spellingErrors,
+        supportLoadSignal: supportSignal(spellingErrors),
+      };
+    }
+    if (subject.subjectKey === 'grammar') {
+      return {
+        subjectKey: 'grammar',
+        displayName: 'Grammar',
+        status: 'live',
+        releaseVersion: null,
+        validationErrors: 0,
+        errorCount7d: grammarErrors,
+        supportLoadSignal: supportSignal(grammarErrors),
+      };
+    }
+    if (subject.subjectKey === 'punctuation') {
+      return {
+        subjectKey: 'punctuation',
+        displayName: 'Punctuation',
+        status: 'live',
+        releaseVersion: null,
+        validationErrors: 0,
+        errorCount7d: punctuationErrors,
+        supportLoadSignal: supportSignal(punctuationErrors),
+      };
+    }
+    // Placeholder subjects: static metadata, no runtime queries
+    return {
+      subjectKey: subject.subjectKey,
+      displayName: subject.displayName,
+      status: 'placeholder',
+      releaseVersion: null,
+      validationErrors: 0,
+      errorCount7d: 0,
+      supportLoadSignal: 'none',
+    };
+  });
+
+  return {
+    generatedAt: nowTs,
+    subjects,
+  };
+}
+
 function normaliseTagsJson(tagsJson) {
   if (tagsJson == null || tagsJson === '') return [];
   try {
@@ -2002,9 +2202,10 @@ function normaliseTagsJson(tagsJson) {
   }
 }
 
-async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorPlatformRole = null } = {}) {
-  const actor = await assertAdminHubActor(db, actorAccountId);
-  const resolvedPlatformRole = normalisePlatformRole(actorPlatformRole || actor?.platform_role);
+async function readAccountOpsMetadataDirectory(db, { now, actorAccountId, actorPlatformRole = null, actor = null } = {}) {
+  // P3 U1: accept a pre-resolved actor to avoid redundant DB round-trip.
+  const resolvedActor = actor || await assertAdminHubActor(db, actorAccountId);
+  const resolvedPlatformRole = normalisePlatformRole(actorPlatformRole || resolvedActor?.platform_role);
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   let rows = [];
   try {
@@ -2215,11 +2416,13 @@ function normaliseOpsErrorFilter(rawFilter, { nowTs }) {
 async function readOpsErrorEventSummary(db, {
   now,
   actorAccountId,
+  actor: preResolvedActor = null,
   status = null,
   limit = OPS_ERROR_EVENTS_DEFAULT_LIMIT,
   filter = null,
 } = {}) {
-  const actor = await assertAdminHubActor(db, actorAccountId);
+  // P3 U1: accept a pre-resolved actor to skip the redundant DB lookup.
+  const actor = preResolvedActor || await assertAdminHubActor(db, actorAccountId);
   const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
   const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const safeLimit = Math.max(1, Math.min(OPS_ERROR_EVENTS_MAX_LIMIT, Number(limit) || OPS_ERROR_EVENTS_DEFAULT_LIMIT));
@@ -2375,6 +2578,405 @@ async function readOpsErrorEventSummary(db, {
     if (!isMissingTableError(error, 'ops_error_events')) throw error;
     return emptyOpsErrorEventSummary(nowTs);
   }
+}
+
+// ---------------------------------------------------------------------------
+// U8 (P3): Request denial log read helper.
+// Reads from `admin_request_denials` (migration 0013). R8 visibility:
+//   - admin sees accountIdMasked (last 8 chars) so they can cross-reference.
+//   - ops sees denial_reason + route only — NO account or learner linkage.
+// Soft-fails with isMissingTableError so the panel loads pre-migration.
+// ---------------------------------------------------------------------------
+
+async function readAdminRequestDenials(db, {
+  now,
+  actorAccountId,
+  actor: preResolvedActor = null,
+  reason = null,
+  route = null,
+  accountId: filterAccountId = null,
+  from = null,
+  to = null,
+  limit = DENIAL_DEFAULT_LIMIT,
+} = {}) {
+  const actor = preResolvedActor || await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const safeLimit = Math.max(1, Math.min(DENIAL_MAX_LIMIT, Number(limit) || DENIAL_DEFAULT_LIMIT));
+  const isAdmin = actorPlatformRole === 'admin';
+
+  const whereClauses = [];
+  const whereParams = [];
+
+  if (typeof reason === 'string' && reason) {
+    whereClauses.push('denial_reason = ?');
+    whereParams.push(reason);
+  }
+  if (typeof route === 'string' && route) {
+    whereClauses.push('route_name LIKE ?');
+    whereParams.push(`%${route}%`);
+  }
+  // R9: only admin can filter by account_id — ops never touches account linkage.
+  if (isAdmin && typeof filterAccountId === 'string' && filterAccountId) {
+    whereClauses.push('account_id LIKE ?');
+    whereParams.push(`%${filterAccountId}%`);
+  }
+  if (from != null && Number.isFinite(Number(from))) {
+    whereClauses.push('denied_at >= ?');
+    whereParams.push(Number(from));
+  }
+  if (to != null && Number.isFinite(Number(to))) {
+    whereClauses.push('denied_at <= ?');
+    whereParams.push(Number(to));
+  }
+
+  const whereSql = whereClauses.length > 0
+    ? `WHERE ${whereClauses.join(' AND ')}`
+    : '';
+
+  try {
+    const rows = await all(db, `
+      SELECT id, denied_at, denial_reason, route_name, account_id,
+             learner_id, session_id_last8, is_demo, release, detail_json
+      FROM admin_request_denials
+      ${whereSql}
+      ORDER BY denied_at DESC, id DESC
+      LIMIT ?
+    `, [...whereParams, safeLimit]);
+
+    return {
+      generatedAt: nowTs,
+      entries: rows.map((row) => ({
+        id: typeof row?.id === 'string' ? row.id : '',
+        deniedAt: Number(row?.denied_at) || 0,
+        denialReason: typeof row?.denial_reason === 'string' ? row.denial_reason : '',
+        routeName: typeof row?.route_name === 'string' ? row.route_name : null,
+        // R8: admin sees last-8 masked account_id; ops sees null.
+        accountIdMasked: isAdmin && row?.account_id
+          ? maskAccountIdLastN(row.account_id, DENIAL_ACCOUNT_ID_MASK_LAST_N)
+          : null,
+        isDemo: Boolean(row?.is_demo),
+        release: typeof row?.release === 'string' ? row.release : null,
+      })),
+    };
+  } catch (error) {
+    if (!isMissingTableError(error, 'admin_request_denials')) throw error;
+    return { generatedAt: nowTs, entries: [] };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// U7 (P3): Account search + detail read helpers.
+// Search: queries adult_accounts by email/ID/display_name substring match.
+//   - 3-char minimum query length to avoid full-table scans.
+//   - Admin sees full email; ops sees last 6 chars only.
+//   - Bounded to 50 results, filterable by ops_status and platform_role.
+// Detail: aggregates account summary, linked learners, recent errors (10),
+//   recent denials (10), recent mutations (10), and ops metadata for a
+//   single account.  Admin sees full detail; ops sees masked email, no
+//   internal notes.
+// ---------------------------------------------------------------------------
+
+const ACCOUNT_SEARCH_MIN_QUERY_LENGTH = 3;
+const ACCOUNT_SEARCH_DEFAULT_LIMIT = 50;
+const ACCOUNT_SEARCH_MAX_LIMIT = 50;
+const ACCOUNT_DETAIL_SUB_LIMIT = 10;
+
+function maskEmailLastN(email, lastN = 6) {
+  if (typeof email !== 'string' || !email) return null;
+  return email.length <= lastN ? email : `***${email.slice(-lastN)}`;
+}
+
+async function searchAccounts(db, {
+  now,
+  actorAccountId,
+  actor: preResolvedActor = null,
+  query = '',
+  opsStatus = null,
+  platformRole = null,
+  limit = ACCOUNT_SEARCH_DEFAULT_LIMIT,
+} = {}) {
+  const actor = preResolvedActor || await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const isAdmin = actorPlatformRole === 'admin';
+  const safeLimit = Math.max(1, Math.min(ACCOUNT_SEARCH_MAX_LIMIT, Number(limit) || ACCOUNT_SEARCH_DEFAULT_LIMIT));
+
+  const trimmedQuery = typeof query === 'string' ? query.trim() : '';
+  if (trimmedQuery.length < ACCOUNT_SEARCH_MIN_QUERY_LENGTH) {
+    return {
+      generatedAt: nowTs,
+      results: [],
+      truncated: false,
+      error: 'Query must be at least 3 characters.',
+    };
+  }
+
+  const whereClauses = [
+    '(a.email LIKE ? OR a.id LIKE ? OR a.display_name LIKE ?)',
+  ];
+  const likePattern = `%${trimmedQuery}%`;
+  const whereParams = [likePattern, likePattern, likePattern];
+
+  if (typeof opsStatus === 'string' && opsStatus) {
+    whereClauses.push('COALESCE(om.ops_status, \'active\') = ?');
+    whereParams.push(opsStatus);
+  }
+  if (typeof platformRole === 'string' && platformRole) {
+    whereClauses.push('a.platform_role = ?');
+    whereParams.push(platformRole);
+  }
+
+  // Exclude demo accounts from search results — mirrors the ops metadata
+  // directory and the KPI counters (demo accounts have their own panel).
+  whereClauses.push('COALESCE(a.account_type, \'real\') <> \'demo\'');
+
+  const whereSql = whereClauses.join(' AND ');
+
+  try {
+    const rows = await all(db, `
+      SELECT
+        a.id,
+        a.email,
+        a.display_name,
+        a.platform_role,
+        a.created_at,
+        a.updated_at,
+        COALESCE(om.ops_status, 'active') AS ops_status,
+        om.plan_label,
+        COUNT(DISTINCT m.learner_id) AS learner_count
+      FROM adult_accounts a
+      LEFT JOIN account_ops_metadata om ON om.account_id = a.id
+      LEFT JOIN account_learner_memberships m ON m.account_id = a.id
+      WHERE ${whereSql}
+      GROUP BY a.id
+      ORDER BY a.updated_at DESC, a.id ASC
+      LIMIT ?
+    `, [...whereParams, safeLimit + 1]);
+
+    const truncated = rows.length > safeLimit;
+    const displayRows = truncated ? rows.slice(0, safeLimit) : rows;
+
+    return {
+      generatedAt: nowTs,
+      results: displayRows.map((row) => ({
+        id: typeof row?.id === 'string' ? row.id : '',
+        email: isAdmin
+          ? (typeof row?.email === 'string' ? row.email : null)
+          : maskEmailLastN(row?.email),
+        displayName: typeof row?.display_name === 'string' ? row.display_name : null,
+        platformRole: normalisePlatformRole(row?.platform_role),
+        opsStatus: typeof row?.ops_status === 'string' ? row.ops_status : 'active',
+        planLabel: typeof row?.plan_label === 'string' ? row.plan_label : null,
+        learnerCount: Number(row?.learner_count) || 0,
+        createdAt: Number(row?.created_at) || 0,
+        updatedAt: Number(row?.updated_at) || 0,
+      })),
+      truncated,
+    };
+  } catch (error) {
+    if (isMissingTableError(error, 'account_ops_metadata')) {
+      // Soft-fail: fall back to search without ops_metadata join.
+      const fallbackRows = await all(db, `
+        SELECT
+          a.id,
+          a.email,
+          a.display_name,
+          a.platform_role,
+          a.created_at,
+          a.updated_at,
+          'active' AS ops_status,
+          NULL AS plan_label,
+          COUNT(DISTINCT m.learner_id) AS learner_count
+        FROM adult_accounts a
+        LEFT JOIN account_learner_memberships m ON m.account_id = a.id
+        WHERE (a.email LIKE ? OR a.id LIKE ? OR a.display_name LIKE ?)
+          AND COALESCE(a.account_type, 'real') <> 'demo'
+        GROUP BY a.id
+        ORDER BY a.updated_at DESC, a.id ASC
+        LIMIT ?
+      `, [likePattern, likePattern, likePattern, safeLimit]);
+      return {
+        generatedAt: nowTs,
+        results: fallbackRows.map((row) => ({
+          id: typeof row?.id === 'string' ? row.id : '',
+          email: isAdmin
+            ? (typeof row?.email === 'string' ? row.email : null)
+            : maskEmailLastN(row?.email),
+          displayName: typeof row?.display_name === 'string' ? row.display_name : null,
+          platformRole: normalisePlatformRole(row?.platform_role),
+          opsStatus: 'active',
+          planLabel: null,
+          learnerCount: Number(row?.learner_count) || 0,
+          createdAt: Number(row?.created_at) || 0,
+          updatedAt: Number(row?.updated_at) || 0,
+        })),
+        truncated: false,
+      };
+    }
+    throw error;
+  }
+}
+
+async function readAccountDetail(db, {
+  now,
+  actorAccountId,
+  targetAccountId,
+  actor: preResolvedActor = null,
+} = {}) {
+  const actor = preResolvedActor || await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const isAdmin = actorPlatformRole === 'admin';
+
+  if (typeof targetAccountId !== 'string' || !targetAccountId) {
+    throw new NotFoundError('Account not found.', { code: 'account_not_found' });
+  }
+
+  // 1. Account summary
+  const account = await first(db, `
+    SELECT
+      a.id, a.email, a.display_name, a.platform_role, a.created_at, a.updated_at,
+      a.account_type, a.repo_revision
+    FROM adult_accounts a
+    WHERE a.id = ?
+  `, [targetAccountId]);
+
+  if (!account) {
+    throw new NotFoundError('Account not found.', { code: 'account_not_found' });
+  }
+
+  // 2. Linked learners
+  const learners = await all(db, `
+    SELECT
+      l.id, l.name, l.year_group, l.created_at, l.updated_at,
+      m.role AS membership_role
+    FROM account_learner_memberships m
+    JOIN learner_profiles l ON l.id = m.learner_id
+    WHERE m.account_id = ?
+    ORDER BY l.updated_at DESC
+  `, [targetAccountId]);
+
+  // 3. Recent errors (linked by account_id in ops_error_events)
+  let recentErrors = [];
+  try {
+    recentErrors = await all(db, `
+      SELECT id, fingerprint, error_kind, message_first_line, route_name,
+             first_seen, last_seen, occurrence_count, status
+      FROM ops_error_events
+      WHERE account_id = ?
+      ORDER BY last_seen DESC
+      LIMIT ?
+    `, [targetAccountId, ACCOUNT_DETAIL_SUB_LIMIT]);
+  } catch (error) {
+    if (!isMissingTableError(error, 'ops_error_events')) throw error;
+  }
+
+  // 4. Recent denials (linked by account_id in admin_request_denials)
+  let recentDenials = [];
+  try {
+    recentDenials = await all(db, `
+      SELECT id, denied_at, denial_reason, route_name
+      FROM admin_request_denials
+      WHERE account_id = ?
+      ORDER BY denied_at DESC
+      LIMIT ?
+    `, [targetAccountId, ACCOUNT_DETAIL_SUB_LIMIT]);
+  } catch (error) {
+    if (!isMissingTableError(error, 'admin_request_denials')) throw error;
+  }
+
+  // 5. Recent mutations
+  const recentMutations = await all(db, `
+    SELECT request_id, mutation_kind, scope_type, scope_id, status_code, applied_at
+    FROM mutation_receipts
+    WHERE account_id = ?
+    ORDER BY applied_at DESC
+    LIMIT ?
+  `, [targetAccountId, ACCOUNT_DETAIL_SUB_LIMIT]);
+
+  // 6. Ops metadata
+  let opsMetadata = null;
+  try {
+    opsMetadata = await first(db, `
+      SELECT ops_status, plan_label, tags_json, internal_notes,
+             updated_at, updated_by_account_id, row_version
+      FROM account_ops_metadata
+      WHERE account_id = ?
+    `, [targetAccountId]);
+  } catch (error) {
+    if (!isMissingTableError(error, 'account_ops_metadata')) throw error;
+  }
+
+  return {
+    generatedAt: nowTs,
+    account: {
+      id: account.id,
+      email: isAdmin
+        ? (typeof account.email === 'string' ? account.email : null)
+        : maskEmailLastN(account.email),
+      displayName: typeof account.display_name === 'string' ? account.display_name : null,
+      platformRole: normalisePlatformRole(account.platform_role),
+      accountType: account.account_type || 'real',
+      repoRevision: Number(account.repo_revision) || 0,
+      createdAt: Number(account.created_at) || 0,
+      updatedAt: Number(account.updated_at) || 0,
+    },
+    learners: learners.map((l) => ({
+      id: l.id,
+      displayName: typeof l.name === 'string' ? l.name : null,
+      yearGroup: l.year_group ?? null,
+      membershipRole: l.membership_role || 'owner',
+      createdAt: Number(l.created_at) || 0,
+      updatedAt: Number(l.updated_at) || 0,
+    })),
+    recentErrors: recentErrors.map((e) => ({
+      id: e.id,
+      fingerprint: e.fingerprint,
+      errorKind: e.error_kind,
+      messageFirstLine: e.message_first_line,
+      routeName: e.route_name,
+      firstSeen: Number(e.first_seen) || 0,
+      lastSeen: Number(e.last_seen) || 0,
+      occurrenceCount: Number(e.occurrence_count) || 0,
+      status: e.status,
+    })),
+    recentDenials: isAdmin ? recentDenials.map((d) => ({
+      id: d.id,
+      deniedAt: Number(d.denied_at) || 0,
+      denialReason: d.denial_reason,
+      routeName: d.route_name,
+    })) : [],
+    recentMutations: recentMutations.map((m) => ({
+      requestId: m.request_id,
+      mutationKind: m.mutation_kind,
+      scopeType: m.scope_type,
+      scopeId: m.scope_id,
+      statusCode: m.status_code,
+      appliedAt: Number(m.applied_at) || 0,
+    })),
+    opsMetadata: opsMetadata ? {
+      opsStatus: opsMetadata.ops_status || 'active',
+      planLabel: typeof opsMetadata.plan_label === 'string' ? opsMetadata.plan_label : null,
+      tags: normaliseTagsJson(opsMetadata.tags_json),
+      internalNotes: isAdmin
+        ? (typeof opsMetadata.internal_notes === 'string' ? opsMetadata.internal_notes : null)
+        : null,
+      updatedAt: Number(opsMetadata.updated_at) || 0,
+      updatedByAccountId: typeof opsMetadata.updated_by_account_id === 'string'
+        ? opsMetadata.updated_by_account_id
+        : null,
+      rowVersion: Math.max(0, Number(opsMetadata.row_version) || 0),
+    } : {
+      opsStatus: 'active',
+      planLabel: null,
+      tags: [],
+      internalNotes: null,
+      updatedAt: 0,
+      updatedByAccountId: null,
+      rowVersion: 0,
+    },
+  };
 }
 
 async function bumpAdminKpiMetric(db, key, nowTs, delta = 1) {
@@ -4487,6 +5089,99 @@ function generateOpsErrorEventId(nowTs) {
   return `ops-error-${stamp.toString(36)}-${entropy}`;
 }
 
+function generateOccurrenceId(nowTs) {
+  const random = globalThis.crypto?.randomUUID?.();
+  if (typeof random === 'string' && random) return `occ-${random}`;
+  const stamp = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const entropy = Math.random().toString(36).slice(2, 10);
+  return `occ-${stamp.toString(36)}-${entropy}`;
+}
+
+// U5 (P3): ring-buffer cap for per-fingerprint occurrence rows.
+const OPS_ERROR_OCCURRENCE_RING_LIMIT = 20;
+
+// U5 (P3): insert an occurrence row and prune to the ring-buffer cap.
+// Runs as a batch so both the INSERT and the DELETE commit atomically.
+// Tolerates missing table (pre-migration deploy) — silently no-ops.
+async function insertOccurrenceRow(db, {
+  eventId,
+  occurredAt,
+  release = null,
+  routeName = null,
+  accountId = null,
+  userAgent = null,
+} = {}) {
+  const occId = generateOccurrenceId(occurredAt);
+  try {
+    await batch(db, [
+      bindStatement(db, `
+        INSERT INTO ops_error_event_occurrences (id, event_id, occurred_at, release, route_name, account_id, user_agent)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [occId, eventId, occurredAt, release, routeName, accountId, userAgent]),
+      bindStatement(db, `
+        DELETE FROM ops_error_event_occurrences
+        WHERE event_id = ?
+          AND id NOT IN (
+            SELECT id FROM ops_error_event_occurrences
+            WHERE event_id = ?
+            ORDER BY occurred_at DESC
+            LIMIT ?
+          )
+      `, [eventId, eventId, OPS_ERROR_OCCURRENCE_RING_LIMIT]),
+    ]);
+  } catch (error) {
+    // Tolerate missing table — occurrence tracking is additive and must
+    // never break error ingest on a pre-migration deploy.
+    if (isMissingTableError(error, 'ops_error_event_occurrences')) return;
+    throw error;
+  }
+}
+
+// U5 (P3): read the occurrence timeline for a given event. Returns
+// latest-first ordering, capped at `limit` rows (default 20).
+async function readErrorEventOccurrences(db, {
+  actorAccountId,
+  eventId,
+  limit = OPS_ERROR_OCCURRENCE_RING_LIMIT,
+} = {}) {
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+  const isAdmin = actorPlatformRole === 'admin';
+  const safeLimit = Math.max(1, Math.min(100, Number(limit) || OPS_ERROR_OCCURRENCE_RING_LIMIT));
+
+  if (typeof eventId !== 'string' || !eventId) {
+    return { occurrences: [] };
+  }
+
+  try {
+    const rows = await all(db, `
+      SELECT id, event_id, occurred_at, release, route_name, account_id, user_agent
+      FROM ops_error_event_occurrences
+      WHERE event_id = ?
+      ORDER BY occurred_at DESC
+      LIMIT ?
+    `, [eventId, safeLimit]);
+
+    return {
+      occurrences: rows.map((row) => ({
+        id: typeof row?.id === 'string' ? row.id : '',
+        eventId: typeof row?.event_id === 'string' ? row.event_id : '',
+        occurredAt: Number(row?.occurred_at) || 0,
+        release: typeof row?.release === 'string' && row.release ? row.release : null,
+        routeName: typeof row?.route_name === 'string' ? row.route_name : null,
+        // R25-consistent: admin sees account attribution, ops sees null.
+        accountId: isAdmin && row?.account_id ? maskAccountIdLastN(row.account_id) : null,
+        userAgent: typeof row?.user_agent === 'string' ? row.user_agent : null,
+      })),
+    };
+  } catch (error) {
+    if (isMissingTableError(error, 'ops_error_event_occurrences')) {
+      return { occurrences: [] };
+    }
+    throw error;
+  }
+}
+
 // H2 (reviewer) — preflight dedup probe.
 //
 // `recordClientErrorEvent` performs the authoritative R24 3-tuple dedup
@@ -4685,6 +5380,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
         ]);
         const autoReopenChanges = Number(autoReopenBatch?.[0]?.meta?.changes) || 0;
         if (autoReopenChanges === 1) {
+          // U5 (P3): record occurrence row for auto-reopen event.
+          await insertOccurrenceRow(db, {
+            eventId: existing.id,
+            occurredAt: ts,
+            release: storedReleaseValue,
+            routeName: redacted.routeName || null,
+            accountId: attributedAccountId,
+            userAgent: redacted.userAgent || null,
+          });
           return {
             eventId: existing.id,
             deduped: true,
@@ -4714,6 +5418,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
               last_seen_release = ?
           WHERE id = ?
         `, [ts, storedReleaseValue, existing.id]);
+        // U5 (P3): record occurrence row for CAS-fail dedup path.
+        await insertOccurrenceRow(db, {
+          eventId: existing.id,
+          occurredAt: ts,
+          release: storedReleaseValue,
+          routeName: redacted.routeName || null,
+          accountId: attributedAccountId,
+          userAgent: redacted.userAgent || null,
+        });
         return {
           eventId: existing.id,
           deduped: true,
@@ -4733,6 +5446,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
             last_seen_release = ?
         WHERE id = ?
       `, [ts, storedReleaseValue, existing.id]);
+      // U5 (P3): record occurrence row for normal dedup hit.
+      await insertOccurrenceRow(db, {
+        eventId: existing.id,
+        occurredAt: ts,
+        release: storedReleaseValue,
+        routeName: redacted.routeName || null,
+        accountId: attributedAccountId,
+        userAgent: redacted.userAgent || null,
+      });
       return {
         eventId: existing.id,
         deduped: true,
@@ -4806,6 +5528,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
       // batch) keeps the non-atomic window between INSERT and bump as
       // small as possible.
       await bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1).run();
+      // U5 (P3): record the first occurrence row for this fresh fingerprint.
+      await insertOccurrenceRow(db, {
+        eventId,
+        occurredAt: ts,
+        release: freshReleaseValue,
+        routeName: redacted.routeName || null,
+        accountId: attributedAccountId,
+        userAgent: redacted.userAgent || null,
+      });
       return {
         eventId,
         deduped: false,
@@ -4843,6 +5574,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
             last_seen_release = ?
         WHERE id = ?
       `, [ts, redacted.release || null, winner.id]);
+      // U5 (P3): record occurrence row for race-loser dedup path.
+      await insertOccurrenceRow(db, {
+        eventId: winner.id,
+        occurredAt: ts,
+        release: redacted.release || null,
+        routeName: redacted.routeName || null,
+        accountId: attributedAccountId,
+        userAgent: redacted.userAgent || null,
+      });
       return {
         eventId: winner.id,
         deduped: true,
@@ -8088,8 +8828,15 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       };
     },
     async readAdminHub(accountId, { learnerId = null, requestId = null, auditLimit = 20 } = {}) {
-      const account = await first(db, 'SELECT id, selected_learner_id, repo_revision, platform_role, account_type FROM adult_accounts WHERE id = ?', [accountId]);
-      requireAdminHubAccess(account);
+      // P3 U1 (R22): single assertAdminHubActor call — the resolved actor
+      // row is threaded to every downstream helper so the admin-role DB
+      // lookup fires exactly once per readAdminHub invocation.
+      const actor = await assertAdminHubActor(db, accountId);
+      const account = actor;
+
+      // Sequential: memberships depend on account lookup, learner bundles
+      // depend on membership list, content bundle is an independent read
+      // but must complete before buildAdminHubReadModel.
       const memberships = await listMembershipRows(db, accountId, { writableOnly: false });
       const contentBundle = await readSubjectContentBundle(db, accountId, 'spelling');
       const learnerBundles = {};
@@ -8105,24 +8852,41 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         limit: auditLimit,
       });
       const nowTs = nowFactory();
-      const demoOperations = await readDemoOperationSummary(db, nowTs);
-      const monsterVisualConfig = await readMonsterVisualConfigState(db, nowTs);
-      const dashboardKpis = await readDashboardKpis(db, { now: nowTs, actorAccountId: accountId });
-      const opsActivityStream = await listRecentMutationReceipts(db, {
-        now: nowTs,
-        actorAccountId: accountId,
-        limit: OPS_ACTIVITY_STREAM_DEFAULT_LIMIT,
-      });
-      const accountOpsMetadata = await readAccountOpsMetadataDirectory(db, {
-        now: nowTs,
-        actorAccountId: accountId,
-        actorPlatformRole: accountPlatformRole(account),
-      });
-      const errorLogSummary = await readOpsErrorEventSummary(db, {
-        now: nowTs,
-        actorAccountId: accountId,
-        limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
-      });
+
+      // P3 U1 (R22): parallelise independent queries. These share no
+      // read-dependency after the learner bundles are loaded. The pre-
+      // resolved `actor` row is threaded so none of them re-query
+      // adult_accounts for the admin-role check.
+      const [
+        demoOperations,
+        monsterVisualConfig,
+        dashboardKpis,
+        opsActivityStream,
+        accountOpsMetadata,
+        errorLogSummary,
+      ] = await Promise.all([
+        readDemoOperationSummary(db, nowTs),
+        readMonsterVisualConfigState(db, nowTs),
+        readDashboardKpis(db, { now: nowTs, actorAccountId: accountId, actor }),
+        listRecentMutationReceipts(db, {
+          now: nowTs,
+          actorAccountId: accountId,
+          actor,
+          limit: OPS_ACTIVITY_STREAM_DEFAULT_LIMIT,
+        }),
+        readAccountOpsMetadataDirectory(db, {
+          now: nowTs,
+          actorAccountId: accountId,
+          actorPlatformRole: accountPlatformRole(account),
+          actor,
+        }),
+        readOpsErrorEventSummary(db, {
+          now: nowTs,
+          actorAccountId: accountId,
+          actor,
+          limit: OPS_ERROR_EVENTS_DEFAULT_LIMIT,
+        }),
+      ]);
       // Phase E UX-1: surface the build's current release hash on the
       // admin hub payload so `ErrorLogCentrePanel` can pre-fill the
       // "New in release" filter and the drawer helper text. The value
@@ -8227,13 +8991,80 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         now: nowFactory(),
         actorAccountId: accountId,
         actorPlatformRole,
+        actor,
       });
+    },
+    // U9 (P3): cross-subject content overview. Read-only; R16 compliant.
+    async readSubjectContentOverview(accountId) {
+      const actor = await assertAdminHubActor(db, accountId);
+      return readSubjectContentOverviewData(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        actor,
+      });
+    },
+    // U8 (P3): narrow read for the denial log panel in Debugging section.
+    // R8 visibility: admin sees masked account_id (last 8); ops sees
+    // denial_reason + route only (no account or learner linkage).
+    async readAdminRequestDenials(accountId, {
+      reason = null,
+      route = null,
+      accountId: filterAccountId = null,
+      from = null,
+      to = null,
+      limit = DENIAL_DEFAULT_LIMIT,
+    } = {}) {
+      return readAdminRequestDenials(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        reason,
+        route,
+        accountId: filterAccountId,
+        from,
+        to,
+        limit,
+      });
+    },
+    // U6 (P3): Debug Bundle — resolve actor for auth + redaction.
+    // Returns { platformRole } so the route can call redactBundleForRole
+    // with the correct role. The bundle aggregation itself runs against
+    // the raw DB handle (standalone module pattern) but the auth gate
+    // goes through the repository's assertAdminHubActor.
+    async assertAdminHubActorForBundle(accountId) {
+      const actor = await assertAdminHubActor(db, accountId);
+      return {
+        platformRole: normalisePlatformRole(actor?.platform_role),
+      };
     },
     async bumpAdminKpiMetric(key, delta = 1) {
       return bumpAdminKpiMetric(db, key, nowFactory(), delta);
     },
     async listAdminAccounts(accountId) {
       return listAccountDirectory(db, accountId);
+    },
+    // U7 (P3): account search — admin/ops gated via assertAdminHubActor.
+    async searchAccounts(accountId, {
+      query = '',
+      opsStatus = null,
+      platformRole = null,
+      limit = ACCOUNT_SEARCH_DEFAULT_LIMIT,
+    } = {}) {
+      return searchAccounts(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        query,
+        opsStatus,
+        platformRole,
+        limit,
+      });
+    },
+    // U7 (P3): account detail — admin/ops gated via assertAdminHubActor.
+    async readAccountDetail(accountId, { targetAccountId } = {}) {
+      return readAccountDetail(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        targetAccountId,
+      });
     },
     async updateAdminAccountRole(accountId, { targetAccountId, platformRole, expectedRepoRevision = null, requestId, correlationId = null } = {}) {
       return updateManagedAccountRole(db, {
@@ -8360,6 +9191,15 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async isClientErrorFingerprintKnown({ clientEvent } = {}) {
       return isClientErrorFingerprintKnown(db, { clientEvent });
     },
+    // U5 (P3): occurrence timeline read. Admin/ops-gated via
+    // `assertAdminHubActor` inside the helper.
+    async readErrorEventOccurrences(accountId, eventId, { limit } = {}) {
+      return readErrorEventOccurrences(db, {
+        actorAccountId: accountId,
+        eventId,
+        limit,
+      });
+    },
     async saveMonsterVisualConfigDraft(accountId, { draft, mutation = {} } = {}) {
       return saveMonsterVisualConfigDraft(db, accountId, draft, mutation, nowFactory());
     },
@@ -8411,6 +9251,32 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async accessibleLearnerIds(accountId) {
       const rows = await listMembershipRows(db, accountId, { writableOnly: true });
       return rows.map((row) => row.id);
+    },
+    // Hero Mode P0: public authz gate so the route handler can validate
+    // learner access before any data read. Delegates to the module-private
+    // `requireLearnerReadAccess` which throws ForbiddenError on failure.
+    async requireLearnerReadAccess(accountId, learnerId) {
+      return requireLearnerReadAccess(db, accountId, learnerId);
+    },
+    // Hero Mode P0: read per-subject read-model data for the hero
+    // providers. Reads `child_subject_state` rows and returns the
+    // parsed `data` objects keyed by subject_id. Providers handle
+    // null/empty gracefully, so subjects without state simply return
+    // available:false from the provider.
+    async readHeroSubjectReadModels(learnerId) {
+      const rows = await all(db, `
+        SELECT subject_id, data_json
+        FROM child_subject_state
+        WHERE learner_id = ?
+      `, [learnerId]);
+      const result = {};
+      for (const row of rows) {
+        const data = safeJsonParse(row.data_json, null);
+        if (data) {
+          result[row.subject_id] = data;
+        }
+      }
+      return result;
     },
   };
 }

@@ -371,5 +371,14 @@ export function createHubApi({
         body: JSON.stringify(event ?? {}),
       }, publicSession);
     },
+    // U12: fetch active marketing messages (announcements, maintenance
+    // banners) for the client-runtime delivery banner. Any authenticated
+    // user can call this endpoint — the Worker returns only published
+    // messages with safe field projection. Fail-open: caller catches
+    // errors and renders no banner.
+    async fetchActiveMessages() {
+      const url = buildRequestUrl(baseUrl, '/api/ops/active-messages');
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
   };
 }
