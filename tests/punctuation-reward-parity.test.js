@@ -27,7 +27,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
-import { buildPunctuationDashboardModel } from '../src/subjects/punctuation/components/punctuation-view-model.js';
+import {
+  buildPunctuationDashboardModel,
+  mergeMonotonicDisplay,
+} from '../src/subjects/punctuation/components/punctuation-view-model.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -345,5 +348,119 @@ test('negative: reserved monsters (colisk, hyphang, carillon) never appear in re
     const pattern = new RegExp(reserved, 'i');
     assert.equal(pattern.test(stripped), false,
       `Reserved monster "${reserved}" must not appear in rendered output of any punctuation scene component.`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 6 U10: Monotonicity assertion — displayStage never decreases
+// ---------------------------------------------------------------------------
+
+test('monotonicity: mergeMonotonicDisplay prevents displayStage regression across N sessions with lapses', () => {
+  // Simulate N sessions where live stars fluctuate (evidence lapse between
+  // sessions 3→4). The codex high-water marks persist across sessions so
+  // the monotonic merge guarantees displayStage never decreases.
+  const sessionData = [
+    { liveStars: 3, liveStage: 0 },    // Session 1: fresh learner
+    { liveStars: 12, liveStage: 1 },   // Session 2: stage advance
+    { liveStars: 32, liveStage: 2 },   // Session 3: stage 2
+    { liveStars: 8, liveStage: 0 },    // Session 4: evidence lapse — live drops
+    { liveStars: 65, liveStage: 3 },   // Session 5: strong recovery
+  ];
+
+  let codexEntry = { maxStageEver: 0, starHighWater: 0 };
+  let previousDisplayStage = 0;
+  let previousDisplayStars = 0;
+
+  for (let i = 0; i < sessionData.length; i++) {
+    const { liveStars, liveStage } = sessionData[i];
+    const { displayStage, displayStars } = mergeMonotonicDisplay(liveStars, liveStage, codexEntry);
+
+    // Monotonicity invariant: displayStage never decreases.
+    assert.ok(displayStage >= previousDisplayStage,
+      `Session ${i + 1}: displayStage ${displayStage} must be >= previous ${previousDisplayStage}`);
+
+    // Monotonicity invariant: displayStars never decreases.
+    assert.ok(displayStars >= previousDisplayStars,
+      `Session ${i + 1}: displayStars ${displayStars} must be >= previous ${previousDisplayStars}`);
+
+    // Update codex for next session.
+    codexEntry = {
+      maxStageEver: Math.max(codexEntry.maxStageEver, displayStage),
+      starHighWater: Math.max(codexEntry.starHighWater, displayStars),
+    };
+    previousDisplayStage = displayStage;
+    previousDisplayStars = displayStars;
+  }
+});
+
+test('monotonicity: mergeMonotonicDisplay with null codexEntry does not throw', () => {
+  // Edge case: first session before any codex entry exists.
+  const result = mergeMonotonicDisplay(15, 1, null);
+  assert.equal(typeof result.displayStage, 'number');
+  assert.equal(typeof result.displayStars, 'number');
+  assert.ok(result.displayStage >= 1, 'displayStage must be at least liveStage');
+  assert.ok(result.displayStars >= 15, 'displayStars must be at least liveStars');
+});
+
+// ---------------------------------------------------------------------------
+// Phase 6 U10: Additional negative assertions
+// ---------------------------------------------------------------------------
+
+test('negative: dashboard model output does not contain "Stage X of 4" in JSON', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = seededSubjectState(now);
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  const stats = {
+    due: 0, weak: 0,
+    securedRewardUnits: model.progressSnapshot.securedRewardUnits,
+    accuracy: 0,
+  };
+  const dashboard = buildPunctuationDashboardModel(stats, { prefs: { mode: 'smart' } }, {}, model.starView);
+  const json = JSON.stringify(dashboard);
+
+  const stagePattern = /Stage\s+\d+\s+of\s+4/;
+  assert.equal(stagePattern.test(json), false,
+    'Dashboard model JSON must not contain "Stage X of 4".');
+});
+
+test('negative: dashboard model output does not contain "XP" as reward label in JSON', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = seededSubjectState(now);
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  const stats = {
+    due: 0, weak: 0,
+    securedRewardUnits: model.progressSnapshot.securedRewardUnits,
+    accuracy: 0,
+  };
+  const dashboard = buildPunctuationDashboardModel(stats, { prefs: { mode: 'smart' } }, {}, model.starView);
+  const json = JSON.stringify(dashboard);
+
+  const xpPattern = /(?:^|[\s>"`'{(])XP(?:[\s<"`'}).,;:]|$)/m;
+  assert.equal(xpPattern.test(json), false,
+    'Dashboard model JSON must not contain "XP" as a reward label.');
+});
+
+test('negative: read-model output does not contain reserved monsters in JSON', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: seededSubjectState(now),
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  const json = JSON.stringify(model).toLowerCase();
+  for (const reserved of ['colisk', 'hyphang', 'carillon']) {
+    assert.equal(json.includes(reserved), false,
+      `Reserved monster "${reserved}" must not appear in the read-model output.`);
   }
 });
