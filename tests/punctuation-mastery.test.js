@@ -9,6 +9,7 @@ import {
   createPunctuationMasteryKey,
   PUNCTUATION_RELEASE_ID,
 } from '../shared/punctuation/content.js';
+import { punctuationSessionSummaryStage } from '../shared/punctuation/service.js';
 import {
   progressForPunctuationMonster,
   recordPunctuationRewardUnitMastery,
@@ -77,7 +78,7 @@ test('stageFor with PUNCTUATION_MASTERED_THRESHOLDS: 4 mastered -> stage 3', () 
 });
 
 test('stageFor with PUNCTUATION_MASTERED_THRESHOLDS: 6 mastered -> stage 3', () => {
-  // 6 matches threshold[3] = 6 but not threshold[4] = 14, so stage 3.
+  // 6 >= threshold[3] = 4 but < threshold[4] = 14, so stage 3.
   assert.equal(stageFor(6, PUNCTUATION_MASTERED_THRESHOLDS), 3);
 });
 
@@ -376,4 +377,22 @@ test('Claspin 2/2 under count-based thresholds no longer reaches Mega (stage 4)'
   const progress = progressForPunctuationMonster(repository.state(), 'claspin', { publishedTotal: 2 });
   assert.equal(progress.stage, 2, 'Claspin 2/2 must be stage 2 (NOT stage 4 / Mega)');
   assert.equal(progress.mastered, 2);
+});
+
+// ---------------------------------------------------------------------------
+// 7. Parity: punctuationSessionSummaryStage vs stageFor(n, PUNCTUATION_MASTERED_THRESHOLDS)
+//    The service helper is an inlined copy of the platform stageFor logic.
+//    This test asserts both return identical results for all n in 0..15.
+// ---------------------------------------------------------------------------
+
+test('punctuationSessionSummaryStage matches stageFor(n, PUNCTUATION_MASTERED_THRESHOLDS) for n=0..15', () => {
+  for (let n = 0; n <= 15; n++) {
+    const fromStageFor = stageFor(n, PUNCTUATION_MASTERED_THRESHOLDS);
+    const fromSummary = punctuationSessionSummaryStage(n);
+    assert.equal(
+      fromSummary,
+      fromStageFor,
+      `Parity mismatch at n=${n}: stageFor returned ${fromStageFor}, punctuationSessionSummaryStage returned ${fromSummary}`,
+    );
+  }
 });

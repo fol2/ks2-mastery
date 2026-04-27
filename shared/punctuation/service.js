@@ -957,23 +957,18 @@ function sessionSkillsExercised(session = {}, indexes = PUNCTUATION_CONTENT_INDE
   return ordered;
 }
 
-// Phase 4 U5 review follow-on (FINDING A): reproduce the bucketed stage
-// function from `src/platform/game/mastery/punctuation.js:punctuationStageFor`
-// here as a tiny pure helper so the Worker-bundled service does NOT depend on
-// platform/game imports. The 0/1/2/3/4 bucket definition is the visible
-// contract every summary monster-progress teaser + every monster strip on
-// every subject surface reads — keeping it in lock-step is a parity
-// invariant, so the two definitions MUST stay identical. Any change must
-// land in both places simultaneously (drift test: a future dedicated parity
-// test belongs in `tests/punctuation-legacy-parity.test.js` scope; not added
-// here to avoid touching the oracle).
-function punctuationSessionSummaryStage(mastered, total) {
-  const denominator = Math.max(1, Number(total) || 1);
-  const ratio = Math.max(0, Math.min(1, (Number(mastered) || 0) / denominator));
-  if (ratio >= 1) return 4;
-  if (ratio >= 2 / 3) return 3;
-  if (ratio >= 1 / 3) return 2;
-  if (ratio > 0) return 1;
+// Phase 5 U2: count-based stage helper mirroring `stageFor(n, PUNCTUATION_MASTERED_THRESHOLDS)`
+// in `src/platform/game/monsters.js`. Inlined here so the Worker-bundled
+// service does NOT depend on platform/game imports. The threshold values
+// [1, 1, 2, 4, 14] MUST match PUNCTUATION_MASTERED_THRESHOLDS in monsters.js.
+// A parity test in `tests/punctuation-mastery.test.js` asserts identical
+// results for all n in 0..15.
+export function punctuationSessionSummaryStage(mastered) {
+  const thresholds = [1, 1, 2, 4, 14];
+  const count = Number(mastered) || 0;
+  for (let stage = 4; stage >= 1; stage -= 1) {
+    if (count >= thresholds[stage]) return stage;
+  }
   return 0;
 }
 

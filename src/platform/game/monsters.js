@@ -205,6 +205,11 @@ export const MONSTERS_BY_SUBJECT = {
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);
 export const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
 export const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 213]);
+// Count-based thresholds for Punctuation monster stages (Tier 1).
+// Index 0 is unused by stageFor (the loop starts at stage 1).
+// [_, 1, 2, 4, 14] means: stage 1 at 1 mastered, stage 2 at 2, stage 3 at 4, stage 4 (Mega) at 14.
+// Deliberately tighter than the plan's [1, 2, 4, 6, 14] — stage 3 at 4 mastered
+// gives Pealark (5 units) and Curlune (7 units) a reachable stage 3.
 export const PUNCTUATION_MASTERED_THRESHOLDS = Object.freeze([1, 1, 2, 4, 14]);
 export const PUNCTUATION_STAR_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
 export const PUNCTUATION_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 25, 50, 100]);
