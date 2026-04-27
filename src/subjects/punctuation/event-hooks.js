@@ -3,7 +3,10 @@ import {
   PUNCTUATION_CONTENT_MANIFEST,
 } from '../../../shared/punctuation/content.js';
 import { PUNCTUATION_EVENT_TYPES } from '../../../shared/punctuation/events.js';
-import { recordPunctuationRewardUnitMastery } from '../../platform/game/monster-system.js';
+import {
+  recordPunctuationRewardUnitMastery,
+  updatePunctuationStarHighWater,
+} from '../../platform/game/monster-system.js';
 
 function clusterTotals(indexes) {
   const totals = {};
@@ -27,7 +30,24 @@ export function createPunctuationRewardSubscriber({
   return function punctuationRewardSubscriber(events = []) {
     const rewardEvents = [];
     for (const event of Array.isArray(events) ? events : []) {
-      if (!event || event.type !== PUNCTUATION_EVENT_TYPES.UNIT_SECURED) continue;
+      if (!event) continue;
+
+      if (event.type === PUNCTUATION_EVENT_TYPES.STAR_EVIDENCE_UPDATED) {
+        const computedStars = Number(event.computedStars);
+        if (!event.monsterId || !Number.isFinite(computedStars) || computedStars < 1) continue;
+        rewardEvents.push(
+          ...updatePunctuationStarHighWater({
+            learnerId: event.learnerId,
+            monsterId: event.monsterId,
+            computedStars,
+            gameStateRepository,
+            random,
+          }),
+        );
+        continue;
+      }
+
+      if (event.type !== PUNCTUATION_EVENT_TYPES.UNIT_SECURED) continue;
       const unit = indexes.rewardUnitByKey.get(event.masteryKey)
         || indexes.rewardUnitById.get(event.rewardUnitId);
       const cluster = indexes.clusterById.get(event.clusterId || unit?.clusterId);
