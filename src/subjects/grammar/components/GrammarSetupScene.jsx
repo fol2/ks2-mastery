@@ -166,7 +166,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
       conceptNodesMap[c.id] = c;
     }
   }
-  const recentAttempts = Array.isArray(grammar?.recentAttempts) ? grammar.recentAttempts : [];
+  const recentAttempts = Array.isArray(grammar?.analytics?.recentAttempts) ? grammar.analytics.recentAttempts : [];
 
   const dashboard = buildGrammarDashboardModel(grammar, learner, rewardState, conceptNodesMap, recentAttempts);
   const selectedMode = dashboard.primaryMode;
