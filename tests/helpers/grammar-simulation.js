@@ -451,6 +451,509 @@ export function questionTypeCountsInPack(pack) {
   return counts;
 }
 
+// -----------------------------------------------------------------------------
+// Multi-day Star-curve simulation (Phase 5 U3)
+// -----------------------------------------------------------------------------
+
+import {
+  GRAMMAR_MONSTER_STAR_MAX,
+  GRAMMAR_STAR_STAGE_THRESHOLDS,
+  GRAMMAR_CONCEPT_STAR_WEIGHTS,
+  deriveGrammarConceptStarEvidence,
+  computeGrammarMonsterStars,
+  grammarStarStageFor,
+} from '../../shared/grammar/grammar-stars.js';
+
+import {
+  GRAMMAR_MONSTER_CONCEPTS,
+  GRAMMAR_AGGREGATE_CONCEPTS,
+} from '../../src/platform/game/mastery/grammar.js';
+
+/** One simulated day in milliseconds. */
+export const DAY_MS = 86_400_000;
+
+/**
+ * Seeded PRNG matching the one used in grammar-concordium-invariant.test.js.
+ * Returns values in [0, 1).
+ */
+export function makeSeededRandom(seed = 1) {
+  let value = seed >>> 0;
+  return function seededRandom() {
+    value += 0x6D2B79F5;
+    let result = Math.imul(value ^ (value >>> 15), 1 | value);
+    result ^= result + Math.imul(result ^ (result >>> 7), 61 | result);
+    return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// All 13 Grammar concepts that map to direct monsters.
+const DIRECT_GRAMMAR_CONCEPTS = Object.values(GRAMMAR_MONSTER_CONCEPTS).flat();
+
+// The 5 Punctuation-for-Grammar concepts (in Concordium only).
+const PUNCTUATION_CONCEPTS = GRAMMAR_AGGREGATE_CONCEPTS.filter(
+  (c) => !DIRECT_GRAMMAR_CONCEPTS.includes(c),
+);
+
+/**
+ * Create a fresh per-concept mastery map for the simulation.
+ * Each concept tracks the minimal fields needed for evidence-tier derivation.
+ *
+ * The initial strength of 0.10 models a fresh concept with no prior exposure.
+ * Strength grows by +0.08 per correct (slower than the +0.15 in the real
+ * engine, which already accounts for quality-weighted adjustments that make
+ * the effective gain closer to 0.08 for typical answers). This means reaching
+ * secure (>= 0.82) takes ~9 consecutive correct answers from scratch.
+ */
+function createSimConceptMap() {
+  const map = {};
+  for (const conceptId of GRAMMAR_AGGREGATE_CONCEPTS) {
+    map[conceptId] = {
+      attempts: 0,
+      correct: 0,
+      wrong: 0,
+      independentCorrects: 0,
+      strength: 0.10,
+      intervalDays: 0,
+      correctStreak: 0,
+      distinctTemplates: new Set(),
+      dueDay: 0, // day number when next due
+      wasSecured: false, // latched: was ever at secure threshold
+      retentionProven: false, // latched: independent correct after secure
+      secureDaySeen: null, // day when first reached secure (for retention timing)
+    };
+  }
+  return map;
+}
+
+/**
+ * Determine which evidence tiers are unlocked for a concept node.
+ * This mirrors deriveGrammarConceptStarEvidence but operates on our
+ * simplified simulation nodes rather than engine recentAttempts.
+ */
+function simEvidenceForConcept(node) {
+  const evidence = {
+    firstIndependentWin: false,
+    repeatIndependentWin: false,
+    variedPractice: false,
+    secureConfidence: false,
+    retainedAfterSecure: false,
+  };
+  if (node.independentCorrects >= 1) evidence.firstIndependentWin = true;
+  if (node.independentCorrects >= 2) evidence.repeatIndependentWin = true;
+  if (node.distinctTemplates.size >= 2) evidence.variedPractice = true;
+
+  const isSecure = node.strength >= 0.82 && node.intervalDays >= 7 && node.correctStreak >= 3;
+  if (isSecure || node.wasSecured) {
+    evidence.secureConfidence = true;
+  }
+
+  if (node.retentionProven) {
+    evidence.retainedAfterSecure = true;
+  }
+  return evidence;
+}
+
+/**
+ * Compute Stars for a monster using simulation concept nodes.
+ */
+function simMonsterStars(monsterId, conceptMap) {
+  const conceptIds = monsterId === 'concordium'
+    ? GRAMMAR_AGGREGATE_CONCEPTS
+    : (GRAMMAR_MONSTER_CONCEPTS[monsterId] || []);
+
+  const evidenceMap = {};
+  for (const cid of conceptIds) {
+    evidenceMap[cid] = simEvidenceForConcept(conceptMap[cid]);
+  }
+  return computeGrammarMonsterStars(monsterId, evidenceMap);
+}
+
+/**
+ * Pick concepts for today's round using a scheduling heuristic that models
+ * real Smart Practice behaviour:
+ *
+ *  1. Due concepts first (dueDay <= currentDay) — spaced repetition review
+ *  2. Secured-but-not-retained concepts — retention review candidates
+ *  3. Weakest non-due concepts (lowest strength) — struggling areas
+ *  4. Fresh concepts (never attempted) — new material introduction
+ *
+ * The scheduler introduces at most 1-2 fresh concepts per day (matching the
+ * real engine's pacing) and reserves ~30% of the round for retention review
+ * of secured concepts that have not yet proven retention.
+ *
+ * Each concept appears at most twice per day to avoid artificial cramming.
+ *
+ * Returns up to `count` concept IDs.
+ */
+function pickConceptsForDay(conceptMap, currentDay, count, rng) {
+  const due = [];
+  const needsRetention = [];
+  const weak = [];
+  const fresh = [];
+
+  for (const conceptId of DIRECT_GRAMMAR_CONCEPTS) {
+    const node = conceptMap[conceptId];
+    if (node.attempts === 0) {
+      fresh.push(conceptId);
+    } else if (node.dueDay <= currentDay) {
+      due.push(conceptId);
+    } else if (node.wasSecured && !node.retentionProven) {
+      needsRetention.push(conceptId);
+    } else {
+      weak.push(conceptId);
+    }
+  }
+
+  // Sort weak by strength ascending (weakest first).
+  weak.sort((a, b) => conceptMap[a].strength - conceptMap[b].strength);
+  // Shuffle retention and fresh pools for variety.
+  shuffleArray(needsRetention, rng);
+  shuffleArray(fresh, rng);
+
+  const picks = [];
+  const conceptCount = new Map();
+
+  function tryAdd(conceptId) {
+    if (picks.length >= count) return false;
+    const c = conceptCount.get(conceptId) || 0;
+    if (c >= 2) return false; // max 2 per concept per day
+    picks.push(conceptId);
+    conceptCount.set(conceptId, c + 1);
+    return true;
+  }
+
+  // Phase 1: due concepts (spaced repetition).
+  for (const cid of due) tryAdd(cid);
+
+  // Phase 2: retention review — ~30% of remaining capacity.
+  const retentionSlots = Math.max(1, Math.floor((count - picks.length) * 0.3));
+  for (let i = 0; i < retentionSlots && i < needsRetention.length; i++) {
+    tryAdd(needsRetention[i]);
+  }
+
+  // Phase 3: weak concepts.
+  for (const cid of weak) tryAdd(cid);
+
+  // Phase 4: fresh concepts — at most 2 new per day.
+  let freshAdded = 0;
+  for (const cid of fresh) {
+    if (freshAdded >= 2) break;
+    if (tryAdd(cid)) freshAdded++;
+  }
+
+  // Phase 5: fill remaining slots by cycling through all available.
+  const allPool = [...due, ...needsRetention, ...weak, ...fresh];
+  let poolIdx = 0;
+  while (picks.length < count && allPool.length > 0) {
+    tryAdd(allPool[poolIdx % allPool.length]);
+    poolIdx++;
+    if (poolIdx > allPool.length * 3) break; // safety valve
+  }
+
+  return picks;
+}
+
+function shuffleArray(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+}
+
+/**
+ * Apply the result of a single question attempt to a concept node.
+ *
+ * @param {object} node - The simulation concept node (mutated in place).
+ * @param {boolean} correct - Whether the answer was correct.
+ * @param {boolean} independent - Whether the answer was independent (no support).
+ * @param {number} rng - A call to the seeded PRNG (for template assignment).
+ * @param {number} currentDay - The current simulation day.
+ */
+function applySimAttempt(node, correct, independent, rng, currentDay) {
+  node.attempts++;
+
+  // Assign a "template" — we use a simple numeric scheme. Each concept
+  // can cycle through 4 simulated templates (matching the 2-template
+  // minimum needed for variedPractice).
+  const templateId = Math.floor(rng() * 4);
+  node.distinctTemplates.add(templateId);
+
+  if (correct) {
+    node.correct++;
+    if (independent) {
+      node.independentCorrects++;
+
+      // Check retention BEFORE updating strength/streak, because
+      // "retained after secure" means the learner was PREVIOUSLY secure
+      // and is now answering correctly again. The concept must have been
+      // secured on a PREVIOUS day (not today) to count as retention.
+      if (node.wasSecured && !node.retentionProven && node.secureDaySeen !== null && currentDay > node.secureDaySeen) {
+        node.retentionProven = true;
+      }
+    }
+    node.correctStreak++;
+
+    // Strength gain: +0.08 per correct. From 0.10, reaching 0.82 takes
+    // ceil((0.82 - 0.10) / 0.08) = 9 consecutive correct answers.
+    // With spaced repetition, this spans multiple days.
+    node.strength = Math.min(0.99, node.strength + 0.08);
+
+    // SM-2-like interval advancement:
+    //   0 -> 1 -> 2 -> 4 -> 7 -> 12 -> 21 -> 37 -> 64 -> 90
+    // This models the real engine's graduated spacing. Reaching
+    // intervalDays >= 7 takes at least 5 consecutive correct reviews
+    // across different days.
+    if (node.intervalDays === 0) {
+      node.intervalDays = 1;
+    } else if (node.intervalDays === 1) {
+      node.intervalDays = 2;
+    } else {
+      node.intervalDays = Math.min(90, Math.round(node.intervalDays * 1.75));
+    }
+    node.dueDay = currentDay + node.intervalDays;
+  } else {
+    node.wrong++;
+    node.correctStreak = 0;
+    // Wrong answer reduces strength and resets interval partially.
+    node.strength = Math.max(0.02, node.strength - 0.12);
+    // Interval does not fully reset — drop to max(1, floor(interval/3)).
+    node.intervalDays = Math.max(1, Math.floor(node.intervalDays / 3));
+    node.dueDay = currentDay + 1;
+  }
+
+  // Latch secure status: strength >= 0.82, interval >= 7 days, streak >= 3.
+  if (
+    !node.wasSecured &&
+    node.strength >= 0.82 &&
+    node.intervalDays >= 7 &&
+    node.correctStreak >= 3
+  ) {
+    node.wasSecured = true;
+    node.secureDaySeen = currentDay;
+  }
+}
+
+/**
+ * Also update punctuation concepts (for Concordium). These advance
+ * independently via the Punctuation subject with its own practice sessions.
+ *
+ * Models a child doing Punctuation practice on most school days:
+ * - Ideal: 5 days/week, 2 punctuation concepts per session
+ * - Typical: 4 days/week, 1-2 punctuation concepts per session
+ * - Struggling: 3 days/week, 1 punctuation concept per session
+ *
+ * Punctuation concepts follow the same mastery model (strength, interval,
+ * streak) since they feed into Concordium via the cross-subject pipeline.
+ */
+function advancePunctuationConcepts(conceptMap, currentDay, rng, profile) {
+  // Determine if today is a punctuation practice day.
+  const dayOfWeek = currentDay % 7; // 0=Mon..6=Sun
+  const isWeekend = dayOfWeek >= 5;
+  if (isWeekend) return; // No weekend practice
+
+  const practiceChance = profile === 'ideal' ? 1.0 : profile === 'typical' ? 0.8 : 0.6;
+  if (rng() > practiceChance) return;
+
+  const conceptsPerSession = profile === 'ideal' ? 2 : profile === 'typical' ? (rng() < 0.5 ? 2 : 1) : 1;
+  const correctRate = profile === 'ideal' ? 0.90 : profile === 'typical' ? 0.75 : 0.55;
+
+  // Pick punctuation concepts: due first, then by lowest strength.
+  const sorted = PUNCTUATION_CONCEPTS.slice().sort((a, b) => {
+    const aNode = conceptMap[a];
+    const bNode = conceptMap[b];
+    // Due concepts first.
+    const aDue = aNode.dueDay <= currentDay ? 0 : 1;
+    const bDue = bNode.dueDay <= currentDay ? 0 : 1;
+    if (aDue !== bDue) return aDue - bDue;
+    // Then by strength ascending.
+    return aNode.strength - bNode.strength;
+  });
+
+  for (let i = 0; i < conceptsPerSession && i < sorted.length; i++) {
+    const cid = sorted[i];
+    const node = conceptMap[cid];
+    const isCorrect = rng() < correctRate;
+    applySimAttempt(node, isCorrect, isCorrect, rng, currentDay);
+  }
+}
+
+/**
+ * Run a multi-day Grammar star-curve simulation for a learner profile.
+ *
+ * @param {string} profileName - 'ideal' | 'typical' | 'struggling'
+ * @param {object} options
+ * @param {number} options.questionsPerDay - Questions per day (5 or 10).
+ * @param {number} options.seed - Seed for deterministic PRNG.
+ * @param {number} [options.maxDays=150] - Maximum days to simulate.
+ * @returns {object} Milestone timeline results.
+ */
+export function simulateStarCurveProfile(profileName, { questionsPerDay, seed, maxDays = 150 } = {}) {
+  const rng = makeSeededRandom(seed);
+  const conceptMap = createSimConceptMap();
+
+  // Profile-specific parameters.
+  const correctRate = profileName === 'ideal' ? 0.90
+    : profileName === 'typical' ? 0.75 : 0.55;
+  const supportRate = profileName === 'ideal' ? 0.00
+    : profileName === 'typical' ? 0.20 : 0.40;
+
+  // Track milestone days.
+  const milestones = {
+    daysToFirstDirectEgg: null,
+    daysToFirstHatch: null,
+    daysToFirstDirectMega: null,
+    daysToFirstConcordiumEgg: null,
+    daysToGrandConcordium: null,
+    finalStars: {},
+    dayLog: [],
+  };
+
+  const directMonsters = ['bracehart', 'chronalyx', 'couronnail'];
+
+  for (let day = 1; day <= maxDays; day++) {
+    // Pick concepts for today's round.
+    const todaysConcepts = pickConceptsForDay(conceptMap, day, questionsPerDay, rng);
+
+    // Simulate each question.
+    for (const conceptId of todaysConcepts) {
+      const node = conceptMap[conceptId];
+      const isCorrect = rng() < correctRate;
+      const isSupported = rng() < supportRate;
+      const isIndependent = isCorrect && !isSupported;
+
+      applySimAttempt(node, isCorrect, isIndependent, rng, day);
+    }
+
+    // Advance punctuation concepts for Concordium.
+    advancePunctuationConcepts(conceptMap, day, rng, profileName);
+
+    // Compute Stars for all monsters.
+    const starsByMonster = {};
+    for (const mid of [...directMonsters, 'concordium']) {
+      starsByMonster[mid] = simMonsterStars(mid, conceptMap).stars;
+    }
+
+    // Check milestones for direct monsters.
+    if (milestones.daysToFirstDirectEgg === null) {
+      for (const mid of directMonsters) {
+        if (starsByMonster[mid] >= GRAMMAR_STAR_STAGE_THRESHOLDS.egg) {
+          milestones.daysToFirstDirectEgg = day;
+          break;
+        }
+      }
+    }
+    if (milestones.daysToFirstHatch === null) {
+      for (const mid of directMonsters) {
+        if (starsByMonster[mid] >= GRAMMAR_STAR_STAGE_THRESHOLDS.hatch) {
+          milestones.daysToFirstHatch = day;
+          break;
+        }
+      }
+    }
+    if (milestones.daysToFirstDirectMega === null) {
+      for (const mid of directMonsters) {
+        if (starsByMonster[mid] >= GRAMMAR_STAR_STAGE_THRESHOLDS.mega) {
+          milestones.daysToFirstDirectMega = day;
+          break;
+        }
+      }
+    }
+
+    // Check Concordium milestones.
+    if (milestones.daysToFirstConcordiumEgg === null) {
+      if (starsByMonster.concordium >= GRAMMAR_STAR_STAGE_THRESHOLDS.egg) {
+        milestones.daysToFirstConcordiumEgg = day;
+      }
+    }
+    if (milestones.daysToGrandConcordium === null) {
+      if (starsByMonster.concordium >= GRAMMAR_STAR_STAGE_THRESHOLDS.mega) {
+        milestones.daysToGrandConcordium = day;
+      }
+    }
+
+    // Snapshot for day log (sparse — only when milestones change or every 7 days).
+    if (
+      day <= 3 ||
+      day % 7 === 0 ||
+      day === maxDays ||
+      milestones.daysToFirstDirectEgg === day ||
+      milestones.daysToFirstHatch === day ||
+      milestones.daysToFirstDirectMega === day ||
+      milestones.daysToFirstConcordiumEgg === day ||
+      milestones.daysToGrandConcordium === day
+    ) {
+      milestones.dayLog.push({ day, stars: { ...starsByMonster } });
+    }
+
+    // Early exit when all milestones hit.
+    if (
+      milestones.daysToFirstDirectEgg !== null &&
+      milestones.daysToFirstHatch !== null &&
+      milestones.daysToFirstDirectMega !== null &&
+      milestones.daysToFirstConcordiumEgg !== null &&
+      milestones.daysToGrandConcordium !== null
+    ) {
+      milestones.finalStars = starsByMonster;
+      break;
+    }
+  }
+
+  // Compute final Stars if not already set.
+  if (!milestones.finalStars || Object.keys(milestones.finalStars).length === 0) {
+    const starsByMonster = {};
+    for (const mid of [...directMonsters, 'concordium']) {
+      starsByMonster[mid] = simMonsterStars(mid, conceptMap).stars;
+    }
+    milestones.finalStars = starsByMonster;
+  }
+
+  return milestones;
+}
+
+/**
+ * Run a profile simulation across multiple seeds and return aggregated results.
+ *
+ * @param {string} profileName
+ * @param {object} options
+ * @param {number} options.questionsPerDay
+ * @param {number[]} options.seeds
+ * @param {number} [options.maxDays]
+ * @returns {{ seeds: number[], results: object[], medians: object }}
+ */
+export function simulateStarCurveAcrossSeeds(profileName, { questionsPerDay, seeds, maxDays } = {}) {
+  const results = [];
+  for (const seed of seeds) {
+    results.push({
+      seed,
+      ...simulateStarCurveProfile(profileName, { questionsPerDay, seed, maxDays }),
+    });
+  }
+
+  // Compute medians for each milestone across seeds.
+  const milestoneKeys = [
+    'daysToFirstDirectEgg',
+    'daysToFirstHatch',
+    'daysToFirstDirectMega',
+    'daysToFirstConcordiumEgg',
+    'daysToGrandConcordium',
+  ];
+
+  const medians = {};
+  for (const key of milestoneKeys) {
+    const values = results
+      .map((r) => r[key])
+      .filter((v) => v !== null)
+      .sort((a, b) => a - b);
+    medians[key] = values.length > 0
+      ? values[Math.floor(values.length / 2)]
+      : null;
+  }
+
+  return { seeds, results, medians };
+}
+
 /**
  * True iff `queue` contains any run of length >= 3 of consecutive entries
  * that share at least one concept id.
