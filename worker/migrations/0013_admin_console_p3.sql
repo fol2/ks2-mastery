@@ -13,7 +13,7 @@
 -- deduped ops_error_events row via event_id.
 CREATE TABLE IF NOT EXISTS ops_error_event_occurrences (
   id TEXT PRIMARY KEY,
-  event_id TEXT NOT NULL,
+  event_id TEXT NOT NULL REFERENCES ops_error_events(id) ON DELETE CASCADE,
   occurred_at INTEGER NOT NULL,
   release TEXT,
   route_name TEXT,
@@ -35,10 +35,10 @@ CREATE TABLE IF NOT EXISTS admin_request_denials (
   route_name TEXT,
   account_id TEXT,
   learner_id TEXT,
-  session_id_last8 TEXT,
+  session_id_last8 TEXT CHECK (session_id_last8 IS NULL OR length(session_id_last8) <= 8),
   is_demo INTEGER DEFAULT 0,
   release TEXT,
-  detail_json TEXT
+  detail_json TEXT CHECK (detail_json IS NULL OR json_valid(detail_json))
 );
 
 CREATE INDEX IF NOT EXISTS idx_denials_denied_at
@@ -52,12 +52,16 @@ CREATE INDEX IF NOT EXISTS idx_denials_reason_denied_at
 -- maintenance notices surfaced to customers via the admin console (R19).
 CREATE TABLE IF NOT EXISTS admin_marketing_messages (
   id TEXT PRIMARY KEY,
-  message_type TEXT NOT NULL DEFAULT 'announcement',
-  status TEXT NOT NULL DEFAULT 'draft',
+  message_type TEXT NOT NULL DEFAULT 'announcement'
+    CHECK (message_type IN ('announcement', 'maintenance')),
+  status TEXT NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'scheduled', 'published', 'paused', 'archived')),
   title TEXT NOT NULL,
   body_text TEXT NOT NULL,
-  severity_token TEXT DEFAULT 'info',
-  audience TEXT NOT NULL DEFAULT 'internal',
+  severity_token TEXT DEFAULT 'info'
+    CHECK (severity_token IN ('info', 'warning')),
+  audience TEXT NOT NULL DEFAULT 'internal'
+    CHECK (audience IN ('internal', 'demo', 'all_signed_in')),
   starts_at INTEGER,
   ends_at INTEGER,
   created_by TEXT NOT NULL,

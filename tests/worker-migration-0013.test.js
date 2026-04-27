@@ -352,6 +352,190 @@ test('idx_denials_reason_denied_at routes per-reason denial query off table scan
   }
 });
 
+// ---------------------------------------------------------------------------
+// ADV-0013-02: FK constraint — orphaned occurrence insert rejected
+// ---------------------------------------------------------------------------
+
+test('FK constraint rejects occurrence with event_id not in ops_error_events', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    // foreign_keys = ON is already set by the SqliteD1Database constructor
+    assert.throws(
+      () => {
+        db.db.prepare(`
+          INSERT INTO ops_error_event_occurrences (id, event_id, occurred_at)
+          VALUES ('occ-1', 'nonexistent-event', 1714200000)
+        `).run();
+      },
+      /FOREIGN KEY constraint failed/,
+    );
+  } finally {
+    db.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// ADV-0013-01: CHECK constraints — marketing enum fields
+// ---------------------------------------------------------------------------
+
+test('CHECK constraint rejects invalid status in admin_marketing_messages', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    assert.throws(
+      () => {
+        db.db.prepare(`
+          INSERT INTO admin_marketing_messages
+            (id, message_type, status, title, body_text, severity_token, audience,
+             created_by, updated_by, created_at, updated_at)
+          VALUES ('m-1', 'announcement', 'BOGUS', 'T', 'B', 'info', 'internal',
+                  'admin', 'admin', 1714200000, 1714200000)
+        `).run();
+      },
+      /CHECK constraint failed/,
+    );
+  } finally {
+    db.close();
+  }
+});
+
+test('CHECK constraint rejects invalid message_type in admin_marketing_messages', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    assert.throws(
+      () => {
+        db.db.prepare(`
+          INSERT INTO admin_marketing_messages
+            (id, message_type, status, title, body_text, severity_token, audience,
+             created_by, updated_by, created_at, updated_at)
+          VALUES ('m-2', 'newsletter', 'draft', 'T', 'B', 'info', 'internal',
+                  'admin', 'admin', 1714200000, 1714200000)
+        `).run();
+      },
+      /CHECK constraint failed/,
+    );
+  } finally {
+    db.close();
+  }
+});
+
+test('CHECK constraint rejects invalid audience in admin_marketing_messages', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    assert.throws(
+      () => {
+        db.db.prepare(`
+          INSERT INTO admin_marketing_messages
+            (id, message_type, status, title, body_text, severity_token, audience,
+             created_by, updated_by, created_at, updated_at)
+          VALUES ('m-3', 'announcement', 'draft', 'T', 'B', 'info', 'everyone',
+                  'admin', 'admin', 1714200000, 1714200000)
+        `).run();
+      },
+      /CHECK constraint failed/,
+    );
+  } finally {
+    db.close();
+  }
+});
+
+test('CHECK constraint rejects invalid severity_token in admin_marketing_messages', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    assert.throws(
+      () => {
+        db.db.prepare(`
+          INSERT INTO admin_marketing_messages
+            (id, message_type, status, title, body_text, severity_token, audience,
+             created_by, updated_by, created_at, updated_at)
+          VALUES ('m-4', 'announcement', 'draft', 'T', 'B', 'critical', 'internal',
+                  'admin', 'admin', 1714200000, 1714200000)
+        `).run();
+      },
+      /CHECK constraint failed/,
+    );
+  } finally {
+    db.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// ADV-0013-04: session_id_last8 length CHECK
+// ---------------------------------------------------------------------------
+
+test('CHECK constraint rejects session_id_last8 longer than 8 characters', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    assert.throws(
+      () => {
+        db.db.prepare(`
+          INSERT INTO admin_request_denials
+            (id, denied_at, denial_reason, session_id_last8)
+          VALUES ('d-1', 1714200000, 'unauthorized', '123456789')
+        `).run();
+      },
+      /CHECK constraint failed/,
+    );
+  } finally {
+    db.close();
+  }
+});
+
+test('session_id_last8 accepts exactly 8 characters', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    db.db.prepare(`
+      INSERT INTO admin_request_denials
+        (id, denied_at, denial_reason, session_id_last8)
+      VALUES ('d-ok', 1714200000, 'unauthorized', '12345678')
+    `).run();
+    const row = db.db.prepare('SELECT session_id_last8 FROM admin_request_denials WHERE id = ?').get('d-ok');
+    assert.equal(row.session_id_last8, '12345678');
+  } finally {
+    db.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// ADV-0013-05: detail_json json_valid CHECK
+// ---------------------------------------------------------------------------
+
+test('CHECK constraint rejects malformed JSON in detail_json', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    assert.throws(
+      () => {
+        db.db.prepare(`
+          INSERT INTO admin_request_denials
+            (id, denied_at, denial_reason, detail_json)
+          VALUES ('d-bad-json', 1714200000, 'unauthorized', '{not valid json')
+        `).run();
+      },
+      /CHECK constraint failed/,
+    );
+  } finally {
+    db.close();
+  }
+});
+
+test('detail_json accepts valid JSON', () => {
+  const db = createMigratedSqliteD1Database();
+  try {
+    db.db.prepare(`
+      INSERT INTO admin_request_denials
+        (id, denied_at, denial_reason, detail_json)
+      VALUES ('d-good-json', 1714200000, 'unauthorized', '{"reason":"test"}')
+    `).run();
+    const row = db.db.prepare('SELECT detail_json FROM admin_request_denials WHERE id = ?').get('d-good-json');
+    assert.equal(row.detail_json, '{"reason":"test"}');
+  } finally {
+    db.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Index query plans
+// ---------------------------------------------------------------------------
+
 test('idx_marketing_status_starts routes active-message query off table scan', () => {
   const db = createMigratedSqliteD1Database();
   try {
