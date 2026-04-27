@@ -145,15 +145,16 @@ test('evidence tier: secureConfidence false when correctStreak < 3', () => {
   assert.equal(result.secureConfidence, false);
 });
 
-test('evidence tier: retainedAfterSecure requires secure + >= 2 independent corrects (ADV-003, production shape)', () => {
-  // Concept is secured (intervalDays >= 7) and has 2 independent corrects.
-  // The first proves independent mastery; the second proves retention.
+test('evidence tier: retainedAfterSecure requires secure + post-secure independent correct (ADV-003+U3, production shape)', () => {
+  // Concept is secured (intervalDays: 14). securedAtTs ≈ nowTs - 14d.
+  // At least 1 independent correct must have createdAt > securedAtTs.
+  const nowTs = 1_700_000_000_000; // fixed reference
   const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
   const recentAttempts = [
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 3 * 86400000 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 1 * 86400000 },
   ];
-  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
   assert.equal(result.secureConfidence, true);
   assert.equal(result.retainedAfterSecure, true);
 });
@@ -211,13 +212,14 @@ test('evidence tier: only matching conceptId entries count (production shape)', 
 });
 
 test('evidence tier: all 5 tiers true for fully evidenced concept', () => {
+  const nowTs = 1_700_000_000_000;
   const conceptNode = { attempts: 15, correct: 14, wrong: 1, strength: 0.90, intervalDays: 14, correctStreak: 8 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: 'tmpl-c', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 3 * 86400000 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 2 * 86400000 },
+    { conceptId: 'clauses', templateId: 'tmpl-c', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 1 * 86400000 },
   ];
-  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
   assert.equal(result.firstIndependentWin, true);
   assert.equal(result.repeatIndependentWin, true);
   assert.equal(result.variedPractice, true);
@@ -741,13 +743,14 @@ test('U1 CHAR: production-shape variedPractice with 2+ distinct templateIds', ()
 });
 
 test('U1 CHAR: production-shape all 5 tiers true for fully evidenced concept', () => {
+  const nowTs = 1_700_000_000_000;
   const conceptNode = { attempts: 15, correct: 14, wrong: 1, strength: 0.90, intervalDays: 14, correctStreak: 8 };
   const recentAttempts = [
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 3 * 86400000 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 2 * 86400000 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 1 * 86400000 },
   ];
-  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
   assert.equal(result.firstIndependentWin, true);
   assert.equal(result.repeatIndependentWin, true);
   assert.equal(result.variedPractice, true);
@@ -815,12 +818,14 @@ test('phase5 integration: derive evidence for each Couronnail concept then compu
   // Simulate a learner who has 2 independent corrects across 2 templates
   // for each Couronnail concept, with a secured mastery node.
   const couronnailConcepts = ['word_classes', 'standard_english', 'formality'];
+  const nowTs = 1_700_000_000_000;
 
   // Build shared recent attempts: 2 independent corrects per concept, 2 templates.
   // Uses production shape (conceptIds array, result.correct nested).
+  // U3: createdAt must be post-secure for retainedAfterSecure.
   const recentAttempts = couronnailConcepts.flatMap((conceptId) => [
-    { conceptIds: [conceptId], result: { correct: true, score: 1, maxScore: 1 }, templateId: `${conceptId}-tmpl-a`, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptIds: [conceptId], result: { correct: true, score: 1, maxScore: 1 }, templateId: `${conceptId}-tmpl-b`, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: [conceptId], result: { correct: true, score: 1, maxScore: 1 }, templateId: `${conceptId}-tmpl-a`, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 3 * 86400000 },
+    { conceptIds: [conceptId], result: { correct: true, score: 1, maxScore: 1 }, templateId: `${conceptId}-tmpl-b`, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 1 * 86400000 },
   ]);
 
   // Secured mastery node per concept.
@@ -833,6 +838,7 @@ test('phase5 integration: derive evidence for each Couronnail concept then compu
       conceptId,
       conceptNode: securedNode,
       recentAttempts,
+      nowTs,
     });
   }
 
@@ -906,4 +912,86 @@ test('U2: 2 correct on same template → variedPractice = false', () => {
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.variedPractice, false, 'Same template repeated does not prove varied practice');
+});
+
+// ---------------------------------------------------------------------------
+// U3: retainedAfterSecure temporal proof
+// ---------------------------------------------------------------------------
+
+test('U3: concept secured (intervalDays: 14), independent correct 3 days ago → retainedAfterSecure = true', () => {
+  const nowTs = 1_700_000_000_000;
+  // securedAtTs = nowTs - 14 * 86400000 = nowTs - 1_209_600_000
+  // createdAt = nowTs - 3d = well after securedAtTs
+  const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 3 * 86400000 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, true);
+});
+
+test('U3: concept secured (intervalDays: 7), independent correct 1 day ago → retainedAfterSecure = true', () => {
+  const nowTs = 1_700_000_000_000;
+  // securedAtTs = nowTs - 7d; createdAt = nowTs - 1d → post-secure
+  const conceptNode = { attempts: 10, correct: 9, wrong: 1, strength: 0.85, intervalDays: 7, correctStreak: 4 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 1 * 86400000 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, true);
+});
+
+test('U3: concept secured (intervalDays: 14), all independent corrects BEFORE estimated secure date → retainedAfterSecure = false', () => {
+  const nowTs = 1_700_000_000_000;
+  // securedAtTs = nowTs - 14d. Both createdAt values are 20d and 18d ago → before securedAtTs.
+  const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 20 * 86400000 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 18 * 86400000 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, false, 'All corrects predate estimated secure date');
+});
+
+test('U3: concept just became secure (intervalDays: 7), only 2 independent corrects from initial learning burst, both predate secure → retainedAfterSecure = false', () => {
+  const nowTs = 1_700_000_000_000;
+  // securedAtTs = nowTs - 7d. Both corrects are from 10d and 9d ago → before securedAtTs.
+  const conceptNode = { attempts: 8, correct: 7, wrong: 1, strength: 0.82, intervalDays: 7, correctStreak: 3 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 10 * 86400000 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 9 * 86400000 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, false, 'Initial learning burst corrects predate secure status');
+});
+
+test('U3: concept not yet secure (intervalDays: 6) → secureConfidence = false → retainedAfterSecure = false regardless', () => {
+  const nowTs = 1_700_000_000_000;
+  // intervalDays: 6 < 7 → secureConfidence = false; retainedAfterSecure must also be false
+  const conceptNode = { attempts: 5, correct: 5, wrong: 0, strength: 0.80, intervalDays: 6, correctStreak: 5 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 1 * 86400000 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: nowTs - 2 * 86400000 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
+  assert.equal(result.secureConfidence, false);
+  assert.equal(result.retainedAfterSecure, false, 'Not yet secure → retainedAfterSecure must be false');
+});
+
+test('U3: recentAttempts entry missing createdAt → excluded from temporal scan', () => {
+  const nowTs = 1_700_000_000_000;
+  // Concept is secured; 2 independent corrects but neither has createdAt.
+  // With no valid timestamps, no temporal proof can be established.
+  const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts, nowTs });
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, false, 'Missing createdAt entries cannot provide temporal proof');
 });
