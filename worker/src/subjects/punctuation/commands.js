@@ -145,9 +145,9 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
     // P7-U8: Punctuation Doctor diagnostic read model. Reads state but
     // does NOT mutate it — branches early like `record-event` to bypass
     // the engine/projection pipeline. Gated behind admin auth: the
-    // caller must have `isAdmin: true` in the session context.
+    // caller must have `platformRole: 'admin'` in the session context.
     if (command.command === PUNCTUATION_DIAGNOSTIC_COMMAND) {
-      if (!context.session?.isAdmin) {
+      if (context.session?.platformRole !== 'admin') {
         throw new NotFoundError('Punctuation diagnostic requires admin access.', {
           code: 'subject_command_not_found',
           subjectId: 'punctuation',
@@ -160,7 +160,14 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
         'punctuation',
         { skipAccessCheck: true },
       );
-      const codexEntries = runtimeRecord.gameState?.['monster-codex'] || {};
+      // readSubjectRuntimeBundle returns { subjectRecord, latestSession } —
+      // it does NOT include gameState. Load the learner's projection state
+      // separately to get the monster-codex entries (starHighWater, maxStageEver).
+      const projectionBundle = await context.repository.readLearnerProjectionState(
+        context.session.accountId,
+        command.learnerId,
+      );
+      const codexEntries = projectionBundle?.gameState?.['monster-codex'] || {};
       const rawStats = command.payload?.telemetryStats;
       const telemetryStats = rawStats && typeof rawStats === 'object' && !Array.isArray(rawStats)
         ? rawStats

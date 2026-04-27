@@ -14,6 +14,7 @@ import {
   DIRECT_PUNCTUATION_MONSTER_IDS,
   PUNCTUATION_GRAND_MONSTER_ID,
   PUNCTUATION_CLIENT_REWARD_UNITS,
+  CLASPIN_REQUIRED_SKILLS,
   MONSTER_CLUSTERS,
   MONSTER_UNIT_COUNT,
   SKILL_TO_CLUSTER,
@@ -128,15 +129,74 @@ function countDeepSecuredForMonster(rewardUnits, facets, monsterClusterIds) {
 }
 
 // ---------------------------------------------------------------------------
+// Per-monster facet summary for Mega gate diagnostics
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute facet-level signals that mirror the Mega gate checks in
+ * star-projection.js:computeMasteryStars. Returns a summary object
+ * with boolean flags consumed by `megaBlockedReasons`.
+ */
+function computeFacetMegaSummary(facets, monsterClusterIds, monsterId) {
+  const facetEntries = isPlainObject(facets) ? facets : {};
+  const itemModes = new Set();
+  const skillsWithDeepSecure = new Set();
+  let hasSpacedReturn = false;
+
+  for (const [facetId, facetState] of Object.entries(facetEntries)) {
+    const [skillId] = facetId.split('::');
+    const itemMode = facetId.split('::')[1] || '';
+    const skillCluster = SKILL_TO_CLUSTER.get(skillId);
+    if (!skillCluster || !monsterClusterIds.has(skillCluster)) continue;
+
+    const snap = isSecureFacet(facetState);
+    if (snap.secure) {
+      itemModes.add(itemMode);
+      if (snap.lapses === 0) {
+        skillsWithDeepSecure.add(skillId);
+      }
+    }
+    // correctSpanDays check — mirrors memorySnapshot in star-projection.js.
+    const raw = isPlainObject(facetState) ? facetState : {};
+    const firstCorrectAt = Number.isFinite(Number(raw.firstCorrectAt)) ? Number(raw.firstCorrectAt) : null;
+    const lastCorrectAt = Number.isFinite(Number(raw.lastCorrectAt)) ? Number(raw.lastCorrectAt) : null;
+    if (firstCorrectAt != null && lastCorrectAt != null) {
+      const correctSpanDays = Math.floor((lastCorrectAt - firstCorrectAt) / DAY_MS);
+      if (correctSpanDays >= 7) hasSpacedReturn = true;
+    }
+  }
+
+  const hasMixedModes = itemModes.size >= 2;
+
+  // Claspin-specific: both contraction AND possession skills must be deep-secure.
+  const hasBothSkillsDeepSecure = monsterId === 'claspin'
+    ? CLASPIN_REQUIRED_SKILLS.every(s => skillsWithDeepSecure.has(s))
+    : true; // non-Claspin monsters do not have this requirement
+
+  return { hasMixedModes, hasSpacedReturn, hasBothSkillsDeepSecure };
+}
+
+// ---------------------------------------------------------------------------
 // Mega-blocked reasons
 // ---------------------------------------------------------------------------
 
-function megaBlockedReasons(monsterId, monsterStar, rewardUnitCounts) {
+function megaBlockedReasons(monsterId, monsterStar, rewardUnitCounts, facetSummary) {
   const reasons = [];
   const totalUnits = MONSTER_UNIT_COUNT[monsterId] || 0;
+  const fs = facetSummary || {};
 
   if (monsterStar.total < 100) {
     reasons.push('insufficient total stars');
+  }
+
+  // Cross-monster Mega gate conditions from star-projection.js:
+  // mixed item-mode variety and spaced return are required by Claspin
+  // and Curlune gates, but are good diagnostic signals for all monsters.
+  if (!fs.hasMixedModes) {
+    reasons.push('insufficient item-mode variety (need 2+ modes with secure facets)');
+  }
+  if (!fs.hasSpacedReturn) {
+    reasons.push('insufficient spaced return (need 7+ day correctSpanDays)');
   }
 
   if (monsterId === 'claspin') {
@@ -145,6 +205,9 @@ function megaBlockedReasons(monsterId, monsterStar, rewardUnitCounts) {
     }
     if (rewardUnitCounts.deepSecured < totalUnits) {
       reasons.push('insufficient deep-secured units');
+    }
+    if (!fs.hasBothSkillsDeepSecure) {
+      reasons.push('not both apostrophe skills deep-secure');
     }
   }
 
@@ -214,6 +277,9 @@ export function buildPunctuationDiagnostic(subjectState, codexEntries, telemetry
     const ruCounts = countRewardUnitsForMonster(rewardUnits, clusterIds);
     ruCounts.deepSecured = countDeepSecuredForMonster(rewardUnits, facets, clusterIds);
 
+    // Facet-level Mega gate signals (mixed modes, spaced return, deep-secure skills).
+    const facetSummary = computeFacetMegaSummary(facets, clusterIds, monsterId);
+
     monsters[monsterId] = {
       monsterId,
       liveStars,
@@ -225,7 +291,7 @@ export function buildPunctuationDiagnostic(subjectState, codexEntries, telemetry
       practiceStars: Math.floor(monsterStar.practiceStars + 1e-9),
       secureStars: Math.floor(monsterStar.secureStars + 1e-9),
       masteryStars: Math.floor(monsterStar.masteryStars + 1e-9),
-      megaBlocked: megaBlockedReasons(monsterId, monsterStar, ruCounts),
+      megaBlocked: megaBlockedReasons(monsterId, monsterStar, ruCounts, facetSummary),
       rewardUnitsTracked: ruCounts.tracked,
       rewardUnitsSecured: ruCounts.secured,
       rewardUnitsDeepSecured: ruCounts.deepSecured,
