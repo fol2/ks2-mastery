@@ -2372,6 +2372,172 @@ async function listRecentMutationReceipts(db, { now, actorAccountId, actor = nul
   };
 }
 
+// U9 (P3): cross-subject content overview query. Returns a status
+// envelope per subject WITHOUT importing subject engines or content
+// datasets. The live subjects (spelling, grammar, punctuation) are
+// probed via lightweight table queries; future subjects are returned
+// as placeholders with static metadata.
+//
+// R16 compliance: this function performs zero mastery mutations —
+// every statement is a SELECT or a COUNT.
+const CONTENT_OVERVIEW_SUBJECTS = [
+  { subjectKey: 'spelling', displayName: 'Spelling', queryLive: true },
+  { subjectKey: 'grammar', displayName: 'Grammar', queryLive: true },
+  { subjectKey: 'punctuation', displayName: 'Punctuation', queryLive: true },
+  { subjectKey: 'arithmetic', displayName: 'Arithmetic', queryLive: false },
+  { subjectKey: 'reasoning', displayName: 'Reasoning', queryLive: false },
+  { subjectKey: 'reading', displayName: 'Reading', queryLive: false },
+];
+
+async function readSubjectContentOverviewData(db, { now, actorAccountId, actor = null } = {}) {
+  if (!actor) {
+    await assertAdminHubActor(db, actorAccountId);
+  }
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const cutoff7d = nowTs - KPI_WINDOW_7D_MS;
+
+  // Parallel queries for live subject signals. Each query is independent
+  // and uses existing tables. We soft-fail on missing tables so the hub
+  // loads before the relevant migrations land.
+
+  // Spelling: release version from account_subject_content, errors from ops_error_events
+  const spellingReleaseP = first(db,
+    `SELECT content_version FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
+    [],
+  ).catch(() => null);
+
+  const spellingErrorsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM ops_error_events
+    WHERE (lower(route_name) LIKE '%spelling%' OR lower(message_first_line) LIKE '%spelling%')
+      AND last_seen > ?
+      AND status <> 'resolved' AND status <> 'ignored'
+  `, [cutoff7d], 'ops_error_events');
+
+  // Grammar: errors from ops_error_events
+  const grammarErrorsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM ops_error_events
+    WHERE (lower(route_name) LIKE '%grammar%' OR lower(message_first_line) LIKE '%grammar%')
+      AND last_seen > ?
+      AND status <> 'resolved' AND status <> 'ignored'
+  `, [cutoff7d], 'ops_error_events');
+
+  // Punctuation: event count from punctuation_events, errors from ops_error_events
+  const punctuationEventsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM punctuation_events
+    WHERE occurred_at_ms > ?
+  `, [cutoff7d], 'punctuation_events');
+
+  const punctuationErrorsP = scalarCountSafe(db, `
+    SELECT COUNT(*) AS value
+    FROM ops_error_events
+    WHERE (lower(route_name) LIKE '%punctuation%' OR lower(message_first_line) LIKE '%punctuation%')
+      AND last_seen > ?
+      AND status <> 'resolved' AND status <> 'ignored'
+  `, [cutoff7d], 'ops_error_events');
+
+  // Spelling validation: import validation from the content bundle status
+  const spellingValidationP = first(db,
+    `SELECT content_json FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
+    [],
+  ).catch(() => null);
+
+  const [
+    spellingRelease,
+    spellingErrors,
+    grammarErrors,
+    punctuationEvents,
+    punctuationErrors,
+    spellingValidationRow,
+  ] = await Promise.all([
+    spellingReleaseP,
+    spellingErrorsP,
+    grammarErrorsP,
+    punctuationEventsP,
+    punctuationErrorsP,
+    spellingValidationP,
+  ]);
+
+  // Derive spelling release version
+  const spellingReleaseVersion = spellingRelease && Number(spellingRelease.content_version) > 0
+    ? String(Number(spellingRelease.content_version))
+    : null;
+
+  // Derive spelling validation error count from stored content JSON
+  let spellingValidationErrors = 0;
+  if (spellingValidationRow?.content_json) {
+    try {
+      const bundle = JSON.parse(spellingValidationRow.content_json);
+      if (bundle && typeof bundle === 'object' && Array.isArray(bundle.errors)) {
+        spellingValidationErrors = bundle.errors.length;
+      }
+    } catch {
+      // Soft-fail: validation count stays at zero.
+    }
+  }
+
+  // Derive support load signal: simple heuristic based on 7d error count.
+  function supportSignal(errorCount) {
+    if (errorCount >= 10) return 'high';
+    if (errorCount >= 3) return 'medium';
+    if (errorCount >= 1) return 'low';
+    return 'none';
+  }
+
+  const subjects = CONTENT_OVERVIEW_SUBJECTS.map((subject) => {
+    if (subject.subjectKey === 'spelling') {
+      return {
+        subjectKey: 'spelling',
+        displayName: 'Spelling',
+        status: 'live',
+        releaseVersion: spellingReleaseVersion,
+        validationErrors: spellingValidationErrors,
+        errorCount7d: spellingErrors,
+        supportLoadSignal: supportSignal(spellingErrors),
+      };
+    }
+    if (subject.subjectKey === 'grammar') {
+      return {
+        subjectKey: 'grammar',
+        displayName: 'Grammar',
+        status: 'live',
+        releaseVersion: null,
+        validationErrors: 0,
+        errorCount7d: grammarErrors,
+        supportLoadSignal: supportSignal(grammarErrors),
+      };
+    }
+    if (subject.subjectKey === 'punctuation') {
+      return {
+        subjectKey: 'punctuation',
+        displayName: 'Punctuation',
+        status: 'live',
+        releaseVersion: null,
+        validationErrors: 0,
+        errorCount7d: punctuationErrors,
+        supportLoadSignal: supportSignal(punctuationErrors),
+      };
+    }
+    // Placeholder subjects: static metadata, no runtime queries
+    return {
+      subjectKey: subject.subjectKey,
+      displayName: subject.displayName,
+      status: 'placeholder',
+      releaseVersion: null,
+      validationErrors: 0,
+      errorCount7d: 0,
+      supportLoadSignal: 'none',
+    };
+  });
+
+  return {
+    generatedAt: nowTs,
+    subjects,
+  };
+}
+
 function normaliseTagsJson(tagsJson) {
   if (tagsJson == null || tagsJson === '') return [];
   try {
@@ -9039,6 +9205,15 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         now: nowFactory(),
         actorAccountId: accountId,
         actorPlatformRole,
+        actor,
+      });
+    },
+    // U9 (P3): cross-subject content overview. Read-only; R16 compliant.
+    async readSubjectContentOverview(accountId) {
+      const actor = await assertAdminHubActor(db, accountId);
+      return readSubjectContentOverviewData(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
         actor,
       });
     },
