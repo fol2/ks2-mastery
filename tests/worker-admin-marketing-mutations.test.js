@@ -295,7 +295,7 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     });
     const { message: msg } = await createRes.json();
     await transitionMessage(server, 'adult-admin', msg.id, {
-      action: 'scheduled', expectedRowVersion: 0, requestId: 'broad-s1',
+      action: 'scheduled', expectedRowVersion: 0, confirmBroadPublish: true, requestId: 'broad-s1',
     });
     const res = await transitionMessage(server, 'adult-admin', msg.id, {
       action: 'published',
@@ -317,7 +317,7 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     });
     const { message: msg } = await createRes.json();
     await transitionMessage(server, 'adult-admin', msg.id, {
-      action: 'scheduled', expectedRowVersion: 0, requestId: 'noconfirm-s1',
+      action: 'scheduled', expectedRowVersion: 0, confirmBroadPublish: true, requestId: 'noconfirm-s1',
     });
     const res = await transitionMessage(server, 'adult-admin', msg.id, {
       action: 'published',
@@ -327,6 +327,160 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     assert.equal(res.status, 400);
     const data = await res.json();
     assert.equal(data.code, 'marketing_broad_publish_unconfirmed');
+  });
+
+  // --- ADV-U11-005: confirmBroadPublish + requireMaintenanceEndsAt on scheduled ---
+
+  await t.test('ADV-U11-005: draft → scheduled with all_signed_in + confirmBroadPublish succeeds', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched broad confirm',
+      body_text: 'Body.',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 86400000,
+    });
+    const { message: msg } = await createRes.json();
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      confirmBroadPublish: true,
+      requestId: 'adv005-sched-ok',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.newStatus, 'scheduled');
+  });
+
+  await t.test('ADV-U11-005: draft → scheduled with all_signed_in WITHOUT confirmBroadPublish → 400', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched broad no-confirm',
+      body_text: 'Body.',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 86400000,
+    });
+    const { message: msg } = await createRes.json();
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      requestId: 'adv005-sched-noconfirm',
+    });
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data.code, 'marketing_broad_publish_unconfirmed');
+  });
+
+  await t.test('ADV-U11-005: draft → scheduled with audience internal succeeds without confirmBroadPublish', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched internal no-confirm',
+      body_text: 'Body.',
+      audience: 'internal',
+    });
+    const { message: msg } = await createRes.json();
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      requestId: 'adv005-sched-internal',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.newStatus, 'scheduled');
+  });
+
+  await t.test('ADV-U11-005: paused → published with all_signed_in WITHOUT confirmBroadPublish → 400', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Paused broad no-confirm',
+      body_text: 'Body.',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 86400000,
+    });
+    const { message: msg } = await createRes.json();
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, confirmBroadPublish: true, requestId: 'adv005-p2p-s',
+    });
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published', expectedRowVersion: 1, confirmBroadPublish: true, requestId: 'adv005-p2p-pub',
+    });
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'paused', expectedRowVersion: 2, requestId: 'adv005-p2p-pause',
+    });
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published',
+      expectedRowVersion: 3,
+      requestId: 'adv005-p2p-noconfirm',
+    });
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data.code, 'marketing_broad_publish_unconfirmed');
+  });
+
+  await t.test('ADV-U11-005: paused → published with all_signed_in + confirmBroadPublish succeeds', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Paused broad confirm',
+      body_text: 'Body.',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 86400000,
+    });
+    const { message: msg } = await createRes.json();
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, confirmBroadPublish: true, requestId: 'adv005-p2p-ok-s',
+    });
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published', expectedRowVersion: 1, confirmBroadPublish: true, requestId: 'adv005-p2p-ok-pub',
+    });
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'paused', expectedRowVersion: 2, requestId: 'adv005-p2p-ok-pause',
+    });
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published',
+      expectedRowVersion: 3,
+      confirmBroadPublish: true,
+      requestId: 'adv005-p2p-ok-repub',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.newStatus, 'published');
+  });
+
+  await t.test('ADV-U11-005: draft → scheduled maintenance + all_signed_in without ends_at → marketing_maintenance_requires_ends_at', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched maint no ends_at',
+      body_text: 'Body.',
+      message_type: 'maintenance',
+      audience: 'internal',
+    });
+    const { message: msg } = await createRes.json();
+    // Patch audience to all_signed_in directly so create doesn't reject it
+    server.DB.db.prepare(
+      'UPDATE admin_marketing_messages SET audience = ? WHERE id = ?',
+    ).run('all_signed_in', msg.id);
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      confirmBroadPublish: true,
+      requestId: 'adv005-maint-noends',
+    });
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data.code, 'marketing_maintenance_requires_ends_at');
+  });
+
+  await t.test('ADV-U11-005: draft → scheduled maintenance + all_signed_in with valid future ends_at succeeds', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched maint with ends_at',
+      body_text: 'Planned maintenance.',
+      message_type: 'maintenance',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 3600000,
+    });
+    const { message: msg } = await createRes.json();
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      confirmBroadPublish: true,
+      requestId: 'adv005-maint-ok',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.newStatus, 'scheduled');
   });
 
   await t.test('ops mutation attempt → 403', async () => {
@@ -586,6 +740,10 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     assert.equal(data.message.message_type, 'maintenance');
     assert.equal(data.message.audience, 'all_signed_in');
   });
+
+  // Reset rate-limit counters so the remaining tests don't trip the
+  // 60-per-minute admin-ops-mutation budget after the ADV-U11-005 block.
+  server.DB.db.prepare('DELETE FROM request_limits').run();
 
   await t.test('update a draft message fields', async () => {
     const createRes = await createMessage(server, 'adult-admin', {

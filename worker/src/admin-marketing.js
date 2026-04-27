@@ -641,15 +641,15 @@ export async function transitionMarketingMessage(db, {
   }
 
   // Broad publish confirmation gate
-  if (action === 'published' && row.audience === 'all_signed_in' && !confirmBroadPublish) {
+  if ((action === 'published' || action === 'scheduled') && row.audience === 'all_signed_in' && !confirmBroadPublish) {
     throw new BadRequestError('Publishing to all_signed_in requires confirmBroadPublish: true.', {
       code: MARKETING_BROAD_PUBLISH_UNCONFIRMED,
       audience: row.audience,
     });
   }
 
-  // Maintenance + all_signed_in requires future ends_at for publish
-  if (action === 'published') {
+  // Maintenance + all_signed_in requires future ends_at for publish or schedule
+  if (action === 'published' || action === 'scheduled') {
     requireMaintenanceEndsAt(row.message_type, row.audience, row.ends_at, nowTs);
   }
 
