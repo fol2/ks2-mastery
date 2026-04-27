@@ -1682,6 +1682,33 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        // U5 (P3): per-fingerprint occurrence timeline. Lazy-loaded on drawer
+        // open — not included in the base error-events payload. Rate-limited
+        // at 60/min per session via the shared admin-ops-mutation bucket.
+        const occurrenceMatch = /^\/api\/admin\/ops\/error-occurrences\/([^/]+)$/.exec(url.pathname);
+        if (occurrenceMatch && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const occurrenceLimit = await consumeRateLimit(env, {
+            bucket: 'admin-ops-mutation',
+            identifier: session.accountId,
+            limit: 60,
+            windowMs: 60_000,
+          });
+          if (!occurrenceLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_ops_mutation_rate_limited',
+              retryAfterSeconds: occurrenceLimit.retryAfterSeconds,
+              extra: {
+                message: 'Admin-ops reads are rate-limited at 60 per minute per session.',
+              },
+            });
+          }
+          const eventId = decodeURIComponent(occurrenceMatch[1]);
+          const limit = Number(url.searchParams.get('limit')) || undefined;
+          const result = await repository.readErrorEventOccurrences(session.accountId, eventId, { limit });
+          return json({ ok: true, ...result });
+        }
+
         // PR #188 H1: dedicated narrow GET for the account-ops-metadata panel.
         // Mirrors the three sibling /api/admin/ops/* reads so each of the four
         // admin ops panels can refresh independently (R18 extended to 4 panels).
