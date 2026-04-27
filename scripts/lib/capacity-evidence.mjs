@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
-import { mkdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 export const EVIDENCE_SCHEMA_VERSION = 2;
@@ -44,7 +45,75 @@ export function buildReportMeta(options = {}, timings = {}) {
     startedAt: timings.startedAt || null,
     finishedAt: timings.finishedAt || null,
     evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+    provenance: buildProvenance(options),
   };
+}
+
+/**
+ * Build the provenance sub-block for evidence anti-fabrication.
+ * Every field degrades to `'unknown'` (or a safe default) rather than throwing;
+ * `verify-capacity-evidence.mjs` enforces strictness for certifiable tiers.
+ */
+export function buildProvenance(options = {}) {
+  const serverUrl = process.env.GITHUB_SERVER_URL || '';
+  const repo = process.env.GITHUB_REPOSITORY || '';
+  const runId = process.env.GITHUB_RUN_ID || '';
+  const workflowRunUrl = (serverUrl && repo && runId)
+    ? `${serverUrl}/${repo}/actions/runs/${runId}`
+    : 'unknown';
+
+  return {
+    workflowRunUrl,
+    workflowName: process.env.GITHUB_WORKFLOW || 'unknown',
+    gitSha: resolveCommitSha(),
+    dirtyTreeFlag: resolveGitDirty(),
+    thresholdConfigHash: resolveThresholdConfigHash(options),
+    loadDriverVersion: resolveLoadDriverVersion(),
+    operator: process.env.GITHUB_ACTOR || process.env.USER || process.env.USERNAME || 'unknown',
+    rawLogArtifactPath: options.rawLogArtifactPath || 'none',
+  };
+}
+
+function resolveGitDirty() {
+  try {
+    const status = execSync('git status --porcelain', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 3000,
+    }).toString().trim();
+    return status.length > 0;
+  } catch {
+    // Cannot determine; degrade to true (conservative — verify will reject
+    // dirty-tree for certifiable tiers).
+    return true;
+  }
+}
+
+/**
+ * SHA-256 of the threshold config file content when a --config path is supplied.
+ * Returns `'none'` when no config was used (e.g. dry-run or CLI-only thresholds).
+ * Returns `'unknown'` when the file cannot be read.
+ */
+function resolveThresholdConfigHash(options = {}) {
+  const configPath = options.configPath;
+  if (!configPath) return 'none';
+  try {
+    const content = readFileSync(resolve(process.cwd(), configPath), 'utf8');
+    return createHash('sha256').update(content).digest('hex');
+  } catch {
+    return 'unknown';
+  }
+}
+
+function resolveLoadDriverVersion() {
+  try {
+    const pkgPath = resolve(import.meta.url.startsWith('file://')
+      ? new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Z]:)/i, '$1')
+      : resolve(process.cwd(), 'package.json'));
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+    return pkg.version || 'unknown';
+  } catch {
+    return 'unknown';
+  }
 }
 
 function resolveCommitSha() {

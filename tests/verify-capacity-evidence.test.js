@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
@@ -1974,6 +1975,470 @@ test('small-pilot + forged SHA + SKIP_ANCESTRY=1 + full clone fails closed (r8-0
     process.chdir(cwd);
     if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
     else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+// ===========================================================================
+// P4 U8: Evidence provenance and anti-fabrication guard
+// ---------------------------------------------------------------------------
+// Certifiable tiers (30-learner-beta-certified, 60-learner-stretch-certified,
+// 100-plus-certified) MUST carry a provenance block. Lower tiers (smoke-pass,
+// small-pilot-provisional) tolerate missing provenance.
+// ===========================================================================
+
+// Helper: build evidence with provenance.
+function evidenceWithProvenance(provenanceOverrides = {}, envelopeOverrides = {}) {
+  const { reportMeta: rmOverride, ...rest } = envelopeOverrides;
+  return evidenceEnvelope({
+    reportMeta: {
+      commit: 'abc1234567890abcdef1234567890abcdef12345',
+      evidenceSchemaVersion: 2,
+      learners: 30,
+      bootstrapBurst: 30,
+      rounds: 3,
+      provenance: {
+        workflowRunUrl: 'https://github.com/fol2/ks2-mastery/actions/runs/12345',
+        workflowName: 'Capacity CI',
+        gitSha: 'abc1234567890abcdef1234567890abcdef12345',
+        dirtyTreeFlag: false,
+        thresholdConfigHash: 'none',
+        loadDriverVersion: '0.1.0',
+        operator: 'ci-bot',
+        rawLogArtifactPath: 'none',
+        ...provenanceOverrides,
+      },
+      ...(rmOverride || {}),
+    },
+    ...rest,
+  });
+}
+
+test('classroom tier without provenance fails verification (P4-U8)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-production.json');
+  const configPath = join(configsDir, '30-learner-beta.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: '30-learner-beta-certified',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750, maxResponseBytes: 600000 },
+  }));
+  // Evidence WITHOUT provenance block.
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: {
+      commit: 'abc1234567890abcdef1234567890abcdef12345',
+      evidenceSchemaVersion: 2,
+      learners: 30,
+      bootstrapBurst: 30,
+      rounds: 3,
+      // provenance intentionally absent
+    },
+    summary: {
+      ok: true,
+      totalRequests: 20,
+      startedAt: '2026-04-27T00:00:00Z',
+      finishedAt: '2026-04-27T00:00:30Z',
+      endpoints: {
+        'GET /api/bootstrap': { count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000, queryCount: 5, d1RowsRead: 42 },
+        'POST /api/subjects/grammar/command': { count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+      },
+      signals: {},
+      failures: [],
+    },
+    tier: {
+      tier: '30-learner-beta-certified',
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+      maxResponseBytes: { configured: 600000, observed: 81000, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-27', 'abc1234', 'prod', 'Free', '30', '30', '3', '320', '180', '81000', '0', 'none', '30-learner-beta-certified', 'reports/capacity/latest-production.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('provenance') && line.includes('certification')),
+      `expected provenance requirement message; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('smoke-pass without provenance still passes (P4-U8)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-smoke-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  // Evidence WITHOUT provenance — smoke-pass must still pass.
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope()));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, true, `smoke-pass without provenance should pass; got: ${JSON.stringify(result.report)}`);
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('small-pilot-provisional without provenance still passes (P4-U8)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-pilot-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 1, learners: 10, bootstrapBurst: 10, rounds: 1 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, true, `small-pilot without provenance should pass; got: ${JSON.stringify(result.report)}`);
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('classroom tier with provenance.gitSha=unknown fails (P4-U8)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-sha-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-production.json');
+  const configPath = join(configsDir, '30-learner-beta.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: '30-learner-beta-certified',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750, maxResponseBytes: 600000 },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceWithProvenance(
+    { gitSha: 'unknown' },
+    {
+      summary: {
+        ok: true,
+        totalRequests: 20,
+        startedAt: '2026-04-27T00:00:00Z',
+        finishedAt: '2026-04-27T00:00:30Z',
+        endpoints: {
+          'GET /api/bootstrap': { count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000, queryCount: 5, d1RowsRead: 42 },
+          'POST /api/subjects/grammar/command': { count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+        },
+        signals: {},
+        failures: [],
+      },
+      tier: {
+        tier: '30-learner-beta-certified',
+        configPath: 'reports/capacity/configs/30-learner-beta.json',
+      },
+      thresholds: {
+        max5xx: { configured: 0, observed: 0, passed: true },
+        maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+        maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+        maxResponseBytes: { configured: 600000, observed: 81000, passed: true },
+      },
+    },
+  )));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-27', 'abc1234', 'prod', 'Free', '30', '30', '3', '320', '180', '81000', '0', 'none', '30-learner-beta-certified', 'reports/capacity/latest-production.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('provenance.gitSha')),
+      `expected provenance.gitSha failure; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('classroom tier with provenance.dirtyTreeFlag=true fails (P4-U8)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-dirty-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-production.json');
+  const configPath = join(configsDir, '30-learner-beta.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: '30-learner-beta-certified',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750, maxResponseBytes: 600000 },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceWithProvenance(
+    { dirtyTreeFlag: true },
+    {
+      summary: {
+        ok: true,
+        totalRequests: 20,
+        startedAt: '2026-04-27T00:00:00Z',
+        finishedAt: '2026-04-27T00:00:30Z',
+        endpoints: {
+          'GET /api/bootstrap': { count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000, queryCount: 5, d1RowsRead: 42 },
+          'POST /api/subjects/grammar/command': { count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+        },
+        signals: {},
+        failures: [],
+      },
+      tier: {
+        tier: '30-learner-beta-certified',
+        configPath: 'reports/capacity/configs/30-learner-beta.json',
+      },
+      thresholds: {
+        max5xx: { configured: 0, observed: 0, passed: true },
+        maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+        maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+        maxResponseBytes: { configured: 600000, observed: 81000, passed: true },
+      },
+    },
+  )));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-27', 'abc1234', 'prod', 'Free', '30', '30', '3', '320', '180', '81000', '0', 'none', '30-learner-beta-certified', 'reports/capacity/latest-production.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('dirtyTreeFlag')),
+      `expected dirtyTreeFlag failure; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('thresholdConfigHash mismatch between provenance and committed config fails (P4-U8)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-hash-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+
+  // Write config with specific content.
+  const configContent = JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
+  });
+  writeFileSync(configPath, configContent);
+  const configHash = createHash('sha256').update(configContent).digest('hex');
+
+  // Evidence claims a DIFFERENT hash (simulates config tampered after run).
+  const fakeHash = createHash('sha256').update('something else entirely').digest('hex');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: {
+      commit: 'abc1234567890abcdef1234567890abcdef12345',
+      evidenceSchemaVersion: 1,
+      learners: 10,
+      bootstrapBurst: 10,
+      rounds: 1,
+      provenance: {
+        workflowRunUrl: 'unknown',
+        workflowName: 'unknown',
+        gitSha: 'abc1234567890abcdef1234567890abcdef12345',
+        dirtyTreeFlag: false,
+        thresholdConfigHash: fakeHash,
+        loadDriverVersion: '0.1.0',
+        operator: 'test',
+        rawLogArtifactPath: 'none',
+      },
+    },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('thresholdConfigHash mismatch')),
+      `expected thresholdConfigHash mismatch failure; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('matching thresholdConfigHash passes provenance hash check (P4-U8)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-hashok-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+
+  const configContent = JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750 },
+  });
+  writeFileSync(configPath, configContent);
+  const configHash = createHash('sha256').update(configContent).digest('hex');
+
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: {
+      commit: 'abc1234567890abcdef1234567890abcdef12345',
+      evidenceSchemaVersion: 1,
+      learners: 10,
+      bootstrapBurst: 10,
+      rounds: 1,
+      provenance: {
+        workflowRunUrl: 'unknown',
+        workflowName: 'unknown',
+        gitSha: 'abc1234567890abcdef1234567890abcdef12345',
+        dirtyTreeFlag: false,
+        thresholdConfigHash: configHash,
+        loadDriverVersion: '0.1.0',
+        operator: 'test',
+        rawLogArtifactPath: 'none',
+      },
+    },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, true, `matching hash should pass; got: ${JSON.stringify(result.report)}`);
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('100-plus-certified without provenance fails (P4-U8 — all certifiable tiers)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-100-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-production.json');
+  const configPath = join(configsDir, '100-plus.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: '100-plus-certified',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750, maxResponseBytes: 600000 },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: {
+      commit: 'abc1234567890abcdef1234567890abcdef12345',
+      evidenceSchemaVersion: 2,
+      learners: 100,
+      bootstrapBurst: 100,
+      rounds: 3,
+      // provenance intentionally absent
+    },
+    summary: {
+      ok: true,
+      totalRequests: 20,
+      startedAt: '2026-04-27T00:00:00Z',
+      finishedAt: '2026-04-27T00:00:30Z',
+      endpoints: {
+        'GET /api/bootstrap': { count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000, queryCount: 5, d1RowsRead: 42 },
+        'POST /api/subjects/grammar/command': { count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+      },
+      signals: {},
+      failures: [],
+    },
+    tier: {
+      tier: '100-plus-certified',
+      configPath: 'reports/capacity/configs/100-plus.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+      maxResponseBytes: { configured: 600000, observed: 81000, passed: true },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-27', 'abc1234', 'prod', 'Free', '100', '100', '3', '320', '180', '81000', '0', 'none', '100-plus-certified', 'reports/capacity/latest-production.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('provenance')),
+      `expected provenance failure for 100-plus-certified; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
     rmSync(tempDir, { recursive: true, force: true });
   }
 });
