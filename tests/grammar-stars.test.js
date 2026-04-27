@@ -76,12 +76,12 @@ test('evidence tier: concept with 1 independent correct → firstIndependentWin 
   assert.equal(result.retainedAfterSecure, false);
 });
 
-test('evidence tier: repeatIndependentWin requires 2+ distinct independent correct', () => {
+test('evidence tier: repeatIndependentWin requires 2+ distinct independent correct (production shape)', () => {
   const conceptNode = { attempts: 3, correct: 3, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 3 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: false, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: false }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.firstIndependentWin, true);
@@ -89,22 +89,22 @@ test('evidence tier: repeatIndependentWin requires 2+ distinct independent corre
   assert.equal(result.variedPractice, false);
 });
 
-test('evidence tier: variedPractice requires 2+ distinct templateId', () => {
+test('evidence tier: variedPractice requires 2+ distinct templateId (production shape)', () => {
   const conceptNode = { attempts: 2, correct: 2, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 2 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.variedPractice, true);
 });
 
-test('evidence tier: variedPractice false with only 1 template', () => {
+test('evidence tier: variedPractice false with only 1 template (production shape)', () => {
   const conceptNode = { attempts: 3, correct: 3, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 3 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.variedPractice, false);
@@ -145,36 +145,36 @@ test('evidence tier: secureConfidence false when correctStreak < 3', () => {
   assert.equal(result.secureConfidence, false);
 });
 
-test('evidence tier: retainedAfterSecure requires secure + >= 2 independent corrects (ADV-003)', () => {
+test('evidence tier: retainedAfterSecure requires secure + >= 2 independent corrects (ADV-003, production shape)', () => {
   // Concept is secured (intervalDays >= 7) and has 2 independent corrects.
   // The first proves independent mastery; the second proves retention.
   const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.secureConfidence, true);
   assert.equal(result.retainedAfterSecure, true);
 });
 
-test('evidence tier: retainedAfterSecure false with only 1 independent correct (ADV-003)', () => {
+test('evidence tier: retainedAfterSecure false with only 1 independent correct (ADV-003, production shape)', () => {
   // Concept is secured but only 1 independent correct — insufficient to prove
   // post-secure retention (that single correct could predate secure status).
   const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.secureConfidence, true);
   assert.equal(result.retainedAfterSecure, false);
 });
 
-test('evidence tier: retainedAfterSecure false when no independent correct in recentAttempts', () => {
+test('evidence tier: retainedAfterSecure false when no independent correct in recentAttempts (production shape)', () => {
   // Concept is secured but no independent correct in recent attempts
   const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: false, supportLevelAtScoring: 2 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: false, supportLevelAtScoring: 2 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.secureConfidence, true);
@@ -191,20 +191,20 @@ test('evidence tier: retainedAfterSecure false when not secured (intervalDays < 
   assert.equal(result.retainedAfterSecure, false);
 });
 
-test('evidence tier: supported answer (worked/faded) does not unlock firstIndependentWin', () => {
+test('evidence tier: supported answer (worked/faded) does not unlock firstIndependentWin (production shape)', () => {
   const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: false, supportLevelAtScoring: 2 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: false, supportLevelAtScoring: 2 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.firstIndependentWin, false);
 });
 
-test('evidence tier: only matching conceptId entries count', () => {
+test('evidence tier: only matching conceptId entries count (production shape)', () => {
   const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
   const recentAttempts = [
     // Different concept — should be ignored
-    { conceptId: 'tense_aspect', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['tense_aspect'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.firstIndependentWin, false);
@@ -579,13 +579,13 @@ test('star computation: Bracehart secure only (no retention) → capped at ~40%'
 // 8. ADV-001: Nudge gate — supportLevelAtScoring: 0 with firstAttemptIndependent: false
 // ---------------------------------------------------------------------------
 
-test('evidence tier: nudge attempt (supportLevel 0, firstAttemptIndependent false) does NOT unlock firstIndependentWin (ADV-001)', () => {
+test('evidence tier: nudge attempt (supportLevel 0, firstAttemptIndependent false) does NOT unlock firstIndependentWin (ADV-001, production shape)', () => {
   // A nudge attempt: the child got it wrong first, then retried correctly.
   // supportLevelAtScoring is 0 (no external support was rendered), but
   // firstAttemptIndependent is false because the first attempt was wrong.
   const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, supportLevelAtScoring: 0, firstAttemptIndependent: false, supportUsed: 'nudge' },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', supportLevelAtScoring: 0, firstAttemptIndependent: false, supportUsed: 'nudge' },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.firstIndependentWin, false, 'Nudge attempts must not unlock independent tiers');
@@ -622,24 +622,137 @@ test('evidence tier: supportLevelAtScoring 0 alone (firstAttemptIndependent fals
 // 11. TEST-003: variedPractice defensive guard — empty/null templateId
 // ---------------------------------------------------------------------------
 
-test('evidence tier: variedPractice false with empty-string templateId', () => {
+test('evidence tier: variedPractice false with empty-string templateId (production shape)', () => {
   const conceptNode = { attempts: 2, correct: 2, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 2 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: '', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: '', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: '', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: '', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.variedPractice, false);
 });
 
-test('evidence tier: variedPractice false with null templateId', () => {
+test('evidence tier: variedPractice false with null templateId (production shape)', () => {
   const conceptNode = { attempts: 2, correct: 2, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 2 };
   const recentAttempts = [
-    { conceptId: 'clauses', templateId: null, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId: 'clauses', templateId: null, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: null, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: null, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.variedPractice, false);
+});
+
+// ---------------------------------------------------------------------------
+// U1: Production-shape attempt contract tests
+// ---------------------------------------------------------------------------
+
+test('U1 CHAR: production-shape { conceptIds, result.correct } → firstIndependentWin = true', () => {
+  const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true, score: 1, maxScore: 1 }, templateId: 'tpl-1', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: Date.now() },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, true, 'Production-shape attempt must unlock firstIndependentWin');
+});
+
+test('U1 CHAR: production-shape multi-concept → both concepts get evidence', () => {
+  const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
+  const recentAttempts = [
+    { conceptIds: ['clauses', 'phrases'], result: { correct: true }, templateId: 'tpl-1', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const clausesResult = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  const phrasesResult = deriveGrammarConceptStarEvidence({ conceptId: 'phrases', conceptNode, recentAttempts });
+  assert.equal(clausesResult.firstIndependentWin, true, 'clauses must get evidence');
+  assert.equal(phrasesResult.firstIndependentWin, true, 'phrases must get evidence');
+});
+
+test('U1 CHAR: production-shape result.correct false → no evidence', () => {
+  const conceptNode = { attempts: 1, correct: 0, wrong: 1, strength: 0.3, intervalDays: 1, correctStreak: 0 };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: false }, templateId: 'tpl-1', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, false);
+});
+
+test('U1 CHAR: empty conceptIds array → matches nothing → 0 evidence', () => {
+  const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
+  const recentAttempts = [
+    { conceptIds: [], result: { correct: true }, templateId: 'tpl-1', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, false);
+});
+
+test('U1 CHAR: conceptIds not an array → falls back to flat matching', () => {
+  const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
+  const recentAttempts = [
+    { conceptIds: 'clauses', conceptId: 'clauses', correct: true, templateId: 'tpl-1', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, true, 'Falls back to flat conceptId when conceptIds is not an array');
+});
+
+test('U1 CHAR: missing both conceptId and conceptIds → 0 evidence, no crash', () => {
+  const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
+  const recentAttempts = [
+    { result: { correct: true }, templateId: 'tpl-1', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, false);
+});
+
+test('U1 CONTRACT: production-shape and flat-shape produce identical Stars', () => {
+  const conceptNode = { attempts: 15, correct: 14, wrong: 1, strength: 0.90, intervalDays: 14, correctStreak: 8 };
+  const productionAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const flatAttempts = [
+    { conceptId: 'clauses', correct: true, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', correct: true, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', correct: true, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const productionResult = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts: productionAttempts });
+  const flatResult = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts: flatAttempts });
+  assert.deepEqual(productionResult, flatResult, 'Production-shape and flat-shape must produce identical evidence');
+});
+
+test('U1 CHAR: production-shape repeatIndependentWin with 2+ independent correct', () => {
+  const conceptNode = { attempts: 3, correct: 3, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 3 };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, true);
+  assert.equal(result.repeatIndependentWin, true);
+});
+
+test('U1 CHAR: production-shape variedPractice with 2+ distinct templateIds', () => {
+  const conceptNode = { attempts: 2, correct: 2, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 2 };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.variedPractice, true);
+});
+
+test('U1 CHAR: production-shape all 5 tiers true for fully evidenced concept', () => {
+  const conceptNode = { attempts: 15, correct: 14, wrong: 1, strength: 0.90, intervalDays: 14, correctStreak: 8 };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, true);
+  assert.equal(result.repeatIndependentWin, true);
+  assert.equal(result.variedPractice, true);
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, true);
 });
 
 // ---------------------------------------------------------------------------
@@ -698,15 +811,16 @@ test('star computation: Concordium 18 concepts evolve2 boundary — weight 0.35 
 // 14. TEST-005: Integration test — deriveGrammarConceptStarEvidence → computeGrammarMonsterStars
 // ---------------------------------------------------------------------------
 
-test('phase5 integration: derive evidence for each Couronnail concept then compute Stars', () => {
+test('phase5 integration: derive evidence for each Couronnail concept then compute Stars (production shape)', () => {
   // Simulate a learner who has 2 independent corrects across 2 templates
   // for each Couronnail concept, with a secured mastery node.
   const couronnailConcepts = ['word_classes', 'standard_english', 'formality'];
 
   // Build shared recent attempts: 2 independent corrects per concept, 2 templates.
+  // Uses production shape (conceptIds array, result.correct nested).
   const recentAttempts = couronnailConcepts.flatMap((conceptId) => [
-    { conceptId, templateId: `${conceptId}-tmpl-a`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptId, templateId: `${conceptId}-tmpl-b`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: [conceptId], result: { correct: true, score: 1, maxScore: 1 }, templateId: `${conceptId}-tmpl-a`, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: [conceptId], result: { correct: true, score: 1, maxScore: 1 }, templateId: `${conceptId}-tmpl-b`, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ]);
 
   // Secured mastery node per concept.
