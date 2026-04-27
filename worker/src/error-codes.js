@@ -15,3 +15,12 @@ export const SELF_SUSPEND_FORBIDDEN = 'self_suspend_forbidden';
 export const LAST_ADMIN_LOCKED_OUT = 'last_admin_locked_out';
 export const ACCOUNT_OPS_METADATA_STALE = 'account_ops_metadata_stale';
 export const RECONCILE_IN_PROGRESS = 'reconcile_in_progress';
+
+// P3 U4: denial-reason codes captured in `admin_request_denials`.
+// Each constant is the canonical `denial_reason` column value and the
+// only value `logRequestDenial` accepts — never raw strings.
+export const DENIAL_ACCOUNT_SUSPENDED = 'account_suspended';
+export const DENIAL_PAYMENT_HOLD = 'payment_hold';
+export const DENIAL_SESSION_INVALIDATED = 'session_invalidated';
+export const DENIAL_CSRF_REJECTION = 'csrf_rejection';
+export const DENIAL_RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded';

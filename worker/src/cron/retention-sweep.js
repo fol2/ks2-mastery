@@ -24,6 +24,9 @@ export const MUTATION_RECEIPT_MAX_DELETE_BATCH = 5000;
 export const REQUEST_LIMITS_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
 export const REQUEST_LIMITS_MAX_DELETE_BATCH = 5000;
 export const ACCOUNT_SESSIONS_MAX_DELETE_BATCH = 5000;
+// P3 U4: request denials retention — 14-day rolling window.
+export const REQUEST_DENIALS_RETENTION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+export const REQUEST_DENIALS_MAX_DELETE_BATCH = 5000;
 
 // Private copy of the repository's `isMissingTableError` so partial-deploy
 // soft-fail stays local to the cron module (no new export surface).
@@ -138,7 +141,29 @@ export async function sweepStaleSessions(db, now = Date.now()) {
 }
 
 /**
- * Run all three sweeps sequentially and return an aggregated summary.
+ * P3 U4: prune stale request denials. 14-day rolling window, bounded-
+ * delete (5000-row cap), `swallowMissingTable` pattern. The table may
+ * not exist on instances that have not yet applied migration 0013.
+ */
+export async function sweepRequestDenials(db, now = Date.now()) {
+  const cutoff = Math.max(0, Number(now) || 0) - REQUEST_DENIALS_RETENTION_MS;
+  try {
+    const result = await run(db, `
+      DELETE FROM admin_request_denials
+      WHERE rowid IN (
+        SELECT rowid FROM admin_request_denials
+        WHERE denied_at < ?
+        LIMIT ?
+      )
+    `, [cutoff, REQUEST_DENIALS_MAX_DELETE_BATCH]);
+    return { deleted: Math.max(0, Number(result?.meta?.changes) || 0) };
+  } catch (error) {
+    return swallowMissingTable(error, 'admin_request_denials');
+  }
+}
+
+/**
+ * Run all four sweeps sequentially and return an aggregated summary.
  * A sweep failure aborts the remainder so the failure surfaces in the
  * cron's error telemetry; partial successes are reported via the
  * `completed` array.
@@ -151,6 +176,8 @@ export async function runRetentionSweeps(db, now = Date.now()) {
   completed.push({ sweep: 'request_limits', ...requestLimits });
   const sessions = await sweepStaleSessions(db, now);
   completed.push({ sweep: 'account_sessions', ...sessions });
+  const denials = await sweepRequestDenials(db, now);
+  completed.push({ sweep: 'admin_request_denials', ...denials });
   return {
     completed,
     totalDeleted: completed.reduce((sum, entry) => sum + entry.deleted, 0),

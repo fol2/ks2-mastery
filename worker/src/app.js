@@ -32,11 +32,22 @@ import {
 } from './demo/sessions.js';
 import { normaliseSubjectCommandRequest } from './subjects/command-contract.js';
 import { createWorkerSubjectRuntime } from './subjects/runtime.js';
-import { ConflictError, ForbiddenError, NotFoundError } from './errors.js';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  AccountSuspendedError,
+  AccountPaymentHoldError,
+  SessionInvalidatedError,
+} from './errors.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../src/platform/core/subject-availability.js';
 import { consumeRateLimit, rateLimitResponse, rateLimitSubject } from './rate-limit.js';
 import { handleHeroReadModel } from './hero/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
+import { logRequestDenial } from './admin-denial-logger.js';
+import {
+  DENIAL_RATE_LIMIT_EXCEEDED,
+} from './error-codes.js';
 
 
 // U7 (sys-hardening p1): CSP report endpoint constants. The endpoint
@@ -628,7 +639,7 @@ export function createWorkerApp({
   subjectRuntime = createWorkerSubjectRuntime(),
 } = {}) {
   return {
-    async fetch(request, env) {
+    async fetch(request, env, ctx) {
       const url = new URL(request.url);
 
       // U3: validate incoming x-ks2-request-id ingress; reject non-matching
@@ -919,6 +930,14 @@ export function createWorkerApp({
               capacity,
               now,
             });
+            // P3 U4: capture rate-limit denial for operator visibility.
+            logRequestDenial(db, ctx, {
+              denialReason: DENIAL_RATE_LIMIT_EXCEEDED,
+              routeName: url.pathname,
+              release: env.RELEASE || null,
+              detail: { code: 'ops_error_global_budget_exhausted', bucket: 'ops-error-capture-global', retryAfterSeconds: globalLimit.retryAfterSeconds },
+              now: nowTs,
+            });
             return rateLimitResponse({
               code: 'ops_error_global_budget_exhausted',
               retryAfterSeconds: globalLimit.retryAfterSeconds,
@@ -942,6 +961,14 @@ export function createWorkerApp({
               retryAfterSeconds: rateLimit.retryAfterSeconds,
               capacity,
               now,
+            });
+            // P3 U4: capture per-IP rate-limit denial.
+            logRequestDenial(db, ctx, {
+              denialReason: DENIAL_RATE_LIMIT_EXCEEDED,
+              routeName: url.pathname,
+              release: env.RELEASE || null,
+              detail: { code: 'ops_error_rate_limited', bucket: 'ops-error-capture-ip', retryAfterSeconds: rateLimit.retryAfterSeconds },
+              now: nowTs,
             });
             return rateLimitResponse({
               code: 'ops_error_rate_limited',
@@ -2024,6 +2051,57 @@ export function createWorkerApp({
       } catch (error) {
         errorCaught = error;
         response = errorResponse(error);
+
+        // P3 U4: capture auth-boundary denials as structured events in
+        // `admin_request_denials`. Fire-and-forget via ctx.waitUntil —
+        // the 403/401 response is never blocked by the INSERT.
+        try {
+          const db = env?.DB && typeof env.DB.prepare === 'function' ? env.DB : null;
+          if (db) {
+            const denialSession = error?.__denialSession || null;
+            if (error instanceof AccountSuspendedError) {
+              logRequestDenial(db, ctx, {
+                denialReason: 'account_suspended',
+                routeName: url.pathname,
+                accountId: denialSession?.accountId || null,
+                sessionId: denialSession?.sessionId || null,
+                isDemo: Boolean(denialSession?.demo),
+                release: env.RELEASE || null,
+                detail: { code: 'account_suspended', opsStatus: 'suspended' },
+                now: now(),
+              });
+            } else if (error instanceof AccountPaymentHoldError) {
+              logRequestDenial(db, ctx, {
+                denialReason: 'payment_hold',
+                routeName: url.pathname,
+                accountId: denialSession?.accountId || null,
+                sessionId: denialSession?.sessionId || null,
+                isDemo: Boolean(denialSession?.demo),
+                release: env.RELEASE || null,
+                detail: { code: 'account_payment_hold', opsStatus: 'payment_hold' },
+                now: now(),
+              });
+            } else if (error instanceof SessionInvalidatedError) {
+              logRequestDenial(db, ctx, {
+                denialReason: 'session_invalidated',
+                routeName: url.pathname,
+                release: env.RELEASE || null,
+                detail: { code: 'session_invalidated' },
+                now: now(),
+              });
+            } else if (error instanceof ForbiddenError && error?.extra?.code === 'same_origin_required') {
+              logRequestDenial(db, ctx, {
+                denialReason: 'csrf_rejection',
+                routeName: url.pathname,
+                release: env.RELEASE || null,
+                detail: { code: 'same_origin_required' },
+                now: now(),
+              });
+            }
+          }
+        } catch {
+          // Denial logging is best-effort — never block the response.
+        }
       }
 
       // U3: capacity telemetry emit. All paths land here — including

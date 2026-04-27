@@ -1471,7 +1471,11 @@ export function requireActiveAccount(session) {
     } catch {
       // Swallow - telemetry is best-effort.
     }
-    throw new AccountSuspendedError();
+    const error = new AccountSuspendedError();
+    // P3 U4: attach the session so app.js denial capture can extract
+    // accountId / sessionId without re-reading from DB.
+    error.__denialSession = session;
+    throw error;
   }
 }
 
@@ -1507,7 +1511,10 @@ export function requireMutationCapability(session) {
     } catch {
       // Swallow - telemetry is best-effort.
     }
-    throw new AccountSuspendedError();
+    const error = new AccountSuspendedError();
+    // P3 U4: attach the session so app.js denial capture can extract context.
+    error.__denialSession = session;
+    throw error;
   }
   if (session.opsStatus === 'payment_hold') {
     try {
@@ -1520,7 +1527,10 @@ export function requireMutationCapability(session) {
     } catch {
       // Swallow - telemetry is best-effort.
     }
-    throw new AccountPaymentHoldError();
+    const error = new AccountPaymentHoldError();
+    // P3 U4: attach the session so app.js denial capture can extract context.
+    error.__denialSession = session;
+    throw error;
   }
 }
 
