@@ -24,3 +24,6 @@ export const DENIAL_PAYMENT_HOLD = 'payment_hold';
 export const DENIAL_SESSION_INVALIDATED = 'session_invalidated';
 export const DENIAL_CSRF_REJECTION = 'csrf_rejection';
 export const DENIAL_RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded';
+
+// ADV-U4-004: shared origin-check code used by request-origin.js and app.js.
+export const SAME_ORIGIN_REQUIRED = 'same_origin_required';

@@ -9,6 +9,7 @@
 // that both callers delegate to.
 
 import { ForbiddenError } from './errors.js';
+import { SAME_ORIGIN_REQUIRED } from './error-codes.js';
 
 function cleanText(value) {
   return String(value || '').trim();
@@ -84,7 +85,7 @@ export function requireSameOrigin(
   // site, so cross-site here is not a CSRF surface.
   if (fetchSite === 'cross-site' && !allowMissingOrigin) {
     throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
-      code: 'same_origin_required',
+      code: SAME_ORIGIN_REQUIRED,
     });
   }
 
@@ -107,14 +108,14 @@ export function requireSameOrigin(
   if (!origin) {
     if (!allowMissingOrigin && isProductionRuntime(env)) {
       throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
-        code: 'same_origin_required',
+        code: SAME_ORIGIN_REQUIRED,
       });
     }
     return;
   }
   if (!appOrigins(env, request).has(origin)) {
     throw new ForbiddenError('This request must come from the KS2 Mastery app origin.', {
-      code: 'same_origin_required',
+      code: SAME_ORIGIN_REQUIRED,
     });
   }
 }

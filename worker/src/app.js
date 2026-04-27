@@ -47,6 +47,7 @@ import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { logRequestDenial } from './admin-denial-logger.js';
 import {
   DENIAL_RATE_LIMIT_EXCEEDED,
+  SAME_ORIGIN_REQUIRED,
 } from './error-codes.js';
 
 
@@ -931,7 +932,9 @@ export function createWorkerApp({
               now,
             });
             // P3 U4: capture rate-limit denial for operator visibility.
-            logRequestDenial(db, ctx, {
+            // ADV-U4-007: use raw env.DB — fire-and-forget INSERT must not
+            // inflate capacity telemetry via the wrapped `db`.
+            logRequestDenial(env.DB, ctx, {
               denialReason: DENIAL_RATE_LIMIT_EXCEEDED,
               routeName: url.pathname,
               release: env.RELEASE || null,
@@ -963,7 +966,9 @@ export function createWorkerApp({
               now,
             });
             // P3 U4: capture per-IP rate-limit denial.
-            logRequestDenial(db, ctx, {
+            // ADV-U4-007: use raw env.DB — fire-and-forget INSERT must not
+            // inflate capacity telemetry via the wrapped `db`.
+            logRequestDenial(env.DB, ctx, {
               denialReason: DENIAL_RATE_LIMIT_EXCEEDED,
               routeName: url.pathname,
               release: env.RELEASE || null,
@@ -2085,16 +2090,18 @@ export function createWorkerApp({
               logRequestDenial(db, ctx, {
                 denialReason: 'session_invalidated',
                 routeName: url.pathname,
+                accountId: denialSession?.accountId || null,
+                sessionId: denialSession?.sessionId || null,
                 release: env.RELEASE || null,
                 detail: { code: 'session_invalidated' },
                 now: now(),
               });
-            } else if (error instanceof ForbiddenError && error?.extra?.code === 'same_origin_required') {
+            } else if (error instanceof ForbiddenError && error?.extra?.code === SAME_ORIGIN_REQUIRED) {
               logRequestDenial(db, ctx, {
                 denialReason: 'csrf_rejection',
                 routeName: url.pathname,
                 release: env.RELEASE || null,
-                detail: { code: 'same_origin_required' },
+                detail: { code: SAME_ORIGIN_REQUIRED },
                 now: now(),
               });
             }
