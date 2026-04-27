@@ -136,3 +136,5 @@ The pattern also establishes a reusable approach for any future surface that gro
 - `docs/plans/2026-04-27-001-feat-admin-console-p2-restructure-plan.md` — implementation plan
 - `docs/solutions/workflow-issues/sys-hardening-p2-13-unit-autonomous-sprint-learnings-2026-04-26.md` — SDLC orchestration pattern used for this sprint
 - `docs/plans/james/admin-page/admin-page-p1-5-completion-report.md` — P1.5 invariants preserved by this work
+- [`admin-console-p3-command-centre-architecture`](admin-console-p3-command-centre-architecture-2026-04-27.md) — P3 successor: standalone Worker modules, dual-signature actor, Debug Bundle error boundaries, marketing lifecycle, body_text XSS gate
+- `docs/plans/james/admin-page/admin-page-p3-completion-report.md` — P3 completion report (13 units, 227 tests)
