@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { normaliseMarketingMessage } from '../src/platform/hubs/admin-read-model.js';
+import { normaliseMarketingMessage } from '../src/platform/hubs/admin-marketing-message.js';
 import { createAdminMarketingApi } from '../src/platform/hubs/admin-marketing-api.js';
 
 // ---------------------------------------------------------------------------
