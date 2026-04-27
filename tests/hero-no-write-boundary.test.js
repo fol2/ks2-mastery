@@ -164,23 +164,50 @@ test('S4: worker/src/hero/ modules do not use .run(), .batch(), or bindStatement
 
 // ── Structural test 5: no client src/ file imports from shared/hero or worker/src/hero ─
 
-test('S5: no child dashboard component imports from shared/hero/ or worker/src/hero/', () => {
+test('S5: client src/ files may import shared/hero/hero-copy only; all other shared/hero/ and worker/src/hero/ imports are forbidden', () => {
   const clientFiles = collectJsFiles(CLIENT_SRC_DIR).filter(
     (f) => f.endsWith('.js') || f.endsWith('.jsx'),
   );
+
+  // Allowlist: these shared/hero/ module names are safe for client import.
+  const ALLOWED_SHARED_HERO_MODULES = new Set(['hero-copy']);
+
+  // Forbidden module patterns that must never appear in client code.
+  const FORBIDDEN_SHARED_HERO_MODULES = [
+    'shared/hero/scheduler',
+    'shared/hero/eligibility',
+    'shared/hero/seed',
+    'shared/hero/launch-context',
+    'shared/hero/launch-status',
+  ];
 
   for (const filePath of clientFiles) {
     const source = fs.readFileSync(filePath, 'utf8');
     const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
 
-    assert.ok(
-      !source.includes('shared/hero'),
-      `${rel} imports from shared/hero — P0 Hero code must not be imported by the child dashboard`,
-    );
+    // worker/src/hero/ is always forbidden from client code.
     assert.ok(
       !source.includes('worker/src/hero'),
-      `${rel} imports from worker/src/hero — P0 Hero code must not be imported by the child dashboard`,
+      `${rel} imports from worker/src/hero — Hero worker internals must not be imported by client code`,
     );
+
+    // Explicit check for forbidden shared/hero/ modules.
+    for (const forbidden of FORBIDDEN_SHARED_HERO_MODULES) {
+      assert.ok(
+        !source.includes(forbidden),
+        `${rel} imports from ${forbidden} — only shared/hero/hero-copy is allowed in client code`,
+      );
+    }
+
+    // Any shared/hero/ reference must be on the allowlist.
+    const sharedHeroImports = source.match(/shared\/hero\/([a-z0-9-]+)/g) || [];
+    for (const match of sharedHeroImports) {
+      const moduleName = match.replace('shared/hero/', '');
+      assert.ok(
+        ALLOWED_SHARED_HERO_MODULES.has(moduleName),
+        `${rel} imports shared/hero/${moduleName} — only ${[...ALLOWED_SHARED_HERO_MODULES].join(', ')} allowed in client code`,
+      );
+    }
   }
 });
 
