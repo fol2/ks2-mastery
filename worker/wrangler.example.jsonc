@@ -28,7 +28,8 @@
     "PUNCTUATION_SUBJECT_ENABLED": "false",
     "PUNCTUATION_EVENTS_ENABLED": "false",
     "HERO_MODE_SHADOW_ENABLED": "false",
-    "HERO_MODE_LAUNCH_ENABLED": "false"
+    "HERO_MODE_LAUNCH_ENABLED": "false",
+    "HERO_MODE_CHILD_UI_ENABLED": "false"
   },
   "d1_databases": [
     {

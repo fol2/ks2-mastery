@@ -58,10 +58,12 @@ export async function handleHeroReadModel({
   //    providers are designed to handle null/empty gracefully.
   const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId);
 
-  // 5. Assemble the shadow read model
+  // 5. Assemble the shadow read model (v3: pass accountId and env for
+  //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
   const nowTs = typeof now === 'function' ? now() : Date.now();
   const result = buildHeroShadowReadModel({
     learnerId,
+    accountId: session.accountId || '',
     subjectReadModels,
     now: nowTs,
     env,

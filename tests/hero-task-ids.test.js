@@ -92,20 +92,22 @@ test('every task has a heroContext object with required fields', () => {
       );
     }
     assert.equal(task.heroContext.source, 'hero-mode');
-    assert.equal(task.heroContext.phase, 'p1-launch');
+    assert.equal(task.heroContext.phase, 'p2-child-launch');
     assert.equal(task.heroContext.version, 1);
     assert.equal(task.heroContext.questId, result.dailyQuest.questId);
     assert.equal(task.heroContext.taskId, task.taskId);
     assert.equal(task.heroContext.subjectId, task.subjectId);
-    assert.equal(task.heroContext.questFingerprint, null);
+    // v3: questFingerprint is non-null
+    assert.equal(typeof task.heroContext.questFingerprint, 'string');
+    assert.match(task.heroContext.questFingerprint, /^hero-qf-/);
   }
 });
 
 // ── Happy path: response version ─────────────────────────────────────────
 
-test('response version is 2', () => {
+test('response version is 3', () => {
   const result = buildReadModelWithSubjects(['spelling']);
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
 });
 
 // ── Happy path: launch capability block ──────────────────────────────────
@@ -137,7 +139,7 @@ test('all P0 fields still present', () => {
   assert.equal(typeof result.debug, 'object');
   assert.equal(typeof result.dateKey, 'string');
   assert.equal(result.timezone, 'Europe/London');
-  assert.equal(result.schedulerVersion, 'hero-p1-launch-v1');
+  assert.equal(result.schedulerVersion, 'hero-p2-child-ui-v1');
 });
 
 // ── Edge case: launch flag off ───────────────────────────────────────────
@@ -172,7 +174,7 @@ test('zero eligible subjects produces safe empty quest with no taskIds', () => {
   assert.equal(result.dailyQuest.effortPlanned, 0);
   assert.equal(typeof result.dailyQuest.questId, 'string');
   assert.ok(result.dailyQuest.questId.startsWith('hero-quest-'));
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(typeof result.launch, 'object');
 });
 

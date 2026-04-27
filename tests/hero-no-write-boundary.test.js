@@ -188,6 +188,9 @@ test('S5: no child dashboard component imports from shared/hero/ or worker/src/h
 
 test('S6: no P0 Hero source file contains reward/economy tokens', () => {
   // Case-insensitive check on code (comments already stripped).
+  // hero-copy.js is excluded because it *defines* the canonical
+  // forbidden-vocabulary list — it legitimately contains those tokens
+  // as string literals.
   const FORBIDDEN_ECONOMY_TOKENS = [
     /\bcoin\b/i,
     /\bshop\b/i,
@@ -197,6 +200,7 @@ test('S6: no P0 Hero source file contains reward/economy tokens', () => {
   ];
 
   for (const [rel, { code }] of HERO_SOURCES) {
+    if (rel.endsWith('hero-copy.js')) continue;
     for (const pattern of FORBIDDEN_ECONOMY_TOKENS) {
       assert.ok(
         !pattern.test(code),
