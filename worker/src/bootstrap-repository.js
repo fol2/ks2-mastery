@@ -103,9 +103,9 @@ export async function computeBootstrapRevisionHash({
   // U1 follow-up 2026-04-26: digest over every writable learner's
   // `state_revision` (sorted by id, joined as `id:rev,id:rev`, SHA-256 →
   // 16 bytes hex). Computed by `computeWritableLearnerStatesDigest()`.
-  // Optional for historical callers; defaults to `0` which matches the
-  // old 4-input hash when no digest is passed (migration-safe for any
-  // internal test that only exercises the raw hash helper).
+  // Optional for callers; defaults to the empty string. The current hash
+  // format still includes the `writableLearnerStatesDigest:` slot, so
+  // callers get a deterministic value without reverting to a 4-input form.
   writableLearnerStatesDigest = '',
 }) {
   const input = [

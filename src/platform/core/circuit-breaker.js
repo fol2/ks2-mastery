@@ -44,9 +44,13 @@ export const BREAKER_STATE_OPEN = 'open';
 // `bootstrapCapacityMetadata` is resetable this way — it is the sole
 // breaker with `cooldownMaxMs: Infinity` (no auto-recovery) and therefore
 // the only one that requires an operator signal to resume.
-export const RESETABLE_BREAKER_NAMES = Object.freeze(new Set([
+const RESETABLE_BREAKER_NAME_SET = new Set([
   'bootstrapCapacityMetadata',
-]));
+]);
+
+export function isResetableBreakerName(name) {
+  return RESETABLE_BREAKER_NAME_SET.has(name);
+}
 
 export const BREAKER_STATES = Object.freeze({
   CLOSED: BREAKER_STATE_CLOSED,

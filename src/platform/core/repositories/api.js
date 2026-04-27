@@ -38,7 +38,7 @@ import {
 import {
   buildBreakersDegradedMap,
   createCircuitBreaker,
-  RESETABLE_BREAKER_NAMES,
+  isResetableBreakerName,
 } from '../circuit-breaker.js';
 
 const MUTATION_POLICY_VERSION = 1;
@@ -2148,11 +2148,11 @@ export function createApiPlatformRepositories({
       // U9.1 item 2: `forceBreakerReset` via bootstrap response. When an
       // admin header triggers the server to include this field, the client
       // resets the named breaker. The name MUST match the closed set in
-      // `RESETABLE_BREAKER_NAMES` — arbitrary strings are silently ignored.
+      // `isResetableBreakerName` — arbitrary strings are silently ignored.
       const forceBreakerResetName = typeof capacityMeta?.forceBreakerReset === 'string'
         ? capacityMeta.forceBreakerReset
         : null;
-      if (forceBreakerResetName && RESETABLE_BREAKER_NAMES.has(forceBreakerResetName)) {
+      if (forceBreakerResetName && isResetableBreakerName(forceBreakerResetName)) {
         const targetBreaker = breakers[forceBreakerResetName];
         if (targetBreaker && typeof targetBreaker.reset === 'function') {
           targetBreaker.reset();

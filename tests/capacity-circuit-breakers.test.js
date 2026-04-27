@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 import {
   BREAKER_STATES,
   DEFAULT_BREAKER_CONFIG,
-  RESETABLE_BREAKER_NAMES,
+  isResetableBreakerName,
   buildBreakersDegradedMap,
   createCircuitBreaker,
 } from '../src/platform/core/circuit-breaker.js';
@@ -1147,12 +1147,13 @@ test('U9.1 item 1: reading state getter on OPEN breaker within cooldown emits ze
 // U9.1 item 2: forceBreakerReset via bootstrap response.
 // ---------------------------------------------------------------------------
 
-test('U9.1 item 2: RESETABLE_BREAKER_NAMES is a closed set containing only bootstrapCapacityMetadata', () => {
-  assert.ok(RESETABLE_BREAKER_NAMES instanceof Set);
-  assert.equal(RESETABLE_BREAKER_NAMES.size, 1);
-  assert.ok(RESETABLE_BREAKER_NAMES.has('bootstrapCapacityMetadata'));
-  assert.ok(!RESETABLE_BREAKER_NAMES.has('parentHubRecentSessions'));
-  assert.ok(!RESETABLE_BREAKER_NAMES.has('readModelDerivedWrite'));
+test('U9.1 item 2: isResetableBreakerName is a closed predicate accepting only bootstrapCapacityMetadata', () => {
+  assert.equal(typeof isResetableBreakerName, 'function');
+  assert.ok(isResetableBreakerName('bootstrapCapacityMetadata'));
+  assert.ok(!isResetableBreakerName('parentHubRecentSessions'));
+  assert.ok(!isResetableBreakerName('readModelDerivedWrite'));
+  assert.ok(!isResetableBreakerName(''));
+  assert.ok(!isResetableBreakerName(null));
 });
 
 test('U9.1 item 2: forceBreakerReset in bootstrap response triggers client-side reset', async () => {
