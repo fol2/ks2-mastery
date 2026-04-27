@@ -623,34 +623,27 @@ test('U1 integration: admin hub response returns empty postMasteryDebug envelope
 });
 
 // --------------------------------------------------------------------------
-// SpellingSetupScene adult-only link: role gating.
+// SpellingSetupScene adult-only link: removed 2026-04-27.
 // --------------------------------------------------------------------------
+// The inline "Why is Guardian locked?" link previously rendered for admin
+// and ops roles when `isPostMega === false`. It pitched the Admin hub's
+// post-mastery diagnostic panel from the spelling setup scene. The panel
+// itself remains in the Admin hub (under the same heading), but the inline
+// link was redundant chrome for the small audience that could see it, so
+// the setup scene no longer surfaces it for any role.
 
-test('U1 integration: setup scene renders adult-only post-mastery debug link for admin role', async () => {
-  const html = await renderSetupSceneViaBundle({ platformRole: 'admin' });
-  assert.match(html, /Why is Guardian locked\?/);
-  assert.match(html, /data-adult-debug="post-mastery"/);
-  assert.match(html, /data-action="open-admin-hub"/);
-});
-
-test('U1 integration: setup scene renders adult-only post-mastery debug link for ops role', async () => {
-  const html = await renderSetupSceneViaBundle({ platformRole: 'ops' });
-  assert.match(html, /Why is Guardian locked\?/);
-  assert.match(html, /data-adult-debug="post-mastery"/);
-});
-
-test('U1 integration: setup scene omits post-mastery debug link for parent role', async () => {
-  const html = await renderSetupSceneViaBundle({ platformRole: 'parent' });
-  assert.doesNotMatch(html, /Why is Guardian locked\?/);
-  assert.doesNotMatch(html, /data-adult-debug="post-mastery"/);
-});
-
-test('U1 integration: setup scene omits post-mastery debug link when platformRole is empty', async () => {
-  const html = await renderSetupSceneViaBundle({ platformRole: '' });
-  assert.doesNotMatch(html, /Why is Guardian locked\?/);
-});
-
-test('U1 integration: setup scene omits post-mastery debug link for learner role', async () => {
-  const html = await renderSetupSceneViaBundle({ platformRole: 'learner' });
-  assert.doesNotMatch(html, /Why is Guardian locked\?/);
+test('setup scene never renders the post-mastery debug inline link, regardless of role', async () => {
+  for (const platformRole of ['admin', 'ops', 'parent', 'learner', '']) {
+    const html = await renderSetupSceneViaBundle({ platformRole });
+    assert.doesNotMatch(
+      html,
+      /data-adult-debug="post-mastery"/,
+      `inline post-mastery debug link must not render for role="${platformRole}"`,
+    );
+    assert.doesNotMatch(
+      html,
+      /class="[^"]*post-mastery-debug-link/,
+      `inline post-mastery debug link CSS class must not render for role="${platformRole}"`,
+    );
+  }
 });
