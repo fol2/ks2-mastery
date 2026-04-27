@@ -16,6 +16,7 @@ import { createWorkerApp } from '../worker/src/app.js';
 import { COMMAND_PROJECTION_MODEL_KEY } from '../worker/src/read-models/learner-read-models.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
+import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
 
 // ---------------------------------------------------------------------------
 // Budget constants — measured first, then locked.
@@ -74,6 +75,19 @@ const BUDGET_ADMIN_ACCOUNTS_SEARCH = 5;
 // bypasses the capacity collector — the budget covers only the
 // repository-tracked auth preamble. Headroom +1.
 const BUDGET_ADMIN_DEBUG_BUNDLE = 4;
+
+// Measured: 19 queries for Hero command POST start-task (ops_status JOIN +
+// ensureAccount upsert + requireLearnerReadAccess + readHeroSubjectReadModels
+// [1st child_subject_state read for server-side quest recomputation] +
+// requireLearnerReadAccess [2nd, within runSubjectCommand] + learner+account
+// revision CAS + child_subject_state [2nd read for subject dispatch] +
+// active_session scan + spelling_content + projection read-model +
+// child_game_state + event_log + sqlite_master + 6 batch writes).
+// The 2x child_subject_state reads are inherent to the Hero launch
+// architecture: resolveHeroStartTaskCommand recomputes the quest from
+// live subject state, then runSubjectCommand re-reads it for dispatch.
+// Headroom +1.
+const BUDGET_HERO_COMMAND = 20;
 
 // Measured: 5 queries for Admin Ops error-events (ops_status JOIN +
 // ensureAccount upsert + assertAdminHubActor SELECT + totals GROUP BY
@@ -566,6 +580,104 @@ test('U3 query budget: Hero read-model GET ≤ BUDGET_HERO_READ_MODEL', async ()
     assert.ok(
       capacity.queryCount <= BUDGET_HERO_READ_MODEL,
       `Hero read-model queryCount must be ≤ ${BUDGET_HERO_READ_MODEL}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 6b — Hero command POST (start-task)
+// ---------------------------------------------------------------------------
+test('U3 query budget: Hero command POST start-task ≤ BUDGET_HERO_COMMAND', async () => {
+  const server = createWorkerRepositoryServer({
+    defaultAccountId: 'adult-hero-cmd',
+    env: {
+      HERO_MODE_SHADOW_ENABLED: 'true',
+      HERO_MODE_LAUNCH_ENABLED: 'true',
+      PUNCTUATION_SUBJECT_ENABLED: 'true',
+    },
+  });
+  try {
+    // Seed account + learner via platform repositories (mirrors hero-launch-flow.test.js).
+    const repos = createApiPlatformRepositories({
+      baseUrl: BASE_URL,
+      fetch: server.fetch.bind(server),
+      authSession: server.authSessionFor('adult-hero-cmd'),
+    });
+    await repos.hydrate();
+    repos.learners.write({
+      byId: {
+        'learner-hero-cmd': {
+          id: 'learner-hero-cmd',
+          name: 'Hero Budget Learner',
+          yearGroup: 'Y5',
+          goal: 'sats',
+          dailyMinutes: 15,
+          avatarColor: '#3E6FA8',
+          createdAt: 1,
+        },
+      },
+      allIds: ['learner-hero-cmd'],
+      selectedId: 'learner-hero-cmd',
+    });
+    await repos.flush();
+
+    // Seed spelling subject state with enough stats so the Hero spelling
+    // provider produces launchable envelopes (mirrors hero-launch-flow).
+    const spellingData = {
+      stats: {
+        core: { total: 50, secure: 30, due: 10, fresh: 5, trouble: 5, attempts: 200, correct: 160, accuracy: 0.8 },
+        all: { total: 50, secure: 30, due: 10, fresh: 5, trouble: 5, attempts: 200, correct: 160, accuracy: 0.8 },
+      },
+    };
+    server.DB.db.prepare(`
+      INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+      VALUES (?, 'spelling', '{}', ?, ?, ?)
+    `).run('learner-hero-cmd', JSON.stringify(spellingData), NOW, 'adult-hero-cmd');
+
+    // Read model to discover a launchable task.
+    const rmResponse = await server.fetch(`${BASE_URL}/api/hero/read-model?learnerId=learner-hero-cmd`);
+    assert.equal(rmResponse.status, 200);
+    const rmPayload = await readJsonBody(rmResponse);
+    assert.ok(rmPayload.hero?.dailyQuest, 'Read model must contain a daily quest');
+    const quest = rmPayload.hero.dailyQuest;
+    const task = quest.tasks.find((t) => t.launchStatus === 'launchable');
+    assert.ok(task, 'Read model must contain at least one launchable task');
+
+    // Get current learner revision for CAS.
+    const revRow = server.DB.db.prepare(
+      `SELECT lp.state_revision FROM learner_profiles lp
+       JOIN account_learner_memberships alm ON alm.learner_id = lp.id
+       WHERE alm.account_id = ?`,
+    ).get('adult-hero-cmd');
+    const revision = revRow?.state_revision ?? 0;
+
+    // POST the Hero command.
+    const response = await server.fetchAs('adult-hero-cmd', `${BASE_URL}/api/hero/command`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        command: 'start-task',
+        learnerId: 'learner-hero-cmd',
+        questId: quest.questId,
+        taskId: task.taskId,
+        requestId: 'hero-budget-cmd-1',
+        expectedLearnerRevision: revision,
+      }),
+    });
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+    assert.ok(payload.heroLaunch, 'Response must include heroLaunch block');
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'Hero command POST must expose meta.capacity');
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_HERO_COMMAND,
+      `Hero command POST queryCount must be ≤ ${BUDGET_HERO_COMMAND}; measured ${capacity.queryCount}`,
     );
   } finally {
     server.close();
