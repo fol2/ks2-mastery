@@ -462,6 +462,11 @@ test.describe('P7-U10: full Worker-backed Punctuation journey', () => {
     // ---------------------------------------------------------------
     // Step 10: Star meter consistency
     // ---------------------------------------------------------------
+
+    // Hard-fail if any meter array is empty — prevents vacuous passes.
+    expect(landingMetersAfter.length, 'Post-session landing must have star meters').toBeGreaterThan(0);
+    expect(landingMetersRefreshed.length, 'Post-refresh landing must have star meters').toBeGreaterThan(0);
+
     // Post-session landing and post-refresh landing must agree.
     // Star counts extracted as numbers must be identical.
     if (landingMetersAfter.length > 0 && landingMetersRefreshed.length > 0) {
@@ -487,6 +492,8 @@ test.describe('P7-U10: full Worker-backed Punctuation journey', () => {
     // that mirrors the setup scene's monster meters. Both read from the same
     // starView + rewardState + mergeMonotonicDisplay pipeline, so counts
     // must be identical.
+    expect(summaryMeters.length, 'Summary must have star meters').toBeGreaterThan(0);
+
     if (summaryMeters.length > 0 && landingMetersAfter.length > 0) {
       // Build lookup by monster name for comparison (order may differ).
       const summaryByName = Object.fromEntries(summaryMeters.map((m) => [m.name, m]));
@@ -510,6 +517,8 @@ test.describe('P7-U10: full Worker-backed Punctuation journey', () => {
     // and verify they match the landing meters for the same monsters.
     // Map headers contain text like "Pealark12 / 100 Stars · Getting started"
     // so parsing requires a broader pattern.
+    expect(mapHeaders.length, 'Map must have monster-group headers').toBeGreaterThan(0);
+
     if (mapHeaders.length > 0 && landingMetersAfter.length > 0) {
       for (const header of mapHeaders) {
         const mapStars = parseStarCount(header.text.replace(/^[A-Za-z\s]+/, ''));
@@ -529,6 +538,18 @@ test.describe('P7-U10: full Worker-backed Punctuation journey', () => {
         }
       }
     }
+
+    // ---------------------------------------------------------------
+    // Star progression: at least one monster must show progress
+    // after completing a session (prevents vacuous all-zero passes).
+    // ---------------------------------------------------------------
+    const anyProgression = landingMetersAfter.some((m, i) =>
+      landingMetersBefore[i] && parseStarCount(m.text) > parseStarCount(landingMetersBefore[i].text),
+    );
+    expect(
+      anyProgression,
+      'At least one monster should show star progress after completing a session',
+    ).toBeTruthy();
   });
 
   // ---------------------------------------------------------------
