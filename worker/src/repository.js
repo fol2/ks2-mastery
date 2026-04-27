@@ -9772,6 +9772,17 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         limit,
       });
     },
+    // U6 (P3): Debug Bundle — resolve actor for auth + redaction.
+    // Returns { platformRole } so the route can call redactBundleForRole
+    // with the correct role. The bundle aggregation itself runs against
+    // the raw DB handle (standalone module pattern) but the auth gate
+    // goes through the repository's assertAdminHubActor.
+    async assertAdminHubActorForBundle(accountId) {
+      const actor = await assertAdminHubActor(db, accountId);
+      return {
+        platformRole: normalisePlatformRole(actor?.platform_role),
+      };
+    },
     async bumpAdminKpiMetric(key, delta = 1) {
       return bumpAdminKpiMetric(db, key, nowFactory(), delta);
     },

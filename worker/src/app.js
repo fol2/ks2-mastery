@@ -57,6 +57,11 @@ import {
   getMarketingMessage,
   listActiveMessages,
 } from './admin-marketing.js';
+import {
+  aggregateDebugBundle,
+  redactBundleForRole,
+  buildHumanSummary,
+} from './admin-debug-bundle.js';
 
 
 // U7 (sys-hardening p1): CSP report endpoint constants. The endpoint
@@ -1730,6 +1735,52 @@ export function createWorkerApp({
             limit,
           });
           return json({ ok: true, ...result });
+        }
+
+        // U6 (P3): Debug Bundle — Worker-authoritative evidence packet.
+        // Rate-limited at 10/min per session (R5: stricter than general
+        // admin reads because the query fans out to many tables).
+        // Admin-gated via `assertAdminHubActor` inside the repository
+        // helper. Redacted by role (R4) before the JSON response.
+        if (url.pathname === '/api/admin/debug-bundle' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const bundleRateLimit = await consumeRateLimit(env, {
+            bucket: 'admin-debug-bundle',
+            identifier: session.accountId,
+            limit: 10,
+            windowMs: 60_000,
+          });
+          if (!bundleRateLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_debug_bundle_rate_limited',
+              retryAfterSeconds: bundleRateLimit.retryAfterSeconds,
+              extra: {
+                message: 'Debug bundle requests are rate-limited at 10 per minute per session.',
+              },
+            });
+          }
+          // Auth: assertAdminHubActor (admin or ops role required).
+          const actor = await repository.assertAdminHubActorForBundle(session.accountId);
+          const db = requireDatabase(env);
+          const rawBundle = await aggregateDebugBundle(db, {
+            accountId: url.searchParams.get('account_id') || null,
+            learnerId: url.searchParams.get('learner_id') || null,
+            timeFrom: url.searchParams.get('time_from') || null,
+            timeTo: url.searchParams.get('time_to') || null,
+            errorFingerprint: url.searchParams.get('error_fingerprint') || null,
+            route: url.searchParams.get('route') || null,
+            now: now(),
+            buildHash: env.BUILD_HASH || null,
+          });
+          const redacted = redactBundleForRole(rawBundle, actor.platformRole);
+          const summary = buildHumanSummary(redacted);
+          return json({
+            ok: true,
+            bundle: redacted,
+            humanSummary: summary,
+            actorRole: actor.platformRole,
+            canExportJson: actor.platformRole === 'admin',
+          });
         }
 
         // PR #188 H1: dedicated narrow GET for the account-ops-metadata panel.
