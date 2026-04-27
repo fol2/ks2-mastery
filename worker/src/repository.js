@@ -9038,6 +9038,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         now: nowFactory(),
         actorAccountId: accountId,
         actorPlatformRole,
+        actor,
       });
     },
     async bumpAdminKpiMetric(key, delta = 1) {
