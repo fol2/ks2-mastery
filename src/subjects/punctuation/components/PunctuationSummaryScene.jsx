@@ -391,10 +391,20 @@ function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
         const starDerivedStage = starEntry
           ? Math.max(0, Math.floor(Number(starEntry.starDerivedStage) || 0))
           : 0;
+        // U3 (Phase 6): monotonic display — merge codex high-water marks
+        // so the Summary scene never shows a monster at a lower stage than
+        // previously seen. rewardState carries maxStageEver / starHighWater
+        // persisted by the mastery layer.
+        const safeReward = rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState) ? rewardState : {};
+        const codexEntry = safeReward[monsterId];
+        const maxStageEver = Math.max(0, Math.floor(Number(codexEntry?.maxStageEver) || 0));
+        const starHighWater = Math.max(0, Math.floor(Number(codexEntry?.starHighWater) || 0));
+        const displayStars = Math.max(totalStars, starHighWater);
+        const displayStage = Math.max(starDerivedStage, maxStageEver);
         const cap = 100;
         const starsLabel = isGrand ? 'Grand Stars' : 'Stars';
-        const stageText = punctuationStageLabel(starDerivedStage, totalStars);
-        const pct = Math.min(100, Math.max(0, Math.round((totalStars / cap) * 100)));
+        const stageText = punctuationStageLabel(displayStage, displayStars);
+        const pct = Math.min(100, Math.max(0, Math.round((displayStars / cap) * 100)));
         return (
           <div
             className="punctuation-summary-monster punctuation-monster-meter"
@@ -411,9 +421,9 @@ function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
             </div>
             <div
               className="punctuation-monster-meter-count"
-              aria-label={`${name} ${totalStars} of ${cap} ${starsLabel}`}
+              aria-label={`${name} ${displayStars} of ${cap} ${starsLabel}`}
             >
-              {`${totalStars} / ${cap} ${starsLabel}`}
+              {`${displayStars} / ${cap} ${starsLabel}`}
             </div>
           </div>
         );

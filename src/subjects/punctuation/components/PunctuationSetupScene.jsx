@@ -156,8 +156,12 @@ function RoundLengthToggle({ selectedValue, disabled, actions }) {
 function MonsterStarMeter({ monster }) {
   const cap = monster.id === 'quoral' ? 100 : 100;
   const starsLabel = monster.id === 'quoral' ? 'Grand Stars' : 'Stars';
-  const pct = Math.min(100, Math.max(0, Math.round((monster.totalStars / cap) * 100)));
-  const stageText = punctuationStageLabel(monster.starDerivedStage, monster.totalStars);
+  // U3 (Phase 6): use monotonic displayStars / displayStage so a monster
+  // never appears to de-evolve after evidence lapse.
+  const stars = monster.displayStars ?? monster.totalStars;
+  const stage = monster.displayStage ?? monster.starDerivedStage;
+  const pct = Math.min(100, Math.max(0, Math.round((stars / cap) * 100)));
+  const stageText = punctuationStageLabel(stage, stars);
 
   return (
     <div className="punctuation-monster-meter" data-monster-id={monster.id}>
@@ -170,7 +174,7 @@ function MonsterStarMeter({ monster }) {
         />
       </div>
       <div className="punctuation-monster-meter-count">
-        {`${monster.totalStars} / ${cap} ${starsLabel}`}
+        {`${stars} / ${cap} ${starsLabel}`}
       </div>
     </div>
   );

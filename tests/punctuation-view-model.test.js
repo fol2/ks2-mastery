@@ -1162,3 +1162,145 @@ test('U7 view-model: punctuationStageLabel(-1) → Not caught (negative out-of-r
 test('U7 view-model: punctuationStageLabel(NaN) → Not caught (non-finite fallback)', () => {
   assert.equal(punctuationStageLabel(NaN), 'Not caught');
 });
+
+// ---------------------------------------------------------------------------
+// U3 (Phase 6) — monotonic displayStage and displayStars in view-model.
+// The view-model merges codex high-water marks (maxStageEver, starHighWater)
+// so a child's monster never appears to de-evolve after evidence lapse.
+// ---------------------------------------------------------------------------
+
+test('U3 view-model: displayStage = max(starDerivedStage, maxStageEver) — maxStageEver wins', () => {
+  const rewardState = {
+    pealark: { mastered: ['m1'], maxStageEver: 3 },
+  };
+  const starView = {
+    perMonster: { pealark: { total: 15, starDerivedStage: 2, tryStars: 5, practiceStars: 5, secureStars: 3, masteryStars: 2 } },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const pealark = model.activeMonsters.find((m) => m.id === 'pealark');
+  assert.equal(pealark.displayStage, 3, 'maxStageEver 3 > starDerivedStage 2');
+  assert.equal(pealark.starDerivedStage, 2, 'raw starDerivedStage preserved');
+});
+
+test('U3 view-model: displayStage = max(starDerivedStage, maxStageEver) — starDerivedStage wins', () => {
+  const rewardState = {
+    claspin: { mastered: ['m1'], maxStageEver: 2 },
+  };
+  const starView = {
+    perMonster: { claspin: { total: 40, starDerivedStage: 3, tryStars: 10, practiceStars: 10, secureStars: 10, masteryStars: 10 } },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const claspin = model.activeMonsters.find((m) => m.id === 'claspin');
+  assert.equal(claspin.displayStage, 3, 'starDerivedStage 3 > maxStageEver 2');
+});
+
+test('U3 view-model: fresh learner (no maxStageEver) → displayStage = starDerivedStage', () => {
+  const rewardState = {};
+  const starView = {
+    perMonster: { curlune: { total: 10, starDerivedStage: 1, tryStars: 5, practiceStars: 3, secureStars: 2, masteryStars: 0 } },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const curlune = model.activeMonsters.find((m) => m.id === 'curlune');
+  assert.equal(curlune.displayStage, 1, 'no maxStageEver → displayStage equals starDerivedStage');
+});
+
+test('U3 view-model: evidence lapse reduces starDerivedStage but displayStage holds', () => {
+  // Simulate: learner once reached stage 2, but evidence lapsed and
+  // star-derived stage dropped to 1. displayStage must stay at 2.
+  const rewardState = {
+    pealark: { mastered: ['m1'], maxStageEver: 2, starHighWater: 25 },
+  };
+  const starView = {
+    perMonster: { pealark: { total: 12, starDerivedStage: 1, tryStars: 5, practiceStars: 4, secureStars: 2, masteryStars: 1 } },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const pealark = model.activeMonsters.find((m) => m.id === 'pealark');
+  assert.equal(pealark.displayStage, 2, 'displayStage stays at maxStageEver despite lapse');
+  assert.equal(pealark.starDerivedStage, 1, 'raw value reflects the lapse');
+});
+
+test('U3 view-model: displayStars = max(totalStars, starHighWater) — starHighWater wins', () => {
+  const rewardState = {
+    pealark: { mastered: ['m1'], starHighWater: 45 },
+  };
+  const starView = {
+    perMonster: { pealark: { total: 38, starDerivedStage: 2, tryStars: 10, practiceStars: 10, secureStars: 10, masteryStars: 8 } },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const pealark = model.activeMonsters.find((m) => m.id === 'pealark');
+  assert.equal(pealark.displayStars, 45, 'starHighWater 45 > totalStars 38');
+  assert.equal(pealark.totalStars, 38, 'raw totalStars preserved');
+});
+
+test('U3 view-model: displayStars = max(totalStars, starHighWater) — totalStars wins', () => {
+  const rewardState = {
+    claspin: { mastered: ['m1'], starHighWater: 20 },
+  };
+  const starView = {
+    perMonster: { claspin: { total: 35, starDerivedStage: 2, tryStars: 10, practiceStars: 10, secureStars: 10, masteryStars: 5 } },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const claspin = model.activeMonsters.find((m) => m.id === 'claspin');
+  assert.equal(claspin.displayStars, 35, 'totalStars 35 > starHighWater 20');
+});
+
+test('U3 view-model: NaN / missing maxStageEver and starHighWater treated as 0', () => {
+  const rewardState = {
+    pealark: { mastered: [], maxStageEver: NaN, starHighWater: undefined },
+  };
+  const starView = {
+    perMonster: { pealark: { total: 10, starDerivedStage: 1, tryStars: 5, practiceStars: 3, secureStars: 2, masteryStars: 0 } },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const pealark = model.activeMonsters.find((m) => m.id === 'pealark');
+  assert.equal(pealark.displayStage, 1, 'NaN maxStageEver → treated as 0, starDerivedStage wins');
+  assert.equal(pealark.displayStars, 10, 'undefined starHighWater → treated as 0, totalStars wins');
+});
+
+test('U3 view-model: grand monster (quoral) also gets monotonic display fields', () => {
+  const rewardState = {
+    quoral: { mastered: ['m1', 'm2'], maxStageEver: 2, starHighWater: 30 },
+  };
+  const starView = {
+    perMonster: {},
+    grand: { grandStars: 20, total: 100, starDerivedStage: 1 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const quoral = model.activeMonsters.find((m) => m.id === 'quoral');
+  assert.equal(quoral.displayStage, 2, 'grand monster maxStageEver 2 > starDerivedStage 1');
+  assert.equal(quoral.displayStars, 30, 'grand monster starHighWater 30 > grandStars 20');
+});
+
+test('U3 view-model: punctuationStageLabel(displayStage, displayStars) produces correct label after lapse', () => {
+  // Scenario: monster was at stage 3 (Evolve) with 45 stars. Lapse dropped
+  // starDerivedStage to 1 and totalStars to 12. displayStage/displayStars
+  // should still yield "Evolve".
+  const rewardState = {
+    pealark: { mastered: ['m1'], maxStageEver: 3, starHighWater: 45 },
+  };
+  const starView = {
+    perMonster: { pealark: { total: 12, starDerivedStage: 1, tryStars: 5, practiceStars: 4, secureStars: 2, masteryStars: 1 } },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  const pealark = model.activeMonsters.find((m) => m.id === 'pealark');
+  const label = punctuationStageLabel(pealark.displayStage, pealark.displayStars);
+  assert.equal(label, 'Evolve', 'stage 3 = Evolve even after evidence lapse');
+});
+
+test('U3 view-model: all four monsters receive displayStage and displayStars fields', () => {
+  const model = buildPunctuationDashboardModel({}, null, {}, null);
+  for (const monster of model.activeMonsters) {
+    assert.equal(typeof monster.displayStage, 'number', `${monster.id} must have displayStage`);
+    assert.equal(typeof monster.displayStars, 'number', `${monster.id} must have displayStars`);
+    assert.ok(monster.displayStage >= 0, `${monster.id} displayStage must be >= 0`);
+    assert.ok(monster.displayStars >= 0, `${monster.id} displayStars must be >= 0`);
+  }
+});

@@ -218,7 +218,7 @@ function SkillCard({ skill, disabled, actions }) {
   );
 }
 
-function MonsterGroup({ monster, statusFilter, disabled, actions, starView }) {
+function MonsterGroup({ monster, statusFilter, disabled, actions, starView, rewardState }) {
   const filteredSkills = statusFilter === 'all'
     ? monster.skills
     : monster.skills.filter((skill) => skill.status === statusFilter);
@@ -244,8 +244,16 @@ function MonsterGroup({ monster, statusFilter, disabled, actions, starView }) {
   const starDerivedStage = starEntry
     ? Math.max(0, Math.floor(Number(starEntry.starDerivedStage) || 0))
     : 0;
+  // U3 (Phase 6): monotonic display — merge codex high-water marks so the
+  // Map scene never shows a monster at a lower stage than previously seen.
+  const safeReward = rewardState && typeof rewardState === 'object' && !Array.isArray(rewardState) ? rewardState : {};
+  const codexEntry = safeReward[monster.monsterId];
+  const maxStageEver = Math.max(0, Math.floor(Number(codexEntry?.maxStageEver) || 0));
+  const starHighWater = Math.max(0, Math.floor(Number(codexEntry?.starHighWater) || 0));
+  const displayStars = Math.max(totalStars, starHighWater);
+  const displayStage = Math.max(starDerivedStage, maxStageEver);
   const starsLabel = isGrand ? 'Grand Stars' : 'Stars';
-  const stageText = punctuationStageLabel(starDerivedStage, totalStars);
+  const stageText = punctuationStageLabel(displayStage, displayStars);
   return (
     <section
       className="punctuation-map-monster-group"
@@ -255,7 +263,7 @@ function MonsterGroup({ monster, statusFilter, disabled, actions, starView }) {
       <header className="punctuation-map-monster-group-head">
         <h3>{monster.name}</h3>
         <p className="muted">
-          {`${totalStars} / 100 ${starsLabel}`} · {stageText}
+          {`${displayStars} / 100 ${starsLabel}`} · {stageText}
         </p>
       </header>
       <div className="punctuation-map-skill-grid">
@@ -408,6 +416,7 @@ export function PunctuationMapScene({ ui, actions }) {
               disabled={disabled}
               actions={actions}
               starView={starView}
+              rewardState={rewardState}
             />
           ))
           : <div className="punctuation-map-empty muted">No matching skills yet.</div>}

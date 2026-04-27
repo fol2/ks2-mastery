@@ -1178,12 +1178,24 @@ function activeMonsterProgressFromReward(rewardState, starView) {
       : 0;
     const starDerivedStage = starEntry ? safeNumber(starEntry.starDerivedStage, 0) : 0;
 
+    // U3 (Phase 6): monotonic display values. The codex (rewardState)
+    // persists maxStageEver and starHighWater per monster — these survive
+    // evidence lapse so the child never sees a monster de-evolve. The
+    // read-model computes live Star values; the view-model merges the
+    // codex high-water marks here for child-facing display.
+    const maxStageEver = safeNumber(entry?.maxStageEver, 0);
+    const starHighWater = safeNumber(entry?.starHighWater, 0);
+    const displayStage = Math.max(starDerivedStage, maxStageEver);
+    const displayStars = Math.max(totalStars, starHighWater);
+
     return Object.freeze({
       id: monsterId,
       name: punctuationMonsterDisplayName(monsterId),
       mastered,
       totalStars,
       starDerivedStage,
+      displayStage,
+      displayStars,
     });
   });
 }
