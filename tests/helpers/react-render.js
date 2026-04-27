@@ -1093,6 +1093,74 @@ export function renderTopNavFixture({
   `);
 }
 
+export function renderHeroQuestCardFixture({ hero, actions = {} } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HeroQuestCard } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HeroQuestCard.jsx'))};
+
+    const hero = ${JSON.stringify(hero)};
+    const actions = {
+      startHeroQuestTask: () => {},
+      continueHeroTask: () => {},
+      refreshHeroQuest: () => {},
+    };
+    const html = renderToStaticMarkup(<HeroQuestCard hero={hero} actions={actions} />);
+    console.log(html);
+  `);
+}
+
+export function renderHomeSurfaceWithHeroFixture({ hero = null } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HomeSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HomeSurface.jsx'))};
+
+    const model = {
+      theme: 'light',
+      learner: { id: 'learner-a', name: 'Ava' },
+      learnerLabel: 'Ava',
+      learnerOptions: [{ id: 'learner-a', name: 'Ava', yearGroup: 'Y5' }],
+      signedInAs: null,
+      persistence: { mode: 'local-only', label: 'Local-only' },
+      monsterSummary: [],
+      subjects: [
+        { id: 'spelling', name: 'Spelling', blurb: 'KS2 spelling.', accent: '#3E6FA8', status: 'live', glyph: 'S', progress: 0, progressLabel: '0 words secure' },
+        { id: 'grammar', name: 'Grammar', blurb: 'KS2 grammar.', accent: '#A83E6F', status: 'live', glyph: 'G', progress: 0, progressLabel: '0 concepts' },
+        { id: 'punctuation', name: 'Punctuation', blurb: 'KS2 punctuation.', accent: '#6FA83E', status: 'live', glyph: 'P', progress: 0, progressLabel: '0 units' },
+      ],
+      dashboardStats: {
+        spelling: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+        grammar: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+        punctuation: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+      },
+      dueTotal: 0,
+      roundNumber: 1,
+      now: new Date('2026-04-22T12:00:00Z'),
+      permissions: { canOpenParentHub: false },
+      hero: ${JSON.stringify(hero)},
+    };
+    const actions = {
+      dispatch() {},
+      toggleTheme() {},
+      selectLearner() {},
+      navigateHome() {},
+      openProfileSettings() {},
+      openSubject() {},
+      openCodex() {},
+      openParentHub() {},
+      openAdminHub() {},
+      logout() {},
+      retryPersistence() {},
+      startHeroQuestTask() {},
+      continueHeroTask() {},
+      refreshHeroQuest() {},
+    };
+    const html = renderToStaticMarkup(<HomeSurface model={model} actions={actions} />);
+    console.log(html);
+  `);
+}
+
 export function renderAppFixture({ route = 'dashboard' } = {}) {
   return renderFixture(`
     import React from 'react';

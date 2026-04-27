@@ -37,6 +37,7 @@ export function buildHeroHomeModel(heroUi) {
 
   const effortPlanned = readModel?.dailyQuest?.effortPlanned || 0;
   const eligibleSubjects = readModel?.eligibleSubjects || [];
+  const lockedSubjects = readModel?.lockedSubjects || [];
 
   return {
     status,
@@ -48,6 +49,7 @@ export function buildHeroHomeModel(heroUi) {
     error,
     effortPlanned,
     eligibleSubjects,
+    lockedSubjects,
     lastLaunch,
   };
 }
