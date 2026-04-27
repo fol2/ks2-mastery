@@ -812,6 +812,7 @@ function DebugBundlePanel({ model, actions }) {
   const [timeFrom, setTimeFrom] = React.useState('');
   const [timeTo, setTimeTo] = React.useState('');
   const [fingerprint, setFingerprint] = React.useState('');
+  const [eventId, setEventId] = React.useState('');
   const [routeFilter, setRouteFilter] = React.useState('');
   const [copyFeedback, setCopyFeedback] = React.useState('');
 
@@ -819,9 +820,10 @@ function DebugBundlePanel({ model, actions }) {
   const prefill = debugBundle.prefill || null;
   React.useEffect(() => {
     if (prefill?.fingerprint) setFingerprint(prefill.fingerprint);
+    if (prefill?.eventId) setEventId(prefill.eventId);
     if (prefill?.accountId) setAccountId(prefill.accountId);
     if (prefill?.route) setRouteFilter(prefill.route);
-  }, [prefill?.fingerprint, prefill?.accountId, prefill?.route]);
+  }, [prefill?.fingerprint, prefill?.eventId, prefill?.accountId, prefill?.route]);
 
   const generateBundle = () => {
     const payload = {};
@@ -832,6 +834,7 @@ function DebugBundlePanel({ model, actions }) {
     const toTs = Date.parse(timeTo);
     if (Number.isFinite(toTs)) payload.time_to = toTs;
     if (fingerprint.trim()) payload.error_fingerprint = fingerprint.trim();
+    if (eventId.trim()) payload.error_event_id = eventId.trim();
     if (routeFilter.trim()) payload.route = routeFilter.trim();
     actions.dispatch('admin-debug-bundle-generate', payload);
   };
@@ -892,8 +895,12 @@ function DebugBundlePanel({ model, actions }) {
           <input type="datetime-local" className="input" name="bundleTimeTo" value={timeTo} onChange={(e) => setTimeTo(e.target.value)} data-testid="bundle-input-to" />
         </label>
         <label className="field">
-          <span>Error fingerprint</span>
+          <span>Error Fingerprint</span>
           <input type="text" className="input" name="bundleFingerprint" value={fingerprint} maxLength={128} onChange={(e) => setFingerprint(e.target.value)} placeholder="fp-xxxx" data-testid="bundle-input-fingerprint" />
+        </label>
+        <label className="field">
+          <span>Error Event ID</span>
+          <input type="text" className="input" name="bundleEventId" value={eventId} maxLength={128} onChange={(e) => setEventId(e.target.value)} placeholder="evt-xxxx" data-testid="bundle-input-event-id" />
         </label>
         <label className="field">
           <span>Route filter</span>

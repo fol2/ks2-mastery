@@ -100,6 +100,23 @@ function seedDenial(server, {
     learnerId, sessionIdLast8, isDemo, release, detailJson);
 }
 
+function seedOccurrence(server, {
+  id,
+  eventId,
+  occurredAt = NOW - ONE_HOUR_MS,
+  release = null,
+  routeName = null,
+  accountId = null,
+  userAgent = null,
+}) {
+  server.DB.db.prepare(`
+    INSERT INTO ops_error_event_occurrences (
+      id, event_id, occurred_at, release, route_name, account_id, user_agent
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(id, eventId, occurredAt, release, routeName, accountId, userAgent);
+}
+
 function fetchBundle(server, accountId, params = {}, { platformRole = 'admin' } = {}) {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -339,7 +356,7 @@ test('canExportJson is true for admin', async () => {
 // 10. Happy path: bundle includes query context in response
 // =================================================================
 
-test('bundle includes query context', async () => {
+test('bundle includes query context with both fingerprint and event ID', async () => {
   const server = createWorkerRepositoryServer();
   try {
     seedAdultAccount(server, { id: 'admin-query', email: 'query@test.com', displayName: 'Query Admin', platformRole: 'admin' });
@@ -348,12 +365,311 @@ test('bundle includes query context', async () => {
       account_id: 'acct-123',
       route: '/api/spelling',
       error_fingerprint: 'fp-test',
+      error_event_id: 'evt-test',
     });
     const body = await res.json();
     assert.equal(body.ok, true);
     assert.equal(body.bundle.query.accountId, 'acct-123');
     assert.equal(body.bundle.query.route, '/api/spelling');
     assert.equal(body.bundle.query.errorFingerprint, 'fp-test');
+    assert.equal(body.bundle.query.errorEventId, 'evt-test');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 11. Identifier semantics: fingerprint returns matching occurrences
+// =================================================================
+
+test('search by fingerprint returns matching error events AND their occurrences', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const testTs = Date.now() - 1000;
+    seedAdultAccount(server, { id: 'admin-fp', email: 'fp@test.com', displayName: 'FP Admin', platformRole: 'admin' });
+    seedErrorEvent(server, { id: 'evt-fp-1', fingerprint: 'fp-target', firstSeen: testTs, lastSeen: testTs });
+    seedErrorEvent(server, { id: 'evt-fp-2', fingerprint: 'fp-other', firstSeen: testTs, lastSeen: testTs });
+    seedOccurrence(server, { id: 'occ-1', eventId: 'evt-fp-1', occurredAt: testTs, routeName: '/api/a' });
+    seedOccurrence(server, { id: 'occ-2', eventId: 'evt-fp-2', occurredAt: testTs, routeName: '/api/b' });
+
+    const res = await fetchBundle(server, 'admin-fp', {
+      error_fingerprint: 'fp-target',
+      time_from: testTs - ONE_HOUR_MS,
+      time_to: testTs + ONE_HOUR_MS,
+    });
+    const body = await res.json();
+    assert.equal(body.ok, true);
+
+    // recentErrors: only the matching fingerprint
+    const errors = body.bundle.recentErrors || [];
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].fingerprint, 'fp-target');
+
+    // errorOccurrences: only occurrences linked to the matched event
+    const occs = body.bundle.errorOccurrences || [];
+    assert.equal(occs.length, 1);
+    assert.equal(occs[0].eventId, 'evt-fp-1');
+    assert.equal(occs[0].routeName, '/api/a');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 12. Identifier semantics: event ID returns the specific event and occurrences
+// =================================================================
+
+test('search by event ID returns the specific event and its occurrences', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const testTs = Date.now() - 1000;
+    seedAdultAccount(server, { id: 'admin-eid', email: 'eid@test.com', displayName: 'EID Admin', platformRole: 'admin' });
+    seedErrorEvent(server, { id: 'evt-id-1', fingerprint: 'fp-a', firstSeen: testTs, lastSeen: testTs });
+    seedErrorEvent(server, { id: 'evt-id-2', fingerprint: 'fp-b', firstSeen: testTs, lastSeen: testTs });
+    seedOccurrence(server, { id: 'occ-eid-1', eventId: 'evt-id-1', occurredAt: testTs });
+    seedOccurrence(server, { id: 'occ-eid-2', eventId: 'evt-id-2', occurredAt: testTs });
+
+    const res = await fetchBundle(server, 'admin-eid', {
+      error_event_id: 'evt-id-1',
+      time_from: testTs - ONE_HOUR_MS,
+      time_to: testTs + ONE_HOUR_MS,
+    });
+    const body = await res.json();
+    assert.equal(body.ok, true);
+
+    const errors = body.bundle.recentErrors || [];
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].id, 'evt-id-1');
+
+    const occs = body.bundle.errorOccurrences || [];
+    assert.equal(occs.length, 1);
+    assert.equal(occs[0].eventId, 'evt-id-1');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 13. Identifier semantics: both fingerprint and event ID = intersection
+// =================================================================
+
+test('search by both fingerprint and event ID returns intersection', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const testTs = Date.now() - 1000;
+    seedAdultAccount(server, { id: 'admin-both', email: 'both@test.com', displayName: 'Both Admin', platformRole: 'admin' });
+    // Two events with distinct fingerprints.
+    seedErrorEvent(server, { id: 'evt-both-1', fingerprint: 'fp-alpha', firstSeen: testTs, lastSeen: testTs });
+    seedErrorEvent(server, { id: 'evt-both-2', fingerprint: 'fp-beta', firstSeen: testTs, lastSeen: testTs });
+    seedOccurrence(server, { id: 'occ-both-1', eventId: 'evt-both-1', occurredAt: testTs });
+    seedOccurrence(server, { id: 'occ-both-2', eventId: 'evt-both-2', occurredAt: testTs });
+
+    // Both fingerprint and event ID: event must match both constraints.
+    // fp-alpha resolves to evt-both-1, AND event ID is evt-both-1 → match.
+    const res = await fetchBundle(server, 'admin-both', {
+      error_fingerprint: 'fp-alpha',
+      error_event_id: 'evt-both-1',
+      time_from: testTs - ONE_HOUR_MS,
+      time_to: testTs + ONE_HOUR_MS,
+    });
+    const body = await res.json();
+    assert.equal(body.ok, true);
+
+    // recentErrors: both constraints AND'd in section 3
+    const errors = body.bundle.recentErrors || [];
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].id, 'evt-both-1');
+
+    // errorOccurrences: intersection of resolved FP IDs with explicit event ID
+    const occs = body.bundle.errorOccurrences || [];
+    assert.equal(occs.length, 1);
+    assert.equal(occs[0].eventId, 'evt-both-1');
+
+    // Mismatch case: fp-alpha resolves to evt-both-1 but event ID is evt-both-2.
+    // The intersection is empty → zero results.
+    const res2 = await fetchBundle(server, 'admin-both', {
+      error_fingerprint: 'fp-alpha',
+      error_event_id: 'evt-both-2',
+      time_from: testTs - ONE_HOUR_MS,
+      time_to: testTs + ONE_HOUR_MS,
+    });
+    const body2 = await res2.json();
+    assert.equal(body2.ok, true);
+
+    // recentErrors: fp-alpha AND id=evt-both-2 — no row matches both.
+    const errors2 = body2.bundle.recentErrors || [];
+    assert.equal(errors2.length, 0, 'mismatched fingerprint+eventId → no events');
+
+    // errorOccurrences: intersection is empty → empty array.
+    const occs2 = body2.bundle.errorOccurrences;
+    assert.ok(Array.isArray(occs2), 'errorOccurrences is array on mismatch');
+    assert.equal(occs2.length, 0, 'mismatched fingerprint+eventId → no occurrences');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 14. Neither fingerprint nor event ID returns all in time window
+// =================================================================
+
+test('search with neither fingerprint nor event ID returns all in time window', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const testTs = Date.now() - 1000;
+    seedAdultAccount(server, { id: 'admin-neither', email: 'neither@test.com', displayName: 'Neither Admin', platformRole: 'admin' });
+    seedErrorEvent(server, { id: 'evt-all-1', fingerprint: 'fp-x', firstSeen: testTs, lastSeen: testTs });
+    seedErrorEvent(server, { id: 'evt-all-2', fingerprint: 'fp-y', firstSeen: testTs, lastSeen: testTs });
+    seedOccurrence(server, { id: 'occ-all-1', eventId: 'evt-all-1', occurredAt: testTs });
+    seedOccurrence(server, { id: 'occ-all-2', eventId: 'evt-all-2', occurredAt: testTs });
+
+    const res = await fetchBundle(server, 'admin-neither', {
+      time_from: testTs - ONE_HOUR_MS,
+      time_to: testTs + ONE_HOUR_MS,
+    });
+    const body = await res.json();
+    assert.equal(body.ok, true);
+
+    const errors = body.bundle.recentErrors || [];
+    assert.equal(errors.length, 2, 'both events returned without filter');
+
+    const occs = body.bundle.errorOccurrences || [];
+    assert.equal(occs.length, 2, 'both occurrences returned without filter');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 15. CRITICAL: fingerprint matches zero events → empty occurrences, not SQL error
+// =================================================================
+
+test('fingerprint matching zero events returns empty occurrences (not SQL error)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const testTs = Date.now() - 1000;
+    seedAdultAccount(server, { id: 'admin-zero', email: 'zero@test.com', displayName: 'Zero Admin', platformRole: 'admin' });
+    // Seed an event and occurrence, but with a different fingerprint.
+    seedErrorEvent(server, { id: 'evt-z', fingerprint: 'fp-exists', firstSeen: testTs, lastSeen: testTs });
+    seedOccurrence(server, { id: 'occ-z', eventId: 'evt-z', occurredAt: testTs });
+
+    const res = await fetchBundle(server, 'admin-zero', {
+      error_fingerprint: 'fp-nonexistent',
+      time_from: testTs - ONE_HOUR_MS,
+      time_to: testTs + ONE_HOUR_MS,
+    });
+    assert.equal(res.status, 200, 'should not be a server error');
+    const body = await res.json();
+    assert.equal(body.ok, true);
+
+    // recentErrors: empty because fingerprint does not match any event
+    const errors = body.bundle.recentErrors || [];
+    assert.equal(errors.length, 0, 'no matching error events');
+
+    // CRITICAL: errorOccurrences must be empty array, NOT null (SQL error)
+    const occs = body.bundle.errorOccurrences;
+    assert.ok(Array.isArray(occs), 'errorOccurrences is an array (not null from SQL error)');
+    assert.equal(occs.length, 0, 'zero occurrences — empty-match guard triggered');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 16. Fingerprint resolves to event and returns all its occurrences
+// =================================================================
+
+test('fingerprint resolves to event and returns all its occurrences', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const testTs = Date.now() - 1000;
+    seedAdultAccount(server, { id: 'admin-multi', email: 'multi@test.com', displayName: 'Multi Admin', platformRole: 'admin' });
+    // One event with multiple occurrences, and a second unrelated event.
+    seedErrorEvent(server, { id: 'evt-m1', fingerprint: 'fp-multi', routeName: '/api/a', firstSeen: testTs, lastSeen: testTs });
+    seedErrorEvent(server, { id: 'evt-m2', fingerprint: 'fp-unrelated', routeName: '/api/b', firstSeen: testTs, lastSeen: testTs });
+    seedOccurrence(server, { id: 'occ-m1', eventId: 'evt-m1', occurredAt: testTs });
+    seedOccurrence(server, { id: 'occ-m2', eventId: 'evt-m1', occurredAt: testTs - 500 });
+    seedOccurrence(server, { id: 'occ-m3', eventId: 'evt-m1', occurredAt: testTs - 1000 });
+    seedOccurrence(server, { id: 'occ-m4', eventId: 'evt-m2', occurredAt: testTs });
+
+    const res = await fetchBundle(server, 'admin-multi', {
+      error_fingerprint: 'fp-multi',
+      time_from: testTs - ONE_HOUR_MS,
+      time_to: testTs + ONE_HOUR_MS,
+    });
+    const body = await res.json();
+    assert.equal(body.ok, true);
+
+    const errors = body.bundle.recentErrors || [];
+    assert.equal(errors.length, 1, 'only the matching event returned');
+    assert.equal(errors[0].fingerprint, 'fp-multi');
+
+    const occs = body.bundle.errorOccurrences || [];
+    assert.equal(occs.length, 3, 'all 3 occurrences for that event returned');
+    const eventIds = [...new Set(occs.map((o) => o.eventId))];
+    assert.deepStrictEqual(eventIds, ['evt-m1'], 'all occurrences belong to the matched event');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 17. Event ID that does not exist → empty occurrences (not error)
+// =================================================================
+
+test('non-existent event ID returns empty occurrences (not error)', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const testTs = Date.now() - 1000;
+    seedAdultAccount(server, { id: 'admin-noevt', email: 'noevt@test.com', displayName: 'NoEvt Admin', platformRole: 'admin' });
+    seedErrorEvent(server, { id: 'evt-exists', fingerprint: 'fp-e', firstSeen: testTs, lastSeen: testTs });
+    seedOccurrence(server, { id: 'occ-exists', eventId: 'evt-exists', occurredAt: testTs });
+
+    const res = await fetchBundle(server, 'admin-noevt', {
+      error_event_id: 'evt-does-not-exist',
+      time_from: testTs - ONE_HOUR_MS,
+      time_to: testTs + ONE_HOUR_MS,
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.ok, true);
+
+    // recentErrors: empty because id does not match
+    const errors = body.bundle.recentErrors || [];
+    assert.equal(errors.length, 0);
+
+    // errorOccurrences: empty because no occurrence has this event_id
+    const occs = body.bundle.errorOccurrences || [];
+    assert.equal(occs.length, 0);
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 18. safeSection catches DB failure gracefully
+// =================================================================
+
+test('safeSection catches DB failure gracefully in error occurrences', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, { id: 'admin-dbfail', email: 'dbfail@test.com', displayName: 'DBFail Admin', platformRole: 'admin' });
+
+    // Drop the occurrences table to simulate a DB failure.
+    server.DB.db.prepare('DROP TABLE IF EXISTS ops_error_event_occurrences').run();
+
+    const res = await fetchBundle(server, 'admin-dbfail', { account_id: 'admin-dbfail' });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.ok, true);
+
+    // errorOccurrences section returns empty array (allSafe catches
+    // missing table) — other sections still populate.
+    const occs = body.bundle.errorOccurrences;
+    assert.ok(Array.isArray(occs), 'errorOccurrences is array even when table missing');
+    assert.equal(occs.length, 0, 'empty array from missing table');
+    // Other sections (accountSummary) still populated.
+    assert.ok(body.bundle.accountSummary, 'accountSummary still populated');
   } finally {
     server.close();
   }

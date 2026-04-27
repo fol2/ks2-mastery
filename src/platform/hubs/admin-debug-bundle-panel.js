@@ -61,6 +61,7 @@ function normaliseQuery(rawValue) {
     timeFrom: safeNonNegativeInt(raw.timeFrom),
     timeTo: safeNonNegativeInt(raw.timeTo),
     errorFingerprint: typeof raw.errorFingerprint === 'string' ? raw.errorFingerprint : null,
+    errorEventId: typeof raw.errorEventId === 'string' ? raw.errorEventId : null,
     route: typeof raw.route === 'string' ? raw.route : null,
   };
 }
