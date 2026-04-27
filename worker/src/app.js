@@ -42,6 +42,8 @@ import {
 } from './errors.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../src/platform/core/subject-availability.js';
 import { consumeRateLimit, rateLimitResponse, rateLimitSubject } from './rate-limit.js';
+import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
+import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.js';
 import { handleHeroReadModel } from './hero/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { logRequestDenial } from './admin-denial-logger.js';
@@ -679,6 +681,7 @@ export function createWorkerApp({
 
       let response;
       let errorCaught = null;
+      let resolvedPlatformRole = null;
       const runHandler = async () => {
         if (isPublicSourceLockdownPath(url.pathname)) {
           return publicSourceAssetResponse(request, env);
@@ -1156,6 +1159,7 @@ export function createWorkerApp({
         const repository = createWorkerRepository({ env, now, capacity });
         const session = await auth.requireSession(request);
         const account = await repository.ensureAccount(session);
+        resolvedPlatformRole = account?.platform_role || session.platformRole || 'parent';
 
         const subjectCommandMatch = /^\/api\/subjects\/([^/]+)\/command$/.exec(url.pathname);
         if (subjectCommandMatch && request.method === 'POST') {
@@ -2387,6 +2391,8 @@ export function createWorkerApp({
         capacityStartedAt,
         validatedRequestId,
         env,
+        request,
+        resolvedPlatformRole,
       });
     },
   };
@@ -2400,6 +2406,8 @@ async function finaliseTelemetry({
   capacityStartedAt,
   validatedRequestId,
   env,
+  request = null,
+  resolvedPlatformRole = null,
 }) {
   const wallMs = typeof performance?.now === 'function'
     ? Math.max(0, performance.now() - capacityStartedAt)
@@ -2441,6 +2449,25 @@ async function finaliseTelemetry({
           status: outgoing.status,
         });
         const publicJson = capacity.toPublicJSON();
+
+        // U5 item 3: surface server-side derivedWrite breaker state on bootstrap responses
+        const isBootstrapPath = url.pathname === '/api/bootstrap';
+        if (isBootstrapPath) {
+          try {
+            const serverBreaker = getReadModelDerivedWriteBreaker();
+            publicJson.derivedWriteBreakerOpen = serverBreaker.shouldBlockCall();
+          } catch (_) { /* breaker not initialised — omit field */ }
+        }
+
+        // U5 item 2: forceBreakerReset via admin header on bootstrap responses
+        if (isBootstrapPath && request) {
+          const isAdminOrOps = resolvedPlatformRole === 'admin' || resolvedPlatformRole === 'ops';
+          const forceBreakerResetHeader = request?.headers?.get?.('x-ks2-admin-force-breaker-reset') || null;
+          if (isAdminOrOps && typeof forceBreakerResetHeader === 'string' && isResetableBreakerName(forceBreakerResetHeader)) {
+            publicJson.forceBreakerReset = forceBreakerResetHeader;
+          }
+        }
+
         const rewritten = attachCapacityToJsonBody(text, publicJson);
         attachText = rewritten;
         responseBytes = measureUtf8Bytes(rewritten);

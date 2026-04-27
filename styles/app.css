@@ -11143,6 +11143,13 @@ html { scroll-behavior: smooth; }
   margin-top: 8px;
 }
 
+/* U7 hardening-residuals: chunk-load reload CTA spacing.
+   Replaces an inline style={{ marginTop: 12 }} to stay within the
+   CSP inline-style budget (see tests/csp-inline-style-budget.test.js). */
+.error-boundary-reload-actions {
+  margin-top: 12px;
+}
+
 .unknown-route-main {
   max-width: 960px;
   margin: 0 auto;

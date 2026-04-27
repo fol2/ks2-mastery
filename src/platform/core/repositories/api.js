@@ -38,6 +38,7 @@ import {
 import {
   buildBreakersDegradedMap,
   createCircuitBreaker,
+  isResetableBreakerName,
 } from '../circuit-breaker.js';
 
 const MUTATION_POLICY_VERSION = 1;
@@ -1478,10 +1479,21 @@ export function createApiPlatformRepositories({
   // surface. All other breakers use the default 500ms base / 30s cap /
   // 2x curve + failureThreshold=3.
   const breakerStorage = resolvedStorage;
+  // U9.1 item 5: microtask-batched recompute. When N breakers transition
+  // simultaneously (e.g. a bulk-reset or multi-surface 5xx burst), each
+  // transition's `onTransition` fires this callback. Without batching,
+  // `recomputePersistence()` fires N times synchronously — O(N^2) for
+  // subscribers that read the full snapshot on every notification. The
+  // microtask defer schedules a single recompute after all synchronous
+  // transition callbacks have returned.
+  let breakerRecomputeScheduled = false;
   const scheduleBreakerRecompute = () => {
-    // Transitions touch the persistence snapshot; recompute lazily so
-    // subscribers observe the new `breakersDegraded` map.
-    recomputePersistence();
+    if (breakerRecomputeScheduled) return;
+    breakerRecomputeScheduled = true;
+    queueMicrotask(() => {
+      breakerRecomputeScheduled = false;
+      recomputePersistence();
+    });
   };
   const breakers = {
     parentHubRecentSessions: createCircuitBreaker({
@@ -2132,6 +2144,38 @@ export function createApiPlatformRepositories({
         consecutiveMissingBootstrapMetadata = 0;
         bootstrapMetadataOperatorError = null;
         breakers.bootstrapCapacityMetadata.reset();
+      }
+      // U9.1 item 2: `forceBreakerReset` via bootstrap response. When an
+      // admin header triggers the server to include this field, the client
+      // resets the named breaker. The name MUST match the closed set in
+      // `isResetableBreakerName` — arbitrary strings are silently ignored.
+      const forceBreakerResetName = typeof capacityMeta?.forceBreakerReset === 'string'
+        ? capacityMeta.forceBreakerReset
+        : null;
+      if (forceBreakerResetName && isResetableBreakerName(forceBreakerResetName)) {
+        const targetBreaker = breakers[forceBreakerResetName];
+        if (targetBreaker && typeof targetBreaker.reset === 'function') {
+          targetBreaker.reset();
+        }
+      }
+      // U9.1 item 3: surface server-side `readModelDerivedWrite` breaker
+      // state. The server stamps `derivedWriteBreakerOpen: true` on
+      // `meta.capacity` when its breaker is open; the client mirrors this
+      // into `breakersDegraded.derivedWrite` so UI components observe
+      // parity with the server-side projection-skip path.
+      if (capacityMeta && typeof capacityMeta.derivedWriteBreakerOpen === 'boolean') {
+        if (capacityMeta.derivedWriteBreakerOpen) {
+          // Server breaker is open — trip the client-side mirror so
+          // `breakersDegraded.derivedWrite` reads `true`.
+          if (!breakers.readModelDerivedWrite.isOpen) {
+            breakers.readModelDerivedWrite.forceOpen();
+          }
+        } else {
+          // Server breaker is closed — reset the client mirror.
+          if (breakers.readModelDerivedWrite.isOpen) {
+            breakers.readModelDerivedWrite.reset();
+          }
+        }
       }
       // U7: notModified short-circuit. Validate the revision envelope
       // is structurally sound before honouring — a missing field

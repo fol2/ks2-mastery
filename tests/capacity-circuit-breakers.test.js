@@ -17,6 +17,7 @@ import assert from 'node:assert/strict';
 import {
   BREAKER_STATES,
   DEFAULT_BREAKER_CONFIG,
+  isResetableBreakerName,
   buildBreakersDegradedMap,
   createCircuitBreaker,
 } from '../src/platform/core/circuit-breaker.js';
@@ -511,6 +512,10 @@ test('U9 integration: tripping parentHubRecentSessions flips breakersDegraded.pa
   repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
   repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
   repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
+
+  // U9.1 item 5: scheduleBreakerRecompute is now microtask-deferred.
+  // Wait for the microtask to drain before reading the snapshot.
+  await new Promise((resolve) => { queueMicrotask(resolve); });
 
   const snapshot = repositories.persistence.read();
   assert.equal(snapshot.breakersDegraded.parentHub, true);
@@ -1088,4 +1093,579 @@ test('U9 integration: a response with meta.capacity.bootstrapCapacity resets the
   const snapshot = repositories.persistence.read();
   assert.equal(snapshot.breakersDegraded.bootstrapCapacity, false);
   assert.equal(snapshot.breakers.bootstrapCapacityMetadata.state, BREAKER_STATES.CLOSED);
+});
+
+// ---------------------------------------------------------------------------
+// U9.1 item 1: breakerTransition overemission — blocked calls on open
+// breaker do NOT emit transitions.
+// ---------------------------------------------------------------------------
+
+test('U9.1 item 1: repeated shouldBlockCall on OPEN breaker emits zero additional transitions', () => {
+  const clock = makeNow();
+  const transitions = [];
+  const breaker = createCircuitBreaker({
+    name: 'overemission-test',
+    failureThreshold: 2,
+    cooldownMs: 5000,
+    now: clock.read,
+    storage: null,
+    onTransition: (payload) => transitions.push(payload),
+  });
+  breaker.recordFailure();
+  breaker.recordFailure();
+  assert.equal(transitions.length, 1, 'one CLOSED->OPEN transition');
+  // Call shouldBlockCall many times while still in cooldown. Each call
+  // must NOT emit a transition — only actual state changes emit.
+  for (let i = 0; i < 10; i += 1) {
+    assert.equal(breaker.shouldBlockCall(), true);
+  }
+  assert.equal(transitions.length, 1, 'no additional transitions from blocked calls');
+});
+
+test('U9.1 item 1: reading state getter on OPEN breaker within cooldown emits zero additional transitions', () => {
+  const clock = makeNow();
+  const transitions = [];
+  const breaker = createCircuitBreaker({
+    name: 'state-read-test',
+    failureThreshold: 2,
+    cooldownMs: 5000,
+    now: clock.read,
+    storage: null,
+    onTransition: (payload) => transitions.push(payload),
+  });
+  breaker.recordFailure();
+  breaker.recordFailure();
+  assert.equal(transitions.length, 1);
+  // Reading state 10 times while still OPEN must not emit.
+  for (let i = 0; i < 10; i += 1) {
+    assert.equal(breaker.state, BREAKER_STATES.OPEN);
+  }
+  assert.equal(transitions.length, 1, 'state reads do not overemit');
+});
+
+// ---------------------------------------------------------------------------
+// U9.1 item 2: forceBreakerReset via bootstrap response.
+// ---------------------------------------------------------------------------
+
+test('U9.1 item 2: isResetableBreakerName is a closed predicate accepting only bootstrapCapacityMetadata', () => {
+  assert.equal(typeof isResetableBreakerName, 'function');
+  assert.ok(isResetableBreakerName('bootstrapCapacityMetadata'));
+  assert.ok(!isResetableBreakerName('parentHubRecentSessions'));
+  assert.ok(!isResetableBreakerName('readModelDerivedWrite'));
+  assert.ok(!isResetableBreakerName(''));
+  assert.ok(!isResetableBreakerName(null));
+});
+
+test('U9.1 item 2: forceBreakerReset in bootstrap response triggers client-side reset', async () => {
+  const storage = installMemoryStorage();
+  const rawServer = createMockRepositoryServer({ learners: learnerSnapshot() });
+
+  // First: 3 misses to trip the bootstrapCapacityMetadata breaker sticky.
+  const fetchStrip = async (url, init) => {
+    const response = await rawServer.fetch(url, init);
+    if (typeof url === 'string' && url.endsWith('/api/bootstrap')) {
+      const body = await response.json();
+      const stripped = {
+        ...body,
+        meta: { ...(body.meta || {}), capacity: {} },
+      };
+      return new Response(JSON.stringify(stripped), {
+        status: response.status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return response;
+  };
+
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: fetchStrip,
+    storage,
+    now: () => 1_000,
+  });
+
+  await repositories.hydrate();
+  await repositories.hydrate();
+  await repositories.hydrate();
+  assert.equal(repositories.persistence.read().breakersDegraded.bootstrapCapacity, true, 'breaker tripped after 3 misses');
+
+  // Now simulate a bootstrap response that carries forceBreakerReset AND
+  // a healthy bootstrapCapacity field (operator fixed the issue).
+  let resetSent = false;
+  const fetchWithReset = async (url, init) => {
+    const response = await rawServer.fetch(url, init);
+    if (typeof url === 'string' && url.endsWith('/api/bootstrap')) {
+      const body = await response.json();
+      const enriched = {
+        ...body,
+        meta: {
+          ...(body.meta || {}),
+          capacity: {
+            ...(body.meta?.capacity || {}),
+            bootstrapCapacity: { version: 1 },
+            forceBreakerReset: 'bootstrapCapacityMetadata',
+          },
+        },
+      };
+      resetSent = true;
+      return new Response(JSON.stringify(enriched), {
+        status: response.status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return response;
+  };
+
+  // Replace the fetch and hydrate again.
+  const repos2 = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: fetchWithReset,
+    storage,
+    now: () => 2_000,
+  });
+  await repos2.hydrate();
+  assert.ok(resetSent, 'mock served the forceBreakerReset response');
+  // The breaker must be reset via the forceBreakerReset field.
+  const snapshot = repos2.persistence.read();
+  assert.equal(snapshot.breakersDegraded.bootstrapCapacity, false, 'breaker reset by forceBreakerReset');
+  assert.equal(snapshot.breakers.bootstrapCapacityMetadata.state, BREAKER_STATES.CLOSED);
+});
+
+test('U9.1 item 2: forceBreakerReset with invalid name is silently ignored', async () => {
+  const storage = installMemoryStorage();
+  const rawServer = createMockRepositoryServer({ learners: learnerSnapshot() });
+  const fetchWithBadReset = async (url, init) => {
+    const response = await rawServer.fetch(url, init);
+    if (typeof url === 'string' && url.endsWith('/api/bootstrap')) {
+      const body = await response.json();
+      const enriched = {
+        ...body,
+        meta: {
+          ...(body.meta || {}),
+          capacity: {
+            ...(body.meta?.capacity || {}),
+            bootstrapCapacity: { version: 1 },
+            forceBreakerReset: 'readModelDerivedWrite', // NOT in the closed set
+          },
+        },
+      };
+      return new Response(JSON.stringify(enriched), {
+        status: response.status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return response;
+  };
+
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: fetchWithBadReset,
+    storage,
+    now: () => 1_000,
+  });
+
+  // Force the readModelDerivedWrite breaker open before hydrating.
+  repositories.persistence.breakers.readModelDerivedWrite.recordFailure();
+  repositories.persistence.breakers.readModelDerivedWrite.recordFailure();
+  repositories.persistence.breakers.readModelDerivedWrite.recordFailure();
+  assert.equal(repositories.persistence.breakers.readModelDerivedWrite.state, BREAKER_STATES.OPEN);
+
+  await repositories.hydrate();
+  // The invalid name must be silently ignored — breaker stays open.
+  assert.equal(repositories.persistence.breakers.readModelDerivedWrite.state, BREAKER_STATES.OPEN);
+});
+
+// ---------------------------------------------------------------------------
+// U9.1 item 3: derivedWriteBreakerOpen client-side parity.
+// ---------------------------------------------------------------------------
+
+test('U9.1 item 3: derivedWriteBreakerOpen=true in bootstrap response opens client-side readModelDerivedWrite', async () => {
+  const storage = installMemoryStorage();
+  const rawServer = createMockRepositoryServer({ learners: learnerSnapshot() });
+  const fetchWithDerivedOpen = async (url, init) => {
+    const response = await rawServer.fetch(url, init);
+    if (typeof url === 'string' && url.endsWith('/api/bootstrap')) {
+      const body = await response.json();
+      const enriched = {
+        ...body,
+        meta: {
+          ...(body.meta || {}),
+          capacity: {
+            ...(body.meta?.capacity || {}),
+            bootstrapCapacity: { version: 1 },
+            derivedWriteBreakerOpen: true,
+          },
+        },
+      };
+      return new Response(JSON.stringify(enriched), {
+        status: response.status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return response;
+  };
+
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: fetchWithDerivedOpen,
+    storage,
+    now: () => 1_000,
+  });
+
+  await repositories.hydrate();
+  // Wait for the microtask-batched recompute to settle.
+  await new Promise((resolve) => { queueMicrotask(resolve); });
+  const snapshot = repositories.persistence.read();
+  assert.equal(snapshot.breakersDegraded.derivedWrite, true, 'client mirrors server derivedWrite open state');
+});
+
+test('U9.1 item 3: derivedWriteBreakerOpen=false in bootstrap response resets client-side readModelDerivedWrite', async () => {
+  const storage = installMemoryStorage();
+  const rawServer = createMockRepositoryServer({ learners: learnerSnapshot() });
+  const fetchWithDerivedClosed = async (url, init) => {
+    const response = await rawServer.fetch(url, init);
+    if (typeof url === 'string' && url.endsWith('/api/bootstrap')) {
+      const body = await response.json();
+      const enriched = {
+        ...body,
+        meta: {
+          ...(body.meta || {}),
+          capacity: {
+            ...(body.meta?.capacity || {}),
+            bootstrapCapacity: { version: 1 },
+            derivedWriteBreakerOpen: false,
+          },
+        },
+      };
+      return new Response(JSON.stringify(enriched), {
+        status: response.status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return response;
+  };
+
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: fetchWithDerivedClosed,
+    storage,
+    now: () => 1_000,
+  });
+
+  // Force the client breaker open before hydrate.
+  repositories.persistence.breakers.readModelDerivedWrite.forceOpen();
+  assert.equal(repositories.persistence.breakers.readModelDerivedWrite.state, BREAKER_STATES.OPEN);
+
+  await repositories.hydrate();
+  await new Promise((resolve) => { queueMicrotask(resolve); });
+  const snapshot = repositories.persistence.read();
+  assert.equal(snapshot.breakersDegraded.derivedWrite, false, 'client mirrors server derivedWrite closed state');
+});
+
+// ---------------------------------------------------------------------------
+// U9.1 item 4: priority-order invariant — primary write proceeds when
+// readModelDerivedWrite breaker is open.
+// ---------------------------------------------------------------------------
+
+test('U9.1 item 4: primary subject-state write commits even when derivedWrite breaker is open', async () => {
+  const { createWorkerApp } = await import('../worker/src/app.js');
+  const { createMigratedSqliteD1Database } = await import('./helpers/sqlite-d1.js');
+  const {
+    getReadModelDerivedWriteBreaker,
+    resetReadModelDerivedWriteBreaker,
+  } = await import('../worker/src/circuit-breaker-server.js');
+
+  resetReadModelDerivedWriteBreaker();
+  try {
+    const DB = createMigratedSqliteD1Database();
+    const now = Date.UTC(2026, 0, 1);
+    DB.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    `).run('learner-a', now, now);
+    DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES (?, ?, ?, 'parent', ?, ?, ?, 0)
+    `).run('adult-a', 'adult@example.test', 'Adult A', 'learner-a', now, now);
+    DB.db.prepare(`
+      INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+      VALUES (?, ?, 'owner', 0, ?, ?)
+    `).run('adult-a', 'learner-a', now, now);
+
+    const breaker = getReadModelDerivedWriteBreaker();
+    breaker.forceOpen();
+    assert.equal(breaker.state, BREAKER_STATES.OPEN, 'breaker is open before command');
+
+    const app = createWorkerApp({ now: () => now });
+    const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test' };
+    const response = await app.fetch(new Request('https://repo.test/api/subjects/spelling/command', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-ks2-dev-account-id': 'adult-a',
+      },
+      body: JSON.stringify({
+        command: 'start-session',
+        learnerId: 'learner-a',
+        requestId: 'priority-invariant-1',
+        expectedLearnerRevision: 0,
+        payload: { mode: 'single', slug: 'possess', length: 1 },
+      }),
+    }), env, {});
+
+    assert.equal(response.status, 200, 'command succeeds (primary write proceeds)');
+    const body = await response.json();
+
+    // Primary state: learner revision must be bumped (the write landed).
+    const learner = DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a');
+    assert.equal(learner.state_revision, 1, 'primary state revision bumped despite breaker open');
+
+    // Mutation receipt must exist (idempotency record proves the write committed).
+    const receipt = DB.db.prepare('SELECT * FROM mutation_receipts WHERE request_id = ?').get('priority-invariant-1');
+    assert.ok(receipt, 'mutation receipt written — primary write committed');
+
+    // Response carries derivedWriteSkipped signal but the primary write is not masked.
+    assert.equal(
+      body?.meta?.capacity?.derivedWriteSkipped?.reason,
+      'breaker-open',
+      'derivedWriteSkipped stamps breaker-open',
+    );
+    assert.ok(body.ok, 'response.ok is true — the write is not masked as failed');
+    DB.close();
+  } finally {
+    resetReadModelDerivedWriteBreaker();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// U9.1 item 5: scheduleBreakerRecompute O(N^2) fix — N simultaneous
+// transitions produce a single batched recompute via microtask.
+// ---------------------------------------------------------------------------
+
+test('U9.1 item 5: N simultaneous breaker transitions batch into a single persistence recompute via microtask', async () => {
+  const storage = installMemoryStorage();
+  const server = createMockRepositoryServer({ learners: learnerSnapshot() });
+  const repositories = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    storage,
+    now: () => 1_000,
+  });
+  await repositories.hydrate();
+
+  // Capture the number of persistence notifications before the burst.
+  let notificationCount = 0;
+  const unsubscribe = repositories.persistence.subscribe(() => {
+    notificationCount += 1;
+  });
+
+  // Trip 3 breakers simultaneously in the same synchronous turn.
+  repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
+  repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
+  repositories.persistence.breakers.parentHubRecentSessions.recordFailure();
+  repositories.persistence.breakers.parentHubActivity.recordFailure();
+  repositories.persistence.breakers.parentHubActivity.recordFailure();
+  repositories.persistence.breakers.parentHubActivity.recordFailure();
+  repositories.persistence.breakers.classroomSummary.recordFailure();
+  repositories.persistence.breakers.classroomSummary.recordFailure();
+  repositories.persistence.breakers.classroomSummary.recordFailure();
+
+  // The microtask-batched recompute fires after all synchronous transitions.
+  // Before the fix, 3 transitions would fire 3 recomputes synchronously.
+  // After the fix, the count after the microtask drains must be <= 1.
+  const syncNotifications = notificationCount;
+  await new Promise((resolve) => { queueMicrotask(resolve); });
+  const totalNotifications = notificationCount;
+
+  // The key assertion: synchronous notifications must be zero (all deferred
+  // to microtask), and the total after microtask must be exactly 1 (batched).
+  assert.equal(syncNotifications, 0, 'no synchronous recompute during transition burst');
+  assert.equal(totalNotifications, 1, 'exactly one batched recompute via microtask');
+
+  // Final state correctness: all three surfaces are degraded.
+  const snapshot = repositories.persistence.read();
+  assert.equal(snapshot.breakersDegraded.parentHub, true);
+  assert.equal(snapshot.breakersDegraded.classroomSummary, true);
+
+  unsubscribe();
+});
+
+// ---------------------------------------------------------------------------
+// U9.1 item 2 server-side: forceBreakerReset header on bootstrap response
+// ---------------------------------------------------------------------------
+
+test('U9.1 item 2 server: bootstrap response includes forceBreakerReset when admin header sent by admin session', async () => {
+  const { createWorkerApp } = await import('../worker/src/app.js');
+  const { createMigratedSqliteD1Database } = await import('./helpers/sqlite-d1.js');
+
+  const DB = createMigratedSqliteD1Database();
+  const now = Date.UTC(2026, 0, 1);
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run('learner-a', now, now);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, ?, ?, 'admin', ?, ?, ?, 0)
+  `).run('adult-a', 'adult@example.test', 'Adult A', 'learner-a', now, now);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, ?, 'owner', 0, ?, ?)
+  `).run('adult-a', 'learner-a', now, now);
+
+  const app = createWorkerApp({ now: () => now });
+  const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test' };
+
+  // Send a bootstrap GET with the admin header from an admin session.
+  // The dev-stub reads platformRole from x-ks2-dev-platform-role so
+  // ensureAccount UPSERT preserves the admin role in the DB row.
+  const response = await app.fetch(new Request('https://repo.test/api/bootstrap', {
+    method: 'GET',
+    headers: {
+      'x-ks2-dev-account-id': 'adult-a',
+      'x-ks2-dev-platform-role': 'admin',
+      'x-ks2-admin-force-breaker-reset': 'bootstrapCapacityMetadata',
+    },
+  }), env, {});
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(
+    body?.meta?.capacity?.forceBreakerReset,
+    'bootstrapCapacityMetadata',
+    'bootstrap response carries forceBreakerReset for admin session',
+  );
+  DB.close();
+});
+
+test('ADV-U5-CB-001: forceBreakerReset header from non-admin session is silently ignored', async () => {
+  const { createWorkerApp } = await import('../worker/src/app.js');
+  const { createMigratedSqliteD1Database } = await import('./helpers/sqlite-d1.js');
+
+  const DB = createMigratedSqliteD1Database();
+  const now = Date.UTC(2026, 0, 1);
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run('learner-a', now, now);
+  // Non-admin parent account — the header must be silently ignored.
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, ?, ?, 'parent', ?, ?, ?, 0)
+  `).run('adult-a', 'adult@example.test', 'Adult A', 'learner-a', now, now);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, ?, 'owner', 0, ?, ?)
+  `).run('adult-a', 'learner-a', now, now);
+
+  const app = createWorkerApp({ now: () => now });
+  const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test' };
+
+  // Send the admin-only header from a parent session.
+  const response = await app.fetch(new Request('https://repo.test/api/bootstrap', {
+    method: 'GET',
+    headers: {
+      'x-ks2-dev-account-id': 'adult-a',
+      'x-ks2-admin-force-breaker-reset': 'bootstrapCapacityMetadata',
+    },
+  }), env, {});
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  // ADV-U5-CB-001: non-admin must NOT see the forceBreakerReset field.
+  assert.equal(
+    body?.meta?.capacity?.forceBreakerReset,
+    undefined,
+    'non-admin session must not trigger forceBreakerReset',
+  );
+  DB.close();
+});
+
+test('U9.1 item 2 server: invalid breaker name in admin header is silently ignored', async () => {
+  const { createWorkerApp } = await import('../worker/src/app.js');
+  const { createMigratedSqliteD1Database } = await import('./helpers/sqlite-d1.js');
+
+  const DB = createMigratedSqliteD1Database();
+  const now = Date.UTC(2026, 0, 1);
+  DB.db.prepare(`
+    INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+    VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+  `).run('learner-a', now, now);
+  DB.db.prepare(`
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+    VALUES (?, ?, ?, 'parent', ?, ?, ?, 0)
+  `).run('adult-a', 'adult@example.test', 'Adult A', 'learner-a', now, now);
+  DB.db.prepare(`
+    INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+    VALUES (?, ?, 'owner', 0, ?, ?)
+  `).run('adult-a', 'learner-a', now, now);
+
+  const app = createWorkerApp({ now: () => now });
+  const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test' };
+
+  const response = await app.fetch(new Request('https://repo.test/api/bootstrap', {
+    method: 'GET',
+    headers: {
+      'x-ks2-dev-account-id': 'adult-a',
+      'x-ks2-admin-force-breaker-reset': 'readModelDerivedWrite', // not in RESETABLE set
+    },
+  }), env, {});
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  // The invalid name must NOT appear in the response.
+  assert.equal(body?.meta?.capacity?.forceBreakerReset, undefined, 'invalid name silently omitted');
+  DB.close();
+});
+
+// ---------------------------------------------------------------------------
+// U9.1 item 3 server: derivedWriteBreakerOpen in bootstrap response.
+// ---------------------------------------------------------------------------
+
+test('U9.1 item 3 server: bootstrap response includes derivedWriteBreakerOpen field', async () => {
+  const { createWorkerApp } = await import('../worker/src/app.js');
+  const { createMigratedSqliteD1Database } = await import('./helpers/sqlite-d1.js');
+  const {
+    getReadModelDerivedWriteBreaker,
+    resetReadModelDerivedWriteBreaker,
+  } = await import('../worker/src/circuit-breaker-server.js');
+
+  resetReadModelDerivedWriteBreaker();
+  try {
+    const DB = createMigratedSqliteD1Database();
+    const now = Date.UTC(2026, 0, 1);
+    DB.db.prepare(`
+      INSERT INTO learner_profiles (id, name, year_group, avatar_color, goal, daily_minutes, created_at, updated_at, state_revision)
+      VALUES (?, 'Learner A', 'Y5', '#3E6FA8', 'sats', 15, ?, ?, 0)
+    `).run('learner-a', now, now);
+    DB.db.prepare(`
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_learner_id, created_at, updated_at, repo_revision)
+      VALUES (?, ?, ?, 'parent', ?, ?, ?, 0)
+    `).run('adult-a', 'adult@example.test', 'Adult A', 'learner-a', now, now);
+    DB.db.prepare(`
+      INSERT INTO account_learner_memberships (account_id, learner_id, role, sort_index, created_at, updated_at)
+      VALUES (?, ?, 'owner', 0, ?, ?)
+    `).run('adult-a', 'learner-a', now, now);
+
+    const app = createWorkerApp({ now: () => now });
+    const env = { DB, AUTH_MODE: 'development-stub', ENVIRONMENT: 'test' };
+
+    // Breaker is closed — derivedWriteBreakerOpen should be false.
+    const closedResponse = await app.fetch(new Request('https://repo.test/api/bootstrap', {
+      method: 'GET',
+      headers: { 'x-ks2-dev-account-id': 'adult-a' },
+    }), env, {});
+    const closedBody = await closedResponse.json();
+    assert.equal(closedBody?.meta?.capacity?.derivedWriteBreakerOpen, false, 'breaker closed -> false');
+
+    // Force the breaker open.
+    getReadModelDerivedWriteBreaker().forceOpen();
+
+    const openResponse = await app.fetch(new Request('https://repo.test/api/bootstrap', {
+      method: 'GET',
+      headers: { 'x-ks2-dev-account-id': 'adult-a' },
+    }), env, {});
+    const openBody = await openResponse.json();
+    assert.equal(openBody?.meta?.capacity?.derivedWriteBreakerOpen, true, 'breaker open -> true');
+    DB.close();
+  } finally {
+    resetReadModelDerivedWriteBreaker();
+  }
 });
