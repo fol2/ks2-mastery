@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatTimestamp, isBlocked, selectedWritableLearner } from './hub-utils.js';
+import { formatTimestamp, isBlocked } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
 
 // U4+U5: Debugging & Logs section — error log centre + learner support /

@@ -9,9 +9,7 @@ import { AdminDebuggingSection } from './AdminDebuggingSection.jsx';
 import { AdminContentSection } from './AdminContentSection.jsx';
 import { AdminMarketingSection } from './AdminMarketingSection.jsx';
 import { createAccountOpsMetadataDirtyRegistry } from '../../platform/hubs/admin-metadata-dirty-registry.js';
-// Preserve the re-export used by some test imports.
-export { buildAccountOpsMetadataConflictDiff } from '../../platform/hubs/admin-metadata-conflict-diff.js';
-
+import { shouldBlockSectionChange } from '../../platform/hubs/admin-section-guard.js';
 // U4+U5: AdminHubSurface is now a thin shell that renders:
 //   1. Access-denied / loading / error guards (unchanged)
 //   2. Updated header with console branding + LearnerSelect
@@ -81,9 +79,12 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
 
   // Dirty-row guard: before switching tabs, check if any AccountOpsMetadata
   // rows have unsaved edits. If so, prompt the user before discarding.
+  // The decision logic is extracted into shouldBlockSectionChange() so it
+  // can be unit-tested without a DOM / confirm() dependency.
   const handleTabChange = (nextSection) => {
-    if (nextSection === activeSection) return;
-    if (dirtyRegistry.anyDirty()) {
+    const guard = shouldBlockSectionChange(dirtyRegistry, nextSection, activeSection);
+    if (guard.blocked && guard.reason === 'same-section') return;
+    if (guard.blocked && guard.reason === 'dirty-rows') {
       // eslint-disable-next-line no-restricted-globals, no-alert
       const confirmed = confirm('You have unsaved changes in Account Ops Metadata. Discard and switch section?');
       if (!confirmed) return;

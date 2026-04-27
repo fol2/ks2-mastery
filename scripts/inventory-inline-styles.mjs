@@ -204,7 +204,7 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // post-merge baseline honestly.
 export const PRE_MIGRATION_TOTAL = 293;
 export const SITES_MIGRATED_THIS_PR = 25;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 262
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 268
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';

@@ -801,7 +801,7 @@ export function renderHubSurfaceFixture({
       const adminProps = { appState, model: adminModel, hubState: { status: 'loaded' }, accountDirectory, accessContext, actions };
       if (!__initialSection || __initialSection === 'all') {
         // Render each section individually and concatenate for comprehensive tests.
-        const sections = ['overview', 'accounts', 'debug', 'content'];
+        const sections = ['overview', 'accounts', 'debug', 'content', 'marketing'];
         html = sections.map((section) =>
           renderToStaticMarkup(<AdminHubSurface {...adminProps} initialSection={section} />)
         ).join('');
