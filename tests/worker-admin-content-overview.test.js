@@ -317,7 +317,77 @@ test('non-admin account receives 403 for content overview', async () => {
 });
 
 // =================================================================
-// 8. Happy path: generatedAt timestamp is present
+// 8. Happy path: spelling release version extracted from seeded content_json
+// =================================================================
+
+test('spelling release version is extracted from content_json publication.publishedVersion', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, {
+      id: 'admin-content-release',
+      email: 'admin-release@test.com',
+      displayName: 'Admin Release',
+      platformRole: 'admin',
+    });
+
+    // Seed account_subject_content with known content_json containing a published version
+    const contentBundle = {
+      publication: { currentReleaseId: 'rel-1', publishedVersion: 7, updatedAt: NOW },
+      releases: [{ id: 'rel-1', version: 7, state: 'published', publishedAt: NOW, snapshot: { words: [] } }],
+      draft: { id: 'draft-1', words: [] },
+    };
+    server.DB.db.prepare(`
+      INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+      VALUES (?, ?, ?, ?, ?)
+    `).run('admin-content-release', 'spelling', JSON.stringify(contentBundle), NOW, 'admin-content-release');
+
+    const res = await fetchOverview(server, 'admin-content-release');
+    const body = await res.json();
+    const spelling = body.subjects.find((s) => s.subjectKey === 'spelling');
+
+    assert.equal(spelling.releaseVersion, '7', 'version extracted from content_json publication.publishedVersion');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 9. Edge case: spelling content with no publishedVersion falls back to updated_at proxy
+// =================================================================
+
+test('spelling release falls back to updated_at when no publishedVersion', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedAdultAccount(server, {
+      id: 'admin-content-fallback',
+      email: 'admin-fallback@test.com',
+      displayName: 'Admin Fallback',
+      platformRole: 'admin',
+    });
+
+    // Seed content with no publishedVersion (version 0 / missing)
+    const contentBundle = {
+      publication: { currentReleaseId: '', publishedVersion: 0, updatedAt: 0 },
+      releases: [],
+      draft: { id: 'draft-1', words: [] },
+    };
+    server.DB.db.prepare(`
+      INSERT INTO account_subject_content (account_id, subject_id, content_json, updated_at, updated_by_account_id)
+      VALUES (?, ?, ?, ?, ?)
+    `).run('admin-content-fallback', 'spelling', JSON.stringify(contentBundle), NOW, 'admin-content-fallback');
+
+    const res = await fetchOverview(server, 'admin-content-fallback');
+    const body = await res.json();
+    const spelling = body.subjects.find((s) => s.subjectKey === 'spelling');
+
+    assert.ok(spelling.releaseVersion.startsWith('updated:'), 'falls back to updated_at proxy');
+  } finally {
+    server.close();
+  }
+});
+
+// =================================================================
+// 10. Happy path: generatedAt timestamp is present
 // =================================================================
 
 test('overview includes generatedAt timestamp', async () => {

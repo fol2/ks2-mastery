@@ -2400,9 +2400,11 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
   // and uses existing tables. We soft-fail on missing tables so the hub
   // loads before the relevant migrations land.
 
-  // Spelling: release version from account_subject_content, errors from ops_error_events
-  const spellingReleaseP = first(db,
-    `SELECT content_version FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
+  // Spelling: release version + validation from account_subject_content, errors from ops_error_events.
+  // Note: account_id is intentionally omitted — for the cross-subject overview the
+  // admin wants to see "any" content state, not a specific account's content.
+  const spellingContentRowP = first(db,
+    `SELECT content_json, updated_at FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
     [],
   ).catch(() => null);
 
@@ -2423,13 +2425,7 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
       AND status <> 'resolved' AND status <> 'ignored'
   `, [cutoff7d], 'ops_error_events');
 
-  // Punctuation: event count from punctuation_events, errors from ops_error_events
-  const punctuationEventsP = scalarCountSafe(db, `
-    SELECT COUNT(*) AS value
-    FROM punctuation_events
-    WHERE occurred_at_ms > ?
-  `, [cutoff7d], 'punctuation_events');
-
+  // Punctuation: errors from ops_error_events
   const punctuationErrorsP = scalarCountSafe(db, `
     SELECT COUNT(*) AS value
     FROM ops_error_events
@@ -2438,43 +2434,40 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
       AND status <> 'resolved' AND status <> 'ignored'
   `, [cutoff7d], 'ops_error_events');
 
-  // Spelling validation: import validation from the content bundle status
-  const spellingValidationP = first(db,
-    `SELECT content_json FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
-    [],
-  ).catch(() => null);
-
   const [
-    spellingRelease,
+    spellingContentRow,
     spellingErrors,
     grammarErrors,
-    punctuationEvents,
     punctuationErrors,
-    spellingValidationRow,
   ] = await Promise.all([
-    spellingReleaseP,
+    spellingContentRowP,
     spellingErrorsP,
     grammarErrorsP,
-    punctuationEventsP,
     punctuationErrorsP,
-    spellingValidationP,
   ]);
 
-  // Derive spelling release version
-  const spellingReleaseVersion = spellingRelease && Number(spellingRelease.content_version) > 0
-    ? String(Number(spellingRelease.content_version))
-    : null;
-
-  // Derive spelling validation error count from stored content JSON
+  // Derive spelling release version and validation errors from content_json.
+  // The bundle stores publication.publishedVersion (numeric) set at publish time.
+  // Falls back to updated_at as a proxy release indicator when no version exists.
+  let spellingReleaseVersion = null;
   let spellingValidationErrors = 0;
-  if (spellingValidationRow?.content_json) {
+  if (spellingContentRow?.content_json) {
     try {
-      const bundle = JSON.parse(spellingValidationRow.content_json);
-      if (bundle && typeof bundle === 'object' && Array.isArray(bundle.errors)) {
-        spellingValidationErrors = bundle.errors.length;
+      const bundle = JSON.parse(spellingContentRow.content_json);
+      if (bundle && typeof bundle === 'object') {
+        const pubVersion = Number(bundle?.publication?.publishedVersion);
+        if (pubVersion > 0) {
+          spellingReleaseVersion = String(pubVersion);
+        } else if (spellingContentRow.updated_at) {
+          // No explicit version — use updated_at as a proxy release indicator
+          spellingReleaseVersion = `updated:${spellingContentRow.updated_at}`;
+        }
+        if (Array.isArray(bundle.errors)) {
+          spellingValidationErrors = bundle.errors.length;
+        }
       }
     } catch {
-      // Soft-fail: validation count stays at zero.
+      // Soft-fail: version and validation count stay at defaults.
     }
   }
 
