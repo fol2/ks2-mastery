@@ -151,9 +151,10 @@ function makeRepository(initialState = {}) {
 // even if mastered monotonicity regresses.
 // -----------------------------------------------------------------------------
 
-function assertConcordiumRatchet(state, maxPrior, context, { conceptNodes = null } = {}) {
+function assertConcordiumRatchet(state, maxPrior, context, { conceptNodes = null, recentAttempts = null } = {}) {
   const progressOpts = { conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length };
   if (conceptNodes) progressOpts.conceptNodes = conceptNodes;
+  if (recentAttempts) progressOpts.recentAttempts = recentAttempts;
   const concordium = progressForGrammarMonster(state, 'concordium', progressOpts);
   assert.ok(
     concordium.stage >= maxPrior.stage,
@@ -193,9 +194,10 @@ function assertConcordiumRatchet(state, maxPrior, context, { conceptNodes = null
 // trivially and pass. By seeding from the initial view, the ratchet compares
 // against the loaded state's Concordium level and catches any decrement
 // relative to the baseline.
-function initialMaxPriorFromState(state, { conceptNodes = null } = {}) {
+function initialMaxPriorFromState(state, { conceptNodes = null, recentAttempts = null } = {}) {
   const opts = { conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length };
   if (conceptNodes) opts.conceptNodes = conceptNodes;
+  if (recentAttempts) opts.recentAttempts = recentAttempts;
   const concordium = progressForGrammarMonster(state, 'concordium', opts);
   return {
     stage: concordium.stage,
@@ -275,7 +277,7 @@ function applyAction(repository, action, learnerId) {
 // assertions.
 // -----------------------------------------------------------------------------
 
-function runSequence(repository, actions, { label, learnerId = 'learner-a', buildConceptNodes = null } = {}) {
+function runSequence(repository, actions, { label, learnerId = 'learner-a', buildConceptNodes = null, buildRecentAttempts = null } = {}) {
   // Seed the ratchet accumulator from the INITIAL loaded state, so the
   // ratchet compares against the loaded Concordium level (not zero). This
   // catches release-id contract regressions that silently drop retired-
@@ -284,7 +286,8 @@ function runSequence(repository, actions, { label, learnerId = 'learner-a', buil
   // maxPrior.mastered=1 from the initial snapshot (was silently passing
   // under the old `initialMaxPrior()` fresh-zero seed).
   const initNodes = buildConceptNodes ? buildConceptNodes() : null;
-  let maxPrior = initialMaxPriorFromState(repository.state(), { conceptNodes: initNodes });
+  const initAttempts = buildRecentAttempts ? buildRecentAttempts() : null;
+  let maxPrior = initialMaxPriorFromState(repository.state(), { conceptNodes: initNodes, recentAttempts: initAttempts });
   const allEvents = [];
   for (let i = 0; i < actions.length; i += 1) {
     const action = actions[i];
@@ -293,7 +296,8 @@ function runSequence(repository, actions, { label, learnerId = 'learner-a', buil
     allEvents.push(...events);
     const state = repository.state();
     const nodes = buildConceptNodes ? buildConceptNodes() : null;
-    maxPrior = assertConcordiumRatchet(state, maxPrior, context, { conceptNodes: nodes });
+    const attempts = buildRecentAttempts ? buildRecentAttempts() : null;
+    maxPrior = assertConcordiumRatchet(state, maxPrior, context, { conceptNodes: nodes, recentAttempts: attempts });
   }
   return { state: repository.state(), events: allEvents, maxPrior };
 }
@@ -732,8 +736,8 @@ test('U9 named shape 8 (P5 legacy): pre-P5 Couronnail at Mega (3/3 secure, no re
     })),
   });
   // With evidence: firstIndependentWin (5%) + secureConfidence (15%) = 20%
-  // per concept. Computed Stars = floor(3 * (100/3) * 0.20) = floor(60) = 60.
-  // But legacy floor = 100 (stage 4). displayStars = max(60, 0, 100) = 100.
+  // per concept. Computed Stars = floor(3 * (100/3) * 0.20) = floor(20) = 20.
+  // But legacy floor = 100 (stage 4). displayStars = max(20, 0, 100) = 100.
   assert.equal(couronnailWithNodes.stars, 100, 'Legacy floor overrides derived Stars when no starHighWater');
   assert.equal(couronnailWithNodes.stage, 4, 'Mega stage preserved');
 });
@@ -788,6 +792,13 @@ test('U9 named shape 9 (P5 legacy): pre-P5 Concordium at stage 3 (14/18 secure) 
 // answers.
 
 test('U9 named shape 10 (P5 legacy): reserved monster evidence normalised into Concordium → Star ratchet holds', () => {
+  // NOTE: The ratchet seeds from un-normalised state (zero baseline) because
+  // makeRepository receives the raw pre-flip shape and the sequence runner's
+  // initialMaxPriorFromState reads from the raw repo (which has no
+  // concordium entry yet). This means the test exercises "Stars grow from
+  // zero" rather than "normalised baseline preserved" — the normalised
+  // baseline path is covered by shapes 8 and 9 which seed explicit
+  // concordium entries.
   const preFlipKey = grammarMasteryKey('noun_phrases');
   const initialState = {
     glossbloom: { caught: true, mastered: [preFlipKey] },
@@ -906,11 +917,18 @@ test(`U9 P5 Star ratchet: 200 seeded random sequences (seed ${PROPERTY_SEED}) wi
       return nodes;
     };
 
+    // buildRecentAttempts returns the accumulated synthetic attempts so
+    // progressForGrammarMonster receives both conceptNodes and
+    // recentAttempts — exercising the full attempt-dependent evidence
+    // tier pipeline (firstIndependentWin, repeatIndependentWin).
+    const buildRecentAttempts = () => syntheticAttempts.slice();
+
     try {
       runSequence(repository, actions, {
         label: `p5-star-seq-${i}`,
         learnerId: `learner-star-${i}`,
         buildConceptNodes,
+        buildRecentAttempts,
       });
     } catch (error) {
       if (error instanceof assert.AssertionError) {
