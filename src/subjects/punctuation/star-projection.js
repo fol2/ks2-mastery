@@ -118,6 +118,46 @@ const MAX_SAME_DAY_EASY_ITEMS = 15;
 const GRAND_STAR_CAP = 100;
 
 // ---------------------------------------------------------------------------
+// U5: Per-monster reward-unit counts and weight multipliers
+// ---------------------------------------------------------------------------
+// Pealark owns 5 reward units, Claspin 2, Curlune 7.  To make progression
+// *feel* similar, smaller clusters get a higher per-unit weight so that
+// finishing the same fraction of their units yields roughly the same stage.
+//
+// The multiplier is applied inside computeSecureStars and computeMasteryStars
+// so that raw score scales inversely with cluster size.
+
+const MONSTER_UNIT_COUNT = Object.freeze({
+  pealark: 5,
+  claspin: 2,
+  curlune: 7,
+});
+
+// Reference cluster size for normalisation (Pealark = 5 units).
+const REFERENCE_UNIT_COUNT = 5;
+
+/**
+ * Per-unit weight multiplier: `REFERENCE / monsterUnitCount`.
+ * Pealark: 5/5 = 1.0, Claspin: 5/2 = 2.5, Curlune: 5/7 ≈ 0.714
+ */
+function unitWeightMultiplier(monsterId) {
+  const count = MONSTER_UNIT_COUNT[monsterId] || REFERENCE_UNIT_COUNT;
+  return REFERENCE_UNIT_COUNT / count;
+}
+
+// ---------------------------------------------------------------------------
+// U5: Claspin Mega gate — deep-secure evidence requirements
+// ---------------------------------------------------------------------------
+// Claspin (apostrophe, 2 units) cannot reach Mega (100 stars) with just
+// simple secure evidence.  Mega requires ALL of:
+//   1. Both units deep secure (securedAt + facet secure with no lapse)
+//   2. Mixed sentence context evidence (2+ item modes with secure facets)
+//   3. Spaced return after 7+ days (correctSpanDays >= 7 on any facet)
+//   4. Both contractions AND possession skills with deep-secure facets
+// Without this evidence, Mastery Stars are hard-capped at 15 (giving a
+// maximum of 10 + 30 + 35 + 15 = 90 < 100).
+
+// ---------------------------------------------------------------------------
 // Helpers — pure, stateless
 // ---------------------------------------------------------------------------
 
@@ -270,7 +310,7 @@ function computePracticeStars(monsterAttempts) {
   return Math.min(PRACTICE_CAP, Math.floor(rawScore));
 }
 
-function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId) {
+function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId, monsterId) {
   // Count items that have reached the secure bucket.
   let secureItemCount = 0;
   const itemEntries = isPlainObject(items) ? items : {};
@@ -292,13 +332,15 @@ function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId) {
     }
   }
 
-  // Secure Stars scale: secured items contribute + secured reward units
-  // contribute a larger share.
-  const rawScore = (secureItemCount * 2) + (securedUnitCount * 8);
-  return Math.min(SECURE_CAP, rawScore);
+  // U5: Apply per-monster weight multiplier so smaller clusters (Claspin)
+  // earn proportionally more Secure Stars per unit, keeping progression
+  // speed psychologically similar across all three direct monsters.
+  const w = unitWeightMultiplier(monsterId);
+  const rawScore = (secureItemCount * 2 * w) + (securedUnitCount * 8 * w);
+  return Math.min(SECURE_CAP, Math.round(rawScore));
 }
 
-function computeMasteryStars(monsterClusterIds, facets, rewardUnits) {
+function computeMasteryStars(monsterClusterIds, facets, rewardUnits, monsterId) {
   // Mastery requires deep-secure evidence:
   //   - Secured reward units with facet coverage across multiple item modes
   //   - No recent lapse in any facet for this cluster
@@ -310,6 +352,8 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnits) {
   let hasRecentLapse = false;
   const itemModes = new Set();
   let facetSecureCount = 0;
+  const skillsWithDeepSecure = new Set();
+  let hasSpacedReturn = false;
 
   for (const [facetId, facetState] of Object.entries(facetEntries)) {
     const [skillId] = facetId.split('::');
@@ -323,9 +367,15 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnits) {
     }
     if (snap.secure) {
       facetSecureCount += 1;
+      if (snap.lapses === 0) {
+        skillsWithDeepSecure.add(skillId);
+      }
     }
     if (snap.attempts > 0) {
       itemModes.add(itemMode);
+    }
+    if (snap.correctSpanDays >= 7) {
+      hasSpacedReturn = true;
     }
   }
 
@@ -348,9 +398,33 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnits) {
   if (itemModes.size < 2) return 0;
   if (securedUnitCount === 0) return 0;
 
+  // U5: Apply per-monster weight multiplier.
+  const w = unitWeightMultiplier(monsterId);
+
   // Raw score: facet coverage breadth + secure facets + secured units.
-  const rawScore = (itemModes.size * 3) + (facetSecureCount * 3) + (securedUnitCount * 5);
-  return Math.min(MASTERY_CAP, rawScore);
+  const rawScore = (itemModes.size * 3 * w) + (facetSecureCount * 3 * w) + (securedUnitCount * 5 * w);
+  let stars = Math.min(MASTERY_CAP, Math.round(rawScore));
+
+  // U5: Claspin Mega gate — without deep-secure evidence across BOTH skills
+  // (contractions + possession), mixed item modes, and spaced return, cap
+  // Mastery at 15 so the maximum total is 90 (< 100 Mega).
+  if (monsterId === 'claspin') {
+    const totalUnitsForMonster = MONSTER_UNIT_COUNT.claspin; // 2
+    const hasAllUnitsSecured = securedUnitCount >= totalUnitsForMonster;
+    const hasBothSkillsDeepSecure =
+      skillsWithDeepSecure.has('apostrophe_contractions') &&
+      skillsWithDeepSecure.has('apostrophe_possession');
+    const hasMixedModes = itemModes.size >= 2;
+
+    const meetsDeepSecureGate =
+      hasAllUnitsSecured && hasBothSkillsDeepSecure && hasMixedModes && hasSpacedReturn;
+
+    if (!meetsDeepSecureGate) {
+      stars = Math.min(stars, 15);
+    }
+  }
+
+  return stars;
 }
 
 // ---------------------------------------------------------------------------
@@ -385,13 +459,41 @@ function itemsForMonster(items, attempts, monsterClusterIds) {
 // Grand Stars
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// U6: Grand Star tier thresholds (Quoral)
+// ---------------------------------------------------------------------------
+// The Grand Star is NOT a sum of direct monster Stars. It measures breadth
+// and depth of evidence across ALL 14 punctuation units simultaneously.
+//
+// Quoral tiers and their evidence requirements:
+//   Egg     (15)  — 2+ direct monsters progressing, 3+ secured units
+//   Hatch   (35)  — all 3 direct monsters progressing, 6+ secured units
+//   Evolve  (60)  — 8+ secured/deep-secured units
+//   Strong  (80)  — 11+ units secured, GPS/mixed evidence present
+//   Grand   (100) — all 14 units deep secure, all 3 monsters at/near Mega
+//
+// Between tiers, stars are interpolated linearly based on progress within
+// the gate requirements of the next tier.
+
+const GRAND_TIERS = Object.freeze([
+  // { threshold, minMonsters, minSecured, minDeepSecured, requireMixed }
+  { threshold: 0,   minMonsters: 0, minSecured: 0,  minDeepSecured: 0,  requireMixed: false },
+  { threshold: 15,  minMonsters: 2, minSecured: 3,  minDeepSecured: 0,  requireMixed: false },
+  { threshold: 35,  minMonsters: 3, minSecured: 6,  minDeepSecured: 0,  requireMixed: false },
+  { threshold: 60,  minMonsters: 3, minSecured: 8,  minDeepSecured: 4,  requireMixed: false },
+  { threshold: 80,  minMonsters: 3, minSecured: 11, minDeepSecured: 8,  requireMixed: true  },
+  { threshold: 100, minMonsters: 3, minSecured: 14, minDeepSecured: 14, requireMixed: true  },
+]);
+
+// Total reward units across all clusters.
+const TOTAL_REWARD_UNITS = 14;
+
 function computeGrandStars(progress, releaseId) {
   const rewardEntries = isPlainObject(progress.rewardUnits) ? progress.rewardUnits : {};
   const facetEntries = isPlainObject(progress.facets) ? progress.facets : {};
 
   // Count total secured units and deep-secured units across all clusters.
   let totalSecured = 0;
-  let totalDeepSecured = 0;
   const monstersWithSecured = new Set();
 
   for (const [, entry] of Object.entries(rewardEntries)) {
@@ -406,38 +508,86 @@ function computeGrandStars(progress, releaseId) {
   }
 
   // Deep-secured: facets that are secure AND have no recent lapse.
-  for (const [, facetState] of Object.entries(facetEntries)) {
+  let totalDeepSecured = 0;
+  const deepSecureSkills = new Set();
+  let hasMixedEvidence = false;
+  const deepSecureModes = new Set();
+
+  for (const [facetId, facetState] of Object.entries(facetEntries)) {
     const snap = memorySnapshot(facetState);
+    const itemMode = facetId.split('::')[1] || '';
     if (snap.secure && snap.lapses === 0) {
       totalDeepSecured += 1;
+      const [skillId] = facetId.split('::');
+      deepSecureSkills.add(skillId);
+      if (itemMode) deepSecureModes.add(itemMode);
     }
   }
 
-  // Breadth gates: count distinct direct monsters with secured evidence.
+  // Mixed evidence: 2+ distinct item modes across deep-secure facets,
+  // OR presence of GPS test mode in attempts.
+  if (deepSecureModes.size >= 2) hasMixedEvidence = true;
+  if (!hasMixedEvidence && Array.isArray(progress.attempts)) {
+    for (const attempt of progress.attempts) {
+      if (isPlainObject(attempt) && attempt.testMode === 'gps') {
+        hasMixedEvidence = true;
+        break;
+      }
+    }
+  }
+
+  // Breadth: count distinct direct monsters with secured evidence.
   const directMonstersWithEvidence = [...monstersWithSecured].filter(
     (id) => DIRECT_MONSTER_IDS.includes(id),
   ).length;
 
-  // Breadth scoring:
-  //   0 direct monsters with secured → 0 grand stars
-  //   1 direct monster → cap at 15
-  //   2 direct monsters → cap at 50
-  //   3 direct monsters → full range (100)
-  let breadthCap;
-  if (directMonstersWithEvidence === 0) breadthCap = 0;
-  else if (directMonstersWithEvidence === 1) breadthCap = 15;
-  else if (directMonstersWithEvidence === 2) breadthCap = 50;
-  else breadthCap = GRAND_STAR_CAP;
+  // Determine the highest tier the learner qualifies for, then interpolate
+  // within that tier band based on depth progress.
+  let qualifiedTierIndex = 0;
+  for (let i = 1; i < GRAND_TIERS.length; i++) {
+    const tier = GRAND_TIERS[i];
+    if (directMonstersWithEvidence < tier.minMonsters) break;
+    if (totalSecured < tier.minSecured) break;
+    if (totalDeepSecured < tier.minDeepSecured) break;
+    if (tier.requireMixed && !hasMixedEvidence) break;
+    qualifiedTierIndex = i;
+  }
 
-  if (breadthCap === 0) return { grandStars: 0, total: GRAND_STAR_CAP };
+  const currentTier = GRAND_TIERS[qualifiedTierIndex];
 
-  // Formula: weighted sum of secured count + deep-secured count.
-  //   - Each secured unit contributes 4 points.
-  //   - Each deep-secured facet contributes 2 points.
-  const rawScore = (totalSecured * 4) + (totalDeepSecured * 2);
-  const grandStars = Math.min(breadthCap, Math.min(GRAND_STAR_CAP, rawScore));
+  // If at the final tier (100), return the cap.
+  if (qualifiedTierIndex === GRAND_TIERS.length - 1) {
+    return { grandStars: GRAND_STAR_CAP, total: GRAND_STAR_CAP };
+  }
 
-  return { grandStars, total: GRAND_STAR_CAP };
+  // Interpolate within the current tier band towards the next tier.
+  const nextTier = GRAND_TIERS[qualifiedTierIndex + 1];
+  const bandFloor = currentTier.threshold;
+  const bandCeiling = nextTier.threshold;
+  const bandWidth = bandCeiling - bandFloor;
+
+  // Progress fraction: average of how close we are to the next tier's
+  // requirements across all dimensions (secured units, deep-secured, monsters).
+  const securedFrac = nextTier.minSecured > currentTier.minSecured
+    ? Math.min(1, (totalSecured - currentTier.minSecured) / (nextTier.minSecured - currentTier.minSecured))
+    : 1;
+  const deepFrac = nextTier.minDeepSecured > currentTier.minDeepSecured
+    ? Math.min(1, (totalDeepSecured - currentTier.minDeepSecured) / (nextTier.minDeepSecured - currentTier.minDeepSecured))
+    : 1;
+  const monsterFrac = nextTier.minMonsters > currentTier.minMonsters
+    ? Math.min(1, (directMonstersWithEvidence - currentTier.minMonsters) / (nextTier.minMonsters - currentTier.minMonsters))
+    : 1;
+
+  // Use the minimum fraction — all dimensions must progress to advance.
+  const progressFrac = Math.min(securedFrac, deepFrac, monsterFrac);
+
+  // Cannot reach the next tier's threshold without meeting its gates.
+  const grandStars = Math.min(
+    bandFloor + Math.floor(progressFrac * bandWidth),
+    bandCeiling - 1, // Cannot reach next tier without meeting its full gates.
+  );
+
+  return { grandStars: Math.max(0, grandStars), total: GRAND_STAR_CAP };
 }
 
 // ---------------------------------------------------------------------------
@@ -501,8 +651,8 @@ export function projectPunctuationStars(progress, releaseId) {
 
     const tryStars = computeTryStars(mAttempts);
     const practiceStars = computePracticeStars(mAttempts);
-    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnits, releaseId);
-    const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnits);
+    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnits, releaseId, monsterId);
+    const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnits, monsterId);
     const total = tryStars + practiceStars + secureStars + masteryStars;
 
     perMonster[monsterId] = {
