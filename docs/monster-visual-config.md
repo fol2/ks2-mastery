@@ -9,11 +9,15 @@ The monster visual + effect config centre is the admin workflow for changing mon
 
 The centre publishes a single combined document. One save, one publish, one restore covers both visual and effect data.
 
+## Asset & Effect Registry
+
+Since P3 (PR #389), Monster Visual Config is presented through the **Asset & Effect Registry** UI in the Admin Console Content section. The registry provides a structured interface — asset list, effect catalog, per-monster bindings, and celebration tunables — over the existing `platform_monster_visual_config` data model. The underlying schema, publish validation, atomic publish, reviewed state, bundled fallback, and retained version behaviours are unchanged. A future phase may lift the data model into registry-shaped tables; the current UI establishes the registry direction without migration risk.
+
 ## Operator workflow
 
-Open **Admin / Operations** with platform role `admin`.
+Open the **Admin Console** Content section with platform role `admin`.
 
-The **Monster visuals** panel shows:
+The **Asset & Effect Registry** panel (previously "Monster visuals") shows:
 
 - the current draft revision and published version
 - queue filters for all assets, changed assets, assets needing review, and blockers
