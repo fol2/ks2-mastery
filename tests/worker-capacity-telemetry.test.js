@@ -26,6 +26,9 @@ const PUBLIC_JSON_ALLOWED_KEYS = new Set([
   'derivedWriteSkipped',
   'bootstrapMode',
   'signals',
+  // U9.1 item 2+3: bootstrap-only fields for server-side breaker parity.
+  'derivedWriteBreakerOpen',
+  'forceBreakerReset',
 ]);
 
 function seedAccount(DB, { accountId = 'adult-a', learnerId = 'learner-a' } = {}) {

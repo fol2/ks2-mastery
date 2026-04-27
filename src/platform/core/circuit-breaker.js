@@ -39,6 +39,15 @@ export const BREAKER_STATE_CLOSED = 'closed';
 export const BREAKER_STATE_HALF_OPEN = 'half-open';
 export const BREAKER_STATE_OPEN = 'open';
 
+// U9.1 item 2: closed set of breaker names that may be force-reset via
+// the bootstrap response's `meta.capacity.forceBreakerReset` field. Only
+// `bootstrapCapacityMetadata` is resetable this way — it is the sole
+// breaker with `cooldownMaxMs: Infinity` (no auto-recovery) and therefore
+// the only one that requires an operator signal to resume.
+export const RESETABLE_BREAKER_NAMES = Object.freeze(new Set([
+  'bootstrapCapacityMetadata',
+]));
+
 export const BREAKER_STATES = Object.freeze({
   CLOSED: BREAKER_STATE_CLOSED,
   HALF_OPEN: BREAKER_STATE_HALF_OPEN,
@@ -227,6 +236,18 @@ export function createCircuitBreaker({
     emitTransition(prev, next);
   }
 
+  // U9.1 item 6 — Multi-tab cooldown desync: ACCEPTED RESIDUAL.
+  // Each tab runs its own half-open cooldown timer independently; a Tab B
+  // whose cooldown expires 500ms after Tab A will independently probe the
+  // same endpoint. This is by design: the localStorage broadcast hint
+  // coordinates the OPEN state across tabs, but the cooldown-elapsed
+  // transition is a per-tab event because `resolvedNow()` reads the
+  // tab-local clock and there is no cross-tab timer synchronisation
+  // primitive in the browser. The worst case is two concurrent probes
+  // within the same cooldown window — acceptable because probes are
+  // normal requests (not dedicated health-check pings) and the server
+  // is either healthy (both succeed, both close) or unhealthy (both
+  // fail, both re-open with doubled cooldown).
   function maybeHalfOpenFromCooldown() {
     if (state !== BREAKER_STATE_OPEN) return;
     if (!Number.isFinite(cooldownUntil) || cooldownUntil === 0) return;
