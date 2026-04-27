@@ -2,7 +2,7 @@
 //
 // R9 journey 2: Home -> Punctuation -> Wobbly Spots -> Q1 OR empty state.
 //
-// The Wobbly Spots card (data-mode-id="weak") runs a `weak` cohort. On a
+// The Wobbly Spots CTA (data-mode-id="weak") runs a `weak` cohort. On a
 // fresh demo learner with no weak skills the Session scene is still
 // expected to mount an empty state or defer to Smart Review; whichever
 // path the engine picks, the child must land somewhere that is NOT still
@@ -24,7 +24,7 @@ export default async function run({ driver, artifacts, log, assert }) {
   await driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000);
   await driver.screenshot(artifacts.path('02-setup'));
 
-  log('click Wobbly Spots primary-mode card');
+  log('click Wobbly Spots CTA');
   await driver.click('[data-action="punctuation-start"][data-mode-id="weak"]');
 
   log('wait for Setup to unmount OR empty-state surface');

@@ -11,9 +11,9 @@
 //
 //   1. Focus the punctuation subject card on the home dashboard and
 //      activate it via Enter.
-//   2. Focus a primary-mode card (Smart / Weak / GPS etc.) and press
-//      Enter to start a session — the first keyboard-only session
-//      entry path on the setup scene.
+//   2. Focus the mission-dashboard CTA and press Enter to start a
+//      session — the first keyboard-only session entry path on the
+//      setup scene.
 //   3. For a choice item: focus the first choice card, press Space to
 //      select the radio, Tab to the primary Submit, press Enter to
 //      submit. For a text item: type into the autofocused
@@ -63,13 +63,12 @@ test.describe('punctuation accessibility golden — keyboard-only round-trip', (
   });
 
   // ---------------------------------------------------------------
-  // Keyboard-only punctuation entry + primary mode start.
+  // Keyboard-only punctuation entry via the mission-dashboard CTA.
   //
-  // The setup scene renders `[data-action="punctuation-start"]`
-  // primary mode cards (one per mode: Smart / Weak / GPS etc.). They
-  // are native `<button>` elements so they are tab-reachable; we
-  // focus the first card and press Enter to start a session without
-  // ever using the mouse.
+  // The setup scene renders `[data-action="punctuation-start"]` as
+  // the single primary CTA on the mission dashboard. It is a native
+  // `<button>` element so it is tab-reachable; we focus the CTA and
+  // press Enter to start a session without ever using the mouse.
   // ---------------------------------------------------------------
   test('keyboard-only learner opens punctuation and can start a session', async ({ page }) => {
     await createDemoSession(page);
@@ -78,7 +77,7 @@ test.describe('punctuation accessibility golden — keyboard-only round-trip', (
     await page.locator('[data-action="open-subject"][data-subject-id="punctuation"]').focus();
     await page.keyboard.press('Enter');
 
-    // Setup scene must render the primary mode cards.
+    // Setup scene must render the mission-dashboard CTA.
     const startCard = page.locator('[data-action="punctuation-start"]').first();
     await expect(startCard).toBeVisible({ timeout: 15_000 });
 

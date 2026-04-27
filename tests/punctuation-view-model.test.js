@@ -459,7 +459,7 @@ test('U1 view-model: punctuationPrimaryModeFromPrefs collapses cluster modes to 
   }
 });
 
-test('U1 view-model: punctuationPrimaryModeFromPrefs preserves primary modes', () => {
+test('U1 view-model: punctuationPrimaryModeFromPrefs preserves active mode ids', () => {
   assert.equal(punctuationPrimaryModeFromPrefs({ mode: 'smart' }), 'smart');
   assert.equal(punctuationPrimaryModeFromPrefs({ mode: 'weak' }), 'weak');
   assert.equal(punctuationPrimaryModeFromPrefs({ mode: 'gps' }), 'gps');
@@ -638,8 +638,8 @@ test('U1 view-model: buildPunctuationDashboardModel activeMonsters iterate only 
 });
 
 test('U1 view-model: buildPunctuationDashboardModel normalises stale cluster-mode prefs', () => {
-  // Returning learners with a legacy cluster mode see the Smart Review card
-  // as the pressed option; U2's scene migrates the stored value.
+  // Returning learners with a legacy cluster mode see Smart Review as the
+  // pre-selected CTA option; U2's scene migrates the stored value.
   const model = buildPunctuationDashboardModel(
     {},
     { prefs: { mode: 'endmarks' } },

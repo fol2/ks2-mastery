@@ -2,7 +2,7 @@
 //
 // R9 journey 3: Home -> Punctuation -> GPS Check -> Q1 with test-mode banner.
 //
-// GPS Check is the `gps` primary mode. The child-visible contract is
+// GPS Check is the `gps` mode, entered via the mission-dashboard CTA. The child-visible contract is
 // that the Session scene exposes a "test mode" banner — answers at the
 // end, not after each item. We assert both:
 //   - The submit button mounts (Q1 rendered)
@@ -28,7 +28,7 @@ export default async function run({ driver, artifacts, log, assert }) {
   await driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000);
   await driver.screenshot(artifacts.path('02-setup'));
 
-  log('click GPS Check primary-mode card');
+  log('click GPS Check CTA');
   await driver.click('[data-action="punctuation-start"][data-mode-id="gps"]');
 
   log('wait for Session submit + test-mode banner');
