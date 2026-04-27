@@ -68,12 +68,17 @@ function makeRepository(initialState = {}) {
  * Build full-evidence conceptNodes and recentAttempts for a list of concepts.
  * Each concept gets: secure strength/interval/streak + 2 independent corrects
  * + 2 distinct templates = all 5 evidence tiers unlocked.
+ *
+ * P6-U8: converted from legacy flat shape to PRODUCTION-SHAPE attempts
+ * ({ conceptIds: [...], result: { correct }, templateId, ... }) so the
+ * existing e2e suite exercises the production normaliser path.
  */
 function fullEvidenceForConcepts(conceptIds) {
   const conceptNodes = {};
   const recentAttempts = [];
+  const nowTs = Date.now();
   for (const conceptId of conceptIds) {
-    conceptNodes[conceptId] = {
+    const node = {
       attempts: 10,
       correct: 8,
       wrong: 2,
@@ -81,9 +86,26 @@ function fullEvidenceForConcepts(conceptIds) {
       intervalDays: 14,
       correctStreak: 5,
     };
+    conceptNodes[conceptId] = node;
+    // Post-secure timestamp so retainedAfterSecure tier unlocks.
+    const postSecureTs = nowTs - ((node.intervalDays - 1) * 86400000);
     recentAttempts.push(
-      { conceptId, templateId: `${conceptId}-tmpl-1`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-      { conceptId, templateId: `${conceptId}-tmpl-2`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+      {
+        conceptIds: [conceptId],
+        result: { correct: true, score: 1, maxScore: 1 },
+        templateId: `${conceptId}-tmpl-1`,
+        firstAttemptIndependent: true,
+        supportLevelAtScoring: 0,
+        createdAt: postSecureTs,
+      },
+      {
+        conceptIds: [conceptId],
+        result: { correct: true, score: 1, maxScore: 1 },
+        templateId: `${conceptId}-tmpl-2`,
+        firstAttemptIndependent: true,
+        supportLevelAtScoring: 0,
+        createdAt: postSecureTs + 1000,
+      },
     );
   }
   return { conceptNodes, recentAttempts };
