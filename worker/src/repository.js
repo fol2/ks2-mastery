@@ -3010,6 +3010,320 @@ async function readAdminRequestDenials(db, {
   }
 }
 
+// ---------------------------------------------------------------------------
+// U7 (P3): Account search + detail read helpers.
+// Search: queries adult_accounts by email/ID/display_name substring match.
+//   - 3-char minimum query length to avoid full-table scans.
+//   - Admin sees full email; ops sees last 6 chars only.
+//   - Bounded to 50 results, filterable by ops_status and platform_role.
+// Detail: aggregates account summary, linked learners, recent errors (10),
+//   recent denials (10), recent mutations (10), and ops metadata for a
+//   single account.  Admin sees full detail; ops sees masked email, no
+//   internal notes.
+// ---------------------------------------------------------------------------
+
+const ACCOUNT_SEARCH_MIN_QUERY_LENGTH = 3;
+const ACCOUNT_SEARCH_DEFAULT_LIMIT = 50;
+const ACCOUNT_SEARCH_MAX_LIMIT = 50;
+const ACCOUNT_DETAIL_SUB_LIMIT = 10;
+
+function maskEmailLastN(email, lastN = 6) {
+  if (typeof email !== 'string' || !email) return null;
+  return email.length <= lastN ? email : `***${email.slice(-lastN)}`;
+}
+
+async function searchAccounts(db, {
+  now,
+  actorAccountId,
+  actor: preResolvedActor = null,
+  query = '',
+  opsStatus = null,
+  platformRole = null,
+  limit = ACCOUNT_SEARCH_DEFAULT_LIMIT,
+} = {}) {
+  const actor = preResolvedActor || await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const isAdmin = actorPlatformRole === 'admin';
+  const safeLimit = Math.max(1, Math.min(ACCOUNT_SEARCH_MAX_LIMIT, Number(limit) || ACCOUNT_SEARCH_DEFAULT_LIMIT));
+
+  const trimmedQuery = typeof query === 'string' ? query.trim() : '';
+  if (trimmedQuery.length < ACCOUNT_SEARCH_MIN_QUERY_LENGTH) {
+    return {
+      generatedAt: nowTs,
+      results: [],
+      truncated: false,
+      error: 'Query must be at least 3 characters.',
+    };
+  }
+
+  const whereClauses = [
+    '(a.email LIKE ? OR a.id LIKE ? OR a.display_name LIKE ?)',
+  ];
+  const likePattern = `%${trimmedQuery}%`;
+  const whereParams = [likePattern, likePattern, likePattern];
+
+  if (typeof opsStatus === 'string' && opsStatus) {
+    whereClauses.push('COALESCE(om.ops_status, \'active\') = ?');
+    whereParams.push(opsStatus);
+  }
+  if (typeof platformRole === 'string' && platformRole) {
+    whereClauses.push('a.platform_role = ?');
+    whereParams.push(platformRole);
+  }
+
+  // Exclude demo accounts from search results — mirrors the ops metadata
+  // directory and the KPI counters (demo accounts have their own panel).
+  whereClauses.push('COALESCE(a.account_type, \'real\') <> \'demo\'');
+
+  const whereSql = whereClauses.join(' AND ');
+
+  try {
+    const rows = await all(db, `
+      SELECT
+        a.id,
+        a.email,
+        a.display_name,
+        a.platform_role,
+        a.created_at,
+        a.updated_at,
+        COALESCE(om.ops_status, 'active') AS ops_status,
+        om.plan_label,
+        COUNT(DISTINCT m.learner_id) AS learner_count
+      FROM adult_accounts a
+      LEFT JOIN account_ops_metadata om ON om.account_id = a.id
+      LEFT JOIN account_learner_memberships m ON m.account_id = a.id
+      WHERE ${whereSql}
+      GROUP BY a.id
+      ORDER BY a.updated_at DESC, a.id ASC
+      LIMIT ?
+    `, [...whereParams, safeLimit + 1]);
+
+    const truncated = rows.length > safeLimit;
+    const displayRows = truncated ? rows.slice(0, safeLimit) : rows;
+
+    return {
+      generatedAt: nowTs,
+      results: displayRows.map((row) => ({
+        id: typeof row?.id === 'string' ? row.id : '',
+        email: isAdmin
+          ? (typeof row?.email === 'string' ? row.email : null)
+          : maskEmailLastN(row?.email),
+        displayName: typeof row?.display_name === 'string' ? row.display_name : null,
+        platformRole: normalisePlatformRole(row?.platform_role),
+        opsStatus: typeof row?.ops_status === 'string' ? row.ops_status : 'active',
+        planLabel: typeof row?.plan_label === 'string' ? row.plan_label : null,
+        learnerCount: Number(row?.learner_count) || 0,
+        createdAt: Number(row?.created_at) || 0,
+        updatedAt: Number(row?.updated_at) || 0,
+      })),
+      truncated,
+    };
+  } catch (error) {
+    if (isMissingTableError(error, 'account_ops_metadata')) {
+      // Soft-fail: fall back to search without ops_metadata join.
+      const fallbackRows = await all(db, `
+        SELECT
+          a.id,
+          a.email,
+          a.display_name,
+          a.platform_role,
+          a.created_at,
+          a.updated_at,
+          'active' AS ops_status,
+          NULL AS plan_label,
+          COUNT(DISTINCT m.learner_id) AS learner_count
+        FROM adult_accounts a
+        LEFT JOIN account_learner_memberships m ON m.account_id = a.id
+        WHERE (a.email LIKE ? OR a.id LIKE ? OR a.display_name LIKE ?)
+          AND COALESCE(a.account_type, 'real') <> 'demo'
+        GROUP BY a.id
+        ORDER BY a.updated_at DESC, a.id ASC
+        LIMIT ?
+      `, [likePattern, likePattern, likePattern, safeLimit]);
+      return {
+        generatedAt: nowTs,
+        results: fallbackRows.map((row) => ({
+          id: typeof row?.id === 'string' ? row.id : '',
+          email: isAdmin
+            ? (typeof row?.email === 'string' ? row.email : null)
+            : maskEmailLastN(row?.email),
+          displayName: typeof row?.display_name === 'string' ? row.display_name : null,
+          platformRole: normalisePlatformRole(row?.platform_role),
+          opsStatus: 'active',
+          planLabel: null,
+          learnerCount: Number(row?.learner_count) || 0,
+          createdAt: Number(row?.created_at) || 0,
+          updatedAt: Number(row?.updated_at) || 0,
+        })),
+        truncated: false,
+      };
+    }
+    throw error;
+  }
+}
+
+async function readAccountDetail(db, {
+  now,
+  actorAccountId,
+  targetAccountId,
+  actor: preResolvedActor = null,
+} = {}) {
+  const actor = preResolvedActor || await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const isAdmin = actorPlatformRole === 'admin';
+
+  if (typeof targetAccountId !== 'string' || !targetAccountId) {
+    throw new NotFoundError('Account not found.', { code: 'account_not_found' });
+  }
+
+  // 1. Account summary
+  const account = await first(db, `
+    SELECT
+      a.id, a.email, a.display_name, a.platform_role, a.created_at, a.updated_at,
+      a.account_type, a.repo_revision
+    FROM adult_accounts a
+    WHERE a.id = ?
+  `, [targetAccountId]);
+
+  if (!account) {
+    throw new NotFoundError('Account not found.', { code: 'account_not_found' });
+  }
+
+  // 2. Linked learners
+  const learners = await all(db, `
+    SELECT
+      l.id, l.name, l.year_group, l.created_at, l.updated_at,
+      m.role AS membership_role
+    FROM account_learner_memberships m
+    JOIN learner_profiles l ON l.id = m.learner_id
+    WHERE m.account_id = ?
+    ORDER BY l.updated_at DESC
+  `, [targetAccountId]);
+
+  // 3. Recent errors (linked by account_id in ops_error_events)
+  let recentErrors = [];
+  try {
+    recentErrors = await all(db, `
+      SELECT id, fingerprint, error_kind, message_first_line, route_name,
+             first_seen, last_seen, occurrence_count, status
+      FROM ops_error_events
+      WHERE account_id = ?
+      ORDER BY last_seen DESC
+      LIMIT ?
+    `, [targetAccountId, ACCOUNT_DETAIL_SUB_LIMIT]);
+  } catch (error) {
+    if (!isMissingTableError(error, 'ops_error_events')) throw error;
+  }
+
+  // 4. Recent denials (linked by account_id in admin_request_denials)
+  let recentDenials = [];
+  try {
+    recentDenials = await all(db, `
+      SELECT id, denied_at, denial_reason, route_name
+      FROM admin_request_denials
+      WHERE account_id = ?
+      ORDER BY denied_at DESC
+      LIMIT ?
+    `, [targetAccountId, ACCOUNT_DETAIL_SUB_LIMIT]);
+  } catch (error) {
+    if (!isMissingTableError(error, 'admin_request_denials')) throw error;
+  }
+
+  // 5. Recent mutations
+  const recentMutations = await all(db, `
+    SELECT request_id, mutation_kind, scope_type, scope_id, status_code, applied_at
+    FROM mutation_receipts
+    WHERE account_id = ?
+    ORDER BY applied_at DESC
+    LIMIT ?
+  `, [targetAccountId, ACCOUNT_DETAIL_SUB_LIMIT]);
+
+  // 6. Ops metadata
+  let opsMetadata = null;
+  try {
+    opsMetadata = await first(db, `
+      SELECT ops_status, plan_label, tags_json, internal_notes,
+             updated_at, updated_by_account_id, row_version
+      FROM account_ops_metadata
+      WHERE account_id = ?
+    `, [targetAccountId]);
+  } catch (error) {
+    if (!isMissingTableError(error, 'account_ops_metadata')) throw error;
+  }
+
+  return {
+    generatedAt: nowTs,
+    account: {
+      id: account.id,
+      email: isAdmin
+        ? (typeof account.email === 'string' ? account.email : null)
+        : maskEmailLastN(account.email),
+      displayName: typeof account.display_name === 'string' ? account.display_name : null,
+      platformRole: normalisePlatformRole(account.platform_role),
+      accountType: account.account_type || 'real',
+      repoRevision: Number(account.repo_revision) || 0,
+      createdAt: Number(account.created_at) || 0,
+      updatedAt: Number(account.updated_at) || 0,
+    },
+    learners: learners.map((l) => ({
+      id: l.id,
+      displayName: typeof l.name === 'string' ? l.name : null,
+      yearGroup: l.year_group ?? null,
+      membershipRole: l.membership_role || 'owner',
+      createdAt: Number(l.created_at) || 0,
+      updatedAt: Number(l.updated_at) || 0,
+    })),
+    recentErrors: recentErrors.map((e) => ({
+      id: e.id,
+      fingerprint: e.fingerprint,
+      errorKind: e.error_kind,
+      messageFirstLine: e.message_first_line,
+      routeName: e.route_name,
+      firstSeen: Number(e.first_seen) || 0,
+      lastSeen: Number(e.last_seen) || 0,
+      occurrenceCount: Number(e.occurrence_count) || 0,
+      status: e.status,
+    })),
+    recentDenials: isAdmin ? recentDenials.map((d) => ({
+      id: d.id,
+      deniedAt: Number(d.denied_at) || 0,
+      denialReason: d.denial_reason,
+      routeName: d.route_name,
+    })) : [],
+    recentMutations: recentMutations.map((m) => ({
+      requestId: m.request_id,
+      mutationKind: m.mutation_kind,
+      scopeType: m.scope_type,
+      scopeId: m.scope_id,
+      statusCode: m.status_code,
+      appliedAt: Number(m.applied_at) || 0,
+    })),
+    opsMetadata: opsMetadata ? {
+      opsStatus: opsMetadata.ops_status || 'active',
+      planLabel: typeof opsMetadata.plan_label === 'string' ? opsMetadata.plan_label : null,
+      tags: normaliseTagsJson(opsMetadata.tags_json),
+      internalNotes: isAdmin
+        ? (typeof opsMetadata.internal_notes === 'string' ? opsMetadata.internal_notes : null)
+        : null,
+      updatedAt: Number(opsMetadata.updated_at) || 0,
+      updatedByAccountId: typeof opsMetadata.updated_by_account_id === 'string'
+        ? opsMetadata.updated_by_account_id
+        : null,
+      rowVersion: Math.max(0, Number(opsMetadata.row_version) || 0),
+    } : {
+      opsStatus: 'active',
+      planLabel: null,
+      tags: [],
+      internalNotes: null,
+      updatedAt: 0,
+      updatedByAccountId: null,
+      rowVersion: 0,
+    },
+  };
+}
+
 async function bumpAdminKpiMetric(db, key, nowTs, delta = 1) {
   if (!(typeof key === 'string' && key)) return;
   const resolvedDelta = Number.isFinite(Number(delta)) ? Number(delta) : 1;
@@ -9463,6 +9777,30 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     },
     async listAdminAccounts(accountId) {
       return listAccountDirectory(db, accountId);
+    },
+    // U7 (P3): account search — admin/ops gated via assertAdminHubActor.
+    async searchAccounts(accountId, {
+      query = '',
+      opsStatus = null,
+      platformRole = null,
+      limit = ACCOUNT_SEARCH_DEFAULT_LIMIT,
+    } = {}) {
+      return searchAccounts(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        query,
+        opsStatus,
+        platformRole,
+        limit,
+      });
+    },
+    // U7 (P3): account detail — admin/ops gated via assertAdminHubActor.
+    async readAccountDetail(accountId, { targetAccountId } = {}) {
+      return readAccountDetail(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        targetAccountId,
+      });
     },
     async updateAdminAccountRole(accountId, { targetAccountId, platformRole, expectedRepoRevision = null, requestId, correlationId = null } = {}) {
       return updateManagedAccountRole(db, {

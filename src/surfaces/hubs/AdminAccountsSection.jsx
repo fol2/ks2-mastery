@@ -16,6 +16,10 @@ import {
   decideAccountOpsSave,
   defaultConfirmOpsStatusChange,
 } from '../../platform/hubs/admin-ops-confirm.js';
+import {
+  normaliseSearchResult,
+  debugBundleLinkForAccount,
+} from '../../platform/hubs/admin-account-search.js';
 
 // U4+U5: Accounts section — role management, ops metadata, and audit log.
 // Extracted from AdminHubSurface.jsx. All inline components preserved
@@ -381,9 +385,222 @@ function AuditLogLookup({ model }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// U7 (P3): Account search bar + results + detail drawer.
+// ---------------------------------------------------------------------------
+
+function AccountSearchResultRow({ result, onSelect }) {
+  const row = normaliseSearchResult(result);
+  if (!row) return null;
+  return (
+    <div
+      className="skill-row"
+      data-testid="account-search-result"
+      data-account-id={row.id}
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(row.id)}
+      onKeyDown={(e) => { if (e.key === 'Enter') onSelect(row.id); }}
+    >
+      <div>
+        <strong>{row.email || row.id}</strong>
+        <div className="small muted">{row.displayName || 'No display name'}</div>
+      </div>
+      <div><span className="chip">{platformRoleLabel(row.platformRole)}</span></div>
+      <div><span className="chip">{row.opsStatus}</span></div>
+      <div className="small muted">{row.learnerCount} learner{row.learnerCount === 1 ? '' : 's'}</div>
+      <div className="small muted">Updated {formatTimestamp(row.updatedAt)}</div>
+    </div>
+  );
+}
+
+function AccountDetailPanel({ detail, onClose, onDebugBundle }) {
+  if (!detail || !detail.account) return null;
+  const { account, learners, recentErrors, recentDenials, recentMutations, opsMetadata } = detail;
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-testid="account-detail-panel">
+      <div className="card-header">
+        <div>
+          <div className="eyebrow">Account detail</div>
+          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>{account.email || account.id}</h3>
+          <p className="subtitle">{account.displayName || 'No display name'} &middot; {platformRoleLabel(account.platformRole)} &middot; {account.accountType}</p>
+        </div>
+        <div className="actions">
+          <button className="btn secondary" type="button" onClick={onDebugBundle} data-testid="detail-debug-bundle-link">Debug Bundle</button>
+          <button className="btn secondary" type="button" onClick={onClose}>Close</button>
+        </div>
+      </div>
+      <div className="small muted" style={{ marginBottom: 8 }}>
+        Created {formatTimestamp(account.createdAt)} &middot; Updated {formatTimestamp(account.updatedAt)} &middot; Rev {account.repoRevision}
+      </div>
+
+      {opsMetadata && (
+        <div style={{ marginBottom: 12 }}>
+          <div className="eyebrow">Ops metadata</div>
+          <div className="small muted">
+            Status: <strong>{opsMetadata.opsStatus}</strong>
+            {opsMetadata.planLabel ? ` | Plan: ${opsMetadata.planLabel}` : ''}
+            {opsMetadata.tags?.length ? ` | Tags: ${opsMetadata.tags.join(', ')}` : ''}
+          </div>
+          {opsMetadata.internalNotes && <div className="small muted" style={{ marginTop: 4 }}>Notes: {opsMetadata.internalNotes}</div>}
+        </div>
+      )}
+
+      <div className="eyebrow" style={{ marginTop: 8 }}>Learners ({learners.length})</div>
+      {learners.length ? learners.map((l) => (
+        <div className="skill-row" key={l.id}>
+          <div><strong>{l.displayName || l.id}</strong></div>
+          <div className="small muted">Year {l.yearGroup ?? '?'} &middot; {l.membershipRole}</div>
+          <div className="small muted">Updated {formatTimestamp(l.updatedAt)}</div>
+        </div>
+      )) : <p className="small muted">No linked learners.</p>}
+
+      <div className="eyebrow" style={{ marginTop: 12 }}>Recent errors ({recentErrors.length})</div>
+      {recentErrors.length ? recentErrors.map((e) => (
+        <div className="skill-row" key={e.id}>
+          <div><strong>{e.errorKind}</strong>: {e.messageFirstLine}</div>
+          <div className="small muted">{e.status} &middot; {e.occurrenceCount}x</div>
+          <div className="small muted">Last seen {formatTimestamp(e.lastSeen)}</div>
+        </div>
+      )) : <p className="small muted">No recent errors.</p>}
+
+      {recentDenials.length > 0 && (
+        <>
+          <div className="eyebrow" style={{ marginTop: 12 }}>Recent denials ({recentDenials.length})</div>
+          {recentDenials.map((d) => (
+            <div className="skill-row" key={d.id}>
+              <div><strong>{d.denialReason}</strong></div>
+              <div className="small muted">{d.routeName}</div>
+              <div className="small muted">{formatTimestamp(d.deniedAt)}</div>
+            </div>
+          ))}
+        </>
+      )}
+
+      <div className="eyebrow" style={{ marginTop: 12 }}>Recent mutations ({recentMutations.length})</div>
+      {recentMutations.length ? recentMutations.map((m) => (
+        <div className="skill-row" key={m.requestId || `${m.mutationKind}-${m.appliedAt}`}>
+          <div><strong>{m.mutationKind}</strong></div>
+          <div className="small muted">{m.scopeType} &middot; {m.scopeId}</div>
+          <div className="small muted">{formatTimestamp(m.appliedAt)}</div>
+        </div>
+      )) : <p className="small muted">No recent mutations.</p>}
+    </section>
+  );
+}
+
+function AccountSearchPanel({ model, actions }) {
+  const search = model?.accountSearch || {};
+  const results = Array.isArray(search.results) ? search.results : [];
+  const status = search.status || 'idle';
+  const detail = search.detail || null;
+  const [query, setQuery] = React.useState(search.query || '');
+  const [opsStatusFilter, setOpsStatusFilter] = React.useState('');
+  const [platformRoleFilter, setPlatformRoleFilter] = React.useState('');
+
+  const handleSearch = () => {
+    actions.dispatch('account-search', {
+      query: query.trim(),
+      opsStatus: opsStatusFilter || null,
+      platformRole: platformRoleFilter || null,
+    });
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleSearch();
+  };
+
+  const handleSelectAccount = (accountId) => {
+    actions.dispatch('account-detail-load', { accountId });
+  };
+
+  const handleCloseDetail = () => {
+    actions.dispatch('account-detail-close');
+  };
+
+  const handleDebugBundle = () => {
+    if (detail?.account?.id) {
+      const link = debugBundleLinkForAccount(detail.account.id);
+      if (typeof window !== 'undefined') {
+        window.location.hash = link.replace(/^\/admin/, '');
+      }
+    }
+  };
+
+  if (detail) {
+    return (
+      <AccountDetailPanel
+        detail={detail}
+        onClose={handleCloseDetail}
+        onDebugBundle={handleDebugBundle}
+      />
+    );
+  }
+
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-testid="account-search-panel">
+      <div className="eyebrow">Account search</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Find accounts</h3>
+      <p className="subtitle">Search by email, account ID, or display name. Minimum 3 characters.</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <input
+          className="input"
+          type="text"
+          placeholder="Email, ID, or name..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          data-testid="account-search-input"
+          style={{ flex: '1 1 200px', minWidth: 200 }}
+        />
+        <select
+          className="select"
+          value={opsStatusFilter}
+          onChange={(e) => setOpsStatusFilter(e.target.value)}
+          data-testid="account-search-ops-status"
+          style={{ minWidth: 120 }}
+        >
+          <option value="">Any status</option>
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+          <option value="payment_hold">Payment hold</option>
+        </select>
+        <select
+          className="select"
+          value={platformRoleFilter}
+          onChange={(e) => setPlatformRoleFilter(e.target.value)}
+          data-testid="account-search-platform-role"
+          style={{ minWidth: 120 }}
+        >
+          <option value="">Any role</option>
+          <option value="admin">Admin</option>
+          <option value="ops">Ops</option>
+          <option value="parent">Parent</option>
+        </select>
+        <button
+          className="btn secondary"
+          type="button"
+          onClick={handleSearch}
+          disabled={status === 'loading'}
+          data-testid="account-search-submit"
+        >
+          {status === 'loading' ? 'Searching...' : 'Search'}
+        </button>
+      </div>
+      {search.error && <div className="feedback warn" style={{ marginBottom: 8 }}>{search.error}</div>}
+      {search.truncated && <div className="feedback warn" style={{ marginBottom: 8 }}>Results truncated to 50. Refine your search for more specific results.</div>}
+      {status === 'loaded' && results.length === 0 && <p className="small muted">No accounts matched your search.</p>}
+      {results.map((result) => (
+        <AccountSearchResultRow key={result.id} result={result} onSelect={handleSelectAccount} />
+      ))}
+    </section>
+  );
+}
+
 export function AdminAccountsSection({ model, accountDirectory, actions }) {
   return (
     <>
+      <AccountSearchPanel model={model} actions={actions} />
       <AdminAccountRoles model={model} directory={accountDirectory} actions={actions} />
       <AccountOpsMetadataPanel model={model} actions={actions} />
       <AuditLogLookup model={model} />
