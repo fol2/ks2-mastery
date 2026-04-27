@@ -1741,6 +1741,39 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        // U7 (P3): account search. GET with query-string filters.
+        // Admin/ops gated via `searchAccounts` which calls
+        // `assertAdminHubActor` internally. 3-char minimum query.
+        if (url.pathname === '/api/admin/accounts/search' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const q = url.searchParams.get('q') || '';
+          const opsStatusFilter = url.searchParams.get('ops_status') || null;
+          const platformRoleFilter = url.searchParams.get('platform_role') || null;
+          const searchLimit = Number(url.searchParams.get('limit')) || undefined;
+          const result = await repository.searchAccounts(session.accountId, {
+            query: q,
+            opsStatus: opsStatusFilter,
+            platformRole: platformRoleFilter,
+            limit: searchLimit,
+          });
+          return json({ ok: true, ...result });
+        }
+
+        // U7 (P3): account detail. Parameterised GET for a single account.
+        // Admin/ops gated via `readAccountDetail` which calls
+        // `assertAdminHubActor` internally. 404 for unknown account.
+        {
+          const accountDetailMatch = /^\/api\/admin\/accounts\/([^/]+)\/detail$/.exec(url.pathname);
+          if (accountDetailMatch && request.method === 'GET') {
+            requireSameOrigin(request, env);
+            const targetAccountId = decodeURIComponent(accountDetailMatch[1]);
+            const result = await repository.readAccountDetail(session.accountId, {
+              targetAccountId,
+            });
+            return json({ ok: true, ...result });
+          }
+        }
+
         // U9 (P3): cross-subject content overview. Read-only narrow GET
         // matching the existing /api/admin/ops/* panel-per-route pattern.
         // Admin-gated via `readSubjectContentOverview` which calls
