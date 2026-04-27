@@ -14,31 +14,17 @@
 // Grand Stars derive from breadth + deep-secure evidence across ALL clusters,
 // not from summing direct Stars.
 
-import { MONSTERS_BY_SUBJECT } from '../../platform/game/monsters.js';
+import {
+  ACTIVE_PUNCTUATION_MONSTER_IDS,
+  PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
+  CLASPIN_REQUIRED_SKILLS,
+  SKILL_TO_CLUSTER,
+  RU_TO_CLUSTERS,
+  MONSTER_CLUSTERS,
+  MONSTER_UNIT_COUNT,
+  DIRECT_PUNCTUATION_MONSTER_IDS,
+} from './punctuation-manifest.js';
 
-// U4: import monster roster and cluster→monster mapping directly from
-// monsters.js / inline to avoid circular dependency. read-model.js imports
-// star-projection.js, and punctuation-view-model.js imports from
-// read-model.js — routing through punctuation-view-model.js creates a TDZ.
-const ACTIVE_PUNCTUATION_MONSTER_IDS = Object.freeze(
-  Array.isArray(MONSTERS_BY_SUBJECT?.punctuation)
-    ? [...MONSTERS_BY_SUBJECT.punctuation]
-    : ['pealark', 'curlune', 'claspin', 'quoral'],
-);
-
-// Client-safe cluster → monster mapping. Must stay in lock-step with
-// `PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER` in `punctuation-view-model.js`.
-const PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER = Object.freeze({
-  endmarks: 'pealark',
-  speech: 'pealark',
-  boundary: 'pealark',
-  apostrophe: 'claspin',
-  comma_flow: 'curlune',
-  structure: 'curlune',
-});
-
-// Re-export the mapping so downstream consumers can import from this
-// module without reaching into the view-model.
 export { PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER, ACTIVE_PUNCTUATION_MONSTER_IDS, CLASPIN_REQUIRED_SKILLS };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -46,73 +32,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // ---------------------------------------------------------------------------
 // Internal constants
 // ---------------------------------------------------------------------------
-
-const DIRECT_MONSTER_IDS = ACTIVE_PUNCTUATION_MONSTER_IDS.filter(
-  (id) => id !== 'quoral',
-);
-
-// Build a cluster-to-monster lookup from the view-model constant.
-const CLUSTER_TO_MONSTER = { ...PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER };
-
-// Reverse: monster -> Set<clusterId>
-const MONSTER_CLUSTERS = new Map();
-for (const [clusterId, monsterId] of Object.entries(CLUSTER_TO_MONSTER)) {
-  if (!MONSTER_CLUSTERS.has(monsterId)) MONSTER_CLUSTERS.set(monsterId, new Set());
-  MONSTER_CLUSTERS.get(monsterId).add(clusterId);
-}
-
-// Skill -> clusterId lookup. Inlined here (rather than imported from
-// read-model.js) to avoid a circular dependency: read-model.js imports
-// star-projection.js (U4), and star-projection.js previously imported
-// PUNCTUATION_CLIENT_SKILLS from read-model.js, causing a TDZ error.
-// This mirror must stay in lock-step with `PUNCTUATION_CLIENT_SKILLS`
-// in `read-model.js`; the star-projection tests validate the mapping.
-const SKILL_TO_CLUSTER = new Map([
-  ['sentence_endings', 'endmarks'],
-  ['list_commas', 'comma_flow'],
-  ['apostrophe_contractions', 'apostrophe'],
-  ['apostrophe_possession', 'apostrophe'],
-  ['speech', 'speech'],
-  ['fronted_adverbial', 'comma_flow'],
-  ['parenthesis', 'structure'],
-  ['comma_clarity', 'comma_flow'],
-  ['colon_list', 'structure'],
-  ['semicolon', 'boundary'],
-  ['dash_clause', 'boundary'],
-  ['semicolon_list', 'structure'],
-  ['bullet_points', 'structure'],
-  ['hyphen', 'boundary'],
-]);
-
-// P6-U6: Derive the set of skill IDs required for the Claspin Mega gate
-// from the canonical SKILL_TO_CLUSTER mapping rather than hardcoding them.
-// If a new apostrophe skill is added to SKILL_TO_CLUSTER, this constant
-// will automatically include it — no code change needed.
-const CLASPIN_REQUIRED_SKILLS = Object.freeze(
-  Array.from(SKILL_TO_CLUSTER.entries())
-    .filter(([, c]) => c === 'apostrophe')
-    .map(([s]) => s),
-);
-
-// Exact rewardUnitId -> Set<clusterId> lookup.
-// Mirrors `PUNCTUATION_CLIENT_REWARD_UNITS` from read-model.js (not exported).
-// Eliminates substring-match collisions (e.g. `semicolon` vs `semicolon-lists`).
-const RU_TO_CLUSTERS = new Map([
-  ['sentence-endings-core', new Set(['endmarks'])],
-  ['apostrophe-contractions-core', new Set(['apostrophe'])],
-  ['apostrophe-possession-core', new Set(['apostrophe'])],
-  ['speech-core', new Set(['speech'])],
-  ['list-commas-core', new Set(['comma_flow'])],
-  ['fronted-adverbials-core', new Set(['comma_flow'])],
-  ['comma-clarity-core', new Set(['comma_flow'])],
-  ['semicolons-core', new Set(['boundary'])],
-  ['dash-clauses-core', new Set(['boundary'])],
-  ['hyphens-core', new Set(['boundary'])],
-  ['parenthesis-core', new Set(['structure'])],
-  ['colons-core', new Set(['structure'])],
-  ['semicolon-lists-core', new Set(['structure'])],
-  ['bullet-points-core', new Set(['structure'])],
-]);
 
 // Star category caps per direct monster.
 const TRY_CAP = 10;
@@ -137,12 +56,6 @@ const GRAND_STAR_CAP = 100;
 //
 // The multiplier is applied inside computeSecureStars and computeMasteryStars
 // so that raw score scales inversely with cluster size.
-
-const MONSTER_UNIT_COUNT = Object.freeze({
-  pealark: 5,
-  claspin: 2,
-  curlune: 7,
-});
 
 // Reference cluster size for normalisation (Pealark = 5 units).
 const REFERENCE_UNIT_COUNT = 5;
@@ -224,7 +137,7 @@ function clustersForAttempt(attempt) {
  * Determine which monster a cluster belongs to.
  */
 function monsterForCluster(clusterId) {
-  return CLUSTER_TO_MONSTER[clusterId] || null;
+  return PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER[clusterId] || null;
 }
 
 // ---------------------------------------------------------------------------
@@ -598,7 +511,7 @@ function computeGrandStars(progress, releaseId) {
 
   // Breadth: count distinct direct monsters with secured evidence.
   const directMonstersWithEvidence = [...monstersWithSecured].filter(
-    (id) => DIRECT_MONSTER_IDS.includes(id),
+    (id) => DIRECT_PUNCTUATION_MONSTER_IDS.includes(id),
   ).length;
 
   // Determine the highest tier the learner qualifies for, then interpolate
@@ -689,7 +602,7 @@ export function projectPunctuationStars(progress, releaseId) {
 
   // Build per-monster attempt arrays.
   const monsterAttempts = new Map();
-  for (const monsterId of DIRECT_MONSTER_IDS) {
+  for (const monsterId of DIRECT_PUNCTUATION_MONSTER_IDS) {
     monsterAttempts.set(monsterId, []);
   }
   for (const attempt of attempts) {
@@ -704,7 +617,7 @@ export function projectPunctuationStars(progress, releaseId) {
 
   // Project per-monster Stars.
   const perMonster = {};
-  for (const monsterId of DIRECT_MONSTER_IDS) {
+  for (const monsterId of DIRECT_PUNCTUATION_MONSTER_IDS) {
     const clusterIds = MONSTER_CLUSTERS.get(monsterId) || new Set();
     const mAttempts = monsterAttempts.get(monsterId) || [];
     const mItems = itemsForMonster(items, attempts, clusterIds);
