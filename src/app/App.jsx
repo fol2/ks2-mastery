@@ -80,7 +80,7 @@ function SharedOverlays({ appState, actions, controller }) {
   );
 }
 
-function SubjectTopNav({ chrome, actions }) {
+function SubjectTopNav({ chrome, actions, currentScreen }) {
   return (
     <TopNav
       theme={chrome.theme}
@@ -95,6 +95,9 @@ function SubjectTopNav({ chrome, actions }) {
       onLogout={actions.logout}
       persistenceMode={chrome.persistence?.mode || 'local-only'}
       persistenceLabel={chrome.persistence?.label || ''}
+      platformRole={chrome.session?.platformRole}
+      onOpenAdmin={actions.openAdminHub}
+      currentScreen={currentScreen}
     />
   );
 }
@@ -226,7 +229,7 @@ export function App({ controller, runtime }) {
 
       {screen === 'subject' && (
         <div className={subjectShellClassName}>
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <SubjectRoute key={routedSubjectId} appState={appState} context={context} actions={actions} />
           <SharedOverlays appState={appState} actions={actions} controller={controller} />
@@ -248,7 +251,7 @@ export function App({ controller, runtime }) {
 
       {screen === 'parent-hub' && (
         <div className="app-shell">
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <Suspense fallback={<LoadingSkeleton rows={6} />}>
             <ParentHubSurface
@@ -265,7 +268,7 @@ export function App({ controller, runtime }) {
 
       {screen === 'admin-hub' && (
         <div className="app-shell">
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <Suspense fallback={<LoadingSkeleton rows={6} />}>
             <AdminHubSurface
@@ -283,7 +286,7 @@ export function App({ controller, runtime }) {
 
       {!REACT_ROUTES.has(screen) && (
         <div className="app-shell">
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} />
+          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
           <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
           <UnknownRouteSurface screen={screen} actions={actions} />
           <SharedOverlays appState={appState} actions={actions} controller={controller} />

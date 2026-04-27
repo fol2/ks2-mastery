@@ -113,6 +113,9 @@ function ProfileShell({ chrome, actions, children, appState }) {
         onLogout={actions.logout}
         persistenceMode={chrome.persistence?.mode || 'local-only'}
         persistenceLabel={chrome.persistence?.label || ''}
+        platformRole={chrome.session?.platformRole}
+        onOpenAdmin={actions.openAdminHub}
+        currentScreen="profile-settings"
       />
       <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
       {children}
