@@ -156,15 +156,37 @@ export const spellingModule = {
     }
     return next;
   },
-  getDashboardStats(appState, { service }) {
+  getDashboardStats(appState, { service, repositories }) {
     const learner = appState.learners.byId[appState.learners.selectedId];
     const stats = getOverallSpellingStats(service, learner.id);
     const codex = monsterSummaryFromSpellingAnalytics(service.getAnalyticsSnapshot(learner.id));
+    // Post-Mega banner branch — graduated learners see the
+    // `cover-post-mega-{branch}` banner on the home subject card so the
+    // tile matches the Guardian / Boss / Pattern Quest vista they will
+    // land on. The branch follows the learner's grand-master Phaeton
+    // entry in the monster-codex system; a fresh learner with no entry
+    // gets the default branch (b1) — same fallback the hero pickers use.
+    let postMega = false;
+    let postMegaBranch = '';
+    if (typeof service.getPostMasteryState === 'function') {
+      const postMastery = service.getPostMasteryState(learner.id);
+      postMega = Boolean(
+        postMastery?.postMegaDashboardAvailable
+        ?? postMastery?.allWordsMega,
+      );
+      if (postMega) {
+        const monsterState = repositories?.gameState?.read?.(learner.id, 'monster-codex');
+        const rawBranch = String(monsterState?.phaeton?.branch || '').trim();
+        postMegaBranch = rawBranch === 'b2' ? 'b2' : 'b1';
+      }
+    }
     return {
       pct: stats.total ? Math.round((stats.secure / stats.total) * 100) : 0,
       due: stats.due,
       streak: codex.reduce((max, entry) => Math.max(max, entry.progress.level), 0),
       nextUp: stats.trouble ? 'Trouble drill' : stats.due ? 'Due review' : 'Fresh spellings',
+      postMega,
+      postMegaBranch,
     };
   },
   handleAction(action, context) {
