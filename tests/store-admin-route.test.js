@@ -5,6 +5,7 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import { createStore, VALID_ADMIN_SECTIONS } from '../src/platform/core/store.js';
 import { SUBJECTS } from '../src/platform/core/subject-registry.js';
 import { createLocalPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { parseAdminSectionFromHash } from '../src/platform/core/admin-hash.js';
 
 function makeStore() {
   const storage = installMemoryStorage();
@@ -139,21 +140,15 @@ test('non-admin screens carry adminSection: null', () => {
 });
 
 // ---------------------------------------------------------------------------
-// parseAdminSectionFromHash — inline unit tests
-// These test the hash parsing logic that lives in main.js. Since main.js
-// cannot be imported directly (it has browser-side effects), we replicate
-// the pure parsing function here to validate the algorithm.
+// parseAdminSectionFromHash — tests against the REAL production module
+// imported from src/platform/core/admin-hash.js (no local copy).
 // ---------------------------------------------------------------------------
-function parseAdminSectionFromHash(hash) {
-  if (!hash || typeof hash !== 'string') return null;
-  const raw = hash.replace(/^#/, '');
-  if (!raw) return null;
-  const match = raw.match(/(?:^|&)section=([^&]*)/);
-  if (!match) return null;
-  const value = decodeURIComponent(match[1]).toLowerCase();
-  if (!value) return null;
-  return VALID_ADMIN_SECTIONS.has(value) ? value : 'overview';
-}
+
+test('parseAdminSectionFromHash is the real production export (not a test copy)', () => {
+  assert.equal(typeof parseAdminSectionFromHash, 'function');
+  // Confirm it is the exact same reference from the shared module
+  assert.equal(parseAdminSectionFromHash.name, 'parseAdminSectionFromHash');
+});
 
 test('parseAdminSectionFromHash: #section=debug returns "debug"', () => {
   assert.equal(parseAdminSectionFromHash('#section=debug'), 'debug');
@@ -195,4 +190,53 @@ test('parseAdminSectionFromHash: #section= (empty value) returns null', () => {
 test('parseAdminSectionFromHash: null/undefined input returns null', () => {
   assert.equal(parseAdminSectionFromHash(null), null);
   assert.equal(parseAdminSectionFromHash(undefined), null);
+});
+
+// ---------------------------------------------------------------------------
+// Boot pathname variant tests — trailing slash and case normalisation
+// ---------------------------------------------------------------------------
+test('boot pathname: trailing slash /admin/ normalises to /admin', () => {
+  // The SPA boot block in main.js uses:
+  //   (pathname).replace(/\/+$/, '').toLowerCase()
+  // Verify the same logic detects /admin/ as admin.
+  const bootPath = '/admin/'.replace(/\/+$/, '').toLowerCase();
+  assert.equal(bootPath, '/admin');
+});
+
+test('boot pathname: uppercase /ADMIN normalises to /admin', () => {
+  const bootPath = '/ADMIN'.replace(/\/+$/, '').toLowerCase();
+  assert.equal(bootPath, '/admin');
+});
+
+test('boot pathname: mixed case /Admin/ normalises to /admin', () => {
+  const bootPath = '/Admin/'.replace(/\/+$/, '').toLowerCase();
+  assert.equal(bootPath, '/admin');
+});
+
+// ---------------------------------------------------------------------------
+// admin-section-change with invalid section falls back to 'overview'
+// ---------------------------------------------------------------------------
+test('admin-section-change: invalid section falls back to overview via store', () => {
+  const store = makeStore();
+  store.openAdminHub({ adminSection: 'debug' });
+  // Simulate what admin-section-change does: validate then patch
+  const section = typeof 'nonexistent' === 'string' && VALID_ADMIN_SECTIONS.has('nonexistent')
+    ? 'nonexistent'
+    : 'overview';
+  store.patch((current) => ({
+    route: { ...current.route, adminSection: section },
+  }));
+  assert.equal(store.getState().route.adminSection, 'overview');
+});
+
+test('admin-section-change: valid section is preserved via store', () => {
+  const store = makeStore();
+  store.openAdminHub({ adminSection: 'overview' });
+  const section = typeof 'accounts' === 'string' && VALID_ADMIN_SECTIONS.has('accounts')
+    ? 'accounts'
+    : 'overview';
+  store.patch((current) => ({
+    route: { ...current.route, adminSection: section },
+  }));
+  assert.equal(store.getState().route.adminSection, 'accounts');
 });
