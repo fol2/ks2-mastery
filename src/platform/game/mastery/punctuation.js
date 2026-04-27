@@ -1,4 +1,4 @@
-import { MONSTERS, stageFor, PUNCTUATION_MASTERED_THRESHOLDS, PUNCTUATION_STAR_THRESHOLDS } from '../monsters.js';
+import { MONSTERS, stageFor, PUNCTUATION_MASTERED_THRESHOLDS, PUNCTUATION_STAR_THRESHOLDS, PUNCTUATION_GRAND_STAR_THRESHOLDS } from '../monsters.js';
 import { PUNCTUATION_CURRENT_RELEASE_ID } from '../../../subjects/punctuation/service-contract.js';
 import {
   branchForMonster,
@@ -179,6 +179,18 @@ export function progressForPunctuationMonster(state, monsterId, { publishedTotal
     branch: branchForMonster(normalised, monsterId),
     masteredList: punctuationMasteredList(entry, releaseId),
     starHighWater: persistedHW,
+    // Star-derived stage from the monotonic starHighWater latch.
+    // Used by punctuationEventFromTransition to align toast events
+    // with the Star surface so a child never sees a toast that
+    // contradicts the Star-derived stage.
+    // Quoral (grand monster) uses GRAND thresholds [1,10,25,50,100]
+    // while direct monsters use STAR thresholds [1,10,30,60,100].
+    starStage: stageFor(
+      persistedHW,
+      monsterId === PUNCTUATION_GRAND_MONSTER_ID
+        ? PUNCTUATION_GRAND_STAR_THRESHOLDS
+        : PUNCTUATION_STAR_THRESHOLDS,
+    ),
   };
 }
 
@@ -219,11 +231,18 @@ function buildPunctuationEvent({
 }
 
 function punctuationEventFromTransition(payload, previous, next) {
+  // Effective stage = max(mastered-stage, star-stage) so that a learner
+  // whose Stars have advanced beyond the count-based stage does not see a
+  // contradictory evolve/mega toast.  Pre-Star learners (starStage absent
+  // or 0) fall back to the mastered stage naturally.
+  const prevEffective = Math.max(previous.stage, previous.starStage || 0);
+  const nextEffective = Math.max(next.stage, next.starStage || 0);
+
   if (!previous.caught && next.caught) {
     return buildPunctuationEvent({ ...payload, kind: 'caught', previous, next });
   }
-  if (next.stage > previous.stage) {
-    return buildPunctuationEvent({ ...payload, kind: next.stage === 4 ? 'mega' : 'evolve', previous, next });
+  if (nextEffective > prevEffective) {
+    return buildPunctuationEvent({ ...payload, kind: nextEffective === 4 ? 'mega' : 'evolve', previous, next });
   }
   if (next.level > previous.level) {
     return buildPunctuationEvent({ ...payload, kind: 'levelup', previous, next });
