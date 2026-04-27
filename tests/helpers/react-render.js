@@ -1161,6 +1161,46 @@ export function renderHomeSurfaceWithHeroFixture({ hero = null } = {}) {
   `);
 }
 
+export function renderHeroTaskBannerFixture({ lastLaunch = null, subjectName = 'Spelling' } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HeroTaskBanner } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/HeroTaskBanner.jsx'))};
+
+    const lastLaunch = ${JSON.stringify(lastLaunch)};
+    const subjectName = ${JSON.stringify(subjectName)};
+    const html = renderToStaticMarkup(<HeroTaskBanner lastLaunch={lastLaunch} subjectName={subjectName} />);
+    console.log(html);
+  `);
+}
+
+export function renderSubjectRouteWithHeroBannerFixture({ lastLaunch = null } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
+    import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
+    import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+
+    installMemoryStorage();
+    const controller = createLocalAppController();
+    controller.dispatch('open-subject', { subjectId: 'spelling' });
+    const appState = controller.store.getState();
+    const context = controller.contextFor('spelling');
+    const actions = {
+      dispatch(action, data) { controller.dispatch(action, data); },
+      navigateHome() { controller.dispatch('navigate-home'); },
+      openParentHub() { controller.dispatch('open-parent-hub'); },
+      openAdminHub() { controller.dispatch('open-admin-hub'); },
+    };
+    const heroLastLaunch = ${JSON.stringify(lastLaunch)};
+    const html = renderToStaticMarkup(
+      <SubjectRoute appState={appState} context={context} actions={actions} heroLastLaunch={heroLastLaunch} />
+    );
+    console.log(html);
+  `);
+}
+
 export function renderAppFixture({ route = 'dashboard' } = {}) {
   return renderFixture(`
     import React from 'react';

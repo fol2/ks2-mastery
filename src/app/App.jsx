@@ -232,14 +232,23 @@ export function App({ controller, runtime }) {
         </>
       )}
 
-      {screen === 'subject' && (
-        <div className={subjectShellClassName}>
-          <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
-          <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
-          <SubjectRoute key={routedSubjectId} appState={appState} context={context} actions={actions} />
-          <SharedOverlays appState={appState} actions={actions} controller={controller} />
-        </div>
-      )}
+      {screen === 'subject' && (() => {
+        // U6: pass heroLastLaunch to SubjectRoute only when the launch
+        // targets the currently routed subject.  heroUi.lastLaunch is the
+        // single source of truth — subject safeSession() strips heroContext.
+        const heroLastLaunch = appState.heroUi?.lastLaunch || null;
+        const matchingLastLaunch = heroLastLaunch?.subjectId === routedSubjectId
+          ? heroLastLaunch
+          : null;
+        return (
+          <div className={subjectShellClassName}>
+            <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
+            <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
+            <SubjectRoute key={routedSubjectId} appState={appState} context={context} actions={actions} heroLastLaunch={matchingLastLaunch} />
+            <SharedOverlays appState={appState} actions={actions} controller={controller} />
+          </div>
+        );
+      })()}
 
       {screen === 'profile-settings' && (
         <>
