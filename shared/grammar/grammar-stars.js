@@ -114,13 +114,15 @@ function conceptIdsForMonster(monsterId) {
  *   (shape: { attempts, correct, wrong, strength, intervalDays, correctStreak }).
  * @param {Array} params.recentAttempts - The engine's recentAttempts array.
  *   Production shape: { conceptIds: string[], result: { correct: boolean },
- *   templateId, firstAttemptIndependent, supportLevelAtScoring, ... }.
+ *   templateId, firstAttemptIndependent, supportLevelAtScoring, createdAt, ... }.
  *   Legacy flat shape also accepted: { conceptId, correct, ... }.
+ * @param {number} [params.nowTs=Date.now()] - Current timestamp (ms). Injected
+ *   for deterministic test control of the retainedAfterSecure temporal proof.
  * @returns {{ firstIndependentWin: boolean, repeatIndependentWin: boolean,
  *   variedPractice: boolean, secureConfidence: boolean,
  *   retainedAfterSecure: boolean }}
  */
-export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recentAttempts = [] } = {}) {
+export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recentAttempts = [], nowTs } = {}) {
   const result = {
     firstIndependentWin: false,
     repeatIndependentWin: false,
@@ -172,10 +174,12 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
     result.repeatIndependentWin = true;
   }
 
-  // --- variedPractice: at least 2 distinct templateId values ---
+  // --- variedPractice: at least 2 distinct templateId values from CORRECT answers ---
+  // U2: Wrong-answer-only exposure must not contribute. Only correct attempts
+  // prove the learner can transfer understanding across varied forms.
   const templateIds = new Set();
   for (const a of conceptAttempts) {
-    if (typeof a.templateId === 'string' && a.templateId) {
+    if (readCorrect(a) === true && typeof a.templateId === 'string' && a.templateId) {
       templateIds.add(a.templateId);
     }
   }
@@ -194,16 +198,25 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
     }
   }
 
-  // --- retainedAfterSecure: secureConfidence AND proven retention ---
-  // ADV-003: A single independent correct could have occurred BEFORE the
-  // concept reached secure status, so it doesn't prove post-secure retention.
-  // Requiring >= 2 independent corrects solves this: the first proves
-  // independent mastery (needed to reach secure), the second proves the
-  // learner retained that mastery after the concept was secured. Combined
-  // with secureConfidence = true, this means the learner achieved secure
-  // AND demonstrated independent correctness on at least 2 occasions.
-  if (result.secureConfidence && independentCorrects.length >= 2) {
-    result.retainedAfterSecure = true;
+  // --- retainedAfterSecure: secureConfidence AND post-secure temporal proof ---
+  // ADV-003 + U3: The learner must have at least one independent correct
+  // whose createdAt is strictly AFTER the estimated first-secure timestamp.
+  // securedAtTs is estimated as nowTs - (intervalDays * 86400000). This
+  // prevents a learning burst before secure status from satisfying the tier.
+  if (result.secureConfidence && node) {
+    const ts = typeof nowTs === 'number' && Number.isFinite(nowTs) ? nowTs : Date.now();
+    const intervalDays = safeNum(node.intervalDays);
+    const securedAtTs = ts - (intervalDays * 86400000);
+
+    const hasPostSecureCorrect = independentCorrects.some((a) => {
+      // Entries missing createdAt are excluded from the temporal scan.
+      if (typeof a.createdAt !== 'number' || !Number.isFinite(a.createdAt)) return false;
+      return a.createdAt > securedAtTs;
+    });
+
+    if (hasPostSecureCorrect) {
+      result.retainedAfterSecure = true;
+    }
   }
 
   return result;
