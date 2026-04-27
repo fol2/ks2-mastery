@@ -392,7 +392,7 @@ test('denial log panel renders entries with reason, route, and timestamp', async
 // 3. Debug Bundle form — renders all input fields
 // =================================================================
 
-test('debug bundle form renders all 6 input fields', async () => {
+test('debug bundle form renders all 7 input fields', async () => {
   const html = await renderFixture(buildFixture());
 
   // Panel structure
@@ -403,18 +403,20 @@ test('debug bundle form renders all 6 input fields', async () => {
   // Search form container
   assert.match(html, /data-testid="debug-bundle-search-form"/, 'Search form container renders');
 
-  // All 6 input fields
+  // All 7 input fields
   assert.match(html, /data-testid="bundle-input-account"/, 'Account ID input renders');
   assert.match(html, /data-testid="bundle-input-learner"/, 'Learner ID input renders');
   assert.match(html, /data-testid="bundle-input-from"/, 'Time from input renders');
   assert.match(html, /data-testid="bundle-input-to"/, 'Time to input renders');
   assert.match(html, /data-testid="bundle-input-fingerprint"/, 'Error fingerprint input renders');
+  assert.match(html, /data-testid="bundle-input-event-id"/, 'Error event ID input renders');
   assert.match(html, /data-testid="bundle-input-route"/, 'Route filter input renders');
 
   // Labels
   assert.match(html, /Account ID or email/, 'Account input label renders');
   assert.match(html, /Learner ID/, 'Learner input label renders');
-  assert.match(html, /Error fingerprint/, 'Fingerprint input label renders');
+  assert.match(html, /Error Fingerprint/, 'Fingerprint input label renders');
+  assert.match(html, /Error Event ID/, 'Event ID input label renders');
   assert.match(html, /Route filter/, 'Route filter input label renders');
 
   // Generate button
@@ -463,6 +465,7 @@ test('debug bundle pre-fills fingerprint, accountId, and route from prefill', as
   // This is the current behaviour we are pinning — the prefill only
   // activates after hydration on the client.
   assert.match(html, /name="bundleFingerprint"/, 'Fingerprint input name attribute present');
+  assert.match(html, /name="bundleEventId"/, 'Event ID input name attribute present');
   assert.match(html, /name="bundleAccountId"/, 'Account input name attribute present');
   assert.match(html, /name="bundleRoute"/, 'Route input name attribute present');
 });

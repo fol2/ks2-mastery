@@ -1774,6 +1774,7 @@ export function createWorkerApp({
             timeFrom: url.searchParams.get('time_from') || null,
             timeTo: url.searchParams.get('time_to') || null,
             errorFingerprint: url.searchParams.get('error_fingerprint') || null,
+            errorEventId: url.searchParams.get('error_event_id') || null,
             route: url.searchParams.get('route') || null,
             now: now(),
             buildHash: env.BUILD_HASH || null,
