@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 //
-// U6 (P1.5 Phase B): production same-origin smoke for the admin-ops
-// console. Exercises the live `https://ks2.eugnel.uk` deployment
-// through an end-to-end workflow equivalent to the operator opening
-// the admin hub, clicking each of the four narrow refresh buttons,
-// saving an account-ops-metadata update (then reversing it), and
-// posting a synthetic error event. Every mutation carries a
+// U6 (P1.5 Phase B) + U7 (P4): production same-origin smoke for the
+// admin-ops console. Exercises the live `https://ks2.eugnel.uk`
+// deployment through an end-to-end workflow equivalent to the
+// operator opening the admin hub, clicking each of the four narrow
+// refresh buttons, saving an account-ops-metadata update (then
+// reversing it), posting a synthetic error event, generating a
+// Debug Bundle, reading the denial log, exercising account search +
+// detail, verifying content overview, and performing a marketing
+// message lifecycle round-trip. Every mutation carries a
 // `smoke-<iso-date>-<sequence>` requestId so admin-activity metrics
 // can filter it out of real telemetry.
 //
@@ -494,6 +497,327 @@ export async function runSmoke({
       assertStepOk('ops-error-event status reopen', reopen);
       recordStep('ops-error-event status reopen', { requestId: openRequestId });
     }
+
+    // ---------------------------------------------------------------
+    // P3 panel coverage (steps 8-13). Each step is wrapped in its own
+    // try/catch so a failure escalates exitCode to EXIT_FAILURE but
+    // does NOT abort subsequent steps — the smoke run reports as many
+    // data-points as possible in a single invocation.
+    // ---------------------------------------------------------------
+    let exitCode = EXIT_OK;
+    const failedSteps = [];
+
+    // 8. Debug Bundle generation — exercises the fan-out query behind
+    //    /api/admin/debug-bundle with the smoke account's own ID and
+    //    a recent 24-hour time window.
+    try {
+      const timeNow = Date.now();
+      const debugBundle = await apiGet({
+        baseUrl,
+        path: `/api/admin/debug-bundle?account_id=${encodeURIComponent(smokeRow.accountId)}`
+          + `&time_from=${timeNow - 86_400_000}&time_to=${timeNow}`,
+        cookie,
+        timeoutMs,
+      });
+      assertStepOk('debug-bundle', debugBundle);
+      // Verify the bundle contains the expected section keys. Each
+      // section may be null (e.g. no errors for the smoke account) but
+      // the keys themselves must be present in the response envelope.
+      const bundle = debugBundle.payload?.bundle;
+      const requiredBundleKeys = [
+        'accountSummary', 'recentErrors', 'errorOccurrences',
+        'recentDenials', 'recentMutations', 'linkedLearners', 'capacityState',
+      ];
+      const missingBundleKeys = requiredBundleKeys.filter(
+        (key) => bundle === null || bundle === undefined || !(key in bundle),
+      );
+      if (missingBundleKeys.length > 0) {
+        throw new SmokeFailure({
+          step: 'debug-bundle sections',
+          status: 200,
+          correlationId: correlationIdFromPayload(debugBundle.payload),
+          payload: { missing: missingBundleKeys },
+        });
+      }
+      recordStep('debug-bundle', { sections: requiredBundleKeys.length });
+    } catch (error) {
+      exitCode = EXIT_FAILURE;
+      failedSteps.push(error instanceof SmokeFailure ? error : { step: 'debug-bundle', message: error?.message });
+      recordStep('debug-bundle FAILED', { error: error?.message || String(error) });
+    }
+
+    // 9. Denial log read — GET /api/admin/ops/request-denials?limit=5.
+    //    An empty array is a valid success (the smoke account may have
+    //    no denials).
+    try {
+      const denials = await apiGet({
+        baseUrl,
+        path: '/api/admin/ops/request-denials?limit=5',
+        cookie,
+        timeoutMs,
+      });
+      assertStepOk('denial-log', denials);
+      // The response contains `{ ok, rows: [...] }` — verify rows is
+      // an array (empty is fine).
+      const rows = denials.payload?.rows;
+      if (!Array.isArray(rows)) {
+        throw new SmokeFailure({
+          step: 'denial-log shape',
+          status: 200,
+          correlationId: correlationIdFromPayload(denials.payload),
+          payload: { hint: 'expected rows array in denial-log response' },
+        });
+      }
+      recordStep('denial-log', { count: rows.length });
+    } catch (error) {
+      exitCode = EXIT_FAILURE;
+      failedSteps.push(error instanceof SmokeFailure ? error : { step: 'denial-log', message: error?.message });
+      recordStep('denial-log FAILED', { error: error?.message || String(error) });
+    }
+
+    // 10. Account search — verify the smoke account appears when
+    //     searched by its own email.
+    try {
+      const search = await apiGet({
+        baseUrl,
+        path: `/api/admin/accounts/search?q=${encodeURIComponent(credentials.email)}&limit=5`,
+        cookie,
+        timeoutMs,
+      });
+      assertStepOk('account-search', search);
+      const searchRow = findSmokeAccountRow(search.payload, credentials.email);
+      if (!searchRow) {
+        throw new SmokeFailure({
+          step: 'account-search match',
+          status: 200,
+          correlationId: correlationIdFromPayload(search.payload),
+          payload: { hint: 'smoke account not found in search results' },
+        });
+      }
+      recordStep('account-search', { matchedAccountId: searchRow.accountId || searchRow.id });
+    } catch (error) {
+      exitCode = EXIT_FAILURE;
+      failedSteps.push(error instanceof SmokeFailure ? error : { step: 'account-search', message: error?.message });
+      recordStep('account-search FAILED', { error: error?.message || String(error) });
+    }
+
+    // 11. Account detail — GET /api/admin/accounts/:id/detail for the
+    //     smoke account. Verify the expected top-level section keys.
+    try {
+      const detail = await apiGet({
+        baseUrl,
+        path: `/api/admin/accounts/${encodeURIComponent(smokeRow.accountId)}/detail`,
+        cookie,
+        timeoutMs,
+      });
+      assertStepOk('account-detail', detail);
+      const requiredDetailKeys = [
+        'account', 'learners', 'recentErrors',
+        'recentDenials', 'recentMutations', 'opsMetadata',
+      ];
+      const missingDetailKeys = requiredDetailKeys.filter(
+        (key) => !(key in (detail.payload || {})),
+      );
+      if (missingDetailKeys.length > 0) {
+        throw new SmokeFailure({
+          step: 'account-detail sections',
+          status: 200,
+          correlationId: correlationIdFromPayload(detail.payload),
+          payload: { missing: missingDetailKeys },
+        });
+      }
+      recordStep('account-detail', { sections: requiredDetailKeys.length });
+    } catch (error) {
+      exitCode = EXIT_FAILURE;
+      failedSteps.push(error instanceof SmokeFailure ? error : { step: 'account-detail', message: error?.message });
+      recordStep('account-detail FAILED', { error: error?.message || String(error) });
+    }
+
+    // 12. Content overview — GET /api/admin/ops/content-overview.
+    //     Verifies the narrow panel route returns ok.
+    try {
+      const content = await apiGet({
+        baseUrl,
+        path: '/api/admin/ops/content-overview',
+        cookie,
+        timeoutMs,
+      });
+      assertStepOk('content-overview', content);
+      recordStep('content-overview');
+    } catch (error) {
+      exitCode = EXIT_FAILURE;
+      failedSteps.push(error instanceof SmokeFailure ? error : { step: 'content-overview', message: error?.message });
+      recordStep('content-overview FAILED', { error: error?.message || String(error) });
+    }
+
+    // 13. Marketing messages list — GET /api/admin/marketing/messages.
+    //     Verify 200 and array-shaped response.
+    try {
+      const mktList = await apiGet({
+        baseUrl,
+        path: '/api/admin/marketing/messages',
+        cookie,
+        timeoutMs,
+      });
+      assertStepOk('marketing-messages-list', mktList);
+      const messages = mktList.payload?.messages;
+      if (!Array.isArray(messages)) {
+        throw new SmokeFailure({
+          step: 'marketing-messages-list shape',
+          status: 200,
+          correlationId: correlationIdFromPayload(mktList.payload),
+          payload: { hint: 'expected messages array in marketing list response' },
+        });
+      }
+      recordStep('marketing-messages-list', { count: messages.length });
+    } catch (error) {
+      exitCode = EXIT_FAILURE;
+      failedSteps.push(error instanceof SmokeFailure ? error : { step: 'marketing-messages-list', message: error?.message });
+      recordStep('marketing-messages-list FAILED', { error: error?.message || String(error) });
+    }
+
+    // 14. Marketing write-path round-trip — create draft → archive.
+    //     Uses `audience: 'internal'` to avoid the broad-publish gate.
+    //     If the create succeeds but the archive fails, the script
+    //     exits with EXIT_STATE_DRIFT (code 3) since a visible draft
+    //     is left behind. This mirrors the ops-metadata drift pattern.
+    try {
+      const mktCreateRequestId = makeRequestId(sequence + 1);
+      let mktDraftCreated = false;
+      let mktArchived = false;
+      let createdMessageId = null;
+      let createdRowVersion = null;
+
+      try {
+        const create = await apiSend({
+          baseUrl,
+          method: 'POST',
+          path: '/api/admin/marketing/messages',
+          cookie,
+          timeoutMs,
+          body: {
+            title: `Smoke test ${new Date().toISOString().slice(0, 19)}`,
+            body_text: `Automated smoke run — safe to delete. requestId: ${mktCreateRequestId}`,
+            message_type: 'announcement',
+            audience: 'internal',
+          },
+        });
+        assertStepOk('marketing-create', create);
+        mktDraftCreated = true;
+        createdMessageId = create.payload?.message?.id || null;
+        createdRowVersion = create.payload?.message?.rowVersion ?? 0;
+        recordStep('marketing-create', { requestId: mktCreateRequestId, messageId: createdMessageId });
+
+        if (!createdMessageId) {
+          throw new SmokeFailure({
+            step: 'marketing-create id',
+            status: create.response.status,
+            correlationId: correlationIdFromPayload(create.payload),
+            payload: { hint: 'created message missing id in response' },
+          });
+        }
+
+        // Transition to archived to clean up. Uses CAS via
+        // expectedRowVersion to exercise the concurrency guard.
+        const archiveRequestId = makeRequestId(sequence + 1);
+        const archive = await apiSend({
+          baseUrl,
+          method: 'PUT',
+          path: `/api/admin/marketing/messages/${encodeURIComponent(createdMessageId)}`,
+          cookie,
+          timeoutMs,
+          body: {
+            action: 'archived',
+            expectedRowVersion: createdRowVersion,
+            requestId: archiveRequestId,
+            correlationId: archiveRequestId,
+          },
+        });
+        assertStepOk('marketing-archive', archive);
+        mktArchived = true;
+        recordStep('marketing-archive', { requestId: archiveRequestId, messageId: createdMessageId });
+      } finally {
+        // State-drift guard: if the draft was created but archiving
+        // failed, retry once. If the retry also fails, escalate to
+        // EXIT_STATE_DRIFT.
+        if (mktDraftCreated && !mktArchived && createdMessageId) {
+          const retryArchiveRequestId = makeRequestId(sequence + 1);
+          try {
+            // Re-read the message to get the current row_version
+            // in case a concurrent write bumped it.
+            const reRead = await apiGet({
+              baseUrl,
+              path: `/api/admin/marketing/messages/${encodeURIComponent(createdMessageId)}`,
+              cookie,
+              timeoutMs,
+            });
+            const currentRowVersion = reRead.payload?.message?.rowVersion ?? 0;
+
+            const retryArchive = await apiSend({
+              baseUrl,
+              method: 'PUT',
+              path: `/api/admin/marketing/messages/${encodeURIComponent(createdMessageId)}`,
+              cookie,
+              timeoutMs,
+              body: {
+                action: 'archived',
+                expectedRowVersion: currentRowVersion,
+                requestId: retryArchiveRequestId,
+                correlationId: retryArchiveRequestId,
+              },
+            });
+            if (retryArchive.response.ok && retryArchive.payload?.ok !== false) {
+              mktArchived = true;
+              recordStep('marketing-archive retry', { requestId: retryArchiveRequestId, messageId: createdMessageId });
+            }
+          } catch {
+            // Fall through — drift envelope follows.
+          }
+          if (!mktArchived) {
+            emit({
+              ok: false,
+              exit_code: EXIT_STATE_DRIFT,
+              base_url: baseUrl,
+              error: 'STATE_DRIFT_DETECTED',
+              details: {
+                resource: 'marketing_message',
+                messageId: createdMessageId,
+                hint:
+                  'A smoke draft marketing message was created but could not be '
+                  + 'archived. The draft remains visible in the admin marketing '
+                  + 'panel. Manually archive or delete it via the admin hub.',
+              },
+              steps,
+            });
+            return EXIT_STATE_DRIFT;
+          }
+        }
+      }
+    } catch (error) {
+      exitCode = EXIT_FAILURE;
+      failedSteps.push(error instanceof SmokeFailure ? error : { step: 'marketing-roundtrip', message: error?.message });
+      recordStep('marketing-roundtrip FAILED', { error: error?.message || String(error) });
+    }
+
+    // ---------------------------------------------------------------
+    // If any P3 step failed, report the first failure for triage but
+    // still include all steps in the envelope.
+    // ---------------------------------------------------------------
+    if (exitCode !== EXIT_OK) {
+      const first = failedSteps[0];
+      emit({
+        ok: false,
+        exit_code: EXIT_FAILURE,
+        base_url: baseUrl,
+        failed_step: first?.step || 'unknown',
+        status: first?.status || null,
+        correlation_id: first?.correlationId || null,
+        payload: first?.payload || { message: first?.message || null },
+        failed_step_count: failedSteps.length,
+        steps,
+      });
+      return EXIT_FAILURE;
+    }
   } catch (error) {
     if (error instanceof SmokeFailure) {
       emit({
@@ -534,7 +858,30 @@ export async function main(argv = process.argv.slice(2)) {
       '  KS2_SMOKE_BASE_URL          (default https://ks2.eugnel.uk)',
       '  KS2_SMOKE_TIMEOUT_MS        (default 15000)',
       '',
-      'Exit codes: 0 ok, 1 failure, 2 usage.',
+      'Steps exercised:',
+      '   1. Login (POST /api/auth/login)',
+      '   2. Admin hub read (GET /api/hubs/admin) + panel assertion',
+      '   3. Four narrow refresh routes (kpi, activity, error-events, accounts-metadata)',
+      '   4. Locate smoke account row in accounts-metadata + dirty canary',
+      '   5. Ops-metadata forward/reverse mutation round-trip',
+      '   6. Synthetic error-event ingest (POST /api/ops/error-event)',
+      '   7. Error-event status transition (investigating -> open)',
+      '   8. Debug Bundle generation (GET /api/admin/debug-bundle)',
+      '   9. Denial log read (GET /api/admin/ops/request-denials)',
+      '  10. Account search (GET /api/admin/accounts/search)',
+      '  11. Account detail (GET /api/admin/accounts/:id/detail)',
+      '  12. Content overview (GET /api/admin/ops/content-overview)',
+      '  13. Marketing messages list (GET /api/admin/marketing/messages)',
+      '  14. Marketing write-path round-trip (create draft -> archive)',
+      '',
+      'Exit codes:',
+      '  0 — all steps green',
+      '  1 — one or more steps returned non-2xx or unexpected shape',
+      '  2 — usage error (missing env, malformed URL, SMOKE_ACCOUNT_DIRTY)',
+      '  3 — state drift (forward mutation applied but reverse failed)',
+      '',
+      'Steps 1-7 abort on first failure. Steps 8-14 continue on failure',
+      'so the report covers as many data-points as possible.',
       '',
       'See docs/hardening/admin-ops-smoke-setup.md for the runbook.',
     ].join('\n'));
