@@ -43,8 +43,8 @@ function makeSummary(overrides = {}) {
   };
 }
 
-test('EVIDENCE_SCHEMA_VERSION starts at 1 (U1 ships v1)', () => {
-  assert.equal(EVIDENCE_SCHEMA_VERSION, 1);
+test('EVIDENCE_SCHEMA_VERSION is 2 (P4 U1 bumps to v2)', () => {
+  assert.equal(EVIDENCE_SCHEMA_VERSION, 2);
 });
 
 test('buildReportMeta records schema version + degrades unknown fields safely', () => {
@@ -55,7 +55,7 @@ test('buildReportMeta records schema version + degrades unknown fields safely', 
     bootstrapBurst: 8,
     rounds: 2,
   });
-  assert.equal(meta.evidenceSchemaVersion, 1);
+  assert.equal(meta.evidenceSchemaVersion, 2);
   assert.equal(meta.learners, 4);
   assert.equal(meta.bootstrapBurst, 8);
   assert.equal(meta.rounds, 2);
@@ -172,7 +172,7 @@ test('buildEvidencePayload sets ok=false when any threshold fails', () => {
   });
   assert.equal(payload.ok, false);
   assert.ok(payload.failures.includes('max5xx'));
-  assert.equal(payload.reportMeta.evidenceSchemaVersion, 1);
+  assert.equal(payload.reportMeta.evidenceSchemaVersion, 2);
   assert.equal(payload.reportMeta.environment, 'production');
   assert.equal(payload.safety.mode, 'production');
   assert.equal(payload.safety.demoSessions, false);
@@ -372,10 +372,112 @@ test('persistEvidenceFile uses tempfile-then-rename so partial writes never repl
   }
 });
 
-test('requireBootstrapCapacity gate is explicitly deferred to U3 with passed:true', () => {
-  const summary = { ok: true, totalRequests: 1, endpoints: {}, signals: {} };
+// ---------------------------------------------------------------------------
+// requireBootstrapCapacity gate (P4 U1) — real assertion, not deferred stub
+// ---------------------------------------------------------------------------
+
+test('requireBootstrapCapacity: v2 evidence with queryCount + d1RowsRead passes gate', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10,
+        p50WallMs: 120,
+        p95WallMs: 320,
+        maxResponseBytes: 80_000,
+        queryCount: 5,
+        d1RowsRead: 42,
+      },
+      'POST /api/subjects/grammar/command': {
+        count: 30,
+        p50WallMs: 80,
+        p95WallMs: 180,
+        maxResponseBytes: 5_000,
+      },
+    },
+  });
   const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
   assert.equal(result.thresholds.requireBootstrapCapacity.passed, true);
-  assert.equal(result.thresholds.requireBootstrapCapacity.observed, 'deferred-to-U3');
+  assert.deepEqual(result.thresholds.requireBootstrapCapacity.observed, { queryCount: 5, d1RowsRead: 42 });
   assert.deepEqual(result.failures, []);
+});
+
+test('requireBootstrapCapacity: empty endpoints fails gate (vacuous-truth guard)', () => {
+  const summary = { ok: true, totalRequests: 0, endpoints: {}, signals: {} };
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.equal(result.thresholds.requireBootstrapCapacity.observed, 'no-bootstrap-endpoint');
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+test('requireBootstrapCapacity: queryCount=0 is valid (cached bootstrap with no D1 queries)', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 5,
+        p50WallMs: 100,
+        p95WallMs: 300,
+        maxResponseBytes: 70_000,
+        queryCount: 0,
+        d1RowsRead: 0,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, true);
+  assert.deepEqual(result.thresholds.requireBootstrapCapacity.observed, { queryCount: 0, d1RowsRead: 0 });
+  assert.deepEqual(result.failures, []);
+});
+
+test('requireBootstrapCapacity: missing d1RowsRead fails gate', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10,
+        p50WallMs: 120,
+        p95WallMs: 320,
+        maxResponseBytes: 80_000,
+        queryCount: 5,
+        // d1RowsRead intentionally absent
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+test('requireBootstrapCapacity: missing queryCount fails gate', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10,
+        p50WallMs: 120,
+        p95WallMs: 320,
+        maxResponseBytes: 80_000,
+        // queryCount intentionally absent
+        d1RowsRead: 42,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
+});
+
+test('requireBootstrapCapacity: bootstrap endpoint present but both fields null fails gate', () => {
+  const summary = makeSummary({
+    endpoints: {
+      'GET /api/bootstrap': {
+        count: 10,
+        p50WallMs: 120,
+        p95WallMs: 320,
+        maxResponseBytes: 80_000,
+        queryCount: null,
+        d1RowsRead: null,
+      },
+    },
+  });
+  const result = evaluateThresholds(summary, { requireBootstrapCapacity: true });
+  assert.equal(result.thresholds.requireBootstrapCapacity.passed, false);
+  assert.ok(result.failures.includes('requireBootstrapCapacity'));
 });

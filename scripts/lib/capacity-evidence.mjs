@@ -2,7 +2,7 @@ import { execSync } from 'node:child_process';
 import { mkdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-export const EVIDENCE_SCHEMA_VERSION = 1;
+export const EVIDENCE_SCHEMA_VERSION = 2;
 
 // Request-sample cap per endpoint when --include-request-samples is enabled.
 // Plan says 100 + 100 (first N and last N); this preserves post-mortem utility
@@ -154,17 +154,27 @@ export function evaluateThresholds(summary = {}, thresholds = {}, { dryRun = fal
     };
   }
   if (thresholds.requireBootstrapCapacity) {
-    // The full assertion (bootstrapCapacity metadata present in responses)
-    // requires U3's `meta.capacity` telemetry. Until U3 ships, record the
-    // gate as explicitly deferred: passed=true so it does not fail runs that
-    // correctly reference it in tier configs, but observed='deferred-to-U3'
-    // so evidence readers can see the gate is not yet enforced. U3 replaces
-    // this with the real bootstrapCapacity check.
+    // Assert that the bootstrap endpoint has non-null `queryCount` and
+    // `d1RowsRead`, matching the `CapacityCollector.toPublicJSON()` shape.
+    // This gate has teeth: empty endpoints, missing bootstrap entry, or
+    // null capacity fields all fail. `queryCount: 0` is valid (a cached
+    // bootstrap that issued no D1 queries is legitimate).
+    const bootstrapEntry = bootstrapMetrics || {};
+    const hasEndpoint = bootstrapKey != null;
+    const qc = bootstrapEntry.queryCount;
+    const rows = bootstrapEntry.d1RowsRead;
+    const queryCountPresent = qc !== undefined && qc !== null;
+    const d1RowsReadPresent = rows !== undefined && rows !== null;
+    const allPresent = hasEndpoint && queryCountPresent && d1RowsReadPresent;
+
     evaluated.requireBootstrapCapacity = {
       configured: true,
-      observed: 'deferred-to-U3',
-      passed: true,
-      note: 'full check requires U3 meta.capacity telemetry; tracked by evidenceSchemaVersion',
+      observed: allPresent
+        ? { queryCount: qc, d1RowsRead: rows }
+        : hasEndpoint
+          ? { queryCount: qc ?? null, d1RowsRead: rows ?? null }
+          : 'no-bootstrap-endpoint',
+      passed: allPresent,
     };
   }
 

@@ -545,7 +545,7 @@ test('classroom load happy-path test with all network-failure-paired thresholds 
     assert.equal(report.failures.length, 0);
     assert.equal(report.thresholds.max5xx.passed, true);
     assert.equal(report.thresholds.maxBootstrapP95Ms.configured, 10000);
-    assert.equal(report.reportMeta.evidenceSchemaVersion, 1);
+    assert.equal(report.reportMeta.evidenceSchemaVersion, 2);
     assert.equal(report.evidencePath, outputPath);
 
     const written = JSON.parse(readFileSync(outputPath, 'utf8'));

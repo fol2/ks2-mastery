@@ -828,14 +828,14 @@ export function verifyEvidenceRow(row) {
   if (!Number.isFinite(schemaVersion) || schemaVersion < 1) {
     messages.push(
       `evidenceSchemaVersion is missing or invalid (found: ${JSON.stringify(payload.reportMeta?.evidenceSchemaVersion)}). `
-      + 'Evidence must carry a numeric schema version (U1 = 1, U3+ = 2).',
+      + 'Evidence must carry a numeric schema version (v1 = pre-P4, v2 = P4 U1+).',
     );
   }
   // Reject a future-schema-version value we don't know how to verify; this
-  // prevents an operator from hand-editing `evidenceSchemaVersion: 2` into a
-  // U1 run to unlock classroom-tier claims before U3 actually ships the
-  // telemetry. The compiled-in `EVIDENCE_SCHEMA_VERSION` constant is the
-  // authoritative ceiling.
+  // prevents an operator from hand-editing a schema version higher than the
+  // tool's compiled-in ceiling to unlock gates the tool cannot yet enforce.
+  // The compiled-in `EVIDENCE_SCHEMA_VERSION` constant is the authoritative
+  // ceiling.
   if (Number.isFinite(schemaVersion) && schemaVersion > EVIDENCE_SCHEMA_VERSION) {
     messages.push(
       `evidenceSchemaVersion ${schemaVersion} is higher than the current tool version (${EVIDENCE_SCHEMA_VERSION}). `
@@ -845,7 +845,7 @@ export function verifyEvidenceRow(row) {
   if (TIERS_ABOVE_SMALL_PILOT.has(row.decision) && schemaVersion < 2) {
     messages.push(
       `tier "${row.decision}" requires evidenceSchemaVersion >= 2; found v${Number.isFinite(schemaVersion) ? schemaVersion : 'unknown'}. `
-      + 'U3 telemetry (meta.capacity queryCount, d1RowsRead) must ship before classroom-tier claims.',
+      + 'Bootstrap capacity telemetry (queryCount, d1RowsRead) is required for classroom-tier claims.',
     );
   }
 
