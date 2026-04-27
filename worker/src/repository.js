@@ -79,6 +79,48 @@ import {
   stableClone,
   stableStringify,
 } from './repository-helpers.js';
+// P4 U9: pure row-transform functions and their associated constants
+// extracted to a focused module. Barrel re-exports at the bottom of this
+// file keep all existing consumers working without import-path changes.
+import {
+  contentRowToBundle,
+  eventRowToRecord,
+  gameStateRowToRecord,
+  practiceSessionRowToRecord,
+  publicEventRowToRecord,
+  PUBLIC_EVENT_TEXT_ENUMS,
+  PUBLIC_EVENT_TYPES,
+  publicGameStateRowToRecord,
+  publicMonsterCodexEntry,
+  publicMonsterCodexHasMastery,
+  publicMonsterCodexState,
+  publicMonsterCodexStateFromSpellingProgress,
+  PUBLIC_MONSTER_BRANCHES,
+  PUBLIC_MONSTER_CODEX_SYSTEM_ID,
+  PUBLIC_DIRECT_SPELLING_MONSTER_IDS,
+  PUBLIC_MONSTER_IDS,
+  PUBLIC_PRACTICE_CARD_LABELS,
+  publicPracticeLabel,
+  publicPracticeSessionRowToRecord,
+  publicPracticeSessionSummary,
+  publicPunctuationPracticeSessionSummary,
+  publicMistakeSummary,
+  publicSpellingAnalytics,
+  publicSpellingStats,
+  PUBLIC_SPELLING_YEAR_LABELS,
+  publicSummaryCards,
+  safePublicEventEnum,
+  safePublicEventNumber,
+  safePublicEventText,
+  safePublicEventType,
+  safeSpellingCurrentCard,
+  safeSpellingPrompt,
+  safeSpellingSessionProgress,
+  secureSpellingProgress,
+  spellingProgressFromSubjectRow,
+  SPELLING_SECURE_STAGE,
+  subjectStateRowToRecord,
+} from './row-transforms.js';
 // P3 U6: mutation envelope, receipt persistence, and CAS orchestrators.
 import {
   buildMutationMeta,
@@ -92,7 +134,7 @@ import {
 } from './mutation-repository.js';
 import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model.js';
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
-import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
+// monsterIdForSpellingWord → row-transforms.js
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
 import { getSpellingPostMasteryState } from '../../src/subjects/spelling/read-model.js';
 import {
@@ -117,7 +159,7 @@ import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
 import {
   createInitialPunctuationState,
-  normalisePunctuationSummary,
+  // normalisePunctuationSummary → row-transforms.js
 } from '../../src/subjects/punctuation/service-contract.js';
 import {
   BUNDLED_MONSTER_VISUAL_CONFIG,
@@ -159,53 +201,26 @@ import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 
 // WRITABLE_MEMBERSHIP_ROLES / MEMBERSHIP_ROLES → membership-repository.js
 // MUTATION_POLICY_VERSION → repository-helpers.js
-const PUBLIC_SPELLING_YEAR_LABELS = new Map([
-  ['3-4', 'Years 3-4'],
-  ['5-6', 'Years 5-6'],
-  ['extra', 'Extra spellings'],
-]);
-const PUBLIC_PRACTICE_CARD_LABELS = new Map([
-  ['correct', 'Correct'],
-  ['accuracy', 'Accuracy'],
-]);
-const PUBLIC_EVENT_TYPES = new Set([
-  'spelling.retry-cleared',
-  'spelling.word-secured',
-  'spelling.mastery-milestone',
-  'spelling.session-completed',
-  'reward.monster',
-  'platform.practice-streak-hit',
-]);
+// PUBLIC_SPELLING_YEAR_LABELS, PUBLIC_PRACTICE_CARD_LABELS,
+// PUBLIC_EVENT_TYPES, PUBLIC_MONSTER_CODEX_SYSTEM_ID, PUBLIC_MONSTER_IDS,
+// PUBLIC_DIRECT_SPELLING_MONSTER_IDS, PUBLIC_MONSTER_BRANCHES,
+// SPELLING_SECURE_STAGE, PUBLIC_EVENT_TEXT_ENUMS → row-transforms.js
 // PUBLIC_BOOTSTRAP_* constants, BOOTSTRAP_CAPACITY_VERSION,
 // BOOTSTRAP_MODES, BOOTSTRAP_V2_ENVELOPE_SHAPE → bootstrap-repository.js
 
 // U7: the classroom summary paginates at 50 learners per page (plan R11).
 const CLASSROOM_LEARNERS_SUMMARY_PAGE_LIMIT = 50;
-const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
 const PROJECTION_RECENT_EVENT_LIMIT = 200;
 const CAPACITY_READ_MODEL_TABLES = Object.freeze([
   'learner_read_models',
   'learner_activity_feed',
 ]);
 const COMMAND_PROJECTION_READ_MODEL_VERSION = 1;
-const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
-const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
-const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
 const SPELLING_RUNTIME_CONTENT_CACHE_LIMIT = 8;
 const spellingRuntimeContentCache = new Map();
-const SPELLING_SECURE_STAGE = 4;
 const MONSTER_VISUAL_CONFIG_ID = 'global';
 const MONSTER_VISUAL_SCOPE_TYPE = 'platform';
 const MONSTER_VISUAL_SCOPE_ID = 'monster-visual-config';
-const PUBLIC_EVENT_TEXT_ENUMS = {
-  mode: new Set(['smart', 'trouble', 'single', 'test']),
-  sessionType: new Set(['learning', 'test']),
-  kind: new Set(['caught', 'evolve', 'mega', 'levelup']),
-  monsterId: new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']),
-  spellingPool: new Set(['core', 'extra']),
-  yearBand: new Set(['3-4', '5-6', 'extra']),
-  fromPhase: new Set(['retry', 'correction']),
-};
 
 // safeJsonParse, asTs, isMissingTableError → repository-helpers.js
 
@@ -214,62 +229,9 @@ function isMissingCapacityReadModelTableError(error) {
 }
 
 // isPlainObject, stableClone, stableStringify, mutationPayloadHash → repository-helpers.js
-
-function subjectStateRowToRecord(row) {
-  return normaliseSubjectStateRecord({
-    ui: safeJsonParse(row.ui_json, null),
-    data: safeJsonParse(row.data_json, {}),
-    updatedAt: row.updated_at,
-  });
-}
-
-function safeSpellingPrompt(prompt) {
-  if (!prompt || typeof prompt !== 'object' || Array.isArray(prompt)) return null;
-  return {
-    cloze: typeof prompt.cloze === 'string' ? prompt.cloze : '',
-  };
-}
-
-function safeSpellingCurrentCard(card) {
-  if (!card || typeof card !== 'object' || Array.isArray(card)) return null;
-  return {
-    prompt: safeSpellingPrompt(card.prompt),
-  };
-}
-
-function safeSpellingSessionProgress(progress) {
-  if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return null;
-  const output = {};
-  for (const key of ['done', 'total']) {
-    const value = Number(progress[key]);
-    if (Number.isFinite(value) && value >= 0) output[key] = Math.floor(value);
-  }
-  return Object.keys(output).length ? output : null;
-}
-
-function publicSpellingStats(progressPools) {
-  if (!isPlainObject(progressPools)) return {};
-  return {
-    all: cloneSerialisable(progressPools.all || progressPools.core || {}),
-    core: cloneSerialisable(progressPools.core || progressPools.all || {}),
-    y34: cloneSerialisable(progressPools.y34 || {}),
-    y56: cloneSerialisable(progressPools.y56 || {}),
-    extra: cloneSerialisable(progressPools.extra || {}),
-  };
-}
-
-function publicSpellingAnalytics(progressPools, now) {
-  if (!isPlainObject(progressPools)) return null;
-  return {
-    version: 1,
-    generatedAt: Number(now) || Date.now(),
-    pools: cloneSerialisable(progressPools),
-    wordGroups: [],
-    wordBank: {
-      source: 'server-bootstrap',
-    },
-  };
-}
+// subjectStateRowToRecord, safeSpellingPrompt, safeSpellingCurrentCard,
+// safeSpellingSessionProgress, publicSpellingStats, publicSpellingAnalytics
+// → row-transforms.js
 
 function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
   audio = null,
@@ -398,94 +360,10 @@ async function publicSubjectStateRowToRecord(row, { spellingContentSnapshot = nu
 }
 
 // learnerRowToRecord → membership-repository.js
-
-function gameStateRowToRecord(row) {
-  return cloneSerialisable(safeJsonParse(row.state_json, {})) || {};
-}
-
-function publicMonsterCodexEntry(entry) {
-  if (!isPlainObject(entry)) return null;
-  const masteredCount = Number(entry.masteredCount);
-  const mastered = Array.isArray(entry.mastered)
-    ? entry.mastered.filter((slug) => typeof slug === 'string' && slug).length
-    : Number.isFinite(masteredCount) && masteredCount > 0
-      ? Math.floor(masteredCount)
-      : 0;
-  const output = {
-    masteredCount: mastered,
-    caught: Boolean(entry.caught) || mastered > 0,
-  };
-  if (PUBLIC_MONSTER_BRANCHES.has(entry.branch)) output.branch = entry.branch;
-  return output;
-}
-
-function publicMonsterCodexState(rawState) {
-  const state = isPlainObject(rawState) ? rawState : {};
-  const output = {};
-  for (const monsterId of PUBLIC_MONSTER_IDS) {
-    const entry = publicMonsterCodexEntry(state[monsterId]);
-    if (entry) output[monsterId] = entry;
-  }
-  return output;
-}
-
-function publicGameStateRowToRecord(row) {
-  if (row.system_id !== PUBLIC_MONSTER_CODEX_SYSTEM_ID) return null;
-  return publicMonsterCodexState(gameStateRowToRecord(row));
-}
-
-function secureSpellingProgress(entry) {
-  const stage = Number(entry?.stage);
-  return Number.isFinite(stage) && stage >= SPELLING_SECURE_STAGE;
-}
-
-function spellingProgressFromSubjectRow(row) {
-  const data = safeJsonParse(row?.data_json, {});
-  return isPlainObject(data?.progress) ? data.progress : null;
-}
-
-function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState = {}) {
-  if (!isPlainObject(progress)) return null;
-  const counts = Object.fromEntries(PUBLIC_DIRECT_SPELLING_MONSTER_IDS.map((monsterId) => [monsterId, 0]));
-  const words = Array.isArray(snapshot?.words) ? snapshot.words : [];
-  let knownWordCount = 0;
-
-  for (const word of words) {
-    if (!word?.slug || !isPlainObject(progress[word.slug])) continue;
-    knownWordCount += 1;
-    if (!secureSpellingProgress(progress[word.slug])) continue;
-    const monsterId = monsterIdForSpellingWord(word);
-    if (monsterId in counts) counts[monsterId] += 1;
-  }
-
-  const nextState = {};
-  for (const monsterId of PUBLIC_DIRECT_SPELLING_MONSTER_IDS) {
-    const existing = isPlainObject(existingState?.[monsterId]) ? existingState[monsterId] : {};
-    nextState[monsterId] = {
-      masteredCount: counts[monsterId],
-      caught: counts[monsterId] > 0,
-      ...(PUBLIC_MONSTER_BRANCHES.has(existing.branch) ? { branch: existing.branch } : {}),
-    };
-  }
-
-  const phaetonCount = counts.inklet + counts.glimmerbug;
-  const existingPhaeton = isPlainObject(existingState?.phaeton) ? existingState.phaeton : {};
-  nextState.phaeton = {
-    masteredCount: phaetonCount,
-    caught: phaetonCount >= 3,
-    ...(PUBLIC_MONSTER_BRANCHES.has(existingPhaeton.branch) ? { branch: existingPhaeton.branch } : {}),
-  };
-
-  return {
-    state: publicMonsterCodexState(nextState),
-    knownWordCount,
-  };
-}
-
-function publicMonsterCodexHasMastery(state) {
-  if (!isPlainObject(state)) return false;
-  return Object.values(state).some((entry) => Number(entry?.masteredCount) > 0 || entry?.caught === true);
-}
+// gameStateRowToRecord, publicMonsterCodexEntry, publicMonsterCodexState,
+// publicGameStateRowToRecord, secureSpellingProgress,
+// spellingProgressFromSubjectRow, publicMonsterCodexStateFromSpellingProgress,
+// publicMonsterCodexHasMastery → row-transforms.js
 
 async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, { runtimeSnapshot = null } = {}) {
   const spellingRows = subjectRows.filter((row) => row.subject_id === 'spelling');
@@ -508,177 +386,12 @@ async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameSta
   return gameState;
 }
 
-function practiceSessionRowToRecord(row) {
-  return normalisePracticeSessionRecord({
-    id: row.id,
-    learnerId: row.learner_id,
-    subjectId: row.subject_id,
-    sessionKind: row.session_kind,
-    status: row.status,
-    sessionState: safeJsonParse(row.session_state_json, null),
-    summary: safeJsonParse(row.summary_json, null),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  });
-}
-
-function publicPracticeSessionRowToRecord(row) {
-  const record = practiceSessionRowToRecord(row);
-  if (record.subjectId === 'spelling') {
-    return normalisePracticeSessionRecord({
-      ...record,
-      sessionState: null,
-      summary: publicPracticeSessionSummary(record.summary, record.sessionKind),
-    });
-  }
-  if (record.subjectId === 'punctuation') {
-    return normalisePracticeSessionRecord({
-      ...record,
-      sessionState: null,
-      summary: publicPunctuationPracticeSessionSummary(record.summary),
-    });
-  }
-  return record;
-}
-
-function eventRowToRecord(row) {
-  const parsed = safeJsonParse(row.event_json, {});
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-  const event = {
-    ...parsed,
-    id: typeof parsed.id === 'string' && parsed.id ? parsed.id : row.id,
-    learnerId: parsed.learnerId || row.learner_id || null,
-    subjectId: parsed.subjectId || row.subject_id || null,
-    systemId: parsed.systemId || row.system_id || null,
-    createdAt: Number.isFinite(Number(parsed.createdAt)) ? Number(parsed.createdAt) : asTs(row.created_at, 0),
-  };
-  if (typeof event.type !== 'string' || !event.type) {
-    event.type = row.event_type || event.kind || 'event';
-  }
-  return event;
-}
-
-function publicPracticeLabel(sessionKind) {
-  if (sessionKind === 'test') return 'SATs 20 test';
-  if (sessionKind === 'boss') return 'Boss Dictation';
-  if (sessionKind === 'guardian') return 'Guardian Mission';
-  return 'Smart Review';
-}
-
-function publicSummaryCards(cards) {
-  if (!Array.isArray(cards)) return [];
-  return cards
-    .map((card) => {
-      const key = String(card?.label || '').trim().toLowerCase();
-      const label = PUBLIC_PRACTICE_CARD_LABELS.get(key);
-      const value = String(card?.value || '').trim();
-      if (!label || !/^\d+(?:\/\d+)?%?$/.test(value)) return null;
-      return { label, value };
-    })
-    .filter(Boolean);
-}
-
-function publicMistakeSummary(mistake) {
-  const year = PUBLIC_SPELLING_YEAR_LABELS.has(mistake?.year) ? mistake.year : null;
-  return {
-    year,
-    yearLabel: year ? PUBLIC_SPELLING_YEAR_LABELS.get(year) : null,
-  };
-}
-
-function publicPracticeSessionSummary(summary, sessionKind) {
-  const raw = isPlainObject(summary) ? summary : {};
-  return {
-    label: publicPracticeLabel(sessionKind),
-    cards: publicSummaryCards(raw.cards),
-    mistakes: Array.isArray(raw.mistakes)
-      ? raw.mistakes.map(publicMistakeSummary)
-      : [],
-  };
-}
-
-function publicPunctuationPracticeSessionSummary(summary) {
-  const safe = normalisePunctuationSummary(summary);
-  if (!safe) return null;
-  return {
-    ...safe,
-    gps: safe.gps
-      ? {
-        delayedFeedback: safe.gps.delayedFeedback,
-        recommendedMode: safe.gps.recommendedMode,
-        recommendedLabel: safe.gps.recommendedLabel,
-        reviewItems: [],
-      }
-      : null,
-  };
-}
-
-function safePublicEventText(value) {
-  return typeof value === 'string' && value ? value : null;
-}
-
-function safePublicEventNumber(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function safePublicEventType(value) {
-  return PUBLIC_EVENT_TYPES.has(value) ? value : null;
-}
-
-function safePublicEventEnum(key, value) {
-  const text = safePublicEventText(value);
-  const allowed = PUBLIC_EVENT_TEXT_ENUMS[key];
-  return text && allowed?.has(text) ? text : null;
-}
-
-function publicEventRowToRecord(row) {
-  const event = eventRowToRecord(row);
-  if (!event) return null;
-  const type = safePublicEventType(safePublicEventText(event.type) || safePublicEventText(row.event_type));
-  if (!type) return null;
-  const output = {
-    type,
-    learnerId: safePublicEventText(event.learnerId),
-    subjectId: event.subjectId === 'spelling' ? 'spelling' : null,
-    createdAt: safePublicEventNumber(event.createdAt) ?? asTs(row.created_at, 0),
-  };
-
-  [
-    'mode',
-    'sessionType',
-    'kind',
-    'monsterId',
-    'spellingPool',
-    'yearBand',
-    'fromPhase',
-  ].forEach((key) => {
-    const value = safePublicEventEnum(key, event[key]);
-    if (value) output[key] = value;
-  });
-
-  [
-    'totalWords',
-    'mistakeCount',
-    'milestone',
-    'secureCount',
-    'stage',
-    'attemptCount',
-    'streakDays',
-  ].forEach((key) => {
-    const value = safePublicEventNumber(event[key]);
-    if (value != null) output[key] = value;
-  });
-
-  return output;
-}
-
-function contentRowToBundle(row) {
-  return backfillSpellingWordExplanations(
-    safeJsonParse(row.content_json, SEEDED_SPELLING_CONTENT_BUNDLE),
-    SEEDED_SPELLING_CONTENT_BUNDLE,
-  );
-}
+// practiceSessionRowToRecord, publicPracticeSessionRowToRecord,
+// eventRowToRecord, publicPracticeLabel, publicSummaryCards,
+// publicMistakeSummary, publicPracticeSessionSummary,
+// publicPunctuationPracticeSessionSummary, safePublicEventText,
+// safePublicEventNumber, safePublicEventType, safePublicEventEnum,
+// publicEventRowToRecord, contentRowToBundle → row-transforms.js
 
 async function readSubjectContentBundle(db, accountId, subjectId = 'spelling') {
   const row = await first(db, 'SELECT * FROM account_subject_content WHERE account_id = ? AND subject_id = ?', [accountId, subjectId]);
@@ -9320,3 +9033,45 @@ export {
   PUBLIC_BOOTSTRAP_RECENT_SESSION_LIMIT_PER_LEARNER,
   resolveBootstrapSelectedLearnerId,
 } from './bootstrap-repository.js';
+
+// P4 U9: pure row-transform functions and their constants re-exported so
+// existing consumers continue to import from './repository.js'.
+export {
+  contentRowToBundle,
+  eventRowToRecord,
+  gameStateRowToRecord,
+  practiceSessionRowToRecord,
+  publicEventRowToRecord,
+  PUBLIC_EVENT_TEXT_ENUMS,
+  PUBLIC_EVENT_TYPES,
+  publicGameStateRowToRecord,
+  publicMonsterCodexEntry,
+  publicMonsterCodexHasMastery,
+  publicMonsterCodexState,
+  publicMonsterCodexStateFromSpellingProgress,
+  PUBLIC_MONSTER_BRANCHES,
+  PUBLIC_MONSTER_CODEX_SYSTEM_ID,
+  PUBLIC_DIRECT_SPELLING_MONSTER_IDS,
+  PUBLIC_MONSTER_IDS,
+  PUBLIC_PRACTICE_CARD_LABELS,
+  publicPracticeLabel,
+  publicPracticeSessionRowToRecord,
+  publicPracticeSessionSummary,
+  publicPunctuationPracticeSessionSummary,
+  publicMistakeSummary,
+  publicSpellingAnalytics,
+  publicSpellingStats,
+  PUBLIC_SPELLING_YEAR_LABELS,
+  publicSummaryCards,
+  safePublicEventEnum,
+  safePublicEventNumber,
+  safePublicEventText,
+  safePublicEventType,
+  safeSpellingCurrentCard,
+  safeSpellingPrompt,
+  safeSpellingSessionProgress,
+  secureSpellingProgress,
+  spellingProgressFromSubjectRow,
+  SPELLING_SECURE_STAGE,
+  subjectStateRowToRecord,
+} from './row-transforms.js';
