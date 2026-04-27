@@ -99,7 +99,7 @@ export default async function run({ driver, artefacts, log, assert }) {
   log('assert mutation buttons exist on Summary (Start again, Open Map)');
   const mutationState = await driver.eval(
     "(() => {" +
-      " const startAgain = document.querySelector('[data-punctuation-summary] button.btn.primary');" +
+      " const startAgain = document.querySelector('[data-action=\"punctuation-start-again\"]');" +
       " const openMap = document.querySelector('[data-action=\"punctuation-open-map\"]');" +
       " return JSON.stringify({" +
       "   startAgainFound: !!startAgain," +
@@ -110,7 +110,7 @@ export default async function run({ driver, artefacts, log, assert }) {
   log(`mutation button state: ${mutationState}`);
   const mutations = JSON.parse(mutationState);
   assert(mutations.startAgainFound === true,
-    'Summary must have a "Start again" primary button.');
+    'Summary must have a "Start again" button.');
 
   // --- Navigate via Back and verify ---
   log('click Back to verify navigation works from Summary');
@@ -118,9 +118,11 @@ export default async function run({ driver, artefacts, log, assert }) {
   // Should land on setup or home grid.
   const postNavPhase = await Promise.race([
     driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000)
-      .then(() => 'setup'),
+      .then(() => 'setup')
+      .catch(() => null),
     driver.waitForSelector('.subject-grid', 10_000)
-      .then(() => 'home'),
+      .then(() => 'home')
+      .catch(() => null),
   ]);
   log(`post-Back navigation landed on: ${postNavPhase}`);
   assert(

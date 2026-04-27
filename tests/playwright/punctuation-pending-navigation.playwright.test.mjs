@@ -160,7 +160,7 @@ test.describe('P7-U11: pending/degraded navigation proof', () => {
     // Click "Start again" — this dispatches a mutation command that will
     // stall because the fault is active. The button itself will disable
     // (mutation control) but the Back button must stay enabled (navigation).
-    const startAgain = page.locator('[data-punctuation-summary] button.btn.primary');
+    const startAgain = page.locator('[data-action="punctuation-start-again"]');
     if (await startAgain.count()) {
       // Fire-and-forget — the click triggers the stalled command. We do
       // NOT await the navigation because the command hangs.
@@ -265,7 +265,7 @@ test.describe('P7-U11: pending/degraded navigation proof', () => {
     await installStallFault(page, stallPlan({ durationMs: 20_000 }));
 
     // Click "Start again" to trigger a pending mutation command.
-    const startAgainBtn = page.locator('[data-punctuation-summary] button.btn.primary');
+    const startAgainBtn = page.locator('[data-action="punctuation-start-again"]');
     if (await startAgainBtn.count()) {
       await startAgainBtn.first().click();
     }
@@ -274,7 +274,7 @@ test.describe('P7-U11: pending/degraded navigation proof', () => {
     // If we are still on Summary (stall prevented transition):
     if (await page.locator('[data-punctuation-summary]').count()) {
       // Assert: "Start again" (mutation) is disabled.
-      const startAgain = page.locator('[data-punctuation-summary] button.btn.primary');
+      const startAgain = page.locator('[data-action="punctuation-start-again"]');
       if (await startAgain.count()) {
         // The mutation button should be disabled while the command is pending.
         const isStartDisabled = await startAgain.first().isDisabled();
@@ -361,16 +361,25 @@ test.describe('P7-U11: pending/degraded navigation proof', () => {
   });
 
   // -----------------------------------------------------------------
-  // Scene 4: Skill Detail modal Escape closes it during stalled command.
+  // Scene 4: Skill Detail modal close button remains enabled (baseline).
+  //
+  // NOTE: This is a baseline wiring check, NOT a stall-state proof.
+  // The stall fault is installed but no mutation command is dispatched
+  // while the modal is open — clicking 'Practise this' would navigate
+  // away from the modal, defeating the assertion. The test verifies
+  // that the close button is wired with navigation gating (not
+  // mutation gating) so it stays enabled even when the fault is armed.
+  // A true stall-state proof for the Skill Detail surface would
+  // require a mutation action that does NOT dismiss the modal.
   //
   // Flow:
   //   1. Demo session → Punctuation → Setup → Map.
   //   2. Click a skill card on the Map to open Skill Detail modal.
-  //   3. Install stall fault.
-  //   4. While stalled: assert close button is enabled.
+  //   3. Install stall fault (armed but no command dispatched).
+  //   4. Assert close button is enabled (baseline).
   //   5. Click close → modal closes, Map is visible.
   // -----------------------------------------------------------------
-  test('Skill Detail modal close button works during stalled command', async ({ page }) => {
+  test('Skill Detail modal close button remains enabled (baseline)', async ({ page }) => {
     await createDemoSession(page);
     await expect(page.locator('.subject-grid')).toBeVisible();
     await openSubject(page, 'punctuation');
