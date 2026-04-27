@@ -584,3 +584,207 @@ test('record-event writes release_id = null when the feature flag-gated write fi
     h.close();
   }
 });
+
+// ---------------------------------------------------------------------------
+// Phase 6 U9 — Per-session, per-event-kind rate limiting (R16)
+// ---------------------------------------------------------------------------
+
+test('rate limit: 10 answer-submitted events in a session are all accepted', async () => {
+  const h = createHarness();
+  try {
+    for (let i = 0; i < 10; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const { response, body } = await h.recordEvent({
+        kind: 'answer-submitted',
+        payload: { sessionId: 'sess-1', itemId: `item-${i}`, correct: true },
+      });
+      assert.equal(response.status, 200, `event ${i}: ${JSON.stringify(body)}`);
+      assert.equal(body.recorded, true, `event ${i} should be recorded`);
+      assert.equal(body.rateLimited, undefined, `event ${i} should not be rate limited`);
+    }
+    assert.equal(h.eventRowCount(), 10);
+  } finally {
+    h.close();
+  }
+});
+
+test('rate limit: 51st answer-submitted in a session is silently dropped', async () => {
+  const { MAX_TELEMETRY_EVENTS_PER_SESSION_PER_KIND } = await import(
+    '../worker/src/subjects/punctuation/events.js'
+  );
+  assert.equal(MAX_TELEMETRY_EVENTS_PER_SESSION_PER_KIND, 50, 'constant must be 50');
+
+  const h = createHarness();
+  try {
+    // Insert exactly 50 events.
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const { response, body } = await h.recordEvent({
+        kind: 'answer-submitted',
+        payload: { sessionId: 'sess-flood', itemId: `item-${i}`, correct: i % 2 === 0 },
+      });
+      assert.equal(response.status, 200, `event ${i}: ${JSON.stringify(body)}`);
+      assert.equal(body.recorded, true, `event ${i} should be recorded`);
+    }
+    assert.equal(h.eventRowCount(), 50);
+
+    // 51st event should be silently dropped.
+    const { response, body } = await h.recordEvent({
+      kind: 'answer-submitted',
+      payload: { sessionId: 'sess-flood', itemId: 'item-overflow', correct: true },
+    });
+    assert.equal(response.status, 200, JSON.stringify(body));
+    assert.equal(body.ok, true);
+    assert.equal(body.recorded, false, '51st event must not be recorded');
+    assert.equal(body.rateLimited, true, '51st event must report rateLimited');
+    assert.equal(body.eventKind, 'answer-submitted');
+    // Row count unchanged.
+    assert.equal(h.eventRowCount(), 50);
+  } finally {
+    h.close();
+  }
+});
+
+test('rate limit: 50 of kind A + 50 of kind B are both accepted (caps are per-kind)', async () => {
+  const h = createHarness();
+  try {
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'answer-submitted',
+        payload: { sessionId: 'sess-cross', itemId: `a-${i}`, correct: true },
+      });
+    }
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'feedback-rendered',
+        payload: { sessionId: 'sess-cross', itemId: `b-${i}`, correct: false },
+      });
+    }
+    assert.equal(h.eventRowCount(), 100, 'both kinds fill their own quota');
+
+    // 51st of kind A → dropped.
+    const { body: bodyA } = await h.recordEvent({
+      kind: 'answer-submitted',
+      payload: { sessionId: 'sess-cross', itemId: 'overflow-a', correct: true },
+    });
+    assert.equal(bodyA.rateLimited, true, 'kind A 51st is rate-limited');
+
+    // 51st of kind B → dropped.
+    const { body: bodyB } = await h.recordEvent({
+      kind: 'feedback-rendered',
+      payload: { sessionId: 'sess-cross', itemId: 'overflow-b', correct: false },
+    });
+    assert.equal(bodyB.rateLimited, true, 'kind B 51st is rate-limited');
+
+    assert.equal(h.eventRowCount(), 100, 'no new rows after rate limit');
+  } finally {
+    h.close();
+  }
+});
+
+test('rate limit: new session resets the counter', async () => {
+  const h = createHarness();
+  try {
+    // Fill session-1 to the cap.
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'answer-submitted',
+        payload: { sessionId: 'sess-old', itemId: `old-${i}`, correct: true },
+      });
+    }
+    // Confirm session-1 is capped.
+    const { body: capped } = await h.recordEvent({
+      kind: 'answer-submitted',
+      payload: { sessionId: 'sess-old', itemId: 'blocked', correct: true },
+    });
+    assert.equal(capped.rateLimited, true);
+
+    // A new session starts fresh.
+    const { body: fresh } = await h.recordEvent({
+      kind: 'answer-submitted',
+      payload: { sessionId: 'sess-new', itemId: 'new-0', correct: true },
+    });
+    assert.equal(fresh.recorded, true, 'new session is not rate-limited');
+    assert.equal(fresh.rateLimited, undefined);
+
+    assert.equal(h.eventRowCount(), 51, '50 old + 1 new');
+  } finally {
+    h.close();
+  }
+});
+
+test('rate limit: kinds without sessionId are rate-limited by (learner, kind)', async () => {
+  // card-opened does not carry a sessionId, so the cap applies per-learner per-kind.
+  const h = createHarness();
+  try {
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'card-opened',
+        payload: { cardId: `card-${i}` },
+      });
+    }
+    assert.equal(h.eventRowCount(), 50);
+
+    // 51st card-opened → dropped.
+    const { response, body } = await h.recordEvent({
+      kind: 'card-opened',
+      payload: { cardId: 'overflow' },
+    });
+    assert.equal(response.status, 200, JSON.stringify(body));
+    assert.equal(body.rateLimited, true);
+    assert.equal(body.recorded, false);
+    assert.equal(h.eventRowCount(), 50);
+  } finally {
+    h.close();
+  }
+});
+
+test('rate limit: telemetry events never mint Stars, stages, or codex entries', async () => {
+  // Negative test (R16): the record-event handler never writes to any table
+  // besides punctuation_events. Verify no rows appear in mastery-adjacent
+  // tables after a burst of telemetry events.
+  const h = createHarness();
+  try {
+    for (let i = 0; i < 10; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'answer-submitted',
+        payload: { sessionId: 's1', itemId: `item-${i}`, correct: true },
+      });
+    }
+    // The D1 test database has the standard migration set. If any of the
+    // mastery tables exist, verify they are empty.
+    const tables = h.DB.db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('learner_punctuation_state', 'game_state', 'event_log')",
+    ).all();
+    for (const { name } of tables) {
+      const count = Number(h.DB.db.prepare(`SELECT COUNT(*) AS n FROM "${name}"`).get().n) || 0;
+      assert.equal(count, 0, `${name} must have zero rows — telemetry must never mint state`);
+    }
+  } finally {
+    h.close();
+  }
+});
+
+test('rate limit: feature flag OFF skips rate-limit check (no D1 count query)', async () => {
+  // When the feature flag is OFF, the handler returns before reaching
+  // the rate-limit check — no D1 query is issued. Confirm the response
+  // shape has no `rateLimited` key.
+  const h = createHarness({ eventsEnabled: false });
+  try {
+    const { response, body } = await h.recordEvent({
+      kind: 'answer-submitted',
+      payload: { sessionId: 's1', itemId: 'i1', correct: true },
+    });
+    assert.equal(response.status, 200, JSON.stringify(body));
+    assert.equal(body.enabled, false);
+    assert.equal(body.recorded, false);
+    assert.equal(body.rateLimited, undefined, 'no rateLimited flag when feature is off');
+  } finally {
+    h.close();
+  }
+});

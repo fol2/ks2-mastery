@@ -46,15 +46,26 @@ import {
 import { BadRequestError, BackendUnavailableError } from '../../errors.js';
 import { batch, bindStatement } from '../../d1.js';
 
-// TODO (U9 post-rollout, deferred to follow-on unit): add a
-// per-session / per-learner rate-limit on `record-event` so a runaway
-// client cannot flood the D1 ingest path. Classified at review time as
-// adversarial MEDIUM + security LOW; deferred because the payload
-// allowlist + 256-char per-field cap already bound individual writes,
-// the `(learner_id, request_id)` UNIQUE dedup stops retry storms, and
-// the flag remains OFF in production until monitoring is in place. See
-// `docs/punctuation-production.md` "Rollout deferrals" for the decision
-// trail.
+// Phase 6 U9 — Per-session, per-event-kind rate limiting (R16).
+//
+// A generous cap (50 events per session per kind = 600 per session across
+// all 12 kinds) that stops a runaway or compromised client from flooding
+// the D1 ingest path. Legitimate sessions (20-30 items) never approach
+// the limit. The sessionId is extracted from the inner sanitised payload
+// for kinds that carry one (answer-submitted, first-item-rendered,
+// feedback-rendered, summary-reached); for kinds without a sessionId the
+// cap scopes to (learner_id, event_kind) with a NULL session — effectively
+// a per-learner per-kind cap.
+//
+// When the cap is hit the handler returns a success response with
+// `{recorded: false, rateLimited: true}` — the client's fire-and-forget
+// contract is preserved (no error surface).
+
+/**
+ * Maximum number of telemetry events a single session may emit per
+ * event kind. 50 × 12 kinds = 600 events per session ceiling.
+ */
+export const MAX_TELEMETRY_EVENTS_PER_SESSION_PER_KIND = 50;
 
 // Mirrors the set in worker/src/subjects/punctuation/read-models.js so
 // a payload with a field name that matches a server-only read-model
@@ -280,6 +291,32 @@ export async function applyRecordEventCommand({ command, context }) {
     );
   }
 
+  // Phase 6 U9 — Per-session rate limiting (R16). Extract sessionId from
+  // the sanitised payload (for kinds that carry it) and count existing
+  // events for (learner_id, event_kind, sessionId). For kinds without a
+  // sessionId the count scopes to (learner_id, event_kind) alone. When
+  // the cap is hit, return success with `rateLimited: true` — silent drop.
+  const sessionId = typeof sanitisedPayload.sessionId === 'string' && sanitisedPayload.sessionId
+    ? sanitisedPayload.sessionId
+    : null;
+  const existingCount = await countExistingEventsForRateLimit(
+    env.DB,
+    command.learnerId,
+    kind,
+    sessionId,
+  );
+  if (existingCount >= MAX_TELEMETRY_EVENTS_PER_SESSION_PER_KIND) {
+    return {
+      learnerId: command.learnerId,
+      ok: true,
+      changed: false,
+      enabled: true,
+      recorded: false,
+      rateLimited: true,
+      eventKind: kind,
+    };
+  }
+
   // Review follow-on 2026-04-26: dedupe retries via
   // `(learner_id, request_id)` UNIQUE index. `INSERT OR IGNORE` silently
   // drops the second write so a retried client never creates a duplicate
@@ -334,6 +371,34 @@ export async function applyRecordEventCommand({ command, context }) {
     eventKind: kind,
     occurredAtMs: now,
   };
+}
+
+/**
+ * Count existing events in `punctuation_events` for the rate limiter.
+ *
+ * When `sessionId` is non-null, the count scopes to events whose stored
+ * `payload_json` contains the same `sessionId` via `json_extract`. When
+ * `sessionId` is null (the event kind does not carry one), the count
+ * scopes to `(learner_id, event_kind)` alone.
+ *
+ * The query uses the `idx_punctuation_events_learner_kind_time` index
+ * for the (learner_id, event_kind) prefix so the plan is a covering
+ * index scan even when the table grows.
+ */
+async function countExistingEventsForRateLimit(db, learnerId, eventKind, sessionId) {
+  if (sessionId) {
+    const result = await db.prepare(`
+      SELECT COUNT(*) AS n FROM punctuation_events
+      WHERE learner_id = ? AND event_kind = ?
+        AND json_extract(payload_json, '$.sessionId') = ?
+    `).bind(learnerId, eventKind, sessionId).first();
+    return Number(result?.n) || 0;
+  }
+  const result = await db.prepare(`
+    SELECT COUNT(*) AS n FROM punctuation_events
+    WHERE learner_id = ? AND event_kind = ?
+  `).bind(learnerId, eventKind).first();
+  return Number(result?.n) || 0;
 }
 
 /**
