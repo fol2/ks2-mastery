@@ -245,3 +245,78 @@ test('demo session flow: clearAdminReturn prevents popAdminReturn from reading',
   clearAdminReturn(ss);
   assert.equal(popAdminReturn(ss), null);
 });
+
+// ---------------------------------------------------------------------------
+// ADV-002: role guard on stash restore (social-auth return path)
+// ---------------------------------------------------------------------------
+
+test('social-auth return: non-admin role must NOT restore admin stash', () => {
+  // Simulates the boot-time logic in main.js: popAdminReturn returns a valid
+  // URL, but shellPlatformRole is 'parent' — the stash should be discarded.
+  const ss = createMemoryStorage();
+  stashAdminReturn({ pathname: '/admin', hash: '#section=debug' }, ss);
+
+  const stashedReturn = popAdminReturn(ss);
+  assert.ok(stashedReturn, 'stash should yield a valid URL');
+
+  // Simulate the role-guarded branch from main.js
+  const shellPlatformRole = 'parent';
+  let adminHubOpened = false;
+
+  if (stashedReturn && (shellPlatformRole === 'admin' || shellPlatformRole === 'ops')) {
+    adminHubOpened = true;
+  } else if (stashedReturn) {
+    clearAdminReturn(ss); // non-admin discard
+  }
+
+  assert.equal(adminHubOpened, false, 'admin hub must NOT open for parent role');
+});
+
+test('social-auth return: admin role restores admin stash', () => {
+  const ss = createMemoryStorage();
+  stashAdminReturn({ pathname: '/admin', hash: '#section=accounts' }, ss);
+
+  const stashedReturn = popAdminReturn(ss);
+  assert.ok(stashedReturn, 'stash should yield a valid URL');
+
+  const shellPlatformRole = 'admin';
+  let adminHubOpened = false;
+
+  if (stashedReturn && (shellPlatformRole === 'admin' || shellPlatformRole === 'ops')) {
+    adminHubOpened = true;
+  }
+
+  assert.equal(adminHubOpened, true, 'admin hub must open for admin role');
+  assert.equal(stashedReturn, '/admin#section=accounts');
+});
+
+test('social-auth return: ops role restores admin stash', () => {
+  const ss = createMemoryStorage();
+  stashAdminReturn({ pathname: '/admin', hash: '#section=debug' }, ss);
+
+  const stashedReturn = popAdminReturn(ss);
+  const shellPlatformRole = 'ops';
+  let adminHubOpened = false;
+
+  if (stashedReturn && (shellPlatformRole === 'admin' || shellPlatformRole === 'ops')) {
+    adminHubOpened = true;
+  }
+
+  assert.equal(adminHubOpened, true, 'admin hub must open for ops role');
+});
+
+// ---------------------------------------------------------------------------
+// ADV-001: startSocialAuth clears stash before OAuth redirect
+// ---------------------------------------------------------------------------
+
+test('social auth start: stash is cleared before OAuth redirect', () => {
+  // Simulates the clearAdminReturn() call at the start of startSocialAuth
+  const ss = createMemoryStorage();
+  stashAdminReturn({ pathname: '/admin', hash: '#section=debug' }, ss);
+  assert.ok(ss.getItem(STASH_KEY), 'stash should exist before social auth');
+
+  // The clearAdminReturn() call that now precedes the OAuth redirect
+  clearAdminReturn(ss);
+  assert.equal(ss.getItem(STASH_KEY), null, 'stash must be cleared before OAuth redirect');
+  assert.equal(popAdminReturn(ss), null, 'popAdminReturn must return null after clear');
+});

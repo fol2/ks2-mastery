@@ -174,6 +174,10 @@ async function submitAuthCredentials({ mode = 'login', email, password, convertD
 }
 
 async function startSocialAuth(provider) {
+  /* ADV-001: clear any leftover admin-return stash before the OAuth redirect.
+     Matches the defensive pattern in startDemoSession — prevents a stale stash
+     from persisting across provider switches or repeated auth attempts. */
+  clearAdminReturn();
   const response = await credentialFetch(`/api/auth/${provider}/start`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -2485,10 +2489,12 @@ const appRuntime = {
     clearAdminReturn();
   } else {
     /* U2: social-auth return path — after OAuth callback the browser lands
-       on `/` with a valid session. If a stash exists, restore the admin
-       route without a full-page redirect by dispatching into the store. */
+       on `/` with a valid session. If a stash exists AND the user has
+       admin/ops role, restore the admin route without a full-page redirect
+       by dispatching into the store. Non-admin users get the stash
+       discarded silently (ADV-002). */
     const stashedReturn = popAdminReturn();
-    if (stashedReturn) {
+    if (stashedReturn && (shellPlatformRole === 'admin' || shellPlatformRole === 'ops')) {
       const stashedHash = stashedReturn.includes('#')
         ? stashedReturn.slice(stashedReturn.indexOf('#'))
         : '';
@@ -2499,6 +2505,9 @@ const appRuntime = {
       // Update the URL bar to match the restored admin route
       const newUrl = stashedReturn;
       globalThis.history?.replaceState?.(null, '', newUrl);
+    } else if (stashedReturn) {
+      // Non-admin user — discard the stash, do not open admin hub
+      clearAdminReturn(globalThis.sessionStorage);
     }
   }
 }
