@@ -65,7 +65,7 @@ test('runProbe --output persists evidence JSON with full envelope shape', async 
     assert.ok(Array.isArray(written.failures), 'envelope must include failures[]');
     assert.ok(written.thresholds, 'envelope must include thresholds object');
     assert.ok(written.safety, 'envelope must include safety block');
-    assert.equal(written.reportMeta.evidenceSchemaVersion, 1);
+    assert.equal(written.reportMeta.evidenceSchemaVersion, 2);
     // Timings must be real ISO strings, not null (regression from round 1).
     assert.match(written.summary.startedAt, /^\d{4}-\d{2}-\d{2}T/);
     assert.match(written.summary.finishedAt, /^\d{4}-\d{2}-\d{2}T/);
