@@ -561,6 +561,10 @@ let heroUi = {
   lastLaunch: null,
 };
 
+// U10: once-per-visit guard — logs card_rendered / card_hidden exactly
+// once per dashboard visit (reset on learner switch).
+let heroCardLoggedThisVisit = false;
+
 let shellPlatformRole = normalisePlatformRole(boot.session.platformRole || 'parent');
 let adminAccountDirectory = {
   status: 'idle',
@@ -848,6 +852,20 @@ async function loadHeroReadModel({ learnerId, force = false } = {}) {
       readModel: response?.hero || null,
       error: '',
     });
+
+    // U10: lightweight client-side observability — once per dashboard visit.
+    if (!heroCardLoggedThisVisit) {
+      heroCardLoggedThisVisit = true;
+      const rm = response?.hero;
+      const childVisible = rm?.childVisible === true && rm?.ui?.enabled === true;
+      if (childVisible) {
+        // eslint-disable-next-line no-console
+        console.info('[hero] card_rendered');
+      } else {
+        // eslint-disable-next-line no-console
+        console.info('[hero] card_hidden', { reason: rm?.ui?.reason || 'unknown' });
+      }
+    }
   } catch (error) {
     // Stale token guard.
     if (heroUi.requestToken !== requestToken) return;
@@ -2480,6 +2498,9 @@ function buildSurfaceActions() {
       const rm = heroUi?.readModel;
       const task = rm?.dailyQuest?.tasks?.find((t) => t.taskId === taskId);
       if (!task) return;
+      // U10: CTA click observability
+      // eslint-disable-next-line no-console
+      console.info('[hero] launch_clicked', { taskId });
       dispatchAction('hero-start-task', {
         questId: rm?.dailyQuest?.questId,
         questFingerprint: rm?.questFingerprint,
@@ -3132,6 +3153,7 @@ function handleGlobalAction(action, data) {
       pendingTaskKey: '',
       lastLaunch: null,
     };
+    heroCardLoggedThisVisit = false; // U10: reset per-visit observability latch
     if (boot.session.signedIn && nextLearnerId) {
       queueMicrotask(() => loadHeroReadModel({ learnerId: nextLearnerId }));
     }

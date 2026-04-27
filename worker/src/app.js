@@ -1392,62 +1392,120 @@ export function createWorkerApp({
           const body = await readJson(request);
           const heroLearnerId = body?.learnerId || '';
           await repository.requireLearnerReadAccess(session.accountId, heroLearnerId);
-          const { heroLaunch, subjectCommand } = await resolveHeroStartTaskCommand({
-            body,
-            repository,
-            env,
-            now: now(),
-            accountId: session.accountId,
-          });
 
-          // P2 U2: already-started — safe response without running a subject command
-          if (!subjectCommand) {
-            return json({
-              ok: true,
-              heroLaunch,
-            });
-          }
-
-          requireSubjectCommandAvailable(subjectCommand, env);
-          await protectDemoSubjectCommand({
-            env,
-            request,
-            session,
-            command: subjectCommand,
-            now: now(),
-            capacity,
-          });
+          // U10: outer try wraps the full resolve + dispatch so stale /
+          // conflict errors emitted by resolveHeroStartTaskCommand are
+          // logged before re-throwing to the main error handler.
           try {
-            const result = await repository.runSubjectCommand(
-              session.accountId,
-              subjectCommand,
-              () => subjectRuntime.dispatch(subjectCommand, {
-                env,
-                request,
-                session,
-                account,
-                repository,
-                now: now(),
-                capacity,
-              }),
-            );
-            return json({
-              ok: true,
-              heroLaunch,
-              ...result,
+            const { heroLaunch, subjectCommand } = await resolveHeroStartTaskCommand({
+              body,
+              repository,
+              env,
+              now: now(),
+              accountId: session.accountId,
             });
-          } catch (error) {
-            if (error?.name === 'ProjectionUnavailableError') {
-              if (typeof capacity?.setProjectionFallback === 'function') {
-                capacity.setProjectionFallback('rejected');
-              }
+
+            // P2 U2: already-started — safe response without running a subject command
+            if (!subjectCommand) {
               return json({
-                ok: false,
-                error: 'projection_unavailable',
-                retryable: false,
-                requestId: body?.requestId || '',
-                ...(error.extra && typeof error.extra === 'object' ? { cause: error.extra.cause } : {}),
-              }, 503);
+                ok: true,
+                heroLaunch,
+              });
+            }
+
+            requireSubjectCommandAvailable(subjectCommand, env);
+            await protectDemoSubjectCommand({
+              env,
+              request,
+              session,
+              command: subjectCommand,
+              now: now(),
+              capacity,
+            });
+            try {
+              const result = await repository.runSubjectCommand(
+                session.accountId,
+                subjectCommand,
+                () => subjectRuntime.dispatch(subjectCommand, {
+                  env,
+                  request,
+                  session,
+                  account,
+                  repository,
+                  now: now(),
+                  capacity,
+                }),
+              );
+
+              // U10: hero_task_launch_succeeded — best-effort structured log.
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_task_launch_succeeded',
+                  learnerId: heroLearnerId,
+                  questId: heroLaunch?.questId || body?.questId || '',
+                  taskId: heroLaunch?.taskId || body?.taskId || '',
+                  subjectId: heroLaunch?.subjectId || '',
+                  intent: heroLaunch?.intent || '',
+                  launcher: heroLaunch?.launcher || '',
+                }));
+              } catch { /* best-effort */ }
+
+              return json({
+                ok: true,
+                heroLaunch,
+                ...result,
+              });
+            } catch (error) {
+              if (error?.name === 'ProjectionUnavailableError') {
+                if (typeof capacity?.setProjectionFallback === 'function') {
+                  capacity.setProjectionFallback('rejected');
+                }
+                return json({
+                  ok: false,
+                  error: 'projection_unavailable',
+                  retryable: false,
+                  requestId: body?.requestId || '',
+                  ...(error.extra && typeof error.extra === 'object' ? { cause: error.extra.cause } : {}),
+                }, 503);
+              }
+              throw error;
+            }
+          } catch (error) {
+            const errorCode = error?.code || error?.extra?.code || '';
+
+            // U10: stale / conflict structured logging
+            if (errorCode === 'hero_quest_stale' || errorCode === 'hero_quest_fingerprint_mismatch') {
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_quest_stale_rejected',
+                  learnerId: body?.learnerId || '',
+                  code: errorCode,
+                  retryable: false,
+                }));
+              } catch { /* best-effort */ }
+            } else if (errorCode === 'hero_active_session_conflict') {
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_active_session_conflict',
+                  learnerId: body?.learnerId || '',
+                  code: errorCode,
+                  retryable: false,
+                }));
+              } catch { /* best-effort */ }
+            } else {
+              // U10: hero_task_launch_failed — generic non-stale failure
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_task_launch_failed',
+                  learnerId: body?.learnerId || '',
+                  code: errorCode || 'unknown',
+                  retryable: false,
+                }));
+              } catch { /* best-effort */ }
             }
             throw error;
           }

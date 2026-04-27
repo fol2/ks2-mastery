@@ -69,6 +69,19 @@ export async function handleHeroReadModel({
     env,
   });
 
+  // U10: structured observability — fire-and-forget, never blocks the response.
+  try {
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify({
+      event: 'hero_read_model_loaded',
+      learnerId,
+      version: result.version,
+      uiEnabled: result.ui?.enabled || false,
+      taskCount: result.dailyQuest?.tasks?.length || 0,
+      activeSession: Boolean(result.activeHeroSession),
+    }));
+  } catch { /* best-effort */ }
+
   return json({ ok: true, hero: result });
 }
 
