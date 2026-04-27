@@ -5032,6 +5032,99 @@ function generateOpsErrorEventId(nowTs) {
   return `ops-error-${stamp.toString(36)}-${entropy}`;
 }
 
+function generateOccurrenceId(nowTs) {
+  const random = globalThis.crypto?.randomUUID?.();
+  if (typeof random === 'string' && random) return `occ-${random}`;
+  const stamp = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
+  const entropy = Math.random().toString(36).slice(2, 10);
+  return `occ-${stamp.toString(36)}-${entropy}`;
+}
+
+// U5 (P3): ring-buffer cap for per-fingerprint occurrence rows.
+const OPS_ERROR_OCCURRENCE_RING_LIMIT = 20;
+
+// U5 (P3): insert an occurrence row and prune to the ring-buffer cap.
+// Runs as a batch so both the INSERT and the DELETE commit atomically.
+// Tolerates missing table (pre-migration deploy) — silently no-ops.
+async function insertOccurrenceRow(db, {
+  eventId,
+  occurredAt,
+  release = null,
+  routeName = null,
+  accountId = null,
+  userAgent = null,
+} = {}) {
+  const occId = generateOccurrenceId(occurredAt);
+  try {
+    await batch(db, [
+      bindStatement(db, `
+        INSERT INTO ops_error_event_occurrences (id, event_id, occurred_at, release, route_name, account_id, user_agent)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [occId, eventId, occurredAt, release, routeName, accountId, userAgent]),
+      bindStatement(db, `
+        DELETE FROM ops_error_event_occurrences
+        WHERE event_id = ?
+          AND id NOT IN (
+            SELECT id FROM ops_error_event_occurrences
+            WHERE event_id = ?
+            ORDER BY occurred_at DESC
+            LIMIT ?
+          )
+      `, [eventId, eventId, OPS_ERROR_OCCURRENCE_RING_LIMIT]),
+    ]);
+  } catch (error) {
+    // Tolerate missing table — occurrence tracking is additive and must
+    // never break error ingest on a pre-migration deploy.
+    if (isMissingTableError(error, 'ops_error_event_occurrences')) return;
+    throw error;
+  }
+}
+
+// U5 (P3): read the occurrence timeline for a given event. Returns
+// latest-first ordering, capped at `limit` rows (default 20).
+async function readErrorEventOccurrences(db, {
+  actorAccountId,
+  eventId,
+  limit = OPS_ERROR_OCCURRENCE_RING_LIMIT,
+} = {}) {
+  const actor = await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+  const isAdmin = actorPlatformRole === 'admin';
+  const safeLimit = Math.max(1, Math.min(100, Number(limit) || OPS_ERROR_OCCURRENCE_RING_LIMIT));
+
+  if (typeof eventId !== 'string' || !eventId) {
+    return { occurrences: [] };
+  }
+
+  try {
+    const rows = await all(db, `
+      SELECT id, event_id, occurred_at, release, route_name, account_id, user_agent
+      FROM ops_error_event_occurrences
+      WHERE event_id = ?
+      ORDER BY occurred_at DESC
+      LIMIT ?
+    `, [eventId, safeLimit]);
+
+    return {
+      occurrences: rows.map((row) => ({
+        id: typeof row?.id === 'string' ? row.id : '',
+        eventId: typeof row?.event_id === 'string' ? row.event_id : '',
+        occurredAt: Number(row?.occurred_at) || 0,
+        release: typeof row?.release === 'string' && row.release ? row.release : null,
+        routeName: typeof row?.route_name === 'string' ? row.route_name : null,
+        // R25-consistent: admin sees account attribution, ops sees null.
+        accountId: isAdmin && row?.account_id ? maskAccountIdLastN(row.account_id) : null,
+        userAgent: typeof row?.user_agent === 'string' ? row.user_agent : null,
+      })),
+    };
+  } catch (error) {
+    if (isMissingTableError(error, 'ops_error_event_occurrences')) {
+      return { occurrences: [] };
+    }
+    throw error;
+  }
+}
+
 // H2 (reviewer) — preflight dedup probe.
 //
 // `recordClientErrorEvent` performs the authoritative R24 3-tuple dedup
@@ -5230,6 +5323,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
         ]);
         const autoReopenChanges = Number(autoReopenBatch?.[0]?.meta?.changes) || 0;
         if (autoReopenChanges === 1) {
+          // U5 (P3): record occurrence row for auto-reopen event.
+          await insertOccurrenceRow(db, {
+            eventId: existing.id,
+            occurredAt: ts,
+            release: storedReleaseValue,
+            routeName: redacted.routeName || null,
+            accountId: attributedAccountId,
+            userAgent: redacted.userAgent || null,
+          });
           return {
             eventId: existing.id,
             deduped: true,
@@ -5259,6 +5361,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
               last_seen_release = ?
           WHERE id = ?
         `, [ts, storedReleaseValue, existing.id]);
+        // U5 (P3): record occurrence row for CAS-fail dedup path.
+        await insertOccurrenceRow(db, {
+          eventId: existing.id,
+          occurredAt: ts,
+          release: storedReleaseValue,
+          routeName: redacted.routeName || null,
+          accountId: attributedAccountId,
+          userAgent: redacted.userAgent || null,
+        });
         return {
           eventId: existing.id,
           deduped: true,
@@ -5278,6 +5389,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
             last_seen_release = ?
         WHERE id = ?
       `, [ts, storedReleaseValue, existing.id]);
+      // U5 (P3): record occurrence row for normal dedup hit.
+      await insertOccurrenceRow(db, {
+        eventId: existing.id,
+        occurredAt: ts,
+        release: storedReleaseValue,
+        routeName: redacted.routeName || null,
+        accountId: attributedAccountId,
+        userAgent: redacted.userAgent || null,
+      });
       return {
         eventId: existing.id,
         deduped: true,
@@ -5351,6 +5471,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
       // batch) keeps the non-atomic window between INSERT and bump as
       // small as possible.
       await bumpAdminKpiMetricStatement(db, `${KPI_ERROR_STATUS_METRIC_PREFIX}open`, ts, 1).run();
+      // U5 (P3): record the first occurrence row for this fresh fingerprint.
+      await insertOccurrenceRow(db, {
+        eventId,
+        occurredAt: ts,
+        release: freshReleaseValue,
+        routeName: redacted.routeName || null,
+        accountId: attributedAccountId,
+        userAgent: redacted.userAgent || null,
+      });
       return {
         eventId,
         deduped: false,
@@ -5388,6 +5517,15 @@ async function recordClientErrorEvent(db, { clientEvent, sessionAccountId = null
             last_seen_release = ?
         WHERE id = ?
       `, [ts, redacted.release || null, winner.id]);
+      // U5 (P3): record occurrence row for race-loser dedup path.
+      await insertOccurrenceRow(db, {
+        eventId: winner.id,
+        occurredAt: ts,
+        release: redacted.release || null,
+        routeName: redacted.routeName || null,
+        accountId: attributedAccountId,
+        userAgent: redacted.userAgent || null,
+      });
       return {
         eventId: winner.id,
         deduped: true,
@@ -9340,6 +9478,15 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     },
     async isClientErrorFingerprintKnown({ clientEvent } = {}) {
       return isClientErrorFingerprintKnown(db, { clientEvent });
+    },
+    // U5 (P3): occurrence timeline read. Admin/ops-gated via
+    // `assertAdminHubActor` inside the helper.
+    async readErrorEventOccurrences(accountId, eventId, { limit } = {}) {
+      return readErrorEventOccurrences(db, {
+        actorAccountId: accountId,
+        eventId,
+        limit,
+      });
     },
     async saveMonsterVisualConfigDraft(accountId, { draft, mutation = {} } = {}) {
       return saveMonsterVisualConfigDraft(db, accountId, draft, mutation, nowFactory());

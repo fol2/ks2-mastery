@@ -1,13 +1,65 @@
 import React from 'react';
 import { formatTimestamp, isBlocked } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
+import { formatOccurrenceTimestamp } from '../../platform/hubs/admin-occurrence-timeline.js';
 
 // U4+U5: Debugging & Logs section — error log centre + learner support /
 // diagnostics panels. Extracted from AdminHubSurface.jsx.
 
 const ERROR_EVENT_STATUS_OPTIONS = ['open', 'investigating', 'resolved', 'ignored'];
 
-function ErrorEventDetailsDrawer({ entry, canViewAccount }) {
+// U5 (P3): occurrence timeline sub-component. Renders inside the error
+// drawer once the occurrences have been fetched. Lazy-loaded via the
+// `onLoad` callback when the drawer is first expanded.
+function OccurrenceTimeline({ eventId, occurrences, loading, onLoad, canViewAccount }) {
+  const rows = Array.isArray(occurrences) ? occurrences : [];
+  const loaded = rows.length > 0 || loading === false;
+  return (
+    <div data-testid={`occurrence-timeline-${eventId}`} style={{ marginTop: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <strong className="small">Occurrence timeline</strong>
+        {!loaded && typeof onLoad === 'function' ? (
+          <button
+            className="btn ghost small"
+            type="button"
+            data-testid={`occurrence-load-${eventId}`}
+            disabled={loading}
+            onClick={() => onLoad(eventId)}
+          >
+            {loading ? 'Loading...' : 'Load timeline'}
+          </button>
+        ) : null}
+      </div>
+      {rows.length > 0 ? (
+        <table className="small" style={{ marginTop: 6, width: '100%', borderCollapse: 'collapse' }} data-testid={`occurrence-table-${eventId}`}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'left', padding: '2px 6px' }}>When</th>
+              <th style={{ textAlign: 'left', padding: '2px 6px' }}>Release</th>
+              <th style={{ textAlign: 'left', padding: '2px 6px' }}>Route</th>
+              {canViewAccount ? <th style={{ textAlign: 'left', padding: '2px 6px' }}>Account</th> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((occ) => (
+              <tr key={occ.id || occ.occurredAt} data-testid={`occurrence-row-${occ.id}`}>
+                <td className="muted" style={{ padding: '2px 6px' }}>{formatOccurrenceTimestamp(occ.occurredAt)}</td>
+                <td style={{ padding: '2px 6px', fontFamily: 'monospace' }}>{occ.release ? String(occ.release).slice(0, 7) : '—'}</td>
+                <td className="muted" style={{ padding: '2px 6px' }}>{occ.routeName || '—'}</td>
+                {canViewAccount ? <td className="muted" style={{ padding: '2px 6px' }}>{occ.accountId || 'anon'}</td> : null}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
+      {loaded && rows.length === 0 ? (
+        <p className="small muted" data-testid={`occurrence-empty-${eventId}`}>No occurrence history recorded.</p>
+      ) : null}
+    </div>
+  );
+}
+
+function ErrorEventDetailsDrawer({ entry, canViewAccount, onLoadOccurrences }) {
   if (!entry) return null;
   const releaseFallback = (value) => (typeof value === 'string' && value ? value : 'unknown');
   const lastStatusChangeAt = Number.isFinite(Number(entry.lastStatusChangeAt))
@@ -79,6 +131,13 @@ function ErrorEventDetailsDrawer({ entry, canViewAccount }) {
           </React.Fragment>
         ) : null}
       </dl>
+      <OccurrenceTimeline
+        eventId={entry.id}
+        occurrences={entry.occurrences}
+        loading={entry.occurrencesLoading}
+        onLoad={onLoadOccurrences}
+        canViewAccount={canViewAccount}
+      />
     </details>
   );
 }
@@ -307,7 +366,11 @@ function ErrorLogCentrePanel({ model, actions }) {
                 <span className="chip">{entry.status || 'open'}</span>
               )}
             </div>
-            <ErrorEventDetailsDrawer entry={entry} canViewAccount={canManage} />
+            <ErrorEventDetailsDrawer
+              entry={entry}
+              canViewAccount={canManage}
+              onLoadOccurrences={(eventId) => actions.dispatch('admin-ops-load-occurrences', { eventId })}
+            />
           </div>
         );
       }) : (
