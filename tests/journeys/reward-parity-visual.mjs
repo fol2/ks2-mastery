@@ -126,7 +126,7 @@ export default async function run({ driver, artifacts, log, assert }) {
   // --- Phase 5 U9: star-count consistency across surfaces ---
 
   log('verify star-count consistency: landing monster row uses star meters');
-  await driver.click('[data-action="punctuation-back"]');
+  await driver.click('[data-action="punctuation-close-map"]');
   await driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000);
 
   const starMeterPattern = /\d+ \/ 100 Stars/;
