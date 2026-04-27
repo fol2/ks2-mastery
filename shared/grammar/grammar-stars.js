@@ -14,12 +14,7 @@
 //
 // Plan: docs/plans/2026-04-27-001-feat-grammar-phase5-star-curve-landing-plan.md (U2).
 
-// Import concept arrays for monster→concept mapping. These are the only
-// imports this module needs, and they are pure frozen data.
-import {
-  GRAMMAR_MONSTER_CONCEPTS,
-  GRAMMAR_AGGREGATE_CONCEPTS,
-} from '../../src/platform/game/mastery/grammar.js';
+import { conceptIdsForGrammarMonster } from './grammar-concept-roster.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -88,16 +83,6 @@ function isPlainObject(value) {
 function safeNum(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
-}
-
-/**
- * Returns the concept IDs that belong to a given monster.
- * Direct monsters use GRAMMAR_MONSTER_CONCEPTS; Concordium uses
- * GRAMMAR_AGGREGATE_CONCEPTS.
- */
-function conceptIdsForMonster(monsterId) {
-  if (monsterId === 'concordium') return GRAMMAR_AGGREGATE_CONCEPTS;
-  return GRAMMAR_MONSTER_CONCEPTS[monsterId] || [];
 }
 
 // ---------------------------------------------------------------------------
@@ -239,7 +224,7 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
  *   nextMilestoneLabel: string|null }}
  */
 export function computeGrammarMonsterStars(monsterId, conceptEvidenceMap = {}) {
-  const conceptIds = conceptIdsForMonster(monsterId);
+  const conceptIds = conceptIdsForGrammarMonster(monsterId);
   const conceptCount = conceptIds.length;
 
   if (conceptCount === 0) {

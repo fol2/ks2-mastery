@@ -1175,9 +1175,10 @@ test('P6-U6 view-model: dashboard model with evidence → monsterStrip Stars mat
   const conceptNodes = {
     clauses: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
   };
+  const postSecureTs = Date.now() - 1000;
   const recentAttempts = [
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: postSecureTs },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: postSecureTs },
   ];
   const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
   const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
@@ -1207,9 +1208,10 @@ test('P6-U6 view-model: live evidence > persisted starHighWater → dashboard sh
   const conceptNodes = {
     word_classes: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
   };
+  const postSecureTs = Date.now() - 1000;
   const recentAttempts = [
-    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: postSecureTs },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: postSecureTs },
   ];
   const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
   const couronnail = model.monsterStrip.find((e) => e.monsterId === 'couronnail');
