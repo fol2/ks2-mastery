@@ -16,7 +16,10 @@ const DEFAULT_ROUTE = {
   screen: 'dashboard',
   subjectId: null,
   tab: 'practice',
+  adminSection: null,
 };
+
+const VALID_ADMIN_SECTIONS = new Set(['overview', 'accounts', 'debug', 'content', 'marketing']);
 
 const VALID_ROUTE_SCREENS = new Set(['dashboard', 'subject', 'codex', 'profile-settings', 'parent-hub', 'admin-hub']);
 const VALID_ROUTE_TABS = new Set(['practice', 'analytics', 'profiles', 'settings', 'method']);
@@ -115,11 +118,19 @@ function normaliseRoute(rawRoute, subjects) {
     : null;
 
   if (screen === 'subject' && subjectId) {
-    return { screen, subjectId, tab };
+    return { screen, subjectId, tab, adminSection: null };
   }
 
-  if (screen === 'codex' || screen === 'profile-settings' || screen === 'parent-hub' || screen === 'admin-hub') {
-    return { screen, subjectId: null, tab: DEFAULT_ROUTE.tab };
+  if (screen === 'admin-hub') {
+    const rawSection = typeof raw.adminSection === 'string' ? raw.adminSection : null;
+    const adminSection = rawSection !== null
+      ? (VALID_ADMIN_SECTIONS.has(rawSection) ? rawSection : 'overview')
+      : null;
+    return { screen, subjectId: null, tab: DEFAULT_ROUTE.tab, adminSection };
+  }
+
+  if (screen === 'codex' || screen === 'profile-settings' || screen === 'parent-hub') {
+    return { screen, subjectId: null, tab: DEFAULT_ROUTE.tab, adminSection: null };
   }
 
   return { ...DEFAULT_ROUTE };
@@ -310,6 +321,8 @@ function hasAnySubjectState(cachedStates) {
   if (!cachedStates || typeof cachedStates !== 'object') return false;
   return Object.values(cachedStates).some((record) => record && typeof record === 'object');
 }
+
+export { VALID_ADMIN_SECTIONS };
 
 export function createStore(
   subjects,
@@ -519,10 +532,10 @@ export function createStore(
         route: normaliseRoute({ screen: 'profile-settings' }, registry),
       }));
     },
-    openAdminHub() {
+    openAdminHub({ adminSection } = {}) {
       setState((current) => ({
         ...current,
-        route: normaliseRoute({ screen: 'admin-hub' }, registry),
+        route: normaliseRoute({ screen: 'admin-hub', adminSection }, registry),
       }));
     },
     setTab(tab) {

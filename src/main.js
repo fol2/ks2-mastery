@@ -8,6 +8,8 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App.jsx';
 import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
+import { VALID_ADMIN_SECTIONS } from './platform/core/store.js';
+import { parseAdminSectionFromHash } from './platform/core/admin-hash.js';
 import {
   exposedSubjects,
   isSubjectExposed,
@@ -2453,6 +2455,48 @@ const appRuntime = {
   afterRender: afterReactRender,
 };
 
+/* U2: SPA boot — detect `/admin` pathname and dispatch `open-admin-hub` with
+   the hash-derived section BEFORE the first React render so the initial paint
+   lands on the admin hub rather than flashing the dashboard. Cloudflare's
+   `not_found_handling: "single-page-application"` already serves `index.html`
+   for `/admin`, so no Worker changes are needed. */
+{
+  const bootPath = (globalThis.location?.pathname || '').replace(/\/+$/, '').toLowerCase();
+  if (bootPath === '/admin') {
+    const bootSection = parseAdminSectionFromHash(globalThis.location?.hash);
+    store.openAdminHub({ adminSection: bootSection });
+    if (boot.session.signedIn) loadAdminHub({ force: true });
+    loadAdminAccounts();
+  }
+}
+
+/* U2: SPA boot URL routing — hash-based admin section navigation.
+   `_programmaticHashSkips` is a counter (not boolean) so that two rapid
+   programmatic hash writes (e.g. `open-admin-hub` immediately followed
+   by `admin-section-change`) each consume exactly one skip rather than
+   the second clobbering the first's guard.
+   Declared above the hashchange listener to eliminate the TDZ gap. */
+let _programmaticHashSkips = 0;
+
+/* U2: hashchange listener — when the user is on admin-hub, changing the hash
+   updates the active section in state. The `_programmaticHashSkips` counter
+   prevents feedback loops from programmatic hash writes. */
+const handleAdminHashChange = () => {
+  if (_programmaticHashSkips > 0) {
+    _programmaticHashSkips -= 1;
+    return;
+  }
+  const appState = store.getState();
+  if (appState.route.screen !== 'admin-hub') return;
+  const section = parseAdminSectionFromHash(globalThis.location?.hash);
+  if (section !== null) {
+    store.patch((current) => ({
+      route: { ...current.route, adminSection: section },
+    }));
+  }
+};
+globalThis.addEventListener('hashchange', handleAdminHashChange);
+
 createRoot(root).render(
   <App
     controller={controller}
@@ -2512,6 +2556,13 @@ function handleGlobalAction(action, data) {
     // returns the full set of route-exit handlers.
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.goHome();
     return true;
   }
@@ -2526,6 +2577,13 @@ function handleGlobalAction(action, data) {
     }
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.openSubject(subject.id, data.tab || 'practice');
     return true;
   }
@@ -2534,6 +2592,13 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.openCodex();
     return true;
   }
@@ -2542,6 +2607,13 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.openParentHub();
     if (boot.session.signedIn) loadParentHub({ force: true });
     return true;
@@ -2551,6 +2623,13 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
+    // U2-R2: clear admin hash fragment when leaving admin-hub
+    if (appState.route.screen === 'admin-hub') {
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     store.openProfileSettings();
     return true;
   }
@@ -2559,9 +2638,33 @@ function handleGlobalAction(action, data) {
     clearAdultSurfaceNotice();
     tts.stop();
     tts.abortPending?.();
-    store.openAdminHub();
+    store.openAdminHub({ adminSection: data?.section });
+    // U2-R1: sync location.hash so the URL reflects the active section
+    if (data?.section) {
+      _programmaticHashSkips += 1;
+      globalThis.location.hash = `section=${data.section}`;
+    } else {
+      // No explicit section — clear any stale hash fragment
+      globalThis.history.replaceState(
+        null, '',
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
     if (boot.session.signedIn) loadAdminHub({ force: true });
     loadAdminAccounts();
+    return true;
+  }
+
+  if (action === 'admin-section-change') {
+    const section = typeof data?.section === 'string' && VALID_ADMIN_SECTIONS.has(data.section)
+      ? data.section
+      : 'overview';
+    store.patch((current) => ({
+      route: { ...current.route, adminSection: section },
+    }));
+    // Write hash with programmatic guard to prevent hashchange feedback loop
+    _programmaticHashSkips += 1;
+    globalThis.location.hash = `section=${section}`;
     return true;
   }
 
