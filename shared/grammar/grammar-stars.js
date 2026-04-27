@@ -172,10 +172,12 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
     result.repeatIndependentWin = true;
   }
 
-  // --- variedPractice: at least 2 distinct templateId values ---
+  // --- variedPractice: at least 2 distinct templateId values from CORRECT answers ---
+  // U2: Wrong-answer-only exposure must not contribute. Only correct attempts
+  // prove the learner can transfer understanding across varied forms.
   const templateIds = new Set();
   for (const a of conceptAttempts) {
-    if (typeof a.templateId === 'string' && a.templateId) {
+    if (readCorrect(a) === true && typeof a.templateId === 'string' && a.templateId) {
       templateIds.add(a.templateId);
     }
   }

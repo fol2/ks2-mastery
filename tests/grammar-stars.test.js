@@ -851,3 +851,59 @@ test('phase5 integration: derive evidence for each Couronnail concept then compu
   assert.equal(result.stageName, 'Mega');
   assert.equal(result.displayStage, 5);
 });
+
+// ---------------------------------------------------------------------------
+// U2: variedPractice correctness gate
+// ---------------------------------------------------------------------------
+
+test('U2: 2 correct on distinct templates → variedPractice = true', () => {
+  const conceptNode = { attempts: 2, correct: 2, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 2 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.variedPractice, true);
+});
+
+test('U2: 3 correct on 2 templates + 1 wrong on 3rd → variedPractice = true (2 correct-distinct is enough)', () => {
+  const conceptNode = { attempts: 4, correct: 3, wrong: 1, strength: 0.6, intervalDays: 2, correctStreak: 2 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-c', correct: false, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.variedPractice, true, '2 correct-distinct templates suffice even with a wrong on a 3rd');
+});
+
+test('U2: 2 wrong-only on distinct templates → variedPractice = false', () => {
+  const conceptNode = { attempts: 2, correct: 0, wrong: 2, strength: 0.3, intervalDays: 1, correctStreak: 0 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: false, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: false, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.variedPractice, false, 'Wrong-answer-only exposure must not contribute');
+});
+
+test('U2: 1 correct on template A + 1 wrong on template B → variedPractice = false (only 1 correct-distinct)', () => {
+  const conceptNode = { attempts: 2, correct: 1, wrong: 1, strength: 0.4, intervalDays: 1, correctStreak: 0 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: false, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.variedPractice, false, 'Only 1 correct-distinct template is insufficient');
+});
+
+test('U2: 2 correct on same template → variedPractice = false', () => {
+  const conceptNode = { attempts: 2, correct: 2, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 2 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.variedPractice, false, 'Same template repeated does not prove varied practice');
+});
