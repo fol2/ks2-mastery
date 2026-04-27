@@ -172,7 +172,9 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
         <AdminContentSection {...sectionProps} />
       )}
       {activeSection === 'marketing' && (
-        <AdminMarketingSection />
+        <AdminMarketingSection
+          accessContext={{ role: model.permissions.platformRole }}
+        />
       )}
     </>
   );
