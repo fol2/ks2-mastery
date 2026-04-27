@@ -11231,10 +11231,6 @@ html { scroll-behavior: smooth; }
   margin-top: 16px;
 }
 
-.admin-content-spaced {
-  margin-top: 16px;
-}
-
 .admin-note-spaced {
   margin-top: 6px;
 }
@@ -11343,10 +11339,6 @@ html { scroll-behavior: smooth; }
 }
 
 /* -- admin panel content gaps --------------------------------------------- */
-
-.admin-error-detail-spaced {
-  margin-top: 8px;
-}
 
 .admin-validation-details {
   margin-top: 12px;
@@ -11471,10 +11463,6 @@ html { scroll-behavior: smooth; }
 }
 
 .admin-callout-detail {
-  margin-top: 8px;
-}
-
-.admin-callout-footer {
   margin-top: 8px;
 }
 

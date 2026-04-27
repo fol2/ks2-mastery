@@ -213,9 +213,10 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // 11 inline style sites for registry detail grid, card layout, and editor panel.
 // Budget 294 → 305.
 // SH2-U8: first migration slice reduced 305 → 280 (25 sites).
+// Intermediate PRs added 66 inline-style sites, bringing the baseline to 346.
 // U6 (P4): second migration slice — AdminContentSection (65), AdminDebuggingSection
-// (52), AdminAccountsSection (38) fully migrated to CSS classes. 280 → 125. All
-// three files now carry 0 inline style sites; the CSS classes live in the
+// (52), AdminAccountsSection (38) fully migrated to CSS classes. 346 → 191 (155 sites).
+// All three files now carry 0 inline style sites; the CSS classes live in the
 // `/* U6 (P4) */` section of styles/app.css.
 export const PRE_MIGRATION_TOTAL = 346;
 export const SITES_MIGRATED_THIS_PR = 155;
