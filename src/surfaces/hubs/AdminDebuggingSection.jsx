@@ -492,13 +492,19 @@ function LearnerSupportPanel({ model, appState, accessContext, actions }) {
 // disclosure).
 // ---------------------------------------------------------------------------
 
+// Values must match DENIAL_* constants in worker/src/error-codes.js (lines 20-24).
 const DENIAL_REASON_OPTIONS = [
-  'suspended_account',
-  'rate_limited',
-  'forbidden',
-  'invalid_session',
-  'demo_expired',
+  { value: 'account_suspended',   label: 'Account Suspended' },
+  { value: 'payment_hold',        label: 'Payment Hold' },
+  { value: 'session_invalidated', label: 'Session Invalidated' },
+  { value: 'csrf_rejection',      label: 'CSRF / Same-Origin' },
+  { value: 'rate_limit_exceeded', label: 'Rate Limited' },
 ];
+
+/** Reverse-lookup: code → friendly label for denial row rendering. */
+const DENIAL_REASON_LABEL_MAP = Object.fromEntries(
+  DENIAL_REASON_OPTIONS.map(({ value, label }) => [value, label]),
+);
 
 function DenialLogPanel({ model, actions }) {
   const denialLog = model?.denialLog || {};
@@ -549,8 +555,8 @@ function DenialLogPanel({ model, actions }) {
             data-testid="denial-filter-reason"
           >
             <option value="">All reasons</option>
-            {DENIAL_REASON_OPTIONS.map((reason) => (
-              <option value={reason} key={reason}>{reason}</option>
+            {DENIAL_REASON_OPTIONS.map(({ value, label }) => (
+              <option value={value} key={value}>{label}</option>
             ))}
           </select>
         </label>
@@ -632,7 +638,7 @@ function DenialLogPanel({ model, actions }) {
       {entries.length ? entries.map((entry) => (
         <div className="skill-row" key={entry.id} data-testid={`denial-row-${entry.id}`}>
           <div>
-            <strong>{entry.denialReason || 'unknown'}</strong>
+            <strong>{DENIAL_REASON_LABEL_MAP[entry.denialReason] || entry.denialReason || 'unknown'}</strong>
           </div>
           <div className="small muted">{entry.routeName || '—'}</div>
           <div className="small muted">{formatTimestamp(entry.deniedAt)}</div>

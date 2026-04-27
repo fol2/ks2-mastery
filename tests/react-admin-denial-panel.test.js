@@ -107,7 +107,7 @@ test('denial panel renders entries with expected fields', async () => {
       {
         id: 'deny-1',
         deniedAt: 1700000000000,
-        denialReason: 'suspended_account',
+        denialReason: 'account_suspended',
         routeName: '/api/bootstrap',
         accountIdMasked: 'abcd1234',
         isDemo: false,
@@ -116,7 +116,7 @@ test('denial panel renders entries with expected fields', async () => {
       {
         id: 'deny-2',
         deniedAt: 1700000001000,
-        denialReason: 'rate_limited',
+        denialReason: 'rate_limit_exceeded',
         routeName: '/api/subject/command',
         accountIdMasked: 'efgh5678',
         isDemo: true,
@@ -129,8 +129,8 @@ test('denial panel renders entries with expected fields', async () => {
 
   assert.ok(html.includes('data-testid="denial-row-deny-1"'), 'first denial row missing');
   assert.ok(html.includes('data-testid="denial-row-deny-2"'), 'second denial row missing');
-  assert.ok(html.includes('suspended_account'), 'denial reason missing');
-  assert.ok(html.includes('rate_limited'), 'second denial reason missing');
+  assert.ok(html.includes('account_suspended'), 'denial reason missing');
+  assert.ok(html.includes('rate_limit_exceeded'), 'second denial reason missing');
   assert.ok(html.includes('/api/bootstrap'), 'route name missing');
   // Admin sees account id
   assert.ok(html.includes('data-testid="denial-account-deny-1"'), 'admin account id missing');
@@ -156,7 +156,7 @@ test('ops role does not see account linkage in denial panel', async () => {
       {
         id: 'deny-ops-1',
         deniedAt: 1700000000000,
-        denialReason: 'suspended_account',
+        denialReason: 'account_suspended',
         routeName: '/api/bootstrap',
         accountIdMasked: 'abcd1234',
         isDemo: false,
@@ -169,7 +169,7 @@ test('ops role does not see account linkage in denial panel', async () => {
 
   // Ops sees the denial row
   assert.ok(html.includes('data-testid="denial-row-deny-ops-1"'), 'denial row missing for ops');
-  assert.ok(html.includes('suspended_account'), 'reason missing for ops');
+  assert.ok(html.includes('account_suspended'), 'reason missing for ops');
   assert.ok(html.includes('/api/bootstrap'), 'route missing for ops');
   // Ops does NOT see account id column
   assert.ok(!html.includes('data-testid="denial-account-deny-ops-1"'), 'ops should not see account linkage');
@@ -189,7 +189,7 @@ test('normaliseDenialEntry handles missing/malformed entries', async () => {
     const validResult = normaliseDenialEntry({
       id: 'test-1',
       deniedAt: 1700000000000,
-      denialReason: 'forbidden',
+      denialReason: 'csrf_rejection',
       routeName: '/api/test',
       accountIdMasked: 'last8chr',
       isDemo: true,
@@ -218,7 +218,7 @@ test('normaliseDenialEntry handles missing/malformed entries', async () => {
   // Valid entry
   assert.equal(validResult.id, 'test-1');
   assert.equal(validResult.deniedAt, 1700000000000);
-  assert.equal(validResult.denialReason, 'forbidden');
+  assert.equal(validResult.denialReason, 'csrf_rejection');
   assert.equal(validResult.routeName, '/api/test');
   assert.equal(validResult.accountIdMasked, 'last8chr');
   assert.equal(validResult.isDemo, true);

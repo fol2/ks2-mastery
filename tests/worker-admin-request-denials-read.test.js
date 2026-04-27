@@ -96,21 +96,21 @@ test('GET /api/admin/ops/request-denials returns recent denials ordered by denie
     insertRequestDenial(server, {
       id: 'deny-1',
       deniedAt: now - 3000,
-      denialReason: 'suspended_account',
+      denialReason: 'account_suspended',
       routeName: '/api/bootstrap',
       accountId: 'adult-account-aaaa1111',
     });
     insertRequestDenial(server, {
       id: 'deny-2',
       deniedAt: now - 1000,
-      denialReason: 'rate_limited',
+      denialReason: 'rate_limit_exceeded',
       routeName: '/api/subject/command',
       accountId: 'adult-account-bbbb2222',
     });
     insertRequestDenial(server, {
       id: 'deny-3',
       deniedAt: now - 2000,
-      denialReason: 'forbidden',
+      denialReason: 'csrf_rejection',
       routeName: '/api/admin/accounts/role',
       accountId: 'adult-account-cccc3333',
     });
@@ -135,7 +135,7 @@ test('GET /api/admin/ops/request-denials returns recent denials ordered by denie
     assert.equal(payload.entries[2].id, 'deny-1');
 
     // Fields present
-    assert.equal(payload.entries[0].denialReason, 'rate_limited');
+    assert.equal(payload.entries[0].denialReason, 'rate_limit_exceeded');
     assert.equal(payload.entries[0].routeName, '/api/subject/command');
     assert.equal(typeof payload.entries[0].deniedAt, 'number');
   } finally {
@@ -152,19 +152,19 @@ test('GET /api/admin/ops/request-denials filter by reason returns only matching'
     insertRequestDenial(server, {
       id: 'deny-a',
       deniedAt: now - 2000,
-      denialReason: 'suspended_account',
+      denialReason: 'account_suspended',
       routeName: '/api/bootstrap',
     });
     insertRequestDenial(server, {
       id: 'deny-b',
       deniedAt: now - 1000,
-      denialReason: 'rate_limited',
+      denialReason: 'rate_limit_exceeded',
       routeName: '/api/subject/command',
     });
 
     const response = await server.fetchAs(
       'adult-admin',
-      'https://repo.test/api/admin/ops/request-denials?reason=suspended_account',
+      'https://repo.test/api/admin/ops/request-denials?reason=account_suspended',
       {},
       { 'x-ks2-dev-platform-role': 'admin' },
     );
@@ -173,7 +173,7 @@ test('GET /api/admin/ops/request-denials filter by reason returns only matching'
     assert.equal(response.status, 200);
     assert.equal(payload.entries.length, 1);
     assert.equal(payload.entries[0].id, 'deny-a');
-    assert.equal(payload.entries[0].denialReason, 'suspended_account');
+    assert.equal(payload.entries[0].denialReason, 'account_suspended');
   } finally {
     server.close();
   }
@@ -188,13 +188,13 @@ test('GET /api/admin/ops/request-denials filter by route returns only matching',
     insertRequestDenial(server, {
       id: 'deny-x',
       deniedAt: now - 2000,
-      denialReason: 'forbidden',
+      denialReason: 'csrf_rejection',
       routeName: '/api/admin/accounts/role',
     });
     insertRequestDenial(server, {
       id: 'deny-y',
       deniedAt: now - 1000,
-      denialReason: 'rate_limited',
+      denialReason: 'rate_limit_exceeded',
       routeName: '/api/subject/command',
     });
 
@@ -224,7 +224,7 @@ test('admin sees masked account ID (last 8); ops sees no account linkage', async
     insertRequestDenial(server, {
       id: 'deny-acl-1',
       deniedAt: now - 1000,
-      denialReason: 'suspended_account',
+      denialReason: 'account_suspended',
       routeName: '/api/bootstrap',
       accountId: 'adult-account-abcd1234',
     });
@@ -255,7 +255,7 @@ test('admin sees masked account ID (last 8); ops sees no account linkage', async
     assert.equal(opsPayload.entries.length, 1);
     assert.equal(opsPayload.entries[0].accountIdMasked, null);
     // Ops still sees reason + route
-    assert.equal(opsPayload.entries[0].denialReason, 'suspended_account');
+    assert.equal(opsPayload.entries[0].denialReason, 'account_suspended');
     assert.equal(opsPayload.entries[0].routeName, '/api/bootstrap');
   } finally {
     server.close();
@@ -272,7 +272,7 @@ test('no denials in range returns empty entries array', async () => {
     insertRequestDenial(server, {
       id: 'deny-old',
       deniedAt: now - 100_000,
-      denialReason: 'forbidden',
+      denialReason: 'csrf_rejection',
       routeName: '/api/admin/accounts',
     });
 
