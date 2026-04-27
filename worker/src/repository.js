@@ -1970,7 +1970,10 @@ const OPS_ERROR_EVENTS_DEFAULT_LIMIT = 50;
 const OPS_ERROR_EVENTS_MAX_LIMIT = 50;
 const OPS_ACCOUNT_DIRECTORY_LIMIT = 200;
 const ACCOUNT_ID_MASK_LAST_N = 6;
+const DENIAL_ACCOUNT_ID_MASK_LAST_N = 8;
 const LEARNER_SCOPE_ID_MASK_LAST_N = 8;
+const DENIAL_DEFAULT_LIMIT = 50;
+const DENIAL_MAX_LIMIT = 200;
 const KPI_WINDOW_7D_MS = 7 * 24 * 60 * 60 * 1000;
 const KPI_WINDOW_30D_MS = 30 * 24 * 60 * 60 * 1000;
 const KPI_ERROR_STATUS_METRIC_PREFIX = 'ops_error_events.status.';
@@ -2919,6 +2922,91 @@ async function readOpsErrorEventSummary(db, {
   } catch (error) {
     if (!isMissingTableError(error, 'ops_error_events')) throw error;
     return emptyOpsErrorEventSummary(nowTs);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// U8 (P3): Request denial log read helper.
+// Reads from `admin_request_denials` (migration 0013). R8 visibility:
+//   - admin sees accountIdMasked (last 8 chars) so they can cross-reference.
+//   - ops sees denial_reason + route only — NO account or learner linkage.
+// Soft-fails with isMissingTableError so the panel loads pre-migration.
+// ---------------------------------------------------------------------------
+
+async function readAdminRequestDenials(db, {
+  now,
+  actorAccountId,
+  actor: preResolvedActor = null,
+  reason = null,
+  route = null,
+  accountId: filterAccountId = null,
+  from = null,
+  to = null,
+  limit = DENIAL_DEFAULT_LIMIT,
+} = {}) {
+  const actor = preResolvedActor || await assertAdminHubActor(db, actorAccountId);
+  const actorPlatformRole = normalisePlatformRole(actor?.platform_role);
+  const nowTs = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const safeLimit = Math.max(1, Math.min(DENIAL_MAX_LIMIT, Number(limit) || DENIAL_DEFAULT_LIMIT));
+  const isAdmin = actorPlatformRole === 'admin';
+
+  const whereClauses = [];
+  const whereParams = [];
+
+  if (typeof reason === 'string' && reason) {
+    whereClauses.push('denial_reason = ?');
+    whereParams.push(reason);
+  }
+  if (typeof route === 'string' && route) {
+    whereClauses.push('route_name LIKE ?');
+    whereParams.push(`%${route}%`);
+  }
+  // R9: only admin can filter by account_id — ops never touches account linkage.
+  if (isAdmin && typeof filterAccountId === 'string' && filterAccountId) {
+    whereClauses.push('account_id LIKE ?');
+    whereParams.push(`%${filterAccountId}%`);
+  }
+  if (from != null && Number.isFinite(Number(from))) {
+    whereClauses.push('denied_at >= ?');
+    whereParams.push(Number(from));
+  }
+  if (to != null && Number.isFinite(Number(to))) {
+    whereClauses.push('denied_at <= ?');
+    whereParams.push(Number(to));
+  }
+
+  const whereSql = whereClauses.length > 0
+    ? `WHERE ${whereClauses.join(' AND ')}`
+    : '';
+
+  try {
+    const rows = await all(db, `
+      SELECT id, denied_at, denial_reason, route_name, account_id,
+             learner_id, session_id_last8, is_demo, release, detail_json
+      FROM admin_request_denials
+      ${whereSql}
+      ORDER BY denied_at DESC, id DESC
+      LIMIT ?
+    `, [...whereParams, safeLimit]);
+
+    return {
+      generatedAt: nowTs,
+      entries: rows.map((row) => ({
+        id: typeof row?.id === 'string' ? row.id : '',
+        deniedAt: Number(row?.denied_at) || 0,
+        denialReason: typeof row?.denial_reason === 'string' ? row.denial_reason : '',
+        routeName: typeof row?.route_name === 'string' ? row.route_name : null,
+        // R8: admin sees last-8 masked account_id; ops sees null.
+        accountIdMasked: isAdmin && row?.account_id
+          ? maskAccountIdLastN(row.account_id, DENIAL_ACCOUNT_ID_MASK_LAST_N)
+          : null,
+        isDemo: Boolean(row?.is_demo),
+        release: typeof row?.release === 'string' ? row.release : null,
+      })),
+    };
+  } catch (error) {
+    if (!isMissingTableError(error, 'admin_request_denials')) throw error;
+    return { generatedAt: nowTs, entries: [] };
   }
 }
 
@@ -9346,6 +9434,28 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         now: nowFactory(),
         actorAccountId: accountId,
         actor,
+      });
+    },
+    // U8 (P3): narrow read for the denial log panel in Debugging section.
+    // R8 visibility: admin sees masked account_id (last 8); ops sees
+    // denial_reason + route only (no account or learner linkage).
+    async readAdminRequestDenials(accountId, {
+      reason = null,
+      route = null,
+      accountId: filterAccountId = null,
+      from = null,
+      to = null,
+      limit = DENIAL_DEFAULT_LIMIT,
+    } = {}) {
+      return readAdminRequestDenials(db, {
+        now: nowFactory(),
+        actorAccountId: accountId,
+        reason,
+        route,
+        accountId: filterAccountId,
+        from,
+        to,
+        limit,
       });
     },
     async bumpAdminKpiMetric(key, delta = 1) {

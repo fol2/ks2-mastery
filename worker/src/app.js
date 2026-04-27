@@ -1709,6 +1709,29 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        // U8 (P3): denial log panel read route. Filters mirror the panel's
+        // dropdown (reason), text (route), text (account_id), and time range.
+        // R8: admin sees masked account_id (last 8); ops sees reason + route
+        // only — no account or learner linkage.
+        if (url.pathname === '/api/admin/ops/request-denials' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const reason = url.searchParams.get('reason') || null;
+          const route = url.searchParams.get('route') || null;
+          const accountIdFilter = url.searchParams.get('account_id') || null;
+          const from = url.searchParams.get('from') || null;
+          const to = url.searchParams.get('to') || null;
+          const limit = Number(url.searchParams.get('limit')) || undefined;
+          const result = await repository.readAdminRequestDenials(session.accountId, {
+            reason,
+            route,
+            accountId: accountIdFilter,
+            from: from !== null && Number.isFinite(Number(from)) ? Number(from) : null,
+            to: to !== null && Number.isFinite(Number(to)) ? Number(to) : null,
+            limit,
+          });
+          return json({ ok: true, ...result });
+        }
+
         // PR #188 H1: dedicated narrow GET for the account-ops-metadata panel.
         // Mirrors the three sibling /api/admin/ops/* reads so each of the four
         // admin ops panels can refresh independently (R18 extended to 4 panels).
