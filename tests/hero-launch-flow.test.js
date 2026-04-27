@@ -211,7 +211,7 @@ test('E2E launch: active session carries heroContext with matching questId and t
   assert.equal(session.heroContext.questId, launchable.questId);
   assert.equal(session.heroContext.taskId, launchable.taskId);
   assert.equal(session.heroContext.source, 'hero-mode');
-  assert.equal(session.heroContext.phase, 'p1-launch');
+  assert.equal(session.heroContext.phase, 'p2-child-launch');
 
   server.close();
 });

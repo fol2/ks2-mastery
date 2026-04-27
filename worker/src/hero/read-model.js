@@ -86,10 +86,18 @@ export function buildHeroShadowReadModel({
   const launchEnabled = envFlagEnabled(safeEnv.HERO_MODE_LAUNCH_ENABLED);
   const childUiEnabled = envFlagEnabled(safeEnv.HERO_MODE_CHILD_UI_ENABLED);
 
-  // 1. Run each provider via the provider registry
+  // 1. Run each provider via the provider registry.
+  //    subjectReadModels is keyed by subjectId. Each value is either:
+  //    - { data, ui } (P2 expanded shape from repository), or
+  //    - a raw data object (P0/P1 compat from unit tests).
+  //    Providers always receive the data portion only.
   const subjectSnapshots = {};
   for (const subjectId of HERO_READY_SUBJECT_IDS) {
-    const readModel = subjectReadModels[subjectId] || null;
+    const entry = subjectReadModels[subjectId] || null;
+    // Support both { data, ui } (P2) and raw data object (P0 compat)
+    const readModel = entry && typeof entry === 'object' && 'data' in entry
+      ? entry.data
+      : entry;
     const snapshot = runProvider(subjectId, readModel);
     if (snapshot) {
       subjectSnapshots[subjectId] = snapshot;
@@ -210,7 +218,32 @@ export function buildHeroShadowReadModel({
     copyVersion: HERO_P2_COPY_VERSION,
   };
 
-  // 10. Assemble the full v3 response shape
+  // 10. Detect active Hero session from ui_json.
+  //     Inspect each subject's ui field for session.heroContext.source === 'hero-mode'.
+  let activeHeroSession = null;
+  for (const subjectId of HERO_READY_SUBJECT_IDS) {
+    const entry = subjectReadModels[subjectId];
+    if (!entry || typeof entry !== 'object') continue;
+    const ui_data = 'ui' in entry ? entry.ui : null;
+    if (!ui_data || typeof ui_data !== 'object') continue;
+    const session = ui_data.session;
+    if (!session || typeof session !== 'object') continue;
+    const heroCtx = session.heroContext;
+    if (!heroCtx || typeof heroCtx !== 'object') continue;
+    if (heroCtx.source !== 'hero-mode') continue;
+    activeHeroSession = {
+      subjectId,
+      questId: heroCtx.questId || null,
+      questFingerprint: heroCtx.questFingerprint || null,
+      taskId: heroCtx.taskId || null,
+      intent: heroCtx.intent || null,
+      launcher: heroCtx.launcher || null,
+      status: 'in-progress',
+    };
+    break;
+  }
+
+  // 11. Assemble the full v3 response shape
   return {
     version: 3,
     mode: 'shadow',
@@ -238,7 +271,7 @@ export function buildHeroShadowReadModel({
       heroStatePersistenceEnabled: false,
     },
     ui,
-    activeHeroSession: null,
+    activeHeroSession,
     debug: quest.debug,
   };
 }

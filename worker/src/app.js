@@ -1396,7 +1396,17 @@ export function createWorkerApp({
             repository,
             env,
             now: now(),
+            accountId: session.accountId,
           });
+
+          // P2 U2: already-started — safe response without running a subject command
+          if (!subjectCommand) {
+            return json({
+              ok: true,
+              heroLaunch,
+            });
+          }
+
           requireSubjectCommandAvailable(subjectCommand, env);
           await protectDemoSubjectCommand({
             env,

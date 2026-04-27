@@ -126,6 +126,11 @@ test('S-L4: no Hero source file contains economy vocabulary tokens', () => {
     /streak\s+loss/i,
   ];
 
+  // hero-copy.js is the canonical source-of-truth for the forbidden vocabulary
+  // list. It *defines* the ban tokens (HERO_FORBIDDEN_VOCABULARY) but does not
+  // use them in child-facing copy. Exclude it from the token scan.
+  const EXCLUDED_BASENAMES = new Set(['hero-copy.js']);
+
   const allHeroFiles = [
     ...collectJsFiles(SHARED_HERO_DIR),
     ...collectJsFiles(WORKER_HERO_DIR),
@@ -133,6 +138,7 @@ test('S-L4: no Hero source file contains economy vocabulary tokens', () => {
 
   for (const filePath of allHeroFiles) {
     const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+    if (EXCLUDED_BASENAMES.has(path.basename(filePath))) continue;
     const code = stripComments(fs.readFileSync(filePath, 'utf8'));
 
     for (const pattern of ECONOMY_TOKENS) {
