@@ -1,7 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
+import {
+  projectPunctuationStars,
+  PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER,
+  ACTIVE_PUNCTUATION_MONSTER_IDS,
+} from '../src/subjects/punctuation/star-projection.js';
+import { PUNCTUATION_CLIENT_SKILLS } from '../src/subjects/punctuation/read-model.js';
+import {
+  PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER as VM_CLUSTER_TO_MONSTER,
+} from '../src/subjects/punctuation/components/punctuation-view-model.js';
 
 const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -666,4 +674,64 @@ test('Curlune: parenthesis (structure) attempts isolate to Curlune', () => {
     'Pealark must NOT see parenthesis attempts');
   assert.equal(result.perMonster.claspin.tryStars, 0,
     'Claspin must NOT see parenthesis attempts');
+});
+
+// ---------------------------------------------------------------------------
+// FIX 1 (T2 — convergent): SKILL_TO_CLUSTER parity with read-model
+// ---------------------------------------------------------------------------
+
+test('SKILL_TO_CLUSTER parity: every skill.id in PUNCTUATION_CLIENT_SKILLS maps to the same clusterId in star-projection', () => {
+  // For each skill defined in the read-model, fire a single attempt through
+  // projectPunctuationStars using that skillId and verify the resulting
+  // tryStars land on the correct monster (the one that owns the skill's
+  // clusterId according to PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER).
+  for (const skill of PUNCTUATION_CLIENT_SKILLS) {
+    const expectedMonsterId = PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER[skill.clusterId];
+    assert.ok(expectedMonsterId,
+      `skill ${skill.id} has clusterId "${skill.clusterId}" which must exist in PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER`);
+
+    const progress = freshProgress();
+    progress.attempts.push(makeAttempt({
+      itemId: `parity_${skill.id}`,
+      skillIds: [skill.id],
+      correct: true,
+    }));
+
+    const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+    // The expected monster must have received the attempt (tryStars > 0).
+    assert.ok(result.perMonster[expectedMonsterId].tryStars > 0,
+      `skill "${skill.id}" (cluster "${skill.clusterId}") must route to monster "${expectedMonsterId}" — got tryStars=${result.perMonster[expectedMonsterId].tryStars}`);
+
+    // No OTHER direct monster should have received the attempt.
+    for (const otherId of ['pealark', 'claspin', 'curlune']) {
+      if (otherId === expectedMonsterId) continue;
+      assert.equal(result.perMonster[otherId].tryStars, 0,
+        `skill "${skill.id}" must NOT route to monster "${otherId}"`);
+    }
+  }
+});
+
+test('SKILL_TO_CLUSTER parity: PUNCTUATION_CLIENT_SKILLS covers exactly 14 skills', () => {
+  assert.equal(PUNCTUATION_CLIENT_SKILLS.length, 14,
+    'PUNCTUATION_CLIENT_SKILLS must have exactly 14 entries (one per published skill)');
+});
+
+test('PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER parity: star-projection and view-model exports are identical', () => {
+  // The star-projection re-exports PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER
+  // and the view-model exports its own copy. They must be identical.
+  assert.deepStrictEqual(
+    { ...PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER },
+    { ...VM_CLUSTER_TO_MONSTER },
+    'PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER in star-projection.js must match the view-model version',
+  );
+});
+
+test('ACTIVE_PUNCTUATION_MONSTER_IDS includes all 3 direct monsters plus quoral', () => {
+  for (const id of ['pealark', 'claspin', 'curlune', 'quoral']) {
+    assert.ok(ACTIVE_PUNCTUATION_MONSTER_IDS.includes(id),
+      `ACTIVE_PUNCTUATION_MONSTER_IDS must include "${id}"`);
+  }
+  assert.equal(ACTIVE_PUNCTUATION_MONSTER_IDS.length, 4,
+    'ACTIVE_PUNCTUATION_MONSTER_IDS must have exactly 4 entries');
 });
