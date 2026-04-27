@@ -1691,6 +1691,18 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        // U9 (P3): cross-subject content overview. Read-only narrow GET
+        // matching the existing /api/admin/ops/* panel-per-route pattern.
+        // Admin-gated via `readSubjectContentOverview` which calls
+        // `assertAdminHubActor` internally. R15 compliant: no subject
+        // engine imports in this route — the repository helper queries
+        // existing tables directly. R16 compliant: zero mastery mutations.
+        if (url.pathname === '/api/admin/ops/content-overview' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const result = await repository.readSubjectContentOverview(session.accountId);
+          return json({ ok: true, ...result });
+        }
+
         // R31: regex dispatch for parameterised admin ops mutations. Placed
         // AFTER literal /api/admin/accounts and /api/admin/accounts/role so
         // those take priority, and AFTER the four /api/admin/ops/* GET

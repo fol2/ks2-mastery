@@ -4,11 +4,142 @@ import { MonsterVisualConfigPanel } from './MonsterVisualConfigPanel.jsx';
 import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
 import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confidence.js';
 import { buildAssetRegistry } from '../../platform/hubs/admin-asset-registry.js';
+import {
+  buildSubjectContentOverview,
+  statusBadgeClass,
+  statusLabel,
+} from '../../platform/hubs/admin-content-overview.js';
 
 // U4+U5: Content section — content release, import validation, post-mega
 // spelling debug, seed harness, grammar confidence, grammar writing try,
 // and monster visual config. Extracted from AdminHubSurface.jsx.
 // U10 (P3): Asset & Effect Registry card added above the raw config panel.
+// U9 (P3): Subject Overview panel at top — cross-subject operating surface.
+
+// U9 (P3): Subject Overview panel. Renders a cross-subject status table
+// that distinguishes live, gated, and placeholder subjects. Surfaces
+// release version, validation errors, 7d error counts, and support load
+// signals per subject. Content-free leaf: imports only the provider
+// contract and rendering helpers from admin-content-overview.js.
+function SubjectOverviewPanel({ model, actions }) {
+  const overview = React.useMemo(
+    () => buildSubjectContentOverview(model?.contentOverview),
+    [model?.contentOverview],
+  );
+
+  // Error state: overview data failed to load
+  if (model?.contentOverviewError) {
+    return (
+      <section className="card" style={{ marginBottom: 20 }} data-panel="subject-overview">
+        <div className="eyebrow">Content Management</div>
+        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Subject Overview</h3>
+        <div className="feedback bad">
+          <strong>Unable to load subject overview</strong>
+          <div className="small muted" style={{ marginTop: 6 }}>
+            {typeof model.contentOverviewError === 'string'
+              ? model.contentOverviewError
+              : 'The content overview endpoint returned an error. Per-subject panels below may still work.'}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!overview.length) {
+    return null;
+  }
+
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-panel="subject-overview">
+      <div className="eyebrow">Content Management</div>
+      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Subject Overview</h3>
+      <p className="small muted" style={{ marginBottom: 14 }}>
+        Cross-subject operating surface. Live subjects have production data; placeholders
+        are planned but not yet active.
+      </p>
+      <table className="admin-subject-overview-table" aria-label="Subject content overview" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ borderBottom: '2px solid var(--border, #e0e0e0)', textAlign: 'left' }}>
+            <th className="small" style={{ padding: '8px 12px 8px 0', fontWeight: 700 }}>Subject</th>
+            <th className="small" style={{ padding: '8px 12px', fontWeight: 700 }}>Status</th>
+            <th className="small" style={{ padding: '8px 12px', fontWeight: 700 }}>Release</th>
+            <th className="small" style={{ padding: '8px 12px', fontWeight: 700, textAlign: 'right' }}>Errors (7d)</th>
+            <th className="small" style={{ padding: '8px 12px', fontWeight: 700, textAlign: 'right' }}>Validation</th>
+            <th className="small" style={{ padding: '8px 12px', fontWeight: 700 }}>Support Load</th>
+          </tr>
+        </thead>
+        <tbody>
+          {overview.map((subject) => (
+            <tr
+              key={subject.subjectKey}
+              data-subject-key={subject.subjectKey}
+              data-subject-status={subject.status}
+              style={{
+                borderBottom: '1px solid var(--border, #e8e8e8)',
+                opacity: subject.status === 'placeholder' ? 0.6 : 1,
+                cursor: subject.status === 'live' ? 'pointer' : 'default',
+              }}
+              onClick={subject.status === 'live'
+                ? () => {
+                  const target = document.querySelector(
+                    `[data-panel="post-mega-spelling-debug"], [data-panel="grammar-concept-confidence"], [data-panel="asset-registry"]`,
+                  );
+                  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                : undefined}
+              role={subject.status === 'live' ? 'button' : undefined}
+              tabIndex={subject.status === 'live' ? 0 : undefined}
+              aria-label={subject.status === 'live' ? `Scroll to ${subject.displayName} diagnostics` : undefined}
+            >
+              <td style={{ padding: '10px 12px 10px 0', fontWeight: 600 }}>
+                {subject.displayName}
+              </td>
+              <td style={{ padding: '10px 12px' }}>
+                <span
+                  className={`chip ${statusBadgeClass(subject.status)}`}
+                  data-testid={`status-badge-${subject.subjectKey}`}
+                >
+                  {statusLabel(subject.status)}
+                </span>
+              </td>
+              <td className="small" style={{ padding: '10px 12px' }}>
+                {subject.releaseVersion
+                  ? <span data-testid={`release-${subject.subjectKey}`}>v{subject.releaseVersion}</span>
+                  : <span className="muted" data-testid={`release-${subject.subjectKey}`}>
+                      {subject.status === 'placeholder' ? '—' : 'No release'}
+                    </span>}
+              </td>
+              <td className="small" style={{ padding: '10px 12px', textAlign: 'right' }}>
+                <span data-testid={`errors-${subject.subjectKey}`}>
+                  {String(subject.errorCount7d)}
+                </span>
+              </td>
+              <td className="small" style={{ padding: '10px 12px', textAlign: 'right' }}>
+                <span data-testid={`validation-${subject.subjectKey}`}>
+                  {subject.status === 'placeholder'
+                    ? '—'
+                    : String(subject.validationErrors)}
+                </span>
+              </td>
+              <td style={{ padding: '10px 12px' }}>
+                {subject.status !== 'placeholder' ? (
+                  <span
+                    className={`chip ${subject.supportLoadSignal === 'high' ? 'bad' : subject.supportLoadSignal === 'medium' ? 'warn' : subject.supportLoadSignal === 'low' ? '' : ''}`}
+                    data-testid={`support-${subject.subjectKey}`}
+                  >
+                    {subject.supportLoadSignal === 'none' ? 'Clear' : subject.supportLoadSignal.charAt(0).toUpperCase() + subject.supportLoadSignal.slice(1)}
+                  </span>
+                ) : (
+                  <span className="small muted" data-testid={`support-${subject.subjectKey}`}>—</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
 
 function ContentReleaseAndImport({ model, accessContext, actions }) {
   return (
@@ -559,6 +690,7 @@ export function AdminContentSection({ model, appState, accessContext, actions })
 
   return (
     <>
+      <SubjectOverviewPanel model={model} actions={actions} />
       <ContentReleaseAndImport model={model} accessContext={accessContext} actions={actions} />
       <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
       <PostMegaSeedHarnessPanel model={model} actions={actions} />
