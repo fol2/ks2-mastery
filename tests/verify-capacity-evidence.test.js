@@ -2380,6 +2380,66 @@ test('matching thresholdConfigHash passes provenance hash check (P4-U8)', () => 
   }
 });
 
+test('certifiable tier with thresholdConfigHash=unknown and configPath present fails (ADV-002)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-adv002-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-production.json');
+  const configPath = join(configsDir, '30-learner-beta.json');
+  writeFileSync(configPath, JSON.stringify({
+    tier: '30-learner-beta-certified',
+    thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750, maxResponseBytes: 600000 },
+  }));
+  // Evidence with provenance that has thresholdConfigHash='unknown' — simulates
+  // an attacker hand-editing the hash to bypass tamper detection.
+  writeFileSync(evidencePath, JSON.stringify(evidenceWithProvenance(
+    { thresholdConfigHash: 'unknown' },
+    {
+      summary: {
+        ok: true,
+        totalRequests: 20,
+        startedAt: '2026-04-27T00:00:00Z',
+        finishedAt: '2026-04-27T00:00:30Z',
+        endpoints: {
+          'GET /api/bootstrap': { count: 10, p50WallMs: 100, p95WallMs: 320, maxResponseBytes: 81000, queryCount: 5, d1RowsRead: 42 },
+          'POST /api/subjects/grammar/command': { count: 10, p50WallMs: 90, p95WallMs: 180, maxResponseBytes: 5000 },
+        },
+        signals: {},
+        failures: [],
+      },
+      tier: {
+        tier: '30-learner-beta-certified',
+        configPath: 'reports/capacity/configs/30-learner-beta.json',
+      },
+      thresholds: {
+        max5xx: { configured: 0, observed: 0, passed: true },
+        maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+        maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+        maxResponseBytes: { configured: 600000, observed: 81000, passed: true },
+      },
+    },
+  )));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-27', 'abc1234', 'prod', 'Free', '30', '30', '3', '320', '180', '81000', '0', 'none', '30-learner-beta-certified', 'reports/capacity/latest-production.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.report.some((line) => line.includes('thresholdConfigHash is unknown')),
+      `expected thresholdConfigHash unknown rejection; got:\n${result.report.join('\n')}`,
+    );
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('100-plus-certified without provenance fails (P4-U8 — all certifiable tiers)', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-u8-100-'));
   const docPath = join(tempDir, 'capacity.md');

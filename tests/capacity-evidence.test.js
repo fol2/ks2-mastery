@@ -773,3 +773,16 @@ test('buildEvidencePayload includes provenance in reportMeta (P4-U8)', () => {
   assert.equal(typeof payload.reportMeta.provenance.gitSha, 'string');
   assert.equal(typeof payload.reportMeta.provenance.dirtyTreeFlag, 'boolean');
 });
+
+// ---------------------------------------------------------------------------
+// ADV-001: buildReportMeta caches gitSha to prevent TOCTOU divergence
+// ---------------------------------------------------------------------------
+
+test('buildReportMeta.commit is identical to provenance.gitSha (ADV-001 TOCTOU cache)', () => {
+  const meta = buildReportMeta({ mode: 'dry-run' });
+  assert.equal(
+    meta.commit,
+    meta.provenance.gitSha,
+    'reportMeta.commit and provenance.gitSha must be the same value — both derived from a single resolveCommitSha() call',
+  );
+});

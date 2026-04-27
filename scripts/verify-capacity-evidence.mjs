@@ -745,6 +745,15 @@ function checkProvenance(payload, rowDecision) {
         + 'Commit all changes before running a certification capacity test.',
       );
     }
+    // ADV-002: reject thresholdConfigHash='unknown' for certifiable tiers when
+    // a configPath is present. Previously this value silently skipped the hash
+    // cross-check below, so an attacker could hand-edit evidence to set the
+    // hash to 'unknown' and bypass tamper detection entirely.
+    if (payload.tier?.configPath && provenance.thresholdConfigHash === 'unknown') {
+      messages.push(
+        'provenance.thresholdConfigHash is unknown — config integrity cannot be verified for certifiable tiers',
+      );
+    }
   }
 
   // thresholdConfigHash cross-check: when the evidence records a configPath

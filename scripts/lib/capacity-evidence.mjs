@@ -34,8 +34,13 @@ export function validateThresholdConfigKeys(thresholds = {}) {
  * fail just because git metadata or env hints are missing.
  */
 export function buildReportMeta(options = {}, timings = {}) {
+  // ADV-001: resolve the commit SHA once and pass it to buildProvenance so
+  // reportMeta.commit and provenance.gitSha are guaranteed identical. Two
+  // independent calls to resolveCommitSha() created a TOCTOU gap — HEAD could
+  // change between the calls, causing the values to diverge.
+  const commitSha = resolveCommitSha();
   return {
-    commit: resolveCommitSha(),
+    commit: commitSha,
     environment: resolveEnvironmentName(options),
     origin: options.origin || 'unknown',
     authMode: resolveAuthMode(options),
@@ -45,7 +50,7 @@ export function buildReportMeta(options = {}, timings = {}) {
     startedAt: timings.startedAt || null,
     finishedAt: timings.finishedAt || null,
     evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
-    provenance: buildProvenance(options),
+    provenance: buildProvenance(options, commitSha),
   };
 }
 
@@ -54,7 +59,7 @@ export function buildReportMeta(options = {}, timings = {}) {
  * Every field degrades to `'unknown'` (or a safe default) rather than throwing;
  * `verify-capacity-evidence.mjs` enforces strictness for certifiable tiers.
  */
-export function buildProvenance(options = {}) {
+export function buildProvenance(options = {}, cachedCommitSha) {
   const serverUrl = process.env.GITHUB_SERVER_URL || '';
   const repo = process.env.GITHUB_REPOSITORY || '';
   const runId = process.env.GITHUB_RUN_ID || '';
@@ -65,7 +70,9 @@ export function buildProvenance(options = {}) {
   return {
     workflowRunUrl,
     workflowName: process.env.GITHUB_WORKFLOW || 'unknown',
-    gitSha: resolveCommitSha(),
+    // ADV-001: use the cached SHA from buildReportMeta when available, so
+    // provenance.gitSha is always identical to reportMeta.commit.
+    gitSha: cachedCommitSha ?? resolveCommitSha(),
     dirtyTreeFlag: resolveGitDirty(),
     thresholdConfigHash: resolveThresholdConfigHash(options),
     loadDriverVersion: resolveLoadDriverVersion(),
