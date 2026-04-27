@@ -49,20 +49,17 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `shared-pattern-available` | 167 |
 | `dynamic-content-driven` | 108 |
+| `shared-pattern-available` | 78 |
 | `css-var-ready` | 3 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **280** |
+| **TOTAL** | **191** |
 
 ## Per-file inventory
 
 | File | `style={` count | Category | Migrated in SH2-U8 |
 | --- | --- | --- | --- |
-| `src/surfaces/hubs/AdminContentSection.jsx` | 44 | `shared-pattern-available` | no |
 | `src/subjects/punctuation/components/PunctuationSessionScene.jsx` | 27 | `dynamic-content-driven` | no |
-| `src/surfaces/hubs/AdminDebuggingSection.jsx` | 24 | `shared-pattern-available` | no |
-| `src/surfaces/hubs/AdminAccountsSection.jsx` | 21 | `shared-pattern-available` | no |
 | `src/subjects/punctuation/components/PunctuationSummaryScene.jsx` | 20 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/MonsterEffectCatalogPanel.jsx` | 19 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterEffectBindingsPanel.jsx` | 12 | `shared-pattern-available` | no |

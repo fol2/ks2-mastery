@@ -485,6 +485,14 @@ test('button labels: every statically extractable label is classified', () => {
     // roles. Bespoke label: "Admin" is the short navigation affordance, not
     // a canonical verb.
     'Admin',
+    // U6 (P3): debug bundle panel CTAs. Pre-existing labels surfaced by the
+    // scanner after the button-label completeness gate tightened. "Debug
+    // Bundle" navigates from the account detail drawer to the debug panel;
+    // "Copy JSON" / "Copy Summary" are clipboard-copy actions scoped to the
+    // generated bundle output.
+    'Debug Bundle',
+    'Copy JSON',
+    'Copy Summary',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

@@ -30,12 +30,12 @@ function SubjectOverviewPanel({ model, actions }) {
   // Error state: overview data failed to load
   if (model?.contentOverviewError) {
     return (
-      <section className="card" style={{ marginBottom: 20 }} data-panel="subject-overview">
+      <section className="card admin-card-spaced" data-panel="subject-overview">
         <div className="eyebrow">Content Management</div>
-        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Subject Overview</h3>
+        <h3 className="section-title admin-section-title">Subject Overview</h3>
         <div className="feedback bad">
           <strong>Unable to load subject overview</strong>
-          <div className="small muted" style={{ marginTop: 6 }}>
+          <div className="small muted admin-note-spaced">
             {typeof model.contentOverviewError === 'string'
               ? model.contentOverviewError
               : 'The content overview endpoint returned an error. Per-subject panels below may still work.'}
@@ -50,35 +50,32 @@ function SubjectOverviewPanel({ model, actions }) {
   }
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-panel="subject-overview">
+    <section className="card admin-card-spaced" data-panel="subject-overview">
       <div className="eyebrow">Content Management</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Subject Overview</h3>
-      <p className="small muted" style={{ marginBottom: 14 }}>
+      <h3 className="section-title admin-section-title">Subject Overview</h3>
+      <p className="small muted admin-overview-desc">
         Cross-subject operating surface. Live subjects have production data; placeholders
         are planned but not yet active.
       </p>
-      <table className="admin-subject-overview-table" aria-label="Subject content overview" style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="admin-subject-overview-table admin-overview-table" aria-label="Subject content overview">
         <thead>
-          <tr style={{ borderBottom: '2px solid var(--border, #e0e0e0)', textAlign: 'left' }}>
-            <th className="small" style={{ padding: '8px 12px 8px 0', fontWeight: 700 }}>Subject</th>
-            <th className="small" style={{ padding: '8px 12px', fontWeight: 700 }}>Status</th>
-            <th className="small" style={{ padding: '8px 12px', fontWeight: 700 }}>Release</th>
-            <th className="small" style={{ padding: '8px 12px', fontWeight: 700, textAlign: 'right' }}>Errors (7d)</th>
-            <th className="small" style={{ padding: '8px 12px', fontWeight: 700, textAlign: 'right' }}>Validation</th>
-            <th className="small" style={{ padding: '8px 12px', fontWeight: 700 }}>Support Load</th>
+          <tr className="admin-overview-thead-row">
+            <th className="small admin-overview-th-first">Subject</th>
+            <th className="small admin-overview-th">Status</th>
+            <th className="small admin-overview-th">Release</th>
+            <th className="small admin-overview-th-right">Errors (7d)</th>
+            <th className="small admin-overview-th-right">Validation</th>
+            <th className="small admin-overview-th">Support Load</th>
           </tr>
         </thead>
         <tbody>
           {overview.map((subject) => (
             <tr
               key={subject.subjectKey}
+              className="admin-overview-tbody-row"
               data-subject-key={subject.subjectKey}
               data-subject-status={subject.status}
-              style={{
-                borderBottom: '1px solid var(--border, #e8e8e8)',
-                opacity: subject.status === 'placeholder' ? 0.6 : 1,
-                cursor: subject.status === 'live' ? 'pointer' : 'default',
-              }}
+              data-clickable={subject.status === 'live' ? 'true' : undefined}
               onClick={subject.status === 'live'
                 ? () => {
                   const target = document.querySelector(
@@ -91,10 +88,10 @@ function SubjectOverviewPanel({ model, actions }) {
               tabIndex={subject.status === 'live' ? 0 : undefined}
               aria-label={subject.status === 'live' ? `Scroll to ${subject.displayName} diagnostics` : undefined}
             >
-              <td style={{ padding: '10px 12px 10px 0', fontWeight: 600 }}>
+              <td className="admin-overview-td-first">
                 {subject.displayName}
               </td>
-              <td style={{ padding: '10px 12px' }}>
+              <td className="admin-overview-td">
                 <span
                   className={`chip ${statusBadgeClass(subject.status)}`}
                   data-testid={`status-badge-${subject.subjectKey}`}
@@ -102,26 +99,26 @@ function SubjectOverviewPanel({ model, actions }) {
                   {statusLabel(subject.status)}
                 </span>
               </td>
-              <td className="small" style={{ padding: '10px 12px' }}>
+              <td className="small admin-overview-td">
                 {subject.releaseVersion
                   ? <span data-testid={`release-${subject.subjectKey}`}>v{subject.releaseVersion}</span>
                   : <span className="muted" data-testid={`release-${subject.subjectKey}`}>
                       {subject.status === 'placeholder' ? '—' : 'No release'}
                     </span>}
               </td>
-              <td className="small" style={{ padding: '10px 12px', textAlign: 'right' }}>
+              <td className="small admin-overview-td-right">
                 <span data-testid={`errors-${subject.subjectKey}`}>
                   {String(subject.errorCount7d)}
                 </span>
               </td>
-              <td className="small" style={{ padding: '10px 12px', textAlign: 'right' }}>
+              <td className="small admin-overview-td-right">
                 <span data-testid={`validation-${subject.subjectKey}`}>
                   {subject.status === 'placeholder'
                     ? '—'
                     : String(subject.validationErrors)}
                 </span>
               </td>
-              <td style={{ padding: '10px 12px' }}>
+              <td className="admin-overview-td">
                 {subject.status !== 'placeholder' ? (
                   <span
                     className={`chip ${subject.supportLoadSignal === 'high' ? 'bad' : subject.supportLoadSignal === 'medium' ? 'warn' : subject.supportLoadSignal === 'low' ? '' : ''}`}
@@ -143,20 +140,20 @@ function SubjectOverviewPanel({ model, actions }) {
 
 function ContentReleaseAndImport({ model, accessContext, actions }) {
   return (
-    <section className="two-col" style={{ marginBottom: 20 }}>
+    <section className="two-col admin-card-spaced">
       <article className="card">
         <div className="eyebrow">Content release status</div>
-        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Published spelling snapshot</h3>
-        <div className="chip-row" style={{ marginTop: 14 }}>
+        <h3 className="section-title admin-section-title">Published spelling snapshot</h3>
+        <div className="chip-row admin-chip-row-spaced">
           <span className="chip good">Release {String(model.contentReleaseStatus.publishedVersion || 0)}</span>
           <span className="chip">{model.contentReleaseStatus.publishedReleaseId || 'unpublished'}</span>
           <span className="chip">{String(model.contentReleaseStatus.runtimeWordCount || 0)} words</span>
           <span className="chip">{String(model.contentReleaseStatus.runtimeSentenceCount || 0)} sentences</span>
         </div>
-        <p className="small muted" style={{ marginTop: 12 }}>
+        <p className="small muted admin-meta-spaced">
           Draft {model.contentReleaseStatus.currentDraftId} · version {String(model.contentReleaseStatus.currentDraftVersion || 1)} · updated {formatTimestamp(model.contentReleaseStatus.draftUpdatedAt)}
         </p>
-        <div className="actions" style={{ marginTop: 16 }}>
+        <div className="actions admin-actions-spaced">
           <button className="btn secondary" type="button" disabled={isBlocked('open-subject', accessContext)} onClick={() => actions.openSubject('spelling')}>Open Spelling</button>
           <button className="btn secondary" type="button" disabled={isBlocked('open-subject', accessContext)} onClick={() => actions.dispatch('open-subject', { subjectId: 'spelling', tab: 'settings' })}>Open settings tab</button>
           <button className="btn ghost" type="button" onClick={() => actions.dispatch('spelling-content-export')}>Export content</button>
@@ -164,16 +161,16 @@ function ContentReleaseAndImport({ model, accessContext, actions }) {
       </article>
       <article className="card soft">
         <div className="eyebrow">Import / validation status</div>
-        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Draft versus published safety</h3>
+        <h3 className="section-title admin-section-title">Draft versus published safety</h3>
         <div className={`feedback ${model.importValidationStatus.ok ? 'good' : 'bad'}`}>
           <strong>{model.importValidationStatus.ok ? 'Validation clean' : 'Validation problems present'}</strong>
-          <div style={{ marginTop: 8 }}>Errors: {String(model.importValidationStatus.errorCount || 0)} · warnings: {String(model.importValidationStatus.warningCount || 0)}</div>
+          <div className="admin-detail-spaced">Errors: {String(model.importValidationStatus.errorCount || 0)} · warnings: {String(model.importValidationStatus.warningCount || 0)}</div>
         </div>
-        <p className="small muted" style={{ marginTop: 12 }}>Import provenance source: {model.importValidationStatus.source || 'bundled baseline'} · imported at {formatTimestamp(model.importValidationStatus.importedAt)}</p>
+        <p className="small muted admin-meta-spaced">Import provenance source: {model.importValidationStatus.source || 'bundled baseline'} · imported at {formatTimestamp(model.importValidationStatus.importedAt)}</p>
         {(model.importValidationStatus.errors || []).length ? (
-          <details style={{ marginTop: 12 }}>
+          <details className="admin-validation-details">
             <summary>Validation issues</summary>
-            <div className="small muted" style={{ marginTop: 10 }}>
+            <div className="small muted admin-validation-list">
               {model.importValidationStatus.errors.map((issue) => `${issue.code} - ${issue.message}`).join('\n')}
             </div>
           </details>
@@ -199,9 +196,9 @@ function PostMegaSpellingDebugPanel({ debug = null }) {
     ['Content release id', safe.contentReleaseId ? String(safe.contentReleaseId) : '—'],
   ];
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-panel="post-mega-spelling-debug">
+    <section className="card admin-card-spaced" data-panel="post-mega-spelling-debug">
       <div className="eyebrow">Spelling · post-mega</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Why is Guardian locked?</h3>
+      <h3 className="section-title admin-section-title">Why is Guardian locked?</h3>
       <p className="small muted">
         Diagnostic snapshot for the currently selected learner. Surfaces the post-mega gate inputs so
         an operator can see which core words still block graduation. No personal data is rendered —
@@ -249,9 +246,9 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
 
   if (!isAdmin) {
     return (
-      <section className="card" style={{ marginBottom: 20 }} data-panel="post-mega-seed-harness">
+      <section className="card admin-card-spaced" data-panel="post-mega-seed-harness">
         <div className="eyebrow">QA · post-Mega seed</div>
-        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Admin-only seed harness</h3>
+        <h3 className="section-title admin-section-title">Admin-only seed harness</h3>
         <div className="feedback warn">Only admin accounts can apply QA seed shapes. Ops-role viewers keep read-only access to the diagnostic panels.</div>
       </section>
     );
@@ -261,9 +258,9 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
   const canApply = Boolean(effectiveLearnerId) && Boolean(shapeName);
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-panel="post-mega-seed-harness">
+    <section className="card admin-card-spaced" data-panel="post-mega-seed-harness">
       <div className="eyebrow">QA · post-Mega seed</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Post-Mega learner seed harness</h3>
+      <h3 className="section-title admin-section-title">Post-Mega learner seed harness</h3>
       <p className="small muted">
         Write a deterministic post-Mega learner state into the child subject
         store. Useful for reproducing the 8 canonical fixtures without playing
@@ -271,7 +268,7 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
         the audit log for rollback.
       </p>
       <div className="skill-row">
-        <label className="field" style={{ minWidth: 220 }}>
+        <label className="field admin-field-select">
           <span>Seed shape</span>
           <select
             className="select"
@@ -284,7 +281,7 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
             ))}
           </select>
         </label>
-        <label className="field" style={{ minWidth: 220 }}>
+        <label className="field admin-field-select">
           <span>Existing learner</span>
           <select
             className="select"
@@ -300,7 +297,7 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
             ))}
           </select>
         </label>
-        <label className="field" style={{ minWidth: 220 }}>
+        <label className="field admin-field-select">
           <span>…or new learner id</span>
           <input
             className="input"
@@ -326,7 +323,7 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
           >
             Apply seed
           </button>
-          <div className="small muted" style={{ marginTop: 6 }}>
+          <div className="small muted admin-note-spaced">
             {canApply
               ? `Will write ${shapeName} → ${effectiveLearnerId}.`
               : 'Choose a shape and learner to apply.'}
@@ -340,9 +337,9 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
 function GrammarConceptConfidencePanel({ evidence }) {
   const rows = Array.isArray(evidence?.conceptStatus) ? evidence.conceptStatus : [];
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-concept-confidence">
+    <section className="card admin-card-spaced" data-panel="grammar-concept-confidence">
       <div className="eyebrow">Grammar · concept confidence</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Grammar concepts</h3>
+      <h3 className="section-title admin-section-title">Grammar concepts</h3>
       <p className="small muted">
         Adult-facing confidence label per concept for the selected learner, with the full evidence shape: sample size, recent misses, interval-days spacing, and distinct-template coverage over the last {GRAMMAR_RECENT_ATTEMPT_HORIZON} attempts.
       </p>
@@ -378,22 +375,22 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
   const archivedEntries = Array.isArray(transfer?.archive) ? transfer.archive : [];
   if (!learnerId) {
     return (
-      <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-writing-try-admin">
+      <section className="card admin-card-spaced" data-panel="grammar-writing-try-admin">
         <div className="eyebrow">Grammar · Writing Try admin</div>
-        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Writing Try — archive and delete</h3>
+        <h3 className="section-title admin-section-title">Writing Try — archive and delete</h3>
         <p className="small muted">Choose a learner to manage their saved Writing Try entries.</p>
       </section>
     );
   }
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-panel="grammar-writing-try-admin">
+    <section className="card admin-card-spaced" data-panel="grammar-writing-try-admin">
       <div className="eyebrow">Grammar · Writing Try admin</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Writing Try — archive and delete</h3>
+      <h3 className="section-title admin-section-title">Writing Try — archive and delete</h3>
       <p className="small muted">
         Writing Try evidence is non-scored. Archive removes an entry from the learner's active list without deleting it. Delete is only allowed once an entry is archived.
       </p>
-      <section aria-labelledby="grammar-writing-try-admin-live" style={{ marginTop: 16 }}>
-        <h4 id="grammar-writing-try-admin-live" className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+      <section aria-labelledby="grammar-writing-try-admin-live" className="admin-writing-try-section">
+        <h4 id="grammar-writing-try-admin-live" className="small admin-writing-try-heading">
           Active entries
         </h4>
         {liveEntries.length ? (
@@ -432,8 +429,8 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
           <p className="small muted">No active Writing Try entries for this learner.</p>
         )}
       </section>
-      <section aria-labelledby="grammar-writing-try-admin-archive" style={{ marginTop: 20 }}>
-        <h4 id="grammar-writing-try-admin-archive" className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+      <section aria-labelledby="grammar-writing-try-admin-archive" className="admin-writing-try-archive-section">
+        <h4 id="grammar-writing-try-admin-archive" className="small admin-writing-try-heading">
           Archived entries
         </h4>
         <button
@@ -449,8 +446,7 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
           archivedEntries.length ? (
             <ul
               id="grammar-writing-try-admin-archive-list"
-              className="skill-list"
-              style={{ marginTop: 12 }}
+              className="skill-list admin-writing-try-archive-list"
               aria-label="Archived Writing Try entries"
             >
               {archivedEntries.map((entry) => (
@@ -484,7 +480,7 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
               ))}
             </ul>
           ) : (
-            <p className="small muted" style={{ marginTop: 12 }}>
+            <p className="small muted admin-writing-try-archive-empty">
               No archived Writing Try entries for this learner.
             </p>
           )
@@ -531,16 +527,15 @@ function AssetRegistryCard({ entry, model, actions }) {
 
   return (
     <article
-      className="card"
+      className="card admin-card-spaced"
       data-panel="asset-registry-card"
       data-asset-id={entry.assetId}
-      style={{ marginBottom: 20 }}
     >
       <div className="card-header">
         <div>
           <div className="eyebrow">Asset registry · {entry.category}</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>{entry.displayName}</h3>
-          <div className="chip-row" style={{ marginTop: 12 }}>
+          <h3 className="section-title admin-section-title">{entry.displayName}</h3>
+          <div className="chip-row admin-meta-spaced">
             <span className="chip" data-testid="registry-published-version">
               Published: {publishedLabel}
             </span>
@@ -555,7 +550,7 @@ function AssetRegistryCard({ entry, model, actions }) {
               : <span className="chip warn">Read-only</span>}
           </div>
         </div>
-        <div className="actions" style={{ justifyContent: 'flex-end' }}>
+        <div className="actions admin-registry-actions-end">
           <button
             className="btn good"
             type="button"
@@ -593,7 +588,7 @@ function AssetRegistryCard({ entry, model, actions }) {
         </div>
       </div>
 
-      <div style={{ marginTop: 16 }}>
+      <div className="admin-registry-card-body">
         <dl className="registry-detail-grid" data-testid="registry-details">
           <div className="registry-detail-row">
             <dt className="small muted">Category</dt>
@@ -631,17 +626,17 @@ function AssetRegistryCard({ entry, model, actions }) {
       </div>
 
       {!entry.validationState.ok && entry.validationState.errorCount > 0 ? (
-        <div className="feedback bad" style={{ marginTop: 16 }} data-testid="registry-validation-errors">
+        <div className="feedback bad admin-registry-validation-feedback" data-testid="registry-validation-errors">
           <strong>Validation blockers ({String(entry.validationState.errorCount)})</strong>
           {entry.validationState.warningCount > 0 ? (
-            <span className="small muted" style={{ marginLeft: 8 }}>
+            <span className="small muted admin-registry-validation-warning-label">
               + {String(entry.validationState.warningCount)} warning{entry.validationState.warningCount === 1 ? '' : 's'}
             </span>
           ) : null}
           {entry.validationState.errors.length > 0 ? (
-            <details style={{ marginTop: 8 }}>
+            <details className="admin-registry-validation-details">
               <summary className="small">Show blockers</summary>
-              <ul className="small muted" style={{ marginTop: 6, paddingLeft: 18 }}>
+              <ul className="small muted admin-validation-issues-list">
                 {entry.validationState.errors.slice(0, 5).map((issue, idx) => (
                   <li key={idx}>
                     {[issue.assetKey, issue.context, issue.field, issue.code].filter(Boolean).join(' / ') || issue.message || 'Validation error'}
@@ -654,7 +649,7 @@ function AssetRegistryCard({ entry, model, actions }) {
       ) : null}
 
       {!entry.hasDraft && !entry.hasPublished ? (
-        <div className="feedback warn" style={{ marginTop: 16 }} data-testid="registry-empty-state">
+        <div className="feedback warn admin-registry-empty-state" data-testid="registry-empty-state">
           No configuration has been initialised for this asset. Create a draft to get started.
         </div>
       ) : null}
@@ -669,8 +664,8 @@ function AssetRegistrySection({ model, actions }) {
   const registry = React.useMemo(() => buildAssetRegistry(model), [model]);
   if (!registry.length) return null;
   return (
-    <section data-panel="asset-registry" style={{ marginBottom: 20 }}>
-      <div className="eyebrow" style={{ marginBottom: 12 }}>Asset &amp; Effect Registry</div>
+    <section data-panel="asset-registry" className="admin-registry-section">
+      <div className="eyebrow admin-registry-section-eyebrow">Asset &amp; Effect Registry</div>
       {registry.map((entry) => (
         <AssetRegistryCard
           key={entry.assetId}

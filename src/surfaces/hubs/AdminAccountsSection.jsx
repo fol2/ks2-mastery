@@ -35,20 +35,20 @@ function AdminAccountRoles({ model, directory = {}, actions }) {
 
   if (!isAdmin) {
     return (
-      <section className="card" style={{ marginBottom: 20 }}>
+      <section className="card admin-card-spaced">
         <div className="eyebrow">Account roles</div>
-        <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Admin-only role management</h3>
+        <h3 className="section-title admin-section-title">Admin-only role management</h3>
         <div className="feedback warn">Only admin accounts can list accounts or change platform roles.</div>
       </section>
     );
   }
 
   return (
-    <section className="card" style={{ marginBottom: 20 }}>
+    <section className="card admin-card-spaced">
       <div className="card-header">
         <div>
           <div className="eyebrow">Account roles</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Production platform access</h3>
+          <h3 className="section-title admin-section-title">Production platform access</h3>
           <p className="subtitle">Roles are written to D1 adult accounts and audited through mutation receipts. The backend blocks demoting the last admin.</p>
         </div>
         <div className="actions">
@@ -56,7 +56,7 @@ function AdminAccountRoles({ model, directory = {}, actions }) {
           <button className="btn secondary" type="button" onClick={() => actions.dispatch('admin-accounts-refresh')}>Refresh accounts</button>
         </div>
       </div>
-      {directory.error && <div className="feedback bad" style={{ marginBottom: 14 }}>{directory.error}</div>}
+      {directory.error && <div className="feedback bad admin-feedback-error-spaced">{directory.error}</div>}
       {status === 'loading' && !accounts.length && <p className="small muted">Loading production accounts...</p>}
       {accounts.length ? accounts.map((account) => (
         <div className="skill-row" key={account.id}>
@@ -67,7 +67,7 @@ function AdminAccountRoles({ model, directory = {}, actions }) {
           <div className="small muted">{Number(account.learnerCount || 0)} learner{Number(account.learnerCount) === 1 ? '' : 's'}</div>
           <div className="small muted">Updated {formatTimestamp(account.updatedAt)}</div>
           <div>
-            <label className="field" style={{ minWidth: 150 }}>
+            <label className="field admin-field-status">
               <span>Role</span>
               <select
                 className="select"
@@ -207,7 +207,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
         </div>
         <div>
           <span className="chip">{account.opsStatus || 'active'}</span>
-          <div className="small muted" style={{ marginTop: 6 }} data-testid="ops-status-enforcement-note">{ACCOUNT_OPS_ENFORCEMENT_NOTE}</div>
+          <div className="small muted admin-note-spaced" data-testid="ops-status-enforcement-note">{ACCOUNT_OPS_ENFORCEMENT_NOTE}</div>
         </div>
         <div className="small muted">{account.planLabel || '—'}</div>
         <div className="small muted">{(account.tags || []).join(', ') || '—'}</div>
@@ -221,15 +221,14 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
     <div className="skill-row" key={accountId}>
       {conflict && conflictCurrentState ? (
         <div
-          className="callout warn small"
+          className="callout warn small admin-conflict-banner-col"
           role="alert"
           data-testid="account-ops-metadata-conflict-banner"
           data-account-id={accountId}
-          style={{ gridColumn: '1 / -1', marginBottom: 8 }}
         >
           <div><strong>This account changed in another tab.</strong> Choose how to resolve the conflict.</div>
           {conflictDiffRows.length > 0 ? (
-            <ul style={{ margin: '6px 0 8px 16px' }}>
+            <ul className="admin-conflict-diff-list">
               {conflictDiffRows.map((row) => (
                 <li key={row.field} data-field={row.field}>
                   <strong>{row.label}:</strong>{' '}
@@ -239,11 +238,11 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
               ))}
             </ul>
           ) : (
-            <div className="small muted" style={{ margin: '6px 0 8px' }}>
+            <div className="small muted admin-conflict-no-diff">
               No field-level differences surfaced. Pick a resolution to continue.
             </div>
           )}
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="admin-conflict-actions">
             <button
               className="btn secondary"
               type="button"
@@ -270,7 +269,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
         <div className="small muted">{account.displayName || 'No display name'} · {account.platformRole || 'parent'}</div>
       </div>
       <div>
-        <label className="field" style={{ minWidth: 140 }}>
+        <label className="field admin-field-md">
           <span>Ops status</span>
           <select
             className="select"
@@ -284,9 +283,9 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
             ))}
           </select>
         </label>
-        <div className="small muted" style={{ marginTop: 6 }} data-testid="ops-status-enforcement-note">{ACCOUNT_OPS_ENFORCEMENT_NOTE}</div>
+        <div className="small muted admin-note-spaced" data-testid="ops-status-enforcement-note">{ACCOUNT_OPS_ENFORCEMENT_NOTE}</div>
       </div>
-      <label className="field" style={{ minWidth: 140 }}>
+      <label className="field admin-field-md">
         <span>Plan label</span>
         <input
           className="input"
@@ -298,7 +297,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
           onChange={(event) => { markDirty(); setPlanLabel(event.target.value); }}
         />
       </label>
-      <label className="field" style={{ minWidth: 160 }}>
+      <label className="field admin-field-lg">
         <span>Tags (comma separated)</span>
         <input
           className="input"
@@ -309,7 +308,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
           onChange={(event) => { markDirty(); setTagsText(event.target.value); }}
         />
       </label>
-      <label className="field" style={{ minWidth: 200 }}>
+      <label className="field admin-field-xl">
         <span>Internal notes</span>
         <textarea
           className="input"
@@ -330,7 +329,7 @@ function AccountOpsMetadataRow({ account, canManage, savingAccountId, actions })
         >
           {isSaving ? 'Saving...' : 'Save'}
         </button>
-        <div className="small muted" style={{ marginTop: 4 }}>Updated {formatTimestamp(account.updatedAt)}</div>
+        <div className="small muted admin-account-updated">Updated {formatTimestamp(account.updatedAt)}</div>
       </div>
     </div>
   );
@@ -342,7 +341,7 @@ function AccountOpsMetadataPanel({ model, actions }) {
   const canManage = model?.permissions?.platformRole === 'admin';
   const savingAccountId = directory.savingAccountId || '';
   return (
-    <section className="card" style={{ marginBottom: 20 }}>
+    <section className="card admin-card-spaced">
       <PanelHeader
         eyebrow="Account ops"
         title="Account ops metadata"
@@ -367,9 +366,9 @@ function AccountOpsMetadataPanel({ model, actions }) {
 function AuditLogLookup({ model }) {
   const auditEntries = Array.isArray(model.auditLogLookup?.entries) ? model.auditLogLookup.entries : [];
   return (
-    <article className="card" style={{ marginBottom: 20 }}>
+    <article className="card admin-card-spaced">
       <div className="eyebrow">Audit-log lookup</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Mutation receipt stream</h3>
+      <h3 className="section-title admin-section-title">Mutation receipt stream</h3>
       <p className="small muted">{model.auditLogLookup.note || ''}</p>
       {model.auditLogLookup.available ? (
         auditEntries.length ? auditEntries.map((entry) => (
@@ -380,7 +379,7 @@ function AuditLogLookup({ model }) {
             <div className="small muted">{formatTimestamp(entry.appliedAt)}</div>
           </div>
         )) : <p className="small muted">No audit entries matched the current lookup.</p>
-      ) : <div className="callout warn" style={{ marginTop: 12 }}>The local reference build keeps this surface visible, but the live lookup itself is only wired on the Worker API path.</div>}
+      ) : <div className="callout warn admin-audit-callout-spaced">The local reference build keeps this surface visible, but the live lookup itself is only wired on the Worker API path.</div>}
     </article>
   );
 }
@@ -418,11 +417,11 @@ function AccountDetailPanel({ detail, onClose, onDebugBundle }) {
   if (!detail || !detail.account) return null;
   const { account, learners, recentErrors, recentDenials, recentMutations, opsMetadata } = detail;
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-testid="account-detail-panel">
+    <section className="card admin-card-spaced" data-testid="account-detail-panel">
       <div className="card-header">
         <div>
           <div className="eyebrow">Account detail</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>{account.email || account.id}</h3>
+          <h3 className="section-title admin-section-title">{account.email || account.id}</h3>
           <p className="subtitle">{account.displayName || 'No display name'} &middot; {platformRoleLabel(account.platformRole)} &middot; {account.accountType}</p>
         </div>
         <div className="actions">
@@ -430,23 +429,23 @@ function AccountDetailPanel({ detail, onClose, onDebugBundle }) {
           <button className="btn secondary" type="button" onClick={onClose}>Close</button>
         </div>
       </div>
-      <div className="small muted" style={{ marginBottom: 8 }}>
+      <div className="small muted admin-account-detail-meta">
         Created {formatTimestamp(account.createdAt)} &middot; Updated {formatTimestamp(account.updatedAt)} &middot; Rev {account.repoRevision}
       </div>
 
       {opsMetadata && (
-        <div style={{ marginBottom: 12 }}>
+        <div className="admin-account-ops-meta-wrap">
           <div className="eyebrow">Ops metadata</div>
           <div className="small muted">
             Status: <strong>{opsMetadata.opsStatus}</strong>
             {opsMetadata.planLabel ? ` | Plan: ${opsMetadata.planLabel}` : ''}
             {opsMetadata.tags?.length ? ` | Tags: ${opsMetadata.tags.join(', ')}` : ''}
           </div>
-          {opsMetadata.internalNotes && <div className="small muted" style={{ marginTop: 4 }}>Notes: {opsMetadata.internalNotes}</div>}
+          {opsMetadata.internalNotes && <div className="small muted admin-account-ops-notes">Notes: {opsMetadata.internalNotes}</div>}
         </div>
       )}
 
-      <div className="eyebrow" style={{ marginTop: 8 }}>Learners ({learners.length})</div>
+      <div className="eyebrow admin-account-learners-eyebrow">Learners ({learners.length})</div>
       {learners.length ? learners.map((l) => (
         <div className="skill-row" key={l.id}>
           <div><strong>{l.displayName || l.id}</strong></div>
@@ -455,7 +454,7 @@ function AccountDetailPanel({ detail, onClose, onDebugBundle }) {
         </div>
       )) : <p className="small muted">No linked learners.</p>}
 
-      <div className="eyebrow" style={{ marginTop: 12 }}>Recent errors ({recentErrors.length})</div>
+      <div className="eyebrow admin-account-errors-eyebrow">Recent errors ({recentErrors.length})</div>
       {recentErrors.length ? recentErrors.map((e) => (
         <div className="skill-row" key={e.id}>
           <div><strong>{e.errorKind}</strong>: {e.messageFirstLine}</div>
@@ -466,7 +465,7 @@ function AccountDetailPanel({ detail, onClose, onDebugBundle }) {
 
       {recentDenials.length > 0 && (
         <>
-          <div className="eyebrow" style={{ marginTop: 12 }}>Recent denials ({recentDenials.length})</div>
+          <div className="eyebrow admin-account-errors-eyebrow">Recent denials ({recentDenials.length})</div>
           {recentDenials.map((d) => (
             <div className="skill-row" key={d.id}>
               <div><strong>{d.denialReason}</strong></div>
@@ -477,7 +476,7 @@ function AccountDetailPanel({ detail, onClose, onDebugBundle }) {
         </>
       )}
 
-      <div className="eyebrow" style={{ marginTop: 12 }}>Recent mutations ({recentMutations.length})</div>
+      <div className="eyebrow admin-account-errors-eyebrow">Recent mutations ({recentMutations.length})</div>
       {recentMutations.length ? recentMutations.map((m) => (
         <div className="skill-row" key={m.requestId || `${m.mutationKind}-${m.appliedAt}`}>
           <div><strong>{m.mutationKind}</strong></div>
@@ -538,27 +537,25 @@ function AccountSearchPanel({ model, actions }) {
   }
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-testid="account-search-panel">
+    <section className="card admin-card-spaced" data-testid="account-search-panel">
       <div className="eyebrow">Account search</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Find accounts</h3>
+      <h3 className="section-title admin-section-title">Find accounts</h3>
       <p className="subtitle">Search by email, account ID, or display name. Minimum 3 characters.</p>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+      <div className="admin-account-search-bar">
         <input
-          className="input"
+          className="input admin-account-search-input"
           type="text"
           placeholder="Email, ID, or name..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           data-testid="account-search-input"
-          style={{ flex: '1 1 200px', minWidth: 200 }}
         />
         <select
-          className="select"
+          className="select admin-account-search-select"
           value={opsStatusFilter}
           onChange={(e) => setOpsStatusFilter(e.target.value)}
           data-testid="account-search-ops-status"
-          style={{ minWidth: 120 }}
         >
           <option value="">Any status</option>
           <option value="active">Active</option>
@@ -566,11 +563,10 @@ function AccountSearchPanel({ model, actions }) {
           <option value="payment_hold">Payment hold</option>
         </select>
         <select
-          className="select"
+          className="select admin-account-search-select"
           value={platformRoleFilter}
           onChange={(e) => setPlatformRoleFilter(e.target.value)}
           data-testid="account-search-platform-role"
-          style={{ minWidth: 120 }}
         >
           <option value="">Any role</option>
           <option value="admin">Admin</option>
@@ -587,8 +583,8 @@ function AccountSearchPanel({ model, actions }) {
           {status === 'loading' ? 'Searching...' : 'Search'}
         </button>
       </div>
-      {search.error && <div className="feedback warn" style={{ marginBottom: 8 }}>{search.error}</div>}
-      {search.truncated && <div className="feedback warn" style={{ marginBottom: 8 }}>Results truncated to 50. Refine your search for more specific results.</div>}
+      {search.error && <div className="feedback warn admin-account-search-feedback">{search.error}</div>}
+      {search.truncated && <div className="feedback warn admin-account-search-feedback">Results truncated to 50. Refine your search for more specific results.</div>}
       {status === 'loaded' && results.length === 0 && <p className="small muted">No accounts matched your search.</p>}
       {results.map((result) => (
         <AccountSearchResultRow key={result.id} result={result} onSelect={handleSelectAccount} />
