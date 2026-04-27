@@ -1,4 +1,4 @@
-import { MONSTERS, stageFor, PUNCTUATION_MASTERED_THRESHOLDS } from '../monsters.js';
+import { MONSTERS, stageFor, PUNCTUATION_MASTERED_THRESHOLDS, PUNCTUATION_STAR_THRESHOLDS } from '../monsters.js';
 import { PUNCTUATION_CURRENT_RELEASE_ID } from '../../../subjects/punctuation/service-contract.js';
 import {
   branchForMonster,
@@ -20,6 +20,50 @@ import {
 // `quoral` grand monster without requiring a stored-state rewrite. The
 // normaliser is read-only — no entries are deleted or mutated on hydrate.
 const PUNCTUATION_PRE_FLIP_GRAND_MONSTER_IDS = Object.freeze(['carillon']);
+
+// Legacy stage-to-Star floor mapping for Punctuation. Uses the star
+// thresholds as stage boundaries: stage 0 → 0, stage N → threshold[N].
+// This mirrors Grammar's LEGACY_STAGE_STAR_FLOOR but derives from the
+// Punctuation-specific PUNCTUATION_STAR_THRESHOLDS so that pre-P6
+// learners whose stored state has no starHighWater field get seeded
+// to their correct visual floor rather than 0.
+const PUNCTUATION_LEGACY_STAGE_STAR_FLOOR = Object.freeze([
+  0,
+  PUNCTUATION_STAR_THRESHOLDS[1] || 0,
+  PUNCTUATION_STAR_THRESHOLDS[2] || 0,
+  PUNCTUATION_STAR_THRESHOLDS[3] || 0,
+  PUNCTUATION_STAR_THRESHOLDS[4] || 0,
+]);
+
+function safeStarHighWater(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n + 1e-9) : 0;
+}
+
+function punctuationLegacyStarFloor(stage) {
+  const s = Math.max(0, Math.min(4, Math.floor(Number(stage) || 0)));
+  return PUNCTUATION_LEGACY_STAGE_STAR_FLOOR[s] || 0;
+}
+
+/**
+ * Seed the starHighWater value for a Punctuation monster entry during writes.
+ *
+ * If the entry already has a starHighWater field (post-P6 learner), preserve
+ * it via safeStarHighWater. If absent (pre-P6 learner), compute the legacy
+ * floor from the count-based stage so that writing starHighWater for the first
+ * time does not erase the learner's visual floor. Without this, safeStarHighWater
+ * would return 0 for undefined, permanently disabling the legacy floor on
+ * subsequent reads.
+ */
+function seedStarHighWater(entry) {
+  if (entry.starHighWater !== undefined && entry.starHighWater !== null) {
+    return safeStarHighWater(entry.starHighWater);
+  }
+  // Pre-P6 learner: seed from legacy floor.
+  const mastered = punctuationMasteredCount(entry);
+  const legacyStage = stageFor(mastered, PUNCTUATION_MASTERED_THRESHOLDS);
+  return punctuationLegacyStarFloor(legacyStage);
+}
 
 function punctuationMasteredList(entry, releaseId = null) {
   const mastered = masteredList(entry);
@@ -121,6 +165,11 @@ export function progressForPunctuationMonster(state, monsterId, { publishedTotal
   const mastered = punctuationMasteredCount(entry, releaseId);
   const fallback = publishedTotal || MONSTERS[monsterId]?.masteredMax || 1;
   const total = punctuationTotal(entry, fallback, { monsterId });
+
+  // Persisted high-water mark. Corrupted values (NaN, negative) → 0.
+  const rawHW = Number(entry.starHighWater);
+  const persistedHW = Number.isFinite(rawHW) && rawHW > 0 ? Math.floor(rawHW + 1e-9) : 0;
+
   return {
     mastered,
     publishedTotal: total,
@@ -129,6 +178,7 @@ export function progressForPunctuationMonster(state, monsterId, { publishedTotal
     caught: mastered >= 1,
     branch: branchForMonster(normalised, monsterId),
     masteredList: punctuationMasteredList(entry, releaseId),
+    starHighWater: persistedHW,
   };
 }
 
@@ -212,6 +262,15 @@ export function recordPunctuationRewardUnitMastery({
   const beforeDirect = progressForPunctuationMonster(before, monsterId, { publishedTotal, releaseId: scopedReleaseId });
   const beforeAggregate = progressForPunctuationMonster(before, aggregateMonsterId, { publishedTotal: aggregatePublishedTotal, releaseId: scopedReleaseId });
 
+  // Ratchet starHighWater: preserve the existing high-water mark on each
+  // monster entry. For pre-P6 learners (no starHighWater field), seed the
+  // value from the legacy floor so that writing it for the first time does
+  // not erase the learner's visual stage. The actual Star computation
+  // happens on the client read path; the reward layer only preserves the
+  // latch field so it survives round-trips.
+  const directHW = seedStarHighWater(directEntry);
+  const aggregateHW = seedStarHighWater(aggregateEntry);
+
   const after = {
     ...before,
     [monsterId]: {
@@ -220,6 +279,7 @@ export function recordPunctuationRewardUnitMastery({
       releaseId: scopedReleaseId,
       publishedTotal,
       mastered: [...directMastered, masteryKey],
+      starHighWater: directHW,
     },
     [aggregateMonsterId]: {
       ...aggregateEntry,
@@ -229,6 +289,7 @@ export function recordPunctuationRewardUnitMastery({
       mastered: aggregateMastered.includes(masteryKey)
         ? aggregateMastered
         : [...aggregateMastered, masteryKey],
+      starHighWater: aggregateHW,
     },
   };
 
