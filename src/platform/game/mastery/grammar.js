@@ -480,18 +480,25 @@ export function recordGrammarConceptMastery({
 /**
  * Lightweight latch-write for sub-secure Star evidence.
  *
- * Updates `starHighWater = max(existing, computedStars)` on the direct monster
- * and Concordium without touching the `mastered[]` array (that stays exclusive
+ * Updates `starHighWater = max(existing, computedStars)` on the specified
+ * monster only, without touching the `mastered[]` array (that stays exclusive
  * to concept-secured via `recordGrammarConceptMastery`).
  *
- * Sets `caught: true` if Stars >= 1 and was previously false on either
- * monster, emitting a `caught` reward event for each newly-caught monster.
+ * The caller (event-hooks subscriber) is responsible for passing the correct
+ * `monsterId` from each `star-evidence-updated` event. The command handler
+ * emits one event per monster with monster-specific `computedStars`, so each
+ * call updates exactly one monster — preventing cross-inflation where a
+ * direct monster's higher Stars would overwrite Concordium's lower value.
  *
- * Returns an array of reward events (caught events for monsters that newly
+ * Sets `caught: true` if Stars >= 1 and was previously false, emitting a
+ * `caught` reward event for the newly-caught monster.
+ *
+ * Returns an array of reward events (caught event if the monster newly
  * crossed the threshold, otherwise empty).
  */
 export function updateGrammarStarHighWater({
   learnerId,
+  monsterId,
   conceptId,
   computedStars,
   gameStateRepository,
@@ -501,86 +508,56 @@ export function updateGrammarStarHighWater({
   const stars = Math.max(0, Math.floor(Number(computedStars) || 0));
   if (stars < 1) return [];
 
-  const directMonsterId = monsterIdForGrammarConcept(conceptId);
+  // Resolve the target monster. When monsterId is provided, use it directly.
+  // Fall back to the direct monster for the concept (backward compat).
+  const targetMonsterId = monsterId || monsterIdForGrammarConcept(conceptId) || GRAMMAR_GRAND_MONSTER_ID;
+
   const before = ensureMonsterBranches(learnerId, gameStateRepository, {
     random,
     monsterIds: GRAMMAR_MONSTER_IDS,
   });
 
-  const events = [];
-  const after = { ...before };
+  const entry = isPlainObject(before[targetMonsterId])
+    ? before[targetMonsterId]
+    : { mastered: [], caught: false };
+  const existingHW = safeStarHighWater(entry.starHighWater);
+  if (stars <= existingHW) {
+    // No change needed — existing high-water already covers this update.
+    return [];
+  }
 
-  // Helper: latch starHighWater on a single monster entry. Returns true if
-  // the monster was newly caught (Stars >= 1 and was not caught before).
-  function latchMonster(monsterId) {
-    const entry = isPlainObject(before[monsterId])
-      ? before[monsterId]
-      : { mastered: [], caught: false };
-    const existingHW = safeStarHighWater(entry.starHighWater);
-    if (stars <= existingHW) {
-      // No change needed — existing high-water already covers this update.
-      return false;
-    }
-    const wasCaught = entry.caught === true;
-    const nowCaught = wasCaught || stars >= 1;
-    const total = grammarMonsterConceptTotal(monsterId);
-    after[monsterId] = {
+  const wasCaught = entry.caught === true;
+  const nowCaught = wasCaught || stars >= 1;
+  const total = grammarMonsterConceptTotal(targetMonsterId);
+  const after = {
+    ...before,
+    [targetMonsterId]: {
       ...entry,
       caught: nowCaught,
       conceptTotal: total,
       starHighWater: Math.min(GRAMMAR_MONSTER_STAR_MAX, stars),
-    };
-    return !wasCaught && nowCaught;
-  }
+    },
+  };
 
-  let anyChange = false;
+  saveMonsterState(learnerId, after, gameStateRepository);
 
-  // Update Concordium (aggregate).
-  const concordiumNewlyCaught = latchMonster(GRAMMAR_GRAND_MONSTER_ID);
-  if (after[GRAMMAR_GRAND_MONSTER_ID] !== before[GRAMMAR_GRAND_MONSTER_ID]) anyChange = true;
-  if (concordiumNewlyCaught) {
-    const beforeProgress = progressForGrammarMonster(before, GRAMMAR_GRAND_MONSTER_ID, {
-      conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+  const events = [];
+  if (!wasCaught && nowCaught) {
+    const beforeProgress = progressForGrammarMonster(before, targetMonsterId, {
+      conceptTotal: total,
     });
-    const afterProgress = progressForGrammarMonster(after, GRAMMAR_GRAND_MONSTER_ID, {
-      conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+    const afterProgress = progressForGrammarMonster(after, targetMonsterId, {
+      conceptTotal: total,
     });
     const ev = grammarEventFromTransition({
       learnerId,
-      monsterId: GRAMMAR_GRAND_MONSTER_ID,
+      monsterId: targetMonsterId,
       releaseId: GRAMMAR_REWARD_RELEASE_ID,
       conceptId,
       masteryKey: grammarMasteryKey(conceptId),
       createdAt: Date.now(),
     }, beforeProgress, afterProgress);
     if (ev) events.push(ev);
-  }
-
-  // Update direct monster (if any).
-  if (directMonsterId) {
-    const directNewlyCaught = latchMonster(directMonsterId);
-    if (after[directMonsterId] !== before[directMonsterId]) anyChange = true;
-    if (directNewlyCaught) {
-      const beforeProgress = progressForGrammarMonster(before, directMonsterId, {
-        conceptTotal: grammarMonsterConceptTotal(directMonsterId),
-      });
-      const afterProgress = progressForGrammarMonster(after, directMonsterId, {
-        conceptTotal: grammarMonsterConceptTotal(directMonsterId),
-      });
-      const ev = grammarEventFromTransition({
-        learnerId,
-        monsterId: directMonsterId,
-        releaseId: GRAMMAR_REWARD_RELEASE_ID,
-        conceptId,
-        masteryKey: grammarMasteryKey(conceptId),
-        createdAt: Date.now(),
-      }, beforeProgress, afterProgress);
-      if (ev) events.push(ev);
-    }
-  }
-
-  if (anyChange) {
-    saveMonsterState(learnerId, after, gameStateRepository);
   }
 
   return events;

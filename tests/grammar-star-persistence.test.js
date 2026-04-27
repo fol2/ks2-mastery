@@ -73,11 +73,14 @@ function securedEvent(conceptId, overrides = {}) {
 // starHighWater = 1 -> Egg caught
 // ---------------------------------------------------------------------------
 
-test('star-evidence-updated with computedStars=1 sets starHighWater=1 and marks Egg caught on direct + Concordium', () => {
+test('star-evidence-updated with computedStars=1 sets starHighWater=1 and marks Egg caught on the specified monster only', () => {
   const repository = makeRepository();
 
+  // Each star-evidence-updated event targets a single monster. The command
+  // handler emits one per monster with monster-specific computedStars.
   const events = rewardEventsFromGrammarEvents([
-    starEvidenceEvent('sentence_functions', 1),
+    starEvidenceEvent('sentence_functions', 1, { monsterId: 'bracehart' }),
+    starEvidenceEvent('sentence_functions', 1, { monsterId: 'concordium' }),
   ], {
     gameStateRepository: repository,
     random: () => 0,
@@ -124,7 +127,8 @@ test('subsequent star-evidence-updated raises starHighWater without re-emitting 
   });
 
   const events = rewardEventsFromGrammarEvents([
-    starEvidenceEvent('sentence_functions', 3),
+    starEvidenceEvent('sentence_functions', 3, { monsterId: 'bracehart' }),
+    starEvidenceEvent('sentence_functions', 3, { monsterId: 'concordium' }),
   ], {
     gameStateRepository: repository,
     random: () => 0,
@@ -332,11 +336,23 @@ test('starHighWater survives recentAttempts truncation: stored value persists ac
 // Direct function: updateGrammarStarHighWater works correctly
 // ---------------------------------------------------------------------------
 
-test('updateGrammarStarHighWater directly latches starHighWater on direct + Concordium', () => {
+test('updateGrammarStarHighWater directly latches starHighWater on specified monster only', () => {
   const repository = makeRepository();
 
-  const events = updateGrammarStarHighWater({
+  // Call once for the direct monster.
+  const directEvents = updateGrammarStarHighWater({
     learnerId: 'learner-a',
+    monsterId: 'chronalyx',
+    conceptId: 'tense_aspect',
+    computedStars: 3,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  // Call again for Concordium.
+  const aggregateEvents = updateGrammarStarHighWater({
+    learnerId: 'learner-a',
+    monsterId: 'concordium',
     conceptId: 'tense_aspect',
     computedStars: 3,
     gameStateRepository: repository,
@@ -354,14 +370,14 @@ test('updateGrammarStarHighWater directly latches starHighWater on direct + Conc
   assert.equal(state.concordium.caught, true, 'Concordium caught');
   assert.equal(state.concordium.starHighWater, 3, 'Concordium starHighWater=3');
 
-  // caught events emitted for both.
+  // caught events emitted from each call.
   assert.equal(
-    events.some((e) => e.monsterId === 'chronalyx' && e.kind === 'caught'),
+    directEvents.some((e) => e.monsterId === 'chronalyx' && e.kind === 'caught'),
     true,
     'Chronalyx caught event',
   );
   assert.equal(
-    events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
+    aggregateEvents.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
     true,
     'Concordium caught event',
   );
@@ -432,10 +448,10 @@ test('mixed event stream processes both star-evidence-updated and concept-secure
   const repository = makeRepository();
 
   const events = rewardEventsFromGrammarEvents([
-    // Star evidence arrives first (from an earlier answer in the same command batch).
-    starEvidenceEvent('clauses', 2),
-    // Concept secured follows (the concept just crossed the secure threshold).
+    // Concept secured fires first (in result.events from the command handler).
     securedEvent('clauses'),
+    // Star evidence appended after result.events by the command handler.
+    starEvidenceEvent('clauses', 2),
   ], {
     gameStateRepository: repository,
     random: () => 0,
@@ -458,6 +474,48 @@ test('mixed event stream processes both star-evidence-updated and concept-secure
 
   // Both caught events should fire (from star-evidence-updated, concept-secured
   // may also contribute but the important thing is no crash).
+  assert.equal(
+    events.some((e) => e.monsterId === 'bracehart' && e.kind === 'caught'),
+    true,
+    'Bracehart caught event',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// ADV-001 regression: no cross-inflation between monsters from the same concept
+// ---------------------------------------------------------------------------
+
+test('different computedStars per monster do not cross-inflate starHighWater', () => {
+  const repository = makeRepository();
+
+  // The command handler emits two star-evidence-updated events for the same
+  // concept but with different computedStars per monster. Concordium (18
+  // concepts) earns fewer Stars than Bracehart (6 concepts) because the
+  // per-concept budget is spread across more concepts.
+  const events = rewardEventsFromGrammarEvents([
+    starEvidenceEvent('sentence_functions', 1, { monsterId: 'concordium' }),
+    starEvidenceEvent('sentence_functions', 4, { monsterId: 'bracehart' }),
+  ], {
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  const state = repository.state();
+
+  // Concordium must have starHighWater=1, NOT 4.
+  assert.equal(state.concordium.starHighWater, 1, 'Concordium starHighWater is 1 (not inflated to 4)');
+  assert.equal(state.concordium.caught, true, 'Concordium caught');
+
+  // Bracehart must have starHighWater=4.
+  assert.equal(state.bracehart.starHighWater, 4, 'Bracehart starHighWater is 4');
+  assert.equal(state.bracehart.caught, true, 'Bracehart caught');
+
+  // Both caught events emitted.
+  assert.equal(
+    events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
+    true,
+    'Concordium caught event',
+  );
   assert.equal(
     events.some((e) => e.monsterId === 'bracehart' && e.kind === 'caught'),
     true,

@@ -2,10 +2,8 @@ import {
   GRAMMAR_REWARD_RELEASE_ID,
   grammarMasteryKey,
   recordGrammarConceptMastery,
-} from '../../platform/game/monster-system.js';
-import {
   updateGrammarStarHighWater,
-} from '../../platform/game/mastery/grammar.js';
+} from '../../platform/game/monster-system.js';
 
 export const GRAMMAR_EVENT_TYPES = Object.freeze({
   CONCEPT_SECURED: 'grammar.concept-secured',
@@ -47,6 +45,7 @@ export function createGrammarRewardSubscriber({
         rewardEvents.push(
           ...updateGrammarStarHighWater({
             learnerId: event.learnerId,
+            monsterId: event.monsterId,
             conceptId,
             computedStars,
             gameStateRepository,
