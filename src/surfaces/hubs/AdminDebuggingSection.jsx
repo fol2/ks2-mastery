@@ -3,10 +3,17 @@ import { formatTimestamp, isBlocked } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
 import { formatOccurrenceTimestamp } from '../../platform/hubs/admin-occurrence-timeline.js';
 import { normaliseDenialEntry } from '../../platform/hubs/admin-denial-panel.js';
+import {
+  BUNDLE_SECTION_LABELS,
+  BUNDLE_SECTIONS,
+  isSectionEmpty,
+  formatBundleTimestamp,
+} from '../../platform/hubs/admin-debug-bundle-panel.js';
 
 // U4+U5: Debugging & Logs section — error log centre + learner support /
 // diagnostics panels. Extracted from AdminHubSurface.jsx.
 // U8 (P3): + denial log panel below error centre.
+// U6 (P3): + debug bundle panel below denial log.
 
 const ERROR_EVENT_STATUS_OPTIONS = ['open', 'investigating', 'resolved', 'ignored'];
 
@@ -650,11 +657,292 @@ function DenialLogPanel({ model, actions }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// U6 (P3): Debug Bundle panel — evidence packet generator.
+// Search form + generate button + collapsible result sections.
+// JSON copy is admin-only (R4 ops export restriction).
+// ---------------------------------------------------------------------------
+
+function DebugBundleSectionTable({ label, rows, columns }) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return <p className="small muted">No data.</p>;
+  }
+  return (
+    <table className="small" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 4 }}>
+      <thead>
+        <tr>
+          {columns.map((col) => (
+            <th key={col.key} style={{ textAlign: 'left', padding: '2px 6px' }}>{col.label}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, idx) => (
+          <tr key={row.id || row.requestId || idx}>
+            {columns.map((col) => (
+              <td key={col.key} className="muted" style={{ padding: '2px 6px', fontFamily: col.mono ? 'monospace' : 'inherit' }}>
+                {col.render ? col.render(row) : (row[col.key] != null ? String(row[col.key]) : '—')}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function DebugBundleResult({ bundleData }) {
+  if (!bundleData) return null;
+  const bundle = bundleData.bundle || {};
+
+  return (
+    <div data-testid="debug-bundle-result" style={{ marginTop: 12 }}>
+      <div className="small muted" style={{ marginBottom: 8 }}>
+        Generated: {formatBundleTimestamp(bundle.generatedAt)}
+        {bundle.buildHash ? ` · Build: ${String(bundle.buildHash).slice(0, 7)}` : ''}
+      </div>
+
+      {BUNDLE_SECTIONS.map((sectionKey) => {
+        const label = BUNDLE_SECTION_LABELS[sectionKey];
+        const isEmpty = isSectionEmpty(bundle, sectionKey);
+        const value = bundle[sectionKey];
+        return (
+          <details key={sectionKey} data-testid={`bundle-section-${sectionKey}`} style={{ marginBottom: 8 }}>
+            <summary className="small" style={{ cursor: 'pointer', fontWeight: 600 }}>
+              {label} {isEmpty ? <span className="muted">(empty)</span> : null}
+            </summary>
+            <div style={{ padding: '4px 0 4px 12px' }}>
+              {sectionKey === 'accountSummary' && value ? (
+                <dl className="small" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: 2 }}>
+                  <dt className="muted">Account ID</dt><dd>{value.accountId || '—'}</dd>
+                  <dt className="muted">Email</dt><dd>{value.email || '—'}</dd>
+                  <dt className="muted">Name</dt><dd>{value.displayName || '—'}</dd>
+                  <dt className="muted">Role</dt><dd>{value.platformRole || '—'}</dd>
+                  <dt className="muted">Type</dt><dd>{value.accountType || '—'}</dd>
+                </dl>
+              ) : null}
+              {sectionKey === 'linkedLearners' ? (
+                <DebugBundleSectionTable
+                  label={label}
+                  rows={value}
+                  columns={[
+                    { key: 'learnerName', label: 'Name' },
+                    { key: 'learnerId', label: 'ID', mono: true },
+                    { key: 'yearGroup', label: 'Year' },
+                    { key: 'membershipRole', label: 'Role' },
+                  ]}
+                />
+              ) : null}
+              {sectionKey === 'recentErrors' ? (
+                <DebugBundleSectionTable
+                  label={label}
+                  rows={value}
+                  columns={[
+                    { key: 'status', label: 'Status' },
+                    { key: 'errorKind', label: 'Kind' },
+                    { key: 'messageFirstLine', label: 'Message' },
+                    { key: 'occurrenceCount', label: 'Count' },
+                    { key: 'routeName', label: 'Route' },
+                  ]}
+                />
+              ) : null}
+              {sectionKey === 'errorOccurrences' ? (
+                <DebugBundleSectionTable
+                  label={label}
+                  rows={value}
+                  columns={[
+                    { key: 'occurredAt', label: 'When', render: (r) => formatBundleTimestamp(r.occurredAt) },
+                    { key: 'routeName', label: 'Route' },
+                    { key: 'release', label: 'Release', mono: true },
+                  ]}
+                />
+              ) : null}
+              {sectionKey === 'recentDenials' ? (
+                <DebugBundleSectionTable
+                  label={label}
+                  rows={value}
+                  columns={[
+                    { key: 'deniedAt', label: 'When', render: (r) => formatBundleTimestamp(r.deniedAt) },
+                    { key: 'denialReason', label: 'Reason' },
+                    { key: 'routeName', label: 'Route' },
+                  ]}
+                />
+              ) : null}
+              {sectionKey === 'recentMutations' ? (
+                <DebugBundleSectionTable
+                  label={label}
+                  rows={value}
+                  columns={[
+                    { key: 'appliedAt', label: 'When', render: (r) => formatBundleTimestamp(r.appliedAt) },
+                    { key: 'mutationKind', label: 'Kind' },
+                    { key: 'scopeType', label: 'Scope' },
+                    { key: 'scopeId', label: 'Scope ID', mono: true },
+                  ]}
+                />
+              ) : null}
+              {sectionKey === 'capacityState' ? (
+                <DebugBundleSectionTable
+                  label={label}
+                  rows={value}
+                  columns={[
+                    { key: 'metricKey', label: 'Metric' },
+                    { key: 'metricCount', label: 'Count' },
+                    { key: 'updatedAt', label: 'Updated', render: (r) => formatBundleTimestamp(r.updatedAt) },
+                  ]}
+                />
+              ) : null}
+            </div>
+          </details>
+        );
+      })}
+    </div>
+  );
+}
+
+function DebugBundlePanel({ model, actions }) {
+  const debugBundle = model?.debugBundle || {};
+  const bundleData = debugBundle.data || null;
+  const loading = debugBundle.loading === true;
+  const error = debugBundle.error || null;
+  const canExportJson = bundleData?.canExportJson === true;
+  const humanSummary = bundleData?.humanSummary || '';
+
+  const [accountId, setAccountId] = React.useState('');
+  const [learnerId, setLearnerId] = React.useState('');
+  const [timeFrom, setTimeFrom] = React.useState('');
+  const [timeTo, setTimeTo] = React.useState('');
+  const [fingerprint, setFingerprint] = React.useState('');
+  const [routeFilter, setRouteFilter] = React.useState('');
+  const [copyFeedback, setCopyFeedback] = React.useState('');
+
+  // R7: pre-fill from error drawer link.
+  const prefill = debugBundle.prefill || null;
+  React.useEffect(() => {
+    if (prefill?.fingerprint) setFingerprint(prefill.fingerprint);
+    if (prefill?.accountId) setAccountId(prefill.accountId);
+    if (prefill?.route) setRouteFilter(prefill.route);
+  }, [prefill?.fingerprint, prefill?.accountId, prefill?.route]);
+
+  const generateBundle = () => {
+    const payload = {};
+    if (accountId.trim()) payload.account_id = accountId.trim();
+    if (learnerId.trim()) payload.learner_id = learnerId.trim();
+    const fromTs = Date.parse(timeFrom);
+    if (Number.isFinite(fromTs)) payload.time_from = fromTs;
+    const toTs = Date.parse(timeTo);
+    if (Number.isFinite(toTs)) payload.time_to = toTs;
+    if (fingerprint.trim()) payload.error_fingerprint = fingerprint.trim();
+    if (routeFilter.trim()) payload.route = routeFilter.trim();
+    actions.dispatch('admin-debug-bundle-generate', payload);
+  };
+
+  const copyJson = async () => {
+    if (!canExportJson || !bundleData?.bundle) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(bundleData.bundle, null, 2));
+      setCopyFeedback('JSON copied');
+      setTimeout(() => setCopyFeedback(''), 2000);
+    } catch {
+      setCopyFeedback('Copy failed');
+      setTimeout(() => setCopyFeedback(''), 2000);
+    }
+  };
+
+  const copySummary = async () => {
+    if (!humanSummary) return;
+    try {
+      await navigator.clipboard.writeText(humanSummary);
+      setCopyFeedback('Summary copied');
+      setTimeout(() => setCopyFeedback(''), 2000);
+    } catch {
+      setCopyFeedback('Copy failed');
+      setTimeout(() => setCopyFeedback(''), 2000);
+    }
+  };
+
+  return (
+    <section className="card" style={{ marginBottom: 20 }} data-testid="debug-bundle-panel">
+      <PanelHeader
+        eyebrow="Debug tools"
+        title="Debug Bundle"
+        refreshedAt={bundleData?.bundle?.generatedAt}
+        refreshError={error}
+        onRefresh={generateBundle}
+      />
+
+      <div
+        className="filters"
+        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        data-testid="debug-bundle-search-form"
+      >
+        <label className="field">
+          <span>Account ID or email</span>
+          <input type="text" className="input" name="bundleAccountId" value={accountId} maxLength={128} onChange={(e) => setAccountId(e.target.value)} placeholder="acct-xxxx or name@example.com" data-testid="bundle-input-account" />
+        </label>
+        <label className="field">
+          <span>Learner ID</span>
+          <input type="text" className="input" name="bundleLearnerId" value={learnerId} maxLength={128} onChange={(e) => setLearnerId(e.target.value)} placeholder="learner-xxxx" data-testid="bundle-input-learner" />
+        </label>
+        <label className="field">
+          <span>From</span>
+          <input type="datetime-local" className="input" name="bundleTimeFrom" value={timeFrom} onChange={(e) => setTimeFrom(e.target.value)} data-testid="bundle-input-from" />
+        </label>
+        <label className="field">
+          <span>To</span>
+          <input type="datetime-local" className="input" name="bundleTimeTo" value={timeTo} onChange={(e) => setTimeTo(e.target.value)} data-testid="bundle-input-to" />
+        </label>
+        <label className="field">
+          <span>Error fingerprint</span>
+          <input type="text" className="input" name="bundleFingerprint" value={fingerprint} maxLength={128} onChange={(e) => setFingerprint(e.target.value)} placeholder="fp-xxxx" data-testid="bundle-input-fingerprint" />
+        </label>
+        <label className="field">
+          <span>Route filter</span>
+          <input type="text" className="input" name="bundleRoute" value={routeFilter} maxLength={64} onChange={(e) => setRouteFilter(e.target.value)} placeholder="/api/" data-testid="bundle-input-route" />
+        </label>
+      </div>
+
+      <div className="chip-row" style={{ marginTop: 10 }}>
+        <button className="btn" type="button" disabled={loading} onClick={generateBundle} data-testid="bundle-generate-btn">
+          {loading ? 'Generating...' : 'Generate Debug Bundle'}
+        </button>
+        {bundleData ? (
+          <>
+            {canExportJson ? (
+              <button className="btn ghost" type="button" onClick={copyJson} data-testid="bundle-copy-json-btn">
+                Copy JSON
+              </button>
+            ) : null}
+            <button className="btn ghost" type="button" onClick={copySummary} data-testid="bundle-copy-summary-btn">
+              Copy Summary
+            </button>
+          </>
+        ) : null}
+        {copyFeedback ? <span className="chip good" data-testid="bundle-copy-feedback">{copyFeedback}</span> : null}
+      </div>
+
+      {error && !bundleData ? (
+        <div className="feedback warn" style={{ marginTop: 10 }} data-testid="debug-bundle-error">
+          {typeof error === 'string' ? error : 'Failed to generate debug bundle.'}
+        </div>
+      ) : null}
+
+      {!bundleData && !loading && !error ? (
+        <p className="small muted" style={{ marginTop: 10 }} data-testid="debug-bundle-empty-state">
+          Enter search criteria and click Generate to create a debug evidence bundle.
+        </p>
+      ) : null}
+
+      <DebugBundleResult bundleData={bundleData} />
+    </section>
+  );
+}
+
 export function AdminDebuggingSection({ model, appState, accessContext, actions }) {
   return (
     <>
       <ErrorLogCentrePanel model={model} actions={actions} />
       <DenialLogPanel model={model} actions={actions} />
+      <DebugBundlePanel model={model} actions={actions} />
       <LearnerSupportPanel model={model} appState={appState} accessContext={accessContext} actions={actions} />
     </>
   );

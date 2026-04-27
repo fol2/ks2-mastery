@@ -26,6 +26,9 @@ export const DENIAL_RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded';
 // ADV-U4-004: shared origin-check code used by request-origin.js and app.js.
 export const SAME_ORIGIN_REQUIRED = 'same_origin_required';
 
+// U6: Debug Bundle error codes
+export const DEBUG_BUNDLE_RATE_LIMITED = 'admin_debug_bundle_rate_limited';
+
 // U11: Marketing / Live Ops V0 error codes
 export const MARKETING_INVALID_TRANSITION = 'marketing_invalid_transition';
 export const MARKETING_BROAD_PUBLISH_UNCONFIRMED = 'marketing_broad_publish_unconfirmed';
