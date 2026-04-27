@@ -8,6 +8,7 @@ import {
   HERO_DEFAULT_EFFORT_TARGET,
   HERO_INTENT_WEIGHTS,
   HERO_MAINTENANCE_INTENTS,
+  HERO_SAFETY_FLAGS,
 } from './constants.js';
 
 import { createSeededRandom } from './seed.js';
@@ -85,7 +86,12 @@ export function scheduleShadowQuest({
         candidateCount: 0,
         rejectedCandidates: [],
         subjectMix: {},
-        safety: { noWrites: true, noCoins: true, noChildUi: true, noSubjectMutation: true },
+        safety: {
+          noWrites: !HERO_SAFETY_FLAGS.writesEnabled,
+          noCoins: !HERO_SAFETY_FLAGS.coinsEnabled,
+          noChildUi: !HERO_SAFETY_FLAGS.childVisible,
+          noSubjectMutation: true,
+        },
         reason: 'zero-eligible-subjects',
       },
     };
@@ -213,7 +219,12 @@ export function scheduleShadowQuest({
       candidateCount: candidates.length,
       rejectedCandidates,
       subjectMix,
-      safety: { noWrites: true, noCoins: true, noChildUi: true, noSubjectMutation: true },
+      safety: {
+        noWrites: !HERO_SAFETY_FLAGS.writesEnabled,
+        noCoins: !HERO_SAFETY_FLAGS.coinsEnabled,
+        noChildUi: !HERO_SAFETY_FLAGS.childVisible,
+        noSubjectMutation: true,
+      },
       ...(debugReasons.length > 0 ? { reason: debugReasons.join('; ') } : {}),
     },
   };

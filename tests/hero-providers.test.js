@@ -5,7 +5,6 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  getProvider,
   runProvider,
   registeredSubjectIds,
   grammarProvider,
@@ -13,6 +12,7 @@ import {
   spellingProvider,
 } from '../worker/src/hero/providers/index.js';
 
+import { HERO_READY_SUBJECT_IDS } from '../shared/hero/constants.js';
 import { validateTaskEnvelope } from '../shared/hero/task-envelope.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,18 +22,6 @@ function loadFixture(name) {
 }
 
 // ── Provider registry ─────────────────────────────────────────────
-
-test('registry: getProvider returns function for spelling/grammar/punctuation', () => {
-  assert.equal(typeof getProvider('grammar'), 'function');
-  assert.equal(typeof getProvider('punctuation'), 'function');
-  assert.equal(typeof getProvider('spelling'), 'function');
-});
-
-test('registry: getProvider returns null for arithmetic/reasoning/reading', () => {
-  assert.equal(getProvider('arithmetic'), null);
-  assert.equal(getProvider('reasoning'), null);
-  assert.equal(getProvider('reading'), null);
-});
 
 test('registry: runProvider returns null for unregistered subjects', () => {
   assert.equal(runProvider('arithmetic', {}), null);
@@ -46,6 +34,13 @@ test('registry: registeredSubjectIds lists exactly three subjects', () => {
   assert.ok(ids.includes('grammar'));
   assert.ok(ids.includes('punctuation'));
   assert.ok(ids.includes('spelling'));
+});
+
+test('provider registry covers all ready subject IDs', () => {
+  const registered = new Set(registeredSubjectIds());
+  for (const id of HERO_READY_SUBJECT_IDS) {
+    assert.ok(registered.has(id), `ready subject ${id} has no registered provider`);
+  }
 });
 
 // ── Grammar provider ──────────────────────────────────────────────

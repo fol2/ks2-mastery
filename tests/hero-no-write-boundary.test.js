@@ -127,21 +127,12 @@ test('S3: worker/src/hero/ modules do not import dispatch from subject runtime',
 
 // ── Structural test 4: worker/src/hero/ does not use D1 write primitives ─────
 
-test('S4: worker/src/hero/ modules do not use run(), batch(), or bindStatement() from d1.js', () => {
-  const FORBIDDEN_PATTERNS = [
-    // Importing from d1.js
-    /from\s+['"].*d1\.js['"]/,
-    // Using the write primitives directly
-    /\brun\s*\(/,
-    /\bbatch\s*\(/,
-    /\bbindStatement\s*\(/,
-  ];
-
+test('S4: worker/src/hero/ modules do not use .run(), .batch(), or bindStatement() from d1.js', () => {
   for (const filePath of WORKER_HERO_FILES) {
     const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
     const { code } = HERO_SOURCES.get(rel);
 
-    // d1.js import check
+    // d1.js import check — matches `from './d1.js'` or `from '../d1.js'` etc.
     assert.ok(
       !/from\s+['"].*d1\.js['"]/.test(code),
       `${rel} imports from d1.js — Hero code must not use D1 write primitives`,
@@ -153,9 +144,14 @@ test('S4: worker/src/hero/ modules do not use run(), batch(), or bindStatement()
       `${rel} calls bindStatement() — Hero code must not use D1 write primitives`,
     );
 
-    // batch() check — exclude Array.isArray style and similar benign uses.
-    // We specifically look for batch( used as a D1 call, which would be
-    // preceded by a dot or imported standalone.
+    // D1 .run() check — matches `db.prepare(...).run()` and similar
+    // dot-prefixed calls, not bare `run(` which matches benign code.
+    assert.ok(
+      !/\.run\s*\(/.test(code),
+      `${rel} calls .run() — Hero code must not use D1 write primitives`,
+    );
+
+    // D1 .batch() check — dot-prefixed to avoid matching Array helpers.
     assert.ok(
       !/\.batch\s*\(/.test(code),
       `${rel} calls .batch() — Hero code must not use D1 write primitives`,

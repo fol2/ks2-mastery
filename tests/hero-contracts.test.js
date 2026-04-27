@@ -19,8 +19,6 @@ import {
 
 import {
   normaliseQuestShape,
-  normaliseLockedSubject,
-  normaliseEligibleSubject,
 } from '../shared/hero/contracts.js';
 
 import {
@@ -32,7 +30,6 @@ import {
 import {
   buildTaskEnvelope,
   validateTaskEnvelope,
-  stripDebugFields,
 } from '../shared/hero/task-envelope.js';
 
 // ── Constants ──────────────────────────────────────────────────────
@@ -165,18 +162,6 @@ test('normaliseQuestShape does not include response-level safety flags', () => {
   assert.equal(result.coinsEnabled, undefined);
 });
 
-test('normaliseLockedSubject produces valid locked entry', () => {
-  const result = normaliseLockedSubject({ subjectId: 'arithmetic', reason: 'placeholder-engine-not-ready' });
-  assert.equal(result.subjectId, 'arithmetic');
-  assert.equal(result.reason, 'placeholder-engine-not-ready');
-});
-
-test('normaliseLockedSubject defaults missing fields', () => {
-  const result = normaliseLockedSubject({});
-  assert.equal(result.subjectId, '');
-  assert.equal(result.reason, 'unknown');
-});
-
 // ── Seed generator ─────────────────────────────────────────────────
 
 test('generateHeroSeed is deterministic: same inputs produce same seed', () => {
@@ -238,7 +223,7 @@ test('generateHeroSeed: pinned fixture — known inputs produce known seed', () 
     schedulerVersion: 'hero-p0-shadow-v1',
     contentReleaseFingerprint: 'grammar-legacy-reviewed-2026-04-24:punctuation-v1:spelling-v1',
   });
-  assert.equal(seed, seed);
+  assert.equal(seed, 1266714188);
   assert.ok(Number.isFinite(seed));
   assert.ok(seed > 0);
 });
@@ -409,21 +394,6 @@ test('buildTaskEnvelope defaults missing fields safely', () => {
   assert.deepEqual(env.reasonTags, []);
   assert.equal(env.debugReason, '');
   assert.equal(env.heroContext, null);
-});
-
-test('stripDebugFields removes debugReason from envelope', () => {
-  const env = buildTaskEnvelope({
-    subjectId: 'grammar',
-    intent: 'due-review',
-    launcher: 'smart-practice',
-    effortTarget: 6,
-    reasonTags: ['due'],
-    debugReason: 'has due concepts',
-  });
-  const safe = stripDebugFields(env);
-  assert.equal(safe.subjectId, 'grammar');
-  assert.equal(safe.intent, 'due-review');
-  assert.equal(safe.debugReason, undefined);
 });
 
 test('envelope does not contain coin or reward fields', () => {

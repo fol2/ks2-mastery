@@ -89,8 +89,11 @@ export function spellingProvider(readModel) {
 
   const envelopes = [];
 
-  // If post-mega signals are available, emit maintenance envelopes
-  if (postMega && postMegaAvailable) {
+  // If post-mega signals are available AND the learner has actually achieved
+  // mega status, emit maintenance envelopes.  Without the allWordsMega gate
+  // the provider would emit megaLike: true signals for a learner who merely
+  // has the post-mega dashboard unlocked but has not yet secured all words.
+  if (postMega && postMegaAvailable && megaLike) {
     // Post-mega-maintenance: guardian-check for guardian due words
     if (guardianDueCount > 0 || postMega.guardianMissionAvailable) {
       envelopes.push(buildTaskEnvelope({

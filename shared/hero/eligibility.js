@@ -27,7 +27,7 @@ const LOCKED_SUBJECT_SET = new Set(HERO_LOCKED_SUBJECT_IDS);
  * @returns {{ eligible: Array<{subjectId: string, reason: string}>,
  *             locked:   Array<{subjectId: string, reason: string}> }}
  */
-export function resolveEligibility(subjectSnapshots, options) {
+export function resolveEligibility(subjectSnapshots) {
   const snapshots = isPlainObject(subjectSnapshots) ? subjectSnapshots : {};
 
   const eligible = [];

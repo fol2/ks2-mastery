@@ -13,7 +13,7 @@ export function normaliseQuestShape(raw) {
   };
 }
 
-export function normaliseLockedSubject(raw) {
+function normaliseLockedSubject(raw) {
   const entry = isPlainObject(raw) ? raw : {};
   return {
     subjectId: typeof entry.subjectId === 'string' ? entry.subjectId : '',
@@ -21,7 +21,7 @@ export function normaliseLockedSubject(raw) {
   };
 }
 
-export function normaliseEligibleSubject(raw) {
+function normaliseEligibleSubject(raw) {
   const entry = isPlainObject(raw) ? raw : {};
   return {
     subjectId: typeof entry.subjectId === 'string' ? entry.subjectId : '',

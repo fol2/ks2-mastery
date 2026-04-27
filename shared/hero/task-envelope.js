@@ -62,7 +62,7 @@ const CHILD_SAFE_FIELDS = new Set([
   'reasonTags', 'heroContext',
 ]);
 
-export function stripDebugFields(envelope) {
+function stripDebugFields(envelope) {
   if (!isPlainObject(envelope)) return {};
   const result = {};
   for (const key of Object.keys(envelope)) {

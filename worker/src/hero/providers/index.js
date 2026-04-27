@@ -18,7 +18,7 @@ const PROVIDER_MAP = Object.freeze({
  * Look up a provider function for the given subjectId.
  * Returns the provider function or null if no provider is registered.
  */
-export function getProvider(subjectId) {
+function getProvider(subjectId) {
   return PROVIDER_MAP[subjectId] || null;
 }
 

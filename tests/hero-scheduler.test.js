@@ -82,6 +82,11 @@ test('same learner + same date + same version + same fingerprint → same quest 
   // Exact structural equality — deterministic down to the last field.
   assert.deepEqual(quest1, quest2);
 
+  // Pinned cross-version assertions: if the scheduler algorithm changes,
+  // these values will shift — update them intentionally.
+  assert.equal(quest1.questId, 'hero-quest-7043d505');
+  assert.equal(quest1.tasks.length, 3);
+
   // Sanity checks on the pinned output.
   assert.equal(quest1.status, 'shadow');
   assert.equal(quest1.effortTarget, 18);
@@ -136,8 +141,8 @@ test('due-review and retention-after-secure tasks outrank breadth-maintenance', 
   assert.ok(quest.tasks.length >= 2, 'should select at least 2 tasks');
   const firstTwoIntents = quest.tasks.slice(0, 2).map((t) => t.intent);
   assert.ok(
-    firstTwoIntents.includes('due-review') || firstTwoIntents.includes('retention-after-secure'),
-    `first two tasks should include high-weight intents, got: ${JSON.stringify(firstTwoIntents)}`
+    firstTwoIntents.includes('due-review') && firstTwoIntents.includes('retention-after-secure'),
+    `first two tasks should include both due-review AND retention-after-secure, got: ${JSON.stringify(firstTwoIntents)}`
   );
 
   // Breadth should be last if present.
@@ -195,13 +200,13 @@ test('subject effort caps respected when 3 subjects eligible (none exceeds 45%)'
   // Must have tasks from multiple subjects.
   assert.ok(quest.tasks.length >= 3, `should select at least 3 tasks, got ${quest.tasks.length}`);
 
-  // Check that no single subject exceeds 45% of planned effort.
+  // Check that no single subject exceeds 45% of effort target.
   const mix = quest.debug.subjectMix;
   for (const [subjectId, effort] of Object.entries(mix)) {
-    const fraction = effort / quest.effortPlanned;
+    const fraction = effort / quest.effortTarget;
     assert.ok(
       fraction <= 0.46, // small epsilon for rounding
-      `${subjectId} exceeds 45% cap: ${effort}/${quest.effortPlanned} = ${(fraction * 100).toFixed(1)}%`
+      `${subjectId} exceeds 45% cap: ${effort}/${quest.effortTarget} = ${(fraction * 100).toFixed(1)}%`
     );
   }
 });
@@ -232,10 +237,10 @@ test('subject effort caps respected when 2 subjects eligible (none exceeds 60%)'
 
   const mix = quest.debug.subjectMix;
   for (const [subjectId, effort] of Object.entries(mix)) {
-    const fraction = effort / quest.effortPlanned;
+    const fraction = effort / quest.effortTarget;
     assert.ok(
       fraction <= 0.61, // small epsilon for rounding
-      `${subjectId} exceeds 60% cap: ${effort}/${quest.effortPlanned} = ${(fraction * 100).toFixed(1)}%`
+      `${subjectId} exceeds 60% cap: ${effort}/${quest.effortTarget} = ${(fraction * 100).toFixed(1)}%`
     );
   }
 });
