@@ -438,9 +438,6 @@ test('button labels: every statically extractable label is classified', () => {
     'Refresh',
     'Retry refresh',
     'Save learner profile',
-    // P2 U1: admin / ops post-mega diagnostic link — bespoke debug affordance
-    // that opens the Admin Hub post-mega panel. Not a canonical verb.
-    'Why is Guardian locked?',
     // P2 U5: soft-lockout banner "Use this tab anyway" action. Drives the
     // `navigator.locks.request({ steal: true })` path to force ownership
     // when a sibling tab holds the write lock.
@@ -484,6 +481,10 @@ test('button labels: every statically extractable label is classified', () => {
     // filter form (route / kind / date-range / release / reopened).
     'Apply filters',
     'Clear filters',
+    // P2 U3: TopNav admin entry point — visible only to admin/ops platform
+    // roles. Bespoke label: "Admin" is the short navigation affordance, not
+    // a canonical verb.
+    'Admin',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

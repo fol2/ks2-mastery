@@ -1041,6 +1041,40 @@ export function renderSpellingClozeFixture({ sentence, answer = '', revealAnswer
   `);
 }
 
+export function renderTopNavFixture({
+  platformRole = 'parent',
+  currentScreen = 'dashboard',
+  demo = false,
+} = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { TopNav } from ${JSON.stringify(absoluteSpecifier('src/surfaces/shell/TopNav.jsx'))};
+
+    let adminClicked = false;
+    const html = renderToStaticMarkup(
+      <TopNav
+        theme="light"
+        onToggleTheme={() => {}}
+        learners={[{ id: 'learner-a', name: 'Ava', yearGroup: 'Y5' }]}
+        selectedLearnerId="learner-a"
+        learnerLabel="Ava · Y5"
+        signedInAs=${JSON.stringify(demo ? '' : 'user@example.test')}
+        onNavigateHome={() => {}}
+        onSelectLearner={() => {}}
+        onOpenProfileSettings={() => {}}
+        onLogout={() => {}}
+        persistenceMode="local-only"
+        persistenceLabel="Local-only"
+        platformRole={${JSON.stringify(platformRole)}}
+        onOpenAdmin={() => { adminClicked = true; }}
+        currentScreen={${JSON.stringify(currentScreen)}}
+      />
+    );
+    console.log(html);
+  `);
+}
+
 export function renderAppFixture({ route = 'dashboard' } = {}) {
   return renderFixture(`
     import React from 'react';

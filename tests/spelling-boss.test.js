@@ -936,8 +936,16 @@ test('U10 dashboard: Alt+5 hint microcopy present when Boss card is active', () 
   harness.dispatch('open-subject', { subjectId: 'spelling' });
 
   const html = harness.render();
-  // Alt+5 hint mirrors Alt+4 hint ("quick-start Guardian Mission").
-  assert.match(html, /quick-start Boss Dictation/i, 'Alt+5 hint microcopy rendered');
+  // Post-redesign (2026-04-27): the standalone "quick-start Boss Dictation"
+  // hint label was retired together with the begin-row beneath the cards.
+  // The Alt+5 hint now lives inline next to the Boss card's "Begin Boss"
+  // pill — assert the kbd pair is present alongside the Boss card itself.
+  const bossCardRegex = /<div[^>]*data-mode-id="boss-dictation"[\s\S]*?<\/div>\s*<\/div>/;
+  const bossCardMatch = html.match(bossCardRegex);
+  assert.ok(bossCardMatch, 'Boss card markup rendered');
+  const bossCardMarkup = bossCardMatch[0];
+  assert.match(bossCardMarkup, /<kbd>Alt<\/kbd><kbd>5<\/kbd>/, 'Alt+5 inline kbd hint rendered next to Boss card CTA');
+  assert.match(bossCardMarkup, /class="mode-card-post-cta-key"/, 'inline cta-key span wraps the kbd hint');
 });
 
 test('U10 dashboard: dispatch via spelling-shortcut-start mode=boss lands on Boss session (alt+5 wiring)', () => {

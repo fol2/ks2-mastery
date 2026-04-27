@@ -135,7 +135,10 @@ test('previous release reward events cannot reserve current release mastery keys
   assert.deepEqual(repository.state().pealark.mastered, [endmarkEvent.masteryKey]);
 });
 
-test('Apostrophe cluster reaches stage 4 when all published units are secure', () => {
+test('Apostrophe cluster reaches stage 2 when all published units are secure (count-based)', () => {
+  // Under count-based thresholds, Claspin 2/2 maps to stage 2 (threshold[2]=2),
+  // NOT stage 4 (Mega). Only the grand aggregate (quoral) with 14 units can
+  // reach Mega.
   const repository = makeRepository();
   recordPunctuationRewardUnitMastery({
     learnerId: 'learner-a',
@@ -162,11 +165,13 @@ test('Apostrophe cluster reaches stage 4 when all published units are secure', (
     random: () => 0,
   });
 
-  assert.equal(progressForPunctuationMonster(repository.state(), 'claspin', { publishedTotal: 2 }).stage, 4);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'claspin', { publishedTotal: 2 }).stage, 2);
 });
 
-test('Curlune reaches stage 4 when all published comma_flow + structure units are secure', () => {
+test('Curlune reaches stage 3 when all published comma_flow + structure units are secure (count-based)', () => {
   // Phase 2 roster: Curlune covers comma_flow (3) + structure (4) = 7 units.
+  // Under count-based thresholds, 7 mastered maps to stage 3 (threshold[3]=4,
+  // 7 >= 4 but 7 < threshold[4]=14). Only the grand aggregate can reach Mega.
   const repository = makeRepository();
   const curluneUnits = [
     ['comma_flow', 'list-commas-core'],
@@ -192,11 +197,13 @@ test('Curlune reaches stage 4 when all published comma_flow + structure units ar
     });
   }
 
-  assert.equal(progressForPunctuationMonster(repository.state(), 'curlune', { publishedTotal: 7 }).stage, 4);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'curlune', { publishedTotal: 7 }).stage, 3);
 });
 
-test('Pealark reaches stage 4 when all published endmarks + speech + boundary units are secure', () => {
+test('Pealark reaches stage 3 when all published endmarks + speech + boundary units are secure (count-based)', () => {
   // Phase 2 roster: Pealark covers endmarks (1) + speech (1) + boundary (3) = 5 units.
+  // Under count-based thresholds, 5 mastered maps to stage 3 (threshold[3]=4,
+  // 5 >= 4 but 5 < threshold[4]=14). Only the grand aggregate can reach Mega.
   const repository = makeRepository();
   const pealarkUnits = [
     ['endmarks', 'sentence-endings-core'],
@@ -220,7 +227,7 @@ test('Pealark reaches stage 4 when all published endmarks + speech + boundary un
     });
   }
 
-  assert.equal(progressForPunctuationMonster(repository.state(), 'pealark', { publishedTotal: 5 }).stage, 4);
+  assert.equal(progressForPunctuationMonster(repository.state(), 'pealark', { publishedTotal: 5 }).stage, 3);
 });
 
 test('published-release aggregate reaches stage 4 only for current published denominator', () => {
