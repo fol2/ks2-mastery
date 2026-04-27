@@ -3,10 +3,12 @@ import { formatTimestamp, isBlocked } from './hub-utils.js';
 import { MonsterVisualConfigPanel } from './MonsterVisualConfigPanel.jsx';
 import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
 import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confidence.js';
+import { buildAssetRegistry } from '../../platform/hubs/admin-asset-registry.js';
 
 // U4+U5: Content section — content release, import validation, post-mega
 // spelling debug, seed harness, grammar confidence, grammar writing try,
 // and monster visual config. Extracted from AdminHubSurface.jsx.
+// U10 (P3): Asset & Effect Registry card added above the raw config panel.
 
 function ContentReleaseAndImport({ model, accessContext, actions }) {
   return (
@@ -361,6 +363,203 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
   );
 }
 
+// U10 (P3): Registry-shaped card for a single asset entry. Renders status
+// badges, version indicators, validation state, and action buttons that
+// delegate to existing mutation dispatch keys. Designed so multiple cards
+// can be stacked when future asset categories are added.
+function AssetRegistryCard({ entry, model, actions }) {
+  if (!entry) return null;
+
+  const publishedLabel = entry.publishedVersion > 0
+    ? `v${entry.publishedVersion}`
+    : 'First publish pending';
+  const publishedAtLabel = entry.lastPublishedAt > 0
+    ? formatTimestamp(entry.lastPublishedAt)
+    : null;
+  const hashLabel = entry.manifestHash
+    ? entry.manifestHash.slice(0, 12)
+    : null;
+
+  const statusChipClass = entry.reviewStatus === 'publishable'
+    ? 'good'
+    : entry.reviewStatus === 'has-blockers'
+      ? 'bad'
+      : '';
+  const statusChipLabel = entry.reviewStatus === 'publishable'
+    ? 'Publishable'
+    : entry.reviewStatus === 'has-blockers'
+      ? `${entry.validationState.errorCount} blocker${entry.validationState.errorCount === 1 ? '' : 's'}`
+      : 'Unknown';
+
+  const visual = model?.monsterVisualConfig || {};
+  const status = visual?.status || {};
+
+  return (
+    <article
+      className="card"
+      data-panel="asset-registry-card"
+      data-asset-id={entry.assetId}
+      style={{ marginBottom: 20 }}
+    >
+      <div className="card-header">
+        <div>
+          <div className="eyebrow">Asset registry · {entry.category}</div>
+          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>{entry.displayName}</h3>
+          <div className="chip-row" style={{ marginTop: 12 }}>
+            <span className="chip" data-testid="registry-published-version">
+              Published: {publishedLabel}
+            </span>
+            <span className="chip" data-testid="registry-draft-version">
+              Draft: rev {String(entry.draftVersion)}
+            </span>
+            <span className={`chip ${statusChipClass}`} data-testid="registry-review-status">
+              {statusChipLabel}
+            </span>
+            {entry.canManage
+              ? <span className="chip good">Admin edit</span>
+              : <span className="chip warn">Read-only</span>}
+          </div>
+        </div>
+        <div className="actions" style={{ justifyContent: 'flex-end' }}>
+          <button
+            className="btn primary"
+            type="button"
+            disabled={!entry.canManage || !entry.hasDraft}
+            data-action="registry-save-draft"
+            onClick={() => actions.dispatch('monster-visual-config-save', {
+              draft: visual.draft,
+              expectedDraftRevision: status.draftRevision,
+            })}
+          >
+            Save draft
+          </button>
+          <button
+            className="btn good"
+            type="button"
+            disabled={!entry.canManage || !entry.validationState.ok || !entry.hasDraft}
+            data-action="registry-publish"
+            onClick={() => actions.dispatch('monster-visual-config-publish', {
+              expectedDraftRevision: status.draftRevision,
+            })}
+          >
+            Publish
+          </button>
+          <select
+            className="select"
+            disabled={!entry.canManage || !entry.versions.length}
+            data-action="registry-restore"
+            onChange={(event) => {
+              const version = Number(event.target.value) || 0;
+              if (!version) return;
+              actions.dispatch('monster-visual-config-restore', {
+                version,
+                expectedDraftRevision: status.draftRevision,
+              });
+              event.target.value = '';
+            }}
+            defaultValue=""
+            aria-label="Restore version"
+          >
+            <option value="">Restore version</option>
+            {entry.versions.map((version) => (
+              <option value={version.version} key={version.version}>
+                Version {version.version} - {formatTimestamp(version.publishedAt)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <dl className="registry-detail-grid" data-testid="registry-details">
+          <div className="registry-detail-row">
+            <dt className="small muted">Category</dt>
+            <dd>{entry.category}</dd>
+          </div>
+          <div className="registry-detail-row">
+            <dt className="small muted">Published version</dt>
+            <dd data-testid="registry-published-value">{publishedLabel}</dd>
+          </div>
+          <div className="registry-detail-row">
+            <dt className="small muted">Draft revision</dt>
+            <dd>{String(entry.draftVersion)}</dd>
+          </div>
+          {hashLabel ? (
+            <div className="registry-detail-row">
+              <dt className="small muted">Manifest hash</dt>
+              <dd data-testid="registry-manifest-hash">
+                <code className="small">{hashLabel}</code>
+              </dd>
+            </div>
+          ) : null}
+          {publishedAtLabel ? (
+            <div className="registry-detail-row">
+              <dt className="small muted">Last published</dt>
+              <dd data-testid="registry-published-at">{publishedAtLabel}</dd>
+            </div>
+          ) : null}
+          {entry.lastPublishedBy ? (
+            <div className="registry-detail-row">
+              <dt className="small muted">Published by</dt>
+              <dd data-testid="registry-published-by">{entry.lastPublishedBy}</dd>
+            </div>
+          ) : null}
+        </dl>
+      </div>
+
+      {!entry.validationState.ok && entry.validationState.errorCount > 0 ? (
+        <div className="feedback bad" style={{ marginTop: 16 }} data-testid="registry-validation-errors">
+          <strong>Validation blockers ({String(entry.validationState.errorCount)})</strong>
+          {entry.validationState.warningCount > 0 ? (
+            <span className="small muted" style={{ marginLeft: 8 }}>
+              + {String(entry.validationState.warningCount)} warning{entry.validationState.warningCount === 1 ? '' : 's'}
+            </span>
+          ) : null}
+          {entry.validationState.errors.length > 0 ? (
+            <details style={{ marginTop: 8 }}>
+              <summary className="small">Show blockers</summary>
+              <ul className="small muted" style={{ marginTop: 6, paddingLeft: 18 }}>
+                {entry.validationState.errors.slice(0, 5).map((issue, idx) => (
+                  <li key={idx}>
+                    {[issue.assetKey, issue.context, issue.field, issue.code].filter(Boolean).join(' / ') || issue.message || 'Validation error'}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </div>
+      ) : null}
+
+      {!entry.hasDraft && !entry.hasPublished ? (
+        <div className="feedback warn" style={{ marginTop: 16 }} data-testid="registry-empty-state">
+          No configuration has been initialised for this asset. Create a draft to get started.
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+// U10 (P3): Container that renders registry cards for all registered
+// asset entries. Currently one (monster-visual-config); future categories
+// extend by adding entries to `buildAssetRegistry`.
+function AssetRegistrySection({ model, actions }) {
+  const registry = React.useMemo(() => buildAssetRegistry(model), [model]);
+  if (!registry.length) return null;
+  return (
+    <section data-panel="asset-registry" style={{ marginBottom: 20 }}>
+      <div className="eyebrow" style={{ marginBottom: 12 }}>Asset &amp; Effect Registry</div>
+      {registry.map((entry) => (
+        <AssetRegistryCard
+          key={entry.assetId}
+          entry={entry}
+          model={model}
+          actions={actions}
+        />
+      ))}
+    </section>
+  );
+}
+
 export function AdminContentSection({ model, appState, accessContext, actions }) {
   const selectedDiagnostics = model.learnerSupport?.selectedDiagnostics || null;
   const selectedLearnerId = model.learnerSupport?.selectedLearnerId || selectedDiagnostics?.learnerId || '';
@@ -377,6 +576,7 @@ export function AdminContentSection({ model, appState, accessContext, actions })
         transfer={selectedDiagnostics?.grammarTransferAdmin || null}
         actions={actions}
       />
+      <AssetRegistrySection model={model} actions={actions} />
       <MonsterVisualConfigPanel model={model} accountId={model.account?.id || ''} actions={actions} />
     </>
   );
