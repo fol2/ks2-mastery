@@ -589,8 +589,10 @@ const CAPACITY_RELEVANT_PATH_PATTERNS = [
   /^\/api\/bootstrap$/,
   /^\/api\/subjects\/[^/]+\/command$/,
   /^\/api\/hero\/command$/,
+  /^\/api\/hero\/read-model$/,
   /^\/api\/hubs\/parent(\/.*)?$/,
   /^\/api\/classroom(\/.*)?$/,
+  /^\/api\/admin(\/.*)?$/,
 ];
 
 function isCapacityRelevantPath(pathname) {
