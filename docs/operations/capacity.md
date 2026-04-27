@@ -186,7 +186,9 @@ Certification-tier runs (learners >= 20) MUST be invoked with a pinned threshold
 
 | Date | Commit | Env | Plan | Learners | Burst | Rounds | P95 Bootstrap | P95 Command | Max Bytes | 5xx | Signals | Decision | Evidence |
 | --- | --- | --- | --- | --: | --: | --: | --: | --: | --: | --: | --- | --- | --- |
-| _pending first run_ | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| 2026-04-27 | cbf39ec | production | small-pilot | 30 | 20 | 1 | 878.5 | 310.5 | 18578 | 0 | none | small-pilot-provisional | [json](reports/capacity/snapshots/2026-04-27-30-learner-production.json) |
+
+> **Tier-claim note (P3 U2, 2026-04-27).** This first dated run was launched with the `30-learner-beta-certified` release-gate command (`--learners 30 --bootstrap-burst 20`, full release-gate threshold set: `max5xx=0`, `maxBootstrapP95Ms=1000`, `maxCommandP95Ms=750`, `maxResponseBytes=600000`, `requireZeroSignals`). Every threshold passed at the higher tier's bar. The recorded `Decision` is the lower `small-pilot-provisional` tier because the load-driver still emits `evidenceSchemaVersion: 1` — `reports/capacity/configs/30-learner-beta.json` declares `minEvidenceSchemaVersion: 2`, which `verify-capacity-evidence.mjs` enforces. Promoting the row to `30-learner-beta-certified` requires the load-driver to capture `meta.capacity` U3 telemetry into the evidence (`queryCount`, `d1RowsRead`, per-endpoint capacity metrics) and bump the constant in `scripts/lib/capacity-evidence.mjs`. Tracked as a follow-up to this PR; the run itself does not need to be repeated.
 
 When adding a row:
 

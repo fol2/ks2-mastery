@@ -497,11 +497,22 @@ function compareConfigAgainstEvidence(absoluteConfigPath, payload, rowDecision) 
   const configThresholds = config.thresholds || {};
   const evidenceThresholds = payload.thresholds || {};
 
+  // `classroom-load-test.mjs` merges the per-key threshold map (U1 shape) with
+  // legacy PR #177 block-level summary keys (`configured`, `violations`,
+  // `limits`) into the same `thresholds` object so two test harnesses can
+  // probe their distinct shapes off one report. Strip those summary keys from
+  // the cross-check so verify does not flag them as "evidence has threshold X
+  // not in config".
+  const LEGACY_THRESHOLD_SUMMARY_KEYS = new Set(['configured', 'violations', 'limits']);
+
   // Union of keys: iterate BOTH directions so a threshold that appears on
   // one side but not the other is caught. A PR that deletes a key from the
   // committed config while the evidence still references it (or vice versa)
   // indicates config/evidence drift.
-  const allKeys = new Set([...Object.keys(configThresholds), ...Object.keys(evidenceThresholds)]);
+  const allKeys = new Set([
+    ...Object.keys(configThresholds).filter((key) => !LEGACY_THRESHOLD_SUMMARY_KEYS.has(key)),
+    ...Object.keys(evidenceThresholds).filter((key) => !LEGACY_THRESHOLD_SUMMARY_KEYS.has(key)),
+  ]);
   for (const key of allKeys) {
     const configValue = configThresholds[key];
     const evidenceEntry = evidenceThresholds[key];
