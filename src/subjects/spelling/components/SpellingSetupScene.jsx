@@ -1035,30 +1035,53 @@ function PostMegaSetupContent({
   );
 }
 
-/* The Workshop — secondary surface that keeps the legacy practice modes
- * (Smart Review / Trouble Drill / SATs Test) available to a graduated
- * learner without competing with the primary post-Mega cards.
+/* The Workshop — floating upper-right toggle on the post-Mega hero card.
  *
- * Design intent:
- *  - Place metaphor matches the rest of the post-Mega vocabulary (Word
- *    Vault, Codex, Meadow). "The Workshop" reads as a tool shed kids
- *    return to by choice, not a demoted classics rack.
- *  - Default-collapsed so the post-Mega hierarchy stays loud. The header
- *    is the discovery affordance; the chevron telegraphs that more lives
- *    underneath.
- *  - Cards are list-row (not hero) — they share the post-Mega palette but
- *    sit on aged-paper tone so the eye reads them as secondary at a glance.
- *  - Click dispatches `spelling-shortcut-start` (same payload as Alt+1/2/3)
- *    so the underlying entry-point code path stays unchanged. Whatever
- *    prefs.roundLength / yearFilter the learner last used is honoured by
- *    the existing handler.
- *  - The Alt+1/2/3 hint sits at the bottom as a reward for kids who notice
- *    keyboard shortcuts; it is aria-hidden (decorative) so a screen reader
- *    user just hears the cards. */
+ * Design intent (revised after first ship):
+ *  - The original below-the-fold section was clipped by the hero card's
+ *    `min-height: 610px; overflow: hidden;` envelope. Moving the toggle
+ *    into the upper-right clear zone keeps the affordance discoverable
+ *    without growing the card. The popover floats above the layout, so
+ *    nothing else moves.
+ *  - Place metaphor still matches the post-Mega vocabulary (Word Vault,
+ *    Codex, Meadow). "The Workshop" reads as a small tool shed in the
+ *    corner of the hero, not a demoted classics rack.
+ *  - The chip is a quiet pill with paper-translucent backdrop blur. The
+ *    chevron telegraphs the open/closed state; rotating it on toggle is
+ *    the only animation the chip itself needs.
+ *  - Popover anchors to the chip's bottom edge, ~320px wide, with three
+ *    list-row cards. Clicking a card dispatches the same
+ *    `spelling-shortcut-start` payload that Alt+1/2/3 use, so the engine
+ *    path is byte-identical and Mega never drops.
+ *  - Auto-dismiss on outside click + Esc keeps the popover from competing
+ *    with the rest of the hero. Selecting a card also closes the popover
+ *    before the session navigation kicks in. */
 function WorkshopSection({ prefs, actions, startDisabled, runtimeReadOnly }) {
   const [open, setOpen] = React.useState(false);
+  const sectionRef = React.useRef(null);
   const disabled = Boolean(startDisabled || runtimeReadOnly);
-  const sectionId = 'spelling-workshop-body';
+  const popoverId = 'spelling-workshop-popover';
+
+  React.useEffect(() => {
+    if (!open || typeof document === 'undefined') return undefined;
+    function handlePointerDown(event) {
+      const root = sectionRef.current;
+      if (!root || root.contains(event.target)) return;
+      setOpen(false);
+    }
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
 
   function handleCardClick(event, modeId) {
     if (disabled) {
@@ -1066,78 +1089,63 @@ function WorkshopSection({ prefs, actions, startDisabled, runtimeReadOnly }) {
       event?.stopPropagation?.();
       return;
     }
+    setOpen(false);
     renderAction(actions, event, 'spelling-shortcut-start', { mode: modeId });
   }
 
   return (
-    <section
+    <div
+      ref={sectionRef}
       className={`workshop-section${open ? ' is-open' : ''}`}
       data-test-id="spelling-workshop"
       data-state={open ? 'open' : 'closed'}
     >
       <button
         type="button"
-        className="workshop-toggle"
+        className="workshop-chip"
         aria-expanded={open}
-        aria-controls={sectionId}
+        aria-haspopup="true"
+        aria-controls={popoverId}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="workshop-toggle-label">
-          <span className="workshop-eyebrow">Optional · your earlier modes</span>
-          <span className="workshop-title">The Workshop</span>
-        </span>
-        <span className="workshop-toggle-meta">
-          <span className="workshop-toggle-hint">
-            {open ? 'Tuck away' : 'Open the Workshop'}
-          </span>
-          <span className="workshop-chevron" aria-hidden="true" />
-        </span>
+        <span className="workshop-chip-label">Workshop</span>
+        <span className="workshop-chip-chevron" aria-hidden="true" />
       </button>
       <div
-        id={sectionId}
-        className="workshop-body"
+        id={popoverId}
+        className="workshop-popover"
         role="region"
         aria-label="The Workshop — earlier practice modes"
+        data-mode-current={prefs?.mode || ''}
         hidden={!open}
       >
-        <p className="workshop-lede">
-          Your toolbox from before graduation — keep them sharp whenever you fancy a
-          familiar drill. Mega never drops.
-        </p>
-        <ul className="workshop-row" data-mode-current={prefs?.mode || ''}>
+        <p className="workshop-popover-eyebrow">Earlier modes · keep them sharp</p>
+        <ul className="workshop-popover-list">
           {MODE_CARDS.map((mode) => (
             <li key={mode.id}>
               <button
                 type="button"
-                className="workshop-card"
+                className="workshop-popover-card"
                 data-action="spelling-shortcut-start"
                 data-mode={mode.id}
                 data-test-id={`workshop-card-${mode.id}`}
                 disabled={disabled}
                 onClick={(event) => handleCardClick(event, mode.id)}
               >
-                <span className="workshop-card-head">
-                  <span className="workshop-card-title">{mode.title}</span>
-                  <span className="workshop-card-arrow" aria-hidden="true">
-                    <ArrowRightIcon />
-                  </span>
-                </span>
-                <span className="workshop-card-desc">{mode.desc}</span>
+                <span className="workshop-popover-card-title">{mode.title}</span>
+                <span className="workshop-popover-card-desc">{mode.desc}</span>
               </button>
             </li>
           ))}
         </ul>
-        <p className="workshop-hint" aria-hidden="true">
-          <span className="workshop-hint-prefix">Quick keys</span>
+        <p className="workshop-popover-hint" aria-hidden="true">
+          <span className="workshop-popover-hint-prefix">Quick keys</span>
           <kbd>Alt</kbd>
-          <span className="workshop-hint-join">+</span>
           <kbd>1</kbd>
-          <span className="workshop-hint-join">·</span>
           <kbd>2</kbd>
-          <span className="workshop-hint-join">·</span>
           <kbd>3</kbd>
         </p>
       </div>
-    </section>
+    </div>
   );
 }

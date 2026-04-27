@@ -472,16 +472,18 @@ test('U3 edge case: Guardian summary with zero mistakes does not render the Prac
   assert.doesNotMatch(html, /summary-drill-chips/, 'zero-mistake Guardian summary must not render the drill chips container');
 });
 
-// ----- The Workshop — secondary surface on the post-Mega setup scene ----------
+// ----- The Workshop — floating upper-right toggle on the post-Mega scene ----
 //
 // Lets a graduated learner reach the legacy practice modes (Smart Review /
-// Trouble Drill / SATs Test) without exiting the post-Mega dashboard. Default
-// collapsed; click-to-expand; cards dispatch `spelling-shortcut-start` with
-// the legacy mode payload so the entry-point parity with Alt+1/2/3 stays
-// byte-identical. Mega never drops because the underlying handler is
-// unchanged.
+// Trouble Drill / SATs Test) without exiting the post-Mega dashboard. The
+// chip lives in the hero card's upper-right clear zone (top:24, right:28)
+// so it does not push siblings or overflow the card's `min-height: 610px`
+// envelope. Popover anchors to the chip's bottom-right corner and is
+// hidden via the HTML `hidden` attribute until the chip is clicked. Cards
+// dispatch `spelling-shortcut-start` with the legacy mode payload so the
+// entry-point parity with Alt+1/2/3 stays byte-identical. Mega never drops.
 
-test('Workshop section renders on the post-Mega setup scene, default-collapsed', async () => {
+test('Workshop chip renders on the post-Mega setup scene, default-closed', async () => {
   const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
   const html = await renderSpellingSurfaceFixture({
     phase: 'setup',
@@ -500,29 +502,29 @@ test('Workshop section renders on the post-Mega setup scene, default-collapsed',
     },
   });
 
-  // Section + toggle render alongside the post-Mega dashboard.
+  // Section + chip render alongside the post-Mega dashboard.
   assert.match(html, /data-test-id="spelling-workshop"/);
-  assert.match(html, /class="workshop-toggle"[^>]*aria-expanded="false"/);
+  assert.match(html, /class="workshop-chip"[^>]*aria-expanded="false"/);
   assert.match(html, /data-state="closed"/);
-  // Place metaphor + eyebrow microcopy survive the render.
-  assert.match(html, /The Workshop/);
-  assert.match(html, /Optional · your earlier modes/);
-  // Body is hidden on first render — the cards exist in the DOM but the
-  // `hidden` attribute keeps them out of the accessibility tree until the
-  // learner expands the section.
-  assert.match(html, /id="spelling-workshop-body"[^>]*hidden/);
+  assert.match(html, /aria-haspopup="true"/);
+  // Place metaphor (paper aesthetic place vocabulary) survives the render.
+  assert.match(html, />Workshop</);
+  // Popover is hidden on first render — markup exists in the DOM but the
+  // `hidden` attribute keeps it out of the accessibility tree until the
+  // learner clicks the chip.
+  assert.match(html, /id="spelling-workshop-popover"[^>]*hidden/);
 });
 
-test('Workshop section is absent when the legacy dashboard renders (allWordsMega=false)', async () => {
+test('Workshop chip is absent when the legacy dashboard renders (allWordsMega=false)', async () => {
   // Pre-Mega learner: setup scene renders the legacy 3-mode row directly. The
   // Workshop is post-Mega-only — surfacing it on the legacy view would
   // duplicate the same three cards twice on the same page.
   const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
   assert.doesNotMatch(html, /data-test-id="spelling-workshop"/);
-  assert.doesNotMatch(html, /class="workshop-toggle"/);
+  assert.doesNotMatch(html, /class="workshop-chip"/);
 });
 
-test('Workshop section card markup wires Smart / Trouble / Test through spelling-shortcut-start', async () => {
+test('Workshop popover wires Smart / Trouble / Test through spelling-shortcut-start', async () => {
   const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
   const html = await renderSpellingSurfaceFixture({
     phase: 'setup',
@@ -541,20 +543,20 @@ test('Workshop section card markup wires Smart / Trouble / Test through spelling
     },
   });
 
-  // All three legacy modes get a card inside the Workshop body, each wired
+  // All three legacy modes get a list-row inside the popover, each wired
   // through the same `spelling-shortcut-start` action that Alt+1/2/3 use.
   // React's renderer does not preserve a stable JSX-prop attribute order, so
   // assert each attribute independently rather than as a single ordered run.
   for (const modeId of ['smart', 'trouble', 'test']) {
     const cardRegex = new RegExp(`<button[^>]*data-test-id="workshop-card-${modeId}"[^>]*>`);
     const match = html.match(cardRegex);
-    assert.ok(match, `Workshop card for mode "${modeId}" should render`);
+    assert.ok(match, `Workshop popover card for mode "${modeId}" should render`);
     const cardOpenTag = match[0];
     assert.match(cardOpenTag, /data-action="spelling-shortcut-start"/);
     assert.match(cardOpenTag, new RegExp(`data-mode="${modeId}"`));
   }
-  // The Alt+1/2/3 quick-key hint sits at the bottom of the body so kids can
-  // discover the keyboard parity without pressing the button.
+  // The Alt+1/2/3 quick-key hint sits at the foot of the popover so kids
+  // can discover the keyboard parity without pressing the button.
   assert.match(html, /<kbd>Alt<\/kbd>/);
   assert.match(html, /<kbd>1<\/kbd>/);
   assert.match(html, /<kbd>2<\/kbd>/);
