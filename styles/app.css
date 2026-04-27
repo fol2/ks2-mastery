@@ -11199,3 +11199,395 @@ html { scroll-behavior: smooth; }
   font-size: 1.2rem;
 }
 
+/* U6 (P4): inline-style debt ratchet — second migration slice.
+   Follows the SH2-U8 pattern: scoped classes that 1-to-1 replace a static
+   `style={...}` inline. Values are byte-identical to the former inline so
+   visual baselines stay green. See docs/hardening/csp-inline-style-inventory.md
+   for the contract. */
+
+/* -- shared admin panel patterns ------------------------------------------ */
+
+.admin-card-spaced {
+  margin-bottom: 20px;
+}
+
+.admin-section-title {
+  font-size: 1.2rem;
+}
+
+.admin-chip-row-spaced {
+  margin-top: 14px;
+}
+
+.admin-chip-row-gap {
+  margin-top: 8px;
+}
+
+.admin-meta-spaced {
+  margin-top: 12px;
+}
+
+.admin-actions-spaced {
+  margin-top: 16px;
+}
+
+.admin-note-spaced {
+  margin-top: 6px;
+}
+
+.admin-detail-spaced {
+  margin-top: 8px;
+}
+
+.admin-feedback-error-spaced {
+  margin-bottom: 14px;
+}
+
+.admin-filters-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.admin-filter-actions {
+  margin-top: 8px;
+}
+
+.admin-field-status {
+  min-width: 150px;
+}
+
+.admin-field-md {
+  min-width: 140px;
+}
+
+.admin-field-lg {
+  min-width: 160px;
+}
+
+.admin-field-xl {
+  min-width: 200px;
+}
+
+.admin-field-select {
+  min-width: 220px;
+}
+
+.admin-field-self-end {
+  align-self: end;
+}
+
+/* -- admin overview table ------------------------------------------------- */
+
+.admin-overview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-overview-thead-row {
+  border-bottom: 2px solid var(--border, #e0e0e0);
+  text-align: left;
+}
+
+.admin-overview-th {
+  padding: 8px 12px;
+  font-weight: 700;
+}
+
+.admin-overview-th-first {
+  padding: 8px 12px 8px 0;
+  font-weight: 700;
+}
+
+.admin-overview-th-right {
+  padding: 8px 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.admin-overview-tbody-row {
+  border-bottom: 1px solid var(--border, #e8e8e8);
+}
+
+.admin-overview-tbody-row[data-subject-status="placeholder"] {
+  opacity: 0.6;
+}
+
+.admin-overview-tbody-row[data-clickable="true"] {
+  cursor: pointer;
+}
+
+.admin-overview-td {
+  padding: 10px 12px;
+}
+
+.admin-overview-td-first {
+  padding: 10px 12px 10px 0;
+  font-weight: 600;
+}
+
+.admin-overview-td-right {
+  padding: 10px 12px;
+  text-align: right;
+}
+
+/* -- admin overview small spacers ----------------------------------------- */
+
+.admin-overview-desc {
+  margin-bottom: 14px;
+}
+
+/* -- admin panel content gaps --------------------------------------------- */
+
+.admin-validation-details {
+  margin-top: 12px;
+}
+
+.admin-validation-list {
+  margin-top: 10px;
+}
+
+.admin-validation-issues-list {
+  margin-top: 6px;
+  padding-left: 18px;
+}
+
+.admin-detail-dl {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  row-gap: 4px;
+}
+
+.admin-detail-dd-mono {
+  font-family: monospace;
+}
+
+.admin-detail-dd-break {
+  word-break: break-all;
+}
+
+.admin-detail-summary-cursor {
+  cursor: pointer;
+}
+
+.admin-detail-gridcol-full {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+
+/* -- debug bundle panel --------------------------------------------------- */
+
+.admin-bundle-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+
+.admin-bundle-th {
+  text-align: left;
+  padding: 2px 6px;
+}
+
+.admin-bundle-td {
+  padding: 2px 6px;
+}
+
+.admin-bundle-td-mono {
+  padding: 2px 6px;
+  font-family: monospace;
+}
+
+.admin-bundle-result-spaced {
+  margin-top: 12px;
+}
+
+.admin-bundle-meta {
+  margin-bottom: 8px;
+}
+
+.admin-bundle-section-details {
+  margin-bottom: 8px;
+}
+
+.admin-bundle-section-summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admin-bundle-section-body {
+  padding: 4px 0 4px 12px;
+}
+
+.admin-bundle-account-dl {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  row-gap: 2px;
+}
+
+.admin-bundle-error-spaced {
+  margin-top: 10px;
+}
+
+.admin-bundle-empty {
+  margin-top: 10px;
+}
+
+.admin-bundle-gen-actions {
+  margin-top: 10px;
+}
+
+/* -- occurrence timeline -------------------------------------------------- */
+
+.admin-occurrence-spaced {
+  margin-top: 12px;
+}
+
+.admin-occurrence-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-occurrence-table {
+  margin-top: 6px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* -- learner support / diagnostics ---------------------------------------- */
+
+.admin-callout-spaced {
+  margin-top: 16px;
+}
+
+.admin-callout-detail {
+  margin-top: 8px;
+}
+
+/* -- account section patterns --------------------------------------------- */
+
+.admin-account-detail-meta {
+  margin-bottom: 8px;
+}
+
+.admin-account-ops-meta-wrap {
+  margin-bottom: 12px;
+}
+
+.admin-account-ops-notes {
+  margin-top: 4px;
+}
+
+.admin-account-learners-eyebrow {
+  margin-top: 8px;
+}
+
+.admin-account-errors-eyebrow {
+  margin-top: 12px;
+}
+
+.admin-account-search-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.admin-account-search-input {
+  flex: 1 1 200px;
+  min-width: 200px;
+}
+
+.admin-account-search-select {
+  min-width: 120px;
+}
+
+.admin-account-search-feedback {
+  margin-bottom: 8px;
+}
+
+.admin-conflict-banner-col {
+  grid-column: 1 / -1;
+  margin-bottom: 8px;
+}
+
+.admin-conflict-diff-list {
+  margin: 6px 0 8px 16px;
+}
+
+.admin-conflict-no-diff {
+  margin: 6px 0 8px;
+}
+
+.admin-conflict-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-account-updated {
+  margin-top: 4px;
+}
+
+.admin-audit-callout-spaced {
+  margin-top: 12px;
+}
+
+/* -- writing try admin ---------------------------------------------------- */
+
+.admin-writing-try-section {
+  margin-top: 16px;
+}
+
+.admin-writing-try-heading {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.admin-writing-try-archive-section {
+  margin-top: 20px;
+}
+
+.admin-writing-try-archive-list {
+  margin-top: 12px;
+}
+
+.admin-writing-try-archive-empty {
+  margin-top: 12px;
+}
+
+/* -- asset registry card -------------------------------------------------- */
+
+.admin-registry-card-body {
+  margin-top: 16px;
+}
+
+.admin-registry-actions-end {
+  justify-content: flex-end;
+}
+
+.admin-registry-validation-feedback {
+  margin-top: 16px;
+}
+
+.admin-registry-validation-warning-label {
+  margin-left: 8px;
+}
+
+.admin-registry-validation-details {
+  margin-top: 8px;
+}
+
+.admin-registry-empty-state {
+  margin-top: 16px;
+}
+
+.admin-registry-section {
+  margin-bottom: 20px;
+}
+
+.admin-registry-section-eyebrow {
+  margin-bottom: 12px;
+}
+

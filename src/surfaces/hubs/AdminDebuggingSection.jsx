@@ -24,8 +24,8 @@ function OccurrenceTimeline({ eventId, occurrences, loading, onLoad, canViewAcco
   const rows = Array.isArray(occurrences) ? occurrences : [];
   const loaded = rows.length > 0 || loading === false;
   return (
-    <div data-testid={`occurrence-timeline-${eventId}`} style={{ marginTop: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div data-testid={`occurrence-timeline-${eventId}`} className="admin-occurrence-spaced">
+      <div className="admin-occurrence-header">
         <strong className="small">Occurrence timeline</strong>
         {!loaded && typeof onLoad === 'function' ? (
           <button
@@ -40,22 +40,22 @@ function OccurrenceTimeline({ eventId, occurrences, loading, onLoad, canViewAcco
         ) : null}
       </div>
       {rows.length > 0 ? (
-        <table className="small" style={{ marginTop: 6, width: '100%', borderCollapse: 'collapse' }} data-testid={`occurrence-table-${eventId}`}>
+        <table className="small admin-occurrence-table" data-testid={`occurrence-table-${eventId}`}>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', padding: '2px 6px' }}>When</th>
-              <th style={{ textAlign: 'left', padding: '2px 6px' }}>Release</th>
-              <th style={{ textAlign: 'left', padding: '2px 6px' }}>Route</th>
-              {canViewAccount ? <th style={{ textAlign: 'left', padding: '2px 6px' }}>Account</th> : null}
+              <th className="admin-bundle-th">When</th>
+              <th className="admin-bundle-th">Release</th>
+              <th className="admin-bundle-th">Route</th>
+              {canViewAccount ? <th className="admin-bundle-th">Account</th> : null}
             </tr>
           </thead>
           <tbody>
             {rows.map((occ) => (
               <tr key={occ.id || occ.occurredAt} data-testid={`occurrence-row-${occ.id}`}>
-                <td className="muted" style={{ padding: '2px 6px' }}>{formatOccurrenceTimestamp(occ.occurredAt)}</td>
-                <td style={{ padding: '2px 6px', fontFamily: 'monospace' }}>{occ.release ? String(occ.release).slice(0, 7) : '—'}</td>
-                <td className="muted" style={{ padding: '2px 6px' }}>{occ.routeName || '—'}</td>
-                {canViewAccount ? <td className="muted" style={{ padding: '2px 6px' }}>{occ.accountId || 'anon'}</td> : null}
+                <td className="muted admin-bundle-td">{formatOccurrenceTimestamp(occ.occurredAt)}</td>
+                <td className="admin-bundle-td-mono">{occ.release ? String(occ.release).slice(0, 7) : '—'}</td>
+                <td className="muted admin-bundle-td">{occ.routeName || '—'}</td>
+                {canViewAccount ? <td className="muted admin-bundle-td">{occ.accountId || 'anon'}</td> : null}
               </tr>
             ))}
           </tbody>
@@ -84,15 +84,14 @@ function ErrorEventDetailsDrawer({ entry, canViewAccount, onLoadOccurrences }) {
     ? ` · fixed in ${String(entry.resolvedInRelease).slice(0, 7)}`
     : '';
   return (
-    <details data-testid={`error-event-drawer-${entry.id}`} style={{ gridColumn: '1 / -1', marginTop: 8 }}>
+    <details data-testid={`error-event-drawer-${entry.id}`} className="admin-detail-gridcol-full">
       <summary
-        className="small muted"
-        style={{ cursor: 'pointer' }}
+        className="small muted admin-detail-summary-cursor"
         data-testid="error-event-drawer-summary"
       >
         Details — {statusLabel}{firstSeenShort}{resolvedShort}
       </summary>
-      <dl className="small" style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '180px 1fr', rowGap: 4 }}>
+      <dl className="small admin-detail-dl">
         <dt className="muted">Error kind</dt>
         <dd>{entry.errorKind || '—'}</dd>
 
@@ -100,13 +99,13 @@ function ErrorEventDetailsDrawer({ entry, canViewAccount, onLoadOccurrences }) {
         <dd data-testid="error-drawer-message">{entry.messageFirstLine || '—'}</dd>
 
         <dt className="muted">First frame</dt>
-        <dd style={{ fontFamily: 'monospace' }}>{entry.firstFrame || '—'}</dd>
+        <dd className="admin-detail-dd-mono">{entry.firstFrame || '—'}</dd>
 
         <dt className="muted">Route</dt>
         <dd>{entry.routeName || '—'}</dd>
 
         <dt className="muted">User agent</dt>
-        <dd style={{ wordBreak: 'break-all' }}>{entry.userAgent || '—'}</dd>
+        <dd className="admin-detail-dd-break">{entry.userAgent || '—'}</dd>
 
         <dt className="muted">Occurrences</dt>
         <dd>×{Number(entry.occurrenceCount) || 1} (timeline aggregated — per-event history deferred)</dd>
@@ -204,13 +203,13 @@ function ErrorLogCentrePanel({ model, actions }) {
 
   const headerExtras = (
     <>
-      <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="chip-row admin-chip-row-gap">
         <span className="chip">{String(Number(totals.open) || 0)} open</span>
         <span className="chip">{String(Number(totals.investigating) || 0)} investigating</span>
         <span className="chip">{String(Number(totals.resolved) || 0)} resolved</span>
         <span className="chip">{String(Number(totals.ignored) || 0)} ignored</span>
       </div>
-      <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="chip-row admin-chip-row-gap">
         {statusFilters.map((status) => (
           <button
             className="btn ghost"
@@ -223,8 +222,7 @@ function ErrorLogCentrePanel({ model, actions }) {
         ))}
       </div>
       <div
-        className="filters"
-        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        className="filters admin-filters-grid"
         data-testid="error-centre-filters"
       >
         <label className="field">
@@ -295,7 +293,7 @@ function ErrorLogCentrePanel({ model, actions }) {
               : 'Current deploy unavailable — paste a SHA'}
           </span>
         </label>
-        <label className="field" style={{ alignSelf: 'end' }}>
+        <label className="field admin-field-self-end">
           <span>Reopened after resolved</span>
           <input
             type="checkbox"
@@ -305,7 +303,7 @@ function ErrorLogCentrePanel({ model, actions }) {
           />
         </label>
       </div>
-      <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="chip-row admin-filter-actions">
         <button
           className="btn"
           type="button"
@@ -334,7 +332,7 @@ function ErrorLogCentrePanel({ model, actions }) {
     </>
   );
   return (
-    <section className="card" style={{ marginBottom: 20 }}>
+    <section className="card admin-card-spaced">
       <PanelHeader
         eyebrow="Error log"
         title="Error log centre"
@@ -357,7 +355,7 @@ function ErrorLogCentrePanel({ model, actions }) {
             <div className="small muted">Last {formatTimestamp(entry.lastSeen)}</div>
             <div>
               {canManage ? (
-                <label className="field" style={{ minWidth: 150 }}>
+                <label className="field admin-field-status">
                   <span>Status</span>
                   <select
                     className="select"
@@ -408,13 +406,13 @@ function LearnerSupportPanel({ model, appState, accessContext, actions }) {
     || {};
 
   return (
-    <article className="card" data-admin-hub-panel="classroom-summary" style={{ marginBottom: 20 }}>
+    <article className="card admin-card-spaced" data-admin-hub-panel="classroom-summary">
       <div className="eyebrow">Learner support / diagnostics</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Readable learners</h3>
+      <h3 className="section-title admin-section-title">Readable learners</h3>
       {classroomSummaryDegraded ? (
         <div className="feedback warn" data-admin-hub-degraded="classroom-summary">
           <strong>Classroom summary temporarily unavailable</strong>
-          <div style={{ marginTop: 8 }}>
+          <div className="admin-callout-detail">
             Per-learner Grammar and Punctuation summary stats are taking too long to load. The learner list remains available below — use Select to drill into an individual learner. Practice is unaffected.
           </div>
         </div>
@@ -441,34 +439,34 @@ function LearnerSupportPanel({ model, appState, accessContext, actions }) {
         </div>
       )) : <p className="small muted">No learner diagnostics are accessible from this account scope yet.</p>}
       {selectedDiagnostics && (
-        <div className="callout" style={{ marginTop: 16 }}>
+        <div className="callout admin-callout-spaced">
           <strong>{selectedDiagnostics.learnerName}</strong>
-          <div style={{ marginTop: 8 }}>
+          <div className="admin-callout-detail">
             Secure: {String(selectedDiagnostics.overview?.secureWords ?? 0)} · Due: {String(selectedDiagnostics.overview?.dueWords ?? 0)} · Trouble: {String(selectedDiagnostics.overview?.troubleWords ?? 0)}
           </div>
-          <div style={{ marginTop: 8 }}>
+          <div className="admin-callout-detail">
             <strong>Grammar diagnostics</strong>: secured {String(selectedGrammarEvidence.progressSnapshot?.securedConcepts ?? selectedDiagnostics.overview?.secureGrammarConcepts ?? 0)} · due {String(selectedGrammarEvidence.progressSnapshot?.dueConcepts ?? selectedDiagnostics.overview?.dueGrammarConcepts ?? 0)} · weak {String(selectedGrammarEvidence.progressSnapshot?.weakConcepts ?? selectedDiagnostics.overview?.weakGrammarConcepts ?? 0)}
           </div>
-          <div style={{ marginTop: 8 }}>
+          <div className="admin-callout-detail">
             <strong>Punctuation diagnostics</strong>: secured {String(selectedPunctuationEvidence.progressSnapshot?.securedRewardUnits ?? selectedDiagnostics.overview?.securePunctuationUnits ?? 0)} · due {String(selectedPunctuationEvidence.progressSnapshot?.dueItems ?? selectedDiagnostics.overview?.duePunctuationItems ?? 0)} · weak {String(selectedPunctuationEvidence.progressSnapshot?.weakItems ?? selectedDiagnostics.overview?.weakPunctuationItems ?? 0)}
           </div>
-          <div className="small muted" style={{ marginTop: 8 }}>
+          <div className="small muted admin-callout-detail">
             Punctuation release: {selectedPunctuationRelease.releaseId || 'unknown'} · tracked units {String(selectedPunctuationRelease.trackedRewardUnitCount ?? 0)} · sessions {String(selectedPunctuationRelease.sessionCount ?? 0)} · weak patterns {String(selectedPunctuationRelease.weakPatternCount ?? 0)} · exposure {selectedPunctuationRelease.productionExposureStatus || 'unknown'}
           </div>
           {selectedGrammarEvidence.questionTypeSummary?.[0] ? (
-            <div className="small muted" style={{ marginTop: 8 }}>
+            <div className="small muted admin-callout-detail">
               Question-type focus: {selectedGrammarEvidence.questionTypeSummary[0].label || selectedGrammarEvidence.questionTypeSummary[0].id}
             </div>
           ) : null}
           {selectedPunctuationEvidence.weakestFacets?.[0] ? (
-            <div className="small muted" style={{ marginTop: 8 }}>
+            <div className="small muted admin-callout-detail">
               Punctuation focus: {selectedPunctuationEvidence.weakestFacets[0].label || selectedPunctuationEvidence.weakestFacets[0].id}
             </div>
           ) : null}
-          <div className="small muted" style={{ marginTop: 8 }}>{selectedDiagnostics.currentFocus?.detail || 'No current focus surfaced.'}</div>
+          <div className="small muted admin-callout-detail">{selectedDiagnostics.currentFocus?.detail || 'No current focus surfaced.'}</div>
         </div>
       )}
-      <div className="actions" style={{ marginTop: 16 }}>
+      <div className="actions admin-actions-spaced">
         {(model.learnerSupport.entryPoints || []).map((entry) => (
           <button
             className="btn secondary"
@@ -541,8 +539,7 @@ function DenialLogPanel({ model, actions }) {
   const headerExtras = (
     <>
       <div
-        className="filters"
-        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        className="filters admin-filters-grid"
         data-testid="denial-panel-filters"
       >
         <label className="field">
@@ -596,7 +593,7 @@ function DenialLogPanel({ model, actions }) {
           />
         </label>
       </div>
-      <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="chip-row admin-filter-actions">
         <button
           className="btn"
           type="button"
@@ -626,7 +623,7 @@ function DenialLogPanel({ model, actions }) {
   );
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-testid="denial-log-panel">
+    <section className="card admin-card-spaced" data-testid="denial-log-panel">
       <PanelHeader
         eyebrow="Request denials"
         title="Denial log"
@@ -674,11 +671,11 @@ function DebugBundleSectionTable({ label, rows, columns }) {
     return <p className="small muted">No data.</p>;
   }
   return (
-    <table className="small" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 4 }}>
+    <table className="small admin-bundle-table">
       <thead>
         <tr>
           {columns.map((col) => (
-            <th key={col.key} style={{ textAlign: 'left', padding: '2px 6px' }}>{col.label}</th>
+            <th key={col.key} className="admin-bundle-th">{col.label}</th>
           ))}
         </tr>
       </thead>
@@ -686,7 +683,7 @@ function DebugBundleSectionTable({ label, rows, columns }) {
         {rows.map((row, idx) => (
           <tr key={row.id || row.requestId || idx}>
             {columns.map((col) => (
-              <td key={col.key} className="muted" style={{ padding: '2px 6px', fontFamily: col.mono ? 'monospace' : 'inherit' }}>
+              <td key={col.key} className={col.mono ? 'muted admin-bundle-td-mono' : 'muted admin-bundle-td'}>
                 {col.render ? col.render(row) : (row[col.key] != null ? String(row[col.key]) : '—')}
               </td>
             ))}
@@ -702,8 +699,8 @@ function DebugBundleResult({ bundleData }) {
   const bundle = bundleData.bundle || {};
 
   return (
-    <div data-testid="debug-bundle-result" style={{ marginTop: 12 }}>
-      <div className="small muted" style={{ marginBottom: 8 }}>
+    <div data-testid="debug-bundle-result" className="admin-bundle-result-spaced">
+      <div className="small muted admin-bundle-meta">
         Generated: {formatBundleTimestamp(bundle.generatedAt)}
         {bundle.buildHash ? ` · Build: ${String(bundle.buildHash).slice(0, 7)}` : ''}
       </div>
@@ -713,13 +710,13 @@ function DebugBundleResult({ bundleData }) {
         const isEmpty = isSectionEmpty(bundle, sectionKey);
         const value = bundle[sectionKey];
         return (
-          <details key={sectionKey} data-testid={`bundle-section-${sectionKey}`} style={{ marginBottom: 8 }}>
-            <summary className="small" style={{ cursor: 'pointer', fontWeight: 600 }}>
+          <details key={sectionKey} data-testid={`bundle-section-${sectionKey}`} className="admin-bundle-section-details">
+            <summary className="small admin-bundle-section-summary">
               {label} {isEmpty ? <span className="muted">(empty)</span> : null}
             </summary>
-            <div style={{ padding: '4px 0 4px 12px' }}>
+            <div className="admin-bundle-section-body">
               {sectionKey === 'accountSummary' && value ? (
-                <dl className="small" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: 2 }}>
+                <dl className="small admin-bundle-account-dl">
                   <dt className="muted">Account ID</dt><dd>{value.accountId || '—'}</dd>
                   <dt className="muted">Email</dt><dd>{value.email || '—'}</dd>
                   <dt className="muted">Name</dt><dd>{value.displayName || '—'}</dd>
@@ -870,7 +867,7 @@ function DebugBundlePanel({ model, actions }) {
   };
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-testid="debug-bundle-panel">
+    <section className="card admin-card-spaced" data-testid="debug-bundle-panel">
       <PanelHeader
         eyebrow="Debug tools"
         title="Debug Bundle"
@@ -880,8 +877,7 @@ function DebugBundlePanel({ model, actions }) {
       />
 
       <div
-        className="filters"
-        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        className="filters admin-filters-grid"
         data-testid="debug-bundle-search-form"
       >
         <label className="field">
@@ -914,7 +910,7 @@ function DebugBundlePanel({ model, actions }) {
         </label>
       </div>
 
-      <div className="chip-row" style={{ marginTop: 10 }}>
+      <div className="chip-row admin-bundle-gen-actions">
         <button className="btn" type="button" disabled={loading} onClick={generateBundle} data-testid="bundle-generate-btn">
           {loading ? 'Generating...' : 'Generate Debug Bundle'}
         </button>
@@ -934,13 +930,13 @@ function DebugBundlePanel({ model, actions }) {
       </div>
 
       {error && !bundleData ? (
-        <div className="feedback warn" style={{ marginTop: 10 }} data-testid="debug-bundle-error">
+        <div className="feedback warn admin-bundle-error-spaced" data-testid="debug-bundle-error">
           {typeof error === 'string' ? error : 'Failed to generate debug bundle.'}
         </div>
       ) : null}
 
       {!bundleData && !loading && !error ? (
-        <p className="small muted" style={{ marginTop: 10 }} data-testid="debug-bundle-empty-state">
+        <p className="small muted admin-bundle-empty" data-testid="debug-bundle-empty-state">
           Enter search criteria and click Generate to create a debug evidence bundle.
         </p>
       ) : null}
