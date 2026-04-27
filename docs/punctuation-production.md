@@ -146,6 +146,7 @@ Supported commands:
 - `save-prefs`
 - `reset-learner`
 - `record-event` (Phase 4 — telemetry pipeline)
+- `request-context-pack` (Phase 2 — AI context-pack compilation, stub)
 - `punctuation-diagnostic` (P7-U8 — admin-only diagnostic read model)
 
 The Worker owns session creation, item selection, marking, scheduling, progress mutation, completed-session writes, domain-event append, reward projection, and the returned read model. The React browser surface sends learner intent and renders the returned state.
@@ -368,7 +369,7 @@ Any field not on the kind's allowlist is **rejected** (not scrubbed) with a 400 
 
 **Authz.** The `record-event` command routes through `repository.runSubjectCommand` at `worker/src/repository.js` — which fires `requireLearnerWriteAccess`. The `{mutates: false}` flag on the client-side `punctuation-record-event` action mapping (`src/subjects/punctuation/command-actions.js`) controls pending-UI wrapping only; it does NOT bypass Worker authz. A learner cannot write telemetry rows for another learner.
 
-**Query surface.** `GET /api/subjects/punctuation/events?learner={id}&kind={optional}&since={ms}&limit={n}`. Returns an array of `{kind, payload, occurredAtMs}` sorted reverse-chronological. Limit defaults to 100, clamps to 1000. Authz via `requireLearnerReadAccess` (parent / admin / owner membership required).
+**Query surface.** `GET /api/subjects/punctuation/events?learner={id}&kind={optional}&since={ms}&limit={n}`. Returns an array of `{kind, payload, occurredAtMs}` sorted reverse-chronological. Limit defaults to 100, clamps to 500. Authz via `requireLearnerReadAccess` (parent / admin / owner membership required).
 
 **Rollout steps.**
 
