@@ -553,7 +553,7 @@ test('near-retry with independent correction still earns Practice Stars', () => 
 // FIX 3a: Grand Star 2-monster breadth tier
 // ---------------------------------------------------------------------------
 
-test('Grand Stars capped at 50 with exactly 2-monster breadth', () => {
+test('Grand Stars capped below Hatch with exactly 2-monster breadth (U6 tier gate)', () => {
   const progress = freshProgress();
 
   // Secured units in only Pealark and Claspin — no Curlune.
@@ -567,7 +567,7 @@ test('Grand Stars capped at 50 with exactly 2-monster breadth', () => {
     ...securedRewardUnit('apostrophe', 'apostrophe-possession-core'),
   };
 
-  // Deep-secured facets (enough to push rawScore well above 50).
+  // Deep-secured facets.
   progress.facets = {
     'sentence_endings::choose': secureItemState({ lapses: 0 }),
     'sentence_endings::insert': secureItemState({ lapses: 0 }),
@@ -581,22 +581,23 @@ test('Grand Stars capped at 50 with exactly 2-monster breadth', () => {
   };
 
   const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
-  // rawScore = 7 secured * 4 + 9 deep-secured * 2 = 28 + 18 = 46
-  // Even if rawScore < 50 here, the cap is the important assertion.
-  assert.ok(result.grand.grandStars <= 50,
-    `Grand Stars must be capped at 50 with 2-monster breadth, got ${result.grand.grandStars}`);
-  assert.ok(result.grand.grandStars > 15,
-    `Grand Stars should exceed 1-monster cap with 2-monster breadth, got ${result.grand.grandStars}`);
+  // U6: 2 monsters qualifies for Egg tier (15) but cannot reach Hatch (35,
+  // requires 3 monsters).  Interpolation towards Hatch is blocked by the
+  // monster dimension (2 of 3 needed), so grand stars sit at 15.
+  assert.ok(result.grand.grandStars >= 15,
+    `Grand Stars should be at Egg tier with 2-monster breadth, got ${result.grand.grandStars}`);
+  assert.ok(result.grand.grandStars < 35,
+    `Grand Stars must not reach Hatch tier without 3 monsters, got ${result.grand.grandStars}`);
 });
 
 // ---------------------------------------------------------------------------
 // FIX 3b: Grand Star 1-monster test tightening
 // ---------------------------------------------------------------------------
 
-test('Grand Stars capped at 15 with single-monster progress — exact value check', () => {
+test('Grand Stars capped below Egg with single-monster progress (U6 tier gate)', () => {
   const progress = freshProgress();
 
-  // Saturate Pealark only with many secured units to push rawScore above 15.
+  // Saturate Pealark only with many secured units.
   progress.rewardUnits = {
     ...securedRewardUnit('endmarks', 'sentence-endings-core'),
     ...securedRewardUnit('speech', 'speech-core'),
@@ -605,7 +606,7 @@ test('Grand Stars capped at 15 with single-monster progress — exact value chec
     ...securedRewardUnit('boundary', 'hyphens-core'),
   };
 
-  // Deep-secured facets to push rawScore further.
+  // Deep-secured facets.
   progress.facets = {
     'sentence_endings::choose': secureItemState({ lapses: 0 }),
     'sentence_endings::insert': secureItemState({ lapses: 0 }),
@@ -616,10 +617,14 @@ test('Grand Stars capped at 15 with single-monster progress — exact value chec
   };
 
   const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
-  // rawScore = 5 secured * 4 + 6 deep-secured * 2 = 20 + 12 = 32, well above 15.
-  // The breadth gate must clamp to exactly 15.
-  assert.equal(result.grand.grandStars, 15,
-    `Grand Stars must be exactly 15 (clamped by 1-monster breadth gate), got ${result.grand.grandStars}`);
+  // U6: 1 monster cannot qualify for Egg tier (needs 2 monsters).
+  // Interpolation towards Egg is capped by monster dimension (1/2 = 0.5).
+  // With 5 secured (needs 3) and 0 deep-secured (needs 0), the min frac
+  // is 0.5, giving floor(0.5 * 15) = 7.
+  assert.ok(result.grand.grandStars < 15,
+    `Grand Stars must be below Egg tier (15) with single-monster progress, got ${result.grand.grandStars}`);
+  assert.ok(result.grand.grandStars > 0,
+    `Grand Stars should be > 0 with some secured evidence, got ${result.grand.grandStars}`);
 });
 
 // ---------------------------------------------------------------------------
@@ -734,4 +739,430 @@ test('ACTIVE_PUNCTUATION_MONSTER_IDS includes all 3 direct monsters plus quoral'
   }
   assert.equal(ACTIVE_PUNCTUATION_MONSTER_IDS.length, 4,
     'ACTIVE_PUNCTUATION_MONSTER_IDS must have exactly 4 entries');
+});
+
+// ---------------------------------------------------------------------------
+// U5: Per-monster weight calibration tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a "complete simple secure" journey for a given monster.
+ * All reward units secured, items secure, facets secure in ONE mode only
+ * (no mixed/GPS evidence, no spaced return beyond the minimum 7-day span).
+ */
+function simpleSecureJourney(monsterId) {
+  const progress = freshProgress();
+
+  // Monster -> clusters -> skills -> reward units
+  const monsterSkills = {
+    pealark: [
+      { skillId: 'sentence_endings', cluster: 'endmarks', ru: 'sentence-endings-core' },
+      { skillId: 'speech', cluster: 'speech', ru: 'speech-core' },
+      { skillId: 'semicolon', cluster: 'boundary', ru: 'semicolons-core' },
+      { skillId: 'dash_clause', cluster: 'boundary', ru: 'dash-clauses-core' },
+      { skillId: 'hyphen', cluster: 'boundary', ru: 'hyphens-core' },
+    ],
+    claspin: [
+      { skillId: 'apostrophe_contractions', cluster: 'apostrophe', ru: 'apostrophe-contractions-core' },
+      { skillId: 'apostrophe_possession', cluster: 'apostrophe', ru: 'apostrophe-possession-core' },
+    ],
+    curlune: [
+      { skillId: 'list_commas', cluster: 'comma_flow', ru: 'list-commas-core' },
+      { skillId: 'fronted_adverbial', cluster: 'comma_flow', ru: 'fronted-adverbials-core' },
+      { skillId: 'comma_clarity', cluster: 'comma_flow', ru: 'comma-clarity-core' },
+      { skillId: 'parenthesis', cluster: 'structure', ru: 'parenthesis-core' },
+      { skillId: 'colon_list', cluster: 'structure', ru: 'colons-core' },
+      { skillId: 'semicolon_list', cluster: 'structure', ru: 'semicolon-lists-core' },
+      { skillId: 'bullet_points', cluster: 'structure', ru: 'bullet-points-core' },
+    ],
+  };
+
+  const skills = monsterSkills[monsterId];
+  let itemIdx = 0;
+
+  for (const { skillId, cluster, ru } of skills) {
+    // Secure items: 10 items per skill, all with secure memory state.
+    for (let i = 0; i < 10; i++) {
+      const itemId = `${monsterId}_${skillId}_item_${i}`;
+      progress.items[itemId] = secureItemState();
+
+      // Create attempts spread over days for meaningful Try/Practice evidence.
+      for (let d = 0; d < 4; d++) {
+        progress.attempts.push(makeAttempt({
+          ts: Date.UTC(2026, 3, 25 - d, 10, itemIdx, i),
+          itemId,
+          skillIds: [skillId],
+          rewardUnitId: ru,
+          correct: true,
+          supportLevel: 0,
+          itemMode: 'choose', // Single mode only — simple secure.
+        }));
+      }
+      itemIdx++;
+    }
+
+    // Secured reward unit.
+    progress.rewardUnits = {
+      ...progress.rewardUnits,
+      ...securedRewardUnit(cluster, ru),
+    };
+
+    // Facet: secure in ONE mode (choose only — simple secure).
+    progress.facets[`${skillId}::choose`] = secureItemState({ lapses: 0 });
+  }
+
+  return progress;
+}
+
+test('U5 calibration: simple secure journeys — Pealark, Claspin, Curlune stages within 1 of each other', () => {
+  const pealarkResult = projectPunctuationStars(simpleSecureJourney('pealark'), CURRENT_RELEASE_ID);
+  const claspinResult = projectPunctuationStars(simpleSecureJourney('claspin'), CURRENT_RELEASE_ID);
+  const curluneResult = projectPunctuationStars(simpleSecureJourney('curlune'), CURRENT_RELEASE_ID);
+
+  // Map star totals to stages (0-25=Egg, 26-50=Hatch, 51-75=Evolve, 76-99=Strong, 100=Mega).
+  function stageOf(total) {
+    if (total >= 100) return 4; // Mega
+    if (total >= 76) return 3;  // Strong
+    if (total >= 51) return 2;  // Evolve
+    if (total >= 26) return 1;  // Hatch
+    return 0;                   // Egg
+  }
+
+  const pStage = stageOf(pealarkResult.perMonster.pealark.total);
+  const cStage = stageOf(claspinResult.perMonster.claspin.total);
+  const uStage = stageOf(curluneResult.perMonster.curlune.total);
+
+  assert.ok(Math.abs(pStage - cStage) <= 1,
+    `Pealark stage (${pStage}, total=${pealarkResult.perMonster.pealark.total}) and Claspin stage (${cStage}, total=${claspinResult.perMonster.claspin.total}) must be within 1 stage`);
+  assert.ok(Math.abs(pStage - uStage) <= 1,
+    `Pealark stage (${pStage}, total=${pealarkResult.perMonster.pealark.total}) and Curlune stage (${uStage}, total=${curluneResult.perMonster.curlune.total}) must be within 1 stage`);
+  assert.ok(Math.abs(cStage - uStage) <= 1,
+    `Claspin stage (${cStage}, total=${claspinResult.perMonster.claspin.total}) and Curlune stage (${uStage}, total=${curluneResult.perMonster.curlune.total}) must be within 1 stage`);
+});
+
+test('U5 calibration: all simple secure journeys produce totals > 50 (meaningful progression)', () => {
+  for (const monsterId of ['pealark', 'claspin', 'curlune']) {
+    const result = projectPunctuationStars(simpleSecureJourney(monsterId), CURRENT_RELEASE_ID);
+    assert.ok(result.perMonster[monsterId].total > 50,
+      `${monsterId} simple secure total must be > 50 (got ${result.perMonster[monsterId].total})`);
+  }
+});
+
+test('U5: Claspin Mega gate — 2 simple secure units cannot reach 100 stars', () => {
+  const progress = simpleSecureJourney('claspin');
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const claspin = result.perMonster.claspin;
+
+  // Simple secure journey has only 1 item mode and no spaced return beyond
+  // minimum. Mastery Stars must be capped at 15, giving total < 100.
+  assert.ok(claspin.total < 100,
+    `Claspin simple secure total must be < 100 (Mega), got ${claspin.total}`);
+  assert.ok(claspin.total <= 75,
+    `Claspin simple secure total must be <= 75 (capped by Mastery gate), got ${claspin.total}`);
+  assert.ok(claspin.masteryStars <= 15,
+    `Claspin Mastery Stars must be <= 15 without deep-secure evidence, got ${claspin.masteryStars}`);
+});
+
+test('U5: Claspin Mega — deep secure + mixed + spaced return unlocks 100 stars', () => {
+  const progress = freshProgress();
+
+  // Both apostrophe skills with rich evidence.
+  for (const { skillId, ru } of [
+    { skillId: 'apostrophe_contractions', ru: 'apostrophe-contractions-core' },
+    { skillId: 'apostrophe_possession', ru: 'apostrophe-possession-core' },
+  ]) {
+    // 10 items per skill, all secure.
+    for (let i = 0; i < 10; i++) {
+      const itemId = `claspin_mega_${skillId}_${i}`;
+      progress.items[itemId] = secureItemState();
+
+      // Attempts in both choose and insert modes.
+      for (let d = 0; d < 4; d++) {
+        progress.attempts.push(makeAttempt({
+          ts: Date.UTC(2026, 3, 25 - d, 10, 0, i),
+          itemId,
+          skillIds: [skillId],
+          rewardUnitId: ru,
+          correct: true,
+          supportLevel: 0,
+          itemMode: d % 2 === 0 ? 'choose' : 'insert',
+        }));
+      }
+    }
+  }
+
+  // Both reward units secured.
+  progress.rewardUnits = {
+    ...securedRewardUnit('apostrophe', 'apostrophe-contractions-core'),
+    ...securedRewardUnit('apostrophe', 'apostrophe-possession-core'),
+  };
+
+  // Facets: both skills, both modes, secure, no lapses, spaced return.
+  const now = Date.UTC(2026, 3, 25);
+  for (const skillId of ['apostrophe_contractions', 'apostrophe_possession']) {
+    for (const mode of ['choose', 'insert']) {
+      progress.facets[`${skillId}::${mode}`] = secureItemState({
+        lapses: 0,
+        firstCorrectAt: now - (14 * DAY_MS), // 14-day span — spaced return
+        lastCorrectAt: now,
+      });
+    }
+  }
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const claspin = result.perMonster.claspin;
+
+  // All gates met: both skills deep secure, mixed modes, spaced return.
+  assert.equal(claspin.total, 100,
+    `Claspin deep secure total must be exactly 100 (Mega), got ${claspin.total}`);
+  assert.ok(claspin.masteryStars > 15,
+    `Claspin Mastery Stars must exceed the simple-secure cap of 15, got ${claspin.masteryStars}`);
+});
+
+test('U5: Claspin Mega gate — missing possession skill blocks full Mastery', () => {
+  const progress = freshProgress();
+
+  // Only contractions skill with deep evidence.
+  for (let i = 0; i < 10; i++) {
+    const itemId = `claspin_partial_${i}`;
+    progress.items[itemId] = secureItemState();
+    for (let d = 0; d < 4; d++) {
+      progress.attempts.push(makeAttempt({
+        ts: Date.UTC(2026, 3, 25 - d, 10, 0, i),
+        itemId,
+        skillIds: ['apostrophe_contractions'],
+        rewardUnitId: 'apostrophe-contractions-core',
+        correct: true,
+        supportLevel: 0,
+        itemMode: d % 2 === 0 ? 'choose' : 'insert',
+      }));
+    }
+  }
+
+  // Both units secured but only contractions has deep-secure facets.
+  progress.rewardUnits = {
+    ...securedRewardUnit('apostrophe', 'apostrophe-contractions-core'),
+    ...securedRewardUnit('apostrophe', 'apostrophe-possession-core'),
+  };
+
+  const now = Date.UTC(2026, 3, 25);
+  progress.facets = {
+    'apostrophe_contractions::choose': secureItemState({ lapses: 0, firstCorrectAt: now - (14 * DAY_MS), lastCorrectAt: now }),
+    'apostrophe_contractions::insert': secureItemState({ lapses: 0, firstCorrectAt: now - (14 * DAY_MS), lastCorrectAt: now }),
+    // possession has attempts in 2 modes but facets are NOT secure.
+    'apostrophe_possession::choose': { attempts: 3, correct: 1, streak: 1, lapses: 0, firstCorrectAt: now - DAY_MS, lastCorrectAt: now, lastSeen: now },
+    'apostrophe_possession::insert': { attempts: 2, correct: 1, streak: 1, lapses: 0, firstCorrectAt: now - DAY_MS, lastCorrectAt: now, lastSeen: now },
+  };
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const claspin = result.perMonster.claspin;
+
+  assert.ok(claspin.masteryStars <= 15,
+    `Claspin Mastery must be capped at 15 without both skills deep secure, got ${claspin.masteryStars}`);
+  assert.ok(claspin.total < 100,
+    `Claspin total must be < 100 without both skills deep secure, got ${claspin.total}`);
+});
+
+// ---------------------------------------------------------------------------
+// U6: Grand Star tier gate tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Build progress with N secured units spread across the specified number
+ * of direct monsters, plus optional deep-secure facets and mixed evidence.
+ */
+function grandStarEvidence({ securedCount, monsterCount, deepSecuredCount = 0, hasMixed = false, hasGps = false }) {
+  const progress = freshProgress();
+
+  // Distribute secured units across monsters.
+  const allUnits = [
+    { cluster: 'endmarks', ru: 'sentence-endings-core', skill: 'sentence_endings', monster: 'pealark' },
+    { cluster: 'speech', ru: 'speech-core', skill: 'speech', monster: 'pealark' },
+    { cluster: 'boundary', ru: 'semicolons-core', skill: 'semicolon', monster: 'pealark' },
+    { cluster: 'boundary', ru: 'dash-clauses-core', skill: 'dash_clause', monster: 'pealark' },
+    { cluster: 'boundary', ru: 'hyphens-core', skill: 'hyphen', monster: 'pealark' },
+    { cluster: 'apostrophe', ru: 'apostrophe-contractions-core', skill: 'apostrophe_contractions', monster: 'claspin' },
+    { cluster: 'apostrophe', ru: 'apostrophe-possession-core', skill: 'apostrophe_possession', monster: 'claspin' },
+    { cluster: 'comma_flow', ru: 'list-commas-core', skill: 'list_commas', monster: 'curlune' },
+    { cluster: 'comma_flow', ru: 'fronted-adverbials-core', skill: 'fronted_adverbial', monster: 'curlune' },
+    { cluster: 'comma_flow', ru: 'comma-clarity-core', skill: 'comma_clarity', monster: 'curlune' },
+    { cluster: 'structure', ru: 'parenthesis-core', skill: 'parenthesis', monster: 'curlune' },
+    { cluster: 'structure', ru: 'colons-core', skill: 'colon_list', monster: 'curlune' },
+    { cluster: 'structure', ru: 'semicolon-lists-core', skill: 'semicolon_list', monster: 'curlune' },
+    { cluster: 'structure', ru: 'bullet-points-core', skill: 'bullet_points', monster: 'curlune' },
+  ];
+
+  // Select units by round-robin across monsters to ensure breadth.
+  const monsterOrder = ['pealark', 'claspin', 'curlune'];
+  const allowedMonsters = monsterOrder.slice(0, monsterCount);
+  const perMonsterUnits = new Map();
+  for (const m of allowedMonsters) {
+    perMonsterUnits.set(m, allUnits.filter((u) => u.monster === m));
+  }
+
+  // Round-robin: take one unit from each monster in turn.
+  const selected = [];
+  let round = 0;
+  while (selected.length < securedCount) {
+    let added = false;
+    for (const m of allowedMonsters) {
+      if (selected.length >= securedCount) break;
+      const mUnits = perMonsterUnits.get(m);
+      if (round < mUnits.length) {
+        selected.push(mUnits[round]);
+        added = true;
+      }
+    }
+    if (!added) break; // All units exhausted.
+    round++;
+  }
+
+  for (const { cluster, ru, skill } of selected) {
+    progress.rewardUnits = {
+      ...progress.rewardUnits,
+      ...securedRewardUnit(cluster, ru),
+    };
+  }
+
+  // Deep-secure facets.
+  const now = Date.UTC(2026, 3, 25);
+  const dsSelected = selected.slice(0, deepSecuredCount);
+  const modes = hasMixed ? ['choose', 'insert'] : ['choose'];
+  for (const { skill } of dsSelected) {
+    for (const mode of modes) {
+      progress.facets[`${skill}::${mode}`] = secureItemState({
+        lapses: 0,
+        firstCorrectAt: now - (14 * DAY_MS),
+        lastCorrectAt: now,
+      });
+    }
+  }
+
+  // GPS evidence.
+  if (hasGps) {
+    progress.attempts.push(makeAttempt({
+      ts: now,
+      itemId: 'gps_item_01',
+      skillIds: [selected[0]?.skill || 'sentence_endings'],
+      correct: true,
+      testMode: 'gps',
+    }));
+  }
+
+  return progress;
+}
+
+test('U6: Grand Stars = 0 with zero secured evidence', () => {
+  const result = projectPunctuationStars(freshProgress(), CURRENT_RELEASE_ID);
+  assert.equal(result.grand.grandStars, 0,
+    'Grand Stars must be 0 with no evidence');
+});
+
+test('U6: single-unit depth cannot exceed Egg gate (breadth blocks)', () => {
+  // 1 monster, 5 secured (all Pealark), 5 deep-secured.
+  const progress = grandStarEvidence({ securedCount: 5, monsterCount: 1, deepSecuredCount: 5, hasMixed: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(result.grand.grandStars < 15,
+    `Grand Stars must be below Egg (15) with single-monster depth, got ${result.grand.grandStars}`);
+});
+
+test('U6 Egg tier: 2+ monsters, 3+ secured units reaches Egg (15)', () => {
+  // 2 monsters, 3 secured.
+  const progress = grandStarEvidence({ securedCount: 3, monsterCount: 2 });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(result.grand.grandStars >= 15,
+    `Grand Stars must reach Egg (15) with 2 monsters + 3 secured, got ${result.grand.grandStars}`);
+});
+
+test('U6 Hatch tier: 3 monsters, 6+ secured units reaches Hatch (35)', () => {
+  // 3 monsters, 6 secured.
+  const progress = grandStarEvidence({ securedCount: 6, monsterCount: 3 });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(result.grand.grandStars >= 35,
+    `Grand Stars must reach Hatch (35) with 3 monsters + 6 secured, got ${result.grand.grandStars}`);
+});
+
+test('U6 Evolve tier: 8+ secured, 4+ deep-secured reaches Evolve (60)', () => {
+  const progress = grandStarEvidence({ securedCount: 8, monsterCount: 3, deepSecuredCount: 4 });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(result.grand.grandStars >= 60,
+    `Grand Stars must reach Evolve (60) with 8 secured + 4 deep, got ${result.grand.grandStars}`);
+});
+
+test('U6 Strong tier: 11+ secured, 8+ deep-secured, mixed evidence reaches Strong (80)', () => {
+  const progress = grandStarEvidence({ securedCount: 11, monsterCount: 3, deepSecuredCount: 8, hasMixed: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(result.grand.grandStars >= 80,
+    `Grand Stars must reach Strong (80) with 11 secured + 8 deep + mixed, got ${result.grand.grandStars}`);
+});
+
+test('U6 Strong tier: missing mixed evidence blocks Strong even with sufficient depth', () => {
+  // 11 secured, 8 deep, but NO mixed evidence.
+  const progress = grandStarEvidence({ securedCount: 11, monsterCount: 3, deepSecuredCount: 8, hasMixed: false });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(result.grand.grandStars < 80,
+    `Grand Stars must be below Strong (80) without mixed evidence, got ${result.grand.grandStars}`);
+});
+
+test('U6 Grand Quoral: all 14 deep secure reaches 100 Grand Stars', () => {
+  const progress = grandStarEvidence({ securedCount: 14, monsterCount: 3, deepSecuredCount: 14, hasMixed: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.equal(result.grand.grandStars, 100,
+    `Grand Stars must be 100 with all 14 units deep secure, got ${result.grand.grandStars}`);
+});
+
+test('U6 Grand Quoral: GPS test mode counts as mixed evidence for Strong gate', () => {
+  // 11 secured, 8 deep, GPS evidence instead of mixed modes.
+  const progress = grandStarEvidence({ securedCount: 11, monsterCount: 3, deepSecuredCount: 8, hasGps: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(result.grand.grandStars >= 80,
+    `Grand Stars must reach Strong (80) with GPS evidence, got ${result.grand.grandStars}`);
+});
+
+test('U6: Grand Stars increase monotonically as evidence grows', () => {
+  // Progressively add evidence and verify grand stars never decrease.
+  let prevGrand = 0;
+
+  const steps = [
+    { securedCount: 1, monsterCount: 1 },
+    { securedCount: 3, monsterCount: 2 },
+    { securedCount: 6, monsterCount: 3 },
+    { securedCount: 8, monsterCount: 3, deepSecuredCount: 4 },
+    { securedCount: 11, monsterCount: 3, deepSecuredCount: 8, hasMixed: true },
+    { securedCount: 14, monsterCount: 3, deepSecuredCount: 14, hasMixed: true },
+  ];
+
+  for (const step of steps) {
+    const progress = grandStarEvidence(step);
+    const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+    assert.ok(result.grand.grandStars >= prevGrand,
+      `Grand Stars must not decrease: ${result.grand.grandStars} < previous ${prevGrand} at step ${JSON.stringify(step)}`);
+    prevGrand = result.grand.grandStars;
+  }
+});
+
+test('U6: interpolation within a tier band — partial progress yields intermediate values', () => {
+  // Between Egg (15) and Hatch (35): 2 monsters, 3 secured (Egg base).
+  // Add 1 more secured to start climbing towards Hatch.
+  const progress = grandStarEvidence({ securedCount: 4, monsterCount: 3 });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  // Should be between Hatch threshold (35) and Evolve (60), since we meet
+  // Hatch gate (3 monsters, 6 secured? No — 4 secured < 6). Actually with 3
+  // monsters + 4 secured we meet Egg but not Hatch. So we interpolate within
+  // Egg band towards Hatch.
+  assert.ok(result.grand.grandStars >= 15,
+    `Grand Stars should be at least Egg (15), got ${result.grand.grandStars}`);
+  assert.ok(result.grand.grandStars < 35,
+    `Grand Stars should be below Hatch (35) with only 4 secured, got ${result.grand.grandStars}`);
+  assert.ok(result.grand.grandStars > 15,
+    `Grand Stars should interpolate above Egg floor with partial progress, got ${result.grand.grandStars}`);
 });
