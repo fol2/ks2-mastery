@@ -17,7 +17,7 @@ import {
   buildHstsValue,
   serialiseHeadersBlock,
 } from '../worker/src/security-headers.js';
-import { applySecurityHeadersSafely } from '../worker/src/index.js';
+import { applySecurityHeadersSafely } from '../worker/src/security-headers-safe.js';
 import { assertHeadersBlockIsFresh } from '../scripts/lib/headers-drift.mjs';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 

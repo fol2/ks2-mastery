@@ -10,12 +10,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
-import workerModule, {
+import workerModule from '../worker/src/index.js';
+import {
   runScheduledHandler,
   CRON_METRIC_SUCCESS_COUNTER,
   CRON_METRIC_LAST_SUCCESS_AT,
   CRON_METRIC_LAST_FAILURE_AT,
-} from '../worker/src/index.js';
+} from '../worker/src/cron/scheduled.js';
 import { reconcileLockHashForRequestId } from '../worker/src/repository.js';
 
 function seedAdultAccount(db, {
