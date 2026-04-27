@@ -53,4 +53,54 @@ export default async function run({ driver, artifacts, log, assert }) {
     "document.querySelector('[data-punctuation-submit]') ? 'yes' : 'no'",
   );
   assert(/yes/i.test(hasSubmit), 'Session scene submit button must render for Q1.');
+
+  // --- Phase 5 U9: drive round to Summary and verify star meter ---
+
+  log('drive round to Summary (click first choice + submit repeatedly)');
+  const driveStart = Date.now();
+  while (Date.now() - driveStart < 20_000) {
+    const phase = await driver.eval(
+      "(() => { const el = document.querySelector('[data-punctuation-phase]'); return el ? el.getAttribute('data-punctuation-phase') : ''; })()",
+    );
+    if (/summary/.test(phase)) break;
+    await driver.eval(
+      "(() => {" +
+        " const choice = document.querySelector('.choice-card');" +
+        " if (choice) choice.click();" +
+        " const submit = document.querySelector('[data-punctuation-submit]');" +
+        " if (submit && !submit.disabled) submit.click();" +
+        " const cont = document.querySelector('[data-punctuation-continue]');" +
+        " if (cont && !cont.disabled) cont.click();" +
+        " return 'nudged';" +
+      " })()",
+    );
+    await new Promise((r) => setTimeout(r, 400));
+  }
+
+  await driver.waitForSelector('[data-punctuation-phase="summary"]', 10_000);
+  await driver.screenshot(artifacts.path('04-summary'));
+
+  log('assert star meter visible on Summary scene');
+  const summaryText = await driver.eval(
+    "(() => { const el = document.querySelector('[data-punctuation-phase=\"summary\"]'); return el ? el.textContent : ''; })()",
+  );
+  const starMeterPattern = /\d+ \/ 100 Stars/;
+  assert(starMeterPattern.test(summaryText),
+    `Summary scene must show star meter matching ${starMeterPattern}. Got: "${summaryText.slice(0, 200)}"`);
+
+  // --- Return to landing and verify skeleton ---
+
+  log('click Back to return to landing (Setup scene)');
+  await driver.click('[data-action="punctuation-back"]');
+  await driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000);
+  await driver.screenshot(artifacts.path('05-landing-post-round'));
+
+  log('assert landing skeleton intact after returning from Summary');
+  for (const section of ['hero', 'progress-row', 'monster-row', 'map-link', 'secondary']) {
+    const sel = `[data-section="${section}"]`;
+    const found = await driver.eval(
+      `(() => { const el = document.querySelector(${JSON.stringify(sel)}); return el ? 'yes' : 'no'; })()`,
+    );
+    assert(/yes/i.test(found), `Landing section "${section}" must still exist after returning from Summary.`);
+  }
 }

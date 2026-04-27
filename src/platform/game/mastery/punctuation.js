@@ -1,4 +1,4 @@
-import { MONSTERS } from '../monsters.js';
+import { MONSTERS, stageFor, PUNCTUATION_MASTERED_THRESHOLDS } from '../monsters.js';
 import { PUNCTUATION_CURRENT_RELEASE_ID } from '../../../subjects/punctuation/service-contract.js';
 import {
   branchForMonster,
@@ -107,16 +107,6 @@ export function reservedPunctuationMonsterEntries(state = {}) {
   return reserved;
 }
 
-function punctuationStageFor(mastered, total) {
-  const denominator = Math.max(1, Number(total) || 1);
-  const ratio = Math.max(0, Math.min(1, (Number(mastered) || 0) / denominator));
-  if (ratio >= 1) return 4;
-  if (ratio >= 2 / 3) return 3;
-  if (ratio >= 1 / 3) return 2;
-  if (ratio > 0) return 1;
-  return 0;
-}
-
 export function activePunctuationMonsterSummaryFromState(state = {}) {
   return punctuationMonsterSummaryFromState(state)
     .filter((entry) => entry.progress.caught || entry.progress.mastered > 0);
@@ -134,7 +124,7 @@ export function progressForPunctuationMonster(state, monsterId, { publishedTotal
   return {
     mastered,
     publishedTotal: total,
-    stage: punctuationStageFor(mastered, total),
+    stage: stageFor(mastered, PUNCTUATION_MASTERED_THRESHOLDS),
     level: Math.min(10, Math.round((mastered / Math.max(1, total)) * 10)),
     caught: mastered >= 1,
     branch: branchForMonster(normalised, monsterId),
@@ -244,6 +234,18 @@ export function recordPunctuationRewardUnitMastery({
 
   const afterDirect = progressForPunctuationMonster(after, monsterId, { publishedTotal, releaseId: scopedReleaseId });
   const afterAggregate = progressForPunctuationMonster(after, aggregateMonsterId, { publishedTotal: aggregatePublishedTotal, releaseId: scopedReleaseId });
+
+  // Persist maxStageEver: the high-water mark stage for each monster entry.
+  // This survives even if the mastered count later decreases (defensive).
+  after[monsterId] = {
+    ...after[monsterId],
+    maxStageEver: Math.max(afterDirect.stage, directEntry.maxStageEver || 0),
+  };
+  after[aggregateMonsterId] = {
+    ...after[aggregateMonsterId],
+    maxStageEver: Math.max(afterAggregate.stage, aggregateEntry.maxStageEver || 0),
+  };
+
   saveMonsterState(learnerId, after, gameStateRepository);
 
   const events = [];

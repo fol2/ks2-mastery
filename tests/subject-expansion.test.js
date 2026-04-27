@@ -238,7 +238,7 @@ const punctuationSpec = {
   createHarness: createPunctuationHarness,
   prepareHarness: preparePunctuationHarness,
   expectReactPractice: true,
-  practiceMatcher: /Punctuation practice/,
+  practiceMatcher: /punctuation mission/,
   sessionMatcher: /Choose the best punctuated sentence|Punctuate the sentence accurately|Correct the punctuation/,
   // U4 follower (design-lens HIGH 2): summary headline is now the
   // accuracy-bucketed celebration copy from `punctuationSummaryHeadline`.

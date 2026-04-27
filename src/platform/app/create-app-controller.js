@@ -294,7 +294,7 @@ export function createAppController({
     if (action === 'open-admin-hub') {
       tts.stop();
       tts.abortPending?.();
-      store.openAdminHub();
+      store.openAdminHub({ adminSection: data?.section });
       return true;
     }
 

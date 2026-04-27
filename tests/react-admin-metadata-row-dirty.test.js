@@ -250,6 +250,7 @@ test('AdminHubSurface renders the internal-notes textarea with the server value 
         accountDirectory={accountDirectory}
         accessContext={accessContext}
         actions={actions}
+        initialSection="accounts"
       />
     );
     console.log(html);

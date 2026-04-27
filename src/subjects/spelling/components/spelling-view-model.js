@@ -179,6 +179,14 @@ const SPELLING_HERO_REGIONS = Object.freeze({
   test: Object.freeze(['e']),
 });
 const SPELLING_HERO_TONES = Object.freeze(['1', '2', '3']);
+// Post-Mega backgrounds live in the `f` slot — Guardian / Boss / Pattern Quest
+// scenes (setup + session) draw from `the-scribe-downs-f{tone}-{branch}` where
+// the branch tracks the learner's grand-master monster (Phaeton) so the
+// vista matches the Codex creature painted on it. b1 / b2 are the only
+// branches today; mirror MONSTER_BRANCHES if more land in future.
+const SPELLING_POST_MEGA_REGION = 'f';
+const SPELLING_POST_MEGA_BRANCHES = Object.freeze(['b1', 'b2']);
+const SPELLING_POST_MEGA_DEFAULT_BRANCH = 'b1';
 const CONTRAST_DARK = 'dark';
 const CONTRAST_LIGHT = 'light';
 const SPELLING_HERO_CONTRAST_BY_TONE = Object.freeze({
@@ -191,7 +199,16 @@ export const SPELLING_HERO_BACKGROUNDS = Object.freeze({
   smart: Object.freeze(SPELLING_HERO_REGIONS.smart.flatMap((region) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${region}${tone}`)))),
   trouble: Object.freeze(SPELLING_HERO_REGIONS.trouble.flatMap((region) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${region}${tone}`)))),
   test: Object.freeze(SPELLING_HERO_REGIONS.test.flatMap((region) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${region}${tone}`)))),
+  postMega: Object.freeze(SPELLING_POST_MEGA_BRANCHES.flatMap((branch) => SPELLING_HERO_TONES.map((tone) => spellingHeroUrl(`${SPELLING_POST_MEGA_REGION}${tone}-${branch}`)))),
 });
+
+export function normalisePostMegaBranch(branch) {
+  return SPELLING_POST_MEGA_BRANCHES.includes(String(branch || '').trim())
+    ? String(branch).trim()
+    : SPELLING_POST_MEGA_DEFAULT_BRANCH;
+}
+
+export { SPELLING_POST_MEGA_BRANCHES, SPELLING_POST_MEGA_DEFAULT_BRANCH };
 
 export function accentFor(subject) {
   return subject?.accent || SPELLING_ACCENT;
@@ -243,11 +260,33 @@ export function heroBgForMode(mode, learnerId, options = {}) {
   return spellingHeroUrl(`${regions[regionIndex]}${tone}`);
 }
 
+/**
+ * Post-Mega hero background. Branch follows the learner's grand-master
+ * monster (Phaeton for spelling) so the vista matches the Codex creature.
+ * `tone` cycles 1 / 2 / 3 the same way the legacy regions do — passing it
+ * explicitly lets callers (Setup tone seed, session progress mapping) keep
+ * the same dramatic-arc behaviour they have on pre-Mega scenes.
+ */
+export function heroBgForPostMega(branch, tone, learnerId = '') {
+  const safeBranch = normalisePostMegaBranch(branch);
+  const safeTone = SPELLING_HERO_TONES.includes(String(tone))
+    ? String(tone)
+    : spellingHeroTone(learnerId);
+  return spellingHeroUrl(`${SPELLING_POST_MEGA_REGION}${safeTone}-${safeBranch}`);
+}
+
 export function heroBgForLearner(learnerId, mode = 'smart') {
   return heroBgForMode(mode, learnerId);
 }
 
 export function heroBgForSetup(learnerId, prefs, options = {}) {
+  // Graduated learners see the post-Mega vista regardless of the cached
+  // pref `mode`. The `postMegaBranch` option is supplied by the practice
+  // surface from the learner's monster-codex state; falling back to b1
+  // keeps the picker safe before a learner has any branch attribution.
+  if (options.postMega) {
+    return heroBgForPostMega(options.postMegaBranch, options.tone, learnerId);
+  }
   return heroBgForMode(prefs?.mode, learnerId, options);
 }
 
@@ -285,6 +324,12 @@ export function heroBgForSession(learnerId, session, options = {}) {
   const tone = SPELLING_HERO_TONES.includes(requestedTone)
     ? requestedTone
     : spellingHeroToneForSessionProgress(session, options);
+  // Post-Mega sessions (Guardian / Boss / Pattern Quest) draw from the f
+  // region with the learner's branch baked in — same vista as the post-Mega
+  // setup scene so the transition into a round is visually continuous.
+  if (options.postMega) {
+    return heroBgForPostMega(options.postMegaBranch, tone, learnerId);
+  }
   return heroBgForMode(session?.mode || (session?.type === 'test' ? 'test' : 'smart'), learnerId, { tone });
 }
 
@@ -297,16 +342,47 @@ export function heroBgPreloadUrls(learnerId, prefs = {}, options = {}) {
   const setupUrls = modes.map((mode) => heroBgForMode(mode, learnerId, { tone: setupTone }));
   const sessionMode = prefs?.mode || 'smart';
   const sessionUrls = SPELLING_HERO_TONES.map((tone) => heroBgForMode(sessionMode, learnerId, { tone }));
-  return [...new Set([...setupUrls, ...sessionUrls].filter(Boolean))];
+  // Post-Mega learners also need the f-region tones preloaded so the
+  // setup → session transition does not flash an unloaded background. The
+  // branch is sticky per learner so we only emit three URLs (one per tone).
+  const postMegaUrls = options.postMega
+    ? SPELLING_HERO_TONES.map((tone) => heroBgForPostMega(options.postMegaBranch, tone, learnerId))
+    : [];
+  return [...new Set([...setupUrls, ...sessionUrls, ...postMegaUrls].filter(Boolean))];
 }
 
 export function heroToneForBg(url) {
-  const variant = String(url || '').match(/the-scribe-downs-[a-e]([1-3])\.1280\.webp(?:$|[?#])/);
+  const text = String(url || '');
+  // Pre-Mega regions (a–e) carry no branch suffix; post-Mega `f` region
+  // backgrounds always carry `-bN`. Match either shape so legacy callers
+  // (Setup contrast adapter, tests) keep working when the post-Mega vista
+  // is the active backdrop.
+  const postMegaVariant = text.match(/the-scribe-downs-f([1-3])-b[12]\.1280\.webp(?:$|[?#])/);
+  if (postMegaVariant) return postMegaVariant[1];
+  const variant = text.match(/the-scribe-downs-[a-e]([1-3])\.1280\.webp(?:$|[?#])/);
   return variant?.[1] || '';
 }
 
 export function heroContrastProfileForBg(url, mode = 'smart') {
-  const variant = String(url || '').match(/the-scribe-downs-([a-e])([1-3])\.1280\.webp(?:$|[?#])/);
+  const text = String(url || '');
+  const postMegaVariant = text.match(/the-scribe-downs-f([1-3])-b[12]\.1280\.webp(?:$|[?#])/);
+  // Post-Mega vistas inherit the same per-tone contrast envelope as the
+  // legacy regions — tone 1 = dark shell, 2/3 = light. The active mode
+  // index is meaningless for post-Mega (Guardian / Boss / Pattern Quest
+  // share one CTA per card), so the selected-card override does not apply
+  // and every card gets the base tone.
+  if (postMegaVariant) {
+    const tone = postMegaVariant[1];
+    const base = SPELLING_HERO_CONTRAST_BY_TONE[tone];
+    if (!base) return null;
+    return {
+      tone,
+      shell: base.shell,
+      controls: base.controls,
+      cards: base.cards.slice(),
+    };
+  }
+  const variant = text.match(/the-scribe-downs-([a-e])([1-3])\.1280\.webp(?:$|[?#])/);
   if (!variant) return null;
   const base = SPELLING_HERO_CONTRAST_BY_TONE[variant[2]];
   if (!base) return null;

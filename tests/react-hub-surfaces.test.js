@@ -31,7 +31,7 @@ test('React Parent Hub surface renders readable learner payload and read-only no
 test('React Admin Operations surface renders content, audit, account roles, and diagnostics', async () => {
   const html = await renderHubSurfaceFixture({ surface: 'admin' });
 
-  assert.match(html, /Admin \/ operations skeleton/);
+  assert.match(html, /Operations dashboard/);
   assert.match(html, /Monster visuals/);
   assert.match(html, /vellhorn-b1-3/);
   assert.match(html, /Save draft/);

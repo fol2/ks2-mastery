@@ -1,3 +1,6 @@
+import { projectPunctuationStars } from './star-projection.js';
+import { stageFor, PUNCTUATION_STAR_THRESHOLDS, PUNCTUATION_GRAND_STAR_THRESHOLDS } from '../../platform/game/monsters.js';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 const TOTAL_REWARD_UNITS = 14;
@@ -435,7 +438,47 @@ export function buildPunctuationLearnerReadModel({
   const secureItems = itemSnapshots.filter((entry) => entry.bucket === 'secure').length;
   const dueItems = itemSnapshots.filter((entry) => entry.bucket === 'due').length;
   const weakItems = itemSnapshots.filter((entry) => entry.bucket === 'weak').length;
-  const publishedRewardUnits = currentPublishedRewardUnits(rewardUnits);
+  const trackedRewardUnitEntries = currentPublishedRewardUnits(rewardUnits);
+  const trackedRewardUnitCount = trackedRewardUnitEntries.length;
+  const securedRewardUnitCount = trackedRewardUnitEntries.filter(
+    (entry) => asTs(entry.securedAt, 0) > 0,
+  ).length;
+  // Placeholder for U3 — deep-secure projection not yet wired.
+  const deepSecuredRewardUnitCount = 0;
+  // U4: project Star counts from learning evidence. The ledger provides
+  // per-monster breakdowns (tryStars, practiceStars, secureStars,
+  // masteryStars, total) and a grand Star total. `starDerivedStage` is
+  // computed here so the read-model consumer can display star-derived
+  // monster stages. `maxStageEver` is left as 0 — the read-model does
+  // not have access to the monster codex state (lives in
+  // `gameStateRepository`); the view-model merges codex state at render
+  // time to produce the final displayStage.
+  const starLedger = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const starViewPerMonster = {};
+  for (const [monsterId, starEntry] of Object.entries(starLedger.perMonster)) {
+    const starDerivedStage = stageFor(starEntry.total, PUNCTUATION_STAR_THRESHOLDS);
+    starViewPerMonster[monsterId] = {
+      tryStars: starEntry.tryStars,
+      practiceStars: starEntry.practiceStars,
+      secureStars: starEntry.secureStars,
+      masteryStars: starEntry.masteryStars,
+      total: starEntry.total,
+      starDerivedStage,
+    };
+  }
+  const grandStarDerivedStage = stageFor(
+    starLedger.grand.grandStars,
+    PUNCTUATION_GRAND_STAR_THRESHOLDS,
+  );
+  const starView = {
+    perMonster: starViewPerMonster,
+    grand: {
+      grandStars: starLedger.grand.grandStars,
+      total: starLedger.grand.total,
+      starDerivedStage: grandStarDerivedStage,
+    },
+  };
+
   const weakestFacets = facetRows(progress, skills, nowTs);
   const skillRows = skillRowsFromAttempts(attempts, skills);
   const strengths = buildStrengths(skillRows);
@@ -500,12 +543,14 @@ export function buildPunctuationLearnerReadModel({
     subjectId: 'punctuation',
     hasEvidence,
     currentFocus,
+    starView,
     progressSnapshot: {
       subjectId: 'punctuation',
       releaseId: CURRENT_RELEASE_ID,
       totalRewardUnits: TOTAL_REWARD_UNITS,
-      trackedRewardUnits: publishedRewardUnits.length,
-      securedRewardUnits: publishedRewardUnits.length,
+      trackedRewardUnits: trackedRewardUnitCount,
+      securedRewardUnits: securedRewardUnitCount,
+      deepSecuredRewardUnits: deepSecuredRewardUnitCount,
       trackedItems: itemSnapshots.length,
       secureItems,
       dueItems,
@@ -518,7 +563,7 @@ export function buildPunctuationLearnerReadModel({
       correct,
       accuracyPercent: accuracy,
       sessionsCompleted: Math.max(0, Number(progress.sessionsCompleted) || 0),
-      securedRewardUnits: publishedRewardUnits.length,
+      securedRewardUnits: securedRewardUnitCount,
       dueItems,
       weakItems,
       lastActivityAt,
@@ -539,7 +584,7 @@ export function buildPunctuationLearnerReadModel({
       releaseId: CURRENT_RELEASE_ID,
       publishedSkillCount: PUNCTUATION_CLIENT_SKILLS.length,
       publishedRewardUnitCount: TOTAL_REWARD_UNITS,
-      trackedRewardUnitCount: publishedRewardUnits.length,
+      trackedRewardUnitCount: trackedRewardUnitCount,
       sessionCount: sessions.length,
       weakPatternCount: patterns.length,
       productionExposureStatus: 'enabled',

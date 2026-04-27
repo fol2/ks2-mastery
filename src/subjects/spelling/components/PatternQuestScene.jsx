@@ -18,8 +18,10 @@ import {
   spellingAnswerInputProps,
 } from './SpellingCommon.jsx';
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
+import { isPostMasteryMode } from '../service-contract.js';
 import {
   heroBgForSession,
+  normalisePostMegaBranch,
   heroBgStyle,
   renderAction,
   renderFormAction,
@@ -44,6 +46,22 @@ import {
  * "Card X of 5 • Pattern: <title>" WITHOUT slot-machine dynamics —
  * it is a static label, never animating a roll.
  */
+// Phaeton anchors the post-Mega vista; the branch falls through to the
+// `f`-region URL builder. Inlined defaults so the module file does not
+// have to import the bigger monsters constants surface.
+const SPELLING_GRAND_MASTER_MONSTER_ID = 'phaeton';
+const MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
+
+function postMegaBranchFromRepositories(repositories, learnerId) {
+  if (!learnerId || !repositories?.gameState?.read) return normalisePostMegaBranch();
+  try {
+    const state = repositories.gameState.read(learnerId, MONSTER_CODEX_SYSTEM_ID);
+    return normalisePostMegaBranch(state?.[SPELLING_GRAND_MASTER_MONSTER_ID]?.branch);
+  } catch (_error) {
+    return normalisePostMegaBranch();
+  }
+}
+
 export function PatternQuestScene({
   learner,
   service,
@@ -52,6 +70,11 @@ export function PatternQuestScene({
   actions,
   previousHeroBg = '',
   runtimeReadOnly = false,
+  // P2 hotfix 2026-04-27: receive repositories so the post-Mega branch
+  // lookup can resolve Phaeton's branch from monster-codex state. Pattern
+  // Quest is always post-Mega so we always swap to the f-region — branch
+  // just decides which painting (b1 / b2).
+  repositories = null,
 }) {
   const session = ui.session;
   const questCard = session?.patternQuestCard || null;
@@ -85,7 +108,19 @@ export function PatternQuestScene({
   const contextNote = spellingSessionContextNote(session);
   const footerNote = spellingSessionFooterNote(session);
   const infoChips = spellingSessionInfoChips(session);
-  const heroBg = heroBgForSession(learner.id, session, { awaitingAdvance });
+  // Pattern Quest only runs as a post-Mega mode, so the f-region vista
+  // always applies. `isPostMasteryMode` covers the canonical guardian /
+  // boss / pattern-quest set; if a stale or unknown mode slips through
+  // we still fall through to legacy regions cleanly.
+  const isPostMegaSession = isPostMasteryMode(session?.mode);
+  const sessionPostMegaBranch = isPostMegaSession
+    ? postMegaBranchFromRepositories(repositories, learner.id)
+    : '';
+  const heroBg = heroBgForSession(learner.id, session, {
+    awaitingAdvance,
+    postMega: isPostMegaSession,
+    postMegaBranch: sessionPostMegaBranch,
+  });
 
   const persistenceWarning = ui.feedback?.persistenceWarning || null;
   const persistenceWarningCopy = persistenceWarning

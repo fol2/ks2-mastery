@@ -126,6 +126,12 @@ export const CLASSIFICATION = Object.freeze({
   'src/surfaces/hubs/MonsterVisualFieldControls.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/admin-panel-header.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminHubSurface.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminSectionTabs.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminOverviewSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminAccountsSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminDebuggingSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminContentSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminMarketingSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/ParentHubSurface.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/MonsterEffectBindingsPanel.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/MonsterEffectCatalogPanel.jsx': 'shared-pattern-available',
@@ -197,10 +203,10 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // for a future migration PR; the budget is bumped from 282 to 287 to record the
 // post-merge baseline honestly.
 // P5-U7: Monster strip progress bar uses 1 inline `style={{ width, backgroundColor }}`
-// site in GrammarSetupScene.jsx for accent-coloured star bars. Budget 287 → 288.
-export const PRE_MIGRATION_TOTAL = 288;
+// site in GrammarSetupScene.jsx for accent-coloured star bars. Budget 293 → 294.
+export const PRE_MIGRATION_TOTAL = 294;
 export const SITES_MIGRATED_THIS_PR = 25;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 263
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 269
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';
