@@ -151,7 +151,7 @@ function MarketingCreateForm({ onSubmit, submitting }) {
     setValidationError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) {
       setValidationError('Title is required.');
@@ -183,8 +183,12 @@ function MarketingCreateForm({ onSubmit, submitting }) {
       starts_at: form.starts_at ? new Date(form.starts_at).getTime() : null,
       ends_at: form.ends_at ? new Date(form.ends_at).getTime() : null,
     };
-    onSubmit(data);
-    setForm({ ...EMPTY_FORM });
+    try {
+      await onSubmit(data);
+      setForm({ ...EMPTY_FORM }); // HIGH-2: only clear on success
+    } catch {
+      // form retains values on failure — parent shows error
+    }
   };
 
   return (
@@ -421,7 +425,7 @@ function MessageListRow({ message, onSelect }) {
 // Main section component
 // ---------------------------------------------------------------------------
 
-export function AdminMarketingSection({ accessContext, onRefresh }) {
+export function AdminMarketingSection({ accessContext }) {
   const isAdmin = (accessContext?.role || accessContext?.shellAccess?.platformRole || '').toLowerCase() === 'admin';
 
   // API instance — created once
@@ -444,18 +448,26 @@ export function AdminMarketingSection({ accessContext, onRefresh }) {
   const createLock = useSubmitLock();
   const transitionLock = useSubmitLock();
 
+  // MEDIUM-2: generation counter guards against rapid-refresh race conditions.
+  // If a newer fetch starts before an older one resolves, the older response
+  // is discarded so stale data never overwrites fresh data.
+  const fetchGeneration = React.useRef(0);
+
   // Fetch messages on mount (lazy-load on tab activation)
   const fetchMessages = React.useCallback(async () => {
+    const gen = ++fetchGeneration.current;
     setLoading(true);
     setError(null);
     try {
       const result = await api.fetchMarketingMessages();
+      if (gen !== fetchGeneration.current) return; // stale response — discard
       const normalised = (result?.messages || []).map(normaliseMarketingMessage);
       setMessages(normalised);
     } catch (err) {
+      if (gen !== fetchGeneration.current) return; // stale error — discard
       setError(err?.message || 'Failed to load marketing messages.');
     } finally {
-      setLoading(false);
+      if (gen === fetchGeneration.current) setLoading(false);
     }
   }, [api]);
 
@@ -478,9 +490,10 @@ export function AdminMarketingSection({ accessContext, onRefresh }) {
     setBroadPublishPending(null);
   };
 
-  // Create message
+  // Create message — returns a promise so MarketingCreateForm can await it
+  // and only clear the form on success (HIGH-2).
   const handleCreate = (data) => {
-    createLock.run(async () => {
+    return createLock.run(async () => {
       setError(null);
       try {
         const result = await api.createMarketingMessage(data);
@@ -491,6 +504,7 @@ export function AdminMarketingSection({ accessContext, onRefresh }) {
         }
       } catch (err) {
         setError(err?.message || 'Failed to create message.');
+        throw err; // re-throw so MarketingCreateForm's await rejects
       }
     });
   };
@@ -531,6 +545,7 @@ export function AdminMarketingSection({ accessContext, onRefresh }) {
       } catch (err) {
         if (err?.status === 409 || err?.code === 'marketing_message_stale') {
           setTransitionError('This message was updated by another session. Please go back and refresh the list.');
+          fetchMessages(); // HIGH-1: refresh stale local state after CAS conflict
         } else {
           setTransitionError(err?.message || 'Transition failed.');
         }

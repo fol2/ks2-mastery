@@ -174,7 +174,6 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
       {activeSection === 'marketing' && (
         <AdminMarketingSection
           accessContext={{ role: model.permissions.platformRole }}
-          onRefresh={() => sectionActions.dispatch('admin-section-change', { section: 'marketing' })}
         />
       )}
     </>
