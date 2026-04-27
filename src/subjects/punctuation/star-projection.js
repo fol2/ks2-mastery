@@ -424,6 +424,41 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnits, monsterId) 
     }
   }
 
+  // P6-U5: Curlune Mega breadth gate — Curlune owns 7 reward units across
+  // comma_flow (3) and structure (4). Without broad deep-secure evidence
+  // (5/7 skills), Mastery Stars are capped at 15 so the maximum total is
+  // 10 + 30 + 35 + 15 = 90 (< 100 Mega).
+  if (monsterId === 'curlune') {
+    const totalUnitsForMonster = MONSTER_UNIT_COUNT.curlune; // 7
+    const minDeepSecuredForMega = Math.ceil(totalUnitsForMonster * 0.71); // 5
+
+    // Count deep-secured skills within Curlune's clusters.  Each Curlune
+    // skill maps 1:1 to a reward unit, so this is equivalent to counting
+    // deep-secured reward units.  Using skills (not cluster-level) avoids
+    // over-counting when only a subset of skills in a cluster are deep-secure.
+    let deepSecuredSkillCount = 0;
+    for (const skillId of skillsWithDeepSecure) {
+      const cluster = SKILL_TO_CLUSTER.get(skillId);
+      if (cluster && monsterClusterIds.has(cluster)) {
+        deepSecuredSkillCount += 1;
+      }
+    }
+
+    const hasMixedModes = itemModes.size >= 2;
+
+    // Structural parity with Claspin gate: require a minimum number of
+    // secured reward units (securedAt > 0) in addition to deep-secure
+    // skill evidence.  In practice deep-secure implies secured, but the
+    // gate enforces it explicitly so both monsters share the same shape.
+    const meetsCurluneMegaGate =
+      securedUnitCount >= minDeepSecuredForMega &&
+      deepSecuredSkillCount >= minDeepSecuredForMega && hasMixedModes && hasSpacedReturn;
+
+    if (!meetsCurluneMegaGate) {
+      stars = Math.min(stars, 15);
+    }
+  }
+
   return stars;
 }
 

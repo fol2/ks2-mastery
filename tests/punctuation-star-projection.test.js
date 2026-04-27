@@ -964,6 +964,172 @@ test('U5: Claspin Mega gate — missing possession skill blocks full Mastery', (
 });
 
 // ---------------------------------------------------------------------------
+// P6-U5: Curlune Mega breadth gate tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a Curlune journey with a specific number of deep-secured units.
+ * @param {number} deepSecuredCount — how many of 7 units have deep-secure facets
+ * @param {Object} [opts] — { mixedModes, spacedReturn }
+ */
+function curluneJourney(deepSecuredCount, { mixedModes = true, spacedReturn = true } = {}) {
+  const progress = freshProgress();
+  const now = Date.UTC(2026, 3, 25);
+
+  // All 7 Curlune reward units in order.
+  const curluneUnits = [
+    { skillId: 'list_commas', cluster: 'comma_flow', ru: 'list-commas-core' },
+    { skillId: 'fronted_adverbial', cluster: 'comma_flow', ru: 'fronted-adverbials-core' },
+    { skillId: 'comma_clarity', cluster: 'comma_flow', ru: 'comma-clarity-core' },
+    { skillId: 'parenthesis', cluster: 'structure', ru: 'parenthesis-core' },
+    { skillId: 'colon_list', cluster: 'structure', ru: 'colons-core' },
+    { skillId: 'semicolon_list', cluster: 'structure', ru: 'semicolon-lists-core' },
+    { skillId: 'bullet_points', cluster: 'structure', ru: 'bullet-points-core' },
+  ];
+
+  // All 7 units are secured (securedAt > 0).
+  for (const { cluster, ru, skillId } of curluneUnits) {
+    progress.rewardUnits = {
+      ...progress.rewardUnits,
+      ...securedRewardUnit(cluster, ru),
+    };
+
+    // Add items and attempts for Try/Practice/Secure evidence.
+    for (let i = 0; i < 10; i++) {
+      const itemId = `curlune_${skillId}_item_${i}`;
+      progress.items[itemId] = secureItemState();
+      for (let d = 0; d < 4; d++) {
+        const modes = mixedModes ? ['choose', 'insert'] : ['choose'];
+        progress.attempts.push(makeAttempt({
+          ts: Date.UTC(2026, 3, 25 - d, 10, 0, i),
+          itemId,
+          skillIds: [skillId],
+          rewardUnitId: ru,
+          correct: true,
+          supportLevel: 0,
+          itemMode: modes[d % modes.length],
+        }));
+      }
+    }
+  }
+
+  // Deep-secure facets for the first N units.
+  const deepSecuredUnits = curluneUnits.slice(0, deepSecuredCount);
+  const modes = mixedModes ? ['choose', 'insert'] : ['choose'];
+  for (const { skillId } of deepSecuredUnits) {
+    for (const mode of modes) {
+      progress.facets[`${skillId}::${mode}`] = secureItemState({
+        lapses: 0,
+        firstCorrectAt: spacedReturn ? now - (14 * DAY_MS) : now - DAY_MS,
+        lastCorrectAt: now,
+      });
+    }
+  }
+
+  // Non-deep-secure facets for the remaining units (secure but with lapses).
+  const nonDeepUnits = curluneUnits.slice(deepSecuredCount);
+  for (const { skillId } of nonDeepUnits) {
+    for (const mode of modes) {
+      progress.facets[`${skillId}::${mode}`] = secureItemState({
+        lapses: 1,  // Has lapse — not deep-secure
+        streak: 3,  // Still secure (streak >= 3)
+        firstCorrectAt: spacedReturn ? now - (14 * DAY_MS) : now - DAY_MS,
+        lastCorrectAt: now,
+      });
+    }
+  }
+
+  return progress;
+}
+
+test('P6-U5: Curlune 5/7 deep-secure + mixed + spaced return — 100 Stars achievable', () => {
+  const progress = curluneJourney(5, { mixedModes: true, spacedReturn: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const curlune = result.perMonster.curlune;
+
+  assert.equal(curlune.total, 100,
+    `Curlune with 5/7 deep-secure must reach 100 (Mega), got ${curlune.total}`);
+  assert.ok(curlune.masteryStars > 15,
+    `Curlune Mastery Stars must exceed the capped value of 15, got ${curlune.masteryStars}`);
+});
+
+test('P6-U5: Curlune 7/7 deep-secure — Mega reached', () => {
+  const progress = curluneJourney(7, { mixedModes: true, spacedReturn: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const curlune = result.perMonster.curlune;
+
+  assert.equal(curlune.total, 100,
+    `Curlune with 7/7 deep-secure must reach 100 (Mega), got ${curlune.total}`);
+});
+
+test('P6-U5: Curlune 3/7 deep-secure — Mastery capped at 15, total max 90', () => {
+  const progress = curluneJourney(3, { mixedModes: true, spacedReturn: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const curlune = result.perMonster.curlune;
+
+  assert.ok(curlune.masteryStars <= 15,
+    `Curlune Mastery must be capped at 15 with 3/7 deep-secure, got ${curlune.masteryStars}`);
+  assert.ok(curlune.total <= 90,
+    `Curlune total must be <= 90 with 3/7 deep-secure, got ${curlune.total}`);
+  assert.ok(curlune.total < 100,
+    `Curlune must NOT reach Mega (100) with 3/7 deep-secure, got ${curlune.total}`);
+});
+
+test('P6-U5: Curlune 4/7 deep-secure — still capped (threshold is 5)', () => {
+  const progress = curluneJourney(4, { mixedModes: true, spacedReturn: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const curlune = result.perMonster.curlune;
+
+  assert.ok(curlune.masteryStars <= 15,
+    `Curlune Mastery must be capped at 15 with 4/7 deep-secure, got ${curlune.masteryStars}`);
+  assert.ok(curlune.total < 100,
+    `Curlune must NOT reach Mega (100) with 4/7 deep-secure, got ${curlune.total}`);
+});
+
+test('P6-U5: Curlune 5/7 deep-secure but no mixed modes — Mastery blocked by itemModes gate', () => {
+  const progress = curluneJourney(5, { mixedModes: false, spacedReturn: true });
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const curlune = result.perMonster.curlune;
+
+  assert.equal(curlune.masteryStars, 0,
+    `Curlune Mastery must be 0 without mixed modes (itemModes.size < 2), got ${curlune.masteryStars}`);
+  assert.ok(curlune.total < 100,
+    `Curlune must NOT reach Mega without mixed modes, got ${curlune.total}`);
+});
+
+test('P6-U5: Pealark and Claspin unaffected by Curlune breadth gate', () => {
+  // Verify Pealark and Claspin simple-secure journeys are unchanged.
+  const pealarkResult = projectPunctuationStars(simpleSecureJourney('pealark'), CURRENT_RELEASE_ID);
+  const claspinResult = projectPunctuationStars(simpleSecureJourney('claspin'), CURRENT_RELEASE_ID);
+
+  // These should produce the same results as before the Curlune gate was added.
+  // Pealark: simple secure journey has 1 mode, so Mastery = 0.
+  assert.equal(pealarkResult.perMonster.pealark.masteryStars, 0,
+    'Pealark Mastery Stars must be 0 with single mode (unaffected by Curlune gate)');
+  // Claspin: simple secure journey has 1 mode, so Mastery = 0.
+  assert.equal(claspinResult.perMonster.claspin.masteryStars, 0,
+    'Claspin Mastery Stars must be 0 with single mode (unaffected by Curlune gate)');
+
+  // Neither monster has Curlune's gate applied.
+  assert.ok(pealarkResult.perMonster.pealark.total > 0,
+    'Pealark total must be > 0');
+  assert.ok(claspinResult.perMonster.claspin.total > 0,
+    'Claspin total must be > 0');
+});
+
+test('P6-U5: Curlune simple-secure journey (1 mode) cannot reach Mega', () => {
+  // The existing simpleSecureJourney helper uses single mode.
+  const result = projectPunctuationStars(simpleSecureJourney('curlune'), CURRENT_RELEASE_ID);
+  const curlune = result.perMonster.curlune;
+
+  assert.ok(curlune.total < 100,
+    `Curlune simple secure (single mode) must not reach Mega, got ${curlune.total}`);
+  // Mastery Stars should be 0 due to the itemModes.size < 2 gate.
+  assert.equal(curlune.masteryStars, 0,
+    'Curlune Mastery Stars must be 0 with single item mode');
+});
+
+// ---------------------------------------------------------------------------
 // U6: Grand Star tier gate tests
 // ---------------------------------------------------------------------------
 
