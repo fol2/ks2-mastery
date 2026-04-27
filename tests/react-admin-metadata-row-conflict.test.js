@@ -194,6 +194,7 @@ test('AccountOpsMetadataRow renders a conflict banner when account.conflict is s
         actions={actions}
         accessContext={accessContext}
         accountDirectory={accountDirectory}
+        initialSection="accounts"
       />
     );
     process.stdout.write(html);
@@ -378,6 +379,7 @@ test('AccountOpsMetadataRow does NOT render the conflict banner when account.con
         actions={actions}
         accessContext={accessContext}
         accountDirectory={accountDirectory}
+        initialSection="accounts"
       />
     );
     process.stdout.write(html);

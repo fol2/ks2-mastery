@@ -255,6 +255,7 @@ test('U20 drawer refresh — SSR-rendered drawer keeps release + account cells s
         accountDirectory={{ accounts: [], status: 'idle' }}
         accessContext={{ shellAccess: { source: 'worker-session' } }}
         actions={{ dispatch: () => {}, openSubject: () => {}, navigateHome: () => {}, registerAccountOpsMetadataRowDirty: () => {} }}
+        initialSection="debug"
       />,
     );
     const htmlB = renderToStaticMarkup(
@@ -265,6 +266,7 @@ test('U20 drawer refresh — SSR-rendered drawer keeps release + account cells s
         accountDirectory={{ accounts: [], status: 'idle' }}
         accessContext={{ shellAccess: { source: 'worker-session' } }}
         actions={{ dispatch: () => {}, openSubject: () => {}, navigateHome: () => {}, registerAccountOpsMetadataRowDirty: () => {} }}
+        initialSection="debug"
       />,
     );
     console.log(JSON.stringify({ drawerA: extractDrawerBlock(htmlA), drawerB: extractDrawerBlock(htmlB) }));
