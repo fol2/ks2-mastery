@@ -129,6 +129,18 @@ export function applyAdminHubAccountOpsMetadataPatch(adminHub, rawDirectory) {
   };
 }
 
+// U8 (P3): narrow-refresh patch for the denial log panel. Mirrors the
+// four existing sibling patch helpers above. The denial panel has no
+// in-flight saving scalars, so no `preserveKeys` are needed.
+export function applyAdminHubDenialPatch(adminHub, rawDenials) {
+  const hub = coerceAdminHub(adminHub);
+  if (!hub) return adminHub;
+  const next = stripOkEnvelope(rawDenials);
+  if (!isPlainObject(next)) return hub;
+  const previous = isPlainObject(hub.denialLog) ? hub.denialLog : null;
+  return { ...hub, denialLog: composeSuccess(previous, next) };
+}
+
 // P1.5 Phase A (U1): failure-case patch — record the refresh error on the
 // target panel without touching any other sibling. The refreshedAt scalar
 // is preserved verbatim (whatever timestamp the UI was displaying from the
@@ -139,6 +151,7 @@ const PANEL_KEYS = Object.freeze({
   opsActivityStream: 'opsActivityStream',
   errorLogSummary: 'errorLogSummary',
   accountOpsMetadata: 'accountOpsMetadata',
+  denialLog: 'denialLog',
 });
 
 export function applyAdminHubPanelRefreshError(adminHub, panelKey, refreshError) {
