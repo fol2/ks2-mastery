@@ -383,6 +383,7 @@ function startOptionsFromPayload(payload = {}) {
     // boundary so the service's `startPatternQuestSession` knows which
     // 5-card quest to build.
     patternId: typeof payload.patternId === 'string' ? payload.patternId : undefined,
+    heroContext: payload.heroContext || null,
   };
 }
 
@@ -459,7 +460,11 @@ export function createServerSpellingEngine({
       let transition;
 
       if (command === 'start-session') {
-        transition = service.startSession(learnerId, startOptionsFromPayload(payload));
+        const options = startOptionsFromPayload(payload);
+        transition = service.startSession(learnerId, options);
+        if (transition.state?.session && options.heroContext) {
+          transition.state.session.heroContext = options.heroContext;
+        }
       } else if (currentState.phase === 'session' && !currentRawUiWasServerOwned) {
         persistence.abandonPracticeSession(learnerId, currentState);
         staleSessionError(command);
