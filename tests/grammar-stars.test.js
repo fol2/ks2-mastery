@@ -145,15 +145,29 @@ test('evidence tier: secureConfidence false when correctStreak < 3', () => {
   assert.equal(result.secureConfidence, false);
 });
 
-test('evidence tier: retainedAfterSecure requires secure + later independent correct', () => {
-  // Concept is secured (intervalDays >= 7) and has a later independent correct
+test('evidence tier: retainedAfterSecure requires secure + >= 2 independent corrects (ADV-003)', () => {
+  // Concept is secured (intervalDays >= 7) and has 2 independent corrects.
+  // The first proves independent mastery; the second proves retention.
+  const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: 'tmpl-b', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.secureConfidence, true);
+  assert.equal(result.retainedAfterSecure, true);
+});
+
+test('evidence tier: retainedAfterSecure false with only 1 independent correct (ADV-003)', () => {
+  // Concept is secured but only 1 independent correct — insufficient to prove
+  // post-secure retention (that single correct could predate secure status).
   const conceptNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
   const recentAttempts = [
     { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
   const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
   assert.equal(result.secureConfidence, true);
-  assert.equal(result.retainedAfterSecure, true);
+  assert.equal(result.retainedAfterSecure, false);
 });
 
 test('evidence tier: retainedAfterSecure false when no independent correct in recentAttempts', () => {
@@ -368,7 +382,7 @@ test('star computation: Concordium 1 concept firstIndependentWin → floor guara
   assert.equal(result.stars, 1);
 });
 
-test('star computation: Concordium 18 concepts each firstIndependentWin only → 4 Stars (floating-point floor)', () => {
+test('star computation: Concordium 18 concepts each firstIndependentWin only → 5 Stars (epsilon-aware floor)', () => {
   const concepts = [
     'sentence_functions', 'word_classes', 'noun_phrases', 'adverbials',
     'clauses', 'relative_clauses', 'tense_aspect', 'standard_english',
@@ -378,10 +392,9 @@ test('star computation: Concordium 18 concepts each firstIndependentWin only →
   ];
   const map = firstWinOnlyForConcepts(concepts);
   const result = computeGrammarMonsterStars('concordium', map);
-  // Ideal: 18 * (100/18 * 0.05) = 5.0, but IEEE 754 yields 4.999999999999999.
-  // floor(4.999...) = 4. This is the correct floored result per the plan's
-  // "floor applies only to the final total" rule.
-  assert.equal(result.stars, 4);
+  // Ideal: 18 * (100/18 * 0.05) = 5.0. Without epsilon, IEEE 754 yields
+  // 4.999... → floor = 4. With epsilon-aware floor (ADV-002), correctly = 5.
+  assert.equal(result.stars, 5);
 });
 
 test('star computation: empty conceptEvidenceMap → 0 Stars', () => {
@@ -560,4 +573,167 @@ test('star computation: Bracehart secure only (no retention) → capped at ~40%'
   // Each concept: 16.667 * (0.05+0.10+0.10+0.15) = 16.667 * 0.40 = 6.667
   // Total: 6 * 6.667 = 40.0; floor = 40
   assert.equal(result.stars, 40);
+});
+
+// ---------------------------------------------------------------------------
+// 8. ADV-001: Nudge gate — supportLevelAtScoring: 0 with firstAttemptIndependent: false
+// ---------------------------------------------------------------------------
+
+test('evidence tier: nudge attempt (supportLevel 0, firstAttemptIndependent false) does NOT unlock firstIndependentWin (ADV-001)', () => {
+  // A nudge attempt: the child got it wrong first, then retried correctly.
+  // supportLevelAtScoring is 0 (no external support was rendered), but
+  // firstAttemptIndependent is false because the first attempt was wrong.
+  const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, supportLevelAtScoring: 0, firstAttemptIndependent: false, supportUsed: 'nudge' },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, false, 'Nudge attempts must not unlock independent tiers');
+});
+
+// ---------------------------------------------------------------------------
+// 9. TEST-001: Unknown monsterId
+// ---------------------------------------------------------------------------
+
+test('star computation: unknown monsterId → 0 Stars with full result shape', () => {
+  const result = computeGrammarMonsterStars('nonexistent', {});
+  assert.equal(result.stars, 0);
+  assert.equal(result.starMax, 100);
+  assert.equal(result.displayStage, 0);
+  assert.equal(result.stageName, 'Not found yet');
+  assert.equal(result.nextMilestoneStars, 1);
+  assert.equal(result.nextMilestoneLabel, 'Egg found');
+});
+
+// ---------------------------------------------------------------------------
+// 10. TEST-002: OR-condition arm — supportLevelAtScoring: 0 alone is insufficient
+// ---------------------------------------------------------------------------
+
+test('evidence tier: supportLevelAtScoring 0 alone (firstAttemptIndependent false) does NOT trigger firstIndependentWin (TEST-002)', () => {
+  const conceptNode = { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: 'tmpl-a', correct: true, supportLevelAtScoring: 0, firstAttemptIndependent: false },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.firstIndependentWin, false);
+});
+
+// ---------------------------------------------------------------------------
+// 11. TEST-003: variedPractice defensive guard — empty/null templateId
+// ---------------------------------------------------------------------------
+
+test('evidence tier: variedPractice false with empty-string templateId', () => {
+  const conceptNode = { attempts: 2, correct: 2, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 2 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: '', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: '', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.variedPractice, false);
+});
+
+test('evidence tier: variedPractice false with null templateId', () => {
+  const conceptNode = { attempts: 2, correct: 2, wrong: 0, strength: 0.6, intervalDays: 2, correctStreak: 2 };
+  const recentAttempts = [
+    { conceptId: 'clauses', templateId: null, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'clauses', templateId: null, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const result = deriveGrammarConceptStarEvidence({ conceptId: 'clauses', conceptNode, recentAttempts });
+  assert.equal(result.variedPractice, false);
+});
+
+// ---------------------------------------------------------------------------
+// 12. TEST-004: Floor guarantee tests for Chronalyx and Couronnail
+// ---------------------------------------------------------------------------
+
+test('star computation: Chronalyx 1 concept firstIndependentWin only → floor guarantee 1 Star', () => {
+  const concepts = ['tense_aspect', 'modal_verbs', 'adverbials', 'pronouns_cohesion'];
+  const map = noEvidenceForConcepts(concepts);
+  map.tense_aspect = { ...map.tense_aspect, firstIndependentWin: true };
+  const result = computeGrammarMonsterStars('chronalyx', map);
+  // conceptBudget = 100/4 = 25; 25 * 0.05 = 1.25; floor(1.25) = 1
+  assert.equal(result.stars, 1);
+});
+
+test('star computation: Couronnail 1 concept firstIndependentWin only → floor guarantee 1 Star', () => {
+  const concepts = ['word_classes', 'standard_english', 'formality'];
+  const map = noEvidenceForConcepts(concepts);
+  map.word_classes = { ...map.word_classes, firstIndependentWin: true };
+  const result = computeGrammarMonsterStars('couronnail', map);
+  // conceptBudget = 100/3 = 33.333; 33.333 * 0.05 = 1.667; floor(1.667) = 1
+  assert.equal(result.stars, 1);
+});
+
+// ---------------------------------------------------------------------------
+// 13. ADV-002: IEEE 754 epsilon floor test — Concordium evolve2 boundary
+// ---------------------------------------------------------------------------
+
+test('star computation: Concordium 18 concepts evolve2 boundary — weight 0.35 → 35 Stars (ADV-002)', () => {
+  // Weight 0.35 = repeat(0.10) + varied(0.10) + secure(0.15).
+  // Ideal: 18 * (100/18 * 0.35) = 35.0, but IEEE 754 yields 34.999...
+  // Without epsilon floor this gives 34 (stage 2); with epsilon → 35 (stage 3).
+  const concepts = [
+    'sentence_functions', 'word_classes', 'noun_phrases', 'adverbials',
+    'clauses', 'relative_clauses', 'tense_aspect', 'standard_english',
+    'pronouns_cohesion', 'formality', 'active_passive', 'subject_object',
+    'modal_verbs', 'parenthesis_commas', 'speech_punctuation',
+    'apostrophes_possession', 'boundary_punctuation', 'hyphen_ambiguity',
+  ];
+  const map = {};
+  for (const id of concepts) {
+    map[id] = {
+      firstIndependentWin: false,
+      repeatIndependentWin: true,
+      variedPractice: true,
+      secureConfidence: true,
+      retainedAfterSecure: false,
+    };
+  }
+  const result = computeGrammarMonsterStars('concordium', map);
+  assert.equal(result.stars, 35, 'Epsilon-aware floor must yield 35 at the evolve2 boundary');
+  assert.equal(result.displayStage, 3, 'Display stage 3 = Growing');
+});
+
+// ---------------------------------------------------------------------------
+// 14. TEST-005: Integration test — deriveGrammarConceptStarEvidence → computeGrammarMonsterStars
+// ---------------------------------------------------------------------------
+
+test('phase5 integration: derive evidence for each Couronnail concept then compute Stars', () => {
+  // Simulate a learner who has 2 independent corrects across 2 templates
+  // for each Couronnail concept, with a secured mastery node.
+  const couronnailConcepts = ['word_classes', 'standard_english', 'formality'];
+
+  // Build shared recent attempts: 2 independent corrects per concept, 2 templates.
+  const recentAttempts = couronnailConcepts.flatMap((conceptId) => [
+    { conceptId, templateId: `${conceptId}-tmpl-a`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId, templateId: `${conceptId}-tmpl-b`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ]);
+
+  // Secured mastery node per concept.
+  const securedNode = { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 };
+
+  // Derive evidence for each concept and collect into map.
+  const evidenceMap = {};
+  for (const conceptId of couronnailConcepts) {
+    evidenceMap[conceptId] = deriveGrammarConceptStarEvidence({
+      conceptId,
+      conceptNode: securedNode,
+      recentAttempts,
+    });
+  }
+
+  // Each concept should have all 5 tiers true.
+  for (const conceptId of couronnailConcepts) {
+    assert.equal(evidenceMap[conceptId].firstIndependentWin, true, `${conceptId}: firstIndependentWin`);
+    assert.equal(evidenceMap[conceptId].repeatIndependentWin, true, `${conceptId}: repeatIndependentWin`);
+    assert.equal(evidenceMap[conceptId].variedPractice, true, `${conceptId}: variedPractice`);
+    assert.equal(evidenceMap[conceptId].secureConfidence, true, `${conceptId}: secureConfidence`);
+    assert.equal(evidenceMap[conceptId].retainedAfterSecure, true, `${conceptId}: retainedAfterSecure`);
+  }
+
+  // Feed into computeGrammarMonsterStars → expect 100 Stars.
+  const result = computeGrammarMonsterStars('couronnail', evidenceMap);
+  assert.equal(result.stars, 100);
+  assert.equal(result.stageName, 'Mega');
+  assert.equal(result.displayStage, 5);
 });

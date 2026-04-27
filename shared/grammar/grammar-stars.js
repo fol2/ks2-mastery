@@ -138,8 +138,15 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
   );
 
   // --- firstIndependentWin: at least 1 independent correct ---
+  // ADV-001: Use firstAttemptIndependent as the sole gate. A nudge attempt
+  // (child got it wrong, retried correctly) has supportLevelAtScoring: 0 but
+  // firstAttemptIndependent: false. The previous OR condition let nudges
+  // through, violating the invariant "supported answers cannot unlock
+  // independent tiers." firstAttemptIndependent is the authoritative signal —
+  // it is true only when the child answered correctly on the first attempt
+  // with no support of any kind.
   const independentCorrects = conceptAttempts.filter(
-    (a) => a.correct === true && (a.supportLevelAtScoring === 0 || a.firstAttemptIndependent === true),
+    (a) => a.correct === true && a.firstAttemptIndependent === true,
   );
   if (independentCorrects.length >= 1) {
     result.firstIndependentWin = true;
@@ -172,10 +179,15 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
     }
   }
 
-  // --- retainedAfterSecure: secureConfidence AND later independent correct ---
-  // The intervalDays >= 7 proxy on the conceptNode proves prior secured status.
-  // A subsequent independent correct in recentAttempts proves retention.
-  if (result.secureConfidence && independentCorrects.length >= 1) {
+  // --- retainedAfterSecure: secureConfidence AND proven retention ---
+  // ADV-003: A single independent correct could have occurred BEFORE the
+  // concept reached secure status, so it doesn't prove post-secure retention.
+  // Requiring >= 2 independent corrects solves this: the first proves
+  // independent mastery (needed to reach secure), the second proves the
+  // learner retained that mastery after the concept was secured. Combined
+  // with secureConfidence = true, this means the learner achieved secure
+  // AND demonstrated independent correctness on at least 2 occasions.
+  if (result.secureConfidence && independentCorrects.length >= 2) {
     result.retainedAfterSecure = true;
   }
 
@@ -233,8 +245,11 @@ export function computeGrammarMonsterStars(monsterId, conceptEvidenceMap = {}) {
     totalStars += conceptBudget * weightSum;
   }
 
-  // Floor the final total.
-  let stars = Math.floor(totalStars);
+  // ADV-002: Epsilon-aware floor to avoid IEEE 754 boundary traps.
+  // e.g. Concordium 18 concepts at weight 0.35 yields 34.999... instead of
+  // 35, causing Math.floor to return 34 (stage 2) instead of 35 (stage 3).
+  // Adding a tiny epsilon before flooring fixes all such boundary cases.
+  let stars = Math.floor(totalStars + 1e-9);
 
   // Per-monster floor guarantee: if any concept has any evidence, at least 1 Star.
   if (hasAnyEvidence && stars < 1) {
