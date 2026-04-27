@@ -145,6 +145,9 @@ Supported commands:
 - `end-session`
 - `save-prefs`
 - `reset-learner`
+- `record-event` (Phase 4 — telemetry pipeline)
+- `request-context-pack` (Phase 2 — AI context-pack compilation, stub)
+- `punctuation-diagnostic` (P7-U8 — admin-only diagnostic read model)
 
 The Worker owns session creation, item selection, marking, scheduling, progress mutation, completed-session writes, domain-event append, reward projection, and the returned read model. The React browser surface sends learner intent and renders the returned state.
 
@@ -156,6 +159,7 @@ Punctuation emits domain events:
 - `punctuation.misconception-observed`
 - `punctuation.unit-secured`
 - `punctuation.session-completed`
+- `punctuation.star-evidence-updated` (P7-U4 — emitted when live Star evidence exceeds persisted `starHighWater` for a monster)
 
 ### Monster Roster (Phase 2)
 
@@ -196,6 +200,54 @@ punctuation:<releaseId>:<clusterId>:<rewardUnitId>
 ```
 
 Migration-read coverage for historical mastery keys lives in `tests/punctuation-monster-migration.test.js`.
+
+### 100-Star Evidence Model (Phase 5 + Phase 7)
+
+The child-facing reward display uses a 100-Star scale per direct monster. Stars are derived from four evidence categories, accumulated through practice:
+
+- **Try Stars** — earned from first attempts at items, regardless of correctness.
+- **Practice Stars** — earned from repeated practice across varied items.
+- **Secure Stars** — earned when reward units reach secured state (repeated clean evidence, accuracy, streak, and spaced return).
+- **Mastery Stars** — earned from deep mastery: facet coverage across multiple item modes, spaced return confirmation, and mixed-mode breadth.
+
+Each direct monster (Pealark, Claspin, Curlune) has a maximum of 100 Stars. The stage thresholds for direct monsters are `[10, 30, 60, 100]` Stars for stages 1-4 respectively.
+
+Quoral (grand monster) uses cross-monster breadth rather than per-monster depth. Grand Stars are computed from aggregate evidence across all direct monsters: secured unit count, deep-secured unit count, monster coverage, and overall practice breadth. Grand Star stage thresholds are `[10, 25, 50, 100]`.
+
+#### Secured vs Deep-Secured Reward Units
+
+A **secured reward unit** has reached the scheduler's secure state — repeated clean evidence, accuracy above threshold, streak length, and at least one spaced return.
+
+A **deep-secured reward unit** goes further: the learner has demonstrated facet coverage across multiple item modes (e.g. `choose`, `insert`, `fix`, `transfer`), confirmed spaced return at the facet level, and shown mixed-mode breadth within the reward unit's cluster.
+
+Deep-secured units gate Mega stage eligibility and contribute additional Mastery Stars.
+
+#### Direct Stars vs Grand Stars
+
+**Direct Stars** are per-monster, max 100. They measure depth within the monster's assigned clusters: how much a learner has tried, practised, secured, and mastered the specific skills assigned to that monster.
+
+**Grand Stars** (Quoral) are cross-monster. They measure breadth across the entire Punctuation subject: how many secured and deep-secured units exist across all clusters, how many monsters show evidence, and overall practice coverage.
+
+#### Codex `starHighWater` vs Live Projection
+
+The **live projection** (`projectPunctuationStars`) recomputes Stars from all attempts and reward-unit evidence on every Worker command. This is the source of truth for the child-facing display.
+
+The **codex `starHighWater`** is a persisted latch — it only ratchets upward. It records the highest Star count ever observed for each monster. The latch is used for stage-transition events, toast thresholds, and durable progress markers.
+
+The `mergeMonotonicDisplay` function ensures the child always sees `max(starHighWater, liveProjection)`, so even if a learner's live evidence temporarily dips (e.g. after a poor session), the display never regresses.
+
+#### Star-Evidence Latch Writer (P7-U4)
+
+Prior to P7, `starHighWater` only advanced when a reward unit was secured (`punctuation.unit-secured` events). A learner practising extensively without securing new units would see correct Star display (via live projection) but the persisted latch would not advance.
+
+P7-U4 closes this gap. After every Worker command, the command handler computes Star evidence per monster and compares against the persisted `starHighWater`. If `liveStars > starHighWater` for any monster, a `punctuation.star-evidence-updated` domain event is emitted. The mastery layer subscribes and ratchets:
+
+- `starHighWater = max(existing, computedStars)` (with IEEE 754 epsilon guard: `Math.floor(n + 1e-9)`)
+- `maxStageEver = max(existing, derivedStage)`
+
+The latch writer does NOT emit toast events — toast timing remains on reward-unit mastery events only. This preserves existing celebration timing while ensuring the persisted latch accurately tracks accumulated evidence.
+
+Writes are monster-targeted (each monster updates independently) and idempotent (`max` is idempotent, so duplicate event replay is safe).
 
 ## AI Context Pack Decision (Phase 2)
 
@@ -317,7 +369,7 @@ Any field not on the kind's allowlist is **rejected** (not scrubbed) with a 400 
 
 **Authz.** The `record-event` command routes through `repository.runSubjectCommand` at `worker/src/repository.js` — which fires `requireLearnerWriteAccess`. The `{mutates: false}` flag on the client-side `punctuation-record-event` action mapping (`src/subjects/punctuation/command-actions.js`) controls pending-UI wrapping only; it does NOT bypass Worker authz. A learner cannot write telemetry rows for another learner.
 
-**Query surface.** `GET /api/subjects/punctuation/events?learner={id}&kind={optional}&since={ms}&limit={n}`. Returns an array of `{kind, payload, occurredAtMs}` sorted reverse-chronological. Limit defaults to 100, clamps to 1000. Authz via `requireLearnerReadAccess` (parent / admin / owner membership required).
+**Query surface.** `GET /api/subjects/punctuation/events?learner={id}&kind={optional}&since={ms}&limit={n}`. Returns an array of `{kind, payload, occurredAtMs}` sorted reverse-chronological. Limit defaults to 100, clamps to 500. Authz via `requireLearnerReadAccess` (parent / admin / owner membership required).
 
 **Rollout steps.**
 
@@ -340,14 +392,18 @@ Any field not on the kind's allowlist is **rejected** (not scrubbed) with a 400 
 - `CHECK (json_valid(payload_json))` — a corrupt payload can never reach the downstream query-helper `JSON.parse`.
 - `request_id TEXT` + `UNIQUE (learner_id, request_id)` — the retry dedup described above.
 
-**Rollout deferrals (review follow-on 2026-04-26).** Two items are deliberately deferred to a follow-on unit before the flag is flipped on in production:
+**Time-windowed rate limiting (P7-U6).** Sessionless telemetry kinds (e.g. `card-opened`, `map-opened`) previously used a lifetime per-learner cap. After 50 cumulative events across all sessions, the learner would be permanently rate-limited. P7-U6 replaces the lifetime cap with a rolling 7-day window: `COUNT(*) WHERE learner_id = ? AND event_kind = ? AND occurred_at_ms > ?` using `Date.now() - 7 * 86400000`. After 7 days, old events fall out of the window and the learner can emit again. Per-session caps (when `sessionId` is present) remain unchanged.
 
-- **Per-session / per-learner rate-limit** on `record-event` to protect against a runaway client flooding the D1 ingest path. Adversarial MEDIUM at review time. The payload allowlist + 256-char cap + UNIQUE retry-dedup already bound individual writes; a per-session rate-limit is the belt-and-braces layer.
-- **Audit trail on query-endpoint reads** mirroring the admin-ops audit pattern. Security LOW. A later unit should log every `GET /api/subjects/punctuation/events` call to the admin audit feed so a parent looking at their learner's telemetry leaves a tracked entry.
+Rate-limited and deduped events are distinguishable in the response: `{ recorded: false, rateLimited: true }` vs `{ recorded: false, deduped: true }`.
 
-Neither deferral blocks schema land or the flag-OFF integration smoke — both can be additively shipped before the production flag flip.
+**Query audit (P7-U6).** Event timeline reads (`queryPunctuationEvents`) accept an `audit` callback. When provided, the callback fires after each query with `{ learnerId, kind, appliedLimit, resultCount, readAtMs }` so the repository layer can record the read in the ops audit surface. Audit failures are best-effort — they never break the read path. All event timeline queries are bounded (`LIMIT` clamped to [1, 500]) and require a learner ID — no unbounded scans.
 
-### Aspirational telemetry (log warning codes with no consumer)
+**Previous rollout deferrals (now resolved).**
+
+- Per-session / per-learner rate-limit: resolved by P7-U6 time-windowed policy. Sessionless kinds use a 7-day rolling window; per-session kinds retain their existing per-session cap.
+- Audit trail on query-endpoint reads: resolved by P7-U6 `audit` callback wiring.
+
+### Aspirational telemetry (log warning codes with no consumer) [ASPIRATIONAL]
 
 Phase 2 shipped a set of structured warning codes emitted via the existing `logMutation('warn', …)` path. The codes below are stable so a future observability work item can consume them. The repo does not currently have a dashboard or alerting pipeline that ingests these codes — the thresholds quoted here are **aspirational**, not enforced. Until the pipeline lands, operators reviewing Worker logs after a release should watch for:
 
@@ -357,18 +413,36 @@ Phase 2 shipped a set of structured warning codes emitted via the existing `logM
 - `punctuation-command-dedupe-reject` — expected non-zero for real double-submit cases. Spikes indicate UI regression on the disable state machine.
 - "Stuck-at-1" learner count — a diagnostic query on `child_game_state.punctuation.quoral.publishedTotal < 14` run manually from the D1 console during release week. Expected non-zero initially, trending down as learners practise. A non-draining tail should escalate to the deferred repair script.
 
-These codes and queries are not currently wired to a consumer; the acceptance criteria for graduating them from aspirational to enforced are listed below under "Phase 4 follow-up candidates".
+These codes and queries are not currently wired to a consumer. This section is **aspirational** — the thresholds and metric names are stable but no dashboard or alerting pipeline consumes them. The acceptance criteria for graduating them from aspirational to enforced are listed below under "Phase 4 follow-up candidates".
+
+## Punctuation Doctor (P7-U8)
+
+A server-side diagnostic read model is available via the `punctuation-diagnostic` admin command. The diagnostic is for developers and operators only — there is no child-facing Doctor surface.
+
+**Usage.** Send a `punctuation-diagnostic` command through the subject command boundary (gated behind admin auth). The command branches early and bypasses the engine/projection pipeline — it reads state but does not mutate it.
+
+**Output.** The diagnostic returns a structured object answering:
+
+- Per direct monster (Pealark, Claspin, Curlune): live Stars, `starHighWater`, delta between live and latch, stage, `maxStageEver`, breakdown by evidence category (Try/Practice/Secure/Mastery Stars), Mega blockers, reward units tracked/secured/deep-secured.
+- Grand monster (Quoral): grand Stars, grand stage, monsters with secured units, total secured/deep-secured across all clusters.
+- Latch state: whether the latch leads live or live leads latch, per monster.
+- Telemetry: events accepted/dropped/deduped/rate-limited, last event timestamp, per kind.
+- Session context: session ID, command count, last command timestamp.
+
+**Safety.** The output contains only IDs, counts, booleans, timestamps, and safe labels. A recursive forbidden-key scan covers the entire diagnostic payload — no `acceptedAnswers`, `answerBanks`, `correctIndex`, `validators`, or `generatorSeeds` can appear. The diagnostic module lives under `worker/src/subjects/punctuation/` and is forbidden from the client bundle by the `FORBIDDEN_MODULES` audit.
+
+**Admin consumption.** The `normalisePunctuationDiagnostic` normaliser (following the `admin-debug-bundle-panel.js` pattern) provides defensive type coercion and fallbacks for admin panel rendering.
 
 ## Phase 4 follow-up candidates
 
 Items deliberately deferred from earlier phases and scheduled for a future Phase 4 (or a dedicated observability work item):
 
-- **Wire the Operational Telemetry warning codes to a consumer.** Concrete acceptance criteria for each code:
+- **[ASPIRATIONAL] Wire the Operational Telemetry warning codes to a consumer.** Concrete acceptance criteria for each code:
   - Query surface: Cloudflare Workers Analytics Engine, Logpush to an ingesting store, or a Grafana / Loki query pane fed by the Worker log stream. Any one of these is acceptable — the choice is a platform decision, not a code decision.
   - Metric names (stable; match the warning code verbatim to avoid rename drift): `punctuation-redaction-unknown-key-strip`, `punctuation-normaliser-malformed-key`, `punctuation-command-stale-response-drop`, `punctuation-command-dedupe-reject`, `punctuation-quoral-stuck-at-1`.
   - Thresholds: `*-unknown-key-strip` must alert on any non-zero 24h window; `*-malformed-key` must alert on > 10 / 24h sustained for 3 consecutive days; `*-stale-response-drop` must alert on > 50 / 24h; `*-dedupe-reject` must alert on a 7-day-over-7-day increase of > 3x; `*-stuck-at-1` must alert only if the count fails to decrease week-over-week for two consecutive weeks post-release.
   - Consumer: an on-call operations rotation (TBD — likely the same consumer as the Admin Ops Console alert feed once that exists). The default is that this lands as a companion PR alongside whichever phase adds the dashboards.
 - **AI context-pack learner surface.** Phase 2 deferred this deliberately (`safeContextPackSummary` allowlist is already fail-closed). Phase 3 U8 strips it from the default child read model. A Phase 4 decision is required: either productise it as a Parent / Admin-only "Why this question?" surface, or retire the Worker plumbing entirely. The `punctuation-context-pack` client action remains in place as a stub so either path is reachable without a command-surface rewrite.
-- **Dashboard + alerting on `punctuation_events` (post-Phase-4).** Phase 4 U9 ships the D1 table + query endpoint + the 12-event pipeline but deliberately stops short of a dashboard. A post-Phase-4 work item should add: (a) a Cloudflare Workers Analytics Engine or Logpush sink that copies each new row; (b) alert rules on `command-failed` spikes (> 1% of sessions in a 24h window) and on zero-row days (ingest pipeline stalled); (c) a weekly aggregation that joins `punctuation_events.answer-submitted` against the mastery projection to surface under-practising learners. The acceptance criteria mirror the warning-code bullet above — same query-surface options, same consumer rotation.
+- **[ASPIRATIONAL] Dashboard + alerting on `punctuation_events` (post-Phase-4).** Phase 4 U9 ships the D1 table + query endpoint + the 12-event pipeline but deliberately stops short of a dashboard. A post-Phase-4 work item should add: (a) a Cloudflare Workers Analytics Engine or Logpush sink that copies each new row; (b) alert rules on `command-failed` spikes (> 1% of sessions in a 24h window) and on zero-row days (ingest pipeline stalled); (c) a weekly aggregation that joins `punctuation_events.answer-submitted` against the mastery projection to surface under-practising learners. The acceptance criteria mirror the warning-code bullet above — same query-surface options, same consumer rotation.
 
 These items are tracked here (rather than in a GitHub issue) so the doc stays the single source of truth for Punctuation production concerns. When a Phase 4 work item starts, copy the relevant bullet into a tracking issue and link it back to this section.
