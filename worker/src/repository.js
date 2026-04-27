@@ -36,6 +36,7 @@ import { buildAdminHubReadModel } from '../../src/platform/hubs/admin-read-model
 import { buildParentHubReadModel } from '../../src/platform/hubs/parent-read-model.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import { buildSpellingProgressPools, buildSpellingWordBankReadModel } from './content/spelling-read-models.js';
+import { getSpellingPostMasteryState } from '../../src/subjects/spelling/read-model.js';
 import {
   activityFeedRowFromEventRow,
   appendRecentEventTokens,
@@ -322,6 +323,31 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
   const progressPools = contentSnapshot
     ? buildSpellingProgressPools({ contentSnapshot, data, now })
     : null;
+  // P2 hotfix: derive `postMastery` on the bootstrap path so a graduated
+  // learner whose D1 record has the sticky bit lands on the post-Mega
+  // dashboard on first render — without waiting for the first command
+  // round-trip to populate `subjectUi.spelling.postMastery`. Pre-v3
+  // graduates (sticky bit minted via the read-model backfill on first
+  // hydration, or seeded directly into D1) would otherwise stay on the
+  // legacy Smart Review setup until they fired a command. The selector is
+  // shared with the `applyCommandResponse` path (engine.js), so the
+  // bootstrap-derived snapshot and the Worker authoritative response use
+  // byte-identical logic. `sourceHint: 'worker'` matches the existing
+  // hydrated path so the Admin diagnostic panel does not need to branch.
+  let postMastery = null;
+  if (contentSnapshot) {
+    try {
+      postMastery = getSpellingPostMasteryState({
+        subjectStateRecord: { data, ui: raw },
+        runtimeSnapshot: contentSnapshot,
+        now,
+        sourceHint: 'worker',
+      });
+    } catch (error) {
+      globalThis.console?.warn?.('[spelling.bootstrap] postMastery derivation failed, omitting from response', error);
+      postMastery = null;
+    }
+  }
   return {
     subjectId: 'spelling',
     learnerId,
@@ -353,6 +379,7 @@ function redactSpellingUiForClient(ui, data = {}, learnerId = '', {
     analytics: publicSpellingAnalytics(progressPools, now),
     audio: audio ? cloneSerialisable(audio) : null,
     content: null,
+    postMastery,
   };
 }
 
