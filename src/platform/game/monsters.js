@@ -205,6 +205,9 @@ export const MONSTERS_BY_SUBJECT = {
 export const MONSTER_BRANCHES = Object.freeze(['b1', 'b2']);
 export const DIRECT_STAGE_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
 export const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 213]);
+export const PUNCTUATION_MASTERED_THRESHOLDS = Object.freeze([1, 1, 2, 4, 14]);
+export const PUNCTUATION_STAR_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
+export const PUNCTUATION_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 25, 50, 100]);
 
 const DEFAULT_MONSTER_BRANCH = 'b1';
 const MONSTER_ASSET_SIZES = Object.freeze([320, 640, 1280]);
