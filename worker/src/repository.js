@@ -8417,12 +8417,16 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async readSpellingWordBank(accountId, learnerId, filters = {}) {
       return readSpellingWordBankBundle(db, accountId, learnerId, filters, nowFactory());
     },
-    // U9: Punctuation telemetry read. Fires the same
+    // U9 → P7-U6: Punctuation telemetry read. Fires the same
     // `requireLearnerReadAccess` gate the spelling word-bank read uses
     // so a parent / admin with membership can query their learner's
     // telemetry, but a caller without membership gets a 403. The SQL
     // SELECT is delegated to `worker/src/subjects/punctuation/events.js`
     // for test reachability; the repository layer owns the authz gate.
+    //
+    // P7-U6: the read now fires an audit callback that inserts a
+    // `punctuation.telemetry-read` mutation receipt so event timeline
+    // reads are auditable in the ops activity stream.
     async readPunctuationEvents(accountId, learnerId, options = {}) {
       await requireLearnerReadAccess(db, accountId, learnerId);
       return listPunctuationEvents({
@@ -8431,6 +8435,28 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         kind: options.kind || null,
         sinceMs: options.sinceMs ?? null,
         limit: options.limit ?? null,
+        nowMs: nowFactory(),
+        audit: async ({ resultCount, readAtMs }) => {
+          const appliedAt = Number.isFinite(readAtMs) ? readAtMs : nowFactory();
+          await db.prepare(`
+            INSERT INTO mutation_receipts (
+              account_id, request_id, scope_type, scope_id,
+              mutation_kind, request_hash, response_json,
+              status_code, correlation_id, applied_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            accountId,
+            `telemetry-read-${appliedAt}-${Math.random().toString(36).slice(2, 8)}`,
+            'learner',
+            learnerId,
+            'punctuation.telemetry-read',
+            '',
+            JSON.stringify({ resultCount }),
+            200,
+            null,
+            appliedAt,
+          ).run();
+        },
       });
     },
     async readParentRecentSessions(accountId, options = {}) {

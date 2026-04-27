@@ -304,12 +304,12 @@ test('GET events filters by kind when the kind query parameter is supplied', asy
   }
 });
 
-test('GET events clamps the limit to the documented maximum (1000)', async () => {
+test('GET events clamps the limit to the documented maximum (500, P7-U6 hard ceiling)', async () => {
   const h = createHarness();
   try {
     const { body } = await h.getEvents({ limit: 5000 });
-    // The response should include an `appliedLimit` that clamps to 1000.
-    assert.equal(body.appliedLimit, 1000);
+    // P7-U6: hard ceiling reduced from 1000 to 500 per R4 "bounded reads".
+    assert.equal(body.appliedLimit, 500);
   } finally {
     h.close();
   }
@@ -784,6 +784,230 @@ test('rate limit: feature flag OFF skips rate-limit check (no D1 count query)', 
     assert.equal(body.enabled, false);
     assert.equal(body.recorded, false);
     assert.equal(body.rateLimited, undefined, 'no rateLimited flag when feature is off');
+  } finally {
+    h.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 7 U6 — Rolling 7-day window for sessionless telemetry (R4)
+// ---------------------------------------------------------------------------
+
+test('P7-U6: sessionless event accepted when window count < 50', async () => {
+  const h = createHarness();
+  try {
+    // Insert 10 card-opened events — well under the 50 cap.
+    for (let i = 0; i < 10; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const { response, body } = await h.recordEvent({
+        kind: 'card-opened',
+        payload: { cardId: `card-${i}` },
+      });
+      assert.equal(response.status, 200, `event ${i}: ${JSON.stringify(body)}`);
+      assert.equal(body.recorded, true, `event ${i} should be recorded`);
+      assert.equal(body.rateLimited, undefined, `event ${i} should not be rate limited`);
+    }
+    assert.equal(h.eventRowCount(), 10);
+  } finally {
+    h.close();
+  }
+});
+
+test('P7-U6: sessionless event rate-limited when window count >= 50', async () => {
+  const h = createHarness();
+  try {
+    // Fill to the cap within the current window.
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'card-opened',
+        payload: { cardId: `card-${i}` },
+      });
+    }
+    assert.equal(h.eventRowCount(), 50);
+
+    // 51st event should be rate-limited.
+    const { response, body } = await h.recordEvent({
+      kind: 'card-opened',
+      payload: { cardId: 'overflow' },
+    });
+    assert.equal(response.status, 200, JSON.stringify(body));
+    assert.equal(body.ok, true);
+    assert.equal(body.recorded, false, '51st event must not be recorded');
+    assert.equal(body.rateLimited, true, '51st event must report rateLimited');
+    assert.equal(h.eventRowCount(), 50);
+  } finally {
+    h.close();
+  }
+});
+
+test('P7-U6: after 7 days, old events fall out of window — learner can emit again', async () => {
+  const { SESSIONLESS_RATE_LIMIT_WINDOW_MS } = await import(
+    '../worker/src/subjects/punctuation/events.js'
+  );
+  const h = createHarness();
+  try {
+    const dayZero = Date.UTC(2026, 0, 1);
+    h.nowRef.value = dayZero;
+
+    // Fill 50 card-opened events on day zero.
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'card-opened',
+        payload: { cardId: `old-${i}` },
+      });
+    }
+    assert.equal(h.eventRowCount(), 50);
+
+    // Confirm rate-limited at day zero.
+    const { body: capped } = await h.recordEvent({
+      kind: 'card-opened',
+      payload: { cardId: 'blocked' },
+    });
+    assert.equal(capped.rateLimited, true, 'day-zero cap reached');
+
+    // Advance past the 7-day window. All 50 events are now outside
+    // the window, so the next event should be accepted.
+    h.nowRef.value = dayZero + SESSIONLESS_RATE_LIMIT_WINDOW_MS + 1;
+    const { body: fresh } = await h.recordEvent({
+      kind: 'card-opened',
+      payload: { cardId: 'fresh-after-window' },
+    });
+    assert.equal(fresh.recorded, true, 'event after window expiry should be recorded');
+    assert.equal(fresh.rateLimited, undefined, 'no rate limit after window expiry');
+    assert.equal(h.eventRowCount(), 51);
+  } finally {
+    h.close();
+  }
+});
+
+test('P7-U6: per-session cap unchanged (sessionId present path)', async () => {
+  // Per-session cap is NOT windowed — it counts ALL events for the
+  // (learner, kind, sessionId) triple regardless of age. Verify by
+  // filling a session to 50 and confirming the 51st is dropped even
+  // when time has advanced.
+  const h = createHarness();
+  try {
+    const dayZero = Date.UTC(2026, 0, 1);
+    h.nowRef.value = dayZero;
+
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'answer-submitted',
+        payload: { sessionId: 'sess-fixed', itemId: `item-${i}`, correct: true },
+      });
+    }
+
+    // Advance 8 days — past the sessionless window, but per-session
+    // cap does not use a time window.
+    h.nowRef.value = dayZero + 8 * 86_400_000;
+    const { body: capped } = await h.recordEvent({
+      kind: 'answer-submitted',
+      payload: { sessionId: 'sess-fixed', itemId: 'item-overflow', correct: true },
+    });
+    assert.equal(capped.rateLimited, true, 'per-session cap is not time-windowed');
+    assert.equal(capped.recorded, false);
+    assert.equal(h.eventRowCount(), 50);
+  } finally {
+    h.close();
+  }
+});
+
+test('P7-U6: 50 events from 8 days ago — all expired, next event accepted', async () => {
+  const { SESSIONLESS_RATE_LIMIT_WINDOW_MS } = await import(
+    '../worker/src/subjects/punctuation/events.js'
+  );
+  const h = createHarness();
+  try {
+    const eightDaysAgo = Date.UTC(2026, 0, 1);
+    h.nowRef.value = eightDaysAgo;
+
+    // Insert exactly 50 card-opened events 8 days ago.
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'card-opened',
+        payload: { cardId: `ancient-${i}` },
+      });
+    }
+    assert.equal(h.eventRowCount(), 50);
+
+    // Now = 8 days later. All 50 events are outside the 7-day window.
+    h.nowRef.value = eightDaysAgo + SESSIONLESS_RATE_LIMIT_WINDOW_MS + 86_400_000;
+    const { body } = await h.recordEvent({
+      kind: 'card-opened',
+      payload: { cardId: 'new-after-expiry' },
+    });
+    assert.equal(body.recorded, true, 'all 50 expired → next event accepted');
+    assert.equal(body.rateLimited, undefined);
+    assert.equal(h.eventRowCount(), 51);
+  } finally {
+    h.close();
+  }
+});
+
+test('P7-U6: 49 events from 6 days ago + 1 from today — next event rate-limited (total 50 in window)', async () => {
+  const h = createHarness();
+  try {
+    const sixDaysAgo = Date.UTC(2026, 0, 1);
+    h.nowRef.value = sixDaysAgo;
+
+    // Insert 49 card-opened events 6 days ago.
+    for (let i = 0; i < 49; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'card-opened',
+        payload: { cardId: `six-day-${i}` },
+      });
+    }
+    assert.equal(h.eventRowCount(), 49);
+
+    // Advance to "today" (6 days later, still within the 7-day window).
+    h.nowRef.value = sixDaysAgo + 6 * 86_400_000;
+
+    // Insert 1 event today → total 50 in window.
+    const { body: fiftiethBody } = await h.recordEvent({
+      kind: 'card-opened',
+      payload: { cardId: 'today-50th' },
+    });
+    assert.equal(fiftiethBody.recorded, true, '50th event is accepted');
+    assert.equal(h.eventRowCount(), 50);
+
+    // 51st event → rate-limited.
+    const { body: overflowBody } = await h.recordEvent({
+      kind: 'card-opened',
+      payload: { cardId: 'today-51st' },
+    });
+    assert.equal(overflowBody.rateLimited, true, '51st event in window is rate-limited');
+    assert.equal(overflowBody.recorded, false);
+    assert.equal(h.eventRowCount(), 50);
+  } finally {
+    h.close();
+  }
+});
+
+test('P7-U6: rate-limited response returns correct shape { ok: true, recorded: false, rateLimited: true }', async () => {
+  const h = createHarness();
+  try {
+    for (let i = 0; i < 50; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await h.recordEvent({
+        kind: 'card-opened',
+        payload: { cardId: `fill-${i}` },
+      });
+    }
+    const { response, body } = await h.recordEvent({
+      kind: 'card-opened',
+      payload: { cardId: 'overflow' },
+    });
+    assert.equal(response.status, 200, 'status 200 — no learner disruption');
+    assert.equal(body.ok, true);
+    assert.equal(body.recorded, false);
+    assert.equal(body.rateLimited, true);
+    assert.equal(body.enabled, true);
+    assert.equal(body.eventKind, 'card-opened');
   } finally {
     h.close();
   }

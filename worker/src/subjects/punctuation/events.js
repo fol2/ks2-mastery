@@ -46,16 +46,24 @@ import {
 import { BadRequestError, BackendUnavailableError } from '../../errors.js';
 import { batch, bindStatement } from '../../d1.js';
 
-// Phase 6 U9 — Per-session, per-event-kind rate limiting (R16).
+// Phase 6 U9 → Phase 7 U6 — Per-session / rolling-window rate limiting.
 //
-// A generous cap (50 events per session per kind = 600 per session across
-// all 12 kinds) that stops a runaway or compromised client from flooding
-// the D1 ingest path. Legitimate sessions (20-30 items) never approach
-// the limit. The sessionId is extracted from the inner sanitised payload
-// for kinds that carry one (answer-submitted, first-item-rendered,
-// feedback-rendered, summary-reached); for kinds without a sessionId the
-// cap scopes to (learner_id, event_kind) with a NULL session — effectively
-// a per-learner per-kind cap.
+// Per-session kinds: a generous cap (50 events per session per kind = 600
+// per session across all 12 kinds) that stops a runaway or compromised
+// client from flooding the D1 ingest path. Legitimate sessions (20-30
+// items) never approach the limit. The sessionId is extracted from the
+// inner sanitised payload for kinds that carry one (answer-submitted,
+// first-item-rendered, feedback-rendered, summary-reached).
+//
+// Sessionless kinds (P7-U6): for kinds without a sessionId the cap scopes
+// to a rolling 7-day window of (learner_id, event_kind). Previously this
+// was a lifetime per-learner cap which permanently rate-limited learners
+// after normal long-term use. The rolling window uses
+// `AND occurred_at_ms > ?` with `Date.now() - 7 * 86400000` — epoch ms
+// arithmetic against the `occurred_at_ms INTEGER` column. The composite
+// index `idx_punctuation_events_learner_kind_time` covers
+// `(learner_id, event_kind, occurred_at_ms DESC)` so the added range
+// clause narrows the scan.
 //
 // When the cap is hit the handler returns a success response with
 // `{recorded: false, rateLimited: true}` — the client's fire-and-forget
@@ -304,6 +312,7 @@ export async function applyRecordEventCommand({ command, context }) {
     command.learnerId,
     kind,
     sessionId,
+    now,
   );
   if (existingCount >= MAX_TELEMETRY_EVENTS_PER_SESSION_PER_KIND) {
     return {
@@ -374,18 +383,31 @@ export async function applyRecordEventCommand({ command, context }) {
 }
 
 /**
+ * Rolling 7-day window duration in milliseconds.
+ * Sessionless telemetry kinds are rate-limited within this window
+ * rather than against all-time counts, so a learner is never
+ * permanently rate-limited for normal long-term use.
+ */
+export const SESSIONLESS_RATE_LIMIT_WINDOW_MS = 7 * 86_400_000;
+
+/**
  * Count existing events in `punctuation_events` for the rate limiter.
  *
  * When `sessionId` is non-null, the count scopes to events whose stored
  * `payload_json` contains the same `sessionId` via `json_extract`. When
  * `sessionId` is null (the event kind does not carry one), the count
- * scopes to `(learner_id, event_kind)` alone.
+ * scopes to a rolling 7-day window of `(learner_id, event_kind)` using
+ * the `occurred_at_ms` column (epoch ms). This replaces the previous
+ * lifetime count which permanently rate-limited learners after 50
+ * cumulative events.
  *
  * The query uses the `idx_punctuation_events_learner_kind_time` index
- * for the (learner_id, event_kind) prefix so the plan is a covering
- * index scan even when the table grows.
+ * for the `(learner_id, event_kind, occurred_at_ms DESC)` prefix so
+ * the added range clause narrows the scan rather than widening it.
+ *
+ * `nowMs` allows test injection; defaults to `Date.now()`.
  */
-async function countExistingEventsForRateLimit(db, learnerId, eventKind, sessionId) {
+async function countExistingEventsForRateLimit(db, learnerId, eventKind, sessionId, nowMs = Date.now()) {
   if (sessionId) {
     const result = await db.prepare(`
       SELECT COUNT(*) AS n FROM punctuation_events
@@ -394,19 +416,31 @@ async function countExistingEventsForRateLimit(db, learnerId, eventKind, session
     `).bind(learnerId, eventKind, sessionId).first();
     return Number(result?.n) || 0;
   }
+  // P7-U6: rolling 7-day window instead of lifetime count.
+  const windowStart = nowMs - SESSIONLESS_RATE_LIMIT_WINDOW_MS;
   const result = await db.prepare(`
     SELECT COUNT(*) AS n FROM punctuation_events
     WHERE learner_id = ? AND event_kind = ?
-  `).bind(learnerId, eventKind).first();
+      AND occurred_at_ms > ?
+  `).bind(learnerId, eventKind, windowStart).first();
   return Number(result?.n) || 0;
 }
+
+/**
+ * Hard ceiling on event timeline reads (P7-U6 R4). Even when the caller
+ * passes `limit: 1000`, the query never exceeds this bound. Prevents
+ * unbounded scans of the events table.
+ */
+const EVENT_TIMELINE_READ_HARD_LIMIT = 500;
 
 /**
  * Read punctuation events for a learner. Invoked by the query
  * endpoint after `requireLearnerReadAccess` has fired in the
  * repository helper.
  *
- * `limit` is clamped to [1, 1000] with a default of 100.
+ * `limit` is clamped to [1, 500] with a default of 100. The hard
+ * ceiling is `EVENT_TIMELINE_READ_HARD_LIMIT` (500) per P7-U6 R4
+ * ("bounded and audited").
  *
  * Review follow-on 2026-04-26:
  *   - Unknown `kind` values now raise a 400 `punctuation_event_unknown_kind`
@@ -416,6 +450,15 @@ async function countExistingEventsForRateLimit(db, learnerId, eventKind, session
  *   - The ORDER BY adds `id DESC` as a tiebreaker on `occurred_at_ms`
  *     so same-ms events (handler emits back-to-back with the same
  *     `context.now`) return in deterministic insertion order.
+ *
+ * P7-U6: `audit` callback. When provided, called after the query with
+ * `{ learnerId, kind, appliedLimit, resultCount, readAtMs }` so the
+ * caller (repository layer) can record the read in the ops audit surface.
+ *
+ * `nowMs` injectable clock for the audit `readAtMs` value. When finite
+ * the callback receives this value instead of `Date.now()`, keeping the
+ * read timestamp consistent with the repository's injectable clock for
+ * testability. Falls back to `Date.now()` when omitted.
  */
 export async function listPunctuationEvents({
   db,
@@ -423,6 +466,8 @@ export async function listPunctuationEvents({
   kind = null,
   sinceMs = null,
   limit = null,
+  audit = null,
+  nowMs = null,
 }) {
   const cleanLearner = typeof learnerId === 'string' ? learnerId : '';
   if (!cleanLearner) {
@@ -463,20 +508,40 @@ export async function listPunctuationEvents({
   `;
   const result = await db.prepare(sql).bind(...params).all();
   const rows = Array.isArray(result?.results) ? result.results : [];
+
+  const events = rows.map((row) => ({
+    kind: row.event_kind,
+    occurredAtMs: Number(row.occurred_at_ms) || 0,
+    payload: safeParseJson(row.payload_json),
+  }));
+
+  // P7-U6: fire audit callback so the repository layer can record
+  // this read in the ops audit surface. Best-effort — audit failures
+  // must not break the read path.
+  if (typeof audit === 'function') {
+    try {
+      await audit({
+        learnerId: cleanLearner,
+        kind: kind || null,
+        appliedLimit,
+        resultCount: events.length,
+        readAtMs: Number.isFinite(nowMs) ? nowMs : Date.now(),
+      });
+    } catch {
+      // Audit write failure is non-fatal — the read still returns.
+    }
+  }
+
   return {
     appliedLimit,
-    events: rows.map((row) => ({
-      kind: row.event_kind,
-      occurredAtMs: Number(row.occurred_at_ms) || 0,
-      payload: safeParseJson(row.payload_json),
-    })),
+    events,
   };
 }
 
 function clampLimit(value) {
   const raw = Number(value);
   if (!Number.isFinite(raw) || raw <= 0) return 100;
-  if (raw > 1000) return 1000;
+  if (raw > EVENT_TIMELINE_READ_HARD_LIMIT) return EVENT_TIMELINE_READ_HARD_LIMIT;
   return Math.floor(raw);
 }
 
