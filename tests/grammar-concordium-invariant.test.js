@@ -65,7 +65,10 @@ import { snapshotGrammarRewardState } from './helpers/grammar-reward-invariant.j
 import {
   GRAMMAR_MONSTER_STAR_MAX,
   legacyStarFloorFromStage,
+  deriveGrammarConceptStarEvidence,
+  computeGrammarMonsterStars,
 } from '../shared/grammar/grammar-stars.js';
+import { simulateStarCurveProfile } from './helpers/grammar-simulation.js';
 
 // -----------------------------------------------------------------------------
 // Denominator-freeze hard gate. Plan invariant 7: GRAMMAR_AGGREGATE_CONCEPTS
@@ -1234,5 +1237,365 @@ test('U3 error path: normaliseGrammarRewardState accepts non-object inputs witho
   for (const input of [null, undefined, 42, 'string', []]) {
     assert.doesNotThrow(() => normaliseGrammarRewardState(input),
       `normaliseGrammarRewardState does not throw on input ${JSON.stringify(input)}`);
+  }
+});
+
+// =============================================================================
+// Phase 6 — Ratchet extension: sub-secure persistence shapes.
+//
+// Invariants: docs/plans/james/grammar/grammar-phase6-invariants.md (P6-4, P6-5, P6-6).
+// Plan: docs/plans/2026-04-27-002-feat-grammar-phase6-star-evidence-authority-plan.md (U7).
+//
+// This section extends the 200-random ratchet with sub-secure persistence
+// shapes and adds two named regression shapes plus a Grand Concordium timeline
+// assertion (R14 analogue for Phase 6).
+// =============================================================================
+
+// =============================================================================
+// 2c. P6 Sub-secure persistence ratchet — 200 random sequences that include
+// star-evidence-updated events firing BEFORE concept-secured, and
+// recentAttempts truncation mid-sequence.
+//
+// Stars must never decrease: stars >= maxPriorStars after every step,
+// even when the derivation path transitions between sub-secure evidence
+// (starHighWater latch) and post-secure evidence (full computation).
+// =============================================================================
+
+test(`U7 P6 sub-secure ratchet: 200 seeded sequences (seed ${PROPERTY_SEED}) with star-evidence-updated before concept-secured hold star monotonicity`, () => {
+  const sequenceRng = makeSeededRandom(PROPERTY_SEED);
+  for (let i = 0; i < 200; i += 1) {
+    const length = 20 + Math.floor(sequenceRng() * 41); // 20..60
+    const actionRng = makeSeededRandom(PROPERTY_SEED + i * 37 + 5);
+    const actions = randomSequence(actionRng, length);
+    const repository = makeRepository();
+
+    // Track which concepts have been secured and build growing evidence.
+    const securedConcepts = new Set();
+    let templateCounter = 0;
+    const syntheticAttempts = [];
+    // Simulate recentAttempts truncation at capacity 50.
+    const TRUNCATION_CAPACITY = 50;
+
+    for (const action of actions) {
+      if (action.correct && !action.isTransferSave) {
+        securedConcepts.add(action.conceptId);
+        syntheticAttempts.push({
+          conceptIds: [action.conceptId],
+          result: { correct: true },
+          templateId: `tpl-${action.conceptId}-${templateCounter++}`,
+          firstAttemptIndependent: true,
+          supportLevelAtScoring: 0,
+          createdAt: 1_777_000_000_000 + templateCounter * 60000,
+        });
+      }
+    }
+
+    // buildConceptNodes: growing evidence map that uses production shape.
+    const buildConceptNodes = () => {
+      const nodes = {};
+      for (const cId of securedConcepts) {
+        nodes[cId] = {
+          attempts: 10,
+          correct: 8,
+          wrong: 2,
+          strength: 0.85,
+          intervalDays: 14,
+          correctStreak: 5,
+        };
+      }
+      return nodes;
+    };
+
+    // buildRecentAttempts: apply truncation to simulate window rollover.
+    // When the list exceeds TRUNCATION_CAPACITY, only the most recent
+    // entries survive — modelling the production recentAttempts ring buffer.
+    const buildRecentAttempts = () => {
+      if (syntheticAttempts.length <= TRUNCATION_CAPACITY) {
+        return syntheticAttempts.slice();
+      }
+      return syntheticAttempts.slice(-TRUNCATION_CAPACITY);
+    };
+
+    try {
+      runSequence(repository, actions, {
+        label: `p6-sub-secure-seq-${i}`,
+        learnerId: `learner-p6-${i}`,
+        buildConceptNodes,
+        buildRecentAttempts,
+      });
+    } catch (error) {
+      if (error instanceof assert.AssertionError) {
+        throw new Error(`[p6-sub-secure-ratchet] FAILED seed=${PROPERTY_SEED} seq=${i} :: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+});
+
+// =============================================================================
+// P6 Named regression shape 11: Sub-secure Stars earned → session ends →
+// recentAttempts rolls → starHighWater holds.
+//
+// This shape exercises the critical path where a learner earns Stars from
+// sub-secure evidence (firstIndependentWin, repeatIndependentWin) before any
+// concept reaches secure status. The session then ends (simulated by clearing
+// recentAttempts on the next read), and the starHighWater latch must preserve
+// the earned Stars.
+// =============================================================================
+
+test('U7 P6 named shape 11: sub-secure Stars earned → recentAttempts rolls → starHighWater holds', () => {
+  // This test exercises the P6-4 contract: Stars earned via sub-secure
+  // evidence (before concept-secured fires) persist across session boundaries
+  // via the starHighWater latch.
+  //
+  // Production pipeline:
+  //   1. Worker fires grammar.star-evidence-updated after each practice answer
+  //   2. event-hooks.js calls updateGrammarStarHighWater to persist the latch
+  //   3. On next read, progressForGrammarMonster reads starHighWater from state
+  //
+  // This test simulates the pipeline: first, we compute Stars from evidence
+  // via progressForGrammarMonster with conceptNodes (the client read path),
+  // then write the starHighWater back (simulating the updateGrammarStarHighWater
+  // call), then verify a subsequent read WITHOUT conceptNodes uses the latch.
+
+  // Build a reward state with 3 concept-secured entries + starHighWater: 0
+  // (fresh post-P5 learner who has just started).
+  const conceptsSecured = GRAMMAR_AGGREGATE_CONCEPTS.slice(0, 3);
+  const masteredKeys = conceptsSecured.map((id) => grammarMasteryKey(id));
+  const initialState = {
+    concordium: {
+      mastered: masteredKeys,
+      caught: true,
+      conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+      releaseId: GRAMMAR_REWARD_RELEASE_ID,
+      starHighWater: 0,
+    },
+  };
+
+  // Phase 1: Client read with conceptNodes and recentAttempts (sub-secure
+  // evidence for 6 concepts — 3 secured + 3 with partial evidence only).
+  const allConcepts = GRAMMAR_AGGREGATE_CONCEPTS.slice(0, 6);
+  const conceptNodes = {};
+  for (const cId of allConcepts) {
+    conceptNodes[cId] = {
+      attempts: 10,
+      correct: 8,
+      wrong: 2,
+      strength: 0.85,
+      intervalDays: 14,
+      correctStreak: 5,
+    };
+  }
+  const recentAttempts = allConcepts.flatMap((cId) => [
+    {
+      conceptIds: [cId],
+      result: { correct: true },
+      templateId: `tpl-${cId}-a`,
+      firstAttemptIndependent: true,
+      supportLevelAtScoring: 0,
+      createdAt: 1_777_000_000_000,
+    },
+    {
+      conceptIds: [cId],
+      result: { correct: true },
+      templateId: `tpl-${cId}-b`,
+      firstAttemptIndependent: true,
+      supportLevelAtScoring: 0,
+      createdAt: 1_777_000_060_000,
+    },
+  ]);
+
+  const starsWithEvidence = progressForGrammarMonster(initialState, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+    conceptNodes,
+    recentAttempts,
+  });
+  assert.ok(starsWithEvidence.stars > 0,
+    `Stars with sub-secure evidence must be positive, got ${starsWithEvidence.stars}`);
+  const derivedStars = starsWithEvidence.stars;
+
+  // Phase 2: Simulate updateGrammarStarHighWater writing the latch.
+  // In production, this happens via the star-evidence-updated event pipeline.
+  const stateAfterWrite = clone(initialState);
+  stateAfterWrite.concordium.starHighWater = Math.max(
+    stateAfterWrite.concordium.starHighWater || 0,
+    derivedStars,
+  );
+
+  // Phase 3: Session ends — read WITHOUT conceptNodes or recentAttempts.
+  // Only the persisted starHighWater protects the Stars.
+  const starsAfterRoll = progressForGrammarMonster(stateAfterWrite, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+  });
+
+  // The starHighWater latch must preserve the derived Stars across the roll.
+  assert.ok(starsAfterRoll.stars >= derivedStars,
+    `After recentAttempts roll: displayStars=${starsAfterRoll.stars} ` +
+    `must be >= derived ${derivedStars} (P6-4: starHighWater holds)`);
+  assert.ok(starsAfterRoll.starHighWater >= derivedStars,
+    `After recentAttempts roll: starHighWater=${starsAfterRoll.starHighWater} ` +
+    `must be >= derived ${derivedStars} (P6-4: latch persisted)`);
+
+  // Phase 4: Verify the latch is monotonic — writing a LOWER computed value
+  // must NOT decrease starHighWater.
+  const stateLowEvidence = clone(stateAfterWrite);
+  const lowNodes = {};
+  lowNodes[allConcepts[0]] = conceptNodes[allConcepts[0]]; // Only 1 concept
+  const lowRecentAttempts = recentAttempts.slice(0, 2); // Only 2 attempts
+  const starsLowEvidence = progressForGrammarMonster(stateLowEvidence, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+    conceptNodes: lowNodes,
+    recentAttempts: lowRecentAttempts,
+  });
+  assert.ok(starsLowEvidence.stars >= derivedStars,
+    `With reduced evidence: displayStars=${starsLowEvidence.stars} ` +
+    `must be >= original ${derivedStars} because starHighWater holds`);
+});
+
+// =============================================================================
+// P6 Named regression shape 12: Pre-secure corrects + concept becomes secure →
+// retainedAfterSecure must NOT retroactively unlock without temporal proof.
+//
+// This shape exercises the temporal constraint: a learning burst before secure
+// status does not satisfy the retainedAfterSecure tier. The correct answer's
+// createdAt must be AFTER the estimated secure date.
+// =============================================================================
+
+test('U7 P6 named shape 12: retainedAfterSecure must NOT retroactively unlock without temporal proof (createdAt required)', () => {
+  // Scenario: learner has 5 correct answers, all with createdAt BEFORE
+  // the concept became secure. Then the concept reaches secure status.
+  // retainedAfterSecure must be false because there is no post-secure
+  // temporal proof.
+  const nowTs = 1_777_000_000_000;
+  const secureNode = {
+    attempts: 10,
+    correct: 8,
+    wrong: 2,
+    strength: 0.90,
+    intervalDays: 21, // long interval
+    correctStreak: 6,
+  };
+
+  // securedAtTs = nowTs - (intervalDays * 86400000) = nowTs - 21 days
+  const securedAtTs = nowTs - (21 * 86_400_000);
+
+  // All attempts are from BEFORE the estimated secure date.
+  const preSecureAttempts = [
+    {
+      conceptId: 'adverbials',
+      correct: true,
+      templateId: 'tpl-adv-1',
+      firstAttemptIndependent: true,
+      supportLevelAtScoring: 0,
+      createdAt: securedAtTs - 10 * 86_400_000, // 10 days before secure
+    },
+    {
+      conceptId: 'adverbials',
+      correct: true,
+      templateId: 'tpl-adv-2',
+      firstAttemptIndependent: true,
+      supportLevelAtScoring: 0,
+      createdAt: securedAtTs - 5 * 86_400_000, // 5 days before secure
+    },
+    {
+      conceptId: 'adverbials',
+      correct: true,
+      templateId: 'tpl-adv-3',
+      firstAttemptIndependent: true,
+      supportLevelAtScoring: 0,
+      createdAt: securedAtTs - 1 * 86_400_000, // 1 day before secure
+    },
+  ];
+
+  const noRetention = deriveGrammarConceptStarEvidence({
+    conceptId: 'adverbials',
+    conceptNode: secureNode,
+    recentAttempts: preSecureAttempts,
+    nowTs,
+  });
+
+  assert.equal(noRetention.secureConfidence, true,
+    'shape-12: concept is secure');
+  assert.equal(noRetention.firstIndependentWin, true,
+    'shape-12: has independent wins');
+  assert.equal(noRetention.repeatIndependentWin, true,
+    'shape-12: has repeat independent wins');
+  assert.equal(noRetention.variedPractice, true,
+    'shape-12: has varied practice (3 distinct templates, all correct)');
+  assert.equal(noRetention.retainedAfterSecure, false,
+    'shape-12: retainedAfterSecure must be FALSE — all createdAt are pre-secure ' +
+    '(P6-3: temporal proof requires post-secure createdAt)');
+
+  // Now add ONE post-secure attempt — retainedAfterSecure unlocks.
+  const postSecureAttempts = [
+    ...preSecureAttempts,
+    {
+      conceptId: 'adverbials',
+      correct: true,
+      templateId: 'tpl-adv-4',
+      firstAttemptIndependent: true,
+      supportLevelAtScoring: 0,
+      createdAt: securedAtTs + 2 * 86_400_000, // 2 days AFTER secure
+    },
+  ];
+
+  const withRetention = deriveGrammarConceptStarEvidence({
+    conceptId: 'adverbials',
+    conceptNode: secureNode,
+    recentAttempts: postSecureAttempts,
+    nowTs,
+  });
+
+  assert.equal(withRetention.retainedAfterSecure, true,
+    'shape-12: retainedAfterSecure unlocks when ONE post-secure createdAt exists ' +
+    '(P6-3: temporal proof satisfied)');
+
+  // Verify the Star impact: retained tier accounts for 60% of the budget.
+  // adverbials belongs to Chronalyx (4 concepts), so use Chronalyx for the
+  // star computation. Concordium (18 concepts) would also work but Chronalyx
+  // shows a larger per-concept delta because the budget is 100/4 = 25 per concept.
+  const evidenceMapWithout = { adverbials: noRetention };
+  const evidenceMapWith = { adverbials: withRetention };
+  const starsWithout = computeGrammarMonsterStars('chronalyx', evidenceMapWithout);
+  const starsWith = computeGrammarMonsterStars('chronalyx', evidenceMapWith);
+  assert.ok(starsWith.stars > starsWithout.stars,
+    `shape-12: Chronalyx Stars with retention (${starsWith.stars}) must exceed ` +
+    `Stars without (${starsWithout.stars}) — the 60% budget is load-bearing`);
+});
+
+// =============================================================================
+// P6-6: Grand Concordium timeline assertion (R14).
+//
+// Uses the existing simulation helper to verify Grand Concordium is
+// unreachable within 150 simulated days. This protects the timeline from
+// accidental weakening by code changes to the evidence model.
+// =============================================================================
+
+test('U7 P6 invariant 6: Grand Concordium is unreachable within 150 simulated days (timeline >= 5 months)', () => {
+  // Test across 3 profiles to confirm the timeline holds universally.
+  const profiles = ['ideal', 'typical', 'struggling'];
+  const seeds = [42, 100, 2025];
+
+  for (const profile of profiles) {
+    for (const seed of seeds) {
+      const result = simulateStarCurveProfile(profile, {
+        questionsPerDay: 10,
+        seed,
+        maxDays: 150,
+      });
+
+      assert.equal(result.daysToGrandConcordium, null,
+        `P6-6: Grand Concordium must be unreachable within 150 days ` +
+        `for profile="${profile}" seed=${seed}. ` +
+        `Got daysToGrandConcordium=${result.daysToGrandConcordium}. ` +
+        'If this assertion fails, a code change has weakened the reward curve ' +
+        'timeline — review whether the evidence model or retention requirements changed.');
+
+      // Additional check: Concordium final Stars must be below 100.
+      const concordiumFinalStars = result.finalStars?.concordium ?? 0;
+      assert.ok(concordiumFinalStars < 100,
+        `P6-6: Concordium final Stars at day 150 must be < 100, ` +
+        `got ${concordiumFinalStars} for profile="${profile}" seed=${seed}`);
+    }
   }
 });

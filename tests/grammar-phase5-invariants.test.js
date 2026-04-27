@@ -36,7 +36,11 @@ import {
   GRAMMAR_MONSTER_STAR_MAX,
   GRAMMAR_STAR_STAGE_THRESHOLDS,
   GRAMMAR_CONCEPT_STAR_WEIGHTS,
+  deriveGrammarConceptStarEvidence,
 } from '../shared/grammar/grammar-stars.js';
+
+import { GRAMMAR_EVENT_TYPES } from '../src/subjects/grammar/event-hooks.js';
+import { updateGrammarStarHighWater } from '../src/platform/game/mastery/grammar.js';
 
 // -----------------------------------------------------------------------------
 // 1. Denominator-freeze hard gate.
@@ -301,4 +305,184 @@ test('Phase 5 invariant 15: concept-ID snapshot — all 18 aggregate concept IDs
     'Sorted concept-ID snapshot must match exactly. Any rename, swap, addition, ' +
     'or removal requires updating this snapshot and a paired migration.',
   );
+});
+
+// =============================================================================
+// Phase 6 invariant pins (P6-1 through P6-5).
+//
+// Invariants: docs/plans/james/grammar/grammar-phase6-invariants.md.
+// These pins verify the six trust fixes from Phase 6 are testable from the
+// existing module surface. They are additive — all Phase 5 pins above remain
+// unchanged.
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// P6-1 pin: deriveGrammarConceptStarEvidence accepts conceptIds (array) —
+// production attempt shape.
+//
+// The production Worker engine emits attempts with { conceptIds: [...],
+// result: { correct } }. This pin exercises the production shape to confirm
+// the normaliser at shared/grammar/grammar-stars.js handles it.
+// -----------------------------------------------------------------------------
+
+test('P6 invariant 1: deriveGrammarConceptStarEvidence accepts production shape (conceptIds array + result.correct nested)', () => {
+  // Production shape: conceptIds is an array, correct is nested in result.
+  const evidence = deriveGrammarConceptStarEvidence({
+    conceptId: 'noun_phrases',
+    conceptNode: null,
+    recentAttempts: [
+      {
+        conceptIds: ['noun_phrases'],
+        result: { correct: true },
+        templateId: 'tpl-np-1',
+        firstAttemptIndependent: true,
+        supportLevelAtScoring: 0,
+      },
+      {
+        conceptIds: ['noun_phrases'],
+        result: { correct: true },
+        templateId: 'tpl-np-2',
+        firstAttemptIndependent: true,
+        supportLevelAtScoring: 0,
+      },
+    ],
+  });
+  assert.equal(evidence.firstIndependentWin, true,
+    'P6-1: production shape (conceptIds array) must unlock firstIndependentWin');
+  assert.equal(evidence.repeatIndependentWin, true,
+    'P6-1: production shape must unlock repeatIndependentWin with 2 independent corrects');
+  assert.equal(evidence.variedPractice, true,
+    'P6-1: production shape with 2 distinct templateIds must unlock variedPractice');
+});
+
+// -----------------------------------------------------------------------------
+// P6-2 pin: variedPractice false for wrong-only distinct templates.
+//
+// Wrong answers on varied templates prove exposure but not transfer.
+// -----------------------------------------------------------------------------
+
+test('P6 invariant 2: variedPractice false when all distinct templates are wrong-answer-only', () => {
+  const evidence = deriveGrammarConceptStarEvidence({
+    conceptId: 'clauses',
+    conceptNode: null,
+    recentAttempts: [
+      {
+        conceptId: 'clauses',
+        correct: false,
+        templateId: 'tpl-clauses-a',
+        firstAttemptIndependent: false,
+        supportLevelAtScoring: 0,
+      },
+      {
+        conceptId: 'clauses',
+        correct: false,
+        templateId: 'tpl-clauses-b',
+        firstAttemptIndependent: false,
+        supportLevelAtScoring: 0,
+      },
+      {
+        conceptId: 'clauses',
+        correct: false,
+        templateId: 'tpl-clauses-c',
+        firstAttemptIndependent: false,
+        supportLevelAtScoring: 0,
+      },
+    ],
+  });
+  assert.equal(evidence.variedPractice, false,
+    'P6-2: wrong-answer-only distinct templates must NOT unlock variedPractice');
+  assert.equal(evidence.firstIndependentWin, false,
+    'P6-2: wrong answers must not unlock firstIndependentWin');
+});
+
+// -----------------------------------------------------------------------------
+// P6-3 pin: deriveGrammarConceptStarEvidence accepts nowTs parameter for
+// deterministic temporal proof testing.
+// -----------------------------------------------------------------------------
+
+test('P6 invariant 3: deriveGrammarConceptStarEvidence accepts nowTs parameter for temporal proof', () => {
+  // A concept that is secure (strength >= 0.82, intervalDays >= 7, correctStreak >= 3).
+  const secureNode = {
+    attempts: 10,
+    correct: 8,
+    wrong: 2,
+    strength: 0.85,
+    intervalDays: 14,
+    correctStreak: 5,
+  };
+
+  // nowTs is 30 days after an imagined secure point.
+  // securedAtTs = nowTs - (intervalDays * 86400000) = nowTs - 14 days.
+  // A correct attempt with createdAt AFTER securedAtTs satisfies the temporal proof.
+  const nowTs = 1_777_000_000_000;
+  const securedAtTs = nowTs - (14 * 86_400_000);
+  const postSecureCreatedAt = securedAtTs + 86_400_000; // 1 day after secure
+
+  const withTemporal = deriveGrammarConceptStarEvidence({
+    conceptId: 'modal_verbs',
+    conceptNode: secureNode,
+    recentAttempts: [
+      {
+        conceptId: 'modal_verbs',
+        correct: true,
+        templateId: 'tpl-mv-1',
+        firstAttemptIndependent: true,
+        supportLevelAtScoring: 0,
+        createdAt: postSecureCreatedAt,
+      },
+    ],
+    nowTs,
+  });
+  assert.equal(withTemporal.secureConfidence, true,
+    'P6-3: secure concept must unlock secureConfidence');
+  assert.equal(withTemporal.retainedAfterSecure, true,
+    'P6-3: post-secure temporal proof with nowTs must unlock retainedAfterSecure');
+
+  // Same concept, but createdAt is BEFORE the securedAtTs — temporal proof fails.
+  const preSecureCreatedAt = securedAtTs - 86_400_000; // 1 day before secure
+  const withoutTemporal = deriveGrammarConceptStarEvidence({
+    conceptId: 'modal_verbs',
+    conceptNode: secureNode,
+    recentAttempts: [
+      {
+        conceptId: 'modal_verbs',
+        correct: true,
+        templateId: 'tpl-mv-1',
+        firstAttemptIndependent: true,
+        supportLevelAtScoring: 0,
+        createdAt: preSecureCreatedAt,
+      },
+    ],
+    nowTs,
+  });
+  assert.equal(withoutTemporal.secureConfidence, true,
+    'P6-3: secure concept still shows secureConfidence');
+  assert.equal(withoutTemporal.retainedAfterSecure, false,
+    'P6-3: pre-secure createdAt must NOT unlock retainedAfterSecure (temporal proof fails)');
+});
+
+// -----------------------------------------------------------------------------
+// P6-4 pin: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED exists.
+//
+// The star-evidence-updated event is the trigger for sub-secure persistence.
+// Its existence is a load-bearing contract for the Phase 6 persistence model.
+// -----------------------------------------------------------------------------
+
+test('P6 invariant 4: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED exists', () => {
+  assert.equal(
+    GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+    'grammar.star-evidence-updated',
+    'P6-4: STAR_EVIDENCE_UPDATED event type must be the sub-secure persistence trigger',
+  );
+});
+
+// -----------------------------------------------------------------------------
+// P6-4 pin (continued): updateGrammarStarHighWater exists and is exported.
+//
+// The function is the write-side of the sub-secure persistence model.
+// -----------------------------------------------------------------------------
+
+test('P6 invariant 4: updateGrammarStarHighWater exists and is exported', () => {
+  assert.equal(typeof updateGrammarStarHighWater, 'function',
+    'P6-4: updateGrammarStarHighWater must be a function exported from grammar.js');
 });
