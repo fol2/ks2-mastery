@@ -191,6 +191,7 @@ The operator must complete every item below before flipping `HSTS_PRELOAD_ENABLE
 - [ ] **Third-party subdomains verified.** Every CNAME-delegated subdomain (status page, docs, blog, analytics, support) serves HTTPS-only with valid certificates.
 - [ ] **No HTTP-only subdomains exist.** No current or near-term planned subdomain depends on plaintext HTTP.
 - [ ] **Rollback implications accepted.** The operator has read the "Rollback implications" section above and accepts the two-year HTTPS-only commitment across all `*.eugnel.uk` subdomains.
+- [ ] **Anti-preload enforcement points updated.** The PR that flips `HSTS_PRELOAD_ENABLED` must also update every hardcoded anti-preload assertion that will otherwise reject the change: `scripts/lib/headers-drift.mjs` (preload rejection in `assertHeadersBlockIsFresh`), `scripts/production-bundle-audit.mjs` (live HEAD check rejects HSTS preload), and `tests/security-headers.test.js` (no-preload assertions on `_headers` content and `serialiseHeadersBlock` output). All four sites must accept preload before the activation PR can pass CI.
 - [ ] **`_headers` file updated.** The PR that flips `HSTS_PRELOAD_ENABLED` also updates every HSTS line in `_headers` to include `; preload`.
 - [ ] **`hstspreload.org` submission confirmed.** The submission has been completed and the confirmation screenshot or ticket ID is attached to the PR.
 

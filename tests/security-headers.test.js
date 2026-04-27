@@ -13,6 +13,7 @@ import {
   REPORTING_ENDPOINTS_VALUE,
   SECURITY_HEADERS,
   applySecurityHeaders,
+  buildHstsValue,
   serialiseHeadersBlock,
 } from '../worker/src/security-headers.js';
 import { applySecurityHeadersSafely } from '../worker/src/index.js';
@@ -628,17 +629,23 @@ test('HSTS_VALUE omits preload when HSTS_PRELOAD_ENABLED is false', () => {
   );
 });
 
-test('HSTS_VALUE would include preload when the constant is true (conditional logic verification)', () => {
-  // We cannot flip the module-level constant at runtime, but we can verify
-  // the conditional expression produces the correct string for both branches.
-  const whenEnabled = true
-    ? 'max-age=63072000; includeSubDomains; preload'
-    : 'max-age=63072000; includeSubDomains';
-  const whenDisabled = false
-    ? 'max-age=63072000; includeSubDomains; preload'
-    : 'max-age=63072000; includeSubDomains';
-  assert.equal(whenEnabled, 'max-age=63072000; includeSubDomains; preload');
-  assert.equal(whenDisabled, 'max-age=63072000; includeSubDomains');
+test('buildHstsValue returns correct strings for both branches', () => {
+  assert.equal(
+    buildHstsValue(true),
+    'max-age=63072000; includeSubDomains; preload',
+    'buildHstsValue(true) must append "; preload"',
+  );
+  assert.equal(
+    buildHstsValue(false),
+    'max-age=63072000; includeSubDomains',
+    'buildHstsValue(false) must omit preload',
+  );
+  // Verify the live HSTS_VALUE export is wired through buildHstsValue.
+  assert.equal(
+    HSTS_VALUE,
+    buildHstsValue(HSTS_PRELOAD_ENABLED),
+    'HSTS_VALUE must equal buildHstsValue(HSTS_PRELOAD_ENABLED)',
+  );
 });
 
 test('Worker HSTS header and _headers file carry identical HSTS value (no drift)', async () => {

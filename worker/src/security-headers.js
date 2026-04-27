@@ -44,9 +44,20 @@ function warnOnPlaceholderHashOnce() {
 // document for rollback implications (preload is a two-year commitment).
 export const HSTS_PRELOAD_ENABLED = false;
 
-export const HSTS_VALUE = HSTS_PRELOAD_ENABLED
-  ? 'max-age=63072000; includeSubDomains; preload'
-  : 'max-age=63072000; includeSubDomains';
+/**
+ * Build the HSTS header value. Extracted as a pure function so both
+ * branches (preload enabled / disabled) are testable without flipping
+ * the module-level constant.
+ *
+ * @param {boolean} preloadEnabled
+ * @returns {string}
+ */
+export function buildHstsValue(preloadEnabled) {
+  const base = 'max-age=63072000; includeSubDomains';
+  return preloadEnabled ? `${base}; preload` : base;
+}
+
+export const HSTS_VALUE = buildHstsValue(HSTS_PRELOAD_ENABLED);
 
 export const PERMISSIONS_POLICY = [
   'camera=()',
