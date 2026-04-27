@@ -123,6 +123,7 @@ const MASTERY_CAP = 25;
 // Evidence gates (R11, R12).
 const MAX_ATTEMPTS_PER_ITEM = 3;
 const MAX_SAME_DAY_EASY_ITEMS = 15;
+const MAX_SAME_DAY_PRACTICE_ITEMS = 25;
 
 // Grand Star maximum.
 const GRAND_STAR_CAP = 100;
@@ -272,7 +273,9 @@ function computeTryStars(monsterAttempts) {
 function computePracticeStars(monsterAttempts) {
   // Independent first-attempt correct: supportLevel === 0 && correct,
   // capping same-item repeats at MAX_ATTEMPTS_PER_ITEM.
+  // U4: Per-calendar-day cap on distinct items (anti-grinding R10).
   const perItem = new Map();
+  const perDayCorrectItems = new Map(); // day -> Set<itemId>
   let independentCorrect = 0;
 
   for (const attempt of monsterAttempts) {
@@ -284,17 +287,23 @@ function computePracticeStars(monsterAttempts) {
 
     const supportLevel = Math.max(0, Number(attempt.supportLevel) || 0);
     if (supportLevel === 0 && attempt.correct === true) {
-      independentCorrect += 1;
+      const day = dayIndex(attempt.ts);
+      if (!perDayCorrectItems.has(day)) perDayCorrectItems.set(day, new Set());
+      const dayItems = perDayCorrectItems.get(day);
+      // Only count this item if the day hasn't hit the daily cap yet.
+      if (dayItems.size < MAX_SAME_DAY_PRACTICE_ITEMS || dayItems.has(itemId)) {
+        dayItems.add(itemId);
+        independentCorrect += 1;
+      }
     }
   }
 
   // Distinct item variety bonus: each unique item that was correct adds
-  // a fractional Star.
+  // a fractional Star.  Apply the same per-day cap to the variety set.
   const correctItems = new Set();
-  for (const attempt of monsterAttempts) {
-    const supportLevel = Math.max(0, Number(attempt.supportLevel) || 0);
-    if (supportLevel === 0 && attempt.correct === true && attempt.itemId) {
-      correctItems.add(attempt.itemId);
+  for (const dayItems of perDayCorrectItems.values()) {
+    for (const itemId of dayItems) {
+      correctItems.add(itemId);
     }
   }
 
