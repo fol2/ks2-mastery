@@ -49,11 +49,11 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `shared-pattern-available` | 146 |
+| `shared-pattern-available` | 147 |
 | `dynamic-content-driven` | 111 |
 | `css-var-ready` | 3 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **262** |
+| **TOTAL** | **263** |
 
 ## Per-file inventory
 
@@ -76,6 +76,7 @@ Future migration PRs should:
 | `src/surfaces/home/SubjectCard.jsx` | 3 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/MonsterVisualPreviewGrid.jsx` | 3 | `dynamic-content-driven` | no |
 | `src/platform/game/render/effects/celebration-shell.js` | 2 | `third-party-boundary` | no |
+| `src/subjects/grammar/components/GrammarSetupScene.jsx` | 2 | `shared-pattern-available` | no |
 | `src/subjects/spelling/components/SpellingCommon.jsx` | 2 | `css-var-ready` | no |
 | `src/subjects/spelling/components/SpellingWordDetailModal.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCard.jsx` | 2 | `dynamic-content-driven` | no |
@@ -87,7 +88,6 @@ Future migration PRs should:
 | `src/platform/game/render/BaseSprite.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/platform/game/render/MonsterRender.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/platform/ui/LoadingSkeleton.jsx` | 1 | `css-var-ready` | no |
-| `src/subjects/grammar/components/GrammarSetupScene.jsx` | 1 | `shared-pattern-available` | no |
 | `src/subjects/punctuation/components/PunctuationMapScene.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/subjects/punctuation/components/PunctuationSetupScene.jsx` | 1 | `shared-pattern-available` | no |
 | `src/subjects/spelling/components/SpellingHeroBackdrop.jsx` | 1 | `dynamic-content-driven` | no |
