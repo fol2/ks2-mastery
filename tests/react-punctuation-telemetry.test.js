@@ -237,6 +237,9 @@ test('PunctuationSetupScene mount emits a card-opened event with the subject id'
   });
 
   // Simulate the useEffect body (card-opened telemetry emission).
+  // This exercises the emitter contract only. The component-to-effect wiring
+  // is not testable under SSR; the Playwright golden-path test (P7-U10)
+  // will cover the integration.
   emitPunctuationEvent('card-opened', { cardId: 'smart' }, {
     actions,
     learnerId: learner && typeof learner === 'object' ? learner.id : null,
