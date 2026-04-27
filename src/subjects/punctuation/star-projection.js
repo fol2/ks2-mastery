@@ -446,7 +446,12 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnits, monsterId) 
 
     const hasMixedModes = itemModes.size >= 2;
 
+    // Structural parity with Claspin gate: require a minimum number of
+    // secured reward units (securedAt > 0) in addition to deep-secure
+    // skill evidence.  In practice deep-secure implies secured, but the
+    // gate enforces it explicitly so both monsters share the same shape.
     const meetsCurluneMegaGate =
+      securedUnitCount >= minDeepSecuredForMega &&
       deepSecuredSkillCount >= minDeepSecuredForMega && hasMixedModes && hasSpacedReturn;
 
     if (!meetsCurluneMegaGate) {
