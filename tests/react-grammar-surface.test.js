@@ -2817,7 +2817,7 @@ test('U5: grammar-open-analytics renders GrammarAnalyticsScene via the phase rou
   // Canonical analytics content is present. Phase 3 U7 renames the scene
   // heading to `Grown-up view` to match the summary button label.
   assert.match(html, /id="grammar-analytics-title"[^>]*>Grown-up view</);
-  assert.match(html, /Evidence snapshot/);
+  assert.match(html, /Grammar progress/);
 });
 
 test('U5: grammar-open-analytics is a no-op mid-session so the active round is not wiped', () => {
@@ -3104,11 +3104,13 @@ test('U7: analytics phase renders the back affordance dispatching grammar-close-
 test('U7: analytics phase retains the adult-only evidence vocabulary', () => {
   const { harness } = u7OpenAnalyticsFromSummary();
   const html = harness.render();
-  // These four phrases are explicitly allowed on the adult scene only.
-  assert.match(html, /Evidence snapshot/);
-  assert.match(html, /Stage 1/);
+  // U10: "Evidence snapshot" → "Grammar progress"; "Stage 1" chip removed;
+  // "Reserved reward routes" → "Grammar creature routes" (U3).
+  assert.match(html, /Grammar progress/);
+  assert.doesNotMatch(html, /Evidence snapshot/);
+  assert.doesNotMatch(html, /class="chip">Stage 1</);
   assert.match(html, /Bellstorm bridge/);
-  assert.match(html, /Reserved reward routes/);
+  assert.match(html, /Grammar creature routes/);
 });
 
 test('U7: analytics phase renders adult confidence chips with the internal 5-label taxonomy + sample size', () => {
@@ -3281,4 +3283,51 @@ test('U7: integration — summary Grown-up view -> analytics -> back leaves summ
     summaryBefore,
     'summary payload survives the analytics round-trip',
   );
+});
+
+// ---------------------------------------------------------------------------
+// U10: Star explanation surface + analytics copy cleanup
+// ---------------------------------------------------------------------------
+
+test('U10: analytics eyebrow reads "Grammar progress" not "Evidence snapshot"', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const html = harness.render();
+  assert.match(html, /Grammar progress/);
+  assert.doesNotMatch(html, /Evidence snapshot/);
+});
+
+test('U10: "Stage 1" chip is absent from the analytics scene', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const html = harness.render();
+  assert.doesNotMatch(html, /<span class="chip">Stage 1<\/span>/);
+});
+
+test('U10: star explanation details element is rendered on the analytics scene', () => {
+  const { harness } = u7OpenAnalyticsFromSummary();
+  const html = harness.render();
+  assert.match(html, /<details class="grammar-star-explanation">/);
+  assert.match(html, /<summary>Star explanation<\/summary>/);
+  // All four active monsters are present in the debug output.
+  assert.match(html, /class="grammar-star-debug-entry"/);
+  assert.match(html, />Bracehart</);
+  assert.match(html, />Chronalyx</);
+  assert.match(html, />Couronnail</);
+  assert.match(html, />Concordium</);
+  // Each entry shows star count and stage name.
+  assert.match(html, /\/ 100 Stars/);
+  assert.match(html, /Source: live/);
+});
+
+test('U10: forbidden-term sweep still passes on the child dashboard', () => {
+  const storage = installMemoryStorage();
+  const harness = createAppHarness({ storage });
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  const html = harness.render();
+  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><details class="grammar-grown-up-view">/);
+  assert.ok(dashboardMatch, 'dashboard section was rendered');
+  const dashboardHtml = dashboardMatch[0];
+  for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    assert.doesNotMatch(dashboardHtml, new RegExp(escaped, 'i'), `forbidden term leaked: ${term}`);
+  }
 });

@@ -6,6 +6,10 @@ import {
   GRAMMAR_MONSTER_ROUTES,
   groupedGrammarConcepts,
 } from '../metadata.js';
+import { buildGrammarStarDebugModel } from '../../../../shared/grammar/grammar-star-debug.js';
+import { GRAMMAR_MONSTER_CONCEPTS, GRAMMAR_AGGREGATE_CONCEPTS } from '../../../../shared/grammar/grammar-concept-roster.js';
+
+const ACTIVE_MONSTER_IDS = ['bracehart', 'chronalyx', 'couronnail', 'concordium'];
 
 function StatusCount({ label, value, className = '' }) {
   return (
@@ -108,6 +112,7 @@ export function GrammarAnalyticsScene({
   const grouped = groupedGrammarConcepts(concepts);
   const rewardState = providedRewardState || grammar.projections?.rewards?.state || {};
   const recentActivity = recentActivityForAnalytics(grammar.analytics || {});
+  const recentAttemptsRaw = Array.isArray(grammar.analytics?.recentAttempts) ? grammar.analytics.recentAttempts : [];
   const punctuationConcepts = punctuationGrammarConcepts(concepts);
   const securedPunctuationConcepts = punctuationConcepts.filter((concept) => concept.status === 'secured').length;
 
@@ -119,14 +124,13 @@ export function GrammarAnalyticsScene({
     >
       <div className="card-header">
         <div>
-          <div className="eyebrow">Evidence snapshot</div>
+          <div className="eyebrow">Grammar progress</div>
           <h3 className="section-title" id="grammar-analytics-title">Grown-up view</h3>
           <p className="grammar-analytics-intro small muted">
             Detailed Grammar progress for parents and teachers. Nothing here is a grade.
           </p>
         </div>
         <div className="grammar-analytics-actions">
-          <span className="chip">Stage 1</span>
           {actions?.dispatch ? (
             <button
               className="btn secondary"
@@ -242,6 +246,32 @@ export function GrammarAnalyticsScene({
           </div>
         </div>
       </div>
+
+      <details className="grammar-star-explanation">
+        <summary>Star explanation</summary>
+        <div className="grammar-star-explanation-content">
+          {ACTIVE_MONSTER_IDS.map((monsterId) => {
+            const conceptIds = monsterId === 'concordium' ? GRAMMAR_AGGREGATE_CONCEPTS : (GRAMMAR_MONSTER_CONCEPTS[monsterId] || []);
+            const conceptNodeMap = {};
+            for (const id of conceptIds) {
+              conceptNodeMap[id] = conceptsById.get(id) || null;
+            }
+            const debug = buildGrammarStarDebugModel({
+              monsterId,
+              conceptNodes: conceptNodeMap,
+              recentAttempts: recentAttemptsRaw,
+              rewardEntry: rewardState[monsterId] || null,
+            });
+            return (
+              <div key={monsterId} className="grammar-star-debug-entry">
+                <strong>{debug.name}</strong>
+                <span>{debug.displayStars} / 100 Stars — {debug.stageName}</span>
+                <small>Source: {debug.source}{debug.warnings.length ? ` · ${debug.warnings[0]}` : ''}</small>
+              </div>
+            );
+          })}
+        </div>
+      </details>
 
       <div className="grammar-evidence-panels">
         <div>
