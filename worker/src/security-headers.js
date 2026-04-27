@@ -59,6 +59,12 @@ export function buildHstsValue(preloadEnabled) {
 
 export const HSTS_VALUE = buildHstsValue(HSTS_PRELOAD_ENABLED);
 
+// P4-U4: CSP enforcement mode constant. Tests and operational tooling import
+// this to assert the header name matches the intended delivery mode. The flip
+// from 'report-only' to 'enforced' ships in a dedicated PR gated on the
+// observation window documented in docs/hardening/csp-enforcement-decision.md.
+export const CSP_ENFORCEMENT_MODE = 'report-only';
+
 export const PERMISSIONS_POLICY = [
   'camera=()',
   'geolocation=()',

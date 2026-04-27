@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  CSP_ENFORCEMENT_MODE,
   CSP_INLINE_SCRIPT_HASH,
   CSP_POLICY_VALUE,
   HSTS_PRELOAD_ENABLED,
@@ -786,4 +787,61 @@ test('_headers repo file contains the CSP Report-Only line (pre-substitution via
   assert.match(content, /report-uri \/api\/security\/csp-report/);
   assert.match(content, /Report-To:[^\n]*csp-endpoint/);
   assert.match(content, /Reporting-Endpoints:[^\n]*csp-endpoint/);
+});
+
+// ---------------------------------------------------------------------------
+// P4-U4: CSP enforcement decision gate — mode constant and header assertions.
+// ---------------------------------------------------------------------------
+
+test('CSP_ENFORCEMENT_MODE export equals "report-only" (P4-U4 decision gate)', () => {
+  assert.equal(
+    CSP_ENFORCEMENT_MODE,
+    'report-only',
+    'CSP_ENFORCEMENT_MODE must be "report-only" until the observation window '
+      + 'closes and the enforcement flip PR lands. See '
+      + 'docs/hardening/csp-enforcement-decision.md.',
+  );
+});
+
+test('SECURITY_HEADERS contains Content-Security-Policy-Report-Only, not Content-Security-Policy (P4-U4)', () => {
+  assert.ok(
+    SECURITY_HEADERS['Content-Security-Policy-Report-Only'],
+    'SECURITY_HEADERS must carry the Report-Only key while CSP_ENFORCEMENT_MODE is "report-only".',
+  );
+  assert.equal(
+    SECURITY_HEADERS['Content-Security-Policy'],
+    undefined,
+    'SECURITY_HEADERS must NOT carry the enforced Content-Security-Policy key '
+      + 'while in report-only mode.',
+  );
+});
+
+test('upgrade-insecure-requests is NOT present in CSP directives while in report-only mode (P4-U4)', () => {
+  // Per CSP3, upgrade-insecure-requests is ignored in Report-Only delivery
+  // and Chrome emits a console warning. It should only be restored in the
+  // same PR that flips the header to enforced.
+  assert.ok(
+    !CSP_POLICY_VALUE.includes('upgrade-insecure-requests'),
+    'upgrade-insecure-requests must not appear in CSP while delivery is '
+      + 'Report-Only. Re-add it in the enforcement flip PR.',
+  );
+});
+
+test('applySecurityHeaders response contains Content-Security-Policy-Report-Only header (P4-U4)', () => {
+  const response = new Response('test', {
+    status: 200,
+    headers: { 'content-type': 'text/plain' },
+  });
+  const wrapped = applySecurityHeaders(response, { path: '/test' });
+  assert.ok(
+    wrapped.headers.get('content-security-policy-report-only'),
+    'applySecurityHeaders must stamp Content-Security-Policy-Report-Only '
+      + 'on every response while in report-only mode.',
+  );
+  assert.equal(
+    wrapped.headers.get('content-security-policy'),
+    null,
+    'applySecurityHeaders must NOT stamp the enforced Content-Security-Policy '
+      + 'header while CSP_ENFORCEMENT_MODE is "report-only".',
+  );
 });
