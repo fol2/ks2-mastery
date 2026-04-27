@@ -323,11 +323,12 @@ function SetupStatGrid({ stats }) {
 // "non-learner" check) guards against future roles slipping past the
 // check; a brand-new role (e.g. 'demo') will render the link only after
 // an explicit code change here, matching the P2 plan's §U1 ICO posture.
-const POST_MASTERY_DEBUG_ROLES = new Set(['admin', 'ops']);
-
-function adultCanSeePostMasteryDebug(platformRole) {
-  return POST_MASTERY_DEBUG_ROLES.has(String(platformRole || ''));
-}
+//
+// 2026-04-27 update: the inline "Why is Guardian locked?" link is removed.
+// The diagnostic panel itself stays in the Admin hub for ops use; we just
+// stop pitching it from the spelling setup scene. Admins land in the Admin
+// hub through the existing nav, so the inline footnote was redundant noise
+// for the very small audience that could see it.
 
 export function SpellingSetupScene({
   learner,
@@ -391,13 +392,6 @@ export function SpellingSetupScene({
   const contentClasses = ['setup-content'];
   if (isPostMega) contentClasses.push('setup-content--post-mega');
   if (isHydrationChecking) contentClasses.push('setup-content--checking');
-
-  // P2 U1: admin / ops adults see a "Why is Guardian locked?" diagnostic
-  // link right below the setup hero when Guardian Mission is NOT unlocked
-  // (i.e. `isPostMega === false`). Child / parent surfaces get `platformRole`
-  // empty (defaulted) or === 'parent' and the link never renders. Routed
-  // to the admin hub where the post-mega debug panel explains the counts.
-  const showPostMasteryDebugLink = adultCanSeePostMasteryDebug(platformRole) && !isPostMega;
 
   // P2 U5: soft-lockout banner state. Renders above the setup hero when a
   // sibling tab holds the write lock, or when the browser has no Web Locks
@@ -492,21 +486,6 @@ export function SpellingSetupScene({
               startDisabled={startDisabled}
             />
           )}
-          {showPostMasteryDebugLink ? (
-            <p className="small muted post-mastery-debug-link" data-adult-debug="post-mastery">
-              <button
-                type="button"
-                className="btn ghost"
-                data-action="open-admin-hub"
-                onClick={(event) => renderAction(actions, event, 'open-admin-hub')}
-              >
-                Why is Guardian locked?
-              </button>
-              <span className="small muted" style={{ marginLeft: 8 }}>
-                Adult-only diagnostic. Opens the Admin / Operations hub post-mega debug panel.
-              </span>
-            </p>
-          ) : null}
         </div>
       </section>
 
