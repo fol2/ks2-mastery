@@ -51,6 +51,16 @@ const FAULT_KINDS = Object.freeze([
   // The handler reuses the same `respondJson(500, ...)` payload.
   '500-tts',
   'offline',
+  // P7-U9: stall-punctuation-command simulates a Worker command that
+  // hangs indefinitely (or for a configurable duration). Unlike
+  // `timeout` which returns a 408 immediately, this kind produces a
+  // true stall — the response promise does not resolve until
+  // `durationMs` elapses. The middleware in browser-app-server.js
+  // neither responds to nor forwards the request during the stall
+  // window. This enables honest testing of pending/degraded navigation
+  // in U11 where mutation buttons must disable while navigation/escape
+  // buttons remain available.
+  'stall-punctuation-command',
 ]);
 
 const PLAN_QUERY_PARAM = '__ks2_fault';
@@ -79,12 +89,21 @@ function decodePlan(encoded) {
     const pathPattern = typeof parsed.pathPattern === 'string' ? parsed.pathPattern : '';
     if (!pathPattern) return null;
     const planId = typeof parsed.planId === 'string' && parsed.planId ? parsed.planId : '';
-    return {
+    // P7-U9: `durationMs` is an optional numeric field used by the
+    // `stall-punctuation-command` kind to configure how long the
+    // middleware hangs before releasing the socket. When absent or
+    // non-numeric, `applyFault` falls back to the 30 000 ms default.
+    const durationMs = typeof parsed.durationMs === 'number' && Number.isFinite(parsed.durationMs) && parsed.durationMs > 0
+      ? parsed.durationMs
+      : undefined;
+    const result = {
       kind,
       pathPattern,
       once: Boolean(parsed.once),
       planId,
     };
+    if (durationMs !== undefined) result.durationMs = durationMs;
+    return result;
   } catch {
     return null;
   }
@@ -102,6 +121,11 @@ function encodePlan(plan) {
   };
   if (typeof plan?.planId === 'string' && plan.planId) {
     canonical.planId = plan.planId;
+  }
+  // P7-U9: preserve durationMs so stall-punctuation-command scenes
+  // can configure the hang duration via the encoded plan transport.
+  if (typeof plan?.durationMs === 'number' && Number.isFinite(plan.durationMs)) {
+    canonical.durationMs = plan.durationMs;
   }
   return Buffer.from(JSON.stringify(canonical), 'utf8').toString('base64');
 }
@@ -176,6 +200,9 @@ function parseFaultPlan(request) {
  *                            / `headers` back to the client.
  *   - action: 'delay'     -> sleep `delayMs` and then continue to the
  *                            real dispatcher.
+ *   - action: 'stall'     -> hang for `durationMs` without responding
+ *                            or forwarding; simulates a command that
+ *                            never completes (P7-U9).
  *   - action: 'forward'   -> no fault applies, forward as normal.
  *
  * The function is pure — the caller owns actually performing the
@@ -252,6 +279,22 @@ function applyFault(plan, request) {
           'cache-control': 'no-store',
         },
         body: JSON.stringify({ ok: false, error: 'offline', code: 'offline' }),
+      };
+    case 'stall-punctuation-command':
+      // P7-U9: true stall — the middleware must neither respond to nor
+      // forward the request for `durationMs`. The caller (browser-app-
+      // server.js) awaits the returned Promise, during which the HTTP
+      // response socket stays open but idle. This differs from `timeout`
+      // (which returns 408 immediately) and `delay` (which sleeps then
+      // forwards to the real handler). The plan's `durationMs` field
+      // allows scenes to choose a duration appropriate for the test;
+      // the default 30 000 ms is long enough for any reasonable UI
+      // assertion without risking CI timeout.
+      return {
+        action: 'stall',
+        durationMs: typeof plan.durationMs === 'number' && Number.isFinite(plan.durationMs) && plan.durationMs > 0
+          ? plan.durationMs
+          : 30_000,
       };
     default:
       return { action: 'forward' };

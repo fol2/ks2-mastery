@@ -188,6 +188,26 @@ export async function startBrowserAppServer({
           await new Promise((resolve) => setTimeout(resolve, faultDecision.delayMs));
         }
 
+        // P7-U9: stall action — hang for `durationMs` without
+        // responding or forwarding. The HTTP socket stays open but
+        // idle, simulating a Worker command that never completes.
+        // After the stall elapses we return early with no response
+        // body so the socket closes cleanly rather than forwarding
+        // to the real handler. This is fundamentally different from
+        // `delay` (which continues to the real handler after sleeping)
+        // and `timeout`/`respond` (which send an immediate response).
+        if (faultDecision.action === 'stall' && Number.isFinite(faultDecision.durationMs)) {
+          await new Promise((resolve) => setTimeout(resolve, faultDecision.durationMs));
+          if (!response.writableEnded) {
+            response.writeHead(504, {
+              'content-type': 'application/json; charset=utf-8',
+              'cache-control': 'no-store',
+            });
+            response.end(JSON.stringify({ ok: false, error: 'stall expired', code: 'stall_expired' }));
+          }
+          return;
+        }
+
         const workerResponse = await workerServer.fetchRaw(`http://${request.headers.host}${request.url || '/'}`, {
           method: request.method,
           headers: fetchHeadersFromNode(request.headers),
