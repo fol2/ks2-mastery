@@ -37,13 +37,33 @@ function warnOnPlaceholderHashOnce() {
   );
 }
 
+// Operator gate for HSTS preload submission. Flip to `true` ONLY after the
+// operator has completed every sign-off item in
+// `docs/hardening/hsts-preload-audit.md` and the full DNS zone enumeration
+// confirms every subdomain under `eugnel.uk` is HTTPS-only. See the audit
+// document for rollback implications (preload is a two-year commitment).
+export const HSTS_PRELOAD_ENABLED = false;
+
+/**
+ * Build the HSTS header value. Extracted as a pure function so both
+ * branches (preload enabled / disabled) are testable without flipping
+ * the module-level constant.
+ *
+ * @param {boolean} preloadEnabled
+ * @returns {string}
+ */
+export function buildHstsValue(preloadEnabled) {
+  const base = 'max-age=63072000; includeSubDomains';
+  return preloadEnabled ? `${base}; preload` : base;
+}
+
+export const HSTS_VALUE = buildHstsValue(HSTS_PRELOAD_ENABLED);
+
 // P4-U4: CSP enforcement mode constant. Tests and operational tooling import
 // this to assert the header name matches the intended delivery mode. The flip
 // from 'report-only' to 'enforced' ships in a dedicated PR gated on the
 // observation window documented in docs/hardening/csp-enforcement-decision.md.
 export const CSP_ENFORCEMENT_MODE = 'report-only';
-
-export const HSTS_VALUE = 'max-age=63072000; includeSubDomains';
 
 export const PERMISSIONS_POLICY = [
   'camera=()',

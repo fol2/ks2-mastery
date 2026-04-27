@@ -154,4 +154,61 @@ _To be completed by the operator. Until every field is non-empty, preload submis
 
 ---
 
+## P4 U10 — HSTS Preload Operator Sign-Off Gate (2026-04-27)
+
+**Unit:** U10 of `2026-04-27-004-feat-production-certification-post-p3-revalidation-plan.md`
+**Purpose:** Formalise the preload decision as an operator-gated code path.
+
+### Code-level gate
+
+`worker/src/security-headers.js` now exports:
+
+```js
+export const HSTS_PRELOAD_ENABLED = false;
+```
+
+When `HSTS_PRELOAD_ENABLED` is `false` (the current default), the HSTS header is:
+
+```
+max-age=63072000; includeSubDomains
+```
+
+When the operator flips the constant to `true` after completing the sign-off below, the header becomes:
+
+```
+max-age=63072000; includeSubDomains; preload
+```
+
+The `_headers` file must be updated in the same PR that flips the constant, so that Worker and static headers remain in lockstep. Tests enforce this parity.
+
+### Operator preload activation checklist
+
+The operator must complete every item below before flipping `HSTS_PRELOAD_ENABLED` to `true`. Each item corresponds to a risk or blocker documented in the sections above.
+
+- [ ] **DNS zone enumeration complete.** Every HTTP-serving subdomain under `eugnel.uk` has a non-`TBD` row in the subdomain enumeration table above.
+- [ ] **Apex `eugnel.uk` HTTPS verified.** The apex serves HTTPS with `Strict-Transport-Security: max-age>=31536000; includeSubDomains; preload`.
+- [ ] **`dev-ks2.eugnel.uk` HTTPS-only confirmed.** The development origin serves HTTPS-only, or the operator accepts the two-year preload commitment for it.
+- [ ] **Third-party subdomains verified.** Every CNAME-delegated subdomain (status page, docs, blog, analytics, support) serves HTTPS-only with valid certificates.
+- [ ] **No HTTP-only subdomains exist.** No current or near-term planned subdomain depends on plaintext HTTP.
+- [ ] **Rollback implications accepted.** The operator has read the "Rollback implications" section above and accepts the two-year HTTPS-only commitment across all `*.eugnel.uk` subdomains.
+- [ ] **Anti-preload enforcement points updated.** The PR that flips `HSTS_PRELOAD_ENABLED` must also update every hardcoded anti-preload assertion that will otherwise reject the change: `scripts/lib/headers-drift.mjs` (preload rejection in `assertHeadersBlockIsFresh`), `scripts/production-bundle-audit.mjs` (live HEAD check rejects HSTS preload), and `tests/security-headers.test.js` (no-preload assertions on `_headers` content and `serialiseHeadersBlock` output). All four sites must accept preload before the activation PR can pass CI.
+- [ ] **`_headers` file updated.** The PR that flips `HSTS_PRELOAD_ENABLED` also updates every HSTS line in `_headers` to include `; preload`.
+- [ ] **`hstspreload.org` submission confirmed.** The submission has been completed and the confirmation screenshot or ticket ID is attached to the PR.
+
+### Operator activation sign-off
+
+_To be completed by the operator at the time of flipping `HSTS_PRELOAD_ENABLED` to `true`. Do not fill in until every checklist item above is ticked._
+
+| Field | Value |
+| --- | --- |
+| **Approver name** | |
+| **Date of activation** | |
+| **DNS enumeration method** | |
+| **PR that flips the constant** | |
+| **hstspreload.org submission ID** | |
+
+**No header changes made by this unit.** `HSTS_PRELOAD_ENABLED` is `false`. The constant and this sign-off gate are the deliverables.
+
+---
+
 **End of audit skeleton.** Any change to this file after operator sign-off requires a new dated sign-off block appended below (never rewrite a signed block).
