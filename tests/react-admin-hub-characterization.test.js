@@ -45,6 +45,15 @@ function normaliseLineEndings(value) {
   return String(value).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 }
 
+async function renderAllSections(buildEntryOpts = {}) {
+  const sections = ['overview', 'accounts', 'debug', 'content', 'marketing'];
+  const parts = [];
+  for (const s of sections) {
+    parts.push(await renderFixture(buildEntry({ ...buildEntryOpts, initialSection: s })));
+  }
+  return parts.join('\n');
+}
+
 async function renderFixture(entrySource) {
   const tmpDir = await mkdtemp(path.join(tmpdir(), 'ks2-admin-char-'));
   const entryPath = path.join(tmpDir, 'entry.jsx');
@@ -330,7 +339,7 @@ function baseAccountDirectory() {
   };
 }
 
-function buildEntry({ model, appState, accessContext, accountDirectory, hubState, refreshStatus, activeOpsMetadataSavingId, modelExplicitNull } = {}) {
+function buildEntry({ model, appState, accessContext, accountDirectory, hubState, refreshStatus, activeOpsMetadataSavingId, modelExplicitNull, initialSection } = {}) {
   const m = modelExplicitNull ? null : (model || baseModel());
   const as = appState || baseAppState();
   const ac = accessContext || baseAccessContext();
@@ -338,6 +347,7 @@ function buildEntry({ model, appState, accessContext, accountDirectory, hubState
   const hs = hubState || { status: 'loaded' };
   const rs = refreshStatus || { inFlight: false, lastUpdatedAt: 0 };
   const savingId = activeOpsMetadataSavingId || '';
+  const section = initialSection || null;
   return `
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -358,6 +368,7 @@ function buildEntry({ model, appState, accessContext, accountDirectory, hubState
         actions={actions}
         accessContext={accessContext}
         accountDirectory={accountDirectory}
+        initialSection={${JSON.stringify(section)}}
       />
     );
     process.stdout.write(html);
@@ -369,7 +380,7 @@ function buildEntry({ model, appState, accessContext, accountDirectory, hubState
 // =================================================================
 
 test('full admin model renders all 15 panels without error', async () => {
-  const html = await renderFixture(buildEntry());
+  const html = await renderAllSections();
 
   // --- MonsterVisualConfigPanel ---
   // Plan deviation: the MonsterVisualConfigPanel early-returns null when
@@ -483,7 +494,7 @@ test('ops-role model renders with read-only account section and admin-only seed 
       canManageMonsterVisualConfig: false,
     },
   });
-  const html = await renderFixture(buildEntry({ model: opsModel }));
+  const html = await renderAllSections({ model: opsModel });
 
   // AdminAccountRoles shows admin-only notice for non-admin
   assert.match(html, /Admin-only role management/, 'Ops sees admin-only role management notice');
@@ -512,7 +523,7 @@ test('ops-role model renders with read-only account section and admin-only seed 
 // =================================================================
 
 test('error centre filter controls render with all 6 filter dimensions', async () => {
-  const html = await renderFixture(buildEntry());
+  const html = await renderFixture(buildEntry({ initialSection: 'debug' }));
 
   // Filter container
   assert.match(html, /data-testid="error-centre-filters"/, 'Error centre filter container renders');
@@ -584,7 +595,7 @@ test('account ops metadata shows CAS conflict banner when model state includes c
       ],
     },
   });
-  const html = await renderFixture(buildEntry({ model: conflictModel }));
+  const html = await renderFixture(buildEntry({ model: conflictModel, initialSection: 'accounts' }));
 
   // Conflict banner renders
   assert.match(html, /data-testid="account-ops-metadata-conflict-banner"/, 'Conflict banner renders');
@@ -619,10 +630,10 @@ test('empty learner list renders "no learner diagnostics" fallback', async () =>
   const emptyAppState = baseAppState({
     learners: { selectedId: '', byId: {}, allIds: [] },
   });
-  const html = await renderFixture(buildEntry({
+  const html = await renderAllSections({
     model: emptyLearnersModel,
     appState: emptyAppState,
-  }));
+  });
 
   assert.match(
     html,
@@ -683,7 +694,7 @@ test('classroom summary degraded state hides per-learner stats but shows learner
       breakersDegraded: { classroomSummary: true },
     },
   });
-  const html = await renderFixture(buildEntry({ appState: degradedAppState }));
+  const html = await renderFixture(buildEntry({ appState: degradedAppState, initialSection: 'debug' }));
 
   // Degraded banner renders
   assert.match(
@@ -732,7 +743,7 @@ test('non-admin/non-ops role renders Access Denied card', async () => {
   assert.match(html, /access-denied-card/, 'Access denied card renders');
   assert.match(
     html,
-    /Admin \/ Operations is not available for the current surface role/,
+    /Admin Console is not available for the current surface role/,
     'Access denied title renders',
   );
   assert.match(
@@ -752,7 +763,7 @@ test('non-admin/non-ops role renders Access Denied card', async () => {
 // =================================================================
 
 test('key interactive elements render: role selector, refresh buttons, status chips', async () => {
-  const html = await renderFixture(buildEntry());
+  const html = await renderAllSections();
 
   // Role selector in AdminAccountRoles
   assert.match(html, /name="platformRole"/, 'Platform role selector renders');
@@ -793,7 +804,7 @@ test('key interactive elements render: role selector, refresh buttons, status ch
 // =================================================================
 
 test('error event details drawer renders with release columns and timestamps', async () => {
-  const html = await renderFixture(buildEntry());
+  const html = await renderFixture(buildEntry({ initialSection: 'debug' }));
 
   // Drawer renders for the event
   assert.match(html, /data-testid="error-event-row-evt-001"/, 'Error event row renders');
@@ -826,7 +837,7 @@ test('loading-remote early return renders loading card when model is null', asyn
     accessContext: { shellAccess: { source: 'worker-session' }, activeAdultLearnerContext: null },
   }));
 
-  assert.match(html, /Loading Admin \/ Operations/, 'Loading card heading renders');
+  assert.match(html, /Loading Admin Console/, 'Loading card heading renders');
   assert.match(html, /Loading live Worker diagnostics/, 'Loading card detail text renders');
   // No admin panels should render in loading state
   assert.doesNotMatch(html, /Dashboard KPI/, 'KPI panel does not render during loading');
@@ -884,7 +895,7 @@ test('error log empty-state renders when entries array is empty', async () => {
       entries: [],
     },
   });
-  const html = await renderFixture(buildEntry({ model: emptyErrorsModel }));
+  const html = await renderFixture(buildEntry({ model: emptyErrorsModel, initialSection: 'debug' }));
 
   assert.match(html, /data-testid="error-centre-empty-state"/, 'Error centre empty state element renders');
   assert.match(html, /No error events recorded/, 'Error centre empty state message renders');
