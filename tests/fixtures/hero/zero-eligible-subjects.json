@@ -1,0 +1,50 @@
+{
+  "grammar": {
+    "subjectId": "grammar",
+    "version": 1,
+    "phase": "dashboard",
+    "stats": {
+      "concepts": {
+        "total": 0,
+        "new": 0,
+        "learning": 0,
+        "weak": 0,
+        "due": 0,
+        "secured": 0
+      },
+      "contentStats": {
+        "total": 0,
+        "selectedResponse": 0,
+        "constructedResponse": 0
+      }
+    },
+    "analytics": {
+      "concepts": [],
+      "progressSnapshot": {
+        "subjectId": "grammar",
+        "totalConcepts": 0,
+        "trackedConcepts": 0,
+        "securedConcepts": 0,
+        "dueConcepts": 0,
+        "weakConcepts": 0,
+        "untouchedConcepts": 0,
+        "accuracyPercent": null
+      }
+    }
+  },
+  "punctuation": null,
+  "spelling": {
+    "subjectId": "spelling",
+    "version": 1,
+    "phase": "dashboard",
+    "stats": {
+      "all": { "total": 0, "secure": 0, "due": 0, "fresh": 0, "trouble": 0, "attempts": 0, "correct": 0, "accuracy": null },
+      "core": { "total": 0, "secure": 0, "due": 0, "fresh": 0, "trouble": 0, "attempts": 0, "correct": 0, "accuracy": null },
+      "y34": { "total": 0, "secure": 0, "due": 0, "fresh": 0, "trouble": 0, "attempts": 0, "correct": 0, "accuracy": null },
+      "y56": { "total": 0, "secure": 0, "due": 0, "fresh": 0, "trouble": 0, "attempts": 0, "correct": 0, "accuracy": null },
+      "extra": { "total": 0, "secure": 0, "due": 0, "fresh": 0, "trouble": 0, "attempts": 0, "correct": 0, "accuracy": null }
+    },
+    "analytics": null,
+    "postMega": null
+  }
+}

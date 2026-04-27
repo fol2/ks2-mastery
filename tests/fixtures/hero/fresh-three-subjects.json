@@ -1,0 +1,105 @@
+{
+  "grammar": {
+    "subjectId": "grammar",
+    "version": 1,
+    "phase": "dashboard",
+    "stats": {
+      "concepts": {
+        "total": 30,
+        "new": 10,
+        "learning": 8,
+        "weak": 3,
+        "due": 5,
+        "secured": 4
+      },
+      "contentStats": {
+        "total": 120,
+        "selectedResponse": 60,
+        "constructedResponse": 60
+      }
+    },
+    "analytics": {
+      "concepts": [
+        { "id": "noun_proper", "name": "Proper nouns", "domain": "word-class", "status": "due", "attempts": 8, "strength": 0.65, "dueAt": 1745700000000, "correctStreak": 1, "intervalDays": 3, "confidence": { "label": "building", "sampleSize": 8, "intervalDays": 3, "distinctTemplates": 3, "recentMisses": 0 } },
+        { "id": "noun_common", "name": "Common nouns", "domain": "word-class", "status": "weak", "attempts": 6, "strength": 0.35, "dueAt": 1745700000000, "correctStreak": 0, "intervalDays": 1, "confidence": { "label": "needs-repair", "sampleSize": 6, "intervalDays": 1, "distinctTemplates": 2, "recentMisses": 3 } },
+        { "id": "adjective_comparative", "name": "Comparative adjectives", "domain": "word-class", "status": "secured", "attempts": 12, "strength": 0.88, "dueAt": 1746500000000, "correctStreak": 5, "intervalDays": 4, "confidence": { "label": "consolidating", "sampleSize": 12, "intervalDays": 4, "distinctTemplates": 5, "recentMisses": 0 } },
+        { "id": "verb_tense_past", "name": "Past tense verbs", "domain": "word-class", "status": "due", "attempts": 10, "strength": 0.70, "dueAt": 1745600000000, "correctStreak": 2, "intervalDays": 5, "confidence": { "label": "building", "sampleSize": 10, "intervalDays": 5, "distinctTemplates": 4, "recentMisses": 1 } },
+        { "id": "clause_relative", "name": "Relative clauses", "domain": "sentence", "status": "secured", "attempts": 15, "strength": 0.90, "dueAt": 1747000000000, "correctStreak": 6, "intervalDays": 10, "confidence": { "label": "secure", "sampleSize": 15, "intervalDays": 10, "distinctTemplates": 6, "recentMisses": 0 } }
+      ],
+      "progressSnapshot": {
+        "subjectId": "grammar",
+        "totalConcepts": 30,
+        "trackedConcepts": 20,
+        "securedConcepts": 4,
+        "dueConcepts": 5,
+        "weakConcepts": 3,
+        "untouchedConcepts": 10,
+        "accuracyPercent": 68
+      }
+    }
+  },
+  "punctuation": {
+    "subjectId": "punctuation",
+    "version": 1,
+    "phase": "setup",
+    "availability": { "status": "ready", "code": null, "message": "" },
+    "stats": {
+      "total": 80,
+      "secure": 20,
+      "due": 12,
+      "fresh": 30,
+      "weak": 4,
+      "attempts": 150,
+      "correct": 120,
+      "accuracy": 80,
+      "publishedRewardUnits": 10,
+      "securedRewardUnits": 4,
+      "sessionsCompleted": 8
+    },
+    "analytics": {
+      "releaseId": "punctuation-v1",
+      "attempts": 150,
+      "correct": 120,
+      "accuracy": 80,
+      "sessionsCompleted": 8,
+      "skillRows": [
+        { "skillId": "full_stop", "name": "Full stops", "clusterId": "basics", "published": true, "attempts": 30, "correct": 27, "accuracy": 90, "secure": 5, "due": 2, "weak": 0, "mastery": 85 },
+        { "skillId": "comma_list", "name": "Commas in lists", "clusterId": "comma", "published": true, "attempts": 25, "correct": 18, "accuracy": 72, "secure": 3, "due": 3, "weak": 2, "mastery": 60 },
+        { "skillId": "apostrophe_possession", "name": "Possessive apostrophes", "clusterId": "apostrophe", "published": true, "attempts": 20, "correct": 15, "accuracy": 75, "secure": 2, "due": 2, "weak": 1, "mastery": 55 }
+      ],
+      "rewardUnits": [],
+      "bySessionMode": [],
+      "byItemMode": [],
+      "weakestFacets": [],
+      "recentMistakes": [],
+      "misconceptionPatterns": [],
+      "dailyGoal": { "targetAttempts": 10, "attemptsToday": 3, "correctToday": 2, "completed": false, "progressPercent": 30 },
+      "streak": { "currentDays": 2, "bestDays": 5, "activeDays": 12 }
+    }
+  },
+  "spelling": {
+    "subjectId": "spelling",
+    "version": 1,
+    "phase": "dashboard",
+    "stats": {
+      "all": { "total": 200, "secure": 50, "due": 15, "fresh": 80, "trouble": 8, "attempts": 300, "correct": 250, "accuracy": 83 },
+      "core": { "total": 200, "secure": 50, "due": 15, "fresh": 80, "trouble": 8, "attempts": 300, "correct": 250, "accuracy": 83 },
+      "y34": { "total": 100, "secure": 30, "due": 8, "fresh": 40, "trouble": 4, "attempts": 160, "correct": 135, "accuracy": 84 },
+      "y56": { "total": 100, "secure": 20, "due": 7, "fresh": 40, "trouble": 4, "attempts": 140, "correct": 115, "accuracy": 82 },
+      "extra": { "total": 0, "secure": 0, "due": 0, "fresh": 0, "trouble": 0, "attempts": 0, "correct": 0, "accuracy": null }
+    },
+    "analytics": {
+      "version": 3,
+      "generatedAt": 1745750000000,
+      "pools": {
+        "all": { "total": 200, "secure": 50, "due": 15, "fresh": 80, "trouble": 8, "attempts": 300, "correct": 250, "accuracy": 83 },
+        "core": { "total": 200, "secure": 50, "due": 15, "fresh": 80, "trouble": 8, "attempts": 300, "correct": 250, "accuracy": 83 },
+        "y34": { "total": 100, "secure": 30, "due": 8, "fresh": 40, "trouble": 4, "attempts": 160, "correct": 135, "accuracy": 84 },
+        "y56": { "total": 100, "secure": 20, "due": 7, "fresh": 40, "trouble": 4, "attempts": 140, "correct": 115, "accuracy": 82 },
+        "extra": { "total": 0, "secure": 0, "due": 0, "fresh": 0, "trouble": 0, "attempts": 0, "correct": 0, "accuracy": null }
+      },
+      "wordGroups": []
+    },
+    "postMega": null
+  }
+}
