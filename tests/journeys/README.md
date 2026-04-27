@@ -15,7 +15,7 @@ first one that responds to `status` (bb-browser) or `--help` (agent-browser)
 wins. Playwright is not loaded; the existing Playwright golden-path specs
 under `tests/playwright/` are orthogonal and keep working.
 
-## Six journeys
+## Six journeys (bb-browser driver)
 
 | Script                              | Journey                                                  |
 | ----------------------------------- | -------------------------------------------------------- |
@@ -25,6 +25,29 @@ under `tests/playwright/` are orthogonal and keep working.
 | `map-guided-skill.mjs`              | Map -> skill card -> Practise this -> Guided Q1          |
 | `summary-back-while-pending.mjs`    | SKIPPED: needs dev-only stall endpoint (see below)       |
 | `reward-parity-visual.mjs`          | Map + Setup + Summary reward-state parity                |
+
+## Playwright golden-path coverage (P7-U10)
+
+The Playwright golden-path test at `tests/playwright/punctuation-golden-path.playwright.test.mjs`
+exercises the **full Worker-backed journey** through the real Worker/D1 command
+path in a Chromium browser. This is separate from the bb-browser journeys above
+and runs via `npx playwright test`. Coverage added in P7-U10:
+
+| Test name                                          | Journey                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------ |
+| complete journey (star consistency)                 | Home -> landing -> session -> summary -> landing -> refresh -> map; star meter consistency across all surfaces |
+| refresh after full journey (SH2-U2 regression)     | Full session -> summary -> reload -> clean setup; zombie-phase guard |
+| map opens from landing and closes back to landing   | Landing -> open map -> map body visible -> close map -> landing CTA |
+| telemetry disabled journey                          | Session to summary with telemetry rate-limited via route intercept; no console errors |
+
+**Star consistency contract (§5.5):** After completing a round, Star counts
+from the landing monster meters, the summary monster meters, and the map
+monster-group headers must agree (within display rounding). The test reads
+`.punctuation-monster-meter-count` elements on each surface and compares
+parsed numeric values.
+
+**Mobile-390 baseline:** All Playwright tests run against the `mobile-390`
+project (390 x 844 viewport). Desktop/tablet matrix deferred to follow-up.
 
 ## Prerequisites
 
