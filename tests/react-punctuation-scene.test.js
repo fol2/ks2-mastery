@@ -3044,6 +3044,97 @@ test('punctuation Setup scene: fresh learner renders zero-state progress row (gu
   assert.match(html, /Find your first punctuation egg/, 'fresh learner CTA');
 });
 
+// ---------------------------------------------------------------------------
+// P7-U7 — Landing QoL metric clarification: Grand Stars replaces the
+// ambiguous "Stars earned" aggregate. The progress row now shows Quoral's
+// Grand Stars (cross-monster overall progress) instead of the sum of
+// all direct + grand Stars.
+// ---------------------------------------------------------------------------
+
+test('P7-U7: progress row shows "Grand Stars" label, not "Stars earned"', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  const html = harness.render();
+
+  // The ambiguous aggregate label must not appear.
+  assert.doesNotMatch(html, /Stars earned/, 'ambiguous "Stars earned" aggregate must not appear');
+  // The progress row shows "Grand Stars" instead.
+  assert.match(html, /Grand Stars/, 'progress row must display "Grand Stars" label');
+  // The data-metric landmark is present for journey spec testing.
+  assert.match(html, /data-metric="grand-stars"/, 'grand-stars data-metric landmark present');
+});
+
+test('P7-U7: fresh learner sees Grand Stars = 0 in the progress row', () => {
+  const harness = createPunctuationHarness();
+  harness.dispatch('open-subject', { subjectId: 'punctuation' });
+  const html = harness.render();
+
+  // The Grand Stars metric should show 0 for a fresh learner.
+  assert.match(html, /Grand Stars/, 'Grand Stars label renders');
+  // Layout skeleton unchanged — same data-section landmarks.
+  assert.match(html, /data-section="progress-row"/, 'progress row present');
+  assert.match(html, /data-section="monster-row"/, 'monster row present');
+});
+
+test('P7-U7: post-session learner sees Grand Stars consistent with Quoral meter', async () => {
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const html = renderPunctuationSetupSceneStandalone({
+    ui: {
+      availability: { status: 'ready' },
+      starView: {
+        perMonster: {
+          pealark: { total: 30, starDerivedStage: 2 },
+          claspin: { total: 15, starDerivedStage: 1 },
+          curlune: { total: 10, starDerivedStage: 1 },
+        },
+        grand: { grandStars: 8, starDerivedStage: 0, total: 100 },
+      },
+    },
+    actions: { dispatch: () => {}, updateSubjectUi: () => {} },
+    prefs: { mode: 'smart', roundLength: '4' },
+    stats: { total: 14, secure: 3, due: 2, weak: 1, fresh: 8, attempts: 20, correct: 15, accuracy: 75 },
+    learner: { id: 'test', name: 'Tester' },
+    rewardState: {},
+  });
+
+  // "Grand Stars" label rendered — not "Stars earned".
+  assert.match(html, /Grand Stars/, 'Grand Stars label renders post-session');
+  assert.doesNotMatch(html, /Stars earned/, '"Stars earned" must not appear post-session');
+  // Quoral meter uses "Grand Stars" label (the MonsterStarMeter already does this).
+  assert.match(html, /8 \/ 100 Grand Stars/, 'Quoral meter shows Grand Stars count');
+  // Layout skeleton same as fresh learner.
+  assert.match(html, /data-section="progress-row"/, 'progress row present post-session');
+  assert.match(html, /data-section="monster-row"/, 'monster row present post-session');
+});
+
+test('P7-U7: Quoral meter is visually distinct with "Grand Stars" vs direct monster "Stars"', async () => {
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const html = renderPunctuationSetupSceneStandalone({
+    ui: {
+      availability: { status: 'ready' },
+      starView: {
+        perMonster: {
+          pealark: { total: 20, starDerivedStage: 1 },
+        },
+        grand: { grandStars: 5, starDerivedStage: 0, total: 100 },
+      },
+    },
+    actions: { dispatch: () => {}, updateSubjectUi: () => {} },
+    prefs: { mode: 'smart', roundLength: '4' },
+    stats: {},
+    learner: { id: 'test' },
+    rewardState: {},
+  });
+
+  // Direct monsters show "Stars", Quoral shows "Grand Stars".
+  assert.match(html, /20 \/ 100 Stars/, 'direct monster shows "Stars"');
+  assert.match(html, /5 \/ 100 Grand Stars/, 'Quoral shows "Grand Stars"');
+});
+
 test('punctuation Setup scene: reserved monster ids NEVER appear in the active monster strip', () => {
   // Smuggle reserved monster entries into the reward state. The
   // iterator is `ACTIVE_PUNCTUATION_MONSTER_IDS` only (plan R10), so

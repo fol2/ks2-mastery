@@ -261,14 +261,13 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   // Progress row values
   const dueCount = Number(stats?.due) || 0;
   const weakCount = Number(stats?.weak) || 0;
-  // U3 review follow-up (HIGH 1): use displayStars (monotonic) for the
-  // aggregate, matching MonsterStarMeter which already reads displayStars.
-  // Prior code used raw totalStars, causing a mismatch between the
-  // progress-row aggregate and the individual meter values after evidence
-  // lapse.
-  const totalStarsEarned = dashboard.activeMonsters.reduce(
-    (sum, m) => sum + (m.displayStars ?? m.totalStars ?? 0), 0,
-  );
+  // P7-U7: replaced the ambiguous "Stars earned" aggregate (which summed
+  // direct monster Stars + Grand Stars into one confusing number) with
+  // Quoral's Grand Stars — the cross-monster overall progress metric.
+  // Individual monster meters already show per-monster Star totals, so
+  // the aggregate was redundant. Grand Stars is the only metric that
+  // represents whole-subject progress without double-counting.
+  const grandStars = dashboard.grandStars;
 
   const learnerName = learner && typeof learner === 'object' && !Array.isArray(learner)
     && typeof learner.name === 'string' && learner.name.trim()
@@ -334,9 +333,9 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
             <dt>Wobbly</dt>
             <dd>{weakCount}</dd>
           </div>
-          <div className="punctuation-progress-item">
-            <dt>Stars earned</dt>
-            <dd>{totalStarsEarned}</dd>
+          <div className="punctuation-progress-item" data-metric="grand-stars">
+            <dt>Grand Stars</dt>
+            <dd>{grandStars}</dd>
           </div>
         </dl>
       </section>
