@@ -222,7 +222,7 @@ function assertAdminHubPanels(payload) {
 }
 
 function findSmokeAccountRow(payload, targetEmail) {
-  const rows = payload?.rows || payload?.accounts || [];
+  const rows = payload?.rows || payload?.accounts || payload?.results || [];
   const normalisedTarget = String(targetEmail || '').toLowerCase();
   return rows.find((row) => String(row.email || '').toLowerCase() === normalisedTarget) || null;
 }
@@ -499,7 +499,7 @@ export async function runSmoke({
     }
 
     // ---------------------------------------------------------------
-    // P3 panel coverage (steps 8-13). Each step is wrapped in its own
+    // P3 panel coverage (steps 8-14). Each step is wrapped in its own
     // try/catch so a failure escalates exitCode to EXIT_FAILURE but
     // does NOT abort subsequent steps — the smoke run reports as many
     // data-points as possible in a single invocation.
@@ -557,15 +557,15 @@ export async function runSmoke({
         timeoutMs,
       });
       assertStepOk('denial-log', denials);
-      // The response contains `{ ok, rows: [...] }` — verify rows is
+      // The response contains `{ ok, entries: [...] }` — verify entries is
       // an array (empty is fine).
-      const rows = denials.payload?.rows;
+      const rows = denials.payload?.entries;
       if (!Array.isArray(rows)) {
         throw new SmokeFailure({
           step: 'denial-log shape',
           status: 200,
           correlationId: correlationIdFromPayload(denials.payload),
-          payload: { hint: 'expected rows array in denial-log response' },
+          payload: { hint: 'expected entries array in denial-log response' },
         });
       }
       recordStep('denial-log', { count: rows.length });
@@ -705,7 +705,7 @@ export async function runSmoke({
         assertStepOk('marketing-create', create);
         mktDraftCreated = true;
         createdMessageId = create.payload?.message?.id || null;
-        createdRowVersion = create.payload?.message?.rowVersion ?? 0;
+        createdRowVersion = create.payload?.message?.row_version ?? 0;
         recordStep('marketing-create', { requestId: mktCreateRequestId, messageId: createdMessageId });
 
         if (!createdMessageId) {
@@ -751,7 +751,7 @@ export async function runSmoke({
               cookie,
               timeoutMs,
             });
-            const currentRowVersion = reRead.payload?.message?.rowVersion ?? 0;
+            const currentRowVersion = reRead.payload?.message?.row_version ?? 0;
 
             const retryArchive = await apiSend({
               baseUrl,
@@ -789,7 +789,7 @@ export async function runSmoke({
               },
               steps,
             });
-            return EXIT_STATE_DRIFT;
+            exitCode = EXIT_STATE_DRIFT;
           }
         }
       }
@@ -807,7 +807,7 @@ export async function runSmoke({
       const first = failedSteps[0];
       emit({
         ok: false,
-        exit_code: EXIT_FAILURE,
+        exit_code: exitCode,
         base_url: baseUrl,
         failed_step: first?.step || 'unknown',
         status: first?.status || null,
@@ -816,7 +816,7 @@ export async function runSmoke({
         failed_step_count: failedSteps.length,
         steps,
       });
-      return EXIT_FAILURE;
+      return exitCode;
     }
   } catch (error) {
     if (error instanceof SmokeFailure) {
