@@ -49,6 +49,14 @@ import {
   DENIAL_RATE_LIMIT_EXCEEDED,
   SAME_ORIGIN_REQUIRED,
 } from './error-codes.js';
+import {
+  createMarketingMessage,
+  updateMarketingMessage,
+  transitionMarketingMessage,
+  listMarketingMessages,
+  getMarketingMessage,
+  listActiveMessages,
+} from './admin-marketing.js';
 
 
 // U7 (sys-hardening p1): CSP report endpoint constants. The endpoint
@@ -1425,6 +1433,13 @@ export function createWorkerApp({
           }
         }
 
+        // U11: public-facing active messages. Any authenticated role.
+        if (url.pathname === '/api/ops/active-messages' && request.method === 'GET') {
+          const db = requireDatabase(env);
+          const result = await listActiveMessages(db, { nowTs: now() });
+          return json({ ok: true, ...result });
+        }
+
         if (url.pathname === '/api/demo/reset' && request.method === 'POST') {
           requireMutationCapability(session);
           await resetDemoAccount({
@@ -1919,6 +1934,70 @@ export function createWorkerApp({
             learnerId,
             promptId,
             mutation: mutationFromRequest(body, request),
+          });
+          return json({ ok: true, ...result });
+        }
+
+        // U11: Marketing / Live Ops V0 — admin CRUD + lifecycle routes.
+        if (url.pathname === '/api/admin/marketing/messages' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const db = requireDatabase(env);
+          const result = await listMarketingMessages(db, { actorAccountId: session.accountId });
+          return json({ ok: true, ...result });
+        }
+
+        if (url.pathname === '/api/admin/marketing/messages' && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          requireMutationCapability(session);
+          const body = await readJson(request);
+          const db = requireDatabase(env);
+          const result = await createMarketingMessage(db, {
+            actorAccountId: session.accountId,
+            body,
+            nowTs: now(),
+          });
+          return json({ ok: true, ...result }, 201);
+        }
+
+        const marketingMessageMatch = /^\/api\/admin\/marketing\/messages\/([^/]+)$/.exec(url.pathname);
+        if (marketingMessageMatch && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const db = requireDatabase(env);
+          const messageId = decodeURIComponent(marketingMessageMatch[1]);
+          const result = await getMarketingMessage(db, {
+            actorAccountId: session.accountId,
+            messageId,
+          });
+          return json({ ok: true, ...result });
+        }
+
+        if (marketingMessageMatch && request.method === 'PUT') {
+          requireSameOrigin(request, env);
+          requireMutationCapability(session);
+          const body = await readJson(request);
+          const db = requireDatabase(env);
+          const messageId = decodeURIComponent(marketingMessageMatch[1]);
+
+          // If body.action is present, it's a lifecycle transition.
+          if (typeof body.action === 'string') {
+            const result = await transitionMarketingMessage(db, {
+              actorAccountId: session.accountId,
+              messageId,
+              action: body.action,
+              expectedRowVersion: body.expectedRowVersion,
+              confirmBroadPublish: body.confirmBroadPublish === true,
+              mutation: body.mutation || { requestId: body.requestId, correlationId: body.correlationId },
+              nowTs: now(),
+            });
+            return json({ ok: true, ...result });
+          }
+
+          // Otherwise it's a field update on a draft message.
+          const result = await updateMarketingMessage(db, {
+            actorAccountId: session.accountId,
+            messageId,
+            body,
+            nowTs: now(),
           });
           return json({ ok: true, ...result });
         }
