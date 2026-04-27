@@ -12,9 +12,9 @@
 // child surface inherits the guard through U10's fixture-driven test.
 
 import {
-  grammarChildConfidenceLabel as grammarChildConfidenceLabelShared,
   isGrammarConfidenceLabel,
 } from '../../../../shared/grammar/confidence.js';
+import { grammarChildLabelForInternal, grammarChildToneForInternal } from '../../../../shared/grammar/grammar-status.js';
 import {
   grammarStarStageName,
   grammarStarDisplayStage,
@@ -370,40 +370,32 @@ export function isGrammarChildCopy(text) {
 }
 
 // --- Child confidence label mapping -----------------------------------------
-// The internal-label → child-copy mapping lives in `shared/grammar/confidence.js`
-// (U8 consolidation). The tone map stays local because tone is CSS-class
-// vocabulary the shared module has no opinion about. Validation of incoming
-// labels uses `isGrammarConfidenceLabel` so we never silently accept an
-// out-of-taxonomy label.
-
-const CHILD_CONFIDENCE_TONES = Object.freeze({
-  emerging: 'new',
-  building: 'learning',
-  'needs-repair': 'trouble',
-  consolidating: 'nearly-secure',
-  secure: 'secure',
-});
+// U9 Phase 7: label and tone mappings are centralised in
+// `shared/grammar/grammar-status.js`. The view-model delegates to
+// `grammarChildLabelForInternal` and `grammarChildToneForInternal` so the
+// truth table lives in a single place. Validation of incoming labels uses
+// `isGrammarConfidenceLabel` so we never silently accept an out-of-taxonomy
+// label.
 
 /**
  * Translates the internal five-label taxonomy into child-friendly copy.
- * Thin wrapper over the shared helper so existing view-model imports
- * continue to work; validates the incoming label via
- * `isGrammarConfidenceLabel` first (defensive against fixture drift) and
- * delegates the actual mapping to `shared/grammar/confidence.js`.
+ * Delegates to the centralised `grammarChildLabelForInternal` in
+ * `shared/grammar/grammar-status.js`. Validates the incoming label via
+ * `isGrammarConfidenceLabel` first (defensive against fixture drift).
  */
 export function grammarChildConfidenceLabel({ label } = {}) {
-  if (!isGrammarConfidenceLabel(label)) return 'Check status';
-  return grammarChildConfidenceLabelShared({ label });
+  if (!isGrammarConfidenceLabel(label)) return grammarChildLabelForInternal(null);
+  return grammarChildLabelForInternal(label);
 }
 
 /**
- * CSS-class-appropriate tone for each child confidence label. Matches the
- * status-chip tone family used by Spelling's Word Bank so the visual hierarchy
- * is consistent across subjects.
+ * CSS-class-appropriate tone for each child confidence label. Delegates to
+ * `grammarChildToneForInternal` in `shared/grammar/grammar-status.js`.
+ * Matches the status-chip tone family used by Spelling's Word Bank so the
+ * visual hierarchy is consistent across subjects.
  */
 export function grammarChildConfidenceTone(label) {
-  if (typeof label !== 'string') return 'learning';
-  return CHILD_CONFIDENCE_TONES[label] || 'learning';
+  return grammarChildToneForInternal(label);
 }
 
 // --- Concept → cluster resolver ---------------------------------------------
