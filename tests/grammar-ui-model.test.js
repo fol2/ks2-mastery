@@ -1160,3 +1160,111 @@ test('P5-U10 view-model: reserved monsters never leak into monsterStrip from das
   assert.equal(ids.includes('loomrill'), false, 'loomrill excluded from dashboard monsterStrip');
   assert.equal(ids.length, 4, 'exactly 4 active monsters in strip');
 });
+
+// =============================================================================
+// P6-U6: Dashboard model passes evidence to monster strip
+// =============================================================================
+
+test('P6-U6 view-model: dashboard model with evidence → monsterStrip Stars match live derivation', () => {
+  // Bracehart has 6 concepts. Provide mastery nodes showing a secured concept
+  // with 2 independent corrects across 2 templates → all 5 evidence tiers
+  // should be true for that concept, yielding floor(100/6 * 1.0) = 16 Stars.
+  const rewardState = {
+    bracehart: { mastered: [], caught: false, starHighWater: 0 },
+  };
+  const conceptNodes = {
+    clauses: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+  };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  // 1 concept fully evidenced out of 6: floor(100/6 * 1.0) = floor(16.667) = 16
+  assert.equal(bracehart.stars, 16, 'Live evidence yields 16 Stars for 1 fully-evidenced concept');
+  assert.equal(bracehart.stageName, 'Hatched', '16 Stars = Hatched stage');
+});
+
+test('P6-U6 view-model: dashboard model without evidence (null, null) → graceful fallback to starHighWater', () => {
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 42 },
+  };
+  // No evidence args — the 4th and 5th parameters default to null.
+  const model = buildGrammarDashboardModel({}, null, rewardState);
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehart.stars, 42, 'Falls back to persisted starHighWater when no evidence supplied');
+  assert.equal(bracehart.stageName, 'Growing', '42 Stars = Growing stage');
+});
+
+test('P6-U6 view-model: live evidence > persisted starHighWater → dashboard shows higher Stars', () => {
+  // starHighWater is 5, but live evidence computes to more than 5.
+  const rewardState = {
+    couronnail: { mastered: [], caught: true, starHighWater: 5 },
+  };
+  // Couronnail has 3 concepts. Give word_classes all 5 tiers:
+  // floor(100/3 * 1.0) = floor(33.333) = 33 Stars.
+  const conceptNodes = {
+    word_classes: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+  };
+  const recentAttempts = [
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const couronnail = model.monsterStrip.find((e) => e.monsterId === 'couronnail');
+  assert.ok(couronnail.stars > 5, `Live evidence (${couronnail.stars}) must exceed persisted starHighWater (5)`);
+  assert.equal(couronnail.stars, 33, '1 fully-evidenced Couronnail concept = 33 Stars');
+});
+
+test('P6-U6 view-model: live evidence < persisted starHighWater → dashboard shows starHighWater (latch holds)', () => {
+  // starHighWater is 50, but live evidence only computes to 1 Star
+  // (one concept with firstIndependentWin only → floor guarantee 1).
+  // The latch must hold — display should be 50.
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 50 },
+  };
+  const conceptNodes = {
+    clauses: { attempts: 1, correct: 1, wrong: 0, strength: 0.5, intervalDays: 1, correctStreak: 1 },
+  };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  assert.equal(bracehart.stars, 50, 'Latch holds — starHighWater 50 preserved despite lower live evidence');
+  assert.equal(bracehart.stageName, 'Growing', '50 Stars = Growing stage');
+});
+
+test('P6-U6 view-model: dashboard Stars match direct buildGrammarMonsterStripModel Stars when same evidence supplied', () => {
+  // Integration test: the dashboard model and the direct strip builder must
+  // produce identical results when given the same inputs.
+  const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 10 },
+    chronalyx: { mastered: [], caught: false, starHighWater: 0 },
+    couronnail: { mastered: [], caught: true, starHighWater: 20 },
+    concordium: { mastered: [], caught: false, starHighWater: 0 },
+  };
+  const conceptNodes = {
+    clauses: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+    word_classes: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+  };
+  const recentAttempts = [
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-c', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-d', firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+  ];
+  const dashboardModel = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const directStrip = buildGrammarMonsterStripModel(rewardState, conceptNodes, recentAttempts);
+
+  assert.equal(dashboardModel.monsterStrip.length, directStrip.length, 'Same number of entries');
+  for (let i = 0; i < directStrip.length; i++) {
+    const dashEntry = dashboardModel.monsterStrip[i];
+    const directEntry = directStrip[i];
+    assert.equal(dashEntry.monsterId, directEntry.monsterId, `Same monster id at index ${i}`);
+    assert.equal(dashEntry.stars, directEntry.stars, `${dashEntry.monsterId}: dashboard Stars match direct strip Stars`);
+    assert.equal(dashEntry.stageName, directEntry.stageName, `${dashEntry.monsterId}: dashboard stageName matches direct strip`);
+    assert.equal(dashEntry.stageIndex, directEntry.stageIndex, `${dashEntry.monsterId}: dashboard stageIndex matches direct strip`);
+  }
+});
