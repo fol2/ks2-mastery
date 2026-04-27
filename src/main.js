@@ -2471,6 +2471,10 @@ const appRuntime = {
   buildSurfaceChromeModel,
   buildSurfaceActions,
   afterRender: afterReactRender,
+  // U12: active message delivery — expose the hub API fetch so the
+  // <ActiveMessagesBar> in App.jsx can poll the Worker-authoritative
+  // endpoint. Null when not signed in (matches the hubApi guard).
+  fetchActiveMessages: hubApi?.fetchActiveMessages?.bind(hubApi) || null,
 };
 
 /* U2: SPA boot — detect `/admin` pathname and dispatch `open-admin-hub` with
