@@ -198,14 +198,21 @@ test('React spelling setup scene renders the post-Mega dashboard with Guardian M
   assert.match(html, /The Word Vault is yours/);
   assert.match(html, /Guardian Mission/);
   assert.match(html, /Boss Dictation/);
+  // Roadmap placeholders (Word Detective / Story Challenge) collapse from
+  // full mode cards into a single quiet "Coming next" footer line so the
+  // post-Mega scene no longer carries two empty striped cards on row 2.
+  // The titles remain in the markup (still part of the journey signal),
+  // just rendered as inline serif italic items instead of cards.
   assert.match(html, /Word Detective/);
   assert.match(html, /Story Challenge/);
-  // Placeholder roadmap labels should show "Next 02/03/04" rather than a
-  // single generic "Coming soon" shield, so the codex reads as planned steps.
-  assert.match(html, /mc-badge-roadmap/);
-  // The begin button explicitly routes through spelling-shortcut-start with
-  // mode=guardian so the module-level gate is the one source of truth.
+  assert.match(html, /post-mega-coming-next/);
+  assert.match(html, />Coming next</);
+  // The Guardian Begin CTA now lives INSIDE the Guardian mode card as an
+  // inline pill, replacing the previous stacked Begin button row beneath
+  // the cards. Still routes through spelling-shortcut-start so the
+  // module-level gate stays the single source of truth.
   assert.match(html, /data-action="spelling-shortcut-start"[^>]*data-mode="guardian"/);
+  assert.match(html, /class="mode-card-post-cta"/);
   assert.match(html, /ACTIVE DUTY/);
   assert.doesNotMatch(html, /Choose today/);
 });
@@ -241,9 +248,11 @@ test('U1: React setup scene shows optional-patrol copy when post-Mega but no wor
   assert.match(html, /No urgent duties\. Optional patrol available/);
   assert.match(html, /OPTIONAL PATROL/);
   assert.match(html, /data-mission-state="optional-patrol"/);
-  // The Begin CTA must be enabled in optional-patrol so the learner can
-  // choose to run a warm-up round.
-  assert.match(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*>Begin Guardian Mission/);
+  // The Begin CTA (now an inline pill inside the Guardian card) must be
+  // enabled in optional-patrol so the learner can choose to run a warm-up
+  // round. Label is "Begin patrol" — the inline-card scope no longer needs
+  // to repeat "Guardian Mission" because the surrounding card carries it.
+  assert.match(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*>(?:[^<]|<(?!\/button))*Begin patrol/);
   assert.doesNotMatch(html, /<button[^>]*data-action="spelling-shortcut-start"[^>]*data-mode="guardian"[^>]*disabled=""/);
 });
 
