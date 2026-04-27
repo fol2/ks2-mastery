@@ -156,8 +156,12 @@ function RoundLengthToggle({ selectedValue, disabled, actions }) {
 function MonsterStarMeter({ monster }) {
   const cap = monster.id === 'quoral' ? 100 : 100;
   const starsLabel = monster.id === 'quoral' ? 'Grand Stars' : 'Stars';
-  const pct = Math.min(100, Math.max(0, Math.round((monster.totalStars / cap) * 100)));
-  const stageText = punctuationStageLabel(monster.starDerivedStage, monster.totalStars);
+  // U3 (Phase 6): use monotonic displayStars / displayStage so a monster
+  // never appears to de-evolve after evidence lapse.
+  const stars = monster.displayStars ?? monster.totalStars;
+  const stage = monster.displayStage ?? monster.starDerivedStage;
+  const pct = Math.min(100, Math.max(0, Math.round((stars / cap) * 100)));
+  const stageText = punctuationStageLabel(stage, stars);
 
   return (
     <div className="punctuation-monster-meter" data-monster-id={monster.id}>
@@ -170,7 +174,7 @@ function MonsterStarMeter({ monster }) {
         />
       </div>
       <div className="punctuation-monster-meter-count">
-        {`${monster.totalStars} / ${cap} ${starsLabel}`}
+        {`${stars} / ${cap} ${starsLabel}`}
       </div>
     </div>
   );
@@ -251,8 +255,13 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   // Progress row values
   const dueCount = Number(stats?.due) || 0;
   const weakCount = Number(stats?.weak) || 0;
+  // U3 review follow-up (HIGH 1): use displayStars (monotonic) for the
+  // aggregate, matching MonsterStarMeter which already reads displayStars.
+  // Prior code used raw totalStars, causing a mismatch between the
+  // progress-row aggregate and the individual meter values after evidence
+  // lapse.
   const totalStarsEarned = dashboard.activeMonsters.reduce(
-    (sum, m) => sum + (m.totalStars || 0), 0,
+    (sum, m) => sum + (m.displayStars ?? m.totalStars ?? 0), 0,
   );
 
   const learnerName = learner && typeof learner === 'object' && !Array.isArray(learner)

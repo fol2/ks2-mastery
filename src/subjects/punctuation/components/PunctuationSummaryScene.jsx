@@ -66,6 +66,7 @@ import {
   composeIsDisabled,
   composeIsNavigationDisabled,
   extractPunctuationMonsterProgress,
+  mergeMonotonicDisplay,
   punctuationChildMisconceptionLabel,
   punctuationChildNextReviewCopy,
   punctuationChildRegisterOverrideString,
@@ -391,10 +392,16 @@ function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
         const starDerivedStage = starEntry
           ? Math.max(0, Math.floor(Number(starEntry.starDerivedStage) || 0))
           : 0;
+        // U3 review follow-up (MEDIUM ADV-395-2/3): use shared monotonic
+        // merge helper so sanitisation is consistent across all scenes.
+        // Finding 3: rewardState is already resolved at the function top
+        // via rewardStateForPunctuation — no redundant re-validation needed.
+        const codexEntry = rewardState?.[monsterId];
+        const { displayStars, displayStage } = mergeMonotonicDisplay(totalStars, starDerivedStage, codexEntry);
         const cap = 100;
         const starsLabel = isGrand ? 'Grand Stars' : 'Stars';
-        const stageText = punctuationStageLabel(starDerivedStage, totalStars);
-        const pct = Math.min(100, Math.max(0, Math.round((totalStars / cap) * 100)));
+        const stageText = punctuationStageLabel(displayStage, displayStars);
+        const pct = Math.min(100, Math.max(0, Math.round((displayStars / cap) * 100)));
         return (
           <div
             className="punctuation-summary-monster punctuation-monster-meter"
@@ -411,9 +418,9 @@ function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
             </div>
             <div
               className="punctuation-monster-meter-count"
-              aria-label={`${name} ${totalStars} of ${cap} ${starsLabel}`}
+              aria-label={`${name} ${displayStars} of ${cap} ${starsLabel}`}
             >
-              {`${totalStars} / ${cap} ${starsLabel}`}
+              {`${displayStars} / ${cap} ${starsLabel}`}
             </div>
           </div>
         );
