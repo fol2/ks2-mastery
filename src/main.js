@@ -10,6 +10,7 @@ import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
 import { SUBJECTS, getSubject } from './platform/core/subject-registry.js';
 import { VALID_ADMIN_SECTIONS } from './platform/core/store.js';
 import { parseAdminSectionFromHash } from './platform/core/admin-hash.js';
+import { stashAdminReturn, popAdminReturn, clearAdminReturn } from './platform/core/admin-return-stash.js';
 import {
   exposedSubjects,
   isSubjectExposed,
@@ -166,7 +167,10 @@ async function submitAuthCredentials({ mode = 'login', email, password, convertD
   if (!response.ok) {
     throw new Error(payload.message || 'Sign-in failed.');
   }
-  globalThis.location.href = '/';
+  /* U2: after successful auth, check for a stashed admin return target.
+     If valid, redirect there instead of the default `/`. */
+  const adminReturn = popAdminReturn();
+  globalThis.location.href = adminReturn || '/';
 }
 
 async function startSocialAuth(provider) {
@@ -183,6 +187,9 @@ async function startSocialAuth(provider) {
 }
 
 async function startDemoSession() {
+  /* U2: demo sessions must NOT restore admin return — clear the stash
+     unconditionally before the redirect. */
+  clearAdminReturn();
   const response = await credentialFetch('/api/demo/session', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -224,6 +231,13 @@ async function createRepositoriesForCurrentRuntime() {
 
 const boot = await createRepositoriesForCurrentRuntime();
 if (!boot.repositories) {
+  /* U2: stash the pre-auth admin URL so we can return the user to the
+     correct admin section after a successful sign-in. Only stashes for
+     `/admin` pathnames — anything else is ignored by the helper. */
+  stashAdminReturn({
+    pathname: globalThis.location?.pathname,
+    hash: globalThis.location?.hash,
+  });
   renderAuthRoot({
     error: boot.session?.error || '',
     code: boot.session?.code || '',
@@ -2467,6 +2481,25 @@ const appRuntime = {
     store.openAdminHub({ adminSection: bootSection });
     if (boot.session.signedIn) loadAdminHub({ force: true });
     loadAdminAccounts();
+    // Consume any leftover stash — the user landed on /admin directly
+    clearAdminReturn();
+  } else {
+    /* U2: social-auth return path — after OAuth callback the browser lands
+       on `/` with a valid session. If a stash exists, restore the admin
+       route without a full-page redirect by dispatching into the store. */
+    const stashedReturn = popAdminReturn();
+    if (stashedReturn) {
+      const stashedHash = stashedReturn.includes('#')
+        ? stashedReturn.slice(stashedReturn.indexOf('#'))
+        : '';
+      const stashedSection = parseAdminSectionFromHash(stashedHash);
+      store.openAdminHub({ adminSection: stashedSection });
+      if (boot.session.signedIn) loadAdminHub({ force: true });
+      loadAdminAccounts();
+      // Update the URL bar to match the restored admin route
+      const newUrl = stashedReturn;
+      globalThis.history?.replaceState?.(null, '', newUrl);
+    }
   }
 }
 
