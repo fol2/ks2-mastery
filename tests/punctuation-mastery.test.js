@@ -16,6 +16,7 @@ import {
   progressForPunctuationMonster,
   recordPunctuationRewardUnitMastery,
   punctuationMonsterSummaryFromState,
+  updatePunctuationStarHighWater,
 } from '../src/platform/game/monster-system.js';
 import { monsterSummaryFromState } from '../src/platform/game/mastery/spelling.js';
 
@@ -1278,4 +1279,369 @@ test('ADV-U8-1: Pealark (direct) starHighWater=28 -> starStage 1 (STAR threshold
   const progress = progressForPunctuationMonster(state, 'pealark', { publishedTotal: 5 });
   assert.equal(progress.starStage, 1,
     'Pealark starHighWater=28 must remain stage 1 via STAR thresholds (28 < 30)');
+});
+
+// ---------------------------------------------------------------------------
+// 12. P7-U4: updatePunctuationStarHighWater — star-evidence latch writer
+// ---------------------------------------------------------------------------
+
+test('P7-U4: updatePunctuationStarHighWater advances starHighWater from 3 to 8', () => {
+  // Learner completes practice items (no unit secured) -> starHighWater advances.
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 3,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      starHighWater: 0,
+      branch: 'b1',
+    },
+  });
+  const events = updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-1',
+    monsterId: 'pealark',
+    computedStars: 8,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  assert.equal(state.pealark.starHighWater, 8, 'starHighWater must advance from 3 to 8');
+  assert.deepEqual(events, [], 'latch writes must NOT emit toast events');
+});
+
+test('P7-U4: computedStars equals starHighWater -> no latch write', () => {
+  // Provide all 4 monster entries with branches to avoid ensureMonsterBranches writes.
+  const repository = makeRepository({
+    pealark: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 5,
+      starHighWater: 15,
+      branch: 'b1',
+    },
+    claspin: { mastered: [], caught: false, branch: 'b1' },
+    curlune: { mastered: [], caught: false, branch: 'b1' },
+    quoral: {
+      mastered: [masteryKey('endmarks', 'sentence-endings-core')],
+      caught: true,
+      publishedTotal: 14,
+      starHighWater: 15,
+      branch: 'b1',
+    },
+  });
+  const events = updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-2',
+    monsterId: 'pealark',
+    computedStars: 15,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.deepEqual(events, [], 'equal stars must not produce events');
+  assert.equal(repository.writes(), 0, 'repository must not be written when stars <= HW');
+});
+
+test('P7-U4: computedStars below starHighWater -> no latch write', () => {
+  // Provide all 4 monster entries with branches to avoid ensureMonsterBranches writes.
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 20,
+      branch: 'b1',
+    },
+    claspin: { mastered: [], caught: false, branch: 'b1' },
+    curlune: { mastered: [], caught: false, branch: 'b1' },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      branch: 'b1',
+    },
+  });
+  const events = updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-3',
+    monsterId: 'pealark',
+    computedStars: 10,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.deepEqual(events, [], 'lower stars must not produce events');
+  assert.equal(repository.writes(), 0, 'repository must not be written when stars < HW');
+});
+
+test('P7-U4: Quoral uses GRAND thresholds for maxStageEver', () => {
+  // GRAND thresholds: [1, 10, 25, 50, 100]
+  // STAR thresholds:  [1, 10, 30, 60, 100]
+  // At 28 stars: GRAND -> stage 2 (28 >= 25), STAR -> stage 1 (28 < 30)
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      starHighWater: 0,
+      branch: 'b1',
+    },
+  });
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-4',
+    monsterId: 'quoral',
+    computedStars: 28,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  assert.equal(state.quoral.starHighWater, 28, 'starHighWater must be 28');
+  assert.equal(state.quoral.maxStageEver, 2,
+    'Quoral maxStageEver must be 2 via GRAND thresholds (28 >= 25), not 1');
+});
+
+test('P7-U4: direct monster uses STAR thresholds for maxStageEver', () => {
+  // At 28 stars: STAR thresholds -> stage 1 (28 < 30)
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 0,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      branch: 'b1',
+    },
+  });
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-5',
+    monsterId: 'pealark',
+    computedStars: 28,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  assert.equal(state.pealark.starHighWater, 28, 'starHighWater must be 28');
+  assert.equal(state.pealark.maxStageEver, 1,
+    'Pealark maxStageEver must be 1 via STAR thresholds (28 < 30)');
+});
+
+test('P7-U4: epsilon guard — 7.9999 floors to 7, no advance beyond existing HW of 7', () => {
+  // Provide all 4 monster entries with branches to avoid ensureMonsterBranches writes.
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 7,
+      branch: 'b1',
+    },
+    claspin: { mastered: [], caught: false, branch: 'b1' },
+    curlune: { mastered: [], caught: false, branch: 'b1' },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      branch: 'b1',
+    },
+  });
+  // 7.9999 + 1e-9 = 7.9999000001 -> Math.floor = 7
+  // 7 is not > 7 -> no write.
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-6',
+    monsterId: 'pealark',
+    computedStars: 7.9999,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(repository.writes(), 0, 'no write when floor(7.9999 + 1e-9) = 7 <= existing 7');
+  assert.equal(repository.state().pealark.starHighWater, 7, 'starHighWater unchanged');
+});
+
+test('P7-U4: epsilon guard — 7.999999999 rounds to 8 and advances', () => {
+  // Provide all 4 monster entries with branches to avoid ensureMonsterBranches writes.
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 7,
+      branch: 'b1',
+    },
+    claspin: { mastered: [], caught: false, branch: 'b1' },
+    curlune: { mastered: [], caught: false, branch: 'b1' },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      branch: 'b1',
+    },
+  });
+  // 7.999999999 + 1e-9 = 8.000000000 -> floor = 8 > 7 -> should write.
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-7',
+    monsterId: 'pealark',
+    computedStars: 7.999999999,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  assert.equal(state.pealark.starHighWater, 8,
+    'starHighWater must advance to 8 (epsilon-guarded from 7.999999999)');
+});
+
+test('P7-U4: idempotent under retry — same computedStars twice produces single latch write', () => {
+  // Provide all 4 monster entries with branches to avoid ensureMonsterBranches writes.
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 5,
+      branch: 'b1',
+    },
+    claspin: { mastered: [], caught: false, branch: 'b1' },
+    curlune: { mastered: [], caught: false, branch: 'b1' },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      branch: 'b1',
+    },
+  });
+  // First call: 5 -> 12
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-8',
+    monsterId: 'pealark',
+    computedStars: 12,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(repository.writes(), 1, 'first call must write exactly once');
+  assert.equal(repository.state().pealark.starHighWater, 12);
+
+  // Second call (retry): same computedStars — should not write.
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-8',
+    monsterId: 'pealark',
+    computedStars: 12,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(repository.writes(), 1, 'retry with same stars must not produce a second write');
+  assert.equal(repository.state().pealark.starHighWater, 12, 'starHighWater unchanged after retry');
+});
+
+test('P7-U4: maxStageEver ratchets — never decreases', () => {
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 0,
+      maxStageEver: 0,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      branch: 'b1',
+    },
+  });
+
+  // Advance to 35 stars -> stage 2 (STAR thresholds: 35 >= 30)
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-9',
+    monsterId: 'pealark',
+    computedStars: 35,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(repository.state().pealark.maxStageEver, 2);
+
+  // Advance to 65 stars -> stage 3 (STAR thresholds: 65 >= 60)
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-9',
+    monsterId: 'pealark',
+    computedStars: 65,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.equal(repository.state().pealark.maxStageEver, 3);
+  assert.equal(repository.state().pealark.starHighWater, 65);
+});
+
+test('P7-U4: invalid monsterId -> returns empty, no crash', () => {
+  const repository = makeRepository();
+  const events = updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-10',
+    monsterId: 'nonexistent-monster',
+    computedStars: 50,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.deepEqual(events, []);
+  assert.equal(repository.writes(), 0);
+});
+
+test('P7-U4: computedStars < 1 -> returns empty, no write', () => {
+  // computedStars: 0.5 -> floor(0.5 + 1e-9) = 0 < 1 -> early return.
+  const repository = makeRepository({
+    pealark: { mastered: [], caught: false, branch: 'b1' },
+    claspin: { mastered: [], caught: false, branch: 'b1' },
+    curlune: { mastered: [], caught: false, branch: 'b1' },
+    quoral: { mastered: [], caught: false, branch: 'b1' },
+  });
+  const events = updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-11',
+    monsterId: 'pealark',
+    computedStars: 0.5,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  assert.deepEqual(events, []);
+  // stars < 1 returns before ensureMonsterBranches, so truly 0 writes.
+  assert.equal(repository.writes(), 0);
+});
+
+test('P7-U4: monster-targeted — updating pealark does not touch quoral', () => {
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 5,
+      branch: 'b1',
+    },
+    quoral: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 14,
+      starHighWater: 3,
+      branch: 'b1',
+    },
+  });
+  updatePunctuationStarHighWater({
+    learnerId: 'learner-u4-12',
+    monsterId: 'pealark',
+    computedStars: 20,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+  const state = repository.state();
+  assert.equal(state.pealark.starHighWater, 20, 'pealark advances');
+  assert.equal(state.quoral.starHighWater, 3, 'quoral unchanged by pealark update');
 });

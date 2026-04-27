@@ -354,6 +354,73 @@ export function recordPunctuationRewardUnitMastery({
   return events;
 }
 
+/**
+ * Lightweight latch-write for sub-secure Star evidence.
+ *
+ * Updates `starHighWater = max(existing, computedStars)` on the specified
+ * monster only, without touching the `mastered[]` array (that stays exclusive
+ * to unit-secured via `recordPunctuationRewardUnitMastery`).
+ *
+ * The caller (event-hooks subscriber) is responsible for passing the correct
+ * `monsterId` from each `star-evidence-updated` event. The command handler
+ * emits one event per monster with monster-specific `computedStars`, so each
+ * call updates exactly one monster — preventing cross-inflation where a
+ * direct monster's higher Stars would overwrite Quoral's lower value.
+ *
+ * Also ratchets `maxStageEver = max(existing, derivedStage)` using the
+ * appropriate threshold table (GRAND for Quoral, STAR for direct monsters).
+ *
+ * Returns an array of reward events (empty — latch writes do NOT emit toast
+ * events; toast timing stays on reward-unit mastery only).
+ */
+export function updatePunctuationStarHighWater({
+  learnerId,
+  monsterId,
+  computedStars,
+  gameStateRepository,
+  random = Math.random,
+} = {}) {
+  const stars = Math.floor((Number(computedStars) || 0) + 1e-9);
+  if (stars < 1) return [];
+  if (!MONSTERS[monsterId]) return [];
+
+  const before = ensureMonsterBranches(learnerId, gameStateRepository, {
+    random,
+    monsterIds: PUNCTUATION_MONSTER_IDS,
+  });
+
+  const entry = isPlainObject(before[monsterId])
+    ? before[monsterId]
+    : { mastered: [], caught: false };
+  const existingHW = safeStarHighWater(entry.starHighWater);
+  if (stars <= existingHW) {
+    // No change needed — existing high-water already covers this update.
+    return [];
+  }
+
+  // Derive stage from the new starHighWater using the correct threshold table.
+  const thresholds = monsterId === PUNCTUATION_GRAND_MONSTER_ID
+    ? PUNCTUATION_GRAND_STAR_THRESHOLDS
+    : PUNCTUATION_STAR_THRESHOLDS;
+  const derivedStage = stageFor(stars, thresholds);
+  const existingMaxStage = Math.max(0, Math.floor(Number(entry.maxStageEver) || 0));
+
+  const after = {
+    ...before,
+    [monsterId]: {
+      ...entry,
+      starHighWater: stars,
+      maxStageEver: Math.max(existingMaxStage, derivedStage),
+    },
+  };
+
+  saveMonsterState(learnerId, after, gameStateRepository);
+
+  // Latch writes do NOT emit toast events — toast timing stays on
+  // reward-unit mastery only. Child-facing celebration timing is unchanged.
+  return [];
+}
+
 export function punctuationMonsterSummaryFromState(state = {}, { clusterTotals = {}, aggregateTotal = 1, releaseId = PUNCTUATION_CURRENT_RELEASE_ID } = {}) {
   return PUNCTUATION_MONSTER_IDS.map((monsterId) => ({
     subjectId: 'punctuation',

@@ -29,6 +29,9 @@ import {
   mergeMonotonicDisplay,
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 import { stageFor, PUNCTUATION_STAR_THRESHOLDS } from '../src/platform/game/monsters.js';
+import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
+import { updatePunctuationStarHighWater } from '../src/platform/game/monster-system.js';
+import { createPunctuationRewardSubscriber } from '../src/subjects/punctuation/event-hooks.js';
 
 const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -474,6 +477,88 @@ test('negative: Worker forbidden-key scan passes on fresh/null data payload', ()
       data: null,
     });
   }, 'buildPunctuationReadModel must not throw on null data payload');
+});
+
+// ---------------------------------------------------------------------------
+// P7-U4: Star-evidence event derivation parity
+// ---------------------------------------------------------------------------
+
+test('P7-U4 parity: PUNCTUATION_EVENT_TYPES includes STAR_EVIDENCE_UPDATED', () => {
+  assert.equal(
+    PUNCTUATION_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+    'punctuation.star-evidence-updated',
+    'STAR_EVIDENCE_UPDATED must be defined in PUNCTUATION_EVENT_TYPES',
+  );
+});
+
+test('P7-U4 parity: updatePunctuationStarHighWater is exported from monster-system', () => {
+  assert.equal(typeof updatePunctuationStarHighWater, 'function',
+    'updatePunctuationStarHighWater must be exported from monster-system.js');
+});
+
+test('P7-U4 parity: event-hooks subscriber handles STAR_EVIDENCE_UPDATED events', () => {
+  // Create a subscriber with a mock repository.
+  let writesCalled = 0;
+  const mockRepo = {
+    read() { return { pealark: { mastered: [], caught: false, starHighWater: 5, branch: 'b1' }, quoral: { mastered: [], caught: false, branch: 'b1' } }; },
+    write(_id, _sys, state) { writesCalled++; return state; },
+  };
+
+  const subscriber = createPunctuationRewardSubscriber({
+    gameStateRepository: mockRepo,
+  });
+
+  // Send a star-evidence-updated event with computedStars > existing HW.
+  const events = subscriber([{
+    type: PUNCTUATION_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+    learnerId: 'test-learner-parity',
+    monsterId: 'pealark',
+    computedStars: 20,
+    createdAt: Date.now(),
+  }]);
+
+  // The subscriber should have called the mastery writer.
+  assert.ok(writesCalled > 0, 'subscriber must invoke updatePunctuationStarHighWater on STAR_EVIDENCE_UPDATED');
+  // latch writes return empty events (no toast).
+  assert.deepEqual(events, [], 'latch write must not emit toast events');
+});
+
+test('P7-U4 parity: event-hooks subscriber ignores STAR_EVIDENCE_UPDATED with invalid data', () => {
+  let writesCalled = 0;
+  const mockRepo = {
+    read() { return {}; },
+    write(_id, _sys, state) { writesCalled++; return state; },
+  };
+
+  const subscriber = createPunctuationRewardSubscriber({
+    gameStateRepository: mockRepo,
+  });
+
+  // Missing monsterId
+  subscriber([{
+    type: PUNCTUATION_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+    learnerId: 'test-learner-parity',
+    computedStars: 20,
+  }]);
+  assert.equal(writesCalled, 0, 'missing monsterId must not write');
+
+  // computedStars < 1
+  subscriber([{
+    type: PUNCTUATION_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+    learnerId: 'test-learner-parity',
+    monsterId: 'pealark',
+    computedStars: 0,
+  }]);
+  assert.equal(writesCalled, 0, 'computedStars < 1 must not write');
+
+  // NaN computedStars
+  subscriber([{
+    type: PUNCTUATION_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+    learnerId: 'test-learner-parity',
+    monsterId: 'pealark',
+    computedStars: NaN,
+  }]);
+  assert.equal(writesCalled, 0, 'NaN computedStars must not write');
 });
 
 // ---------------------------------------------------------------------------

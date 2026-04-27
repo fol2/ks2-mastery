@@ -20,6 +20,7 @@ export {
   progressForPunctuationMonster,
   punctuationMonsterSummaryFromState,
   recordPunctuationRewardUnitMastery,
+  updatePunctuationStarHighWater,
 } from './punctuation.js';
 export {
   GRAMMAR_AGGREGATE_CONCEPTS,

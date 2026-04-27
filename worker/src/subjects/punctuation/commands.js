@@ -1,11 +1,18 @@
 import {
   PUNCTUATION_CONTENT_MANIFEST,
   PUNCTUATION_MANIFEST_VALIDATION,
+  PUNCTUATION_RELEASE_ID,
 } from '../../../../shared/punctuation/content.js';
+import { PUNCTUATION_EVENT_TYPES } from '../../../../shared/punctuation/events.js';
 import { NotFoundError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
 import { projectPunctuationRewards } from '../../projections/rewards.js';
+import { projectPunctuationStars } from '../../../../src/subjects/punctuation/star-projection.js';
+import {
+  ACTIVE_PUNCTUATION_MONSTER_IDS,
+  PUNCTUATION_GRAND_MONSTER_ID,
+} from '../../../../src/subjects/punctuation/punctuation-manifest.js';
 import { requestPunctuationContextPack } from './ai-enrichment.js';
 import { createServerPunctuationEngine } from './engine.js';
 import { buildPunctuationReadModel } from './read-models.js';
@@ -48,6 +55,64 @@ function contentMeta() {
         clusterId: skill.clusterId,
       })),
   };
+}
+
+/**
+ * Derives star-evidence-updated events for monsters affected by a command.
+ *
+ * Computes Stars from the post-command engine data via `projectPunctuationStars`.
+ * For each monster whose computed Stars exceed the current `starHighWater` from
+ * the persisted codex, emits a `punctuation.star-evidence-updated` event that
+ * the reward subscriber will handle to persist the latch.
+ *
+ * The engine remains Star-unaware; this derivation happens at the command
+ * handler layer, preserving the P5 architecture boundary.
+ */
+function deriveStarEvidenceEvents({ engineData, learnerId, gameState }) {
+  const progress = engineData?.progress;
+  if (!progress) return [];
+
+  const starLedger = projectPunctuationStars(progress, PUNCTUATION_RELEASE_ID);
+  if (!starLedger?.perMonster) return [];
+
+  const codexState = gameState || {};
+  const starEvents = [];
+
+  // Check each direct monster.
+  for (const monsterId of ACTIVE_PUNCTUATION_MONSTER_IDS) {
+    // For direct monsters read from perMonster; for grand (quoral) read from grand.
+    let liveStars;
+    if (monsterId === PUNCTUATION_GRAND_MONSTER_ID) {
+      liveStars = starLedger.grand?.grandStars ?? 0;
+    } else {
+      liveStars = starLedger.perMonster[monsterId]?.total ?? 0;
+    }
+
+    // IEEE 754 epsilon guard: floor with epsilon before comparison.
+    const computedStars = Math.floor(liveStars + 1e-9);
+    if (computedStars < 1) continue;
+
+    // Read current starHighWater from monster codex state.
+    const monsterEntry = codexState[monsterId];
+    const existingHW = monsterEntry && typeof monsterEntry === 'object'
+      ? Math.max(0, Math.floor((Number(monsterEntry.starHighWater) || 0) + 1e-9))
+      : 0;
+
+    if (computedStars > existingHW) {
+      starEvents.push({
+        id: `punctuation.star-evidence.${learnerId || 'learner'}.${monsterId}.${Date.now()}`,
+        type: PUNCTUATION_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+        subjectId: 'punctuation',
+        learnerId,
+        monsterId,
+        computedStars,
+        previousStarHighWater: existingHW,
+        createdAt: Date.now(),
+      });
+    }
+  }
+
+  return starEvents;
 }
 
 export function createPunctuationCommandHandlers({ now, random } = {}) {
@@ -117,18 +182,32 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
     const projectionState = projectionInput
       ? projectionInput.projectionState
       : { gameState: null, events: [] };
+    // P7-U4: derive star-evidence-updated events from the post-command
+    // engine data. These are injected into the domain event stream before
+    // the reward projection so the subscriber can persist starHighWater at
+    // evidence time rather than deferring to unit-secured.
+    const starEvidenceEvents = result.changed === false
+      ? []
+      : deriveStarEvidenceEvents({
+          engineData: result.data,
+          learnerId: command.learnerId,
+          gameState: projectionState.gameState?.['monster-codex'] || null,
+        });
+    const allDomainEvents = starEvidenceEvents.length
+      ? [...result.events, ...starEvidenceEvents]
+      : result.events;
     const projectedRewards = result.changed === false
       ? { gameState: projectionState.gameState, changedGameState: null, rewardEvents: [] }
       : projectPunctuationRewards({
           learnerId: command.learnerId,
-          domainEvents: result.events,
+          domainEvents: allDomainEvents,
           gameState: projectionState.gameState,
           random,
         });
     const projectedEvents = result.changed === false
       ? { events: [], domainEvents: [], reactionEvents: [], toastEvents: [] }
       : combineCommandEvents({
-          domainEvents: result.events,
+          domainEvents: allDomainEvents,
           reactionEvents: projectedRewards.rewardEvents,
           existingEvents: projectionState.events,
           seedTokens: projectionInput?.tokens || [],
