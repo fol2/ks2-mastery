@@ -35,7 +35,7 @@ import { createWorkerSubjectRuntime } from './subjects/runtime.js';
 import { ConflictError, ForbiddenError, NotFoundError } from './errors.js';
 import { SUBJECT_EXPOSURE_GATES } from '../../src/platform/core/subject-availability.js';
 import { consumeRateLimit, rateLimitResponse, rateLimitSubject } from './rate-limit.js';
-import { handleHeroReadModel, handleHeroCommand } from './hero/routes.js';
+import { handleHeroReadModel } from './hero/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 
 
@@ -1340,6 +1340,8 @@ export function createWorkerApp({
           requireSameOrigin(request, env);
           requireMutationCapability(session);
           const body = await readJson(request);
+          const heroLearnerId = body?.learnerId || '';
+          await repository.requireLearnerReadAccess(session.accountId, heroLearnerId);
           const { heroLaunch, subjectCommand } = await resolveHeroStartTaskCommand({
             body,
             repository,
@@ -1383,7 +1385,7 @@ export function createWorkerApp({
                 ok: false,
                 error: 'projection_unavailable',
                 retryable: false,
-                requestId: validatedRequestId,
+                requestId: body?.requestId || '',
                 ...(error.extra && typeof error.extra === 'object' ? { cause: error.extra.cause } : {}),
               }, 503);
             }

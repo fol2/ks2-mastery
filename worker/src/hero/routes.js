@@ -7,7 +7,6 @@
 import { json } from '../http.js';
 import { NotFoundError } from '../errors.js';
 import { buildHeroShadowReadModel } from './read-model.js';
-import { resolveHeroStartTaskCommand } from './launch.js';
 
 function envFlagEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
@@ -71,18 +70,3 @@ export async function handleHeroReadModel({
   return json({ ok: true, hero: result });
 }
 
-/**
- * POST /api/hero/command
- *
- * Validates the Hero command body and resolves start-task into a subject
- * command shape. Returns { heroLaunch, subjectCommand } for the app
- * route handler to dispatch through the standard subject mutation path.
- */
-export async function handleHeroCommand({
-  body,
-  repository,
-  env,
-  now,
-}) {
-  return resolveHeroStartTaskCommand({ body, repository, env, now });
-}

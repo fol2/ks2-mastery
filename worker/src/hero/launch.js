@@ -16,9 +16,10 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now }
     });
   }
   if (command !== 'start-task') {
-    throw new BadRequestError(`Unsupported Hero command: ${command}`, {
+    const safeCommand = String(command).slice(0, 64).replace(/[^a-zA-Z0-9_-]/g, '');
+    throw new BadRequestError(`Unsupported Hero command: ${safeCommand}`, {
       code: 'hero_command_unsupported',
-      command,
+      command: safeCommand,
     });
   }
 
@@ -44,6 +45,11 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now }
     : requestId;
   const expectedLearnerRevision = Number(body.expectedLearnerRevision);
 
+  if (!learnerId) {
+    throw new BadRequestError('learnerId is required for Hero start-task.', {
+      code: 'hero_learner_id_required',
+    });
+  }
   if (!questId) {
     throw new BadRequestError('questId is required for Hero start-task.', {
       code: 'hero_quest_id_required',

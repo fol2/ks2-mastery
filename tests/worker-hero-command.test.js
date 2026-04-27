@@ -17,6 +17,15 @@ function createServerWithFlags({ shadow = true, launch = true, punctuation = tru
   });
 }
 
+// Minimal spelling data shape that produces at least one Hero task envelope
+// (due > 0 triggers "due-review" / "smart-practice" from the spelling provider).
+const HERO_SPELLING_DATA = {
+  stats: {
+    core: { total: 20, secure: 14, due: 3, fresh: 2, trouble: 1, attempts: 80, correct: 60, accuracy: 75 },
+    all:  { total: 20, secure: 14, due: 3, fresh: 2, trouble: 1, attempts: 80, correct: 60, accuracy: 75 },
+  },
+};
+
 async function seedLearner(server, accountId, learnerId) {
   const repos = createApiPlatformRepositories({
     baseUrl: 'https://repo.test',
@@ -40,6 +49,13 @@ async function seedLearner(server, accountId, learnerId) {
     selectedId: learnerId,
   });
   await repos.flush();
+
+  // Seed spelling subject state so the Hero scheduler generates tasks.
+  server.DB.db.prepare(`
+    INSERT OR REPLACE INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at)
+    VALUES (?, 'spelling', '{}', ?, ?)
+  `).run(learnerId, JSON.stringify(HERO_SPELLING_DATA), Date.now());
+
   return repos;
 }
 
@@ -82,10 +98,7 @@ test('hero command: happy path — both flags on, valid request returns 200 with
   await seedLearner(server, 'adult-a', 'learner-a');
 
   const launchable = await getFirstLaunchableTask(server);
-  if (!launchable) {
-    server.close();
-    return;
-  }
+  assert.ok(launchable, 'No launchable task found — test infrastructure broken');
 
   const revision = getLearnerRevision(server);
   const response = await postHeroCommand(server, {
@@ -119,10 +132,7 @@ test('hero command: heroLaunch safety flags are all false', async () => {
   await seedLearner(server, 'adult-a', 'learner-a');
 
   const launchable = await getFirstLaunchableTask(server);
-  if (!launchable) {
-    server.close();
-    return;
-  }
+  assert.ok(launchable, 'No launchable task found — test infrastructure broken');
 
   const revision = getLearnerRevision(server);
   const response = await postHeroCommand(server, {
@@ -240,6 +250,28 @@ test('hero command: unsupported command returns 400 hero_command_unsupported', a
 
   assert.equal(response.status, 400);
   assert.equal(payload.code, 'hero_command_unsupported');
+
+  server.close();
+});
+
+test('hero command: missing learnerId is rejected by learner access gate (403)', async () => {
+  const server = createServerWithFlags();
+  await seedLearner(server, 'adult-a', 'learner-a');
+
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    questId: 'q-1',
+    taskId: 't-1',
+    requestId: 'cmd-1',
+    expectedLearnerRevision: 0,
+  });
+  const payload = await response.json();
+
+  // The requireLearnerReadAccess gate fires before the resolver, so an
+  // empty learnerId hits 403 (access denied) rather than the resolver's
+  // 400 hero_learner_id_required. The resolver validation is a
+  // defence-in-depth layer for direct calls outside the route.
+  assert.equal(response.status, 403);
 
   server.close();
 });

@@ -450,3 +450,25 @@ test('determineLaunchStatus: launcher set to false is not-launchable', () => {
   assert.equal(result.launchable, false);
   assert.equal(result.status, 'not-launchable');
 });
+
+// ── FIX 7: hero_task_not_launchable route coverage via determineLaunchStatus ──
+
+test('determineLaunchStatus: unsupported subject/launcher pair returns not-launchable (route coverage)', () => {
+  // This covers the hero_task_not_launchable code path: when the quest has
+  // a task whose subject/launcher pair produces launchStatus !== 'launchable',
+  // resolveHeroStartTaskCommand throws a 409. This unit test verifies the
+  // status determination that feeds that gate.
+  const result = determineLaunchStatus('spelling', 'mini-test', FIXTURE_REGISTRY);
+  assert.equal(result.launchable, false);
+  assert.equal(result.status, 'not-launchable');
+  assert.ok(result.reason.length > 0, 'reason must explain why not launchable');
+});
+
+// ── FIX 8: validateHeroContext rejects context missing taskId ────────
+
+test('validateHeroContext rejects context missing taskId', () => {
+  const ctx = { version: 1, source: 'hero-mode', questId: 'q1', launchRequestId: 'r1' };
+  const result = validateHeroContext(ctx);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('taskId')));
+});
