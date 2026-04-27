@@ -443,8 +443,38 @@ export function buildPunctuationLearnerReadModel({
   const securedRewardUnitCount = trackedRewardUnitEntries.filter(
     (entry) => asTs(entry.securedAt, 0) > 0,
   ).length;
-  // Placeholder for U3 — deep-secure projection not yet wired.
-  const deepSecuredRewardUnitCount = 0;
+  // U7: compute deep-secured reward units from facet evidence.
+  // A reward unit is deep-secured when:
+  //   (a) it has securedAt > 0, AND
+  //   (b) at least one facet for a skill in that unit's cluster is deep-secure
+  //       (memorySnapshot.secure === true AND raw lapses === 0).
+  // This mirrors the deep-secure criteria used by computeMasteryStars in
+  // star-projection.js (lines 368-372).
+  const clusterToSkillIds = new Map();
+  for (const skill of PUNCTUATION_CLIENT_SKILLS) {
+    if (!clusterToSkillIds.has(skill.clusterId)) clusterToSkillIds.set(skill.clusterId, new Set());
+    clusterToSkillIds.get(skill.clusterId).add(skill.id);
+  }
+  const facetEntries = isPlainObject(progress.facets) ? progress.facets : {};
+  let deepSecuredRewardUnitCount = 0;
+  for (const entry of trackedRewardUnitEntries) {
+    if (asTs(entry.securedAt, 0) <= 0) continue;
+    const entryClusterId = typeof entry.clusterId === 'string' ? entry.clusterId : '';
+    const skillIds = clusterToSkillIds.get(entryClusterId);
+    if (!skillIds) continue;
+    let hasDeepSecureFacet = false;
+    for (const [facetId, facetState] of Object.entries(facetEntries)) {
+      const [skillId] = facetId.split('::');
+      if (!skillIds.has(skillId)) continue;
+      const snap = memorySnapshot(facetState, nowTs);
+      const rawLapses = Math.max(0, Number((isPlainObject(facetState) ? facetState : {}).lapses) || 0);
+      if (snap.secure && rawLapses === 0) {
+        hasDeepSecureFacet = true;
+        break;
+      }
+    }
+    if (hasDeepSecureFacet) deepSecuredRewardUnitCount += 1;
+  }
   // U4: project Star counts from learning evidence. The ledger provides
   // per-monster breakdowns (tryStars, practiceStars, secureStars,
   // masteryStars, total) and a grand Star total. `starDerivedStage` is
