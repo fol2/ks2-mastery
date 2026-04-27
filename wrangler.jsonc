@@ -42,7 +42,8 @@
     "ENVIRONMENT": "production",
     "PUNCTUATION_SUBJECT_ENABLED": "true",
     "SOCIAL_LOGIN_WIRE_ENABLED": "true",
-    "HERO_MODE_SHADOW_ENABLED": "false"
+    "HERO_MODE_SHADOW_ENABLED": "false",
+    "HERO_MODE_LAUNCH_ENABLED": "false"
   },
   "d1_databases": [
     {
