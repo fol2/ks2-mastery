@@ -245,3 +245,62 @@ test('spaced clean attempts emit a secure-unit event once', () => {
   }));
   assert.equal(service.getStats('learner-a').securedRewardUnits, 1);
 });
+
+test('getStats securedRewardUnits counts only entries with securedAt > 0 (defensive edge case)', () => {
+  // Seed reward-unit entries where tracked != secured: 5 tracked, only 2
+  // genuinely secured (positive securedAt). securedAt: 0, null, and missing
+  // cannot occur after Writer normalisation but the filter is defensive.
+  const repository = makeRepository();
+  const now = Date.UTC(2026, 3, 25);
+  repository.writeData('learner-a', {
+    prefs: { mode: 'smart', roundLength: '4' },
+    progress: {
+      items: {},
+      facets: {},
+      rewardUnits: {
+        [createPunctuationMasteryKey({ clusterId: 'endmarks', rewardUnitId: 'sentence-endings-core' })]: {
+          masteryKey: createPunctuationMasteryKey({ clusterId: 'endmarks', rewardUnitId: 'sentence-endings-core' }),
+          releaseId: PUNCTUATION_RELEASE_ID,
+          clusterId: 'endmarks',
+          rewardUnitId: 'sentence-endings-core',
+          securedAt: now - 10_000,
+        },
+        [createPunctuationMasteryKey({ clusterId: 'apostrophe', rewardUnitId: 'apostrophe-contractions-core' })]: {
+          masteryKey: createPunctuationMasteryKey({ clusterId: 'apostrophe', rewardUnitId: 'apostrophe-contractions-core' }),
+          releaseId: PUNCTUATION_RELEASE_ID,
+          clusterId: 'apostrophe',
+          rewardUnitId: 'apostrophe-contractions-core',
+          securedAt: now - 5_000,
+        },
+        [createPunctuationMasteryKey({ clusterId: 'apostrophe', rewardUnitId: 'apostrophe-possession-core' })]: {
+          masteryKey: createPunctuationMasteryKey({ clusterId: 'apostrophe', rewardUnitId: 'apostrophe-possession-core' }),
+          releaseId: PUNCTUATION_RELEASE_ID,
+          clusterId: 'apostrophe',
+          rewardUnitId: 'apostrophe-possession-core',
+          securedAt: 0,
+        },
+        [createPunctuationMasteryKey({ clusterId: 'speech', rewardUnitId: 'speech-core' })]: {
+          masteryKey: createPunctuationMasteryKey({ clusterId: 'speech', rewardUnitId: 'speech-core' }),
+          releaseId: PUNCTUATION_RELEASE_ID,
+          clusterId: 'speech',
+          rewardUnitId: 'speech-core',
+          securedAt: null,
+        },
+        [createPunctuationMasteryKey({ clusterId: 'comma_flow', rewardUnitId: 'list-commas-core' })]: {
+          masteryKey: createPunctuationMasteryKey({ clusterId: 'comma_flow', rewardUnitId: 'list-commas-core' }),
+          releaseId: PUNCTUATION_RELEASE_ID,
+          clusterId: 'comma_flow',
+          rewardUnitId: 'list-commas-core',
+        },
+      },
+      attempts: [],
+      sessionsCompleted: 0,
+    },
+  });
+  const service = createPunctuationService({ repository, now: () => now, random: () => 0 });
+  const stats = service.getStats('learner-a');
+
+  assert.equal(stats.trackedRewardUnits, 5, 'all 5 tracked entries present');
+  assert.equal(stats.securedRewardUnits, 2, 'only 2 entries with securedAt > 0 count as secured');
+  assert.equal(stats.publishedRewardUnits, 14, 'published denominator unchanged');
+});
