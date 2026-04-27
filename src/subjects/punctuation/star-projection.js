@@ -308,6 +308,10 @@ function computePracticeStars(monsterAttempts) {
   }
 
   // Near-retry corrections count at 0.5 each.
+  // Only count a fail->correct transition when the correcting attempt's
+  // itemId falls within the daily-cap set (perDayCorrectItems) for its day.
+  // This ensures near-retries cannot inflate Practice Stars beyond the
+  // daily cap even though PRACTICE_CAP currently absorbs the excess.
   let nearRetryCorrections = 0;
   const itemAttemptOrder = new Map();
   for (const attempt of monsterAttempts) {
@@ -316,10 +320,13 @@ function computePracticeStars(monsterAttempts) {
     if (!itemAttemptOrder.has(itemId)) itemAttemptOrder.set(itemId, []);
     itemAttemptOrder.get(itemId).push(attempt);
   }
-  for (const [, attempts] of itemAttemptOrder) {
+  for (const [itemId, attempts] of itemAttemptOrder) {
     for (let i = 1; i < attempts.length && i < MAX_ATTEMPTS_PER_ITEM; i++) {
       if (!attempts[i - 1].correct && attempts[i].correct && (attempts[i].supportLevel || 0) === 0) {
-        nearRetryCorrections += 1;
+        const day = dayIndex(attempts[i].ts);
+        if (perDayCorrectItems.get(day)?.has(itemId)) {
+          nearRetryCorrections += 1;
+        }
       }
     }
   }

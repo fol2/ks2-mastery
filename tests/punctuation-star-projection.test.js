@@ -1420,10 +1420,8 @@ test('U4 daily throttle: 25 distinct correct items in 1 day — at daily ceiling
   // 25 independent correct + 25 variety * 0.5 = 37.5 → floor 37 → cap 30.
   // Daily ceiling at 25 items is exactly the cap input, all count.
   const ceilingStars = pealark.practiceStars;
-  assert.ok(ceilingStars > 0,
-    `Practice Stars must be positive at daily ceiling, got ${ceilingStars}`);
-  assert.ok(ceilingStars <= 30,
-    `Practice Stars must not exceed cap (30) at daily ceiling, got ${ceilingStars}`);
+  assert.equal(ceilingStars, 30,
+    `Practice Stars from 25 items in one day must hit PRACTICE_CAP exactly, got ${ceilingStars}`);
 });
 
 test('U4 daily throttle: 30 distinct correct items in 1 day — capped at daily ceiling', () => {
@@ -1549,7 +1547,7 @@ test('U4 daily throttle: zero timestamp on all attempts — all cluster to day 0
     `30 items at ts=0 must equal 25 items at ts=0 (daily cap), got ${pealark.practiceStars} vs ${result25.perMonster.pealark.practiceStars}`);
 });
 
-test('U4 verification: a child cannot reach 30 Practice Stars from a single calendar day', () => {
+test('U4 verification: adding items beyond daily cap produces zero additional Practice Stars', () => {
   // Saturate: 50 distinct correct items, all on the same day.
   const progress = freshProgress();
   for (let i = 0; i < 50; i++) {
@@ -1587,4 +1585,54 @@ test('U4 verification: a child cannot reach 30 Practice Stars from a single cale
 
   assert.equal(result100.perMonster.pealark.practiceStars, pealark.practiceStars,
     `100 items in 1 day must produce the same Practice Stars as 50 items (daily cap enforced), got ${result100.perMonster.pealark.practiceStars} vs ${pealark.practiceStars}`)
+});
+
+test('U4 near-retry + daily-cap interaction: 30 fail-then-correct items equal 25 items under PRACTICE_CAP', () => {
+  // Baseline: 25 distinct items, each independently correct on the same day.
+  const progress25 = freshProgress();
+  for (let i = 0; i < 25; i++) {
+    progress25.attempts.push(makeAttempt({
+      ts: Date.UTC(2026, 3, 25, 10, 0, i),
+      itemId: `cap_baseline_${i}`,
+      skillIds: ['sentence_endings'],
+      rewardUnitId: 'sentence-endings-core',
+      correct: true,
+      supportLevel: 0,
+    }));
+  }
+
+  const baselineStars = projectPunctuationStars(progress25, CURRENT_RELEASE_ID)
+    .perMonster.pealark.practiceStars;
+
+  // 30 distinct items, each with a fail-then-correct sequence on the same day.
+  const progress30 = freshProgress();
+  for (let i = 0; i < 30; i++) {
+    const itemId = `cap_retry_${i}`;
+    // First attempt: independent, incorrect.
+    progress30.attempts.push(makeAttempt({
+      ts: Date.UTC(2026, 3, 25, 10, i, 0),
+      itemId,
+      skillIds: ['sentence_endings'],
+      rewardUnitId: 'sentence-endings-core',
+      correct: false,
+      supportLevel: 0,
+    }));
+    // Second attempt: independent, correct.
+    progress30.attempts.push(makeAttempt({
+      ts: Date.UTC(2026, 3, 25, 10, i, 30),
+      itemId,
+      skillIds: ['sentence_endings'],
+      rewardUnitId: 'sentence-endings-core',
+      correct: true,
+      supportLevel: 0,
+    }));
+  }
+
+  const retryStars = projectPunctuationStars(progress30, CURRENT_RELEASE_ID)
+    .perMonster.pealark.practiceStars;
+
+  // Both scenarios hit PRACTICE_CAP — the excess near-retries are absorbed
+  // by the daily cap, producing the same result.
+  assert.equal(retryStars, baselineStars,
+    `30 fail-then-correct items must produce the same Practice Stars as 25 items (both at cap), got retry=${retryStars} vs baseline=${baselineStars}`);
 });
