@@ -46,7 +46,7 @@ const GRAMMAR_COMMANDS = Object.freeze([
  * The engine remains Star-unaware; this derivation happens at the command
  * handler layer, preserving the P5 architecture boundary.
  */
-function deriveStarEvidenceEvents({ domainEvents, engineState, learnerId, gameState }) {
+function deriveStarEvidenceEvents({ domainEvents, engineState, learnerId, gameState, requestId }) {
   // Collect concept IDs from answer-submitted events.
   const answerEvents = domainEvents.filter(
     (e) => e && e.type === 'grammar.answer-submitted',
@@ -119,7 +119,7 @@ function deriveStarEvidenceEvents({ domainEvents, engineState, learnerId, gameSt
       // The subscriber looks up the direct monster from the conceptId.
       const representativeConcept = [..._affectedConcepts][0];
       starEvents.push({
-        id: `grammar.star-evidence.${learnerId || 'learner'}.${monsterId}.${Date.now()}`,
+        id: `grammar.star-evidence.${learnerId || 'learner'}.${monsterId}.${requestId || 'no-req'}.${starResult.stars}`,
         type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
         subjectId: 'grammar',
         learnerId,
@@ -189,6 +189,7 @@ export function createGrammarCommandHandlers({ now, random } = {}) {
           engineState: result.state,
           learnerId: command.learnerId,
           gameState: projectionState.gameState?.['monster-codex'] || null,
+          requestId: command.requestId,
         });
     const allDomainEvents = starEvidenceEvents.length
       ? [...result.events, ...starEvidenceEvents]
