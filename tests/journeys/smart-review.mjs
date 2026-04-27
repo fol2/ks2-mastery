@@ -5,7 +5,7 @@
 // This is the journey the Phase 3 SSR harness missed. The unit test in
 // `tests/react-punctuation-scene.test.js` asserted on the rendered HTML
 // after dispatching `punctuation-start` directly — it never exercised the
-// primary-mode card's onClick, which was wiring `punctuation-set-mode`
+// mission-dashboard CTA's onClick, which was wiring `punctuation-set-mode`
 // (preference save) instead of `punctuation-start` (session open). The
 // bug shipped green. This spec clicks the real button.
 //
@@ -13,7 +13,7 @@
 //   1. clearStorage() — wipe prior journey's cookies + localStorage.
 //   2. Open /demo — seeds a demo learner and redirects to /.
 //   3. Click Home's Punctuation card ([data-subject-id="punctuation"]).
-//   4. Click the Smart Review primary-mode card
+//   4. Click the Smart Review mission-dashboard CTA
 //      ([data-action="punctuation-start"][data-mode-id="smart"]).
 //   5. Assert the Session scene is mounted: the `[data-punctuation-submit]`
 //      button appears within 10s (this is the first child-visible proof
@@ -37,7 +37,7 @@ export default async function run({ driver, artifacts, log, assert }) {
   await driver.waitForSelector('[data-punctuation-phase="setup"]', 10_000);
   await driver.screenshot(artifacts.path('02-setup'));
 
-  log('click Start Smart Review primary-mode card');
+  log('click Start Smart Review CTA');
   await driver.click('[data-action="punctuation-start"][data-mode-id="smart"]');
 
   log('wait for Session scene submit button to mount');

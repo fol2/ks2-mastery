@@ -104,7 +104,7 @@ test('punctuation React surface keeps server-only fields out of active HTML', ()
 
 test('punctuation React surface renders Guided teach box during an active session', () => {
   // Phase 3 U2: the setup-surface Guided dropdown + Weak / GPS buttons
-  // are removed (the new dashboard uses three primary mode cards +
+  // are removed (the mission dashboard uses a single primary CTA +
   // Open Map). This test keeps the active-item Guided teach-box
   // regression coverage — the current session's guided teach-box
   // payload still renders rule + worked example + common mistake.
@@ -2322,9 +2322,10 @@ test('Punctuation summary scene: active monster strip renders 4 monsters, no res
   // flat path that `PunctuationMapScene` uses and that
   // `PunctuationPracticeSurface` threads in via the resolved prop. The
   // pre-fix path `ui.rewards.monsters.punctuation` was fixture-only;
-  // production always rendered "Stage 0 of 4" because no code wrote that
-  // shape. Seed at the real path so a reserved-monster leak is still
-  // caught AND the roster iteration is driven off the path production uses.
+  // production rendered star meters (not the old "Stage 0 of 4") because
+  // no code wrote that shape. Seed at the real path so a reserved-monster
+  // leak is still caught AND the roster iteration is driven off the path
+  // production uses.
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
     phase: 'summary',
@@ -2827,11 +2828,11 @@ test('punctuation Setup scene does not render the 6 cluster focus buttons (plan 
   assert.doesNotMatch(html, /data-punctuation-gps-start/);
 });
 
-// Phase 5 U7: mission dashboard — the three primary mode cards are replaced
-// by a single primary CTA + secondary drawer. The CTA label adapts to the
-// learner's state (fresh / returning with wobbly / post-session continue).
-// Mode-dispatch tests below verify that `punctuation-set-mode` still updates
-// stored prefs, which feeds the CTA resolution logic.
+// Phase 5 U7: mission dashboard — a single primary CTA with a secondary
+// drawer. The CTA label adapts to the learner's state (fresh / returning
+// with wobbly / post-session continue). Mode-dispatch tests below verify
+// that `punctuation-set-mode` still updates stored prefs, which feeds the
+// CTA resolution logic.
 
 test('punctuation Setup scene: fresh learner single CTA reads "Find your first punctuation egg" with all monsters at 0/100 Stars', () => {
   const harness = createPunctuationHarness();
@@ -3684,26 +3685,26 @@ for (const entry of PUNCTUATION_CLUSTER_MODE_MATRIX) {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 4 U1 — primary-mode card click-through (R1, R14).
+// Phase 4 U1 — mission-dashboard CTA click-through (R1, R14).
 //
 // The Phase 3 SSR harness could only grep the rendered HTML — it could not
-// fire an onClick handler, so a regression that swapped the primary card's
-// dispatch target from `punctuation-start` to `punctuation-set-mode` slipped
-// through.  The fix: tapping a primary card must start a session immediately
-// with `{ mode: <cardId>, roundLength: <prefs.roundLength> }`.
+// fire an onClick handler, so a regression that swapped the mission-dashboard
+// CTA's dispatch target from `punctuation-start` to `punctuation-set-mode`
+// slipped through.  The fix: tapping a mission-dashboard CTA must start a
+// session immediately with `{ mode: <ctaId>, roundLength: <prefs.roundLength> }`.
 //
 // These tests exercise the REAL onClick closure (via
-// `renderPrimaryModeCardElement`, which returns the React element straight
+// `renderMissionDashboardCTAElement`, which returns the React element straight
 // from the component function).  Invoking `element.props.onClick()` is the
 // same code path the browser would run — no SSR blind spot.
 //
 // Coverage matrix:
-//   - Each of the three primary card ids (smart / weak / gps) must dispatch
-//     `punctuation-start` with `{ mode: <id>, roundLength: '4' }`.
+//   - Each of the three mission-dashboard CTA ids (smart / weak / gps) must
+//     dispatch `punctuation-start` with `{ mode: <id>, roundLength: '4' }`.
 //   - Non-default round lengths ('8', '12') flow through to the payload.
 //   - `disabled=true` short-circuits the dispatch entirely.
-//   - The button MUST NOT carry `aria-pressed` — primary cards are action
-//     buttons, not radio buttons.
+//   - The button MUST NOT carry `aria-pressed` — mission-dashboard CTAs are
+//     action buttons, not radio buttons.
 //   - `data-action` must be `"punctuation-start"` (not `"punctuation-set-mode"`).
 // ---------------------------------------------------------------------------
 

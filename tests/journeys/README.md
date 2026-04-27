@@ -3,9 +3,9 @@
 Six end-to-end journey scripts that exercise the **real child critical-path
 click flow** against a live dev server. These are the regression-catching
 surface the Phase 3 SSR harness missed: every assertion in
-`tests/react-punctuation-scene.test.js` passed while the primary-mode
-`onClick` dispatched the wrong action. Journey specs here click with a real
-browser — the wire cannot lie.
+`tests/react-punctuation-scene.test.js` passed while the mission-dashboard
+CTA `onClick` dispatched the wrong action. Journey specs here click with a
+real browser — the wire cannot lie.
 
 ## Driver priority
 
@@ -19,9 +19,9 @@ under `tests/playwright/` are orthogonal and keep working.
 
 | Script                              | Journey                                                  |
 | ----------------------------------- | -------------------------------------------------------- |
-| `smart-review.mjs`                  | Home -> Punctuation -> Smart Review -> Q1 renders        |
-| `wobbly-spots.mjs`                  | Home -> Punctuation -> Wobbly Spots -> Q1 OR left-setup  |
-| `gps-check.mjs`                     | Home -> Punctuation -> GPS Check -> Q1 with test banner  |
+| `smart-review.mjs`                  | Home -> Punctuation -> Smart Review CTA -> Q1 renders    |
+| `wobbly-spots.mjs`                  | Home -> Punctuation -> Wobbly Spots CTA -> Q1 OR left-setup |
+| `gps-check.mjs`                     | Home -> Punctuation -> GPS Check CTA -> Q1 with test banner |
 | `map-guided-skill.mjs`              | Map -> skill card -> Practise this -> Guided Q1          |
 | `summary-back-while-pending.mjs`    | SKIPPED: needs dev-only stall endpoint (see below)       |
 | `reward-parity-visual.mjs`          | Map + Setup + Summary reward-state parity                |
