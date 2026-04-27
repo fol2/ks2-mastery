@@ -201,6 +201,8 @@ SH2-U10 failed this check for 3 files — Worker allowlist, audit walker, and im
 - [Sys-Hardening Phase 1 completion report](../../plans/james/sys-hardening/sys-hardening-p1-completion-report.md) — P1 sprint that established the base pattern (19 blockers, 13 units, 14 PRs).
 - [Sys-Hardening Phase 2 completion report](../../plans/james/sys-hardening/sys-hardening-p2-completion-report.md) — P2 sprint that scaled the pattern (25 blockers, 13 units, 81 concurrent commits).
 - [Phase 2 formal plan](../../plans/2026-04-26-001-feat-sys-hardening-p2-plan.md) — Deep-tier plan with 23 key technical decisions + 26 risks.
+- [P3 convergent sprint patterns](../best-practices/p3-stability-capacity-multi-learner-patterns-2026-04-27.md) — companion learning from the P3 sprint covering characterisation-first testing, measure-first budgets, client-vs-server boundary checks, vacuous-truth guards. Complements this doc's orchestration mechanics with technical discipline patterns.
+- [P3 completion report](../../plans/james/sys-hardening/sys-hardening-p3-completion-report.md) — P3 sprint (7 units, 49 test scenarios, 12 reviewer findings).
 
 ## What this learning DOES NOT cover
 
@@ -211,4 +213,6 @@ SH2-U10 failed this check for 3 files — Worker allowlist, audit walker, and im
 
 ---
 
-*Empirical data: P1 (19 blockers / 13 units / 1 day) + P2 (25 blockers / 13 units / 81 concurrent commits / 1 day) = 44 reviewer-caught blockers across 26 units, 0 merge-clobber incidents, 0 silent-green defects shipped.*
+*Empirical data: P1 (19 blockers / 13 units / 1 day) + P2 (25 blockers / 13 units / 81 concurrent commits / 1 day) + P3 (12 findings / 7 units / 1 day, 4 HIGH including 3 vacuous-truth silent-greens) = 56 reviewer-caught findings across 33 units, 0 merge-clobber incidents. P3 found that P2-era test patterns contained 3 vacuous-truth `[].every()` silent-greens — see the [P3 companion learning](../best-practices/p3-stability-capacity-multi-learner-patterns-2026-04-27.md) for the guard pattern.*
+
+*Note: the `audit.yml` `continue-on-error` example in §6 was resolved by regression sweep PR #338 (2026-04-26), which promoted `audit:client` to a hard PR gate. The pattern (ship first-CI with temporary `continue-on-error` for pre-existing failures) remains valid as general guidance for future first-CI scenarios.*
