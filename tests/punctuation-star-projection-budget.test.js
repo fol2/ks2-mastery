@@ -109,8 +109,8 @@ function buildDenseProgress(count, now) {
     if (correct) {
       item.correct += 1;
       item.streak += 1;
-      if (item.firstCorrectAt === null) item.firstCorrectAt = ts;
-      item.lastCorrectAt = ts;
+      if (item.firstCorrectAt === null || ts < item.firstCorrectAt) item.firstCorrectAt = ts;
+      if (item.lastCorrectAt === null || ts > item.lastCorrectAt) item.lastCorrectAt = ts;
     } else {
       item.incorrect += 1;
       if (item.streak > 0) { item.lapses += 1; item.streak = 0; }
@@ -130,8 +130,8 @@ function buildDenseProgress(count, now) {
     if (correct) {
       facet.correct += 1;
       facet.streak += 1;
-      if (facet.firstCorrectAt === null) facet.firstCorrectAt = ts;
-      facet.lastCorrectAt = ts;
+      if (facet.firstCorrectAt === null || ts < facet.firstCorrectAt) facet.firstCorrectAt = ts;
+      if (facet.lastCorrectAt === null || ts > facet.lastCorrectAt) facet.lastCorrectAt = ts;
     } else {
       facet.incorrect += 1;
       if (facet.streak > 0) { facet.lapses += 1; facet.streak = 0; }
