@@ -457,9 +457,19 @@ export async function createMarketingMessage(db, { actorAccountId, body, nowTs }
   return { message: adminMessageFields(row) };
 }
 
-export async function updateMarketingMessage(db, { actorAccountId, messageId, body, nowTs }) {
+export async function updateMarketingMessage(db, { actorAccountId, messageId, body, expectedRowVersion, nowTs }) {
   const actor = await loadActor(db, actorAccountId);
   requireAdminRole(actor);
+
+  // ADV-U11-002: CAS guard — require expectedRowVersion to prevent silent
+  // overwrites from concurrent editors.
+  const normalisedRowVersion = normaliseExpectedRowVersion(expectedRowVersion);
+  if (normalisedRowVersion === null) {
+    throw new BadRequestError('expectedRowVersion is required for message updates.', {
+      code: 'validation_failed',
+      field: 'expectedRowVersion',
+    });
+  }
 
   const row = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
   if (!row) {
@@ -471,6 +481,17 @@ export async function updateMarketingMessage(db, { actorAccountId, messageId, bo
     throw new BadRequestError('Only draft messages can be edited. Transition to draft first.', {
       code: 'validation_failed',
       status: row.status,
+    });
+  }
+
+  // Pre-check CAS — fast rejection before composing the UPDATE.
+  const currentRowVersion = Number(row.row_version) || 0;
+  if (currentRowVersion !== normalisedRowVersion) {
+    throw new ConflictError('Marketing message was updated by another session. Reload and retry.', {
+      code: MARKETING_MESSAGE_STALE,
+      messageId,
+      expectedRowVersion: normalisedRowVersion,
+      currentRowVersion,
     });
   }
 
@@ -501,12 +522,27 @@ export async function updateMarketingMessage(db, { actorAccountId, messageId, bo
   setClauses.push('row_version = row_version + 1');
 
   params.push(messageId);
+  params.push(normalisedRowVersion);
 
-  await run(db, `
+  const result = await run(db, `
     UPDATE admin_marketing_messages
     SET ${setClauses.join(', ')}
-    WHERE id = ?
+    WHERE id = ? AND row_version = ?
   `, params);
+
+  // Post-run CAS check — if a concurrent write bumped row_version between
+  // the SELECT and the UPDATE, zero rows are affected.
+  const updateChanges = Math.max(0, Number(result?.meta?.changes) || 0);
+  if (updateChanges !== 1) {
+    const postRow = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
+    const postRowVersion = Math.max(0, Number(postRow?.row_version) || 0);
+    throw new ConflictError('Marketing message was updated by another session. Reload and retry.', {
+      code: MARKETING_MESSAGE_STALE,
+      messageId,
+      expectedRowVersion: normalisedRowVersion,
+      currentRowVersion: postRowVersion,
+    });
+  }
 
   const updated = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
   return { message: adminMessageFields(updated) };
@@ -654,7 +690,25 @@ export async function transitionMarketingMessage(db, {
     appliedAt: ts,
   });
 
-  await batch(db, [updateStmt, receiptStmt]);
+  const batchResult = await batch(db, [updateStmt, receiptStmt]);
+
+  // ADV-U11-001: post-batch CAS guard. If a concurrent request bumped
+  // row_version between the pre-check SELECT and the batch, the UPDATE
+  // WHERE id = ? AND row_version = ? matches zero rows. The receipt INSERT
+  // already committed but is harmless — the authoritative signal is the
+  // UPDATE's meta.changes. Mirrors the account_ops_metadata pattern at
+  // repository.js:3736-3750.
+  const updateChanges = Math.max(0, Number(batchResult?.[0]?.meta?.changes) || 0);
+  if (updateChanges !== 1) {
+    const postBatchRow = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
+    const postBatchRowVersion = Math.max(0, Number(postBatchRow?.row_version) || 0);
+    throw new ConflictError('Marketing message was updated by another session between pre-check and batch. Reload and retry.', {
+      code: MARKETING_MESSAGE_STALE,
+      messageId,
+      expectedRowVersion: normalisedRowVersion,
+      currentRowVersion: postBatchRowVersion,
+    });
+  }
 
   const updated = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
   return {
@@ -702,6 +756,14 @@ export async function getMarketingMessage(db, { actorAccountId, messageId }) {
     throw new NotFoundError('Marketing message not found.', { code: 'not_found', messageId });
   }
 
+  // ADV-U11-008: ops users can only see published or scheduled messages via
+  // the detail endpoint, matching the list-level restriction. Drafts,
+  // paused, and archived messages are admin-only.
+  const role = (actor.platform_role || '').toLowerCase();
+  if (role === 'ops' && row.status !== 'published' && row.status !== 'scheduled') {
+    throw new NotFoundError('Marketing message not found.', { code: 'not_found', messageId });
+  }
+
   return { message: adminMessageFields(row) };
 }
 
@@ -711,9 +773,13 @@ export async function getMarketingMessage(db, { actorAccountId, messageId }) {
 export async function listActiveMessages(db, { nowTs }) {
   const ts = Number.isFinite(Number(nowTs)) ? Number(nowTs) : Date.now();
 
+  // ADV-U11-003: filter by audience = 'all_signed_in' so internal and demo
+  // audience messages are only visible in the admin list view, never in
+  // the public client delivery endpoint.
   const rows = await all(db, `
     SELECT * FROM admin_marketing_messages
     WHERE status = 'published'
+      AND audience = 'all_signed_in'
       AND (starts_at IS NULL OR starts_at <= ?)
       AND (ends_at IS NULL OR ends_at >= ?)
     ORDER BY created_at DESC

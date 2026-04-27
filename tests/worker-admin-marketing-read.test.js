@@ -177,13 +177,13 @@ test('U11 Marketing Read Routes', async (t) => {
       publishedBy: 'adult-admin',
       publishedAt: now - 20000,
     });
-    // Published, no time window (should appear)
+    // Published, no time window, audience=all_signed_in (should appear)
     seedMessage(server, {
       id: 'msg-notimed',
       status: 'published',
       title: 'No window',
       bodyText: 'No window.',
-      audience: 'internal',
+      audience: 'all_signed_in',
       publishedBy: 'adult-admin',
       publishedAt: now - 5000,
     });
@@ -227,12 +227,131 @@ test('U11 Marketing Read Routes', async (t) => {
     }
   });
 
-  await t.test('active-messages does not include the "Published" message from earlier (no time window, seeded before now)', async () => {
-    // msg-pub was seeded with no starts_at/ends_at and status 'published' but
-    // with default timestamps. It should appear since no time window means always visible.
+  await t.test('ADV-U11-003: internal-audience published message excluded from public endpoint', async () => {
+    // msg-pub was seeded earlier with status='published' but audience='internal'
+    // (the default). After ADV-U11-003, audience='internal' messages are
+    // excluded from the public active-messages endpoint.
     const res = await getActiveMessages(server, 'adult-parent');
     const data = await res.json();
     const titles = data.messages.map((m) => m.title);
-    assert.ok(titles.includes('Published'), 'Published message with no window should appear');
+    assert.ok(!titles.includes('Published'), 'Published message with audience=internal should NOT appear on public endpoint');
+  });
+
+  await t.test('ADV-U11-003: active-messages filters by audience=all_signed_in', async () => {
+    const now = Date.now();
+    // Published, audience=all_signed_in, within window → should appear
+    seedMessage(server, {
+      id: 'msg-audience-public',
+      status: 'published',
+      title: 'Public announcement',
+      bodyText: 'For everyone.',
+      audience: 'all_signed_in',
+      startsAt: now - 1000,
+      endsAt: now + 60000,
+      publishedBy: 'adult-admin',
+      publishedAt: now - 1000,
+    });
+    // Published, audience=internal, within window → should NOT appear
+    seedMessage(server, {
+      id: 'msg-audience-internal',
+      status: 'published',
+      title: 'Internal only',
+      bodyText: 'Staff only.',
+      audience: 'internal',
+      startsAt: now - 1000,
+      endsAt: now + 60000,
+      publishedBy: 'adult-admin',
+      publishedAt: now - 1000,
+    });
+    // Published, audience=demo, within window → should NOT appear
+    seedMessage(server, {
+      id: 'msg-audience-demo',
+      status: 'published',
+      title: 'Demo only',
+      bodyText: 'Demo.',
+      audience: 'demo',
+      startsAt: now - 1000,
+      endsAt: now + 60000,
+      publishedBy: 'adult-admin',
+      publishedAt: now - 1000,
+    });
+
+    const res = await getActiveMessages(server, 'adult-parent');
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    const titles = data.messages.map((m) => m.title);
+    assert.ok(titles.includes('Public announcement'), 'all_signed_in message should appear');
+    assert.ok(!titles.includes('Internal only'), 'internal audience should be excluded');
+    assert.ok(!titles.includes('Demo only'), 'demo audience should be excluded');
+  });
+
+  await t.test('ADV-U11-008: ops cannot read draft message by ID', async () => {
+    seedMessage(server, {
+      id: 'msg-ops-draft-hidden',
+      status: 'draft',
+      title: 'Hidden Draft',
+      bodyText: 'Not for ops.',
+    });
+    const res = await getMessage(server, 'adult-ops', 'msg-ops-draft-hidden', 'ops');
+    assert.equal(res.status, 404);
+    const data = await res.json();
+    assert.equal(data.code, 'not_found');
+  });
+
+  await t.test('ADV-U11-008: ops cannot read paused message by ID', async () => {
+    seedMessage(server, {
+      id: 'msg-ops-paused-hidden',
+      status: 'paused',
+      title: 'Hidden Paused',
+      bodyText: 'Not for ops.',
+    });
+    const res = await getMessage(server, 'adult-ops', 'msg-ops-paused-hidden', 'ops');
+    assert.equal(res.status, 404);
+  });
+
+  await t.test('ADV-U11-008: ops cannot read archived message by ID', async () => {
+    seedMessage(server, {
+      id: 'msg-ops-archived-hidden',
+      status: 'archived',
+      title: 'Hidden Archived',
+      bodyText: 'Not for ops.',
+    });
+    const res = await getMessage(server, 'adult-ops', 'msg-ops-archived-hidden', 'ops');
+    assert.equal(res.status, 404);
+  });
+
+  await t.test('ADV-U11-008: ops CAN read published message by ID', async () => {
+    seedMessage(server, {
+      id: 'msg-ops-pub-visible',
+      status: 'published',
+      title: 'Ops visible published',
+      bodyText: 'Ops can see this.',
+      publishedBy: 'adult-admin',
+      publishedAt: 1000,
+    });
+    const res = await getMessage(server, 'adult-ops', 'msg-ops-pub-visible', 'ops');
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.message.title, 'Ops visible published');
+  });
+
+  await t.test('ADV-U11-008: ops CAN read scheduled message by ID', async () => {
+    seedMessage(server, {
+      id: 'msg-ops-sched-visible',
+      status: 'scheduled',
+      title: 'Ops visible scheduled',
+      bodyText: 'Ops can see this.',
+    });
+    const res = await getMessage(server, 'adult-ops', 'msg-ops-sched-visible', 'ops');
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.message.title, 'Ops visible scheduled');
+  });
+
+  await t.test('ADV-U11-008: admin CAN read draft message by ID', async () => {
+    const res = await getMessage(server, 'adult-admin', 'msg-ops-draft-hidden');
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.message.title, 'Hidden Draft');
   });
 });

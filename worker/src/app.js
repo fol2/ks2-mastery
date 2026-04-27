@@ -1949,6 +1949,23 @@ export function createWorkerApp({
         if (url.pathname === '/api/admin/marketing/messages' && request.method === 'POST') {
           requireSameOrigin(request, env);
           requireMutationCapability(session);
+          // ADV-U11-004: rate-limit marketing mutations at 60/min per session,
+          // matching the sibling admin-ops mutation pattern.
+          const createMktLimit = await consumeRateLimit(env, {
+            bucket: 'admin-ops-mutation',
+            identifier: session.accountId,
+            limit: 60,
+            windowMs: 60_000,
+          });
+          if (!createMktLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_ops_mutation_rate_limited',
+              retryAfterSeconds: createMktLimit.retryAfterSeconds,
+              extra: {
+                message: 'Admin-ops mutations are rate-limited at 60 per minute per session.',
+              },
+            });
+          }
           const body = await readJson(request);
           const db = requireDatabase(env);
           const result = await createMarketingMessage(db, {
@@ -1974,6 +1991,22 @@ export function createWorkerApp({
         if (marketingMessageMatch && request.method === 'PUT') {
           requireSameOrigin(request, env);
           requireMutationCapability(session);
+          // ADV-U11-004: rate-limit marketing mutations at 60/min per session.
+          const updateMktLimit = await consumeRateLimit(env, {
+            bucket: 'admin-ops-mutation',
+            identifier: session.accountId,
+            limit: 60,
+            windowMs: 60_000,
+          });
+          if (!updateMktLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_ops_mutation_rate_limited',
+              retryAfterSeconds: updateMktLimit.retryAfterSeconds,
+              extra: {
+                message: 'Admin-ops mutations are rate-limited at 60 per minute per session.',
+              },
+            });
+          }
           const body = await readJson(request);
           const db = requireDatabase(env);
           const messageId = decodeURIComponent(marketingMessageMatch[1]);
@@ -1993,10 +2026,13 @@ export function createWorkerApp({
           }
 
           // Otherwise it's a field update on a draft message.
+          // ADV-U11-002: forward expectedRowVersion from the request body so
+          // updateMarketingMessage can enforce CAS concurrency control.
           const result = await updateMarketingMessage(db, {
             actorAccountId: session.accountId,
             messageId,
             body,
+            expectedRowVersion: body?.expectedRowVersion ?? null,
             nowTs: now(),
           });
           return json({ ok: true, ...result });
