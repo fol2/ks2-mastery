@@ -1,7 +1,8 @@
 ---
 title: "P3 — Stability, Capacity Evidence, and Multi-Learner Correctness"
 type: feat
-status: active
+status: completed
+completed: 2026-04-27
 date: 2026-04-27
 origin: docs/plans/james/sys-hardening/sys-hardening-p3.md
 deepened: 2026-04-27
