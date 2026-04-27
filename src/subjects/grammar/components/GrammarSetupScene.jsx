@@ -9,7 +9,10 @@ import {
   GRAMMAR_DASHBOARD_HERO,
   GRAMMAR_MORE_PRACTICE_MODES,
   GRAMMAR_PRIMARY_MODE_CARDS,
+  GRAMMAR_SECONDARY_MODE_LINKS,
+  GRAMMAR_MONSTER_STRIP_CHILD_COPY,
   buildGrammarDashboardModel,
+  buildGrammarMonsterStripModel,
 } from './grammar-view-model.js';
 // SH2-U5: fresh-learner `dashboard.isEmpty` branch surfaces the canonical
 // three-part copy through the shared primitive. The pre-U5 bespoke
@@ -18,22 +21,20 @@ import {
 // grammar-phase3-child-copy test continues to find the anchor.
 import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 
-// Phase 3 U1: Child-facing Grammar dashboard. Every label, mode id, and
-// card comes from the U8 view-model (`grammar-view-model.js`). The JSX
+// Phase 5 U7+U8: Child-facing Grammar dashboard. Every label, mode id,
+// and card comes from the view-model (`grammar-view-model.js`). The JSX
 // layer is a layout-only component — we do not restate copy, filter ids,
 // or mode ids inline. Hero copy is driven by `GRAMMAR_DASHBOARD_HERO` so
 // James can swap the wording in one place after review.
 //
-// Structure mirrors `SpellingSetupScene.jsx`:
+// Layout (top → bottom):
 //   - Hero (headline + subheadline)
-//   - Today cards row (Due / Trouble spots / Secure / Streak)
-//   - Concordium progress (drawn from `buildGrammarDashboardModel` →
-//     `concordiumProgress`)
-//   - Primary mode cards (4 cards from `GRAMMAR_PRIMARY_MODE_CARDS`)
-//   - Writing Try secondary entry (dispatches `grammar-open-transfer` —
-//     U6b renders the scene)
-//   - More practice <details> disclosure (5 cards from
-//     `GRAMMAR_MORE_PRACTICE_MODES`). Closed by default.
+//   - Monster strip (active creatures with Star progress bars)
+//   - Primary CTA (Start Smart Practice button)
+//   - Today cards (Due / Trouble spots / Secure / Streak)
+//   - Secondary links (Grammar Bank, Mini Test, Fix Trouble Spots)
+//   - More practice <details> disclosure (Learn, Surgery, Builder,
+//     Worked, Faded, Writing Try). Closed by default.
 //   - Quiet round-length + speech-rate controls.
 //
 // Everything the old adult-diagnostic surface said (`Worker-marked modes`,
@@ -59,28 +60,49 @@ function TodayCard({ card }) {
   );
 }
 
+// U7 Phase 5: Monster strip entry — one per active Grammar monster.
+function MonsterStripEntry({ entry }) {
+  const pct = entry.starMax > 0 ? Math.round((entry.stars / entry.starMax) * 100) : 0;
+  return (
+    <div className="grammar-monster-entry" data-monster-id={entry.monsterId}>
+      <img
+        className="grammar-monster-entry-image"
+        src={grammarMonsterAsset(entry.monsterId, 320)}
+        alt=""
+        aria-hidden="true"
+      />
+      <div className="grammar-monster-entry-info">
+        <span className="grammar-monster-entry-name">{entry.name}</span>
+        <span className="grammar-monster-entry-stage">{entry.stageName}</span>
+        <div className="grammar-star-bar" aria-label={`${entry.stars} of ${entry.starMax} Stars`}>
+          <div
+            className="grammar-star-bar-fill"
+            style={{ width: `${pct}%`, backgroundColor: entry.accentColor }}
+          />
+        </div>
+        <span className="grammar-monster-entry-stars">{`${entry.stars} / ${entry.starMax} Stars`}</span>
+      </div>
+    </div>
+  );
+}
+
 function PrimaryModeCard({ card, selected, disabled, actions }) {
   const featured = card.featured === true;
   const classes = ['grammar-primary-mode'];
   if (selected) classes.push('selected');
   if (disabled) classes.push('is-disabled');
   if (featured) classes.push('is-recommended');
-  const action = card.id === 'bank' ? 'grammar-open-concept-bank' : 'grammar-set-mode';
   return (
     <button
       type="button"
       className={classes.join(' ')}
       data-mode-id={card.id}
-      data-action={action}
+      data-action="grammar-set-mode"
       data-featured={featured ? 'true' : 'false'}
       aria-pressed={selected ? 'true' : 'false'}
       disabled={disabled}
       onClick={() => {
         if (disabled) return;
-        if (card.id === 'bank') {
-          actions.dispatch('grammar-open-concept-bank');
-          return;
-        }
         actions.dispatch('grammar-set-mode', { value: card.id });
       }}
     >
@@ -102,16 +124,24 @@ function MoreModeCard({ card, selected, disabled, actions }) {
   // tests and QA can scope by the mode id. The label is decorative and
   // does not change mode behaviour.
   const label = typeof card.label === 'string' && card.label ? card.label : '';
+  // U8 Phase 5: Writing Try (id: 'transfer') dispatches 'grammar-open-transfer'
+  // instead of 'grammar-set-mode' since it routes to the transfer scene.
+  const isTransfer = card.id === 'transfer';
+  const action = isTransfer ? 'grammar-open-transfer' : 'grammar-set-mode';
   return (
     <button
       type="button"
       className={classes.join(' ')}
       data-mode-id={card.id}
-      data-action="grammar-set-mode"
+      data-action={action}
       aria-pressed={selected ? 'true' : 'false'}
       disabled={disabled}
       onClick={() => {
         if (disabled) return;
+        if (isTransfer) {
+          actions.dispatch('grammar-open-transfer');
+          return;
+        }
         actions.dispatch('grammar-set-mode', { value: card.id });
       }}
     >
@@ -135,7 +165,21 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
     : (Number(grammar.prefs?.roundLength) || 5);
   const selectedSpeechRate = normaliseGrammarSpeechRate(grammar.prefs?.speechRate);
   const { title: heroTitle, subtitle: heroSubtitle } = GRAMMAR_DASHBOARD_HERO;
-  const concordium = dashboard.concordiumProgress;
+
+  // U7 Phase 5: build monster strip from reward state + mastery concept nodes.
+  // The grammar read-model carries concept nodes under analytics.concepts as
+  // a flat array; we index by id for the strip builder. recentAttempts come
+  // from the engine state if available.
+  const conceptNodesMap = {};
+  const analyticsConcepts = Array.isArray(grammar?.analytics?.concepts)
+    ? grammar.analytics.concepts : [];
+  for (const c of analyticsConcepts) {
+    if (c && typeof c === 'object' && typeof c.id === 'string') {
+      conceptNodesMap[c.id] = c;
+    }
+  }
+  const recentAttempts = Array.isArray(grammar?.recentAttempts) ? grammar.recentAttempts : [];
+  const monsterStrip = buildGrammarMonsterStripModel(rewardState, conceptNodesMap, recentAttempts);
 
   return (
     <section
@@ -143,6 +187,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
       aria-labelledby="grammar-dashboard-title"
       data-grammar-phase-root="dashboard"
     >
+      {/* Hero section */}
       <div
         className="grammar-hero"
         style={{ '--grammar-hero-bg': `url(${GRAMMAR_REGION_IMAGE})` }}
@@ -160,39 +205,21 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
         </div>
       </div>
 
-      <section className="grammar-today" aria-label="Today at a glance">
-        {dashboard.isEmpty ? (
-          <div className="grammar-today-empty" data-testid="grammar-today-empty">
-            <EmptyState
-              title="No rounds yet"
-              body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
-            />
-          </div>
-        ) : (
-          <div className="grammar-today-grid">
-            {dashboard.todayCards.map((card) => (
-              <TodayCard card={card} key={card.id} />
-            ))}
-          </div>
-        )}
-        <div className="grammar-concordium-progress" data-testid="grammar-concordium-progress">
-          <img
-            className="grammar-concordium-image"
-            src={grammarMonsterAsset('concordium', 320)}
-            alt=""
-            aria-hidden="true"
-          />
-          <span className="grammar-concordium-label">Grow Concordium</span>
-          <strong className="grammar-concordium-value">{`${concordium.mastered}/${concordium.total}`}</strong>
-        </div>
+      {/* U7: Monster strip — 4 active monsters with Star progress */}
+      <section className="grammar-monster-strip" aria-label="Your Grammar creatures">
+        {monsterStrip.map((entry) => (
+          <MonsterStripEntry entry={entry} key={entry.monsterId} />
+        ))}
+        <p className="grammar-monster-strip-hint">{GRAMMAR_MONSTER_STRIP_CHILD_COPY}</p>
       </section>
 
-      <section className="grammar-primary-modes" aria-label="Choose a round">
+      {/* U8: Primary CTA — Smart Practice only */}
+      <section className="grammar-primary-modes" aria-label="Start practising">
         <div className="grammar-primary-grid">
           {GRAMMAR_PRIMARY_MODE_CARDS.map((card) => (
             <PrimaryModeCard
               card={card}
-              selected={card.id !== 'bank' && card.id === selectedMode}
+              selected={card.id === selectedMode}
               disabled={setupDisabled}
               actions={actions}
               key={card.id}
@@ -238,29 +265,65 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
           <button
             className="btn primary xl"
             type="button"
+            data-featured="true"
             disabled={setupDisabled}
             onClick={() => actions.dispatch('grammar-start')}
           >
-            {grammar.pendingCommand === 'start-session' ? 'Starting...' : 'Begin round'}
+            {grammar.pendingCommand === 'start-session' ? 'Starting...' : 'Start Smart Practice'}
           </button>
-          {dashboard.writingTryAvailable ? (
-            <button
-              className="btn secondary"
-              type="button"
-              data-action="grammar-open-transfer"
-              disabled={setupDisabled}
-              onClick={() => actions.dispatch('grammar-open-transfer')}
-            >
-              Writing Try · non-scored
-            </button>
-          ) : null}
         </div>
       </section>
 
+      {/* U8: Today cards — repositioned below primary CTA, above secondary links */}
+      <section className="grammar-today" aria-label="Today at a glance">
+        {dashboard.isEmpty ? (
+          <div className="grammar-today-empty" data-testid="grammar-today-empty">
+            <EmptyState
+              title="No rounds yet"
+              body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
+            />
+          </div>
+        ) : (
+          <div className="grammar-today-grid">
+            {dashboard.todayCards.map((card) => (
+              <TodayCard card={card} key={card.id} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* U8: Secondary links — Grammar Bank, Mini Test, Fix Trouble Spots */}
+      <nav className="grammar-secondary-links" aria-label="Other practice modes">
+        {GRAMMAR_SECONDARY_MODE_LINKS.map((link) => (
+          <button
+            type="button"
+            className={`grammar-secondary-link${selectedMode === link.id ? ' selected' : ''}`}
+            aria-pressed={selectedMode === link.id ? 'true' : 'false'}
+            key={link.id}
+            data-mode-id={link.id}
+            data-action={link.action}
+            disabled={setupDisabled}
+            onClick={() => {
+              if (setupDisabled) return;
+              if (link.action === 'grammar-open-concept-bank') {
+                actions.dispatch('grammar-open-concept-bank');
+              } else {
+                actions.dispatch('grammar-set-mode', { value: link.id });
+              }
+            }}
+          >
+            {link.title}
+          </button>
+        ))}
+      </nav>
+
+      {/* U8: More practice disclosure — Learn, Surgery, Builder, Worked, Faded, Writing Try */}
       <details className="grammar-more-practice">
         <summary>More practice</summary>
         <div className="grammar-more-practice-grid">
-          {GRAMMAR_MORE_PRACTICE_MODES.map((card) => (
+          {GRAMMAR_MORE_PRACTICE_MODES.filter(
+            (m) => m.id !== 'transfer' || dashboard.writingTryAvailable
+          ).map((card) => (
             <MoreModeCard
               card={card}
               selected={card.id === selectedMode}
