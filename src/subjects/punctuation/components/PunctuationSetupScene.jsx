@@ -5,7 +5,7 @@
 // Bellstorm Coast. Layout:
 //
 //   Hero: Bellstorm Coast backdrop + headline + primary CTA
-//   Progress row: Due today | Wobbly | Stars earned (compact)
+//   Progress row: Due today | Wobbly | Grand Stars (compact)
 //   Monster row: 4 active monsters with star meters (X / 100 Stars)
 //     and stage labels (Not caught / Egg Found / Hatch / Evolve / Strong / Mega)
 //   Map link: "Open Punctuation Map"
