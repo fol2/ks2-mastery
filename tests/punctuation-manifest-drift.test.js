@@ -18,7 +18,12 @@ import {
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_DETAIL_TAB_IDS,
+  PUNCTUATION_GRAND_MONSTER_ID,
 } from '../src/subjects/punctuation/punctuation-manifest.js';
+
+import {
+  PUNCTUATION_GRAND_MONSTER_ID as SHARED_GRAND_MONSTER_ID,
+} from '../src/platform/game/mastery/shared.js';
 
 // ---------------------------------------------------------------------------
 // Manifest drift tests — pin the canonical constants so any accidental
@@ -127,13 +132,16 @@ test('MONSTER_CLUSTERS covers all direct monsters', () => {
   }
 });
 
-test('MONSTER_UNIT_COUNT covers all direct monsters', () => {
+test('MONSTER_UNIT_COUNT covers all direct monsters with pinned values', () => {
   for (const id of DIRECT_PUNCTUATION_MONSTER_IDS) {
     assert.ok(
       typeof MONSTER_UNIT_COUNT[id] === 'number' && MONSTER_UNIT_COUNT[id] > 0,
       `MONSTER_UNIT_COUNT["${id}"] should be a positive number`,
     );
   }
+  assert.equal(MONSTER_UNIT_COUNT.pealark, 5);
+  assert.equal(MONSTER_UNIT_COUNT.claspin, 2);
+  assert.equal(MONSTER_UNIT_COUNT.curlune, 7);
 });
 
 test('map filter IDs are frozen arrays', () => {
@@ -143,4 +151,8 @@ test('map filter IDs are frozen arrays', () => {
   assert.ok(PUNCTUATION_MAP_STATUS_FILTER_IDS.length > 0);
   assert.ok(PUNCTUATION_MAP_MONSTER_FILTER_IDS.length > 0);
   assert.ok(PUNCTUATION_MAP_DETAIL_TAB_IDS.length > 0);
+});
+
+test('PUNCTUATION_GRAND_MONSTER_ID is identical in manifest and mastery shared', () => {
+  assert.strictEqual(PUNCTUATION_GRAND_MONSTER_ID, SHARED_GRAND_MONSTER_ID);
 });

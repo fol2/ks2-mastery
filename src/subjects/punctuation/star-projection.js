@@ -33,11 +33,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // Internal constants
 // ---------------------------------------------------------------------------
 
-const DIRECT_MONSTER_IDS = DIRECT_PUNCTUATION_MONSTER_IDS;
-
-// Build a cluster-to-monster lookup from the manifest constant.
-const CLUSTER_TO_MONSTER = { ...PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER };
-
 // Star category caps per direct monster.
 const TRY_CAP = 10;
 const PRACTICE_CAP = 30;
@@ -61,8 +56,6 @@ const GRAND_STAR_CAP = 100;
 //
 // The multiplier is applied inside computeSecureStars and computeMasteryStars
 // so that raw score scales inversely with cluster size.
-
-// MONSTER_UNIT_COUNT imported from punctuation-manifest.js.
 
 // Reference cluster size for normalisation (Pealark = 5 units).
 const REFERENCE_UNIT_COUNT = 5;
@@ -144,7 +137,7 @@ function clustersForAttempt(attempt) {
  * Determine which monster a cluster belongs to.
  */
 function monsterForCluster(clusterId) {
-  return CLUSTER_TO_MONSTER[clusterId] || null;
+  return PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER[clusterId] || null;
 }
 
 // ---------------------------------------------------------------------------
@@ -518,7 +511,7 @@ function computeGrandStars(progress, releaseId) {
 
   // Breadth: count distinct direct monsters with secured evidence.
   const directMonstersWithEvidence = [...monstersWithSecured].filter(
-    (id) => DIRECT_MONSTER_IDS.includes(id),
+    (id) => DIRECT_PUNCTUATION_MONSTER_IDS.includes(id),
   ).length;
 
   // Determine the highest tier the learner qualifies for, then interpolate
@@ -609,7 +602,7 @@ export function projectPunctuationStars(progress, releaseId) {
 
   // Build per-monster attempt arrays.
   const monsterAttempts = new Map();
-  for (const monsterId of DIRECT_MONSTER_IDS) {
+  for (const monsterId of DIRECT_PUNCTUATION_MONSTER_IDS) {
     monsterAttempts.set(monsterId, []);
   }
   for (const attempt of attempts) {
@@ -624,7 +617,7 @@ export function projectPunctuationStars(progress, releaseId) {
 
   // Project per-monster Stars.
   const perMonster = {};
-  for (const monsterId of DIRECT_MONSTER_IDS) {
+  for (const monsterId of DIRECT_PUNCTUATION_MONSTER_IDS) {
     const clusterIds = MONSTER_CLUSTERS.get(monsterId) || new Set();
     const mAttempts = monsterAttempts.get(monsterId) || [];
     const mItems = itemsForMonster(items, attempts, clusterIds);

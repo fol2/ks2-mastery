@@ -1,6 +1,7 @@
 import { SESSION_EPHEMERAL_FIELDS } from '../../platform/core/subject-contract.js';
 import {
   PUNCTUATION_CLIENT_SKILL_IDS,
+  PUNCTUATION_CLIENT_SKILL_ID_SET,
   PUNCTUATION_MAP_STATUS_FILTER_IDS,
   PUNCTUATION_MAP_MONSTER_FILTER_IDS,
   PUNCTUATION_MAP_DETAIL_TAB_IDS,
@@ -38,8 +39,6 @@ export const PUNCTUATION_PHASES = Object.freeze([
 // the transition to prevent an orphan session / stale feedback from leaking
 // into phase=map (adversarial reviewer adv-219-002).
 export const PUNCTUATION_OPEN_MAP_ALLOWED_PHASES = Object.freeze(['setup', 'summary']);
-
-const PUNCTUATION_CLIENT_SKILL_ID_SET = new Set(PUNCTUATION_CLIENT_SKILL_IDS);
 
 export function isPublishedPunctuationSkillId(value) {
   return typeof value === 'string' && PUNCTUATION_CLIENT_SKILL_ID_SET.has(value);

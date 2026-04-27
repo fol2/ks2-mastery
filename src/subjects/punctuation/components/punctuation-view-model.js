@@ -172,8 +172,8 @@ export const PUNCTUATION_PRIMARY_MODE_CARDS = Object.freeze([
 
 // --- Punctuation Map filter lists ------------------------------------------
 //
-// Status, monster, and detail-tab id lists moved to service-contract.js in U5
-// (adv-219-005 layer fix). The view-model re-exports them via the top-of-file
+// Status, monster, and detail-tab id lists canonical source is now
+// punctuation-manifest.js. The view-model re-exports them via the top-of-file
 // `export { ... }` block so downstream imports keep working.
 
 // Short, child-facing rule one-liners for the Punctuation Map scene's skill
