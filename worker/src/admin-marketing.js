@@ -604,7 +604,12 @@ export async function transitionMarketingMessage(db, {
       });
     }
     const stored = JSON.parse(existingReceipt.response_json || '{}');
-    return { ...stored, mutation: { requestId, correlationId, replayed: true } };
+    const currentRow = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [stored.messageId]);
+    return {
+      ...stored,
+      message: currentRow ? adminMessageFields(currentRow) : null,
+      mutation: { requestId, correlationId, replayed: true },
+    };
   }
 
   const row = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
