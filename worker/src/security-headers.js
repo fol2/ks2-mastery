@@ -37,7 +37,16 @@ function warnOnPlaceholderHashOnce() {
   );
 }
 
-export const HSTS_VALUE = 'max-age=63072000; includeSubDomains';
+// Operator gate for HSTS preload submission. Flip to `true` ONLY after the
+// operator has completed every sign-off item in
+// `docs/hardening/hsts-preload-audit.md` and the full DNS zone enumeration
+// confirms every subdomain under `eugnel.uk` is HTTPS-only. See the audit
+// document for rollback implications (preload is a two-year commitment).
+export const HSTS_PRELOAD_ENABLED = false;
+
+export const HSTS_VALUE = HSTS_PRELOAD_ENABLED
+  ? 'max-age=63072000; includeSubDomains; preload'
+  : 'max-age=63072000; includeSubDomains';
 
 export const PERMISSIONS_POLICY = [
   'camera=()',

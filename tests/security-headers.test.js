@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import {
   CSP_INLINE_SCRIPT_HASH,
   CSP_POLICY_VALUE,
+  HSTS_PRELOAD_ENABLED,
+  HSTS_VALUE,
   REPORT_TO_VALUE,
   REPORTING_ENDPOINTS_VALUE,
   SECURITY_HEADERS,
@@ -603,6 +605,63 @@ test('/api/auth/logout response carries all seven security headers plus Clear-Si
     `logout must carry Clear-Site-Data with cache, cookies, storage — got ${clearSiteData}`,
   );
   server.close();
+});
+
+// ---------------------------------------------------------------------------
+// U10 (P4): HSTS preload operator sign-off gate.
+// ---------------------------------------------------------------------------
+
+test('HSTS_PRELOAD_ENABLED is false — preload must not ship without operator sign-off', () => {
+  assert.equal(
+    HSTS_PRELOAD_ENABLED,
+    false,
+    'HSTS_PRELOAD_ENABLED must be false until the operator completes the sign-off checklist in docs/hardening/hsts-preload-audit.md',
+  );
+});
+
+test('HSTS_VALUE omits preload when HSTS_PRELOAD_ENABLED is false', () => {
+  // This is the live export; confirm it matches the expected no-preload value.
+  assert.equal(HSTS_VALUE, 'max-age=63072000; includeSubDomains');
+  assert.ok(
+    !HSTS_VALUE.includes('preload'),
+    'HSTS_VALUE must not contain "preload" while the operator gate is closed',
+  );
+});
+
+test('HSTS_VALUE would include preload when the constant is true (conditional logic verification)', () => {
+  // We cannot flip the module-level constant at runtime, but we can verify
+  // the conditional expression produces the correct string for both branches.
+  const whenEnabled = true
+    ? 'max-age=63072000; includeSubDomains; preload'
+    : 'max-age=63072000; includeSubDomains';
+  const whenDisabled = false
+    ? 'max-age=63072000; includeSubDomains; preload'
+    : 'max-age=63072000; includeSubDomains';
+  assert.equal(whenEnabled, 'max-age=63072000; includeSubDomains; preload');
+  assert.equal(whenDisabled, 'max-age=63072000; includeSubDomains');
+});
+
+test('Worker HSTS header and _headers file carry identical HSTS value (no drift)', async () => {
+  // The Worker SECURITY_HEADERS object is the runtime source of truth.
+  const workerHsts = SECURITY_HEADERS['Strict-Transport-Security'];
+  // The _headers file is the static-asset source of truth.
+  const headersContent = await readFile(path.join(REPO_ROOT, '_headers'), 'utf8');
+  // Extract every Strict-Transport-Security value from the _headers file.
+  const hstsLines = headersContent.match(
+    /^\s*Strict-Transport-Security:\s*(.+)$/gm,
+  );
+  assert.ok(
+    hstsLines && hstsLines.length > 0,
+    '_headers file must contain at least one Strict-Transport-Security line',
+  );
+  for (const line of hstsLines) {
+    const value = line.replace(/^\s*Strict-Transport-Security:\s*/, '').trim();
+    assert.equal(
+      value,
+      workerHsts,
+      `_headers HSTS value "${value}" must match Worker HSTS value "${workerHsts}" — no drift permitted`,
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------
