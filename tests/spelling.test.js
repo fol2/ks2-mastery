@@ -412,11 +412,11 @@ test('Extra word-family variants are opt-in and share base-word progress', () =>
 
   assert.ok(seenWords.has('division'));
   const stats = service.getStats('learner-family', 'extra');
-  assert.equal(stats.total, 23);
+  assert.equal(stats.total, 33);
   assert.equal(stats.secure, 1);
 
   const extraGroup = service.getAnalyticsSnapshot('learner-family').wordGroups.find((group) => group.key === 'extra');
-  assert.equal(extraGroup.words.length, 23);
+  assert.equal(extraGroup.words.length, 33);
   assert.equal(extraGroup.words.some((word) => word.slug === 'division' || word.word === 'division'), false);
   const divide = extraGroup.words.find((word) => word.slug === 'divide');
   assert.equal(divide.word, 'divide');
@@ -667,7 +667,7 @@ test('analytics snapshot is explicit and normalised', () => {
   assert.equal(snapshot.pools.all.total > 0, true);
   assert.deepEqual(snapshot.pools.all, snapshot.pools.core);
   assert.equal(snapshot.pools.all.accuracy, null);
-  assert.equal(snapshot.pools.extra.total, 23);
+  assert.equal(snapshot.pools.extra.total, 33);
   assert.deepEqual(snapshot.wordGroups.map((group) => group.key), ['y3-4', 'y5-6', 'extra']);
   assert.equal(snapshot.wordGroups[0].title, 'Years 3-4');
   const possess = snapshot.wordGroups.flatMap((group) => group.words).find((word) => word.slug === 'possess');

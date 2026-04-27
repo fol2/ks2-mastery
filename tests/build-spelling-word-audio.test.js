@@ -83,13 +83,13 @@ async function withTempEnv(envOverrides, fn) {
   }
 }
 
-// HAPPY PATH: list yields exactly 472 entries, planned slugs are exactly the
-// 236 unique slugs in WORDS, and every R2 key matches the shared helper.
-test('list emits 472 entries (236 unique slugs × 2 voices) with valid R2 keys', async () => {
+// HAPPY PATH: list yields one entry per word × voice, and every R2 key
+// matches the shared helper.
+test('list emits one entry per word × voice with valid R2 keys', async () => {
   const entries = await commandList();
-  assert.equal(entries.length, 472);
+  assert.equal(entries.length, WORDS.length * 2);
   const uniqueSlugs = new Set(entries.map((entry) => entry.slug));
-  assert.equal(uniqueSlugs.size, 236);
+  assert.equal(uniqueSlugs.size, WORDS.length);
   for (const entry of entries) {
     assert.ok(['Iapetus', 'Sulafat'].includes(entry.voice), `Unexpected voice ${entry.voice}`);
     const expected = buildWordAudioAssetKey({
@@ -155,8 +155,8 @@ test('--limit 1 --offset 0 plans the first WORDS entry', () => {
   assert.equal(words[0].slug, 'accident');
 });
 
-test('--offset 235 --limit 1 plans the last WORDS entry', () => {
-  const words = selectWords({ slugs: [], limit: 1, offset: 235 });
+test('--offset at the final index --limit 1 plans the last WORDS entry', () => {
+  const words = selectWords({ slugs: [], limit: 1, offset: WORDS.length - 1 });
   assert.equal(words.length, 1);
   assert.equal(words[0].slug, WORDS[WORDS.length - 1].slug);
 });
@@ -345,9 +345,9 @@ test('buildPlannedEntries R2 key matches buildWordAudioAssetKey output', async (
   }
 });
 
-// INTEGRATION: planned → uploaded count parity. Mock everything; assert
-// exactly 472 entries reach status: uploaded after a fully simulated run.
-test('full simulated generate run lands 472 uploaded entries', async (t) => {
+// INTEGRATION: planned → uploaded count parity. Mock everything; assert every
+// planned word × voice entry reaches status: uploaded after a simulated run.
+test('full simulated generate run lands every planned word entry uploaded', async (t) => {
   const callGemini = async () => ({
     data: Buffer.from('fake-pcm-data').toString('base64'),
     mimeType: 'audio/L16;rate=24000',
@@ -363,8 +363,8 @@ test('full simulated generate run lands 472 uploaded entries', async (t) => {
   });
   t.after(async () => rm(path.dirname(result.statePath), { recursive: true, force: true }));
 
-  assert.equal(result.summary.planned, 472);
-  assert.equal(result.summary.uploaded, 472);
+  assert.equal(result.summary.planned, WORDS.length * 2);
+  assert.equal(result.summary.uploaded, WORDS.length * 2);
   assert.equal(result.summary.failed, 0);
 });
 
@@ -787,6 +787,40 @@ test('--max-retries 2 + non-quota Gemini error → exactly 1 attempt (break-imme
   const entry = result.entries[0];
   assert.equal(entry.status, 'failed');
   assert.equal(entry.attempts, 1);
+});
+
+test('transient Gemini 5xx retries within the bounded retry budget', async (t) => {
+  let geminiCalls = 0;
+  const callGemini = async () => {
+    geminiCalls += 1;
+    if (geminiCalls === 1) {
+      const error = new Error('Gemini TTS direct call failed: 503 UNAVAILABLE');
+      error.status = 503;
+      throw error;
+    }
+    return {
+      data: Buffer.from('fake-pcm').toString('base64'),
+      mimeType: 'audio/L16;rate=24000',
+    };
+  };
+  const result = await commandGenerate({
+    flags: { slug: ['accident'], voice: 'Iapetus', concurrency: 1, maxRetries: 2 },
+    env: { GEMINI_API_KEY: 'stub-key' },
+    dependencies: {
+      callGemini,
+      upload: async () => {},
+      transcode: async () => {},
+      writeWav: async () => {},
+      processSignals: { on() {}, removeListener() {}, exit() {} },
+    },
+  });
+  t.after(async () => rm(path.dirname(result.statePath), { recursive: true, force: true }));
+
+  assert.equal(geminiCalls, 2);
+  const entry = result.entries[0];
+  assert.equal(entry.status, 'uploaded');
+  assert.equal(entry.attempts, 2);
+  assert.equal(entry.lastError, null);
 });
 
 // FIX 2a (review 2026-04-26): atomic state file — corrupt JSON on read

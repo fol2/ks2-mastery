@@ -14,7 +14,7 @@
 |---|---|---:|---:|
 | `node ./scripts/wrangler-oauth.mjs whoami` | production Cloudflare account shown | <OUTPUT> | <Y/N> |
 | `.env` contains `GEMINI_API_KEY` (and `_2`, `_3` if used) | at least one present | <KEY COUNT> | <Y/N> |
-| `WORDS.length === 236` (sanity from `src/subjects/spelling/data/word-data.js`) | 236 | <COUNT> | <Y/N> |
+| `WORDS.length` sanity from `src/subjects/spelling/data/word-data.js` | current published count (246 at 2026-04-27 SC/CH expansion) | <COUNT> | <Y/N> |
 | `SPELLING_AUDIO_MODEL` captured into run state file | `gemini-3.1-flash-tts-preview` (or current export) | <VALUE> | <Y/N> |
 | `npm run smoke:production:spelling-audio -- --json` baseline | sentence-legacy probes pass; word probes WARN miss (pre-fill) | <PASTE JSON OR FAIL DESCRIPTION> | <Y/N> |
 
@@ -25,7 +25,7 @@
 
 ## 2. Small sample run (target ~15 min)
 
-Command:
+Word-only command:
 
 ```
 npm run spelling:word-audio -- generate --slug accident,beginning
@@ -35,6 +35,12 @@ Wait — `beginning` may not exist in WORDS (use `accidentally` instead per U2 f
 
 ```
 npm run spelling:word-audio -- generate --slug accident,accidentally
+```
+
+All-in-one word + sentence command for new content:
+
+```
+npm run spelling:audio-cache -- generate --lane all --slug <slug-list>
 ```
 
 | Item | Result |
@@ -87,15 +93,15 @@ Command:
 npm run spelling:word-audio -- generate --concurrency 4
 ```
 
-(No `--slug` filter → all 236 words; auto-skips the 4 already uploaded from §2.)
+(No `--slug` filter → all current words; auto-skips entries already uploaded in the same run state.)
 
 | Metric | Target | Actual |
 |---|---|---|
-| Total entries | 472 (236 × 2) | <COUNT> |
-| Uploaded | 472 | <COUNT> |
+| Total entries | current planned count | <COUNT> |
+| Uploaded | planned count | <COUNT> |
 | Failed | 0 | <COUNT> |
 | Total wall time | 60–90 min | <DURATION> |
-| Total Gemini API calls (incl. retries) | ~472 + retry budget | <COUNT> |
+| Total Gemini API calls (incl. retries) | planned count + retry budget | <COUNT> |
 | 429 retries (quota rotations) | <N> | <COUNT> |
 | 5xx retries (R2 502/503) | <N> | <COUNT> |
 | Total R2 bytes uploaded | ~? MB | <BYTES> |
@@ -113,7 +119,7 @@ Commands + expected results:
 npm run spelling:word-audio -- status --run-id <RUNID>
 ```
 
-Expected: `472 uploaded / 0 failed`. Actual: <RESULT>
+Expected: all planned entries uploaded / 0 failed. Actual: <RESULT>
 
 ```
 # SPELLING_AUDIO_MODEL freeze check
@@ -134,7 +140,7 @@ Expected: EXIT_OK; all sample word probes hit; sentence-legacy probes still pass
 npm run spelling:word-audio -- reconcile --run-id <verify-RUNID>
 ```
 
-Expected: `summary.uploaded === 472` AND `inventorySize === 472`, with 236 objects under `spelling-audio/v1/gemini-3.1-flash-tts-preview/Iapetus/word/` and 236 under `Sulafat/word/`. Actual: <SUMMARY.UPLOADED> / <INVENTORYSIZE> / <PER-VOICE COUNTS>
+Expected: `summary.uploaded === planned count` AND `inventorySize === planned count`, with one object per current word under each word voice prefix. Actual: <SUMMARY.UPLOADED> / <INVENTORYSIZE> / <PER-VOICE COUNTS>
 
 **Race-mitigation cleanup:**
 
@@ -165,7 +171,7 @@ Expected: `summary.uploaded === 472` AND `inventorySize === 472`, with 236 objec
 
 **Operator confirmation:**
 
-- [ ] All 472 word-only audio files generated and uploaded.
+- [ ] All planned word-only audio files generated and uploaded.
 - [ ] Production smoke (`smoke:production:spelling-audio --require-word-hit`) returns EXIT_OK.
 - [ ] Cross-account invariant probe passes.
 - [ ] Sentence-legacy probe still passes (PR 252 fallback healthy).
