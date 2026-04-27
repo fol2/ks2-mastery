@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -10,6 +11,7 @@ import {
   REQUEST_SAMPLES_TAIL_LIMIT,
   autoNameEvidencePath,
   buildEvidencePayload,
+  buildProvenance,
   buildReportMeta,
   evaluateThresholds,
   persistEvidenceFile,
@@ -651,4 +653,136 @@ test('end-to-end: summarise then evaluate — pipeline populates capacity for ga
   assert.equal(result.thresholds.requireBootstrapCapacity.passed, true);
   assert.deepEqual(result.thresholds.requireBootstrapCapacity.observed, { queryCount: 7, d1RowsRead: 55 });
   assert.deepEqual(result.failures, []);
+});
+
+// ---------------------------------------------------------------------------
+// P4 U8: Evidence provenance and anti-fabrication guard
+// ---------------------------------------------------------------------------
+
+test('buildReportMeta includes provenance sub-block (P4-U8)', () => {
+  const meta = buildReportMeta({ mode: 'dry-run' });
+  assert.ok(meta.provenance, 'provenance block must be present');
+  assert.equal(typeof meta.provenance.gitSha, 'string');
+  assert.equal(typeof meta.provenance.dirtyTreeFlag, 'boolean');
+  assert.equal(typeof meta.provenance.workflowRunUrl, 'string');
+  assert.equal(typeof meta.provenance.workflowName, 'string');
+  assert.equal(typeof meta.provenance.operator, 'string');
+  assert.equal(typeof meta.provenance.loadDriverVersion, 'string');
+  assert.equal(typeof meta.provenance.rawLogArtifactPath, 'string');
+});
+
+test('buildProvenance degrades workflowRunUrl to unknown without GH env vars (P4-U8)', () => {
+  const saved = {
+    GITHUB_SERVER_URL: process.env.GITHUB_SERVER_URL,
+    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+    GITHUB_RUN_ID: process.env.GITHUB_RUN_ID,
+    GITHUB_WORKFLOW: process.env.GITHUB_WORKFLOW,
+    GITHUB_ACTOR: process.env.GITHUB_ACTOR,
+  };
+  delete process.env.GITHUB_SERVER_URL;
+  delete process.env.GITHUB_REPOSITORY;
+  delete process.env.GITHUB_RUN_ID;
+  delete process.env.GITHUB_WORKFLOW;
+  delete process.env.GITHUB_ACTOR;
+  try {
+    const prov = buildProvenance({});
+    assert.equal(prov.workflowRunUrl, 'unknown');
+    assert.equal(prov.workflowName, 'unknown');
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test('buildProvenance constructs workflowRunUrl from GH env vars (P4-U8)', () => {
+  const saved = {
+    GITHUB_SERVER_URL: process.env.GITHUB_SERVER_URL,
+    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+    GITHUB_RUN_ID: process.env.GITHUB_RUN_ID,
+    GITHUB_WORKFLOW: process.env.GITHUB_WORKFLOW,
+    GITHUB_ACTOR: process.env.GITHUB_ACTOR,
+  };
+  process.env.GITHUB_SERVER_URL = 'https://github.com';
+  process.env.GITHUB_REPOSITORY = 'fol2/ks2-mastery';
+  process.env.GITHUB_RUN_ID = '12345';
+  process.env.GITHUB_WORKFLOW = 'Capacity CI';
+  process.env.GITHUB_ACTOR = 'test-bot';
+  try {
+    const prov = buildProvenance({});
+    assert.equal(prov.workflowRunUrl, 'https://github.com/fol2/ks2-mastery/actions/runs/12345');
+    assert.equal(prov.workflowName, 'Capacity CI');
+    assert.equal(prov.operator, 'test-bot');
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test('buildProvenance thresholdConfigHash is "none" without configPath (P4-U8)', () => {
+  const prov = buildProvenance({});
+  assert.equal(prov.thresholdConfigHash, 'none');
+});
+
+test('buildProvenance thresholdConfigHash is sha256 of config file content (P4-U8)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-prov-'));
+  const configPath = join(tempDir, 'test-config.json');
+  const content = JSON.stringify({ tier: 'test', thresholds: { max5xx: 0 } });
+  writeFileSync(configPath, content);
+  try {
+    const prov = buildProvenance({ configPath });
+    const expectedHash = createHash('sha256').update(content).digest('hex');
+    assert.equal(prov.thresholdConfigHash, expectedHash);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('buildProvenance rawLogArtifactPath defaults to "none" (P4-U8)', () => {
+  const prov = buildProvenance({});
+  assert.equal(prov.rawLogArtifactPath, 'none');
+});
+
+test('buildProvenance rawLogArtifactPath reads from options (P4-U8)', () => {
+  const prov = buildProvenance({ rawLogArtifactPath: 'logs/run-12345.log' });
+  assert.equal(prov.rawLogArtifactPath, 'logs/run-12345.log');
+});
+
+test('buildProvenance loadDriverVersion reads from package.json (P4-U8)', () => {
+  const prov = buildProvenance({});
+  // Should read 0.1.0 from the package.json in the repo.
+  assert.equal(prov.loadDriverVersion, '0.1.0');
+});
+
+test('buildEvidencePayload includes provenance in reportMeta (P4-U8)', () => {
+  const report = {
+    ok: true,
+    summary: makeSummary(),
+    plan: {},
+  };
+  const payload = buildEvidencePayload({
+    report,
+    thresholds: {},
+    options: { mode: 'dry-run' },
+    timings: {},
+  });
+  assert.ok(payload.reportMeta.provenance, 'provenance must be present in evidence payload');
+  assert.equal(typeof payload.reportMeta.provenance.gitSha, 'string');
+  assert.equal(typeof payload.reportMeta.provenance.dirtyTreeFlag, 'boolean');
+});
+
+// ---------------------------------------------------------------------------
+// ADV-001: buildReportMeta caches gitSha to prevent TOCTOU divergence
+// ---------------------------------------------------------------------------
+
+test('buildReportMeta.commit is identical to provenance.gitSha (ADV-001 TOCTOU cache)', () => {
+  const meta = buildReportMeta({ mode: 'dry-run' });
+  assert.equal(
+    meta.commit,
+    meta.provenance.gitSha,
+    'reportMeta.commit and provenance.gitSha must be the same value — both derived from a single resolveCommitSha() call',
+  );
 });
