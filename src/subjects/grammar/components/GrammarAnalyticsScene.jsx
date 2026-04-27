@@ -215,7 +215,7 @@ export function GrammarAnalyticsScene({
         </div>
 
         <div className="grammar-route-panel">
-          <div className="eyebrow">Reserved reward routes</div>
+          <div className="eyebrow">Grammar creature routes</div>
           <div className="grammar-monster-grid">
             {GRAMMAR_MONSTER_ROUTES.map((route) => {
               const secured = securedCountForRoute(route, conceptsById);

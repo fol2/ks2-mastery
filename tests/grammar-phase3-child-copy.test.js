@@ -100,7 +100,7 @@ test('U10: analytics phase retains the adult-only Evidence vocabulary (R7 invers
     'Evidence snapshot',
     'Stage 1',
     'Bellstorm bridge',
-    'Reserved reward routes',
+    'Grammar creature routes',
   ];
   for (const phrase of requiredAdultPhrases) {
     assert.match(

@@ -29,6 +29,7 @@ import {
   GRAMMAR_MONSTER_STRIP_CHILD_COPY,
   GRAMMAR_BANK_STATUS_FILTER_IDS,
   GRAMMAR_BANK_CLUSTER_FILTER_IDS,
+  GRAMMAR_BANK_STATUS_CHIPS,
   GRAMMAR_DASHBOARD_HERO,
   GRAMMAR_CHILD_FORBIDDEN_TERMS,
   GRAMMAR_FOCUS_ALLOWED_MODES,
@@ -450,10 +451,10 @@ test('U8 view-model: grammarChildConfidenceLabel maps the five internal labels (
   assert.equal(grammarChildConfidenceLabel({ label: 'secure' }), 'Secure');
 });
 
-test('U8 view-model: grammarChildConfidenceLabel unknown label falls back to Learning', () => {
-  assert.equal(grammarChildConfidenceLabel({ label: 'not-a-label' }), 'Learning');
-  assert.equal(grammarChildConfidenceLabel({}), 'Learning');
-  assert.equal(grammarChildConfidenceLabel({ label: null }), 'Learning');
+test('U8 view-model: grammarChildConfidenceLabel unknown label falls back to Check status', () => {
+  assert.equal(grammarChildConfidenceLabel({ label: 'not-a-label' }), 'Check status');
+  assert.equal(grammarChildConfidenceLabel({}), 'Check status');
+  assert.equal(grammarChildConfidenceLabel({ label: null }), 'Check status');
 });
 
 test('U8 view-model: grammarChildConfidenceTone maps tones for CSS classes', () => {
@@ -1269,4 +1270,46 @@ test('P6-U6 view-model: dashboard Stars match direct buildGrammarMonsterStripMod
     assert.equal(dashEntry.stageName, directEntry.stageName, `${dashEntry.monsterId}: dashboard stageName matches direct strip`);
     assert.equal(dashEntry.stageIndex, directEntry.stageIndex, `${dashEntry.monsterId}: dashboard stageIndex matches direct strip`);
   }
+});
+
+// =============================================================================
+// P7-U3: Writing Try availability, Due filter label, confidence fallback
+// =============================================================================
+
+test('P7-U3 view-model: buildGrammarDashboardModel with aiEnrichment.enabled: false returns writingTryAvailable: true', () => {
+  const grammar = { capabilities: { aiEnrichment: { enabled: false } } };
+  const model = buildGrammarDashboardModel(grammar, null, null);
+  assert.equal(model.writingTryAvailable, true);
+});
+
+test('P7-U3 view-model: buildGrammarDashboardModel with no capabilities returns writingTryAvailable: true', () => {
+  const model = buildGrammarDashboardModel({}, null, null);
+  assert.equal(model.writingTryAvailable, true);
+});
+
+test('P7-U3 view-model: GRAMMAR_BANK_STATUS_CHIPS "due" entry has label "Practise next"', () => {
+  const dueChip = GRAMMAR_BANK_STATUS_CHIPS.find((chip) => chip.id === 'due');
+  assert.ok(dueChip, 'due chip must exist');
+  assert.equal(dueChip.label, 'Practise next');
+});
+
+test('P7-U3 view-model: grammarBankFilterMatchesStatus("due", "building") still returns true (unchanged behaviour)', () => {
+  assert.equal(grammarBankFilterMatchesStatus('due', 'building'), true);
+  assert.equal(grammarBankFilterMatchesStatus('due', 'needs-repair'), true);
+});
+
+test('P7-U3 view-model: grammarChildConfidenceLabel({ label: "not-a-label" }) returns "Check status"', () => {
+  assert.equal(grammarChildConfidenceLabel({ label: 'not-a-label' }), 'Check status');
+});
+
+test('P7-U3 view-model: grammarChildConfidenceLabel({ label: "building" }) returns "Learning" (unchanged)', () => {
+  assert.equal(grammarChildConfidenceLabel({ label: 'building' }), 'Learning');
+});
+
+test('P7-U3 view-model: grammarChildConfidenceLabel({}) returns "Check status"', () => {
+  assert.equal(grammarChildConfidenceLabel({}), 'Check status');
+});
+
+test('P7-U3 view-model: grammarChildConfidenceLabel(undefined) returns "Check status"', () => {
+  assert.equal(grammarChildConfidenceLabel(undefined), 'Check status');
 });

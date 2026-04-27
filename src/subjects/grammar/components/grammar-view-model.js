@@ -160,7 +160,7 @@ export const GRAMMAR_BANK_HERO = Object.freeze({
 // Nearly secure · Secure · New.
 export const GRAMMAR_BANK_STATUS_CHIPS = Object.freeze([
   Object.freeze({ id: 'all', label: 'All', tone: 'all' }),
-  Object.freeze({ id: 'due', label: 'Due', tone: 'due' }),
+  Object.freeze({ id: 'due', label: 'Practise next', tone: 'due' }),
   Object.freeze({ id: 'trouble', label: 'Trouble', tone: 'trouble' }),
   Object.freeze({ id: 'learning', label: 'Learning', tone: 'learning' }),
   Object.freeze({ id: 'nearly-secure', label: 'Nearly secure', tone: 'nearly-secure' }),
@@ -392,7 +392,7 @@ const CHILD_CONFIDENCE_TONES = Object.freeze({
  * delegates the actual mapping to `shared/grammar/confidence.js`.
  */
 export function grammarChildConfidenceLabel({ label } = {}) {
-  if (!isGrammarConfidenceLabel(label)) return 'Learning';
+  if (!isGrammarConfidenceLabel(label)) return 'Check status';
   return grammarChildConfidenceLabelShared({ label });
 }
 
@@ -558,7 +558,7 @@ export function buildGrammarDashboardModel(grammar, _learner, rewardState, maste
     monsterStrip: buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, recentAttempts),
     primaryMode,
     moreModes: GRAMMAR_MORE_PRACTICE_MODES,
-    writingTryAvailable: aiEnabled,
+    writingTryAvailable: true,
   };
 }
 
