@@ -477,6 +477,115 @@ export function recordGrammarConceptMastery({
   return events;
 }
 
+/**
+ * Lightweight latch-write for sub-secure Star evidence.
+ *
+ * Updates `starHighWater = max(existing, computedStars)` on the direct monster
+ * and Concordium without touching the `mastered[]` array (that stays exclusive
+ * to concept-secured via `recordGrammarConceptMastery`).
+ *
+ * Sets `caught: true` if Stars >= 1 and was previously false on either
+ * monster, emitting a `caught` reward event for each newly-caught monster.
+ *
+ * Returns an array of reward events (caught events for monsters that newly
+ * crossed the threshold, otherwise empty).
+ */
+export function updateGrammarStarHighWater({
+  learnerId,
+  conceptId,
+  computedStars,
+  gameStateRepository,
+  random = Math.random,
+} = {}) {
+  if (!GRAMMAR_AGGREGATE_CONCEPTS.includes(conceptId)) return [];
+  const stars = Math.max(0, Math.floor(Number(computedStars) || 0));
+  if (stars < 1) return [];
+
+  const directMonsterId = monsterIdForGrammarConcept(conceptId);
+  const before = ensureMonsterBranches(learnerId, gameStateRepository, {
+    random,
+    monsterIds: GRAMMAR_MONSTER_IDS,
+  });
+
+  const events = [];
+  const after = { ...before };
+
+  // Helper: latch starHighWater on a single monster entry. Returns true if
+  // the monster was newly caught (Stars >= 1 and was not caught before).
+  function latchMonster(monsterId) {
+    const entry = isPlainObject(before[monsterId])
+      ? before[monsterId]
+      : { mastered: [], caught: false };
+    const existingHW = safeStarHighWater(entry.starHighWater);
+    if (stars <= existingHW) {
+      // No change needed — existing high-water already covers this update.
+      return false;
+    }
+    const wasCaught = entry.caught === true;
+    const nowCaught = wasCaught || stars >= 1;
+    const total = grammarMonsterConceptTotal(monsterId);
+    after[monsterId] = {
+      ...entry,
+      caught: nowCaught,
+      conceptTotal: total,
+      starHighWater: Math.min(GRAMMAR_MONSTER_STAR_MAX, stars),
+    };
+    return !wasCaught && nowCaught;
+  }
+
+  let anyChange = false;
+
+  // Update Concordium (aggregate).
+  const concordiumNewlyCaught = latchMonster(GRAMMAR_GRAND_MONSTER_ID);
+  if (after[GRAMMAR_GRAND_MONSTER_ID] !== before[GRAMMAR_GRAND_MONSTER_ID]) anyChange = true;
+  if (concordiumNewlyCaught) {
+    const beforeProgress = progressForGrammarMonster(before, GRAMMAR_GRAND_MONSTER_ID, {
+      conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+    });
+    const afterProgress = progressForGrammarMonster(after, GRAMMAR_GRAND_MONSTER_ID, {
+      conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+    });
+    const ev = grammarEventFromTransition({
+      learnerId,
+      monsterId: GRAMMAR_GRAND_MONSTER_ID,
+      releaseId: GRAMMAR_REWARD_RELEASE_ID,
+      conceptId,
+      masteryKey: grammarMasteryKey(conceptId),
+      createdAt: Date.now(),
+    }, beforeProgress, afterProgress);
+    if (ev) events.push(ev);
+  }
+
+  // Update direct monster (if any).
+  if (directMonsterId) {
+    const directNewlyCaught = latchMonster(directMonsterId);
+    if (after[directMonsterId] !== before[directMonsterId]) anyChange = true;
+    if (directNewlyCaught) {
+      const beforeProgress = progressForGrammarMonster(before, directMonsterId, {
+        conceptTotal: grammarMonsterConceptTotal(directMonsterId),
+      });
+      const afterProgress = progressForGrammarMonster(after, directMonsterId, {
+        conceptTotal: grammarMonsterConceptTotal(directMonsterId),
+      });
+      const ev = grammarEventFromTransition({
+        learnerId,
+        monsterId: directMonsterId,
+        releaseId: GRAMMAR_REWARD_RELEASE_ID,
+        conceptId,
+        masteryKey: grammarMasteryKey(conceptId),
+        createdAt: Date.now(),
+      }, beforeProgress, afterProgress);
+      if (ev) events.push(ev);
+    }
+  }
+
+  if (anyChange) {
+    saveMonsterState(learnerId, after, gameStateRepository);
+  }
+
+  return events;
+}
+
 export function activeGrammarMonsterSummaryFromState(state = {}) {
   return grammarMonsterSummaryFromState(state)
     .filter((entry) => entry.progress.caught || entry.progress.mastered > 0);
