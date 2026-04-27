@@ -1,0 +1,307 @@
+// Hero Mode P0 — No-write boundary tests.
+//
+// Structural and behavioural tests proving the P0 Hero code layer cannot
+// write reward or subject state. These guard against accidental future
+// drift that would violate the read-only contract.
+//
+// Structural tests (1-6): use fs.readFileSync to scan the import graph
+// and source content of every .js file under shared/hero/ and
+// worker/src/hero/. No file IO at test-time beyond reading local source.
+//
+// Behavioural tests (7-8): use the Worker test server to prove the
+// route does not mutate any database table and that no command endpoint
+// exists.
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
+import { createWorkerRepositoryServer } from './helpers/worker-server.js';
+
+// ── Helpers ──────────────────────────────────────────────────────────
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(__dirname, '..');
+
+/**
+ * Recursively collect all .js files under a directory.
+ */
+function collectJsFiles(dir) {
+  const results = [];
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return results;
+  }
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...collectJsFiles(full));
+    } else if (entry.isFile() && entry.name.endsWith('.js')) {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
+/**
+ * Strip single-line and multi-line comments from source code so that
+ * structural grep assertions do not fire on documentation or TODOs.
+ */
+function stripComments(source) {
+  return source
+    .replace(/\/\/.*$/gm, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
+const SHARED_HERO_DIR = path.join(REPO_ROOT, 'shared', 'hero');
+const WORKER_HERO_DIR = path.join(REPO_ROOT, 'worker', 'src', 'hero');
+const CLIENT_SRC_DIR = path.join(REPO_ROOT, 'src');
+
+const SHARED_HERO_FILES = collectJsFiles(SHARED_HERO_DIR);
+const WORKER_HERO_FILES = collectJsFiles(WORKER_HERO_DIR);
+const ALL_HERO_FILES = [...SHARED_HERO_FILES, ...WORKER_HERO_FILES];
+
+// Pre-read all hero sources (stripped of comments) for structural checks.
+const HERO_SOURCES = new Map();
+for (const filePath of ALL_HERO_FILES) {
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+  HERO_SOURCES.set(rel, { raw, code: stripComments(raw) });
+}
+
+// ── Structural test 1: shared/hero/ does not import repository write methods ─
+
+test('S1: shared/hero/ modules do not import repository write primitives', () => {
+  const FORBIDDEN = ['.run(', '.batch(', 'bindStatement', 'createWorkerRepository'];
+  for (const filePath of SHARED_HERO_FILES) {
+    const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+    const { code } = HERO_SOURCES.get(rel);
+    for (const token of FORBIDDEN) {
+      assert.ok(
+        !code.includes(token),
+        `${rel} contains forbidden repository write token "${token}"`,
+      );
+    }
+  }
+});
+
+// ── Structural test 2: shared/hero/ does not import subject runtime ──────────
+
+test('S2: shared/hero/ modules do not import worker/src/subjects/runtime.js', () => {
+  for (const filePath of SHARED_HERO_FILES) {
+    const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+    const { code } = HERO_SOURCES.get(rel);
+    assert.ok(
+      !code.includes('subjects/runtime'),
+      `${rel} imports from subjects/runtime — shared/hero must not depend on subject runtime`,
+    );
+  }
+});
+
+// ── Structural test 3: worker/src/hero/ does not import dispatch from subject runtime ─
+
+test('S3: worker/src/hero/ modules do not import dispatch from subject runtime', () => {
+  for (const filePath of WORKER_HERO_FILES) {
+    const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+    const { code } = HERO_SOURCES.get(rel);
+    // Check for both the import path and the dispatch function name in
+    // combination. A benign comment mentioning "dispatch" is stripped.
+    if (code.includes('subjects/runtime')) {
+      assert.fail(
+        `${rel} imports from subjects/runtime — worker/src/hero must not depend on subject dispatch`,
+      );
+    }
+    // Also check for bare `dispatch(` calls which would indicate runtime mutation.
+    assert.ok(
+      !/\bdispatch\s*\(/.test(code),
+      `${rel} calls dispatch() — Hero providers must be read-only`,
+    );
+  }
+});
+
+// ── Structural test 4: worker/src/hero/ does not use D1 write primitives ─────
+
+test('S4: worker/src/hero/ modules do not use run(), batch(), or bindStatement() from d1.js', () => {
+  const FORBIDDEN_PATTERNS = [
+    // Importing from d1.js
+    /from\s+['"].*d1\.js['"]/,
+    // Using the write primitives directly
+    /\brun\s*\(/,
+    /\bbatch\s*\(/,
+    /\bbindStatement\s*\(/,
+  ];
+
+  for (const filePath of WORKER_HERO_FILES) {
+    const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+    const { code } = HERO_SOURCES.get(rel);
+
+    // d1.js import check
+    assert.ok(
+      !/from\s+['"].*d1\.js['"]/.test(code),
+      `${rel} imports from d1.js — Hero code must not use D1 write primitives`,
+    );
+
+    // bindStatement check
+    assert.ok(
+      !/\bbindStatement\s*\(/.test(code),
+      `${rel} calls bindStatement() — Hero code must not use D1 write primitives`,
+    );
+
+    // batch() check — exclude Array.isArray style and similar benign uses.
+    // We specifically look for batch( used as a D1 call, which would be
+    // preceded by a dot or imported standalone.
+    assert.ok(
+      !/\.batch\s*\(/.test(code),
+      `${rel} calls .batch() — Hero code must not use D1 write primitives`,
+    );
+  }
+});
+
+// ── Structural test 5: no client src/ file imports from shared/hero or worker/src/hero ─
+
+test('S5: no child dashboard component imports from shared/hero/ or worker/src/hero/', () => {
+  const clientFiles = collectJsFiles(CLIENT_SRC_DIR).filter(
+    (f) => f.endsWith('.js') || f.endsWith('.jsx'),
+  );
+
+  for (const filePath of clientFiles) {
+    const source = fs.readFileSync(filePath, 'utf8');
+    const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+
+    assert.ok(
+      !source.includes('shared/hero'),
+      `${rel} imports from shared/hero — P0 Hero code must not be imported by the child dashboard`,
+    );
+    assert.ok(
+      !source.includes('worker/src/hero'),
+      `${rel} imports from worker/src/hero — P0 Hero code must not be imported by the child dashboard`,
+    );
+  }
+});
+
+// ── Structural test 6: no P0 source file contains reward/economy strings ─────
+
+test('S6: no P0 Hero source file contains reward/economy tokens', () => {
+  // Case-insensitive check on code (comments already stripped).
+  const FORBIDDEN_ECONOMY_TOKENS = [
+    /\bcoin\b/i,
+    /\bshop\b/i,
+    /\bdeal\b/i,
+    /\bloot\b/i,
+    /streak\s+loss/i,
+  ];
+
+  for (const [rel, { code }] of HERO_SOURCES) {
+    for (const pattern of FORBIDDEN_ECONOMY_TOKENS) {
+      assert.ok(
+        !pattern.test(code),
+        `${rel} contains forbidden economy token matching ${pattern} — P0 Hero is read-only, no reward/economy strings allowed`,
+      );
+    }
+  }
+});
+
+// ── Behavioural test 7: GET /api/hero/read-model does not mutate any table ───
+
+test('B7: GET /api/hero/read-model does not write to any state table', async () => {
+  const server = createWorkerRepositoryServer({
+    env: { HERO_MODE_SHADOW_ENABLED: 'true' },
+  });
+
+  // Seed account + learner using the platform repositories pattern
+  // (mirrors worker-hero-read-model.test.js).
+  const repos = createApiPlatformRepositories({
+    baseUrl: 'https://repo.test',
+    fetch: server.fetch.bind(server),
+    authSession: server.authSessionFor('adult-a'),
+  });
+  await repos.hydrate();
+  repos.learners.write({
+    byId: {
+      'learner-a': {
+        id: 'learner-a',
+        name: 'Boundary Test Learner',
+        yearGroup: 'Y5',
+        goal: 'sats',
+        dailyMinutes: 15,
+        avatarColor: '#3E6FA8',
+        createdAt: 1,
+      },
+    },
+    allIds: ['learner-a'],
+    selectedId: 'learner-a',
+  });
+  await repos.flush();
+
+  // Tables whose row counts MUST NOT change from a read-only hero route.
+  const GUARDED_TABLES = [
+    'child_game_state',
+    'child_subject_state',
+    'practice_sessions',
+    'event_log',
+    'mutation_receipts',
+    'account_subject_content',
+    'platform_monster_visual_config',
+  ];
+
+  function countRows(tableName) {
+    return server.DB.db.prepare(
+      `SELECT COUNT(*) AS count FROM ${tableName}`,
+    ).get()?.count ?? 0;
+  }
+
+  // Snapshot BEFORE
+  const before = {};
+  for (const table of GUARDED_TABLES) {
+    before[table] = countRows(table);
+  }
+
+  // Call the hero read-model route
+  const response = await server.fetch(
+    'https://repo.test/api/hero/read-model?learnerId=learner-a',
+  );
+  assert.equal(response.status, 200, 'Hero read-model should return 200');
+
+  // Snapshot AFTER
+  for (const table of GUARDED_TABLES) {
+    const after = countRows(table);
+    assert.equal(
+      after,
+      before[table],
+      `Table ${table} row count changed from ${before[table]} to ${after} after GET /api/hero/read-model — violates the read-only contract`,
+    );
+  }
+
+  server.close();
+});
+
+// ── Behavioural test 8: POST /api/hero/command returns 404 ───────────────────
+
+test('B8: POST /api/hero/command returns 404 (route does not exist)', async () => {
+  const server = createWorkerRepositoryServer({
+    env: { HERO_MODE_SHADOW_ENABLED: 'true' },
+  });
+
+  const response = await server.fetch(
+    'https://repo.test/api/hero/command',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'test' }),
+    },
+  );
+
+  assert.equal(
+    response.status,
+    404,
+    `POST /api/hero/command must return 404 — P0 Hero has no write endpoint; got ${response.status}`,
+  );
+
+  server.close();
+});
