@@ -281,7 +281,11 @@ test('U5 Reward parity: one secured speech-core unit surfaces coherent progress 
     rewardState: monsterCodexState,
   });
   assert.match(setupHtml, /data-monster-id="pealark"/);
-  assert.match(setupHtml, /1\/5 secure/);
+  // Phase 5 U7: the Setup scene no longer shows "X/Y secure" per monster.
+  // Instead it renders star meters (X / 100 Stars) via starView. With no
+  // starView seeded, the meter reads "0 / 100 Stars" — still proves the
+  // monster renders and the reserved-monster filter is intact.
+  assert.match(setupHtml, /Pealark/);
   assert.doesNotMatch(setupHtml, /data-monster-id="colisk"/);
 
   // Summary — same rewardState prop; the strip reads pealark's stage.

@@ -51,26 +51,21 @@ function answerCurrentItemCorrectly(harness) {
 }
 
 test('punctuation React surface renders setup, active item, feedback and summary states', () => {
-  // Phase 3 U2 replaces the Phase 2 ten-button mode grid with a
-  // dashboard hero + three primary mode cards (Smart Review / Wobbly
-  // Spots / GPS Check) + one Open Map secondary card + round-length
-  // toggle. The old `data-punctuation-*-start` data attributes and
-  // `Endmarks focus` / `Apostrophe focus` / etc. labels are gone —
-  // the U2 describe block below tests the new dashboard shape
-  // explicitly, so this smoke test only asserts the hero + the
-  // three primary card labels land on Setup.
+  // Phase 5 U7 replaces the three-card button wall with a mission
+  // dashboard: hero + primary CTA + progress row + monster star meters
+  // + map link + secondary drawer with Wobbly / GPS / round length.
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
 
   const setupHtml = harness.render();
   assert.match(setupHtml, /Bellstorm Coast/);
-  assert.match(setupHtml, /Punctuation practice/);
-  assert.match(setupHtml, />Smart Review</);
+  assert.match(setupHtml, /punctuation mission/);
+  // Primary CTA
+  assert.match(setupHtml, /data-punctuation-cta/);
+  // Secondary drawer still carries Wobbly Spots and GPS Check
   assert.match(setupHtml, />Wobbly Spots</);
   assert.match(setupHtml, />GPS Check</);
-  // U1 (Phase 4, R1): primary cards dispatch `punctuation-start` on click,
-  // not `punctuation-set-mode`. The old assertion was the SSR blind spot
-  // the Phase 3 regression slipped through.
+  // Secondary buttons dispatch punctuation-start
   assert.match(setupHtml, /data-action="punctuation-start"/);
 
   startOneItemPunctuationSession(harness);
@@ -441,12 +436,9 @@ test('punctuation text-item controls disable when runtime is degraded', () => {
   assert.match(html, /<button[^>]*disabled[^>]*data-punctuation-submit/);
 });
 
-test('punctuation setup view disables primary mode cards when availability is degraded', () => {
-  // Phase 3 U2: the old `data-punctuation-start` Start practice button
-  // is replaced with three primary mode cards + an Open Map secondary
-  // card. Every mutation control threads `composeIsDisabled(ui)`, so
-  // degraded availability disables the Smart Review card (and every
-  // other card beside it).
+test('punctuation setup view disables primary CTA when availability is degraded', () => {
+  // Phase 5 U7: the mission dashboard's primary CTA threads
+  // `composeIsDisabled(ui)`, so degraded availability disables it.
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
@@ -454,12 +446,10 @@ test('punctuation setup view disables primary mode cards when availability is de
     availability: { status: 'degraded', code: 'runtime_degraded', message: 'paused' },
   });
   const html = harness.render();
-  // U1 (Phase 4): `data-action` is now `punctuation-start`. The disabled
-  // guard itself is unchanged.
   assert.match(
     html,
-    /<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="smart"|<button[^>]*data-action="punctuation-start"[^>]*data-value="smart"[^>]*disabled/,
-    'Smart Review card must be disabled under degraded availability',
+    /<button[^>]*disabled[^>]*data-punctuation-cta|<button[^>]*data-punctuation-cta[^>]*disabled/,
+    'Primary CTA must be disabled under degraded availability',
   );
 });
 
@@ -2790,28 +2780,33 @@ function forbiddenTermsInSetupHtml(html) {
   return leaks;
 }
 
-test('punctuation Setup scene renders 3 primary mode cards + Open Map secondary card', () => {
+test('punctuation Setup scene renders mission dashboard with primary CTA + secondary drawer + map link', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   const html = harness.render();
 
-  // Three primary journey cards, each tagged by mode id. U1 (Phase 4):
-  // tapping a card starts a session — `data-action` is `punctuation-start`.
-  for (const modeId of ['smart', 'weak', 'gps']) {
+  // R7: Single primary CTA above the fold.
+  assert.match(html, /data-punctuation-cta/, 'missing primary CTA');
+  // Secondary drawer carries Wobbly Spots and GPS Check.
+  for (const modeId of ['weak', 'gps']) {
     assert.match(
       html,
       new RegExp(`data-action="punctuation-start"[^>]*data-value="${modeId}"`),
-      `missing primary mode card for ${modeId}`,
+      `missing secondary mode button for ${modeId}`,
     );
   }
-  // Child-facing labels land too.
-  assert.match(html, />Smart Review</);
   assert.match(html, />Wobbly Spots</);
   assert.match(html, />GPS Check</);
-  // Exactly one Open Map secondary card.
+  // Exactly one Open Punctuation Map affordance.
   const openMapMatches = html.match(/data-action="punctuation-open-map"/g) || [];
   assert.equal(openMapMatches.length, 1, 'expected exactly one Open Map affordance');
   assert.match(html, />Open Punctuation Map</);
+  // R8: data-section landmarks for journey spec testing.
+  assert.match(html, /data-section="hero"/, 'missing hero landmark');
+  assert.match(html, /data-section="progress-row"/, 'missing progress-row landmark');
+  assert.match(html, /data-section="monster-row"/, 'missing monster-row landmark');
+  assert.match(html, /data-section="map-link"/, 'missing map-link landmark');
+  assert.match(html, /data-section="secondary"/, 'missing secondary landmark');
 });
 
 test('punctuation Setup scene does not render the 6 cluster focus buttons (plan R1)', () => {
@@ -2834,53 +2829,115 @@ test('punctuation Setup scene does not render the 6 cluster focus buttons (plan 
   assert.doesNotMatch(html, /data-punctuation-gps-start/);
 });
 
-// U1 (Phase 4, R1): primary cards are action buttons, not radio buttons,
-// so `aria-pressed` is removed from the primary-card element. The
-// display-collapse signal (Smart Review "feels selected" when prefs
-// collapse to smart) is now the `selected` CSS class — the tests below
-// assert on that class instead. The legacy cluster-mode → `'smart'`
-// migration still runs through `punctuation-set-mode` (unchanged).
-test('punctuation Setup scene Smart Review card carries `selected` class when prefs.mode is smart', () => {
+// Phase 5 U7: mission dashboard — the three primary mode cards are replaced
+// by a single primary CTA + secondary drawer. The CTA label adapts to the
+// learner's state (fresh / returning with wobbly / post-session continue).
+// Mode-dispatch tests below verify that `punctuation-set-mode` still updates
+// stored prefs, which feeds the CTA resolution logic.
+
+test('punctuation Setup scene: fresh learner single CTA reads "Find your first punctuation egg" with all monsters at 0/100 Stars', () => {
   const harness = createPunctuationHarness();
-  const learnerId = harness.store.getState().learners.selectedId;
-  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
-  // Force a fresh dispatch so ui.prefs mirrors the stored mode.
-  harness.dispatch('punctuation-set-mode', { value: 'smart' });
   const html = harness.render();
 
+  assert.match(html, /Find your first punctuation egg/, 'fresh learner CTA label');
+  // All four active monsters at 0 / 100 Stars
+  for (const name of ['Pealark', 'Claspin', 'Curlune', 'Quoral']) {
+    assert.match(html, new RegExp(name), `monster ${name} must render`);
+  }
+  assert.match(html, /0 \/ 100 Stars/, 'fresh learner monsters show 0/100');
+  // No "Stage X of 4" anywhere
+  assert.doesNotMatch(html, /Stage \d+ of \d+/, 'no "Stage X of Y" in rendered output');
+});
+
+test('punctuation Setup scene: post-session render — same layout with updated stars and mission text', async () => {
+  // Use the standalone renderer so we can control stats + starView directly
+  // without going through the service layer (which doesn't populate weak from
+  // updateSubjectUi alone).
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const html = renderPunctuationSetupSceneStandalone({
+    ui: {
+      availability: { status: 'ready' },
+      starView: {
+        perMonster: {
+          pealark: { total: 22, starDerivedStage: 1 },
+          claspin: { total: 0, starDerivedStage: 0 },
+          curlune: { total: 12, starDerivedStage: 1 },
+        },
+        grand: { grandStars: 3, starDerivedStage: 0, total: 100 },
+      },
+    },
+    actions: { dispatch: () => {}, updateSubjectUi: () => {} },
+    prefs: { mode: 'smart', roundLength: '4' },
+    stats: { total: 14, secure: 3, due: 2, weak: 1, fresh: 8, attempts: 20, correct: 15, accuracy: 75 },
+    learner: { id: 'test', name: 'Tester' },
+    rewardState: {},
+  });
+
+  // R8: same data-section landmarks as fresh learner
+  assert.match(html, /data-section="hero"/, 'hero landmark present post-session');
+  assert.match(html, /data-section="progress-row"/, 'progress-row present post-session');
+  assert.match(html, /data-section="monster-row"/, 'monster-row present post-session');
+  assert.match(html, /data-section="map-link"/, 'map-link present post-session');
+  assert.match(html, /data-section="secondary"/, 'secondary present post-session');
+  // R7: CTA adapts — weak > 0, so CTA reads "Tackle wobbly spots"
+  assert.match(html, /Tackle wobbly spots/, 'post-session CTA with wobbly spots');
+  // Star meters update
+  assert.match(html, /22 \/ 100 Stars/, 'pealark stars updated');
+  // No "Stage X of 4" anywhere
+  assert.doesNotMatch(html, /Stage \d+ of \d+/, 'no "Stage X of Y" in rendered output');
+});
+
+test('punctuation Setup scene: active session triggers "Continue your round" CTA with punctuation-continue action', async () => {
+  // Use the standalone renderer so we can inject ui.session.id directly
+  // — the harness render pipeline strips session on phase=setup.
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const html = renderPunctuationSetupSceneStandalone({
+    ui: {
+      availability: { status: 'ready' },
+      session: { id: 'test-session' },
+    },
+    actions: { dispatch: () => {}, updateSubjectUi: () => {} },
+    prefs: { mode: 'smart', roundLength: '4' },
+    // Non-zero stats so the dashboard isEmpty is false — a fresh learner
+    // would override the CTA label with "Find your first punctuation egg".
+    stats: { total: 10, secure: 2, due: 3, weak: 0, attempts: 5, correct: 4, accuracy: 80 },
+    learner: { id: 'test', name: 'Tester' },
+    rewardState: {},
+  });
+
+  // CTA label must read "Continue your round".
+  assert.match(html, /Continue your round/, 'continue CTA label when active session exists');
+  // CTA button must dispatch punctuation-continue (not punctuation-start).
   assert.match(
     html,
-    /class="punctuation-primary-mode selected[^"]*"[^>]*data-mode-id="smart"/,
-    'Smart Review card should carry the `selected` class when prefs.mode === "smart"',
+    /data-action="punctuation-continue"/,
+    'CTA carries data-action="punctuation-continue" for the continue branch',
   );
 });
 
-test('punctuation Setup scene Wobbly card carries `selected` class when prefs.mode is weak', () => {
+test('punctuation Setup scene: round-length preference accessible via secondary drawer', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
-  harness.dispatch('punctuation-set-mode', { value: 'weak' });
   const html = harness.render();
-  assert.match(
-    html,
-    /class="punctuation-primary-mode selected[^"]*"[^>]*data-mode-id="weak"/,
-    'Wobbly Spots card should carry the `selected` class when prefs.mode === "weak"',
-  );
+  // Round length toggle lives inside the secondary drawer
+  assert.match(html, /data-section="secondary"[^]*role="radiogroup"/, 'round length radiogroup inside secondary');
+  assert.match(html, /Round length/, 'round length label present');
 });
 
-test('punctuation Setup scene GPS card carries `selected` class when prefs.mode is gps', () => {
+test('punctuation Setup scene: Punctuation Map link present', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
-  harness.dispatch('punctuation-set-mode', { value: 'gps' });
   const html = harness.render();
-  assert.match(
-    html,
-    /class="punctuation-primary-mode selected[^"]*"[^>]*data-mode-id="gps"/,
-    'GPS Check card should carry the `selected` class when prefs.mode === "gps"',
-  );
+  assert.match(html, /data-section="map-link"/, 'map-link landmark');
+  assert.match(html, />Open Punctuation Map</, 'map link text');
 });
 
-test('punctuation Setup scene: clicking Smart Review sets state.subjectUi.punctuation.prefs.mode to smart', () => {
+test('punctuation Setup scene: mode dispatch still updates stored prefs', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.dispatch('punctuation-set-mode', { value: 'smart' });
@@ -2888,7 +2945,7 @@ test('punctuation Setup scene: clicking Smart Review sets state.subjectUi.punctu
   assert.equal(state.prefs.mode, 'smart');
 });
 
-test('punctuation Setup scene: clicking Wobbly sets state.subjectUi.punctuation.prefs.mode to weak', () => {
+test('punctuation Setup scene: weak mode dispatch updates stored prefs', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.dispatch('punctuation-set-mode', { value: 'weak' });
@@ -2896,7 +2953,7 @@ test('punctuation Setup scene: clicking Wobbly sets state.subjectUi.punctuation.
   assert.equal(state.prefs.mode, 'weak');
 });
 
-test('punctuation Setup scene: clicking GPS sets state.subjectUi.punctuation.prefs.mode to gps', () => {
+test('punctuation Setup scene: gps mode dispatch updates stored prefs', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.dispatch('punctuation-set-mode', { value: 'gps' });
@@ -2915,7 +2972,7 @@ test('punctuation Setup scene: Open Map dispatch transitions phase setup → map
   assert.equal(harness.store.getState().subjectUi.punctuation.phase, 'map');
 });
 
-test('punctuation Setup scene: degraded availability disables every primary and secondary card', () => {
+test('punctuation Setup scene: degraded availability disables primary CTA + secondary buttons + map link', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
@@ -2923,24 +2980,29 @@ test('punctuation Setup scene: degraded availability disables every primary and 
   });
   const html = harness.render();
 
-  // Each primary mode card is disabled. U1 (Phase 4): `data-action` is
-  // now `punctuation-start`.
-  for (const modeId of ['smart', 'weak', 'gps']) {
+  // Primary CTA disabled.
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-punctuation-cta|<button[^>]*data-punctuation-cta[^>]*disabled/,
+    'primary CTA should be disabled under degraded availability',
+  );
+  // Secondary drawer mode buttons disabled.
+  for (const modeId of ['weak', 'gps']) {
     assert.match(
       html,
       new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"[^>]*disabled`),
-      `primary mode card ${modeId} should be disabled under degraded availability`,
+      `secondary button ${modeId} should be disabled under degraded availability`,
     );
   }
-  // Open Map secondary card is disabled.
+  // Map link disabled.
   assert.match(
     html,
     /<button[^>]*disabled[^>]*data-action="punctuation-open-map"|<button[^>]*data-action="punctuation-open-map"[^>]*disabled/,
-    'Open Map card should be disabled under degraded availability',
+    'Map link should be disabled under degraded availability',
   );
 });
 
-test('punctuation Setup scene: pendingCommand disables every primary and secondary card', () => {
+test('punctuation Setup scene: pendingCommand disables primary CTA + secondary buttons + map link', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   harness.store.updateSubjectUi('punctuation', {
@@ -2948,14 +3010,18 @@ test('punctuation Setup scene: pendingCommand disables every primary and seconda
   });
   const html = harness.render();
 
-  // U1 (Phase 4): `data-action` is now `punctuation-start`, not
-  // `punctuation-set-mode`. The pending-command guard is unchanged —
-  // still renders each card with `disabled`.
-  for (const modeId of ['smart', 'weak', 'gps']) {
+  // Primary CTA disabled.
+  assert.match(
+    html,
+    /<button[^>]*disabled[^>]*data-punctuation-cta|<button[^>]*data-punctuation-cta[^>]*disabled/,
+    'primary CTA should be disabled while pendingCommand is set',
+  );
+  // Secondary drawer mode buttons disabled.
+  for (const modeId of ['weak', 'gps']) {
     assert.match(
       html,
       new RegExp(`<button[^>]*disabled[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"|<button[^>]*data-action="punctuation-start"[^>]*data-value="${modeId}"[^>]*disabled`),
-      `primary mode card ${modeId} should be disabled while pendingCommand is set`,
+      `secondary button ${modeId} should be disabled while pendingCommand is set`,
     );
   }
   assert.match(
@@ -2965,17 +3031,18 @@ test('punctuation Setup scene: pendingCommand disables every primary and seconda
   );
 });
 
-test('punctuation Setup scene: fresh learner renders zero-state copy (guards Phase 2 hasEvidence fix)', () => {
-  // A fresh learner with no stats should NOT see "1 skill due" or any
-  // inflated Today counter. The empty-state copy lives in a dedicated
-  // data-testid hook so this test stays resilient to copy tweaks.
+test('punctuation Setup scene: fresh learner renders zero-state progress row (guards Phase 2 hasEvidence fix)', () => {
+  // A fresh learner with no stats should see zeroes in the progress row,
+  // not inflated counters. The mission dashboard always renders the
+  // progress row (R8 invariant skeleton).
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   const html = harness.render();
 
-  // Zero-state copy lands — every count is zero, so the dashboard
-  // shows the empty-state prompt instead of the grid.
-  assert.match(html, /data-testid="punctuation-today-empty"/);
+  // Progress row renders with all zeroes.
+  assert.match(html, /data-section="progress-row"/, 'progress row renders for fresh learner');
+  // The CTA reads the fresh-learner label.
+  assert.match(html, /Find your first punctuation egg/, 'fresh learner CTA');
 });
 
 test('punctuation Setup scene: reserved monster ids NEVER appear in the active monster strip', () => {
@@ -3020,32 +3087,16 @@ test('punctuation Setup scene SSR HTML contains no forbidden child terms', () =>
 });
 
 test('punctuation Setup scene stale-prefs migration: endmarks prefs collapse to smart on first render', () => {
-  // Pre-Phase-3 stored `prefs.mode === 'endmarks'` → the display
-  // normaliser collapses legacy cluster values to `'smart'` so the
-  // Smart Review card visually reads as the active selection, AND
-  // first render dispatches `punctuation-set-mode` with
-  // `{ value: 'smart' }` to migrate stored state once.
-  //
-  // U1 (Phase 4): primary cards are action buttons (no `aria-pressed`
-  // — R1), so the visual-selection signal is the `selected` CSS class
-  // on the Smart Review button rather than an ARIA attribute. The
-  // migration behaviour itself (stored prefs collapse to `'smart'`)
-  // is unchanged.
+  // Pre-Phase-3 stored `prefs.mode === 'endmarks'` → first render
+  // dispatches `punctuation-set-mode` with `{ value: 'smart' }` to
+  // migrate stored state once.
   const harness = createPunctuationHarness();
   const learnerId = harness.store.getState().learners.selectedId;
   harness.services.punctuation.savePrefs(learnerId, { mode: 'endmarks', roundLength: '4' });
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
 
-  // First render — the effect dispatches the migration.
-  const html = harness.render();
-  // Display collapse: Smart Review receives the `selected` CSS class
-  // (U1 replaces the removed `aria-pressed` attribute as the visual-
-  // selection signal).
-  assert.match(
-    html,
-    /class="punctuation-primary-mode selected[^"]*"[^>]*data-mode-id="smart"|class="punctuation-primary-mode[^"]* selected"[^>]*data-mode-id="smart"/,
-    'Smart Review must render with the `selected` class when prefs.mode is a legacy cluster value',
-  );
+  // First render — the migration dispatches.
+  harness.render();
   // Migration persisted — stored prefs.mode is now 'smart'.
   assert.equal(harness.store.getState().subjectUi.punctuation.prefs.mode, 'smart');
 });
@@ -3758,7 +3809,11 @@ test('U1 primary card data-action is "punctuation-start" and does NOT carry aria
 //     selectedRoundLength().
 // ---------------------------------------------------------------------------
 
-function extractPrimaryCardRoundLengths(html) {
+// Phase 5 U7: the mission dashboard moves Wobbly Spots and GPS Check into
+// the secondary drawer. The `extractSecondaryButtonRoundLengths` helper
+// extracts the `data-round-length` attribute from each secondary button so
+// prop-threading tests still verify the parent → button contract.
+function extractSecondaryButtonRoundLengths(html) {
   const regex = /<button\b[^>]*\bdata-action="punctuation-start"[^>]*?>/g;
   const cards = [];
   let match;
@@ -3774,26 +3829,7 @@ function extractPrimaryCardRoundLengths(html) {
   return cards;
 }
 
-test('U1 follow-on: parent threads prefs.roundLength="4" to every primary card (default)', () => {
-  const harness = createPunctuationHarness();
-  const learnerId = harness.store.getState().learners.selectedId;
-  harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '4' });
-  harness.dispatch('open-subject', { subjectId: 'punctuation' });
-  harness.dispatch('punctuation-set-round-length', { value: '4' });
-  const html = harness.render();
-
-  const cards = extractPrimaryCardRoundLengths(html);
-  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
-  for (const card of cards) {
-    assert.equal(
-      card.roundLength,
-      '4',
-      `primary card ${card.mode} must carry data-round-length="4" (parent prop-threading regression if missing)`,
-    );
-  }
-});
-
-test('U1 follow-on: parent threads prefs.roundLength="8" to every primary card', () => {
+test('U7 follow-on: round-length toggle threads value to secondary drawer buttons', () => {
   const harness = createPunctuationHarness();
   const learnerId = harness.store.getState().learners.selectedId;
   harness.services.punctuation.savePrefs(learnerId, { mode: 'smart', roundLength: '8' });
@@ -3801,45 +3837,18 @@ test('U1 follow-on: parent threads prefs.roundLength="8" to every primary card',
   harness.dispatch('punctuation-set-round-length', { value: '8' });
   const html = harness.render();
 
-  const cards = extractPrimaryCardRoundLengths(html);
-  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
-  for (const card of cards) {
-    assert.equal(
-      card.roundLength,
-      '8',
-      `primary card ${card.mode} must carry data-round-length="8" (parent prop-threading regression if missing)`,
-    );
+  // The secondary drawer carries 2 buttons: weak and gps.
+  // Filter to buttons with a data-value (excludes the primary CTA which
+  // also renders data-action="punctuation-start" but without data-value).
+  const allButtons = extractSecondaryButtonRoundLengths(html);
+  const buttons = allButtons.filter((b) => b.mode !== null);
+  assert.ok(buttons.length >= 2, 'expected at least two secondary buttons');
+  // Every secondary button must carry the threaded round-length value.
+  for (const btn of buttons) {
+    assert.equal(btn.roundLength, '8', `secondary button ${btn.mode} must carry data-round-length="8"`);
   }
-});
-
-test('U1 follow-on: parent falls back to "4" when prefs.roundLength is absent', async () => {
-  // Bypass `createPunctuationHarness` so we control `prefs` exactly and
-  // exercise `selectedRoundLength()`'s default branch (no roundLength key
-  // at all). Uses the standalone SSR helper so the full parent tree runs.
-  const { renderPunctuationSetupSceneStandalone } = await import(
-    './helpers/punctuation-scene-render.js'
-  );
-  const html = renderPunctuationSetupSceneStandalone({
-    ui: { availability: { status: 'ready' } },
-    actions: {
-      dispatch: () => {},
-      updateSubjectUi: () => {},
-    },
-    prefs: { mode: 'smart' }, // deliberately omit roundLength
-    stats: {},
-    learner: null,
-    rewardState: {},
-  });
-
-  const cards = extractPrimaryCardRoundLengths(html);
-  assert.equal(cards.length, 3, 'expected exactly three primary-mode cards to render');
-  for (const card of cards) {
-    assert.equal(
-      card.roundLength,
-      '4',
-      `primary card ${card.mode} must fall back to data-round-length="4" when prefs.roundLength is absent`,
-    );
-  }
+  // Round length radiogroup present inside the secondary drawer.
+  assert.match(html, /role="radiogroup"/, 'round length toggle present');
 });
 
 // ---------------------------------------------------------------------------
