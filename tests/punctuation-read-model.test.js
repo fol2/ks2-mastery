@@ -173,7 +173,7 @@ test('three units tracked but only one has securedAt — tracked 3, secured 1', 
   assert.equal(model.progressSnapshot.securedRewardUnits, 1, 'only the entry with a valid securedAt is secured');
   assert.equal(model.overview.securedRewardUnits, 1, 'overview must match progressSnapshot');
   assert.equal(model.releaseDiagnostics.trackedRewardUnitCount, 3, 'diagnostics must reflect tracked count');
-  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0, 'deep-secured placeholder is 0 until U3');
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0, 'no facets exist so no deep-secured units');
 });
 
 test('reward unit entry with null securedAt is tracked but not secured', () => {
@@ -393,4 +393,324 @@ test('U4: starDerivedStage follows PUNCTUATION_STAR_THRESHOLDS', () => {
   // With 15 distinct correct items + 1 secured reward unit, expect total >= 10 → stage >= 1.
   assert.ok(pealark.total >= 10, `Pealark total should be >= 10, got ${pealark.total}`);
   assert.ok(pealark.starDerivedStage >= 1, `Pealark starDerivedStage should be >= 1, got ${pealark.starDerivedStage}`);
+});
+
+// ---------------------------------------------------------------------------
+// U7: deepSecuredRewardUnits wiring tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Helper: build a facet state that memorySnapshot classifies as secure.
+ * secure bucket requires: streak >= 3, accuracy >= 0.8, correctSpanDays >= 7.
+ */
+function deepSecureFacet(nowTs) {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  return {
+    attempts: 10,
+    correct: 9,
+    incorrect: 1,
+    streak: 4,
+    lapses: 0,
+    dueAt: 0,
+    firstCorrectAt: nowTs - (14 * DAY_MS),
+    lastCorrectAt: nowTs,
+    lastSeen: nowTs,
+  };
+}
+
+test('U7: reward unit with securedAt and all facets deep-secure counts as deep-secured', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  // Secure reward unit in endmarks cluster.
+  const k1 = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now - 10_000,
+  };
+
+  // Deep-secure facet for sentence_endings (belongs to endmarks cluster).
+  subjectState.data.progress.facets['sentence_endings::choose'] = deepSecureFacet(now);
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 1,
+    'reward unit with securedAt + deep-secure facet must count as deep-secured');
+});
+
+test('U7: 3 of 14 units deep-secured returns deepSecuredRewardUnits = 3', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  // Three secured reward units with deep-secure facets.
+  const secured = [
+    { clusterId: 'endmarks', rewardUnitId: 'sentence-endings-core', facetSkill: 'sentence_endings' },
+    { clusterId: 'apostrophe', rewardUnitId: 'apostrophe-contractions-core', facetSkill: 'apostrophe_contractions' },
+    { clusterId: 'speech', rewardUnitId: 'speech-core', facetSkill: 'speech' },
+  ];
+
+  for (const u of secured) {
+    const k = masteryKey(u.clusterId, u.rewardUnitId);
+    subjectState.data.progress.rewardUnits[k] = {
+      masteryKey: k,
+      releaseId: CURRENT_RELEASE_ID,
+      clusterId: u.clusterId,
+      rewardUnitId: u.rewardUnitId,
+      securedAt: now - 10_000,
+    };
+    subjectState.data.progress.facets[`${u.facetSkill}::choose`] = deepSecureFacet(now);
+  }
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 3,
+    '3 units with securedAt + deep-secure facets = deepSecuredRewardUnits 3');
+  assert.equal(model.progressSnapshot.securedRewardUnits, 3,
+    'all 3 are also counted as secured');
+});
+
+test('U7: secured unit with facet that has lapse is NOT deep-secured', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  const k1 = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now - 10_000,
+  };
+
+  // Facet is secure but has lapses > 0.
+  const facet = deepSecureFacet(now);
+  facet.lapses = 2;
+  subjectState.data.progress.facets['sentence_endings::choose'] = facet;
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0,
+    'facet with lapses > 0 blocks deep-secure even when bucket is secure');
+  assert.equal(model.progressSnapshot.securedRewardUnits, 1,
+    'still counts as secured (securedAt is valid)');
+});
+
+test('U7: facet secure with lapses > 0 but streak > 0 is NOT deep-secured', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  const k1 = masteryKey('speech', 'speech-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    securedAt: now - 10_000,
+  };
+
+  // Facet: secure bucket (streak >= 3, accuracy >= 0.8, span >= 7 days) but lapses = 1.
+  const facet = deepSecureFacet(now);
+  facet.lapses = 1;
+  facet.streak = 4; // streak > 0 does NOT excuse the lapse for deep-secure
+  subjectState.data.progress.facets['speech::insert'] = facet;
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0,
+    'lapses must be exactly 0 for deep-secure — streak cannot compensate');
+});
+
+test('U7: no tracked reward units yields deepSecuredRewardUnits = 0', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  // Add a deep-secure facet but no reward units at all.
+  subjectState.data.progress.facets['sentence_endings::choose'] = deepSecureFacet(now);
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0,
+    'no tracked reward units means deepSecuredRewardUnits = 0');
+  assert.equal(model.progressSnapshot.trackedRewardUnits, 0);
+});
+
+test('U7: fresh learner with no facets and no reward units yields deepSecuredRewardUnits = 0', () => {
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: freshSubjectState(),
+    practiceSessions: [],
+    now: () => Date.UTC(2026, 3, 25),
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0,
+    'fresh learner must have deepSecuredRewardUnits = 0');
+  assert.equal(model.progressSnapshot.trackedRewardUnits, 0);
+  assert.equal(model.progressSnapshot.securedRewardUnits, 0);
+});
+
+test('U7: secured unit without securedAt is NOT deep-secured even with deep-secure facets', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  // Tracked reward unit but securedAt = 0 (not yet secured).
+  const k1 = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: 0,
+  };
+
+  // Deep-secure facet exists.
+  subjectState.data.progress.facets['sentence_endings::choose'] = deepSecureFacet(now);
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0,
+    'securedAt must be > 0 for deep-secured count');
+  assert.equal(model.progressSnapshot.securedRewardUnits, 0,
+    'securedAt = 0 means not secured either');
+  assert.equal(model.progressSnapshot.trackedRewardUnits, 1,
+    'entry is tracked');
+});
+
+test('U7: deep-secure facet for a DIFFERENT cluster does not count — cluster mismatch', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  // Secured reward unit in the endmarks cluster.
+  const k1 = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now - 10_000,
+  };
+
+  // Deep-secure facet for apostrophe_contractions — belongs to the apostrophe
+  // cluster, NOT endmarks. This exercises the `if (!skillIds.has(skillId)) continue`
+  // guard: the facet is genuine deep-secure material but for the wrong cluster.
+  subjectState.data.progress.facets['apostrophe_contractions::choose'] = deepSecureFacet(now);
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0,
+    'facet is deep-secure but belongs to apostrophe cluster, not endmarks');
+  assert.equal(model.progressSnapshot.securedRewardUnits, 1,
+    'reward unit is still secured (securedAt > 0)');
+});
+
+test('U7: facet in learning bucket with zero lapses is NOT deep-secured', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  // Secured reward unit in endmarks cluster.
+  const k1 = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now - 10_000,
+  };
+
+  // Facet with zero lapses but NOT in the secure bucket.
+  // Learning bucket: streak=1 (< 3), accuracy=0.85, correctSpanDays=2 (< 7).
+  // This exercises the `snap.secure` conjunct independently while rawLapses === 0.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  subjectState.data.progress.facets['sentence_endings::choose'] = {
+    attempts: 10,
+    correct: 9,         // accuracy 0.9 — well above 0.8
+    incorrect: 1,
+    streak: 1,          // below secure threshold of 3
+    lapses: 0,          // zero lapses — not the blocking factor
+    dueAt: 0,
+    firstCorrectAt: now - (2 * DAY_MS),   // correctSpanDays = 2, below secure threshold of 7
+    lastCorrectAt: now,
+    lastSeen: now,
+  };
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0,
+    'facet is in learning bucket (not secure) despite zero lapses — snap.secure blocks');
+  assert.equal(model.progressSnapshot.securedRewardUnits, 1,
+    'reward unit itself is still secured');
+});
+
+test('U7: multiple reward units in same cluster — shared deep-secure facet promotes both', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  // comma_flow cluster has 3 reward units: list-commas, fronted-adverbials, comma-clarity.
+  // Secure two of them, but only provide deep-secure facets for one skill.
+  const k1 = masteryKey('comma_flow', 'list-commas-core');
+  const k2 = masteryKey('comma_flow', 'fronted-adverbials-core');
+  subjectState.data.progress.rewardUnits[k1] = {
+    masteryKey: k1,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'comma_flow',
+    rewardUnitId: 'list-commas-core',
+    securedAt: now - 10_000,
+  };
+  subjectState.data.progress.rewardUnits[k2] = {
+    masteryKey: k2,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'comma_flow',
+    rewardUnitId: 'fronted-adverbials-core',
+    securedAt: now - 5_000,
+  };
+
+  // Deep-secure facet for list_commas skill (belongs to comma_flow).
+  // Both reward units share the comma_flow cluster, so ANY deep-secure facet
+  // for a comma_flow skill qualifies all secured reward units in that cluster.
+  subjectState.data.progress.facets['list_commas::choose'] = deepSecureFacet(now);
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  // Both reward units are in comma_flow, both have securedAt > 0,
+  // and there is a deep-secure facet for list_commas which is in comma_flow.
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 2,
+    'both comma_flow units are deep-secured because a shared cluster facet is deep-secure');
+  assert.equal(model.progressSnapshot.securedRewardUnits, 2);
 });
