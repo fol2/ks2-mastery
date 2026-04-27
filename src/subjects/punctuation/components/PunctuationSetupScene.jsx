@@ -185,6 +185,7 @@ function SecondaryModeButton({ label, mode, roundLength, disabled, actions }) {
       className={classes.join(' ')}
       data-action="punctuation-start"
       data-value={mode}
+      data-round-length={roundLength}
       disabled={disabled}
       onClick={() => {
         if (disabled) return;

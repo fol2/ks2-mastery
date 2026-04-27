@@ -2890,6 +2890,36 @@ test('punctuation Setup scene: post-session render — same layout with updated 
   assert.doesNotMatch(html, /Stage \d+ of \d+/, 'no "Stage X of Y" in rendered output');
 });
 
+test('punctuation Setup scene: active session triggers "Continue your round" CTA with punctuation-continue action', async () => {
+  // Use the standalone renderer so we can inject ui.session.id directly
+  // — the harness render pipeline strips session on phase=setup.
+  const { renderPunctuationSetupSceneStandalone } = await import(
+    './helpers/punctuation-scene-render.js'
+  );
+  const html = renderPunctuationSetupSceneStandalone({
+    ui: {
+      availability: { status: 'ready' },
+      session: { id: 'test-session' },
+    },
+    actions: { dispatch: () => {}, updateSubjectUi: () => {} },
+    prefs: { mode: 'smart', roundLength: '4' },
+    // Non-zero stats so the dashboard isEmpty is false — a fresh learner
+    // would override the CTA label with "Find your first punctuation egg".
+    stats: { total: 10, secure: 2, due: 3, weak: 0, attempts: 5, correct: 4, accuracy: 80 },
+    learner: { id: 'test', name: 'Tester' },
+    rewardState: {},
+  });
+
+  // CTA label must read "Continue your round".
+  assert.match(html, /Continue your round/, 'continue CTA label when active session exists');
+  // CTA button must dispatch punctuation-continue (not punctuation-start).
+  assert.match(
+    html,
+    /data-action="punctuation-continue"/,
+    'CTA carries data-action="punctuation-continue" for the continue branch',
+  );
+});
+
 test('punctuation Setup scene: round-length preference accessible via secondary drawer', () => {
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
@@ -3808,8 +3838,15 @@ test('U7 follow-on: round-length toggle threads value to secondary drawer button
   const html = harness.render();
 
   // The secondary drawer carries 2 buttons: weak and gps.
-  const buttons = extractSecondaryButtonRoundLengths(html);
+  // Filter to buttons with a data-value (excludes the primary CTA which
+  // also renders data-action="punctuation-start" but without data-value).
+  const allButtons = extractSecondaryButtonRoundLengths(html);
+  const buttons = allButtons.filter((b) => b.mode !== null);
   assert.ok(buttons.length >= 2, 'expected at least two secondary buttons');
+  // Every secondary button must carry the threaded round-length value.
+  for (const btn of buttons) {
+    assert.equal(btn.roundLength, '8', `secondary button ${btn.mode} must carry data-round-length="8"`);
+  }
   // Round length radiogroup present inside the secondary drawer.
   assert.match(html, /role="radiogroup"/, 'round length toggle present');
 });
