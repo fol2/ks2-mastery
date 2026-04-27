@@ -158,7 +158,7 @@ test('browser migration smoke covers the React app root, Grammar completeness co
 
     assert.match(output, /Your subjects/);
     assert.doesNotMatch(output, /data-home-mount/);
-    assert.match(output, /Punctuation practice/);
+    assert.match(output, /punctuation mission/);
     // U4 follower: summary headline is now the accuracy-bucketed celebration
     // copy from `punctuationSummaryHeadline`, replacing the adult
     // "Punctuation session summary" default. Match any of the 3 buckets so

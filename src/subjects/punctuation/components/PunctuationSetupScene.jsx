@@ -1,57 +1,36 @@
-// Phase 3 U2 — Punctuation Setup scene (child dashboard).
+// Phase 5 U7 — Punctuation mission dashboard.
 //
-// Replaces the Phase 2 `SetupView`'s 10-button mode grid with a Hero +
-// Today cards + three primary journey cards (Smart Review / Wobbly Spots
-// / GPS Check) + one "Open Punctuation Map" secondary card + compact
-// round-length toggle (4 / 8 / 12) + active-monster strip. Reserved
-// monsters (Colisk / Hyphang / Carillon) are NEVER rendered — the
-// iterator is `ACTIVE_PUNCTUATION_MONSTER_IDS` full stop (plan R10 /
-// learning #5).
+// Replaces the Phase 3 U2 three-card button wall with a mission dashboard
+// modelled on the Spelling Setup's hero + side-panel pattern, adapted for
+// Bellstorm Coast. Layout:
 //
-// Mode display: `aria-pressed` on the primary cards is driven by
-// `punctuationPrimaryModeFromPrefs(prefs)`, which collapses the 6
-// Phase 2 cluster modes (endmarks / apostrophe / speech / comma_flow /
-// boundary / structure) AND `guided` to `'smart'` for display. That
-// normaliser is display-only — stored prefs still carry the stale
-// value until the one-shot migration below persists the collapse.
+//   Hero: Bellstorm Coast backdrop + headline + primary CTA
+//   Progress row: Due today | Wobbly | Stars earned (compact)
+//   Monster row: 4 active monsters with star meters (X / 100 Stars)
+//     and stage labels (Not caught / Egg Found / Hatch / Evolve / Strong / Mega)
+//   Map link: "Open Punctuation Map"
+//   Secondary drawer: Wobbly Spots | GPS Check | Round length toggle
 //
-// Stale-prefs migration (R1, plan line 408): on first render, if the
-// stored `prefs.mode` is one of the 6 cluster values or `'guided'`, the
-// scene dispatches `punctuation-set-mode` with `{ value: 'smart' }` to
-// migrate the stored value once. Two gates combine to guarantee exactly
-// one dispatch per session:
-//   - A `useRef` gate protects the same component instance from
-//     re-dispatching across React-level re-renders (including React 18
-//     strict-mode's double-invoke).
-//   - A store-level `ui.prefsMigrated` latch (set by the module's
-//     `punctuation-set-mode` handler) protects against component
-//     tear-down + rebuild — SSR renders produce fresh trees each time,
-//     so the useRef gate alone would re-fire on every server-side
-//     render.
-// Without this migration, `punctuation-start-again` (dispatched from
-// Summary) would silently start a cluster-focus session the learner
-// can no longer configure.
+// R7: Single primary CTA above the fold — Smart Review default, Wobbly if
+//     weaknesses exist, Continue if active session.
+// R8: Invariant skeleton — fresh learner and post-session render the SAME
+//     layout with different content only (no structural divergence).
+// R9: Star meters per monster from starView (U4 wired).
 //
-// Every mutation control threads `composeIsDisabled(ui)` so the
-// dashboard pauses visually whenever a command is in flight, the
-// runtime is degraded/unavailable, or the platform has flipped the
-// subject read-only (plan R11 — the same signal wired through Map,
-// Session, Feedback, and Summary scenes).
+// Every major section carries a `data-section` landmark for journey spec
+// testing (U9). The primary CTA carries `data-punctuation-cta`.
 
 import React, { useMemo, useRef } from 'react';
 
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
-  PUNCTUATION_DASHBOARD_HERO,
-  PUNCTUATION_PRIMARY_MODE_CARDS,
   PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS,
   bellstormSceneForPhase,
   buildPunctuationDashboardModel,
   composeIsDisabled,
   punctuationMonsterDisplayName,
-  punctuationPrimaryModeFromPrefs,
+  punctuationStageLabel,
 } from './punctuation-view-model.js';
-import { progressForPunctuationMonster } from '../../../platform/game/mastery/punctuation.js';
 import { emitPunctuationEvent } from '../telemetry.js';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
@@ -68,52 +47,55 @@ const LEGACY_PUNCTUATION_MODE_IDS = Object.freeze(new Set([
   'guided',
 ]));
 
-// Compact three-option toggle for the Setup scene. Default 4 (per plan);
-// 8 and 12 are the other two stops. Mirrors the Spelling LengthPicker's
-// radiogroup shape so screen readers land on the same familiar control.
-// Shared as `PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS` from the view-model so
-// the module's `punctuation-set-round-length` handler can validate against
-// the same narrow enum (adv-234-001).
+// --- CTA resolution --------------------------------------------------------
+//
+// R7: the primary CTA above the fold resolves to one of three labels:
+//   - "Continue your round" when an active session exists
+//   - "Tackle wobbly spots" when weaknesses exist (weak > 0) and no session
+//   - "Start today's round" as the default smart-review entry
+// The dispatch mode follows the same ladder: continue → weak → smart.
 
-function TodayCard({ card }) {
-  return (
-    <div className="punctuation-today-card" data-today-id={card.id}>
-      <div className="punctuation-today-label">{card.label}</div>
-      <div className="punctuation-today-value">{card.value}</div>
-      <div className="punctuation-today-detail">{card.detail}</div>
-    </div>
+function resolvePrimaryCta(stats, ui) {
+  const hasActiveSession = Boolean(
+    ui && typeof ui === 'object' && !Array.isArray(ui) && ui.session && ui.session.id,
   );
+  if (hasActiveSession) {
+    return { label: 'Continue your round', mode: 'continue' };
+  }
+  const weakCount = Number(stats?.weak) || 0;
+  if (weakCount > 0) {
+    return { label: 'Tackle wobbly spots', mode: 'weak' };
+  }
+  return { label: "Start today's round", mode: 'smart' };
 }
 
-// Exported so `tests/react-punctuation-scene.test.js` can exercise the real
-// onClick closure directly (calling the component as a plain function and
-// invoking the returned element's `props.onClick`). The Phase 3 SSR harness
-// could only grep the rendered HTML, so a regression that swapped the click
-// dispatch target (`punctuation-start` → `punctuation-set-mode`) slipped
-// through. The click-through test below that export is U1's guard.
-//
-// U1 (Phase 4, R1): primary cards are ACTION buttons, not radio buttons.
-// Tapping one starts a session immediately via `punctuation-start` with
-// `{ mode, roundLength }` — NOT `punctuation-set-mode` (which is a
-// preference-save no-op from Setup's perspective). `aria-pressed` is
-// intentionally omitted for the same reason: no "selected" state to
-// announce, because the click fires a session rather than toggling a
-// preference. The only remaining caller of `punctuation-set-mode` from
-// this scene is the one-shot stale-prefs migration (lines 251-270).
-//
-// `data-round-length` encodes the parent-threaded `roundLength` on the
-// button DOM so SSR tests can verify the parent → card prop threading
-// without needing to fire the onClick closure. Without this attribute
-// the click-through tests (which mount PrimaryModeCard in isolation
-// with a directly-supplied roundLength) would still pass if a future
-// regression dropped the `roundLength={selectedLengthValue}` prop from
-// the parent — production would dispatch `{mode, roundLength: undefined}`
-// but unit tests would stay green. See the "parent prop-threading"
-// SSR assertions in `tests/react-punctuation-scene.test.js`.
-export function PrimaryModeCard({ card, selected, disabled, roundLength, actions }) {
+// --- Fresh learner CTA override -------------------------------------------
+// A fresh learner (zero attempts, zero secure, zero due) gets a warmer
+// invitation instead of the default "Start today's round".
+function freshLearnerCtaLabel(isEmpty) {
+  return isEmpty ? 'Find your first punctuation egg' : null;
+}
+
+function selectedRoundLength(prefs) {
+  const raw = prefs && typeof prefs === 'object' && !Array.isArray(prefs)
+    ? prefs.roundLength
+    : null;
+  const candidate = typeof raw === 'string' && raw ? raw : '4';
+  return PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(candidate) ? candidate : '4';
+}
+
+// --- Legacy PrimaryModeCard export (backward compat) -----------------------
+// Phase 5 U7 replaces the three primary mode cards with a single CTA +
+// secondary drawer. The `PrimaryModeCard` component is no longer rendered
+// in the mission dashboard, but it is exported so the U1 click-through
+// tests in `tests/react-punctuation-scene.test.js` and the standalone
+// renderer in `tests/helpers/punctuation-scene-render.js` keep working.
+// These tests exercise the component's onClick closure in isolation and
+// are structurally valid even though the component is off the render tree.
+export function PrimaryModeCard({ card, selected, disabled: isDisabled, roundLength, actions }) {
   const classes = ['punctuation-primary-mode'];
   if (selected) classes.push('selected');
-  if (disabled) classes.push('is-disabled');
+  if (isDisabled) classes.push('is-disabled');
   if (card.badge) classes.push('is-recommended');
   return (
     <button
@@ -123,10 +105,10 @@ export function PrimaryModeCard({ card, selected, disabled, roundLength, actions
       data-action="punctuation-start"
       data-value={card.id}
       data-round-length={roundLength}
-      disabled={disabled}
-      aria-disabled={disabled ? 'true' : undefined}
+      disabled={isDisabled}
+      aria-disabled={isDisabled ? 'true' : undefined}
       onClick={() => {
-        if (disabled) return;
+        if (isDisabled) return;
         actions.dispatch('punctuation-start', { mode: card.id, roundLength });
       }}
     >
@@ -137,28 +119,7 @@ export function PrimaryModeCard({ card, selected, disabled, roundLength, actions
   );
 }
 
-function OpenMapCard({ disabled, actions }) {
-  const classes = ['punctuation-secondary-mode'];
-  if (disabled) classes.push('is-disabled');
-  return (
-    <button
-      type="button"
-      className={classes.join(' ')}
-      data-action="punctuation-open-map"
-      disabled={disabled}
-      aria-disabled={disabled ? 'true' : undefined}
-      onClick={() => {
-        if (disabled) return;
-        actions.dispatch('punctuation-open-map');
-      }}
-    >
-      <h4 className="punctuation-secondary-mode-title">Open Punctuation Map</h4>
-      <p className="punctuation-secondary-mode-desc">
-        Browse the 14 skills by monster and status.
-      </p>
-    </button>
-  );
-}
+// --- Sub-components --------------------------------------------------------
 
 function RoundLengthToggle({ selectedValue, disabled, actions }) {
   return (
@@ -192,103 +153,83 @@ function RoundLengthToggle({ selectedValue, disabled, actions }) {
   );
 }
 
-function ActiveMonsterStrip({ rewardState }) {
-  // Iterate `ACTIVE_PUNCTUATION_MONSTER_IDS` only — reserved monsters
-  // (colisk / hyphang / carillon) never surface even if the reward
-  // state carries entries for them (plan R10).
+function MonsterStarMeter({ monster }) {
+  const cap = monster.id === 'quoral' ? 100 : 100;
+  const starsLabel = monster.id === 'quoral' ? 'Grand Stars' : 'Stars';
+  const pct = Math.min(100, Math.max(0, Math.round((monster.totalStars / cap) * 100)));
+  const stageText = punctuationStageLabel(monster.starDerivedStage, monster.totalStars);
+
   return (
-    <div className="punctuation-active-monsters" aria-label="Active monsters">
-      {ACTIVE_PUNCTUATION_MONSTER_IDS.map((monsterId) => {
-        const progress = progressForPunctuationMonster(rewardState, monsterId);
-        return (
-          <div
-            className="punctuation-active-monster"
-            data-monster-id={monsterId}
-            key={monsterId}
-          >
-            <div className="punctuation-active-monster-name">
-              {punctuationMonsterDisplayName(monsterId)}
-            </div>
-            <div className="punctuation-active-monster-progress muted">
-              {`${progress.mastered}/${progress.publishedTotal} secure`}
-            </div>
-          </div>
-        );
-      })}
+    <div className="punctuation-monster-meter" data-monster-id={monster.id}>
+      <div className="punctuation-monster-meter-name">{monster.name}</div>
+      <div className="punctuation-monster-meter-stage">{stageText}</div>
+      <div className="punctuation-monster-meter-bar" aria-hidden="true">
+        <div
+          className="punctuation-monster-meter-fill"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="punctuation-monster-meter-count">
+        {`${monster.totalStars} / ${cap} ${starsLabel}`}
+      </div>
     </div>
   );
 }
 
-function selectedRoundLength(prefs) {
-  const raw = prefs && typeof prefs === 'object' && !Array.isArray(prefs)
-    ? prefs.roundLength
-    : null;
-  const candidate = typeof raw === 'string' && raw ? raw : '4';
-  return PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.includes(candidate) ? candidate : '4';
+function SecondaryModeButton({ label, mode, roundLength, disabled, actions }) {
+  const classes = ['punctuation-secondary-action'];
+  if (disabled) classes.push('is-disabled');
+  return (
+    <button
+      type="button"
+      className={classes.join(' ')}
+      data-action="punctuation-start"
+      data-value={mode}
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        actions.dispatch('punctuation-start', { mode, roundLength });
+      }}
+    >
+      {label}
+    </button>
+  );
 }
+
+// --- Main scene ------------------------------------------------------------
 
 export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewardState }) {
   const scene = bellstormSceneForPhase('setup');
   const disabled = composeIsDisabled(ui);
 
-  // Display-only collapse of legacy cluster / `guided` prefs to `'smart'`.
-  // Stored value stays untouched until the migration effect below
-  // persists the collapse via dispatch.
-  const primaryMode = useMemo(() => punctuationPrimaryModeFromPrefs(prefs), [prefs]);
+  // U4: thread starView from ui into the dashboard model builder.
+  // The read-model populates ui.starView on the Worker round-trip;
+  // fresh learners have no starView — null is safe (builder handles it).
+  const starView = ui && typeof ui === 'object' && !Array.isArray(ui)
+    ? ui.starView || null
+    : null;
+
   const dashboard = useMemo(
-    () => buildPunctuationDashboardModel(stats, { prefs }, rewardState),
-    [stats, prefs, rewardState],
+    () => buildPunctuationDashboardModel(stats, { prefs }, rewardState, starView),
+    [stats, prefs, rewardState, starView],
   );
 
-  // One-shot stale-prefs migration. Three gates combine to guarantee
-  // exactly one dispatch per session:
-  //
-  //   1. `migratedRef` — React-level gate. Persists across every
-  //      re-render of the same component instance (including React
-  //      18's strict-mode double-invoke) so a client-side re-render
-  //      never fires the dispatch twice.
-  //   2. `ui.prefsMigrated` — store-level gate. Survives component
-  //      tear-down and rebuild (SSR renders produce fresh trees each
-  //      time; `migratedRef` alone would re-fire on every SSR call).
-  //      Latched CLIENT-SIDE below via `actions.updateSubjectUi` BEFORE
-  //      the dispatch fires — see adv-234 HIGH 1 for the detail. The
-  //      module's `punctuation-set-mode` handler also sets this latch
-  //      as part of its store update, but in production the dispatch
-  //      routes through `handleRemotePunctuationAction` → the Worker
-  //      `save-prefs` command, which returns true and short-circuits
-  //      the fall-through to `handleSubjectAction` → module handler.
-  //      Landing the latch here keeps both the harness (module-handler
-  //      path) and production (Worker-command path) in lock-step.
-  //   3. Reload-from-repositories after the Worker response rehydrates
-  //      `prefs.mode` to 'smart' — so even if the client-side latch is
-  //      somehow lost, the next render's `legacyCluster` check is
-  //      false.
-  //
-  // The check runs synchronously in the component body rather than
-  // an effect — `renderToStaticMarkup` does not execute effects, so a
-  // useEffect-based migration would never fire server-side. Dispatch
-  // to the store is safe during render because it goes to the app
-  // store (not component state) and the guards above prevent a
-  // re-entrant loop.
-  //
-  // `legacyCluster` is computed from the raw stored mode, not the
-  // display collapse, so a reverted state is detected only the first
-  // time before `prefsMigrated` latches.
-  // Phase 4 U4 — telemetry smoke integration.
-  //
-  // Setup-mount is the first of 12 telemetry emission sites in the plan's
-  // emission-site table (line 832-842). Firing the `card-opened` event at
-  // render-time (guarded by `cardOpenedRef`) gives U4 a real production
-  // touchpoint; the remaining 11 emission sites land in follow-on units
-  // (Session mount, submit-answer dispatch, feedback render, summary,
-  // map, etc.).
-  //
-  // A useRef gate is used (not useEffect) because `renderToStaticMarkup`
-  // never runs effects. The gate prevents React 18 strict-mode's
-  // double-invoke from firing the emit twice per mount. The emitter is
-  // fire-and-forget and routes through the subject-command-actions
-  // mapping — it cannot stall the render (see `telemetry.js` for the
-  // authz invariant).
+  // One-shot stale-prefs migration (unchanged from Phase 3 U2).
+  const migratedRef = useRef(false);
+  const prefsMigrated = Boolean(ui && typeof ui === 'object' && !Array.isArray(ui) && ui.prefsMigrated);
+  const storedMode = prefs && typeof prefs === 'object' && !Array.isArray(prefs)
+    ? prefs.mode
+    : null;
+  const legacyCluster = typeof storedMode === 'string' && LEGACY_PUNCTUATION_MODE_IDS.has(storedMode);
+  if (legacyCluster && !migratedRef.current && !prefsMigrated) {
+    migratedRef.current = true;
+    if (typeof actions.updateSubjectUi === 'function') {
+      actions.updateSubjectUi('punctuation', { prefsMigrated: true });
+    }
+    actions.dispatch('punctuation-set-mode', { value: 'smart' });
+  }
+
+  // Phase 4 U4 telemetry smoke — Setup mount.
   const cardOpenedRef = useRef(false);
   if (!cardOpenedRef.current) {
     cardOpenedRef.current = true;
@@ -298,40 +239,43 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
     });
   }
 
-  const migratedRef = useRef(false);
-  const prefsMigrated = Boolean(ui && typeof ui === 'object' && !Array.isArray(ui) && ui.prefsMigrated);
-  const storedMode = prefs && typeof prefs === 'object' && !Array.isArray(prefs)
-    ? prefs.mode
-    : null;
-  const legacyCluster = typeof storedMode === 'string' && LEGACY_PUNCTUATION_MODE_IDS.has(storedMode);
-  if (legacyCluster && !migratedRef.current && !prefsMigrated) {
-    migratedRef.current = true;
-    // adv-234 HIGH 1: latch the store-level gate BEFORE dispatching so the
-    // production Worker-command path (which never falls through to the
-    // module handler) still gets the `prefsMigrated: true` store update.
-    // `updateSubjectUi` is exposed on `actions` by both the production
-    // `buildSurfaceActions` in main.js and the tests/helpers/react-app-ssr
-    // renderer. Safe to call during render — it is a plain store merge,
-    // not a dispatch through `handleSubjectAction`, so no re-entrant loop.
-    if (typeof actions.updateSubjectUi === 'function') {
-      actions.updateSubjectUi('punctuation', { prefsMigrated: true });
-    }
-    actions.dispatch('punctuation-set-mode', { value: 'smart' });
-  }
-
   const selectedLengthValue = selectedRoundLength(prefs);
+
+  // CTA resolution
+  const cta = resolvePrimaryCta(stats, ui);
+  const freshLabel = freshLearnerCtaLabel(dashboard.isEmpty);
+  const ctaLabel = freshLabel || cta.label;
+  const ctaMode = cta.mode;
+
+  // Progress row values
+  const dueCount = Number(stats?.due) || 0;
+  const weakCount = Number(stats?.weak) || 0;
+  const totalStarsEarned = dashboard.activeMonsters.reduce(
+    (sum, m) => sum + (m.totalStars || 0), 0,
+  );
+
   const learnerName = learner && typeof learner === 'object' && !Array.isArray(learner)
     && typeof learner.name === 'string' && learner.name.trim()
     ? learner.name.trim()
     : '';
 
+  function handlePrimaryCta() {
+    if (disabled) return;
+    if (ctaMode === 'continue') {
+      actions.dispatch('punctuation-continue');
+      return;
+    }
+    actions.dispatch('punctuation-start', { mode: ctaMode, roundLength: selectedLengthValue });
+  }
+
   return (
     <section
-      className="card border-top punctuation-surface punctuation-setup-scene"
+      className="card border-top punctuation-surface punctuation-setup-scene punctuation-mission-dashboard"
       data-punctuation-phase="setup"
       style={{ borderTopColor: '#B8873F' }}
     >
-      <div className="punctuation-hero">
+      {/* Hero area — Bellstorm Coast backdrop + headline + primary CTA */}
+      <div className="punctuation-dashboard-hero" data-section="hero">
         <img
           src={scene.src}
           srcSet={scene.srcSet}
@@ -339,50 +283,89 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
           alt=""
           aria-hidden="true"
         />
-        <div>
-          <div className="eyebrow">{PUNCTUATION_DASHBOARD_HERO.eyebrow}</div>
-          <h2 className="section-title">{PUNCTUATION_DASHBOARD_HERO.headline}</h2>
-          <p className="subtitle">{PUNCTUATION_DASHBOARD_HERO.subtitle}</p>
+        <div className="punctuation-dashboard-hero-content">
+          <div className="eyebrow">Bellstorm Coast</div>
+          <h2 className="section-title">Today's punctuation mission</h2>
           {learnerName ? (
             <p className="punctuation-hero-welcome">
               {`Hi ${learnerName} — ready for a short round?`}
             </p>
           ) : null}
+          <div className="punctuation-dashboard-cta-row">
+            <button
+              type="button"
+              className="btn primary xl"
+              style={{ '--btn-accent': '#B8873F' }}
+              data-punctuation-cta
+              data-action={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
+              disabled={disabled}
+              onClick={handlePrimaryCta}
+            >
+              {ctaLabel}
+            </button>
+          </div>
         </div>
       </div>
 
-      <section className="punctuation-today" aria-label="Today at a glance">
-        {dashboard.isEmpty ? (
-          <div className="punctuation-today-empty" data-testid="punctuation-today-empty">
-            Start your first round to see your scores here.
+      {/* Progress row — compact stats strip */}
+      <section className="punctuation-progress-row" data-section="progress-row" aria-label="Today at a glance">
+        <dl className="punctuation-progress-strip">
+          <div className="punctuation-progress-item">
+            <dt>Due today</dt>
+            <dd>{dueCount}</dd>
           </div>
-        ) : (
-          <div className="punctuation-today-grid">
-            {dashboard.todayCards.map((card) => (
-              <TodayCard card={card} key={card.id} />
-            ))}
+          <div className="punctuation-progress-item">
+            <dt>Wobbly</dt>
+            <dd>{weakCount}</dd>
           </div>
-        )}
+          <div className="punctuation-progress-item">
+            <dt>Stars earned</dt>
+            <dd>{totalStarsEarned}</dd>
+          </div>
+        </dl>
       </section>
 
-      <section className="punctuation-primary-modes" aria-label="Choose a round">
-        <div className="punctuation-primary-grid">
-          {PUNCTUATION_PRIMARY_MODE_CARDS.map((card) => (
-            <PrimaryModeCard
-              card={card}
-              selected={card.id === primaryMode}
-              disabled={disabled}
-              roundLength={selectedLengthValue}
-              actions={actions}
-              key={card.id}
-            />
-          ))}
-        </div>
+      {/* Monster row — 4 active monsters with star meters */}
+      <section className="punctuation-monster-row" data-section="monster-row" aria-label="Your monsters">
+        {dashboard.activeMonsters.map((monster) => (
+          <MonsterStarMeter monster={monster} key={monster.id} />
+        ))}
+      </section>
 
-        <div className="punctuation-secondary-grid">
-          <OpenMapCard disabled={disabled} actions={actions} />
-        </div>
+      {/* Map link */}
+      <div data-section="map-link">
+        <button
+          type="button"
+          className="punctuation-map-link"
+          data-action="punctuation-open-map"
+          disabled={disabled}
+          onClick={() => {
+            if (disabled) return;
+            actions.dispatch('punctuation-open-map');
+          }}
+        >
+          Open Punctuation Map
+        </button>
+      </div>
 
+      {/* Secondary practice drawer */}
+      <section className="punctuation-secondary-drawer" data-section="secondary" aria-label="More practice options">
+        <div className="punctuation-secondary-modes">
+          <SecondaryModeButton
+            label="Wobbly Spots"
+            mode="weak"
+            roundLength={selectedLengthValue}
+            disabled={disabled}
+            actions={actions}
+          />
+          <SecondaryModeButton
+            label="GPS Check"
+            mode="gps"
+            roundLength={selectedLengthValue}
+            disabled={disabled}
+            actions={actions}
+          />
+        </div>
         <div className="punctuation-round-controls">
           <span className="punctuation-round-label">Round length</span>
           <RoundLengthToggle
@@ -391,11 +374,6 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
             actions={actions}
           />
         </div>
-      </section>
-
-      <section className="punctuation-monsters-section" aria-label="Your monsters">
-        <h3 className="punctuation-monsters-heading">Your monsters</h3>
-        <ActiveMonsterStrip rewardState={rewardState} />
       </section>
     </section>
   );

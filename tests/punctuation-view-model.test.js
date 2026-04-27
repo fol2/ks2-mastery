@@ -252,7 +252,7 @@ test('U1 view-model: punctuationMonsterDisplayName falls back to titlecase for u
 
 test('U1 view-model: PUNCTUATION_DASHBOARD_HERO has child-friendly copy', () => {
   assert.equal(PUNCTUATION_DASHBOARD_HERO.eyebrow, 'Bellstorm Coast');
-  assert.equal(PUNCTUATION_DASHBOARD_HERO.headline, 'Punctuation practice');
+  assert.equal(PUNCTUATION_DASHBOARD_HERO.headline, "Today's punctuation mission");
   assert.equal(typeof PUNCTUATION_DASHBOARD_HERO.subtitle, 'string');
   assert.ok(PUNCTUATION_DASHBOARD_HERO.subtitle.length > 0);
   assert.equal(isPunctuationChildCopy(PUNCTUATION_DASHBOARD_HERO.eyebrow), true);

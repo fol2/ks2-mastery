@@ -342,7 +342,7 @@ export function punctuationSummaryHeadline(summary) {
 // only — U10's sweep validates.
 export const PUNCTUATION_DASHBOARD_HERO = Object.freeze({
   eyebrow: 'Bellstorm Coast',
-  headline: 'Punctuation practice',
+  headline: "Today's punctuation mission",
   subtitle: "Pick a short round — we'll queue what matters next.",
 });
 
@@ -1105,6 +1105,39 @@ const PUNCTUATION_MULTI_SKILL_ITEM_SKILLS = Object.freeze(new Set([
 export function punctuationSkillHasMultiSkillItems(skillId) {
   if (typeof skillId !== 'string' || !skillId) return false;
   return PUNCTUATION_MULTI_SKILL_ITEM_SKILLS.has(skillId);
+}
+
+// --- Monster stage labels (child-facing) -----------------------------------
+
+// Child-facing label for a monster's current stage, derived from
+// `starDerivedStage` (0-5 for direct monsters, 0-5 for grand). The labels
+// read as warm adventure-world status rather than clinical stage numbers.
+// Stage 0 with zero stars is "Not caught" (fresh learner); Stage 0 with
+// any stars is "Egg Found" (the learner has started but not hatched).
+const PUNCTUATION_MONSTER_STAGE_LABELS = Object.freeze([
+  'Not caught',
+  'Egg Found',
+  'Hatch',
+  'Evolve',
+  'Strong',
+  'Mega',
+]);
+
+/**
+ * Returns a child-facing label for the monster's current stage.
+ * `stage` is the `starDerivedStage` integer (0-5). `totalStars` is
+ * used to distinguish "Not caught" (0 stars at stage 0) from
+ * "Egg Found" (>0 stars at stage 0). Unknown/out-of-range stages
+ * fall back to "Not caught".
+ */
+export function punctuationStageLabel(stage, totalStars = 0) {
+  const s = Number(stage);
+  const stars = Number(totalStars) || 0;
+  if (!Number.isFinite(s) || s < 0 || s > 5) return PUNCTUATION_MONSTER_STAGE_LABELS[0];
+  // Stage 0 splits: zero stars → "Not caught"; any stars → "Egg Found"
+  if (s === 0 && stars > 0) return PUNCTUATION_MONSTER_STAGE_LABELS[1];
+  if (s === 0) return PUNCTUATION_MONSTER_STAGE_LABELS[0];
+  return PUNCTUATION_MONSTER_STAGE_LABELS[s] || PUNCTUATION_MONSTER_STAGE_LABELS[0];
 }
 
 // --- Dashboard model builder -----------------------------------------------
