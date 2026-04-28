@@ -1,1 +1,89 @@
-{ "schema": 2, "metrics": {}, "generatedAt": null }
+{
+  "schema": 3,
+  "generatedAt": "2026-04-28T23:31:45.828Z",
+  "sources": {
+    "capacity_evidence": {
+      "file": "reports/capacity/evidence/",
+      "found": true
+    },
+    "admin_smoke": {
+      "file": "reports/admin-smoke/latest.json",
+      "found": false
+    },
+    "bootstrap_smoke": {
+      "file": "reports/bootstrap-smoke/latest.json",
+      "found": false
+    },
+    "csp_status": {
+      "file": "worker/src/security-headers.js",
+      "found": true
+    },
+    "d1_migrations": {
+      "file": "worker/migrations/",
+      "found": true
+    },
+    "build_version": {
+      "file": "package.json",
+      "found": true
+    },
+    "kpi_reconcile": {
+      "file": "reports/kpi-reconcile/latest.json",
+      "found": false
+    }
+  },
+  "metrics": {
+    "certified_30_learner_beta": {
+      "tier": "certified_30_learner_beta",
+      "ok": false,
+      "dryRun": false,
+      "learners": 30,
+      "finishedAt": "2026-04-28T21:33:08.171Z",
+      "commit": "1c56e069c4bd95828328410bec3fef81564677ca",
+      "failures": [
+        "maxBootstrapP95Ms"
+      ],
+      "thresholdsPassed": false,
+      "fileName": "30-learner-beta-v2-20260428-p5-warm.json"
+    },
+    "certified_60_learner_stretch": {
+      "tier": "certified_60_learner_stretch",
+      "ok": false,
+      "dryRun": false,
+      "learners": 60,
+      "finishedAt": null,
+      "commit": "42ec29b41ba9cca9fc39d38cc29f08e6c71d4cf9",
+      "failures": [],
+      "thresholdsPassed": null,
+      "fileName": "60-learner-stretch-preflight-20260428.json"
+    },
+    "csp_status": {
+      "tier": "csp_status",
+      "ok": false,
+      "dryRun": false,
+      "mode": "report-only",
+      "finishedAt": null,
+      "commit": null,
+      "failures": [
+        "csp_mode_is_report-only"
+      ]
+    },
+    "d1_migrations": {
+      "tier": "d1_migrations",
+      "ok": true,
+      "dryRun": false,
+      "count": 14,
+      "finishedAt": null,
+      "commit": null,
+      "failures": []
+    },
+    "build_version": {
+      "tier": "build_version",
+      "ok": true,
+      "dryRun": false,
+      "version": "0.1.0",
+      "finishedAt": null,
+      "commit": null,
+      "failures": []
+    }
+  }
+}

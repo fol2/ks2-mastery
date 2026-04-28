@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-export const EVIDENCE_SCHEMA_VERSION = 2;
+export const EVIDENCE_SCHEMA_VERSION = 3;
 
 // Request-sample cap per endpoint when --include-request-samples is enabled.
 // Plan says 100 + 100 (first N and last N); this preserves post-mortem utility
