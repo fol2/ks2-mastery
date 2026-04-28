@@ -126,6 +126,11 @@ test('S-L4: no Hero source file contains economy vocabulary tokens', () => {
     /streak\s+loss/i,
   ];
 
+  // hero-copy.js is the canonical source-of-truth for the forbidden vocabulary
+  // list. It *defines* the ban tokens (HERO_FORBIDDEN_VOCABULARY) but does not
+  // use them in child-facing copy. Exclude it from the token scan.
+  const EXCLUDED_BASENAMES = new Set(['hero-copy.js']);
+
   const allHeroFiles = [
     ...collectJsFiles(SHARED_HERO_DIR),
     ...collectJsFiles(WORKER_HERO_DIR),
@@ -133,6 +138,7 @@ test('S-L4: no Hero source file contains economy vocabulary tokens', () => {
 
   for (const filePath of allHeroFiles) {
     const rel = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+    if (EXCLUDED_BASENAMES.has(path.basename(filePath))) continue;
     const code = stripComments(fs.readFileSync(filePath, 'utf8'));
 
     for (const pattern of ECONOMY_TOKENS) {
@@ -206,6 +212,21 @@ async function seedLearner(server, accountId, learnerId) {
     selectedId: learnerId,
   });
   await repos.flush();
+
+  // Seed spelling subject state so the Hero scheduler produces launchable
+  // tasks. Without stats the scheduler has no eligible subjects.
+  const spellingData = {
+    stats: {
+      core: { total: 50, secure: 30, due: 10, fresh: 5, trouble: 5, attempts: 200, correct: 160, accuracy: 0.8 },
+      all: { total: 50, secure: 30, due: 10, fresh: 5, trouble: 5, attempts: 200, correct: 160, accuracy: 0.8 },
+    },
+  };
+  const now = Date.now();
+  server.DB.db.prepare(`
+    INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+    VALUES (?, 'spelling', '{}', ?, ?, ?)
+  `).run(learnerId, JSON.stringify(spellingData), now, accountId);
+
   return repos;
 }
 
@@ -248,10 +269,7 @@ test('B-L1: after a successful Hero launch, mutation_receipts row count increase
   await seedLearner(server, 'adult-a', 'learner-a');
 
   const launchable = await getFirstLaunchableTask(server);
-  if (!launchable) {
-    server.close();
-    return;
-  }
+  assert.ok(launchable, 'Fixture must produce at least one launchable task');
 
   const receiptsBefore = countRows(server, 'mutation_receipts');
   const revision = getLearnerRevision(server);
@@ -288,10 +306,7 @@ test('B-L2: after a successful Hero launch, no hero.* event types exist in event
   await seedLearner(server, 'adult-a', 'learner-a');
 
   const launchable = await getFirstLaunchableTask(server);
-  if (!launchable) {
-    server.close();
-    return;
-  }
+  assert.ok(launchable, 'Fixture must produce at least one launchable task');
 
   const revision = getLearnerRevision(server);
 

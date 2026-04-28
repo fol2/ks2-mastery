@@ -58,15 +58,35 @@ export async function handleHeroReadModel({
   //    providers are designed to handle null/empty gracefully.
   const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId);
 
-  // 5. Assemble the shadow read model
+  // 5. Assemble the shadow read model (v3: pass accountId and env for
+  //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
   const nowTs = typeof now === 'function' ? now() : Date.now();
   const result = buildHeroShadowReadModel({
     learnerId,
+    accountId: session.accountId || '',
     subjectReadModels,
     now: nowTs,
     env,
   });
 
-  return json({ ok: true, hero: result });
+  // U10: structured observability — fire-and-forget, never blocks the response.
+  try {
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify({
+      event: 'hero_read_model_loaded',
+      learnerId,
+      version: result.version,
+      uiEnabled: result.ui?.enabled || false,
+      taskCount: result.dailyQuest?.tasks?.length || 0,
+      activeSession: Boolean(result.activeHeroSession),
+    }));
+  } catch { /* best-effort */ }
+
+  // Strip debug block from the child-visible response — debug data is
+  // useful for shadow/internal diagnostics but must not leak to the child browser.
+  const { debug, ...safeResult } = result;
+  const responseHero = envFlagEnabled(env.HERO_MODE_CHILD_UI_ENABLED) ? safeResult : result;
+
+  return json({ ok: true, hero: responseHero });
 }
 

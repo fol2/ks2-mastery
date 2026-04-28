@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { TopNav } from '../shell/TopNav.jsx';
 import { MonsterMeadow } from './MonsterMeadow.jsx';
 import { SubjectCard } from './SubjectCard.jsx';
+import { HeroQuestCard } from './HeroQuestCard.jsx';
 import { IconArrowRight } from './icons.jsx';
 import {
   buildMeadowMonsters,
@@ -49,6 +50,14 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
     ? `Start ${recommendation.subjectName}`
     : "Begin today's round";
 
+  // P2 U5: Hero card renders when hero is in an active state (enabled,
+  // canStart, or canContinue). When the Hero card renders, it replaces
+  // the "Today's best round" recommendation block — they must not both
+  // appear simultaneously.
+  const hero = model.hero;
+  const heroActive = hero?.enabled === true
+    && hero.status !== 'loading';
+
   return (
     <div className={shellClassName}>
       <TopNav
@@ -77,47 +86,53 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
             <b>{greet}, {model.learner?.name || 'there'}.</b>{' '}
             {companionName ? `${companionName} is ready for round ${model.roundNumber || 1}.` : 'A fresh round is waiting.'}
           </div>
-          {recommendation ? (
+          {heroActive ? (
+            <HeroQuestCard hero={hero} actions={actions} />
+          ) : (
             <>
-              <h1 className="mission">
-                Today's practice is <em>waiting.</em>
-              </h1>
-              <div className="hero-best-round" data-best-round-subject={recommendation.subjectId}>
-                <div className="hero-best-round-label">Today's best round:{' '}
-                  <strong>{recommendation.subjectName}</strong>
-                </div>
-                <div className="hero-best-round-detail">
-                  {recommendation.monsterCompanion
-                    ? `${recommendation.monsterCompanion} has ${formatDueCount(recommendation.due)} due.`
-                    : `${formatDueCount(recommendation.due)} due for you.`}
-                </div>
+              {recommendation ? (
+                <>
+                  <h1 className="mission">
+                    Today's practice is <em>waiting.</em>
+                  </h1>
+                  <div className="hero-best-round" data-best-round-subject={recommendation.subjectId}>
+                    <div className="hero-best-round-label">Today's best round:{' '}
+                      <strong>{recommendation.subjectName}</strong>
+                    </div>
+                    <div className="hero-best-round-detail">
+                      {recommendation.monsterCompanion
+                        ? `${recommendation.monsterCompanion} has ${formatDueCount(recommendation.due)} due.`
+                        : `${formatDueCount(recommendation.due)} due for you.`}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <h1 className="mission">
+                  Today's words are <em>waiting.</em>
+                  <br />
+                  {dueCopy(dueTotal)}
+                </h1>
+              )}
+              <div className="hero-cta-row">
+                <button
+                  type="button"
+                  className="btn primary xl"
+                  data-action="open-subject"
+                  data-subject-id={ctaSubjectId}
+                  onClick={() => actions.openSubject(ctaSubjectId)}
+                >
+                  {ctaLabel} <IconArrowRight />
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost xl"
+                  onClick={actions.openCodex}
+                >
+                  Open codex
+                </button>
               </div>
             </>
-          ) : (
-            <h1 className="mission">
-              Today's words are <em>waiting.</em>
-              <br />
-              {dueCopy(dueTotal)}
-            </h1>
           )}
-          <div className="hero-cta-row">
-            <button
-              type="button"
-              className="btn primary xl"
-              data-action="open-subject"
-              data-subject-id={ctaSubjectId}
-              onClick={() => actions.openSubject(ctaSubjectId)}
-            >
-              {ctaLabel} <IconArrowRight />
-            </button>
-            <button
-              type="button"
-              className="btn ghost xl"
-              onClick={actions.openCodex}
-            >
-              Open codex
-            </button>
-          </div>
         </div>
       </div>
 

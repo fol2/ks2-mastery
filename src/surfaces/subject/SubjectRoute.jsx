@@ -1,5 +1,6 @@
 import React from 'react';
 import { SubjectBreadcrumb } from '../shell/SubjectBreadcrumb.jsx';
+import { HeroTaskBanner } from './HeroTaskBanner.jsx';
 import { SubjectRouteContext } from './SubjectRouteContext.js';
 import { SubjectRuntimeFallback } from './SubjectRuntimeFallback.jsx';
 import { PunctuationPracticeSurface } from '../../subjects/punctuation/components/PunctuationPracticeSurface.jsx';
@@ -133,7 +134,7 @@ function renderPracticeNode({ subject, routeContext, actions, activeTab, runtime
   );
 }
 
-export function SubjectRoute({ appState, context, actions }) {
+export function SubjectRoute({ appState, context, actions, heroLastLaunch }) {
   const subject = context.subject;
   const learner = selectedLearner(appState);
   const activeTab = 'practice';
@@ -189,6 +190,7 @@ export function SubjectRoute({ appState, context, actions }) {
     <SubjectRouteContext.Provider value={{ appState, context: routeContext, actions, subject, activeTab }}>
       <main className="subject-entry-content">
         <SubjectBreadcrumb subjectName={subject.name} onDashboard={actions.navigateHome} />
+        {heroLastLaunch && <HeroTaskBanner lastLaunch={heroLastLaunch} subjectName={subject.name} />}
         {appState.subjectUi?.[subject.id]?.error ? (
           <section className="card" style={{ marginBottom: 18 }} role="alert" aria-live="polite">
             <div className="feedback bad">

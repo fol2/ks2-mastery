@@ -3,12 +3,43 @@ import { buildHeroShadowReadModel } from './read-model.js';
 import { mapHeroEnvelopeToSubjectPayload } from './launch-adapters/index.js';
 import { buildHeroContext, sanitiseHeroContext } from '../../../shared/hero/launch-context.js';
 import {
-  HERO_P1_SCHEDULER_VERSION,
+  HERO_P2_SCHEDULER_VERSION,
   HERO_DEFAULT_TIMEZONE,
   HERO_LAUNCH_CONTRACT_VERSION,
+  HERO_READY_SUBJECT_IDS,
 } from '../../../shared/hero/constants.js';
 
-export async function resolveHeroStartTaskCommand({ body, repository, env, now }) {
+function envFlagEnabled(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+/**
+ * Detect any active (non-Hero) subject session from the expanded
+ * subject read models. Returns { subjectId } if found, null otherwise.
+ */
+function detectNonHeroActiveSession(subjectReadModels) {
+  for (const subjectId of HERO_READY_SUBJECT_IDS) {
+    const entry = subjectReadModels[subjectId];
+    if (!entry || typeof entry !== 'object') continue;
+    const ui = 'ui' in entry ? entry.ui : null;
+    if (!ui || typeof ui !== 'object') continue;
+    const session = ui.session;
+    if (!session || typeof session !== 'object') continue;
+    // Session exists — check if it is a Hero session or a regular session
+    const heroCtx = session.heroContext;
+    if (heroCtx && typeof heroCtx === 'object' && heroCtx.source === 'hero-mode') {
+      continue; // Hero session — skip (handled by activeHeroSession detection)
+    }
+    // Non-Hero active session: check that the session has meaningful state
+    // (not just an empty object from initial seeding)
+    if (session.id || session.startedAt || session.mode) {
+      return { subjectId };
+    }
+  }
+  return null;
+}
+
+export async function resolveHeroStartTaskCommand({ body, repository, env, now, accountId: callerAccountId }) {
   const command = body?.command;
   if (!command) {
     throw new BadRequestError('Hero command is required.', {
@@ -40,6 +71,9 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now }
   const questId = typeof body.questId === 'string' ? body.questId.trim() : '';
   const taskId = typeof body.taskId === 'string' ? body.taskId.trim() : '';
   const requestId = typeof body.requestId === 'string' ? body.requestId.trim() : '';
+  const clientQuestFingerprint = body.questFingerprint !== undefined
+    ? body.questFingerprint
+    : undefined;
   const correlationId = typeof body.correlationId === 'string' && body.correlationId.trim()
     ? body.correlationId.trim()
     : requestId;
@@ -71,9 +105,22 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now }
     });
   }
 
+  const safeEnv = env || {};
+  const childUiEnabled = envFlagEnabled(safeEnv.HERO_MODE_CHILD_UI_ENABLED);
+
+  // Quest fingerprint validation: required when child UI is enabled
+  if (childUiEnabled) {
+    if (typeof clientQuestFingerprint !== 'string' || !clientQuestFingerprint.trim()) {
+      throw new BadRequestError('questFingerprint is required when child UI is enabled.', {
+        code: 'hero_quest_fingerprint_required',
+      });
+    }
+  }
+
   const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId);
   const heroReadModel = buildHeroShadowReadModel({
     learnerId,
+    accountId: callerAccountId || '',
     subjectReadModels,
     now,
     env,
@@ -84,7 +131,66 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now }
     throw new ConflictError('Hero quest is stale — the daily quest has changed.', {
       code: 'hero_quest_stale',
       clientQuestId: questId,
-      serverQuestId: quest?.questId || null,
+    });
+  }
+
+  // Quest fingerprint mismatch check (child UI mode only)
+  if (childUiEnabled && clientQuestFingerprint) {
+    if (clientQuestFingerprint.trim() !== heroReadModel.questFingerprint) {
+      throw new ConflictError('Quest fingerprint mismatch — the quest has changed since the client read it.', {
+        code: 'hero_quest_fingerprint_mismatch',
+        clientFingerprint: clientQuestFingerprint.trim(),
+      });
+    }
+  }
+
+  // Active session detection (P2 U2)
+  const activeSession = heroReadModel.activeHeroSession;
+
+  if (activeSession) {
+    // Same taskId → safe idempotent-style response
+    if (activeSession.taskId === taskId) {
+      const heroLaunch = {
+        version: HERO_LAUNCH_CONTRACT_VERSION,
+        status: 'already-started',
+        questId,
+        taskId,
+        dateKey: heroReadModel.dateKey,
+        subjectId: activeSession.subjectId,
+        intent: activeSession.intent || '',
+        launcher: activeSession.launcher || '',
+        effortTarget: 0,
+        subjectCommand: 'start-session',
+        coinsEnabled: false,
+        claimEnabled: false,
+        childVisible: childUiEnabled,
+        activeSession: {
+          subjectId: activeSession.subjectId,
+          taskId: activeSession.taskId,
+          questId: activeSession.questId,
+        },
+      };
+      return { heroLaunch, subjectCommand: null };
+    }
+
+    // Different Hero taskId → conflict
+    throw new ConflictError('A different Hero task is already active.', {
+      code: 'hero_active_session_conflict',
+      activeSession: {
+        subjectId: activeSession.subjectId,
+        taskId: activeSession.taskId,
+      },
+    });
+  }
+
+  // Non-Hero active session detection
+  const nonHeroSession = detectNonHeroActiveSession(subjectReadModels);
+  if (nonHeroSession) {
+    throw new ConflictError('A subject session is already active.', {
+      code: 'subject_active_session_conflict',
+      activeSession: {
+        subjectId: nonHeroSession.subjectId,
+      },
     });
   }
 
@@ -121,7 +227,8 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now }
     taskId,
     requestId,
     now,
-    schedulerVersion: HERO_P1_SCHEDULER_VERSION,
+    schedulerVersion: HERO_P2_SCHEDULER_VERSION,
+    questFingerprint: heroReadModel.questFingerprint,
   }));
 
   const subjectCommand = {
@@ -147,7 +254,7 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now }
     subjectCommand: 'start-session',
     coinsEnabled: false,
     claimEnabled: false,
-    childVisible: false,
+    childVisible: childUiEnabled,
   };
 
   return { heroLaunch, subjectCommand };

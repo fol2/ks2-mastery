@@ -2,6 +2,10 @@ export const HERO_SCHEDULER_VERSION = 'hero-p0-shadow-v1';
 
 export const HERO_P1_SCHEDULER_VERSION = 'hero-p1-launch-v1';
 
+export const HERO_P2_SCHEDULER_VERSION = 'hero-p2-child-ui-v1';
+
+export const HERO_P2_COPY_VERSION = 'hero-p2-copy-v1';
+
 export const HERO_LAUNCH_CONTRACT_VERSION = 1;
 
 export const HERO_LAUNCH_STATUSES = Object.freeze([

@@ -8997,22 +8997,23 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async requireLearnerReadAccess(accountId, learnerId) {
       return requireLearnerReadAccess(db, accountId, learnerId);
     },
-    // Hero Mode P0: read per-subject read-model data for the hero
-    // providers. Reads `child_subject_state` rows and returns the
-    // parsed `data` objects keyed by subject_id. Providers handle
-    // null/empty gracefully, so subjects without state simply return
-    // available:false from the provider.
+    // Hero Mode P0/P2: read per-subject read-model data for the hero
+    // providers. Reads `child_subject_state` rows and returns both
+    // parsed `data` (data_json) and `ui` (ui_json) objects keyed by
+    // subject_id. Providers consume the `data` field unchanged.
+    // P2 active session detection inspects `ui` for heroContext.
     async readHeroSubjectReadModels(learnerId) {
       const rows = await all(db, `
-        SELECT subject_id, data_json
+        SELECT subject_id, data_json, ui_json
         FROM child_subject_state
         WHERE learner_id = ?
       `, [learnerId]);
       const result = {};
       for (const row of rows) {
         const data = safeJsonParse(row.data_json, null);
-        if (data) {
-          result[row.subject_id] = data;
+        const ui = safeJsonParse(row.ui_json, null);
+        if (data || ui) {
+          result[row.subject_id] = { data, ui };
         }
       }
       return result;
