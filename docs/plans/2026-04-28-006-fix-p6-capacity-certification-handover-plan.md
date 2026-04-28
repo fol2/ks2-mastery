@@ -1,10 +1,11 @@
 ---
 title: "fix: Complete P6 capacity certification and operations handover"
 type: fix
-status: active
+status: completed
 date: 2026-04-28
 origin: docs/plans/james/sys-hardening/sys-hardening-p6.md
 deepened: 2026-04-28
+completion_report: docs/plans/james/sys-hardening/sys-hardening-p6-completion-report.md
 ---
 
 # fix: Complete P6 capacity certification and operations handover

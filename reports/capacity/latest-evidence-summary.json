@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-04-29T00:18:15.915Z",
+  "generatedAt": "2026-04-29T00:19:10.075Z",
   "sources": {
     "capacity_evidence": {
       "file": "reports/capacity/evidence/",
@@ -68,35 +68,47 @@
     },
     "certified_60_learner_stretch": {
       "tier": "certified_60_learner_stretch",
-      "sourceTier": "certified_60_learner_stretch",
-      "status": "non_certifying",
+      "sourceTier": "60-learner-stretch-certified",
+      "status": "failed",
       "ok": false,
       "certifying": false,
       "dryRun": false,
       "evidenceKind": "preflight",
       "certificationEligible": false,
       "certificationReasons": [
-        "missing-certification-diagnostics"
+        "session-manifest-requires-equivalence-record",
+        "non-p6-30-learner-gate-shape",
+        "tier-is-not-30-learner-beta-certified",
+        "threshold-violations"
       ],
-      "decision": "invalid-with-named-setup-blocker",
-      "failureReason": "session-manifest-preparation-rate-limited",
+      "decision": "fail",
+      "failureReason": "threshold-violations",
       "learners": 60,
-      "bootstrapBurst": null,
-      "rounds": null,
-      "finishedAt": "2026-04-28T00:00:00.000Z",
-      "finishedAtPrecision": "date",
-      "commit": "0f744c3",
-      "failures": [],
-      "thresholdsPassed": null,
-      "thresholdViolations": [],
-      "fileName": "60-learner-stretch-preflight-20260428-p5.json"
+      "bootstrapBurst": 20,
+      "rounds": 1,
+      "finishedAt": "2026-04-28T23:38:26.815Z",
+      "finishedAtPrecision": "timestamp",
+      "commit": "08253bb2231ba9e2a1673e46d24138f726a268e0",
+      "failures": [
+        "maxBootstrapP95Ms"
+      ],
+      "thresholdsPassed": false,
+      "thresholdViolations": [
+        {
+          "threshold": "max-bootstrap-p95-ms",
+          "limit": 750,
+          "observed": 854,
+          "message": "Bootstrap P95 wall time 854 ms exceeds 750 ms."
+        }
+      ],
+      "fileName": "60-learner-stretch-preflight-20260428-p6.json"
     },
     "csp_status": {
       "tier": "csp_status",
       "ok": false,
       "dryRun": false,
       "mode": "report-only",
-      "finishedAt": "2026-04-29T00:18:15.915Z",
+      "finishedAt": "2026-04-29T00:19:10.075Z",
       "commit": null,
       "failures": [
         "csp_mode_is_report-only"
@@ -107,7 +119,7 @@
       "ok": true,
       "dryRun": false,
       "count": 14,
-      "finishedAt": "2026-04-29T00:18:15.915Z",
+      "finishedAt": "2026-04-29T00:19:10.075Z",
       "commit": null,
       "failures": []
     },
@@ -116,7 +128,7 @@
       "ok": true,
       "dryRun": false,
       "version": "0.1.0",
-      "finishedAt": "2026-04-29T00:18:15.915Z",
+      "finishedAt": "2026-04-29T00:19:10.075Z",
       "commit": null,
       "failures": []
     }
