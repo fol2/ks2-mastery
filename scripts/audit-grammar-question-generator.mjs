@@ -97,7 +97,7 @@ function buildSignatureAudit(seeds) {
   for (const template of GRAMMAR_TEMPLATE_METADATA) {
     if (!template.generative) continue;
     if (!template.generatorFamilyId) missing.push(template.id);
-    const strictVariantTemplate = (template.tags || []).includes('qg-p1') || (template.tags || []).includes('qg-p3');
+    const strictVariantTemplate = (template.tags || []).includes('qg-p1') || (template.tags || []).includes('qg-p3') || (template.tags || []).includes('qg-p4');
     for (const seed of seeds) {
       const question = createGrammarQuestion({ templateId: template.id, seed });
       const signature = grammarQuestionVariantSignature(question);
@@ -134,6 +134,66 @@ function buildSignatureAudit(seeds) {
     legacyRepeatedGeneratedVariants: legacyRepeatedVariants,
     sampleCount: samples.length,
     samples,
+  };
+}
+
+function buildMixedTransferCoverage() {
+  const mixedTransferTemplates = GRAMMAR_TEMPLATE_METADATA.filter(
+    (template) => (template.tags || []).includes('mixed-transfer'),
+  );
+  const conceptsWithMixedTransfer = new Set();
+  for (const template of mixedTransferTemplates) {
+    for (const skillId of (template.skillIds || [])) {
+      conceptsWithMixedTransfer.add(skillId);
+    }
+  }
+  const allConceptIds = GRAMMAR_CONCEPTS.map((c) => c.id).sort();
+  const conceptsWithMixedTransferCoverage = allConceptIds.filter((id) => conceptsWithMixedTransfer.has(id));
+  const conceptsMissingMixedTransferCoverage = allConceptIds.filter((id) => !conceptsWithMixedTransfer.has(id));
+
+  return {
+    mixedTransferTemplateCount: mixedTransferTemplates.length,
+    conceptsWithMixedTransferCoverage,
+    conceptsMissingMixedTransferCoverage,
+    p4MixedTransferComplete: conceptsMissingMixedTransferCoverage.length === 0,
+  };
+}
+
+function buildCaseDepthAudit(seeds) {
+  const familyMap = new Map();
+
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    if (!template.generative) continue;
+    const familyId = template.generatorFamilyId || template.id;
+    if (!familyMap.has(familyId)) {
+      familyMap.set(familyId, { familyId, signatures: new Set(), totalSampled: 0 });
+    }
+    const entry = familyMap.get(familyId);
+    for (const seed of seeds) {
+      const question = createGrammarQuestion({ templateId: template.id, seed });
+      const signature = grammarQuestionVariantSignature(question);
+      if (signature) {
+        entry.signatures.add(signature);
+      }
+      entry.totalSampled += 1;
+    }
+  }
+
+  const generatedCaseDepthByFamily = Array.from(familyMap.values())
+    .map((entry) => ({
+      familyId: entry.familyId,
+      uniqueSignatures: entry.signatures.size,
+      totalSampled: entry.totalSampled,
+      depth: entry.signatures.size,
+    }))
+    .sort((a, b) => a.familyId.localeCompare(b.familyId));
+
+  const lowDepthGeneratedTemplates = generatedCaseDepthByFamily.filter((row) => row.uniqueSignatures < 8);
+
+  return {
+    deepSampledSeeds: seeds.slice(),
+    generatedCaseDepthByFamily,
+    lowDepthGeneratedTemplates,
   };
 }
 
@@ -188,17 +248,18 @@ function buildAnswerSpecAudit(seeds) {
   };
 }
 
-export function buildGrammarQuestionGeneratorAudit({ seeds = DEFAULT_SEEDS } = {}) {
+export function buildGrammarQuestionGeneratorAudit({ seeds = DEFAULT_SEEDS, deepSeeds } = {}) {
   const selectedResponseCount = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length;
   const generatedTemplateCount = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.generative).length;
   const conceptCoverage = buildConceptCoverage();
   const explainCoverage = buildExplainCoverage(conceptCoverage);
   const signatureAudit = buildSignatureAudit(seeds.map((seed) => Number(seed)).filter(Number.isFinite));
   const answerSpecAudit = buildAnswerSpecAudit(seeds.map((seed) => Number(seed)).filter(Number.isFinite));
+  const mixedTransferCoverage = buildMixedTransferCoverage();
   const templateIds = GRAMMAR_TEMPLATE_METADATA.map((template) => template.id);
   const duplicateTemplateIds = templateIds.filter((id, index) => templateIds.indexOf(id) !== index);
 
-  return {
+  const result = {
     releaseId: GRAMMAR_CONTENT_RELEASE_ID,
     conceptCount: GRAMMAR_CONCEPTS.length,
     templateCount: GRAMMAR_TEMPLATE_METADATA.length,
@@ -214,7 +275,17 @@ export function buildGrammarQuestionGeneratorAudit({ seeds = DEFAULT_SEEDS } = {
     ...explainCoverage,
     ...signatureAudit,
     ...answerSpecAudit,
+    ...mixedTransferCoverage,
   };
+
+  if (deepSeeds && deepSeeds.length > 0) {
+    const caseDepth = buildCaseDepthAudit(deepSeeds.map((seed) => Number(seed)).filter(Number.isFinite));
+    result.deepSampledSeeds = caseDepth.deepSampledSeeds;
+    result.generatedCaseDepthByFamily = caseDepth.generatedCaseDepthByFamily;
+    result.lowDepthGeneratedTemplates = caseDepth.lowDepthGeneratedTemplates;
+  }
+
+  return result;
 }
 
 function formatSummary(audit) {
@@ -235,18 +306,31 @@ function formatSummary(audit) {
     `Constructed-response answer-spec templates: ${audit.constructedResponseAnswerSpecTemplateCount}/${audit.constructedResponseTemplateCount}`,
     `Legacy adapter templates: ${audit.legacyAdapterTemplateCount}`,
     `Manual-review-only templates: ${audit.manualReviewOnlyTemplateCount}`,
+    `Mixed-transfer templates: ${audit.mixedTransferTemplateCount}`,
+    `Concepts with mixed-transfer coverage: ${audit.conceptsWithMixedTransferCoverage.length}/${audit.conceptCount}`,
+    `Concepts missing mixed-transfer coverage: ${audit.conceptsMissingMixedTransferCoverage.join(', ') || 'none'}`,
   ];
   if (audit.duplicateTemplateIds.length) lines.push(`Duplicate template ids: ${audit.duplicateTemplateIds.join(', ')}`);
   if (audit.missingGeneratorMetadata.length) lines.push(`Missing generator metadata: ${audit.missingGeneratorMetadata.join(', ')}`);
   if (audit.templatesMissingAnswerSpecs.length) lines.push(`Missing answerSpecs: ${audit.templatesMissingAnswerSpecs.join(', ')}`);
   if (audit.invalidAnswerSpecs.length) lines.push(`Invalid answerSpecs: ${audit.invalidAnswerSpecs.map((row) => `${row.templateId}:${row.seed}`).join(', ')}`);
+  if (audit.generatedCaseDepthByFamily) {
+    lines.push(`Deep-sampled seeds: ${audit.deepSampledSeeds.length}`);
+    lines.push(`Generated families: ${audit.generatedCaseDepthByFamily.length}`);
+    lines.push(`Low-depth families (<8 unique): ${audit.lowDepthGeneratedTemplates.length}`);
+    if (audit.lowDepthGeneratedTemplates.length > 0) {
+      lines.push(`  ${audit.lowDepthGeneratedTemplates.map((row) => `${row.familyId}:${row.uniqueSignatures}`).join(', ')}`);
+    }
+  }
   return lines.join('\n');
 }
 
 async function main(argv) {
   const seedArg = argv.find((arg) => arg.startsWith('--seeds='));
   const seeds = seedArg ? seedArg.slice('--seeds='.length).split(',').map(Number).filter(Number.isFinite) : DEFAULT_SEEDS;
-  const audit = buildGrammarQuestionGeneratorAudit({ seeds });
+  const deep = argv.includes('--deep');
+  const deepSeeds = deep ? Array.from({ length: 30 }, (_, i) => i + 1) : undefined;
+  const audit = buildGrammarQuestionGeneratorAudit({ seeds, deepSeeds });
   const writeFixtureIndex = argv.indexOf('--write-fixture');
   if (writeFixtureIndex >= 0) {
     const targetArg = argv[writeFixtureIndex + 1] || 'tests/fixtures/grammar-legacy-oracle/grammar-qg-p1-baseline.json';

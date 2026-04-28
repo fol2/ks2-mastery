@@ -41,6 +41,13 @@ test('Grammar question-generator audit covers the current template inventory', (
     normalisedText: 5,
     punctuationPattern: 9,
   });
+
+  // P4 mixed-transfer scaffold assertions
+  assert.equal(typeof audit.mixedTransferTemplateCount, 'number');
+  assert.equal(audit.mixedTransferTemplateCount, 0);
+  assert.ok(Array.isArray(audit.conceptsMissingMixedTransferCoverage));
+  assert.equal(audit.conceptsMissingMixedTransferCoverage.length, 18);
+  assert.equal(audit.p4MixedTransferComplete, false);
 });
 
 test('Grammar generated variants have stable answer-safe signatures', () => {
