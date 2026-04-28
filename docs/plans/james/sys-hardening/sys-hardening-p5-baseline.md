@@ -82,3 +82,28 @@ P5 is a **certification closure** phase. Its purpose is to:
 4. Revalidate capacity claims against the post-P4 drift surfaces listed above.
 
 P5 does NOT introduce new hardening infrastructure, new circuit breakers, new telemetry surfaces, or new operational runbooks. Any such work discovered during P5 execution is captured as a P6 residual.
+
+## Admin Capacity Residual Triage
+
+### Certification-Critical Admin Routes (P5)
+
+These Admin routes could theoretically affect learner-route performance if they share D1 connection pools or trigger heavy queries during capacity runs:
+
+- `/api/admin/ops/kpi` — manual-refresh pattern (operator clicks to refresh, not live on every page load). Indexed queries via `readDashboardKpis`. Not blocking learner routes.
+- `/api/admin/debug-bundle` — read-only diagnostic. Rate-limited at 10/min per session. Limitations: capacity collector bypass is documented but not fixed. Explicitly carried to P6.
+
+### Routes NOT Certification-Critical (P5)
+
+All other admin endpoints operate independently of learner routes during capacity certification runs (learner load uses demo sessions, not admin sessions).
+
+### P6 Deferrals
+
+- Full Admin KPI pre-aggregation (replace live counters with pre-computed values)
+- Budget ceiling tests for all 14+ admin endpoints with `meta.capacity`
+- Debug-bundle capacity collector instrumentation for raw DB aggregation
+- Admin endpoint response-time budgets beyond the certification-critical set
+
+### Verification
+
+- No Admin route touched by P5 lacks access tests (verified by `tests/redaction-access-matrix.test.js` — covers parent, admin, ops roles across all route axes)
+- Admin KPI live-count cost does not affect learner-route certification (admin sessions are not used during capacity runs)
