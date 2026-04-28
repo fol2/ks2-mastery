@@ -27,26 +27,22 @@
 // Demo-rate-limit design (CRITICAL)
 // ---------------------------------
 //
-// Every `createDemoSession()` call consumes one token from the demo
-// endpoint's 30-request / 10-minute rate limit (worker/src/demo/
-// sessions.js:24 `DEMO_LIMITS.createIp = 30`). Playwright runs each
-// test in its own browser context (fresh cookie jar) so EVERY test's
-// `createDemoSession()` hits a fresh demo mint.
+// Every `createDemoSession()` call goes through the real `/demo`
+// endpoint. Playwright runs each test in its own browser context
+// (fresh cookie jar) so EVERY test's `createDemoSession()` hits a
+// fresh demo mint.
 //
 // With 5 projects running serially in a single worker (playwright
-// config says `workers: 1` for this exact reason) and ~30 demo-
-// consuming tests in the full suite (grammar golden: 10, spelling
-// golden: 3, punctuation golden: 3, chaos/access/reduced-motion: 6,
-// and this scene), a naive "one demo per test" shape in SH2-U6 would
-// bust the limit long before the matrix finishes.
+// config says `workers: 1` for this exact reason), a naive "one demo
+// per test from the same loopback bucket" shape would bust the
+// production 30-request / 10-minute demo-create rate limit long before
+// the PR-time suite finishes.
 //
-// We batch AGGRESSIVELY: ONE demo-consuming test drives ~10 surfaces
-// per project via in-flight navigation. Non-demo surfaces (auth,
-// synthetic over-mask guard, DOM-fixture overlays after the main
-// walk completes) live in their own tests but consume zero demo
-// tokens after the primary walk. This keeps each project under 3
-// demo creates; 5 × 3 = 15 tokens total, well below the 30 ceiling
-// and leaving headroom for parallel test sessions on the same host.
+// `shared.createDemoSession()` stamps a deterministic synthetic
+// `CF-Connecting-IP` per browser seed so the test harness models
+// distinct clients while the Worker still exercises the real `/demo`
+// create path. Worker-level tests remain the source of truth for the
+// production limiter contract.
 //
 // Baseline environment expectations (Linux-CI mismatch)
 // -----------------------------------------------------
