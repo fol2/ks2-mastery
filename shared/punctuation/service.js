@@ -39,6 +39,7 @@ const GENERATED_ITEMS_PER_FAMILY = 4;
 const MAX_GPS_QUEUE_LENGTH = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAILY_TARGET_ATTEMPTS = 4;
+const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
 const ITEM_MODE_LABELS = Object.freeze({
   choose: 'Choice',
   insert: 'Insert punctuation',
@@ -67,6 +68,12 @@ function isPlainObject(value) {
 function timestamp(now = Date.now) {
   const value = typeof now === 'function' ? Number(now()) : Number(now);
   return Number.isFinite(value) ? value : Date.now();
+}
+
+function normaliseOpaqueVariantSignature(value) {
+  if (typeof value !== 'string') return '';
+  const signature = value.trim();
+  return OPAQUE_VARIANT_SIGNATURE_PATTERN.test(signature) ? signature : '';
 }
 
 function randomSuffix(random = Math.random) {
@@ -215,8 +222,9 @@ function normaliseItemForState(item) {
     model: item.model || '',
     source: item.source || 'fixed',
   };
-  if (typeof item.variantSignature === 'string' && item.variantSignature) {
-    safe.variantSignature = item.variantSignature;
+  const variantSignature = normaliseOpaqueVariantSignature(item.variantSignature);
+  if (safe.source === 'generated' && variantSignature) {
+    safe.variantSignature = variantSignature;
   }
   if (item.mode === 'choose') {
     safe.options = Array.isArray(item.options)

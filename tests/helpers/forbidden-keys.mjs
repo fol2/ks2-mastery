@@ -67,19 +67,34 @@ export const FORBIDDEN_GRAMMAR_ITEM_KEYS = Object.freeze([
 // validator, seed, rawGenerator, hiddenQueue, queueItemIds, responses,
 // unpublished) is disjoint from grammar's. The overlap with the universal
 // floor covers the shared concerns ('accepted', 'answers', 'generator').
+//
+// `variantSignature` has one narrow exception: a generated active
+// session.currentItem may carry it as an opaque submission/evidence token. It
+// remains forbidden everywhere else, especially GPS review rows and adult
+// evidence surfaces.
+export const ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS = Object.freeze([
+  'variantSignature',
+]);
+
 export const FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS = Object.freeze([
   'accepted',
+  'acceptedAnswers',
   'answers',
   'correctIndex',
+  'generatorFamilyId',
   'rubric',
   'validator',
+  'validators',
   'seed',
   'generator',
   'rawGenerator',
+  'rawResponse',
   'hiddenQueue',
   'queueItemIds',
   'responses',
+  'templateId',
   'unpublished',
+  'variantSignature',
 ]);
 
 // Punctuation adult evidence surface extends the read-model surface with

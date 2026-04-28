@@ -82,7 +82,7 @@ Generated practice now runs through a deterministic compiler. Each published gen
 Generated item guardrails:
 
 - The production runtime service uses `generatedPerFamily: 4`, giving 171 runtime items while keeping the published reward denominator unchanged. Lower-level generator and audit compatibility fixtures still exercise `generatedPerFamily: 1`.
-- Each generated item carries a stable `templateId` and opaque `variantSignature`. The scheduler uses recent signatures to avoid equivalent retries, and Star evidence uses signatures before item ids when a generated surface has an available signature.
+- Each generated item carries a stable internal `templateId` and opaque `variantSignature`. The scheduler uses recent signatures to avoid equivalent retries, and Star evidence uses signatures before item ids when a generated surface has an available signature. The `templateId` stays server-only; only the opaque signature may cross to the active generated item read model.
 - Template-bank expansion appends new templates after the first two legacy templates. The first generated runtime variant is preserved when the bank grows.
 - The audit command `npm run audit:punctuation-content -- --strict --generated-per-family 4` checks generated family coverage, validator coverage, duplicate variant signatures, distinct signature counts, and generated model-answer marking. Duplicate stems/models remain reported for content review; add `--fail-on-duplicate-generated-content` when a review specifically wants those surfaced as hard failures.
 
@@ -260,15 +260,19 @@ Writes are monster-targeted (each monster updates independently) and idempotent 
 
 The Worker plumbing for an AI-assisted context-pack compiler stays in place, but the learner React surface deliberately ignores the field in Phase 2. The existing `safeContextPackSummary` allowlist ensures any future upstream field addition trips the fail-closed redaction guard added in Phase 2 U2. Phase 3 will decide whether to productise the context pack as a post-feedback learner surface or keep it teacher/admin-only; until then, the Parent / Admin evidence path is the only surface that consumes it.
 
-## Read-Model Redaction (Phase 2)
+## Generated Metadata Transport And Read-Model Redaction (Phase 2 / P2 U4)
 
 Every phase output (active item, feedback, summary, GPS review, analytics, Parent / Admin evidence, context-pack summary) is built from explicit allowlists. A recursive `assertNoForbiddenReadModelKeys` scan runs on the assembled payload before it leaves the Worker so a forbidden field added at any depth of any branch (e.g. `summary.metadata.rawGenerator`, `reviewRow.validator`, `analytics.byItemMode[].rubric`) throws in `NODE_ENV=test` and emits a structured warning + strips the field in production.
 
-The forbidden-key set is kept aligned between `worker/src/subjects/punctuation/read-models.js` (`FORBIDDEN_READ_MODEL_KEYS`) and `scripts/punctuation-production-smoke.mjs` (`FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS`). Adding a new forbidden key means editing both files in the same PR; CI will fail with a clear "server-only field: &lt;key&gt;" message if drift is introduced.
+Generated metadata has one deliberate transport exception. A generated active `session.currentItem` may expose `variantSignature` when it matches the opaque `puncsig_*` shape. It is used only for submission/evidence binding and equivalent-surface de-duplication. The active item must not expose `templateId`, generator family ids, validators, accepted answers, raw responses, raw generator payloads, or template internals. Fixed active items do not expose `variantSignature`.
+
+Every other surface treats `variantSignature` as forbidden. GPS delayed review rows, Smart Review feedback/summary payloads, Parent Hub Punctuation evidence, Admin learner diagnostics, progress snapshots, and misconception-pattern evidence must omit `variantSignature` alongside generated internals and answer-bearing fields such as `acceptedAnswers`, `validator(s)`, `rawResponse`, `response`, `typed`, `attemptedAnswer`, `model`, and `displayCorrection`.
+
+The forbidden-key set is kept aligned between `tests/helpers/forbidden-keys.mjs`, `worker/src/subjects/punctuation/read-models.js` (`FORBIDDEN_READ_MODEL_KEYS`), and `scripts/punctuation-production-smoke.mjs` (`FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS`). Adding a new forbidden key means editing the shared helper first, then the Worker/smoke enforcement in the same PR; CI will fail with a clear "server-only field: &lt;key&gt;" message if drift is introduced.
 
 ## Browser Read Model And Lockdown
 
-The browser read model is an allowlist. It may show the current prompt, stem, safe answer choices, feedback, correction copy, rubric facets, and summary data.
+The browser read model is an allowlist. It may show the current prompt, stem, safe answer choices, feedback, correction copy, rubric facets, summary data, and the opaque generated active-item `variantSignature` exception described above.
 
 It must not expose server-only fields such as accepted answer lists, `correctIndex`, validators, raw rubric definitions, content generators, hidden queues, unpublished items, or the domain engine.
 

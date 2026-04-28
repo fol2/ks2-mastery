@@ -1,9 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import {
+  assertNoForbiddenPunctuationAdultEvidenceKeys,
+  assertNoForbiddenPunctuationReadModelKeys,
+} from '../scripts/punctuation-production-smoke.mjs';
+import { buildAdminHubReadModel } from '../src/platform/hubs/admin-read-model.js';
+import { buildParentHubReadModel } from '../src/platform/hubs/parent-read-model.js';
 import { buildPunctuationReadModel } from '../worker/src/subjects/punctuation/read-models.js';
 import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
 import { createPunctuationReadModelService } from '../src/subjects/punctuation/client-read-models.js';
+import {
+  ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS,
+  FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS,
+  FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS,
+} from './helpers/forbidden-keys.mjs';
 
 const BASE_STATE = {
   phase: 'summary',
@@ -30,6 +41,82 @@ const BASE_STATE = {
   },
   availability: { status: 'ready', code: null, message: '' },
 };
+
+const GENERATED_ACTIVE_ITEM_FORBIDDEN_KEYS = Object.freeze([
+  'templateId',
+  'generatorFamilyId',
+  'validator',
+  'validators',
+  'accepted',
+  'acceptedAnswers',
+  'answers',
+  'rawResponse',
+  'rawGenerator',
+  'model',
+]);
+
+function generatedPunctuationSubjectState(now = 1_777_000_000_000) {
+  return {
+    data: {
+      progress: {
+        items: {
+          gen_speech_insert_1: {
+            attempts: 1,
+            correct: 0,
+            incorrect: 1,
+            streak: 0,
+            lapses: 1,
+            dueAt: now,
+            firstCorrectAt: null,
+            lastCorrectAt: null,
+            lastSeen: now,
+          },
+        },
+        facets: {},
+        rewardUnits: {},
+        attempts: [
+          {
+            ts: now,
+            sessionId: 'punctuation-generated-session',
+            itemId: 'gen_speech_insert_1',
+            variantSignature: 'puncsig_parent1',
+            templateId: 'gen_speech_insert_template_secret',
+            generatorFamilyId: 'gen_speech_insert',
+            acceptedAnswers: ['Maya said, "Hello."'],
+            validator: { type: 'speech' },
+            rawResponse: { typed: 'maya said hello' },
+            response: 'maya said hello',
+            typed: 'maya said hello',
+            attemptedAnswer: 'maya said hello',
+            model: 'Maya said, "Hello."',
+            displayCorrection: 'Maya said, "Hello."',
+            mode: 'insert',
+            itemMode: 'insert',
+            skillIds: ['speech'],
+            rewardUnitId: 'speech-core',
+            sessionMode: 'smart',
+            correct: false,
+            misconceptionTags: ['speech.quote_missing'],
+            facetOutcomes: [{ id: 'speech::insert', label: 'Speech - Insert punctuation', ok: false }],
+          },
+        ],
+        sessionsCompleted: 1,
+      },
+    },
+    updatedAt: now,
+  };
+}
+
+function makeLearner(id = 'learner-punctuation-u4') {
+  return {
+    id,
+    name: 'Ava',
+    yearGroup: 'Y5',
+    goal: 'sats',
+    dailyMinutes: 15,
+    createdAt: 1000,
+  };
+}
 
 test('safeSummary passes a clean payload through redaction without throwing', () => {
   const result = buildPunctuationReadModel({
@@ -210,7 +297,7 @@ test('availability payload fails closed on forbidden fields', () => {
 });
 
 test('scan catches rawGenerator, queueItemIds, and responses at any depth', () => {
-  for (const key of ['rawGenerator', 'queueItemIds', 'responses']) {
+  for (const key of ['acceptedAnswers', 'generatorFamilyId', 'rawGenerator', 'rawResponse', 'queueItemIds', 'responses', 'templateId', 'validators', 'variantSignature']) {
     const leaky = {
       ...BASE_STATE,
       summary: {
@@ -229,6 +316,236 @@ test('scan catches rawGenerator, queueItemIds, and responses at any depth', () =
       `forbidden key ${key} must trip the recursive scan`,
     );
   }
+});
+
+test('active generated currentItem exposes only an opaque variant signature', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-a',
+    state: {
+      phase: 'active-item',
+      session: {
+        id: 'session-generated',
+        releaseId: 'punctuation-r4-full-14-skill-structure',
+        mode: 'smart',
+        length: 1,
+        phase: 'active-item',
+        startedAt: 1_777_000_000_000,
+        answeredCount: 0,
+        correctCount: 0,
+        currentItem: {
+          id: 'generated-speech-insert',
+          mode: 'insert',
+          source: 'generated',
+          prompt: 'Add the direct-speech punctuation.',
+          stem: 'Maya said, hello.',
+          inputKind: 'text',
+          skillIds: ['speech'],
+          clusterId: 'speech',
+          variantSignature: 'puncsig_abc123',
+        },
+        serverAuthority: 'worker',
+      },
+      availability: { status: 'ready', code: null, message: '' },
+    },
+    prefs: {},
+    stats: {},
+  });
+  const currentItem = result.session.currentItem;
+
+  assert.equal(currentItem.source, 'generated');
+  assert.equal(currentItem.variantSignature, 'puncsig_abc123');
+  assertNoForbiddenPunctuationReadModelKeys(result, 'punctuation.active.startModel');
+  for (const key of GENERATED_ACTIVE_ITEM_FORBIDDEN_KEYS) {
+    assert.equal(Object.hasOwn(currentItem, key), false, `active generated currentItem must not expose ${key}`);
+  }
+});
+
+test('feedback generated currentItem omits the active-item variant signature transport', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-a',
+    state: {
+      phase: 'feedback',
+      session: {
+        id: 'session-generated',
+        releaseId: 'punctuation-r4-full-14-skill-structure',
+        mode: 'smart',
+        length: 1,
+        phase: 'feedback',
+        startedAt: 1_777_000_000_000,
+        answeredCount: 1,
+        correctCount: 1,
+        currentItem: {
+          id: 'generated-speech-insert',
+          mode: 'insert',
+          source: 'generated',
+          prompt: 'Add the direct-speech punctuation.',
+          stem: 'Maya said, hello.',
+          inputKind: 'text',
+          skillIds: ['speech'],
+          clusterId: 'speech',
+          variantSignature: 'puncsig_abc123',
+        },
+        serverAuthority: 'worker',
+      },
+      feedback: {
+        kind: 'success',
+        headline: 'Nice work',
+        body: 'The answer was accepted.',
+      },
+      availability: { status: 'ready', code: null, message: '' },
+    },
+    prefs: {},
+    stats: {},
+  });
+  const currentItem = result.session.currentItem;
+
+  assert.equal(result.phase, 'feedback');
+  assert.equal(currentItem.source, 'generated');
+  assert.equal(Object.hasOwn(currentItem, 'variantSignature'), false);
+  assertNoForbiddenPunctuationReadModelKeys(result, 'punctuation.smart.feedbackModel');
+});
+
+test('shared punctuation metadata policy allows variantSignature only on active currentItem', () => {
+  assert.deepEqual(ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS, ['variantSignature']);
+  assert.equal(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.includes('variantSignature'), true);
+  assert.equal(FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS.includes('variantSignature'), true);
+
+  assert.doesNotThrow(() => assertNoForbiddenPunctuationReadModelKeys({
+    phase: 'active-item',
+    session: {
+      currentItem: {
+        source: 'generated',
+        variantSignature: 'puncsig_abc123',
+      },
+    },
+  }, 'punctuation.smart.startModel'));
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'feedback',
+      session: {
+        currentItem: {
+          source: 'generated',
+          variantSignature: 'puncsig_abc123',
+        },
+      },
+    }, 'punctuation.smart.feedbackModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'active-item',
+      session: {
+        currentItem: {
+          source: 'fixed',
+          variantSignature: 'puncsig_abc123',
+        },
+      },
+    }, 'punctuation.smart.startModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'active-item',
+      session: {
+        currentItem: {
+          source: 'generated',
+          variantSignature: 'not-opaque',
+        },
+      },
+    }, 'punctuation.smart.startModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'active-item',
+      analytics: {
+        session: {
+          currentItem: {
+            variantSignature: 'puncsig_abc123',
+          },
+        },
+      },
+    }, 'punctuation.smart.startModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'active-item',
+      rows: [
+        {
+          session: {
+            currentItem: {
+              variantSignature: 'puncsig_abc123',
+            },
+          },
+        },
+      ],
+    }, 'punctuation.smart.startModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      summary: {
+        gps: {
+          reviewItems: [{ itemId: 'generated-speech-insert', variantSignature: 'puncsig_abc123' }],
+        },
+      },
+    }, 'punctuation.gps.summaryModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationAdultEvidenceKeys({
+      recentMistakes: [{ itemId: 'generated-speech-insert', variantSignature: 'puncsig_abc123' }],
+    }, 'parentHub.punctuationEvidence'),
+    /variantSignature exposed a server-only field/,
+  );
+});
+
+test('Parent Hub and Admin punctuation evidence omit generated metadata and answer fields', () => {
+  const now = 1_777_000_000_000;
+  const learner = makeLearner();
+  const subjectState = generatedPunctuationSubjectState(now);
+  const parentModel = buildParentHubReadModel({
+    learner,
+    platformRole: 'parent',
+    membershipRole: 'owner',
+    subjectStates: { punctuation: subjectState },
+    practiceSessions: [],
+    eventLog: [],
+    now: () => now,
+  });
+
+  assert.equal(parentModel.punctuationEvidence.hasEvidence, true);
+  assertNoForbiddenPunctuationAdultEvidenceKeys(parentModel.punctuationEvidence, 'parentHub.punctuationEvidence');
+  assertNoForbiddenPunctuationAdultEvidenceKeys(parentModel.progressSnapshots, 'parentHub.progressSnapshots');
+  assertNoForbiddenPunctuationAdultEvidenceKeys(parentModel.misconceptionPatterns, 'parentHub.misconceptionPatterns');
+  for (const key of ['variantSignature', 'templateId', 'generatorFamilyId', 'acceptedAnswers', 'validator', 'rawResponse', 'response', 'typed', 'attemptedAnswer', 'model', 'displayCorrection']) {
+    assert.equal(
+      Object.hasOwn(parentModel.punctuationEvidence.recentMistakes[0], key),
+      false,
+      `Parent Hub recent mistake must not expose ${key}`,
+    );
+  }
+
+  const adminModel = buildAdminHubReadModel({
+    account: { id: 'adult-admin', selectedLearnerId: learner.id, repoRevision: 7, platformRole: 'admin' },
+    platformRole: 'admin',
+    memberships: [{ learnerId: learner.id, learner, role: 'owner' }],
+    learnerBundles: {
+      [learner.id]: {
+        subjectStates: { punctuation: subjectState },
+        practiceSessions: [],
+        eventLog: [],
+        gameState: {},
+      },
+    },
+    selectedLearnerId: learner.id,
+    now: () => now,
+  });
+  const diagnostics = adminModel.learnerSupport.selectedDiagnostics;
+
+  assert.equal(diagnostics.punctuationEvidence.hasEvidence, true);
+  assertNoForbiddenPunctuationAdultEvidenceKeys(diagnostics.punctuationEvidence, 'adminHub.selectedDiagnostics.punctuationEvidence');
 });
 
 test('client normaliser drops contextPack if the worker ever re-adds it (U8 belt-and-braces)', () => {
