@@ -1666,7 +1666,7 @@ async function readDashboardKpis(db, { now, actorAccountId, actor = null } = {})
 
   // U11: surface cron-driven reconciliation telemetry so the dashboard
   // can warn when automated reconciliation has stalled. Metric keys live
-  // in `worker/src/index.js::runScheduledHandler`; we soft-fail if the
+  // in `worker/src/cron/scheduled.js::runScheduledHandler`; we soft-fail if the
   // table is missing so the hub keeps loading pre-migration.
   // I-RE-1 (re-review Important): the cron also runs a retention sweep on
   // request_limits + sessions + receipts. A retention failure alone
