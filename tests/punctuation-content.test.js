@@ -13,6 +13,56 @@ import {
   validatePunctuationManifest,
 } from '../shared/punctuation/content.js';
 
+const P2_U3_PRIORITY_FIXED_TARGETS = Object.freeze({
+  sentence_endings: 8,
+  apostrophe_contractions: 8,
+  comma_clarity: 8,
+  semicolon_list: 8,
+  hyphen: 8,
+  dash_clause: 8,
+});
+
+const STABLE_PUNCTUATION_REWARD_UNIT_IDS = Object.freeze([
+  'sentence-endings-core',
+  'apostrophe-contractions-core',
+  'apostrophe-possession-core',
+  'speech-core',
+  'list-commas-core',
+  'fronted-adverbials-core',
+  'comma-clarity-core',
+  'semicolons-core',
+  'dash-clauses-core',
+  'hyphens-core',
+  'parenthesis-core',
+  'colons-core',
+  'semicolon-lists-core',
+  'bullet-points-core',
+]);
+
+const P2_U3_NEW_FIXED_ANCHOR_IDS = Object.freeze([
+  'se_choose_direct_question',
+  'se_insert_quiet_command',
+  'se_fix_excited_statement',
+  'se_transfer_where',
+  'ac_choose_theyre_dont',
+  'ac_insert_well_youre',
+  'ac_transfer_dont_theyre',
+  'cc_choose_before_cooking',
+  'cc_insert_after_supper',
+  'cc_fix_if_lost',
+  'cc_transfer_after_the_match',
+  'sl_choose_clubs',
+  'sl_insert_helper_roles',
+  'sl_fix_stalls',
+  'sl_transfer_event_stalls',
+  'hy_choose_small_business',
+  'hy_insert_well_behaved',
+  'hy_transfer_part_time_job',
+  'dc_choose_lights_out',
+  'dc_insert_alarm_rang',
+  'dc_transfer_curtain_rose',
+]);
+
 test('punctuation manifest exposes 14 atomic skills and one cluster owner per skill', () => {
   const result = validatePunctuationManifest();
   assert.equal(result.ok, true, result.errors.join('\n'));
@@ -54,6 +104,40 @@ test('published punctuation release includes the hidden full 14-skill Structure 
   // the behavioural smoke matrix proves.
   assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /14-skill KS2 progression/);
   assert.match(PUNCTUATION_CONTENT_MANIFEST.publishedScopeCopy, /Smart Review/);
+});
+
+test('P2 U3 priority fixed anchors meet target depth without new reward units', () => {
+  const indexes = createPunctuationContentIndexes();
+
+  for (const [skillId, expected] of Object.entries(P2_U3_PRIORITY_FIXED_TARGETS)) {
+    const fixedItems = (indexes.itemsBySkill.get(skillId) || [])
+      .filter((item) => item.source === 'fixed');
+    assert.equal(fixedItems.length, expected, `${skillId} fixed anchor count`);
+  }
+
+  assert.deepEqual(
+    indexes.publishedRewardUnits.map((unit) => unit.rewardUnitId),
+    STABLE_PUNCTUATION_REWARD_UNIT_IDS,
+  );
+});
+
+test('P2 U3 new free-text fixed anchors have deterministic marking contracts', () => {
+  const indexes = createPunctuationContentIndexes();
+
+  for (const itemId of P2_U3_NEW_FIXED_ANCHOR_IDS) {
+    const item = indexes.itemById.get(itemId);
+    assert.ok(item, `${itemId} should exist`);
+    assert.equal(item.source, 'fixed', `${itemId} should be a fixed authored anchor`);
+    assert.ok(Array.isArray(item.misconceptionTags) && item.misconceptionTags.length > 0, `${itemId} should tag likely misconceptions`);
+    assert.ok(Array.isArray(item.readiness) && item.readiness.includes('negative_test'), `${itemId} should include negative-test readiness`);
+
+    if (item.mode !== 'choose') {
+      assert.ok(
+        item.validator || item.rubric || (Array.isArray(item.accepted) && item.accepted.includes(item.model)),
+        `${itemId} should have validator, rubric, or exact-answer coverage`,
+      );
+    }
+  }
 });
 
 test('published reward mastery keys are release-scoped and stable when generator families expand', () => {
