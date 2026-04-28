@@ -780,3 +780,293 @@ test('U2: starView shape matches client-side buildPunctuationLearnerReadModel ou
     'Worker starView must be identical to client starView for same data',
   );
 });
+
+// ---------------------------------------------------------------------------
+// P3 U7: Fail-closed redaction characterisation tests
+//
+// These tests prove the redaction contract is FAIL-CLOSED in all environments:
+//   1. A well-formed generated item's read-model contains no forbidden keys.
+//   2. variantSignature IS present on the active session currentItem (explicit
+//      allowance for the opaque evidence token).
+//   3. Artificially injecting ANY forbidden key into ANY read-model surface
+//      causes a THROW — not silent strip.
+//
+// The contract: throw in all environments. Production smoke catches deployed
+// leakage via the same assertNoForbiddenPunctuationReadModelKeys oracle.
+// ---------------------------------------------------------------------------
+
+test('P3 U7: every FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS key throws when injected into summary', () => {
+  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+    const leaky = {
+      ...BASE_STATE,
+      summary: {
+        ...BASE_STATE.summary,
+        injected: { [key]: 'leak' },
+      },
+    };
+    assert.throws(
+      () => buildPunctuationReadModel({
+        learnerId: 'learner-u7-summary',
+        state: leaky,
+        prefs: {},
+        stats: {},
+      }),
+      new RegExp(`server-only .*field: ${key}`),
+      `fail-closed: forbidden key "${key}" injected into summary must throw`,
+    );
+  }
+});
+
+test('P3 U7: every FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS key throws when injected into stats', () => {
+  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+    assert.throws(
+      () => buildPunctuationReadModel({
+        learnerId: 'learner-u7-stats',
+        state: BASE_STATE,
+        prefs: {},
+        stats: { publishedRewardUnits: 14, [key]: 'leak' },
+      }),
+      new RegExp(`server-only .*field: ${key}`),
+      `fail-closed: forbidden key "${key}" injected into stats must throw`,
+    );
+  }
+});
+
+test('P3 U7: every FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS key throws when injected into analytics', () => {
+  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+    assert.throws(
+      () => buildPunctuationReadModel({
+        learnerId: 'learner-u7-analytics',
+        state: BASE_STATE,
+        prefs: {},
+        stats: {},
+        analytics: { bySessionMode: [], [key]: 'leak' },
+      }),
+      new RegExp(`server-only .*field: ${key}`),
+      `fail-closed: forbidden key "${key}" injected into analytics must throw`,
+    );
+  }
+});
+
+test('P3 U7: every FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS key throws when injected into prefs', () => {
+  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+    assert.throws(
+      () => buildPunctuationReadModel({
+        learnerId: 'learner-u7-prefs',
+        state: BASE_STATE,
+        prefs: { mode: 'smart', [key]: 'leak' },
+        stats: {},
+      }),
+      new RegExp(`server-only .*field: ${key}`),
+      `fail-closed: forbidden key "${key}" injected into prefs must throw`,
+    );
+  }
+});
+
+test('P3 U7: every FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS key throws when injected into availability', () => {
+  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+    const leaky = {
+      ...BASE_STATE,
+      availability: { status: 'ready', code: null, message: '', [key]: 'leak' },
+    };
+    assert.throws(
+      () => buildPunctuationReadModel({
+        learnerId: 'learner-u7-availability',
+        state: leaky,
+        prefs: {},
+        stats: {},
+      }),
+      new RegExp(`server-only .*field: ${key}`),
+      `fail-closed: forbidden key "${key}" injected into availability must throw`,
+    );
+  }
+});
+
+test('P3 U7: every FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS key throws at arbitrary nesting depth', () => {
+  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+    const leaky = {
+      ...BASE_STATE,
+      summary: {
+        ...BASE_STATE.summary,
+        deep: { nested: { three: { [key]: 'leak' } } },
+      },
+    };
+    assert.throws(
+      () => buildPunctuationReadModel({
+        learnerId: 'learner-u7-depth',
+        state: leaky,
+        prefs: {},
+        stats: {},
+      }),
+      new RegExp(`server-only .*field: ${key}`),
+      `fail-closed: forbidden key "${key}" at depth=3 must throw`,
+    );
+  }
+});
+
+test('P3 U7: clean generated-item read-model contains zero forbidden keys (happy path)', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-u7-happy',
+    state: {
+      phase: 'active-item',
+      session: {
+        id: 'session-u7-happy',
+        releaseId: 'punctuation-r4-full-14-skill-structure',
+        mode: 'smart',
+        length: 4,
+        phase: 'active-item',
+        startedAt: 1_777_000_000_000,
+        answeredCount: 0,
+        correctCount: 0,
+        currentItem: {
+          id: 'generated-speech-insert-u7',
+          mode: 'insert',
+          source: 'generated',
+          prompt: 'Add the direct-speech punctuation.',
+          stem: 'Maya said hello.',
+          inputKind: 'text',
+          skillIds: ['speech'],
+          clusterId: 'speech',
+          variantSignature: 'puncsig_happy7',
+        },
+        serverAuthority: 'worker',
+      },
+      availability: { status: 'ready', code: null, message: '' },
+    },
+    prefs: { mode: 'smart' },
+    stats: { publishedRewardUnits: 14, securedRewardUnits: 0 },
+  });
+
+  // Assert no forbidden key is present anywhere in the full payload tree.
+  assertNoForbiddenPunctuationReadModelKeys(result, 'punctuation.u7.happyPath');
+
+  // Also verify structurally: currentItem exists and carries only safe fields.
+  const currentItem = result.session.currentItem;
+  assert.equal(currentItem.source, 'generated');
+  assert.equal(currentItem.id, 'generated-speech-insert-u7');
+  for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+    if (key === 'variantSignature') continue; // checked below
+    assert.equal(
+      Object.hasOwn(currentItem, key),
+      false,
+      `happy path: currentItem must not carry forbidden key "${key}"`,
+    );
+  }
+});
+
+test('P3 U7: variantSignature IS present on active generated currentItem (explicit allowance)', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-u7-allowance',
+    state: {
+      phase: 'active-item',
+      session: {
+        id: 'session-u7-allowance',
+        releaseId: 'punctuation-r4-full-14-skill-structure',
+        mode: 'smart',
+        length: 4,
+        phase: 'active-item',
+        startedAt: 1_777_000_000_000,
+        answeredCount: 0,
+        correctCount: 0,
+        currentItem: {
+          id: 'generated-speech-insert-u7b',
+          mode: 'insert',
+          source: 'generated',
+          prompt: 'Add the direct-speech punctuation.',
+          stem: 'Liam shouted hello.',
+          inputKind: 'text',
+          skillIds: ['speech'],
+          clusterId: 'speech',
+          variantSignature: 'puncsig_allow7',
+        },
+        serverAuthority: 'worker',
+      },
+      availability: { status: 'ready', code: null, message: '' },
+    },
+    prefs: {},
+    stats: {},
+  });
+
+  const currentItem = result.session.currentItem;
+  assert.equal(currentItem.source, 'generated');
+  // The allowance: variantSignature passes through on active generated items.
+  assert.equal(currentItem.variantSignature, 'puncsig_allow7');
+  // The entire payload still passes the recursive oracle (proving the allowance
+  // is not a hole in the scan — it is a deliberate carve-out at the exact
+  // position: root.session.currentItem where source=generated).
+  assertNoForbiddenPunctuationReadModelKeys(result, 'punctuation.u7.allowanceCheck');
+});
+
+test('P3 U7: variantSignature is STRIPPED from feedback-phase currentItem (no leakage)', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-u7-feedback-strip',
+    state: {
+      phase: 'feedback',
+      session: {
+        id: 'session-u7-fb',
+        releaseId: 'punctuation-r4-full-14-skill-structure',
+        mode: 'smart',
+        length: 4,
+        phase: 'feedback',
+        startedAt: 1_777_000_000_000,
+        answeredCount: 1,
+        correctCount: 1,
+        currentItem: {
+          id: 'generated-speech-insert-u7fb',
+          mode: 'insert',
+          source: 'generated',
+          prompt: 'Add the direct-speech punctuation.',
+          stem: 'Noah said hi.',
+          inputKind: 'text',
+          skillIds: ['speech'],
+          clusterId: 'speech',
+          variantSignature: 'puncsig_fb7',
+        },
+        serverAuthority: 'worker',
+      },
+      feedback: {
+        kind: 'success',
+        headline: 'Well done',
+        body: 'Correct answer.',
+      },
+      availability: { status: 'ready', code: null, message: '' },
+    },
+    prefs: {},
+    stats: {},
+  });
+
+  const currentItem = result.session.currentItem;
+  assert.equal(currentItem.source, 'generated');
+  // In feedback phase, variantSignature must NOT be present — the allowance
+  // is strictly for active-item phase only.
+  assert.equal(Object.hasOwn(currentItem, 'variantSignature'), false,
+    'feedback-phase currentItem must not carry variantSignature');
+  assertNoForbiddenPunctuationReadModelKeys(result, 'punctuation.u7.feedbackStrip');
+});
+
+test('P3 U7: contract is throw-not-strip — error message names the leaked key', () => {
+  // This characterises the MECHANISM: the error carries the key name so
+  // production telemetry pinpoints exactly which upstream path leaked.
+  const sentinel = 'rawGenerator';
+  const leaky = {
+    ...BASE_STATE,
+    summary: {
+      ...BASE_STATE.summary,
+      leakedField: { [sentinel]: { payload: 'secret' } },
+    },
+  };
+  let thrown = null;
+  try {
+    buildPunctuationReadModel({
+      learnerId: 'learner-u7-mechanism',
+      state: leaky,
+      prefs: {},
+      stats: {},
+    });
+  } catch (error) {
+    thrown = error;
+  }
+  assert.ok(thrown instanceof Error, 'must throw an Error, not return silently');
+  assert.match(thrown.message, /rawGenerator/, 'error message must name the leaked key');
+  assert.match(thrown.message, /server-only/, 'error message must indicate server-only classification');
+});
