@@ -81,11 +81,11 @@ export function AdminProductionEvidencePanel({ model, actions }) {
       }
     >
       <div data-testid="evidence-panel-overall">
-        <div className="skill-row" style={{ marginBottom: 8 }}>
+        <div className="skill-row admin-evidence-overall-row">
           <div><strong>Overall state</strong></div>
           <div><StateBadge state={panelModel.overallState} /></div>
         </div>
-        <div className="small muted" style={{ marginBottom: 12 }}>
+        <div className="small muted admin-evidence-generated">
           Generated: {formatEvidenceTimestamp(panelModel.generatedAt)}
           {panelModel.isFresh ? ' (fresh)' : ' (stale)'}
         </div>
@@ -93,25 +93,24 @@ export function AdminProductionEvidencePanel({ model, actions }) {
 
       {panelModel.metrics.length > 0 ? (
         <table
-          className="admin-table"
+          className="admin-table admin-evidence-table"
           data-testid="evidence-metrics-table"
-          style={{ width: '100%', borderCollapse: 'collapse' }}
         >
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', padding: '4px 8px' }}>Tier</th>
-              <th style={{ textAlign: 'left', padding: '4px 8px' }}>State</th>
-              <th style={{ textAlign: 'left', padding: '4px 8px' }}>Learners</th>
-              <th style={{ textAlign: 'left', padding: '4px 8px' }}>Last run</th>
+              <th className="admin-evidence-th">Tier</th>
+              <th className="admin-evidence-th">State</th>
+              <th className="admin-evidence-th">Learners</th>
+              <th className="admin-evidence-th">Last run</th>
             </tr>
           </thead>
           <tbody>
             {panelModel.metrics.map((metric) => (
               <tr key={metric.key} data-metric-key={metric.key}>
-                <td style={{ padding: '4px 8px' }}>{metric.tier}</td>
-                <td style={{ padding: '4px 8px' }}><StateBadge state={metric.state} /></td>
-                <td style={{ padding: '4px 8px' }}>{metric.learners ?? '—'}</td>
-                <td style={{ padding: '4px 8px' }} className="small muted">
+                <td className="admin-evidence-td">{metric.tier}</td>
+                <td className="admin-evidence-td"><StateBadge state={metric.state} /></td>
+                <td className="admin-evidence-td">{metric.learners ?? '—'}</td>
+                <td className="small muted admin-evidence-td">
                   {formatEvidenceTimestamp(metric.finishedAt)}
                 </td>
               </tr>

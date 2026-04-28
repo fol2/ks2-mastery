@@ -57,7 +57,7 @@ export function AdminPanelFrame({
   });
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-panel-frame={title}>
+    <section className="card admin-card-spaced" data-panel-frame={title}>
       <PanelHeader
         eyebrow={eyebrow}
         title={title}
@@ -70,9 +70,8 @@ export function AdminPanelFrame({
 
       {frameState.showStaleWarning ? (
         <div
-          className="feedback warn"
+          className="feedback warn admin-panel-frame-feedback"
           data-panel-frame-stale="true"
-          style={{ marginBottom: 12 }}
         >
           <strong>Data may be stale.</strong>
           {' '}Last refreshed {formatTimestamp(frameState.lastSuccessAt)}.
@@ -86,9 +85,8 @@ export function AdminPanelFrame({
 
       {frameState.showLastSuccessTimestamp && !frameState.showStaleWarning ? (
         <div
-          className="feedback"
+          className="feedback admin-panel-frame-feedback"
           data-panel-frame-partial-failure="true"
-          style={{ marginBottom: 12 }}
         >
           Showing data from {formatTimestamp(frameState.lastSuccessAt)}. A more recent refresh failed.
         </div>
@@ -97,7 +95,7 @@ export function AdminPanelFrame({
       {frameState.showLoadingSkeleton ? (
         <div data-panel-frame-loading="true" aria-busy="true">
           {loadingSkeleton || (
-            <div className="small muted" style={{ padding: '16px 0' }}>Loading panel data...</div>
+            <div className="small muted admin-panel-frame-placeholder">Loading panel data...</div>
           )}
         </div>
       ) : null}
@@ -105,7 +103,7 @@ export function AdminPanelFrame({
       {frameState.showEmptyState ? (
         <div data-panel-frame-empty="true">
           {emptyState || (
-            <p className="small muted" style={{ padding: '16px 0' }}>No data available.</p>
+            <p className="small muted admin-panel-frame-placeholder">No data available.</p>
           )}
         </div>
       ) : null}

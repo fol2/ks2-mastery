@@ -2,12 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
+import { createPunctuationContentIndexes } from '../shared/punctuation/content.js';
+import { createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
+import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 import {
+  PUNCTUATION_DASH_POLICY_VARIANTS,
+  PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS,
+  assertGeneratedActiveItemPolicy,
   assertNoForbiddenPunctuationAdultEvidenceKeys,
   assertNoForbiddenPunctuationReadModelKeys,
+  assertPunctuationP2RuntimeStats,
+  dashVariantAnswerFor,
+  oxfordCommaAnswerFor,
   punctuationAnswerFor,
   punctuationExpectedContextFor,
+  punctuationRuntimeStatsForSmoke,
+  punctuationWrongAnswerFor,
 } from '../scripts/punctuation-production-smoke.mjs';
 import { createSession } from '../worker/src/auth.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
@@ -52,6 +63,12 @@ function stripJsonComments(source) {
 async function readWranglerVars() {
   const source = await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
   return JSON.parse(stripJsonComments(source)).vars || {};
+}
+
+function productionPunctuationIndexes() {
+  return createPunctuationContentIndexes(createPunctuationRuntimeManifest({
+    generatedPerFamily: 4,
+  }));
 }
 
 function productionServer({ punctuationEnabled = false } = {}) {
@@ -239,6 +256,88 @@ test('Punctuation production rollout config intentionally enables the exposure g
   assert.equal(vars.PUNCTUATION_SUBJECT_ENABLED, 'true');
 });
 
+test('Punctuation P2 smoke helper separates local manifest expectations from production-observed stats', () => {
+  assert.deepEqual(punctuationRuntimeStatsForSmoke(), PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS);
+  const observed = assertPunctuationP2RuntimeStats({
+    content: {
+      releaseId: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.releaseId,
+      publishedRewardUnitCount: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
+    },
+    stats: {
+      total: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.runtimeItemCount,
+      publishedRewardUnits: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
+    },
+  }, 'releaseSmoke.mockReadModel');
+  assert.deepEqual(observed, {
+    releaseId: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.releaseId,
+    runtimeItems: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.runtimeItemCount,
+    publishedRewardUnits: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
+  });
+  assert.equal(Object.hasOwn(observed, 'generatedItems'), false);
+
+  const indexes = productionPunctuationIndexes();
+  const generated = indexes.items.find((item) => item.source === 'generated' && item.mode === 'insert');
+  assert.ok(generated, 'Expected a generated insert item in the P2 runtime manifest.');
+
+  const readItem = {
+    id: generated.id,
+    mode: generated.mode,
+    inputKind: 'text',
+    skillIds: generated.skillIds,
+    clusterId: generated.clusterId,
+    prompt: generated.prompt,
+    stem: generated.stem,
+    source: 'generated',
+    variantSignature: generated.variantSignature,
+  };
+  assertGeneratedActiveItemPolicy(readItem, 'releaseSmoke.generated.currentItem');
+});
+
+test('Punctuation P2 smoke helper builds accepted dash and Oxford-comma probes', () => {
+  const indexes = productionPunctuationIndexes();
+  const dashSource = indexes.items.find((item) => dashVariantAnswerFor(item, '-'));
+  assert.ok(dashSource, 'Expected a dash-clause source item for smoke policy probes.');
+
+  for (const variant of PUNCTUATION_DASH_POLICY_VARIANTS) {
+    const typed = dashVariantAnswerFor(dashSource, variant.mark);
+    const result = markPunctuationAnswer({ item: dashSource, answer: { typed } });
+    assert.equal(result.correct, true, `${variant.label}: ${typed}`);
+  }
+
+  const listSource = indexes.items.find((item) => oxfordCommaAnswerFor(item));
+  assert.ok(listSource, 'Expected a default list-comma source item for Oxford-comma smoke probes.');
+  assert.notEqual(listSource.validator.allowFinalComma, false);
+  const oxfordResult = markPunctuationAnswer({
+    item: listSource,
+    answer: { typed: oxfordCommaAnswerFor(listSource) },
+  });
+  assert.equal(oxfordResult.correct, true);
+});
+
+test('Punctuation P2 smoke helper builds wrong generated answers with misconception evidence', () => {
+  const indexes = productionPunctuationIndexes();
+  const generated = indexes.items.find((item) => item.source === 'generated' && item.mode === 'insert');
+  assert.ok(generated, 'Expected a generated insert item in the P2 runtime manifest.');
+
+  const readItem = {
+    id: generated.id,
+    mode: generated.mode,
+    inputKind: 'text',
+    skillIds: generated.skillIds,
+    clusterId: generated.clusterId,
+    prompt: generated.prompt,
+    stem: generated.stem,
+    source: 'generated',
+    variantSignature: generated.variantSignature,
+  };
+  const result = markPunctuationAnswer({
+    item: generated,
+    answer: punctuationWrongAnswerFor(readItem),
+  });
+  assert.equal(result.correct, false);
+  assert.ok(result.misconceptionTags.length > 0);
+});
+
 test('Punctuation release smoke completes a gated demo action through Worker commands', async () => {
   const server = productionServer({ punctuationEnabled: true });
   try {
@@ -260,6 +359,7 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(start.response.status, 200, JSON.stringify(start.body));
     assert.equal(start.body.subjectReadModel.phase, 'active-item');
     assert.equal(start.body.subjectReadModel.session.serverAuthority, 'worker');
+    assertPunctuationP2RuntimeStats(start.body.subjectReadModel, 'releaseSmoke.smart.start');
     assertNoForbiddenPunctuationReadModelKeys(start.body.subjectReadModel, 'releaseSmoke.smart.start');
 
     const submitPayload = {
@@ -277,6 +377,7 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(submit.response.status, 200, JSON.stringify(submit.body));
     assert.equal(submit.body.subjectReadModel.phase, 'feedback');
     assert.equal(submit.body.subjectReadModel.feedback.kind, 'success');
+    assertPunctuationP2RuntimeStats(submit.body.subjectReadModel, 'releaseSmoke.smart.feedback');
     assertNoForbiddenPunctuationReadModelKeys(submit.body.subjectReadModel, 'releaseSmoke.smart.feedback');
     assert.equal(submit.body.domainEvents.some((event) => (
       event.type === 'punctuation.item-attempted' && event.correct === true
@@ -294,6 +395,7 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(done.body.subjectReadModel.summary.total, 1);
     assert.equal(done.body.subjectReadModel.summary.correct, 1);
     assert.equal(done.body.subjectReadModel.summary.accuracy, 100);
+    assertPunctuationP2RuntimeStats(done.body.subjectReadModel, 'releaseSmoke.smart.summary');
     assertNoForbiddenPunctuationReadModelKeys(done.body.subjectReadModel, 'releaseSmoke.smart.summary');
 
     assert.equal(server.DB.db.prepare(`
@@ -359,6 +461,7 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(gpsStart.body.subjectReadModel.session.mode, 'gps');
     assert.equal(gpsStart.body.subjectReadModel.session.gps.delayedFeedback, true);
     assert.equal(gpsStart.body.subjectReadModel.feedback, null);
+    assertPunctuationP2RuntimeStats(gpsStart.body.subjectReadModel, 'releaseSmoke.gps.start');
     assertNoForbiddenPunctuationReadModelKeys(gpsStart.body.subjectReadModel, 'releaseSmoke.gps.start');
 
     const gpsSubmit = await postPunctuationCommand(server, {
@@ -377,6 +480,7 @@ test('Punctuation release smoke completes a gated demo action through Worker com
     assert.equal(gpsSubmit.body.subjectReadModel.summary.total, 1);
     assert.equal(gpsSubmit.body.subjectReadModel.summary.gps.delayedFeedback, true);
     assert.equal(gpsSubmit.body.subjectReadModel.summary.gps.reviewItems.length, 1);
+    assertPunctuationP2RuntimeStats(gpsSubmit.body.subjectReadModel, 'releaseSmoke.gps.summary');
     assertNoForbiddenPunctuationReadModelKeys(gpsSubmit.body.subjectReadModel, 'releaseSmoke.gps.summary');
 
     const parentHub = await server.fetchRaw(`https://repo.test/api/hubs/parent?learnerId=${demo.learnerId}`, {
