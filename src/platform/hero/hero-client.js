@@ -205,5 +205,135 @@ export function createHeroModeClient({
     return responsePayload;
   }
 
-  return { readModel, startTask };
+  // -----------------------------------------------------------------------
+  // claimTask
+  // -----------------------------------------------------------------------
+
+  async function claimTask({ learnerId, questId, questFingerprint, taskId, requestId, practiceSessionId } = {}) {
+    const cleanLearnerId = String(learnerId || '').trim();
+    if (!cleanLearnerId || !questId || !taskId || !requestId) {
+      throw new HeroModeClientError({
+        code: 'hero_client_invalid',
+        status: 400,
+        retryable: false,
+        message: 'claimTask requires learnerId, questId, taskId, and requestId.',
+      });
+    }
+
+    const correlationId = `hero-claim-${Date.now().toString(36)}`;
+    const expectedLearnerRevision = typeof getLearnerRevision === 'function'
+      ? Number(getLearnerRevision(cleanLearnerId)) || 0
+      : 0;
+
+    // Body shape: Hero claim command.
+    // NEVER include subjectId, payload, coins, or reward — those are
+    // subject-command fields and the Hero endpoint rejects them.
+    const body = {
+      command: 'claim-task',
+      learnerId: cleanLearnerId,
+      questId,
+      questFingerprint: questFingerprint ?? null,
+      taskId,
+      requestId,
+      correlationId,
+      expectedLearnerRevision,
+    };
+
+    // Optional hint — only include when explicitly provided
+    if (practiceSessionId) {
+      body.practiceSessionId = practiceSessionId;
+    }
+
+    let response;
+    try {
+      response = await fetchFn('/api/hero/command', {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      throw new HeroModeClientError({
+        code: 'network_error',
+        status: 0,
+        retryable: true,
+        message: error?.message || 'Hero claim-task request could not reach the server.',
+      });
+    }
+
+    const responsePayload = await parseJson(response);
+
+    // Auto-retry once on stale_write (revision conflict)
+    if (!response.ok && responsePayload?.code === 'stale_write') {
+      if (typeof onStaleWrite === 'function') {
+        onStaleWrite({ error: null, learnerId: cleanLearnerId });
+      }
+
+      const freshRevision = typeof getLearnerRevision === 'function'
+        ? Number(getLearnerRevision(cleanLearnerId)) || 0
+        : 0;
+
+      const retryBody = {
+        ...body,
+        expectedLearnerRevision: freshRevision,
+        requestId: `${requestId}-retry`,
+      };
+
+      let retryResponse;
+      try {
+        retryResponse = await fetchFn('/api/hero/command', {
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(retryBody),
+        });
+      } catch (error) {
+        throw new HeroModeClientError({
+          code: 'network_error',
+          status: 0,
+          retryable: true,
+          message: error?.message || 'Hero claim-task retry could not reach the server.',
+        });
+      }
+
+      const retryPayload = await parseJson(retryResponse);
+
+      if (!retryResponse.ok) {
+        throw new HeroModeClientError({
+          code: retryPayload?.code || retryPayload?.error || 'hero_claim_failed',
+          status: retryResponse.status,
+          retryable: false,
+          payload: retryPayload,
+        });
+      }
+
+      return retryPayload;
+    }
+
+    // Non-stale errors
+    if (!response.ok || responsePayload?.ok === false) {
+      const errorCode = responsePayload?.code || responsePayload?.error || 'hero_claim_failed';
+      const heroError = new HeroModeClientError({
+        code: errorCode,
+        status: response.status,
+        payload: responsePayload,
+      });
+
+      // Stale-write callback (stale quest or fingerprint mismatch)
+      if (STALE_WRITE_CODES.has(errorCode) && typeof onStaleWrite === 'function') {
+        onStaleWrite({ error: heroError, learnerId: cleanLearnerId });
+      }
+
+      throw heroError;
+    }
+
+    // Success — includes 'already-completed' which is a 200 success case
+    return responsePayload;
+  }
+
+  return { readModel, startTask, claimTask };
 }
