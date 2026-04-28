@@ -88,7 +88,7 @@ function BodyTextPreview({ text }) {
   if (!text) return <span className="small muted">No body text</span>;
   const rendered = renderRestrictedMarkdown(text);
   return (
-    <div className="marketing-body-preview" style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
+    <div className="marketing-body-preview admin-marketing-body-preview">
       {rendered || text}
     </div>
   );
@@ -101,22 +101,21 @@ function BodyTextPreview({ text }) {
 function BroadPublishConfirmDialog({ message, targetAction, onConfirm, onCancel }) {
   return (
     <div
-      className="callout warn"
+      className="callout warn admin-marketing-confirm-wrap"
       role="alertdialog"
       aria-label="Confirm broad publish"
       data-testid="broad-publish-confirm"
-      style={{ marginBottom: 12, padding: 16 }}
     >
       <strong>Confirm broad publish</strong>
-      <p style={{ margin: '8px 0' }}>
+      <p className="admin-marketing-confirm-text">
         You are about to {targetAction === 'published' ? 'publish' : 'schedule'} a message
         to <strong>all signed-in users</strong>.
         This will display a banner to every user of the platform.
       </p>
-      <p className="small muted" style={{ margin: '4px 0 12px' }}>
+      <p className="small muted admin-marketing-confirm-meta">
         Message: &ldquo;{message.title}&rdquo; ({message.message_type}, {message.severity_token})
       </p>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="admin-marketing-confirm-actions">
         <button
           className="btn secondary"
           type="button"
@@ -192,14 +191,14 @@ function MarketingCreateForm({ onSubmit, submitting }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} data-testid="marketing-create-form" style={{ marginBottom: 16 }}>
+    <form onSubmit={handleSubmit} data-testid="marketing-create-form" className="admin-marketing-form">
       {validationError && (
-        <div className="feedback bad" style={{ marginBottom: 8 }} data-testid="create-form-validation-error">
+        <div className="feedback bad admin-marketing-form-feedback" data-testid="create-form-validation-error">
           {validationError}
         </div>
       )}
-      <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 1fr' }}>
-        <label className="field" style={{ gridColumn: '1 / -1' }}>
+      <div className="admin-marketing-form-grid">
+        <label className="field admin-marketing-form-grid-full">
           <span>Title</span>
           <input
             className="input"
@@ -212,7 +211,7 @@ function MarketingCreateForm({ onSubmit, submitting }) {
             data-testid="create-form-title"
           />
         </label>
-        <label className="field" style={{ gridColumn: '1 / -1' }}>
+        <label className="field admin-marketing-form-grid-full">
           <span>Body text (restricted Markdown: **bold**, *italic*, [text](https://url))</span>
           <textarea
             className="input"
@@ -284,7 +283,7 @@ function MarketingCreateForm({ onSubmit, submitting }) {
           />
         </label>
       </div>
-      <div style={{ marginTop: 12 }}>
+      <div className="admin-marketing-form-submit">
         <button
           className="btn secondary"
           type="submit"
@@ -306,11 +305,11 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError
   const allowedTransitions = VALID_TRANSITIONS.get(message.status) || [];
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-testid="marketing-message-detail">
+    <section className="card admin-card-spaced" data-testid="marketing-message-detail">
       <div className="card-header">
         <div>
           <div className="eyebrow">Marketing message</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>{message.title}</h3>
+          <h3 className="section-title admin-section-title">{message.title}</h3>
           <p className="subtitle">
             {message.message_type} &middot; {message.audience} &middot; <StatusBadge status={message.status} />
           </p>
@@ -321,7 +320,7 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError
       </div>
 
       {transitionError && (
-        <div className="feedback bad" style={{ marginBottom: 12 }} data-testid="transition-error">
+        <div className="feedback bad admin-marketing-feedback-spaced" data-testid="transition-error">
           {transitionError}
         </div>
       )}
@@ -335,12 +334,12 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError
         />
       )}
 
-      <div style={{ marginBottom: 12 }}>
+      <div className="admin-marketing-detail-body">
         <div className="eyebrow">Body text</div>
         <BodyTextPreview text={message.body_text} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8, marginBottom: 12 }}>
+      <div className="admin-marketing-detail-grid">
         <div>
           <div className="small muted">Severity</div>
           <strong>{message.severity_token}</strong>
@@ -374,7 +373,7 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError
       </div>
 
       {isAdmin && allowedTransitions.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="admin-marketing-transition-row">
           {allowedTransitions.map((target) => (
             <button
               key={target}
@@ -401,14 +400,13 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError
 function MessageListRow({ message, onSelect }) {
   return (
     <div
-      className="skill-row"
+      className="skill-row admin-marketing-row-pointer"
       data-testid="marketing-message-row"
       data-message-id={message.id}
       role="button"
       tabIndex={0}
       onClick={() => onSelect(message.id)}
       onKeyDown={(e) => { if (e.key === 'Enter') onSelect(message.id); }}
-      style={{ cursor: 'pointer' }}
     >
       <div>
         <strong>{message.title || 'Untitled'}</strong>
@@ -588,11 +586,11 @@ export function AdminMarketingSection({ accessContext }) {
 
   // List view
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-section="marketing">
+    <section className="card admin-card-spaced" data-section="marketing">
       <div className="card-header">
         <div>
           <div className="eyebrow">Marketing &amp; Live Ops</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Marketing messages</h3>
+          <h3 className="section-title admin-section-title">Marketing messages</h3>
           <p className="subtitle">
             Create and manage announcements, maintenance banners, and campaign messages.
             Messages follow the lifecycle: draft, scheduled, published, paused, archived.
@@ -621,7 +619,7 @@ export function AdminMarketingSection({ accessContext }) {
       </div>
 
       {error && (
-        <div className="feedback bad" style={{ marginBottom: 12 }} data-testid="marketing-error">
+        <div className="feedback bad admin-marketing-feedback-spaced" data-testid="marketing-error">
           {error}
         </div>
       )}
