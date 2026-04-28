@@ -52,6 +52,40 @@ function buildConceptCoverage() {
   })).sort((a, b) => a.conceptId.localeCompare(b.conceptId));
 }
 
+function buildExplainCoverage(conceptCoverage) {
+  const explainCoverageByConcept = conceptCoverage.map((row) => {
+    const explainTemplateIds = GRAMMAR_TEMPLATE_METADATA
+      .filter((template) => (
+        template.questionType === 'explain'
+        && (template.skillIds || []).includes(row.conceptId)
+      ))
+      .map((template) => template.id)
+      .sort();
+    return {
+      conceptId: row.conceptId,
+      explainTemplateCount: explainTemplateIds.length,
+      explainTemplateIds,
+      questionTypes: row.questionTypes.slice(),
+    };
+  });
+  const conceptsWithExplainCoverage = explainCoverageByConcept
+    .filter((row) => row.explainTemplateCount > 0)
+    .map((row) => row.conceptId)
+    .sort();
+  const conceptsMissingExplainCoverage = explainCoverageByConcept
+    .filter((row) => row.explainTemplateCount === 0)
+    .map((row) => row.conceptId)
+    .sort();
+
+  return {
+    explainTemplateCount: GRAMMAR_TEMPLATE_METADATA.filter((template) => template.questionType === 'explain').length,
+    conceptsWithExplainCoverage,
+    conceptsMissingExplainCoverage,
+    explainCoverageByConcept,
+    p3ExplanationComplete: conceptsMissingExplainCoverage.length === 0,
+  };
+}
+
 function buildSignatureAudit(seeds) {
   const seen = new Map();
   const missing = [];
@@ -63,7 +97,7 @@ function buildSignatureAudit(seeds) {
   for (const template of GRAMMAR_TEMPLATE_METADATA) {
     if (!template.generative) continue;
     if (!template.generatorFamilyId) missing.push(template.id);
-    const strictVariantTemplate = (template.tags || []).includes('qg-p1');
+    const strictVariantTemplate = (template.tags || []).includes('qg-p1') || (template.tags || []).includes('qg-p3');
     for (const seed of seeds) {
       const question = createGrammarQuestion({ templateId: template.id, seed });
       const signature = grammarQuestionVariantSignature(question);
@@ -158,6 +192,7 @@ export function buildGrammarQuestionGeneratorAudit({ seeds = DEFAULT_SEEDS } = {
   const selectedResponseCount = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length;
   const generatedTemplateCount = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.generative).length;
   const conceptCoverage = buildConceptCoverage();
+  const explainCoverage = buildExplainCoverage(conceptCoverage);
   const signatureAudit = buildSignatureAudit(seeds.map((seed) => Number(seed)).filter(Number.isFinite));
   const answerSpecAudit = buildAnswerSpecAudit(seeds.map((seed) => Number(seed)).filter(Number.isFinite));
   const templateIds = GRAMMAR_TEMPLATE_METADATA.map((template) => template.id);
@@ -176,6 +211,7 @@ export function buildGrammarQuestionGeneratorAudit({ seeds = DEFAULT_SEEDS } = {
     thinPoolConcepts: conceptCoverage.filter((row) => row.total <= 2),
     singleQuestionTypeConcepts: conceptCoverage.filter((row) => row.questionTypes.length <= 1),
     conceptCoverage,
+    ...explainCoverage,
     ...signatureAudit,
     ...answerSpecAudit,
   };
@@ -188,6 +224,9 @@ function formatSummary(audit) {
     `Response surface: ${audit.selectedResponseCount} selected-response, ${audit.constructedResponseCount} constructed-response`,
     `Thin pools: ${audit.thinPoolConcepts.map((row) => `${row.conceptId}:${row.total}`).join(', ') || 'none'}`,
     `Single-type pools: ${audit.singleQuestionTypeConcepts.map((row) => `${row.conceptId}:${row.questionTypes.join('/')}`).join(', ') || 'none'}`,
+    `Explain templates: ${audit.explainTemplateCount}`,
+    `Concepts with explain coverage: ${audit.conceptsWithExplainCoverage.length}/${audit.conceptCount}`,
+    `Concepts missing explain coverage: ${audit.conceptsMissingExplainCoverage.join(', ') || 'none'}`,
     `Generated signature samples: ${audit.sampleCount}`,
     `Cross-template signature collisions: ${audit.generatedSignatureCollisions.length}`,
     `Repeated strict P1 variants within a template: ${audit.repeatedGeneratedVariants.length}`,

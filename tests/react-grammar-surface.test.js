@@ -1758,8 +1758,10 @@ test('Grammar setup can start faded guidance mode with lower support', () => {
   assert.equal(grammar.session.type, 'faded-guidance');
   assert.equal(grammar.session.supportLevel, 1);
   assert.equal(grammar.session.supportGuidance.kind, 'faded');
-  assert.match(harness.render(), /Faded guidance/);
-  assert.match(harness.render(), /Near miss/);
+  const html = harness.render();
+  assert.match(html, /Faded guidance/);
+  assert.doesNotMatch(html, /Worked example/);
+  assert.doesNotMatch(html, />Model</);
 });
 
 // U0 follower. The helper `normaliseGrammarRewardState` already has direct

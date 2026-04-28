@@ -145,7 +145,7 @@ test('audit doc exists at the declared repo path', () => {
   assert.ok(fs.existsSync(DOC_PATH), `Expected audit doc at ${DOC_PATH}`);
 });
 
-test('audit doc declares the current P1 contentReleaseId bump in its frontmatter', () => {
+test('audit doc declares the current QG contentReleaseId bump in its frontmatter', () => {
   const source = readDoc();
   assert.match(source, /contentReleaseBump:\s*yes/, 'contentReleaseBump must be declared as `yes`.');
   assert.match(
@@ -205,10 +205,12 @@ test('audit records active_passive and subject_object as P1-resolved brittle con
   const sectionEnd = source.indexOf('\n## ', sectionStart + 1);
   const section = sectionEnd === -1 ? source.slice(sectionStart) : source.slice(sectionStart, sectionEnd);
 
-  assert.match(section, /### `active_passive` — now `choose` \+ `rewrite`/);
+  assert.match(section, /### `active_passive` — now `choose` \+ `rewrite` \+ `explain`/);
   assert.match(section, /qg_active_passive_choice/);
-  assert.match(section, /### `subject_object` — now `classify` \+ `identify`/);
+  assert.match(section, /qg_p3_active_passive_explain/);
+  assert.match(section, /### `subject_object` — now `classify` \+ `identify` \+ `explain`/);
   assert.match(section, /qg_subject_object_classify_table/);
+  assert.match(section, /qg_p3_subject_object_explain/);
 
   // Double-check the concept table agrees: both concepts now have two
   // question types present.
@@ -217,8 +219,8 @@ test('audit records active_passive and subject_object as P1-resolved brittle con
   const so = rows.find((row) => row.conceptId === 'subject_object');
   assert.ok(ap, 'active_passive row missing.');
   assert.ok(so, 'subject_object row missing.');
-  assert.deepEqual(ap.typesPresent.slice().sort(), ['choose', 'rewrite']);
-  assert.deepEqual(so.typesPresent.slice().sort(), ['classify', 'identify']);
+  assert.deepEqual(ap.typesPresent.slice().sort(), ['choose', 'explain', 'rewrite']);
+  assert.deepEqual(so.typesPresent.slice().sort(), ['classify', 'explain', 'identify']);
 });
 
 test('each P1 focus concept lists at least five future template ideas', () => {

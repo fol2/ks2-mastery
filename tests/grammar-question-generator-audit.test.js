@@ -19,15 +19,23 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.deepEqual(audit.templatesMissingAnswerSpecs, []);
   assert.deepEqual(audit.invalidAnswerSpecs, []);
   assert.equal(audit.conceptCoverage.length, GRAMMAR_CONCEPTS.length);
-  assert.equal(audit.answerSpecTemplateCount, 26);
+  assert.equal(audit.answerSpecTemplateCount, 39);
   assert.equal(audit.constructedResponseTemplateCount, 20);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 20);
   assert.equal(audit.legacyAdapterTemplateCount, 0);
   assert.equal(audit.manualReviewOnlyTemplateCount, 4);
   assert.equal(audit.p2MigrationComplete, true);
+  assert.equal(audit.explainTemplateCount, 17);
+  assert.equal(audit.conceptsWithExplainCoverage.length, GRAMMAR_CONCEPTS.length);
+  assert.deepEqual(audit.conceptsMissingExplainCoverage, []);
+  assert.equal(audit.p3ExplanationComplete, true);
+  assert.ok(
+    audit.explainCoverageByConcept.every((row) => row.explainTemplateCount >= 1),
+    'Every Grammar concept should have at least one explanation template after QG P3.',
+  );
   assert.deepEqual(audit.answerSpecKindCounts, {
     acceptedSet: 2,
-    exact: 4,
+    exact: 17,
     manualReviewOnly: 4,
     multiField: 2,
     normalisedText: 5,
