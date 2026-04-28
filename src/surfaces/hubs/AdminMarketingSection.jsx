@@ -658,7 +658,7 @@ export function AdminMarketingSection({ accessContext }) {
   // List view — uses AdminPanelFrame for unified freshness/failure/empty handling
   return (
     <AdminPanelFrame
-      eyebrow="Marketing &amp; Live Ops"
+      eyebrow="Marketing & Live Ops"
       title="Marketing messages"
       subtitle="Create and manage announcements, maintenance banners, and campaign messages. Messages follow the lifecycle: draft, scheduled, published, paused, archived."
       refreshedAt={null}
@@ -687,12 +687,6 @@ export function AdminMarketingSection({ accessContext }) {
         <p className="small muted">Loading marketing messages...</p>
       }
     >
-      {error && (
-        <div className="feedback bad admin-marketing-feedback-spaced" data-testid="marketing-error">
-          {error}
-        </div>
-      )}
-
       {isAdmin && showCreateForm && (
         <MarketingCreateForm onSubmit={handleCreate} submitting={createLock.locked} />
       )}
