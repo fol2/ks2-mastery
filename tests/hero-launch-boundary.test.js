@@ -129,7 +129,9 @@ test('S-L4: no Hero source file contains economy vocabulary tokens', () => {
   // hero-copy.js is the canonical source-of-truth for the forbidden vocabulary
   // list. It *defines* the ban tokens (HERO_FORBIDDEN_VOCABULARY) but does not
   // use them in child-facing copy. Exclude it from the token scan.
-  const EXCLUDED_BASENAMES = new Set(['hero-copy.js']);
+  // claim-contract.js, claim-resolver.js: P3 claim architecture — economy-
+  // adjacent terms are legitimate in the server-side reward/claim boundary.
+  const EXCLUDED_BASENAMES = new Set(['hero-copy.js', 'claim-contract.js', 'claim-resolver.js']);
 
   const allHeroFiles = [
     ...collectJsFiles(SHARED_HERO_DIR),

@@ -198,6 +198,8 @@ export function createRemoteSpellingActionHandler({
     store?.updateSubjectUi?.('spelling', { error: message || 'Practice is temporarily unavailable.' });
   },
   pendingCommandKeys = new Set(),
+  // P3 U10: hero auto-claim hook — called when spelling session ends.
+  onSubjectSessionEnded = null,
 } = {}) {
   const pendingPreferenceSaves = new Map();
   const preferenceSaveChains = new Map();
@@ -409,6 +411,10 @@ export function createRemoteSpellingActionHandler({
 
     if (isSelectedLearner && endedSession) {
       store.releaseMonsterCelebrations();
+      // P3 U10: hero auto-claim — spelling session just ended.
+      if (typeof onSubjectSessionEnded === 'function') {
+        onSubjectSessionEnded('spelling');
+      }
     }
 
     if (isSelectedLearner && response?.audio?.promptToken) {

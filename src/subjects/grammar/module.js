@@ -164,6 +164,10 @@ function applyRemoteReadModel(context, response, { learnerId } = {}) {
     && typeof context.store.releaseMonsterCelebrations === 'function'
   ) {
     context.store.releaseMonsterCelebrations();
+    // P3 U10: hero auto-claim — grammar session just ended.
+    if (typeof context.notifyHeroSubjectSessionEnded === 'function') {
+      context.notifyHeroSubjectSessionEnded(GRAMMAR_SUBJECT_ID);
+    }
   }
 }
 

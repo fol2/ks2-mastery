@@ -81,6 +81,7 @@ import {
 import { installGlobalErrorCapture } from './platform/ops/error-capture.js';
 import { createHeroModeClient } from './platform/hero/hero-client.js';
 import { buildHeroHomeModel } from './platform/hero/hero-ui-model.js';
+import { isHeroSessionTerminal } from '../shared/hero/completion-status.js';
 
 const root = document.getElementById('app');
 const credentialFetch = createCredentialFetch();
@@ -555,14 +556,17 @@ const heroClient = createHeroModeClient({
 
 // Non-persistent Hero UI state — lost on reload (quest is recomputed fresh),
 // reset on learner switch, never written to repositories / gameState / D1.
+// P3 U10: extended with pendingClaimKey and lastClaim for claim flow.
 let heroUi = {
-  status: 'idle',
+  status: 'idle',        // idle | loading | ready | launching | claiming | error
   learnerId: '',
   requestToken: 0,
   readModel: null,
   error: '',
-  pendingTaskKey: '',
+  pendingTaskKey: '',    // taskId being launched (start-task)
+  pendingClaimKey: null, // taskId being claimed (claim-task)
   lastLaunch: null,
+  lastClaim: null,       // last successful claim result
 };
 
 // U10: once-per-visit guard — logs card_rendered / card_hidden exactly
@@ -870,6 +874,12 @@ async function loadHeroReadModel({ learnerId, force = false } = {}) {
         console.info('[hero] card_hidden', { reason: rm?.ui?.reason || 'unknown' });
       }
     }
+
+    // P3 U10: dashboard-load claim repair — if the read model reports a
+    // pending unclaimed session, fire a background claim to recover it.
+    if (heroUi.readModel?.pendingCompletedHeroSession && heroUi.status !== 'claiming') {
+      queueMicrotask(() => heroRepairPendingClaim());
+    }
   } catch (error) {
     // Stale token guard.
     if (heroUi.requestToken !== requestToken) return;
@@ -981,6 +991,116 @@ async function startHeroTask({ questId, questFingerprint, taskId } = {}) {
         error: code || error?.message || 'Hero task could not be started.',
       });
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hero Mode — claim actions (P3 U10)
+// ---------------------------------------------------------------------------
+
+/**
+ * heroClaimTask — POST claim-task to the Hero API.
+ * Sets status:'claiming' before the request, reverts to 'ready' on success,
+ * or 'error' on failure. The `pendingClaimKey` prevents double-claim.
+ */
+async function heroClaimTask({ questId, questFingerprint, taskId, practiceSessionId } = {}) {
+  const appState = store.getState();
+  const learnerId = appState.learners?.selectedId;
+  if (!learnerId || !questId || !taskId) return null;
+
+  const requestId = `hero-claim-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+  patchHeroUi({
+    status: 'claiming',
+    pendingClaimKey: taskId,
+    error: '',
+  });
+
+  try {
+    const result = await heroClient.claimTask({
+      learnerId,
+      questId,
+      questFingerprint,
+      taskId,
+      requestId,
+      practiceSessionId,
+    });
+
+    patchHeroUi({
+      status: 'ready',
+      lastClaim: result?.heroClaim || result || null,
+      readModel: result?.hero || heroUi.readModel,
+      pendingClaimKey: null,
+      error: '',
+    });
+
+    return result;
+  } catch (err) {
+    patchHeroUi({
+      status: 'error',
+      error: err?.code || 'claim_failed',
+      pendingClaimKey: null,
+    });
+    // eslint-disable-next-line no-console
+    console.warn('[hero] claim_failed', err?.code, err?.message);
+    return null;
+  }
+}
+
+/**
+ * heroAutoClaimCurrentTask — fires auto-claim when the client detects the
+ * hero-launched subject session has completed. Reads questId/taskId from
+ * lastLaunch. No-op if already claiming or if lastLaunch is null.
+ */
+function heroAutoClaimCurrentTask() {
+  if (!heroUi?.lastLaunch) return null;
+  if (heroUi.status === 'claiming') return null;
+
+  const { questId, questFingerprint, taskId } = heroUi.lastLaunch;
+  // Fire-and-forget — do not block the subject response path.
+  heroClaimTask({ questId, questFingerprint, taskId });
+  return null;
+}
+
+/**
+ * heroRepairPendingClaim — dashboard-load repair. Uses the read-model's
+ * pendingCompletedHeroSession to issue a claim for sessions that completed
+ * but were not claimed (e.g. the tab was closed before auto-claim fired).
+ */
+function heroRepairPendingClaim() {
+  if (!heroUi?.readModel?.pendingCompletedHeroSession) return null;
+  if (heroUi.status === 'claiming') return null;
+
+  const pending = heroUi.readModel.pendingCompletedHeroSession;
+  // Fire-and-forget — non-blocking.
+  heroClaimTask({
+    questId: pending.questId,
+    questFingerprint: pending.questFingerprint,
+    taskId: pending.taskId,
+    practiceSessionId: pending.practiceSessionId,
+  });
+  return null;
+}
+
+/**
+ * notifyHeroSubjectSessionEnded — called by subject response handlers when
+ * a subject session ends. Checks whether the ended subject matches the
+ * hero-launched subject and fires auto-claim if terminal.
+ *
+ * @param {string} subjectId — the subject that just ended its session
+ */
+function notifyHeroSubjectSessionEnded(subjectId) {
+  if (!heroUi?.lastLaunch) return;
+  if (heroUi.status === 'claiming') return;
+  if (heroUi.lastLaunch.subjectId !== subjectId) return;
+
+  // Verify the subject is truly terminal using isHeroSessionTerminal
+  const subjectState = store.getState().subjectUi?.[subjectId];
+  const phase = subjectState?.phase || '';
+  const sessionPresent = Boolean(subjectState?.session);
+
+  if (isHeroSessionTerminal(subjectId, phase, sessionPresent)) {
+    heroAutoClaimCurrentTask();
   }
 }
 
@@ -1325,6 +1445,8 @@ remoteSpellingActions = createRemoteSpellingActionHandler({
   tts,
   isReadOnly: runtimeIsReadOnly,
   setRuntimeError: setSpellingRuntimeError,
+  // P3 U10: hero auto-claim callback wired from the spelling module.
+  onSubjectSessionEnded: notifyHeroSubjectSessionEnded,
 });
 
 function resetLearnerData(learnerId) {
@@ -2345,6 +2467,8 @@ function contextFor(subjectId = null) {
     session: { ...boot.session, platformRole: shellPlatformRole },
     handleRemoteSpellingAction,
     runtimeReadOnly: appState.persistence?.mode === 'degraded',
+    // P3 U10: hero auto-claim hook — subjects call this when their session ends.
+    notifyHeroSubjectSessionEnded,
     ...buildHubModels(appState),
   };
 }
@@ -2529,6 +2653,8 @@ function buildSurfaceActions() {
     },
     continueHeroTask: (subjectId) => dispatchAction('hero-open-active-session', { subjectId }),
     refreshHeroQuest: () => dispatchAction('hero-read-model-refresh'),
+    // P3 U10: explicit claim action for component use (e.g. manual retry).
+    claimHeroTask: (data) => dispatchAction('hero-claim-task', data),
   };
 }
 
@@ -2881,6 +3007,12 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  // P3 U10: explicit claim action (triggered programmatically).
+  if (action === 'hero-claim-task') {
+    heroClaimTask(data);
+    return true;
+  }
+
   if (action === 'open-subject') {
     if (blockReadOnlyAdultAction(action)) return true;
     clearAdultSurfaceNotice();
@@ -3174,7 +3306,9 @@ function handleGlobalAction(action, data) {
       readModel: null,
       error: '',
       pendingTaskKey: '',
+      pendingClaimKey: null,
       lastLaunch: null,
+      lastClaim: null,
     };
     heroCardLoggedThisVisit = false; // U10: reset per-visit observability latch
     if (boot.session.signedIn && nextLearnerId) {
@@ -3477,6 +3611,8 @@ function applyPunctuationCommandResponse(response) {
   }
   if (subjectSessionEnded('punctuation', previousPunctuationUi, nextPunctuationUi)) {
     store.releaseMonsterCelebrations();
+    // P3 U10: hero auto-claim — punctuation session just ended.
+    notifyHeroSubjectSessionEnded('punctuation');
   }
 }
 

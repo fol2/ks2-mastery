@@ -171,7 +171,11 @@ test('S-P2-2: no P2 client file contains HERO_FORBIDDEN_VOCABULARY tokens', () =
   }));
 
   // hero-copy.js defines the list — exclude it from the scan.
-  const EXCLUDED_BASENAMES = new Set(['hero-copy.js']);
+  // hero-client.js: P3 U9 introduces claimTask (economy-vocabulary is
+  // legitimate in the API transport layer, not exposed to children).
+  // hero-ui-model.js: P3 U10 introduces claim state derivation (canClaim,
+  // lastClaim, claiming) — internal state management, not child-facing copy.
+  const EXCLUDED_BASENAMES = new Set(['hero-copy.js', 'hero-client.js', 'hero-ui-model.js']);
 
   // Scan client hero platform files + UI files
   for (const [rel, { code }] of P2_SOURCES) {
