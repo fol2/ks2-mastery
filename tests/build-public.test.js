@@ -12,8 +12,10 @@ test('public build emits the React app bundle entrypoint', () => {
   execFileSync(process.execPath, ['./scripts/audit-client-bundle.mjs'], { stdio: 'ignore' });
 
   const indexHtml = readFileSync('dist/public/index.html', 'utf8');
+  const llmsTxt = readFileSync('dist/public/llms.txt', 'utf8');
   const robotsTxt = readFileSync('dist/public/robots.txt', 'utf8');
   const sitemapXml = readFileSync('dist/public/sitemap.xml', 'utf8');
+  const aboutHtml = readFileSync('dist/public/about/index.html', 'utf8');
   const practicePages = new Map(PRACTICE_SEO_PAGES.map((page) => [
     page.slug,
     readFileSync(`dist/public/${page.slug}/index.html`, 'utf8'),
@@ -29,11 +31,13 @@ test('public build emits the React app bundle entrypoint', () => {
   assert.doesNotMatch(indexHtml, /src\/main\.js/);
   assert.match(indexHtml, /KS2 Mastery \| KS2 Spelling, Grammar and Punctuation Practice/);
   assert.match(indexHtml, /<link rel="canonical" href="https:\/\/ks2\.eugnel\.uk\/" \/>/);
+  assert.match(indexHtml, /<link rel="alternate" type="text\/plain" href="\/llms\.txt"/);
   assert.match(indexHtml, /application\/ld\+json/);
   assert.match(indexHtml, /KS2 spelling, grammar and punctuation practice/);
   assert.match(indexHtml, /href="\/ks2-spelling-practice\/"/);
   assert.match(indexHtml, /href="\/ks2-grammar-practice\/"/);
   assert.match(indexHtml, /href="\/ks2-punctuation-practice\/"/);
+  assert.match(indexHtml, /href="\/about\/"/);
   assert.match(robotsTxt, /Disallow: \/api\//);
   assert.match(robotsTxt, /Disallow: \/admin/);
   assert.match(robotsTxt, /Disallow: \/demo/);
@@ -45,11 +49,27 @@ test('public build emits the React app bundle entrypoint', () => {
   assert.deepEqual(sitemapLocs, [
     'https://ks2.eugnel.uk/',
     ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+    'https://ks2.eugnel.uk/about/',
   ]);
   for (const page of PRACTICE_SEO_PAGES) {
     assert.match(sitemapXml, new RegExp(`<loc>${canonicalPracticePageUrl(page).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</loc>`));
   }
   assert.doesNotMatch(sitemapXml, /\/api\/|\/admin|\/demo|\.html|localhost|127\.0\.0\.1/);
+  assert.doesNotMatch(sitemapXml, /llms\.txt/);
+  assert.match(llmsTxt, /KS2 Mastery/);
+  assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\//);
+  assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/about\//);
+  assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/ks2-spelling-practice\//);
+  assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/ks2-grammar-practice\//);
+  assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/ks2-punctuation-practice\//);
+  assert.match(llmsTxt, /KS2 spelling/);
+  assert.match(llmsTxt, /KS2 grammar/);
+  assert.match(llmsTxt, /KS2 punctuation/);
+  assert.match(llmsTxt, /Private learner progress, account state, operator tools and generated content stores are not public SEO content/);
+  assert.doesNotMatch(
+    llmsTxt,
+    /\/api\/|\/admin|OPENAI_API_KEY|GEMINI_API_KEY|ANTHROPIC_API_KEY|SEEDED_SPELLING_CONTENT_BUNDLE|PUNCTUATION_CONTENT_MANIFEST|generativelanguage\.googleapis\.com|api\.openai\.com\/v1|guaranteed|full curriculum|AI tutor|exam results/i,
+  );
   for (const page of PRACTICE_SEO_PAGES) {
     const html = practicePages.get(page.slug);
     assert.ok(html, `${page.slug} should be emitted as a static page`);
@@ -62,7 +82,21 @@ test('public build emits the React app bundle entrypoint', () => {
       assert.match(html, new RegExp(point.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
     assert.doesNotMatch(html, /app\.bundle\.js|id="app"|application\/ld\+json|<script/i);
+    assert.match(html, /href="\/about\/"/);
   }
+  assert.match(aboutHtml, /<title>About KS2 Mastery \| KS2 Spelling, Grammar and Punctuation Practice<\/title>/);
+  assert.match(aboutHtml, /<link rel="canonical" href="https:\/\/ks2\.eugnel\.uk\/about\/" \/>/);
+  assert.match(aboutHtml, /<h1>About KS2 Mastery<\/h1>/);
+  assert.match(aboutHtml, /KS2 spelling, grammar and punctuation practice/);
+  assert.match(aboutHtml, /Learners can try a demo before signing in/);
+  assert.match(aboutHtml, /Signing in saves learner profiles and progress/);
+  assert.match(aboutHtml, /Private learner progress, admin tools and generated content stores are not public SEO content/);
+  assert.match(aboutHtml, /href="\/ks2-spelling-practice\/"/);
+  assert.match(aboutHtml, /href="\/ks2-grammar-practice\/"/);
+  assert.match(aboutHtml, /href="\/ks2-punctuation-practice\/"/);
+  assert.match(aboutHtml, /href="\/demo"/);
+  assert.doesNotMatch(aboutHtml, /app\.bundle\.js|id="app"|application\/ld\+json|<script/i);
+  assert.doesNotMatch(aboutHtml, /guaranteed|full curriculum|AI tutor|exam results/i);
   assert.ok(
     cspHashArtefact.split(/\r?\n/u).filter(Boolean).length >= 2,
     'CSP hash artefact should list both theme and JSON-LD inline script hashes',

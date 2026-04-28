@@ -1,11 +1,30 @@
 import { runClientBundleAudit } from './audit-client-bundle.mjs';
 import { createDemoSession, loadBootstrap } from './lib/production-smoke.mjs';
 import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from './lib/seo-practice-pages.mjs';
+import { IDENTITY_SEO_PAGES, canonicalIdentityPageUrl } from './lib/seo-identity-pages.mjs';
+import { crawlerPolicyFailures } from './lib/seo-crawler-policy.mjs';
 import { FORBIDDEN_KEYS_EVERYWHERE } from '../tests/helpers/forbidden-keys.mjs';
 
 const DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
 const SEO_CANONICAL_ROOT = 'https://ks2.eugnel.uk/';
 const SEO_SITEMAP_URL = `${SEO_CANONICAL_ROOT}sitemap.xml`;
+const SEO_PRIVATE_CRAWLER_PATHS = Object.freeze(['/api/', '/admin', '/demo']);
+
+function seoPublicPaths() {
+  return [
+    '/',
+    ...PRACTICE_SEO_PAGES.map((page) => `/${page.slug}/`),
+    ...IDENTITY_SEO_PAGES.map((page) => `/${page.slug}/`),
+  ];
+}
+
+function seoSitemapLocs() {
+  return [
+    SEO_CANONICAL_ROOT,
+    ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+    ...IDENTITY_SEO_PAGES.map((page) => canonicalIdentityPageUrl(page)),
+  ];
+}
 
 // U13 redaction matrix forbidden-key check: these keys must never appear in any
 // authenticated response surface reached via the demo session. The set is
@@ -160,10 +179,12 @@ function assertSeoRootHtml(index, failures) {
     '<meta property="og:description"',
     `<meta property="og:url" content="${SEO_CANONICAL_ROOT}"`,
     '<meta name="twitter:card" content="summary"',
+    '<link rel="alternate" type="text/plain" href="/llms.txt"',
     'KS2 spelling, grammar and punctuation practice',
     'Spelling practice for KS2 word confidence',
     'Grammar practice for sentence-level accuracy',
     'Punctuation practice for clearer written English',
+    'href="/about/"',
   ];
   for (const token of requiredTokens) {
     if (!index.text.includes(token)) {
@@ -217,6 +238,8 @@ function assertSeoPracticePageHtml(page, response, failures) {
     page.intro,
     '/demo',
     'KS2 Mastery home',
+    'About KS2 Mastery',
+    'href="/about/"',
     ...page.points,
   ]) {
     if (!response.text.includes(token)) {
@@ -236,6 +259,108 @@ async function assertSeoPracticePages(base, failures) {
     const response = await fetchText(new URL(`/${page.slug}/`, base).href);
     assertSeoPracticePageHtml(page, response, failures);
   }
+}
+
+function assertSeoIdentityPageHtml(page, response, failures) {
+  const path = `/${page.slug}/`;
+  const canonicalUrl = canonicalIdentityPageUrl(page);
+  if (response.status < 200 || response.status >= 300) {
+    failures.push(`Production SEO page ${path} fetch failed: ${response.status} ${response.url}`);
+    return;
+  }
+  if (!/text\/html/i.test(response.contentType)) {
+    failures.push(`Production SEO page ${path} expected text/html, got: ${response.contentType || 'absent'}`);
+  }
+  if (
+    response.text.includes('<title>KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice</title>')
+    || response.text.includes(`<link rel="canonical" href="${SEO_CANONICAL_ROOT}"`)
+    || response.text.includes('app.bundle.js')
+    || response.text.includes('id="app"')
+  ) {
+    failures.push(`Production SEO page ${path} appears to be the root SPA shell, not page-specific public HTML.`);
+  }
+  for (const token of [
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}"`,
+    `<link rel="canonical" href="${canonicalUrl}"`,
+    `<meta property="og:url" content="${canonicalUrl}"`,
+    `<h1>${page.heading}</h1>`,
+    page.intro,
+    'KS2 spelling, grammar and punctuation practice',
+    'Learners can try a demo before signing in',
+    'Signing in saves learner profiles and progress',
+    'Private learner progress, admin tools and generated content stores are not public SEO content',
+    'href="/ks2-spelling-practice/"',
+    'href="/ks2-grammar-practice/"',
+    'href="/ks2-punctuation-practice/"',
+    'href="/demo"',
+  ]) {
+    if (!response.text.includes(token)) {
+      failures.push(`Production SEO page ${path} is missing required token: ${token}`);
+    }
+  }
+  for (const forbiddenToken of ['application/ld+json', '<script']) {
+    if (response.text.includes(forbiddenToken)) {
+      failures.push(`Production SEO page ${path} must remain static and script-free; found token: ${forbiddenToken}`);
+    }
+  }
+  for (const overclaim of ['guaranteed', 'full curriculum', 'AI tutor', 'exam results']) {
+    if (response.text.toLowerCase().includes(overclaim.toLowerCase())) {
+      failures.push(`Production SEO page ${path} must not overclaim with token: ${overclaim}`);
+    }
+  }
+  assertNoForbiddenText(`Production SEO page ${path}`, response.text, failures);
+}
+
+async function assertSeoIdentityPages(base, failures) {
+  for (const page of IDENTITY_SEO_PAGES) {
+    const response = await fetchText(new URL(`/${page.slug}/`, base).href);
+    assertSeoIdentityPageHtml(page, response, failures);
+  }
+}
+
+function assertSeoLlmsText(response, failures) {
+  const path = '/llms.txt';
+  if (response.status < 200 || response.status >= 300) {
+    failures.push(`Production ${path} fetch failed: ${response.status} ${response.url}`);
+    return;
+  }
+  if (!/text\/plain/i.test(response.contentType)) {
+    failures.push(`Production ${path} expected text/plain, got: ${response.contentType || 'absent'}`);
+  }
+  if (/text\/html/i.test(response.contentType) || /<!doctype|<\/?html/i.test(response.text)) {
+    failures.push('Production llms.txt appears to be SPA fallback HTML, not an AI-readable text summary.');
+  }
+  for (const token of [
+    'KS2 Mastery',
+    SEO_CANONICAL_ROOT,
+    ...IDENTITY_SEO_PAGES.map((page) => canonicalIdentityPageUrl(page)),
+    ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+    'KS2 spelling',
+    'KS2 grammar',
+    'KS2 punctuation',
+    'Private learner progress, account state, operator tools and generated content stores are not public SEO content',
+  ]) {
+    if (!response.text.includes(token)) {
+      failures.push(`Production ${path} is missing required token: ${token}`);
+    }
+  }
+  for (const forbiddenToken of [
+    '/api/',
+    '/admin',
+    'OPENAI_API_KEY',
+    'GEMINI_API_KEY',
+    'ANTHROPIC_API_KEY',
+    'guaranteed',
+    'full curriculum',
+    'AI tutor',
+    'exam results',
+  ]) {
+    if (response.text.toLowerCase().includes(forbiddenToken.toLowerCase())) {
+      failures.push(`Production ${path} must not include forbidden token: ${forbiddenToken}`);
+    }
+  }
+  assertNoForbiddenText(`Production ${path}`, response.text, failures);
 }
 
 async function assertSeoDiscoveryResources(base, failures) {
@@ -258,9 +383,12 @@ async function assertSeoDiscoveryResources(base, failures) {
       failures.push(`Production robots.txt is missing required token: ${token}`);
     }
   }
-  if (/User-agent:\s*OAI-SearchBot[\s\S]*?Disallow:\s*\//i.test(robots.text)) {
-    failures.push('Production robots.txt must not explicitly disallow OAI-SearchBot from public SEO pages.');
-  }
+  failures.push(...crawlerPolicyFailures(robots.text, {
+    userAgent: 'OAI-SearchBot',
+    publicPaths: seoPublicPaths(),
+    privatePaths: SEO_PRIVATE_CRAWLER_PATHS,
+    label: 'Production robots.txt',
+  }));
 
   const sitemap = await fetchText(new URL('/sitemap.xml', base).href);
   if (sitemap.status < 200 || sitemap.status >= 300) {
@@ -271,18 +399,14 @@ async function assertSeoDiscoveryResources(base, failures) {
   }
   for (const token of [
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    `<loc>${SEO_CANONICAL_ROOT}</loc>`,
-    ...PRACTICE_SEO_PAGES.map((page) => `<loc>${canonicalPracticePageUrl(page)}</loc>`),
+    ...seoSitemapLocs().map((url) => `<loc>${url}</loc>`),
   ]) {
     if (!sitemap.text.includes(token)) {
       failures.push(`Production sitemap.xml is missing required token: ${token}`);
     }
   }
-  assertExactSitemapLocs('Production sitemap.xml', sitemap.text, [
-    SEO_CANONICAL_ROOT,
-    ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
-  ], failures);
-  for (const forbiddenPath of ['/api/', '/admin', '/demo', '.html', 'localhost', '127.0.0.1']) {
+  assertExactSitemapLocs('Production sitemap.xml', sitemap.text, seoSitemapLocs(), failures);
+  for (const forbiddenPath of ['/api/', '/admin', '/demo', '.html', 'localhost', '127.0.0.1', 'llms.txt']) {
     if (sitemap.text.includes(forbiddenPath)) {
       failures.push(`Production sitemap.xml must not advertise private or local path: ${forbiddenPath}`);
     }
@@ -411,6 +535,8 @@ async function auditProduction(origin) {
   assertSeoRootHtml(index, failures);
   await assertSeoDiscoveryResources(base, failures);
   await assertSeoPracticePages(base, failures);
+  await assertSeoIdentityPages(base, failures);
+  assertSeoLlmsText(await fetchText(new URL('/llms.txt', base).href), failures);
 
   const scripts = scriptSources(index.text)
     .filter((src) => !/^https?:\/\//i.test(src) || new URL(src, base).origin === base.origin);
@@ -625,7 +751,13 @@ async function auditProduction(origin) {
     { path: '/manifest.webmanifest', label: 'web app manifest', expected: 'public, max-age=3600' },
     { path: '/robots.txt', label: 'robots policy', expected: 'public, max-age=3600' },
     { path: '/sitemap.xml', label: 'sitemap', expected: 'public, max-age=3600' },
+    { path: '/llms.txt', label: 'AI-readable text summary', expected: 'public, max-age=3600' },
     ...PRACTICE_SEO_PAGES.map((page) => ({
+      path: `/${page.slug}/`,
+      label: `${page.slug} SEO page`,
+      expected: 'no-store',
+    })),
+    ...IDENTITY_SEO_PAGES.map((page) => ({
       path: `/${page.slug}/`,
       label: `${page.slug} SEO page`,
       expected: 'no-store',

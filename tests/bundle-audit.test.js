@@ -17,6 +17,15 @@ import {
   PRACTICE_SEO_PAGES,
   canonicalPracticePageUrl,
 } from '../scripts/lib/seo-practice-pages.mjs';
+import {
+  IDENTITY_SEO_PAGES,
+  canonicalIdentityPageUrl,
+} from '../scripts/lib/seo-identity-pages.mjs';
+import {
+  crawlerPolicyFailures,
+  isCrawlerPathAllowed,
+  parseRobotsGroups,
+} from '../scripts/lib/seo-crawler-policy.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -639,6 +648,68 @@ function normaliseCacheControl(value) {
   return String(value || '').replace(/\s+/gu, ' ').replace(/,\s*/gu, ', ').trim();
 }
 
+test('SEO crawler policy helper keeps OAI public access separate from GPTBot training policy', () => {
+  const robots = [
+    'User-agent: *',
+    'Disallow: /api/',
+    'Disallow: /admin',
+    'Disallow: /demo',
+    'Allow: /',
+    '',
+    'User-agent: GPTBot',
+    'Disallow: /',
+  ].join('\n');
+
+  assert.equal(parseRobotsGroups(robots).length, 2);
+  assert.equal(isCrawlerPathAllowed(robots, 'OAI-SearchBot', '/about/'), true);
+  assert.equal(isCrawlerPathAllowed(robots, 'OAI-SearchBot', '/api/bootstrap'), false);
+  assert.equal(isCrawlerPathAllowed(robots, 'GPTBot', '/about/'), false);
+  assert.deepEqual(crawlerPolicyFailures(robots, {
+    userAgent: 'OAI-SearchBot',
+    publicPaths: ['/', '/about/'],
+    privatePaths: ['/api/', '/admin', '/demo'],
+  }), []);
+});
+
+test('SEO crawler policy helper requires private disallows in bot-specific OAI groups', () => {
+  const robots = [
+    'User-agent: *',
+    'Disallow: /api/',
+    'Disallow: /admin',
+    'Disallow: /demo',
+    'Allow: /',
+    '',
+    'User-agent: OAI-SearchBot',
+    'Allow: /',
+  ].join('\n');
+
+  assert.equal(isCrawlerPathAllowed(robots, 'OAI-SearchBot', '/about/'), true);
+  assert.equal(isCrawlerPathAllowed(robots, 'OAI-SearchBot', '/api/bootstrap'), true);
+  assert.match(crawlerPolicyFailures(robots, {
+    userAgent: 'OAI-SearchBot',
+    publicPaths: ['/', '/about/'],
+    privatePaths: ['/api/', '/admin', '/demo'],
+  }).join('\n'), /must repeat the private-path disallow for \/api\//);
+});
+
+test('SEO crawler policy helper rejects generic private-path allow overrides', () => {
+  const robots = [
+    'User-agent: *',
+    'Disallow: /api/',
+    'Allow: /api/',
+    'Disallow: /admin',
+    'Disallow: /demo',
+    'Allow: /',
+  ].join('\n');
+
+  assert.equal(isCrawlerPathAllowed(robots, 'OAI-SearchBot', '/api/bootstrap'), true);
+  assert.match(crawlerPolicyFailures(robots, {
+    userAgent: 'OAI-SearchBot',
+    publicPaths: ['/', '/about/'],
+    privatePaths: ['/api/', '/admin', '/demo'],
+  }).join('\n'), /must disallow OAI-SearchBot from private crawler path \/api\//);
+});
+
 const SEO_AUDIT_SECURITY_HEADERS = {
   'strict-transport-security': 'max-age=63072000; includeSubDomains',
   'x-content-type-options': 'nosniff',
@@ -662,6 +733,7 @@ function seoAuditRootHtml({ omitCanonical = false } = {}) {
     '<meta property="og:description" content="Online KS2 English practice for spelling, grammar and punctuation." />',
     '<meta property="og:url" content="https://ks2.eugnel.uk/" />',
     '<meta name="twitter:card" content="summary" />',
+    '<link rel="alternate" type="text/plain" href="/llms.txt" title="AI-readable KS2 Mastery summary" />',
     '<script type="application/ld+json">',
     JSON.stringify({
       '@context': 'https://schema.org',
@@ -677,7 +749,8 @@ function seoAuditRootHtml({ omitCanonical = false } = {}) {
     '<main><h1>KS2 spelling, grammar and punctuation practice</h1>',
     '<p>Spelling practice for KS2 word confidence</p>',
     '<p>Grammar practice for sentence-level accuracy</p>',
-    '<p>Punctuation practice for clearer written English</p></main>',
+    '<p>Punctuation practice for clearer written English</p>',
+    '<a href="/about/">About KS2 Mastery</a></main>',
     '<script type="module" src="/src/bundles/app.bundle.js?v=test"></script>',
     '</body></html>',
   ].join('');
@@ -702,10 +775,62 @@ function seoAuditPracticePageHtml(page, { omitCanonical = false, forbiddenToken 
     '</ul>',
     forbiddenToken ? `<p>${forbiddenToken}</p>` : '',
     '<a href="/demo">Try demo</a>',
+    '<a href="/about/">About KS2 Mastery</a>',
     '<a href="/">KS2 Mastery home</a>',
     '</main>',
     '</body></html>',
   ].join('');
+}
+
+function seoAuditIdentityPageHtml(page, { forbiddenToken = '' } = {}) {
+  const canonicalUrl = canonicalIdentityPageUrl(page);
+  return [
+    '<!doctype html><html lang="en-GB"><head>',
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}" />`,
+    `<link rel="canonical" href="${canonicalUrl}" />`,
+    `<meta property="og:title" content="${page.title}" />`,
+    `<meta property="og:description" content="${page.description}" />`,
+    `<meta property="og:url" content="${canonicalUrl}" />`,
+    '<meta name="twitter:card" content="summary" />',
+    '</head><body>',
+    `<main><h1>${page.heading}</h1>`,
+    `<p>${page.intro}</p>`,
+    '<p>KS2 spelling, grammar and punctuation practice</p>',
+    '<p>Learners can try a demo before signing in</p>',
+    '<p>Signing in saves learner profiles and progress</p>',
+    '<p>Private learner progress, admin tools and generated content stores are not public SEO content</p>',
+    forbiddenToken ? `<p>${forbiddenToken}</p>` : '',
+    '<a href="/ks2-spelling-practice/">KS2 spelling practice online</a>',
+    '<a href="/ks2-grammar-practice/">KS2 grammar practice online</a>',
+    '<a href="/ks2-punctuation-practice/">KS2 punctuation practice online</a>',
+    '<a href="/demo">Try demo</a>',
+    '</main>',
+    '</body></html>',
+  ].join('');
+}
+
+function seoAuditLlmsTxt({ forbiddenToken = '' } = {}) {
+  return [
+    '# KS2 Mastery',
+    '',
+    'KS2 Mastery is an online KS2 spelling, grammar and punctuation practice product for learners and supporting adults.',
+    '',
+    'Canonical public pages:',
+    '- https://ks2.eugnel.uk/',
+    ...IDENTITY_SEO_PAGES.map((page) => `- ${canonicalIdentityPageUrl(page)}`),
+    ...PRACTICE_SEO_PAGES.map((page) => `- ${canonicalPracticePageUrl(page)}`),
+    '',
+    'Current subject coverage:',
+    '- KS2 spelling practice for word confidence and recall',
+    '- KS2 grammar practice for sentence-level accuracy',
+    '- KS2 punctuation practice for clearer written English',
+    '',
+    'Product notes:',
+    '- Private learner progress, account state, operator tools and generated content stores are not public SEO content.',
+    forbiddenToken ? `- ${forbiddenToken}` : '',
+    '',
+  ].join('\n');
 }
 
 function createSeoAuditStubServer(options = {}) {
@@ -736,21 +861,65 @@ function createSeoAuditStubServer(options = {}) {
         return;
       }
     }
+    for (const page of IDENTITY_SEO_PAGES) {
+      if (url === `/${page.slug}/`) {
+        if (options.identityFallbackSlug === page.slug) {
+          write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml());
+          return;
+        }
+        write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditIdentityPageHtml(page, {
+          forbiddenToken: options.identityForbiddenTokenSlug === page.slug
+            ? 'OPENAI_API_KEY'
+            : '',
+        }));
+        return;
+      }
+    }
     if (url === '/robots.txt') {
       if (options.robotsFallback) {
         write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml());
         return;
       }
-      write(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' }, [
+      const robotsLines = [
         'User-agent: *',
         'Disallow: /api/',
         'Disallow: /admin',
         'Disallow: /demo',
         'Allow: /',
         '',
+      ];
+      if (options.robotsGenericAllowPrivate) {
+        robotsLines.push(
+          `Allow: ${options.robotsGenericAllowPrivate}`,
+          '',
+        );
+      }
+      if (options.robotsOaiDisallowRoot) {
+        robotsLines.push(
+          'User-agent: OAI-SearchBot',
+          'Disallow: /',
+          '',
+        );
+      }
+      if (options.robotsOaiSpecificMissingPrivate) {
+        robotsLines.push(
+          'User-agent: OAI-SearchBot',
+          'Allow: /',
+          '',
+        );
+      }
+      if (options.robotsGptbotDisallowRoot) {
+        robotsLines.push(
+          'User-agent: GPTBot',
+          'Disallow: /',
+          '',
+        );
+      }
+      robotsLines.push(
         'Sitemap: https://ks2.eugnel.uk/sitemap.xml',
         '',
-      ].join('\n'));
+      );
+      write(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' }, robotsLines.join('\n'));
       return;
     }
     if (url === '/sitemap.xml') {
@@ -759,6 +928,9 @@ function createSeoAuditStubServer(options = {}) {
         ...PRACTICE_SEO_PAGES
           .filter((page) => page.slug !== options.omitSitemapPageSlug)
           .map((page) => canonicalPracticePageUrl(page)),
+        ...IDENTITY_SEO_PAGES
+          .filter((page) => page.slug !== options.omitSitemapIdentitySlug)
+          .map((page) => canonicalIdentityPageUrl(page)),
       ];
       if (options.sitemapForbiddenPath) {
         sitemapUrls.push(`https://ks2.eugnel.uk${options.sitemapForbiddenPath}`);
@@ -777,6 +949,16 @@ function createSeoAuditStubServer(options = {}) {
         '</urlset>',
         '',
       ].join('\n'));
+      return;
+    }
+    if (url === '/llms.txt') {
+      if (options.llmsFallback) {
+        write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml());
+        return;
+      }
+      write(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' }, seoAuditLlmsTxt({
+        forbiddenToken: options.llmsForbiddenToken || '',
+      }));
       return;
     }
     if (url === '/src/bundles/app.bundle.js' || url === '/src/bundles/app.bundle.js?v=test') {
@@ -864,7 +1046,7 @@ test('production bundle audit passes with SEO root, robots, and sitemap resource
       timeout: 8000,
     });
     assert.match(stdout, /Production bundle audit passed/);
-    assert.match(stdout, /cache-split checks: 10\/10/);
+    assert.match(stdout, /cache-split checks: 12\/12/);
   } finally {
     await closeServer(server);
   }
@@ -942,6 +1124,79 @@ test('production bundle audit fails when a practice page leaks forbidden deploye
     });
   } finally {
     await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when the about page is SPA fallback HTML', async () => {
+  const server = createSeoAuditStubServer({ identityFallbackSlug: 'about' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production SEO page \/about\/ appears to be the root SPA shell/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when llms.txt is SPA fallback HTML or leaks private text', async () => {
+  const fallbackServer = createSeoAuditStubServer({ llmsFallback: true });
+  await new Promise((resolve) => fallbackServer.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = fallbackServer.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production llms\.txt appears to be SPA fallback HTML/);
+      return true;
+    });
+  } finally {
+    await closeServer(fallbackServer);
+  }
+
+  const leakServer = createSeoAuditStubServer({ llmsForbiddenToken: 'OPENAI_API_KEY' });
+  await new Promise((resolve) => leakServer.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = leakServer.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production \/llms\.txt must not include forbidden token: OPENAI_API_KEY/);
+      return true;
+    });
+  } finally {
+    await closeServer(leakServer);
   }
 });
 
@@ -1035,6 +1290,104 @@ test('production bundle audit fails when robots.txt is SPA fallback HTML', async
       });
     }, (error) => {
       assert.match(error.stderr, /Production robots\.txt appears to be SPA fallback HTML/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when OAI-SearchBot is blocked from public SEO pages', async () => {
+  const server = createSeoAuditStubServer({ robotsOaiDisallowRoot: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production robots\.txt must allow OAI-SearchBot to fetch public SEO path \//);
+      assert.match(error.stderr, /Cloudflare bot\/crawler settings/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when generic robots allows private paths for OAI-SearchBot', async () => {
+  const server = createSeoAuditStubServer({ robotsGenericAllowPrivate: '/api/' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production robots\.txt must disallow OAI-SearchBot from private crawler path \/api\//);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit allows GPTBot training disallow when OAI search remains crawlable', async () => {
+  const server = createSeoAuditStubServer({ robotsGptbotDisallowRoot: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    const { stdout } = await execFileAsync(process.execPath, [
+      './scripts/production-bundle-audit.mjs',
+      '--skip-local',
+      '--url',
+      `http://127.0.0.1:${port}/`,
+    ], {
+      cwd: process.cwd(),
+      timeout: 8000,
+    });
+    assert.match(stdout, /Production bundle audit passed/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when OAI-specific robots group omits private disallows', async () => {
+  const server = createSeoAuditStubServer({ robotsOaiSpecificMissingPrivate: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production robots\.txt has a bot-specific OAI-SearchBot group, so it must repeat the private-path disallow for \/api\//);
+      assert.match(error.stderr, /Cloudflare bot\/crawler settings/);
       return true;
     });
   } finally {

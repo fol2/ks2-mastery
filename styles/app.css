@@ -292,6 +292,9 @@ textarea:focus-visible {
 }
 
 .practice-public-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
   width: min(100%, 960px);
   margin: 0 auto;
   padding: 24px 28px 0;
@@ -351,6 +354,31 @@ textarea:focus-visible {
 
 .practice-public-list li + li {
   margin-top: 8px;
+}
+
+.practice-public-section {
+  margin-top: 28px;
+}
+
+.practice-public-section h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+}
+
+.practice-public-section p {
+  margin: 12px 0 0;
+  color: var(--ink-2);
+  line-height: 1.65;
+}
+
+.identity-public-panel {
+  max-width: 780px;
+}
+
+.identity-public-links {
+  margin-top: 24px;
 }
 
 .practice-public-actions {
