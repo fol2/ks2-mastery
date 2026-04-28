@@ -1886,6 +1886,13 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
         validationErrors: spellingValidationErrors,
         errorCount7d: spellingErrors,
         supportLoadSignal: supportSignal(spellingErrors),
+        // U6 (P6): release readiness signals
+        validationBlockers: spellingValidationErrors > 0
+          ? [`${spellingValidationErrors} unresolved validation error${spellingValidationErrors === 1 ? '' : 's'}`]
+          : [],
+        validationWarnings: [],
+        hasRealDiagnostics: true,
+        recentErrorCount7d: spellingErrors,
       };
     }
     if (subject.subjectKey === 'grammar') {
@@ -1897,6 +1904,11 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
         validationErrors: 0,
         errorCount7d: grammarErrors,
         supportLoadSignal: supportSignal(grammarErrors),
+        // U6 (P6): release readiness signals
+        validationBlockers: [],
+        validationWarnings: [],
+        hasRealDiagnostics: true,
+        recentErrorCount7d: grammarErrors,
       };
     }
     if (subject.subjectKey === 'punctuation') {
@@ -1908,6 +1920,11 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
         validationErrors: 0,
         errorCount7d: punctuationErrors,
         supportLoadSignal: supportSignal(punctuationErrors),
+        // U6 (P6): release readiness signals
+        validationBlockers: [],
+        validationWarnings: [],
+        hasRealDiagnostics: true,
+        recentErrorCount7d: punctuationErrors,
       };
     }
     // Placeholder subjects: static metadata, no runtime queries
@@ -1919,12 +1936,192 @@ async function readSubjectContentOverviewData(db, { now, actorAccountId, actor =
       validationErrors: 0,
       errorCount7d: 0,
       supportLoadSignal: 'none',
+      // U6 (P6): placeholder subjects have no validation or diagnostics
+      validationBlockers: [],
+      validationWarnings: [],
+      hasRealDiagnostics: false,
+      recentErrorCount7d: 0,
     };
   });
 
   return {
     generatedAt: nowTs,
     subjects,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// U7 (P6): Content quality signals — per-subject learning quality data.
+// Uses the same safeSection pattern as admin-debug-bundle: each subject
+// query is independently wrapped so failures degrade gracefully.
+// ---------------------------------------------------------------------------
+
+async function safeSignalSection(label, fn) {
+  try {
+    return await fn();
+  } catch {
+    return null;
+  }
+}
+
+async function readContentQualitySignalsData(db, { actorAccountId, actor = null } = {}) {
+  if (!actor) {
+    await assertAdminHubActor(db, actorAccountId);
+  }
+
+  // Grammar signals: concept coverage from GRAMMAR_AGGREGATE_CONCEPTS (18 concepts)
+  // and per-concept attempt counts from the mastery_evidence table.
+  const grammarSignals = await safeSignalSection('grammar', async () => {
+    // Concept count is static — 18 KS2 grammar concepts defined in roster.
+    const GRAMMAR_CONCEPT_COUNT = 18;
+
+    // Count concepts that have at least one evidence row (any learner).
+    const conceptsWithEvidence = await scalarCountSafe(db, `
+      SELECT COUNT(DISTINCT concept_id) AS value
+      FROM mastery_evidence
+      WHERE subject_id = 'grammar'
+    `, [], 'mastery_evidence');
+
+    // High wrong-rate concepts: concepts where recent wrong answers exceed 40%.
+    let highWrongRateItems = [];
+    try {
+      const wrongRateRows = await all(db, `
+        SELECT concept_id,
+               COUNT(*) AS total_attempts,
+               SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END) AS wrong_count
+        FROM mastery_evidence
+        WHERE subject_id = 'grammar'
+        GROUP BY concept_id
+        HAVING wrong_count * 1.0 / total_attempts > 0.4
+        ORDER BY wrong_count DESC
+        LIMIT 10
+      `, []);
+      highWrongRateItems = wrongRateRows.map((r) => ({
+        id: r.concept_id || '',
+        label: r.concept_id || '',
+        count: Number(r.wrong_count) || 0,
+        detail: `${Number(r.wrong_count) || 0}/${Number(r.total_attempts) || 0} wrong`,
+      }));
+    } catch {
+      // Table may not have is_correct column — degrade gracefully.
+    }
+
+    // Template coverage: distinct templateId values used across all grammar evidence.
+    let templateValue = 0;
+    try {
+      const tplCount = await scalar(db, `
+        SELECT COUNT(DISTINCT template_id) AS value
+        FROM mastery_evidence
+        WHERE subject_id = 'grammar' AND template_id IS NOT NULL AND template_id <> ''
+      `, []);
+      templateValue = Math.max(0, Number(tplCount) || 0);
+    } catch {
+      // template_id column may not exist in all environments.
+    }
+
+    return {
+      subjectKey: 'grammar',
+      subjectName: 'Grammar',
+      signals: {
+        skillCoverage: {
+          status: conceptsWithEvidence > 0 ? 'available' : 'not_available',
+          value: Math.min(conceptsWithEvidence, GRAMMAR_CONCEPT_COUNT),
+          total: GRAMMAR_CONCEPT_COUNT,
+        },
+        templateCoverage: {
+          status: templateValue > 0 ? 'available' : 'not_available',
+          value: templateValue,
+          total: 0, // Total templates not statically known at worker level
+        },
+        itemCoverage: { status: 'not_available', value: 0, total: 0 },
+        commonMisconceptions: { status: 'not_available', items: [] },
+        highWrongRate: {
+          status: highWrongRateItems.length > 0 ? 'available' : 'not_available',
+          items: highWrongRateItems,
+        },
+        recentlyChangedUnevidenced: { status: 'not_available', items: [] },
+      },
+    };
+  });
+
+  // Spelling signals: word-bank coverage from account_subject_content.
+  const spellingSignals = await safeSignalSection('spelling', async () => {
+    let wordCount = 0;
+    let secureCoreCount = 0;
+    try {
+      const contentRow = await first(db,
+        `SELECT content_json FROM account_subject_content WHERE subject_id = 'spelling' LIMIT 1`,
+        [],
+      );
+      if (contentRow?.content_json) {
+        const bundle = JSON.parse(contentRow.content_json);
+        if (bundle && typeof bundle === 'object') {
+          wordCount = Number(bundle?.publication?.runtimeWordCount) || 0;
+          secureCoreCount = Number(bundle?.secureCoreCount) || 0;
+        }
+      }
+    } catch {
+      // Soft-fail: content may not be available.
+    }
+
+    return {
+      subjectKey: 'spelling',
+      subjectName: 'Spelling',
+      signals: {
+        skillCoverage: { status: 'not_available', value: 0, total: 0 },
+        templateCoverage: { status: 'not_available', value: 0, total: 0 },
+        itemCoverage: {
+          status: wordCount > 0 ? 'available' : 'not_available',
+          value: secureCoreCount,
+          total: wordCount,
+        },
+        commonMisconceptions: { status: 'not_available', items: [] },
+        highWrongRate: { status: 'not_available', items: [] },
+        recentlyChangedUnevidenced: { status: 'not_available', items: [] },
+      },
+    };
+  });
+
+  // Punctuation signals: skill count from the static roster (known at runtime).
+  const punctuationSignals = await safeSignalSection('punctuation', async () => {
+    // Punctuation skills are defined in shared/punctuation/content.js.
+    // We do not import them here — the count is derived from what evidence exists.
+    let skillsWithEvidence = 0;
+    try {
+      skillsWithEvidence = await scalarCountSafe(db, `
+        SELECT COUNT(DISTINCT concept_id) AS value
+        FROM mastery_evidence
+        WHERE subject_id = 'punctuation'
+      `, [], 'mastery_evidence');
+    } catch {
+      // Table may not exist — degrade.
+    }
+
+    return {
+      subjectKey: 'punctuation',
+      subjectName: 'Punctuation',
+      signals: {
+        skillCoverage: {
+          status: skillsWithEvidence > 0 ? 'available' : 'not_available',
+          value: skillsWithEvidence,
+          total: 0, // Total skills not imported here — content-free leaf
+        },
+        templateCoverage: { status: 'not_available', value: 0, total: 0 },
+        itemCoverage: { status: 'not_available', value: 0, total: 0 },
+        commonMisconceptions: { status: 'not_available', items: [] },
+        highWrongRate: { status: 'not_available', items: [] },
+        recentlyChangedUnevidenced: { status: 'not_available', items: [] },
+      },
+    };
+  });
+
+  // Assemble — filter out null entries (subjects whose query entirely failed).
+  const subjectSignals = [grammarSignals, spellingSignals, punctuationSignals]
+    .filter(Boolean);
+
+  return {
+    generatedAt: Date.now(),
+    subjectSignals,
   };
 }
 
@@ -8999,6 +9196,14 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       const actor = await assertAdminHubActor(db, accountId);
       return readSubjectContentOverviewData(db, {
         now: nowFactory(),
+        actorAccountId: accountId,
+        actor,
+      });
+    },
+    // U7 (P6): content quality signals. Read-only; R16 compliant.
+    async readContentQualitySignals(accountId) {
+      const actor = await assertAdminHubActor(db, accountId);
+      return readContentQualitySignalsData(db, {
         actorAccountId: accountId,
         actor,
       });
