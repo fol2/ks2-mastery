@@ -63,6 +63,8 @@ function normaliseDailyState(daily) {
     firstStartedAt: daily.firstStartedAt || null,
     completedAt: daily.completedAt || null,
     lastUpdatedAt: daily.lastUpdatedAt || Date.now(),
+    // P4: Economy sub-block preserved from applyDailyCompletionCoinAward
+    economy: daily.economy && typeof daily.economy === 'object' ? daily.economy : null,
   };
 }
 
