@@ -5,6 +5,7 @@ import { createAdminMarketingApi } from '../../platform/hubs/admin-marketing-api
 import { uid } from '../../platform/core/utils.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 import { formatTimestamp } from './hub-utils.js';
+import { AdminPanelFrame } from './AdminPanelFrame.jsx';
 
 // U6 (P4): Marketing section — wired to admin-marketing.js backend.
 //
@@ -60,12 +61,19 @@ const EMPTY_FORM = {
 // Status badge
 // ---------------------------------------------------------------------------
 
+const STATUS_DESCRIPTIONS = {
+  scheduled: 'Staged for a future window — will NOT be shown to users until manually published.',
+};
+
 function StatusBadge({ status }) {
   const style = STATUS_BADGE_STYLES[status] || STATUS_BADGE_STYLES.draft;
+  const description = STATUS_DESCRIPTIONS[status] || null;
   return (
     <span
       className="chip"
       data-status={status}
+      title={description}
+      aria-label={description || status}
       style={{
         ...style,
         fontSize: '0.75rem',
@@ -301,7 +309,7 @@ function MarketingCreateForm({ onSubmit, submitting }) {
 // Message detail view with lifecycle transitions
 // ---------------------------------------------------------------------------
 
-function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError, transitioning, broadPublishPending, onBroadPublishConfirm, onBroadPublishCancel }) {
+function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError, transitioning, broadPublishPending, onBroadPublishConfirm, onBroadPublishCancel, schedulingConfirmPending, onSchedulingConfirm, onSchedulingCancel }) {
   const allowedTransitions = VALID_TRANSITIONS.get(message.status) || [];
 
   return (
@@ -319,6 +327,12 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError
         </div>
       </div>
 
+      {message.status === 'scheduled' && (
+        <div className="feedback info admin-marketing-feedback-spaced" data-testid="scheduling-truth-note">
+          This message is staged but not auto-delivered. Publish manually when ready.
+        </div>
+      )}
+
       {transitionError && (
         <div className="feedback bad admin-marketing-feedback-spaced" data-testid="transition-error">
           {transitionError}
@@ -332,6 +346,38 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError
           onConfirm={onBroadPublishConfirm}
           onCancel={onBroadPublishCancel}
         />
+      )}
+
+      {schedulingConfirmPending && (
+        <div
+          className="callout info admin-marketing-confirm-wrap"
+          role="alertdialog"
+          aria-label="Confirm scheduling"
+          data-testid="scheduling-truth-confirm"
+        >
+          <strong>Manual publish required</strong>
+          <p className="admin-marketing-confirm-text">
+            Scheduling stages this message. It will NOT be auto-delivered — you must publish manually.
+          </p>
+          <div className="admin-marketing-confirm-actions">
+            <button
+              className="btn secondary"
+              type="button"
+              onClick={onSchedulingConfirm}
+              data-testid="scheduling-truth-confirm-yes"
+            >
+              Confirm schedule
+            </button>
+            <button
+              className="btn secondary"
+              type="button"
+              onClick={onSchedulingCancel}
+              data-testid="scheduling-truth-confirm-cancel"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="admin-marketing-detail-body">
@@ -441,6 +487,7 @@ export function AdminMarketingSection({ accessContext }) {
   const [showCreateForm, setShowCreateForm] = React.useState(false);
   const [transitionError, setTransitionError] = React.useState('');
   const [broadPublishPending, setBroadPublishPending] = React.useState(null);
+  const [schedulingConfirmPending, setSchedulingConfirmPending] = React.useState(false);
   const pendingTransitionRef = React.useRef(null);
 
   const createLock = useSubmitLock();
@@ -511,6 +558,7 @@ export function AdminMarketingSection({ accessContext }) {
   const handleTransition = (targetAction) => {
     if (!selectedMessage) return;
     setTransitionError('');
+    setSchedulingConfirmPending(false);
 
     // Broad publish gate: all_signed_in audience on publish or schedule
     if (
@@ -518,6 +566,13 @@ export function AdminMarketingSection({ accessContext }) {
       && selectedMessage.audience === 'all_signed_in'
     ) {
       setBroadPublishPending(targetAction);
+      pendingTransitionRef.current = targetAction;
+      return;
+    }
+
+    // Scheduling truth gate: confirm manual-publish semantics
+    if (targetAction === 'scheduled') {
+      setSchedulingConfirmPending(true);
       pendingTransitionRef.current = targetAction;
       return;
     }
@@ -563,6 +618,19 @@ export function AdminMarketingSection({ accessContext }) {
     pendingTransitionRef.current = null;
   };
 
+  const handleSchedulingConfirm = () => {
+    const action = pendingTransitionRef.current;
+    setSchedulingConfirmPending(false);
+    if (action) {
+      executeTransition(action, false);
+    }
+  };
+
+  const handleSchedulingCancel = () => {
+    setSchedulingConfirmPending(false);
+    pendingTransitionRef.current = null;
+  };
+
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
@@ -580,67 +648,52 @@ export function AdminMarketingSection({ accessContext }) {
         broadPublishPending={broadPublishPending}
         onBroadPublishConfirm={handleBroadPublishConfirm}
         onBroadPublishCancel={handleBroadPublishCancel}
+        schedulingConfirmPending={schedulingConfirmPending}
+        onSchedulingConfirm={handleSchedulingConfirm}
+        onSchedulingCancel={handleSchedulingCancel}
       />
     );
   }
 
-  // List view
+  // List view — uses AdminPanelFrame for unified freshness/failure/empty handling
   return (
-    <section className="card admin-card-spaced" data-section="marketing">
-      <div className="card-header">
-        <div>
-          <div className="eyebrow">Marketing &amp; Live Ops</div>
-          <h3 className="section-title admin-section-title">Marketing messages</h3>
-          <p className="subtitle">
-            Create and manage announcements, maintenance banners, and campaign messages.
-            Messages follow the lifecycle: draft, scheduled, published, paused, archived.
-          </p>
-        </div>
-        <div className="actions">
+    <AdminPanelFrame
+      eyebrow="Marketing & Live Ops"
+      title="Marketing messages"
+      subtitle="Create and manage announcements, maintenance banners, and campaign messages. Messages follow the lifecycle: draft, scheduled, published, paused, archived."
+      refreshedAt={null}
+      refreshError={error ? { message: error } : null}
+      onRefresh={fetchMessages}
+      data={messages}
+      loading={loading}
+      headerExtras={
+        isAdmin ? (
           <button
             className="btn secondary"
             type="button"
-            onClick={fetchMessages}
-            disabled={loading}
+            onClick={() => setShowCreateForm((prev) => !prev)}
+            data-testid="toggle-create-form"
           >
-            {loading ? 'Loading...' : 'Refresh'}
+            {showCreateForm ? 'Cancel' : 'New message'}
           </button>
-          {isAdmin && (
-            <button
-              className="btn secondary"
-              type="button"
-              onClick={() => setShowCreateForm((prev) => !prev)}
-              data-testid="toggle-create-form"
-            >
-              {showCreateForm ? 'Cancel' : 'New message'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {error && (
-        <div className="feedback bad admin-marketing-feedback-spaced" data-testid="marketing-error">
-          {error}
-        </div>
-      )}
-
-      {isAdmin && showCreateForm && (
-        <MarketingCreateForm onSubmit={handleCreate} submitting={createLock.locked} />
-      )}
-
-      {loading && messages.length === 0 && (
-        <p className="small muted">Loading marketing messages...</p>
-      )}
-
-      {!loading && messages.length === 0 && !error && (
+        ) : null
+      }
+      emptyState={
         <p className="small muted" data-testid="marketing-empty">
           No marketing messages found. {isAdmin ? 'Create one to get started.' : ''}
         </p>
+      }
+      loadingSkeleton={
+        <p className="small muted">Loading marketing messages...</p>
+      }
+    >
+      {isAdmin && showCreateForm && (
+        <MarketingCreateForm onSubmit={handleCreate} submitting={createLock.locked} />
       )}
 
       {messages.map((msg) => (
         <MessageListRow key={msg.id} message={msg} onSelect={handleSelect} />
       ))}
-    </section>
+    </AdminPanelFrame>
   );
 }

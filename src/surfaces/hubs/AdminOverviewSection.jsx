@@ -2,6 +2,7 @@ import React from 'react';
 import { formatTimestamp } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
 import { AdminPanelFrame } from './AdminPanelFrame.jsx';
+import { AdminProductionEvidencePanel } from './AdminProductionEvidencePanel.jsx';
 
 // U4+U5: Overview section — top-level KPIs, recent ops activity, and demo
 // health. Extracted from AdminHubSurface.jsx as the default landing section
@@ -160,6 +161,7 @@ export function AdminOverviewSection({ model, actions }) {
   return (
     <>
       <DashboardKpiPanel model={model} actions={actions} />
+      <AdminProductionEvidencePanel model={model} actions={actions} />
       <RecentActivityStreamPanel model={model} actions={actions} />
       <DemoOperationsSummary summary={model.demoOperations} />
     </>
