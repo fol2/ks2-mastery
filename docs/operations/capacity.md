@@ -184,9 +184,14 @@ Every row in this table must point to a persisted JSON file at `reports/capacity
 
 Certification-tier runs (learners >= 20) MUST be invoked with a pinned threshold config: `--config reports/capacity/configs/<tier>.json`. Threshold changes go through PR review; operators may not relax thresholds ad-hoc under deadline pressure.
 
+`reports/capacity/latest-evidence-summary.json` is generated from the committed JSON files under `reports/capacity/evidence/` by `node scripts/generate-evidence-summary.mjs`. Admin Production Evidence displays that summary as latest evidence: failed certification-tier evidence remains failed, setup-blocked preflights remain non-certifying, and stale or empty summaries must not be read as certification success.
+
 | Date | Commit | Env | Plan | Learners | Burst | Rounds | P95 Bootstrap | P95 Command | Max Bytes | 5xx | Signals | Decision | Evidence |
 | --- | --- | --- | --- | --: | --: | --: | --: | --: | --: | --: | --- | --- | --- |
+| 2026-04-28 | 1c56e06 | production | 30-learner-beta | 30 | 20 | 1 | 1167.4 | 409.7 | 39002 | 0 | none | fail | [json](reports/capacity/evidence/30-learner-beta-v2-20260428-p5-warm.json) |
 | 2026-04-28 | d2d9c29 | production | 30-learner-beta | 30 | 20 | 1 | 1126.3 | 288.7 | 36852 | 0 | none | fail | [json](reports/capacity/evidence/30-learner-beta-v2-20260428.json) |
+
+> **P5 warm-cache re-run (2026-04-28, fail).** Latest committed 30-learner certification-tier evidence still fails only `maxBootstrapP95Ms`: observed 1,167.4 ms vs configured 1,000 ms ceiling (~16.7% over). `requireBootstrapCapacity` passes (queryCount=12, d1RowsRead=10), command P95 is 409.7 ms, payload max is 39,002 B, and 5xx/network/capacity signals remain zero. This is the row represented in `reports/capacity/latest-evidence-summary.json` and the Admin Production Evidence panel; the decision remains `small-pilot-provisional`.
 
 > **P4-U11 cert attempt (2026-04-28, fail).** First dated run under evidence schema v2 with full provenance (gitSha pinned, dirtyTreeFlag=false, thresholdConfigHash matches `30-learner-beta.json`). `requireBootstrapCapacity` passes (queryCount=12, d1RowsRead=10) and `requireZeroSignals` is clean. The single threshold violation is `maxBootstrapP95Ms`: observed 1126.3 ms vs configured 1000 ms ceiling (~12.6% over). Command P95 (288.7 ms) and payload max (36,852 B) both pass with comfortable headroom. The capacity claim therefore stays at `small-pilot-provisional` until a passing 30-learner run lands. Top suspected source of the bootstrap P95 regression: cold-bootstrap burst of 20 against a recently deployed worker hitting cold D1 statement caches; re-measure after a warm-cache window before opening any worker-side fix PR.
 
@@ -225,13 +230,16 @@ should investigate. Schema is intentionally lighter than the
 
 | Target | Status | Date | Commit | Evidence |
 | --- | --- | --- | --- | --- |
+| 60-learner stretch | **Preflight: invalid setup blocker** | 2026-04-28 | `0f744c3` | [json](../../reports/capacity/evidence/60-learner-stretch-preflight-20260428-p5.json) |
 | 60-learner stretch | **Preflight: fail** | 2026-04-28 | `42ec29b` | [json](../../reports/capacity/evidence/60-learner-stretch-preflight-20260428.json) |
 
+> **P5 manifest preflight (2026-04-28, invalid-with-named-setup-blocker).** Session-manifest mode separated setup from application load correctly, but the preceding 30-learner run consumed the single-IP demo-session bucket before the 60-learner manifest could be prepared. The result is intentionally non-certifying: it records `session-manifest-preparation-rate-limited` and does not measure `/api/bootstrap` or subject-command capacity at 60 learners. P6 changes the manifest utility default to wait for a full 10-minute bucket reset between safe-sized batches before a new 60-learner preflight is attempted.
+>
 > **P4-U12 preflight (2026-04-28, fail-with-root-cause).** The 60-learner stretch shape needs 60 demo sessions, one per virtual learner. Production trusts only the Cloudflare-signed `CF-Connecting-IP` header (see `worker/src/rate-limit.js::normaliseRateLimitSubject`), so a single load-generator host shares one IP-aggregated bucket against `/api/demo/session`. With `DEMO_LIMITS.createIp = 30` per 10-minute window (`worker/src/demo/sessions.js`), virtual `learner-31` and every subsequent learner are rejected with HTTP 429 (`code: demo_rate_limited`) before any `/api/bootstrap` or subject-command load runs. The driver detects the setup failure and aborts cleanly rather than reusing global auth, which would silently corrupt threshold readings.
 >
 > **Top bottleneck:** `demo-session-create-ip-rate-limit` (test-infrastructure, NOT production-traffic). Real classroom traffic at 60 students has 60 distinct `CF-Connecting-IP` values (one per device on the school's network egress, in the worst case clustered across a small NAT pool) and does not share the same per-IP rate-limit bucket; the preflight exposes a load-test infrastructure bottleneck rather than a production-capacity one.
 >
-> **Next step:** Extend the load-test driver with a multi-IP source mode (e.g. a small per-IP CF Worker proxy fan-out, or N independent runners) before re-attempting the 60-learner shape. Until that lands, `/api/bootstrap`, subject-command, and projection-path bottlenecks beyond 30 learners stay unmeasured; the existing 30-learner cert run on commit `d2d9c29` (decision=fail on `maxBootstrapP95Ms`) remains the highest-evidence claim and should be re-run after the bootstrap-P95 regression is investigated.
+> **Next step:** Prepare a fresh session manifest with the full bucket-reset delay, then re-attempt the 60-learner shape with `--session-manifest`. If a single-host manifest still cannot be prepared safely, use a multi-IP source mode or independent runners. Until a run reaches `/api/bootstrap` and subject-command load, bottlenecks beyond 30 learners stay unmeasured; the latest 30-learner cert-tier run on commit `1c56e06` (decision=fail on `maxBootstrapP95Ms`) remains the highest-evidence claim.
 
 ## Operational Thresholds
 

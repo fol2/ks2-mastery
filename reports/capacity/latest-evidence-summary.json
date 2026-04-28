@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-04-28T23:31:45.828Z",
+  "generatedAt": "2026-04-29T00:16:29.672Z",
   "sources": {
     "capacity_evidence": {
       "file": "reports/capacity/evidence/",
@@ -34,34 +34,69 @@
   "metrics": {
     "certified_30_learner_beta": {
       "tier": "certified_30_learner_beta",
+      "sourceTier": "30-learner-beta-certified",
+      "status": "failed",
       "ok": false,
+      "certifying": false,
       "dryRun": false,
+      "evidenceKind": "capacity-run",
+      "certificationEligible": false,
+      "certificationReasons": [
+        "missing-certification-diagnostics"
+      ],
+      "decision": "fail",
+      "failureReason": "threshold-violations",
       "learners": 30,
+      "bootstrapBurst": 20,
+      "rounds": 1,
       "finishedAt": "2026-04-28T21:33:08.171Z",
+      "finishedAtPrecision": "timestamp",
       "commit": "1c56e069c4bd95828328410bec3fef81564677ca",
       "failures": [
         "maxBootstrapP95Ms"
       ],
       "thresholdsPassed": false,
+      "thresholdViolations": [
+        {
+          "threshold": "max-bootstrap-p95-ms",
+          "limit": 1000,
+          "observed": 1167.4,
+          "message": "Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms."
+        }
+      ],
       "fileName": "30-learner-beta-v2-20260428-p5-warm.json"
     },
     "certified_60_learner_stretch": {
       "tier": "certified_60_learner_stretch",
+      "sourceTier": "certified_60_learner_stretch",
+      "status": "non_certifying",
       "ok": false,
+      "certifying": false,
       "dryRun": false,
+      "evidenceKind": "preflight",
+      "certificationEligible": false,
+      "certificationReasons": [
+        "missing-certification-diagnostics"
+      ],
+      "decision": "invalid-with-named-setup-blocker",
+      "failureReason": "session-manifest-preparation-rate-limited",
       "learners": 60,
-      "finishedAt": null,
-      "commit": "42ec29b41ba9cca9fc39d38cc29f08e6c71d4cf9",
+      "bootstrapBurst": null,
+      "rounds": null,
+      "finishedAt": "2026-04-28T00:00:00.000Z",
+      "finishedAtPrecision": "date",
+      "commit": "0f744c3",
       "failures": [],
       "thresholdsPassed": null,
-      "fileName": "60-learner-stretch-preflight-20260428.json"
+      "thresholdViolations": [],
+      "fileName": "60-learner-stretch-preflight-20260428-p5.json"
     },
     "csp_status": {
       "tier": "csp_status",
       "ok": false,
       "dryRun": false,
       "mode": "report-only",
-      "finishedAt": null,
+      "finishedAt": "2026-04-29T00:16:29.672Z",
       "commit": null,
       "failures": [
         "csp_mode_is_report-only"
@@ -72,7 +107,7 @@
       "ok": true,
       "dryRun": false,
       "count": 14,
-      "finishedAt": null,
+      "finishedAt": "2026-04-29T00:16:29.672Z",
       "commit": null,
       "failures": []
     },
@@ -81,7 +116,7 @@
       "ok": true,
       "dryRun": false,
       "version": "0.1.0",
-      "finishedAt": null,
+      "finishedAt": "2026-04-29T00:16:29.672Z",
       "commit": null,
       "failures": []
     }

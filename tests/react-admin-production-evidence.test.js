@@ -101,7 +101,9 @@ test('renders fresh evidence panel with passing 30-learner certification', async
       metrics: {
         certified_30_learner_beta: {
           tier: 'certified_30_learner_beta',
+          status: 'passed',
           ok: true,
+          certifying: true,
           dryRun: false,
           learners: 30,
           finishedAt: freshDate,
@@ -114,8 +116,8 @@ test('renders fresh evidence panel with passing 30-learner certification', async
   };
   const html = await renderFixture(buildEntry(model));
 
-  assert.match(html, /Certification evidence/, 'renders panel title');
-  assert.match(html, /data-panel-frame="Certification evidence"/, 'AdminPanelFrame wraps content');
+  assert.match(html, /Latest certification evidence/, 'renders panel title');
+  assert.match(html, /data-panel-frame="Latest certification evidence"/, 'AdminPanelFrame wraps content');
   assert.match(html, /data-testid="evidence-panel-overall"/, 'overall state section present');
   assert.match(html, /data-evidence-state="certified_30_learner_beta"/, 'shows certified_30 badge');
   assert.match(html, /data-testid="evidence-metrics-table"/, 'metrics table present');
@@ -137,7 +139,9 @@ test('renders stale evidence panel when generatedAt exceeds 24h', async () => {
       metrics: {
         certified_30_learner_beta: {
           tier: 'certified_30_learner_beta',
+          status: 'passed',
           ok: true,
+          certifying: true,
           dryRun: false,
           learners: 30,
           finishedAt: staleDate,
@@ -150,7 +154,7 @@ test('renders stale evidence panel when generatedAt exceeds 24h', async () => {
   };
   const html = await renderFixture(buildEntry(model));
 
-  assert.match(html, /Certification evidence/, 'renders panel title');
+  assert.match(html, /Latest certification evidence/, 'renders panel title');
   assert.match(html, /data-evidence-state="stale"/, 'overall state is stale');
   assert.match(html, /\(stale\)/, 'shows stale indicator');
 });
@@ -165,9 +169,9 @@ test('renders empty state when evidence summary has no metrics', async () => {
   };
   const html = await renderFixture(buildEntry(model));
 
-  assert.match(html, /Certification evidence/, 'renders panel title');
+  assert.match(html, /Latest certification evidence/, 'renders panel title');
   assert.match(html, /data-panel-frame-empty="true"/, 'shows empty state');
-  assert.match(html, /No evidence data available/, 'shows empty state message');
+  assert.match(html, /Latest evidence: Not available/, 'shows empty state message');
 });
 
 // ---------------------------------------------------------------------------
@@ -178,7 +182,7 @@ test('renders empty state when productionEvidence is absent from model', async (
   const model = {};
   const html = await renderFixture(buildEntry(model));
 
-  assert.match(html, /Certification evidence/, 'renders panel title');
+  assert.match(html, /Latest certification evidence/, 'renders panel title');
   assert.match(html, /data-panel-frame-empty="true"/, 'shows empty state');
 });
 
@@ -196,12 +200,22 @@ test('renders failing state when evidence has failures', async () => {
       metrics: {
         certified_30_learner_beta: {
           tier: 'certified_30_learner_beta',
+          status: 'failed',
           ok: false,
+          certifying: false,
           dryRun: false,
           learners: 30,
           finishedAt: freshDate,
           commit: 'abc1234',
           failures: ['max5xx'],
+          thresholdViolations: [
+            {
+              threshold: 'max-bootstrap-p95-ms',
+              limit: 1000,
+              observed: 1167.4,
+              message: 'Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms.',
+            },
+          ],
           fileName: '30-fail.json',
         },
       },
@@ -210,7 +224,8 @@ test('renders failing state when evidence has failures', async () => {
   const html = await renderFixture(buildEntry(model));
 
   assert.match(html, /data-evidence-state="failing"/, 'shows failing badge');
-  assert.match(html, /Failing/, 'failing label present');
+  assert.match(html, /Failed/, 'failed label present');
+  assert.match(html, /Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms/, 'threshold violation present');
 });
 
 // ---------------------------------------------------------------------------
@@ -227,6 +242,7 @@ test('renders multiple metric rows in table', async () => {
       metrics: {
         smoke_pass: {
           tier: 'smoke_pass',
+          status: 'passed',
           ok: true,
           dryRun: false,
           learners: 1,
@@ -237,7 +253,9 @@ test('renders multiple metric rows in table', async () => {
         },
         certified_60_learner_stretch: {
           tier: 'certified_60_learner_stretch',
+          status: 'passed',
           ok: true,
+          certifying: true,
           dryRun: false,
           learners: 60,
           finishedAt: freshDate,
@@ -253,4 +271,42 @@ test('renders multiple metric rows in table', async () => {
   assert.match(html, /data-metric-key="smoke_pass"/, 'smoke row present');
   assert.match(html, /data-metric-key="certified_60_learner_stretch"/, '60-learner row present');
   assert.match(html, /data-evidence-state="certified_60_learner_stretch"/, 'highest tier badge shown');
+});
+
+// ---------------------------------------------------------------------------
+// 7. Non-certifying preflight evidence
+// ---------------------------------------------------------------------------
+
+test('renders 60-learner preflight as non-certifying rather than certified', async () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 60_000).toISOString();
+  const model = {
+    productionEvidence: {
+      schema: 2,
+      generatedAt: freshDate,
+      metrics: {
+        certified_60_learner_stretch: {
+          tier: 'certified_60_learner_stretch',
+          status: 'non_certifying',
+          ok: false,
+          certifying: false,
+          dryRun: false,
+          evidenceKind: 'preflight',
+          decision: 'invalid-with-named-setup-blocker',
+          failureReason: 'session-manifest-preparation-rate-limited',
+          learners: 60,
+          finishedAt: '2026-04-28T00:00:00.000Z',
+          commit: '0f744c3',
+          failures: [],
+          thresholdViolations: [],
+          fileName: '60-learner-stretch-preflight-20260428-p5.json',
+        },
+      },
+    },
+  };
+  const html = await renderFixture(buildEntry(model));
+
+  assert.match(html, /data-evidence-state="non_certifying"/, 'shows non-certifying badge');
+  assert.doesNotMatch(html, /Certified: 60-learner stretch/, 'does not render 60-learner certification');
+  assert.match(html, /Reason: session-manifest-preparation-rate-limited/, 'shows setup blocker reason');
 });

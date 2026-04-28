@@ -1,272 +1,456 @@
-// P6 Unit 2: generate-evidence-summary.mjs — schema 3 multi-source tests.
-//
-// Tests the generator's source-reading logic, schema 3 shape, backward
-// compatibility with schema 2 consumers, missing source handling, and
-// malformed source robustness.
-
-import { describe, it } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { execSync } from 'node:child_process';
 
 import {
+  buildEvidenceSummary,
+  classifyTier,
+} from '../scripts/generate-evidence-summary.mjs';
+import { EVIDENCE_SCHEMA_VERSION } from '../scripts/lib/capacity-evidence.mjs';
+import {
   EVIDENCE_STATES,
-  classifyEvidenceMetric,
   buildEvidencePanelModel,
+  classifyEvidenceMetric,
 } from '../src/platform/hubs/admin-production-evidence.js';
 
-// ---------------------------------------------------------------------------
-// Schema 3 output shape validation
-// ---------------------------------------------------------------------------
+test('generate-evidence-summary emits schema 3 with the expected source manifest', () => {
+  const root = join(import.meta.url.startsWith('file://')
+    ? new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/i, '$1')
+    : process.cwd());
+  const outputPath = join(root, 'reports', 'capacity', 'latest-evidence-summary.json');
 
-describe('generate-evidence-summary schema 3 output', () => {
-  it('produces schema 3 when run via node', () => {
-    const ROOT = join(import.meta.url.startsWith('file://')
-      ? new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/i, '$1')
-      : process.cwd());
-    const outputPath = join(ROOT, 'reports', 'capacity', 'latest-evidence-summary.json');
-
-    // Run the generator
-    execSync('node scripts/generate-evidence-summary.mjs', {
-      cwd: ROOT,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: 10000,
-    });
-
-    const content = readFileSync(outputPath, 'utf8');
-    const summary = JSON.parse(content);
-
-    assert.equal(summary.schema, 3);
-    assert.equal(typeof summary.generatedAt, 'string');
-    assert.ok(summary.sources && typeof summary.sources === 'object');
-    assert.ok(summary.metrics && typeof summary.metrics === 'object');
-
-    // sources must contain the expected keys
-    const expectedSourceKeys = [
-      'capacity_evidence', 'admin_smoke', 'bootstrap_smoke',
-      'csp_status', 'd1_migrations', 'build_version', 'kpi_reconcile',
-    ];
-    for (const key of expectedSourceKeys) {
-      assert.ok(key in summary.sources, `sources must contain ${key}`);
-      assert.equal(typeof summary.sources[key].found, 'boolean');
-      assert.equal(typeof summary.sources[key].file, 'string');
-    }
+  execSync('node scripts/generate-evidence-summary.mjs', {
+    cwd: root,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: 10_000,
   });
+
+  const summary = JSON.parse(readFileSync(outputPath, 'utf8'));
+  assert.equal(summary.schema, EVIDENCE_SCHEMA_VERSION);
+  assert.ok(summary.sources && typeof summary.sources === 'object');
+  assert.ok(summary.metrics && typeof summary.metrics === 'object');
+
+  for (const key of [
+    'capacity_evidence',
+    'admin_smoke',
+    'bootstrap_smoke',
+    'csp_status',
+    'd1_migrations',
+    'build_version',
+    'kpi_reconcile',
+  ]) {
+    assert.ok(key in summary.sources, `sources must contain ${key}`);
+    assert.equal(typeof summary.sources[key].found, 'boolean');
+    assert.equal(typeof summary.sources[key].file, 'string');
+  }
 });
 
-// ---------------------------------------------------------------------------
-// Schema 3 backward compatibility with buildEvidencePanelModel
-// ---------------------------------------------------------------------------
+test('buildEvidencePanelModel consumes schema 3 sources while retaining schema 2 compatibility', () => {
+  const now = 1_700_000_000_000;
+  const fresh = new Date(now - 60_000).toISOString();
 
-describe('buildEvidencePanelModel handles schema 3', () => {
-  const NOW = 1_700_000_000_000;
-  const FRESH = new Date(NOW - 60_000).toISOString();
-
-  it('schema 3 summary with sources is consumed correctly', () => {
-    const summary = {
-      schema: 3,
-      generatedAt: FRESH,
-      sources: {
-        capacity_evidence: { file: 'reports/capacity/evidence/', found: true },
-        admin_smoke: { file: 'reports/admin-smoke/latest.json', found: false },
+  const schema3 = {
+    schema: 3,
+    generatedAt: fresh,
+    sources: {
+      capacity_evidence: { file: 'reports/capacity/evidence/', found: true },
+      admin_smoke: { file: 'reports/admin-smoke/latest.json', found: false },
+    },
+    metrics: {
+      certified_30_learner_beta: {
+        tier: 'certified_30_learner_beta',
+        ok: true,
+        failures: [],
+        finishedAt: fresh,
+        commit: 'abc1234',
       },
-      metrics: {
-        certified_30_learner_beta: {
-          tier: 'certified_30_learner_beta',
-          ok: true,
-          failures: [],
-          finishedAt: FRESH,
-          commit: 'abc1234',
+    },
+  };
+  const schema3Model = buildEvidencePanelModel(schema3, now);
+  assert.equal(schema3Model.overallState, EVIDENCE_STATES.CERTIFIED_30);
+  assert.equal(schema3Model.sources.capacity_evidence.found, true);
+  assert.equal(schema3Model.sources.admin_smoke.found, false);
+
+  const schema2 = {
+    schema: 2,
+    generatedAt: fresh,
+    metrics: {
+      smoke_pass: {
+        tier: 'smoke_pass',
+        ok: true,
+        failures: [],
+        finishedAt: fresh,
+      },
+    },
+  };
+  const schema2Model = buildEvidencePanelModel(schema2, now);
+  assert.equal(schema2Model.overallState, EVIDENCE_STATES.SMOKE_PASS);
+  assert.equal(schema2Model.sources, null);
+});
+
+test('classifyEvidenceMetric recognises schema 3 smoke source keys', () => {
+  const now = 1_700_000_000_000;
+  const fresh = new Date(now - 60_000).toISOString();
+
+  assert.equal(
+    classifyEvidenceMetric('admin_smoke', { ok: true, failures: [], finishedAt: fresh }, fresh, now),
+    EVIDENCE_STATES.SMOKE_PASS,
+  );
+  assert.equal(
+    classifyEvidenceMetric('bootstrap_smoke', { ok: true, failures: [], finishedAt: fresh }, fresh, now),
+    EVIDENCE_STATES.SMOKE_PASS,
+  );
+  assert.equal(
+    classifyEvidenceMetric('admin_smoke', { ok: false, failures: ['timeout'], finishedAt: fresh }, fresh, now),
+    EVIDENCE_STATES.FAILING,
+  );
+  assert.equal(classifyEvidenceMetric('bootstrap_smoke', null, fresh, now), EVIDENCE_STATES.NOT_AVAILABLE);
+});
+
+test('schema 3 missing and malformed sources fail closed without crashing the panel model', () => {
+  const now = 1_700_000_000_000;
+  const fresh = new Date(now - 60_000).toISOString();
+  const summary = {
+    schema: 3,
+    generatedAt: fresh,
+    sources: {
+      admin_smoke: { file: 'reports/admin-smoke/latest.json', found: false },
+    },
+    metrics: {},
+  };
+  const model = buildEvidencePanelModel(summary, now);
+  assert.equal(model.metrics.find((metric) => metric.key === 'admin_smoke'), undefined);
+  assert.equal(model.sources.admin_smoke.found, false);
+  assert.equal(classifyEvidenceMetric('admin_smoke', undefined, fresh, now), EVIDENCE_STATES.NOT_AVAILABLE);
+  assert.equal(classifyEvidenceMetric('kpi_reconcile', 'broken', fresh, now), EVIDENCE_STATES.NOT_AVAILABLE);
+  assert.equal(classifyEvidenceMetric('csp_status', 42, fresh, now), EVIDENCE_STATES.NOT_AVAILABLE);
+});
+
+test('schema 3 mixed source overall state prioritises certified capacity truth', () => {
+  const now = 1_700_000_000_000;
+  const fresh = new Date(now - 60_000).toISOString();
+  const certified = buildEvidencePanelModel({
+    schema: 3,
+    generatedAt: fresh,
+    sources: {},
+    metrics: {
+      certified_30_learner_beta: {
+        tier: 'certified_30_learner_beta',
+        ok: true,
+        failures: [],
+        finishedAt: fresh,
+      },
+      admin_smoke: { tier: 'admin_smoke', ok: true, failures: [], finishedAt: fresh },
+    },
+  }, now);
+  assert.equal(certified.overallState, EVIDENCE_STATES.CERTIFIED_30);
+
+  const smokeOnly = buildEvidencePanelModel({
+    schema: 3,
+    generatedAt: fresh,
+    sources: {},
+    metrics: {
+      admin_smoke: { tier: 'admin_smoke', ok: true, failures: [], finishedAt: fresh },
+    },
+  }, now);
+  assert.equal(smokeOnly.overallState, EVIDENCE_STATES.SMOKE_PASS);
+});
+
+test('classifyTier prefers declared tier metadata over filename fallback', () => {
+  assert.equal(
+    classifyTier('operator-note.json', { tier: { tier: '30-learner-beta-certified' } }),
+    'certified_30_learner_beta',
+  );
+  assert.equal(
+    classifyTier('60-learner-stretch-preflight-20260428.json', {}),
+    'certified_60_learner_stretch',
+  );
+});
+
+test('buildEvidenceSummary reports P5 30-learner beta-v2 threshold failure as failed and non-certifying', () => {
+  const summary = buildEvidenceSummary([
+    {
+      name: '30-learner-beta-v2-20260428-p5-warm.json',
+      data: {
+        ok: false,
+        dryRun: false,
+        reportMeta: {
+          commit: '1c56e069c4bd95828328410bec3fef81564677ca',
+          learners: 30,
+          bootstrapBurst: 20,
+          rounds: 1,
+          finishedAt: '2026-04-28T21:33:08.171Z',
+          evidenceSchemaVersion: 2,
+        },
+        summary: {
+          endpoints: {
+            'GET /api/bootstrap': { p95WallMs: 1167.4 },
+          },
+        },
+        thresholds: {
+          maxBootstrapP95Ms: {
+            configured: 1000,
+            observed: 1167.4,
+            passed: false,
+          },
+          violations: [
+            {
+              threshold: 'max-bootstrap-p95-ms',
+              limit: 1000,
+              observed: 1167.4,
+              message: 'Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms.',
+            },
+          ],
+        },
+        failures: ['maxBootstrapP95Ms'],
+        tier: { tier: '30-learner-beta-certified' },
+      },
+    },
+  ], { generatedAt: '2026-04-28T22:00:00.000Z' });
+
+  const metric = summary.metrics.certified_30_learner_beta;
+  assert.equal(metric.status, 'failed');
+  assert.equal(metric.certifying, false);
+  assert.equal(metric.ok, false);
+  assert.equal(metric.thresholdsPassed, false);
+  assert.equal(metric.failureReason, 'threshold-violations');
+  assert.equal(metric.learners, 30);
+  assert.equal(metric.fileName, '30-learner-beta-v2-20260428-p5-warm.json');
+  assert.deepEqual(metric.thresholdViolations, [
+    {
+      threshold: 'max-bootstrap-p95-ms',
+      limit: 1000,
+      observed: 1167.4,
+      message: 'Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms.',
+    },
+  ]);
+});
+
+test('buildEvidenceSummary reports 60-learner preflight setup blocker as non-certifying', () => {
+  const summary = buildEvidenceSummary([
+    {
+      name: '60-learner-stretch-preflight-20260428-p5.json',
+      data: {
+        ok: false,
+        decision: 'invalid-with-named-setup-blocker',
+        rootCause: 'session-manifest-preparation-rate-limited',
+        metrics: null,
+        reportMeta: {
+          commit: '0f744c3',
+          date: '2026-04-28',
+          phase: 'P5',
+          evidenceSchemaVersion: 2,
         },
       },
-    };
-    const result = buildEvidencePanelModel(summary, NOW);
-    assert.equal(result.isFresh, true);
-    assert.equal(result.metrics.length, 1);
-    assert.equal(result.metrics[0].state, EVIDENCE_STATES.CERTIFIED_30);
-    assert.equal(result.overallState, EVIDENCE_STATES.CERTIFIED_30);
-    // sources are preserved in the model
-    assert.ok(result.sources);
-    assert.equal(result.sources.capacity_evidence.found, true);
-    assert.equal(result.sources.admin_smoke.found, false);
-  });
+    },
+  ], { generatedAt: '2026-04-28T22:00:00.000Z' });
 
-  it('schema 2 summary (no sources field) still works', () => {
-    const summary = {
-      schema: 2,
-      generatedAt: FRESH,
-      metrics: {
-        smoke_pass: { tier: 'smoke_pass', ok: true, failures: [] },
-      },
-    };
-    const result = buildEvidencePanelModel(summary, NOW);
-    assert.equal(result.isFresh, true);
-    assert.equal(result.overallState, EVIDENCE_STATES.SMOKE_PASS);
-    // sources should be null for schema 2
-    assert.equal(result.sources, null);
-  });
-
-  it('empty schema 2 placeholder still produces STALE', () => {
-    const summary = { schema: 2, metrics: {}, generatedAt: null };
-    const result = buildEvidencePanelModel(summary, NOW);
-    assert.equal(result.overallState, EVIDENCE_STATES.STALE);
-    assert.equal(result.sources, null);
-  });
+  const metric = summary.metrics.certified_60_learner_stretch;
+  assert.equal(metric.status, 'non_certifying');
+  assert.equal(metric.certifying, false);
+  assert.equal(metric.evidenceKind, 'preflight');
+  assert.equal(metric.decision, 'invalid-with-named-setup-blocker');
+  assert.equal(metric.failureReason, 'session-manifest-preparation-rate-limited');
+  assert.equal(metric.learners, 60);
+  assert.equal(metric.thresholdsPassed, null);
 });
 
-// ---------------------------------------------------------------------------
-// New tier keys: admin_smoke, bootstrap_smoke classification
-// ---------------------------------------------------------------------------
+test('buildEvidenceSummary reports preflight that reaches load but violates thresholds as failed', () => {
+  const summary = buildEvidenceSummary([
+    {
+      name: '60-learner-stretch-preflight-20260428-p6.json',
+      data: {
+        ok: false,
+        reportMeta: {
+          commit: 'abc123',
+          learners: 60,
+          bootstrapBurst: 20,
+          rounds: 1,
+          finishedAt: '2026-04-28T23:38:26.815Z',
+          evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+        },
+        diagnostics: {
+          classification: {
+            certificationEligible: false,
+            kind: 'diagnostic',
+            reasons: ['session-manifest-requires-equivalence-record', 'threshold-violations'],
+          },
+        },
+        thresholds: {
+          violations: [
+            {
+              threshold: 'max-bootstrap-p95-ms',
+              limit: 750,
+              observed: 854,
+              message: 'Bootstrap P95 wall time 854 ms exceeds 750 ms.',
+            },
+          ],
+        },
+        failures: ['maxBootstrapP95Ms'],
+        tier: { tier: '60-learner-stretch-certified' },
+      },
+    },
+  ], { generatedAt: '2026-04-28T23:40:00.000Z' });
 
-describe('classifyEvidenceMetric with schema 3 tier keys', () => {
-  const NOW = 1_700_000_000_000;
-  const FRESH = new Date(NOW - 60_000).toISOString();
-
-  it('admin_smoke passing → SMOKE_PASS', () => {
-    const result = classifyEvidenceMetric(
-      'admin_smoke',
-      { ok: true, failures: [] },
-      FRESH,
-      NOW,
-    );
-    assert.equal(result, EVIDENCE_STATES.SMOKE_PASS);
-  });
-
-  it('bootstrap_smoke passing → SMOKE_PASS', () => {
-    const result = classifyEvidenceMetric(
-      'bootstrap_smoke',
-      { ok: true, failures: [] },
-      FRESH,
-      NOW,
-    );
-    assert.equal(result, EVIDENCE_STATES.SMOKE_PASS);
-  });
-
-  it('admin_smoke failing → FAILING', () => {
-    const result = classifyEvidenceMetric(
-      'admin_smoke',
-      { ok: false, failures: ['timeout'] },
-      FRESH,
-      NOW,
-    );
-    assert.equal(result, EVIDENCE_STATES.FAILING);
-  });
-
-  it('bootstrap_smoke null metric → NOT_AVAILABLE', () => {
-    const result = classifyEvidenceMetric('bootstrap_smoke', null, FRESH, NOW);
-    assert.equal(result, EVIDENCE_STATES.NOT_AVAILABLE);
-  });
+  const metric = summary.metrics.certified_60_learner_stretch;
+  assert.equal(metric.status, 'failed');
+  assert.equal(metric.certifying, false);
+  assert.equal(metric.evidenceKind, 'preflight');
+  assert.equal(metric.failureReason, 'threshold-violations');
+  assert.equal(metric.thresholdsPassed, false);
 });
 
-// ---------------------------------------------------------------------------
-// Missing source files → NOT_AVAILABLE
-// ---------------------------------------------------------------------------
-
-describe('missing source files produce NOT_AVAILABLE metrics', () => {
-  const NOW = 1_700_000_000_000;
-  const FRESH = new Date(NOW - 60_000).toISOString();
-
-  it('metric is absent when source file does not exist', () => {
-    // Simulate: summary generated with admin_smoke source not found
-    const summary = {
-      schema: 3,
-      generatedAt: FRESH,
-      sources: {
-        admin_smoke: { file: 'reports/admin-smoke/latest.json', found: false },
+test('buildEvidenceSummary fails closed for filename-only passed certification evidence', () => {
+  const summary = buildEvidenceSummary([
+    {
+      name: '30-learner-beta-v2-20260428-p6-strict.json',
+      data: {
+        ok: true,
+        dryRun: false,
+        reportMeta: {
+          commit: 'abc123',
+          learners: 30,
+          bootstrapBurst: 20,
+          rounds: 1,
+          finishedAt: '2026-04-28T23:00:00.000Z',
+          evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+        },
+        summary: {
+          endpoints: {
+            'GET /api/bootstrap': { p95WallMs: 900 },
+          },
+        },
+        thresholds: { violations: [] },
+        failures: [],
       },
-      metrics: {
-        // admin_smoke is NOT in metrics because source was missing
-      },
-    };
-    const result = buildEvidencePanelModel(summary, NOW);
-    // No admin_smoke metric in the output
-    const adminMetric = result.metrics.find((m) => m.key === 'admin_smoke');
-    assert.equal(adminMetric, undefined);
-    // sources manifest shows it was not found
-    assert.equal(result.sources.admin_smoke.found, false);
-  });
+    },
+  ], { generatedAt: '2026-04-28T23:05:00.000Z' });
 
-  it('classifyEvidenceMetric returns NOT_AVAILABLE for undefined metric value', () => {
-    const result = classifyEvidenceMetric('admin_smoke', undefined, FRESH, NOW);
-    assert.equal(result, EVIDENCE_STATES.NOT_AVAILABLE);
-  });
+  const metric = summary.metrics.certified_30_learner_beta;
+  assert.equal(metric.status, 'non_certifying');
+  assert.equal(metric.certifying, false);
+  assert.equal(metric.sourceTier, 'certified_30_learner_beta');
+  assert.equal(metric.failureReason, 'missing-certification-diagnostics');
+  assert.equal(metric.certificationEligible, false);
+  assert.deepEqual(metric.certificationReasons, ['missing-certification-diagnostics']);
+  assert.equal(metric.thresholdsPassed, null);
 });
 
-// ---------------------------------------------------------------------------
-// Malformed source files → NOT_AVAILABLE (no crash)
-// ---------------------------------------------------------------------------
+test('buildEvidenceSummary certifies only diagnostics-approved production gate evidence', () => {
+  const summary = buildEvidenceSummary([
+    {
+      name: '30-learner-beta-v2-20260428-p6-strict.json',
+      data: {
+        ok: true,
+        dryRun: false,
+        reportMeta: {
+          commit: 'abc123',
+          origin: 'https://ks2.eugnel.uk',
+          learners: 30,
+          bootstrapBurst: 20,
+          rounds: 1,
+          finishedAt: '2026-04-28T23:00:00.000Z',
+          evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+        },
+        diagnostics: {
+          classification: {
+            certificationEligible: true,
+            kind: 'certification-candidate',
+            reasons: [],
+          },
+        },
+        thresholds: { violations: [] },
+        failures: [],
+        tier: { tier: '30-learner-beta-certified' },
+      },
+    },
+  ], { generatedAt: '2026-04-28T23:05:00.000Z' });
 
-describe('malformed source files do not crash the generator', () => {
-  const NOW = 1_700_000_000_000;
-  const FRESH = new Date(NOW - 60_000).toISOString();
-
-  it('metric with non-object value (string) is NOT_AVAILABLE', () => {
-    const result = classifyEvidenceMetric('kpi_reconcile', 'broken', FRESH, NOW);
-    assert.equal(result, EVIDENCE_STATES.NOT_AVAILABLE);
-  });
-
-  it('metric with array value is FAILING (array is typeof object, ok is falsy)', () => {
-    // Arrays pass the typeof object check; without an `ok` property they
-    // evaluate as !metricValue.ok → true → FAILING.
-    const result = classifyEvidenceMetric('kpi_reconcile', [1, 2, 3], FRESH, NOW);
-    assert.equal(result, EVIDENCE_STATES.FAILING);
-  });
-
-  it('metric with number value is NOT_AVAILABLE', () => {
-    const result = classifyEvidenceMetric('csp_status', 42, FRESH, NOW);
-    assert.equal(result, EVIDENCE_STATES.NOT_AVAILABLE);
-  });
+  const metric = summary.metrics.certified_30_learner_beta;
+  assert.equal(metric.status, 'passed');
+  assert.equal(metric.certifying, true);
+  assert.equal(metric.certificationEligible, true);
+  assert.deepEqual(metric.certificationReasons, []);
+  assert.equal(metric.thresholdsPassed, true);
 });
 
-// ---------------------------------------------------------------------------
-// Overall state derivation with schema 3 mixed metrics
-// ---------------------------------------------------------------------------
+test('buildEvidenceSummary keeps diagnostics-only certification-shaped runs non-certifying', () => {
+  const cases = [
+    ['off-origin', 'origin-preview'],
+    ['manifest', 'session-manifest-requires-equivalence-record'],
+    ['shared-auth', 'session-source-not-isolated-demo'],
+    ['wrong-shape', 'non-p6-30-learner-gate-shape'],
+  ];
 
-describe('overall state with schema 3 mixed sources', () => {
-  const NOW = 1_700_000_000_000;
-  const FRESH = new Date(NOW - 60_000).toISOString();
-
-  it('capacity certified_30 + admin_smoke pass → overall is CERTIFIED_30', () => {
-    const summary = {
-      schema: 3,
-      generatedAt: FRESH,
-      sources: {},
-      metrics: {
-        certified_30_learner_beta: { tier: 'certified_30_learner_beta', ok: true, failures: [] },
-        admin_smoke: { tier: 'admin_smoke', ok: true, failures: [] },
+  for (const [label, reason] of cases) {
+    const summary = buildEvidenceSummary([
+      {
+        name: `30-learner-beta-v2-20260428-p6-${label}.json`,
+        data: {
+          ok: true,
+          dryRun: false,
+          reportMeta: {
+            commit: 'abc123',
+            origin: label === 'off-origin' ? 'https://preview.example.test' : 'https://ks2.eugnel.uk',
+            learners: label === 'wrong-shape' ? 20 : 30,
+            bootstrapBurst: label === 'wrong-shape' ? 10 : 20,
+            rounds: 1,
+            finishedAt: '2026-04-28T23:00:00.000Z',
+            evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+          },
+          diagnostics: {
+            classification: {
+              certificationEligible: false,
+              kind: 'diagnostic',
+              reasons: [reason],
+            },
+          },
+          thresholds: { violations: [] },
+          failures: [],
+          tier: { tier: '30-learner-beta-certified' },
+        },
       },
-    };
-    const result = buildEvidencePanelModel(summary, NOW);
-    assert.equal(result.overallState, EVIDENCE_STATES.CERTIFIED_30);
-  });
+    ], { generatedAt: '2026-04-28T23:05:00.000Z' });
 
-  it('only informational metrics (csp_status, d1_migrations) → UNKNOWN overall', () => {
-    const summary = {
-      schema: 3,
-      generatedAt: FRESH,
-      sources: {},
-      metrics: {
-        csp_status: { tier: 'csp_status', ok: false, failures: ['csp_mode_is_report-only'] },
-        d1_migrations: { tier: 'd1_migrations', ok: true, failures: [] },
-      },
-    };
-    const result = buildEvidencePanelModel(summary, NOW);
-    // csp_status fails → FAILING (rank 1), d1_migrations unknown tier ok → UNKNOWN (rank 2)
-    // bestRank = 2 (UNKNOWN), hasFailing = true, 2 <= 2 && hasFailing → FAILING
-    assert.equal(result.overallState, EVIDENCE_STATES.FAILING);
-  });
+    const metric = summary.metrics.certified_30_learner_beta;
+    assert.equal(metric.status, 'non_certifying', label);
+    assert.equal(metric.certifying, false, label);
+    assert.equal(metric.failureReason, `not-certification-eligible: ${reason}`, label);
+    assert.deepEqual(metric.certificationReasons, [reason], label);
+  }
+});
 
-  it('admin_smoke pass only → overall is SMOKE_PASS', () => {
-    const summary = {
-      schema: 3,
-      generatedAt: FRESH,
-      sources: {},
-      metrics: {
-        admin_smoke: { tier: 'admin_smoke', ok: true, failures: [] },
+test('buildEvidenceSummary keeps the latest same-day phase evidence per tier', () => {
+  const summary = buildEvidenceSummary([
+    {
+      name: '60-learner-stretch-preflight-20260428.json',
+      data: {
+        ok: false,
+        decision: 'fail',
+        rootCause: 'demo-session-create-ip-rate-limit',
+        shape: { learners: 60 },
+        reportMeta: { abortedAt: '2026-04-28T10:05:00.000Z' },
       },
-    };
-    const result = buildEvidencePanelModel(summary, NOW);
-    assert.equal(result.overallState, EVIDENCE_STATES.SMOKE_PASS);
-  });
+    },
+    {
+      name: '60-learner-stretch-preflight-20260428-p5.json',
+      data: {
+        ok: false,
+        decision: 'invalid-with-named-setup-blocker',
+        rootCause: 'session-manifest-preparation-rate-limited',
+        metrics: null,
+        shape: { learners: 60 },
+        reportMeta: {
+          date: '2026-04-28',
+          phase: 'P5',
+        },
+      },
+    },
+  ], { generatedAt: '2026-04-28T22:00:00.000Z' });
+
+  const metric = summary.metrics.certified_60_learner_stretch;
+  assert.equal(metric.fileName, '60-learner-stretch-preflight-20260428-p5.json');
+  assert.equal(metric.failureReason, 'session-manifest-preparation-rate-limited');
 });

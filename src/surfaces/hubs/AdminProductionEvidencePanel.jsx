@@ -15,12 +15,13 @@ import {
 const STATE_LABELS = {
   [EVIDENCE_STATES.NOT_AVAILABLE]: 'Not available',
   [EVIDENCE_STATES.STALE]: 'Stale',
-  [EVIDENCE_STATES.FAILING]: 'Failing',
+  [EVIDENCE_STATES.FAILING]: 'Failed',
+  [EVIDENCE_STATES.NON_CERTIFYING]: 'Non-certifying',
   [EVIDENCE_STATES.SMOKE_PASS]: 'Smoke pass',
   [EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL]: 'Small pilot (provisional)',
-  [EVIDENCE_STATES.CERTIFIED_30]: 'Certified 30-learner beta',
-  [EVIDENCE_STATES.CERTIFIED_60]: 'Certified 60-learner stretch',
-  [EVIDENCE_STATES.CERTIFIED_100]: 'Certified 100+ learners',
+  [EVIDENCE_STATES.CERTIFIED_30]: 'Certified: 30-learner beta',
+  [EVIDENCE_STATES.CERTIFIED_60]: 'Certified: 60-learner stretch',
+  [EVIDENCE_STATES.CERTIFIED_100]: 'Certified: 100+ learners',
   [EVIDENCE_STATES.UNKNOWN]: 'Unknown',
 };
 
@@ -28,6 +29,7 @@ const STATE_BADGES = {
   [EVIDENCE_STATES.NOT_AVAILABLE]: 'badge muted',
   [EVIDENCE_STATES.STALE]: 'badge warn',
   [EVIDENCE_STATES.FAILING]: 'badge error',
+  [EVIDENCE_STATES.NON_CERTIFYING]: 'badge warn',
   [EVIDENCE_STATES.SMOKE_PASS]: 'badge info',
   [EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL]: 'badge info',
   [EVIDENCE_STATES.CERTIFIED_30]: 'badge success',
@@ -56,6 +58,31 @@ function formatEvidenceTimestamp(isoString) {
   });
 }
 
+function formatThresholdViolation(violation) {
+  if (!violation || typeof violation !== 'object') return null;
+  if (violation.message) return violation.message;
+  const name = violation.threshold || 'threshold';
+  const observed = violation.observed ?? 'unknown';
+  const limit = violation.limit ?? 'unknown';
+  return `${name}: observed ${observed}; limit ${limit}.`;
+}
+
+function formatMetricDetail(metric) {
+  const details = [];
+  const thresholdDetails = metric.thresholdViolations
+    .map(formatThresholdViolation)
+    .filter(Boolean);
+  if (thresholdDetails.length > 0) {
+    details.push(`Threshold violation: ${thresholdDetails.join(' ')}`);
+  } else if (metric.failureReason) {
+    details.push(`Reason: ${metric.failureReason}.`);
+  }
+  if (metric.fileName) {
+    details.push(`Source: ${metric.fileName}.`);
+  }
+  return details.join(' ');
+}
+
 export function AdminProductionEvidencePanel({ model, actions }) {
   const evidenceSummary = model?.productionEvidence || null;
   const now = Date.now();
@@ -68,7 +95,7 @@ export function AdminProductionEvidencePanel({ model, actions }) {
   return (
     <AdminPanelFrame
       eyebrow="Production evidence"
-      title="Certification evidence"
+      title="Latest certification evidence"
       refreshedAt={refreshedAtMs}
       refreshError={null}
       onRefresh={actions?.dispatch ? () => actions.dispatch('admin-ops-evidence-refresh') : undefined}
@@ -76,17 +103,17 @@ export function AdminProductionEvidencePanel({ model, actions }) {
       loading={false}
       emptyState={
         <p className="small muted">
-          No evidence data available. Run <code>node scripts/generate-evidence-summary.mjs</code> to generate.
+          Latest evidence: Not available. Run <code>node scripts/generate-evidence-summary.mjs</code> after the next capacity run.
         </p>
       }
     >
       <div data-testid="evidence-panel-overall">
         <div className="skill-row admin-evidence-overall-row">
-          <div><strong>Overall state</strong></div>
+          <div><strong>Latest evidence</strong></div>
           <div><StateBadge state={panelModel.overallState} /></div>
         </div>
         <div className="small muted admin-evidence-generated">
-          Generated: {formatEvidenceTimestamp(panelModel.generatedAt)}
+          Summary generated: {formatEvidenceTimestamp(panelModel.generatedAt)}
           {panelModel.isFresh ? ' (fresh)' : ' (stale)'}
         </div>
       </div>
@@ -102,19 +129,24 @@ export function AdminProductionEvidencePanel({ model, actions }) {
               <th className="admin-evidence-th">State</th>
               <th className="admin-evidence-th">Learners</th>
               <th className="admin-evidence-th">Last run</th>
+              <th className="admin-evidence-th">Details</th>
             </tr>
           </thead>
           <tbody>
-            {panelModel.metrics.map((metric) => (
-              <tr key={metric.key} data-metric-key={metric.key}>
-                <td className="admin-evidence-td">{metric.tier}</td>
-                <td className="admin-evidence-td"><StateBadge state={metric.state} /></td>
-                <td className="admin-evidence-td">{metric.learners ?? '—'}</td>
-                <td className="small muted admin-evidence-td">
-                  {formatEvidenceTimestamp(metric.finishedAt)}
-                </td>
-              </tr>
-            ))}
+            {panelModel.metrics.map((metric) => {
+              const detail = formatMetricDetail(metric);
+              return (
+                <tr key={metric.key} data-metric-key={metric.key}>
+                  <td className="admin-evidence-td">{metric.tier}</td>
+                  <td className="admin-evidence-td"><StateBadge state={metric.state} /></td>
+                  <td className="admin-evidence-td">{metric.learners ?? '—'}</td>
+                  <td className="small muted admin-evidence-td">
+                    {formatEvidenceTimestamp(metric.finishedAt)}
+                  </td>
+                  <td className="small muted admin-evidence-td">{detail || '—'}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       ) : null}

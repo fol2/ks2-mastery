@@ -1,7 +1,7 @@
 // P5 Unit 4: Production Evidence panel — logic layer tests.
 //
 // Tests the closed EVIDENCE_STATES enum, the classifyEvidenceMetric function,
-// and the buildEvidencePanelModel function covering all 9 states.
+// and the buildEvidencePanelModel function covering all 10 states.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,9 +18,9 @@ import {
 // isValidEvidenceState
 // ---------------------------------------------------------------------------
 
-test('isValidEvidenceState accepts all 9 enum values', () => {
+test('isValidEvidenceState accepts all 10 enum values', () => {
   const values = Object.values(EVIDENCE_STATES);
-  assert.equal(values.length, 9, 'enum has exactly 9 values');
+  assert.equal(values.length, 10, 'enum has exactly 10 values');
   for (const v of values) {
     assert.equal(isValidEvidenceState(v), true, `${v} is valid`);
   }
@@ -82,14 +82,26 @@ test('classifyEvidenceMetric returns FAILING when failures array is non-empty', 
 });
 
 // ---------------------------------------------------------------------------
-// classifyEvidenceMetric — UNKNOWN (dry-run)
+// classifyEvidenceMetric — NON_CERTIFYING
 // ---------------------------------------------------------------------------
 
-test('classifyEvidenceMetric returns UNKNOWN for dry-run evidence', () => {
+test('classifyEvidenceMetric returns NON_CERTIFYING for dry-run evidence', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
   const result = classifyEvidenceMetric('smoke_pass', { ok: true, dryRun: true, failures: [] }, freshDate, now);
-  assert.equal(result, EVIDENCE_STATES.UNKNOWN);
+  assert.equal(result, EVIDENCE_STATES.NON_CERTIFYING);
+});
+
+test('classifyEvidenceMetric returns NON_CERTIFYING for setup-blocked preflight evidence', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 1000).toISOString();
+  const result = classifyEvidenceMetric('certified_60_learner_stretch', {
+    ok: false,
+    status: 'non_certifying',
+    evidenceKind: 'preflight',
+    failures: [],
+  }, freshDate, now);
+  assert.equal(result, EVIDENCE_STATES.NON_CERTIFYING);
 });
 
 // ---------------------------------------------------------------------------
@@ -167,7 +179,7 @@ test('buildEvidencePanelModel returns empty model for null summary', () => {
   assert.deepEqual(result.metrics, []);
   assert.equal(result.generatedAt, null);
   assert.equal(result.isFresh, false);
-  assert.equal(result.overallState, EVIDENCE_STATES.STALE);
+  assert.equal(result.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
 });
 
 test('buildEvidencePanelModel returns empty model for placeholder summary', () => {
@@ -175,7 +187,7 @@ test('buildEvidencePanelModel returns empty model for placeholder summary', () =
   assert.deepEqual(result.metrics, []);
   assert.equal(result.generatedAt, null);
   assert.equal(result.isFresh, false);
-  assert.equal(result.overallState, EVIDENCE_STATES.STALE);
+  assert.equal(result.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
 });
 
 // ---------------------------------------------------------------------------
@@ -191,7 +203,9 @@ test('buildEvidencePanelModel classifies fresh summary with passing 30-learner',
     metrics: {
       certified_30_learner_beta: {
         tier: 'certified_30_learner_beta',
+        status: 'passed',
         ok: true,
+        certifying: true,
         dryRun: false,
         learners: 30,
         finishedAt: freshDate,
@@ -217,6 +231,7 @@ test('buildEvidencePanelModel overall is highest tier when multiple metrics pass
     metrics: {
       smoke_pass: {
         tier: 'smoke_pass',
+        status: 'passed',
         ok: true,
         dryRun: false,
         learners: 1,
@@ -227,7 +242,9 @@ test('buildEvidencePanelModel overall is highest tier when multiple metrics pass
       },
       certified_60_learner_stretch: {
         tier: 'certified_60_learner_stretch',
+        status: 'passed',
         ok: true,
+        certifying: true,
         dryRun: false,
         learners: 60,
         finishedAt: freshDate,
@@ -250,7 +267,9 @@ test('buildEvidencePanelModel overall is FAILING when all metrics fail', () => {
     metrics: {
       certified_30_learner_beta: {
         tier: 'certified_30_learner_beta',
+        status: 'failed',
         ok: false,
+        certifying: false,
         dryRun: false,
         learners: 30,
         finishedAt: freshDate,
@@ -265,6 +284,116 @@ test('buildEvidencePanelModel overall is FAILING when all metrics fail', () => {
   assert.equal(result.overallState, EVIDENCE_STATES.FAILING);
 });
 
+test('buildEvidencePanelModel surfaces threshold violations from P5 30-learner failure', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 60_000).toISOString();
+  const summary = {
+    schema: 2,
+    generatedAt: freshDate,
+    metrics: {
+      certified_30_learner_beta: {
+        tier: 'certified_30_learner_beta',
+        status: 'failed',
+        ok: false,
+        certifying: false,
+        dryRun: false,
+        learners: 30,
+        finishedAt: '2026-04-28T21:33:08.171Z',
+        commit: '1c56e06',
+        failures: ['maxBootstrapP95Ms'],
+        thresholdViolations: [
+          {
+            threshold: 'max-bootstrap-p95-ms',
+            limit: 1000,
+            observed: 1167.4,
+            message: 'Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms.',
+          },
+        ],
+        fileName: '30-learner-beta-v2-20260428-p5-warm.json',
+      },
+    },
+  };
+  const result = buildEvidencePanelModel(summary, now);
+  assert.equal(result.overallState, EVIDENCE_STATES.FAILING);
+  assert.equal(result.metrics[0].state, EVIDENCE_STATES.FAILING);
+  assert.deepEqual(result.metrics[0].thresholdViolations, [
+    {
+      threshold: 'max-bootstrap-p95-ms',
+      limit: 1000,
+      observed: 1167.4,
+      message: 'Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms.',
+    },
+  ]);
+});
+
+test('buildEvidencePanelModel keeps setup-blocked 60-learner preflight non-certifying', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 60_000).toISOString();
+  const summary = {
+    schema: 2,
+    generatedAt: freshDate,
+    metrics: {
+      certified_60_learner_stretch: {
+        tier: 'certified_60_learner_stretch',
+        status: 'non_certifying',
+        ok: false,
+        certifying: false,
+        dryRun: false,
+        evidenceKind: 'preflight',
+        decision: 'invalid-with-named-setup-blocker',
+        failureReason: 'session-manifest-preparation-rate-limited',
+        learners: 60,
+        finishedAt: '2026-04-28T00:00:00.000Z',
+        commit: '0f744c3',
+        failures: [],
+        thresholdViolations: [],
+        fileName: '60-learner-stretch-preflight-20260428-p5.json',
+      },
+    },
+  };
+  const result = buildEvidencePanelModel(summary, now);
+  assert.equal(result.overallState, EVIDENCE_STATES.NON_CERTIFYING);
+  assert.equal(result.metrics[0].state, EVIDENCE_STATES.NON_CERTIFYING);
+  assert.equal(result.metrics[0].certifying, false);
+  assert.equal(result.metrics[0].failureReason, 'session-manifest-preparation-rate-limited');
+});
+
+test('buildEvidencePanelModel gives failing latest evidence priority over provisional success', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 60_000).toISOString();
+  const summary = {
+    schema: 2,
+    generatedAt: freshDate,
+    metrics: {
+      small_pilot_provisional: {
+        tier: 'small_pilot_provisional',
+        status: 'passed',
+        ok: true,
+        dryRun: false,
+        learners: 30,
+        finishedAt: freshDate,
+        commit: 'cbf39ec',
+        failures: [],
+        fileName: 'small-pilot.json',
+      },
+      certified_30_learner_beta: {
+        tier: 'certified_30_learner_beta',
+        status: 'failed',
+        ok: false,
+        certifying: false,
+        dryRun: false,
+        learners: 30,
+        finishedAt: freshDate,
+        commit: '1c56e06',
+        failures: ['maxBootstrapP95Ms'],
+        fileName: '30-fail.json',
+      },
+    },
+  };
+  const result = buildEvidencePanelModel(summary, now);
+  assert.equal(result.overallState, EVIDENCE_STATES.FAILING);
+});
+
 test('buildEvidencePanelModel overall is STALE when generatedAt exceeds 24h', () => {
   const now = Date.now();
   const staleDate = new Date(now - EVIDENCE_FRESH_THRESHOLD_MS - 1000).toISOString();
@@ -274,7 +403,9 @@ test('buildEvidencePanelModel overall is STALE when generatedAt exceeds 24h', ()
     metrics: {
       certified_30_learner_beta: {
         tier: 'certified_30_learner_beta',
+        status: 'passed',
         ok: true,
+        certifying: true,
         dryRun: false,
         learners: 30,
         finishedAt: staleDate,

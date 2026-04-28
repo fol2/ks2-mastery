@@ -2278,7 +2278,7 @@ export function createWorkerApp({
           }
           // Auth: assertAdminHubActor (admin or ops role required).
           const actor = await repository.assertAdminHubActorForBundle(session.accountId);
-          const db = requireDatabase(env);
+          const db = requireDatabaseWithCapacity(env, capacity);
           const rawBundle = await aggregateDebugBundle(db, {
             accountId: url.searchParams.get('account_id') || null,
             learnerId: url.searchParams.get('learner_id') || null,

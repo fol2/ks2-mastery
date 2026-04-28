@@ -10,6 +10,11 @@ export const EVIDENCE_SCHEMA_VERSION = 3;
 // without letting classroom-tier runs produce multi-MB evidence files.
 export const REQUEST_SAMPLES_HEAD_LIMIT = 100;
 export const REQUEST_SAMPLES_TAIL_LIMIT = 100;
+export const P6_THIRTY_LEARNER_GATE_SHAPE = Object.freeze({
+  learners: 30,
+  bootstrapBurst: 20,
+  rounds: 1,
+});
 
 // Known keys for threshold config files. `validateThresholdConfigKeys` rejects
 // unknown keys so typos like `maxFivexx` cannot silently disable a gate.
@@ -52,6 +57,166 @@ export function buildReportMeta(options = {}, timings = {}) {
     evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
     provenance: buildProvenance(options, commitSha),
   };
+}
+
+export function classifyCapacityEvidenceRun(options = {}, tier = {}) {
+  const runShape = buildRunShape(options);
+  const targetTier = tier?.tier || null;
+  const reasons = [];
+
+  if (runShape.mode === 'dry-run') {
+    reasons.push('dry-run-has-no-measurements');
+  } else if (runShape.mode !== 'production') {
+    reasons.push('not-production-mode');
+  }
+
+  if (runShape.originClass !== 'production') {
+    reasons.push(`origin-${runShape.originClass}`);
+  }
+
+  if (runShape.sessionSourceMode === 'manifest') {
+    reasons.push('session-manifest-requires-equivalence-record');
+  } else if (runShape.sessionSourceMode !== 'demo-sessions') {
+    reasons.push('session-source-not-isolated-demo');
+  }
+
+  if (!runShape.releaseGateShape) {
+    reasons.push('non-p6-30-learner-gate-shape');
+  }
+
+  if (!options.configPath || !targetTier) {
+    reasons.push('missing-pinned-threshold-config');
+  } else if (targetTier !== '30-learner-beta-certified') {
+    reasons.push('tier-is-not-30-learner-beta-certified');
+  }
+
+  return {
+    kind: reasons.length ? 'diagnostic' : 'certification-candidate',
+    certificationEligible: reasons.length === 0,
+    reasons,
+    targetTier,
+    runShape,
+  };
+}
+
+export function buildCapacityDiagnostics({
+  options = {},
+  tier = {},
+  summary = {},
+  thresholdViolations = [],
+  thresholdConfigHash = null,
+} = {}) {
+  const baseClassification = classifyCapacityEvidenceRun(options, tier);
+  const endpointKeys = Object.keys(summary.endpoints || {});
+  const bootstrapEndpointKeys = endpointKeys.filter((key) => key.endsWith('/api/bootstrap'));
+  const commandEndpointKeys = endpointKeys.filter((key) => /subjects\/.*\/command/.test(key));
+  const endpointInventory = {
+    hasBootstrapMetrics: bootstrapEndpointKeys.length > 0,
+    hasCommandMetrics: commandEndpointKeys.length > 0,
+    bootstrapEndpointKeys,
+    commandEndpointKeys,
+  };
+  const normalisedViolations = normaliseThresholdViolations(thresholdViolations);
+  const shapeEligible = baseClassification.certificationEligible;
+  const thresholdEligible = normalisedViolations.length === 0;
+  const evidenceComplete = endpointInventory.hasBootstrapMetrics && endpointInventory.hasCommandMetrics;
+  const resultReasons = [];
+
+  if (!endpointInventory.hasBootstrapMetrics) resultReasons.push('missing-bootstrap-metrics');
+  if (!endpointInventory.hasCommandMetrics) resultReasons.push('missing-command-metrics');
+  if (!thresholdEligible) resultReasons.push('threshold-violations');
+
+  const reasons = [...baseClassification.reasons, ...resultReasons];
+  const certificationEligible = shapeEligible && thresholdEligible && evidenceComplete;
+
+  return {
+    classification: {
+      ...baseClassification,
+      kind: certificationEligible ? baseClassification.kind : 'diagnostic',
+      shapeEligible,
+      thresholdEligible,
+      evidenceComplete,
+      certificationEligible,
+      reasons,
+    },
+    runShape: baseClassification.runShape,
+    endpointInventory,
+    thresholdConfig: {
+      configPath: options.configPath || null,
+      tier: tier?.tier || null,
+      minEvidenceSchemaVersion: tier?.minEvidenceSchemaVersion ?? null,
+      hash: thresholdConfigHash || null,
+    },
+    thresholdViolations: normalisedViolations,
+  };
+}
+
+function buildRunShape(options = {}) {
+  const learners = normaliseShapeNumber(options.learners);
+  const bootstrapBurst = normaliseShapeNumber(options.bootstrapBurst);
+  const rounds = normaliseShapeNumber(options.rounds);
+  const origin = options.origin || null;
+
+  return {
+    mode: options.mode || 'dry-run',
+    origin,
+    originClass: classifyOrigin(origin),
+    learners,
+    bootstrapBurst,
+    rounds,
+    sessionSourceMode: resolveSessionSourceMode(options),
+    releaseGateShape:
+      learners === P6_THIRTY_LEARNER_GATE_SHAPE.learners
+      && bootstrapBurst === P6_THIRTY_LEARNER_GATE_SHAPE.bootstrapBurst
+      && rounds === P6_THIRTY_LEARNER_GATE_SHAPE.rounds,
+  };
+}
+
+function resolveSessionSourceMode(options = {}) {
+  if (options.sessionManifest) return 'manifest';
+  if (options.demoSessions) return 'demo-sessions';
+  if (options.cookie || options.bearer) return 'shared-auth';
+  if (options.headers && options.headers.some((header) => /^(authorization|cookie)\s*:/i.test(header))) {
+    return 'shared-auth';
+  }
+  if (options.mode === 'dry-run') return 'none';
+  return 'unknown';
+}
+
+function normaliseShapeNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function classifyOrigin(origin) {
+  if (!origin) return 'unknown';
+  try {
+    const url = new URL(origin);
+    const host = url.hostname.toLowerCase();
+    if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.test')) {
+      return 'local';
+    }
+    if (/preview|staging|dev/.test(host)) return 'preview';
+    if (url.protocol === 'https:') return 'production';
+    return 'non-production';
+  } catch {
+    return 'unknown';
+  }
+}
+
+function normaliseThresholdViolations(violations = []) {
+  if (!Array.isArray(violations)) return [];
+  return violations.map((entry) => {
+    if (!entry || typeof entry !== 'object') return { threshold: 'unknown' };
+    return {
+      threshold: entry.threshold || 'unknown',
+      limit: entry.limit ?? null,
+      observed: entry.observed ?? null,
+      message: entry.message || '',
+      ...(Array.isArray(entry.signals) ? { signals: [...entry.signals] } : {}),
+      ...(Array.isArray(entry.gatedEndpoints) ? { gatedEndpoints: [...entry.gatedEndpoints] } : {}),
+    };
+  });
 }
 
 /**

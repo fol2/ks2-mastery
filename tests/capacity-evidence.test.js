@@ -9,10 +9,12 @@ import {
   EVIDENCE_SCHEMA_VERSION,
   REQUEST_SAMPLES_HEAD_LIMIT,
   REQUEST_SAMPLES_TAIL_LIMIT,
+  buildCapacityDiagnostics,
   autoNameEvidencePath,
   buildEvidencePayload,
   buildProvenance,
   buildReportMeta,
+  classifyCapacityEvidenceRun,
   evaluateThresholds,
   persistEvidenceFile,
   validateThresholdConfigKeys,
@@ -203,6 +205,147 @@ test('buildEvidencePayload preserves report.ok and lists confirmations in safety
   assert.equal(payload.ok, true);
   assert.deepEqual(payload.failures, []);
   assert.deepEqual(payload.safety.confirmedVia, ['production-load', 'high-production-load']);
+});
+
+test('classifyCapacityEvidenceRun marks strict production demo run as certification candidate only before threshold result', () => {
+  const result = classifyCapacityEvidenceRun({
+    mode: 'production',
+    origin: 'https://ks2.eugnel.uk',
+    demoSessions: true,
+    learners: 30,
+    bootstrapBurst: 20,
+    rounds: 1,
+    configPath: 'reports/capacity/configs/30-learner-beta.json',
+  }, {
+    tier: '30-learner-beta-certified',
+    minEvidenceSchemaVersion: 2,
+  });
+
+  assert.equal(result.kind, 'certification-candidate');
+  assert.equal(result.certificationEligible, true);
+  assert.deepEqual(result.reasons, []);
+  assert.equal(result.runShape.releaseGateShape, true);
+  assert.equal(result.runShape.sessionSourceMode, 'demo-sessions');
+});
+
+test('classifyCapacityEvidenceRun keeps reduced burst and manifest runs diagnostic', () => {
+  const result = classifyCapacityEvidenceRun({
+    mode: 'production',
+    origin: 'https://ks2.eugnel.uk',
+    sessionManifest: 'reports/capacity/manifests/demo.json',
+    learners: 30,
+    bootstrapBurst: 10,
+    rounds: 2,
+    configPath: 'reports/capacity/configs/30-learner-beta.json',
+  }, {
+    tier: '30-learner-beta-certified',
+    minEvidenceSchemaVersion: 2,
+  });
+
+  assert.equal(result.kind, 'diagnostic');
+  assert.equal(result.certificationEligible, false);
+  assert.ok(result.reasons.includes('session-manifest-requires-equivalence-record'));
+  assert.ok(result.reasons.includes('non-p6-30-learner-gate-shape'));
+});
+
+test('buildCapacityDiagnostics records threshold provenance, endpoint inventory, and machine-readable violations', () => {
+  const diagnostics = buildCapacityDiagnostics({
+    options: {
+      mode: 'production',
+      origin: 'https://ks2.eugnel.uk',
+      demoSessions: true,
+      learners: 30,
+      bootstrapBurst: 20,
+      rounds: 1,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    tier: {
+      tier: '30-learner-beta-certified',
+      minEvidenceSchemaVersion: 2,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    summary: makeSummary(),
+    thresholdConfigHash: 'abc123',
+    thresholdViolations: [{
+      threshold: 'max-bootstrap-p95-ms',
+      limit: 1000,
+      observed: 1126.3,
+      message: 'Bootstrap P95 wall time 1126.3 ms exceeds 1000 ms.',
+    }],
+  });
+
+  assert.equal(diagnostics.classification.kind, 'diagnostic');
+  assert.equal(diagnostics.classification.shapeEligible, true);
+  assert.equal(diagnostics.classification.thresholdEligible, false);
+  assert.equal(diagnostics.classification.evidenceComplete, true);
+  assert.equal(diagnostics.classification.certificationEligible, false);
+  assert.deepEqual(diagnostics.classification.reasons, ['threshold-violations']);
+  assert.equal(diagnostics.endpointInventory.hasBootstrapMetrics, true);
+  assert.equal(diagnostics.endpointInventory.hasCommandMetrics, true);
+  assert.equal(diagnostics.thresholdConfig.hash, 'abc123');
+  assert.deepEqual(diagnostics.thresholdViolations, [{
+    threshold: 'max-bootstrap-p95-ms',
+    limit: 1000,
+    observed: 1126.3,
+    message: 'Bootstrap P95 wall time 1126.3 ms exceeds 1000 ms.',
+  }]);
+});
+
+test('buildCapacityDiagnostics keeps complete passing strict evidence certification-eligible', () => {
+  const diagnostics = buildCapacityDiagnostics({
+    options: {
+      mode: 'production',
+      origin: 'https://ks2.eugnel.uk',
+      demoSessions: true,
+      learners: 30,
+      bootstrapBurst: 20,
+      rounds: 1,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    tier: {
+      tier: '30-learner-beta-certified',
+      minEvidenceSchemaVersion: 2,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    summary: makeSummary(),
+  });
+
+  assert.equal(diagnostics.classification.kind, 'certification-candidate');
+  assert.equal(diagnostics.classification.shapeEligible, true);
+  assert.equal(diagnostics.classification.thresholdEligible, true);
+  assert.equal(diagnostics.classification.evidenceComplete, true);
+  assert.equal(diagnostics.classification.certificationEligible, true);
+  assert.deepEqual(diagnostics.classification.reasons, []);
+});
+
+test('buildCapacityDiagnostics requires endpoint evidence even when the run shape is strict', () => {
+  const diagnostics = buildCapacityDiagnostics({
+    options: {
+      mode: 'production',
+      origin: 'https://ks2.eugnel.uk',
+      demoSessions: true,
+      learners: 30,
+      bootstrapBurst: 20,
+      rounds: 1,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    tier: {
+      tier: '30-learner-beta-certified',
+      minEvidenceSchemaVersion: 2,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    summary: { endpoints: {} },
+  });
+
+  assert.equal(diagnostics.classification.kind, 'diagnostic');
+  assert.equal(diagnostics.classification.shapeEligible, true);
+  assert.equal(diagnostics.classification.thresholdEligible, true);
+  assert.equal(diagnostics.classification.evidenceComplete, false);
+  assert.equal(diagnostics.classification.certificationEligible, false);
+  assert.deepEqual(diagnostics.classification.reasons, [
+    'missing-bootstrap-metrics',
+    'missing-command-metrics',
+  ]);
 });
 
 test('persistEvidenceFile writes JSON + creates parent directories', () => {
@@ -624,6 +767,84 @@ test('summariseCapacityResults aggregates queryCount and d1RowsRead from measure
   const bootstrap = summary.endpoints['GET /api/bootstrap'];
   assert.equal(bootstrap.queryCount, 5, 'queryCount is max across measurements');
   assert.equal(bootstrap.d1RowsRead, 42, 'd1RowsRead is max across measurements');
+});
+
+test('summariseCapacityResults records phases, response distribution, D1 writes, and top-tail request ids', () => {
+  const measurements = [
+    {
+      scenario: 'initial-bootstrap',
+      virtualLearner: 'learner-01',
+      method: 'GET',
+      endpoint: '/api/bootstrap',
+      status: 200,
+      ok: true,
+      wallMs: 120,
+      responseBytes: 5000,
+      clientRequestId: 'ks2_req_00000000-0000-4000-8000-000000000001',
+      serverRequestId: 'ks2_req_00000000-0000-4000-8000-000000000001',
+      capacity: {
+        requestId: 'ks2_req_00000000-0000-4000-8000-000000000001',
+        queryCount: 3,
+        d1RowsRead: 20,
+        d1RowsWritten: 0,
+        serverWallMs: 80,
+        responseBytes: 5100,
+        bootstrapMode: 'selected-learner-bounded',
+        bootstrapCapacity: { version: 2, mode: 'selected-learner-bounded', subjectStatesBounded: false },
+      },
+    },
+    {
+      scenario: 'cold-bootstrap-burst',
+      virtualLearner: 'learner-02',
+      method: 'GET',
+      endpoint: '/api/bootstrap',
+      status: 200,
+      ok: true,
+      wallMs: 980,
+      responseBytes: 6000,
+      clientRequestId: 'ks2_req_00000000-0000-4000-8000-000000000002',
+      serverRequestId: 'ks2_req_00000000-0000-4000-8000-000000000002',
+      capacity: {
+        requestId: 'ks2_req_00000000-0000-4000-8000-000000000002',
+        queryCount: 5,
+        d1RowsRead: 42,
+        d1RowsWritten: 1,
+        serverWallMs: 920,
+        responseBytes: 6100,
+        signals: ['bootstrapFallback'],
+        bootstrapMode: 'selected-learner-bounded',
+        bootstrapCapacity: { version: 2, mode: 'selected-learner-bounded', subjectStatesBounded: false },
+      },
+    },
+    {
+      scenario: 'human-paced-grammar-round',
+      virtualLearner: 'learner-02',
+      method: 'POST',
+      endpoint: '/api/subjects/grammar/command',
+      status: 200,
+      ok: true,
+      wallMs: 240,
+      responseBytes: 1100,
+      capacity: { queryCount: 4, d1RowsRead: 6, d1RowsWritten: 1, serverWallMs: 200 },
+    },
+  ];
+
+  const summary = summariseCapacityResults(measurements, { expectedRequests: 3 });
+  const bootstrap = summary.endpoints['GET /api/bootstrap'];
+
+  assert.equal(bootstrap.phase, 'bootstrap');
+  assert.equal(bootstrap.queryCount, 5);
+  assert.equal(bootstrap.queryCountP95, 5);
+  assert.equal(bootstrap.d1RowsWritten, 1);
+  assert.equal(bootstrap.serverWallMsP95, 920);
+  assert.equal(bootstrap.p95ResponseBytes, 6000);
+  assert.deepEqual(bootstrap.bootstrapModes, { 'selected-learner-bounded': 2 });
+  assert.deepEqual(bootstrap.capacitySignals, { bootstrapFallback: 1 });
+  assert.equal(bootstrap.topTailSamples[0].serverRequestId, 'ks2_req_00000000-0000-4000-8000-000000000002');
+  assert.equal(bootstrap.topTailSamples[0].queryCount, 5);
+  assert.equal(summary.phases.bootstrap.count, 2);
+  assert.equal(summary.phases.command.count, 1);
+  assert.equal(summary.scenarios['cold-bootstrap-burst'].phase, 'bootstrap');
 });
 
 test('summariseCapacityResults omits queryCount/d1RowsRead when no measurements have capacity (ADV-U1-001)', () => {
