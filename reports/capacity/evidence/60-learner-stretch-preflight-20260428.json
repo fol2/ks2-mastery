@@ -1,0 +1,48 @@
+{
+  "ok": false,
+  "decision": "fail",
+  "rootCause": "demo-session-create-ip-rate-limit",
+  "shape": {
+    "learners": 60,
+    "bootstrapBurst": 30,
+    "rounds": 1,
+    "demoSessions": true,
+    "origin": "https://ks2.eugnel.uk",
+    "config": "reports/capacity/configs/60-learner-stretch.json"
+  },
+  "setupFailure": {
+    "phase": "demo-session-setup",
+    "abortedAtLearner": "learner-31",
+    "endpoint": "POST /api/demo/session",
+    "driverErrorMessage": "Demo session setup failed for learner-31; refusing to reuse global auth for an isolated load context.",
+    "demoLimits": {
+      "createIp": 30,
+      "windowMs": 600000,
+      "source": "worker/src/demo/sessions.js (DEMO_LIMITS.createIp)"
+    },
+    "interpretation": [
+      "The 60-learner stretch shape needs 60 demo sessions, one per virtual learner.",
+      "Production trusts only the Cloudflare-signed CF-Connecting-IP header, so a single load-generator host shares one IP-aggregated bucket against /api/demo/session.",
+      "DEMO_LIMITS.createIp = 30 per 10-minute window means the 31st virtual learner (and every subsequent one) is rejected with HTTP 429 (code: demo_rate_limited) before any /api/bootstrap or subject-command load is exercised.",
+      "The classroom-load-test driver detects the setup failure and aborts before the load phase rather than retrying with reused auth, which would invalidate per-learner isolation and silently corrupt the threshold readings.",
+      "Real classroom traffic at 60 students has 60 distinct CF-Connecting-IP values (one per device on the school's network egress, in the worst case clustered across a small NAT pool) and does not share the same per-IP rate-limit bucket; this preflight therefore exposes a load-test infrastructure bottleneck rather than a production-capacity bottleneck."
+    ]
+  },
+  "topBottleneck": "demo-session-create-ip-rate-limit (test-infrastructure, NOT production-traffic)",
+  "nextStep": [
+    "Extend the load-test driver with a multi-IP source mode (e.g. a small per-IP CF Worker proxy fan-out, or N independent runners) before re-attempting the 60-learner shape.",
+    "Until that lands, /api/bootstrap, subject-command, and projection-path bottlenecks beyond 30 learners stay unmeasured; the existing 30-learner cert run remains the highest-evidence claim."
+  ],
+  "reportMeta": {
+    "commit": "42ec29b41ba9cca9fc39d38cc29f08e6c71d4cf9",
+    "environment": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "authMode": "demo-sessions",
+    "learners": 60,
+    "bootstrapBurst": 30,
+    "rounds": 1,
+    "abortedAt": "2026-04-28T10:05:00Z",
+    "evidenceSchemaVersion": "preflight-v1",
+    "operator": "jamesto"
+  }
+}
