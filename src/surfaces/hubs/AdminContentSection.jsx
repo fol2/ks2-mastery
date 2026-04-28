@@ -8,6 +8,7 @@ import {
   buildSubjectContentOverview,
   statusBadgeClass,
   statusLabel,
+  drilldownPanelSelector,
 } from '../../platform/hubs/admin-content-overview.js';
 
 // U4+U5: Content section — content release, import validation, post-mega
@@ -21,6 +22,22 @@ import {
 // release version, validation errors, 7d error counts, and support load
 // signals per subject. Content-free leaf: imports only the provider
 // contract and rendering helpers from admin-content-overview.js.
+//
+// U9 (P5): Honest drilldown actions. Each row now surfaces a truthful
+// action label indicating whether clicking does anything. Rows are only
+// clickable when drilldownAction maps to a real panel.
+
+/**
+ * Human-readable action label for the drilldown column.
+ */
+function drilldownActionLabel(action) {
+  if (action === 'diagnostics') return 'Open diagnostics';
+  if (action === 'asset_registry') return 'Open asset registry';
+  if (action === 'content_release') return 'Open content release';
+  if (action === 'none') return 'No drilldown yet';
+  return 'Placeholder — not live';
+}
+
 function SubjectOverviewPanel({ model, actions }) {
   const overview = React.useMemo(
     () => buildSubjectContentOverview(model?.contentOverview),
@@ -49,6 +66,17 @@ function SubjectOverviewPanel({ model, actions }) {
     return null;
   }
 
+  const isClickable = (subject) =>
+    subject.drilldownAction !== 'none' && subject.drilldownAction !== 'placeholder';
+
+  const handleRowClick = (subject) => {
+    if (!isClickable(subject)) return;
+    const selector = drilldownPanelSelector(subject);
+    if (!selector) return;
+    const target = document.querySelector(selector);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <section className="card admin-card-spaced" data-panel="subject-overview">
       <div className="eyebrow">Content Management</div>
@@ -66,6 +94,7 @@ function SubjectOverviewPanel({ model, actions }) {
             <th className="small admin-overview-th-right">Errors (7d)</th>
             <th className="small admin-overview-th-right">Validation</th>
             <th className="small admin-overview-th">Support Load</th>
+            <th className="small admin-overview-th">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -75,18 +104,12 @@ function SubjectOverviewPanel({ model, actions }) {
               className="admin-overview-tbody-row"
               data-subject-key={subject.subjectKey}
               data-subject-status={subject.status}
-              data-clickable={subject.status === 'live' ? 'true' : undefined}
-              onClick={subject.status === 'live'
-                ? () => {
-                  const target = document.querySelector(
-                    `[data-panel="post-mega-spelling-debug"], [data-panel="grammar-concept-confidence"], [data-panel="asset-registry"]`,
-                  );
-                  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-                : undefined}
-              role={subject.status === 'live' ? 'button' : undefined}
-              tabIndex={subject.status === 'live' ? 0 : undefined}
-              aria-label={subject.status === 'live' ? `Scroll to ${subject.displayName} diagnostics` : undefined}
+              data-drilldown-action={subject.drilldownAction}
+              data-clickable={isClickable(subject) ? 'true' : undefined}
+              onClick={isClickable(subject) ? () => handleRowClick(subject) : undefined}
+              role={isClickable(subject) ? 'button' : undefined}
+              tabIndex={isClickable(subject) ? 0 : undefined}
+              aria-label={isClickable(subject) ? `Scroll to ${subject.displayName} diagnostics` : undefined}
             >
               <td className="admin-overview-td-first">
                 {subject.displayName}
@@ -129,6 +152,14 @@ function SubjectOverviewPanel({ model, actions }) {
                 ) : (
                   <span className="small muted" data-testid={`support-${subject.subjectKey}`}>—</span>
                 )}
+              </td>
+              <td className="small admin-overview-td">
+                <span
+                  className={isClickable(subject) ? '' : 'muted'}
+                  data-testid={`action-${subject.subjectKey}`}
+                >
+                  {drilldownActionLabel(subject.drilldownAction)}
+                </span>
               </td>
             </tr>
           ))}

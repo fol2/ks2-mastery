@@ -43,6 +43,59 @@ const VALID_STATUSES = ['live', 'gated', 'placeholder'];
 const VALID_SIGNALS = ['low', 'medium', 'high', 'none'];
 
 /**
+ * Known drilldown panel mappings. Each entry maps a subject key to the
+ * data-panel attribute of the target panel within AdminContentSection.
+ *
+ * @type {Record<string, { action: string, panel: string }>}
+ */
+const DRILLDOWN_PANEL_MAP = {
+  spelling: { action: 'diagnostics', panel: 'post-mega-spelling-debug' },
+  grammar: { action: 'diagnostics', panel: 'grammar-concept-confidence' },
+};
+
+/**
+ * Subjects that link to the asset registry panel.
+ * Currently none are subject-specific — the registry is cross-subject.
+ */
+const ASSET_REGISTRY_SUBJECTS = new Set(/* future: add subject keys here */);
+
+/**
+ * Subjects that link to the content release panel.
+ */
+const CONTENT_RELEASE_SUBJECTS = new Set(/* future: add subject keys here */);
+
+/**
+ * Derive the drilldown action for a normalised subject entry.
+ *
+ * @param {object} entry — normalised subject status envelope
+ * @returns {'diagnostics'|'asset_registry'|'content_release'|'none'|'placeholder'}
+ */
+export function deriveDrilldownAction(entry) {
+  if (entry.status === 'placeholder') return 'placeholder';
+  if (DRILLDOWN_PANEL_MAP[entry.subjectKey]) return DRILLDOWN_PANEL_MAP[entry.subjectKey].action;
+  if (ASSET_REGISTRY_SUBJECTS.has(entry.subjectKey)) return 'asset_registry';
+  if (CONTENT_RELEASE_SUBJECTS.has(entry.subjectKey)) return 'content_release';
+  return 'none';
+}
+
+/**
+ * Get the data-panel selector for a subject's drilldown target.
+ * Returns null when the action is 'none' or 'placeholder'.
+ *
+ * @param {object} entry — normalised subject status envelope with drilldownAction
+ * @returns {string|null}
+ */
+export function drilldownPanelSelector(entry) {
+  if (entry.drilldownAction === 'diagnostics') {
+    const mapping = DRILLDOWN_PANEL_MAP[entry.subjectKey];
+    return mapping ? `[data-panel="${mapping.panel}"]` : null;
+  }
+  if (entry.drilldownAction === 'asset_registry') return '[data-panel="asset-registry"]';
+  if (entry.drilldownAction === 'content_release') return '[data-panel="content-release"]';
+  return null;
+}
+
+/**
  * Normalise a single subject status envelope from the worker payload.
  *
  * Defensive: every field is coerced to a safe rendering-ready value so
@@ -83,7 +136,11 @@ export function normaliseSubjectStatus(raw) {
 export function buildSubjectContentOverview(payload) {
   const data = isPlainObject(payload) ? payload : {};
   const subjects = Array.isArray(data.subjects) ? data.subjects : [];
-  const normalised = subjects.map(normaliseSubjectStatus);
+  const normalised = subjects.map((raw) => {
+    const entry = normaliseSubjectStatus(raw);
+    entry.drilldownAction = deriveDrilldownAction(entry);
+    return entry;
+  });
 
   // Sort: live first, gated second, placeholder last. Within each group
   // preserve the server-provided order (which is the canonical subject
