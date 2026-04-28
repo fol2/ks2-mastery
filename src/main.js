@@ -2435,7 +2435,14 @@ function buildSurfaceChromeModel(appState) {
 
 function buildHomeModel(appState, context) {
   const learnerId = appState.learners.selectedId;
-  const canOpenParentHub = Boolean(context.parentHub?.permissions?.canViewParentHub) || !boot.session.signedIn;
+  const roleCanOpenParentHub = ['parent', 'admin'].includes(normalisePlatformRole(shellPlatformRole));
+  const signedInParentCanOpenHub = boot.session.signedIn
+    && !boot.session.demo
+    && Boolean(learnerId)
+    && roleCanOpenParentHub;
+  const canOpenParentHub = Boolean(context.parentHub?.permissions?.canViewParentHub)
+    || !boot.session.signedIn
+    || signedInParentCanOpenHub;
   const visibleSubjects = context.subjects || exposedSubjects(SUBJECTS, subjectExposureGates);
 
   return {

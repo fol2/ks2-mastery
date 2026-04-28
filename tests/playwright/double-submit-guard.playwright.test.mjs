@@ -43,19 +43,95 @@ import { test, expect } from '@playwright/test';
 import {
   applyDeterminism,
   createDemoSession,
-  grammarDashboardStartButton,
-  grammarAnswer,
+  fillGrammarAnswer,
   openSubject,
   punctuationAnswer,
   spellingAnswer,
 } from './shared.mjs';
 
-async function answerCurrentSpellingCorrection(page) {
-  const answer = page.locator('.feedback-slot .word').first();
-  await expect(answer).toBeVisible({ timeout: 10_000 });
-  const text = ((await answer.textContent()) || '').replace(/[“”]/gu, '').trim();
-  expect(text, 'spelling correction feedback should expose the expected word').not.toBe('');
-  await spellingAnswer(page, text);
+const PUNCTUATION_START_SELECTOR = '[data-punctuation-cta], [data-punctuation-start]';
+
+async function waitForSpellingContinue(page) {
+  const continueBtn = page.locator('[data-action="spelling-continue"]');
+  if (await continueBtn.isVisible({ timeout: 1_000 }).catch(() => false)) {
+    return continueBtn;
+  }
+  const feedback = page.locator('.feedback-slot:not(.is-placeholder)');
+  const deadline = Date.now() + 10_000;
+  let correction = '';
+  while (Date.now() < deadline && !correction) {
+    const feedbackText = await feedback.innerText({ timeout: 1_000 }).catch(() => '');
+    const match = feedbackText.match(/“([^”]+)”/);
+    correction = match?.[1]?.trim() || '';
+    if (!correction) await page.waitForTimeout(100);
+  }
+  if (!correction) {
+    throw new Error('Spelling correction did not expose a curly-quoted model word.');
+  }
+  await spellingAnswer(page, correction);
+  await expect(continueBtn).toBeVisible({ timeout: 10_000 });
+  return continueBtn;
+}
+
+async function submitOneGrammarAnswer(page) {
+  await fillGrammarAnswer(page, { typed: 'x' });
+  const submit = page.locator('.grammar-answer-form button[type="submit"].primary').first();
+  await expect(submit).toBeEnabled({ timeout: 5_000 });
+  await submit.click();
+}
+
+async function seedParentHubAccount(page) {
+  const origin = new URL(page.url()).origin === 'null'
+    ? 'http://127.0.0.1:4173'
+    : new URL(page.url()).origin;
+  const email = `parent-export-${Date.now()}-${Math.random().toString(36).slice(2)}@example.test`;
+  const learnerId = `learner-export-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const createdAt = Date.now();
+  const register = await page.request.post('/api/auth/register', {
+    headers: {
+      origin,
+      'sec-fetch-site': 'same-origin',
+    },
+    data: {
+      email,
+      password: 'password-1234',
+    },
+  });
+  expect(register.status()).toBe(201);
+
+  const learners = {
+    byId: {
+      [learnerId]: {
+        id: learnerId,
+        name: 'Export Learner',
+        yearGroup: 'Y5',
+        avatarColor: '#3E6FA8',
+        goal: 'sats',
+        dailyMinutes: 15,
+        weakSubjects: [],
+        createdAt,
+      },
+    },
+    allIds: [learnerId],
+    selectedId: learnerId,
+  };
+  const save = await page.request.put('/api/learners', {
+    headers: {
+      origin,
+      'sec-fetch-site': 'same-origin',
+      'x-ks2-request-id': `playwright-parent-export-${createdAt}`,
+      'x-ks2-correlation-id': `playwright-parent-export-${createdAt}`,
+    },
+    data: {
+      learners,
+      mutation: {
+        requestId: `playwright-parent-export-${createdAt}`,
+        correlationId: `playwright-parent-export-${createdAt}`,
+        expectedAccountRevision: 0,
+      },
+    },
+  });
+  expect(save.status()).toBe(200);
 }
 
 test.describe('SH2-U1 double-submit guard', () => {
@@ -88,18 +164,17 @@ test.describe('SH2-U1 double-submit guard', () => {
     await expect(page.locator('.spelling-in-session.is-question-revealed input[name="typed"]'))
       .toBeVisible({ timeout: 15_000 });
 
-    // Force the session into the correction path with two wrong answers,
-    // then type the expected spelling once. Today's UX keeps the learner
-    // on the correction input until that final exact answer lands; only
-    // then does the awaiting-advance Continue button mount.
+    // Force the session into the `correction` phase by submitting two
+    // wrong answers — this is the only path that surfaces a Continue
+    // button (awaiting-advance). The golden-path scene uses the same
+    // trick. We pick strings that cannot possibly match any English
+    // word.
     await spellingAnswer(page, 'zzzzzzzzzz');
     await expect(page.locator('.feedback-slot:not(.is-placeholder)'))
       .toBeVisible({ timeout: 10_000 });
     await spellingAnswer(page, 'qqqqqqqqqq');
-    await answerCurrentSpellingCorrection(page);
 
-    const continueBtn = page.locator('[data-action="spelling-continue"]');
-    await expect(continueBtn).toBeVisible({ timeout: 10_000 });
+    const continueBtn = await waitForSpellingContinue(page);
     await expect(continueBtn).toBeEnabled();
 
     // Snapshot request count BEFORE the burst so we can assert delta.
@@ -201,10 +276,8 @@ test.describe('SH2-U1 double-submit guard', () => {
     await expect(page.locator('.feedback-slot:not(.is-placeholder)'))
       .toBeVisible({ timeout: 10_000 });
     await spellingAnswer(page, 'qqqqqqqqqq');
-    await answerCurrentSpellingCorrection(page);
 
-    const continueBtn = page.locator('[data-action="spelling-continue"]');
-    await expect(continueBtn).toBeVisible({ timeout: 10_000 });
+    const continueBtn = await waitForSpellingContinue(page);
 
     const before = commandRequests.length;
     await Promise.all([
@@ -245,22 +318,22 @@ test.describe('SH2-U1 double-submit guard', () => {
     const dashboard = page.locator('.grammar-dashboard');
     await expect(dashboard).toBeVisible({ timeout: 15_000 });
 
-    // Drive into an in-session round: smart mode is the default
-    // GrammarDashboard entry point.
-    const beginRound = grammarDashboardStartButton(page);
-    await expect(beginRound.first()).toBeVisible({ timeout: 10_000 });
-    await beginRound.first().click();
+    // Drive into an in-session round: Smart Practice is the default
+    // GrammarDashboard entry point and exposes the featured primary CTA.
+    const startButton = dashboard.locator('.grammar-start-row button[data-featured="true"]').first();
+    await expect(startButton).toBeVisible({ timeout: 10_000 });
+    await startButton.click();
 
     const session = page.locator('.grammar-answer-form').first();
     await expect(session).toBeVisible({ timeout: 15_000 });
 
-    // Submit an empty-ish answer to force a wrong, which lands us on
-    // the feedback frame where Continue is visible. Grammar accepts a
-    // short text answer on most question types.
-    await grammarAnswer(page, { typed: 'x' });
+    // Submit one deterministic answer, whatever input shape the live
+    // Grammar item renders, to land on the feedback frame where the
+    // advance button is visible.
+    await submitOneGrammarAnswer(page);
 
     // Wait for feedback frame with Continue / Next question button.
-    const continueBtn = page.locator('.grammar-answer-form button.secondary[type="button"]').first();
+    const continueBtn = page.getByRole('button', { name: /Next question|Finish round/ }).first();
     await expect(continueBtn).toBeVisible({ timeout: 15_000 });
     await expect(continueBtn).toBeEnabled();
 
@@ -287,7 +360,7 @@ test.describe('SH2-U1 double-submit guard', () => {
     await createDemoSession(page);
     await openSubject(page, 'punctuation');
 
-    const startBtn = page.locator('[data-punctuation-cta]').first();
+    const startBtn = page.locator(PUNCTUATION_START_SELECTOR).first();
     await expect(startBtn).toBeVisible({ timeout: 15_000 });
     await startBtn.click();
 
@@ -381,16 +454,14 @@ test.describe('SH2-U1 double-submit guard', () => {
       downloads.push(download.suggestedFilename());
     });
 
-    await createDemoSession(page);
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await seedParentHubAccount(page);
+    await page.goto('/', { waitUntil: 'networkidle' });
     await expect(page.locator('.subject-grid')).toBeVisible();
 
-    // Navigate to Parent Hub via the section link on home. Demo learner
-    // sessions may not expose this adult-only route; when the link is not
-    // present, the test records a real skip rather than asserting against
-    // an unavailable surface.
+    // Navigate to Parent Hub via the section link on home.
     const parentHubLink = page.getByRole('button', { name: /Parent hub/ });
-    const parentHubAvailable = await parentHubLink.first().isVisible({ timeout: 2_000 }).catch(() => false);
-    test.skip(!parentHubAvailable, 'Demo learner session does not expose Parent Hub export controls.');
+    await expect(parentHubLink.first()).toBeVisible({ timeout: 15_000 });
     await parentHubLink.first().click();
 
     // Wait for the export buttons to mount under the snapshot card.

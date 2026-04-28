@@ -624,13 +624,13 @@ test.describe('SH2-U6 visual baselines — five-viewport matrix', () => {
 
     // ---------- Parent Hub (deferred for demo learners) ----------
     // Review-blocker-5: the Parent Hub entry CTA (`Parent hub →`) is
-    // gated by `canOpenParentHub` in src/main.js, which is
-    // `context.parentHub?.permissions?.canViewParentHub || !boot.session.signedIn`.
-    // Demo learners ARE `signedIn: true` (demo-sync mode) and the
-    // Worker's parent-hub read model does NOT grant canViewParentHub
-    // to demo accounts — so the button is genuinely not rendered on
-    // the demo surface. Reaching the parent-hub route at all from a
-    // demo context would require either:
+    // gated by `canOpenParentHub` in src/main.js. Real signed-in
+    // parent/admin shells with a selected learner can open it directly;
+    // demo learners ARE `signedIn: true` (demo-sync mode) and are
+    // explicitly excluded because the Worker's parent-hub read model
+    // does NOT grant canViewParentHub to demo accounts — so the button
+    // is genuinely not rendered on the demo surface. Reaching the
+    // parent-hub route at all from a demo context would require either:
     //   1. Seeding a non-demo parent role (outside SH2-U6's scope;
     //      PR #227 boundary + would expand the test harness), OR
     //   2. Exposing a dispatch back-door on `window.__ks2_test_store`
