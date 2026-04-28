@@ -149,10 +149,11 @@ Star evidence derived from Worker-owned post-answer state；sub-secure Stars 由
 
 - `grammar.concept-secured` → `recordGrammarConceptMastery` for mastered[] / secure analytics only
 - `grammar.star-evidence-updated` → `updateGrammarStarHighWater` for Star latch + monster events
-- Direct monsters: 1 Star Egg persisted via `caught: true` and machine `displayState = egg-found`; Concordium stores raw latches but gates child-facing display until direct breadth exists
+- Direct monsters: 1 Star Egg persisted via `caught: true` and machine `displayState = egg-found`
+- Concordium: Grand Star projection (`GRAMMAR_GRAND_STAR_MODEL_VERSION = 2`) derives child-facing display from breadth/depth across direct monster families, not from the old straight 18-concept aggregate latch
 - `starHighWater` monotonic latch
 - `displayState` parity across Grammar landing, summary, Home dashboard and Codex
-- Concordium aggregate from all 18 concepts, with child-facing display gated until at least two direct Grammar monsters are found
+- Concordium aggregate mastery still covers all 18 concepts, but child-facing Stars use the Grand tier thresholds: 1/15/35/65/100 based on direct-family secure breadth, retained evidence, and varied practice
 - Direct monsters from shared concept roster
 - Punctuation-for-grammar bridge concepts have direct owners as well as Concordium aggregate membership: `parenthesis_commas`, `speech_punctuation`, and `boundary_punctuation` → Bracehart; `apostrophes_possession` and `hyphen_ambiguity` → Couronnail
 - Reserved monsters not active child-facing

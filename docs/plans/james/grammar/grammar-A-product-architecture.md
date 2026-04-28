@@ -420,11 +420,11 @@ for child-facing progress:
 - Couronnail owns apostrophes possession and hyphen ambiguity.
 
 This keeps bridge practice from making the grand monster appear before any
-corresponding direct monster. Concordium display is additionally gated: the
-grand monster must stay `not-found` until at least two direct Grammar monsters
-are already found. Stored Concordium high-water can remain for audit/backward
-compatibility, but the child-facing egg can be taken back when it was produced
-only by aggregate bridge evidence.
+corresponding direct monster. Concordium display is not a straight sum of the
+18 concepts: it uses a Grand Star tier model that requires breadth and depth
+across the direct monsters. Old unversioned Concordium high-water from the
+earlier aggregate model is ignored for child-facing display, so a test-account
+Grand egg that came only from aggregate bridge evidence can be taken back.
 
 ### 5.5 100-Star curve 為何好過 raw concept count？
 
@@ -448,7 +448,7 @@ Egg 是 encouragement，不是 mastery。
 
 Egg Found 的 celebration event 使用 unified monster event kind `caught`，語義是 first-found / first-Star，不是 first secure。Hatch / Growing / Nearly Mega / Mega 的 overlay celebration 由 Star threshold transition 觸發，並在 session end 播放；mid-session toast 目前暫時保留。
 
-Concordium 是例外：它是 grand monster，不應該因為單一 bridge concept 或單一 direct family 率先出蛋。Concordium 的 raw Star latch 可以記住 aggregate evidence，但 child-facing `displayState` 要等至少兩隻 direct Grammar monsters 已 found 才可以離開 `not-found`。
+Concordium 是例外：它是 grand monster，不應該因為單一 bridge concept 或單一 direct family 率先出蛋。Concordium 的 child-facing Stars 由 Grand tier model 決定：1 Star 需要至少 2 個 direct monster family 內有 2 個 secure concepts；15 Stars 需要 3 個 secure concepts；35 Stars 需要 3 個 direct families + 6 secure concepts；65 Stars 需要 10 secure + 5 retained concepts；100 Stars 需要全 18 concepts retained 並有 mixed/varied evidence across 3 direct families。
 
 ### 5.7 Stars 為何不能是 XP？
 

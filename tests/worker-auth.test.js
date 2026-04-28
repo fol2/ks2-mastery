@@ -486,6 +486,7 @@ test('production public bootstrap redacts spelling sentinels from subject state,
         caught: false,
         branch: 'b1',
         starHighWater: 1,
+        starModelVersion: 2,
         maxStageEver: 0,
         internalMarker: sentinel,
       },
@@ -543,6 +544,7 @@ test('production public bootstrap redacts spelling sentinels from subject state,
   assert.equal(publicGameState.pealark.caught, false);
   assert.equal(publicGameState.pealark.branch, 'b1');
   assert.equal(publicGameState.pealark.starHighWater, 1);
+  assert.equal(publicGameState.pealark.starModelVersion, 2);
   assert.equal(publicGameState.pealark.maxStageEver, 0);
   assert.equal(publicGameState.unsafe, undefined);
 

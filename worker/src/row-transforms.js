@@ -168,6 +168,8 @@ export function publicMonsterCodexEntry(entry) {
   if (PUBLIC_MONSTER_BRANCHES.has(entry.branch)) output.branch = entry.branch;
   const starHighWater = safePublicNonNegativeInt(entry.starHighWater);
   if (starHighWater != null) output.starHighWater = starHighWater;
+  const starModelVersion = safePublicNonNegativeInt(entry.starModelVersion);
+  if (starModelVersion != null) output.starModelVersion = starModelVersion;
   const maxStageEver = safePublicNonNegativeInt(entry.maxStageEver, { max: 4 });
   if (maxStageEver != null) output.maxStageEver = maxStageEver;
   return output;

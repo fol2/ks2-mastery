@@ -318,16 +318,16 @@ test('star e2e: Concordium Stars increase from cross-cluster concept evidence', 
     assert.ok(rawStars >= prevStars,
       `Concordium raw Stars after ${conceptId}: ${rawStars} >= ${prevStars}`);
     if (securedSoFar.length < 2) {
-      assert.equal(progress.stars, 0, 'Concordium display remains gated before two direct monsters are found');
+      assert.equal(progress.stars, 0, 'Concordium display remains gated before two secure direct families');
     } else {
-      assert.ok(progress.stars >= 1, 'Concordium displays Stars once direct breadth is present');
+      assert.ok(progress.stars >= 1, 'Concordium displays Stars once Grand secure breadth is present');
     }
     prevStars = rawStars;
   }
 
-  // After 3 cross-cluster concepts with full evidence: Stars should reflect
-  // 3/18 concepts fully evidenced -> floor(3 * (100/18) * 1.0) = floor(16.67) = 16 Stars.
-  assert.ok(prevStars >= 16, `Concordium Stars after 3 cross-cluster concepts: ${prevStars} >= 16`);
+  // After 3 cross-cluster secure concepts, Concordium reaches the 15-Star
+  // Grand tier.
+  assert.ok(prevStars >= 15, `Concordium Stars after 3 cross-cluster concepts: ${prevStars} >= 15`);
 });
 
 // =============================================================================
@@ -700,7 +700,7 @@ test('star e2e: monster strip model after mixed cross-cluster journey shows corr
     'sentence_functions', // Bracehart
     'tense_aspect',       // Chronalyx
     'word_classes',       // Couronnail
-    'speech_punctuation', // Concordium-only
+    'speech_punctuation', // Bracehart bridge concept, also in Concordium aggregate
   ];
 
   for (const conceptId of concepts) {

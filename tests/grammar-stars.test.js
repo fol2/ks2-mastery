@@ -18,6 +18,7 @@ import assert from 'node:assert/strict';
 
 import {
   GRAMMAR_MONSTER_STAR_MAX,
+  GRAMMAR_GRAND_STAR_TIERS,
   GRAMMAR_STAR_STAGE_THRESHOLDS,
   GRAMMAR_CONCEPT_STAR_WEIGHTS,
   deriveGrammarConceptStarEvidence,
@@ -61,6 +62,18 @@ test('GRAMMAR_CONCEPT_STAR_WEIGHTS sum === 1.0', () => {
     retainedAfterSecure: 0.60,
   });
   assert.ok(Object.isFrozen(GRAMMAR_CONCEPT_STAR_WEIGHTS));
+});
+
+test('GRAMMAR_GRAND_STAR_TIERS shape', () => {
+  assert.deepEqual(GRAMMAR_GRAND_STAR_TIERS, [
+    { threshold: 0,   minMonsters: 0, minSecure: 0,  minDeep: 0,  minVaried: 0, minVariedMonsters: 0 },
+    { threshold: 1,   minMonsters: 2, minSecure: 2,  minDeep: 0,  minVaried: 0, minVariedMonsters: 0 },
+    { threshold: 15,  minMonsters: 2, minSecure: 3,  minDeep: 0,  minVaried: 0, minVariedMonsters: 0 },
+    { threshold: 35,  minMonsters: 3, minSecure: 6,  minDeep: 0,  minVaried: 0, minVariedMonsters: 0 },
+    { threshold: 65,  minMonsters: 3, minSecure: 10, minDeep: 5,  minVaried: 0, minVariedMonsters: 0 },
+    { threshold: 100, minMonsters: 3, minSecure: 18, minDeep: 18, minVaried: 6, minVariedMonsters: 3 },
+  ]);
+  assert.ok(Object.isFrozen(GRAMMAR_GRAND_STAR_TIERS));
 });
 
 // ---------------------------------------------------------------------------
@@ -363,23 +376,80 @@ test('star computation: Bracehart 1 concept firstIndependentWin only → floor g
   assert.equal(result.stars, 1);
 });
 
-test('star computation: Concordium 1 concept firstIndependentWin → floor guarantee 1 Star', () => {
+test('star computation: Concordium 1 concept firstIndependentWin → 0 Stars until Grand secure breadth', () => {
   const concepts = GRAMMAR_AGGREGATE_CONCEPTS;
   const map = noEvidenceForConcepts(concepts);
   map.clauses = { ...map.clauses, firstIndependentWin: true };
   const result = computeGrammarMonsterStars('concordium', map);
-  // conceptBudget = 100/18 = 5.556; 5.556 * 0.05 = 0.278; floor(0.278) = 0
-  // But per-monster floor → 1 Star
-  assert.equal(result.stars, 1);
+  assert.equal(result.stars, 0, 'Grand Stars do not use the direct-monster floor guarantee');
 });
 
-test('star computation: Concordium 18 concepts each firstIndependentWin only → 5 Stars (epsilon-aware floor)', () => {
+test('star computation: Concordium 18 concepts each firstIndependentWin only → 0 Stars', () => {
   const concepts = GRAMMAR_AGGREGATE_CONCEPTS;
   const map = firstWinOnlyForConcepts(concepts);
   const result = computeGrammarMonsterStars('concordium', map);
-  // Ideal: 18 * (100/18 * 0.05) = 5.0. Without epsilon, IEEE 754 yields
-  // 4.999... → floor = 4. With epsilon-aware floor (ADV-002), correctly = 5.
-  assert.equal(result.stars, 5);
+  assert.equal(result.stars, 0, 'Grand Stars require secure breadth, not try-only breadth');
+});
+
+test('star computation: Concordium two secure concepts across two direct monsters → 1 Star', () => {
+  const map = noEvidenceForConcepts(GRAMMAR_AGGREGATE_CONCEPTS);
+  map.sentence_functions = { ...map.sentence_functions, secureConfidence: true };
+  map.word_classes = { ...map.word_classes, secureConfidence: true };
+  const result = computeGrammarMonsterStars('concordium', map);
+  assert.equal(result.stars, 1);
+  assert.equal(result.displayStage, 1);
+});
+
+test('star computation: Concordium three secure concepts across two direct monsters → 15 Stars', () => {
+  const map = noEvidenceForConcepts(GRAMMAR_AGGREGATE_CONCEPTS);
+  map.sentence_functions = { ...map.sentence_functions, secureConfidence: true };
+  map.clauses = { ...map.clauses, secureConfidence: true };
+  map.word_classes = { ...map.word_classes, secureConfidence: true };
+  const result = computeGrammarMonsterStars('concordium', map);
+  assert.equal(result.stars, 15);
+  assert.equal(result.displayStage, 2);
+});
+
+test('star computation: Concordium six secure concepts across three direct monsters → 35 Stars', () => {
+  const map = noEvidenceForConcepts(GRAMMAR_AGGREGATE_CONCEPTS);
+  for (const conceptId of [
+    'sentence_functions',
+    'clauses',
+    'tense_aspect',
+    'modal_verbs',
+    'word_classes',
+    'standard_english',
+  ]) {
+    map[conceptId] = { ...map[conceptId], secureConfidence: true };
+  }
+  const result = computeGrammarMonsterStars('concordium', map);
+  assert.equal(result.stars, 35);
+  assert.equal(result.displayStage, 3);
+});
+
+test('star computation: Concordium ten secure + five deep concepts across three direct monsters → 65 Stars', () => {
+  const map = noEvidenceForConcepts(GRAMMAR_AGGREGATE_CONCEPTS);
+  const secureConcepts = [
+    'sentence_functions',
+    'clauses',
+    'relative_clauses',
+    'tense_aspect',
+    'modal_verbs',
+    'adverbials',
+    'word_classes',
+    'standard_english',
+    'formality',
+    'hyphen_ambiguity',
+  ];
+  for (const conceptId of secureConcepts) {
+    map[conceptId] = { ...map[conceptId], secureConfidence: true };
+  }
+  for (const conceptId of secureConcepts.slice(0, 5)) {
+    map[conceptId] = { ...map[conceptId], retainedAfterSecure: true };
+  }
+  const result = computeGrammarMonsterStars('concordium', map);
+  assert.equal(result.stars, 65);
+  assert.equal(result.displayStage, 4);
 });
 
 test('star computation: empty conceptEvidenceMap → 0 Stars', () => {
@@ -770,13 +840,10 @@ test('star computation: Couronnail 1 concept firstIndependentWin only → floor 
 });
 
 // ---------------------------------------------------------------------------
-// 13. ADV-002: IEEE 754 epsilon floor test — Concordium evolve2 boundary
+// 13. Grand Star tier boundary — Concordium Growing threshold
 // ---------------------------------------------------------------------------
 
-test('star computation: Concordium 18 concepts evolve2 boundary — weight 0.35 → 35 Stars (ADV-002)', () => {
-  // Weight 0.35 = repeat(0.10) + varied(0.10) + secure(0.15).
-  // Ideal: 18 * (100/18 * 0.35) = 35.0, but IEEE 754 yields 34.999...
-  // Without epsilon floor this gives 34 (stage 2); with epsilon → 35 (stage 3).
+test('star computation: Concordium 18 secure concepts without retained proof → 35 Stars', () => {
   const concepts = GRAMMAR_AGGREGATE_CONCEPTS;
   const map = {};
   for (const id of concepts) {
@@ -789,7 +856,7 @@ test('star computation: Concordium 18 concepts evolve2 boundary — weight 0.35 
     };
   }
   const result = computeGrammarMonsterStars('concordium', map);
-  assert.equal(result.stars, 35, 'Epsilon-aware floor must yield 35 at the evolve2 boundary');
+  assert.equal(result.stars, 35, 'Grand model needs retained proof before the 65-Star tier');
   assert.equal(result.displayStage, 3, 'Display stage 3 = Growing');
 });
 
