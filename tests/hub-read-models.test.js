@@ -328,6 +328,11 @@ test('parent hub read model includes Grammar evidence without replacing Spelling
   assert.equal(grammarDueWork.recommendedMode, 'trouble');
   assert.equal(model.grammarEvidence.weakConcepts[0].id, 'adverbials');
   assert.equal(model.grammarEvidence.questionTypeSummary[0].id, 'choose');
+  assert.equal(model.grammarEvidence.coverageDiagnostics.releaseId, 'grammar-qg-p1-2026-04-28');
+  assert.equal(model.grammarEvidence.coverageDiagnostics.templateCount, 57);
+  assert.equal(model.grammarEvidence.coverageDiagnostics.generatedTemplateCount, 31);
+  assert.deepEqual(model.grammarEvidence.coverageDiagnostics.thinPoolWarnings, []);
+  assert.equal(Object.hasOwn(model.grammarEvidence.coverageDiagnostics, 'answerSpec'), false);
   assert.equal(model.grammarEvidence.recentActivity[0].itemId, 'fronted-adverbial-choice:101');
   assert.equal(model.grammarEvidence.recentActivity[0].score, 0);
   assert.equal(Object.hasOwn(model.grammarEvidence.recentActivity[0], 'response'), false);

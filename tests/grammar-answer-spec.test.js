@@ -128,6 +128,24 @@ test('manualReviewOnly: never auto-scores correct', () => {
   assert.equal(result.score, 0);
 });
 
+test('markByAnswerSpec preserves spec-owned answer text and hint metadata', () => {
+  const spec = {
+    kind: 'exact',
+    golden: ['passive voice'],
+    nearMiss: ['active voice'],
+    maxScore: 1,
+    misconception: 'active_passive_confusion',
+    minimalHint: 'Look for who receives the action first.',
+    feedbackLong: 'The sentence is passive because the thing affected comes first.',
+    answerText: 'passive voice',
+  };
+  const result = markByAnswerSpec(spec, { answer: 'active voice' });
+  assert.equal(result.correct, false);
+  assert.equal(result.misconception, 'active_passive_confusion');
+  assert.equal(result.minimalHint, 'Look for who receives the action first.');
+  assert.equal(result.answerText, 'passive voice');
+});
+
 test('markByAnswerSpec tolerates missing/malformed input gracefully', () => {
   assert.equal(markByAnswerSpec(null, { answer: 'x' }).correct, false);
   assert.equal(markByAnswerSpec({}, { answer: 'x' }).correct, false);

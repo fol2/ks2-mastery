@@ -54,6 +54,7 @@ function grammarEvidenceFromReadModel(grammar = {}) {
     dueConcepts: Array.isArray(grammar.dueConcepts) ? grammar.dueConcepts : [],
     weakConcepts: Array.isArray(grammar.weakConcepts) ? grammar.weakConcepts : [],
     questionTypeSummary: Array.isArray(grammar.questionTypeSummary) ? grammar.questionTypeSummary : [],
+    coverageDiagnostics: grammar.coverageDiagnostics || null,
     misconceptionPatterns: Array.isArray(grammar.misconceptionPatterns) ? grammar.misconceptionPatterns : [],
     recentActivity: Array.isArray(grammar.recentActivity) ? grammar.recentActivity : [],
     recentSessions: Array.isArray(grammar.recentSessions) ? grammar.recentSessions : [],

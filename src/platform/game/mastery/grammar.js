@@ -61,12 +61,12 @@ function safeStarHighWater(value) {
  * would return 0 for undefined, permanently disabling the legacy floor on
  * subsequent reads.
  */
-function seedStarHighWater(entry, total) {
+function seedStarHighWater(entry, total, releaseId = GRAMMAR_REWARD_RELEASE_ID) {
   if (entry.starHighWater !== undefined && entry.starHighWater !== null) {
     return safeStarHighWater(entry.starHighWater);
   }
   // Pre-P5 learner: seed from legacy floor.
-  const mastered = grammarMasteredCount(entry);
+  const mastered = grammarMasteredCount(entry, releaseId);
   const legacyStage = grammarStageFor(mastered, total);
   return legacyStarFloorFromStage(legacyStage);
 }
@@ -350,10 +350,12 @@ export function recordGrammarConceptMastery({
 
   const beforeAggregate = progressForGrammarMonster(before, GRAMMAR_GRAND_MONSTER_ID, {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+    releaseId,
   });
   const beforeDirect = directMonsterId
     ? progressForGrammarMonster(before, directMonsterId, {
       conceptTotal: grammarMonsterConceptTotal(directMonsterId),
+      releaseId,
     })
     : null;
 
@@ -364,7 +366,7 @@ export function recordGrammarConceptMastery({
   // happens on the client read path (which has access to concept nodes);
   // the reward layer only preserves the latch field so it survives
   // round-trips.
-  const aggregateHW = seedStarHighWater(aggregateEntry, GRAMMAR_AGGREGATE_CONCEPTS.length);
+  const aggregateHW = seedStarHighWater(aggregateEntry, GRAMMAR_AGGREGATE_CONCEPTS.length, releaseId);
 
   const after = {
     ...before,
@@ -381,7 +383,7 @@ export function recordGrammarConceptMastery({
   };
 
   if (directMonsterId) {
-    const directHW = seedStarHighWater(directEntry, grammarMonsterConceptTotal(directMonsterId));
+    const directHW = seedStarHighWater(directEntry, grammarMonsterConceptTotal(directMonsterId), releaseId);
     after[directMonsterId] = {
       ...directEntry,
       caught: true,
@@ -396,10 +398,12 @@ export function recordGrammarConceptMastery({
 
   const afterAggregate = progressForGrammarMonster(after, GRAMMAR_GRAND_MONSTER_ID, {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+    releaseId,
   });
   const afterDirect = directMonsterId
     ? progressForGrammarMonster(after, directMonsterId, {
       conceptTotal: grammarMonsterConceptTotal(directMonsterId),
+      releaseId,
     })
     : null;
   saveMonsterState(learnerId, after, gameStateRepository);

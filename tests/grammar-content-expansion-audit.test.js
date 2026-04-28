@@ -5,13 +5,10 @@
 // table, and verifies the structural claims that drive Phase 5 prioritisation:
 //
 //   * Exactly 18 concept rows (one per member of GRAMMAR_AGGREGATE_CONCEPTS).
-//   * Thin-pool flag is `true` for exactly the six ground-truth concepts
-//     (pronouns_cohesion, formality, active_passive, subject_object,
-//     modal_verbs, hyphen_ambiguity) and `false` for the other twelve.
-//   * `active_passive` and `subject_object` are flagged as
-//     single-question-type in the "Especially brittle" section with HIGHEST
-//     priority.
-//   * Each of the six thin-pool concepts has at least five new template
+//   * Thin-pool flags match the executable question-generator audit.
+//   * `active_passive` and `subject_object` are called out as P1-resolved
+//     former single-question-type concepts.
+//   * Each of the six P1 focus concepts has at least five future template
 //     ideas listed in its dedicated new-template-ideas subsection.
 //
 // The gate deliberately does NOT inspect `content.js` — it characterises the
@@ -28,7 +25,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { buildGrammarQuestionGeneratorAudit } from '../scripts/audit-grammar-question-generator.mjs';
 import { GRAMMAR_AGGREGATE_CONCEPTS } from '../src/platform/game/mastery/grammar.js';
+import { GRAMMAR_CONTENT_RELEASE_ID } from '../worker/src/subjects/grammar/content.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOC_PATH = path.resolve(
@@ -46,7 +45,7 @@ const DOC_PATH = path.resolve(
 // doc and this gate at the same time rather than silently passing here.
 const EXPECTED_CONCEPTS = [...GRAMMAR_AGGREGATE_CONCEPTS];
 
-const EXPECTED_THIN_POOL = new Set([
+const P1_FOCUS_CONCEPTS = new Set([
   'pronouns_cohesion',
   'formality',
   'active_passive',
@@ -125,7 +124,7 @@ function parseConceptTable(source) {
 }
 
 function countNewTemplateIdeas(source, conceptId) {
-  // Each thin-pool subsection has a heading of the form
+  // Each P1 focus subsection has a heading of the form
   // `### <conceptId> (currently ...)`. Ideas are numbered `1.` through `N.`.
   const headingRe = new RegExp(`### ${conceptId}[^\n]*`);
   const headingMatch = headingRe.exec(source);
@@ -146,15 +145,13 @@ test('audit doc exists at the declared repo path', () => {
   assert.ok(fs.existsSync(DOC_PATH), `Expected audit doc at ${DOC_PATH}`);
 });
 
-test('audit doc declares zero contentReleaseId bump in its frontmatter', () => {
+test('audit doc declares the current P1 contentReleaseId bump in its frontmatter', () => {
   const source = readDoc();
-  // Strict match on the frontmatter key=value pair. If the doc is rewritten to
-  // accompany a Phase 5 migration, the implementer must change this line.
-  assert.match(source, /contentReleaseBump:\s*none/, 'contentReleaseBump must be declared as `none`.');
+  assert.match(source, /contentReleaseBump:\s*yes/, 'contentReleaseBump must be declared as `yes`.');
   assert.match(
     source,
-    /contentReleaseId:\s*grammar-legacy-reviewed-2026-04-24/,
-    'contentReleaseId must still be the Phase 4 legacy-reviewed id.',
+    new RegExp(`contentReleaseId:\\s*${GRAMMAR_CONTENT_RELEASE_ID}`),
+    'contentReleaseId must match the current Grammar content release id.',
   );
 });
 
@@ -169,62 +166,68 @@ test('concept table has exactly 18 rows, one per GRAMMAR_AGGREGATE_CONCEPTS entr
   );
 });
 
-test('thin-pool flag is true for exactly the six ground-truth concepts, false for the other twelve', () => {
+test('thin-pool flags match the executable generator audit', () => {
   const rows = parseConceptTable(readDoc());
-  const trueSet = new Set(rows.filter((row) => row.thinPool).map((row) => row.conceptId));
-  const falseSet = new Set(rows.filter((row) => !row.thinPool).map((row) => row.conceptId));
-  assert.equal(trueSet.size, 6, 'Thin-pool should fire for exactly six concepts.');
-  assert.equal(falseSet.size, 12, 'Non-thin-pool should cover the other twelve concepts.');
-  for (const id of EXPECTED_THIN_POOL) {
-    assert.ok(trueSet.has(id), `${id} is missing from the thin-pool set.`);
-  }
-  for (const id of EXPECTED_CONCEPTS) {
-    if (EXPECTED_THIN_POOL.has(id)) continue;
-    assert.ok(falseSet.has(id), `${id} must be marked thin-pool=false.`);
-  }
+  const trueSet = rows.filter((row) => row.thinPool).map((row) => row.conceptId).sort();
+  const auditThinPool = buildGrammarQuestionGeneratorAudit()
+    .thinPoolConcepts
+    .map((row) => row.conceptId)
+    .sort();
+  assert.deepEqual(trueSet, auditThinPool);
 });
 
-test('thin-pool concepts all carry the `high` priority label', () => {
+test('Markdown thin-pool list agrees with the executable generator audit', () => {
+  const rows = parseConceptTable(readDoc());
+  const docThinPool = rows
+    .filter((row) => row.thinPool)
+    .map((row) => row.conceptId)
+    .sort();
+  const auditThinPool = buildGrammarQuestionGeneratorAudit()
+    .thinPoolConcepts
+    .map((row) => row.conceptId)
+    .sort();
+  assert.deepEqual(docThinPool, auditThinPool);
+});
+
+test('P1 focus concepts all carry the `high` priority label', () => {
   const rows = parseConceptTable(readDoc());
   for (const row of rows) {
-    if (EXPECTED_THIN_POOL.has(row.conceptId)) {
-      assert.equal(row.priority, 'high', `${row.conceptId} must be priority=high because it is thin-pool.`);
+    if (P1_FOCUS_CONCEPTS.has(row.conceptId)) {
+      assert.equal(row.priority, 'high', `${row.conceptId} must remain priority=high because it is a P1 focus concept.`);
     }
   }
 });
 
-test('audit flags active_passive and subject_object as single-question-type (HIGHEST priority)', () => {
+test('audit records active_passive and subject_object as P1-resolved brittle concepts', () => {
   const source = readDoc();
-  // The "Especially brittle" section must exist, must name both concepts, and
-  // must mark them as HIGHEST priority in the heading.
-  const sectionStart = source.indexOf('## Especially brittle');
-  assert.ok(sectionStart !== -1, 'Missing "Especially brittle" section.');
+  const sectionStart = source.indexOf('## P1-resolved brittle concepts');
+  assert.ok(sectionStart !== -1, 'Missing "P1-resolved brittle concepts" section.');
   const sectionEnd = source.indexOf('\n## ', sectionStart + 1);
   const section = sectionEnd === -1 ? source.slice(sectionStart) : source.slice(sectionStart, sectionEnd);
 
-  assert.match(section, /### `active_passive` — both templates are `rewrite` \(HIGHEST priority\)/);
-  assert.match(section, /### `subject_object` — both templates are `identify` \(HIGHEST priority\)/);
+  assert.match(section, /### `active_passive` — now `choose` \+ `rewrite`/);
+  assert.match(section, /qg_active_passive_choice/);
+  assert.match(section, /### `subject_object` — now `classify` \+ `identify`/);
+  assert.match(section, /qg_subject_object_classify_table/);
 
-  // Double-check the concept table agrees: both concepts should have exactly
-  // one entry in "Types present".
+  // Double-check the concept table agrees: both concepts now have two
+  // question types present.
   const rows = parseConceptTable(source);
   const ap = rows.find((row) => row.conceptId === 'active_passive');
   const so = rows.find((row) => row.conceptId === 'subject_object');
   assert.ok(ap, 'active_passive row missing.');
   assert.ok(so, 'subject_object row missing.');
-  assert.equal(ap.typesPresent.length, 1, 'active_passive must have exactly one question type present.');
-  assert.equal(ap.typesPresent[0], 'rewrite');
-  assert.equal(so.typesPresent.length, 1, 'subject_object must have exactly one question type present.');
-  assert.equal(so.typesPresent[0], 'identify');
+  assert.deepEqual(ap.typesPresent.slice().sort(), ['choose', 'rewrite']);
+  assert.deepEqual(so.typesPresent.slice().sort(), ['classify', 'identify']);
 });
 
-test('each thin-pool concept lists at least five new template ideas', () => {
+test('each P1 focus concept lists at least five future template ideas', () => {
   const source = readDoc();
-  for (const conceptId of EXPECTED_THIN_POOL) {
+  for (const conceptId of P1_FOCUS_CONCEPTS) {
     const count = countNewTemplateIdeas(source, conceptId);
     assert.ok(
       count >= 5,
-      `${conceptId} must propose at least five new template ideas (found ${count}).`,
+      `${conceptId} must propose at least five future template ideas (found ${count}).`,
     );
   }
 });

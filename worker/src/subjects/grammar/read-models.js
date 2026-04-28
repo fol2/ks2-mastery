@@ -490,6 +490,28 @@ function statsFromConcepts(concepts) {
   for (const concept of concepts) {
     counts[concept.status] = (counts[concept.status] || 0) + 1;
   }
+  const selectedResponse = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length;
+  const generated = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.generative).length;
+  const conceptCoverage = new Map(GRAMMAR_CONCEPTS.map((concept) => [concept.id, {
+    count: 0,
+    questionTypes: new Set(),
+  }]));
+  const questionTypes = {};
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    questionTypes[template.questionType] = (questionTypes[template.questionType] || 0) + 1;
+    for (const conceptId of template.skillIds || []) {
+      const row = conceptCoverage.get(conceptId);
+      if (!row) continue;
+      row.count += 1;
+      row.questionTypes.add(template.questionType);
+    }
+  }
+  const thinPoolConcepts = [];
+  const singleQuestionTypeConcepts = [];
+  for (const [conceptId, row] of conceptCoverage.entries()) {
+    if (row.count <= 2) thinPoolConcepts.push(conceptId);
+    if (row.questionTypes.size <= 1) singleQuestionTypeConcepts.push(conceptId);
+  }
   // Phase 4 U1: internal template counts are surfaced under `contentStats` so
   // the client read-model contract never exposes a `templates` key. The
   // forbidden-key universal floor bans `templates` on every authenticated
@@ -499,8 +521,14 @@ function statsFromConcepts(concepts) {
     concepts: counts,
     contentStats: {
       total: GRAMMAR_TEMPLATE_METADATA.length,
-      selectedResponse: GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length,
-      constructedResponse: GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length,
+      selectedResponse,
+      constructedResponse: GRAMMAR_TEMPLATE_METADATA.length - selectedResponse,
+      generated,
+      fixed: GRAMMAR_TEMPLATE_METADATA.length - generated,
+      answerSpecEnabled: GRAMMAR_TEMPLATE_METADATA.filter((template) => template.requiresAnswerSpec).length,
+      thinPoolConcepts,
+      singleQuestionTypeConcepts,
+      questionTypes,
     },
   };
 }
@@ -640,6 +668,33 @@ function recentActivityFromAttempts(attempts = []) {
     });
 }
 
+function safeRecentAttempt(attempt = {}) {
+  const result = isPlainObject(attempt?.result) ? attempt.result : {};
+  return {
+    contentReleaseId: attempt?.contentReleaseId === GRAMMAR_CONTENT_RELEASE_ID ? GRAMMAR_CONTENT_RELEASE_ID : '',
+    templateId: typeof attempt?.templateId === 'string' ? attempt.templateId : '',
+    itemId: typeof attempt?.itemId === 'string' ? attempt.itemId : '',
+    seed: Number.isFinite(Number(attempt?.seed)) ? Number(attempt.seed) : 0,
+    questionType: typeof attempt?.questionType === 'string' ? attempt.questionType : '',
+    conceptIds: Array.isArray(attempt?.conceptIds) ? attempt.conceptIds.filter(Boolean).map(String) : [],
+    result: {
+      correct: Boolean(result.correct),
+      score: Number.isFinite(Number(result.score)) ? Number(result.score) : 0,
+      maxScore: Number.isFinite(Number(result.maxScore)) ? Number(result.maxScore) : 1,
+      misconception: typeof result.misconception === 'string' ? result.misconception : '',
+    },
+    supportLevel: Number.isFinite(Number(attempt?.supportLevel)) ? Math.max(0, Math.min(2, Number(attempt.supportLevel))) : 0,
+    attempts: Number.isFinite(Number(attempt?.attempts)) ? Math.max(1, Number(attempt.attempts)) : 1,
+    firstAttemptIndependent: Boolean(attempt?.firstAttemptIndependent),
+    supportUsed: typeof attempt?.supportUsed === 'string' ? attempt.supportUsed : 'none',
+    supportLevelAtScoring: Number.isFinite(Number(attempt?.supportLevelAtScoring))
+      ? Math.max(0, Math.min(2, Number(attempt.supportLevelAtScoring)))
+      : Math.max(0, Math.min(2, Number(attempt?.supportLevel) || 0)),
+    mode: typeof attempt?.mode === 'string' ? attempt.mode : '',
+    createdAt: asTs(attempt?.createdAt, 0),
+  };
+}
+
 function evidenceSummary({ concepts, patterns }) {
   const snapshot = progressSnapshotFromConcepts(concepts);
   return [
@@ -766,7 +821,7 @@ export function buildGrammarReadModel({
   const safeState = cloneSerialisable(state) || {};
   const concepts = conceptMap(safeState, now);
   const misconceptionPatterns = misconceptionPatternsFromState(safeState);
-  const recentAttempts = Array.isArray(safeState.recentAttempts) ? safeState.recentAttempts.slice(-12).map(cloneSerialisable) : [];
+  const recentAttempts = Array.isArray(safeState.recentAttempts) ? safeState.recentAttempts.slice(-12).map(safeRecentAttempt) : [];
   return {
     subjectId: 'grammar',
     learnerId,

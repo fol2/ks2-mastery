@@ -258,17 +258,12 @@ function statsFromConcepts(concepts) {
       : 'new';
     counts[status] += 1;
   }
-  // Phase 4 U1: client mirror of the Worker's `contentStats` emit. The key is
-  // renamed from the forbidden `templates` so the universal forbidden-key
-  // floor is honoured end-to-end; see worker/src/subjects/grammar/read-models.js
-  // `statsFromConcepts` for the authoritative shape.
+  // Phase 4 U1: keep the safe `contentStats` key present for legacy or local
+  // payloads. Worker read-models provide the authoritative count payload and
+  // are merged below when available.
   return {
     concepts: counts,
-    contentStats: {
-      total: 51,
-      selectedResponse: 31,
-      constructedResponse: 20,
-    },
+    contentStats: {},
   };
 }
 
@@ -648,7 +643,7 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
     content: {
       releaseId: raw.content?.releaseId || '',
       conceptCount: GRAMMAR_CLIENT_CONCEPTS.length,
-      templateCount: 51,
+      templateCount: 57,
       questionTypes: raw.content?.questionTypes || {},
     },
     phase,

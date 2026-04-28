@@ -1,6 +1,9 @@
 import {
   GRAMMAR_CONCEPTS,
   GRAMMAR_TEMPLATE_METADATA,
+  createGrammarQuestion,
+  grammarQuestionVariantSignature,
+  grammarTemplateGeneratorFamilyId,
 } from './content.js';
 
 export const SELECTION_WEIGHTS = Object.freeze({
@@ -10,6 +13,7 @@ export const SELECTION_WEIGHTS = Object.freeze({
   recentMiss: 1.6,
   qtWeakness: 1.3,
   templateFreshness: 1.15,
+  variantFreshness: 1.45,
   conceptFreshness: 1.1,
   focus: 1.8,
   generative: 1.15,
@@ -112,14 +116,78 @@ function recentConceptIndex(recentAttempts) {
   attempts.forEach((attempt, position) => {
     const distance = horizon - position;
     const conceptIds = Array.isArray(attempt.conceptIds) ? attempt.conceptIds : [];
+    const result = isPlainObject(attempt.result) ? attempt.result : {};
     for (const conceptId of conceptIds) {
-      const existing = index.get(conceptId) || { lastDistance: Infinity, count: 0 };
+      const existing = index.get(conceptId) || { lastDistance: Infinity, count: 0, lastMissDistance: Infinity };
       existing.count += 1;
       if (distance < existing.lastDistance) existing.lastDistance = distance;
+      if (result.correct === false && distance < existing.lastMissDistance) {
+        existing.lastMissDistance = distance;
+      }
       index.set(conceptId, existing);
     }
   });
   return index;
+}
+
+function variantKey(generatorFamilyId, variantSignature) {
+  if (!generatorFamilyId || !variantSignature) return '';
+  return `${generatorFamilyId}:${variantSignature}`;
+}
+
+function candidateVariantMetadata(template, seed) {
+  if (!template) return { generatorFamilyId: '', variantSignature: '' };
+  const generatorFamilyId = grammarTemplateGeneratorFamilyId(template);
+  if (!template.generative) return { generatorFamilyId, variantSignature: '' };
+  const question = createGrammarQuestion({ templateId: template.id, seed });
+  return {
+    generatorFamilyId,
+    variantSignature: grammarQuestionVariantSignature(question) || '',
+  };
+}
+
+function recentVariantIndex(recentAttempts) {
+  const index = new Map();
+  const attempts = normaliseRecentAttempts(recentAttempts);
+  const horizon = attempts.length;
+  attempts.forEach((attempt, position) => {
+    const key = variantKey(attempt.generatorFamilyId, attempt.variantSignature);
+    if (!key) return;
+    const distance = horizon - position;
+    const entry = index.get(key) || { lastDistance: Infinity, count: 0, lastMissDistance: Infinity };
+    entry.count += 1;
+    if (distance < entry.lastDistance) entry.lastDistance = distance;
+    const result = isPlainObject(attempt.result) ? attempt.result : {};
+    if (result.correct === false && distance < entry.lastMissDistance) {
+      entry.lastMissDistance = distance;
+    }
+    index.set(key, entry);
+  });
+  return index;
+}
+
+function addPlannedGeneratedVariant(index, template, seed) {
+  const candidateVariant = candidateVariantMetadata(template, seed);
+  const key = variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature);
+  if (!key) return;
+  const entry = index.get(key) || { lastDistance: Infinity, count: 0, lastMissDistance: Infinity };
+  index.set(key, {
+    ...entry,
+    count: entry.count + 1,
+    lastDistance: Math.min(entry.lastDistance, 1),
+  });
+}
+
+function hasRecentGeneratedVariant(template, recentVariants, candidateSeed) {
+  const candidateVariant = candidateVariantMetadata(template, candidateSeed);
+  if (!candidateVariant.variantSignature) return false;
+  const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
+  return Boolean(recentVariant && recentVariant.lastDistance <= 6);
+}
+
+function variantFreshTemplates(pool, recentVariants, candidateSeed) {
+  const fresh = pool.filter((template) => !hasRecentGeneratedVariant(template, recentVariants, candidateSeed));
+  return fresh.length > 0 ? fresh : pool;
 }
 
 function questionTypeWeakness(mastery, questionType) {
@@ -136,6 +204,8 @@ function weightFor(template, context) {
     focusConceptId,
     recentTemplates,
     recentConcepts,
+    recentVariants,
+    candidateSeed,
     nowTs,
   } = context;
 
@@ -152,7 +222,7 @@ function weightFor(template, context) {
   // Recent miss bonus: concepts with a miss in the last 10 attempts get boosted
   const conceptMisses = template.skillIds
     .map((id) => recentConcepts.get(id))
-    .filter((entry) => entry && entry.lastDistance <= 10);
+    .filter((entry) => entry && entry.lastMissDistance <= 10);
   if (conceptMisses.length > 0) weight *= SELECTION_WEIGHTS.recentMiss;
 
   // Question-type weakness bonus
@@ -167,6 +237,19 @@ function weightFor(template, context) {
       weight /= (SELECTION_WEIGHTS.templateFreshness + 0.35 * (4 - templateEntry.lastDistance));
     } else if (templateEntry.count >= 2) {
       weight /= SELECTION_WEIGHTS.templateFreshness;
+    }
+  }
+
+  // Generated variant freshness penalty. The signature is derived from visible
+  // prompt/input surface data only, so it avoids repeating the same generated
+  // variant without storing hidden answers in learner-facing read models.
+  const candidateVariant = candidateVariantMetadata(template, candidateSeed);
+  const recentVariant = recentVariants?.get(variantKey(candidateVariant.generatorFamilyId, candidateVariant.variantSignature));
+  if (recentVariant) {
+    if (recentVariant.lastDistance <= 6) {
+      weight /= (SELECTION_WEIGHTS.variantFreshness + 0.25 * (7 - recentVariant.lastDistance));
+    } else {
+      weight /= SELECTION_WEIGHTS.variantFreshness;
     }
   }
 
@@ -205,12 +288,15 @@ function normaliseFocus(focusConceptId) {
   return typeof focusConceptId === 'string' && GRAMMAR_CONCEPT_IDS.has(focusConceptId) ? focusConceptId : '';
 }
 
-function pickTemplate({ pool, rng, mastery, focusConceptId, recentTemplates, recentConcepts, nowTs }) {
-  const weighted = pool.map((template) => [template, weightFor(template, {
+function pickTemplate({ pool, rng, mastery, focusConceptId, recentTemplates, recentConcepts, recentVariants, candidateSeed, nowTs }) {
+  const candidatePool = variantFreshTemplates(pool, recentVariants, candidateSeed);
+  const weighted = candidatePool.map((template) => [template, weightFor(template, {
     mastery,
     focusConceptId,
     recentTemplates,
     recentConcepts,
+    recentVariants,
+    candidateSeed,
     nowTs,
   })]);
   const total = weighted.reduce((sum, entry) => sum + entry[1], 0);
@@ -221,6 +307,67 @@ function pickTemplate({ pool, rng, mastery, focusConceptId, recentTemplates, rec
     if (roll <= 0) return template;
   }
   return weighted.at(-1)?.[0] || pool[0];
+}
+
+function urgentConceptScore(conceptId, mastery, recentConcepts, nowTs) {
+  const node = nodeFromMastery(mastery, 'concepts', conceptId);
+  const status = conceptStatus(node, nowTs);
+  const recent = recentConcepts.get(conceptId);
+  const missDistance = Number(recent?.lastMissDistance) || Infinity;
+  let score = 0;
+
+  if (missDistance <= 10) {
+    score += 100 + (11 - missDistance);
+  }
+  if (status === 'weak') {
+    score += 60;
+  } else if (status === 'due') {
+    score += 35;
+  }
+
+  return score;
+}
+
+function urgentTemplatePool(pool, mastery, recentConcepts, nowTs) {
+  const availableConcepts = new Set();
+  for (const template of pool) {
+    for (const conceptId of template.skillIds || []) {
+      availableConcepts.add(conceptId);
+    }
+  }
+
+  const scoredConcepts = GRAMMAR_CONCEPTS
+    .map((concept) => ({
+      conceptId: concept.id,
+      score: availableConcepts.has(concept.id)
+        ? urgentConceptScore(concept.id, mastery, recentConcepts, nowTs)
+        : 0,
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.conceptId.localeCompare(b.conceptId));
+
+  if (scoredConcepts.length === 0) return [];
+
+  const topScore = scoredConcepts[0].score;
+  const topConcepts = new Set(
+    scoredConcepts
+      .filter((entry) => entry.score === topScore)
+      .map((entry) => entry.conceptId),
+  );
+
+  return pool.filter((template) => (template.skillIds || []).some((conceptId) => topConcepts.has(conceptId)));
+}
+
+function recentAttemptForQueueTemplate(template, seed) {
+  const variant = candidateVariantMetadata(template, seed);
+  return {
+    templateId: template.id,
+    conceptIds: (template.skillIds || []).slice(),
+    questionType: template.questionType,
+    result: { correct: true },
+    generatorFamilyId: variant.generatorFamilyId || grammarTemplateGeneratorFamilyId(template),
+    variantSignature: variant.variantSignature || '',
+  };
 }
 
 function queueEntry(template) {
@@ -249,11 +396,53 @@ export function buildGrammarPracticeQueue({
   const nowTs = Number(now) || Date.now();
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
+  const workingRecentVariants = recentVariantIndex(recentAttempts);
   const queue = [];
 
-  for (let i = 0; i < safeSize; i += 1) {
+  if (normalisedFocus) {
+    const focusTemplates = pool.filter((template) => (template.skillIds || []).includes(normalisedFocus));
+    if (focusTemplates.length > 0 && focusTemplates.length < safeSize) {
+      for (const template of focusTemplates) {
+        if (queue.length >= safeSize) break;
+        const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+        const recentVariants = workingRecentVariants;
+        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
+        queue.push(queueEntry(template));
+        workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+        addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+      }
+    }
+  }
+
+  if (queue.length < safeSize) {
+    const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
     const recentTemplates = recentTemplateIndex(workingRecent);
     const recentConcepts = recentConceptIndex(workingRecent);
+    const recentVariants = workingRecentVariants;
+    const priorityPool = urgentTemplatePool(pool, mastery, recentConcepts, nowTs);
+    if (priorityPool.length > 0) {
+      const template = pickTemplate({
+        pool: priorityPool,
+        rng,
+        mastery,
+        focusConceptId: normalisedFocus,
+        recentTemplates,
+        recentConcepts,
+        recentVariants,
+        candidateSeed,
+        nowTs,
+      });
+      queue.push(queueEntry(template));
+      workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+      addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
+    }
+  }
+
+  while (queue.length < safeSize) {
+    const candidateSeed = ((Number(seed) || 1) + queue.length * 104729) >>> 0;
+    const recentTemplates = recentTemplateIndex(workingRecent);
+    const recentConcepts = recentConceptIndex(workingRecent);
+    const recentVariants = workingRecentVariants;
     const template = pickTemplate({
       pool,
       rng,
@@ -261,15 +450,13 @@ export function buildGrammarPracticeQueue({
       focusConceptId: normalisedFocus,
       recentTemplates,
       recentConcepts,
+      recentVariants,
+      candidateSeed,
       nowTs,
     });
     queue.push(queueEntry(template));
-    workingRecent.push({
-      templateId: template.id,
-      conceptIds: (template.skillIds || []).slice(),
-      questionType: template.questionType,
-      result: { correct: true },
-    });
+    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
   }
   return queue;
 }
@@ -293,6 +480,8 @@ export function buildGrammarMiniPack({
   const nowTs = Number(now) || Date.now();
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
+  const workingRecentVariants = recentVariantIndex(recentAttempts);
+  const seeds = Array.from({ length: safeSize }, (_, index) => ((Number(seed) || 1) + index * 104729) >>> 0);
   const pack = [];
   const usedTemplateIds = new Set();
   const usedQuestionTypes = new Map(); // questionType -> count
@@ -305,15 +494,14 @@ export function buildGrammarMiniPack({
     if (focusTemplates.length > 0 && focusTemplates.length < safeSize) {
       for (const template of focusTemplates) {
         if (pack.length >= safeSize) break;
+        const candidateSeed = seeds[pack.length] || Number(seed) || 1;
+        const recentVariants = workingRecentVariants;
+        if (hasRecentGeneratedVariant(template, recentVariants, candidateSeed)) continue;
         pack.push(queueEntry(template));
         usedTemplateIds.add(template.id);
         usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
-        workingRecent.push({
-          templateId: template.id,
-          conceptIds: (template.skillIds || []).slice(),
-          questionType: template.questionType,
-          result: { correct: true },
-        });
+        workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+        addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
       }
     }
   }
@@ -336,6 +524,8 @@ export function buildGrammarMiniPack({
 
     const recentTemplates = recentTemplateIndex(workingRecent);
     const recentConcepts = recentConceptIndex(workingRecent);
+    const recentVariants = workingRecentVariants;
+    const candidateSeed = seeds[pack.length] || Number(seed) || 1;
     const template = pickTemplate({
       pool: roundPool,
       rng,
@@ -343,18 +533,16 @@ export function buildGrammarMiniPack({
       focusConceptId: normalisedFocus,
       recentTemplates,
       recentConcepts,
+      recentVariants,
+      candidateSeed,
       nowTs,
     });
 
     pack.push(queueEntry(template));
     usedTemplateIds.add(template.id);
     usedQuestionTypes.set(template.questionType, (usedQuestionTypes.get(template.questionType) || 0) + 1);
-    workingRecent.push({
-      templateId: template.id,
-      conceptIds: (template.skillIds || []).slice(),
-      questionType: template.questionType,
-      result: { correct: true },
-    });
+    workingRecent.push(recentAttemptForQueueTemplate(template, candidateSeed));
+    addPlannedGeneratedVariant(workingRecentVariants, template, candidateSeed);
   }
 
   return pack.slice(0, safeSize);

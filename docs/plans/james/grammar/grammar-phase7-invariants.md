@@ -93,3 +93,39 @@ All twelve Phase 4 invariants, all fifteen Phase 5 invariants, and all six Phase
 A Phase 7 review comment that flags a breach should cite the invariant number (e.g., "breach of P7-3 -- Grammar Bank 'Due' filter is renamed to child-safe label") so that the discussion thread maps back to the same contract the worker read when writing the unit.
 
 If a future requirements change necessitates relaxing an invariant, the relaxation must ship in a dedicated PR that (a) updates this document, (b) updates the enforcing test, and (c) ships the compensating migration -- never as a silent side effect of an implementation unit.
+
+---
+
+## Question-Generator P1 addendum
+
+This addendum records the additional contracts introduced by `docs/plans/james/grammar/questions-generator/grammar-qg-p1.md`. It does not weaken any Phase 4, Phase 5, Phase 6, or Phase 7 invariant. The important change is that QG P1 intentionally bumps the Grammar content release to `grammar-qg-p1-2026-04-28`, so the Phase 7 "no contentReleaseId bump" note remains true for Phase 7 itself but no longer describes the current Grammar content release.
+
+### QG-P1-1. Generated score-bearing content stays deterministic and teacher-authored
+
+QG P1 templates are deterministic `createGrammarQuestion({ templateId, seed })` families. Runtime AI remains enrichment-only and must not author or mark score-bearing Grammar questions.
+
+**Enforced by:** `tests/grammar-question-generator-audit.test.js`, `tests/grammar-engine.test.js`, `tests/grammar-answer-spec-audit.test.js`.
+
+### QG-P1-2. New generated templates require typed answer contracts
+
+Every QG P1 score-bearing template declares a validated `answerSpec`; legacy inline markers remain supported only for pre-existing content. Learner read models must not expose the answer spec, golden answers, or near-miss bank.
+
+**Enforced by:** `tests/grammar-answer-spec.test.js`, `tests/grammar-answer-spec-audit.test.js`, `tests/grammar-production-smoke.test.js`.
+
+### QG-P1-3. Selector variety uses safe generated variant metadata
+
+Generated attempts may store `generatorFamilyId` and `variantSignature` internally so the selector can penalise repeated generated surfaces. These fields are server-only and must not appear in child, parent, admin, feedback, or summary read models.
+
+**Enforced by:** `tests/grammar-selection.test.js`, `tests/grammar-engine.test.js`, `tests/grammar-production-smoke.test.js`, `tests/redaction-access-matrix.test.js`.
+
+### QG-P1-4. Content release and reward release calculations are release-aware
+
+Grammar concept-secured events carry the current content release in their mastery keys. Reward-state transition calculations must use that same release id when determining whether direct and aggregate monster events should emit.
+
+**Enforced by:** `tests/worker-grammar-subject-runtime.test.js`.
+
+### QG-P1-5. Adult/operator diagnostics stay safe
+
+Adult and admin evidence may expose safe generator coverage counts, thin-pool warnings, answer-spec template counts, and question-type coverage. They must not expose raw validators, answer specs, accepted answers, typed learner responses, or hidden generator internals.
+
+**Enforced by:** `tests/hub-read-models.test.js`, `tests/grammar-stats-rename.test.js`, `tests/grammar-production-smoke.test.js`.

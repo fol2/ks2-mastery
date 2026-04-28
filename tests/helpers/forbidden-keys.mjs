@@ -48,6 +48,11 @@ export const FORBIDDEN_KEYS_EVERYWHERE = Object.freeze([
 export const FORBIDDEN_GRAMMAR_READ_MODEL_KEYS = Object.freeze([
   ...FORBIDDEN_KEYS_EVERYWHERE,
   'template',
+  'answerSpec',
+  'generatorFamilyId',
+  'golden',
+  'nearMiss',
+  'variantSignature',
 ]);
 
 // Grammar session.currentItem surface. Currently identical to the read-model

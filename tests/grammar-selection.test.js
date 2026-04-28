@@ -9,6 +9,10 @@ import {
 import {
   GRAMMAR_CONCEPTS,
   GRAMMAR_TEMPLATE_METADATA,
+  createGrammarQuestion,
+  grammarQuestionVariantSignature,
+  grammarTemplateById,
+  grammarTemplateGeneratorFamilyId,
 } from '../worker/src/subjects/grammar/content.js';
 import { createInitialGrammarState } from '../worker/src/subjects/grammar/engine.js';
 
@@ -62,6 +66,24 @@ function pushRecentAttempt(state, attempt) {
   }];
 }
 
+function recentGeneratedAttempt(templateId, seed, conceptIds) {
+  const template = grammarTemplateById(templateId);
+  const question = createGrammarQuestion({ templateId, seed });
+  return {
+    contentReleaseId: 'grammar-qg-p1-2026-04-28',
+    templateId,
+    itemId: question.itemId,
+    seed,
+    questionType: template.questionType,
+    conceptIds,
+    response: {},
+    result: { correct: true },
+    generatorFamilyId: grammarTemplateGeneratorFamilyId(template),
+    variantSignature: grammarQuestionVariantSignature(question),
+    createdAt: 1_777_000_000_000,
+  };
+}
+
 function queueFor(options) {
   const state = options.state || emptyState();
   return buildGrammarPracticeQueue({
@@ -77,10 +99,45 @@ function queueFor(options) {
 
 test('buildGrammarPracticeQueue exports stable weight constants', () => {
   assert.equal(typeof SELECTION_WEIGHTS, 'object');
-  for (const key of ['due', 'weak', 'recentMiss', 'qtWeakness', 'templateFreshness', 'conceptFreshness', 'focus', 'generative']) {
+  for (const key of ['due', 'weak', 'recentMiss', 'qtWeakness', 'templateFreshness', 'variantFreshness', 'conceptFreshness', 'focus', 'generative']) {
     assert.equal(typeof SELECTION_WEIGHTS[key], 'number', `SELECTION_WEIGHTS.${key} is not a number`);
     assert.ok(SELECTION_WEIGHTS[key] > 0, `SELECTION_WEIGHTS.${key} is not positive`);
   }
+});
+
+test('buildGrammarPracticeQueue applies generated variant freshness across seeds', () => {
+  const templateId = 'qg_formality_classify_table';
+  // The baseline queue reaches this generated template at slot 2, whose
+  // candidate seed is base + 2 * 104729. Use a different seed that produces
+  // the same visible variant so the test proves signature freshness, not just
+  // literal seed matching.
+  const recentAttempts = [recentGeneratedAttempt(templateId, 209462, ['formality'])];
+
+  const baseline = buildGrammarPracticeQueue({
+    mode: 'smart',
+    focusConceptId: 'formality',
+    mastery: emptyState().mastery,
+    recentAttempts: [],
+    seed: 1,
+    size: 3,
+    now: 1_777_000_000_000,
+  });
+  const freshened = buildGrammarPracticeQueue({
+    mode: 'smart',
+    focusConceptId: 'formality',
+    mastery: emptyState().mastery,
+    recentAttempts,
+    seed: 1,
+    size: 3,
+    now: 1_777_000_000_000,
+  });
+
+  assert.equal(baseline.filter((item) => item.templateId === templateId).length, 1);
+  assert.equal(
+    freshened.filter((item) => item.templateId === templateId).length,
+    0,
+    'The same generated visible variant should be penalised even when the candidate seed differs.',
+  );
 });
 
 test('buildGrammarPracticeQueue produces a variety of templates when pool is wide', () => {
@@ -168,13 +225,65 @@ test('buildGrammarPracticeQueue due-status outranks otherwise-equivalent non-due
 });
 
 test('buildGrammarPracticeQueue falls back gracefully when focus pool is smaller than size', () => {
-  const focusConceptId = 'hyphen_ambiguity'; // 2 templates only
+  const focusConceptId = 'hyphen_ambiguity';
   const queue = queueFor({ mode: 'smart', focusConceptId, size: 12, seed: 1234 });
   assert.equal(queue.length, 12);
   const focusPicks = queue.filter((item) => (item.skillIds || []).includes(focusConceptId)).length;
   assert.ok(focusPicks >= 2, `Focus should saturate its small pool; got ${focusPicks}`);
   const nonFocusPicks = queue.length - focusPicks;
   assert.ok(nonFocusPicks > 0, 'Fallback broadening should allow non-focus templates when focus pool is too small.');
+});
+
+test('buildGrammarPracticeQueue applies generated variant freshness during focus saturation', () => {
+  const templateId = 'qg_hyphen_ambiguity_explain';
+  const recentAttempts = [1, 2, 3].map((seed) => (
+    recentGeneratedAttempt(templateId, seed, ['hyphen_ambiguity'])
+  ));
+
+  const queue = buildGrammarPracticeQueue({
+    mode: 'smart',
+    focusConceptId: 'hyphen_ambiguity',
+    mastery: emptyState().mastery,
+    recentAttempts,
+    seed: 1,
+    size: 4,
+    now: 1_777_000_000_000,
+  });
+
+  assert.equal(queue.length, 4);
+  assert.equal(
+    queue.some((item) => item.templateId === templateId),
+    false,
+    'Focus saturation must not force a recently seen generated variant.',
+  );
+  assert.ok(
+    queue.some((item) => (item.skillIds || []).includes('hyphen_ambiguity')),
+    'Focus fallback should still include available non-repeated focus templates.',
+  );
+});
+
+test('buildGrammarPracticeQueue keeps original recent variants fresh across full fallback queues', () => {
+  const templateId = 'qg_modal_verb_explain';
+  const recentAttempts = [1, 2, 3].map((seed) => (
+    recentGeneratedAttempt(templateId, seed, ['modal_verbs'])
+  ));
+
+  const queue = buildGrammarPracticeQueue({
+    mode: 'smart',
+    focusConceptId: 'modal_verbs',
+    mastery: emptyState().mastery,
+    recentAttempts,
+    seed: 1,
+    size: 8,
+    now: 1_777_000_000_000,
+  });
+
+  assert.equal(queue.length, 8);
+  assert.equal(
+    queue.some((item) => item.templateId === templateId),
+    false,
+    'Synthetic planned items must not push original recent generated variants past the freshness horizon.',
+  );
 });
 
 test('buildGrammarPracticeQueue honours surgery mode template constraints', () => {
@@ -201,11 +310,61 @@ test('buildGrammarMiniPack returns the requested size and avoids template duplic
 });
 
 test('buildGrammarMiniPack falls back gracefully when focus pool is smaller than size', () => {
-  const focusConceptId = 'hyphen_ambiguity'; // 2 templates
+  const focusConceptId = 'hyphen_ambiguity';
   const pack = buildGrammarMiniPack({ size: 8, focusConceptId, seed: 1234 });
   assert.equal(pack.length, 8);
   const focusCount = pack.filter((item) => (item.skillIds || []).includes(focusConceptId)).length;
   assert.ok(focusCount >= 2, `Should saturate the narrow focus pool; got ${focusCount}`);
+});
+
+test('buildGrammarMiniPack applies generated variant freshness during focus saturation', () => {
+  const templateId = 'qg_hyphen_ambiguity_explain';
+  const recentAttempts = [1, 2, 3].map((seed) => (
+    recentGeneratedAttempt(templateId, seed, ['hyphen_ambiguity'])
+  ));
+
+  const pack = buildGrammarMiniPack({
+    focusConceptId: 'hyphen_ambiguity',
+    mastery: emptyState().mastery,
+    recentAttempts,
+    seed: 1,
+    size: 4,
+    now: 1_777_000_000_000,
+  });
+
+  assert.equal(pack.length, 4);
+  assert.equal(
+    pack.some((item) => item.templateId === templateId),
+    false,
+    'Mini-pack focus saturation must not force a recently seen generated variant.',
+  );
+  assert.ok(
+    pack.some((item) => (item.skillIds || []).includes('hyphen_ambiguity')),
+    'Mini-pack fallback should still include available non-repeated focus templates.',
+  );
+});
+
+test('buildGrammarMiniPack keeps original recent variants fresh across full fallback packs', () => {
+  const templateId = 'qg_modal_verb_explain';
+  const recentAttempts = [1, 2, 3].map((seed) => (
+    recentGeneratedAttempt(templateId, seed, ['modal_verbs'])
+  ));
+
+  const pack = buildGrammarMiniPack({
+    focusConceptId: 'modal_verbs',
+    mastery: emptyState().mastery,
+    recentAttempts,
+    seed: 1,
+    size: 8,
+    now: 1_777_000_000_000,
+  });
+
+  assert.equal(pack.length, 8);
+  assert.equal(
+    pack.some((item) => item.templateId === templateId),
+    false,
+    'Synthetic planned items must not push original recent generated variants past the mini-pack freshness horizon.',
+  );
 });
 
 test('buildGrammarMiniPack spreads question types when possible', () => {
