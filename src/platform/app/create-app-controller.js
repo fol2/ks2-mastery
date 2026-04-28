@@ -11,7 +11,7 @@ import {
 import {
   isMonsterCelebrationEvent,
   shouldDelayMonsterCelebrations,
-  spellingSessionEnded,
+  subjectSessionEnded,
 } from '../game/monster-celebrations.js';
 import {
   acknowledgeMonsterCelebrationEvents,
@@ -177,7 +177,7 @@ export function createAppController({
       renderedSideEffect = true;
     }
 
-    if (spellingSessionEnded(previousSubjectUi, nextSubjectUi)) {
+    if (subjectSessionEnded(subjectId, previousSubjectUi, nextSubjectUi)) {
       renderedSideEffect = store.releaseMonsterCelebrations() || renderedSideEffect;
     }
 

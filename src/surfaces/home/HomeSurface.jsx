@@ -159,8 +159,18 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
 }
 
 function pickCompanionName(summary) {
-  const caught = summary.find((entry) => entry.progress?.caught && entry.progress.stage >= 1);
-  if (caught) return caught.monster.nameByStage?.[caught.progress.stage] || caught.monster.name;
+  const caught = summary.find((entry) => {
+    const progress = entry.progress || {};
+    const stage = Math.max(0, Math.min(4, Number(progress.displayStage ?? progress.stage) || 0));
+    const found = entry.subjectId === 'punctuation'
+      ? (progress.displayState && progress.displayState !== 'not-found') || progress.caught === true
+      : progress.caught;
+    return found && stage >= 1;
+  });
+  if (caught) {
+    const stage = Math.max(0, Math.min(4, Number(caught.progress?.displayStage ?? caught.progress?.stage) || 0));
+    return caught.monster.nameByStage?.[stage] || caught.monster.name;
+  }
   return null;
 }
 

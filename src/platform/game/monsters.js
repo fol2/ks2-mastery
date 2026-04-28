@@ -213,7 +213,7 @@ export const PHAETON_STAGE_THRESHOLDS = Object.freeze([3, 25, 95, 145, 213]);
 export const PUNCTUATION_MASTERED_THRESHOLDS = Object.freeze([1, 1, 2, 4, 14]);
 export const PUNCTUATION_STAR_THRESHOLDS = Object.freeze([1, 10, 30, 60, 100]);
 export const PUNCTUATION_GRAND_STAR_THRESHOLDS = Object.freeze([1, 10, 25, 50, 100]);
-
+const PUNCTUATION_DISPLAY_STATES = Object.freeze(['egg-found', 'hatch', 'evolve', 'strong', 'mega']);
 const DEFAULT_MONSTER_BRANCH = 'b1';
 const MONSTER_ASSET_SIZES = Object.freeze([320, 640, 1280]);
 export const MONSTER_ASSET_VERSION = '20260421-branches';
@@ -229,6 +229,13 @@ export function stageFor(mastered, thresholds = DIRECT_STAGE_THRESHOLDS) {
     if (count >= stageThresholds[stage]) return stage;
   }
   return 0;
+}
+
+export function punctuationDisplayStateForStars(displayStars, displayStage = 0) {
+  const stars = Math.max(0, Math.floor(Number(displayStars) || 0));
+  const stage = Math.max(0, Math.min(4, Math.floor(Number(displayStage) || 0)));
+  if (stars < 1) return 'not-found';
+  return PUNCTUATION_DISPLAY_STATES[stage] || 'mega';
 }
 
 export function levelFor(mastered) {

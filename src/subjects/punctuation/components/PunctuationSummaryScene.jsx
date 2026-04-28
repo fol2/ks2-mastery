@@ -397,7 +397,7 @@ function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
         // Finding 3: rewardState is already resolved at the function top
         // via rewardStateForPunctuation — no redundant re-validation needed.
         const codexEntry = rewardState?.[monsterId];
-        const { displayStars, displayStage } = mergeMonotonicDisplay(totalStars, starDerivedStage, codexEntry);
+        const { displayStars, displayStage, displayState } = mergeMonotonicDisplay(totalStars, starDerivedStage, codexEntry);
         const cap = 100;
         const starsLabel = isGrand ? 'Grand Stars' : 'Stars';
         const stageText = punctuationStageLabel(displayStage, displayStars);
@@ -406,6 +406,7 @@ function MonsterProgressStrip({ ui, rewardState: propRewardState }) {
           <div
             className="punctuation-summary-monster punctuation-monster-meter"
             data-monster-id={monsterId}
+            data-display-state={displayState}
             key={`monster-${monsterId}`}
           >
             <div className="punctuation-monster-meter-name">{name}</div>

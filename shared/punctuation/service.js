@@ -185,6 +185,7 @@ export function normalisePunctuationData(value) {
               supportKind: typeof attempt.supportKind === 'string'
                 ? attempt.supportKind
                 : (normaliseNonNegativeInteger(attempt.supportLevel, 0) > 0 ? 'guided' : null),
+              meaningful: attempt.meaningful !== false,
               correct: attempt.correct === true,
               misconceptionTags: normaliseStringArray(attempt.misconceptionTags),
               facetOutcomes: Array.isArray(attempt.facetOutcomes)
@@ -789,6 +790,21 @@ function answerDisplayText(item, answer = {}) {
   return normaliseAnswerText(answer.typed ?? answer.answer ?? '');
 }
 
+function punctuationAnswerTextHasContent(value) {
+  return normaliseAnswerText(value).length > 0;
+}
+
+function isMeaningfulPunctuationAnswer(item, answer = {}) {
+  if (item?.inputKind === 'choice' || item?.mode === 'choose') {
+    const raw = isPlainObject(answer) ? answer.choiceIndex ?? answer.value ?? answer.typed : answer;
+    return parseChoiceIndex(raw) != null;
+  }
+  const rawText = isPlainObject(answer)
+    ? answer.typed ?? answer.answer ?? answer.paragraph ?? answer.text ?? ''
+    : answer;
+  return punctuationAnswerTextHasContent(rawText);
+}
+
 function reviewItemFromResult({ item, answer, result }) {
   return {
     itemId: item.id,
@@ -824,6 +840,7 @@ function applyMarkedAttemptToProgress({
   result,
   nowValue,
   supportLevel = 0,
+  meaningfulAttempt = true,
 } = {}) {
   const guidedSupport = supportLevel > 0;
   const rewardUnit = rewardUnitForItem(indexes, item);
@@ -865,6 +882,7 @@ function applyMarkedAttemptToProgress({
     testMode: session.mode === 'gps' ? 'gps' : null,
     supportLevel,
     supportKind: supportLevel > 0 ? 'guided' : null,
+    meaningful: meaningfulAttempt !== false,
     correct: result.correct,
     misconceptionTags: result.misconceptionTags || [],
     facetOutcomes: Array.isArray(result.facets)
@@ -1332,6 +1350,7 @@ export function createPunctuationService({
         result: resultFromReviewResponse(response),
         nowValue,
         supportLevel: 0,
+        meaningfulAttempt: punctuationAnswerTextHasContent(response.attemptedAnswer),
       });
       securedRows.push(...applied.securedRows);
     }
@@ -1463,6 +1482,7 @@ export function createPunctuationService({
         ? normaliseNonNegativeInteger(state.session.guidedSupportLevel, 0)
         : 0;
       const reviewResponse = reviewItemFromResult({ item, answer, result });
+      const meaningfulAttempt = isMeaningfulPunctuationAnswer(item, answer);
       if (state.session.mode === 'gps') {
         const gps = normaliseGpsSession(state.session.gps);
         const nextResponses = [...gps.responses, reviewResponse].slice(0, MAX_GPS_QUEUE_LENGTH);
@@ -1515,6 +1535,7 @@ export function createPunctuationService({
         result,
         nowValue,
         supportLevel,
+        meaningfulAttempt,
       });
       const securedUnits = securedRows.map((entry) => entry.masteryKey);
       writeData(repository, learnerId, data);

@@ -19,6 +19,7 @@
 // future shared extraction must prove Spelling byte-for-byte parity in the PR
 // (AGENTS.md:14).
 
+import { punctuationDisplayStateForStars } from '../../../platform/game/monsters.js';
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import {
   PUNCTUATION_CLIENT_SKILLS,
@@ -1123,16 +1124,19 @@ function safeNumber(value, fallback = 0) {
 //   codexEntry     — the rewardState entry for this monster (carries
 //                    maxStageEver + starHighWater)
 //
-// Returns: { displayStars, displayStage } — the monotonic-max values
+// Returns: { displayStars, displayStage, displayState } — the monotonic-max values
 //          safe for child-facing rendering.
 export function mergeMonotonicDisplay(liveStars, liveStage, codexEntry) {
   const stars = safeNumber(liveStars, 0);
   const stage = safeNumber(liveStage, 0);
   const maxStageEver = safeNumber(codexEntry?.maxStageEver, 0);
   const starHighWater = safeNumber(codexEntry?.starHighWater, 0);
+  const displayStars = Math.max(stars, starHighWater);
+  const displayStage = Math.max(stage, maxStageEver);
   return {
-    displayStars: Math.max(stars, starHighWater),
-    displayStage: Math.max(stage, maxStageEver),
+    displayStars,
+    displayStage,
+    displayState: punctuationDisplayStateForStars(displayStars, displayStage),
   };
 }
 
@@ -1172,7 +1176,7 @@ function activeMonsterProgressFromReward(rewardState, starView) {
     // these survive evidence lapse so the child never sees a monster
     // de-evolve. mergeMonotonicDisplay centralises the Math.max merge so
     // Setup, Map, and Summary all use one sanitisation path.
-    const { displayStage, displayStars } = mergeMonotonicDisplay(totalStars, starDerivedStage, entry);
+    const { displayStage, displayStars, displayState } = mergeMonotonicDisplay(totalStars, starDerivedStage, entry);
 
     return Object.freeze({
       id: monsterId,
@@ -1182,6 +1186,7 @@ function activeMonsterProgressFromReward(rewardState, starView) {
       starDerivedStage,
       displayStage,
       displayStars,
+      displayState,
     });
   });
 }

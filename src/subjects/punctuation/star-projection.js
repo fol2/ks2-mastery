@@ -149,6 +149,7 @@ function computeTryStars(monsterAttempts) {
   // capping same-item repeats at MAX_ATTEMPTS_PER_ITEM.
   const perItem = new Map();
   for (const attempt of monsterAttempts) {
+    if (attempt.meaningful === false) continue;
     const itemId = attempt.itemId || '';
     if (!itemId) continue;
     const count = perItem.get(itemId) || 0;
@@ -159,6 +160,7 @@ function computeTryStars(monsterAttempts) {
   // Cap same-day items.
   const perDay = new Map();
   for (const attempt of monsterAttempts) {
+    if (attempt.meaningful === false) continue;
     const day = dayIndex(attempt.ts);
     const itemId = attempt.itemId || '';
     if (!itemId) continue;
@@ -600,6 +602,7 @@ export function projectPunctuationStars(progress, releaseId, options) {
       itemMode: typeof a.itemMode === 'string' ? a.itemMode : '',
       sessionMode: typeof a.sessionMode === 'string' ? a.sessionMode : 'smart',
       testMode: a.testMode === 'gps' ? 'gps' : null,
+      meaningful: a.meaningful !== false,
     };
   });
 

@@ -216,7 +216,7 @@ test('maxStageEver does not decrease (defensive)', () => {
 // 4. Event emission — caught, evolve, mega
 // ---------------------------------------------------------------------------
 
-test('recordPunctuationRewardUnitMastery emits caught event on first mastery', () => {
+test('recordPunctuationRewardUnitMastery emits hatch/evolve, not legacy caught, on first secured unit', () => {
   const repository = makeRepository();
   const events = recordPunctuationRewardUnitMastery({
     learnerId: 'learner-a',
@@ -232,15 +232,17 @@ test('recordPunctuationRewardUnitMastery emits caught event on first mastery', (
   });
 
   const caughtEvents = events.filter((e) => e.kind === 'caught');
-  assert.equal(caughtEvents.length, 2, 'caught for direct monster + grand aggregate');
-  assert.ok(caughtEvents.some((e) => e.monsterId === 'pealark'));
-  assert.ok(caughtEvents.some((e) => e.monsterId === 'quoral'));
+  assert.equal(caughtEvents.length, 0, 'Punctuation no longer emits legacy caught for first-secured');
+  const evolveEvents = events.filter((e) => e.kind === 'evolve');
+  assert.equal(evolveEvents.length, 2, 'stage 0 -> 1 hatching uses the shared evolve animation path');
+  assert.ok(evolveEvents.some((e) => e.monsterId === 'pealark'));
+  assert.ok(evolveEvents.some((e) => e.monsterId === 'quoral'));
 });
 
 test('recordPunctuationRewardUnitMastery emits evolve on stage advance', () => {
   const repository = makeRepository();
 
-  // First mastery: caught (stage 0 -> 1)
+  // First mastery: stage 0 -> 1 hatch/evolve
   recordPunctuationRewardUnitMastery({
     learnerId: 'learner-a',
     releaseId: PUNCTUATION_RELEASE_ID,
@@ -897,17 +899,12 @@ test('U8 happy path: mastered stage 1, starHighWater 35 (star stage 2) -> evolve
     gameStateRepository: repo2,
     random: () => 0,
   });
-  // caught fires because !previous.caught && next.caught (checked first)
   const caughtEvents = events.filter((e) => e.kind === 'caught');
-  assert.ok(caughtEvents.length >= 1, 'caught event fires on first mastery');
+  assert.equal(caughtEvents.length, 0, 'Punctuation first-secured no longer emits legacy caught');
   // The previous starStage was stageFor(35, thresholds) = 2 and next starStage is also 2,
-  // but previous mastered stage was 0 and next is 1. The caught check fires first
-  // (before stage comparison), so we get caught. No separate evolve because
-  // effective stage prev = max(0, 2) = 2 and next = max(1, 2) = 2 — equal.
+  // so the shared evolve animation would be a duplicate of a stage the child
+  // has already seen through Stars.
   const evolveEvents = events.filter((e) => e.kind === 'evolve');
-  // With both before and after having starHighWater=35, effective stages
-  // are both 2, so no evolve fires — caught is the only event for the direct
-  // monster. This is correct: the child already sees star stage 2.
   assert.equal(
     evolveEvents.filter((e) => e.monsterId === 'pealark').length, 0,
     'no evolve when star stage is already 2 on both sides',
@@ -996,7 +993,7 @@ test('U8 happy path: mastered stage 2, starHighWater 100 (star stage 4) -> mega 
     'no evolve when effective stage unchanged (4 -> 4)');
 });
 
-test('U8 happy path: mastered stage 1, star stage 1 -> caught fires normally', () => {
+test('U8 happy path: first secured unit below Hatch Star threshold emits hatch/evolve, not caught', () => {
   const repository = makeRepository({
     pealark: {
       mastered: [],
@@ -1026,14 +1023,18 @@ test('U8 happy path: mastered stage 1, star stage 1 -> caught fires normally', (
     random: () => 0,
   });
   const caughtEvents = events.filter((e) => e.kind === 'caught');
-  assert.ok(caughtEvents.some((e) => e.monsterId === 'pealark'), 'caught fires for direct monster');
-  assert.ok(caughtEvents.some((e) => e.monsterId === 'quoral'), 'caught fires for aggregate');
+  assert.equal(caughtEvents.length, 0, 'Punctuation first-secured no longer emits legacy caught');
+  assert.equal(
+    events.filter((e) => e.kind === 'evolve').length,
+    2,
+    'first secured unit below the Hatch Star threshold still queues hatch/evolve for direct + grand',
+  );
 });
 
 test('U8 edge: pre-Star learner (starHighWater 0) -> mastered stage governs', () => {
   const repository = makeRepository();
   // First mastery: stage 0 -> 1, starHighWater 0, starStage 0
-  // effective: max(0, 0) -> max(1, 0) = 1 > 0 -- but caught fires first
+  // effective: max(0, 0) -> max(1, 0) = 1 > 0 -- hatch/evolve fires
   recordPunctuationRewardUnitMastery({
     learnerId: 'learner-u8-4',
     releaseId: PUNCTUATION_RELEASE_ID,
@@ -1313,6 +1314,50 @@ test('P7-U4: updatePunctuationStarHighWater advances starHighWater from 3 to 8',
   const state = repository.state();
   assert.equal(state.pealark.starHighWater, 8, 'starHighWater must advance from 3 to 8');
   assert.deepEqual(events, [], 'latch writes must NOT emit toast events');
+});
+
+test('display state: one Star is Egg Found without secured reward units', () => {
+  const state = {
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 1,
+      branch: 'b1',
+    },
+  };
+  const progress = progressForPunctuationMonster(state, 'pealark', { publishedTotal: 5 });
+
+  assert.equal(progress.mastered, 0);
+  assert.equal(progress.caught, false, 'legacy caught stays first-secured');
+  assert.equal(progress.displayStars, 1);
+  assert.equal(progress.displayStage, 0);
+  assert.equal(progress.displayState, 'egg-found');
+});
+
+test('caught event fires on first Star high-water transition', () => {
+  const repository = makeRepository({
+    pealark: {
+      mastered: [],
+      caught: false,
+      publishedTotal: 5,
+      starHighWater: 0,
+      branch: 'b1',
+    },
+  });
+  const events = updatePunctuationStarHighWater({
+    learnerId: 'learner-caught-first-star',
+    monsterId: 'pealark',
+    computedStars: 1,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+
+  assert.equal(repository.state().pealark.starHighWater, 1);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].kind, 'caught');
+  assert.equal(events[0].previous.displayState, 'not-found');
+  assert.equal(events[0].next.displayState, 'egg-found');
 });
 
 test('P7-U4: computedStars equals starHighWater -> no latch write', () => {

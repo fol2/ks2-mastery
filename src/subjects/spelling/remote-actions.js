@@ -9,7 +9,7 @@ import {
 import {
   normaliseMonsterCelebrationEvents,
   shouldDelayMonsterCelebrations,
-  spellingSessionEnded,
+  subjectSessionEnded,
 } from '../../platform/game/monster-celebrations.js';
 import {
   unacknowledgedMonsterCelebrationEvents,
@@ -378,7 +378,7 @@ export function createRemoteSpellingActionHandler({
       store.pushToasts(toastEvents);
     }
 
-    const endedSession = spellingSessionEnded(previousSubjectUi, nextSubjectUi);
+    const endedSession = subjectSessionEnded('spelling', previousSubjectUi, nextSubjectUi);
     let monsterEvents = responseMonsterEvents;
     if (isSelectedLearner && endedSession && !monsterEvents.length) {
       const loggedRewardEvents = spellingRewardEvents(store.repositories?.eventLog?.list?.(learnerId) || []);

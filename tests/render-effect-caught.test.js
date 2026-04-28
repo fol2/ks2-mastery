@@ -82,6 +82,30 @@ test('caught effect: happy path — reward.monster event renders with toast text
   assert.equal(warnings.length, 0, `unexpected warnings: ${JSON.stringify(warnings)}`);
 });
 
+test('caught effect: first-Star Punctuation event uses the shared caught celebration kind', async () => {
+  const event = makeRewardEvent({
+    id: 'reward.monster:learner-a:inklet:caught:first-star',
+    kind: 'caught',
+    previous: { mastered: 0, stage: 0, displayState: 'not-found', caught: false, branch: 'b1' },
+    next: { mastered: 0, stage: 0, displayState: 'egg-found', caught: false, branch: 'b1' },
+  });
+  const out = await renderCelebrationLayerFixture({
+    registrations: REGISTER_CAUGHT,
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html, before, after, warnings } = JSON.parse(out);
+
+  assert.equal(before.queue.length, 1);
+  assert.equal(after.queue.length, 1, 'render alone must not advance the queue');
+  assert.match(html, /Inklet Egg/);
+  assert.match(html, /You caught a new friend!/);
+  assert.match(html, /New friend/);
+  assert.match(html, /class="monster-celebration-overlay caught"/);
+  assert.equal(warnings.length, 0, `unexpected warnings: ${JSON.stringify(warnings)}`);
+});
+
 test('caught effect: dismissal — onComplete drains the queue and persists an ack', async () => {
   // Wrap the registered effect so its render fires onComplete the first
   // time it sees one. <CelebrationLayer> evaluates render() during SSR,

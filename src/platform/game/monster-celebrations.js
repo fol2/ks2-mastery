@@ -77,11 +77,21 @@ export function emptyMonsterCelebrations() {
   };
 }
 
+function subjectIsInSession(subjectId, ui) {
+  const phase = ui?.phase;
+  if (subjectId === 'spelling') return phase === 'session';
+  if (subjectId === 'punctuation') return phase === 'active-item' || phase === 'feedback';
+  return false;
+}
+
+export function subjectSessionEnded(subjectId, previousUi, nextUi) {
+  return subjectIsInSession(subjectId, previousUi) && !subjectIsInSession(subjectId, nextUi);
+}
+
 export function spellingSessionEnded(previousUi, nextUi) {
-  return previousUi?.phase === 'session' && nextUi?.phase !== 'session';
+  return subjectSessionEnded('spelling', previousUi, nextUi);
 }
 
 export function shouldDelayMonsterCelebrations(subjectId, previousUi, nextUi) {
-  if (subjectId !== 'spelling') return false;
-  return previousUi?.phase === 'session' || nextUi?.phase === 'session';
+  return subjectIsInSession(subjectId, previousUi) || subjectIsInSession(subjectId, nextUi);
 }
