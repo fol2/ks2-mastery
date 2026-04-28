@@ -157,9 +157,48 @@ export function reservedPunctuationMonsterEntries(state = {}) {
   return reserved;
 }
 
-export function activePunctuationMonsterSummaryFromState(state = {}) {
-  return punctuationMonsterSummaryFromState(state)
+export function activePunctuationMonsterSummaryFromState(state = {}, options = {}) {
+  return punctuationMonsterSummaryFromState(state, options)
     .filter((entry) => entry.progress.displayState !== 'not-found' || entry.progress.caught || entry.progress.mastered > 0);
+}
+
+function punctuationStarViewProgress(starView, monsterId) {
+  const safeStarView = isPlainObject(starView) ? starView : null;
+  if (!safeStarView) return null;
+  if (monsterId === PUNCTUATION_GRAND_MONSTER_ID) {
+    const grand = isPlainObject(safeStarView.grand) ? safeStarView.grand : null;
+    if (!grand) return null;
+    return {
+      stars: safeStarHighWater(grand.grandStars),
+      stage: Math.max(0, Math.min(4, Math.floor(Number(grand.starDerivedStage) || 0))),
+    };
+  }
+  const perMonster = isPlainObject(safeStarView.perMonster) ? safeStarView.perMonster : {};
+  const entry = isPlainObject(perMonster[monsterId]) ? perMonster[monsterId] : null;
+  if (!entry) return null;
+  return {
+    stars: safeStarHighWater(entry.total),
+    stage: Math.max(0, Math.min(4, Math.floor(Number(entry.starDerivedStage) || 0))),
+  };
+}
+
+function mergePunctuationProgressWithStarView(progress, monsterId, starView) {
+  const live = punctuationStarViewProgress(starView, monsterId);
+  if (!live) return progress;
+  const displayStars = Math.max(safeStarHighWater(progress?.displayStars), safeStarHighWater(progress?.starHighWater), live.stars);
+  const displayStage = Math.max(
+    Math.max(0, Math.min(4, Math.floor(Number(progress?.displayStage) || 0))),
+    Math.max(0, Math.min(4, Math.floor(Number(progress?.starStage) || 0))),
+    Math.max(0, Math.min(4, Math.floor(Number(progress?.stage) || 0))),
+    live.stage,
+  );
+  return {
+    ...progress,
+    displayStars,
+    displayStage,
+    displayState: punctuationDisplayStateForStars(displayStars, displayStage),
+    starStage: Math.max(Math.max(0, Math.min(4, Math.floor(Number(progress?.starStage) || 0))), live.stage),
+  };
 }
 
 export function progressForPunctuationMonster(state, monsterId, { publishedTotal = null, releaseId = PUNCTUATION_CURRENT_RELEASE_ID } = {}) {
@@ -444,15 +483,19 @@ export function updatePunctuationStarHighWater({
   return event ? [event] : [];
 }
 
-export function punctuationMonsterSummaryFromState(state = {}, { clusterTotals = {}, aggregateTotal = 1, releaseId = PUNCTUATION_CURRENT_RELEASE_ID } = {}) {
+export function punctuationMonsterSummaryFromState(state = {}, { clusterTotals = {}, aggregateTotal = 1, releaseId = PUNCTUATION_CURRENT_RELEASE_ID, starView = null } = {}) {
   return PUNCTUATION_MONSTER_IDS.map((monsterId) => ({
     subjectId: 'punctuation',
     monster: MONSTERS[monsterId],
-    progress: progressForPunctuationMonster(state, monsterId, {
-      publishedTotal: monsterId === PUNCTUATION_GRAND_MONSTER_ID
-        ? aggregateTotal
-        : (clusterTotals[monsterId] || MONSTERS[monsterId]?.masteredMax || 1),
-      releaseId,
-    }),
+    progress: mergePunctuationProgressWithStarView(
+      progressForPunctuationMonster(state, monsterId, {
+        publishedTotal: monsterId === PUNCTUATION_GRAND_MONSTER_ID
+          ? aggregateTotal
+          : (clusterTotals[monsterId] || MONSTERS[monsterId]?.masteredMax || 1),
+        releaseId,
+      }),
+      monsterId,
+      starView,
+    ),
   }));
 }

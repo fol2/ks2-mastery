@@ -276,6 +276,36 @@ test('analytics summaries can project branches without writing during render', (
   assert.equal(summary.find((entry) => entry.monster.id === 'vellhorn').progress.mastered, 0);
 });
 
+test('analytics summaries project Punctuation live Star eggs before codex high-water backfill', () => {
+  const repository = makeGameStateRepository({
+    pealark: { branch: 'b2', mastered: [], caught: false },
+  });
+  const punctuationStarView = {
+    perMonster: {
+      pealark: { total: 1, starDerivedStage: 0 },
+      curlune: { total: 0, starDerivedStage: 0 },
+      claspin: { total: 0, starDerivedStage: 0 },
+    },
+    grand: { grandStars: 0, total: 100, starDerivedStage: 0 },
+  };
+
+  const summary = monsterSummaryFromSpellingAnalytics({ wordGroups: [] }, {
+    learnerId: 'James',
+    gameStateRepository: repository,
+    punctuationStarView,
+    persistBranches: false,
+  });
+
+  const pealarkEntries = summary.filter((entry) => entry.subjectId === 'punctuation' && entry.monster.id === 'pealark');
+  assert.equal(pealarkEntries.length, 1);
+  const pealark = pealarkEntries[0];
+  assert.equal(pealark.progress.caught, false, 'secure reward state stays decoupled from monster display');
+  assert.equal(pealark.progress.branch, 'b2');
+  assert.equal(pealark.progress.displayStars, 1);
+  assert.equal(pealark.progress.displayStage, 0);
+  assert.equal(pealark.progress.displayState, 'egg-found');
+});
+
 test('redacted analytics uses public monster projection state without writing during render', () => {
   const repository = makeGameStateRepository({
     inklet: { masteredCount: 12, caught: true, branch: 'b1' },
