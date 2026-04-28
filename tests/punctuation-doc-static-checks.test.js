@@ -14,7 +14,18 @@ import { resolve } from 'node:path';
 // ---------------------------------------------------------------------------
 
 const DOC_PATH = resolve(import.meta.dirname, '..', 'docs', 'punctuation-production.md');
+const PLAN_DOC_PATH = resolve(
+  import.meta.dirname,
+  '..',
+  'docs',
+  'plans',
+  'james',
+  'punctuation',
+  'questions-generator',
+  'punctuation-qg-p1.md',
+);
 const docContent = readFileSync(DOC_PATH, 'utf8');
+const planDocContent = readFileSync(PLAN_DOC_PATH, 'utf8');
 const docLines = docContent.split('\n');
 
 // ---------------------------------------------------------------------------
@@ -199,6 +210,7 @@ test('punctuation-production.md documents the Punctuation Doctor diagnostic', ()
 
 test('punctuation-production.md documents generated practice guardrails', () => {
   for (const pattern of [
+    /generatedPerFamily:\s*4/,
     /generatedPerFamily:\s*1/,
     /templateId/,
     /variantSignature/,
@@ -207,6 +219,23 @@ test('punctuation-production.md documents generated practice guardrails', () => 
     /generated-per-family 4/,
   ]) {
     assert.match(docContent, pattern);
+  }
+});
+
+test('punctuation generator plan documents the current runtime bank', () => {
+  assert.match(planDocContent, /production runtime service now creates \*\*4 generated items/i);
+  assert.match(planDocContent, /\*\*171 Punctuation items\*\*/);
+  assert.match(planDocContent, /Current runtime total:\s+171/);
+  assert.match(planDocContent, /\|\s*4, current\s*\|\s*171\s*\|/);
+
+  for (const stalePattern of [
+    /current runtime setting creates \*\*1 generated item/i,
+    /const GENERATED_ITEMS_PER_FAMILY = 1;/,
+    /Current runtime total:\s+96/,
+    /\|\s*1, current\s*\|\s*96\s*\|/,
+    /Current runtime pool:\s*\*\*96 items\*\*\./,
+  ]) {
+    assert.doesNotMatch(planDocContent, stalePattern);
   }
 });
 

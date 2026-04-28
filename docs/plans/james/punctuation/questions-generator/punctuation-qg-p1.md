@@ -1,6 +1,6 @@
-I reviewed the Punctuation subject as a static source audit from GitHub. I could not run the repo locally here, so the numbers below are from the source/manifest, not from a live database crawl.
+I reviewed the Punctuation subject as a static source audit from GitHub. I could not run the repo locally in the original audit, so the first baseline numbers came from the source/manifest rather than a live database crawl.
 
-The main answer: **Punctuation is not using AI to generate questions at runtime.** It uses a **human-authored fixed item bank** plus a **deterministic template generator**. The current runtime setting creates **1 generated item per published generator family**, so today the practical runtime pool is about **96 Punctuation items**: **71 fixed evidence items + 25 generated items**.
+The main answer: **Punctuation is not using AI to generate questions at runtime.** It uses a **human-authored fixed item bank** plus a **deterministic template generator**. As of 28 April 2026, the production runtime service now creates **4 generated items per published generator family**, so the practical runtime pool is **171 Punctuation items**: **71 fixed evidence items + 100 generated items**. The earlier 96-item figure in this plan is the original audit baseline, not the current runtime setting.
 
 ## 1. What Punctuation currently covers
 
@@ -39,25 +39,25 @@ First, there is a **fixed item bank** in `shared/punctuation/content.js`. These 
 
 Second, there are **published generator families**. The generator takes a family, a skill, a seed, and a variant index, then chooses from a deterministic template bank or from a context pack. It builds a generated item with a stable ID, model answer, validator/rubric, misconception tags, readiness tags, and `source: 'generated'`. ([GitHub][3])
 
-Third, the service currently sets:
+Third, the production service now sets:
 
 ```js
-const GENERATED_ITEMS_PER_FAMILY = 1;
+const GENERATED_ITEMS_PER_FAMILY = 4;
 ```
 
-and imports `createPunctuationRuntimeManifest`, so the runtime pool adds one generated item per family. ([GitHub][4])
+and imports `createPunctuationRuntimeManifest`, so the runtime pool adds four generated items per family. ([GitHub][4])
 
 So the current engine is a **deterministic template generator**, not a generative AI system. That is the right quality direction.
 
 ## 3. How many questions do we have?
 
-Current runtime count:
+Current runtime count as of 28 April 2026:
 
 ```text
 Fixed evidence items:      71
 Generated families:        25
-Generated per family:       1
-Current runtime total:     96
+Generated per family:       4
+Current runtime total:    171
 ```
 
 The formula is:
@@ -71,38 +71,39 @@ So:
 | `generatedPerFamily` | Runtime items |
 | -------------------: | ------------: |
 |                    0 |            71 |
-|           1, current |            96 |
+| 1, original baseline |            96 |
 |                    2 |           121 |
+|           4, current |           171 |
 |                    5 |           196 |
 |                   10 |           321 |
 
-But be careful: increasing `generatedPerFamily` alone does not automatically mean genuinely new learning content. The generator can keep creating IDs, but if the template bank has only a small number of unique templates per family, the child may see repeated structures with different IDs. The current default template bank appears to have roughly **two default templates per family**, so the practical non-repeating default catalogue is closer to **71 fixed + about 50 generated = about 121 unique template-backed items**, unless you expand the template bank or use richer context packs. ([GitHub][3])
+But be careful: increasing `generatedPerFamily` alone does not automatically mean genuinely new learning content. The generator can keep creating IDs, but if the template bank has only a small number of unique templates per family, the child may see repeated structures with different IDs. The guardrail audit now requires four generated variants per published family for the release build; increasing beyond the current setting should still be paired with richer template banks, context packs, and signature-level duplicate checks. ([GitHub][3])
 
 By skill, the current practical runtime coverage is approximately:
 
 | Skill                   | Fixed items | Generator families | Current runtime items |
 | ----------------------- | ----------: | -----------------: | --------------------: |
-| sentence endings        |           4 |                  1 |                     5 |
-| list commas             |           6 |                  2 |                     8 |
-| apostrophe contractions |           4 |                  1 |                     5 |
-| apostrophe possession   |           5 |                  2 |                     7 |
-| speech                  |           6 |                  2 |                     8 |
-| fronted adverbials      |           5 |                  2 |                     7 |
-| parenthesis             |           6 |                  3 |                     9 |
-| comma clarity           |           4 |                  1 |                     5 |
-| colon lists             |           6 |                  2 |                     8 |
-| semicolons              |           6 |                  3 |                     9 |
-| dash clauses            |           5 |                  2 |                     7 |
-| semicolon lists         |           4 |                  1 |                     5 |
-| bullet points           |           5 |                  2 |                     7 |
-| hyphens                 |           5 |                  1 |                     6 |
-| **Total**               |      **71** |             **25** |                **96** |
+| sentence endings        |           4 |                  1 |                     8 |
+| list commas             |           6 |                  2 |                    14 |
+| apostrophe contractions |           4 |                  1 |                     8 |
+| apostrophe possession   |           5 |                  2 |                    13 |
+| speech                  |           6 |                  2 |                    14 |
+| fronted adverbials      |           5 |                  2 |                    13 |
+| parenthesis             |           6 |                  3 |                    18 |
+| comma clarity           |           4 |                  1 |                     8 |
+| colon lists             |           6 |                  2 |                    14 |
+| semicolons              |           6 |                  3 |                    18 |
+| dash clauses            |           5 |                  2 |                    13 |
+| semicolon lists         |           4 |                  1 |                     8 |
+| bullet points           |           5 |                  2 |                    13 |
+| hyphens                 |           5 |                  1 |                     9 |
+| **Total**               |      **71** |             **25** |               **171** |
 
 One caveat: some paragraph items are multi-skill, for example apostrophe contraction + possession, or fronted adverbial + speech. So for learning analytics, an item may touch more than one skill. For reward-unit counting, the table above counts by the primary reward unit/family.
 
 ## 4. Existing question quality: overall judgement
 
-The current quality is **good as a first production slice**, but the pool is **too shallow for long-term mastery**.
+The current quality is **good as a first production slice**. The 171-item runtime bank reaches the near-term size target, but the pool is still shallow for long-term mastery unless the next slices keep improving variation, validators, and spaced evidence.
 
 The good parts:
 
@@ -118,9 +119,9 @@ The reward model has some good anti-grinding thinking already: it separates Try/
 
 The weak parts:
 
-**The pool is small.** Ninety-six runtime items across 14 skills is only about 6–7 items per skill. For a child using the app regularly, that is not enough to avoid memorisation. This matters even more because the 100-star / Mega model needs evidence that the child can transfer learning, not just remember the same sentence.
+**The pool still needs depth.** One hundred and seventy-one runtime items across 14 skills is about 12 items per skill on average. That is enough for the near-term release target, but not enough for long-term post-secure retention if the generated shapes are too similar. This matters even more because the 100-star / Mega model needs evidence that the child can transfer learning, not just remember the same sentence.
 
-**Some skills are especially thin.** Sentence endings, contractions, comma clarity, and semicolon lists have only 4 fixed evidence items each. That is acceptable for an early slice, but not enough for secure mastery.
+**Some fixed anchors are especially thin.** Sentence endings, contractions, comma clarity, and semicolon lists have only 4 fixed evidence items each. The generated variants improve practice volume, but secure mastery still needs varied fixed, generated, transfer, and spaced evidence.
 
 **The generator is currently closer to a template picker than a true rule-based generator.** It is deterministic and safe, which is good, but the default bank needs more variation. Otherwise, increasing `generatedPerFamily` may create repeated item shapes rather than genuinely new questions.
 
@@ -230,7 +231,7 @@ skillId + mode + templateId + normalisedStem + normalisedModel
 
 The scheduler should avoid repeating signatures, not only item IDs. Otherwise two generated IDs can still feel like the same question.
 
-Third, expand each generator family to at least **8–12 unique templates or slot combinations** before increasing `GENERATED_ITEMS_PER_FAMILY`. Do not simply turn the setting from 1 to 5 until the template bank can support it.
+Third, expand each generator family to at least **8–12 unique templates or slot combinations** before increasing `GENERATED_ITEMS_PER_FAMILY` beyond the current value of 4. Do not simply turn the setting from 4 to a larger number until the template bank can support it.
 
 Fourth, improve the **context-pack system**. It already sanitises context-pack atoms and can generate templates for selected families such as sentence endings, speech, list commas, fronted adverbials, parenthesis combining, and hyphens. But it currently affects only a subset of generator families. Expand it to all 25 families, and make it generate multiple variants per family rather than often returning one template. ([GitHub][8])
 
@@ -249,9 +250,9 @@ Sixth, change retry behaviour. After a mistake, do not just show the same item a
 
 ## 7. Expansion target
 
-Current runtime pool: **96 items**.
+Current runtime pool: **171 items**. Original audit baseline: **96 items**.
 
-Near-term safe target: **150–200 runtime items**.
+Near-term safe target: **150–200 runtime items**. This is now met numerically; the remaining near-term work is quality depth, not raw count.
 
 Strong product target: **280–420 runtime items**, roughly **20–30 per skill**, with enough variation for spaced retrieval and secure mastery.
 
@@ -278,7 +279,7 @@ Do this in order:
 
 **P0 — Count and quality guardrails.** Add the audit script, template signatures, duplicate detection, and golden marking tests. Fix dash acceptance and clarify Oxford comma policy.
 
-**P1 — Expand the thinnest skills.** Add templates first for sentence endings, contractions, comma clarity, semicolon lists, hyphens, and dash clauses. These are currently the easiest places for repetition to show.
+**P1 — Expand the thinnest skills.** Add deeper templates first for sentence endings, contractions, comma clarity, semicolon lists, hyphens, and dash clauses. These still have the thinnest fixed anchors and are the easiest places for repetition to show.
 
 **P2 — Upgrade generator DSL.** Move from hand-written template arrays to slot-based teacher-authored templates with model builders and validators.
 
@@ -286,7 +287,7 @@ Do this in order:
 
 **P4 — Expand context packs.** Use context packs to safely create fresh surface contexts, but keep the grammar/punctuation rule and validator deterministic.
 
-My blunt judgement: the current Punctuation content is directionally good and much safer than AI-generated questions, but the item pool is too small for the mastery ambition. The next win is not AI; it is a better deterministic template engine, more template variety, stronger QA tests, and scheduler rules that reward varied evidence rather than repeated correctness.
+My blunt judgement: the current Punctuation content is directionally good and much safer than AI-generated questions. The runtime pool has reached the near-term size target, but the mastery ambition still needs a better deterministic template engine, more template variety, stronger QA tests, and scheduler rules that reward varied evidence rather than repeated correctness.
 
 [1]: https://github.com/fol2/ks2-mastery "GitHub - fol2/ks2-mastery: KS2 Unified — browser-side React prototype of a KS2 (UK Year 5/6) study app · GitHub"
 [2]: https://github.com/fol2/ks2-mastery/blob/main/shared/punctuation/content.js "ks2-mastery/shared/punctuation/content.js at main · fol2/ks2-mastery · GitHub"

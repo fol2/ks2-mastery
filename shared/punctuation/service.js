@@ -35,7 +35,7 @@ import {
 
 const SUBJECT_ID = 'punctuation';
 const SERVER_AUTHORITY = 'worker';
-const GENERATED_ITEMS_PER_FAMILY = 1;
+const GENERATED_ITEMS_PER_FAMILY = 4;
 const MAX_GPS_QUEUE_LENGTH = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAILY_TARGET_ATTEMPTS = 4;
