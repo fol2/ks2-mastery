@@ -7,6 +7,12 @@ function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function cleanString(value, fallback = '') {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  return trimmed || fallback;
+}
+
 function isLegacyMonsterCelebrationEvent(event) {
   return event?.type === 'reward.monster'
     && OVERLAY_KINDS.has(event.kind)
@@ -29,7 +35,7 @@ function normaliseProgressSnapshot(value) {
 
 export function normaliseMonsterCelebrationEvent(event) {
   if (isLegacyMonsterCelebrationEvent(event)) return normaliseLegacyMonsterCelebrationEvent(event);
-  return normalisePresentationCelebrationEvent(event);
+  return normalisePresentationCelebrationEvent(event) || normaliseQueuedPresentationCelebrationEvent(event);
 }
 
 export function isMonsterCelebrationEvent(event) {
@@ -72,11 +78,22 @@ function normaliseLegacyMonsterCelebrationEvent(event) {
   };
 }
 
+function presentationAckKey(eventId, intent, index = 0) {
+  const id = cleanString(eventId);
+  if (!id) return '';
+  const explicit = cleanString(intent?.dedupeKey);
+  if (explicit) return explicit;
+  const suffix = cleanString(intent?.intentId, String(index));
+  return `reward:${id}:celebration:${suffix}`;
+}
+
 function normalisePresentationCelebrationEvent(event) {
   if (!isPlainObject(event) || event.type !== REWARD_PRESENTATION_TYPE) return null;
-  const celebrationIntent = Array.isArray(event.presentations?.celebration)
-    ? event.presentations.celebration.find(isPlainObject)
-    : null;
+  const celebrationIntents = Array.isArray(event.presentations?.celebration)
+    ? event.presentations.celebration
+    : [];
+  const celebrationIndex = celebrationIntents.findIndex(isPlainObject);
+  const celebrationIntent = celebrationIndex >= 0 ? celebrationIntents[celebrationIndex] : null;
   if (!celebrationIntent) return null;
 
   const payload = isPlainObject(event.payload) ? event.payload : {};
@@ -105,7 +122,32 @@ function normalisePresentationCelebrationEvent(event) {
     next: normaliseProgressSnapshot(next),
     createdAt: Math.max(0, Number(event.occurredAt) || Date.now()),
     sourceEventId: event.sourceEventId || '',
-    presentationAckKey: celebrationIntent.dedupeKey || '',
+    presentationAckKey: presentationAckKey(event.id, celebrationIntent, celebrationIndex),
+  };
+}
+
+function normaliseQueuedPresentationCelebrationEvent(event) {
+  if (!isPlainObject(event) || event.type !== REWARD_PRESENTATION_TYPE) return null;
+  if (!isPlainObject(event.monster)) return null;
+  const id = cleanString(event.id);
+  const kind = cleanString(event.kind);
+  if (!id || !kind) return null;
+  return {
+    id,
+    type: REWARD_PRESENTATION_TYPE,
+    kind,
+    learnerId: cleanString(event.learnerId, 'default'),
+    monsterId: cleanString(event.monsterId),
+    monster: {
+      ...event.monster,
+      id: cleanString(event.monster.id, cleanString(event.monsterId)),
+      name: cleanString(event.monster.name, 'Reward'),
+    },
+    previous: normaliseProgressSnapshot(event.previous),
+    next: normaliseProgressSnapshot(event.next),
+    createdAt: Math.max(0, Number(event.createdAt) || Date.now()),
+    sourceEventId: cleanString(event.sourceEventId),
+    presentationAckKey: cleanString(event.presentationAckKey),
   };
 }
 
