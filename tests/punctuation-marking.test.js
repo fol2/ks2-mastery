@@ -123,25 +123,23 @@ test('comma list transfer requires preserved items and KS2 list comma placement'
   assert.equal(finalComma.correct, true);
   assert.deepEqual(finalComma.misconceptionTags, []);
 
-  const strictListItem = {
-    ...item('lc_transfer_trip'),
-    validator: {
-      ...item('lc_transfer_trip').validator,
-      allowFinalComma: false,
-    },
-  };
-  const strictFinalComma = markPunctuationAnswer({
-    item: strictListItem,
-    answer: { typed: 'For the trip, we packed torches, maps, and water.' },
-  });
-  assert.equal(strictFinalComma.correct, false);
-  assert.equal(strictFinalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
-
   const anchored = markPunctuationAnswer({
     item: item('lc_transfer_bake_sale'),
     answer: { typed: 'For the bake sale we needed eggs, flour, butter and sugar.' },
   });
   assert.equal(anchored.correct, true);
+
+  const strictFinalCommaItem = item('lc_transfer_bake_sale');
+  assert.equal(strictFinalCommaItem.validator.allowFinalComma, false);
+  assert.match(`${strictFinalCommaItem.prompt} ${strictFinalCommaItem.explanation}`, /house style/i);
+  assert.match(`${strictFinalCommaItem.prompt} ${strictFinalCommaItem.explanation}`, /no final comma before (?:the final )?and/i);
+  const strictFinalComma = markPunctuationAnswer({
+    item: strictFinalCommaItem,
+    answer: { typed: 'For the bake sale we needed eggs, flour, butter, and sugar.' },
+  });
+  assert.equal(strictFinalComma.correct, false);
+  assert.equal(strictFinalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
+  assert.match(strictFinalComma.note, /house style: no final comma before the final and/i);
 
   const changedStem = markPunctuationAnswer({
     item: item('lc_transfer_bake_sale'),
@@ -202,13 +200,8 @@ test('boundary transfer validators require target marks between preserved clause
   assert.equal(commaSplice.correct, false);
   assert.equal(commaSplice.misconceptionTags.includes('boundary.comma_splice'), true);
 
-  const dash = markPunctuationAnswer({
-    item: item('dc_transfer_flooded_route'),
-    answer: { typed: 'The path was flooded - we took the longer route.' },
-  });
-  assert.equal(dash.correct, true);
-
   for (const typed of [
+    'The path was flooded - we took the longer route.',
     'The path was flooded – we took the longer route.',
     'The path was flooded — we took the longer route.',
   ]) {
@@ -225,6 +218,29 @@ test('boundary transfer validators require target marks between preserved clause
   });
   assert.equal(missingDash.correct, false);
   assert.equal(missingDash.misconceptionTags.includes('boundary.dash_missing'), true);
+});
+
+test('dash-clause model display teaches a spaced en dash', () => {
+  const dashItemIds = [
+    'dc_choose_flooded_route',
+    'dc_insert_door_froze',
+    'dc_fix_signal_team',
+    'dc_transfer_flooded_route',
+    'dc_combine_flooded_route',
+    'dc_choose_lights_out',
+    'dc_insert_alarm_rang',
+    'dc_transfer_curtain_rose',
+  ];
+
+  for (const itemId of dashItemIds) {
+    const currentItem = item(itemId);
+    assert.match(currentItem.model, /\s–\s/, `${itemId} model`);
+    assert.doesNotMatch(currentItem.model, /\s-\s/, `${itemId} model`);
+    if (currentItem.mode === 'choose') {
+      assert.match(currentItem.options[currentItem.correctIndex], /\s–\s/, `${itemId} correct option`);
+      assert.doesNotMatch(currentItem.options[currentItem.correctIndex], /\s-\s/, `${itemId} correct option`);
+    }
+  }
 });
 
 test('fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers', () => {

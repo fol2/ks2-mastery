@@ -908,7 +908,7 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
     {
       prompt: 'Add a dash between the related clauses.',
       stem: 'The gate was stuck we found another path.',
-      model: 'The gate was stuck - we found another path.',
+      model: 'The gate was stuck – we found another path.',
       validator: {
         type: 'requiresBoundaryBetweenClauses',
         left: 'The gate was stuck',
@@ -921,7 +921,7 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
     {
       prompt: 'Add a dash between the related clauses.',
       stem: 'The bell rang everyone hurried inside.',
-      model: 'The bell rang - everyone hurried inside.',
+      model: 'The bell rang – everyone hurried inside.',
       validator: {
         type: 'requiresBoundaryBetweenClauses',
         left: 'The bell rang',
@@ -934,7 +934,7 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
     {
       prompt: 'Add a dash between the related clauses.',
       stem: 'The torch failed we used the lantern.',
-      model: 'The torch failed - we used the lantern.',
+      model: 'The torch failed – we used the lantern.',
       validator: {
         type: 'requiresBoundaryBetweenClauses',
         left: 'The torch failed',
@@ -947,7 +947,7 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
     {
       prompt: 'Add a dash between the related clauses.',
       stem: 'The bridge was closed the buses turned back.',
-      model: 'The bridge was closed - the buses turned back.',
+      model: 'The bridge was closed – the buses turned back.',
       validator: {
         type: 'requiresBoundaryBetweenClauses',
         left: 'The bridge was closed',
@@ -962,7 +962,7 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
     {
       prompt: 'Combine the two related clauses into one sentence with a dash.',
       stem: 'The gate was stuck.\nWe found another path.',
-      model: 'The gate was stuck - we found another path.',
+      model: 'The gate was stuck – we found another path.',
       validator: {
         type: 'combineBoundaryBetweenClauses',
         left: 'The gate was stuck',
@@ -975,7 +975,7 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
     {
       prompt: 'Combine the two related clauses into one sentence with a dash.',
       stem: 'The bell rang.\nEveryone hurried inside.',
-      model: 'The bell rang - everyone hurried inside.',
+      model: 'The bell rang – everyone hurried inside.',
       validator: {
         type: 'combineBoundaryBetweenClauses',
         left: 'The bell rang',
@@ -988,7 +988,7 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
     {
       prompt: 'Combine the two related clauses into one sentence with a dash.',
       stem: 'The torch failed.\nWe used the lantern.',
-      model: 'The torch failed - we used the lantern.',
+      model: 'The torch failed – we used the lantern.',
       validator: {
         type: 'combineBoundaryBetweenClauses',
         left: 'The torch failed',
@@ -1001,7 +1001,7 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
     {
       prompt: 'Combine the two related clauses into one sentence with a dash.',
       stem: 'The bridge was closed.\nThe buses turned back.',
-      model: 'The bridge was closed - the buses turned back.',
+      model: 'The bridge was closed – the buses turned back.',
       validator: {
         type: 'combineBoundaryBetweenClauses',
         left: 'The bridge was closed',

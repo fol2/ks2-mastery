@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   PUNCTUATION_CONTENT_MANIFEST,
+  validatePunctuationManifest,
 } from '../shared/punctuation/content.js';
 import {
   runPunctuationContentAudit,
@@ -89,6 +90,10 @@ test('punctuation content audit proves P2 U3 runtime growth comes from fixed anc
   });
 
   assert.equal(audit.ok, true, audit.failures.join('\n'));
+  assert.deepEqual(
+    audit.failureDetails.filter((failure) => failure.code === 'generated_model_marking'),
+    [],
+  );
   assert.equal(audit.summary.fixedItemCount, 92);
   assert.equal(audit.summary.generatedItemCount, 100);
   assert.equal(audit.summary.runtimeItemCount, 192);
@@ -119,6 +124,50 @@ test('punctuation content audit can prove expanded deterministic bank variety', 
     assert.equal(row.variantSignatures.length, 4, row.id);
     assert.equal(row.templateIds.length, 4, row.id);
   }
+});
+
+test('punctuation content audit guards dash display and strict final-comma copy', () => {
+  const validation = validatePunctuationManifest(PUNCTUATION_CONTENT_MANIFEST);
+  assert.equal(validation.ok, true, validation.errors.join('\n'));
+
+  const dashItems = PUNCTUATION_CONTENT_MANIFEST.items.filter((item) => item.skillIds?.includes('dash_clause'));
+  assert.ok(dashItems.length > 0);
+  for (const item of dashItems) {
+    assert.match(item.model, /\s–\s/, item.id);
+    assert.doesNotMatch(item.model, /\s-\s/, item.id);
+  }
+
+  const strictFinalCommaItems = PUNCTUATION_CONTENT_MANIFEST.items.filter((item) => (
+    item.validator?.allowFinalComma === false
+  ));
+  assert.ok(strictFinalCommaItems.length > 0);
+  for (const item of strictFinalCommaItems) {
+    assert.match(`${item.prompt} ${item.explanation}`, /house style/i, item.id);
+    assert.match(`${item.prompt} ${item.explanation}`, /no final comma before (?:the final )?and/i, item.id);
+  }
+});
+
+test('punctuation content audit rejects strict final-comma items without visible policy context', () => {
+  const manifest = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    items: PUNCTUATION_CONTENT_MANIFEST.items.map((item) => (
+      item.id === 'lc_transfer_bake_sale'
+        ? {
+            ...item,
+            prompt: 'Write one sentence using this exact stem and list: For the bake sale we needed eggs, flour, butter and sugar.',
+            explanation: 'The sentence keeps the stem and separates the list items with commas.',
+          }
+        : item
+    )),
+  };
+  const audit = runPunctuationContentAudit({
+    manifest,
+    seed: 'strict-final-comma-policy-copy',
+    generatedPerFamily: 1,
+  });
+
+  assert.equal(audit.ok, false);
+  assert.match(audit.failures.join('\n'), /lc_transfer_bake_sale forbids the final comma without visible house-style context/);
 });
 
 test('punctuation content audit detects crafted duplicate generated signatures', () => {
