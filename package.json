@@ -59,7 +59,7 @@
     "test:playwright": "npx playwright test",
     "journey": "node tests/journeys/_runner.mjs",
     "verify": "npm test && npm run check && npm run capacity:verify-evidence",
-    "verify:grammar-qg": "npm run audit:grammar-qg && npm run audit:grammar-qg:deep && node --test tests/grammar-question-generator-audit.test.js tests/grammar-functionality-completeness.test.js tests/grammar-production-smoke.test.js tests/grammar-selection.test.js tests/grammar-engine.test.js"
+    "verify:grammar-qg": "npm run audit:grammar-qg && npm run audit:grammar-qg:deep && node --test tests/grammar-question-generator-audit.test.js tests/grammar-qg-p5-depth.test.js tests/grammar-qg-p5-content-quality.test.js tests/grammar-qg-p5-report-validation.test.js tests/grammar-functionality-completeness.test.js tests/grammar-production-smoke.test.js tests/grammar-selection.test.js tests/grammar-engine.test.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

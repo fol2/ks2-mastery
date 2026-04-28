@@ -1959,7 +1959,7 @@
         ]
       },
       "correctResponse": {
-        "answer": "“Where are you going?” asked Mum."
+        "answer": "\"Where are you going?\" asked Mum."
       },
       "correctResult": {
         "correct": true,
@@ -1969,7 +1969,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: “Where are you going?” asked Mum.",
         "answerText": "“Where are you going?” asked Mum.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "Check where the spoken words end and where the reporting clause begins."
       },
       "emptyResult": {
         "correct": false,
@@ -2369,7 +2369,7 @@
         "seed": 10476,
         "itemId": "proc_colon_list_fix:10476",
         "marks": 2,
-        "promptText": "Rewrite the sentence with a colon in the correct place. Three countries were represented at the fair France, Japan, Brazil.",
+        "promptText": "Rewrite the sentence with a colon in the correct place. The gardener planted four types of vegetable carrots, beans, potatoes, onions.",
         "inputSpec": {
           "type": "textarea",
           "label": "Corrected sentence",
@@ -2378,11 +2378,11 @@
         "solutionLines": [
           "Check that the words before the list make a complete clause.",
           "A colon can introduce the list that follows.",
-          "A correct answer is: Three countries were represented at the fair: France, Japan, Brazil."
+          "A correct answer is: The gardener planted four types of vegetable: carrots, beans, potatoes, onions."
         ]
       },
       "correctResponse": {
-        "answer": "The museum displayed four objects: a helmet, a shield, a sword, a coin."
+        "answer": "The gardener planted four types of vegetable: carrots, beans, potatoes, onions."
       },
       "correctResult": {
         "correct": true,
@@ -2390,9 +2390,9 @@
         "maxScore": 2,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: The museum displayed four objects: a helmet, a shield, a sword, a coin.",
-        "answerText": "The museum displayed four objects: a helmet, a shield, a sword, a coin.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "feedbackLong": "A correct answer is: The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
+        "answerText": "The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
+        "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
       },
       "emptyResult": {
         "correct": false,
@@ -2400,8 +2400,8 @@
         "maxScore": 2,
         "misconception": "boundary_punctuation_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: Three countries were represented at the fair: France, Japan, Brazil.",
-        "answerText": "Three countries were represented at the fair: France, Japan, Brazil.",
+        "feedbackLong": "A correct answer is: The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
+        "answerText": "The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
         "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
       }
     },
@@ -2431,7 +2431,7 @@
         "seed": 10493,
         "itemId": "proc_dash_boundary_fix:10493",
         "marks": 2,
-        "promptText": "Rewrite the sentence with a dash in the correct place. She had made her decision the letter would be posted today.",
+        "promptText": "Rewrite the sentence with a dash in the correct place. The result surprised us all the youngest team had won.",
         "inputSpec": {
           "type": "textarea",
           "label": "Corrected sentence",
@@ -2440,11 +2440,11 @@
         "solutionLines": [
           "Both parts are strongly linked, and the second part explains or expands the first.",
           "A dash can mark that strong break.",
-          "A correct answer is: She had made her decision – the letter would be posted today."
+          "A correct answer is: The result surprised us all – the youngest team had won."
         ]
       },
       "correctResponse": {
-        "answer": "There was only one answer – turn back at once."
+        "answer": "The result surprised us all – the youngest team had won."
       },
       "correctResult": {
         "correct": true,
@@ -2452,9 +2452,9 @@
         "maxScore": 2,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: There was only one answer – turn back at once.",
-        "answerText": "There was only one answer – turn back at once.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "feedbackLong": "A correct answer is: The result surprised us all – the youngest team had won.",
+        "answerText": "The result surprised us all – the youngest team had won.",
+        "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
       },
       "emptyResult": {
         "correct": false,
@@ -2462,8 +2462,8 @@
         "maxScore": 2,
         "misconception": "boundary_punctuation_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: She had made her decision – the letter would be posted today.",
-        "answerText": "She had made her decision – the letter would be posted today.",
+        "feedbackLong": "A correct answer is: The result surprised us all – the youngest team had won.",
+        "answerText": "The result surprised us all – the youngest team had won.",
         "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
       }
     },
@@ -2493,47 +2493,47 @@
         "seed": 10510,
         "itemId": "proc_hyphen_ambiguity_choice:10510",
         "marks": 1,
-        "promptText": "Which sentence means the hospital treats small animals?",
+        "promptText": "Which sentence means the shop has second-hand items?",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
           "options": [
             {
-              "value": "We visited the small-animal hospital after lunch.",
-              "label": "We visited the small-animal hospital after lunch."
+              "value": "Mum found a bargain at the second-hand shop.",
+              "label": "Mum found a bargain at the second-hand shop."
             },
             {
-              "value": "We visited the small animal hospital after lunch.",
-              "label": "We visited the small animal hospital after lunch."
+              "value": "Mum found a bargain at the second hand shop.",
+              "label": "Mum found a bargain at the second hand shop."
             },
             {
-              "value": "We visited the hospital after lunch with small animals.",
-              "label": "We visited the hospital after lunch with small animals."
+              "value": "Mum found a second bargain handed to her at the shop.",
+              "label": "Mum found a second bargain handed to her at the shop."
             },
             {
-              "value": "We visited a small hospital for lunch animals.",
-              "label": "We visited a small hospital for lunch animals."
+              "value": "Mum found a shop with a second hand at the counter.",
+              "label": "Mum found a shop with a second hand at the counter."
             }
           ]
         },
         "solutionLines": [
           "Read both versions carefully and compare the meaning.",
           "The hyphen shows that two words are working together as one describing idea.",
-          "The hyphen shows that 'small-animal' is one combined idea describing the hospital."
+          "The hyphen turns 'second-hand' into one describing idea for the shop."
         ]
       },
       "correctResponse": {
         "answer": "We visited the small-animal hospital after lunch."
       },
       "correctResult": {
-        "correct": true,
-        "score": 1,
+        "correct": false,
+        "score": 0,
         "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The clearer answer is: We visited the small-animal hospital after lunch.",
-        "answerText": "We visited the small-animal hospital after lunch.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "misconception": "hyphen_ambiguity_confusion",
+        "feedbackShort": "Not quite.",
+        "feedbackLong": "The clearer answer is: Mum found a bargain at the second-hand shop.",
+        "answerText": "Mum found a bargain at the second-hand shop.",
+        "minimalHint": "Say the phrase both ways in your head. Which version makes the meaning clear?"
       },
       "emptyResult": {
         "correct": false,
@@ -2541,8 +2541,8 @@
         "maxScore": 1,
         "misconception": "hyphen_ambiguity_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "The clearer answer is: We visited the small-animal hospital after lunch.",
-        "answerText": "We visited the small-animal hospital after lunch.",
+        "feedbackLong": "The clearer answer is: Mum found a bargain at the second-hand shop.",
+        "answerText": "Mum found a bargain at the second-hand shop.",
         "minimalHint": "Say the phrase both ways in your head. Which version makes the meaning clear?"
       }
     },
@@ -2927,7 +2927,7 @@
         "seed": 10612,
         "itemId": "proc2_modal_choice:10612",
         "marks": 1,
-        "promptText": "Choose the modal verb that best fits the meaning: The timetable is fixed. The coach ___ leave at 9 o'clock.",
+        "promptText": "Choose the modal verb that best fits the meaning: This is a rule on the climbing wall. You ___ wear a helmet.",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
@@ -2937,37 +2937,37 @@
               "label": "might"
             },
             {
+              "value": "could",
+              "label": "could"
+            },
+            {
               "value": "should",
               "label": "should"
             },
             {
               "value": "must",
               "label": "must"
-            },
-            {
-              "value": "will",
-              "label": "will"
             }
           ]
         },
         "solutionLines": [
           "Match the modal verb to the meaning: advice, possibility, certainty or obligation.",
-          "'Will' fits a definite future event here.",
-          "The correct answer is: will"
+          "'Must' shows strongest obligation.",
+          "The correct answer is: must"
         ]
       },
       "correctResponse": {
         "answer": "will"
       },
       "correctResult": {
-        "correct": true,
-        "score": 1,
+        "correct": false,
+        "score": 0,
         "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: will. ’Will’ fits a definite future event here.",
-        "answerText": "will",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "misconception": "modal_verb_confusion",
+        "feedbackShort": "Not quite.",
+        "feedbackLong": "The correct answer is: must. ’Must’ shows strongest obligation.",
+        "answerText": "must",
+        "minimalHint": "Compare how certain each modal verb sounds."
       },
       "emptyResult": {
         "correct": false,
@@ -2975,8 +2975,8 @@
         "maxScore": 1,
         "misconception": "modal_verb_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: will. ’Will’ fits a definite future event here.",
-        "answerText": "will",
+        "feedbackLong": "The correct answer is: must. ’Must’ shows strongest obligation.",
+        "answerText": "must",
         "minimalHint": "Compare how certain each modal verb sounds."
       }
     },
@@ -3004,47 +3004,47 @@
         "seed": 10629,
         "itemId": "proc2_formality_choice:10629",
         "marks": 1,
-        "promptText": "Which sentence is most appropriate for a school newsletter?",
+        "promptText": "Which sentence is most suitable for a formal thank-you letter?",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
           "options": [
             {
-              "value": "We are delighted to announce the opening of the new library.",
-              "label": "We are delighted to announce the opening of the new library."
+              "value": "I am writing to express my gratitude for your generous donation.",
+              "label": "I am writing to express my gratitude for your generous donation."
             },
             {
-              "value": "We're so excited about the new library opening!",
-              "label": "We're so excited about the new library opening!"
+              "value": "Thanks so much for the cash you gave us.",
+              "label": "Thanks so much for the cash you gave us."
             },
             {
-              "value": "Guess what – there's a new library starting up.",
-              "label": "Guess what – there's a new library starting up."
+              "value": "Just wanted to say thanks for giving us that money.",
+              "label": "Just wanted to say thanks for giving us that money."
             },
             {
-              "value": "The new library is opening and it's going to be great.",
-              "label": "The new library is opening and it's going to be great."
+              "value": "Cheers for the donation – it was really kind.",
+              "label": "Cheers for the donation – it was really kind."
             }
           ]
         },
         "solutionLines": [
           "Formal writing avoids chatty wording and uses more precise vocabulary.",
-          "Formal register uses measured language rather than informal exclamations.",
-          "The correct answer is: We are delighted to announce the opening of the new library."
+          "Formal thank-you letters use measured expressions rather than chatty abbreviations.",
+          "The correct answer is: I am writing to express my gratitude for your generous donation."
         ]
       },
       "correctResponse": {
         "answer": "We are delighted to announce the opening of the new library."
       },
       "correctResult": {
-        "correct": true,
-        "score": 1,
+        "correct": false,
+        "score": 0,
         "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: We are delighted to announce the opening of the new library.",
-        "answerText": "We are delighted to announce the opening of the new library.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "misconception": "formality_confusion",
+        "feedbackShort": "Not quite.",
+        "feedbackLong": "The correct answer is: I am writing to express my gratitude for your generous donation.",
+        "answerText": "I am writing to express my gratitude for your generous donation.",
+        "minimalHint": "Match the language to a formal setting, not everyday chat."
       },
       "emptyResult": {
         "correct": false,
@@ -3052,8 +3052,8 @@
         "maxScore": 1,
         "misconception": "formality_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: We are delighted to announce the opening of the new library.",
-        "answerText": "We are delighted to announce the opening of the new library.",
+        "feedbackLong": "The correct answer is: I am writing to express my gratitude for your generous donation.",
+        "answerText": "I am writing to express my gratitude for your generous donation.",
         "minimalHint": "Match the language to a formal setting, not everyday chat."
       }
     },
@@ -3438,7 +3438,7 @@
         "seed": 10731,
         "itemId": "proc2_boundary_punctuation_explain:10731",
         "marks": 1,
-        "promptText": "Why is the punctuation in this sentence effective? The tide was rising quickly; the fishermen hauled in their nets.",
+        "promptText": "Why is the punctuation in this sentence effective? The audience clapped loudly; the choir took a bow.",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
@@ -3752,7 +3752,7 @@
         ]
       },
       "correctResponse": {
-        "answer": "Mia smiled because she had found the missing map."
+        "answer": "If the rain starts, go inside the tent."
       },
       "correctResult": {
         "correct": true,
@@ -3760,9 +3760,9 @@
         "maxScore": 2,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: Mia smiled because she had found the missing map.",
-        "answerText": "Mia smiled because she had found the missing map.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "feedbackLong": "A correct answer is: If the rain starts, go inside the tent.",
+        "answerText": "If the rain starts, go inside the tent.",
+        "minimalHint": "A subordinate clause usually depends on the main clause. Ask whether it can stand alone here."
       },
       "emptyResult": {
         "correct": false,
@@ -3801,7 +3801,7 @@
         "seed": 10816,
         "itemId": "proc3_parenthesis_commas_fix:10816",
         "marks": 2,
-        "promptText": "Add commas to show the parenthesis. Ben after a short pause opened the gate.",
+        "promptText": "Add commas to show the parenthesis. The new path believe it or not was finished in a day.",
         "inputSpec": {
           "type": "textarea",
           "label": "Corrected sentence",
@@ -3809,12 +3809,12 @@
         },
         "solutionLines": [
           "Find the extra information that could be lifted out.",
-          "The extra phrase 'after a short pause' is parenthesis, so commas mark it off.",
-          "A correct answer is: Ben, after a short pause, opened the gate."
+          "The phrase 'believe it or not' is an inserted aside adding the speaker's surprise.",
+          "A correct answer is: The new path, believe it or not, was finished in a day."
         ]
       },
       "correctResponse": {
-        "answer": "Ben, after a short pause, opened the gate."
+        "answer": "The new path, believe it or not, was finished in a day."
       },
       "correctResult": {
         "correct": true,
@@ -3822,8 +3822,8 @@
         "maxScore": 2,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: Ben, after a short pause, opened the gate.",
-        "answerText": "Ben, after a short pause, opened the gate.",
+        "feedbackLong": "A correct answer is: The new path, believe it or not, was finished in a day.",
+        "answerText": "The new path, believe it or not, was finished in a day.",
         "minimalHint": "Parenthesis adds extra information that could be lifted out."
       },
       "emptyResult": {
@@ -3832,8 +3832,8 @@
         "maxScore": 2,
         "misconception": "parenthesis_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: Ben, after a short pause, opened the gate.",
-        "answerText": "Ben, after a short pause, opened the gate.",
+        "feedbackLong": "A correct answer is: The new path, believe it or not, was finished in a day.",
+        "answerText": "The new path, believe it or not, was finished in a day.",
         "minimalHint": "Parenthesis adds extra information that could be lifted out."
       }
     },
@@ -3863,7 +3863,7 @@
         "seed": 10833,
         "itemId": "proc3_hyphen_fix_meaning:10833",
         "marks": 2,
-        "promptText": "Rewrite the sentence with a hyphen to make the meaning clear. We saw a man eating shark near the rocks.",
+        "promptText": "Rewrite the sentence with a hyphen to make the meaning clear. We crossed the narrow, fast flowing stream.",
         "inputSpec": {
           "type": "textarea",
           "label": "Corrected sentence",
@@ -3871,12 +3871,12 @@
         },
         "solutionLines": [
           "Find the words that work together as one describing idea before the noun.",
-          "The hyphen shows that the shark eats people.",
-          "A correct answer is: We saw a man-eating shark near the rocks."
+          "The hyphen joins 'fast-flowing' because both words describe the stream together.",
+          "A correct answer is: We crossed the narrow, fast-flowing stream."
         ]
       },
       "correctResponse": {
-        "answer": "We saw a man-eating shark near the rocks."
+        "answer": "We crossed the narrow, fast-flowing stream."
       },
       "correctResult": {
         "correct": true,
@@ -3884,8 +3884,8 @@
         "maxScore": 2,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: We saw a man-eating shark near the rocks.",
-        "answerText": "We saw a man-eating shark near the rocks.",
+        "feedbackLong": "A correct answer is: We crossed the narrow, fast-flowing stream.",
+        "answerText": "We crossed the narrow, fast-flowing stream.",
         "minimalHint": "The grammar idea is close. Check the exact punctuation and wording."
       },
       "emptyResult": {
@@ -3894,8 +3894,8 @@
         "maxScore": 2,
         "misconception": "punctuation_precision",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: We saw a man-eating shark near the rocks.",
-        "answerText": "We saw a man-eating shark near the rocks.",
+        "feedbackLong": "A correct answer is: We crossed the narrow, fast-flowing stream.",
+        "answerText": "We crossed the narrow, fast-flowing stream.",
         "minimalHint": "The grammar idea is close. Check the exact punctuation and wording."
       }
     },

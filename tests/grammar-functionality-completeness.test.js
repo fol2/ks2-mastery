@@ -596,7 +596,7 @@ test('Grammar QG P4 baseline captures the final mixed-transfer denominator', () 
   const baseline = readQgP4Baseline();
   const content = baseline.contentBaseline;
 
-  assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.contentReleaseId, 'grammar-qg-p4-2026-04-28');
   assert.equal(content.conceptCount, 18);
   assert.equal(content.templateCount, 78);
   assert.equal(content.selectedResponseCount, 58);

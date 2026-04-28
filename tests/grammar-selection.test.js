@@ -108,10 +108,10 @@ test('buildGrammarPracticeQueue exports stable weight constants', () => {
 test('buildGrammarPracticeQueue applies generated variant freshness across seeds', () => {
   const templateId = 'qg_formality_classify_table';
   // The baseline queue reaches this generated template at slot 2, whose
-  // candidate seed is base + 2 * 104729. Use a different seed that produces
-  // the same visible variant so the test proves signature freshness, not just
-  // literal seed matching.
-  const recentAttempts = [recentGeneratedAttempt(templateId, 209462, ['formality'])];
+  // candidate seed is base + 2 * 104729 = 209459. Use a different seed that
+  // produces the same visible variant so the test proves signature freshness,
+  // not just literal seed matching.
+  const recentAttempts = [recentGeneratedAttempt(templateId, 2, ['formality'])];
 
   const baseline = buildGrammarPracticeQueue({
     mode: 'smart',
