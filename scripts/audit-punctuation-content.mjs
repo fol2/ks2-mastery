@@ -78,37 +78,176 @@ function thresholdValue(thresholds, key, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
 
-function buildFailures({ validation, generatorFamilies, generatedDuplicates, bySkill, generatedFailures, thresholds }) {
-  const failures = [...validation.errors];
+function thresholdValueForSkill(thresholds, globalKey, bySkillKey, skillId, fallback = 0) {
+  const skillValue = Number(thresholds?.[bySkillKey]?.[skillId]);
+  if (Number.isFinite(skillValue)) return skillValue;
+  return thresholdValue(thresholds, globalKey, fallback);
+}
+
+function failureDetail(code, message, detail = {}) {
+  return {
+    code,
+    message,
+    ...detail,
+  };
+}
+
+function buildFailureDetails({ validation, generatorFamilies, generatedDuplicates, bySkill, generatedFailures, thresholds }) {
+  const failures = validation.errors.map((message) => failureDetail('manifest_validation', message));
   if (thresholds?.requireTemplatesForPublishedFamilies !== false) {
     for (const family of generatorFamilies) {
       if (family.published && family.generatedItemCount === 0) {
-        failures.push(`Published generator family ${family.id} produced no generated items.`);
+        failures.push(failureDetail(
+          'generated_family_empty',
+          `Published generator family ${family.id} produced no generated items.`,
+          {
+            familyId: family.id,
+            skillId: family.skillId,
+            actual: family.generatedItemCount,
+            expected: 1,
+          },
+        ));
       }
     }
   }
+  const minGeneratedItems = thresholdValue(thresholds, 'minGeneratedItemsPerPublishedFamily', 0);
+  const minTemplates = thresholdValue(thresholds, 'minTemplatesPerPublishedFamily', 0);
+  const minSignatures = thresholdValue(thresholds, 'minSignaturesPerPublishedFamily', 0);
+  for (const family of generatorFamilies) {
+    if (!family.published) continue;
+    if (family.generatedItemCount < minGeneratedItems) {
+      failures.push(failureDetail(
+        'generated_family_minimum',
+        `Published generator family ${family.id} has ${family.generatedItemCount} generated items; expected at least ${minGeneratedItems}.`,
+        {
+          familyId: family.id,
+          skillId: family.skillId,
+          actual: family.generatedItemCount,
+          expected: minGeneratedItems,
+        },
+      ));
+    }
+    if (family.templateIds.length < minTemplates) {
+      failures.push(failureDetail(
+        'generated_template_minimum',
+        `Published generator family ${family.id} has ${family.templateIds.length} distinct templates; expected at least ${minTemplates}.`,
+        {
+          familyId: family.id,
+          skillId: family.skillId,
+          actual: family.templateIds.length,
+          expected: minTemplates,
+        },
+      ));
+    }
+    if (family.variantSignatures.length < minSignatures) {
+      failures.push(failureDetail(
+        'generated_signature_minimum',
+        `Published generator family ${family.id} has ${family.variantSignatures.length} distinct signatures; expected at least ${minSignatures}.`,
+        {
+          familyId: family.id,
+          skillId: family.skillId,
+          actual: family.variantSignatures.length,
+          expected: minSignatures,
+        },
+      ));
+    }
+  }
   if (thresholds?.failOnDuplicateGeneratedSignatures && generatedDuplicates.signatures.length) {
-    failures.push(`Duplicate generated variant signatures: ${generatedDuplicates.signatures.length}.`);
+    failures.push(failureDetail(
+      'duplicate_generated_signature',
+      `Duplicate generated variant signatures: ${generatedDuplicates.signatures.length}.`,
+      {
+        duplicateCount: generatedDuplicates.signatures.length,
+        groups: generatedDuplicates.signatures,
+      },
+    ));
   }
   if (thresholds?.failOnDuplicateGeneratedStems && generatedDuplicates.stems.length) {
-    failures.push(`Duplicate generated stems: ${generatedDuplicates.stems.length}.`);
+    failures.push(failureDetail(
+      'duplicate_generated_stem',
+      `Duplicate generated stems: ${generatedDuplicates.stems.length}.`,
+      {
+        duplicateCount: generatedDuplicates.stems.length,
+        groups: generatedDuplicates.stems,
+      },
+    ));
   }
   if (thresholds?.failOnDuplicateGeneratedModels && generatedDuplicates.models.length) {
-    failures.push(`Duplicate generated models: ${generatedDuplicates.models.length}.`);
+    failures.push(failureDetail(
+      'duplicate_generated_model',
+      `Duplicate generated models: ${generatedDuplicates.models.length}.`,
+      {
+        duplicateCount: generatedDuplicates.models.length,
+        groups: generatedDuplicates.models,
+      },
+    ));
   }
   const minGeneratedSignatures = thresholdValue(thresholds, 'minGeneratedSignaturesPerPublishedSkill', 0);
-  const minValidatorCoverage = thresholdValue(thresholds, 'minValidatorCoveragePerPublishedSkill', 0);
   for (const row of bySkill) {
     if (!row.published) continue;
-    if (row.generatedSignatureCount < minGeneratedSignatures) {
-      failures.push(`Published skill ${row.skillId} has ${row.generatedSignatureCount} generated signatures; expected at least ${minGeneratedSignatures}.`);
+    const skillMinGeneratedSignatures = thresholdValueForSkill(
+      thresholds,
+      'minGeneratedSignaturesPerPublishedSkill',
+      'minGeneratedSignaturesBySkill',
+      row.skillId,
+      minGeneratedSignatures,
+    );
+    const skillMinValidatorCoverage = thresholdValueForSkill(
+      thresholds,
+      'minValidatorCoveragePerPublishedSkill',
+      'minValidatorCoverageBySkill',
+      row.skillId,
+      0,
+    );
+    const skillMinFixedItems = thresholdValueForSkill(
+      thresholds,
+      'minFixedItemsPerPublishedSkill',
+      'minFixedItemsBySkill',
+      row.skillId,
+      0,
+    );
+    if (row.generatedSignatureCount < skillMinGeneratedSignatures) {
+      failures.push(failureDetail(
+        'skill_generated_signature_minimum',
+        `Published skill ${row.skillId} has ${row.generatedSignatureCount} generated signatures; expected at least ${skillMinGeneratedSignatures}.`,
+        {
+          skillId: row.skillId,
+          actual: row.generatedSignatureCount,
+          expected: skillMinGeneratedSignatures,
+        },
+      ));
     }
-    if (row.validatorCoverageCount < minValidatorCoverage) {
-      failures.push(`Published skill ${row.skillId} has ${row.validatorCoverageCount} validator-covered runtime items; expected at least ${minValidatorCoverage}.`);
+    if (row.validatorCoverageCount < skillMinValidatorCoverage) {
+      failures.push(failureDetail(
+        'validator_coverage_minimum',
+        `Published skill ${row.skillId} has ${row.validatorCoverageCount} validator-covered runtime items; expected at least ${skillMinValidatorCoverage}.`,
+        {
+          skillId: row.skillId,
+          actual: row.validatorCoverageCount,
+          expected: skillMinValidatorCoverage,
+        },
+      ));
+    }
+    if (row.fixedItemCount < skillMinFixedItems) {
+      failures.push(failureDetail(
+        'fixed_anchor_minimum',
+        `Published skill ${row.skillId} has ${row.fixedItemCount} fixed items; expected at least ${skillMinFixedItems}.`,
+        {
+          skillId: row.skillId,
+          actual: row.fixedItemCount,
+          expected: skillMinFixedItems,
+        },
+      ));
     }
   }
-  for (const failure of generatedFailures) {
-    failures.push(`Generated model answer does not pass marking: ${failure.id} (${failure.familyId}/${failure.templateId}).`);
+  if (thresholds?.requireGeneratedModelAnswersPass !== false) {
+    for (const failure of generatedFailures) {
+      failures.push(failureDetail(
+        'generated_model_marking',
+        `Generated model answer does not pass marking: ${failure.id} (${failure.familyId}/${failure.templateId}).`,
+        failure,
+      ));
+    }
   }
   return failures;
 }
@@ -175,7 +314,7 @@ export function runPunctuationContentAudit({
     signatures: groupDuplicates(generatedItems, (item) => item.variantSignature || ''),
   };
   const generatedFailures = generatedModelFailures(generatedItems);
-  const failures = buildFailures({
+  const failureDetails = buildFailureDetails({
     validation,
     generatorFamilies,
     generatedDuplicates,
@@ -183,10 +322,12 @@ export function runPunctuationContentAudit({
     generatedFailures,
     thresholds,
   });
+  const failures = failureDetails.map((failure) => failure.message);
 
   return {
     ok: failures.length === 0,
     failures,
+    failureDetails,
     seed,
     generatedPerFamily,
     summary: {
@@ -215,11 +356,18 @@ export function formatPunctuationContentAudit(audit) {
     `generated items: ${audit.summary.generatedItemCount}`,
     `runtime items: ${audit.summary.runtimeItemCount}`,
     `published reward units: ${audit.summary.publishedRewardUnitCount}`,
+    `generated duplicate signatures: ${audit.duplicates.generated.signatures.length}`,
+    `generated duplicate stems: ${audit.duplicates.generated.stems.length}`,
+    `generated duplicate models: ${audit.duplicates.generated.models.length}`,
     '',
     'Per-skill coverage:',
   ];
   for (const row of audit.bySkill) {
     lines.push(`- ${row.skillId}: fixed=${row.fixedItemCount}, generated=${row.generatedItemCount}, signatures=${row.generatedSignatureCount}, modes=${row.modeCoverage.join('|') || 'none'}, readiness=${row.readinessCoverage.join('|') || 'none'}, validators=${row.validatorCoverageCount}`);
+  }
+  lines.push('', 'Per-family generated coverage:');
+  for (const row of audit.generatorFamilies) {
+    lines.push(`- ${row.id}: generated=${row.generatedItemCount}, templates=${row.templateIds.length}, signatures=${row.variantSignatures.length}`);
   }
   if (audit.failures.length) {
     lines.push('', 'Failures:');
@@ -234,13 +382,80 @@ function parseArgs(argv) {
     const index = argv.indexOf(name);
     return index >= 0 && index + 1 < argv.length ? argv[index + 1] : fallback;
   };
+  const numberAfter = (name, fallback) => {
+    const index = argv.indexOf(name);
+    if (index < 0 || index + 1 >= argv.length) return fallback;
+    const value = Number(argv[index + 1]);
+    return Number.isFinite(value) ? value : fallback;
+  };
+  const mapAfter = (name) => Object.fromEntries(String(valueAfter(name, '') || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [key, rawValue] = entry.split('=');
+      return [key, Number(rawValue)];
+    })
+    .filter(([key, value]) => key && Number.isFinite(value)));
   return {
     json: args.has('--json'),
     strict: args.has('--strict'),
     failOnDuplicateGeneratedSignatures: args.has('--fail-on-duplicate-generated-signatures')
       || args.has('--fail-on-duplicate-generated-content'),
     failOnDuplicateGeneratedContent: args.has('--fail-on-duplicate-generated-content'),
-    generatedPerFamily: Number(valueAfter('--generated-per-family', 1)) || 1,
+    generatedPerFamily: numberAfter('--generated-per-family', 1) || 1,
+    minGeneratedItemsPerPublishedFamily: numberAfter('--min-generated-per-family', null),
+    minTemplatesPerPublishedFamily: numberAfter('--min-templates-per-family', null),
+    minSignaturesPerPublishedFamily: numberAfter('--min-signatures-per-family', null),
+    minGeneratedSignaturesPerPublishedSkill: numberAfter('--min-generated-signatures-per-skill', null),
+    minValidatorCoveragePerPublishedSkill: numberAfter('--min-validator-coverage-per-skill', null),
+    minFixedItemsPerPublishedSkill: numberAfter('--min-fixed-items-per-skill', null),
+    minGeneratedSignaturesBySkill: mapAfter('--min-generated-signatures-by-skill'),
+    minValidatorCoverageBySkill: mapAfter('--min-validator-coverage-by-skill'),
+    minFixedItemsBySkill: mapAfter('--min-fixed-items-by-skill'),
+  };
+}
+
+function optionalThresholds(args) {
+  return Object.fromEntries([
+    ['minGeneratedItemsPerPublishedFamily', args.minGeneratedItemsPerPublishedFamily],
+    ['minTemplatesPerPublishedFamily', args.minTemplatesPerPublishedFamily],
+    ['minSignaturesPerPublishedFamily', args.minSignaturesPerPublishedFamily],
+    ['minGeneratedSignaturesPerPublishedSkill', args.minGeneratedSignaturesPerPublishedSkill],
+    ['minValidatorCoveragePerPublishedSkill', args.minValidatorCoveragePerPublishedSkill],
+    ['minFixedItemsPerPublishedSkill', args.minFixedItemsPerPublishedSkill],
+  ].filter(([, value]) => Number.isFinite(value)));
+}
+
+function cliThresholds(args) {
+  const strictThresholds = args.strict
+    ? {
+        failOnDuplicateGeneratedSignatures: true,
+        failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
+        failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
+        minGeneratedItemsPerPublishedFamily: args.generatedPerFamily,
+        minTemplatesPerPublishedFamily: args.generatedPerFamily,
+        minSignaturesPerPublishedFamily: args.generatedPerFamily,
+        minGeneratedSignaturesPerPublishedSkill: 1,
+        minValidatorCoveragePerPublishedSkill: 1,
+      }
+    : {
+        failOnDuplicateGeneratedSignatures: args.failOnDuplicateGeneratedSignatures,
+        failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
+        failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
+      };
+  return {
+    ...strictThresholds,
+    ...optionalThresholds(args),
+    ...(Object.keys(args.minGeneratedSignaturesBySkill).length
+      ? { minGeneratedSignaturesBySkill: args.minGeneratedSignaturesBySkill }
+      : {}),
+    ...(Object.keys(args.minValidatorCoverageBySkill).length
+      ? { minValidatorCoverageBySkill: args.minValidatorCoverageBySkill }
+      : {}),
+    ...(Object.keys(args.minFixedItemsBySkill).length
+      ? { minFixedItemsBySkill: args.minFixedItemsBySkill }
+      : {}),
   };
 }
 
@@ -248,19 +463,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const audit = runPunctuationContentAudit({
     generatedPerFamily: args.generatedPerFamily,
-    thresholds: args.strict
-      ? {
-          failOnDuplicateGeneratedSignatures: true,
-          failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
-          failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
-          minGeneratedSignaturesPerPublishedSkill: 1,
-          minValidatorCoveragePerPublishedSkill: 1,
-        }
-      : {
-          failOnDuplicateGeneratedSignatures: args.failOnDuplicateGeneratedSignatures,
-          failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
-          failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
-        },
+    thresholds: cliThresholds(args),
   });
   process.stdout.write(args.json
     ? `${JSON.stringify(audit, null, 2)}\n`

@@ -1,0 +1,46 @@
+# P2-U1: Punctuation content audit on every PR.
+#
+# Plan: docs/plans/2026-04-28-002-feat-punctuation-qg-p2-depth-release-gate-plan.md
+#
+# Runs the deterministic Punctuation content audit as its own PR gate.
+# This uses the current-compatible generated-per-family depth of 4; later
+# P2 units can activate stricter fixed-anchor thresholds once the authored
+# fixed content has landed.
+#
+# Security posture:
+#  - `permissions: contents: read` only.
+#  - No Cloudflare credentials are required or configured.
+
+name: Punctuation Content Audit (PR)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: punctuation-content-audit-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: npm run audit:punctuation-content
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run Punctuation content audit
+        run: npm run audit:punctuation-content -- --strict --generated-per-family 4
