@@ -6,6 +6,11 @@ import {
   isSectionEmpty,
   formatBundleTimestamp,
 } from '../../platform/hubs/admin-debug-bundle-panel.js';
+import {
+  COPY_AUDIENCE,
+  prepareSafeCopy,
+  copyToClipboard,
+} from '../../platform/hubs/admin-safe-copy.js';
 
 // U8 (P4): Debug Bundle panel — extracted from AdminDebuggingSection.jsx.
 // Contains DebugBundlePanel + DebugBundleSectionTable + DebugBundleResult.
@@ -21,11 +26,11 @@ function DebugBundleSectionTable({ label, rows, columns }) {
     return <p className="small muted">No data.</p>;
   }
   return (
-    <table className="small" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 4 }}>
+    <table className="small admin-bundle-table">
       <thead>
         <tr>
           {columns.map((col) => (
-            <th key={col.key} style={{ textAlign: 'left', padding: '2px 6px' }}>{col.label}</th>
+            <th key={col.key} className="admin-bundle-th">{col.label}</th>
           ))}
         </tr>
       </thead>
@@ -49,8 +54,8 @@ function DebugBundleResult({ bundleData }) {
   const bundle = bundleData.bundle || {};
 
   return (
-    <div data-testid="debug-bundle-result" style={{ marginTop: 12 }}>
-      <div className="small muted" style={{ marginBottom: 8 }}>
+    <div data-testid="debug-bundle-result" className="admin-bundle-result-spaced">
+      <div className="small muted admin-bundle-meta">
         Generated: {formatBundleTimestamp(bundle.generatedAt)}
         {bundle.buildHash ? ` · Build: ${String(bundle.buildHash).slice(0, 7)}` : ''}
       </div>
@@ -60,13 +65,13 @@ function DebugBundleResult({ bundleData }) {
         const isEmpty = isSectionEmpty(bundle, sectionKey);
         const value = bundle[sectionKey];
         return (
-          <details key={sectionKey} data-testid={`bundle-section-${sectionKey}`} style={{ marginBottom: 8 }}>
-            <summary className="small" style={{ cursor: 'pointer', fontWeight: 600 }}>
+          <details key={sectionKey} data-testid={`bundle-section-${sectionKey}`} className="admin-bundle-section-details">
+            <summary className="small admin-bundle-section-summary">
               {label} {isEmpty ? <span className="muted">(empty)</span> : null}
             </summary>
-            <div style={{ padding: '4px 0 4px 12px' }}>
+            <div className="admin-bundle-section-body">
               {sectionKey === 'accountSummary' && value ? (
-                <dl className="small" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: 2 }}>
+                <dl className="small admin-bundle-account-dl">
                   <dt className="muted">Account ID</dt><dd>{value.accountId || '—'}</dd>
                   <dt className="muted">Email</dt><dd>{value.email || '—'}</dd>
                   <dt className="muted">Name</dt><dd>{value.displayName || '—'}</dd>
@@ -194,30 +199,24 @@ export function DebugBundlePanel({ model, actions }) {
 
   const copyJson = async () => {
     if (!canExportJson || !bundleData?.bundle) return;
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(bundleData.bundle, null, 2));
-      setCopyFeedback('JSON copied');
-      setTimeout(() => setCopyFeedback(''), 2000);
-    } catch {
-      setCopyFeedback('Copy failed');
-      setTimeout(() => setCopyFeedback(''), 2000);
-    }
+    const prepared = prepareSafeCopy(bundleData.bundle, COPY_AUDIENCE.ADMIN_ONLY);
+    if (!prepared.ok) { setCopyFeedback('Nothing to copy'); setTimeout(() => setCopyFeedback(''), 2000); return; }
+    const result = await copyToClipboard(prepared.text);
+    setCopyFeedback(result.ok ? 'JSON copied' : 'Copy failed');
+    setTimeout(() => setCopyFeedback(''), 2000);
   };
 
   const copySummary = async () => {
     if (!humanSummary) return;
-    try {
-      await navigator.clipboard.writeText(humanSummary);
-      setCopyFeedback('Summary copied');
-      setTimeout(() => setCopyFeedback(''), 2000);
-    } catch {
-      setCopyFeedback('Copy failed');
-      setTimeout(() => setCopyFeedback(''), 2000);
-    }
+    const prepared = prepareSafeCopy(humanSummary, COPY_AUDIENCE.PARENT_SAFE);
+    if (!prepared.ok) { setCopyFeedback('Nothing to copy'); setTimeout(() => setCopyFeedback(''), 2000); return; }
+    const result = await copyToClipboard(prepared.text);
+    setCopyFeedback(result.ok ? 'Summary copied' : 'Copy failed');
+    setTimeout(() => setCopyFeedback(''), 2000);
   };
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-testid="debug-bundle-panel">
+    <section className="card admin-card-spaced" data-testid="debug-bundle-panel">
       <PanelHeader
         eyebrow="Debug tools"
         title="Debug Bundle"
@@ -227,8 +226,7 @@ export function DebugBundlePanel({ model, actions }) {
       />
 
       <div
-        className="filters"
-        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        className="filters admin-filters-grid"
         data-testid="debug-bundle-search-form"
       >
         <label className="field">
@@ -261,7 +259,7 @@ export function DebugBundlePanel({ model, actions }) {
         </label>
       </div>
 
-      <div className="chip-row" style={{ marginTop: 10 }}>
+      <div className="chip-row admin-bundle-gen-actions">
         <button className="btn" type="button" disabled={loading} onClick={generateBundle} data-testid="bundle-generate-btn">
           {loading ? 'Generating...' : 'Generate Debug Bundle'}
         </button>
@@ -281,13 +279,13 @@ export function DebugBundlePanel({ model, actions }) {
       </div>
 
       {error && !bundleData ? (
-        <div className="feedback warn" style={{ marginTop: 10 }} data-testid="debug-bundle-error">
+        <div className="feedback warn admin-bundle-error-spaced" data-testid="debug-bundle-error">
           {typeof error === 'string' ? error : 'Failed to generate debug bundle.'}
         </div>
       ) : null}
 
       {!bundleData && !loading && !error ? (
-        <p className="small muted" style={{ marginTop: 10 }} data-testid="debug-bundle-empty-state">
+        <p className="small muted admin-bundle-empty" data-testid="debug-bundle-empty-state">
           Enter search criteria and click Generate to create a debug evidence bundle.
         </p>
       ) : null}

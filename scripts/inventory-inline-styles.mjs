@@ -230,9 +230,12 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // The U8 invariant (POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR)
 // is preserved by raising PRE_MIGRATION_TOTAL by the same 72; the new panels
 // remain `shared-pattern-available` candidates for a future migration slice.
+//
+// P5-U11: Migrated 34 inline styles (21 AdminMarketingSection + 13 AdminDebugBundlePanel)
+// to CSS classes. Only dynamic-content-driven styles remain (1 each).
 export const PRE_MIGRATION_TOTAL = 418;
-export const SITES_MIGRATED_THIS_PR = 155;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 263
+export const SITES_MIGRATED_THIS_PR = 189;
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 229
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';

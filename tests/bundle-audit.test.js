@@ -22,6 +22,10 @@ import {
   canonicalIdentityPageUrl,
 } from '../scripts/lib/seo-identity-pages.mjs';
 import {
+  INTENT_SEO_PAGES,
+  canonicalIntentPageUrl,
+} from '../scripts/lib/seo-intent-pages.mjs';
+import {
   crawlerPolicyFailures,
   isCrawlerPathAllowed,
   parseRobotsGroups,
@@ -750,6 +754,9 @@ function seoAuditRootHtml({ omitCanonical = false } = {}) {
     '<p>Spelling practice for KS2 word confidence</p>',
     '<p>Grammar practice for sentence-level accuracy</p>',
     '<p>Punctuation practice for clearer written English</p>',
+    '<a href="/ks2-apostrophes-practice/">KS2 apostrophes practice online</a>',
+    '<a href="/year-5-spelling-practice/">Year 5 spelling practice online</a>',
+    '<a href="/help-child-ks2-grammar-at-home/">Help your child with KS2 grammar at home</a>',
     '<a href="/about/">About KS2 Mastery</a></main>',
     '<script type="module" src="/src/bundles/app.bundle.js?v=test"></script>',
     '</body></html>',
@@ -774,6 +781,7 @@ function seoAuditPracticePageHtml(page, { omitCanonical = false, forbiddenToken 
     ...page.points.map((point) => `<li>${point}</li>`),
     '</ul>',
     forbiddenToken ? `<p>${forbiddenToken}</p>` : '',
+    ...(page.relatedLinks || []).map((link) => `<a href="${link.href}">${link.label}</a>`),
     '<a href="/demo">Try demo</a>',
     '<a href="/about/">About KS2 Mastery</a>',
     '<a href="/">KS2 Mastery home</a>',
@@ -804,7 +812,35 @@ function seoAuditIdentityPageHtml(page, { forbiddenToken = '' } = {}) {
     '<a href="/ks2-spelling-practice/">KS2 spelling practice online</a>',
     '<a href="/ks2-grammar-practice/">KS2 grammar practice online</a>',
     '<a href="/ks2-punctuation-practice/">KS2 punctuation practice online</a>',
+    ...INTENT_SEO_PAGES.map((intentPage) => `<a href="/${intentPage.slug}/">${intentPage.heading}</a>`),
     '<a href="/demo">Try demo</a>',
+    '</main>',
+    '</body></html>',
+  ].join('');
+}
+
+function seoAuditIntentPageHtml(page, { forbiddenToken = '' } = {}) {
+  const canonicalUrl = canonicalIntentPageUrl(page);
+  return [
+    '<!doctype html><html lang="en-GB"><head>',
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}" />`,
+    `<link rel="canonical" href="${canonicalUrl}" />`,
+    `<meta property="og:title" content="${page.title}" />`,
+    `<meta property="og:description" content="${page.description}" />`,
+    `<meta property="og:url" content="${canonicalUrl}" />`,
+    '<meta name="twitter:card" content="summary" />',
+    '</head><body>',
+    `<main><h1>${page.heading}</h1>`,
+    `<p>${page.intro}</p>`,
+    `<p>${page.lane}</p>`,
+    '<ul>',
+    ...page.points.map((point) => `<li>${point}</li>`),
+    '</ul>',
+    forbiddenToken ? `<p>${forbiddenToken}</p>` : '',
+    ...(page.relatedLinks || []).map((link) => `<a href="${link.href}">${link.label}</a>`),
+    '<a href="/demo">Try demo</a>',
+    '<a href="/">KS2 Mastery home</a>',
     '</main>',
     '</body></html>',
   ].join('');
@@ -820,11 +856,17 @@ function seoAuditLlmsTxt({ forbiddenToken = '' } = {}) {
     '- https://ks2.eugnel.uk/',
     ...IDENTITY_SEO_PAGES.map((page) => `- ${canonicalIdentityPageUrl(page)}`),
     ...PRACTICE_SEO_PAGES.map((page) => `- ${canonicalPracticePageUrl(page)}`),
+    ...INTENT_SEO_PAGES.map((page) => `- ${canonicalIntentPageUrl(page)}`),
     '',
     'Current subject coverage:',
     '- KS2 spelling practice for word confidence and recall',
     '- KS2 grammar practice for sentence-level accuracy',
     '- KS2 punctuation practice for clearer written English',
+    '',
+    'Focused public practice pages:',
+    '- KS2 apostrophes practice for contractions and possession',
+    '- Year 5 spelling practice for word confidence and recall',
+    '- KS2 grammar help at home for supporting adults',
     '',
     'Product notes:',
     '- Private learner progress, account state, operator tools and generated content stores are not public SEO content.',
@@ -869,6 +911,20 @@ function createSeoAuditStubServer(options = {}) {
         }
         write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditIdentityPageHtml(page, {
           forbiddenToken: options.identityForbiddenTokenSlug === page.slug
+            ? 'OPENAI_API_KEY'
+            : '',
+        }));
+        return;
+      }
+    }
+    for (const page of INTENT_SEO_PAGES) {
+      if (url === `/${page.slug}/`) {
+        if (options.intentFallbackSlug === page.slug) {
+          write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml());
+          return;
+        }
+        write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditIntentPageHtml(page, {
+          forbiddenToken: options.intentForbiddenTokenSlug === page.slug
             ? 'OPENAI_API_KEY'
             : '',
         }));
@@ -931,6 +987,9 @@ function createSeoAuditStubServer(options = {}) {
         ...IDENTITY_SEO_PAGES
           .filter((page) => page.slug !== options.omitSitemapIdentitySlug)
           .map((page) => canonicalIdentityPageUrl(page)),
+        ...INTENT_SEO_PAGES
+          .filter((page) => page.slug !== options.omitSitemapIntentSlug)
+          .map((page) => canonicalIntentPageUrl(page)),
       ];
       if (options.sitemapForbiddenPath) {
         sitemapUrls.push(`https://ks2.eugnel.uk${options.sitemapForbiddenPath}`);
@@ -1046,7 +1105,7 @@ test('production bundle audit passes with SEO root, robots, and sitemap resource
       timeout: 8000,
     });
     assert.match(stdout, /Production bundle audit passed/);
-    assert.match(stdout, /cache-split checks: 12\/12/);
+    assert.match(stdout, /cache-split checks: 15\/15/);
   } finally {
     await closeServer(server);
   }
@@ -1152,6 +1211,56 @@ test('production bundle audit fails when the about page is SPA fallback HTML', a
   }
 });
 
+test('production bundle audit fails when an intent page is SPA fallback HTML', async () => {
+  const server = createSeoAuditStubServer({ intentFallbackSlug: 'ks2-apostrophes-practice' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production SEO page \/ks2-apostrophes-practice\/ appears to be the root SPA shell/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when an intent page leaks forbidden deployed text', async () => {
+  const server = createSeoAuditStubServer({ intentForbiddenTokenSlug: 'year-5-spelling-practice' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production SEO page \/year-5-spelling-practice\/ includes forbidden deployed token: OPENAI_API_KEY/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('production bundle audit fails when llms.txt is SPA fallback HTML or leaks private text', async () => {
   const fallbackServer = createSeoAuditStubServer({ llmsFallback: true });
   await new Promise((resolve) => fallbackServer.listen(0, '127.0.0.1', resolve));
@@ -1222,6 +1331,29 @@ test('production bundle audit fails when sitemap misses or leaks practice-page U
     });
   } finally {
     await closeServer(missingServer);
+  }
+
+  const missingIntentServer = createSeoAuditStubServer({ omitSitemapIntentSlug: 'ks2-apostrophes-practice' });
+  await new Promise((resolve) => missingIntentServer.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = missingIntentServer.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production sitemap.xml is missing required token: <loc>https:\/\/ks2\.eugnel\.uk\/ks2-apostrophes-practice\/<\/loc>/);
+      return true;
+    });
+  } finally {
+    await closeServer(missingIntentServer);
   }
 
   const leakServer = createSeoAuditStubServer({ sitemapForbiddenPath: '/demo' });

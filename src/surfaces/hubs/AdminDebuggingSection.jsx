@@ -18,6 +18,12 @@ import { LearnerSupportPanel } from './AdminLearnerSupportPanel.jsx';
 //
 // This file is now a thin composition shell that preserves the original
 // prop contract: { model, appState, hubState, accessContext, accountDirectory, actions }.
+//
+// P5 U1: AdminPanelFrame adopted in Overview section. Debugging panels
+// retain their own internal card/PanelHeader rendering (they have complex
+// headerExtras with filter UIs that don't compose cleanly with the frame
+// wrapper). Frame adoption for these panels requires internal refactoring
+// to accept frame props — deferred to a follow-up unit.
 
 export function AdminDebuggingSection({ model, appState, accessContext, actions }) {
   return (

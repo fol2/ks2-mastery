@@ -49,11 +49,11 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `shared-pattern-available` | 150 |
+| `shared-pattern-available` | 116 |
 | `dynamic-content-driven` | 108 |
 | `css-var-ready` | 3 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **263** |
+| **TOTAL** | **229** |
 
 ## Per-file inventory
 
@@ -61,10 +61,10 @@ Future migration PRs should:
 | --- | --- | --- | --- |
 | `src/subjects/punctuation/components/PunctuationSessionScene.jsx` | 27 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/AdminErrorTimelinePanel.jsx` | 23 | `shared-pattern-available` | no |
-| `src/surfaces/hubs/AdminMarketingSection.jsx` | 22 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminMarketingSection.jsx` | 1 | `shared-pattern-available` | yes |
 | `src/subjects/punctuation/components/PunctuationSummaryScene.jsx` | 20 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/MonsterEffectCatalogPanel.jsx` | 19 | `shared-pattern-available` | no |
-| `src/surfaces/hubs/AdminDebugBundlePanel.jsx` | 14 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminDebugBundlePanel.jsx` | 1 | `shared-pattern-available` | yes |
 | `src/surfaces/hubs/AdminLearnerSupportPanel.jsx` | 12 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterEffectBindingsPanel.jsx` | 12 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterVisualConfigPanel.jsx` | 10 | `dynamic-content-driven` | no |

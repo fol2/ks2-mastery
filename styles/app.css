@@ -381,6 +381,19 @@ textarea:focus-visible {
   margin-top: 24px;
 }
 
+.intent-public-lane {
+  display: inline-flex;
+  margin: 18px 0 0;
+  color: var(--brand);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.intent-public-links,
+.practice-public-related {
+  margin-top: 22px;
+}
+
 .practice-public-actions {
   margin-top: 24px;
 }
@@ -11642,6 +11655,78 @@ html { scroll-behavior: smooth; }
 
 .admin-bundle-gen-actions {
   margin-top: 10px;
+}
+
+/* -- marketing section patterns ------------------------------------------- */
+
+.admin-marketing-body-preview {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.admin-marketing-confirm-wrap {
+  margin-bottom: 12px;
+  padding: 16px;
+}
+
+.admin-marketing-confirm-text {
+  margin: 8px 0;
+}
+
+.admin-marketing-confirm-meta {
+  margin: 4px 0 12px;
+}
+
+.admin-marketing-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-marketing-form {
+  margin-bottom: 16px;
+}
+
+.admin-marketing-form-feedback {
+  margin-bottom: 8px;
+}
+
+.admin-marketing-form-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.admin-marketing-form-grid-full {
+  grid-column: 1 / -1;
+}
+
+.admin-marketing-form-submit {
+  margin-top: 12px;
+}
+
+.admin-marketing-feedback-spaced {
+  margin-bottom: 12px;
+}
+
+.admin-marketing-detail-body {
+  margin-bottom: 12px;
+}
+
+.admin-marketing-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-marketing-transition-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-marketing-row-pointer {
+  cursor: pointer;
 }
 
 /* -- occurrence timeline -------------------------------------------------- */

@@ -2,6 +2,7 @@ import { runClientBundleAudit } from './audit-client-bundle.mjs';
 import { createDemoSession, loadBootstrap } from './lib/production-smoke.mjs';
 import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from './lib/seo-practice-pages.mjs';
 import { IDENTITY_SEO_PAGES, canonicalIdentityPageUrl } from './lib/seo-identity-pages.mjs';
+import { INTENT_SEO_PAGES, canonicalIntentPageUrl } from './lib/seo-intent-pages.mjs';
 import { crawlerPolicyFailures } from './lib/seo-crawler-policy.mjs';
 import { FORBIDDEN_KEYS_EVERYWHERE } from '../tests/helpers/forbidden-keys.mjs';
 
@@ -15,6 +16,7 @@ function seoPublicPaths() {
     '/',
     ...PRACTICE_SEO_PAGES.map((page) => `/${page.slug}/`),
     ...IDENTITY_SEO_PAGES.map((page) => `/${page.slug}/`),
+    ...INTENT_SEO_PAGES.map((page) => `/${page.slug}/`),
   ];
 }
 
@@ -23,6 +25,7 @@ function seoSitemapLocs() {
     SEO_CANONICAL_ROOT,
     ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
     ...IDENTITY_SEO_PAGES.map((page) => canonicalIdentityPageUrl(page)),
+    ...INTENT_SEO_PAGES.map((page) => canonicalIntentPageUrl(page)),
   ];
 }
 
@@ -184,6 +187,9 @@ function assertSeoRootHtml(index, failures) {
     'Spelling practice for KS2 word confidence',
     'Grammar practice for sentence-level accuracy',
     'Punctuation practice for clearer written English',
+    'href="/ks2-apostrophes-practice/"',
+    'href="/year-5-spelling-practice/"',
+    'href="/help-child-ks2-grammar-at-home/"',
     'href="/about/"',
   ];
   for (const token of requiredTokens) {
@@ -241,6 +247,7 @@ function assertSeoPracticePageHtml(page, response, failures) {
     'About KS2 Mastery',
     'href="/about/"',
     ...page.points,
+    ...(page.relatedLinks || []).flatMap((link) => [`href="${link.href}"`, link.label]),
   ]) {
     if (!response.text.includes(token)) {
       failures.push(`Production SEO page ${path} is missing required token: ${token}`);
@@ -293,6 +300,7 @@ function assertSeoIdentityPageHtml(page, response, failures) {
     'href="/ks2-spelling-practice/"',
     'href="/ks2-grammar-practice/"',
     'href="/ks2-punctuation-practice/"',
+    ...INTENT_SEO_PAGES.map((intentPage) => `href="/${intentPage.slug}/"`),
     'href="/demo"',
   ]) {
     if (!response.text.includes(token)) {
@@ -319,6 +327,92 @@ async function assertSeoIdentityPages(base, failures) {
   }
 }
 
+function assertSeoIntentPageHtml(page, response, failures) {
+  const path = `/${page.slug}/`;
+  const canonicalUrl = canonicalIntentPageUrl(page);
+  if (response.status < 200 || response.status >= 300) {
+    failures.push(`Production SEO page ${path} fetch failed: ${response.status} ${response.url}`);
+    return;
+  }
+  if (!/text\/html/i.test(response.contentType)) {
+    failures.push(`Production SEO page ${path} expected text/html, got: ${response.contentType || 'absent'}`);
+  }
+  if (
+    response.text.includes('<title>KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice</title>')
+    || response.text.includes(`<link rel="canonical" href="${SEO_CANONICAL_ROOT}"`)
+    || response.text.includes('app.bundle.js')
+    || response.text.includes('id="app"')
+  ) {
+    failures.push(`Production SEO page ${path} appears to be the root SPA shell, not page-specific public HTML.`);
+  }
+  for (const token of [
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}"`,
+    `<link rel="canonical" href="${canonicalUrl}"`,
+    `<meta property="og:url" content="${canonicalUrl}"`,
+    `<h1>${page.heading}</h1>`,
+    page.intro,
+    page.lane,
+    '/demo',
+    'KS2 Mastery home',
+    ...page.points,
+    ...(page.relatedLinks || []).flatMap((link) => [`href="${link.href}"`, link.label]),
+  ]) {
+    if (!response.text.includes(token)) {
+      failures.push(`Production SEO page ${path} is missing required token: ${token}`);
+    }
+  }
+  for (const forbiddenToken of ['application/ld+json', '<script']) {
+    if (response.text.includes(forbiddenToken)) {
+      failures.push(`Production SEO page ${path} must remain static and script-free; found token: ${forbiddenToken}`);
+    }
+  }
+  for (const overclaim of ['guaranteed', 'full curriculum', 'AI tutor', 'exam results']) {
+    if (response.text.toLowerCase().includes(overclaim.toLowerCase())) {
+      failures.push(`Production SEO page ${path} must not overclaim with token: ${overclaim}`);
+    }
+  }
+  if (page.slug === 'ks2-apostrophes-practice') {
+    for (const token of ['contractions', 'possession']) {
+      if (!response.text.includes(token)) {
+        failures.push(`Production SEO page ${path} is missing apostrophe topic token: ${token}`);
+      }
+    }
+    for (const internalToken of ['apostrophe_contractions', 'apostrophe_possession', 'generator']) {
+      if (response.text.includes(internalToken)) {
+        failures.push(`Production SEO page ${path} must not expose internal apostrophe token: ${internalToken}`);
+      }
+    }
+  }
+  if (page.slug === 'year-5-spelling-practice') {
+    for (const wordListClaim of ['complete official word list', 'statutory word list', 'complete word list']) {
+      if (response.text.toLowerCase().includes(wordListClaim)) {
+        failures.push(`Production SEO page ${path} must not claim a complete official word list: ${wordListClaim}`);
+      }
+    }
+  }
+  if (page.slug === 'help-child-ks2-grammar-at-home') {
+    for (const token of ['supporting adults', 'at home']) {
+      if (!response.text.includes(token)) {
+        failures.push(`Production SEO page ${path} is missing parent-support token: ${token}`);
+      }
+    }
+    for (const privateToken of ['parent hub', 'learner records', 'analytics']) {
+      if (response.text.toLowerCase().includes(privateToken)) {
+        failures.push(`Production SEO page ${path} must not expose private parent-support token: ${privateToken}`);
+      }
+    }
+  }
+  assertNoForbiddenText(`Production SEO page ${path}`, response.text, failures);
+}
+
+async function assertSeoIntentPages(base, failures) {
+  for (const page of INTENT_SEO_PAGES) {
+    const response = await fetchText(new URL(`/${page.slug}/`, base).href);
+    assertSeoIntentPageHtml(page, response, failures);
+  }
+}
+
 function assertSeoLlmsText(response, failures) {
   const path = '/llms.txt';
   if (response.status < 200 || response.status >= 300) {
@@ -336,9 +430,13 @@ function assertSeoLlmsText(response, failures) {
     SEO_CANONICAL_ROOT,
     ...IDENTITY_SEO_PAGES.map((page) => canonicalIdentityPageUrl(page)),
     ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+    ...INTENT_SEO_PAGES.map((page) => canonicalIntentPageUrl(page)),
     'KS2 spelling',
     'KS2 grammar',
     'KS2 punctuation',
+    'KS2 apostrophes practice',
+    'Year 5 spelling practice',
+    'KS2 grammar help at home',
     'Private learner progress, account state, operator tools and generated content stores are not public SEO content',
   ]) {
     if (!response.text.includes(token)) {
@@ -536,6 +634,7 @@ async function auditProduction(origin) {
   await assertSeoDiscoveryResources(base, failures);
   await assertSeoPracticePages(base, failures);
   await assertSeoIdentityPages(base, failures);
+  await assertSeoIntentPages(base, failures);
   assertSeoLlmsText(await fetchText(new URL('/llms.txt', base).href), failures);
 
   const scripts = scriptSources(index.text)
@@ -758,6 +857,11 @@ async function auditProduction(origin) {
       expected: 'no-store',
     })),
     ...IDENTITY_SEO_PAGES.map((page) => ({
+      path: `/${page.slug}/`,
+      label: `${page.slug} SEO page`,
+      expected: 'no-store',
+    })),
+    ...INTENT_SEO_PAGES.map((page) => ({
       path: `/${page.slug}/`,
       label: `${page.slug} SEO page`,
       expected: 'no-store',

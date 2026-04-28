@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { computeInlineScriptHashes } from './compute-inline-script-hash.mjs';
 import { PRACTICE_SEO_PAGES, renderPracticeSeoPage } from './lib/seo-practice-pages.mjs';
 import { IDENTITY_SEO_PAGES, renderIdentitySeoPage } from './lib/seo-identity-pages.mjs';
+import { INTENT_SEO_PAGES, renderIntentSeoPage } from './lib/seo-intent-pages.mjs';
 
 const rootDir = process.cwd();
 const outputDir = path.join(rootDir, 'dist', 'public');
@@ -146,6 +147,11 @@ try {
     const pageDir = path.join(tmpDir, page.slug);
     await mkdir(pageDir, { recursive: true });
     await writeFile(path.join(pageDir, 'index.html'), renderIdentitySeoPage(page), 'utf8');
+  }
+  for (const page of INTENT_SEO_PAGES) {
+    const pageDir = path.join(tmpDir, page.slug);
+    await mkdir(pageDir, { recursive: true });
+    await writeFile(path.join(pageDir, 'index.html'), renderIntentSeoPage(page), 'utf8');
   }
 
   await rm(outputDir, { recursive: true, force: true });
