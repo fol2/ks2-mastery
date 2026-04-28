@@ -11430,6 +11430,14 @@ html { scroll-behavior: smooth; }
   margin-bottom: 20px;
 }
 
+.admin-panel-frame-feedback {
+  margin-bottom: 12px;
+}
+
+.admin-panel-frame-placeholder {
+  padding: 16px 0;
+}
+
 .admin-section-title {
   font-size: 1.2rem;
 }
