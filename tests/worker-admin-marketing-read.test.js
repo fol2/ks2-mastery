@@ -369,3 +369,43 @@ test('active-messages soft-fails open when the marketing table is not migrated',
     server.close();
   }
 });
+
+test('admin marketing list soft-fails open when the marketing table is not migrated', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedCore(server, 1000);
+    server.DB.db.exec('DROP TABLE admin_marketing_messages;');
+
+    const adminRes = await listAdmin(server, 'adult-admin');
+    assert.equal(adminRes.status, 200);
+    const adminData = await adminRes.json();
+    assert.equal(adminData.ok, true);
+    assert.deepEqual(adminData.messages, []);
+
+    const opsRes = await listAdmin(server, 'adult-ops', 'ops');
+    assert.equal(opsRes.status, 200);
+    const opsData = await opsRes.json();
+    assert.equal(opsData.ok, true);
+    assert.deepEqual(opsData.messages, []);
+
+    const parentRes = await listAdmin(server, 'adult-parent', 'parent');
+    assert.equal(parentRes.status, 403);
+  } finally {
+    server.close();
+  }
+});
+
+test('admin marketing detail hides missing marketing table as not found', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    seedCore(server, 1000);
+    server.DB.db.exec('DROP TABLE admin_marketing_messages;');
+
+    const res = await getMessage(server, 'adult-admin', 'msg-any');
+    assert.equal(res.status, 404);
+    const data = await res.json();
+    assert.equal(data.code, 'not_found');
+  } finally {
+    server.close();
+  }
+});

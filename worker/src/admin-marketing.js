@@ -738,19 +738,26 @@ export async function listMarketingMessages(db, { actorAccountId }) {
   const role = (actor.platform_role || '').toLowerCase();
 
   let rows;
-  if (role === 'admin') {
-    // Admin sees all messages
-    rows = await all(db, `
-      SELECT * FROM admin_marketing_messages
-      ORDER BY updated_at DESC
-    `);
-  } else {
-    // Ops sees only published + scheduled
-    rows = await all(db, `
-      SELECT * FROM admin_marketing_messages
-      WHERE status IN ('published', 'scheduled')
-      ORDER BY updated_at DESC
-    `);
+  try {
+    if (role === 'admin') {
+      // Admin sees all messages
+      rows = await all(db, `
+        SELECT * FROM admin_marketing_messages
+        ORDER BY updated_at DESC
+      `);
+    } else {
+      // Ops sees only published + scheduled
+      rows = await all(db, `
+        SELECT * FROM admin_marketing_messages
+        WHERE status IN ('published', 'scheduled')
+        ORDER BY updated_at DESC
+      `);
+    }
+  } catch (error) {
+    if (isMissingMarketingMessagesTableError(error)) {
+      return { messages: [] };
+    }
+    throw error;
   }
 
   return { messages: rows.map(adminMessageFields) };
@@ -760,7 +767,15 @@ export async function getMarketingMessage(db, { actorAccountId, messageId }) {
   const actor = await loadActor(db, actorAccountId);
   requireAdminOrOpsRole(actor);
 
-  const row = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
+  let row;
+  try {
+    row = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
+  } catch (error) {
+    if (isMissingMarketingMessagesTableError(error)) {
+      throw new NotFoundError('Marketing message not found.', { code: 'not_found', messageId });
+    }
+    throw error;
+  }
   if (!row) {
     throw new NotFoundError('Marketing message not found.', { code: 'not_found', messageId });
   }
