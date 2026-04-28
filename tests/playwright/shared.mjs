@@ -28,6 +28,16 @@ export {
 
 export const SUBJECT_IDS = ['spelling', 'grammar', 'punctuation'];
 
+let demoClientIpCounter = 1;
+
+async function applyDemoClientIp(page) {
+  const octet = (demoClientIpCounter % 250) + 1;
+  demoClientIpCounter += 1;
+  await page.setExtraHTTPHeaders({
+    'CF-Connecting-IP': `203.0.113.${octet}`,
+  });
+}
+
 // Screenshot-only CSS override. Injected via `page.addStyleTag()` in
 // `applyDeterminism()` + `reload()` to hide non-deterministic surfaces
 // that otherwise blow past the 2% pixel-diff budget. Kept at module
@@ -77,6 +87,7 @@ const SCREENSHOT_DETERMINISM_CSS = `
  * face on the next. See `waitForFontsReady()`.
  */
 export async function createDemoSession(page) {
+  await applyDemoClientIp(page);
   await page.goto('/demo', { waitUntil: 'networkidle' });
   await expect(page.locator('.subject-grid')).toBeVisible({ timeout: 15_000 });
   // Re-inject the determinism stylesheet AFTER the first real
@@ -211,15 +222,54 @@ export async function punctuationContinue(page) {
   await button.click();
 }
 
+export async function drivePunctuationSessionToSummary(page, {
+  maxSteps = 24,
+  typedPrefix = 'punctuation-answer',
+} = {}) {
+  for (let i = 0; i < maxSteps; i += 1) {
+    if (await page.locator('[data-punctuation-summary]').first().isVisible().catch(() => false)) {
+      return;
+    }
+
+    const submit = page.locator('[data-punctuation-submit]').first();
+    if (await submit.isVisible().catch(() => false)) {
+      await punctuationAnswer(page, {
+        typed: `${typedPrefix}-${i}`,
+        choiceIndex: 0,
+      });
+      await expect(
+        page.locator('[data-punctuation-summary], [data-punctuation-phase="feedback"]').first(),
+      ).toBeVisible({ timeout: 15_000 });
+      continue;
+    }
+
+    const continueButton = page.locator('[data-punctuation-continue]').first();
+    if (await continueButton.isVisible().catch(() => false)) {
+      await punctuationContinue(page);
+      await expect(
+        page.locator('[data-punctuation-summary], [data-punctuation-phase="active-item"]').first(),
+      ).toBeVisible({ timeout: 15_000 });
+      continue;
+    }
+
+    await expect(
+      page.locator('[data-punctuation-summary], [data-punctuation-submit], [data-punctuation-continue]').first(),
+    ).toBeVisible({ timeout: 15_000 });
+  }
+
+  await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
+}
+
 /**
  * Grammar session helper: the form has a primary "Submit" button and
  * a "Continue" button on the feedback screen. Both use the enclosing
  * form so the scene only needs the value argument.
  */
 export async function grammarAnswer(page, { typed = '' } = {}) {
-  const input = page.locator('.grammar-answer-form input[name], .grammar-answer-form textarea[name]').first();
-  await expect(input).toBeVisible({ timeout: 10_000 });
-  await input.fill(typed);
+  const answer = await fillGrammarAnswer(page, { typed });
+  if (answer.kind === 'none') {
+    throw new Error('grammarAnswer: no supported answer control was visible.');
+  }
   await page.locator('.grammar-answer-form button[type="submit"].primary').first().click();
 }
 

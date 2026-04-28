@@ -24,13 +24,15 @@ const DEFAULT_PUBLIC_DIR = 'dist/public';
 // Admin Hub + Parent Hub hubs now ship as lazy-loaded chunks.
 // Budget was originally `baseline × 1.05 ≈ 213,390`, rounded up to
 // 214,000. Node 24's zlib output for the current Hero P2 baseline sits
-// just above that at ~214,020 bytes, so the committed ceiling is 215,000:
-// still tight enough to catch an adult-surface re-import, without
-// blocking on a sub-kilobyte compression/runtime drift. Override via CLI
+// just above that at ~214,020 bytes. Phase 7's Punctuation remote-summary
+// safety and radio-focus accessibility fixes lift the Node 22 build to
+// ~215.1 KB, so the committed ceiling is 215,500: still tight enough to
+// catch an adult-surface re-import, without blocking on a sub-kilobyte
+// compression/runtime drift. Override via CLI
 // `--main-bundle-budget-bytes` for experimentation. See
 // `tests/bundle-byte-budget.test.js` for the committed baseline +
 // rationale.
-const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 215_000;
+const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 215_500;
 
 const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/data\//, reason: 'full spelling content dataset' },

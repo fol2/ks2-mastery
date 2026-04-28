@@ -42,7 +42,12 @@
 // pixel diffs, so we do NOT fan out across every project.
 
 import { test, expect } from '@playwright/test';
-import { applyDeterminism, createDemoSession, grammarDashboardStartButton } from './shared.mjs';
+import {
+  applyDeterminism,
+  createDemoSession,
+  fillGrammarAnswer,
+  grammarDashboardStartButton,
+} from './shared.mjs';
 
 /**
  * Read the currently-focused element inside the page. Returns
@@ -99,6 +104,7 @@ test.describe('grammar accessibility golden — keyboard-only round-trip', () =>
 
     const session = page.locator('.grammar-session').first();
     await expect(session).toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(200);
 
     // The grammar answer input / textarea carries `data-autofocus="true"`
     // when the inputSpec is text / textarea (see GrammarSessionScene.jsx).
@@ -143,58 +149,14 @@ test.describe('grammar accessibility golden — keyboard-only round-trip', () =>
     const session = page.locator('.grammar-session').first();
     await expect(session).toBeVisible({ timeout: 15_000 });
 
-    // Branch on text vs choice items. The keyboard-only contract we
-    // pin here is "Enter inside a text input submits the form"; for
-    // choice items the primary Submit button is still keyboard-
-    // reachable and Enter on the button fires the same submit path,
-    // so we fall back to that branch.
-    //
-    // SH2-U7 review follow-up (FIX-2): grammar content carries many
-    // `textarea` input specs ("Corrected sentence", "Rewritten sentence",
-    // ...). Textarea swallows `Enter` as a newline — the form's native
-    // submit never fires. For textarea we Tab forward until focus lands on
-    // the primary Submit button (the `.grammar-answer-form` only renders
-    // a short action row after the input: repair chips, then the primary
-    // Submit), then press Enter. That mirrors what a real keyboard-only
-    // learner would do and keeps the scene deterministic on CI.
-    const textInput = page.locator('.grammar-answer-form input[name="answer"], .grammar-answer-form textarea[name="answer"]').first();
-    const firstRadio = page.locator('.grammar-answer-form input[type="radio"]').first();
-    if (await textInput.count()) {
-      await textInput.focus();
-      await page.keyboard.type('zzzzz-not-a-real-answer');
-      const focusedTag = await textInput.evaluate((el) => el.tagName?.toLowerCase());
-      if (focusedTag === 'textarea') {
-        // Textarea swallows Enter; Tab to the primary Submit button.
-        let landedOnSubmit = false;
-        for (let i = 0; i < 10; i += 1) {
-          await page.keyboard.press('Tab');
-          const current = await readFocusedElement(page);
-          if (current?.tag === 'button' && /submit|check/iu.test(current.text || '')) {
-            landedOnSubmit = true;
-            break;
-          }
-        }
-        if (!landedOnSubmit) {
-          // Fallback: focus the primary submit button directly. The
-          // button is still keyboard-reachable — we just didn't encounter
-          // it within 10 Tabs (unlikely for the session's short form).
-          const submit = page.locator('.grammar-answer-form button[type="submit"].primary').first();
-          await submit.focus();
-        }
-        await page.keyboard.press('Enter');
-      } else {
-        // Plain `<input>`: Enter submits the form natively.
-        await page.keyboard.press('Enter');
-      }
-    } else if (await firstRadio.count()) {
-      // Space selects the focused radio; Tab then Enter invokes the
-      // primary Submit button without a mouse click.
-      await firstRadio.focus();
-      await page.keyboard.press('Space');
-      const submit = page.locator('.grammar-answer-form button[type="submit"].primary').first();
-      await submit.focus();
-      await page.keyboard.press('Enter');
-    }
+    const answer = await fillGrammarAnswer(page, { typed: 'zzzzz-not-a-real-answer' });
+    expect(answer.kind, 'grammar session should expose a supported answer control').not.toBe('none');
+
+    const submit = page.locator('.grammar-answer-form button[type="submit"]').first();
+    await expect(submit).toBeVisible();
+    await submit.focus();
+    await expect(submit).toBeFocused();
+    await page.keyboard.press('Enter');
 
     // Feedback panel with role=status + aria-live=polite is pinned by
     // `tests/react-accessibility-contract.test.js` at the SSR layer;
@@ -245,7 +207,7 @@ test.describe('grammar accessibility golden — keyboard-only round-trip', () =>
     const firstConcept = page.locator('[data-focus-return-id^="grammar-bank-concept-card-"]').first();
     const conceptCount = await firstConcept.count();
     if (conceptCount === 0) {
-      await expect(page.locator('.grammar-dashboard, .grammar-concept-bank')).toBeVisible();
+      await expect(page.locator('.grammar-dashboard, [data-grammar-phase-root="bank"]')).toBeVisible();
       return;
     }
 
@@ -263,7 +225,7 @@ test.describe('grammar accessibility golden — keyboard-only round-trip', () =>
     // Shell is still interactive — the concept bank scene or the
     // dashboard should be visible and tab-navigable.
     await expect(
-      page.locator('.grammar-dashboard, .grammar-concept-bank').first(),
+      page.locator('.grammar-dashboard, [data-grammar-phase-root="bank"]').first(),
     ).toBeVisible();
   });
 
