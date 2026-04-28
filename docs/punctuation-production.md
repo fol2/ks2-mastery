@@ -108,7 +108,7 @@ Comma / Flow marking adds deterministic transfer validators for:
 Boundary marking adds deterministic transfer validators for:
 
 - semi-colons between preserved related clauses
-- spaced dashes between preserved related clauses
+- spaced hyphen, en dash, or em dash marks between preserved related clauses
 - exact hyphenated phrases that avoid ambiguity, such as `well-known author`
 
 Structure marking adds deterministic transfer validators for:
@@ -125,7 +125,7 @@ Combine marking adds stricter one-sentence validators for the first legacy-shape
 - parenthesis rewrites with matched commas, brackets, or dashes
 - colon-list combinations after a complete opening clause
 - semi-colon clause combinations that reject comma splices
-- spaced-dash clause combinations that reject unpunctuated joins
+- spaced hyphen, en dash, or em dash clause combinations that reject unpunctuated joins
 
 Paragraph marking composes the deterministic validators across a short passage for the first legacy-shaped proofreading families:
 
