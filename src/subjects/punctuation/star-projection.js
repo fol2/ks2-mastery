@@ -20,6 +20,7 @@ import {
   CLASPIN_REQUIRED_SKILLS,
   SKILL_TO_CLUSTER,
   RU_TO_CLUSTERS,
+  PUNCTUATION_CLIENT_REWARD_UNITS,
   MONSTER_CLUSTERS,
   MONSTER_UNIT_COUNT,
   DIRECT_PUNCTUATION_MONSTER_IDS,
@@ -184,6 +185,146 @@ function normaliseAttempts(rawAttempts) {
   }));
 }
 
+function normaliseReleaseId(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
+
+function exactString(value) {
+  return typeof value === 'string' && value && value === value.trim() ? value : '';
+}
+
+function canonicalRewardUnitKey(releaseId, clusterId, rewardUnitId) {
+  return `punctuation:${releaseId}:${clusterId}:${rewardUnitId}`;
+}
+
+function publishedRewardUnitByKey(releaseId) {
+  const currentReleaseId = normaliseReleaseId(releaseId);
+  const rows = new Map();
+  if (!currentReleaseId) return rows;
+  for (const unit of PUNCTUATION_CLIENT_REWARD_UNITS) {
+    rows.set(
+      canonicalRewardUnitKey(currentReleaseId, unit.clusterId, unit.rewardUnitId),
+      unit,
+    );
+  }
+  return rows;
+}
+
+export function parsePunctuationRewardMasteryKey(masteryKey) {
+  if (!exactString(masteryKey)) return null;
+  const parts = masteryKey.split(':');
+  if (parts.length !== 4 || parts[0] !== 'punctuation') return null;
+  const [, releaseId, clusterId, rewardUnitId] = parts;
+  if (!releaseId || !clusterId || !rewardUnitId) return null;
+  return {
+    releaseId,
+    clusterId,
+    rewardUnitId,
+    canonicalKey: masteryKey,
+  };
+}
+
+function parseMaybePunctuationKey(value) {
+  if (typeof value !== 'string' || !value) return { parsed: null, malformed: false };
+  if (value !== value.trim()) {
+    return { parsed: null, malformed: value.trim().startsWith('punctuation:') };
+  }
+  if (!value.startsWith('punctuation:')) return { parsed: null, malformed: false };
+  const parsed = parsePunctuationRewardMasteryKey(value);
+  return { parsed, malformed: parsed == null };
+}
+
+function metadataValue(entry, key) {
+  return typeof entry[key] === 'string' && entry[key] ? entry[key] : '';
+}
+
+function canonicalUnitForMetadata(publishedUnits, releaseId, entry) {
+  const clusterId = metadataValue(entry, 'clusterId');
+  const rewardUnitId = metadataValue(entry, 'rewardUnitId');
+  if (!clusterId || !rewardUnitId) return null;
+  const canonicalKey = canonicalRewardUnitKey(releaseId, clusterId, rewardUnitId);
+  const unit = publishedUnits.get(canonicalKey);
+  return unit ? { unit, canonicalKey } : null;
+}
+
+function canonicalUnitForParsedKey(publishedUnits, parsed) {
+  if (!parsed) return null;
+  const unit = publishedUnits.get(parsed.canonicalKey);
+  return unit ? { unit, canonicalKey: parsed.canonicalKey } : null;
+}
+
+function parsedKeyMatchesMetadata(parsed, entry) {
+  if (!parsed) return true;
+  const clusterId = metadataValue(entry, 'clusterId');
+  const rewardUnitId = metadataValue(entry, 'rewardUnitId');
+  if (clusterId && clusterId !== parsed.clusterId) return false;
+  if (rewardUnitId && rewardUnitId !== parsed.rewardUnitId) return false;
+  return true;
+}
+
+function canonicalCurrentReleaseRewardEntry(storageKey, entry, releaseId, publishedUnits) {
+  const currentReleaseId = normaliseReleaseId(releaseId);
+  if (!currentReleaseId) return null;
+
+  const storage = typeof storageKey === 'string' ? storageKey : '';
+  const masteryKey = typeof entry.masteryKey === 'string' ? entry.masteryKey : '';
+  const storageKeyParse = parseMaybePunctuationKey(storage);
+  const entryKey = parseMaybePunctuationKey(masteryKey);
+  if (storageKeyParse.malformed || entryKey.malformed) return null;
+
+  if (
+    storageKeyParse.parsed &&
+    entryKey.parsed &&
+    storageKeyParse.parsed.canonicalKey !== entryKey.parsed.canonicalKey
+  ) {
+    return null;
+  }
+
+  const parsed = entryKey.parsed || storageKeyParse.parsed;
+  const explicitReleaseId = normaliseReleaseId(entry.releaseId);
+
+  if (explicitReleaseId && explicitReleaseId !== currentReleaseId) return null;
+  if (parsed && parsed.releaseId !== currentReleaseId) return null;
+  if (!parsedKeyMatchesMetadata(parsed, entry)) return null;
+
+  const parsedCanonical = canonicalUnitForParsedKey(publishedUnits, parsed);
+  const metadataCanonical = canonicalUnitForMetadata(publishedUnits, currentReleaseId, entry);
+
+  if (parsedCanonical && metadataCanonical && parsedCanonical.canonicalKey !== metadataCanonical.canonicalKey) {
+    return null;
+  }
+
+  const canonical = parsedCanonical || metadataCanonical;
+  if (!canonical) return null;
+  if (!explicitReleaseId && !parsedCanonical) return null;
+
+  return {
+    ...entry,
+    masteryKey: canonical.canonicalKey,
+    releaseId: currentReleaseId,
+    clusterId: canonical.unit.clusterId,
+    rewardUnitId: canonical.unit.rewardUnitId,
+  };
+}
+
+export function currentReleaseRewardEntries(rewardUnits, releaseId) {
+  const publishedUnits = publishedRewardUnitByKey(releaseId);
+  const rows = new Map();
+  for (const [storageKey, entry] of Object.entries(isPlainObject(rewardUnits) ? rewardUnits : {})) {
+    if (!isPlainObject(entry)) continue;
+    const canonicalEntry = canonicalCurrentReleaseRewardEntry(storageKey, entry, releaseId, publishedUnits);
+    if (!canonicalEntry) continue;
+    const hasExactKey =
+      exactString(storageKey) === canonicalEntry.masteryKey ||
+      exactString(entry.masteryKey) === canonicalEntry.masteryKey;
+    const existing = rows.get(canonicalEntry.masteryKey);
+    if (!existing || (hasExactKey && !existing.hasExactKey)) {
+      rows.set(canonicalEntry.masteryKey, { entry: canonicalEntry, hasExactKey });
+    }
+  }
+  return [...rows.values()].map((row) => row.entry);
+}
+
 // ---------------------------------------------------------------------------
 // Per-monster Star computations
 // ---------------------------------------------------------------------------
@@ -295,7 +436,7 @@ function computePracticeStars(monsterAttempts) {
   return Math.min(PRACTICE_CAP, Math.floor(rawScore));
 }
 
-function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId, monsterId, itemSignatureAliases) {
+function computeSecureStars(monsterClusterIds, items, rewardUnitEntries, monsterId, itemSignatureAliases) {
   // Count items that have reached the secure bucket.
   const secureEvidenceKeys = new Set();
   const itemEntries = isPlainObject(items) ? items : {};
@@ -309,8 +450,7 @@ function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId, mo
 
   // Count secured reward units for this monster's clusters.
   let securedUnitCount = 0;
-  const rewardEntries = isPlainObject(rewardUnits) ? rewardUnits : {};
-  for (const [, entry] of Object.entries(rewardEntries)) {
+  for (const entry of rewardUnitEntries) {
     if (!isPlainObject(entry)) continue;
     const entryClusterId = typeof entry.clusterId === 'string' ? entry.clusterId : '';
     if (!monsterClusterIds.has(entryClusterId)) continue;
@@ -328,13 +468,12 @@ function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId, mo
   return Math.min(SECURE_CAP, Math.round(rawScore));
 }
 
-function computeMasteryStars(monsterClusterIds, facets, rewardUnits, monsterId) {
+function computeMasteryStars(monsterClusterIds, facets, rewardUnitEntries, monsterId) {
   // Mastery requires deep-secure evidence:
   //   - Secured reward units with facet coverage across multiple item modes
   //   - No recent lapse in any facet for this cluster
 
   const facetEntries = isPlainObject(facets) ? facets : {};
-  const rewardEntries = isPlainObject(rewardUnits) ? rewardUnits : {};
 
   // Check for recent lapse in any facet belonging to this monster's clusters.
   let hasRecentLapse = false;
@@ -372,7 +511,7 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnits, monsterId) 
 
   // Count secured units for this monster's clusters.
   let securedUnitCount = 0;
-  for (const [, entry] of Object.entries(rewardEntries)) {
+  for (const entry of rewardUnitEntries) {
     if (!isPlainObject(entry)) continue;
     const entryClusterId = typeof entry.clusterId === 'string' ? entry.clusterId : '';
     if (!monsterClusterIds.has(entryClusterId)) continue;
@@ -510,15 +649,14 @@ const GRAND_TIERS = Object.freeze([
 // Total reward units across all clusters.
 const TOTAL_REWARD_UNITS = 14;
 
-function computeGrandStars(progress, releaseId) {
-  const rewardEntries = isPlainObject(progress.rewardUnits) ? progress.rewardUnits : {};
+function computeGrandStars(progress, rewardUnitEntries) {
   const facetEntries = isPlainObject(progress.facets) ? progress.facets : {};
 
   // Count total secured units and deep-secured units across all clusters.
   let totalSecured = 0;
   const monstersWithSecured = new Set();
 
-  for (const [, entry] of Object.entries(rewardEntries)) {
+  for (const entry of rewardUnitEntries) {
     if (!isPlainObject(entry)) continue;
     const securedAt = Number(entry.securedAt);
     if (!Number.isFinite(securedAt) || securedAt <= 0) continue;
@@ -636,6 +774,7 @@ export function projectPunctuationStars(progress, releaseId, options) {
   const rawAttempts = Array.isArray(safeProgress.attempts) ? safeProgress.attempts : [];
   const attempts = normaliseAttempts(rawAttempts);
   const itemSignatureAliases = itemVariantSignatureAliasMap(attempts);
+  const rewardUnitEntries = currentReleaseRewardEntries(rewardUnits, releaseId);
 
   // Build per-monster attempt arrays.
   const monsterAttempts = new Map();
@@ -661,8 +800,8 @@ export function projectPunctuationStars(progress, releaseId, options) {
 
     const tryStars = computeTryStars(mAttempts);
     const practiceStars = computePracticeStars(mAttempts);
-    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnits, releaseId, monsterId, itemSignatureAliases);
-    const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnits, monsterId);
+    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnitEntries, monsterId, itemSignatureAliases);
+    const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnitEntries, monsterId);
     const total = tryStars + practiceStars + secureStars + masteryStars;
 
     perMonster[monsterId] = {
@@ -675,7 +814,7 @@ export function projectPunctuationStars(progress, releaseId, options) {
   }
 
   // Grand Stars.
-  const grand = computeGrandStars(safeProgress, releaseId);
+  const grand = computeGrandStars(safeProgress, rewardUnitEntries);
 
   const result = { perMonster, grand };
 
