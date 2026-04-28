@@ -135,7 +135,7 @@ function fullProductionEvidenceForConcepts(conceptIds, { nowTs = Date.now() } = 
 
 test('trust 1: full 0->100 Star journey for Bracehart using production-shape attempts', () => {
   const concepts = GRAMMAR_MONSTER_CONCEPTS.bracehart;
-  assert.equal(concepts.length, 6, 'Bracehart has 6 concepts');
+  assert.equal(concepts.length, 9, 'Bracehart has 9 concepts');
 
   const repository = makeRepository();
   const nowTs = Date.now();
@@ -156,7 +156,7 @@ test('trust 1: full 0->100 Star journey for Bracehart using production-shape att
     const { conceptNodes, recentAttempts } = fullProductionEvidenceForConcepts(securedSoFar, { nowTs });
 
     const progress = progressForGrammarMonster(repository.state(), 'bracehart', {
-      conceptTotal: 6,
+      conceptTotal: concepts.length,
       conceptNodes,
       recentAttempts,
     });
@@ -167,10 +167,10 @@ test('trust 1: full 0->100 Star journey for Bracehart using production-shape att
     prevStars = progress.stars;
   }
 
-  // After all 6 concepts with full production evidence: 100 Stars.
+  // After all 9 concepts with full production evidence: 100 Stars.
   const { conceptNodes, recentAttempts } = fullProductionEvidenceForConcepts(concepts, { nowTs });
   const finalProgress = progressForGrammarMonster(repository.state(), 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: concepts.length,
     conceptNodes,
     recentAttempts,
   });
@@ -415,7 +415,7 @@ test('trust 4: first independent correct -> Stars >= 1 -> starHighWater persiste
   ];
 
   const progress = progressForGrammarMonster(repository.state(), 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: GRAMMAR_MONSTER_CONCEPTS.bracehart.length,
     conceptNodes,
     recentAttempts,
   });
@@ -438,7 +438,7 @@ test('trust 4: first independent correct -> Stars >= 1 -> starHighWater persiste
 
   // Step 4: simulate session boundary (conceptNodes gone, recentAttempts cleared)
   const progressAfterBoundary = progressForGrammarMonster(repository.state(), 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: GRAMMAR_MONSTER_CONCEPTS.bracehart.length,
     // No conceptNodes or recentAttempts — simulates cleared session
   });
 
@@ -686,7 +686,7 @@ test('zero-inflation: Writing Try (no correct answer) -> 0 Stars, 0 events', () 
 
   const stateBefore = repository.state();
   const progressBefore = progressForGrammarMonster(stateBefore, 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: GRAMMAR_MONSTER_CONCEPTS.bracehart.length,
   });
 
   // Fire a transfer-evidence-saved event (Writing Try)
@@ -710,7 +710,7 @@ test('zero-inflation: Writing Try (no correct answer) -> 0 Stars, 0 events', () 
 
   const stateAfter = repository.state();
   const progressAfter = progressForGrammarMonster(stateAfter, 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: GRAMMAR_MONSTER_CONCEPTS.bracehart.length,
   });
   assert.equal(progressAfter.stars, progressBefore.stars,
     'Stars unchanged after Writing Try');
@@ -874,7 +874,7 @@ test('trust round-trip: production-shape attempts flow through derive -> compute
   const concepts = GRAMMAR_MONSTER_CONCEPTS.bracehart;
   const nowTs = Date.now();
 
-  // Secure all 6 concepts
+  // Secure all Bracehart concepts
   for (const conceptId of concepts) {
     recordGrammarConceptMastery({
       learnerId: 'learner-round-trip',
@@ -884,7 +884,7 @@ test('trust round-trip: production-shape attempts flow through derive -> compute
     });
   }
 
-  // Build production evidence for all 6 concepts
+  // Build production evidence for all Bracehart concepts
   const { conceptNodes, recentAttempts } = fullProductionEvidenceForConcepts(concepts, { nowTs });
 
   // Step 1: derive evidence for each concept
@@ -914,7 +914,7 @@ test('trust round-trip: production-shape attempts flow through derive -> compute
 
   // Step 3: progressForGrammarMonster integrates with state
   const progress = progressForGrammarMonster(repository.state(), 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: concepts.length,
     conceptNodes,
     recentAttempts,
   });

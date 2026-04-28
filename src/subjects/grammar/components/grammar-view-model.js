@@ -402,11 +402,9 @@ export function grammarChildConfidenceTone(label) {
 
 /**
  * Resolves a Grammar concept id to its active cluster monster. Returns one
- * of `'bracehart' | 'chronalyx' | 'couronnail' | 'concordium'`. Concepts
- * that are punctuation-for-grammar only (e.g. `parenthesis_commas`) live in
- * Concordium's aggregate cluster — they are not mapped to a direct cluster
- * in `GRAMMAR_CONCEPT_TO_MONSTER`, so this helper falls back to Concordium.
- * Unknown concept ids also return `'concordium'` to keep the dashboard safe.
+ * of `'bracehart' | 'chronalyx' | 'couronnail' | 'concordium'`. The
+ * punctuation-for-grammar bridge concepts now have direct monster ownership;
+ * only unknown concept ids fall back to Concordium to keep the dashboard safe.
  */
 export function grammarMonsterClusterForConcept(conceptId) {
   if (typeof conceptId !== 'string' || !conceptId) return GRAMMAR_GRAND_MONSTER_ID;

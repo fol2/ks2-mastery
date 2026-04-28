@@ -10,8 +10,8 @@
 //   - tests/grammar-star-staging.test.js — progressForGrammarMonster with conceptNodes
 //
 // Verifies:
-//  1. Full 0->100 Star journey for Bracehart (6 concepts)
-//  2. Full 0->100 Star journey for Couronnail (3 concepts)
+//  1. Full 0->100 Star journey for Bracehart (9 concepts)
+//  2. Full 0->100 Star journey for Couronnail (5 concepts)
 //  3. Concordium accumulates from cross-cluster evidence
 //  4. Writing Try -> 0 Stars
 //  5. Supported answers -> no independent tiers
@@ -31,6 +31,7 @@ import {
   grammarMasteryKey,
   progressForGrammarMonster,
   recordGrammarConceptMastery,
+  monsterIdForGrammarConcept,
   updateGrammarStarHighWater,
 } from '../src/platform/game/monster-system.js';
 import {
@@ -130,12 +131,12 @@ function persistStarHighWaterFromProgress({
 }
 
 // =============================================================================
-// 1. Full 0->100 Star journey for Bracehart (6 concepts)
+// 1. Full 0->100 Star journey for Bracehart (9 concepts)
 // =============================================================================
 
-test('star e2e: full 0->100 Star journey for Bracehart (6 concepts)', () => {
+test('star e2e: full 0->100 Star journey for Bracehart (9 concepts)', () => {
   const concepts = GRAMMAR_MONSTER_CONCEPTS.bracehart;
-  assert.equal(concepts.length, 6, 'Bracehart has 6 concepts');
+  assert.equal(concepts.length, 9, 'Bracehart has 9 concepts');
 
   const repository = makeRepository();
   const allEvents = [];
@@ -162,7 +163,7 @@ test('star e2e: full 0->100 Star journey for Bracehart (6 concepts)', () => {
     const { conceptNodes, recentAttempts } = fullEvidenceForConcepts(securedSoFar);
 
     const progress = progressForGrammarMonster(repository.state(), 'bracehart', {
-      conceptTotal: 6,
+      conceptTotal: concepts.length,
       conceptNodes,
       recentAttempts,
     });
@@ -187,10 +188,10 @@ test('star e2e: full 0->100 Star journey for Bracehart (6 concepts)', () => {
     prevStarHighWater = progress.starHighWater;
   }
 
-  // After all 6 concepts with full evidence: should reach 100 Stars.
+  // After all 9 concepts with full evidence: should reach 100 Stars.
   const { conceptNodes, recentAttempts } = fullEvidenceForConcepts(concepts);
   const finalProgress = progressForGrammarMonster(repository.state(), 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: concepts.length,
     conceptNodes,
     recentAttempts,
   });
@@ -209,12 +210,12 @@ test('star e2e: full 0->100 Star journey for Bracehart (6 concepts)', () => {
 });
 
 // =============================================================================
-// 2. Full 0->100 Star journey for Couronnail (3 concepts)
+// 2. Full 0->100 Star journey for Couronnail (5 concepts)
 // =============================================================================
 
-test('star e2e: full 0->100 Star journey for Couronnail (3 concepts) — gradual, not jump-to-Mega', () => {
+test('star e2e: full 0->100 Star journey for Couronnail (5 concepts) — gradual, not jump-to-Mega', () => {
   const concepts = GRAMMAR_MONSTER_CONCEPTS.couronnail;
-  assert.equal(concepts.length, 3, 'Couronnail has 3 concepts');
+  assert.equal(concepts.length, 5, 'Couronnail has 5 concepts');
 
   const repository = makeRepository();
   const allEvents = [];
@@ -242,7 +243,7 @@ test('star e2e: full 0->100 Star journey for Couronnail (3 concepts) — gradual
     const { conceptNodes, recentAttempts } = fullEvidenceForConcepts(securedSoFar);
 
     const progress = progressForGrammarMonster(repository.state(), 'couronnail', {
-      conceptTotal: 3,
+      conceptTotal: concepts.length,
       conceptNodes,
       recentAttempts,
     });
@@ -262,10 +263,10 @@ test('star e2e: full 0->100 Star journey for Couronnail (3 concepts) — gradual
     prevStars = progress.stars;
   }
 
-  // After all 3 concepts with full evidence: should reach 100 Stars.
+  // After all 5 concepts with full evidence: should reach 100 Stars.
   const { conceptNodes, recentAttempts } = fullEvidenceForConcepts(concepts);
   const finalProgress = progressForGrammarMonster(repository.state(), 'couronnail', {
-    conceptTotal: 3,
+    conceptTotal: concepts.length,
     conceptNodes,
     recentAttempts,
   });
@@ -313,10 +314,15 @@ test('star e2e: Concordium Stars increase from cross-cluster concept evidence', 
       recentAttempts,
     });
 
-    assert.ok(progress.stars >= prevStars,
-      `Concordium Stars after ${conceptId}: ${progress.stars} >= ${prevStars}`);
-    assert.ok(progress.stars >= 1, 'Concordium has at least 1 Star after any evidence');
-    prevStars = progress.stars;
+    const rawStars = Math.max(progress.stars, progress.starHighWater);
+    assert.ok(rawStars >= prevStars,
+      `Concordium raw Stars after ${conceptId}: ${rawStars} >= ${prevStars}`);
+    if (securedSoFar.length < 2) {
+      assert.equal(progress.stars, 0, 'Concordium display remains gated before two direct monsters are found');
+    } else {
+      assert.ok(progress.stars >= 1, 'Concordium displays Stars once direct breadth is present');
+    }
+    prevStars = rawStars;
   }
 
   // After 3 cross-cluster concepts with full evidence: Stars should reflect
@@ -340,7 +346,7 @@ test('star e2e: Writing Try (transfer-evidence-saved) produces 0 Star changes', 
 
   const stateBefore = repository.state();
   const progressBefore = progressForGrammarMonster(stateBefore, 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: GRAMMAR_MONSTER_CONCEPTS.bracehart.length,
   });
 
   // Fire a transfer-evidence-saved event (Writing Try).
@@ -366,7 +372,7 @@ test('star e2e: Writing Try (transfer-evidence-saved) produces 0 Star changes', 
   // Stars unchanged.
   const stateAfter = repository.state();
   const progressAfter = progressForGrammarMonster(stateAfter, 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: GRAMMAR_MONSTER_CONCEPTS.bracehart.length,
   });
   assert.equal(progressAfter.stars, progressBefore.stars,
     'Stars unchanged after Writing Try');
@@ -526,9 +532,9 @@ test('star e2e: incremental evidence tiers produce monotonically increasing Star
   // First tier produces at least 1 Star (floor guarantee).
   assert.ok(starValues[0] >= 1, 'firstIndependentWin produces at least 1 Star');
 
-  // All tiers on 1 concept of 6: floor(100/6 * 1.0) = floor(16.67) = 16 Stars.
-  assert.equal(starValues[4], 16,
-    'all 5 tiers on 1/6 concept = floor(100/6 * 1.0) = 16 Stars');
+  // All tiers on 1 concept of 9: floor(100/9 * 1.0) = 11 Stars.
+  assert.equal(starValues[4], 11,
+    'all 5 tiers on 1/9 concept = floor(100/9 * 1.0) = 11 Stars');
 });
 
 // =============================================================================
@@ -561,6 +567,22 @@ test('star e2e: Concordium full 18-concept journey reaches 100 Stars', () => {
       conceptNodes,
       recentAttempts,
     });
+    const directMonsterId = monsterIdForGrammarConcept(conceptId);
+    if (directMonsterId) {
+      const directConcepts = GRAMMAR_MONSTER_CONCEPTS[directMonsterId] || [];
+      const directProgress = progressForGrammarMonster(repository.state(), directMonsterId, {
+        conceptTotal: directConcepts.length,
+        conceptNodes,
+        recentAttempts,
+      });
+      persistStarHighWaterFromProgress({
+        learnerId: 'learner-concordium-full-e2e',
+        repository,
+        monsterId: directMonsterId,
+        conceptId,
+        progress: directProgress,
+      });
+    }
     const starEvents = persistStarHighWaterFromProgress({
       learnerId: 'learner-concordium-full-e2e',
       repository,
@@ -572,7 +594,7 @@ test('star e2e: Concordium full 18-concept journey reaches 100 Stars', () => {
     concordiumEventKinds.push(...concordiumEvents.map((e) => e.kind));
   }
 
-  // First event is caught.
+  // First Concordium event is caught after the direct-monster breadth gate opens.
   assert.equal(concordiumEventKinds[0], 'caught', 'Concordium first event is caught');
 
   // Last event is mega.
@@ -619,7 +641,7 @@ test('star e2e: full Bracehart journey emits no monster events from secure-only 
 test('star e2e: dashboard model after full Bracehart journey shows preserved concordiumProgress and monsterStrip shape', () => {
   const repository = makeRepository();
 
-  // Secure all 6 Bracehart concepts.
+  // Secure all 9 Bracehart concepts.
   for (const conceptId of GRAMMAR_MONSTER_CONCEPTS.bracehart) {
     recordGrammarConceptMastery({
       learnerId: 'learner-dashboard-e2e',
@@ -632,8 +654,8 @@ test('star e2e: dashboard model after full Bracehart journey shows preserved con
   const state = repository.state();
   const dashboard = buildGrammarDashboardModel({}, null, state);
 
-  // concordiumProgress has 6 mastered (Bracehart concepts are also in Concordium).
-  assert.equal(dashboard.concordiumProgress.mastered, 6);
+  // concordiumProgress has 9 mastered (Bracehart concepts are also in Concordium).
+  assert.equal(dashboard.concordiumProgress.mastered, 9);
   assert.equal(dashboard.concordiumProgress.total, 18);
 
   // monsterStrip has 4 entries with correct shape.
@@ -656,12 +678,12 @@ test('star e2e: dashboard model after full Bracehart journey shows preserved con
     assert.equal(typeof entry.stageName, 'string', `${entry.monsterId} has stageName`);
   }
 
-  // Bracehart has 6/6 mastered — the stage should reflect legacy stage 4 (Mega).
+  // Bracehart has 9/9 mastered — the stage should reflect legacy stage 4 (Mega).
   // But starHighWater=0 for post-P5 learners: the internal stage uses
   // max(legacyStage, starStage). Legacy stage = 4 (6/6 = 1.0), star stage = 0.
   // max(4, 0) = 4. The progress.stage is 4 (Mega).
   const bracehartProgress = progressForGrammarMonster(state, 'bracehart', {
-    conceptTotal: 6,
+    conceptTotal: GRAMMAR_MONSTER_CONCEPTS.bracehart.length,
   });
   assert.equal(bracehartProgress.stage, 4, 'Bracehart at Mega via legacy ratio');
 });

@@ -146,8 +146,8 @@ test('seedPreMega — bracehart.starHighWater is 99', () => {
   const seed = seedPreMega();
   assert.equal(seed.rewardState.bracehart.starHighWater, 99);
   assert.equal(seed.rewardState.bracehart.caught, true);
-  // All 6 bracehart concepts should be mastered.
-  assert.equal(seed.rewardState.bracehart.mastered.length, 6);
+  // All 9 bracehart concepts should be mastered.
+  assert.equal(seed.rewardState.bracehart.mastered.length, 9);
 });
 
 test('seedConcordium17of18 — concordium has 17 mastered entries', () => {

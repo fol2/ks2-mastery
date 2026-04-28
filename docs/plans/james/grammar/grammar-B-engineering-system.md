@@ -149,11 +149,12 @@ Star evidence derived from Worker-owned post-answer state；sub-secure Stars 由
 
 - `grammar.concept-secured` → `recordGrammarConceptMastery` for mastered[] / secure analytics only
 - `grammar.star-evidence-updated` → `updateGrammarStarHighWater` for Star latch + monster events
-- 1 Star Egg persisted via `caught: true` and machine `displayState = egg-found`
+- Direct monsters: 1 Star Egg persisted via `caught: true` and machine `displayState = egg-found`; Concordium stores raw latches but gates child-facing display until direct breadth exists
 - `starHighWater` monotonic latch
 - `displayState` parity across Grammar landing, summary, Home dashboard and Codex
-- Concordium aggregate from all 18 concepts
+- Concordium aggregate from all 18 concepts, with child-facing display gated until at least two direct Grammar monsters are found
 - Direct monsters from shared concept roster
+- Punctuation-for-grammar bridge concepts have direct owners as well as Concordium aggregate membership: `parenthesis_commas`, `speech_punctuation`, and `boundary_punctuation` → Bracehart; `apostrophes_possession` and `hyphen_ambiguity` → Couronnail
 - Reserved monsters not active child-facing
 - Writing Try / AI / view-only actions produce 0 Stars
 - Supported answers excluded from independent tiers
@@ -509,7 +510,7 @@ Any future Grammar work should obey:
 6. Any marking/content behaviour change bumps contentReleaseId unless proven no behavioural change.
 7. Child-facing monster display uses Stars, never raw concept counts.
 8. Debug surfaces stay adult/admin/test-only.
-9. Punctuation-for-grammar bridge remains inside Grammar denominator, but Punctuation subject identity remains separate.
+9. Punctuation-for-grammar bridge remains inside Grammar denominator and has direct Grammar monster ownership, but Punctuation subject identity remains separate.
 10. New content must include answerSpec strategy and fixture refresh from day one.
 
 ---

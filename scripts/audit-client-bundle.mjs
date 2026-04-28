@@ -29,10 +29,11 @@ const DEFAULT_PUBLIC_DIR = 'dist/public';
 // ~215.1 KB. Punctuation's Star-based display parity added a small
 // first-paint utility footprint. Grammar's matching display-state parity
 // adds another tiny cross-subject utility slice. The reward presentation
-// queue, toast compatibility layers, and Hero Mode P3 daily-progress shell
-// keep Node 22/24 gzip output near 219.4 KB, so the committed ceiling is
-// 220,000: still tight enough to catch an adult-surface re-import, without
-// blocking on sub-kilobyte compression/runtime drift. Override via CLI
+// queue, toast compatibility layers, Hero Mode P3 daily-progress shell, and
+// Grammar's bridge-ownership display gate keep Node 22/24 gzip output near
+// 219.4 KB, so the committed ceiling is 220,000: still tight enough to catch
+// an adult-surface re-import, without blocking on sub-kilobyte compression/runtime
+// drift. Override via CLI
 // `--main-bundle-budget-bytes` for experimentation. See
 // `tests/bundle-byte-budget.test.js` for the committed baseline +
 // rationale.

@@ -486,10 +486,14 @@ export function makeSeededRandom(seed = 1) {
   };
 }
 
-// All 13 Grammar concepts that map to direct monsters.
+// Grammar concepts that map to direct monsters. Bridge concepts are direct-owned
+// after the Concordium display-gate fix, so this now covers all aggregate
+// concepts rather than a 13-concept subset.
 const DIRECT_GRAMMAR_CONCEPTS = Object.values(GRAMMAR_MONSTER_CONCEPTS).flat();
 
-// The 5 Punctuation-for-Grammar concepts (in Concordium only).
+// Aggregate-only concepts, if a future roster ever adds them. This is empty for
+// the current 18-concept Grammar roster because every bridge concept has a
+// direct owner.
 const PUNCTUATION_CONCEPTS = GRAMMAR_AGGREGATE_CONCEPTS.filter(
   (c) => !DIRECT_GRAMMAR_CONCEPTS.includes(c),
 );
@@ -736,10 +740,10 @@ function applySimAttempt(node, correct, independent, rng, currentDay) {
 }
 
 /**
- * Also update punctuation concepts (for Concordium). These advance
- * independently via the Punctuation subject with its own practice sessions.
+ * Also update aggregate-only punctuation concepts, if the roster has any.
+ * The current roster has none because the bridge concepts are direct-owned.
  *
- * Models a child doing Punctuation practice on most school days:
+ * When present, this models a child doing Punctuation practice on most school days:
  * - Ideal: 5 days/week, 2 punctuation concepts per session
  * - Typical: 4 days/week, 1-2 punctuation concepts per session
  * - Struggling: 3 days/week, 1 punctuation concept per session

@@ -1005,7 +1005,7 @@ test('Grammar concept-secured events project monster rewards atomically', async 
     event.type === 'reward.monster'
     && event.subjectId === 'grammar'
     && event.monsterId === 'concordium'
-  )), true);
+  )), false);
   assert.ok(submit.body.projections.rewards.state.bracehart.mastered.includes(
     `grammar:${GRAMMAR_CONTENT_RELEASE_ID}:sentence_functions`,
   ));

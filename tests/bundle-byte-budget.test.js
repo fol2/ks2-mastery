@@ -19,10 +19,10 @@
 // ~215.1 KB. Punctuation's Star-based display parity added a small first-paint
 // utility footprint; Grammar's matching display-state parity adds another
 // tiny cross-subject utility slice. The reward presentation queue, toast
-// compatibility layers, and Hero Mode P3 daily-progress shell keep Node 22/24
-// gzip output near 219.4 KB. The committed ceiling is now `220_000`, keeping
-// the headroom narrow while avoiding a sub-kilobyte compression/runtime false
-// blocker.
+// compatibility layers, Hero Mode P3 daily-progress shell, and Grammar's
+// bridge-ownership display gate keep Node 22/24 gzip output near 219.4 KB.
+// The committed ceiling is now `220_000`, keeping the headroom narrow while
+// avoiding a sub-kilobyte compression/runtime false blocker.
 // The audit still fails
 // when ~50 KB of adult-only JS sneaks back into the critical path (the
 // exact regression the code-split protects against). The audit driver re-reads
@@ -67,8 +67,9 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 // ~215.1 KB. Punctuation's Star-based display parity adds a small first-paint
 // utility footprint; Grammar's matching display-state parity adds another
 // tiny cross-subject utility slice. The reward presentation queue, toast
-// compatibility layers, and Hero Mode P3 daily-progress shell keep Node 22/24
-// gzip output near 219.4 KB, so the committed ceiling is 220,000
+// compatibility layers, Hero Mode P3 daily-progress shell, and Grammar's
+// bridge-ownership display gate keep Node 22/24 gzip output near 219.4 KB,
+// so the committed ceiling is 220,000
 // (matches `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES` in
 // `scripts/audit-client-bundle.mjs`). The narrow headroom lets the team
 // land small copy / utility growth without an audit bump, but trips the
