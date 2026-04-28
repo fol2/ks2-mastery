@@ -1,10 +1,13 @@
 import React from 'react';
 import { formatTimestamp } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
+import { AdminPanelFrame } from './AdminPanelFrame.jsx';
 
 // U4+U5: Overview section — top-level KPIs, recent ops activity, and demo
 // health. Extracted from AdminHubSurface.jsx as the default landing section
 // of the tabbed admin console.
+// P5 U1: DashboardKpiPanel and RecentActivityStreamPanel now wrap in
+// AdminPanelFrame for unified freshness/failure/empty-state handling.
 
 function DashboardKpiPanel({ model, actions }) {
   const kpis = model?.dashboardKpis || {};
@@ -61,14 +64,16 @@ function DashboardKpiPanel({ model, actions }) {
     </div>
   );
   return (
-    <section className="card" style={{ marginBottom: 20 }}>
-      <PanelHeader
-        eyebrow="Dashboard KPI"
-        title="Dashboard overview"
-        refreshedAt={kpis.refreshedAt ?? kpis.generatedAt}
-        refreshError={kpis.refreshError || null}
-        onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
-      />
+    <AdminPanelFrame
+      eyebrow="Dashboard KPI"
+      title="Dashboard overview"
+      refreshedAt={kpis.refreshedAt ?? kpis.generatedAt}
+      refreshError={kpis.refreshError || null}
+      onRefresh={() => actions.dispatch('admin-ops-kpi-refresh')}
+      data={kpis.accounts}
+      loading={Boolean(kpis.loading)}
+      emptyState={<p className="small muted">No KPI data available. Try refreshing.</p>}
+    >
       {cronFailing ? (
         <div
           className="callout warn small"
@@ -90,7 +95,7 @@ function DashboardKpiPanel({ model, actions }) {
           </div>
         ))}
       </div>
-    </section>
+    </AdminPanelFrame>
   );
 }
 
@@ -98,24 +103,26 @@ function RecentActivityStreamPanel({ model, actions }) {
   const stream = model?.opsActivityStream || {};
   const entries = Array.isArray(stream.entries) ? stream.entries : [];
   return (
-    <section className="card" style={{ marginBottom: 20 }}>
-      <PanelHeader
-        eyebrow="Ops activity"
-        title="Recent operations activity"
-        subtitle="Latest mutation receipts across accounts. Learner scope ids pre-masked to last 8 characters; account scope ids to last 6."
-        refreshedAt={stream.refreshedAt ?? stream.generatedAt}
-        refreshError={stream.refreshError || null}
-        onRefresh={() => actions.dispatch('admin-ops-activity-refresh')}
-      />
-      {entries.length ? entries.map((entry) => (
+    <AdminPanelFrame
+      eyebrow="Ops activity"
+      title="Recent operations activity"
+      subtitle="Latest mutation receipts across accounts. Learner scope ids pre-masked to last 8 characters; account scope ids to last 6."
+      refreshedAt={stream.refreshedAt ?? stream.generatedAt}
+      refreshError={stream.refreshError || null}
+      onRefresh={() => actions.dispatch('admin-ops-activity-refresh')}
+      data={entries}
+      loading={Boolean(stream.loading)}
+      emptyState={<p className="small muted">No recent operations activity.</p>}
+    >
+      {entries.map((entry) => (
         <div className="skill-row" key={entry.requestId || `${entry.mutationKind}-${entry.appliedAt}`}>
           <div><strong>{entry.mutationKind || 'mutation'}</strong></div>
           <div className="small muted">{entry.scopeType || ''} · {entry.scopeId || 'account'}</div>
           <div>{entry.accountIdMasked || ''}</div>
           <div className="small muted">{formatTimestamp(entry.appliedAt)}</div>
         </div>
-      )) : <p className="small muted">No recent operations activity.</p>}
-    </section>
+      ))}
+    </AdminPanelFrame>
   );
 }
 
