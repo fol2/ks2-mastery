@@ -45,6 +45,19 @@ function correctAnswerFor(item) {
   return { typed: item.model };
 }
 
+test('punctuation service default runtime bank exposes 171 practice items', () => {
+  const service = createPunctuationService({
+    repository: makeRepository(),
+    now: () => 1_800_000_000_000,
+    random: () => 0,
+  });
+  const stats = service.getStats('learner-a');
+
+  assert.equal(stats.total, 171);
+  assert.equal(stats.fresh, 171);
+  assert.equal(stats.publishedRewardUnits, 14);
+});
+
 test('punctuation service follows setup -> active-item -> feedback -> active-item -> summary', () => {
   const repository = makeRepository();
   const service = createPunctuationService({ repository, now: () => 1_800_000_000_000, random: () => 0 });

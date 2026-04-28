@@ -81,7 +81,7 @@ Generated practice now runs through a deterministic compiler. Each published gen
 
 Generated item guardrails:
 
-- The production default remains `generatedPerFamily: 1`; wider banks are exercised by tests and audits before any runtime increase.
+- The production runtime service uses `generatedPerFamily: 4`, giving 171 runtime items while keeping the published reward denominator unchanged. Lower-level generator and audit compatibility fixtures still exercise `generatedPerFamily: 1`.
 - Each generated item carries a stable `templateId` and opaque `variantSignature`. The scheduler uses recent signatures to avoid equivalent retries, and Star evidence uses signatures before item ids when a generated surface has an available signature.
 - Template-bank expansion appends new templates after the first two legacy templates. The first generated runtime variant is preserved when the bank grows.
 - The audit command `npm run audit:punctuation-content -- --strict --generated-per-family 4` checks generated family coverage, validator coverage, duplicate variant signatures, distinct signature counts, and generated model-answer marking. Duplicate stems/models remain reported for content review; add `--fail-on-duplicate-generated-content` when a review specifically wants those surfaced as hard failures.
