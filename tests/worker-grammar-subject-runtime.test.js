@@ -6,6 +6,7 @@ import { createWorkerSubjectRuntime } from '../worker/src/subjects/runtime.js';
 import {
   createGrammarQuestion,
   GRAMMAR_CONTENT_RELEASE_ID,
+  GRAMMAR_TEMPLATE_METADATA,
   serialiseGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
 import { createInitialGrammarState } from '../worker/src/subjects/grammar/engine.js';
@@ -209,7 +210,7 @@ test('Grammar command route persists subject state, practice session, and events
   assert.equal(start.body.subjectId, 'grammar');
   assert.equal(start.body.subjectReadModel.authority, 'worker');
   assert.equal(start.body.subjectReadModel.content.conceptCount, 18);
-  assert.equal(start.body.subjectReadModel.content.templateCount, 57);
+  assert.equal(start.body.subjectReadModel.content.templateCount, GRAMMAR_TEMPLATE_METADATA.length);
   assert.equal(start.body.mutation.kind, 'subject_command.grammar.start-session');
   assert.equal(start.body.mutation.appliedRevision, 1);
 

@@ -277,16 +277,16 @@ test('release-id bump is NO for every selected-response row', () => {
   }
 });
 
-test('audit table proposes the expected P1 answer-spec distribution', () => {
-  // Sanity: legacy selected-response rows use `exact`, while two new P1
-  // classify-table templates use `multiField` from day one. The 20 legacy
-  // constructed-response rows remain one of the other declarative kinds.
+test('audit table proposes the expected current answer-spec distribution', () => {
+  // Sanity: selected-response rows use `exact`, while two P1 classify-table
+  // templates use `multiField` from day one. The 20 legacy constructed-response
+  // rows remain one of the other declarative kinds.
   const doc = readAuditDoc();
   const rows = extractClassificationTableRows(doc);
   const exactCount = rows.filter((row) => row.proposedKind === 'exact').length;
   const multiFieldCount = rows.filter((row) => row.proposedKind === 'multiField').length;
   const nonExactCount = rows.length - exactCount;
-  assert.equal(exactCount, 35, `Expected 35 rows proposing 'exact', got ${exactCount}.`);
+  assert.equal(exactCount, 48, `Expected 48 rows proposing 'exact', got ${exactCount}.`);
   assert.equal(multiFieldCount, 2, `Expected 2 rows proposing 'multiField', got ${multiFieldCount}.`);
   assert.equal(nonExactCount, 22, `Expected 22 rows proposing a non-exact kind, got ${nonExactCount}.`);
 });

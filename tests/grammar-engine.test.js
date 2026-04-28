@@ -24,6 +24,7 @@ import {
   readGrammarLegacyOracle,
   readGrammarQuestionGeneratorBaseline,
   readGrammarQuestionGeneratorP2Baseline,
+  readGrammarQuestionGeneratorP3Baseline,
 } from './helpers/grammar-legacy-oracle.js';
 import { assertNoForbiddenGrammarReadModelKeys } from '../scripts/grammar-production-smoke.mjs';
 
@@ -53,15 +54,12 @@ test('Grammar QG P1 baseline remains frozen for the previous content release', (
   assert.deepEqual(baseline.thinPoolConcepts, []);
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 57);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 37);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 20);
 });
 
-test('Grammar QG P2 baseline pins the shipped declarative marking denominator', () => {
+test('Grammar QG P2 baseline remains frozen for the shipped declarative marking denominator', () => {
   const baseline = readGrammarQuestionGeneratorP2Baseline();
 
-  assert.equal(baseline.releaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.releaseId, 'grammar-qg-p2-2026-04-28');
   assert.equal(baseline.conceptCount, 18);
   assert.equal(baseline.templateCount, 57);
   assert.equal(baseline.selectedResponseCount, 37);
@@ -75,9 +73,32 @@ test('Grammar QG P2 baseline pins the shipped declarative marking denominator', 
   assert.equal(baseline.p2MigrationComplete, true);
   assert.deepEqual(baseline.thinPoolConcepts, []);
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
+});
+
+test('Grammar QG P3 baseline pins the active explanation-depth release', () => {
+  const baseline = readGrammarQuestionGeneratorP3Baseline();
+
+  assert.equal(baseline.releaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.conceptCount, 18);
+  assert.equal(baseline.templateCount, 70);
+  assert.equal(baseline.selectedResponseCount, 50);
+  assert.equal(baseline.constructedResponseCount, 20);
+  assert.equal(baseline.generatedTemplateCount, 44);
+  assert.equal(baseline.fixedTemplateCount, 26);
+  assert.equal(baseline.answerSpecTemplateCount, 39);
+  assert.equal(baseline.constructedResponseAnswerSpecTemplateCount, 20);
+  assert.equal(baseline.legacyAdapterTemplateCount, 0);
+  assert.equal(baseline.manualReviewOnlyTemplateCount, 4);
+  assert.equal(baseline.p2MigrationComplete, true);
+  assert.equal(baseline.explainTemplateCount, 17);
+  assert.equal(baseline.conceptsWithExplainCoverage.length, 18);
+  assert.deepEqual(baseline.conceptsMissingExplainCoverage, []);
+  assert.equal(baseline.p3ExplanationComplete, true);
+  assert.deepEqual(baseline.thinPoolConcepts, []);
+  assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 57);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 37);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 70);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 50);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 20);
 });
 

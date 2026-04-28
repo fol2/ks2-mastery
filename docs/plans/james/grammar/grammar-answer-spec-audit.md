@@ -1,7 +1,7 @@
 ---
 title: "Grammar answer-spec migration audit"
 type: audit
-status: implemented
+status: p3-updated
 date: 2026-04-28
 plan: docs/plans/james/grammar/questions-generator/grammar-qg-p2.md
 unit: QG-P2
@@ -9,21 +9,21 @@ unit: QG-P2
 
 # Grammar answer-spec migration audit
 
-This document is the per-template classification and shipped-state audit for the Grammar answer-spec migration. It inventories every one of the 57 Grammar templates (37 selected-response + 20 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. QG P2 ships the legacy constructed-response migration under `grammar-qg-p2-2026-04-28`; the previous QG P1 baseline remains frozen for regression comparison.
+This document is the per-template classification and shipped-state audit for the Grammar answer-spec migration. It inventories every one of the 70 Grammar templates (50 selected-response + 20 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. QG P2 ships the legacy constructed-response migration under `grammar-qg-p2-2026-04-28`; QG P3 extends the selected-response explanation bank under `grammar-qg-p3-2026-04-28`. The previous baselines remain frozen for regression comparison.
 
 The authoritative answer-spec kind list lives at `worker/src/subjects/grammar/answer-spec.js` (`ANSWER_SPEC_KINDS`). The six kinds are: `exact`, `normalisedText`, `acceptedSet`, `punctuationPattern`, `multiField`, `manualReviewOnly`. Every row below proposes one of those kinds; the gate test asserts the set membership.
 
-QG P2 makes this audit executable: every constructed-response template now sets `requiresAnswerSpec: true` and `answerSpecKind`, and each generated question emits hidden `question.answerSpec` data that passes `validateAnswerSpec()`. Legacy `markStringAnswer` remains as a compatibility adapter, but the shipped P2 release has zero constructed-response templates left on that adapter path.
+QG P2 makes this audit executable: every constructed-response template now sets `requiresAnswerSpec: true` and `answerSpecKind`, and each generated question emits hidden `question.answerSpec` data that passes `validateAnswerSpec()`. QG P3 adds 13 selected-response explanation templates that also emit hidden `exact` answer specs from day one. Legacy `markStringAnswer` remains as a compatibility adapter, but the shipped P2+P3 release has zero constructed-response templates left on that adapter path.
 
 ---
 
 ## 1. Scope and ground rules
 
-- **57 templates total.** Confirmed by `GRAMMAR_TEMPLATES.length === 57` in `worker/src/subjects/grammar/content.js`. Split: 37 `isSelectedResponse: true`, 20 `isSelectedResponse: false`.
+- **70 templates total.** Confirmed by `GRAMMAR_TEMPLATES.length === 70` in `worker/src/subjects/grammar/content.js`. Split: 50 `isSelectedResponse: true`, 20 `isSelectedResponse: false`.
 - **P2 template migration shipped.** The 20 constructed-response templates now emit hidden answer specs directly.
-- **`contentReleaseId` bumped.** QG P2 uses `grammar-qg-p2-2026-04-28` and adds separate P2 fixtures. The QG P1 fixtures remain unchanged.
+- **`contentReleaseId` bumped.** QG P3 uses `grammar-qg-p3-2026-04-28` and adds separate P3 fixtures. The QG P1 and QG P2 fixtures remain unchanged.
 - **P1 focus concepts drive priority.** Six concepts were the confirmed thin-pool backlog before P1 expansion: `pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`. Every template carrying one of these concept ids in `skillIds` inherits **high** priority, so reliability work continues to land on the concepts that were previously fragile.
-- **Selected-response default is `exact`, except classify-table specs.** 35 selected-response rows use `exact`. Two new P1 classify-table templates use `multiField` because they have per-row answers. These are additive migrations: the marking result is deterministic and no stored constructed-response evidence changes.
+- **Selected-response default is `exact`, except classify-table specs.** 48 selected-response rows use `exact`. Two P1 classify-table templates use `multiField` because they have per-row answers. These are additive migrations: the marking result is deterministic and no stored constructed-response evidence changes.
 - **Constructed-response triage is per-concept.** Rewrite templates for `active_passive` and `tense_aspect` migrate to `normalisedText` (whitespace + case tolerance, single golden). Punctuation-surgery templates migrate to `punctuationPattern` (the marker keeps the punctuation characters literal and can opt into `optionalCommas`). Multi-way rewrites (`clauses` combine / join) use explicit `acceptedSet` alternatives. Open-ended builders and ambiguous rewrites are `manualReviewOnly` in P2, with neutral feedback and no auto-scored mastery or reward progression.
 
 ---
@@ -98,22 +98,35 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_formality_classify_table` | `formality` | classify | answerSpec: multiField | `multiField` | per-row option value (`formal` / `informal`) | swapped register labels | high | NO |
 | `qg_modal_verb_explain` | `modal_verbs` | explain | answerSpec: exact | `exact` | `It shows a rule or strong obligation.` | `It shows a weak possibility.` (wrong modal meaning); `It shows the action happened yesterday.` (tense confusion) | high | NO |
 | `qg_hyphen_ambiguity_explain` | `hyphen_ambiguity` | explain | answerSpec: exact | `exact` | `The hyphen shows that the shark eats people.` | `The hyphen shows that a man is eating a shark.` (opposite meaning); `The hyphen shows plural possession.` (wrong punctuation function) | high | NO |
+| `qg_p3_sentence_functions_explain` | `sentence_functions` | explain | answerSpec: exact | `exact` | selected explanation option for the sentence function | distractor that confuses statement, question, command, or exclamation | low | NO |
+| `qg_p3_word_classes_explain` | `word_classes` | explain | answerSpec: exact | `exact` | selected explanation option for the word's job in context | distractor that names the wrong word class or grammatical job | low | NO |
+| `qg_p3_noun_phrases_explain` | `noun_phrases` | explain | answerSpec: exact | `exact` | selected explanation option for the noun phrase structure | distractor that treats a phrase as a clause or misses the head noun | low | NO |
+| `qg_p3_clauses_explain` | `clauses` | explain | answerSpec: exact | `exact` | selected explanation option for the clause relationship | distractor that confuses main, subordinate, or coordinated clauses | low | NO |
+| `qg_p3_relative_clauses_explain` | `relative_clauses` | explain | answerSpec: exact | `exact` | selected explanation option for the relative clause | distractor that treats a relative clause as a time clause or question | low | NO |
+| `qg_p3_tense_aspect_explain` | `tense_aspect` | explain | answerSpec: exact | `exact` | selected explanation option for tense or aspect | distractor that confuses perfect, progressive, simple, or passive forms | low | NO |
+| `qg_p3_pronouns_cohesion_explain` | `pronouns_cohesion` | explain | answerSpec: exact | `exact` | selected explanation option for the pronoun reference or cohesion move | distractor that chooses an ambiguous or unrelated referent | high | NO |
+| `qg_p3_formality_explain` | `formality` | explain | answerSpec: exact | `exact` | selected explanation option for formal or informal register | distractor that treats register as tense, noun choice, or punctuation only | high | NO |
+| `qg_p3_active_passive_explain` | `active_passive` | explain | answerSpec: exact | `exact` | selected explanation option for active or passive voice | distractor that confuses tense, progressive aspect, or the grammatical subject | high | NO |
+| `qg_p3_subject_object_explain` | `subject_object` | explain | answerSpec: exact | `exact` | selected explanation option for subject or object role | distractor that confuses the doer, receiver, or sentence position | high | NO |
+| `qg_p3_parenthesis_commas_explain` | `parenthesis_commas` | explain | answerSpec: exact | `exact` | selected explanation option for parenthesis punctuation | distractor that treats parenthesis punctuation as list, speech, or fronted-adverbial punctuation | low | NO |
+| `qg_p3_speech_punctuation_explain` | `speech_punctuation` | explain | answerSpec: exact | `exact` | selected explanation option for direct speech punctuation | distractor that places punctuation outside speech marks or confuses reporting punctuation | low | NO |
+| `qg_p3_apostrophe_possession_explain` | `apostrophes_possession` | explain | answerSpec: exact | `exact` | selected explanation option for possessive apostrophe placement | distractor that confuses possession, omission, singular owners, or plural owners | low | NO |
 | `proc3_apostrophe_rewrite` | `apostrophes_possession` | rewrite | adapter: markStringAnswer | `normalisedText` | `the farmers' coats` | `the farmer's coats` (singular possessive — different meaning); `the farmers coats` (no apostrophe) | medium | YES |
 
 ### 2.1 Row count reconciliation
 
-The table above has exactly **57 rows**, one per template. The doc-gate test (§6) parses this table and asserts `rows.length === GRAMMAR_TEMPLATES.length` and that every proposed kind is in `ANSWER_SPEC_KINDS`.
+The table above has exactly **70 rows**, one per template. The doc-gate test (§6) parses this table and asserts `rows.length === GRAMMAR_TEMPLATES.length` and that every proposed kind is in `ANSWER_SPEC_KINDS`.
 
 ### 2.2 Proposed-spec distribution
 
-- `exact`: **35** rows (selected-response templates with one answer value).
+- `exact`: **48** rows (selected-response templates with one answer value).
 - `normalisedText`: **5** rows (`tense_rewrite`, `active_passive_rewrite`, `proc2_standard_english_fix`, `proc2_passive_to_active`, `proc3_apostrophe_rewrite`).
 - `acceptedSet`: **2** rows (`combine_clauses_rewrite`, `proc3_clause_join_rewrite`).
 - `punctuationPattern`: **9** rows (every punctuation-surgery fix template: `fix_fronted_adverbial`, `parenthesis_fix_sentence`, `speech_punctuation_fix`, `proc_fronted_adverbial_fix`, `proc_colon_list_fix`, `proc_dash_boundary_fix`, `proc_speech_punctuation_fix`, `proc3_parenthesis_commas_fix`, `proc3_hyphen_fix_meaning`).
 - `multiField`: **2** rows (`qg_subject_object_classify_table`, `qg_formality_classify_table`).
 - `manualReviewOnly`: **4** rows in the table (`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`). §3 additionally flags **2** explain templates as Phase 5 re-evaluation candidates for migration to `manualReviewOnly` once they become free-text, lifting the candidate list to **6**.
 
-Totals: 35 + 5 + 2 + 9 + 2 + 4 = 57.
+Totals: 48 + 5 + 2 + 9 + 2 + 4 = 70.
 
 ### 2.3 Constructed-response triage summary
 
@@ -169,7 +182,7 @@ Why high priority on thin-pool concepts specifically: each concept has fewer tem
 Every row where marking behaviour changes bumps `contentReleaseId` and invalidates stored attempt evidence against the prior release. Rows that are purely declarative (selected-response → `exact`, where the mark result is byte-identical for every stored attempt) do not bump.
 
 - **Rows requiring `contentReleaseId` bump: 20.** Every row marked `YES` in the table — all 20 legacy constructed-response templates. QG P2 batches these as one content release and pairs them with separate QG P2 fixtures.
-- **Rows NOT requiring `contentReleaseId` bump: 37.** Every selected-response row marked `NO` — legacy selected-response rows preserve option-value equality, and the new P1 rows emit typed `answerSpec` data from day one. The P1 content itself bumps the Grammar content release because the pool changed, but the answer-spec marking contract does not add a separate marking-behaviour bump.
+- **Rows NOT requiring `contentReleaseId` bump: 50.** Every selected-response row marked `NO` — legacy selected-response rows preserve option-value equality, and the new P1/P3 rows emit typed `answerSpec` data from day one. P1 and P3 content themselves bump the Grammar content release because the pool changed, but the answer-spec marking contract does not add a separate marking-behaviour bump.
 - **`explain_reason_choice` and `proc2_boundary_punctuation_explain`:** flagged `medium` priority and `NO` bump because today they are selected-response. If Phase 5 migrates them to free-text explanation, that migration **is** a marking-behaviour change and bumps `contentReleaseId` at that time.
 - **`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`:** `manualReviewOnly` migration **always** bumps `contentReleaseId`: the mark result shifts from `correct: true/false, score: 0..2` (adapter path) to `correct: false, score: 0, maxScore: 0, nonScored: true` (manual-review path). Stored attempt evidence must not be replayed as P2 mastery evidence.
 
@@ -202,7 +215,7 @@ These notes are now historical migration guidance plus future backlog boundaries
   4. Remaining rewrites (`normalisedText`) — 3 templates.
   5. Clause combine/join (`acceptedSet`) — 2 templates.
   6. Builders + ambiguous fixes (`manualReviewOnly`) — 4 templates.
-  7. Selected-response batch (`exact`/`multiField`) — 37 templates in one PR, with the two P1 classify tables already carrying `multiField`.
+  7. Selected-response batch (`exact`/`multiField`) — 50 templates after QG P3, with the two P1 classify tables already carrying `multiField` and the 13 P3 explanation templates already carrying `exact`.
   8. Explain-template re-evaluation (potential `manualReviewOnly` migration if they move to free-text) — still deferred to future content-expansion work.
 - **`params` usage.** Reserved parameters flagged above (`params.optionalCommas`, `params.acceptHyphenMinus`, `params.acceptQuoteStyle`) remain future enhancements. P2 relies on declared golden strings matching fixture output byte-for-byte.
 

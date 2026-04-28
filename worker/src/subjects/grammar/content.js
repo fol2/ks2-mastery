@@ -4191,6 +4191,308 @@ const TEMPLATES = [
           }
   },
   {
+    id: "qg_p3_sentence_functions_explain",
+    label: "Explain a sentence function",
+    domain: "Sentence function",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_sentence_functions_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "sentence_functions"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_sentence_functions_explain);
+          }
+  },
+  {
+    id: "qg_p3_word_classes_explain",
+    label: "Explain a word class in context",
+    domain: "Word classes",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_word_classes_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "word_classes"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_word_classes_explain);
+          }
+  },
+  {
+    id: "qg_p3_noun_phrases_explain",
+    label: "Explain an expanded noun phrase",
+    domain: "Phrases",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_noun_phrases_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "noun_phrases"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_noun_phrases_explain);
+          }
+  },
+  {
+    id: "qg_p3_clauses_explain",
+    label: "Explain a clause relationship",
+    domain: "Clauses",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_clauses_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "clauses"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_clauses_explain);
+          }
+  },
+  {
+    id: "qg_p3_relative_clauses_explain",
+    label: "Explain a relative clause",
+    domain: "Clauses",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_relative_clauses_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "relative_clauses"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_relative_clauses_explain);
+          }
+  },
+  {
+    id: "qg_p3_tense_aspect_explain",
+    label: "Explain tense and aspect",
+    domain: "Verb forms",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_tense_aspect_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "tense_aspect"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_tense_aspect_explain);
+          }
+  },
+  {
+    id: "qg_p3_pronouns_cohesion_explain",
+    label: "Explain pronoun cohesion",
+    domain: "Cohesion",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_pronouns_cohesion_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "pronouns_cohesion"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_pronouns_cohesion_explain);
+          }
+  },
+  {
+    id: "qg_p3_formality_explain",
+    label: "Explain formal and informal register",
+    domain: "Register",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_formality_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "formality"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_formality_explain);
+          }
+  },
+  {
+    id: "qg_p3_active_passive_explain",
+    label: "Explain active and passive voice",
+    domain: "Sentence structure",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_active_passive_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "active_passive"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_active_passive_explain);
+          }
+  },
+  {
+    id: "qg_p3_subject_object_explain",
+    label: "Explain subject and object roles",
+    domain: "Sentence structure",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_subject_object_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "subject_object"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_subject_object_explain);
+          }
+  },
+  {
+    id: "qg_p3_parenthesis_commas_explain",
+    label: "Explain parenthesis punctuation",
+    domain: "Punctuation for grammar",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    punctStage: "sense",
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_parenthesis_commas_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "parenthesis_commas"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_parenthesis_commas_explain);
+          }
+  },
+  {
+    id: "qg_p3_speech_punctuation_explain",
+    label: "Explain direct speech punctuation",
+    domain: "Punctuation for grammar",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    punctStage: "sense",
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_speech_punctuation_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "speech_punctuation"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_speech_punctuation_explain);
+          }
+  },
+  {
+    id: "qg_p3_apostrophe_possession_explain",
+    label: "Explain possessive apostrophes",
+    domain: "Punctuation for grammar",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    punctStage: "sense",
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p3_apostrophe_possession_explain",
+    tags: [
+      "qg-p3",
+      "explain"
+    ],
+    skillIds: [
+      "apostrophes_possession"
+    ],
+    generator(seed) {
+            return buildP3ExplanationChoiceQuestion(this, seed, P3_EXPLANATION_CASES.qg_p3_apostrophe_possession_explain);
+          }
+  },
+  {
     id: "proc3_apostrophe_rewrite",
     label: "Rewrite with a possessive apostrophe",
     domain: "Punctuation for grammar",
@@ -4250,6 +4552,1003 @@ const TEMPLATES = [
           }
   }
 ];
+
+const P3_EXPLANATION_CASES = Object.freeze({
+  qg_p3_sentence_functions_explain: [
+    {
+      prompt: "Why is this sentence a command?",
+      example: "Please place the wet coats on the rack.",
+      correct: "It tells someone to do something, so it is a command.",
+      distractors: [
+        "It asks for information, so it is a question.",
+        "It gives information without an instruction, so it is a statement.",
+        "It begins with What or How and shows strong feeling."
+      ],
+      why: "A command gives an instruction or request, often with an imperative verb.",
+      misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this sentence a question?",
+      example: "Where did the caretaker leave the keys?",
+      correct: "It asks for information directly, so it is a question.",
+      distractors: [
+        "It tells the caretaker to leave the keys somewhere.",
+        "It gives information about where the keys are.",
+        "It is a grammatical exclamation because it ends with a question mark."
+      ],
+      why: "A question asks something directly; the question mark supports that function.",
+      misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this sentence a statement?",
+      example: "The caretaker left the keys beside the office door.",
+      correct: "It gives information, so it is a statement.",
+      distractors: [
+        "It asks where the keys are.",
+        "It orders someone to move the keys.",
+        "It begins with What or How to show strong feeling."
+      ],
+      why: "A statement tells the reader something and does not ask, order, or exclaim.",
+      misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this a grammatical exclamation?",
+      example: "What an enormous wave that was!",
+      correct: "It begins with What and expresses strong feeling about a noun phrase.",
+      distractors: [
+        "It is a question because it uses the word what.",
+        "It is a command because it tells someone to look at the wave.",
+        "It is a statement because it gives calm information only."
+      ],
+      why: "KS2 grammatical exclamations often begin with What or How and show strong feeling.",
+      misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this a statement rather than a question?",
+      example: "I wonder where the missing torch is.",
+      correct: "It reports someone wondering; it does not ask the reader directly.",
+      distractors: [
+        "It is a question because it contains the word where.",
+        "It is a command because it tells the reader to find the torch.",
+        "It is an exclamation because it shows strong feeling with What or How."
+      ],
+      why: "A reported question can be part of a statement if the whole sentence is giving information.",
+      misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this not a grammatical exclamation?",
+      example: "The drums sounded very loud!",
+      correct: "It shows excitement, but it does not use the What or How exclamation pattern.",
+      distractors: [
+        "Any sentence with an exclamation mark is a grammatical exclamation.",
+        "It is a command because the drums are making noise.",
+        "It is a question because it ends with strong punctuation."
+      ],
+      why: "In KS2 grammar, an exclamation mark alone does not make the sentence function an exclamation.",
+      misconception: "sentence_function_confusion"
+    }
+  ],
+  qg_p3_word_classes_explain: [
+    {
+      prompt: "Why is the word 'bright' an adjective here?",
+      example: "The bright lantern swung above the door.",
+      correct: "It describes the noun lantern.",
+      distractors: [
+        "It names the action in the sentence.",
+        "It joins two clauses together.",
+        "It replaces a noun phrase to avoid repetition."
+      ],
+      why: "An adjective gives more information about a noun.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'carefully' an adverb here?",
+      example: "Maya carefully folded the map.",
+      correct: "It modifies the verb folded by saying how Maya folded.",
+      distractors: [
+        "It names the person doing the folding.",
+        "It comes before a noun to identify it.",
+        "It joins the two parts of the sentence."
+      ],
+      why: "Adverbs can modify verbs by telling how, when, where, or how often.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'before' a preposition here?",
+      example: "The pupils waited before assembly.",
+      correct: "It begins the phrase before assembly and shows a time relationship.",
+      distractors: [
+        "It replaces the noun pupils.",
+        "It describes the noun assembly.",
+        "It names the action of waiting."
+      ],
+      why: "A preposition usually links a noun phrase to the rest of the sentence by time, place, or cause.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'because' a conjunction here?",
+      example: "Luca whispered because the baby was asleep.",
+      correct: "It joins the reason clause to the main clause.",
+      distractors: [
+        "It describes the noun baby.",
+        "It shows where Luca whispered.",
+        "It replaces the name Luca."
+      ],
+      why: "A conjunction can join clauses and show the relationship between their ideas.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'Those' a determiner here?",
+      example: "Those birds nested under the roof.",
+      correct: "It comes before the noun birds and helps identify which birds.",
+      distractors: [
+        "It tells how the birds nested.",
+        "It names the action in the sentence.",
+        "It joins two clauses together."
+      ],
+      why: "Determiners come before nouns and help specify them.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'it' a pronoun here?",
+      example: "Aisha found the compass and put it in her bag.",
+      correct: "It replaces the noun phrase the compass.",
+      distractors: [
+        "It describes the compass.",
+        "It shows the time of the action.",
+        "It joins the two clauses because it means and."
+      ],
+      why: "Pronouns stand in for nouns or noun phrases when the reference is clear.",
+      misconception: "word_class_confusion"
+    }
+  ],
+  qg_p3_noun_phrases_explain: [
+    {
+      prompt: "Why is this an expanded noun phrase?",
+      example: "the tiny silver key",
+      correct: "It is centred on the noun key and expanded with describing words.",
+      distractors: [
+        "It is a full clause with a verb.",
+        "It is an adverbial because it tells when.",
+        "It is a conjunction because it joins ideas."
+      ],
+      why: "A noun phrase has a noun at its heart; expansion adds detail to that noun.",
+      misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is this an expanded noun phrase?",
+      example: "the book with a torn cover",
+      correct: "It is centred on the noun book and expanded by the phrase with a torn cover.",
+      distractors: [
+        "It is a sentence because it has a subject and a verb.",
+        "It is a fronted adverbial because it starts with the.",
+        "It is direct speech because it names an object."
+      ],
+      why: "A preposition phrase can expand a noun phrase by adding detail about the noun.",
+      misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is this not a noun phrase?",
+      example: "quickly opened the gate",
+      correct: "It contains a verb phrase, so it is part of a clause rather than a noun phrase.",
+      distractors: [
+        "It is a noun phrase because it has four words.",
+        "It is a noun phrase because quickly describes a noun.",
+        "It is a determiner phrase because it ends with gate."
+      ],
+      why: "Length is not enough: a noun phrase must centre on a noun, not a verb.",
+      misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is the underlined group a noun phrase?",
+      example: "The nervous goalkeeper from Year 6 saved the penalty.",
+      focus: "The nervous goalkeeper from Year 6",
+      correct: "The whole group is centred on the noun goalkeeper.",
+      distractors: [
+        "The whole group is the verb phrase.",
+        "It is a subordinate clause because it has extra information.",
+        "It is an adverbial because it tells where the saving happened."
+      ],
+      why: "Extra words before and after the noun can belong inside the same noun phrase.",
+      misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is this an expanded noun phrase rather than a clause?",
+      example: "the lighthouse on the cliff",
+      correct: "It has no verb; it is a noun phrase centred on lighthouse.",
+      distractors: [
+        "It is a clause because every phrase with on has a verb.",
+        "It is a clause because cliff is a subject.",
+        "It is a sentence because it begins with the."
+      ],
+      why: "A clause normally has a verb; this group names and expands a noun.",
+      misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is this not the full noun phrase?",
+      example: "the old oak tree beside the library",
+      focus: "old oak",
+      correct: "Old oak describes the noun, but the full noun phrase must include tree.",
+      distractors: [
+        "Old oak is the full noun phrase because adjectives can stand alone here.",
+        "Old oak is a clause because it has two words.",
+        "Old oak is the object because it comes before tree."
+      ],
+      why: "A noun phrase needs its head noun; adjectives alone do not make the complete noun phrase here.",
+      misconception: "noun_phrase_confusion"
+    }
+  ],
+  qg_p3_clauses_explain: [
+    {
+      prompt: "Why is the first clause subordinate?",
+      example: "Because the rain stopped, we went outside.",
+      correct: "Because the rain stopped depends on the main clause to complete the meaning.",
+      distractors: [
+        "It is subordinate because it is the longest part of the sentence.",
+        "It is subordinate because it contains the subject we.",
+        "It is subordinate because it can stand alone as a full sentence here."
+      ],
+      why: "A subordinate clause often begins with a subordinating conjunction and depends on a main clause.",
+      misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why does the conjunction 'although' fit this sentence?",
+      example: "Although Mia was tired, she finished the race.",
+      correct: "It introduces a subordinate clause showing contrast with the main clause.",
+      distractors: [
+        "It joins two noun phrases in a list.",
+        "It introduces direct speech.",
+        "It shows that the two clauses mean exactly the same thing."
+      ],
+      why: "Although links a contrasting subordinate clause to a main clause.",
+      misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why is this a main clause?",
+      example: "The class cheered when the curtain rose.",
+      focus: "The class cheered",
+      correct: "It can stand alone as a complete clause in the intended meaning.",
+      distractors: [
+        "It is main because it begins with when.",
+        "It is main because it has no verb.",
+        "It is main because it only adds extra information about a noun."
+      ],
+      why: "The main clause carries the core meaning and can usually stand alone.",
+      misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why is the clause beginning with 'if' subordinate?",
+      example: "If the gate is locked, wait by the office.",
+      correct: "It gives a condition and needs the main clause to complete the instruction.",
+      distractors: [
+        "It is subordinate because it is a question.",
+        "It is subordinate because it contains direct speech.",
+        "It is subordinate because it has no subject or verb."
+      ],
+      why: "Conditional clauses beginning with if often depend on a main clause.",
+      misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why does 'and' join these clauses safely?",
+      example: "The bell rang and the pupils lined up.",
+      correct: "It links two related main clauses of equal importance.",
+      distractors: [
+        "It makes the second clause subordinate.",
+        "It introduces a relative clause about bell.",
+        "It shows possession between the two nouns."
+      ],
+      why: "Coordinating conjunctions such as and can join main clauses.",
+      misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why is this not a complete sentence by itself?",
+      example: "When the coach arrived",
+      correct: "It is a subordinate time clause that leaves the main action unfinished.",
+      distractors: [
+        "It is complete because it starts with When.",
+        "It is complete because it has no conjunction.",
+        "It is complete because coach is a noun."
+      ],
+      why: "A subordinate clause may contain a subject and verb but still depend on a main clause.",
+      misconception: "subordinate_clause_confusion"
+    }
+  ],
+  qg_p3_relative_clauses_explain: [
+    {
+      prompt: "Why is the clause 'who carried the flag' a relative clause?",
+      example: "The pupil who carried the flag led the line.",
+      correct: "It adds information about the noun pupil.",
+      distractors: [
+        "It tells when the line was led.",
+        "It joins two unrelated main clauses.",
+        "It is direct speech by the pupil."
+      ],
+      why: "Relative clauses add information about a noun, often using who for people.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why is the clause 'which stood by the window' a relative clause?",
+      example: "The plant which stood by the window needed water.",
+      correct: "It adds information about the noun plant.",
+      distractors: [
+        "It is a question because it starts with which.",
+        "It shows possession by the window.",
+        "It is an adverbial telling how the plant needed water."
+      ],
+      why: "Which can introduce a relative clause that gives more detail about a thing.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why is the clause 'that everyone wanted' a relative clause?",
+      example: "The book that everyone wanted was on the shelf.",
+      correct: "It identifies the noun book more precisely.",
+      distractors: [
+        "It gives the time when the book was on the shelf.",
+        "It is a command telling everyone to want the book.",
+        "It is a main clause that can stand alone here."
+      ],
+      why: "Relative clauses can define or identify the noun they follow.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why is this not a relative clause?",
+      example: "When the show ended, the actors bowed.",
+      correct: "When the show ended is a time clause, not extra information about a noun.",
+      distractors: [
+        "It is relative because every clause at the start is relative.",
+        "It is relative because it contains the noun show.",
+        "It is relative because it tells who bowed."
+      ],
+      why: "A relative clause attaches to a noun; a when-clause here tells time.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why does 'whose' introduce a relative clause here?",
+      example: "The girl whose boots were muddy waited outside.",
+      correct: "The clause adds information about the girl by saying whose boots were muddy.",
+      distractors: [
+        "Whose introduces a direct question here.",
+        "The clause tells where the girl waited.",
+        "The clause is a command about cleaning boots."
+      ],
+      why: "Whose can link a relative clause to a noun by showing possession.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why does this relative clause need commas?",
+      example: "Mr Patel, who runs the chess club, opened the hall.",
+      correct: "The clause adds extra information about Mr Patel and can be lifted out.",
+      distractors: [
+        "The commas show a list of teachers.",
+        "The commas show that the sentence is a question.",
+        "The commas mark possession by the chess club."
+      ],
+      why: "Non-essential relative clauses can be marked as parenthesis with commas.",
+      misconception: "relative_clause_confusion"
+    }
+  ],
+  qg_p3_tense_aspect_explain: [
+    {
+      prompt: "Why is 'has finished' present perfect?",
+      example: "She has finished the poster already.",
+      correct: "It uses has plus a past participle to link a completed action to now.",
+      distractors: [
+        "It is simple past because already names a finished time.",
+        "It is progressive because the action is happening right now.",
+        "It is passive because the poster comes after the verb."
+      ],
+      why: "The present perfect often uses has or have plus a past participle.",
+      misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'had packed' past perfect?",
+      example: "By the time the coach arrived, Sam had packed the bags.",
+      correct: "It shows one past action completed before another past action.",
+      distractors: [
+        "It is present perfect because it uses have in the present.",
+        "It is progressive because packing was in progress at that moment.",
+        "It is simple past because had is always optional."
+      ],
+      why: "Past perfect uses had plus a past participle to show an earlier past action.",
+      misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'was reading' past progressive?",
+      example: "Maya was reading when the bell rang.",
+      correct: "It shows an action that was in progress in the past.",
+      distractors: [
+        "It shows an action completed before another past action.",
+        "It is present tense because reading ends in ing.",
+        "It is passive because it uses was."
+      ],
+      why: "Progressive forms use a form of be plus an -ing verb to show an action in progress.",
+      misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'are building' present progressive?",
+      example: "The pupils are building a model bridge.",
+      correct: "It shows an action in progress now using are plus an -ing verb.",
+      distractors: [
+        "It shows an action finished yesterday.",
+        "It is past perfect because it has two verbs.",
+        "It is a modal verb phrase showing obligation."
+      ],
+      why: "Present progressive uses am, is, or are with an -ing verb.",
+      misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'walked' simple past here?",
+      example: "Yesterday, the team walked to the museum.",
+      correct: "It uses a past verb form for a finished action at a finished time.",
+      distractors: [
+        "It is present perfect because it happened before now.",
+        "It is progressive because the team kept moving.",
+        "It is passive because the team receives the action."
+      ],
+      why: "A finished time word such as yesterday often fits the simple past.",
+      misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'have been practising' a perfect progressive form?",
+      example: "We have been practising all week.",
+      correct: "It links earlier practice to now and shows the action continuing over time.",
+      distractors: [
+        "It is simple present because the action is a habit only.",
+        "It is passive because it uses been.",
+        "It is simple past because all week is always finished."
+      ],
+      why: "The form have been plus an -ing verb combines perfect and progressive meanings.",
+      misconception: "tense_confusion"
+    }
+  ],
+  qg_p3_pronouns_cohesion_explain: [
+    {
+      prompt: "Why does the pronoun 'it' make the second sentence cohesive?",
+      example: "Aisha unfolded the map. It showed the quickest route.",
+      correct: "It clearly refers back to the map and avoids repeating the noun.",
+      distractors: [
+        "It refers to Aisha, so the reader knows who showed the route.",
+        "It is unclear because there is no noun before it.",
+        "It changes the sentence into passive voice."
+      ],
+      why: "A pronoun supports cohesion when its referent is clear.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why is the pronoun 'she' unclear here?",
+      example: "Maya gave Priya the note because she needed it.",
+      correct: "She could refer to Maya or Priya, so the reference is ambiguous.",
+      distractors: [
+        "She clearly refers to the note.",
+        "She is unclear because pronouns can never refer to people.",
+        "She is unclear because it is an adjective."
+      ],
+      why: "Pronouns should make links clear; ambiguity weakens cohesion.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why is repeating 'the trophy' clearer here?",
+      example: "The shelf was above the trophy, but the trophy was too heavy to move.",
+      correct: "Repeating the trophy avoids confusing it with the shelf.",
+      distractors: [
+        "Repeating the noun always makes writing more formal.",
+        "A pronoun would be clearer because it could only mean shelf.",
+        "The noun must be repeated because trophies are plural."
+      ],
+      why: "Sometimes repeating a noun is better than using a pronoun with an unclear referent.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why does 'they' work in this sentence?",
+      example: "The pupils packed the benches after they finished lunch.",
+      correct: "They clearly refers to the pupils, the group who finished lunch.",
+      distractors: [
+        "They refers to the benches because benches are nearby.",
+        "They is wrong because pupils is singular.",
+        "They makes the sentence a direct question."
+      ],
+      why: "A plural pronoun should point clearly to a plural noun phrase.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why is 'this' cohesive here?",
+      example: "The gate was locked. This delayed the match.",
+      correct: "This refers back to the whole situation of the gate being locked.",
+      distractors: [
+        "This can only refer to a person.",
+        "This refers forward to the match only.",
+        "This is a verb because it shows an action."
+      ],
+      why: "Some pronouns can refer back to a whole idea, not just one noun.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why is the pronoun 'him' clear here?",
+      example: "Oliver dropped the baton, so Sam passed it back to him.",
+      correct: "Him refers to Oliver, the person who dropped the baton.",
+      distractors: [
+        "Him refers to the baton because it receives the action.",
+        "Him refers to Sam because Sam is nearest to the pronoun.",
+        "Him is unclear because it is plural."
+      ],
+      why: "Object pronouns still need a clear noun phrase to refer back to.",
+      misconception: "pronoun_cohesion_confusion"
+    }
+  ],
+  qg_p3_formality_explain: [
+    {
+      prompt: "Why is this sentence formal?",
+      example: "Visitors are requested to remain seated.",
+      correct: "It uses precise, polite wording suitable for official information.",
+      distractors: [
+        "It is formal because it uses slang.",
+        "It is formal because it asks a direct question.",
+        "It is formal because it avoids all verbs."
+      ],
+      why: "Formal writing is suited to public or official contexts and avoids chatty phrasing.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why is this sentence informal?",
+      example: "Hang on a minute while we get started.",
+      correct: "It uses chatty wording that suits speech more than formal writing.",
+      distractors: [
+        "It is informal because it uses Standard English.",
+        "It is informal because it has no subject.",
+        "It is informal because it contains a noun phrase."
+      ],
+      why: "Informal register often sounds conversational and relaxed.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why is 'request' the more formal choice?",
+      example: "We request that pupils return the form by Friday.",
+      correct: "Request is more precise and formal than ask for in this context.",
+      distractors: [
+        "Request is more formal because it is a modal verb.",
+        "Request is more formal because it is shorter.",
+        "Request is more formal because it makes the sentence a question."
+      ],
+      why: "Formal vocabulary often chooses precise words that fit the audience and purpose.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why is this version more formal?",
+      example: "The equipment was inspected before use.",
+      correct: "It uses impersonal, precise wording instead of chatty phrasing.",
+      distractors: [
+        "It is more formal because passive voice is always required.",
+        "It is more formal because it has fewer syllables.",
+        "It is more formal because it uses the word got."
+      ],
+      why: "Formal writing can use impersonal structures when the action matters more than the doer.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why is this ending too informal for an official letter?",
+      example: "Send it back by Friday, OK?",
+      correct: "OK is a chatty tag that does not suit an official letter.",
+      distractors: [
+        "OK is too formal for any letter.",
+        "The sentence is informal because Friday is a noun.",
+        "The sentence is informal because it has an object."
+      ],
+      why: "Formal writing avoids conversational tags such as OK? at the end of instructions.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why is this not automatically formal?",
+      example: "The club got set up last year.",
+      correct: "Got set up is conversational; established would be more formal.",
+      distractors: [
+        "It is formal because every past-tense sentence is formal.",
+        "It is formal because club is a noun.",
+        "It is formal because got is always the most precise verb."
+      ],
+      why: "Register depends on vocabulary and structure, not only on whether the grammar is understandable.",
+      misconception: "formality_confusion"
+    }
+  ],
+  qg_p3_active_passive_explain: [
+    {
+      prompt: "Why is this sentence passive?",
+      example: "The hall was cleaned by the caretaker.",
+      correct: "The thing affected comes first and the doer comes after by.",
+      distractors: [
+        "It is passive because it happened in the past.",
+        "It is passive because the caretaker is doing the action first.",
+        "It is passive because it asks a question."
+      ],
+      why: "Passive voice often uses a form of be plus a past participle and foregrounds the thing affected.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why is this sentence active?",
+      example: "The caretaker cleaned the hall.",
+      correct: "The doer, the caretaker, is the subject before the verb.",
+      distractors: [
+        "It is active because the hall comes first.",
+        "It is active because it uses was plus a past participle.",
+        "It is active because it hides who did the cleaning."
+      ],
+      why: "In active voice, the doer normally comes before the verb as the subject.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why might a writer choose the passive voice here?",
+      example: "The window was broken during lunch.",
+      correct: "It foregrounds the broken window and does not name the doer.",
+      distractors: [
+        "It proves that the action is still happening now.",
+        "It makes the sentence a command.",
+        "It shows that the window did the breaking."
+      ],
+      why: "Passive voice can focus attention on the thing affected or leave the doer unnamed.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why is this not passive voice?",
+      example: "Maya was carrying the heavy box.",
+      correct: "Was carrying is progressive; Maya is still the doer before the verb.",
+      distractors: [
+        "It is passive because every sentence with was is passive.",
+        "It is passive because box is an object.",
+        "It is passive because the action happened in the past."
+      ],
+      why: "A form of be alone is not enough for passive voice; check the doer and the past participle.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why does this passive sentence keep the meaning of the active one?",
+      example: "The scenery was painted by Aisha.",
+      correct: "Aisha is still the doer, but the scenery has been moved to the subject position.",
+      distractors: [
+        "The scenery becomes the person doing the painting.",
+        "The tense changes from past to future.",
+        "The sentence becomes a question about Aisha."
+      ],
+      why: "Active and passive can keep the same basic event while changing emphasis.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why is this passive sentence missing the doer?",
+      example: "The medals were presented after assembly.",
+      correct: "Passive voice can leave out the by-phrase when the doer is unknown or less important.",
+      distractors: [
+        "The medals must be the doers because they come first.",
+        "The sentence is active because no by-phrase appears.",
+        "The sentence is informal because the doer is hidden."
+      ],
+      why: "A passive sentence does not have to include the doer.",
+      misconception: "active_passive_confusion"
+    }
+  ],
+  qg_p3_subject_object_explain: [
+    {
+      prompt: "Why is 'The chef' the subject?",
+      example: "The chef tasted the soup.",
+      correct: "The chef does the action of tasting.",
+      distractors: [
+        "The chef receives the action.",
+        "The chef comes after the verb.",
+        "The chef is the object because it is a noun phrase."
+      ],
+      why: "In a simple active sentence, the subject usually does the verb.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why is 'the soup' the object?",
+      example: "The chef tasted the soup.",
+      correct: "The soup receives the action of tasting.",
+      distractors: [
+        "The soup does the action.",
+        "The soup is the subject because it is at the end.",
+        "The soup is an adverbial because it tells when."
+      ],
+      why: "The object is often the noun phrase that the action is done to.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why is 'Before lunch' not the subject?",
+      example: "Before lunch, Aisha packed the kit.",
+      correct: "Before lunch is an adverbial; Aisha does the action.",
+      distractors: [
+        "Before lunch is the subject because it comes first.",
+        "Before lunch is the object because it receives packing.",
+        "Before lunch is the verb phrase."
+      ],
+      why: "A fronted adverbial can come first, but the subject is still who or what does the verb.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why is the expanded noun phrase the subject?",
+      example: "The tall goalkeeper with red gloves caught the ball.",
+      correct: "The whole noun phrase names who did the catching.",
+      distractors: [
+        "Only red gloves can be the subject.",
+        "The whole noun phrase is the object because it is long.",
+        "The ball is the subject because it is affected by the verb."
+      ],
+      why: "A subject can be an expanded noun phrase, not just a single word.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why is 'the trophy' the subject in this passive sentence?",
+      example: "The trophy was lifted by Aisha.",
+      correct: "The trophy is before the verb phrase and the sentence is about what happened to it.",
+      distractors: [
+        "Aisha must be the subject because she is the doer.",
+        "The trophy is the object because every affected thing is always the object.",
+        "By Aisha is the subject because it comes after by."
+      ],
+      why: "In passive voice, the grammatical subject can be the thing affected.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why is 'the letters' the object?",
+      example: "The pupils sorted the letters carefully.",
+      correct: "The letters receive the action of sorting.",
+      distractors: [
+        "The letters are the subject because they are plural.",
+        "The letters are an adverbial because they tell how.",
+        "The letters are the verb because sorting happens to them."
+      ],
+      why: "Ask who or what receives the verb to find the object.",
+      misconception: "subject_object_confusion"
+    }
+  ],
+  qg_p3_parenthesis_commas_explain: [
+    {
+      prompt: "Why do the commas mark parenthesis here?",
+      example: "Luca, a keen drummer, led the parade.",
+      correct: "A keen drummer is extra information that could be lifted out.",
+      distractors: [
+        "The commas separate items in a list.",
+        "The commas show where direct speech begins.",
+        "The commas mark a fronted adverbial at the start."
+      ],
+      why: "Parenthesis adds extra information without breaking the main sentence.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why do the dashes mark parenthesis here?",
+      example: "The hall - usually quiet - was full of music.",
+      correct: "Usually quiet is extra information inserted into the sentence.",
+      distractors: [
+        "The dashes join two equal main clauses.",
+        "The dashes show plural possession.",
+        "The dashes introduce a list after a complete clause."
+      ],
+      why: "Dashes can mark parenthesis when they enclose removable extra information.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why do the brackets mark parenthesis here?",
+      example: "The trip (which had been delayed) finally began.",
+      correct: "The bracketed clause adds extra information about the trip.",
+      distractors: [
+        "The brackets show direct speech.",
+        "The brackets make which into a question word.",
+        "The brackets show that trip is plural."
+      ],
+      why: "Brackets can mark parenthetical information that is not essential to the main clause.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why are these commas not marking parenthesis?",
+      example: "We packed pencils, rulers, glue and card.",
+      correct: "The commas separate items in a list, not removable extra information.",
+      distractors: [
+        "They mark a relative clause about pencils.",
+        "They show direct speech punctuation.",
+        "They show that the nouns own the card."
+      ],
+      why: "List commas separate items; parenthesis commas enclose extra information.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why is a pair of commas needed here?",
+      example: "The museum, which opened last year, is near the river.",
+      correct: "The parenthetical relative clause sits in the middle of the main sentence.",
+      distractors: [
+        "Only one comma is needed after museum because the rest is a list.",
+        "The commas show that the museum owns the river.",
+        "The commas turn the sentence into direct speech."
+      ],
+      why: "When parenthesis interrupts the middle of a sentence, paired punctuation marks both ends.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why is the phrase after the comma not parenthesis?",
+      example: "After the storm, the path was muddy.",
+      correct: "After the storm is a fronted adverbial telling when, not extra information in the middle.",
+      distractors: [
+        "It is parenthesis because every comma marks parenthesis.",
+        "It is parenthesis because storm is a noun.",
+        "It is direct speech because the comma comes early."
+      ],
+      why: "A fronted adverbial comma has a different job from parenthesis punctuation.",
+      misconception: "parenthesis_confusion"
+    }
+  ],
+  qg_p3_speech_punctuation_explain: [
+    {
+      prompt: "Why does the question mark go inside the speech marks?",
+      example: "\"Where is the map?\" asked Priya.",
+      correct: "The spoken words are a question, so the question mark belongs inside them.",
+      distractors: [
+        "The question mark belongs after asked because Priya is asking.",
+        "The question mark shows possession by the map.",
+        "The question mark replaces the closing speech mark."
+      ],
+      why: "End punctuation for the spoken words sits inside the speech marks.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why is there a comma before the closing speech mark?",
+      example: "\"I found the map,\" said Priya.",
+      correct: "The comma separates the spoken words from the reporting clause.",
+      distractors: [
+        "The comma shows that map is plural.",
+        "The comma belongs outside the speech marks in this pattern.",
+        "The comma marks a list of speakers."
+      ],
+      why: "When a reporting clause follows a statement in direct speech, the comma is part of the spoken section.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why is there a comma after the reporting clause?",
+      example: "Priya said, \"I found the map.\"",
+      correct: "The comma introduces the direct speech after the reporting clause.",
+      distractors: [
+        "The comma shows that Priya is in a list.",
+        "The comma marks a subordinate clause beginning with I.",
+        "The comma shows plural possession."
+      ],
+      why: "A comma often separates a reporting clause from the direct speech that follows.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why is the exclamation mark inside the speech marks?",
+      example: "\"Watch out!\" shouted Sam.",
+      correct: "The spoken words are an exclamation or warning, so the mark belongs inside.",
+      distractors: [
+        "The exclamation mark belongs after shouted because Sam is loud.",
+        "The exclamation mark turns shouted into a noun.",
+        "The exclamation mark shows that Sam owns the warning."
+      ],
+      why: "Punctuation that belongs to the spoken words is placed inside the speech marks.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why does the spoken sentence start with a capital letter?",
+      example: "Mum asked, \"Are you ready?\"",
+      correct: "The direct speech starts a new spoken sentence.",
+      distractors: [
+        "Every word after a comma must have a capital letter.",
+        "Are is capitalised because it is a noun.",
+        "The capital letter shows possession."
+      ],
+      why: "Direct speech keeps the normal capital letter at the start of the spoken sentence.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why is the full stop not outside the speech marks?",
+      example: "\"The bus is here.\"",
+      correct: "The full stop finishes the spoken sentence, so it belongs inside the speech marks.",
+      distractors: [
+        "The full stop belongs outside because speech marks are only decoration.",
+        "The full stop belongs before the opening speech mark.",
+        "The full stop should be replaced by an apostrophe."
+      ],
+      why: "The punctuation that ends the direct speech is part of the quoted words.",
+      misconception: "speech_punctuation_confusion"
+    }
+  ],
+  qg_p3_apostrophe_possession_explain: [
+    {
+      prompt: "Why is the apostrophe before the s?",
+      example: "the girl's bag",
+      correct: "One girl owns the bag, so singular possession uses apostrophe + s.",
+      distractors: [
+        "More than one girl owns the bag, so the apostrophe follows the plural s.",
+        "The apostrophe shows a missing letter from girl is.",
+        "The apostrophe makes the noun plural."
+      ],
+      why: "For one regular singular owner, the apostrophe usually comes before s.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why is the apostrophe after the s?",
+      example: "the girls' bags",
+      correct: "More than one girl owns the bags, and girls is a regular plural ending in s.",
+      distractors: [
+        "One girl owns the bags, so the apostrophe must come after s.",
+        "The apostrophe shows the bags are missing letters.",
+        "The apostrophe turns bags into a verb."
+      ],
+      why: "For a regular plural owner ending in s, the apostrophe usually comes after the s.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why is this apostrophe + s?",
+      example: "the children's coats",
+      correct: "Children is an irregular plural that does not end in s, so it takes apostrophe + s.",
+      distractors: [
+        "Children is singular, so only one child owns the coats.",
+        "The apostrophe comes after an s that is missing from children.",
+        "The apostrophe shows a contraction of children is."
+      ],
+      why: "Irregular plural owners that do not end in s usually use apostrophe + s.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why does this phrase show possession, not omission?",
+      example: "the teacher's desk",
+      correct: "The apostrophe shows the desk belongs to the teacher.",
+      distractors: [
+        "The apostrophe replaces letters from teacher is.",
+        "The apostrophe makes desk plural.",
+        "The apostrophe marks a direct speech break."
+      ],
+      why: "Possessive apostrophes show ownership; contraction apostrophes show missing letters.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why is 'the boys' changing room' plural possession?",
+      example: "the boys' changing room",
+      correct: "The room belongs to more than one boy, so the apostrophe follows the plural s.",
+      distractors: [
+        "The room belongs to one boy, so the apostrophe follows the plural s.",
+        "The apostrophe shows that changing is missing letters.",
+        "The apostrophe is needed because room is singular."
+      ],
+      why: "The apostrophe position changes the owner number, not the number of the owned noun.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why is 'the dog's bowls' singular possession?",
+      example: "the dog's bowls",
+      correct: "One dog owns more than one bowl, so the apostrophe is before s in dog's.",
+      distractors: [
+        "More than one dog owns one bowl, so the apostrophe is before s.",
+        "The apostrophe belongs after bowls because bowls is plural.",
+        "The apostrophe shows dog is a verb."
+      ],
+      why: "Look at the owner, not only the owned noun, when placing the apostrophe.",
+      misconception: "apostrophe_possession_confusion"
+    }
+  ]
+});
+
+function buildP3ExplanationChoiceQuestion(template, seed, cases) {
+  const rng = mulberry32(seed);
+  const item = cases[((Number(seed) || 0) % cases.length + cases.length) % cases.length];
+  const correct = cleanSpaces(item.correct);
+  const distractors = dedupePlain(item.distractors || []).filter(option => option !== correct);
+  const answerSpec = exactAnswerSpec(correct, distractors, {
+    misconception:item.misconception,
+    feedbackLong:item.why,
+    answerText:correct
+  });
+  const stemParts = [
+    `<p>${escapeHtml(item.prompt)}</p>`
+  ];
+  if (item.example) stemParts.push(`<p><strong>${escapeHtml(item.example)}</strong></p>`);
+  if (item.focus) stemParts.push(`<p><strong>Focus:</strong> ${escapeHtml(item.focus)}</p>`);
+  return makeBaseQuestion(template, seed, {
+    marks:1,
+    answerSpec,
+    stemHtml:stemParts.join(""),
+    inputSpec:{ type:"single_choice", label:"Choose one", options:buildChoiceOptions(rng, correct, distractors) },
+    solutionLines:[
+      "Choose the option that explains the grammar relationship.",
+      item.why,
+      `The best explanation is: ${correct}`
+    ],
+    evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
+  });
+}
 
 function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
@@ -4796,7 +6095,7 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p2-2026-04-28';
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p3-2026-04-28';
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);
