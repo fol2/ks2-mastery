@@ -212,3 +212,14 @@ _To be completed by the operator at the time of flipping `HSTS_PRELOAD_ENABLED` 
 ---
 
 **End of audit skeleton.** Any change to this file after operator sign-off requires a new dated sign-off block appended below (never rewrite a signed block).
+
+---
+
+## P5 Status Update (2026-04-28)
+
+No new operator DNS audit information available. All `TBD-operator` cells remain unfilled.
+`HSTS_PRELOAD_ENABLED` remains `false` in `worker/src/security-headers.js`.
+
+**Decision:** Deferred; operator DNS audit incomplete. HSTS preload activation is not blocked by engineering — it is blocked by the DNS zone enumeration and operator sign-off checklist.
+
+**Next review:** When operator completes DNS zone enumeration and verifies all subdomains HTTPS-only.
