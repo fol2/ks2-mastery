@@ -84,21 +84,55 @@ function revisionFrom(result) {
   return result.body?.mutation?.appliedRevision ?? null;
 }
 
-// Extract a valid submit-answer payload from a Grammar/Punctuation session
-// read model. Grammar expects `{ response: { answer: <valid option> } }` for
-// single_choice questions; Punctuation uses a similar shape. Returns an object
-// suitable as the `payload` for a `submit-answer` command.
-function grammarAnswerPayloadFromReadModel(readModel) {
-  const item = readModel?.session?.currentItem;
-  const spec = item?.inputSpec;
+function grammarOptionValue(option) {
+  if (Array.isArray(option)) return String(option[0] ?? '');
+  if (typeof option === 'string' || typeof option === 'number') return String(option);
+  return String(option?.value ?? '');
+}
+
+function firstGrammarOptionValue(options, fallback = 'a') {
+  const values = Array.isArray(options) ? options.map(grammarOptionValue).filter(Boolean) : [];
+  return values[0] || fallback;
+}
+
+function grammarAnswerPayloadFromInputSpec(spec) {
   if (spec?.type === 'single_choice' && Array.isArray(spec.options) && spec.options.length > 0) {
-    return { response: { answer: spec.options[0].value } };
+    return { response: { answer: firstGrammarOptionValue(spec.options) } };
   }
   if (spec?.type === 'checkbox_list' && Array.isArray(spec.options) && spec.options.length > 0) {
-    return { response: { selected: [spec.options[0].value] } };
+    return { response: { selected: [firstGrammarOptionValue(spec.options)] } };
   }
-  // Fallback: the engine will normalise the response.
-  return { response: { answer: 'a' } };
+  if (spec?.type === 'table_choice') {
+    const rows = Array.isArray(spec.rows) ? spec.rows : [];
+    const choice = firstGrammarOptionValue(spec.columns, 'A');
+    const response = {};
+    for (const row of rows) {
+      if (typeof row?.key === 'string' && row.key) response[row.key] = choice;
+    }
+    return { response: Object.keys(response).length > 0 ? response : { answer: choice } };
+  }
+  if (spec?.type === 'multi') {
+    const fields = Array.isArray(spec.fields) ? spec.fields : [];
+    const response = {};
+    for (const field of fields) {
+      if (typeof field?.key !== 'string' || !field.key) continue;
+      response[field.key] = firstGrammarOptionValue(field.options, 'test answer');
+    }
+    return { response: Object.keys(response).length > 0 ? response : { answer: 'test answer' } };
+  }
+  if (spec?.type === 'textarea' || spec?.type === 'text') {
+    return { response: { answer: 'test answer' } };
+  }
+  return { response: { answer: 'test answer' } };
+}
+
+// Extract a valid submit-answer payload from a Grammar session read model.
+// The full command loop can draw any live Grammar inputSpec shape, so this
+// mirrors the form field names used by GrammarSessionScene instead of relying
+// on a single-choice fallback.
+function grammarAnswerPayloadFromReadModel(readModel) {
+  const item = readModel?.session?.currentItem;
+  return grammarAnswerPayloadFromInputSpec(item?.inputSpec);
 }
 
 function punctuationAnswerPayloadFromReadModel(readModel) {
@@ -110,6 +144,31 @@ function punctuationAnswerPayloadFromReadModel(readModel) {
   }
   return { typed: 'a' };
 }
+
+test('grammar answer payload helper covers live inputSpec variants', () => {
+  assert.deepEqual(
+    grammarAnswerPayloadFromInputSpec({
+      type: 'table_choice',
+      rows: [{ key: 'first' }, { key: 'second' }],
+      columns: ['noun', 'verb'],
+    }),
+    { response: { first: 'noun', second: 'noun' } },
+  );
+  assert.deepEqual(
+    grammarAnswerPayloadFromInputSpec({
+      type: 'multi',
+      fields: [
+        { key: 'tense', options: [{ value: 'past', label: 'Past' }] },
+        { key: 'reason' },
+      ],
+    }),
+    { response: { tense: 'past', reason: 'test answer' } },
+  );
+  assert.deepEqual(
+    grammarAnswerPayloadFromInputSpec({ type: 'textarea' }),
+    { response: { answer: 'test answer' } },
+  );
+});
 
 // ---------------------------------------------------------------------------
 // 1. Spelling full loop: start-session → submit-answer → end-session
