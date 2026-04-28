@@ -8356,6 +8356,22 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async readHeroProgress(learnerId) {
       return readHeroProgressState(db, learnerId);
     },
+    // Hero Mode P3 U7: read progress bundle for the v4 read model.
+    // Returns both the normalised hero progress state AND recent completed
+    // practice sessions (last 24h) for pending-completed detection.
+    async readHeroProgressData(learnerId) {
+      const [progressState, sessionRows] = await Promise.all([
+        readHeroProgressState(db, learnerId),
+        all(db, `
+          SELECT id, learner_id, subject_id, session_kind, status, summary_json, updated_at
+          FROM practice_sessions
+          WHERE learner_id = ? AND status = 'completed' AND updated_at > ?
+          ORDER BY updated_at DESC
+          LIMIT 20
+        `, [learnerId, Date.now() - (24 * 60 * 60 * 1000)]),
+      ]);
+      return { heroProgressState: progressState, recentCompletedSessions: sessionRows };
+    },
     // Hero Mode P3 U4: standalone hero progress write (no CAS / no revision bump).
     async writeHeroProgress(learnerId, accountId, state) {
       const nowTs = nowFactory();

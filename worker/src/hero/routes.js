@@ -58,7 +58,13 @@ export async function handleHeroReadModel({
   //    providers are designed to handle null/empty gracefully.
   const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId);
 
-  // 5. Assemble the shadow read model (v3: pass accountId and env for
+  // 4b. P3 U7: load progress bundle for the v4 read model when progress enabled.
+  const progressFlagEnabled = envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED);
+  const heroProgressData = progressFlagEnabled
+    ? await repository.readHeroProgressData(learnerId)
+    : { heroProgressState: null, recentCompletedSessions: [] };
+
+  // 5. Assemble the shadow read model (v3 or v4: pass accountId and env for
   //    quest fingerprint and the HERO_MODE_CHILD_UI_ENABLED gate).
   const nowTs = typeof now === 'function' ? now() : Date.now();
   const result = buildHeroShadowReadModel({
@@ -67,6 +73,9 @@ export async function handleHeroReadModel({
     subjectReadModels,
     now: nowTs,
     env,
+    heroProgressState: heroProgressData.heroProgressState,
+    recentCompletedSessions: heroProgressData.recentCompletedSessions,
+    progressEnabled: progressFlagEnabled,
   });
 
   // U10: structured observability — fire-and-forget, never blocks the response.
