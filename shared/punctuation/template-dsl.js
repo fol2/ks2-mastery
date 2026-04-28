@@ -181,8 +181,13 @@ export function definePunctuationTemplate(spec) {
 /**
  * Expand an array of validated DSL definitions into a flat array of
  * template objects compatible with GENERATED_TEMPLATE_BANK.
+ *
+ * Options:
+ *   embedTemplateId (default true) — if false, omits the DSL-generated
+ *     templateId from each output template so that generators.js computes
+ *     a content-hash-based templateId instead (backward-compatible mode).
  */
-export function expandDslTemplates(dslDefinitions) {
+export function expandDslTemplates(dslDefinitions, { embedTemplateId = true } = {}) {
   if (!Array.isArray(dslDefinitions)) {
     throw new Error('expandDslTemplates: argument must be an array');
   }
@@ -210,6 +215,16 @@ export function expandDslTemplates(dslDefinitions) {
         );
       }
 
+      // In backward-compat mode (embedTemplateId: false), only include skillIds/clusterId
+      // on the template when the build result explicitly provides them — this preserves
+      // content-hash parity with the hand-authored templates that lacked these fields.
+      const skillIdsEntry = embedTemplateId
+        ? { skillIds: buildResult.skillIds || spec.skillIds }
+        : (Array.isArray(buildResult.skillIds) ? { skillIds: buildResult.skillIds } : {});
+      const clusterIdEntry = embedTemplateId
+        ? { clusterId: buildResult.clusterId || spec.clusterId }
+        : (typeof buildResult.clusterId === 'string' ? { clusterId: buildResult.clusterId } : {});
+
       const template = {
         prompt: buildResult.prompt || 'Practise this punctuation pattern.',
         stem: buildResult.stem || '',
@@ -218,20 +233,26 @@ export function expandDslTemplates(dslDefinitions) {
         ...(isPlainObject(buildResult.rubric) ? { rubric: buildResult.rubric } : {}),
         ...(Array.isArray(buildResult.accepted) ? { accepted: buildResult.accepted } : {}),
         explanation: buildResult.explanation || 'This generated item practises the same published punctuation skill.',
-        skillIds: buildResult.skillIds || spec.skillIds,
-        clusterId: buildResult.clusterId || spec.clusterId,
+        ...skillIdsEntry,
+        ...clusterIdEntry,
         misconceptionTags: buildResult.misconceptionTags || spec.misconceptionTags,
         readiness: buildResult.readiness || spec.readiness,
-        templateId,
+        ...(embedTemplateId ? { templateId } : {}),
         tests: spec.tests,
       };
 
-      // Compute variant signature for duplicate detection
+      // Compute variant signature for duplicate detection (always uses DSL templateId internally)
+      const sigTemplate = {
+        ...template,
+        templateId,
+        skillIds: template.skillIds || spec.skillIds,
+        clusterId: template.clusterId || spec.clusterId,
+      };
       const signature = variantSignatureFor({
         familyId: spec.familyId,
         mode: spec.mode,
         templateId,
-        template,
+        template: sigTemplate,
         model: template.model,
       });
 
