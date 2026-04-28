@@ -1946,7 +1946,13 @@ export function createPunctuationRuntimeManifest({
   seed = manifest.releaseId || 'punctuation',
   generatedPerFamily = 1,
   contextPack = null,
+  allowContextPacks = false,
 } = {}) {
+  if (contextPack && allowContextPacks !== true) {
+    throw new Error(
+      'Context packs are teacher/admin-only in P3. Pass allowContextPacks: true for preview/admin paths.',
+    );
+  }
   const generatedItems = createPunctuationGeneratedItems({
     manifest,
     seed,

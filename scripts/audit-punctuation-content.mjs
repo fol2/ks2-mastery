@@ -302,6 +302,7 @@ export function runPunctuationContentAudit({
     seed,
     generatedPerFamily,
     contextPack,
+    allowContextPacks: Boolean(contextPack),
   });
   const runtimeIndexes = createPunctuationContentIndexes(runtimeManifest);
   const fixedItems = fixedIndexes.items;
