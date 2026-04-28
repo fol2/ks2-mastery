@@ -39,12 +39,13 @@ export function decidePanelFrameState({
   // Resolve the most authoritative last-success timestamp.
   const lastSuccess = resolveTimestamp(lastSuccessfulRefreshAt) || resolveTimestamp(refreshedAt);
 
-  // Staleness: data is stale when the last successful refresh exceeds threshold.
+  // Staleness: data is stale when the last successful refresh exceeds threshold
+  // AND we actually have data to be stale about. Empty + stale is contradictory.
+  const hasData = dataIsPresent(data);
   const ageMs = lastSuccess ? currentTime - lastSuccess : Infinity;
-  const showStaleWarning = lastSuccess > 0 && ageMs > threshold && !loading;
+  const showStaleWarning = lastSuccess > 0 && ageMs > threshold && !loading && hasData;
 
   // Loading skeleton: show when actively loading AND we have no existing data.
-  const hasData = dataIsPresent(data);
   const showLoadingSkeleton = Boolean(loading) && !hasData;
 
   // Empty state: no data, no loading, no error (i.e. data genuinely empty).
