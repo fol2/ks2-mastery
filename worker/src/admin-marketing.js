@@ -59,6 +59,10 @@ const VALID_TRANSITIONS = new Map([
 const TITLE_MAX_LENGTH = 200;
 const BODY_MAX_LENGTH = 4000;
 
+function isMissingMarketingMessagesTableError(error) {
+  return /no such table:\s*admin_marketing_messages\b/i.test(String(error?.message || ''));
+}
+
 // ---------------------------------------------------------------------------
 // body_text validation (XSS gate)
 // ---------------------------------------------------------------------------
@@ -781,14 +785,22 @@ export async function listActiveMessages(db, { nowTs }) {
   // ADV-U11-003: filter by audience = 'all_signed_in' so internal and demo
   // audience messages are only visible in the admin list view, never in
   // the public client delivery endpoint.
-  const rows = await all(db, `
-    SELECT * FROM admin_marketing_messages
-    WHERE status = 'published'
-      AND audience = 'all_signed_in'
-      AND (starts_at IS NULL OR starts_at <= ?)
-      AND (ends_at IS NULL OR ends_at >= ?)
-    ORDER BY created_at DESC
-  `, [ts, ts]);
+  let rows;
+  try {
+    rows = await all(db, `
+      SELECT * FROM admin_marketing_messages
+      WHERE status = 'published'
+        AND audience = 'all_signed_in'
+        AND (starts_at IS NULL OR starts_at <= ?)
+        AND (ends_at IS NULL OR ends_at >= ?)
+      ORDER BY created_at DESC
+    `, [ts, ts]);
+  } catch (error) {
+    if (isMissingMarketingMessagesTableError(error)) {
+      return { messages: [] };
+    }
+    throw error;
+  }
 
   return { messages: rows.map(safeMessageFields) };
 }

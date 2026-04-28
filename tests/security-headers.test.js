@@ -153,20 +153,37 @@ test('applySecurityHeaders treats x-ks2-tts-* metadata as TTS signal even when c
   assert.equal(wrapped.headers.get('cache-control'), 'no-store');
 });
 
-test('applySecurityHeaders forces immutable cache on /src/bundles/*', () => {
+test('applySecurityHeaders keeps the stable app entry bundle no-store', () => {
   const response = new Response('console.log("bundle")', {
     status: 200,
     headers: {
       'content-type': 'application/javascript',
-      'cache-control': 'no-store',
+      'cache-control': 'public, max-age=31536000, immutable',
     },
   });
   const wrapped = applySecurityHeaders(response, { path: '/src/bundles/app.bundle.js' });
   assertHasAllSecurityHeaders(wrapped);
   assert.equal(
     wrapped.headers.get('cache-control'),
+    'no-store',
+    'The stable entry filename must not strand clients on stale lazy chunk names.',
+  );
+});
+
+test('applySecurityHeaders forces immutable cache on hashed /src/bundles/* split chunks', () => {
+  const response = new Response('console.log("chunk")', {
+    status: 200,
+    headers: {
+      'content-type': 'application/javascript',
+      'cache-control': 'no-store',
+    },
+  });
+  const wrapped = applySecurityHeaders(response, { path: '/src/bundles/AdminHubSurface-ABC12345.js' });
+  assertHasAllSecurityHeaders(wrapped);
+  assert.equal(
+    wrapped.headers.get('cache-control'),
     'public, max-age=31536000, immutable',
-    'Bundle path explicitly overrides ASSETS-response no-store via set()',
+    'Content-hashed split chunks explicitly override ASSETS-response no-store via set()',
   );
 });
 
@@ -226,6 +243,72 @@ test('Worker 404 plaintext from publicSourceAssetResponse carries all seven secu
   const server = createWorkerRepositoryServer();
   const response = await server.fetchRaw('https://repo.test/src/main.js');
   assert.equal(response.status, 404);
+  assertHasAllSecurityHeaders(response);
+  server.close();
+});
+
+test('Worker bundle allowlist refuses ASSETS SPA fallback HTML for missing chunks', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      ASSETS: {
+        async fetch() {
+          return new Response('<!doctype html><div id="app"></div>', {
+            status: 200,
+            headers: { 'content-type': 'text/html' },
+          });
+        },
+      },
+    },
+  });
+  const response = await server.fetchRaw('https://repo.test/src/bundles/AdminHubSurface-OLD.js');
+  assert.equal(response.status, 404);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assertHasAllSecurityHeaders(response);
+  server.close();
+});
+
+test('Worker bundle allowlist serves JavaScript chunks through ASSETS with split-chunk cache policy', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      ASSETS: {
+        async fetch() {
+          return new Response('export default 1;', {
+            status: 200,
+            headers: {
+              'content-type': 'text/javascript',
+              'cache-control': 'no-store',
+            },
+          });
+        },
+      },
+    },
+  });
+  const response = await server.fetchRaw('https://repo.test/src/bundles/AdminHubSurface-OK123456.js');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  assertHasAllSecurityHeaders(response);
+  server.close();
+});
+
+test('Worker bundle allowlist preserves ASSETS 304 responses for conditional chunk requests', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      ASSETS: {
+        async fetch() {
+          return new Response(null, {
+            status: 304,
+            headers: { etag: '"chunk-etag"' },
+          });
+        },
+      },
+    },
+  });
+  const response = await server.fetchRaw('https://repo.test/src/bundles/AdminHubSurface-CACHED12.js', {
+    headers: { 'if-none-match': '"chunk-etag"' },
+  });
+  assert.equal(response.status, 304);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
   assertHasAllSecurityHeaders(response);
   server.close();
 });
@@ -481,7 +564,7 @@ test('applySecurityHeaders does NOT apply immutable cache to non-2xx bundle resp
       'cache-control': 'private, max-age=30',
     },
   });
-  const wrapped500 = applySecurityHeaders(serverError, { path: '/src/bundles/app.bundle.js' });
+  const wrapped500 = applySecurityHeaders(serverError, { path: '/src/bundles/chunk-ERROR123.js' });
   assertHasAllSecurityHeaders(wrapped500);
   assert.equal(
     wrapped500.headers.get('cache-control'),
@@ -499,7 +582,7 @@ test('applySecurityHeaders does NOT apply immutable cache to non-2xx bundle resp
     status: 304,
     headers: {},
   });
-  const wrapped304 = applySecurityHeaders(notModified, { path: '/src/bundles/app.bundle.js' });
+  const wrapped304 = applySecurityHeaders(notModified, { path: '/src/bundles/chunk-NOTMOD12.js' });
   assert.notEqual(
     wrapped304.headers.get('cache-control'),
     'public, max-age=31536000, immutable',

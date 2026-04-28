@@ -518,8 +518,10 @@ Expected values on every path:
 
 Path-specific cache expectations:
 
-- `/src/bundles/app.bundle.js` — `Cache-Control: public, max-age=31536000, immutable` (Worker
-  wrapper explicitly overrides the `no-store` that ASSETS applies from the `_headers` `/*` group).
+- `/src/bundles/app.bundle.js` — `Cache-Control: no-store`. The public HTML adds a content-hash
+  `?v=` query to this stable entry filename so browsers do not keep an entry bundle that points at
+  retired lazy chunks.
+- `/src/bundles/*-HASH.js` split chunks — `Cache-Control: public, max-age=31536000, immutable`.
 - `/manifest.webmanifest` — `Cache-Control: public, max-age=3600` (1-hour cache updated in U8
   so app-manifest churn is visible to installed PWAs within the hour).
 - `/favicon.ico` — `Cache-Control: public, max-age=86400`.
@@ -537,7 +539,7 @@ Manual spot-check (use when the audit script is unavailable):
 
 ```bash
 curl -sI https://ks2.eugnel.uk/                                  | grep -i cache-control   # expect: no-store
-curl -sI https://ks2.eugnel.uk/src/bundles/app.bundle.js         | grep -i cache-control   # expect: public, max-age=31536000, immutable
+curl -sI https://ks2.eugnel.uk/src/bundles/app.bundle.js         | grep -i cache-control   # expect: no-store
 curl -sI https://ks2.eugnel.uk/assets/app-icons/favicon-32.png   | grep -i cache-control   # expect: public, max-age=31536000, immutable
 curl -sI https://ks2.eugnel.uk/api/bootstrap                     | grep -i cache-control   # expect: no-store
 curl -sI https://ks2.eugnel.uk/manifest.webmanifest              | grep -i cache-control   # expect: public, max-age=3600

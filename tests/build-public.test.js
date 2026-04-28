@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -10,7 +11,12 @@ test('public build emits the React app bundle entrypoint', () => {
   execFileSync(process.execPath, ['./scripts/audit-client-bundle.mjs'], { stdio: 'ignore' });
 
   const indexHtml = readFileSync('dist/public/index.html', 'utf8');
-  assert.match(indexHtml, /type="module" src="\.\/src\/bundles\/app\.bundle\.js"/);
+  const appBundle = readFileSync('dist/public/src/bundles/app.bundle.js', 'utf8');
+  const expectedAppBundleVersion = createHash('sha256').update(appBundle).digest('hex').slice(0, 12);
+  assert.match(
+    indexHtml,
+    new RegExp(`type="module" src="\\.\\/src\\/bundles\\/app\\.bundle\\.js\\?v=${expectedAppBundleVersion}"`),
+  );
   assert.doesNotMatch(indexHtml, /home\.bundle\.js/);
   assert.doesNotMatch(indexHtml, /src\/main\.js/);
 
@@ -21,7 +27,6 @@ test('public build emits the React app bundle entrypoint', () => {
   assert.equal(existsSync('dist/public/src/subjects/spelling/data/content-data.js'), false);
   assert.equal(existsSync('dist/public/worker/src/app.js'), false);
 
-  const appBundle = readFileSync('dist/public/src/bundles/app.bundle.js', 'utf8');
   const visualManifest = readFileSync('src/platform/game/monster-asset-manifest.js', 'utf8');
   const manifestHash = visualManifest.match(/"manifestHash": "([^"]+)"/)?.[1] || '';
   assert.ok(manifestHash, 'expected generated monster visual manifest hash');

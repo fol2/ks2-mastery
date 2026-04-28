@@ -466,7 +466,16 @@ async function publicSourceAssetResponse(request, env = {}) {
     && url.pathname.endsWith('.js')
     && env.ASSETS
   ) {
-    return env.ASSETS.fetch(request);
+    const assetResponse = await env.ASSETS.fetch(request);
+    const contentType = String(assetResponse.headers.get('content-type') || '').toLowerCase();
+    const isJavaScript = contentType.includes('javascript') || contentType.includes('ecmascript');
+    if (assetResponse.status === 304) {
+      return assetResponse;
+    }
+    if (assetResponse.status >= 200 && assetResponse.status < 300 && isJavaScript) {
+      return assetResponse;
+    }
+    return new Response('Not found.', { status: 404, headers });
   }
   return new Response('Not found.', { status: 404, headers });
 }
