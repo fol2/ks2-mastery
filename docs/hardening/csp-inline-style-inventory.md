@@ -49,19 +49,23 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
+| `shared-pattern-available` | 150 |
 | `dynamic-content-driven` | 108 |
-| `shared-pattern-available` | 78 |
 | `css-var-ready` | 3 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **191** |
+| **TOTAL** | **263** |
 
 ## Per-file inventory
 
 | File | `style={` count | Category | Migrated in SH2-U8 |
 | --- | --- | --- | --- |
 | `src/subjects/punctuation/components/PunctuationSessionScene.jsx` | 27 | `dynamic-content-driven` | no |
+| `src/surfaces/hubs/AdminErrorTimelinePanel.jsx` | 23 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminMarketingSection.jsx` | 22 | `shared-pattern-available` | no |
 | `src/subjects/punctuation/components/PunctuationSummaryScene.jsx` | 20 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/MonsterEffectCatalogPanel.jsx` | 19 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminDebugBundlePanel.jsx` | 14 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminLearnerSupportPanel.jsx` | 12 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterEffectBindingsPanel.jsx` | 12 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterVisualConfigPanel.jsx` | 10 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/ParentHubSurface.jsx` | 10 | `shared-pattern-available` | no |
@@ -76,6 +80,7 @@ Future migration PRs should:
 | `src/subjects/punctuation/components/PunctuationSetupScene.jsx` | 3 | `shared-pattern-available` | no |
 | `src/subjects/spelling/components/SpellingSummaryScene.jsx` | 3 | `dynamic-content-driven` | no |
 | `src/surfaces/home/SubjectCard.jsx` | 3 | `dynamic-content-driven` | no |
+| `src/surfaces/hubs/AdminRequestDenialsPanel.jsx` | 3 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/AdminSectionTabs.jsx` | 3 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterVisualPreviewGrid.jsx` | 3 | `dynamic-content-driven` | no |
 | `src/platform/game/render/effects/celebration-shell.js` | 2 | `third-party-boundary` | no |
@@ -87,7 +92,6 @@ Future migration PRs should:
 | `src/surfaces/home/CodexSubjectSection.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/surfaces/home/MonsterMeadow.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/admin-panel-header.jsx` | 2 | `shared-pattern-available` | yes |
-| `src/surfaces/hubs/AdminMarketingSection.jsx` | 2 | `shared-pattern-available` | no |
 | `src/surfaces/shell/MonsterCelebrationOverlay.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/platform/game/render/BaseSprite.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/platform/game/render/MonsterRender.jsx` | 1 | `dynamic-content-driven` | no |

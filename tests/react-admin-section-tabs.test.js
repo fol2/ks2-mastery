@@ -103,12 +103,14 @@ test('inactive tabs have aria-selected="false"', async () => {
   }
 });
 
-test('marketing tab shows "Soon" chip', async () => {
+test('marketing tab no longer shows "Soon" chip after U11 lifecycle ship', async () => {
+  // Pre-U11 the Marketing tab carried a "Soon" chip while the section was
+  // still scaffolding. After U11 (Marketing/Live Ops V0, #401) shipped, the
+  // chip was removed; pin the post-ship behaviour so a regression that
+  // brings the chip back is caught.
   const html = await renderTabs();
-  // The "Soon" chip should appear inside the marketing tab button.
-  // Look for the chip after the marketing data-section attribute.
   assert.match(html, /data-section="marketing"/, 'marketing tab should exist');
-  assert.match(html, /Marketing<span class="chip"[^>]*>Soon<\/span>/, 'marketing tab should contain "Soon" chip');
+  assert.doesNotMatch(html, /Marketing<span class="chip"[^>]*>Soon<\/span>/, 'marketing tab must not carry a "Soon" chip post-U11');
 });
 
 test('each tab carries a data-section attribute matching its key', async () => {

@@ -493,6 +493,13 @@ test('button labels: every statically extractable label is classified', () => {
     'Debug Bundle',
     'Copy JSON',
     'Copy Summary',
+    // U11 Marketing/Live Ops: AdminMarketingSection broad-publish confirm
+    // dialog uses a contextual confirm CTA ("Yes, publish to all users" or
+    // "Yes, schedule to all users"); the static prefix the scanner extracts
+    // is "Yes,". The list-detail navigation back-affordance is "Back to
+    // list".
+    'Yes,',
+    'Back to list',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to
