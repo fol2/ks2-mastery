@@ -25,10 +25,138 @@ const P2_U3_FIXED_THRESHOLDS = Object.freeze({
   dash_clause: 8,
 });
 
+const P2_U6_PRIORITY_CAPACITY_FAMILIES = Object.freeze([
+  'gen_sentence_endings_insert',
+  'gen_apostrophe_contractions_fix',
+  'gen_comma_clarity_insert',
+  'gen_dash_clause_fix',
+  'gen_dash_clause_combine',
+  'gen_hyphen_insert',
+  'gen_semicolon_list_fix',
+]);
+
+const P2_U6_PRIORITY_CAPACITY_FAMILY_IDS = new Set(P2_U6_PRIORITY_CAPACITY_FAMILIES);
+
+const P2_U6_EXPECTED_CAPACITY_DUPLICATE_RESIDUALS = Object.freeze({
+  stems: {
+    groupCount: 35,
+    priorityGroupCount: 0,
+    priorityFamilies: [],
+    familyGroupCounts: {
+      gen_apostrophe_mix_paragraph: 2,
+      gen_apostrophe_possession_insert: 2,
+      gen_bullet_points_fix: 2,
+      gen_bullet_points_paragraph: 2,
+      gen_colon_list_combine: 2,
+      gen_colon_list_insert: 2,
+      gen_colon_semicolon_paragraph: 2,
+      gen_fronted_adverbial_combine: 3,
+      gen_fronted_adverbial_fix: 3,
+      gen_fronted_speech_paragraph: 2,
+      gen_list_commas_combine: 2,
+      gen_list_commas_insert: 2,
+      gen_parenthesis_combine: 2,
+      gen_parenthesis_fix: 2,
+      gen_parenthesis_speech_paragraph: 2,
+      gen_semicolon_combine: 2,
+      gen_semicolon_fix: 2,
+      gen_speech_insert: 2,
+    },
+  },
+  models: {
+    groupCount: 34,
+    priorityGroupCount: 8,
+    priorityFamilies: [
+      'gen_dash_clause_combine',
+      'gen_dash_clause_fix',
+    ],
+    familyGroupCounts: {
+      gen_apostrophe_mix_paragraph: 2,
+      gen_apostrophe_possession_insert: 2,
+      gen_bullet_points_fix: 3,
+      gen_bullet_points_paragraph: 3,
+      gen_colon_list_combine: 4,
+      gen_colon_list_insert: 4,
+      gen_colon_semicolon_paragraph: 2,
+      gen_fronted_adverbial_combine: 3,
+      gen_fronted_adverbial_fix: 3,
+      gen_fronted_speech_paragraph: 2,
+      gen_list_commas_combine: 2,
+      gen_list_commas_insert: 2,
+      gen_parenthesis_combine: 4,
+      gen_parenthesis_fix: 4,
+      gen_parenthesis_speech_paragraph: 2,
+      gen_semicolon_combine: 4,
+      gen_semicolon_fix: 4,
+      gen_speech_insert: 2,
+    },
+  },
+  signatures: {
+    groupCount: 36,
+    priorityGroupCount: 0,
+    priorityFamilies: [],
+    familyGroupCounts: {
+      gen_apostrophe_mix_paragraph: 2,
+      gen_apostrophe_possession_insert: 2,
+      gen_bullet_points_fix: 2,
+      gen_bullet_points_paragraph: 2,
+      gen_colon_list_combine: 2,
+      gen_colon_list_insert: 2,
+      gen_colon_semicolon_paragraph: 2,
+      gen_fronted_adverbial_combine: 2,
+      gen_fronted_adverbial_fix: 2,
+      gen_fronted_speech_paragraph: 2,
+      gen_list_commas_combine: 2,
+      gen_list_commas_insert: 2,
+      gen_parenthesis_combine: 2,
+      gen_parenthesis_fix: 2,
+      gen_parenthesis_speech_paragraph: 2,
+      gen_semicolon_combine: 2,
+      gen_semicolon_fix: 2,
+      gen_speech_insert: 2,
+    },
+  },
+});
+
 function fixedThresholdArg(thresholds = P2_U3_FIXED_THRESHOLDS) {
   return Object.entries(thresholds)
     .map(([skillId, count]) => `${skillId}=${count}`)
     .join(',');
+}
+
+function generatedFamilyIdFromItemId(id) {
+  return String(id || '').replace(/_[a-z0-9]+_\d+$/, '');
+}
+
+function capacityDuplicateResidualSummary(groups = []) {
+  const familyGroupCounts = {};
+  const priorityFamilies = new Set();
+  let groupCount = 0;
+  let priorityGroupCount = 0;
+
+  for (const group of groups) {
+    const families = [...new Set((group.ids || []).map(generatedFamilyIdFromItemId))].sort();
+    const nonPriorityFamilies = families.filter((familyId) => !P2_U6_PRIORITY_CAPACITY_FAMILY_IDS.has(familyId));
+    const groupPriorityFamilies = families.filter((familyId) => P2_U6_PRIORITY_CAPACITY_FAMILY_IDS.has(familyId));
+
+    if (nonPriorityFamilies.length) {
+      groupCount += 1;
+      for (const familyId of nonPriorityFamilies) {
+        familyGroupCounts[familyId] = (familyGroupCounts[familyId] || 0) + 1;
+      }
+    }
+    if (groupPriorityFamilies.length) {
+      priorityGroupCount += 1;
+      for (const familyId of groupPriorityFamilies) priorityFamilies.add(familyId);
+    }
+  }
+
+  return {
+    groupCount,
+    priorityGroupCount,
+    priorityFamilies: [...priorityFamilies].sort(),
+    familyGroupCounts: Object.fromEntries(Object.entries(familyGroupCounts).sort()),
+  };
 }
 
 function runAuditCli(args) {
@@ -124,6 +252,57 @@ test('punctuation content audit can prove expanded deterministic bank variety', 
     assert.equal(row.variantSignatures.length, 4, row.id);
     assert.equal(row.templateIds.length, 4, row.id);
   }
+});
+
+test('punctuation content audit proves spare priority capacity without raising production runtime', () => {
+  const capacityThresholds = Object.fromEntries(P2_U6_PRIORITY_CAPACITY_FAMILIES.map((familyId) => [familyId, 8]));
+  const productionAudit = runPunctuationContentAudit({
+    seed: 'audit-p2-u6-production-runtime',
+    generatedPerFamily: 4,
+  });
+  const capacityAudit = runPunctuationContentAudit({
+    seed: 'audit-p2-u6-priority-capacity',
+    generatedPerFamily: 8,
+    thresholds: {
+      minGeneratedItemsByFamily: capacityThresholds,
+      minTemplatesByFamily: capacityThresholds,
+      minSignaturesByFamily: capacityThresholds,
+    },
+  });
+
+  assert.equal(productionAudit.ok, true, productionAudit.failures.join('\n'));
+  assert.equal(productionAudit.summary.generatedItemCount, 100);
+  assert.equal(productionAudit.summary.runtimeItemCount, 192);
+  assert.equal(capacityAudit.ok, true, capacityAudit.failures.join('\n'));
+  assert.deepEqual(
+    capacityAudit.failureDetails.filter((failure) => failure.code === 'generated_model_marking'),
+    [],
+  );
+  assert.equal(capacityAudit.summary.generatedItemCount, 200);
+  assert.equal(capacityAudit.summary.runtimeItemCount, 292);
+  for (const familyId of P2_U6_PRIORITY_CAPACITY_FAMILIES) {
+    const row = capacityAudit.generatorFamilies.find((entry) => entry.id === familyId);
+    assert.equal(row.generatedItemCount, 8, familyId);
+    assert.equal(row.templateIds.length, 8, familyId);
+    assert.equal(row.variantSignatures.length, 8, familyId);
+  }
+});
+
+test('punctuation content audit guards expected capacity duplicate residuals', () => {
+  const capacityAudit = runPunctuationContentAudit({
+    seed: 'audit-p2-u6-priority-capacity',
+    generatedPerFamily: 8,
+  });
+  const duplicateResiduals = Object.fromEntries(
+    Object.entries(capacityAudit.duplicates.generated)
+      .map(([kind, groups]) => [kind, capacityDuplicateResidualSummary(groups)]),
+  );
+
+  assert.equal(capacityAudit.ok, true, capacityAudit.failures.join('\n'));
+  assert.deepEqual(
+    duplicateResiduals,
+    P2_U6_EXPECTED_CAPACITY_DUPLICATE_RESIDUALS,
+  );
 });
 
 test('punctuation content audit guards dash display and strict final-comma copy', () => {

@@ -26,6 +26,26 @@ const VALID_CONTEXT_PACK = Object.freeze({
   ],
 });
 
+const VARIANT_CONTEXT_PACK = Object.freeze({
+  names: ['Maya', 'Ravi'],
+  places: ['harbour', 'library'],
+  listNouns: ['ropes', 'maps', 'snacks', 'shells', 'bells', 'chalk'],
+  frontedAdverbialPhrases: ['before sunrise', 'after lunch'],
+  speechCommands: ['bring the rope', 'close the gate'],
+  speechQuestions: ['can we start now', 'where is the map'],
+  parenthesisPhrases: ['our meeting place', 'the quiet room'],
+  stems: [
+    'the crew checked the ropes',
+    'we found another path',
+    'the class packed the kit',
+    'the bus arrived early',
+  ],
+  hyphenCompoundRows: [
+    { left: 'well', right: 'known', noun: 'author' },
+    { left: 'fast', right: 'moving', noun: 'tide' },
+  ],
+});
+
 test('punctuation context-pack compiler sanitises atoms deterministically', () => {
   const result = normalisePunctuationContextPack({
     ...VALID_CONTEXT_PACK,
@@ -88,13 +108,63 @@ test('context-pack generated items still pass deterministic marking', () => {
   assert.match(generatedText, /Before sunrise/);
   assert.match(generatedText, /Before sunrise, the harbour was quiet/);
   assert.match(generatedText, /The crew checked the ropes; we found another path/);
-  assert.match(generatedText, /The crew checked the ropes - we found another path/);
+  assert.match(generatedText, /The crew checked the ropes – we found another path/);
   assert.match(generatedText, /The harbour, our meeting place, was busy/);
   assert.match(generatedText, /well-known author/);
+  const dashItems = generatedItems.filter((item) => item.generatorFamilyId.startsWith('gen_dash_clause_'));
+  assert.equal(dashItems.length, 2);
+  for (const item of dashItems) {
+    assert.match(item.model, /\s–\s/, item.id);
+    assert.doesNotMatch(item.model, /\s-\s/, item.id);
+    for (const typed of [
+      item.model.replace(' – ', ' - '),
+      item.model,
+      item.model.replace(' – ', ' — '),
+    ]) {
+      const result = markPunctuationAnswer({ item, answer: { typed } });
+      assert.equal(result.correct, true, `${item.id}: ${typed}`);
+    }
+  }
   for (const item of generatedItems) {
     const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
     assert.equal(result.correct, true, item.id);
   }
+});
+
+test('context-pack variants keep stable signatures while safe atoms vary', () => {
+  const contextPack = normalisePunctuationContextPack(VARIANT_CONTEXT_PACK);
+  const first = createPunctuationGeneratedItems({
+    seed: 'context-pack-variant-capacity',
+    perFamily: 2,
+    contextPack,
+  }).filter((item) => contextPack.summary.affectedGeneratorFamilies.includes(item.generatorFamilyId));
+  const second = createPunctuationGeneratedItems({
+    seed: 'context-pack-variant-capacity',
+    perFamily: 2,
+    contextPack,
+  }).filter((item) => contextPack.summary.affectedGeneratorFamilies.includes(item.generatorFamilyId));
+
+  assert.deepEqual(second, first);
+  assert.equal(first.length, contextPack.summary.affectedGeneratorFamilies.length * 2);
+
+  for (const familyId of contextPack.summary.affectedGeneratorFamilies) {
+    const familyItems = first.filter((item) => item.generatorFamilyId === familyId);
+    assert.equal(familyItems.length, 2, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.templateId)).size, 2, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.variantSignature)).size, 2, familyId);
+    for (const item of familyItems) {
+      const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
+      assert.equal(result.correct, true, item.id);
+    }
+  }
+
+  const generatedText = first.map((item) => `${item.stem}\n${item.model}`).join('\n');
+  assert.match(generatedText, /ropes, maps and snacks/);
+  assert.match(generatedText, /shells, bells and chalk/);
+  assert.match(generatedText, /The crew checked the ropes; we found another path/);
+  assert.match(generatedText, /The class packed the kit; the bus arrived early/);
+  assert.match(generatedText, /well-known author/);
+  assert.match(generatedText, /fast-moving tide/);
 });
 
 test('context-pack runtime manifest keeps reward denominators stable', () => {

@@ -76,17 +76,33 @@ function variantSignatureFor({ family, template, templateId, model }) {
   return `puncsig_${shortHash(JSON.stringify(stableJson(signaturePayload)))}`;
 }
 
-function pickTemplate(templates, seed, familyId, variantIndex, { legacyTemplateCount = 2 } = {}) {
+function pickTemplate(templates, seed, familyId, variantIndex, {
+  legacyTemplateCount = 2,
+  runtimeStableTemplateCount = legacyTemplateCount,
+} = {}) {
   if (!templates.length) return null;
   const legacyCount = Math.max(0, Math.min(Number(legacyTemplateCount) || 0, templates.length));
-  const expandedPool = templates.slice(legacyCount);
-  const pool = variantIndex < legacyCount || !expandedPool.length
-    ? templates.slice(0, legacyCount || templates.length)
-    : expandedPool;
+  const stableCount = Math.max(
+    legacyCount,
+    Math.min(Number(runtimeStableTemplateCount) || legacyCount, templates.length),
+  );
+  const stableExpansionPool = templates.slice(legacyCount, stableCount);
+  const capacityExpansionPool = templates.slice(stableCount);
+  const pool = (() => {
+    if (variantIndex < legacyCount) return templates.slice(0, legacyCount || templates.length);
+    if (variantIndex < stableCount && stableExpansionPool.length) return stableExpansionPool;
+    if (capacityExpansionPool.length) return capacityExpansionPool;
+    if (stableExpansionPool.length) return stableExpansionPool;
+    return templates.slice(0, legacyCount || templates.length);
+  })();
   const offset = hashString(`${seed}:${familyId}`) % pool.length;
-  const poolVariantIndex = variantIndex < legacyCount || !expandedPool.length
-    ? variantIndex
-    : variantIndex - legacyCount;
+  const poolVariantIndex = (() => {
+    if (variantIndex < legacyCount) return variantIndex;
+    if (variantIndex < stableCount && stableExpansionPool.length) return variantIndex - legacyCount;
+    if (capacityExpansionPool.length) return variantIndex - stableCount;
+    if (stableExpansionPool.length) return variantIndex - legacyCount;
+    return variantIndex;
+  })();
   const poolIndex = (offset + poolVariantIndex) % pool.length;
   const template = pool[poolIndex];
   return {
@@ -129,6 +145,34 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['endmarks.exclamation_mark_missing', 'endmarks.capitalisation_missing'],
       readiness: ['insertion', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Rewrite this as a correctly punctuated question.',
+      stem: 'can the rescue team hear us',
+      model: 'Can the rescue team hear us?',
+      misconceptionTags: ['endmarks.question_mark_missing', 'endmarks.capitalisation_missing'],
+      readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Rewrite the excited sentence with its capital letter and end mark.',
+      stem: 'what an amazing view',
+      model: 'What an amazing view!',
+      misconceptionTags: ['endmarks.exclamation_mark_missing', 'endmarks.capitalisation_missing'],
+      readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the sentence ending and capital letter.',
+      stem: 'the lights went out',
+      model: 'The lights went out.',
+      misconceptionTags: ['endmarks.terminal_missing', 'endmarks.capitalisation_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the capital letter and the calm command ending.',
+      stem: 'please close the safety gate',
+      model: 'Please close the safety gate.',
+      misconceptionTags: ['endmarks.terminal_missing', 'endmarks.capitalisation_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
   ]),
   gen_apostrophe_contractions_fix: Object.freeze([
     {
@@ -158,6 +202,34 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       model: "You're sure he isn't coming.",
       misconceptionTags: ['apostrophe.contraction_missing'],
       readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the missing apostrophes in the contractions.',
+      stem: 'We havent checked because the phones arent working.',
+      model: "We haven't checked because the phones aren't working.",
+      misconceptionTags: ['apostrophe.contraction_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Fix only the contraction apostrophes.',
+      stem: 'Itll be easier if youre ready.',
+      model: "It'll be easier if you're ready.",
+      misconceptionTags: ['apostrophe.contraction_missing'],
+      readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Proofread the sentence and repair the contractions.',
+      stem: 'They didnt know we couldnt see.',
+      model: "They didn't know we couldn't see.",
+      misconceptionTags: ['apostrophe.contraction_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Rewrite with standard contraction punctuation.',
+      stem: 'Shes sure it doesnt matter.',
+      model: "She's sure it doesn't matter.",
+      misconceptionTags: ['apostrophe.contraction_missing'],
+      readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
     },
   ]),
   gen_apostrophe_possession_insert: Object.freeze([
@@ -681,6 +753,50 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['comma.clarity_missing'],
       readiness: ['insertion', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Add the comma after the opening phrase to avoid a misread.',
+      stem: 'After the final whistle the crowd cheered.',
+      model: 'After the final whistle, the crowd cheered.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'After the final whistle',
+      },
+      misconceptionTags: ['comma.clarity_missing'],
+      readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the missing clarity comma.',
+      stem: 'If the alarm sounds the class will line up.',
+      model: 'If the alarm sounds, the class will line up.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'If the alarm sounds',
+      },
+      misconceptionTags: ['comma.clarity_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Rewrite with the clarity comma in the right place.',
+      stem: 'Near the old bridge the lane narrows.',
+      model: 'Near the old bridge, the lane narrows.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'Near the old bridge',
+      },
+      misconceptionTags: ['comma.clarity_missing'],
+      readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the comma that separates the opening clause from the main clause.',
+      stem: 'Because the path flooded the cyclists turned back.',
+      model: 'Because the path flooded, the cyclists turned back.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'Because the path flooded',
+      },
+      misconceptionTags: ['comma.clarity_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
   ]),
   gen_semicolon_fix: Object.freeze([
     {
@@ -957,6 +1073,58 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['boundary.dash_missing'],
       readiness: ['proofreading', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Add a dash to mark the sudden shift.',
+      stem: 'The waves grew louder we stepped back.',
+      model: 'The waves grew louder – we stepped back.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The waves grew louder',
+        right: 'we stepped back',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Replace the run-on join with a dash.',
+      stem: 'The door opened nobody spoke.',
+      model: 'The door opened – nobody spoke.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The door opened',
+        right: 'nobody spoke',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Use a dash to connect the surprise.',
+      stem: 'The signal vanished the team waited.',
+      model: 'The signal vanished – the team waited.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The signal vanished',
+        right: 'the team waited',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the dash between the two related ideas.',
+      stem: 'The path ended we climbed over the stile.',
+      model: 'The path ended – we climbed over the stile.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The path ended',
+        right: 'we climbed over the stile',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
   ]),
   gen_dash_clause_combine: Object.freeze([
     {
@@ -1011,6 +1179,58 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['boundary.dash_missing'],
       readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Combine the sudden shift into one sentence with a dash.',
+      stem: 'The waves grew louder.\nWe stepped back.',
+      model: 'The waves grew louder – we stepped back.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The waves grew louder',
+        right: 'we stepped back',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Join the surprise with a dash.',
+      stem: 'The door opened.\nNobody spoke.',
+      model: 'The door opened – nobody spoke.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The door opened',
+        right: 'nobody spoke',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Use one dash to combine the clauses.',
+      stem: 'The signal vanished.\nThe team waited.',
+      model: 'The signal vanished – the team waited.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The signal vanished',
+        right: 'the team waited',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Combine the two ideas with a dash.',
+      stem: 'The path ended.\nWe climbed over the stile.',
+      model: 'The path ended – we climbed over the stile.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The path ended',
+        right: 'we climbed over the stile',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
+    },
   ]),
   gen_hyphen_insert: Object.freeze([
     {
@@ -1056,6 +1276,50 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       },
       misconceptionTags: ['boundary.hyphen_missing'],
       readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the hyphen that avoids ambiguity.',
+      stem: 'The sugar free snack was popular.',
+      model: 'The sugar-free snack was popular.',
+      validator: {
+        type: 'requiresHyphenatedPhrase',
+        phrase: 'sugar-free snack',
+      },
+      misconceptionTags: ['boundary.hyphen_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Rewrite the age phrase with the needed hyphens.',
+      stem: 'The ten year old pupil read aloud.',
+      model: 'The ten-year-old pupil read aloud.',
+      validator: {
+        type: 'requiresHyphenatedPhrase',
+        phrase: 'ten-year-old pupil',
+      },
+      misconceptionTags: ['boundary.hyphen_missing'],
+      readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the hyphen to clarify the compound modifier.',
+      stem: 'The last minute change surprised us.',
+      model: 'The last-minute change surprised us.',
+      validator: {
+        type: 'requiresHyphenatedPhrase',
+        phrase: 'last-minute change',
+      },
+      misconceptionTags: ['boundary.hyphen_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Fix the compound adjective before the noun.',
+      stem: 'The short term plan worked.',
+      model: 'The short-term plan worked.',
+      validator: {
+        type: 'requiresHyphenatedPhrase',
+        phrase: 'short-term plan',
+      },
+      misconceptionTags: ['boundary.hyphen_missing'],
+      readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
     },
   ]),
   gen_parenthesis_fix: Object.freeze([
@@ -1421,6 +1685,50 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['structure.semicolon_list_missing'],
       readiness: ['proofreading', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Use semi-colons to separate the complex list items.',
+      stem: 'The survey covered Cardiff, Wales, Belfast, Northern Ireland and Truro, Cornwall.',
+      model: 'The survey covered Cardiff, Wales; Belfast, Northern Ireland; and Truro, Cornwall.',
+      validator: {
+        type: 'requiresSemicolonList',
+        items: ['Cardiff, Wales', 'Belfast, Northern Ireland', 'Truro, Cornwall'],
+      },
+      misconceptionTags: ['structure.semicolon_list_missing'],
+      readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the separators in the complex list.',
+      stem: 'The teams were Falcons, Year 5, Otters, Year 6 and Kites, Year 4.',
+      model: 'The teams were Falcons, Year 5; Otters, Year 6; and Kites, Year 4.',
+      validator: {
+        type: 'requiresSemicolonList',
+        items: ['Falcons, Year 5', 'Otters, Year 6', 'Kites, Year 4'],
+      },
+      misconceptionTags: ['structure.semicolon_list_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Rewrite the complex list with semi-colons between the larger items.',
+      stem: 'The boxes contained shells, blue, pebbles, grey and glass, green.',
+      model: 'The boxes contained shells, blue; pebbles, grey; and glass, green.',
+      validator: {
+        type: 'requiresSemicolonList',
+        items: ['shells, blue', 'pebbles, grey', 'glass, green'],
+      },
+      misconceptionTags: ['structure.semicolon_list_missing'],
+      readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add semi-colons so each complex list item stays clear.',
+      stem: 'The route stopped at Exeter, station one, Bristol, station two and Reading, station three.',
+      model: 'The route stopped at Exeter, station one; Bristol, station two; and Reading, station three.',
+      validator: {
+        type: 'requiresSemicolonList',
+        items: ['Exeter, station one', 'Bristol, station two', 'Reading, station three'],
+      },
+      misconceptionTags: ['structure.semicolon_list_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
   ]),
   gen_bullet_points_fix: Object.freeze([
     {
@@ -1616,7 +1924,8 @@ export function createPunctuationGeneratedItems({
     if (!skill || !templates.length) continue;
     for (let index = 0; index < limit; index += 1) {
       const picked = pickTemplate(templates, seed, family.id, index, {
-        legacyTemplateCount: contextTemplates.length ? templates.length : 2,
+        legacyTemplateCount: contextTemplates.length ? 1 : 2,
+        runtimeStableTemplateCount: contextTemplates.length ? templates.length : 4,
       });
       if (!picked?.template) continue;
       items.push(buildGeneratedItem({
