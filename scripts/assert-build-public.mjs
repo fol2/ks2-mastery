@@ -35,6 +35,34 @@ async function walk(relativeDir = '') {
   return files;
 }
 
+function assertContainsAll(label, value, expectedTokens) {
+  for (const token of expectedTokens) {
+    if (!value.includes(token)) {
+      throw new Error(`${label} must include: ${token}`);
+    }
+  }
+}
+
+function jsonLdBlocks(html) {
+  const blocks = [];
+  const pattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  let match = pattern.exec(html);
+  while (match) {
+    const attributes = String(match[1] || '');
+    if (!/\btype=["']application\/ld\+json["']/i.test(attributes)) {
+      match = pattern.exec(html);
+      continue;
+    }
+    try {
+      blocks.push(JSON.parse(match[2]));
+    } catch (error) {
+      throw new Error(`Public index.html contains invalid JSON-LD: ${error?.message || error}`);
+    }
+    match = pattern.exec(html);
+  }
+  return blocks;
+}
+
 async function currentMonsterAssetKeys() {
   const monsterRoot = path.join(rootDir, 'assets', 'monsters');
   const keys = new Map();
@@ -58,6 +86,8 @@ async function currentMonsterAssetKeys() {
 
 await mustExist('index.html');
 await mustExist('manifest.webmanifest');
+await mustExist('robots.txt');
+await mustExist('sitemap.xml');
 await mustExist('favicon.ico');
 await mustExist('_headers');
 await mustExist('styles/app.css');
@@ -113,6 +143,8 @@ const allowed = new Set([
   'favicon.ico',
   'index.html',
   'manifest.webmanifest',
+  'robots.txt',
+  'sitemap.xml',
   'styles',
   'src',
   'assets',
@@ -171,6 +203,10 @@ assertCacheSplitRules(publishedHeadersContent);
 
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
 const appBundle = await readFile(path.join(publicDir, 'src/bundles/app.bundle.js'), 'utf8');
+const robotsTxt = await readFile(path.join(publicDir, 'robots.txt'), 'utf8');
+const sitemapXml = await readFile(path.join(publicDir, 'sitemap.xml'), 'utf8');
+const cspHashArtefact = await readFile(path.join(publicDir, '.csp-theme-hash'), 'utf8');
+const canonicalRoot = 'https://ks2.eugnel.uk/';
 if (!indexHtml.includes('/manifest.webmanifest')) {
   throw new Error('Public index.html must link the web app manifest.');
 }
@@ -187,6 +223,64 @@ if (appBundleVersionMatch[1] !== expectedAppBundleVersion) {
 }
 if (indexHtml.includes('home.bundle.js') || indexHtml.includes('src/main.js')) {
   throw new Error('Public index.html must not load legacy home islands or the raw source entry.');
+}
+
+assertContainsAll('Public index.html SEO identity', indexHtml, [
+  '<title>KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice</title>',
+  '<meta name="description"',
+  `<link rel="canonical" href="${canonicalRoot}" />`,
+  '<meta property="og:title"',
+  '<meta property="og:description"',
+  `<meta property="og:url" content="${canonicalRoot}" />`,
+  '<meta name="twitter:card" content="summary" />',
+  'KS2 spelling, grammar and punctuation practice',
+  'Spelling practice for KS2 word confidence',
+  'Grammar practice for sentence-level accuracy',
+  'Punctuation practice for clearer written English',
+]);
+
+const productIdentity = jsonLdBlocks(indexHtml).find((entry) => entry?.name === 'KS2 Mastery');
+if (!productIdentity) {
+  throw new Error('Public index.html must include JSON-LD product identity for KS2 Mastery.');
+}
+if (productIdentity.url !== canonicalRoot) {
+  throw new Error(`Public JSON-LD product identity must use canonical URL ${canonicalRoot}.`);
+}
+assertContainsAll('Public JSON-LD product identity', JSON.stringify(productIdentity), [
+  'KS2 spelling',
+  'KS2 grammar',
+  'KS2 punctuation',
+  'Practice tool',
+]);
+
+const cspHashLines = cspHashArtefact.split(/\r?\n/u).filter(Boolean);
+if (cspHashLines.length < 2 || !cspHashLines.every((line) => /^sha256-[A-Za-z0-9+/]+=*$/.test(line))) {
+  throw new Error('Public .csp-theme-hash must list every intentional inline script hash, including JSON-LD.');
+}
+
+if (/<\/?html|<!doctype/i.test(robotsTxt)) {
+  throw new Error('robots.txt must not be the SPA HTML fallback.');
+}
+assertContainsAll('robots.txt', robotsTxt, [
+  'User-agent: *',
+  'Disallow: /api/',
+  'Disallow: /admin',
+  'Disallow: /demo',
+  'Allow: /',
+  `Sitemap: ${canonicalRoot}sitemap.xml`,
+]);
+
+if (/<\/?html|<!doctype/i.test(sitemapXml)) {
+  throw new Error('sitemap.xml must not be the SPA HTML fallback.');
+}
+assertContainsAll('sitemap.xml', sitemapXml, [
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+  `<loc>${canonicalRoot}</loc>`,
+]);
+for (const forbiddenPublicPath of ['/api/', '/admin', 'localhost', '127.0.0.1']) {
+  if (sitemapXml.includes(forbiddenPublicPath)) {
+    throw new Error(`sitemap.xml must not advertise private or local path: ${forbiddenPublicPath}`);
+  }
 }
 
 for (const token of [

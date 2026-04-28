@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// U7 (sys-hardening p1): compute SHA-256 of the inline theme script
-// block embedded in `index.html` so the CSP `script-src` can list it
+// U7 (sys-hardening p1): compute SHA-256 of the intentional inline script
+// blocks embedded in `index.html` so the CSP `script-src` can list them
 // via `'sha256-<base64>'` instead of falling back to `unsafe-inline`.
 //
 // CLI usage:
@@ -25,22 +25,21 @@ const __dirname = path.dirname(__filename);
 const DEFAULT_HTML_PATH = path.resolve(__dirname, '..', 'index.html');
 
 /**
- * Extract the first `<script>...</script>` block that does NOT carry a
- * `src="..."` attribute (inline script). Returns the raw character data
- * between the opening and closing tags, preserving whitespace.
+ * Extract `<script>...</script>` blocks that do NOT carry a `src="..."`
+ * attribute. Returns each raw character-data body between the opening and
+ * closing tags, preserving whitespace.
  *
- * The app's `index.html` has exactly one such inline block — the theme
- * bootstrapper at lines 25-34 — and one external `<script src=...>`
- * that loads the app bundle. If a future change adds a second inline
- * block we must either hash it too or fail the build; this helper
- * throws when more than one inline block is present.
+ * The app's `index.html` intentionally has more than one inline block now:
+ * the executable theme bootstrapper and non-executing JSON-LD product
+ * identity. CSP still needs to know about every intentional inline script
+ * element, so callers should usually use `computeInlineScriptHashes()`.
  *
  * @param {string} html
- * @returns {string} inline script contents
+ * @returns {string[]} inline script contents
  */
-export function extractInlineScriptContents(html) {
+export function extractInlineScriptContentsList(html) {
   if (typeof html !== 'string') {
-    throw new TypeError('extractInlineScriptContents: html must be a string.');
+    throw new TypeError('extractInlineScriptContentsList: html must be a string.');
   }
   const pattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
   const inlineBlocks = [];
@@ -56,13 +55,18 @@ export function extractInlineScriptContents(html) {
   if (inlineBlocks.length === 0) {
     throw new Error('No inline <script> block found in HTML. CSP hash cannot be computed.');
   }
-  if (inlineBlocks.length > 1) {
-    throw new Error(
-      `Expected exactly one inline <script> block, found ${inlineBlocks.length}. `
-      + 'Update scripts/compute-inline-script-hash.mjs if multi-inline support is intentional.',
-    );
-  }
-  return inlineBlocks[0];
+  return inlineBlocks;
+}
+
+/**
+ * Backwards-compatible single-script extractor. This remains for existing
+ * callers and tests that care about the first inline script only.
+ *
+ * @param {string} html
+ * @returns {string} first inline script contents
+ */
+export function extractInlineScriptContents(html) {
+  return extractInlineScriptContentsList(html)[0];
 }
 
 /**
@@ -78,6 +82,19 @@ export function computeInlineScriptHash(html) {
 }
 
 /**
+ * Compute CSP-formatted hashes for every intentional inline script block.
+ *
+ * @param {string} html
+ * @returns {string[]} e.g. [`sha256-abc...=`]
+ */
+export function computeInlineScriptHashes(html) {
+  return extractInlineScriptContentsList(html).map((script) => {
+    const digest = createHash('sha256').update(script, 'utf8').digest('base64');
+    return `sha256-${digest}`;
+  });
+}
+
+/**
  * Read the HTML file at `htmlPath` and return its CSP hash.
  *
  * @param {string} [htmlPath]
@@ -86,6 +103,11 @@ export function computeInlineScriptHash(html) {
 export async function computeInlineScriptHashFromFile(htmlPath = DEFAULT_HTML_PATH) {
   const html = await readFile(htmlPath, 'utf8');
   return computeInlineScriptHash(html);
+}
+
+export async function computeInlineScriptHashesFromFile(htmlPath = DEFAULT_HTML_PATH) {
+  const html = await readFile(htmlPath, 'utf8');
+  return computeInlineScriptHashes(html);
 }
 
 function argValue(name, fallback) {
@@ -101,6 +123,6 @@ const invokedDirectly = process.argv[1]
   && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (invokedDirectly) {
   const htmlPath = argValue('--html', DEFAULT_HTML_PATH);
-  const hash = await computeInlineScriptHashFromFile(htmlPath);
-  process.stdout.write(`${hash}\n`);
+  const hashes = await computeInlineScriptHashesFromFile(htmlPath);
+  process.stdout.write(`${hashes.join('\n')}\n`);
 }

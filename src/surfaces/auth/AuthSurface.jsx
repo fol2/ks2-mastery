@@ -217,7 +217,14 @@ function AuthSurfaceStandard({ initialMode = 'login', initialError = '', onSubmi
       <section className="auth-panel card">
         <div className="eyebrow">KS2 Mastery</div>
         <h1 className="title">{isRegister ? 'Create your parent account' : 'Sign in to continue'}</h1>
-        <p className="subtitle">Your learner profiles and spelling progress sync through the KS2 Mastery cloud backend.</p>
+        <p className="subtitle">
+          Practise KS2 spelling, grammar and punctuation online, then save learner profiles and progress when you sign in.
+        </p>
+        <ul className="auth-product-summary" aria-label="KS2 Mastery practice areas">
+          <li>Focused spelling practice for KS2 word confidence</li>
+          <li>Grammar practice for sentence-level accuracy</li>
+          <li>Punctuation practice for clearer written English</li>
+        </ul>
         {/* SH2-U8: inline style prop migrated to `.auth-standard-error` class
             (see docs/hardening/csp-inline-style-inventory.md). */}
         {error && (

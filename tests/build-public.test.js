@@ -11,6 +11,9 @@ test('public build emits the React app bundle entrypoint', () => {
   execFileSync(process.execPath, ['./scripts/audit-client-bundle.mjs'], { stdio: 'ignore' });
 
   const indexHtml = readFileSync('dist/public/index.html', 'utf8');
+  const robotsTxt = readFileSync('dist/public/robots.txt', 'utf8');
+  const sitemapXml = readFileSync('dist/public/sitemap.xml', 'utf8');
+  const cspHashArtefact = readFileSync('dist/public/.csp-theme-hash', 'utf8');
   const appBundle = readFileSync('dist/public/src/bundles/app.bundle.js', 'utf8');
   const expectedAppBundleVersion = createHash('sha256').update(appBundle).digest('hex').slice(0, 12);
   assert.match(
@@ -19,6 +22,21 @@ test('public build emits the React app bundle entrypoint', () => {
   );
   assert.doesNotMatch(indexHtml, /home\.bundle\.js/);
   assert.doesNotMatch(indexHtml, /src\/main\.js/);
+  assert.match(indexHtml, /KS2 Mastery \| KS2 Spelling, Grammar and Punctuation Practice/);
+  assert.match(indexHtml, /<link rel="canonical" href="https:\/\/ks2\.eugnel\.uk\/" \/>/);
+  assert.match(indexHtml, /application\/ld\+json/);
+  assert.match(indexHtml, /KS2 spelling, grammar and punctuation practice/);
+  assert.match(robotsTxt, /Disallow: \/api\//);
+  assert.match(robotsTxt, /Disallow: \/admin/);
+  assert.match(robotsTxt, /Disallow: \/demo/);
+  assert.match(robotsTxt, /Sitemap: https:\/\/ks2\.eugnel\.uk\/sitemap\.xml/);
+  assert.doesNotMatch(robotsTxt, /<!doctype html|<html/i);
+  assert.match(sitemapXml, /<loc>https:\/\/ks2\.eugnel\.uk\/<\/loc>/);
+  assert.doesNotMatch(sitemapXml, /\/api\/|\/admin|localhost|127\.0\.0\.1/);
+  assert.ok(
+    cspHashArtefact.split(/\r?\n/u).filter(Boolean).length >= 2,
+    'CSP hash artefact should list both theme and JSON-LD inline script hashes',
+  );
 
   assert.equal(existsSync('dist/public/src/bundles/home.bundle.js'), false);
   assert.equal(existsSync('dist/public/src/main.js'), false);

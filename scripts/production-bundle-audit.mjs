@@ -3,6 +3,8 @@ import { createDemoSession, loadBootstrap } from './lib/production-smoke.mjs';
 import { FORBIDDEN_KEYS_EVERYWHERE } from '../tests/helpers/forbidden-keys.mjs';
 
 const DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
+const SEO_CANONICAL_ROOT = 'https://ks2.eugnel.uk/';
+const SEO_SITEMAP_URL = `${SEO_CANONICAL_ROOT}sitemap.xml`;
 
 // U13 redaction matrix forbidden-key check: these keys must never appear in any
 // authenticated response surface reached via the demo session. The set is
@@ -124,6 +126,112 @@ function scriptSources(html) {
   return sources;
 }
 
+function extractJsonLdBlocks(html, failures) {
+  const blocks = [];
+  const pattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  let match = pattern.exec(html);
+  while (match) {
+    const attributes = String(match[1] || '');
+    if (!/\btype=["']application\/ld\+json["']/i.test(attributes)) {
+      match = pattern.exec(html);
+      continue;
+    }
+    try {
+      blocks.push(JSON.parse(match[2]));
+    } catch (error) {
+      failures.push(`Production HTML JSON-LD is invalid: ${error?.message || error}`);
+    }
+    match = pattern.exec(html);
+  }
+  return blocks;
+}
+
+function assertSeoRootHtml(index, failures) {
+  if (!/text\/html/i.test(index.contentType)) {
+    failures.push(`Production SEO root expected text/html, got: ${index.contentType || 'absent'}`);
+  }
+
+  const requiredTokens = [
+    '<title>KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice</title>',
+    '<meta name="description"',
+    `<link rel="canonical" href="${SEO_CANONICAL_ROOT}"`,
+    '<meta property="og:title"',
+    '<meta property="og:description"',
+    `<meta property="og:url" content="${SEO_CANONICAL_ROOT}"`,
+    '<meta name="twitter:card" content="summary"',
+    'KS2 spelling, grammar and punctuation practice',
+    'Spelling practice for KS2 word confidence',
+    'Grammar practice for sentence-level accuracy',
+    'Punctuation practice for clearer written English',
+  ];
+  for (const token of requiredTokens) {
+    if (!index.text.includes(token)) {
+      failures.push(`Production SEO root is missing required public identity token: ${token}`);
+    }
+  }
+
+  const productIdentity = extractJsonLdBlocks(index.text, failures)
+    .find((entry) => entry?.name === 'KS2 Mastery');
+  if (!productIdentity) {
+    failures.push('Production SEO root is missing JSON-LD product identity for KS2 Mastery.');
+    return;
+  }
+  if (productIdentity.url !== SEO_CANONICAL_ROOT) {
+    failures.push(
+      `Production SEO JSON-LD must use canonical URL ${SEO_CANONICAL_ROOT}, got: ${productIdentity.url || 'absent'}`,
+    );
+  }
+  const json = JSON.stringify(productIdentity);
+  for (const token of ['KS2 spelling', 'KS2 grammar', 'KS2 punctuation', 'Practice tool']) {
+    if (!json.includes(token)) {
+      failures.push(`Production SEO JSON-LD is missing product identity token: ${token}`);
+    }
+  }
+}
+
+async function assertSeoDiscoveryResources(base, failures) {
+  const robots = await fetchText(new URL('/robots.txt', base).href);
+  if (robots.status < 200 || robots.status >= 300) {
+    failures.push(`Production robots.txt fetch failed: ${robots.status} ${robots.url}`);
+  }
+  if (/text\/html/i.test(robots.contentType) || /<!doctype|<\/?html/i.test(robots.text)) {
+    failures.push('Production robots.txt appears to be SPA fallback HTML, not a robots policy.');
+  }
+  for (const token of [
+    'User-agent: *',
+    'Disallow: /api/',
+    'Disallow: /admin',
+    'Disallow: /demo',
+    'Allow: /',
+    `Sitemap: ${SEO_SITEMAP_URL}`,
+  ]) {
+    if (!robots.text.includes(token)) {
+      failures.push(`Production robots.txt is missing required token: ${token}`);
+    }
+  }
+
+  const sitemap = await fetchText(new URL('/sitemap.xml', base).href);
+  if (sitemap.status < 200 || sitemap.status >= 300) {
+    failures.push(`Production sitemap.xml fetch failed: ${sitemap.status} ${sitemap.url}`);
+  }
+  if (/text\/html/i.test(sitemap.contentType) || /<!doctype|<\/?html/i.test(sitemap.text)) {
+    failures.push('Production sitemap.xml appears to be SPA fallback HTML, not a sitemap.');
+  }
+  for (const token of [
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    `<loc>${SEO_CANONICAL_ROOT}</loc>`,
+  ]) {
+    if (!sitemap.text.includes(token)) {
+      failures.push(`Production sitemap.xml is missing required token: ${token}`);
+    }
+  }
+  for (const forbiddenPath of ['/api/', '/admin', 'localhost', '127.0.0.1']) {
+    if (sitemap.text.includes(forbiddenPath)) {
+      failures.push(`Production sitemap.xml must not advertise private or local path: ${forbiddenPath}`);
+    }
+  }
+}
+
 // SH2-U10 (S-01 mirror): extract the set of same-origin chunk paths that a
 // shipped ES-module chunk imports. Esbuild splitting emits
 // `import("./chunk-XXXX.js")` for lazy-loaded entries and shared chunks,
@@ -222,6 +330,8 @@ async function auditProduction(origin) {
     failures.push(`Production HTML fetch failed: ${index.status} ${base.href}`);
   }
   assertNoForbiddenText('Production HTML', index.text, failures);
+  assertSeoRootHtml(index, failures);
+  await assertSeoDiscoveryResources(base, failures);
 
   const scripts = scriptSources(index.text)
     .filter((src) => !/^https?:\/\//i.test(src) || new URL(src, base).origin === base.origin);
@@ -434,6 +544,8 @@ async function auditProduction(origin) {
       : null,
     { path: '/assets/app-icons/favicon-32.png', label: 'ASSETS app icon', expected: 'public, max-age=31536000, immutable' },
     { path: '/manifest.webmanifest', label: 'web app manifest', expected: 'public, max-age=3600' },
+    { path: '/robots.txt', label: 'robots policy', expected: 'public, max-age=3600' },
+    { path: '/sitemap.xml', label: 'sitemap', expected: 'public, max-age=3600' },
   ].filter(Boolean);
   let cacheChecksPassed = 0;
   for (const check of CACHE_SPLIT_CHECKS) {

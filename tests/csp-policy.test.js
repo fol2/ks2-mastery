@@ -16,6 +16,7 @@ import assert from 'node:assert/strict';
 
 import {
   CSP_INLINE_SCRIPT_HASH,
+  CSP_INLINE_SCRIPT_HASHES,
   CSP_POLICY_VALUE,
 } from '../worker/src/security-headers.js';
 
@@ -38,18 +39,22 @@ test("policy defines default-src 'none' (deny-by-default)", () => {
   assert.deepEqual(directives.get('default-src'), ["'none'"]);
 });
 
-test('policy script-src lists self, the inline theme-script hash, strict-dynamic, and Turnstile', () => {
+test('policy script-src lists self, every inline script hash, strict-dynamic, and Turnstile', () => {
   const value = directives.get('script-src')?.[0] || '';
   assert.match(value, /'self'/, "script-src must include 'self'");
-  assert.ok(value.includes(`'${CSP_INLINE_SCRIPT_HASH}'`), 'script-src must list the inline theme-script hash');
+  for (const hash of CSP_INLINE_SCRIPT_HASHES) {
+    assert.ok(value.includes(`'${hash}'`), `script-src must list inline script hash ${hash}`);
+  }
   assert.match(value, /'strict-dynamic'/, "script-src must enable 'strict-dynamic'");
   assert.match(value, /https:\/\/challenges\.cloudflare\.com/, 'script-src must allow Turnstile');
 });
 
-test('policy script-src-elem mirrors script-src without strict-dynamic (HTML element form)', () => {
+test('policy script-src-elem mirrors script-src hashes without strict-dynamic (HTML element form)', () => {
   const value = directives.get('script-src-elem')?.[0] || '';
   assert.match(value, /'self'/);
-  assert.ok(value.includes(`'${CSP_INLINE_SCRIPT_HASH}'`));
+  for (const hash of CSP_INLINE_SCRIPT_HASHES) {
+    assert.ok(value.includes(`'${hash}'`), `script-src-elem must list inline script hash ${hash}`);
+  }
   assert.match(value, /https:\/\/challenges\.cloudflare\.com/);
 });
 

@@ -1,7 +1,7 @@
 {
   "name": "KS2 Mastery",
   "short_name": "KS2 Mastery",
-  "description": "A KS2 practice web app with spelling, punctuation, grammar and collectible mastery creatures.",
+  "description": "A KS2 practice web app for spelling, grammar and punctuation, with demo access and saved learner progress.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

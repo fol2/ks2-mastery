@@ -129,6 +129,8 @@ export const CACHE_SPLIT_RULES = Object.freeze([
   { path: '/styles/*', cacheControl: 'public, max-age=31536000, immutable' },
   { path: '/favicon.ico', cacheControl: 'public, max-age=86400' },
   { path: '/manifest.webmanifest', cacheControl: 'public, max-age=3600' },
+  { path: '/robots.txt', cacheControl: 'public, max-age=3600' },
+  { path: '/sitemap.xml', cacheControl: 'public, max-age=3600' },
   { path: '/', cacheControl: 'no-store' },
   { path: '/index.html', cacheControl: 'no-store' },
 ]);
