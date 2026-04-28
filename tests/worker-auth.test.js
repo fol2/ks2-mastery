@@ -481,6 +481,14 @@ test('production public bootstrap redacts spelling sentinels from subject state,
       inklet: { mastered: [sentinel.toLowerCase()], caught: true, branch: 'b1', wordSlug: sentinel.toLowerCase() },
       glimmerbug: { mastered: [sentinel], caught: true, branch: 'b2' },
       phaeton: { branch: 'b1' },
+      pealark: {
+        mastered: [],
+        caught: false,
+        branch: 'b1',
+        starHighWater: 1,
+        maxStageEver: 0,
+        internalMarker: sentinel,
+      },
       unsafe: sentinel,
     }),
     now,
@@ -529,6 +537,13 @@ test('production public bootstrap redacts spelling sentinels from subject state,
   assert.equal(publicGameState.glimmerbug.mastered, undefined);
   assert.equal(publicGameState.glimmerbug.masteredCount, 1);
   assert.equal(publicGameState.glimmerbug.branch, 'b2');
+  assert.equal(publicGameState.pealark.mastered, undefined);
+  assert.equal(publicGameState.pealark.internalMarker, undefined);
+  assert.equal(publicGameState.pealark.masteredCount, 0);
+  assert.equal(publicGameState.pealark.caught, false);
+  assert.equal(publicGameState.pealark.branch, 'b1');
+  assert.equal(publicGameState.pealark.starHighWater, 1);
+  assert.equal(publicGameState.pealark.maxStageEver, 0);
   assert.equal(publicGameState.unsafe, undefined);
 
   server.close();

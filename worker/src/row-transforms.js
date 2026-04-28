@@ -20,6 +20,7 @@ import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../../src/subjects/spelling/data
 import {
   normalisePunctuationSummary,
 } from '../../src/subjects/punctuation/service-contract.js';
+import { MONSTERS_BY_SUBJECT } from '../../src/platform/game/monsters.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import {
   asTs,
@@ -47,7 +48,22 @@ export const PUBLIC_EVENT_TYPES = new Set([
   'platform.practice-streak-hit',
 ]);
 export const PUBLIC_MONSTER_CODEX_SYSTEM_ID = 'monster-codex';
-export const PUBLIC_MONSTER_IDS = new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
+export const PUBLIC_SPELLING_MONSTER_IDS = Object.freeze(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']);
+export const PUBLIC_PUNCTUATION_MONSTER_IDS = Object.freeze(
+  Array.isArray(MONSTERS_BY_SUBJECT?.punctuation)
+    ? [...MONSTERS_BY_SUBJECT.punctuation]
+    : ['pealark', 'curlune', 'claspin', 'quoral'],
+);
+export const PUBLIC_GRAMMAR_MONSTER_IDS = Object.freeze(
+  Array.isArray(MONSTERS_BY_SUBJECT?.grammar)
+    ? [...MONSTERS_BY_SUBJECT.grammar]
+    : ['bracehart', 'chronalyx', 'couronnail', 'concordium'],
+);
+export const PUBLIC_MONSTER_IDS = new Set([
+  ...PUBLIC_SPELLING_MONSTER_IDS,
+  ...PUBLIC_PUNCTUATION_MONSTER_IDS,
+  ...PUBLIC_GRAMMAR_MONSTER_IDS,
+]);
 export const PUBLIC_DIRECT_SPELLING_MONSTER_IDS = ['inklet', 'glimmerbug', 'vellhorn'];
 export const PUBLIC_MONSTER_BRANCHES = new Set(['b1', 'b2']);
 export const SPELLING_SECURE_STAGE = 4;
@@ -55,7 +71,7 @@ export const PUBLIC_EVENT_TEXT_ENUMS = {
   mode: new Set(['smart', 'trouble', 'single', 'test']),
   sessionType: new Set(['learning', 'test']),
   kind: new Set(['caught', 'evolve', 'mega', 'levelup']),
-  monsterId: new Set(['inklet', 'glimmerbug', 'phaeton', 'vellhorn']),
+  monsterId: new Set(PUBLIC_MONSTER_IDS),
   spellingPool: new Set(['core', 'extra']),
   yearBand: new Set(['3-4', '5-6', 'extra']),
   fromPhase: new Set(['retry', 'correction']),
@@ -129,6 +145,14 @@ export function gameStateRowToRecord(row) {
   return cloneSerialisable(safeJsonParse(row.state_json, {})) || {};
 }
 
+function safePublicNonNegativeInt(value, { max = null } = {}) {
+  if (value === undefined || value === null) return null;
+  const n = Math.floor(Number(value) + 1e-9);
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.max(0, n);
+  return max == null ? clamped : Math.min(max, clamped);
+}
+
 export function publicMonsterCodexEntry(entry) {
   if (!isPlainObject(entry)) return null;
   const masteredCount = Number(entry.masteredCount);
@@ -142,6 +166,10 @@ export function publicMonsterCodexEntry(entry) {
     caught: Boolean(entry.caught) || mastered > 0,
   };
   if (PUBLIC_MONSTER_BRANCHES.has(entry.branch)) output.branch = entry.branch;
+  const starHighWater = safePublicNonNegativeInt(entry.starHighWater);
+  if (starHighWater != null) output.starHighWater = starHighWater;
+  const maxStageEver = safePublicNonNegativeInt(entry.maxStageEver, { max: 4 });
+  if (maxStageEver != null) output.maxStageEver = maxStageEver;
   return output;
 }
 
