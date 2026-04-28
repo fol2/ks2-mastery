@@ -116,6 +116,27 @@ test('comma list transfer requires preserved items and KS2 list comma placement'
   assert.equal(missingComma.correct, false);
   assert.equal(missingComma.misconceptionTags.includes('comma.list_separator_missing'), true);
 
+  const insertOxfordComma = markPunctuationAnswer({
+    item: item('lc_insert_supplies'),
+    answer: { typed: 'We needed pencils, rulers, and glue.' },
+  });
+  assert.equal(insertOxfordComma.correct, true);
+  assert.deepEqual(insertOxfordComma.misconceptionTags, []);
+
+  const fixOxfordComma = markPunctuationAnswer({
+    item: item('lc_fix_display'),
+    answer: { typed: 'The display showed shells, pebbles, and fossils.' },
+  });
+  assert.equal(fixOxfordComma.correct, true);
+  assert.deepEqual(fixOxfordComma.misconceptionTags, []);
+
+  const changedInsertStem = markPunctuationAnswer({
+    item: item('lc_insert_supplies'),
+    answer: { typed: 'We packed pencils, rulers, and glue.' },
+  });
+  assert.equal(changedInsertStem.correct, false);
+  assert.equal(changedInsertStem.misconceptionTags.includes('comma.list_words_changed'), true);
+
   const finalComma = markPunctuationAnswer({
     item: item('lc_transfer_trip'),
     answer: { typed: 'For the trip, we packed torches, maps, and water.' },
@@ -131,15 +152,15 @@ test('comma list transfer requires preserved items and KS2 list comma placement'
 
   const strictFinalCommaItem = item('lc_transfer_bake_sale');
   assert.equal(strictFinalCommaItem.validator.allowFinalComma, false);
-  assert.match(`${strictFinalCommaItem.prompt} ${strictFinalCommaItem.explanation}`, /house style/i);
-  assert.match(`${strictFinalCommaItem.prompt} ${strictFinalCommaItem.explanation}`, /no final comma before (?:the final )?and/i);
+  assert.doesNotMatch(`${strictFinalCommaItem.prompt} ${strictFinalCommaItem.explanation}`, /house style/i);
+  assert.match(`${strictFinalCommaItem.prompt} ${strictFinalCommaItem.explanation}`, /do not put a comma before the final and/i);
   const strictFinalComma = markPunctuationAnswer({
     item: strictFinalCommaItem,
     answer: { typed: 'For the bake sale we needed eggs, flour, butter, and sugar.' },
   });
   assert.equal(strictFinalComma.correct, false);
   assert.equal(strictFinalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
-  assert.match(strictFinalComma.note, /house style: no final comma before the final and/i);
+  assert.equal(strictFinalComma.note, 'For this question, do not put a comma before the final and.');
 
   const changedStem = markPunctuationAnswer({
     item: item('lc_transfer_bake_sale'),
@@ -147,6 +168,16 @@ test('comma list transfer requires preserved items and KS2 list comma placement'
   });
   assert.equal(changedStem.correct, false);
   assert.equal(changedStem.misconceptionTags.includes('comma.list_words_changed'), true);
+
+  const changedStemWithFinalComma = markPunctuationAnswer({
+    item: item('lc_transfer_bake_sale'),
+    answer: { typed: 'At the bake sale we needed eggs, flour, butter, and sugar.' },
+  });
+  assert.equal(changedStemWithFinalComma.correct, false);
+  assert.equal(changedStemWithFinalComma.misconceptionTags.includes('comma.list_words_changed'), true);
+  assert.equal(changedStemWithFinalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
+  assert.match(changedStemWithFinalComma.note, /Keep the exact stem and list items in order/i);
+  assert.match(changedStemWithFinalComma.note, /do not put a comma before the final and/i);
 });
 
 test('fronted adverbial and clarity transfers require the opening phrase comma', () => {

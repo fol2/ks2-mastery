@@ -285,11 +285,13 @@ function listCommaOk(text, words = [], { allowFinalComma = true } = {}) {
   };
 }
 
-function listCommaRejectionNote(validator = {}, hasFinalComma = false, fallback = '') {
-  if (validator.allowFinalComma === false && hasFinalComma) {
-    return 'This item uses the house style: no final comma before the final and.';
-  }
-  return fallback;
+const STRICT_FINAL_COMMA_NOTE = 'For this question, do not put a comma before the final and.';
+
+function listCommaRejectionNote(validator = {}, { hasFinalComma = false, tags = [] } = {}, fallback = '') {
+  if (validator.allowFinalComma !== false || !hasFinalComma) return fallback;
+  const otherIssues = uniqueStrings(tags).filter((tag) => tag !== 'comma.unnecessary_final_comma');
+  if (!otherIssues.length) return STRICT_FINAL_COMMA_NOTE;
+  return `${fallback} ${STRICT_FINAL_COMMA_NOTE}`.trim();
 }
 
 function openingPhraseMainClause(text, phrase) {
@@ -713,12 +715,19 @@ function markTransfer(item, answer) {
     if (!capitalOk) tags.push('comma.capitalisation_missing');
     if (!terminalOk) tags.push('comma.terminal_missing');
     if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
+    const fallbackNote = opening
+      ? 'Keep the exact stem and list items in order, and use commas between the list items.'
+      : 'Keep the list items in order and use commas between the list items.';
     return {
       correct,
       expected: item.model || '',
       note: correct
         ? 'The list items are preserved and separated clearly.'
-        : listCommaRejectionNote(validator, hasFinalComma, 'Keep the list items in order and add the list comma before the final and phrase.'),
+        : listCommaRejectionNote(
+            validator,
+            { hasFinalComma, tags },
+            fallbackNote,
+          ),
       misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
       facets: [
         facet('preservation', wordsOk),
@@ -915,7 +924,11 @@ function markTransfer(item, answer) {
       expected: item.model || '',
       note: correct
         ? 'The colon introduces the list after a complete opening clause.'
-        : listCommaRejectionNote(validator, hasFinalComma, 'Use the colon after the opening clause and keep the list items in order.'),
+        : listCommaRejectionNote(
+            validator,
+            { hasFinalComma, tags },
+            'Use the colon after the opening clause and keep the list items in order.',
+          ),
       misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
       facets: [
         facet('preservation', wordsOk),
@@ -1096,7 +1109,11 @@ function markCombine(item, answer) {
       expected,
       note: correct
         ? 'The notes have been combined into one clear list sentence.'
-        : listCommaRejectionNote(validator, hasFinalComma, 'Keep the list words in order and separate the list with the expected comma.'),
+        : listCommaRejectionNote(
+            validator,
+            { hasFinalComma, tags },
+            'Keep the list words in order and separate the list with the expected comma.',
+          ),
       misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
       facets: [
         facet('preservation', wordsOk),
@@ -1172,7 +1189,11 @@ function markCombine(item, answer) {
       expected,
       note: correct
         ? 'The opening clause and list are combined with a colon.'
-        : listCommaRejectionNote(validator, hasFinalComma, 'Use the colon after the opening clause and keep the list items in order.'),
+        : listCommaRejectionNote(
+            validator,
+            { hasFinalComma, tags },
+            'Use the colon after the opening clause and keep the list items in order.',
+          ),
       misconceptionTags: correct ? [] : [...new Set(tags.length ? tags : itemTags(item))],
       facets: [
         facet('preservation', wordsOk),

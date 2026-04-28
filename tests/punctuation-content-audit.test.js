@@ -142,8 +142,18 @@ test('punctuation content audit guards dash display and strict final-comma copy'
   ));
   assert.ok(strictFinalCommaItems.length > 0);
   for (const item of strictFinalCommaItems) {
-    assert.match(`${item.prompt} ${item.explanation}`, /house style/i, item.id);
-    assert.match(`${item.prompt} ${item.explanation}`, /no final comma before (?:the final )?and/i, item.id);
+    assert.doesNotMatch(`${item.prompt} ${item.explanation}`, /house style/i, item.id);
+    assert.match(`${item.prompt} ${item.explanation}`, /do not put a comma before the final and/i, item.id);
+  }
+
+  const fixedFreeTextListCommaItems = PUNCTUATION_CONTENT_MANIFEST.items.filter((item) => (
+    item.skillIds?.includes('list_commas')
+      && ['insert', 'fix'].includes(item.mode)
+      && item.validator?.allowFinalComma !== false
+  ));
+  assert.ok(fixedFreeTextListCommaItems.length > 0);
+  for (const item of fixedFreeTextListCommaItems) {
+    assert.equal(item.validator?.type, 'requiresListCommas', item.id);
   }
 });
 
@@ -167,7 +177,47 @@ test('punctuation content audit rejects strict final-comma items without visible
   });
 
   assert.equal(audit.ok, false);
-  assert.match(audit.failures.join('\n'), /lc_transfer_bake_sale forbids the final comma without visible house-style context/);
+  assert.match(audit.failures.join('\n'), /lc_transfer_bake_sale forbids the final comma without visible no-final-comma context/);
+});
+
+test('punctuation content audit rejects dash-clause items without dash-teaching display text', () => {
+  const manifest = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    items: PUNCTUATION_CONTENT_MANIFEST.items.map((item) => (
+      item.id === 'dc_insert_door_froze'
+        ? {
+            ...item,
+            model: 'The door creaked open we froze.',
+          }
+        : item
+    )),
+  };
+  const validation = validatePunctuationManifest(manifest);
+
+  assert.equal(validation.ok, false);
+  assert.match(validation.errors.join('\n'), /dc_insert_door_froze must use a spaced en dash in model display/);
+});
+
+test('punctuation content audit rejects dash-clause display with spaced hyphen', () => {
+  const manifest = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    items: PUNCTUATION_CONTENT_MANIFEST.items.map((item) => (
+      item.id === 'dc_choose_flooded_route'
+        ? {
+            ...item,
+            options: item.options.map((option, index) => (
+              index === item.correctIndex
+                ? 'The path was flooded - we took the longer route.'
+                : option
+            )),
+          }
+        : item
+    )),
+  };
+  const validation = validatePunctuationManifest(manifest);
+
+  assert.equal(validation.ok, false);
+  assert.match(validation.errors.join('\n'), /dc_choose_flooded_route must use a spaced en dash in model display/);
 });
 
 test('punctuation content audit detects crafted duplicate generated signatures', () => {

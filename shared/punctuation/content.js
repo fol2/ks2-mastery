@@ -441,6 +441,11 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     accepted: ['We needed pencils, rulers and glue.'],
     explanation: 'Use a comma between pencils and rulers to separate the list items.',
     model: 'We needed pencils, rulers and glue.',
+    validator: {
+      type: 'requiresListCommas',
+      opening: 'We needed',
+      items: ['pencils', 'rulers', 'glue'],
+    },
     misconceptionTags: ['comma.list_separator_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -454,8 +459,13 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     prompt: 'Correct the list punctuation in this sentence.',
     stem: 'The display showed shells pebbles, and fossils.',
     accepted: ['The display showed shells, pebbles and fossils.'],
-    explanation: 'The comma belongs between shells and pebbles. The final comma before and is not needed here.',
+    explanation: 'The comma belongs between shells and pebbles. A final comma before and is accepted here too.',
     model: 'The display showed shells, pebbles and fossils.',
+    validator: {
+      type: 'requiresListCommas',
+      opening: 'The display showed',
+      items: ['shells', 'pebbles', 'fossils'],
+    },
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -482,10 +492,10 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     skillIds: ['list_commas'],
     clusterId: 'comma_flow',
     rewardUnitId: 'list-commas-core',
-    prompt: 'Write one sentence using this exact stem and list, following the house style with no final comma before and: For the bake sale we needed eggs, flour, butter and sugar.',
+    prompt: 'Write one sentence using this exact stem and list: For the bake sale we needed eggs, flour, butter and sugar. For this question, do not put a comma before the final and.',
     stem: '',
     accepted: ['For the bake sale we needed eggs, flour, butter and sugar.'],
-    explanation: 'The sentence keeps the stem and separates the list items with commas. This item uses the house style: no final comma before the final and.',
+    explanation: 'The sentence keeps the exact stem and list items, with commas between the list items. For this question, there is no comma before the final and.',
     model: 'For the bake sale we needed eggs, flour, butter and sugar.',
     validator: {
       type: 'requiresListCommas',
@@ -2501,8 +2511,9 @@ function dashClauseDisplayUsesEnDash(item) {
   const displayTexts = [
     item.model,
     item.mode === 'choose' ? asArray(item.options)[Number(item.correctIndex)] : '',
-  ].filter((entry) => typeof entry === 'string' && /[-–—]/.test(entry));
-  return displayTexts.every((text) => text.includes(' – ') && !text.includes(' - '));
+  ].filter((entry) => typeof entry === 'string' && entry.trim());
+  return displayTexts.length > 0
+    && displayTexts.every((text) => text.includes(' – ') && !text.includes(' - '));
 }
 
 function pushIndexed(map, key, value) {
@@ -2643,7 +2654,7 @@ export function validatePunctuationManifest(manifest = PUNCTUATION_CONTENT_MANIF
       }
     }
     if (!strictFinalCommaPolicyVisible(item)) {
-      errors.push(`List-comma item ${item.id} forbids the final comma without visible house-style context.`);
+      errors.push(`List-comma item ${item.id} forbids the final comma without visible no-final-comma context.`);
     }
     if (!dashClauseDisplayUsesEnDash(item)) {
       errors.push(`Dash-clause item ${item.id} must use a spaced en dash in model display.`);

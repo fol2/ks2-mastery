@@ -101,7 +101,7 @@ The first Speech rubric is deliberately strict:
 
 Comma / Flow marking adds deterministic transfer validators for:
 
-- ordered KS2 list-comma patterns; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma with visible house-style context
+- ordered KS2 list-comma patterns; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma with visible no-final-comma context
 - opening phrase commas after fronted adverbials such as `After lunch,`
 - opening phrase commas that make meaning clearer, such as `In the morning,`
 
@@ -120,7 +120,7 @@ Structure marking adds deterministic transfer validators for:
 
 Combine marking adds stricter one-sentence validators for the first legacy-shaped rewrite families:
 
-- list-comma note combination; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma with visible house-style context
+- list-comma note combination; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma with visible no-final-comma context
 - fronted-adverbial rewrites with the opening comma
 - parenthesis rewrites with matched commas, brackets, or dashes
 - colon-list combinations after a complete opening clause
