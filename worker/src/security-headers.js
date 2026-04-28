@@ -15,7 +15,7 @@
 //   per F-01). It uses `headers.set()` to force path-specific cache rules on
 //   bundles that arrive from `env.ASSETS.fetch` with `no-store` applied.
 
-import { CSP_INLINE_SCRIPT_HASH } from './generated-csp-hash.js';
+import { CSP_INLINE_SCRIPT_HASH, CSP_INLINE_SCRIPT_HASHES } from './generated-csp-hash.js';
 
 // Placeholder hash shipped with `worker/src/generated-csp-hash.js` before
 // the first build. `scripts/build-public.mjs` overwrites the module with
@@ -28,7 +28,7 @@ let cspPlaceholderWarningEmitted = false;
 
 function warnOnPlaceholderHashOnce() {
   if (cspPlaceholderWarningEmitted) return;
-  if (CSP_INLINE_SCRIPT_HASH !== CSP_PLACEHOLDER_HASH) return;
+  if (!CSP_INLINE_SCRIPT_HASHES.includes(CSP_PLACEHOLDER_HASH)) return;
   cspPlaceholderWarningEmitted = true;
   // eslint-disable-next-line no-console
   console.error(
@@ -65,6 +65,10 @@ export const HSTS_VALUE = buildHstsValue(HSTS_PRELOAD_ENABLED);
 // observation window documented in docs/hardening/csp-enforcement-decision.md.
 export const CSP_ENFORCEMENT_MODE = 'report-only';
 
+const CSP_INLINE_SCRIPT_HASH_DIRECTIVES = CSP_INLINE_SCRIPT_HASHES
+  .map((hash) => `'${hash}'`)
+  .join(' ');
+
 export const PERMISSIONS_POLICY = [
   'camera=()',
   'geolocation=()',
@@ -91,8 +95,8 @@ export const PERMISSIONS_POLICY = [
 // to produce the header value.
 const CSP_DIRECTIVES = Object.freeze([
   "default-src 'none'",
-  `script-src 'self' '${CSP_INLINE_SCRIPT_HASH}' 'strict-dynamic' https://challenges.cloudflare.com`,
-  `script-src-elem 'self' '${CSP_INLINE_SCRIPT_HASH}' https://challenges.cloudflare.com`,
+  `script-src 'self' ${CSP_INLINE_SCRIPT_HASH_DIRECTIVES} 'strict-dynamic' https://challenges.cloudflare.com`,
+  `script-src-elem 'self' ${CSP_INLINE_SCRIPT_HASH_DIRECTIVES} https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
@@ -128,7 +132,7 @@ export const REPORTING_ENDPOINTS_VALUE = 'csp-endpoint="/api/security/csp-report
 
 // Export the CSP hash so tests can assert the same value is substituted
 // into `_headers` by the build step.
-export { CSP_INLINE_SCRIPT_HASH };
+export { CSP_INLINE_SCRIPT_HASH, CSP_INLINE_SCRIPT_HASHES };
 
 export const SECURITY_HEADERS = Object.freeze({
   'Strict-Transport-Security': HSTS_VALUE,

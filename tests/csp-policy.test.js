@@ -13,9 +13,12 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
+import { computeInlineScriptHashes } from '../scripts/compute-inline-script-hash.mjs';
 import {
   CSP_INLINE_SCRIPT_HASH,
+  CSP_INLINE_SCRIPT_HASHES,
   CSP_POLICY_VALUE,
 } from '../worker/src/security-headers.js';
 
@@ -38,19 +41,39 @@ test("policy defines default-src 'none' (deny-by-default)", () => {
   assert.deepEqual(directives.get('default-src'), ["'none'"]);
 });
 
-test('policy script-src lists self, the inline theme-script hash, strict-dynamic, and Turnstile', () => {
+test('policy script-src lists self, every inline script hash, strict-dynamic, and Turnstile', () => {
   const value = directives.get('script-src')?.[0] || '';
   assert.match(value, /'self'/, "script-src must include 'self'");
-  assert.ok(value.includes(`'${CSP_INLINE_SCRIPT_HASH}'`), 'script-src must list the inline theme-script hash');
+  for (const hash of CSP_INLINE_SCRIPT_HASHES) {
+    assert.ok(value.includes(`'${hash}'`), `script-src must list inline script hash ${hash}`);
+  }
   assert.match(value, /'strict-dynamic'/, "script-src must enable 'strict-dynamic'");
   assert.match(value, /https:\/\/challenges\.cloudflare\.com/, 'script-src must allow Turnstile');
 });
 
-test('policy script-src-elem mirrors script-src without strict-dynamic (HTML element form)', () => {
+test('policy script-src-elem mirrors script-src hashes without strict-dynamic (HTML element form)', () => {
   const value = directives.get('script-src-elem')?.[0] || '';
   assert.match(value, /'self'/);
-  assert.ok(value.includes(`'${CSP_INLINE_SCRIPT_HASH}'`));
+  for (const hash of CSP_INLINE_SCRIPT_HASHES) {
+    assert.ok(value.includes(`'${hash}'`), `script-src-elem must list inline script hash ${hash}`);
+  }
   assert.match(value, /https:\/\/challenges\.cloudflare\.com/);
+});
+
+test('index inline-script CSP hashes are limited to the expected theme and JSON-LD blocks', async () => {
+  const indexHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  assert.deepEqual(
+    computeInlineScriptHashes(indexHtml),
+    CSP_INLINE_SCRIPT_HASHES,
+    'generated CSP hashes must match the current index.html inline script allowlist',
+  );
+
+  const driftedHtml = indexHtml.replace('</head>', '<script>console.log("unexpected inline script")</script></head>');
+  assert.throws(
+    () => computeInlineScriptHashes(driftedHtml),
+    /Expected exactly two intentional inline <script> blocks/,
+    'unexpected inline scripts must fail the CSP hash generator instead of being auto-allowed',
+  );
 });
 
 test('policy style-src allows self plus unsafe-inline and Google Fonts', () => {

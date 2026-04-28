@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /api/
+Disallow: /admin
+Disallow: /demo
+Allow: /
+
+Sitemap: https://ks2.eugnel.uk/sitemap.xml

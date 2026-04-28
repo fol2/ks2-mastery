@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { computeInlineScriptHash } from './compute-inline-script-hash.mjs';
+import { computeInlineScriptHashes } from './compute-inline-script-hash.mjs';
 
 const rootDir = process.cwd();
 const outputDir = path.join(rootDir, 'dist', 'public');
@@ -16,7 +16,7 @@ const tmpDir = path.join(rootDir, 'dist', 'public.tmp');
 //    graph (NOT under `src/generated/`, which is excluded below) so
 //    Wrangler bundles it.
 //  - `dist/public/.csp-theme-hash` is a plain-text artefact used by
-//    the drift audit and by operators checking which hash shipped.
+//    the drift audit and by operators checking which inline hashes shipped.
 //  - `dist/public/_headers` carries the CSP line with the hash value
 //    substituted into the `'sha256-BUILD_TIME_HASH'` placeholder.
 const generatedCspHashPath = path.join(rootDir, 'worker', 'src', 'generated-csp-hash.js');
@@ -33,6 +33,8 @@ const entries = [
   'favicon.ico',
   'index.html',
   'manifest.webmanifest',
+  'robots.txt',
+  'sitemap.xml',
   'styles',
   'assets',
 ];
@@ -136,11 +138,14 @@ try {
   await cp(tmpDir, outputDir, { recursive: true, force: true });
   await rm(tmpDir, { recursive: true, force: true });
 
-  // U7: compute the inline theme-script SHA-256 from the canonical
+  // U7/U2 SEO: compute the inline script SHA-256 values from the canonical
   // source (`index.html` at repo root). The public HTML rewrites only the
-  // external module script URL, so the inline theme script hash is unchanged.
+  // external module script URL, so the inline script hashes are unchanged.
   const sourceHtml = await readFile(path.join(rootDir, 'index.html'), 'utf8');
-  const cspThemeHash = computeInlineScriptHash(sourceHtml);
+  const cspInlineScriptHashes = computeInlineScriptHashes(sourceHtml);
+  const cspInlineScriptHashDirectives = cspInlineScriptHashes
+    .map((hash) => `'${hash}'`)
+    .join(' ');
 
   // Write the generated module that `worker/src/security-headers.js`
   // imports. Keep the module tiny so a broken build fails fast with a
@@ -152,18 +157,19 @@ try {
     '// This file is committed so fresh clones can run `npm test` before',
     '// `npm run build` has produced a real hash. Build overwrites this.',
     '',
-    `export const CSP_INLINE_SCRIPT_HASH = '${cspThemeHash}';`,
+    `export const CSP_INLINE_SCRIPT_HASHES = Object.freeze(${JSON.stringify(cspInlineScriptHashes)});`,
+    'export const CSP_INLINE_SCRIPT_HASH = CSP_INLINE_SCRIPT_HASHES[0];',
     '',
   ].join('\n');
   await writeFile(generatedCspHashPath, generatedModule, 'utf8');
-  await writeFile(publicCspHashArtefactPath, `${cspThemeHash}\n`, 'utf8');
+  await writeFile(publicCspHashArtefactPath, `${cspInlineScriptHashes.join('\n')}\n`, 'utf8');
 
-  // Substitute the placeholder token in `_headers`. The source file
-  // carries `'sha256-BUILD_TIME_HASH'` twice (once for `script-src`,
-  // once for `script-src-elem`); both are rewritten to the real value.
+  // Substitute the placeholder token in `_headers`. Each public header block
+  // carries the same placeholder in `script-src` and `script-src-elem`; every
+  // occurrence is rewritten to the current inline-script hash directives.
   const headersContent = await readFile(publicHeadersPath, 'utf8');
-  const substituted = headersContent.replaceAll("'sha256-BUILD_TIME_HASH'", `'${cspThemeHash}'`);
-  if (!substituted.includes(cspThemeHash)) {
+  const substituted = headersContent.replaceAll("'sha256-BUILD_TIME_HASH'", cspInlineScriptHashDirectives);
+  if (!cspInlineScriptHashes.every((hash) => substituted.includes(hash))) {
     throw new Error(
       '_headers must contain a \'sha256-BUILD_TIME_HASH\' placeholder for the CSP rollout (U7). '
       + 'Restore the placeholder or update scripts/build-public.mjs.',

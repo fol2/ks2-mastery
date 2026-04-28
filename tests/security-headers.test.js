@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   CSP_ENFORCEMENT_MODE,
   CSP_INLINE_SCRIPT_HASH,
+  CSP_INLINE_SCRIPT_HASHES,
   CSP_POLICY_VALUE,
   HSTS_PRELOAD_ENABLED,
   HSTS_VALUE,
@@ -479,6 +480,8 @@ test('_headers repo file contains expected security header block', async () => {
   assert.match(content, /Cross-Origin-Opener-Policy: same-origin-allow-popups/);
   assert.match(content, /Cross-Origin-Resource-Policy: same-site/);
   assert.match(content, /\/assets\/bundles\/\*/);
+  assert.match(content, /\/robots\.txt/);
+  assert.match(content, /\/sitemap\.xml/);
   assert.match(content, /\/\*/);
   assert.match(content, /public, max-age=31536000, immutable/);
 });
@@ -773,11 +776,26 @@ test('CSP_INLINE_SCRIPT_HASH is a well-formed sha256 CSP token or the pre-build 
   );
 });
 
+test('CSP_INLINE_SCRIPT_HASHES lists every intentional inline script hash', () => {
+  const placeholder = 'sha256-PLACEHOLDER_PRE_BUILD_HASH=';
+  assert.ok(Array.isArray(CSP_INLINE_SCRIPT_HASHES), 'CSP_INLINE_SCRIPT_HASHES must be an array.');
+  assert.ok(CSP_INLINE_SCRIPT_HASHES.length >= 1, 'At least the theme bootstrap hash must be present.');
+  for (const hash of CSP_INLINE_SCRIPT_HASHES) {
+    const wellFormed = /^sha256-[A-Za-z0-9+/]+=*$/.test(hash);
+    assert.ok(
+      wellFormed || hash === placeholder,
+      `Expected sha256-<base64> token or the pre-build placeholder, got: ${hash}`,
+    );
+  }
+});
+
 test('CSP_POLICY_VALUE includes all baseline directives', () => {
   const policy = CSP_POLICY_VALUE;
   assert.match(policy, /default-src 'none'/, 'default-src must deny-by-default');
   assert.match(policy, /'strict-dynamic'/, 'script-src must carry strict-dynamic');
-  assert.ok(policy.includes(`'${CSP_INLINE_SCRIPT_HASH}'`), 'CSP must list the inline theme-script hash');
+  for (const hash of CSP_INLINE_SCRIPT_HASHES) {
+    assert.ok(policy.includes(`'${hash}'`), `CSP must list inline script hash ${hash}`);
+  }
   assert.match(policy, /manifest-src 'self'/, 'manifest-src must be explicit (F-06)');
   assert.match(policy, /worker-src 'none'/, 'worker-src must deny Service Workers (F-06)');
   assert.match(policy, /connect-src[^;]*https:\/\/fonts\.googleapis\.com/, 'connect-src must list Google Fonts CSS origin');

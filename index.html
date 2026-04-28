@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="application-name" content="KS2 Mastery" />
+  <meta name="description" content="KS2 Mastery helps learners practise KS2 spelling, grammar and punctuation online with focused demo and sign-in experiences." />
   <meta name="apple-mobile-web-app-title" content="KS2 Mastery" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -11,7 +12,17 @@
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#F6F5F1" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0F1620" media="(prefers-color-scheme: dark)" />
-  <title>KS2 Mastery Platform v2</title>
+  <meta property="og:site_name" content="KS2 Mastery" />
+  <meta property="og:title" content="KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice" />
+  <meta property="og:description" content="Online KS2 English practice for spelling, grammar and punctuation, with a demo path for learners and supporting adults." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://ks2.eugnel.uk/" />
+  <meta property="og:locale" content="en_GB" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice" />
+  <meta name="twitter:description" content="Focused online KS2 spelling, grammar and punctuation practice." />
+  <title>KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice</title>
+  <link rel="canonical" href="https://ks2.eugnel.uk/" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/app-icons/favicon-32.png" />
@@ -32,9 +43,48 @@
       } catch (err) {}
     })();
   </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": ["WebApplication", "LearningResource"],
+  "name": "KS2 Mastery",
+  "url": "https://ks2.eugnel.uk/",
+  "description": "KS2 Mastery helps learners practise KS2 spelling, grammar and punctuation online.",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Web",
+  "educationalLevel": "Key Stage 2",
+  "learningResourceType": "Practice tool",
+  "audience": {
+    "@type": "EducationalAudience",
+    "educationalRole": "student"
+  },
+  "teaches": [
+    "KS2 spelling",
+    "KS2 grammar",
+    "KS2 punctuation"
+  ]
+}
+  </script>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <main class="seo-public-fallback" aria-label="KS2 Mastery public summary">
+      <section class="seo-public-panel">
+        <p class="eyebrow">KS2 Mastery</p>
+        <h1>KS2 spelling, grammar and punctuation practice</h1>
+        <p>
+          KS2 Mastery helps learners practise key English skills online with focused sessions for
+          spelling, grammar and punctuation.
+        </p>
+        <ul aria-label="Practice areas">
+          <li>Spelling practice for KS2 word confidence</li>
+          <li>Grammar practice for sentence-level accuracy</li>
+          <li>Punctuation practice for clearer written English</li>
+        </ul>
+        <p><a class="btn primary lg" href="/demo">Try demo</a></p>
+      </section>
+    </main>
+  </div>
   <script type="module" src="./src/bundles/app.bundle.js"></script>
 </body>
 </html>

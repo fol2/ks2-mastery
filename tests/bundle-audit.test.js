@@ -635,6 +635,233 @@ function normaliseCacheControl(value) {
   return String(value || '').replace(/\s+/gu, ' ').replace(/,\s*/gu, ', ').trim();
 }
 
+const SEO_AUDIT_SECURITY_HEADERS = {
+  'strict-transport-security': 'max-age=63072000; includeSubDomains',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'permissions-policy': 'microphone=()',
+  'x-frame-options': 'DENY',
+  'cross-origin-opener-policy': 'same-origin-allow-popups',
+  'cross-origin-resource-policy': 'same-site',
+  'content-security-policy-report-only': "default-src 'none'; script-src 'self' 'sha256-abc=' 'strict-dynamic'; report-uri /api/security/csp-report; report-to csp-endpoint",
+  'report-to': '{"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"/api/security/csp-report"}]}',
+  'reporting-endpoints': 'csp-endpoint="/api/security/csp-report"',
+};
+
+function seoAuditRootHtml({ omitCanonical = false } = {}) {
+  return [
+    '<!doctype html><html lang="en-GB"><head>',
+    '<title>KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice</title>',
+    '<meta name="description" content="KS2 Mastery helps learners practise KS2 spelling, grammar and punctuation online." />',
+    omitCanonical ? '' : '<link rel="canonical" href="https://ks2.eugnel.uk/" />',
+    '<meta property="og:title" content="KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice" />',
+    '<meta property="og:description" content="Online KS2 English practice for spelling, grammar and punctuation." />',
+    '<meta property="og:url" content="https://ks2.eugnel.uk/" />',
+    '<meta name="twitter:card" content="summary" />',
+    '<script type="application/ld+json">',
+    JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': ['WebApplication', 'LearningResource'],
+      name: 'KS2 Mastery',
+      url: 'https://ks2.eugnel.uk/',
+      description: 'KS2 Mastery helps learners practise KS2 spelling, grammar and punctuation online.',
+      learningResourceType: 'Practice tool',
+      teaches: ['KS2 spelling', 'KS2 grammar', 'KS2 punctuation'],
+    }),
+    '</script>',
+    '</head><body>',
+    '<main><h1>KS2 spelling, grammar and punctuation practice</h1>',
+    '<p>Spelling practice for KS2 word confidence</p>',
+    '<p>Grammar practice for sentence-level accuracy</p>',
+    '<p>Punctuation practice for clearer written English</p></main>',
+    '<script type="module" src="/src/bundles/app.bundle.js?v=test"></script>',
+    '</body></html>',
+  ].join('');
+}
+
+function createSeoAuditStubServer(options = {}) {
+  const server = createServer((request, response) => {
+    const url = request.url || '/';
+    const method = request.method || 'GET';
+    const write = (status, headers, body = '') => {
+      response.writeHead(status, { ...SEO_AUDIT_SECURITY_HEADERS, ...headers });
+      response.end(method === 'HEAD' ? '' : body);
+    };
+
+    if (url === '/' || url === '/index.html') {
+      write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml(options));
+      return;
+    }
+    if (url === '/robots.txt') {
+      if (options.robotsFallback) {
+        write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml());
+        return;
+      }
+      write(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' }, [
+        'User-agent: *',
+        'Disallow: /api/',
+        'Disallow: /admin',
+        'Disallow: /demo',
+        'Allow: /',
+        '',
+        'Sitemap: https://ks2.eugnel.uk/sitemap.xml',
+        '',
+      ].join('\n'));
+      return;
+    }
+    if (url === '/sitemap.xml') {
+      write(200, { 'content-type': 'application/xml', 'cache-control': 'public, max-age=3600' }, [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+        '  <url>',
+        '    <loc>https://ks2.eugnel.uk/</loc>',
+        '  </url>',
+        '</urlset>',
+        '',
+      ].join('\n'));
+      return;
+    }
+    if (url === '/src/bundles/app.bundle.js' || url === '/src/bundles/app.bundle.js?v=test') {
+      write(200, { 'content-type': 'application/javascript', 'cache-control': 'no-store' }, 'import"./chunk-CLEAN.js"; console.log("ok");');
+      return;
+    }
+    if (url === '/src/bundles/chunk-CLEAN.js') {
+      write(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'public, max-age=31536000, immutable',
+      }, 'console.log("clean");');
+      return;
+    }
+    if (url === '/assets/app-icons/favicon-32.png') {
+      write(200, {
+        'content-type': 'image/png',
+        'cache-control': 'public, max-age=31536000, immutable',
+      });
+      return;
+    }
+    if (url === '/manifest.webmanifest') {
+      write(200, {
+        'content-type': 'application/manifest+json',
+        'cache-control': 'public, max-age=3600',
+      }, '{}');
+      return;
+    }
+    if (url === '/api/demo/session') {
+      write(200, {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+        'set-cookie': 'ks2_session=demo-cookie; Path=/; HttpOnly',
+      }, JSON.stringify({
+        ok: true,
+        session: { demo: true, accountId: 'acct-demo', learnerId: 'learner-demo' },
+      }));
+      return;
+    }
+    if (url === '/api/bootstrap') {
+      write(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }, JSON.stringify({
+        ok: true,
+        session: { demo: true, accountId: 'acct-demo', learnerId: 'learner-demo' },
+        learners: {
+          selectedId: 'learner-demo',
+          byId: { 'learner-demo': { stateRevision: 0 } },
+        },
+      }));
+      return;
+    }
+    if (url === '/api/auth/logout') {
+      write(200, {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+        'clear-site-data': '"cache", "cookies", "storage"',
+      }, '{}');
+      return;
+    }
+    if (url === '/api/tts') {
+      write(401, { 'content-type': 'application/json', 'cache-control': 'no-store' }, '{}');
+      return;
+    }
+    write(404, { 'content-type': 'text/plain', 'cache-control': 'no-store' }, 'not found');
+  });
+  return server;
+}
+
+async function closeServer(server) {
+  server.closeAllConnections?.();
+  await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+}
+
+test('production bundle audit passes with SEO root, robots, and sitemap resources', async () => {
+  const server = createSeoAuditStubServer();
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    const { stdout } = await execFileAsync(process.execPath, [
+      './scripts/production-bundle-audit.mjs',
+      '--skip-local',
+      '--url',
+      `http://127.0.0.1:${port}/`,
+    ], {
+      cwd: process.cwd(),
+      timeout: 8000,
+    });
+    assert.match(stdout, /Production bundle audit passed/);
+    assert.match(stdout, /cache-split checks: 7\/7/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when robots.txt is SPA fallback HTML', async () => {
+  const server = createSeoAuditStubServer({ robotsFallback: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production robots\.txt appears to be SPA fallback HTML/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when the root canonical URL disappears', async () => {
+  const server = createSeoAuditStubServer({ omitCanonical: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production SEO root is missing required public identity token: <link rel="canonical"/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('_headers carries the U8 cache-split rule set for every path group', async () => {
   const content = await readFile(path.join(REPO_ROOT, '_headers'), 'utf8');
   // The pure contract must not throw on the checked-in _headers.

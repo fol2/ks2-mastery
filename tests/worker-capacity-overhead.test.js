@@ -76,6 +76,42 @@ async function timeIt(fn) {
   return summarise(timings);
 }
 
+async function timePaired(leftFn, rightFn) {
+  const leftTimings = [];
+  const rightTimings = [];
+
+  for (let i = 0; i < WARM; i += 1) {
+    await leftFn();
+    await rightFn();
+  }
+
+  for (let i = 0; i < ITER; i += 1) {
+    if (i % 2 === 0) {
+      const leftStart = performance.now();
+      await leftFn();
+      leftTimings.push(performance.now() - leftStart);
+
+      const rightStart = performance.now();
+      await rightFn();
+      rightTimings.push(performance.now() - rightStart);
+      continue;
+    }
+
+    const rightStart = performance.now();
+    await rightFn();
+    rightTimings.push(performance.now() - rightStart);
+
+    const leftStart = performance.now();
+    await leftFn();
+    leftTimings.push(performance.now() - leftStart);
+  }
+
+  return {
+    left: summarise(leftTimings),
+    right: summarise(rightTimings),
+  };
+}
+
 // U11 follow-up: under full-suite parallel `node --test` load (40+ test
 // files spawning subprocesses) the macro benchmark's ~10-20 ms/call
 // regime picks up significant scheduler-jitter on busy hosts. The
@@ -98,21 +134,23 @@ test('U3 overhead benchmark — capacity proxy mean ≤+30%, p95 ≤+80%', async
   console.log = () => {};
 
   try {
-    // 1) Baseline: repository.bootstrap() with NO collector. Zero
-    //    proxy overhead; the short-circuit in withCapacityCollector
-    //    returns the raw DB handle when capacity is null.
-    const baseline = await timeIt(async () => {
+    const runBaseline = async () => {
       const repo = createWorkerRepository({ env: { DB }, now: () => NOW, capacity: null });
       await repo.bootstrap('adult-bench', { publicReadModels: false });
-    });
+    };
 
-    // 2) Proxied: same call path with a CapacityCollector. Measures
-    //    the pure per-query proxy overhead + collector allocation.
-    const proxied = await timeIt(async () => {
+    const runProxied = async () => {
       const capacity = new CapacityCollector({ requestId: 'ks2_req_00000000-0000-4000-8000-000000000000' });
       const repo = createWorkerRepository({ env: { DB }, now: () => NOW, capacity });
       await repo.bootstrap('adult-bench', { publicReadModels: false });
-    });
+    };
+
+    // 1/2) Baseline vs proxied repository.bootstrap(). Measure them
+    //      as adjacent alternating pairs so full-suite CPU jitter does
+    //      not turn phase changes into fake proxy overhead.
+    const paired = await timePaired(runBaseline, runProxied);
+    const baseline = paired.left;
+    const proxied = paired.right;
 
     // 3) Full-stack: end-to-end app.fetch('/api/bootstrap'). Includes
     //    request parsing, auth boundary, JSON rewrite, meta.capacity

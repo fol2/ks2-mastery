@@ -201,11 +201,65 @@ textarea:focus-visible {
   width: min(100%, 460px);
 }
 
+.seo-public-fallback {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+
+.seo-public-panel {
+  width: min(100%, 620px);
+}
+
+.seo-public-panel h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  line-height: 0.98;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .seo-public-panel h1 {
+    font-size: 2.2rem;
+  }
+}
+
+.seo-public-panel p,
+.seo-public-panel ul {
+  margin-top: 16px;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.seo-public-panel ul,
+.auth-product-summary {
+  padding-left: 20px;
+}
+
+.seo-public-panel li + li,
+.auth-product-summary li + li {
+  margin-top: 6px;
+}
+
+.seo-public-panel .btn {
+  margin-top: 4px;
+}
+
 .auth-form,
 .auth-social {
   display: grid;
   gap: 12px;
   margin-top: 18px;
+}
+
+.auth-product-summary {
+  margin-top: 16px;
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
 
 .auth-switch {
