@@ -306,10 +306,172 @@ function MarketingCreateForm({ onSubmit, submitting }) {
 }
 
 // ---------------------------------------------------------------------------
+// Edit form — pre-filled with current draft values
+// ---------------------------------------------------------------------------
+
+function timestampToDatetimeLocal(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function MarketingEditForm({ message, onSubmit, onCancel, submitting }) {
+  const [form, setForm] = React.useState({
+    title: message.title || '',
+    body_text: message.body_text || '',
+    severity_token: message.severity_token || 'info',
+    starts_at: timestampToDatetimeLocal(message.starts_at),
+    ends_at: timestampToDatetimeLocal(message.ends_at),
+  });
+  const [validationError, setValidationError] = React.useState('');
+  const [showPreview, setShowPreview] = React.useState(false);
+
+  const updateField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setValidationError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title.trim()) {
+      setValidationError('Title is required.');
+      return;
+    }
+    if (!form.body_text.trim()) {
+      setValidationError('Body text is required.');
+      return;
+    }
+    if (!SEVERITY_TOKENS.includes(form.severity_token)) {
+      setValidationError('Severity must be "info" or "warning".');
+      return;
+    }
+
+    const data = {
+      title: form.title.trim(),
+      body_text: form.body_text,
+      severity_token: form.severity_token,
+      starts_at: form.starts_at ? new Date(form.starts_at).getTime() : null,
+      ends_at: form.ends_at ? new Date(form.ends_at).getTime() : null,
+      expectedRowVersion: message.row_version,
+    };
+    await onSubmit(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} data-testid="marketing-edit-form" className="admin-marketing-form">
+      {validationError && (
+        <div className="feedback bad admin-marketing-form-feedback" data-testid="edit-form-validation-error">
+          {validationError}
+        </div>
+      )}
+      <div className="admin-marketing-form-grid">
+        <label className="field admin-marketing-form-grid-full">
+          <span>Title</span>
+          <input
+            className="input"
+            type="text"
+            name="title"
+            value={form.title}
+            maxLength={200}
+            required
+            onChange={(e) => updateField('title', e.target.value)}
+            data-testid="edit-form-title"
+          />
+        </label>
+        <label className="field admin-marketing-form-grid-full">
+          <span>Body text (restricted Markdown: **bold**, *italic*, [text](https://url))</span>
+          <textarea
+            className="input"
+            name="body_text"
+            value={form.body_text}
+            maxLength={4000}
+            rows={4}
+            required
+            onChange={(e) => updateField('body_text', e.target.value)}
+            data-testid="edit-form-body"
+          />
+        </label>
+        {showPreview && form.body_text && (
+          <div className="admin-marketing-form-grid-full" data-testid="edit-form-preview">
+            <div className="eyebrow">Preview</div>
+            <BodyTextPreview text={form.body_text} />
+          </div>
+        )}
+        <div className="admin-marketing-form-grid-full">
+          <button
+            className="btn link small"
+            type="button"
+            onClick={() => setShowPreview((prev) => !prev)}
+            data-testid="edit-form-toggle-preview"
+          >
+            {showPreview ? 'Hide preview' : 'Show preview'}
+          </button>
+        </div>
+        <label className="field">
+          <span>Severity</span>
+          <select
+            className="select"
+            name="severity_token"
+            value={form.severity_token}
+            onChange={(e) => updateField('severity_token', e.target.value)}
+            data-testid="edit-form-severity"
+          >
+            {SEVERITY_TOKENS.map((s) => <option value={s} key={s}>{s}</option>)}
+          </select>
+        </label>
+        <label className="field">
+          <span>Starts at (optional)</span>
+          <input
+            className="input"
+            type="datetime-local"
+            name="starts_at"
+            value={form.starts_at}
+            onChange={(e) => updateField('starts_at', e.target.value)}
+            data-testid="edit-form-starts-at"
+          />
+        </label>
+        <label className="field">
+          <span>Ends at (optional)</span>
+          <input
+            className="input"
+            type="datetime-local"
+            name="ends_at"
+            value={form.ends_at}
+            onChange={(e) => updateField('ends_at', e.target.value)}
+            data-testid="edit-form-ends-at"
+          />
+        </label>
+      </div>
+      <div className="admin-marketing-form-submit">
+        <button
+          className="btn secondary"
+          type="submit"
+          disabled={submitting}
+          data-testid="edit-form-submit"
+        >
+          {submitting ? 'Saving...' : 'Save changes'}
+        </button>
+        <button
+          className="btn secondary"
+          type="button"
+          onClick={onCancel}
+          disabled={submitting}
+          data-testid="edit-form-cancel"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Message detail view with lifecycle transitions
 // ---------------------------------------------------------------------------
 
-function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError, transitioning, broadPublishPending, onBroadPublishConfirm, onBroadPublishCancel, schedulingConfirmPending, onSchedulingConfirm, onSchedulingCancel }) {
+function MessageDetail({ message, isAdmin, onTransition, onBack, onEdit, editError, transitionError, transitioning, broadPublishPending, onBroadPublishConfirm, onBroadPublishCancel, schedulingConfirmPending, onSchedulingConfirm, onSchedulingCancel }) {
   const allowedTransitions = VALID_TRANSITIONS.get(message.status) || [];
 
   return (
@@ -323,9 +485,25 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, transitionError
           </p>
         </div>
         <div className="actions">
+          {isAdmin && message.status === 'draft' && (
+            <button
+              className="btn secondary"
+              type="button"
+              onClick={onEdit}
+              data-testid="edit-draft-btn"
+            >
+              Edit
+            </button>
+          )}
           <button className="btn secondary" type="button" onClick={onBack}>Back to list</button>
         </div>
       </div>
+
+      {editError && (
+        <div className="feedback bad admin-marketing-feedback-spaced" data-testid="edit-error">
+          {editError}
+        </div>
+      )}
 
       {message.status === 'scheduled' && (
         <div className="feedback info admin-marketing-feedback-spaced" data-testid="scheduling-truth-note">
@@ -485,12 +663,15 @@ export function AdminMarketingSection({ accessContext }) {
   const [error, setError] = React.useState(null);
   const [selectedId, setSelectedId] = React.useState(null);
   const [showCreateForm, setShowCreateForm] = React.useState(false);
+  const [showEditForm, setShowEditForm] = React.useState(false);
+  const [editError, setEditError] = React.useState('');
   const [transitionError, setTransitionError] = React.useState('');
   const [broadPublishPending, setBroadPublishPending] = React.useState(null);
   const [schedulingConfirmPending, setSchedulingConfirmPending] = React.useState(false);
   const pendingTransitionRef = React.useRef(null);
 
   const createLock = useSubmitLock();
+  const editLock = useSubmitLock();
   const transitionLock = useSubmitLock();
 
   // MEDIUM-2: generation counter guards against rapid-refresh race conditions.
@@ -525,14 +706,51 @@ export function AdminMarketingSection({ accessContext }) {
 
   const handleSelect = (id) => {
     setSelectedId(id);
+    setShowEditForm(false);
+    setEditError('');
     setTransitionError('');
     setBroadPublishPending(null);
   };
 
   const handleBack = () => {
     setSelectedId(null);
+    setShowEditForm(false);
+    setEditError('');
     setTransitionError('');
     setBroadPublishPending(null);
+  };
+
+  // Edit draft message
+  const handleEditClick = () => {
+    setShowEditForm(true);
+    setEditError('');
+    setTransitionError('');
+  };
+
+  const handleEditCancel = () => {
+    setShowEditForm(false);
+    setEditError('');
+  };
+
+  const handleEditSubmit = (data) => {
+    return editLock.run(async () => {
+      setEditError('');
+      try {
+        const result = await api.updateMarketingMessage(selectedMessage.id, data);
+        if (result?.message) {
+          const normalised = normaliseMarketingMessage(result.message);
+          setMessages((prev) => prev.map((m) => (m.id === normalised.id ? normalised : m)));
+          setShowEditForm(false);
+        }
+      } catch (err) {
+        if (err?.status === 409 || err?.code === 'marketing_message_stale') {
+          setEditError('This message was updated by another session. Please go back and refresh the list.');
+          fetchMessages();
+        } else {
+          setEditError(err?.message || 'Failed to save changes.');
+        }
+      }
+    });
   };
 
   // Create message — returns a promise so MarketingCreateForm can await it
@@ -635,6 +853,31 @@ export function AdminMarketingSection({ accessContext }) {
   // Render
   // -------------------------------------------------------------------------
 
+  // Edit form view (replaces detail view)
+  if (selectedMessage && showEditForm) {
+    return (
+      <section className="card admin-card-spaced" data-testid="marketing-edit-view">
+        <div className="card-header">
+          <div>
+            <div className="eyebrow">Edit draft message</div>
+            <h3 className="section-title admin-section-title">{selectedMessage.title}</h3>
+          </div>
+        </div>
+        {editError && (
+          <div className="feedback bad admin-marketing-feedback-spaced" data-testid="edit-error">
+            {editError}
+          </div>
+        )}
+        <MarketingEditForm
+          message={selectedMessage}
+          onSubmit={handleEditSubmit}
+          onCancel={handleEditCancel}
+          submitting={editLock.locked}
+        />
+      </section>
+    );
+  }
+
   // Detail view
   if (selectedMessage) {
     return (
@@ -643,6 +886,8 @@ export function AdminMarketingSection({ accessContext }) {
         isAdmin={isAdmin}
         onTransition={handleTransition}
         onBack={handleBack}
+        onEdit={handleEditClick}
+        editError={editError}
         transitionError={transitionError}
         transitioning={transitionLock.locked}
         broadPublishPending={broadPublishPending}
