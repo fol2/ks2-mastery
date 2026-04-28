@@ -24,6 +24,49 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_HTML_PATH = path.resolve(__dirname, '..', 'index.html');
 
+function extractInlineScriptBlocks(html) {
+  const pattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  const inlineBlocks = [];
+  let match = pattern.exec(html);
+  while (match) {
+    const attributes = String(match[1] || '');
+    const body = match[2] || '';
+    if (!/\bsrc\s*=/i.test(attributes)) {
+      inlineBlocks.push({ attributes, body });
+    }
+    match = pattern.exec(html);
+  }
+  return inlineBlocks;
+}
+
+function assertExpectedIndexInlineScripts(blocks) {
+  if (blocks.length !== 2) {
+    throw new Error(
+      `Expected exactly two intentional inline <script> blocks in index.html, found ${blocks.length}. `
+      + 'Only the theme bootstrapper and JSON-LD product identity may be inline.',
+    );
+  }
+
+  const [themeBootstrap, jsonLdIdentity] = blocks;
+  if (themeBootstrap.attributes.trim() !== '') {
+    throw new Error('The first inline <script> in index.html must be the attribute-free theme bootstrapper.');
+  }
+
+  const jsonLdAttributes = jsonLdIdentity.attributes.trim();
+  if (!/^type\s*=\s*["']application\/ld\+json["']$/i.test(jsonLdAttributes)) {
+    throw new Error(
+      'The second inline <script> in index.html must be the JSON-LD product identity. '
+      + `Found attributes: ${jsonLdAttributes || '(none)'}`,
+    );
+  }
+
+  try {
+    JSON.parse(jsonLdIdentity.body);
+  } catch (error) {
+    throw new Error(`The JSON-LD inline script in index.html must contain valid JSON: ${error?.message || error}`);
+  }
+}
+
 /**
  * Extract `<script>...</script>` blocks that do NOT carry a `src="..."`
  * attribute. Returns each raw character-data body between the opening and
@@ -41,17 +84,7 @@ export function extractInlineScriptContentsList(html) {
   if (typeof html !== 'string') {
     throw new TypeError('extractInlineScriptContentsList: html must be a string.');
   }
-  const pattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
-  const inlineBlocks = [];
-  let match = pattern.exec(html);
-  while (match) {
-    const attributes = String(match[1] || '');
-    const body = match[2] || '';
-    if (!/\bsrc\s*=/i.test(attributes)) {
-      inlineBlocks.push(body);
-    }
-    match = pattern.exec(html);
-  }
+  const inlineBlocks = extractInlineScriptBlocks(html).map((block) => block.body);
   if (inlineBlocks.length === 0) {
     throw new Error('No inline <script> block found in HTML. CSP hash cannot be computed.');
   }
@@ -88,8 +121,16 @@ export function computeInlineScriptHash(html) {
  * @returns {string[]} e.g. [`sha256-abc...=`]
  */
 export function computeInlineScriptHashes(html) {
-  return extractInlineScriptContentsList(html).map((script) => {
-    const digest = createHash('sha256').update(script, 'utf8').digest('base64');
+  if (typeof html !== 'string') {
+    throw new TypeError('computeInlineScriptHashes: html must be a string.');
+  }
+  const blocks = extractInlineScriptBlocks(html);
+  if (blocks.length === 0) {
+    throw new Error('No inline <script> block found in HTML. CSP hash cannot be computed.');
+  }
+  assertExpectedIndexInlineScripts(blocks);
+  return blocks.map(({ body }) => {
+    const digest = createHash('sha256').update(body, 'utf8').digest('base64');
     return `sha256-${digest}`;
   });
 }

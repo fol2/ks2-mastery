@@ -13,7 +13,9 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
+import { computeInlineScriptHashes } from '../scripts/compute-inline-script-hash.mjs';
 import {
   CSP_INLINE_SCRIPT_HASH,
   CSP_INLINE_SCRIPT_HASHES,
@@ -56,6 +58,22 @@ test('policy script-src-elem mirrors script-src hashes without strict-dynamic (H
     assert.ok(value.includes(`'${hash}'`), `script-src-elem must list inline script hash ${hash}`);
   }
   assert.match(value, /https:\/\/challenges\.cloudflare\.com/);
+});
+
+test('index inline-script CSP hashes are limited to the expected theme and JSON-LD blocks', async () => {
+  const indexHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  assert.deepEqual(
+    computeInlineScriptHashes(indexHtml),
+    CSP_INLINE_SCRIPT_HASHES,
+    'generated CSP hashes must match the current index.html inline script allowlist',
+  );
+
+  const driftedHtml = indexHtml.replace('</head>', '<script>console.log("unexpected inline script")</script></head>');
+  assert.throws(
+    () => computeInlineScriptHashes(driftedHtml),
+    /Expected exactly two intentional inline <script> blocks/,
+    'unexpected inline scripts must fail the CSP hash generator instead of being auto-allowed',
+  );
 });
 
 test('policy style-src allows self plus unsafe-inline and Google Fonts', () => {
