@@ -50,6 +50,7 @@
     "spelling:audio-cache": "node ./scripts/precache-spelling-audio.mjs",
     "pretest": "node ./scripts/preflight-test.mjs",
     "test": "node ./scripts/run-node-tests.mjs",
+    "test:punctuation:benchmark": "KS2_RUN_TIMING_BENCHMARKS=1 node --test tests/punctuation-projection-benchmark.test.js",
     "test:migration:browser": "KS2_BROWSER_SMOKE=1 node --test tests/browser-react-migration-smoke.test.js",
     "test:mega-invariant:nightly": "node --test tests/spelling-mega-invariant.test.js",
     "test:playwright": "npx playwright test",

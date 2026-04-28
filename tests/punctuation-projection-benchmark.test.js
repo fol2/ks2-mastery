@@ -23,6 +23,8 @@ import {
 const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ITEM_MODES = ['choose', 'insert', 'fix', 'transfer', 'combine', 'paragraph'];
+const RUN_TIMING_BENCHMARKS = process.env.KS2_RUN_TIMING_BENCHMARKS === '1';
+const timingBenchmark = RUN_TIMING_BENCHMARKS ? test : test.skip;
 
 // ---------------------------------------------------------------------------
 // Progress data generators
@@ -158,7 +160,7 @@ function measureMedianMs(progress, runs = 10) {
 // Benchmark tests
 // ---------------------------------------------------------------------------
 
-test('benchmark: 500 attempts — projection completes under 5ms (median of 10 runs)', () => {
+timingBenchmark('benchmark: 500 attempts — projection completes under 5ms (median of 10 runs)', () => {
   const progress = generateRealisticProgress(500);
   assert.equal(progress.attempts.length > 400, true,
     `Expected ~500 attempts, got ${progress.attempts.length}`);
@@ -171,7 +173,7 @@ test('benchmark: 500 attempts — projection completes under 5ms (median of 10 r
     `500-attempt projection median ${medianMs.toFixed(2)}ms exceeds 5ms bound`);
 });
 
-test('benchmark: 1500 attempts — projection completes under 8ms (median of 10 runs)', () => {
+timingBenchmark('benchmark: 1500 attempts — projection completes under 8ms (median of 10 runs)', () => {
   const progress = generateRealisticProgress(1500);
   assert.equal(progress.attempts.length > 1200, true,
     `Expected ~1500 attempts, got ${progress.attempts.length}`);
@@ -184,7 +186,7 @@ test('benchmark: 1500 attempts — projection completes under 8ms (median of 10 
     `1500-attempt projection median ${medianMs.toFixed(2)}ms exceeds 8ms bound`);
 });
 
-test('benchmark: 3000 attempts — projection completes under 15ms (median of 10 runs)', () => {
+timingBenchmark('benchmark: 3000 attempts — projection completes under 15ms (median of 10 runs)', () => {
   const progress = generateRealisticProgress(3000);
   assert.equal(progress.attempts.length > 2400, true,
     `Expected ~3000 attempts, got ${progress.attempts.length}`);
@@ -197,7 +199,7 @@ test('benchmark: 3000 attempts — projection completes under 15ms (median of 10
     `3000-attempt projection median ${medianMs.toFixed(2)}ms exceeds 15ms bound`);
 });
 
-test('benchmark: 5000 attempts — projection completes under 25ms (median of 10 runs)', () => {
+timingBenchmark('benchmark: 5000 attempts — projection completes under 25ms (median of 10 runs)', () => {
   const progress = generateRealisticProgress(5000);
   assert.equal(progress.attempts.length > 4000, true,
     `Expected ~5000 attempts, got ${progress.attempts.length}`);
