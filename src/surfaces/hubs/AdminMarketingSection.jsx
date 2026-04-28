@@ -661,6 +661,7 @@ export function AdminMarketingSection({ accessContext }) {
   const [messages, setMessages] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
+  const [refreshedAt, setRefreshedAt] = React.useState(null);
   const [selectedId, setSelectedId] = React.useState(null);
   const [showCreateForm, setShowCreateForm] = React.useState(false);
   const [showEditForm, setShowEditForm] = React.useState(false);
@@ -689,6 +690,12 @@ export function AdminMarketingSection({ accessContext }) {
       if (gen !== fetchGeneration.current) return; // stale response — discard
       const normalised = (result?.messages || []).map(normaliseMarketingMessage);
       setMessages(normalised);
+      // P6 U4: capture server-provided freshness timestamp
+      if (result?.refreshedAt) {
+        setRefreshedAt(new Date(result.refreshedAt).getTime() || null);
+      } else {
+        setRefreshedAt(Date.now());
+      }
     } catch (err) {
       if (gen !== fetchGeneration.current) return; // stale error — discard
       setError(err?.message || 'Failed to load marketing messages.');
@@ -906,7 +913,7 @@ export function AdminMarketingSection({ accessContext }) {
       eyebrow="Marketing & Live Ops"
       title="Marketing messages"
       subtitle="Create and manage announcements, maintenance banners, and campaign messages. Messages follow the lifecycle: draft, scheduled, published, paused, archived."
-      refreshedAt={null}
+      refreshedAt={refreshedAt}
       refreshError={error ? { message: error } : null}
       onRefresh={fetchMessages}
       data={messages}

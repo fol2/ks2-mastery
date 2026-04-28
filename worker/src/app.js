@@ -1990,14 +1990,14 @@ export function createWorkerApp({
         if (url.pathname === '/api/admin/ops/kpi' && request.method === 'GET') {
           requireSameOrigin(request, env);
           const result = await repository.readAdminOpsKpi(session.accountId);
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         if (url.pathname === '/api/admin/ops/activity' && request.method === 'GET') {
           requireSameOrigin(request, env);
           const limit = Number(url.searchParams.get('limit')) || undefined;
           const result = await repository.listAdminOpsActivity(session.accountId, { limit });
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         if (url.pathname === '/api/admin/ops/error-events' && request.method === 'GET') {
@@ -2025,7 +2025,7 @@ export function createWorkerApp({
             reopenedAfterResolved: reopenedAfterResolved === 'true' || reopenedAfterResolved === '1',
           };
           const result = await repository.readAdminOpsErrorEvents(session.accountId, { status, limit, filter });
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         // U5 (P3): per-fingerprint occurrence timeline. Lazy-loaded on drawer
@@ -2075,7 +2075,7 @@ export function createWorkerApp({
             to: to !== null && Number.isFinite(Number(to)) ? Number(to) : null,
             limit,
           });
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         // U6 (P3): Debug Bundle — Worker-authoritative evidence packet.
@@ -2131,7 +2131,7 @@ export function createWorkerApp({
         if (url.pathname === '/api/admin/ops/accounts-metadata' && request.method === 'GET') {
           requireSameOrigin(request, env);
           const result = await repository.readAdminOpsAccountsMetadata(session.accountId);
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         // U7 (P3): account search. GET with query-string filters.
@@ -2176,7 +2176,7 @@ export function createWorkerApp({
         if (url.pathname === '/api/admin/ops/content-overview' && request.method === 'GET') {
           requireSameOrigin(request, env);
           const result = await repository.readSubjectContentOverview(session.accountId);
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         // P5 U4: Production evidence summary. Lazy-loaded GET returning the
@@ -2207,7 +2207,7 @@ export function createWorkerApp({
           } catch {
             evidenceSummary = { schema: 2, metrics: {}, generatedAt: null };
           }
-          return json({ ok: true, ...evidenceSummary });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...evidenceSummary });
         }
 
         // R31: regex dispatch for parameterised admin ops mutations. Placed
@@ -2462,7 +2462,7 @@ export function createWorkerApp({
           requireSameOrigin(request, env);
           const db = requireDatabase(env);
           const result = await listMarketingMessages(db, { actorAccountId: session.accountId });
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         if (url.pathname === '/api/admin/marketing/messages' && request.method === 'POST') {

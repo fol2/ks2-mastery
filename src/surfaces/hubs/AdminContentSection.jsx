@@ -7,6 +7,7 @@ import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confiden
 import { buildAssetRegistry } from '../../platform/hubs/admin-asset-registry.js';
 import { classifyAction } from '../../platform/hubs/admin-action-classification.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
+import { DEFAULT_STALE_THRESHOLD_MS } from '../../platform/hubs/admin-panel-frame.js';
 import {
   buildSubjectContentOverview,
   statusBadgeClass,
@@ -69,6 +70,18 @@ function SubjectOverviewPanel({ model, actions }) {
     return null;
   }
 
+  // P6 U4: freshness state for the content overview panel (not wrapped in
+  // AdminPanelFrame due to custom table layout). Uses generatedAt from the
+  // worker response as the freshness source.
+  const overviewGeneratedAt = Number(model?.contentOverview?.generatedAt) || null;
+  const overviewRefreshedAtIso = model?.contentOverview?.refreshedAt;
+  const overviewRefreshedAtMs = overviewRefreshedAtIso
+    ? new Date(overviewRefreshedAtIso).getTime() || overviewGeneratedAt
+    : overviewGeneratedAt;
+  const isOverviewStale = overviewRefreshedAtMs
+    ? (Date.now() - overviewRefreshedAtMs > DEFAULT_STALE_THRESHOLD_MS)
+    : false;
+
   const isClickable = (subject) =>
     subject.drilldownAction !== 'none' && subject.drilldownAction !== 'placeholder';
 
@@ -88,6 +101,16 @@ function SubjectOverviewPanel({ model, actions }) {
         Cross-subject operating surface. Live subjects have production data; placeholders
         are planned but not yet active.
       </p>
+      {isOverviewStale ? (
+        <div className="feedback warn admin-panel-frame-feedback" data-panel-frame-stale="true">
+          <strong>Data may be stale.</strong>
+          {' '}Last refreshed {formatTimestamp(overviewRefreshedAtMs)}.
+        </div>
+      ) : overviewRefreshedAtMs ? (
+        <span className="chip small muted" data-freshness="content-overview">
+          Refreshed {formatTimestamp(overviewRefreshedAtMs)}
+        </span>
+      ) : null}
       <table className="admin-subject-overview-table admin-overview-table" aria-label="Subject content overview">
         <thead>
           <tr className="admin-overview-thead-row">
