@@ -12,6 +12,18 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import { coreOnlyVersionOneContent } from './helpers/spelling-content.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
+async function waitForPersistenceFullyDrained(repositories, attempts = 200) {
+  await Promise.resolve();
+  for (let index = 0; index < attempts; index += 1) {
+    const snapshot = repositories.persistence.read();
+    // Stale-write rebase can briefly expose inFlight=0 while the
+    // retried write is still queued.
+    if (snapshot.inFlightWriteCount === 0 && snapshot.pendingWriteCount === 0) break;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function learnerSnapshot(name = 'Ava') {
   return {
     byId: {
@@ -344,7 +356,7 @@ test('content writes share the account revision without leaving later learner wr
     assert.equal(content.getAccountRevision(), 2);
 
     platform.learners.write(learnerSnapshot('Ava Rebased'));
-    await platform.flush();
+    await waitForPersistenceFullyDrained(platform);
 
     const persistence = platform.persistence.read();
     assert.equal(persistence.mode, 'remote-sync');
