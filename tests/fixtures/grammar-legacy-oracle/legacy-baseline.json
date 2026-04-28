@@ -704,12 +704,14 @@
       "emptyResult": {
         "correct": false,
         "score": 0,
-        "maxScore": 2,
-        "misconception": "noun_phrase_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A strong answer is: The nervous young explorer from our class.",
-        "answerText": "The nervous young explorer from our class",
-        "minimalHint": "A noun phrase must centre on a noun. Check which words belong with that noun."
+        "maxScore": 0,
+        "misconception": null,
+        "feedbackShort": "Saved for review.",
+        "feedbackLong": "Your noun phrase has been saved for review. It is not auto-marked for mastery.",
+        "answerText": "",
+        "minimalHint": "This writing response is for review, not automatic marking.",
+        "nonScored": true,
+        "manualReviewOnly": true
       }
     },
     {
@@ -838,7 +840,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "The correct sentence is: Before sunrise, the campers packed their bags.",
         "answerText": "Before sunrise, the campers packed their bags.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
       },
       "emptyResult": {
         "correct": false,
@@ -978,7 +980,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: Sam wore gloves because it was cold.",
         "answerText": "Sam wore gloves because it was cold.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "A subordinate clause usually depends on the main clause. Ask whether it can stand alone here."
       },
       "emptyResult": {
         "correct": false,
@@ -1272,7 +1274,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: The dog was chasing the cat.",
         "answerText": "The dog was chasing the cat.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form."
       },
       "emptyResult": {
         "correct": false,
@@ -1612,7 +1614,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: The trophy will be collected by the team.",
         "answerText": "The trophy will be collected by the team.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "In active voice, the doer comes first. In passive voice, the thing affected comes first."
       },
       "emptyResult": {
         "correct": false,
@@ -1905,7 +1907,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: My cousin (the youngest in the family) won the chess trophy.",
         "answerText": "My cousin (the youngest in the family) won the chess trophy.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "Parenthesis adds extra information that could be lifted out."
       },
       "emptyResult": {
         "correct": false,
@@ -2190,12 +2192,14 @@
       "emptyResult": {
         "correct": false,
         "score": 0,
-        "maxScore": 2,
-        "misconception": "standard_english_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: I did my homework before tea.",
-        "answerText": "I did my homework before tea.",
-        "minimalHint": "Choose the form you would expect in formal writing, not the spoken form you might hear."
+        "maxScore": 0,
+        "misconception": null,
+        "feedbackShort": "Saved for review.",
+        "feedbackLong": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.",
+        "answerText": "",
+        "minimalHint": "This writing response is for review, not automatic marking.",
+        "nonScored": true,
+        "manualReviewOnly": true
       }
     },
     {
@@ -2247,7 +2251,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: On Friday morning, Ruby found the map.",
         "answerText": "On Friday morning, Ruby found the map.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
       },
       "emptyResult": {
         "correct": false,
@@ -2365,7 +2369,7 @@
         "seed": 10476,
         "itemId": "proc_colon_list_fix:10476",
         "marks": 2,
-        "promptText": "Rewrite the sentence with a colon in the correct place. The museum displayed four objects a helmet, a shield, a sword, a coin.",
+        "promptText": "Rewrite the sentence with a colon in the correct place. Three countries were represented at the fair France, Japan, Brazil.",
         "inputSpec": {
           "type": "textarea",
           "label": "Corrected sentence",
@@ -2374,7 +2378,7 @@
         "solutionLines": [
           "Check that the words before the list make a complete clause.",
           "A colon can introduce the list that follows.",
-          "A correct answer is: The museum displayed four objects: a helmet, a shield, a sword, a coin."
+          "A correct answer is: Three countries were represented at the fair: France, Japan, Brazil."
         ]
       },
       "correctResponse": {
@@ -2396,8 +2400,8 @@
         "maxScore": 2,
         "misconception": "boundary_punctuation_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: The museum displayed four objects: a helmet, a shield, a sword, a coin.",
-        "answerText": "The museum displayed four objects: a helmet, a shield, a sword, a coin.",
+        "feedbackLong": "A correct answer is: Three countries were represented at the fair: France, Japan, Brazil.",
+        "answerText": "Three countries were represented at the fair: France, Japan, Brazil.",
         "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
       }
     },
@@ -2427,7 +2431,7 @@
         "seed": 10493,
         "itemId": "proc_dash_boundary_fix:10493",
         "marks": 2,
-        "promptText": "Rewrite the sentence with a dash in the correct place. There was only one answer turn back at once.",
+        "promptText": "Rewrite the sentence with a dash in the correct place. She had made her decision the letter would be posted today.",
         "inputSpec": {
           "type": "textarea",
           "label": "Corrected sentence",
@@ -2436,7 +2440,7 @@
         "solutionLines": [
           "Both parts are strongly linked, and the second part explains or expands the first.",
           "A dash can mark that strong break.",
-          "A correct answer is: There was only one answer – turn back at once."
+          "A correct answer is: She had made her decision – the letter would be posted today."
         ]
       },
       "correctResponse": {
@@ -2458,8 +2462,8 @@
         "maxScore": 2,
         "misconception": "boundary_punctuation_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: There was only one answer – turn back at once.",
-        "answerText": "There was only one answer – turn back at once.",
+        "feedbackLong": "A correct answer is: She had made her decision – the letter would be posted today.",
+        "answerText": "She had made her decision – the letter would be posted today.",
         "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
       }
     },
@@ -2489,37 +2493,37 @@
         "seed": 10510,
         "itemId": "proc_hyphen_ambiguity_choice:10510",
         "marks": 1,
-        "promptText": "Which sentence means the shark eats people?",
+        "promptText": "Which sentence means the hospital treats small animals?",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
           "options": [
             {
-              "value": "We saw a man-eating shark near the rocks.",
-              "label": "We saw a man-eating shark near the rocks."
+              "value": "We visited the small-animal hospital after lunch.",
+              "label": "We visited the small-animal hospital after lunch."
             },
             {
-              "value": "We saw a man eating shark near the rocks.",
-              "label": "We saw a man eating shark near the rocks."
+              "value": "We visited the small animal hospital after lunch.",
+              "label": "We visited the small animal hospital after lunch."
             },
             {
-              "value": "We saw a hungry shark near the rocks.",
-              "label": "We saw a hungry shark near the rocks."
+              "value": "We visited the hospital after lunch with small animals.",
+              "label": "We visited the hospital after lunch with small animals."
             },
             {
-              "value": "We saw a shark near a man on the rocks.",
-              "label": "We saw a shark near a man on the rocks."
+              "value": "We visited a small hospital for lunch animals.",
+              "label": "We visited a small hospital for lunch animals."
             }
           ]
         },
         "solutionLines": [
           "Read both versions carefully and compare the meaning.",
           "The hyphen shows that two words are working together as one describing idea.",
-          "The hyphen makes 'man-eating' work as one describing idea."
+          "The hyphen shows that 'small-animal' is one combined idea describing the hospital."
         ]
       },
       "correctResponse": {
-        "answer": "We saw a man-eating shark near the rocks."
+        "answer": "We visited the small-animal hospital after lunch."
       },
       "correctResult": {
         "correct": true,
@@ -2527,8 +2531,8 @@
         "maxScore": 1,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "The clearer answer is: We saw a man-eating shark near the rocks.",
-        "answerText": "We saw a man-eating shark near the rocks.",
+        "feedbackLong": "The clearer answer is: We visited the small-animal hospital after lunch.",
+        "answerText": "We visited the small-animal hospital after lunch.",
         "minimalHint": "Check the sentence structure and the instruction again."
       },
       "emptyResult": {
@@ -2537,8 +2541,8 @@
         "maxScore": 1,
         "misconception": "hyphen_ambiguity_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "The clearer answer is: We saw a man-eating shark near the rocks.",
-        "answerText": "We saw a man-eating shark near the rocks.",
+        "feedbackLong": "The clearer answer is: We visited the small-animal hospital after lunch.",
+        "answerText": "We visited the small-animal hospital after lunch.",
         "minimalHint": "Say the phrase both ways in your head. Which version makes the meaning clear?"
       }
     },
@@ -2591,7 +2595,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: \"When does the match begin?\" said Dad.",
         "answerText": "\"When does the match begin?\" said Dad.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "Check where the spoken words end and where the reporting clause begins."
       },
       "emptyResult": {
         "correct": false,
@@ -2809,7 +2813,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: Amira saw the comet after school.",
         "answerText": "Amira saw the comet after school.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "Choose the form you would expect in formal writing, not the spoken form you might hear."
       },
       "emptyResult": {
         "correct": false,
@@ -2923,15 +2927,11 @@
         "seed": 10612,
         "itemId": "proc2_modal_choice:10612",
         "marks": 1,
-        "promptText": "Choose the modal verb that best fits the meaning: This is a rule on the climbing wall. You ___ wear a helmet.",
+        "promptText": "Choose the modal verb that best fits the meaning: The timetable is fixed. The coach ___ leave at 9 o'clock.",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
           "options": [
-            {
-              "value": "could",
-              "label": "could"
-            },
             {
               "value": "might",
               "label": "might"
@@ -2943,17 +2943,21 @@
             {
               "value": "must",
               "label": "must"
+            },
+            {
+              "value": "will",
+              "label": "will"
             }
           ]
         },
         "solutionLines": [
           "Match the modal verb to the meaning: advice, possibility, certainty or obligation.",
-          "'Must' shows strongest obligation.",
-          "The correct answer is: must"
+          "'Will' fits a definite future event here.",
+          "The correct answer is: will"
         ]
       },
       "correctResponse": {
-        "answer": "must"
+        "answer": "will"
       },
       "correctResult": {
         "correct": true,
@@ -2961,8 +2965,8 @@
         "maxScore": 1,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: must. ‘Must’ shows strongest obligation.",
-        "answerText": "must",
+        "feedbackLong": "The correct answer is: will. ’Will’ fits a definite future event here.",
+        "answerText": "will",
         "minimalHint": "Check the sentence structure and the instruction again."
       },
       "emptyResult": {
@@ -2971,8 +2975,8 @@
         "maxScore": 1,
         "misconception": "modal_verb_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: must. ‘Must’ shows strongest obligation.",
-        "answerText": "must",
+        "feedbackLong": "The correct answer is: will. ’Will’ fits a definite future event here.",
+        "answerText": "will",
         "minimalHint": "Compare how certain each modal verb sounds."
       }
     },
@@ -3000,37 +3004,37 @@
         "seed": 10629,
         "itemId": "proc2_formality_choice:10629",
         "marks": 1,
-        "promptText": "Choose the sentence that best fits a formal report.",
+        "promptText": "Which sentence is most appropriate for a school newsletter?",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
           "options": [
             {
-              "value": "Several pupils were absent from the visit.",
-              "label": "Several pupils were absent from the visit."
+              "value": "We are delighted to announce the opening of the new library.",
+              "label": "We are delighted to announce the opening of the new library."
             },
             {
-              "value": "A few pupils were off for the visit.",
-              "label": "A few pupils were off for the visit."
+              "value": "We're so excited about the new library opening!",
+              "label": "We're so excited about the new library opening!"
             },
             {
-              "value": "Some pupils didn't come on the trip.",
-              "label": "Some pupils didn't come on the trip."
+              "value": "Guess what – there's a new library starting up.",
+              "label": "Guess what – there's a new library starting up."
             },
             {
-              "value": "Quite a few pupils were missing from it.",
-              "label": "Quite a few pupils were missing from it."
+              "value": "The new library is opening and it's going to be great.",
+              "label": "The new library is opening and it's going to be great."
             }
           ]
         },
         "solutionLines": [
           "Formal writing avoids chatty wording and uses more precise vocabulary.",
-          "Formal writing often chooses more precise vocabulary and sentence structure.",
-          "The correct answer is: Several pupils were absent from the visit."
+          "Formal register uses measured language rather than informal exclamations.",
+          "The correct answer is: We are delighted to announce the opening of the new library."
         ]
       },
       "correctResponse": {
-        "answer": "Several pupils were absent from the visit."
+        "answer": "We are delighted to announce the opening of the new library."
       },
       "correctResult": {
         "correct": true,
@@ -3038,8 +3042,8 @@
         "maxScore": 1,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: Several pupils were absent from the visit.",
-        "answerText": "Several pupils were absent from the visit.",
+        "feedbackLong": "The correct answer is: We are delighted to announce the opening of the new library.",
+        "answerText": "We are delighted to announce the opening of the new library.",
         "minimalHint": "Check the sentence structure and the instruction again."
       },
       "emptyResult": {
@@ -3048,8 +3052,8 @@
         "maxScore": 1,
         "misconception": "formality_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: Several pupils were absent from the visit.",
-        "answerText": "Several pupils were absent from the visit.",
+        "feedbackLong": "The correct answer is: We are delighted to announce the opening of the new library.",
+        "answerText": "We are delighted to announce the opening of the new library.",
         "minimalHint": "Match the language to a formal setting, not everyday chat."
       }
     },
@@ -3256,7 +3260,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: Sam carries the sketchbook before lunch.",
         "answerText": "Sam carries the sketchbook before lunch.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "In active voice, the doer comes first. In passive voice, the thing affected comes first."
       },
       "emptyResult": {
         "correct": false,
@@ -3400,12 +3404,14 @@
       "emptyResult": {
         "correct": false,
         "score": 0,
-        "maxScore": 2,
-        "misconception": "fronted_adverbial_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: At the edge of the field, Noah locked the window.",
-        "answerText": "At the edge of the field, Noah locked the window.",
-        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
+        "maxScore": 0,
+        "misconception": null,
+        "feedbackShort": "Saved for review.",
+        "feedbackLong": "Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.",
+        "answerText": "",
+        "minimalHint": "This writing response is for review, not automatic marking.",
+        "nonScored": true,
+        "manualReviewOnly": true
       }
     },
     {
@@ -3432,7 +3438,7 @@
         "seed": 10731,
         "itemId": "proc2_boundary_punctuation_explain:10731",
         "marks": 1,
-        "promptText": "Why is the punctuation in this sentence effective? The bus arrived; everyone grabbed their bags.",
+        "promptText": "Why is the punctuation in this sentence effective? The tide was rising quickly; the fishermen hauled in their nets.",
         "inputSpec": {
           "type": "single_choice",
           "label": "Choose one",
@@ -3697,12 +3703,14 @@
       "emptyResult": {
         "correct": false,
         "score": 0,
-        "maxScore": 2,
-        "misconception": "noun_phrase_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct expanded noun phrase is: the tiny striped trophy.",
-        "answerText": "the tiny striped trophy",
-        "minimalHint": "A noun phrase must centre on a noun. Check which words belong with that noun."
+        "maxScore": 0,
+        "misconception": null,
+        "feedbackShort": "Saved for review.",
+        "feedbackLong": "Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.",
+        "answerText": "",
+        "minimalHint": "This writing response is for review, not automatic marking.",
+        "nonScored": true,
+        "manualReviewOnly": true
       }
     },
     {
@@ -3731,7 +3739,7 @@
         "seed": 10799,
         "itemId": "proc3_clause_join_rewrite:10799",
         "marks": 2,
-        "promptText": "Combine these ideas into one sentence using because. Mia smiled. She had found the missing map.",
+        "promptText": "Combine these ideas into one sentence using if. The rain starts. Go inside the tent.",
         "inputSpec": {
           "type": "textarea",
           "label": "Combined sentence",
@@ -3739,7 +3747,7 @@
         },
         "solutionLines": [
           "Use the conjunction to join the ideas so the relationship is clear.",
-          "Mia smiled because she had found the missing map.",
+          "If the rain starts, go inside the tent.",
           "Check that the sentence is complete and punctuated as one whole sentence."
         ]
       },
@@ -3762,8 +3770,8 @@
         "maxScore": 2,
         "misconception": "subordinate_clause_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: Mia smiled because she had found the missing map.",
-        "answerText": "Mia smiled because she had found the missing map.",
+        "feedbackLong": "A correct answer is: If the rain starts, go inside the tent.",
+        "answerText": "If the rain starts, go inside the tent.",
         "minimalHint": "A subordinate clause usually depends on the main clause. Ask whether it can stand alone here."
       }
     },
@@ -3816,7 +3824,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: Ben, after a short pause, opened the gate.",
         "answerText": "Ben, after a short pause, opened the gate.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "Parenthesis adds extra information that could be lifted out."
       },
       "emptyResult": {
         "correct": false,
@@ -3878,7 +3886,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: We saw a man-eating shark near the rocks.",
         "answerText": "We saw a man-eating shark near the rocks.",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "The grammar idea is close. Check the exact punctuation and wording."
       },
       "emptyResult": {
         "correct": false,
@@ -3940,7 +3948,7 @@
         "feedbackShort": "Correct.",
         "feedbackLong": "A correct answer is: the people's lunchboxes",
         "answerText": "the people's lunchboxes",
-        "minimalHint": "Check the sentence structure and the instruction again."
+        "minimalHint": "Ask who owns the noun, and whether the owner is singular or plural."
       },
       "emptyResult": {
         "correct": false,

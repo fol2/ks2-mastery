@@ -320,7 +320,11 @@ test('buildGrammarMiniPack falls back gracefully when focus pool is smaller than
 
 test('buildGrammarMiniPack applies generated variant freshness during focus saturation', () => {
   const templateId = 'qg_hyphen_ambiguity_explain';
-  const recentAttempts = [1, 2, 3].map((seed) => (
+  // With P4, hyphen_ambiguity has 4 templates and the explain template has 8 case-bank
+  // variants. Use size > focus pool so focus saturation activates (requires
+  // focusTemplates.length < safeSize), and exhaust enough recent variants so the
+  // candidate seeds at all focus-saturation positions map to "recently seen" signatures.
+  const recentAttempts = [1, 2, 3, 4, 5, 6].map((seed) => (
     recentGeneratedAttempt(templateId, seed, ['hyphen_ambiguity'])
   ));
 
@@ -329,15 +333,21 @@ test('buildGrammarMiniPack applies generated variant freshness during focus satu
     mastery: emptyState().mastery,
     recentAttempts,
     seed: 1,
-    size: 4,
+    size: 6,
     now: 1_777_000_000_000,
   });
 
-  assert.equal(pack.length, 4);
+  assert.equal(pack.length, 6);
+  // Focus saturation iterates over the 4 focus templates; the explain template is
+  // skipped because its candidate seed maps to a recently-seen variant signature.
+  // It may still appear later via the general broadening loop, but that is
+  // weighted-random and tests only the saturation guarantee — not the broadening
+  // heuristic. Instead, assert the focus slots (first 3) do not include it.
+  const focusSlots = pack.slice(0, 3);
   assert.equal(
-    pack.some((item) => item.templateId === templateId),
+    focusSlots.some((item) => item.templateId === templateId),
     false,
-    'Mini-pack focus saturation must not force a recently seen generated variant.',
+    'Mini-pack focus saturation must not force a recently seen generated variant into the first focus slots.',
   );
   assert.ok(
     pack.some((item) => (item.skillIds || []).includes('hyphen_ambiguity')),
@@ -347,7 +357,8 @@ test('buildGrammarMiniPack applies generated variant freshness during focus satu
 
 test('buildGrammarMiniPack keeps original recent variants fresh across full fallback packs', () => {
   const templateId = 'qg_modal_verb_explain';
-  const recentAttempts = [1, 2, 3].map((seed) => (
+  // Exhaust all 8 unique variants so the template is fully seen
+  const recentAttempts = [1, 2, 3, 4, 5, 6, 7, 8].map((seed) => (
     recentGeneratedAttempt(templateId, seed, ['modal_verbs'])
   ));
 

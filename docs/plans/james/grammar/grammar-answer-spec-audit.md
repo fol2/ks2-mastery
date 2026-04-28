@@ -112,21 +112,29 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `qg_p3_speech_punctuation_explain` | `speech_punctuation` | explain | answerSpec: exact | `exact` | selected explanation option for direct speech punctuation | distractor that places punctuation outside speech marks or confuses reporting punctuation | low | NO |
 | `qg_p3_apostrophe_possession_explain` | `apostrophes_possession` | explain | answerSpec: exact | `exact` | selected explanation option for possessive apostrophe placement | distractor that confuses possession, omission, singular owners, or plural owners | low | NO |
 | `proc3_apostrophe_rewrite` | `apostrophes_possession` | rewrite | adapter: markStringAnswer | `normalisedText` | `the farmers' coats` | `the farmer's coats` (singular possessive — different meaning); `the farmers coats` (no apostrophe) | medium | YES |
+| `qg_p4_sentence_speech_transfer` | `sentence_functions, speech_punctuation` | choose | answerSpec: exact | `exact` | selected option identifying how sentence function interacts with direct-speech punctuation | distractor that confuses sentence function with reporting clause punctuation | high | NO |
+| `qg_p4_word_class_noun_phrase_transfer` | `word_classes, noun_phrases` | classify | answerSpec: multiField | `multiField` | each word classified by word class and noun-phrase role | classification that confuses determiners with adjectives or misidentifies the head noun | high | NO |
+| `qg_p4_adverbial_clause_boundary_transfer` | `adverbials, clauses, boundary_punctuation` | choose | answerSpec: exact | `exact` | selected option correctly placing boundary punctuation when an adverbial clause is fronted | distractor that omits the comma or applies it to a non-fronted clause | high | NO |
+| `qg_p4_relative_parenthesis_transfer` | `relative_clauses, parenthesis_commas` | choose | answerSpec: exact | `exact` | selected option identifying correct parenthesis punctuation around a relative clause | distractor that omits commas for a non-defining clause or adds them to a defining clause | high | NO |
+| `qg_p4_verb_form_register_transfer` | `tense_aspect, modal_verbs, standard_english` | choose | answerSpec: exact | `exact` | selected option combining correct tense, modal usage, and Standard English agreement | distractor with non-standard agreement, wrong tense, or inappropriate modal | high | NO |
+| `qg_p4_cohesion_formality_transfer` | `pronouns_cohesion, formality` | choose | answerSpec: exact | `exact` | selected option using pronouns with clear referents in the appropriate register | distractor with ambiguous pronoun reference or mismatched register | high | NO |
+| `qg_p4_voice_roles_transfer` | `active_passive, subject_object` | classify | answerSpec: multiField | `multiField` | each clause classified by voice and its subject/object roles identified | classification that swaps active/passive labels or confuses the grammatical subject with the agent | high | NO |
+| `qg_p4_possession_hyphen_clarity_transfer` | `apostrophes_possession, hyphen_ambiguity` | choose | answerSpec: exact | `exact` | selected option with correct possessive apostrophe and disambiguating hyphen | distractor that places the apostrophe for singular instead of plural or omits the hyphen | high | NO |
 
 ### 2.1 Row count reconciliation
 
-The table above has exactly **70 rows**, one per template. The doc-gate test (§6) parses this table and asserts `rows.length === GRAMMAR_TEMPLATES.length` and that every proposed kind is in `ANSWER_SPEC_KINDS`.
+The table above has exactly **78 rows**, one per template. The doc-gate test (§6) parses this table and asserts `rows.length === GRAMMAR_TEMPLATES.length` and that every proposed kind is in `ANSWER_SPEC_KINDS`.
 
 ### 2.2 Proposed-spec distribution
 
-- `exact`: **48** rows (selected-response templates with one answer value).
+- `exact`: **54** rows (selected-response templates with one answer value, including 6 P4 mixed-transfer choose templates).
 - `normalisedText`: **5** rows (`tense_rewrite`, `active_passive_rewrite`, `proc2_standard_english_fix`, `proc2_passive_to_active`, `proc3_apostrophe_rewrite`).
 - `acceptedSet`: **2** rows (`combine_clauses_rewrite`, `proc3_clause_join_rewrite`).
 - `punctuationPattern`: **9** rows (every punctuation-surgery fix template: `fix_fronted_adverbial`, `parenthesis_fix_sentence`, `speech_punctuation_fix`, `proc_fronted_adverbial_fix`, `proc_colon_list_fix`, `proc_dash_boundary_fix`, `proc_speech_punctuation_fix`, `proc3_parenthesis_commas_fix`, `proc3_hyphen_fix_meaning`).
-- `multiField`: **2** rows (`qg_subject_object_classify_table`, `qg_formality_classify_table`).
+- `multiField`: **4** rows (`qg_subject_object_classify_table`, `qg_formality_classify_table`, `qg_p4_word_class_noun_phrase_transfer`, `qg_p4_voice_roles_transfer`).
 - `manualReviewOnly`: **4** rows in the table (`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`). §3 additionally flags **2** explain templates as Phase 5 re-evaluation candidates for migration to `manualReviewOnly` once they become free-text, lifting the candidate list to **6**.
 
-Totals: 48 + 5 + 2 + 9 + 2 + 4 = 70.
+Totals: 54 + 5 + 2 + 9 + 4 + 4 = 78.
 
 ### 2.3 Constructed-response triage summary
 

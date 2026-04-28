@@ -75,10 +75,10 @@ test('Grammar QG P2 baseline remains frozen for the shipped declarative marking 
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
 });
 
-test('Grammar QG P3 baseline pins the active explanation-depth release', () => {
+test('Grammar QG P3 baseline pins the historical explanation-depth release', () => {
   const baseline = readGrammarQuestionGeneratorP3Baseline();
 
-  assert.equal(baseline.releaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.releaseId, 'grammar-qg-p3-2026-04-28');
   assert.equal(baseline.conceptCount, 18);
   assert.equal(baseline.templateCount, 70);
   assert.equal(baseline.selectedResponseCount, 50);
@@ -96,9 +96,10 @@ test('Grammar QG P3 baseline pins the active explanation-depth release', () => {
   assert.equal(baseline.p3ExplanationComplete, true);
   assert.deepEqual(baseline.thinPoolConcepts, []);
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
+  // Live content now reflects P4 denominator
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 70);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 50);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 78);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 58);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 20);
 });
 

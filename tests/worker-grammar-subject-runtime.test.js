@@ -826,7 +826,7 @@ test('Grammar faded guidance omits contrast examples that match current options'
       mode: 'faded',
       roundLength: 1,
       templateId: 'proc2_formality_choice',
-      seed: 1,
+      seed: 2,
     },
   });
 

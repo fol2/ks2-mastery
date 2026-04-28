@@ -142,7 +142,7 @@ test('Grammar QG P3 baseline matches the active explanation-depth denominator', 
   const baseline = readQgP3Baseline();
   const content = baseline.contentBaseline;
 
-  assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.contentReleaseId, 'grammar-qg-p3-2026-04-28');
   assert.equal(content.conceptCount, 18);
   assert.equal(content.templateCount, 70);
   assert.equal(content.selectedResponseCount, 50);
@@ -158,23 +158,9 @@ test('Grammar QG P3 baseline matches the active explanation-depth denominator', 
   assert.deepEqual(content.conceptsMissingExplainCoverage, []);
   assert.equal(content.p3ExplanationComplete, true);
   assert.deepEqual(content.thinPoolConcepts, []);
+  // P3 fixture is historical — concept count is stable but template count is superseded by P4
   assert.equal(GRAMMAR_CONCEPTS.length, content.conceptCount);
   assert.equal(GRAMMAR_CLIENT_CONCEPTS.length, content.conceptCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, content.templateCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, content.selectedResponseCount);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, content.constructedResponseCount);
-  assert.deepEqual(Object.keys(GRAMMAR_QUESTION_TYPES).sort(), content.questionTypes.slice().sort());
-
-  const actualPerQT = {};
-  const actualPerConcept = {};
-  for (const template of GRAMMAR_TEMPLATE_METADATA) {
-    actualPerQT[template.questionType] = (actualPerQT[template.questionType] || 0) + 1;
-    for (const conceptId of (template.skillIds || [])) {
-      actualPerConcept[conceptId] = (actualPerConcept[conceptId] || 0) + 1;
-    }
-  }
-  assert.deepEqual(actualPerQT, content.perQuestionType);
-  assert.deepEqual(actualPerConcept, content.perConcept);
 });
 
 test('Grammar completeness baseline pins legacy mode coverage separately from behaviour gaps', () => {
@@ -601,22 +587,50 @@ test('Grammar Phase 4 release gate is recorded with existing evidence files', ()
 // QG P4 — mixed-transfer and depth scaffold baseline
 // -----------------------------------------------------------------------------
 
-test('Grammar QG P4 baseline captures the pre-content mixed-transfer and depth scaffold', () => {
+test('Grammar QG P4 baseline captures the final mixed-transfer denominator', () => {
   const baseline = readQgP4Baseline();
   const content = baseline.contentBaseline;
 
   assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
   assert.equal(content.conceptCount, 18);
-  assert.equal(content.templateCount, 70);
-  assert.equal(content.generatedTemplateCount, 44);
+  assert.equal(content.templateCount, 78);
+  assert.equal(content.selectedResponseCount, 58);
+  assert.equal(content.constructedResponseCount, 20);
+  assert.equal(content.generatedTemplateCount, 52);
   assert.equal(content.fixedTemplateCount, 26);
+  assert.equal(content.answerSpecTemplateCount, 47);
+  assert.equal(content.constructedResponseAnswerSpecTemplateCount, 20);
+  assert.equal(content.legacyAdapterTemplateCount, 0);
+  assert.equal(content.manualReviewOnlyTemplateCount, 4);
+  assert.equal(content.p2MigrationComplete, true);
+  assert.equal(content.explainTemplateCount, 17);
+  assert.deepEqual(content.conceptsMissingExplainCoverage, []);
+  assert.equal(content.p3ExplanationComplete, true);
 
   // P4-specific fields
-  assert.equal(typeof content.mixedTransferTemplateCount, 'number');
-  assert.equal(content.mixedTransferTemplateCount, 0);
-  assert.ok(Array.isArray(content.conceptsMissingMixedTransferCoverage));
-  assert.equal(content.conceptsMissingMixedTransferCoverage.length, 18);
+  assert.equal(content.mixedTransferTemplateCount, 8);
   assert.ok(Array.isArray(content.conceptsWithMixedTransferCoverage));
-  assert.equal(content.conceptsWithMixedTransferCoverage.length, 0);
-  assert.equal(content.p4MixedTransferComplete, false);
+  assert.equal(content.conceptsWithMixedTransferCoverage.length, 18);
+  assert.ok(Array.isArray(content.conceptsMissingMixedTransferCoverage));
+  assert.equal(content.conceptsMissingMixedTransferCoverage.length, 0);
+  assert.equal(content.p4MixedTransferComplete, true);
+
+  // Distribution matches live content
+  assert.equal(GRAMMAR_CONCEPTS.length, content.conceptCount);
+  assert.equal(GRAMMAR_CLIENT_CONCEPTS.length, content.conceptCount);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, content.templateCount);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((t) => t.isSelectedResponse).length, content.selectedResponseCount);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((t) => !t.isSelectedResponse).length, content.constructedResponseCount);
+  assert.deepEqual(Object.keys(GRAMMAR_QUESTION_TYPES).sort(), content.questionTypes.slice().sort());
+
+  const actualPerQT = {};
+  const actualPerConcept = {};
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    actualPerQT[template.questionType] = (actualPerQT[template.questionType] || 0) + 1;
+    for (const conceptId of (template.skillIds || [])) {
+      actualPerConcept[conceptId] = (actualPerConcept[conceptId] || 0) + 1;
+    }
+  }
+  assert.deepEqual(actualPerQT, content.perQuestionType);
+  assert.deepEqual(actualPerConcept, content.perConcept);
 });
