@@ -141,7 +141,47 @@ function monsterForCluster(clusterId) {
 }
 
 function attemptEvidenceKey(attempt) {
-  return attempt?.variantSignature || attempt?.itemId || '';
+  return attempt?.evidenceKey || attempt?.variantSignature || attempt?.itemId || '';
+}
+
+function itemVariantSignatureAliasMap(attempts) {
+  const signaturesByItemId = new Map();
+  for (const attempt of attempts) {
+    if (!attempt.itemId || !attempt.variantSignature) continue;
+    if (!signaturesByItemId.has(attempt.itemId)) signaturesByItemId.set(attempt.itemId, new Set());
+    signaturesByItemId.get(attempt.itemId).add(attempt.variantSignature);
+  }
+
+  const aliases = new Map();
+  for (const [itemId, signatures] of signaturesByItemId) {
+    if (signatures.size === 1) aliases.set(itemId, [...signatures][0]);
+  }
+  return aliases;
+}
+
+function normaliseAttempts(rawAttempts) {
+  const attempts = rawAttempts.map((raw) => {
+    const a = isPlainObject(raw) ? raw : {};
+    return {
+      ts: Math.max(0, Number(a.ts) || 0),
+      itemId: typeof a.itemId === 'string' ? a.itemId : '',
+      variantSignature: typeof a.variantSignature === 'string' ? a.variantSignature : '',
+      skillIds: Array.isArray(a.skillIds) ? a.skillIds.filter((s) => typeof s === 'string') : [],
+      rewardUnitId: typeof a.rewardUnitId === 'string' ? a.rewardUnitId : '',
+      correct: a.correct === true,
+      supportLevel: Math.max(0, Number(a.supportLevel) || 0),
+      supportKind: typeof a.supportKind === 'string' ? a.supportKind : null,
+      itemMode: typeof a.itemMode === 'string' ? a.itemMode : '',
+      sessionMode: typeof a.sessionMode === 'string' ? a.sessionMode : 'smart',
+      testMode: a.testMode === 'gps' ? 'gps' : null,
+      meaningful: a.meaningful !== false,
+    };
+  });
+  const itemSignatureAliases = itemVariantSignatureAliasMap(attempts);
+  return attempts.map((attempt) => ({
+    ...attempt,
+    evidenceKey: attempt.variantSignature || itemSignatureAliases.get(attempt.itemId) || attempt.itemId,
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -255,14 +295,17 @@ function computePracticeStars(monsterAttempts) {
   return Math.min(PRACTICE_CAP, Math.floor(rawScore));
 }
 
-function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId, monsterId) {
+function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId, monsterId, itemSignatureAliases) {
   // Count items that have reached the secure bucket.
-  let secureItemCount = 0;
+  const secureEvidenceKeys = new Set();
   const itemEntries = isPlainObject(items) ? items : {};
-  for (const [, itemState] of Object.entries(itemEntries)) {
+  for (const [itemId, itemState] of Object.entries(itemEntries)) {
     const snap = memorySnapshot(itemState);
-    if (snap.secure) secureItemCount += 1;
+    if (snap.secure) {
+      secureEvidenceKeys.add(itemSignatureAliases.get(itemId) || itemId);
+    }
   }
+  const secureItemCount = secureEvidenceKeys.size;
 
   // Count secured reward units for this monster's clusters.
   let securedUnitCount = 0;
@@ -591,25 +634,8 @@ export function projectPunctuationStars(progress, releaseId, options) {
   const facets = isPlainObject(safeProgress.facets) ? safeProgress.facets : {};
   const rewardUnits = isPlainObject(safeProgress.rewardUnits) ? safeProgress.rewardUnits : {};
   const rawAttempts = Array.isArray(safeProgress.attempts) ? safeProgress.attempts : [];
-
-  // Normalise attempts: ensure required fields are present.
-  const attempts = rawAttempts.map((raw) => {
-    const a = isPlainObject(raw) ? raw : {};
-    return {
-      ts: Math.max(0, Number(a.ts) || 0),
-      itemId: typeof a.itemId === 'string' ? a.itemId : '',
-      variantSignature: typeof a.variantSignature === 'string' ? a.variantSignature : '',
-      skillIds: Array.isArray(a.skillIds) ? a.skillIds.filter((s) => typeof s === 'string') : [],
-      rewardUnitId: typeof a.rewardUnitId === 'string' ? a.rewardUnitId : '',
-      correct: a.correct === true,
-      supportLevel: Math.max(0, Number(a.supportLevel) || 0),
-      supportKind: typeof a.supportKind === 'string' ? a.supportKind : null,
-      itemMode: typeof a.itemMode === 'string' ? a.itemMode : '',
-      sessionMode: typeof a.sessionMode === 'string' ? a.sessionMode : 'smart',
-      testMode: a.testMode === 'gps' ? 'gps' : null,
-      meaningful: a.meaningful !== false,
-    };
-  });
+  const attempts = normaliseAttempts(rawAttempts);
+  const itemSignatureAliases = itemVariantSignatureAliasMap(attempts);
 
   // Build per-monster attempt arrays.
   const monsterAttempts = new Map();
@@ -635,7 +661,7 @@ export function projectPunctuationStars(progress, releaseId, options) {
 
     const tryStars = computeTryStars(mAttempts);
     const practiceStars = computePracticeStars(mAttempts);
-    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnits, releaseId, monsterId);
+    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnits, releaseId, monsterId, itemSignatureAliases);
     const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnits, monsterId);
     const total = tryStars + practiceStars + secureStars + masteryStars;
 

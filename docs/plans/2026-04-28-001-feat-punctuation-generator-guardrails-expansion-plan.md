@@ -1,7 +1,7 @@
 ---
 title: "feat: Punctuation Generator Guardrails and Thin-Skill Expansion"
 type: feat
-status: active
+status: completed
 date: 2026-04-28
 deepened: 2026-04-28
 origin: docs/plans/james/punctuation/questions-generator/punctuation-qg-p1.md

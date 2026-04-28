@@ -252,7 +252,6 @@ function normaliseGpsResponse(value) {
   if (!itemId) return null;
   return {
     itemId,
-    variantSignature: typeof value.variantSignature === 'string' ? value.variantSignature : '',
     mode: typeof value.mode === 'string' ? value.mode : '',
     skillIds: normaliseStringArray(value.skillIds),
     rewardUnitId: typeof value.rewardUnitId === 'string' ? value.rewardUnitId : '',
@@ -813,7 +812,6 @@ function isMeaningfulPunctuationAnswer(item, answer = {}) {
 function reviewItemFromResult({ item, answer, result }) {
   return {
     itemId: item.id,
-    variantSignature: item.variantSignature || '',
     mode: item.mode,
     skillIds: Array.isArray(item.skillIds) ? [...item.skillIds] : [],
     rewardUnitId: item.rewardUnitId || '',

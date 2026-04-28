@@ -90,6 +90,12 @@ function buildFailures({ validation, generatorFamilies, generatedDuplicates, byS
   if (thresholds?.failOnDuplicateGeneratedSignatures && generatedDuplicates.signatures.length) {
     failures.push(`Duplicate generated variant signatures: ${generatedDuplicates.signatures.length}.`);
   }
+  if (thresholds?.failOnDuplicateGeneratedStems && generatedDuplicates.stems.length) {
+    failures.push(`Duplicate generated stems: ${generatedDuplicates.stems.length}.`);
+  }
+  if (thresholds?.failOnDuplicateGeneratedModels && generatedDuplicates.models.length) {
+    failures.push(`Duplicate generated models: ${generatedDuplicates.models.length}.`);
+  }
   const minGeneratedSignatures = thresholdValue(thresholds, 'minGeneratedSignaturesPerPublishedSkill', 0);
   const minValidatorCoverage = thresholdValue(thresholds, 'minValidatorCoveragePerPublishedSkill', 0);
   for (const row of bySkill) {
@@ -231,7 +237,9 @@ function parseArgs(argv) {
   return {
     json: args.has('--json'),
     strict: args.has('--strict'),
-    failOnDuplicateGeneratedSignatures: args.has('--fail-on-duplicate-generated-signatures'),
+    failOnDuplicateGeneratedSignatures: args.has('--fail-on-duplicate-generated-signatures')
+      || args.has('--fail-on-duplicate-generated-content'),
+    failOnDuplicateGeneratedContent: args.has('--fail-on-duplicate-generated-content'),
     generatedPerFamily: Number(valueAfter('--generated-per-family', 1)) || 1,
   };
 }
@@ -242,12 +250,16 @@ async function main() {
     generatedPerFamily: args.generatedPerFamily,
     thresholds: args.strict
       ? {
-          failOnDuplicateGeneratedSignatures: args.failOnDuplicateGeneratedSignatures,
+          failOnDuplicateGeneratedSignatures: true,
+          failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
+          failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
           minGeneratedSignaturesPerPublishedSkill: 1,
           minValidatorCoveragePerPublishedSkill: 1,
         }
       : {
           failOnDuplicateGeneratedSignatures: args.failOnDuplicateGeneratedSignatures,
+          failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
+          failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
         },
   });
   process.stdout.write(args.json

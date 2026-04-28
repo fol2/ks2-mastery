@@ -86,7 +86,7 @@ test('weak mode avoids repeating a recent item when another weak alternative exi
   assert.equal(result.weakFocus.source, 'weak_facet');
 });
 
-test('scheduler suppresses recently seen generated variant signatures', () => {
+test('scheduler avoids recently seen generated variant signatures when alternatives exist', () => {
   const signatureItem = (id, variantSignature) => ({
     id,
     mode: 'choose',
@@ -112,16 +112,18 @@ test('scheduler suppresses recently seen generated variant signatures', () => {
     skillById: new Map([['sentence_endings', { id: 'sentence_endings', name: 'Capital letters and sentence endings', published: true }]]),
   };
 
-  const result = selectPunctuationItem({
-    indexes,
-    progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },
-    session: { answeredCount: 0, recentItemIds: [previous.id] },
-    prefs: { mode: 'smart' },
-    now: 0,
-    random: () => 0.2,
-  });
+  for (const randomValue of [0, 0.05, 0.2, 0.99]) {
+    const result = selectPunctuationItem({
+      indexes,
+      progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },
+      session: { answeredCount: 0, recentItemIds: [previous.id] },
+      prefs: { mode: 'smart' },
+      now: 0,
+      random: () => randomValue,
+    });
 
-  assert.equal(result.item.id, differentSignature.id);
+    assert.equal(result.item.id, differentSignature.id, `random=${randomValue}`);
+  }
 });
 
 test('weak mode falls back to mixed review when no weak evidence exists', () => {

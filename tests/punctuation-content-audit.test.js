@@ -47,24 +47,30 @@ test('punctuation content audit can prove expanded deterministic bank variety', 
   const audit = runPunctuationContentAudit({
     seed: 'audit-expanded-bank',
     generatedPerFamily: 4,
+    thresholds: {
+      failOnDuplicateGeneratedSignatures: true,
+    },
   });
-  const targetFamilies = [
-    'gen_sentence_endings_insert',
-    'gen_apostrophe_contractions_fix',
-    'gen_comma_clarity_insert',
-    'gen_dash_clause_fix',
-    'gen_dash_clause_combine',
-    'gen_hyphen_insert',
-    'gen_semicolon_list_fix',
-  ];
 
   assert.equal(audit.ok, true, audit.failures.join('\n'));
-  for (const familyId of targetFamilies) {
-    const row = audit.generatorFamilies.find((entry) => entry.id === familyId);
-    assert.equal(row.generatedItemCount, 4, familyId);
-    assert.equal(row.variantSignatures.length, 4, familyId);
-    assert.equal(row.templateIds.length, 4, familyId);
+  for (const row of audit.generatorFamilies.filter((entry) => entry.published)) {
+    assert.equal(row.generatedItemCount, 4, row.id);
+    assert.equal(row.variantSignatures.length, 4, row.id);
+    assert.equal(row.templateIds.length, 4, row.id);
   }
+});
+
+test('punctuation content audit can fail when generated variants exceed unique bank capacity', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'audit-over-capacity',
+    generatedPerFamily: 5,
+    thresholds: {
+      failOnDuplicateGeneratedSignatures: true,
+    },
+  });
+
+  assert.equal(audit.ok, false);
+  assert.match(audit.failures.join('\n'), /Duplicate generated variant signatures/);
 });
 
 test('punctuation content audit detects missing generated family coverage', () => {

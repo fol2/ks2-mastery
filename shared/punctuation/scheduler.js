@@ -341,6 +341,22 @@ function recentSignatureSet(indexes, session = {}, progress = {}) {
   return signatures;
 }
 
+function avoidRecentSignatureRows(rows, recentSignatures) {
+  const freshRows = rows.filter((row) => {
+    const signature = row.item?.variantSignature;
+    return !signature || !recentSignatures.has(signature);
+  });
+  return freshRows.length ? freshRows : rows;
+}
+
+function avoidRecentSignatureItems(items, recentSignatures) {
+  const freshItems = items.filter((item) => {
+    const signature = item?.variantSignature;
+    return !signature || !recentSignatures.has(signature);
+  });
+  return freshItems.length ? freshItems : items;
+}
+
 function weakRows(indexes, progress, session, now, maxWindow) {
   const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
   const recentSignatures = recentSignatureSet(indexes, session, progress);
@@ -371,7 +387,8 @@ function weakRows(indexes, progress, session, now, maxWindow) {
     if (rows.length >= limit) break;
   }
 
-  return rows.sort((a, b) => b.priority - a.priority || a.order - b.order);
+  const sortedRows = rows.sort((a, b) => b.priority - a.priority || a.order - b.order);
+  return avoidRecentSignatureRows(sortedRows, recentSignatures);
 }
 
 export function selectPunctuationItem({
@@ -417,10 +434,11 @@ export function selectPunctuationItem({
       const candidates = modeSuppressed
         ? []
         : candidateItems(indexes, { mode: candidateMode, clusterId, skillId: guidedSkillId });
+      const nonRepeatCandidates = candidates.filter((item) => item.id !== previousItemId);
       return {
         mode: candidateMode,
         candidates,
-        nonRepeatCandidates: candidates.filter((item) => item.id !== previousItemId),
+        nonRepeatCandidates: avoidRecentSignatureItems(nonRepeatCandidates, recentSignatures),
       };
     });
   const selectedMode = modeRows.find((row) => row.nonRepeatCandidates.length)

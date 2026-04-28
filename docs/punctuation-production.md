@@ -84,7 +84,7 @@ Generated item guardrails:
 - The production default remains `generatedPerFamily: 1`; wider banks are exercised by tests and audits before any runtime increase.
 - Each generated item carries a stable `templateId` and opaque `variantSignature`. The scheduler uses recent signatures to avoid equivalent retries, and Star evidence uses signatures before item ids when a generated surface has an available signature.
 - Template-bank expansion appends new templates after the first two legacy templates. The first generated runtime variant is preserved when the bank grows.
-- The audit command `npm run audit:punctuation-content -- --strict --generated-per-family 4` checks generated family coverage, validator coverage, distinct signature counts, and generated model-answer marking. Add `--fail-on-duplicate-generated-signatures` only when the requested generated-per-family count is within every family's available template count.
+- The audit command `npm run audit:punctuation-content -- --strict --generated-per-family 4` checks generated family coverage, validator coverage, duplicate variant signatures, distinct signature counts, and generated model-answer marking. Duplicate stems/models remain reported for content review; add `--fail-on-duplicate-generated-content` when a review specifically wants those surfaced as hard failures.
 
 Sentence-combining practice is now ported as a Worker-owned item mode rather than a separate browser session. Smart review and focused cluster sessions include `combine` at controlled frequency, weak spots can target weak `skill::combine` facets, and unsupported clusters fall back to their available item modes instead of exposing an empty queue.
 
