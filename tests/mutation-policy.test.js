@@ -20,6 +20,23 @@ async function waitForPersistenceIdle(repositories, attempts = 60) {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+// A stale-conflict rebase moves a write back into the pending queue
+// after the 409 response, so `inFlightWriteCount === 0` can flicker to
+// true while pending is still 1. Tests that assert the END state
+// (pendingWriteCount === 0 after a rebase chain has fully drained)
+// need to wait for both counters to reach zero. Use a longer attempt
+// budget than the basic helper so the rebase + re-issue round-trip
+// has time to complete under parallel-suite CPU pressure.
+async function waitForPersistenceFullyDrained(repositories, attempts = 200) {
+  await Promise.resolve();
+  for (let index = 0; index < attempts; index += 1) {
+    const snapshot = repositories.persistence.read();
+    if (snapshot.inFlightWriteCount === 0 && snapshot.pendingWriteCount === 0) break;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 async function waitForCondition(predicate, attempts = 60) {
   await Promise.resolve();
   for (let index = 0; index < attempts; index += 1) {
@@ -308,7 +325,7 @@ test('stale learner writes are rebased automatically without a discard warning',
   await repoA.flush();
 
   repoB.subjectStates.writeData('learner-a', 'spelling', { prefs: { mode: 'single' } });
-  await waitForPersistenceIdle(repoB);
+  await waitForPersistenceFullyDrained(repoB);
 
   const snapshot = repoB.persistence.read();
   assert.equal(snapshot.mode, 'remote-sync');
@@ -340,7 +357,7 @@ test('stale learner writes automatically rebase pending local progress', async (
   await repoA.flush();
 
   repoB.subjectStates.writeData('learner-a', 'spelling', { prefs: { mode: 'single' } });
-  await waitForPersistenceIdle(repoB);
+  await waitForPersistenceFullyDrained(repoB);
 
   assert.equal(repoB.persistence.read().mode, 'remote-sync');
   assert.equal(repoB.persistence.read().pendingWriteCount, 0);
@@ -471,7 +488,7 @@ test('stale account learner writes preserve remote learner ids during rebase', a
     allIds: ['learner-a'],
     selectedId: 'learner-a',
   });
-  await waitForPersistenceIdle(repoB);
+  await waitForPersistenceFullyDrained(repoB);
 
   assert.equal(repoB.persistence.read().mode, 'remote-sync');
   assert.equal(repoB.persistence.read().pendingWriteCount, 0);
@@ -502,7 +519,7 @@ test('stale rebase keeps all queued learner writes on the local branch', async (
   await repoA.flush();
 
   repoB.subjectStates.writeData('learner-a', 'spelling', { prefs: { mode: 'single' } });
-  await waitForPersistenceIdle(repoB);
+  await waitForPersistenceFullyDrained(repoB);
 
   assert.equal(repoB.persistence.read().mode, 'remote-sync');
   assert.equal(repoB.persistence.read().pendingWriteCount, 0);
@@ -525,7 +542,7 @@ test('stale rebase keeps all queued learner writes on the local branch', async (
     type: 'spelling.word-secured',
     createdAt: 21,
   });
-  await waitForPersistenceIdle(repoB);
+  await waitForPersistenceFullyDrained(repoB);
 
   assert.equal(repoB.persistence.read().mode, 'remote-sync');
   assert.equal(repoB.persistence.read().pendingWriteCount, 0);
@@ -570,7 +587,7 @@ test('retry action preserves the visible store on the rebased local branch', asy
   await repoA.flush();
 
   harness.store.updateSubjectUi('spelling', { phase: 'dashboard', error: 'local marker' });
-  await waitForPersistenceIdle(repoB);
+  await waitForPersistenceFullyDrained(repoB);
 
   assert.equal(repoB.persistence.read().mode, 'remote-sync');
   assert.equal(harness.store.getState().subjectUi.spelling.error, 'local marker');
@@ -578,6 +595,7 @@ test('retry action preserves the visible store on the rebased local branch', asy
   harness.dispatch('persistence-retry');
   await waitForCondition(() => (
     repoB.persistence.read().mode === 'remote-sync'
+    && repoB.persistence.read().pendingWriteCount === 0
     && harness.store.getState().subjectUi.spelling.error === 'local marker'
   ));
 

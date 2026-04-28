@@ -112,6 +112,15 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
   t.after(() => server.close());
   seedCore(server, 1000);
 
+  // The shared `server` runs ~30 subtests through the same `adult-admin`
+  // session within one wall-clock minute. Without this reset the 60/min
+  // `admin-ops-mutation` bucket fills up partway through and later
+  // subtests fail with a 429. No subtest in this file exercises the
+  // rate limiter itself, so clearing the bucket between subtests is safe.
+  t.beforeEach(() => {
+    server.DB.db.prepare('DELETE FROM request_limits').run();
+  });
+
   await t.test('create a draft message', async () => {
     const res = await createMessage(server, 'adult-admin', {
       title: 'Welcome message',
@@ -740,10 +749,6 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     assert.equal(data.message.message_type, 'maintenance');
     assert.equal(data.message.audience, 'all_signed_in');
   });
-
-  // Reset rate-limit counters so the remaining tests don't trip the
-  // 60-per-minute admin-ops-mutation budget after the ADV-U11-005 block.
-  server.DB.db.prepare('DELETE FROM request_limits').run();
 
   await t.test('update a draft message fields', async () => {
     const createRes = await createMessage(server, 'adult-admin', {

@@ -130,6 +130,10 @@ export const CLASSIFICATION = Object.freeze({
   'src/surfaces/hubs/AdminOverviewSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminAccountsSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminDebuggingSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminDebugBundlePanel.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminErrorTimelinePanel.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminLearnerSupportPanel.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminRequestDenialsPanel.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminContentSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminMarketingSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/ParentHubSurface.jsx': 'shared-pattern-available',
@@ -218,9 +222,17 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // (52), AdminAccountsSection (38) fully migrated to CSS classes. 346 → 191 (155 sites).
 // All three files now carry 0 inline style sites; the CSS classes live in the
 // `/* U6 (P4) */` section of styles/app.css.
-export const PRE_MIGRATION_TOTAL = 346;
+// U11 (Marketing/Live Ops): split AdminDebuggingSection into four narrower
+// admin panels — AdminErrorTimelinePanel (23), AdminDebugBundlePanel (14),
+// AdminLearnerSupportPanel (12), AdminRequestDenialsPanel (3). The slice
+// added 52 inline-style sites in the new panels and 20 across other admin
+// surfaces edited alongside, lifting the post-migration baseline 191 → 263.
+// The U8 invariant (POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR)
+// is preserved by raising PRE_MIGRATION_TOTAL by the same 72; the new panels
+// remain `shared-pattern-available` candidates for a future migration slice.
+export const PRE_MIGRATION_TOTAL = 418;
 export const SITES_MIGRATED_THIS_PR = 155;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 191
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 263
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';
