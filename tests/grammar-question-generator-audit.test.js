@@ -8,6 +8,7 @@ import {
   createGrammarQuestion,
   grammarQuestionVariantSignature,
 } from '../worker/src/subjects/grammar/content.js';
+import { readGrammarQuestionGeneratorP5Baseline } from './helpers/grammar-legacy-oracle.js';
 
 test('Grammar question-generator audit covers the current template inventory', () => {
   const audit = buildGrammarQuestionGeneratorAudit();
@@ -69,6 +70,55 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
   assert.match(a, /^grammar-v1:[a-z0-9]+$/);
   assert.equal(a, b);
   assert.notEqual(a, c);
+});
+
+test('Grammar question-generator P5 denominator assertions', () => {
+  const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
+  const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
+
+  // P5 denominators
+  assert.equal(audit.templateCount, 78);
+  assert.equal(audit.conceptCount, 18);
+  assert.equal(audit.selectedResponseCount, 58);
+  assert.equal(audit.constructedResponseCount, 20);
+  assert.equal(audit.generatedTemplateCount, 52);
+  assert.equal(audit.fixedTemplateCount, 26);
+  assert.equal(audit.explainTemplateCount, 17);
+  assert.equal(audit.conceptsWithExplainCoverage.length, 18);
+  assert.equal(audit.mixedTransferTemplateCount, 8);
+  assert.equal(audit.conceptsWithMixedTransferCoverage.length, 18);
+  assert.equal(audit.repeatedGeneratedVariants.length, 0, 'Default-window repeated variants must be zero');
+  assert.equal(audit.lowDepthGeneratedTemplates.length, 0, 'Deep low-depth families must be zero');
+  assert.equal(audit.answerSpecTemplateCount, 47);
+  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 20);
+  assert.equal(audit.manualReviewOnlyTemplateCount, 4);
+  assert.equal(audit.generatedSignatureCollisions.length, 0, 'Cross-template collisions must be zero');
+});
+
+test('Grammar P5 baseline fixture is frozen against live audit output', () => {
+  const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
+  const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
+  const baseline = readGrammarQuestionGeneratorP5Baseline();
+
+  assert.equal(audit.releaseId, baseline.releaseId);
+  assert.equal(audit.conceptCount, baseline.conceptCount);
+  assert.equal(audit.templateCount, baseline.templateCount);
+  assert.equal(audit.selectedResponseCount, baseline.selectedResponseCount);
+  assert.equal(audit.constructedResponseCount, baseline.constructedResponseCount);
+  assert.equal(audit.generatedTemplateCount, baseline.generatedTemplateCount);
+  assert.equal(audit.fixedTemplateCount, baseline.fixedTemplateCount);
+  assert.equal(audit.explainTemplateCount, baseline.explainTemplateCount);
+  assert.equal(audit.mixedTransferTemplateCount, baseline.mixedTransferTemplateCount);
+  assert.equal(audit.answerSpecTemplateCount, baseline.answerSpecTemplateCount);
+  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, baseline.constructedResponseAnswerSpecTemplateCount);
+  assert.equal(audit.manualReviewOnlyTemplateCount, baseline.manualReviewOnlyTemplateCount);
+  assert.equal(audit.repeatedGeneratedVariants.length, baseline.repeatedGeneratedVariants.length);
+  assert.equal(audit.generatedSignatureCollisions.length, baseline.generatedSignatureCollisions.length);
+  assert.equal(audit.lowDepthGeneratedTemplates.length, baseline.lowDepthGeneratedTemplates.length);
+  assert.deepEqual(audit.conceptsWithExplainCoverage, baseline.conceptsWithExplainCoverage);
+  assert.deepEqual(audit.conceptsMissingExplainCoverage, baseline.conceptsMissingExplainCoverage);
+  assert.deepEqual(audit.conceptsWithMixedTransferCoverage, baseline.conceptsWithMixedTransferCoverage);
+  assert.deepEqual(audit.conceptsMissingMixedTransferCoverage, baseline.conceptsMissingMixedTransferCoverage);
 });
 
 test('Grammar generated variant signatures ignore choice shuffle order only', () => {

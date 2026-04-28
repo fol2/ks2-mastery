@@ -8,6 +8,7 @@ const qgP1FixturePath = path.join(rootDir, 'tests/fixtures/grammar-legacy-oracle
 const qgP2FixturePath = path.join(rootDir, 'tests/fixtures/grammar-legacy-oracle/grammar-qg-p2-baseline.json');
 const qgP3FixturePath = path.join(rootDir, 'tests/fixtures/grammar-legacy-oracle/grammar-qg-p3-baseline.json');
 const qgP4FixturePath = path.join(rootDir, 'tests/fixtures/grammar-legacy-oracle/grammar-qg-p4-baseline.json');
+const qgP5FixturePath = path.join(rootDir, 'tests/fixtures/grammar-legacy-oracle/grammar-qg-p5-baseline.json');
 
 export function readGrammarLegacyOracle() {
   return JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
@@ -27,6 +28,10 @@ export function readGrammarQuestionGeneratorP3Baseline() {
 
 export function readGrammarQuestionGeneratorP4Baseline() {
   return JSON.parse(fs.readFileSync(qgP4FixturePath, 'utf8'));
+}
+
+export function readGrammarQuestionGeneratorP5Baseline() {
+  return JSON.parse(fs.readFileSync(qgP5FixturePath, 'utf8'));
 }
 
 export function oracleTemplateById(templateId) {
