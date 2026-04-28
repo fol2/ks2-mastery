@@ -1921,6 +1921,36 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        // P5 U4: Production evidence summary. Lazy-loaded GET returning the
+        // pre-generated evidence summary JSON. Rate-limited at 60/min per
+        // session (same bucket as other admin-ops reads). Both admin and ops
+        // roles see the same data — evidence is non-sensitive operational state.
+        if (url.pathname === '/api/admin/ops/production-evidence' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const evidenceLimit = await consumeRateLimit(env, {
+            bucket: 'admin-ops-mutation',
+            identifier: session.accountId,
+            limit: 60,
+            windowMs: 60_000,
+          });
+          if (!evidenceLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_ops_mutation_rate_limited',
+              retryAfterSeconds: evidenceLimit.retryAfterSeconds,
+              extra: {
+                message: 'Admin-ops reads are rate-limited at 60 per minute per session.',
+              },
+            });
+          }
+          let evidenceSummary;
+          try {
+            evidenceSummary = (await import('../../../reports/capacity/latest-evidence-summary.json', { with: { type: 'json' } })).default;
+          } catch {
+            evidenceSummary = { schema: 2, metrics: {}, generatedAt: null };
+          }
+          return json({ ok: true, ...evidenceSummary });
+        }
+
         // R31: regex dispatch for parameterised admin ops mutations. Placed
         // AFTER literal /api/admin/accounts and /api/admin/accounts/role so
         // those take priority, and AFTER the four /api/admin/ops/* GET
