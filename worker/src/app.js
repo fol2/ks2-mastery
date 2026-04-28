@@ -9,7 +9,7 @@ import {
   requireMutationCapability,
   startSocialLogin,
 } from './auth.js';
-import { requireDatabase, requireDatabaseWithCapacity } from './d1.js';
+import { all, requireDatabase, requireDatabaseWithCapacity, run } from './d1.js';
 import { errorResponse } from './errors.js';
 import { json, readForm, readJson, readJsonBounded } from './http.js';
 import {
@@ -46,10 +46,14 @@ import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.js';
 import { handleHeroReadModel } from './hero/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
+import { resolveHeroClaimCommand } from './hero/claim.js';
 import {
   initialiseDailyProgress,
   markTaskStarted,
+  applyClaimToProgress,
+  pruneRecentClaims,
 } from '../../shared/hero/progress-state.js';
+import { buildClaimRecord } from '../../shared/hero/claim-contract.js';
 import { logRequestDenial } from './admin-denial-logger.js';
 import {
   DENIAL_RATE_LIMIT_EXCEEDED,
@@ -1422,6 +1426,204 @@ export function createWorkerApp({
           const body = await readJson(request);
           const heroLearnerId = body?.learnerId || '';
           await repository.requireLearnerReadAccess(session.accountId, heroLearnerId);
+
+          // P3 U6: claim-task command — full mutation with evidence, CAS, events.
+          if (body?.command === 'claim-task') {
+            if (!envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+              return json({ ok: false, error: { code: 'hero_claim_disabled', message: 'Hero progress is not enabled' } }, 404);
+            }
+            if (!envFlagEnabled(env.HERO_MODE_CHILD_UI_ENABLED)) {
+              return json({ ok: false, error: { code: 'hero_claim_disabled', message: 'Hero child UI is not enabled' } }, 404);
+            }
+
+            const nowTs = now();
+            const heroProgressState = await repository.readHeroProgress(heroLearnerId);
+
+            // Find the expected subject from progress state
+            const progressTask = heroProgressState?.daily?.tasks?.[body.taskId];
+            const expectedSubjectId = progressTask?.subjectId || null;
+
+            // Read recent completed practice sessions (last 24h, matching subject)
+            const db = requireDatabase(env);
+            const oneDayAgo = nowTs - (24 * 60 * 60 * 1000);
+            const practiceSessionRows = expectedSubjectId
+              ? await all(db, `
+                  SELECT id, learner_id, subject_id, session_kind, status, summary_json, updated_at
+                  FROM practice_sessions
+                  WHERE learner_id = ? AND status = 'completed' AND updated_at > ? AND subject_id = ?
+                  ORDER BY updated_at DESC
+                  LIMIT 20
+                `, [heroLearnerId, oneDayAgo, expectedSubjectId])
+              : await all(db, `
+                  SELECT id, learner_id, subject_id, session_kind, status, summary_json, updated_at
+                  FROM practice_sessions
+                  WHERE learner_id = ? AND status = 'completed' AND updated_at > ?
+                  ORDER BY updated_at DESC
+                  LIMIT 20
+                `, [heroLearnerId, oneDayAgo]);
+
+            // Read subject ui states (for fallback evidence)
+            const subjectUiRows = await all(db, `
+              SELECT subject_id, ui_json FROM child_subject_state WHERE learner_id = ?
+            `, [heroLearnerId]);
+            const subjectUiStates = {};
+            for (const row of subjectUiRows) {
+              try { subjectUiStates[row.subject_id] = JSON.parse(row.ui_json || 'null'); } catch { subjectUiStates[row.subject_id] = null; }
+            }
+
+            // Run the pure claim resolver
+            const claimResult = resolveHeroClaimCommand({
+              body,
+              heroProgressState,
+              practiceSessionRows,
+              subjectUiStates,
+              nowTs,
+            });
+
+            // Handle rejection
+            if (!claimResult.ok) {
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_task_claim_rejected',
+                  learnerId: heroLearnerId,
+                  questId: body.questId || '',
+                  taskId: body.taskId || '',
+                  code: claimResult.code,
+                  reason: claimResult.reason,
+                }));
+              } catch { /* best-effort */ }
+              return json({ ok: false, error: { code: claimResult.code, message: claimResult.reason } }, 400);
+            }
+
+            // Handle already-completed (safe duplicate)
+            if (claimResult.status === 'already-completed') {
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_task_claim_already_completed',
+                  learnerId: heroLearnerId,
+                  questId: body.questId || '',
+                  taskId: body.taskId || '',
+                }));
+              } catch { /* best-effort */ }
+              return json({
+                ok: true,
+                heroClaim: { version: 1, status: 'already-completed', learnerId: heroLearnerId, taskId: claimResult.taskId, questId: claimResult.questId },
+              });
+            }
+
+            // Execute mutation through runHeroCommand
+            const heroCommand = {
+              command: 'claim-task',
+              learnerId: heroLearnerId,
+              requestId: body.requestId,
+              correlationId: body.correlationId || null,
+              expectedLearnerRevision: body.expectedLearnerRevision,
+            };
+
+            const mutationResult = await repository.runHeroCommand(session.accountId, heroLearnerId, heroCommand, async () => {
+              // Apply claim to progress state
+              let updatedState = applyClaimToProgress(heroProgressState, claimResult, nowTs);
+              updatedState = pruneRecentClaims(updatedState, nowTs);
+
+              // Add claim record to recentClaims
+              const claimRecord = buildClaimRecord({
+                requestId: body.requestId,
+                learnerId: heroLearnerId,
+                dateKey: heroProgressState.daily?.dateKey,
+                questId: body.questId,
+                questFingerprint: body.questFingerprint,
+                taskId: body.taskId,
+                subjectId: claimResult.subjectId,
+                practiceSessionId: claimResult.practiceSessionId,
+                result: 'claimed',
+                reason: null,
+                nowTs,
+              });
+              updatedState = { ...updatedState, recentClaims: [...(updatedState.recentClaims || []), claimRecord] };
+
+              return { state: updatedState, claimResult };
+            });
+
+            // Build event_log entries (fire-and-forget, non-fatal)
+            try {
+              const events = [];
+              events.push({
+                learnerId: heroLearnerId,
+                subjectId: claimResult.subjectId || null,
+                systemId: 'hero-mode',
+                type: 'hero.task.completed',
+                data: { questId: body.questId, taskId: body.taskId, subjectId: claimResult.subjectId, effortCredited: claimResult.effortTarget },
+              });
+
+              const updatedDaily = mutationResult.state?.daily;
+              if (updatedDaily?.status === 'completed') {
+                events.push({
+                  learnerId: heroLearnerId,
+                  subjectId: null,
+                  systemId: 'hero-mode',
+                  type: 'hero.daily.completed',
+                  data: { questId: body.questId, dateKey: updatedDaily.dateKey, effortCompleted: updatedDaily.effortCompleted },
+                });
+              }
+
+              for (const evt of events) {
+                await run(db, `
+                  INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                  ON CONFLICT(id) DO NOTHING
+                `, [
+                  `hero-evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                  heroLearnerId,
+                  evt.subjectId || null,
+                  evt.systemId,
+                  evt.type,
+                  JSON.stringify(evt),
+                  nowTs,
+                  session.accountId,
+                ]);
+              }
+            } catch (err) {
+              // eslint-disable-next-line no-console
+              console.error('[hero] claim event_log write failed:', err.message);
+            }
+
+            // Build response
+            try {
+              // eslint-disable-next-line no-console
+              console.log(JSON.stringify({
+                event: 'hero_task_claim_succeeded',
+                learnerId: heroLearnerId,
+                questId: body.questId || '',
+                taskId: body.taskId || '',
+                subjectId: claimResult.subjectId || '',
+                dailyStatus: mutationResult.state?.daily?.status || '',
+              }));
+            } catch { /* best-effort */ }
+
+            const updatedDaily = mutationResult.state?.daily;
+            return json({
+              ok: true,
+              heroClaim: {
+                version: 1,
+                status: 'claimed',
+                learnerId: heroLearnerId,
+                dateKey: heroProgressState.daily?.dateKey,
+                questId: body.questId,
+                questFingerprint: body.questFingerprint,
+                taskId: body.taskId,
+                subjectId: claimResult.subjectId,
+                effortCredited: claimResult.effortTarget,
+                effortCompleted: updatedDaily?.effortCompleted || 0,
+                effortPlanned: updatedDaily?.effortPlanned || 0,
+                dailyStatus: updatedDaily?.status || 'active',
+                coinsEnabled: false,
+                heroStatePersistenceEnabled: true,
+              },
+              mutation: mutationResult.mutation || null,
+            });
+          }
 
           // U10: outer try wraps the full resolve + dispatch so stale /
           // conflict errors emitted by resolveHeroStartTaskCommand are
