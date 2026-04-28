@@ -34,22 +34,60 @@ const FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS = new Set(SHARED_FORBIDDEN_PUNCT
 const ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS = new Set(SHARED_ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS);
 const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
 
-export function assertNoForbiddenPunctuationReadModelKeys(value, path = 'punctuation.subjectReadModel') {
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isAllowedActiveCurrentItemMetadata({ key, child, parent, pathSegments, rootPhase }) {
+  return ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS.has(key)
+    && rootPhase === 'active-item'
+    && pathSegments.length === 2
+    && pathSegments[0] === 'session'
+    && pathSegments[1] === 'currentItem'
+    && isPlainObject(parent)
+    && parent.source === 'generated'
+    && typeof child === 'string'
+    && OPAQUE_VARIANT_SIGNATURE_PATTERN.test(child);
+}
+
+function assertNoForbiddenPunctuationReadModelKeysAt(value, { path, pathSegments, rootPhase }) {
   if (value == null || typeof value !== 'object') return;
   if (Array.isArray(value)) {
-    value.forEach((entry, index) => assertNoForbiddenPunctuationReadModelKeys(entry, `${path}[${index}]`));
+    value.forEach((entry, index) => assertNoForbiddenPunctuationReadModelKeysAt(entry, {
+      path: `${path}[${index}]`,
+      pathSegments: [...pathSegments, `[${index}]`],
+      rootPhase,
+    }));
     return;
   }
   for (const [key, child] of Object.entries(value)) {
-    const allowedActiveItemMetadata = ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS.has(key)
-      && path.endsWith('.session.currentItem');
+    const allowedActiveItemMetadata = isAllowedActiveCurrentItemMetadata({
+      key,
+      child,
+      parent: value,
+      pathSegments,
+      rootPhase,
+    });
     assert.equal(
       FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.has(key) && !allowedActiveItemMetadata,
       false,
       `${path}.${key} exposed a server-only field.`,
     );
-    assertNoForbiddenPunctuationReadModelKeys(child, `${path}.${key}`);
+    assertNoForbiddenPunctuationReadModelKeysAt(child, {
+      path: `${path}.${key}`,
+      pathSegments: [...pathSegments, key],
+      rootPhase,
+    });
   }
+}
+
+export function assertNoForbiddenPunctuationReadModelKeys(value, path = 'punctuation.subjectReadModel', context = {}) {
+  const rootPhase = context.rootPhase || (isPlainObject(value) && typeof value.phase === 'string' ? value.phase : null);
+  assertNoForbiddenPunctuationReadModelKeysAt(value, {
+    path,
+    pathSegments: [],
+    rootPhase,
+  });
 }
 
 export function assertNoForbiddenPunctuationAdultEvidenceKeys(value, path = 'punctuation.adultEvidence') {

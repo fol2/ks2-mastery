@@ -360,12 +360,58 @@ test('active generated currentItem exposes only an opaque variant signature', ()
   }
 });
 
+test('feedback generated currentItem omits the active-item variant signature transport', () => {
+  const result = buildPunctuationReadModel({
+    learnerId: 'learner-a',
+    state: {
+      phase: 'feedback',
+      session: {
+        id: 'session-generated',
+        releaseId: 'punctuation-r4-full-14-skill-structure',
+        mode: 'smart',
+        length: 1,
+        phase: 'feedback',
+        startedAt: 1_777_000_000_000,
+        answeredCount: 1,
+        correctCount: 1,
+        currentItem: {
+          id: 'generated-speech-insert',
+          mode: 'insert',
+          source: 'generated',
+          prompt: 'Add the direct-speech punctuation.',
+          stem: 'Maya said, hello.',
+          inputKind: 'text',
+          skillIds: ['speech'],
+          clusterId: 'speech',
+          variantSignature: 'puncsig_abc123',
+        },
+        serverAuthority: 'worker',
+      },
+      feedback: {
+        kind: 'success',
+        headline: 'Nice work',
+        body: 'The answer was accepted.',
+      },
+      availability: { status: 'ready', code: null, message: '' },
+    },
+    prefs: {},
+    stats: {},
+  });
+  const currentItem = result.session.currentItem;
+
+  assert.equal(result.phase, 'feedback');
+  assert.equal(currentItem.source, 'generated');
+  assert.equal(Object.hasOwn(currentItem, 'variantSignature'), false);
+  assertNoForbiddenPunctuationReadModelKeys(result, 'punctuation.smart.feedbackModel');
+});
+
 test('shared punctuation metadata policy allows variantSignature only on active currentItem', () => {
   assert.deepEqual(ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS, ['variantSignature']);
   assert.equal(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.includes('variantSignature'), true);
   assert.equal(FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS.includes('variantSignature'), true);
 
   assert.doesNotThrow(() => assertNoForbiddenPunctuationReadModelKeys({
+    phase: 'active-item',
     session: {
       currentItem: {
         source: 'generated',
@@ -373,6 +419,70 @@ test('shared punctuation metadata policy allows variantSignature only on active 
       },
     },
   }, 'punctuation.smart.startModel'));
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'feedback',
+      session: {
+        currentItem: {
+          source: 'generated',
+          variantSignature: 'puncsig_abc123',
+        },
+      },
+    }, 'punctuation.smart.feedbackModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'active-item',
+      session: {
+        currentItem: {
+          source: 'fixed',
+          variantSignature: 'puncsig_abc123',
+        },
+      },
+    }, 'punctuation.smart.startModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'active-item',
+      session: {
+        currentItem: {
+          source: 'generated',
+          variantSignature: 'not-opaque',
+        },
+      },
+    }, 'punctuation.smart.startModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'active-item',
+      analytics: {
+        session: {
+          currentItem: {
+            variantSignature: 'puncsig_abc123',
+          },
+        },
+      },
+    }, 'punctuation.smart.startModel'),
+    /variantSignature exposed a server-only field/,
+  );
+  assert.throws(
+    () => assertNoForbiddenPunctuationReadModelKeys({
+      phase: 'active-item',
+      rows: [
+        {
+          session: {
+            currentItem: {
+              variantSignature: 'puncsig_abc123',
+            },
+          },
+        },
+      ],
+    }, 'punctuation.smart.startModel'),
+    /variantSignature exposed a server-only field/,
+  );
   assert.throws(
     () => assertNoForbiddenPunctuationReadModelKeys({
       summary: {

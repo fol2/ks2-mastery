@@ -45,7 +45,7 @@ function normaliseOpaqueVariantSignature(value) {
   return OPAQUE_VARIANT_SIGNATURE_PATTERN.test(signature) ? signature : '';
 }
 
-function safeCurrentItem(item) {
+function safeCurrentItem(item, { includeVariantSignature = false } = {}) {
   if (!isPlainObject(item)) return null;
   const safe = {
     id: typeof item.id === 'string' ? item.id : '',
@@ -66,7 +66,7 @@ function safeCurrentItem(item) {
       }));
   }
   const variantSignature = normaliseOpaqueVariantSignature(item.variantSignature);
-  if (safe.source === 'generated' && variantSignature) {
+  if (includeVariantSignature && safe.source === 'generated' && variantSignature) {
     safe.variantSignature = variantSignature;
   }
   return safe;
@@ -138,6 +138,7 @@ function safeGpsSession(session) {
 function safeSession(session, phase) {
   if (!isPlainObject(session)) return null;
   const hideGpsInterimResults = session.mode === 'gps';
+  const includeCurrentItemSignature = phase === 'active-item';
   const safe = {
     id: typeof session.id === 'string' ? session.id : '',
     releaseId: typeof session.releaseId === 'string' ? session.releaseId : PUNCTUATION_RELEASE_ID,
@@ -149,7 +150,9 @@ function safeSession(session, phase) {
     correctCount: hideGpsInterimResults
       ? 0
       : (Number.isFinite(Number(session.correctCount)) ? Number(session.correctCount) : 0),
-    currentItem: phase === 'active-item' || phase === 'feedback' ? safeCurrentItem(session.currentItem) : null,
+    currentItem: phase === 'active-item' || phase === 'feedback'
+      ? safeCurrentItem(session.currentItem, { includeVariantSignature: includeCurrentItemSignature })
+      : null,
     securedUnits: Array.isArray(session.securedUnits) ? session.securedUnits.filter((entry) => typeof entry === 'string') : [],
     misconceptionTags: hideGpsInterimResults
       ? []
@@ -226,20 +229,55 @@ function assertNoForbiddenItemFields(item) {
   }
 }
 
-function assertNoForbiddenReadModelKeys(value, path = 'punctuation') {
+function isAllowedActiveCurrentItemMetadata({ key, child, parent, pathSegments, rootPhase }) {
+  return key === 'variantSignature'
+    && rootPhase === 'active-item'
+    && pathSegments.length === 2
+    && pathSegments[0] === 'session'
+    && pathSegments[1] === 'currentItem'
+    && isPlainObject(parent)
+    && parent.source === 'generated'
+    && typeof child === 'string'
+    && OPAQUE_VARIANT_SIGNATURE_PATTERN.test(child);
+}
+
+function assertNoForbiddenReadModelKeys(value, {
+  path = 'punctuation',
+  pathSegments = [],
+  rootPhase = null,
+} = {}) {
   if (value == null || typeof value !== 'object') return;
+  const resolvedRootPhase = rootPhase || (
+    pathSegments.length === 0 && isPlainObject(value) && typeof value.phase === 'string'
+      ? value.phase
+      : null
+  );
   if (Array.isArray(value)) {
     for (let index = 0; index < value.length; index += 1) {
-      assertNoForbiddenReadModelKeys(value[index], `${path}[${index}]`);
+      assertNoForbiddenReadModelKeys(value[index], {
+        path: `${path}[${index}]`,
+        pathSegments: [...pathSegments, `[${index}]`],
+        rootPhase: resolvedRootPhase,
+      });
     }
     return;
   }
   for (const [key, child] of Object.entries(value)) {
-    const allowedActiveItemSignature = key === 'variantSignature' && path.endsWith('.session.currentItem');
+    const allowedActiveItemSignature = isAllowedActiveCurrentItemMetadata({
+      key,
+      child,
+      parent: value,
+      pathSegments,
+      rootPhase: resolvedRootPhase,
+    });
     if (FORBIDDEN_READ_MODEL_KEYS.has(key) && !allowedActiveItemSignature) {
       throw new Error(`Punctuation read model attempted to expose server-only ${path}.${key} field: ${key}`);
     }
-    assertNoForbiddenReadModelKeys(child, `${path}.${key}`);
+    assertNoForbiddenReadModelKeys(child, {
+      path: `${path}.${key}`,
+      pathSegments: [...pathSegments, key],
+      rootPhase: resolvedRootPhase,
+    });
   }
 }
 
