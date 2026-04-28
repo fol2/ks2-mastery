@@ -9,7 +9,7 @@ import { HERO_CLAIM_GRACE_HOURS } from '../../../shared/hero/constants.js';
  * Pure claim resolver — receives pre-loaded data, returns a result object.
  * Does NOT perform DB reads or writes.
  */
-export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessionRows, subjectUiStates, nowTs }) {
+export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessionRows, subjectUiStates, nowTs, economyEnabled }) {
   // 1. Validate request body
   const validation = validateClaimRequest(body);
   if (!validation.valid) {
@@ -82,6 +82,7 @@ export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessi
     practiceSessionId,
     practiceSessionRows,
     subjectUiStates,
+    economyEnabled,
   });
 
   if (!evidence.found) {
@@ -101,7 +102,7 @@ export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessi
   if (!evidence.completed) {
     return {
       ok: false,
-      code: 'hero_claim_evidence_not_completed',
+      code: evidence.code || 'hero_claim_evidence_not_completed',
       reason: evidence.reason || 'Session found but not completed',
     };
   }
@@ -127,14 +128,14 @@ export function resolveHeroClaimCommand({ body, heroProgressState, practiceSessi
   };
 }
 
-export function findCompletionEvidence({ taskId, questId, questFingerprint, learnerId, subjectId, practiceSessionId, practiceSessionRows, subjectUiStates }) {
+export function findCompletionEvidence({ taskId, questId, questFingerprint, learnerId, subjectId, practiceSessionId, practiceSessionRows, subjectUiStates, economyEnabled }) {
   // Strategy 1: Check practice_sessions with heroContext in summary
   if (practiceSessionRows && practiceSessionRows.length > 0) {
     // If a specific practiceSessionId was provided, check it first
     if (practiceSessionId) {
       const specific = practiceSessionRows.find(r => r.id === practiceSessionId);
       if (specific) {
-        const result = validatePracticeSession(specific, { taskId, questId, questFingerprint, learnerId, subjectId });
+        const result = validatePracticeSession(specific, { taskId, questId, questFingerprint, learnerId, subjectId, economyEnabled });
         if (result.found) return result;
       }
     }
@@ -196,7 +197,7 @@ export function findCompletionEvidence({ taskId, questId, questFingerprint, lear
   };
 }
 
-function validatePracticeSession(row, { taskId, questId, questFingerprint, learnerId, subjectId }) {
+function validatePracticeSession(row, { taskId, questId, questFingerprint, learnerId, subjectId, economyEnabled }) {
   if (row.learner_id !== learnerId) {
     return { found: true, completed: false, learnerMismatch: true, reason: 'Session belongs to different learner' };
   }
@@ -208,6 +209,9 @@ function validatePracticeSession(row, { taskId, questId, questFingerprint, learn
   }
   const summary = safeParseJson(row.summary_json);
   if (!summary?.heroContext) {
+    if (economyEnabled) {
+      return { found: true, completed: false, code: 'hero_claim_missing_hero_context', reason: 'Economy requires heroContext evidence' };
+    }
     return { found: true, completed: true, source: 'practice-session', practiceSessionId: row.id, sessionStatus: 'completed', summaryStatus: 'completed', reason: 'Completed but no heroContext in summary (pre-P3 session)' };
   }
   if (summary.heroContext.questId !== questId || summary.heroContext.taskId !== taskId) {

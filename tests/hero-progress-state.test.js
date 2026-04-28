@@ -12,23 +12,29 @@ import {
   markTaskStarted,
 } from '../shared/hero/progress-state.js';
 
+import { HERO_ECONOMY_VERSION, emptyEconomyState } from '../shared/hero/economy.js';
+
 // ── normaliseHeroProgressState ────────────────────────────────────
 
-test('normaliseHeroProgressState with null returns empty state with version 1', () => {
+test('normaliseHeroProgressState with null returns empty v2 state', () => {
   const result = normaliseHeroProgressState(null);
-  assert.equal(result.version, HERO_PROGRESS_VERSION);
+  assert.equal(result.version, 2);
   assert.equal(result.daily, null);
   assert.deepEqual(result.recentClaims, []);
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.economy.balance, 0);
+  assert.deepEqual(result.economy.ledger, []);
 });
 
-test('normaliseHeroProgressState with undefined returns empty state', () => {
+test('normaliseHeroProgressState with undefined returns empty v2 state', () => {
   const result = normaliseHeroProgressState(undefined);
-  assert.equal(result.version, 1);
+  assert.equal(result.version, 2);
   assert.equal(result.daily, null);
   assert.deepEqual(result.recentClaims, []);
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
 });
 
-test('normaliseHeroProgressState with valid state returns normalised structure', () => {
+test('normaliseHeroProgressState v1 state migrates to v2 preserving daily and recentClaims', () => {
   const input = {
     version: 1,
     daily: {
@@ -53,25 +59,146 @@ test('normaliseHeroProgressState with valid state returns normalised structure',
     recentClaims: [{ claimId: 'c1', createdAt: 999 }],
   };
   const result = normaliseHeroProgressState(input);
-  assert.equal(result.version, 1);
+  assert.equal(result.version, 2);
   assert.equal(result.daily.dateKey, '2026-04-28');
   assert.equal(result.daily.questId, 'quest-abc');
   assert.equal(result.daily.tasks.t1.status, 'completed');
   assert.equal(result.daily.tasks.t2.status, 'planned');
   assert.deepEqual(result.recentClaims, [{ claimId: 'c1', createdAt: 999 }]);
+  // Economy must be empty (v1 had no economy)
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.economy.balance, 0);
+  assert.equal(result.economy.lifetimeEarned, 0);
+  assert.equal(result.economy.lifetimeSpent, 0);
+  assert.deepEqual(result.economy.ledger, []);
+  assert.equal(result.economy.lastUpdatedAt, null);
 });
 
-test('normaliseHeroProgressState with wrong version returns empty state', () => {
+test('normaliseHeroProgressState v2 state with existing economy normalises correctly', () => {
+  const input = {
+    version: 2,
+    daily: {
+      dateKey: '2026-04-29',
+      questId: 'quest-xyz',
+      timezone: 'Europe/London',
+      status: 'completed',
+      effortTarget: 18,
+      effortPlanned: 18,
+      effortCompleted: 18,
+      taskOrder: ['t1'],
+      completedTaskIds: ['t1'],
+      tasks: {
+        t1: { taskId: 't1', status: 'completed', effortTarget: 18 },
+      },
+      generatedAt: 5000,
+      firstStartedAt: 5001,
+      completedAt: 5500,
+      lastUpdatedAt: 5500,
+    },
+    recentClaims: [{ claimId: 'c2', createdAt: 5500 }],
+    economy: {
+      version: HERO_ECONOMY_VERSION,
+      balance: 100,
+      lifetimeEarned: 200,
+      lifetimeSpent: 100,
+      ledger: [{ id: 'entry-1', type: 'daily-completion-award', coins: 100 }],
+      lastUpdatedAt: 5500,
+    },
+  };
+  const result = normaliseHeroProgressState(input);
+  assert.equal(result.version, 2);
+  assert.equal(result.daily.questId, 'quest-xyz');
+  assert.equal(result.economy.balance, 100);
+  assert.equal(result.economy.lifetimeEarned, 200);
+  assert.equal(result.economy.lifetimeSpent, 100);
+  assert.equal(result.economy.ledger.length, 1);
+  assert.equal(result.economy.lastUpdatedAt, 5500);
+});
+
+test('normaliseHeroProgressState with malformed version (99) returns empty v2 state', () => {
   const result = normaliseHeroProgressState({ version: 99, daily: null, recentClaims: [] });
-  assert.equal(result.version, 1);
+  assert.equal(result.version, 2);
   assert.equal(result.daily, null);
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.economy.balance, 0);
+});
+
+test('normaliseHeroProgressState with missing version returns empty v2 state', () => {
+  const result = normaliseHeroProgressState({ daily: null, recentClaims: [] });
+  assert.equal(result.version, 2);
+  assert.equal(result.daily, null);
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+});
+
+test('normaliseHeroProgressState with version as string returns empty v2 state', () => {
+  const result = normaliseHeroProgressState({ version: '2', daily: null, recentClaims: [] });
+  assert.equal(result.version, 2);
+  assert.equal(result.daily, null);
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+});
+
+test('normaliseHeroProgressState v2 with partially corrupt economy normalises safely', () => {
+  const input = {
+    version: 2,
+    daily: {
+      dateKey: '2026-04-29',
+      questId: 'quest-keep',
+      timezone: 'Europe/London',
+      status: 'active',
+      effortTarget: 12,
+      effortPlanned: 12,
+      effortCompleted: 0,
+      taskOrder: ['t1'],
+      completedTaskIds: [],
+      tasks: {
+        t1: { taskId: 't1', status: 'planned', effortTarget: 12 },
+      },
+      generatedAt: 7000,
+      firstStartedAt: null,
+      completedAt: null,
+      lastUpdatedAt: 7000,
+    },
+    recentClaims: [{ claimId: 'c3', createdAt: 7000 }],
+    economy: {
+      version: HERO_ECONOMY_VERSION,
+      balance: 'corrupted', // not a number
+      lifetimeEarned: Infinity, // not finite
+      lifetimeSpent: -1, // not tested as corrupt, just negative
+      ledger: 'not-an-array', // corrupt
+      lastUpdatedAt: null,
+    },
+  };
+  const result = normaliseHeroProgressState(input);
+  // Daily progress MUST survive
+  assert.equal(result.daily.questId, 'quest-keep');
+  assert.equal(result.daily.tasks.t1.status, 'planned');
+  assert.deepEqual(result.recentClaims, [{ claimId: 'c3', createdAt: 7000 }]);
+  // Economy normalises to safe defaults
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.economy.balance, 0); // 'corrupted' → 0
+  assert.equal(result.economy.lifetimeEarned, 0); // Infinity → 0
+  assert.deepEqual(result.economy.ledger, []); // 'not-an-array' → []
+});
+
+test('normaliseHeroProgressState v2 with null economy gets empty economy', () => {
+  const input = {
+    version: 2,
+    daily: null,
+    recentClaims: [],
+    economy: null,
+  };
+  const result = normaliseHeroProgressState(input);
+  assert.equal(result.version, 2);
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.economy.balance, 0);
 });
 
 test('normaliseHeroProgressState with malformed daily repairs safely', () => {
   const result = normaliseHeroProgressState({
-    version: 1,
+    version: 2,
     daily: { dateKey: '2026-04-28', questId: 'q1', status: 'garbage', effortTarget: 'abc' },
     recentClaims: 'not-an-array',
+    economy: emptyEconomyState(),
   });
   assert.equal(result.daily.status, 'active'); // unknown status defaults to 'active'
   assert.equal(result.daily.effortTarget, 0); // NaN coerces to 0
@@ -80,9 +207,10 @@ test('normaliseHeroProgressState with malformed daily repairs safely', () => {
 
 test('normaliseHeroProgressState with daily missing dateKey returns null daily', () => {
   const result = normaliseHeroProgressState({
-    version: 1,
+    version: 2,
     daily: { questId: 'q1' }, // no dateKey
     recentClaims: [],
+    economy: emptyEconomyState(),
   });
   assert.equal(result.daily, null);
 });
@@ -131,7 +259,7 @@ test('initialiseDailyProgress from quest with 3 tasks produces correct shape', (
 
 test('applyClaimToProgress increments effortCompleted and adds to completedTaskIds', () => {
   const state = {
-    version: 1,
+    version: 2,
     daily: {
       dateKey: '2026-04-28',
       questId: 'q1',
@@ -147,6 +275,7 @@ test('applyClaimToProgress increments effortCompleted and adds to completedTaskI
       },
     },
     recentClaims: [],
+    economy: emptyEconomyState(),
   };
   const claimResult = { taskId: 't1', requestId: 'req-1', practiceSessionId: 'sess-1', evidence: { score: 5 } };
   const nowTs = 2000;
@@ -164,7 +293,7 @@ test('applyClaimToProgress increments effortCompleted and adds to completedTaskI
 
 test('applyClaimToProgress for already-completed task returns unchanged (no double-count)', () => {
   const state = {
-    version: 1,
+    version: 2,
     daily: {
       dateKey: '2026-04-28',
       questId: 'q1',
@@ -180,6 +309,7 @@ test('applyClaimToProgress for already-completed task returns unchanged (no doub
       },
     },
     recentClaims: [],
+    economy: emptyEconomyState(),
   };
   const claimResult = { taskId: 't1', requestId: 'req-2' };
   const result = applyClaimToProgress(state, claimResult, 3000);
@@ -190,7 +320,7 @@ test('applyClaimToProgress for already-completed task returns unchanged (no doub
 
 test('applyClaimToProgress when all tasks complete sets daily.status=completed', () => {
   const state = {
-    version: 1,
+    version: 2,
     daily: {
       dateKey: '2026-04-28',
       questId: 'q1',
@@ -206,6 +336,7 @@ test('applyClaimToProgress when all tasks complete sets daily.status=completed',
       },
     },
     recentClaims: [],
+    economy: emptyEconomyState(),
   };
   const claimResult = { taskId: 't2', requestId: 'req-3', practiceSessionId: 'sess-2' };
   const nowTs = 4000;
@@ -229,12 +360,13 @@ test('pruneRecentClaims removes old claims and keeps recent ones', () => {
   const oldTs = nowTs - (MAX_RECENT_CLAIMS_AGE_DAYS + 1) * 24 * 60 * 60 * 1000;
   const recentTs = nowTs - 1000;
   const state = {
-    version: 1,
+    version: 2,
     daily: null,
     recentClaims: [
       { claimId: 'old', createdAt: oldTs },
       { claimId: 'recent', createdAt: recentTs },
     ],
+    economy: emptyEconomyState(),
   };
   const result = pruneRecentClaims(state, nowTs);
   assert.equal(result.recentClaims.length, 1);
@@ -244,16 +376,17 @@ test('pruneRecentClaims removes old claims and keeps recent ones', () => {
 test('pruneRecentClaims returns same reference when nothing to prune', () => {
   const nowTs = Date.now();
   const state = {
-    version: 1,
+    version: 2,
     daily: null,
     recentClaims: [{ claimId: 'fresh', createdAt: nowTs - 1000 }],
+    economy: emptyEconomyState(),
   };
   const result = pruneRecentClaims(state, nowTs);
   assert.equal(result, state);
 });
 
 test('pruneRecentClaims with empty recentClaims returns same reference', () => {
-  const state = { version: 1, daily: null, recentClaims: [] };
+  const state = { version: 2, daily: null, recentClaims: [], economy: emptyEconomyState() };
   const result = pruneRecentClaims(state, Date.now());
   assert.equal(result, state);
 });
@@ -262,7 +395,7 @@ test('pruneRecentClaims with empty recentClaims returns same reference', () => {
 
 test('markTaskStarted sets status=started and startedAt', () => {
   const state = {
-    version: 1,
+    version: 2,
     daily: {
       dateKey: '2026-04-28',
       questId: 'q1',
@@ -273,6 +406,7 @@ test('markTaskStarted sets status=started and startedAt', () => {
       },
     },
     recentClaims: [],
+    economy: emptyEconomyState(),
   };
   const nowTs = 2000;
   const result = markTaskStarted(state, 't1', 'launch-req-1', nowTs);
@@ -286,7 +420,7 @@ test('markTaskStarted sets status=started and startedAt', () => {
 
 test('markTaskStarted does not regress a completed task', () => {
   const state = {
-    version: 1,
+    version: 2,
     daily: {
       dateKey: '2026-04-28',
       questId: 'q1',
@@ -297,6 +431,7 @@ test('markTaskStarted does not regress a completed task', () => {
       },
     },
     recentClaims: [],
+    economy: emptyEconomyState(),
   };
   const result = markTaskStarted(state, 't1', 'launch-req-2', 3000);
   assert.equal(result, state); // unchanged
@@ -304,7 +439,7 @@ test('markTaskStarted does not regress a completed task', () => {
 
 test('markTaskStarted preserves existing firstStartedAt', () => {
   const state = {
-    version: 1,
+    version: 2,
     daily: {
       dateKey: '2026-04-28',
       questId: 'q1',
@@ -315,6 +450,7 @@ test('markTaskStarted preserves existing firstStartedAt', () => {
       },
     },
     recentClaims: [],
+    economy: emptyEconomyState(),
   };
   const result = markTaskStarted(state, 't1', 'lr-1', 2000);
   assert.equal(result.daily.firstStartedAt, 500); // not overwritten
@@ -322,30 +458,22 @@ test('markTaskStarted preserves existing firstStartedAt', () => {
 
 // ── emptyProgressState ────────────────────────────────────────────
 
-test('emptyProgressState returns correct default shape', () => {
+test('emptyProgressState returns correct v2 shape with economy', () => {
   const result = emptyProgressState();
   assert.equal(result.version, HERO_PROGRESS_VERSION);
+  assert.equal(result.version, 2);
   assert.equal(result.daily, null);
   assert.deepEqual(result.recentClaims, []);
+  assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.economy.balance, 0);
+  assert.equal(result.economy.lifetimeEarned, 0);
+  assert.equal(result.economy.lifetimeSpent, 0);
+  assert.deepEqual(result.economy.ledger, []);
+  assert.equal(result.economy.lastUpdatedAt, null);
 });
 
-// ── No economy vocabulary ─────────────────────────────────────────
+// ── HERO_PROGRESS_VERSION is 2 ───────────────────────────────────
 
-test('progress-state exports contain no economy vocabulary', () => {
-  const exportNames = [
-    'HERO_PROGRESS_VERSION',
-    'MAX_RECENT_CLAIMS_AGE_DAYS',
-    'emptyProgressState',
-    'normaliseHeroProgressState',
-    'initialiseDailyProgress',
-    'applyClaimToProgress',
-    'pruneRecentClaims',
-    'markTaskStarted',
-  ];
-  const forbidden = ['coins', 'reward', 'xp', 'balance', 'shop', 'monster'];
-  for (const name of exportNames) {
-    for (const word of forbidden) {
-      assert.ok(!name.toLowerCase().includes(word), `${name} must not contain "${word}"`);
-    }
-  }
+test('HERO_PROGRESS_VERSION is 2', () => {
+  assert.equal(HERO_PROGRESS_VERSION, 2);
 });

@@ -1486,6 +1486,7 @@ export function createWorkerApp({
               practiceSessionRows,
               subjectUiStates,
               nowTs,
+              economyEnabled: envFlagEnabled(env.HERO_MODE_ECONOMY_ENABLED),
             });
 
             // Handle rejection
