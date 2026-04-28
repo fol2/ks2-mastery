@@ -91,8 +91,17 @@ export const commaClarityInsertDsl = TEMPLATES.map((t, i) =>
       readiness: t.readiness,
     }),
     tests: {
-      accept: [t.model],
-      reject: [t.stem],
+      accept: [
+        t.model,
+      ],
+      reject: [
+        // Original stem (missing comma)
+        t.stem,
+        // Comma in the wrong position (after first word only)
+        t.stem.replace(/^(\S+)/, '$1,'),
+        // Comma present but full stop missing — no terminal
+        t.model.replace(/\.$/, ''),
+      ],
     },
   }),
 );

@@ -83,8 +83,21 @@ export const sentenceEndingsInsertDsl = TEMPLATES.map((t, i) =>
       readiness: t.readiness,
     }),
     tests: {
-      accept: [t.model],
-      reject: [t.stem],
+      accept: [
+        t.model,
+      ],
+      reject: [
+        // Original stem (no capital, no end mark)
+        t.stem,
+        // Capital added but wrong end mark (swap ? and ! and .)
+        (() => {
+          const mark = t.model.slice(-1);
+          const wrongMark = mark === '?' ? '.' : mark === '!' ? '.' : '?';
+          return t.model.slice(0, -1) + wrongMark;
+        })(),
+        // Correct end mark but missing capital letter
+        t.model[0].toLowerCase() + t.model.slice(1),
+      ],
     },
   }),
 );

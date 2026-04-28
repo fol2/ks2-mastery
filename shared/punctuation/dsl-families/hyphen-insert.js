@@ -91,8 +91,17 @@ export const hyphenInsertDsl = TEMPLATES.map((t, i) =>
       readiness: t.readiness,
     }),
     tests: {
-      accept: [t.model],
-      reject: [t.stem],
+      accept: [
+        t.model,
+      ],
+      reject: [
+        // Original stem (spaces instead of hyphens)
+        t.stem,
+        // Hyphen present but missing terminal full stop
+        t.model.replace(/\.$/, ''),
+        // Missing capital letter at start
+        t.model[0].toLowerCase() + t.model.slice(1),
+      ],
     },
   }),
 );

@@ -91,8 +91,22 @@ export const dashClauseCombineDsl = TEMPLATES.map((t, i) =>
       readiness: t.readiness,
     }),
     tests: {
-      accept: [t.model],
-      reject: [t.stem],
+      accept: [
+        // En dash (model)
+        t.model,
+        // Spaced hyphen
+        t.model.replace(' – ', ' - '),
+        // Em dash
+        t.model.replace(' – ', ' — '),
+      ],
+      reject: [
+        // Original two-sentence stem (not combined)
+        t.stem,
+        // Comma splice instead of dash
+        `${t.validator.left}, ${t.validator.right}.`,
+        // Dash present but clauses reversed
+        `${t.validator.right} – ${t.validator.left}.`,
+      ],
     },
   }),
 );

@@ -82,8 +82,19 @@ export const apostropheContractionsDsl = TEMPLATES.map((t, i) =>
       readiness: t.readiness,
     }),
     tests: {
-      accept: [t.model],
-      reject: [t.stem],
+      accept: [
+        t.model,
+        // Curly apostrophes are acceptable (canonical normalisation)
+        t.model.replace(/'/g, '’'),
+      ],
+      reject: [
+        // Original stem (missing apostrophes)
+        t.stem,
+        // Missing terminal full stop
+        t.model.replace(/\.$/, ''),
+        // Lowercase first letter
+        t.model[0].toLowerCase() + t.model.slice(1),
+      ],
     },
   }),
 );

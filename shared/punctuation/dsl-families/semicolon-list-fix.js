@@ -91,8 +91,17 @@ export const semicolonListFixDsl = TEMPLATES.map((t, i) =>
       readiness: t.readiness,
     }),
     tests: {
-      accept: [t.model],
-      reject: [t.stem],
+      accept: [
+        t.model,
+      ],
+      reject: [
+        // Original stem (comma-only, no semicolons)
+        t.stem,
+        // Commas between complex items instead of semicolons
+        t.model.replace(/; /g, ', '),
+        // Missing terminal full stop
+        t.model.replace(/\.$/, ''),
+      ],
     },
   }),
 );

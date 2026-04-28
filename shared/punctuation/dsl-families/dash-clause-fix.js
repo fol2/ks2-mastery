@@ -91,8 +91,22 @@ export const dashClauseFixDsl = TEMPLATES.map((t, i) =>
       readiness: t.readiness,
     }),
     tests: {
-      accept: [t.model],
-      reject: [t.stem],
+      accept: [
+        // En dash (model)
+        t.model,
+        // Spaced hyphen
+        t.model.replace(' – ', ' - '),
+        // Em dash
+        t.model.replace(' – ', ' — '),
+      ],
+      reject: [
+        // Original stem (run-on, no dash)
+        t.stem,
+        // Comma splice instead of dash
+        `${t.validator.left}, ${t.validator.right}.`,
+        // Has dash but missing full stop terminal
+        t.model.replace(/\.$/, ''),
+      ],
     },
   }),
 );
