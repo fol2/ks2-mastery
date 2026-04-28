@@ -1,9 +1,12 @@
 import React from 'react';
 import { formatTimestamp, isBlocked } from './hub-utils.js';
 import { MonsterVisualConfigPanel } from './MonsterVisualConfigPanel.jsx';
+import { AdminConfirmAction } from './AdminConfirmAction.jsx';
 import { AdultConfidenceChip } from '../../subjects/grammar/components/AdultConfidenceChip.jsx';
 import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confidence.js';
 import { buildAssetRegistry } from '../../platform/hubs/admin-asset-registry.js';
+import { classifyAction } from '../../platform/hubs/admin-action-classification.js';
+import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 import {
   buildSubjectContentOverview,
   statusBadgeClass,
@@ -267,6 +270,8 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
   const [shapeName, setShapeName] = React.useState(shapes[0] || '');
   const [learnerId, setLearnerId] = React.useState(defaultLearnerId);
   const [manualLearnerId, setManualLearnerId] = React.useState('');
+  const [showConfirm, setShowConfirm] = React.useState(false);
+  const { locked, run } = useSubmitLock();
 
   React.useEffect(() => {
     if (!shapeName && shapes.length) setShapeName(shapes[0]);
@@ -287,6 +292,7 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
 
   const effectiveLearnerId = manualLearnerId.trim() || learnerId;
   const canApply = Boolean(effectiveLearnerId) && Boolean(shapeName);
+  const classification = classifyAction('post-mega-seed-apply', { targetId: effectiveLearnerId });
 
   return (
     <section className="card admin-card-spaced" data-panel="post-mega-seed-harness">
@@ -343,22 +349,39 @@ function PostMegaSeedHarnessPanel({ model, actions }) {
           />
         </label>
         <div>
-          <button
-            className="btn secondary"
-            type="button"
-            disabled={!canApply}
-            onClick={() => actions.dispatch('post-mega-seed-apply', {
-              learnerId: effectiveLearnerId,
-              shapeName,
-            })}
-          >
-            Apply seed
-          </button>
-          <div className="small muted admin-note-spaced">
-            {canApply
-              ? `Will write ${shapeName} → ${effectiveLearnerId}.`
-              : 'Choose a shape and learner to apply.'}
-          </div>
+          {!showConfirm ? (
+            <>
+              <button
+                className="btn secondary"
+                type="button"
+                disabled={!canApply || locked}
+                data-action="post-mega-seed-apply"
+                onClick={() => setShowConfirm(true)}
+              >
+                Apply seed
+              </button>
+              <div className="small muted admin-note-spaced">
+                {canApply
+                  ? `Will write ${shapeName} → ${effectiveLearnerId}.`
+                  : 'Choose a shape and learner to apply.'}
+              </div>
+            </>
+          ) : (
+            <AdminConfirmAction
+              level={classification.level}
+              dangerCopy={classification.dangerCopy}
+              targetDisplay={`${shapeName} → ${effectiveLearnerId}`}
+              typedConfirmValue={effectiveLearnerId}
+              onConfirm={() => run(async () => {
+                actions.dispatch('post-mega-seed-apply', {
+                  learnerId: effectiveLearnerId,
+                  shapeName,
+                });
+                setShowConfirm(false);
+              })}
+              onCancel={() => setShowConfirm(false)}
+            />
+          )}
         </div>
       </div>
     </section>
@@ -402,6 +425,10 @@ function GrammarConceptConfidencePanel({ evidence }) {
 
 function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
   const [archiveOpen, setArchiveOpen] = React.useState(false);
+  const [confirmingArchive, setConfirmingArchive] = React.useState(null);
+  const [confirmingDelete, setConfirmingDelete] = React.useState(null);
+  const { locked: archiveLocked, run: runArchive } = useSubmitLock();
+  const { locked: deleteLocked, run: runDelete } = useSubmitLock();
   const liveEntries = Array.isArray(transfer?.evidence) ? transfer.evidence : [];
   const archivedEntries = Array.isArray(transfer?.archive) ? transfer.archive : [];
   if (!learnerId) {
@@ -440,18 +467,32 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
                   </div>
                 </div>
                 <div>
-                  <button
-                    className="btn secondary"
-                    type="button"
-                    data-action="grammar-transfer-admin-archive"
-                    data-prompt-id={entry.promptId}
-                    onClick={() => actions.dispatch('grammar-transfer-admin-archive', {
-                      learnerId,
-                      promptId: entry.promptId,
-                    })}
-                  >
-                    Archive
-                  </button>
+                  {confirmingArchive === entry.promptId ? (
+                    <AdminConfirmAction
+                      level="high"
+                      dangerCopy="This will remove the entry from the learner's active list."
+                      targetDisplay={entry.promptId}
+                      onConfirm={() => runArchive(async () => {
+                        actions.dispatch('grammar-transfer-admin-archive', {
+                          learnerId,
+                          promptId: entry.promptId,
+                        });
+                        setConfirmingArchive(null);
+                      })}
+                      onCancel={() => setConfirmingArchive(null)}
+                    />
+                  ) : (
+                    <button
+                      className="btn secondary"
+                      type="button"
+                      data-action="grammar-transfer-admin-archive"
+                      data-prompt-id={entry.promptId}
+                      disabled={archiveLocked}
+                      onClick={() => setConfirmingArchive(entry.promptId)}
+                    >
+                      Archive
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
@@ -494,18 +535,33 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
                     </div>
                   </div>
                   <div>
-                    <button
-                      className="btn warn"
-                      type="button"
-                      data-action="grammar-transfer-admin-delete"
-                      data-prompt-id={entry.promptId}
-                      onClick={() => actions.dispatch('grammar-transfer-admin-delete', {
-                        learnerId,
-                        promptId: entry.promptId,
-                      })}
-                    >
-                      Delete permanently
-                    </button>
+                    {confirmingDelete === entry.promptId ? (
+                      <AdminConfirmAction
+                        level="critical"
+                        dangerCopy="This will permanently delete the archived entry. This cannot be undone."
+                        targetDisplay={entry.promptId}
+                        typedConfirmValue={entry.promptId}
+                        onConfirm={() => runDelete(async () => {
+                          actions.dispatch('grammar-transfer-admin-delete', {
+                            learnerId,
+                            promptId: entry.promptId,
+                          });
+                          setConfirmingDelete(null);
+                        })}
+                        onCancel={() => setConfirmingDelete(null)}
+                      />
+                    ) : (
+                      <button
+                        className="btn warn"
+                        type="button"
+                        data-action="grammar-transfer-admin-delete"
+                        data-prompt-id={entry.promptId}
+                        disabled={deleteLocked}
+                        onClick={() => setConfirmingDelete(entry.promptId)}
+                      >
+                        Delete permanently
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}
@@ -526,6 +582,12 @@ function GrammarWritingTryAdminPanel({ learnerId, transfer, actions }) {
 // delegate to existing mutation dispatch keys. Designed so multiple cards
 // can be stacked when future asset categories are added.
 function AssetRegistryCard({ entry, model, actions }) {
+  const [selectedRestoreVersion, setSelectedRestoreVersion] = React.useState(null);
+  const [showRestoreConfirm, setShowRestoreConfirm] = React.useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = React.useState(false);
+  const { locked: publishLocked, run: runPublish } = useSubmitLock();
+  const { locked: restoreLocked, run: runRestore } = useSubmitLock();
+
   if (!entry) return null;
 
   const publishedLabel = entry.publishedVersion > 0
@@ -582,40 +644,80 @@ function AssetRegistryCard({ entry, model, actions }) {
           </div>
         </div>
         <div className="actions admin-registry-actions-end">
-          <button
-            className="btn good"
-            type="button"
-            disabled={!entry.canManage || !entry.validationState.ok || !entry.hasDraft}
-            data-action="registry-publish"
-            onClick={() => actions.dispatch('monster-visual-config-publish', {
-              expectedDraftRevision: status.draftRevision,
-            })}
-          >
-            Publish
-          </button>
-          <select
-            className="select"
-            disabled={!entry.canManage || !entry.versions.length}
-            data-action="registry-restore"
-            onChange={(event) => {
-              const version = Number(event.target.value) || 0;
-              if (!version) return;
-              actions.dispatch('monster-visual-config-restore', {
-                version,
-                expectedDraftRevision: status.draftRevision,
-              });
-              event.target.value = '';
-            }}
-            defaultValue=""
-            aria-label="Restore version"
-          >
-            <option value="">Restore version</option>
-            {entry.versions.map((version) => (
-              <option value={version.version} key={version.version}>
-                Version {version.version} - {formatTimestamp(version.publishedAt)}
-              </option>
-            ))}
-          </select>
+          {showPublishConfirm ? (
+            <AdminConfirmAction
+              level="high"
+              dangerCopy="This will publish the current draft to all users."
+              targetDisplay={`Monster Visual Config rev ${String(status.draftRevision)}`}
+              onConfirm={() => runPublish(async () => {
+                actions.dispatch('monster-visual-config-publish', {
+                  expectedDraftRevision: status.draftRevision,
+                });
+                setShowPublishConfirm(false);
+              })}
+              onCancel={() => setShowPublishConfirm(false)}
+            />
+          ) : (
+            <button
+              className="btn good"
+              type="button"
+              disabled={!entry.canManage || !entry.validationState.ok || !entry.hasDraft || publishLocked}
+              data-action="registry-publish"
+              onClick={() => setShowPublishConfirm(true)}
+            >
+              Publish
+            </button>
+          )}
+          <div className="admin-registry-restore-flow">
+            <select
+              className="select"
+              disabled={!entry.canManage || !entry.versions.length || restoreLocked}
+              data-action="registry-restore"
+              value={selectedRestoreVersion != null ? String(selectedRestoreVersion) : ''}
+              onChange={(event) => {
+                const version = Number(event.target.value) || 0;
+                setSelectedRestoreVersion(version || null);
+                setShowRestoreConfirm(false);
+              }}
+              aria-label="Restore version"
+            >
+              <option value="">Restore version</option>
+              {entry.versions.map((version) => (
+                <option value={version.version} key={version.version}>
+                  Version {version.version} - {formatTimestamp(version.publishedAt)}
+                </option>
+              ))}
+            </select>
+            {selectedRestoreVersion && !showRestoreConfirm ? (
+              <button
+                className="btn secondary"
+                type="button"
+                data-action="registry-restore-confirm-trigger"
+                disabled={restoreLocked}
+                onClick={() => setShowRestoreConfirm(true)}
+              >
+                Restore to v{selectedRestoreVersion}
+              </button>
+            ) : null}
+            {showRestoreConfirm && selectedRestoreVersion ? (
+              <AdminConfirmAction
+                level="high"
+                dangerCopy="This will overwrite the current draft with a previous version."
+                targetDisplay={`Restore to v${selectedRestoreVersion}`}
+                onConfirm={() => runRestore(async () => {
+                  actions.dispatch('monster-visual-config-restore', {
+                    version: selectedRestoreVersion,
+                    expectedDraftRevision: status.draftRevision,
+                  });
+                  setSelectedRestoreVersion(null);
+                  setShowRestoreConfirm(false);
+                })}
+                onCancel={() => {
+                  setShowRestoreConfirm(false);
+                }}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
 
