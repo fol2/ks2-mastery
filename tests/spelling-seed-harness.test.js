@@ -625,8 +625,13 @@ test('[U3 HIGH adversarial] admin with membership can overwrite their own learne
 
 test('[U3 P2 security] 11th POST in 60s window from same IP returns 429 post_mega_seed_rate_limited', async () => {
   const server = createWorkerRepositoryServer();
+  const originalDateNow = Date.now;
   try {
     seedAdultAccount(server, { id: 'adult-admin', email: 'admin@example.com', platformRole: 'admin' });
+    // Pin the limiter clock away from a minute boundary. Under the full
+    // parallel Node suite this test can otherwise straddle a 60s bucket
+    // boundary and falsely see the 11th request start a fresh window.
+    Date.now = () => Date.UTC(2026, 3, 28, 10, 15, 30);
     // Fire 10 allowed requests from the same `cf-connecting-ip`. Each uses
     // a distinct requestId so the mutation-receipt preflight does not
     // short-circuit them; the 11th should 429.
@@ -678,6 +683,7 @@ test('[U3 P2 security] 11th POST in 60s window from same IP returns 429 post_meg
     // Sanity: the previous attempts (lastOkStatus) all cleared.
     assert.equal(lastOkStatus, 200);
   } finally {
+    Date.now = originalDateNow;
     server.close();
   }
 });
