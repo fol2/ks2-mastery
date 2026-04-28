@@ -1,3 +1,5 @@
+export const HERO_CLAIM_GRACE_HOURS = 2;
+
 export const HERO_SCHEDULER_VERSION = 'hero-p0-shadow-v1';
 
 export const HERO_P1_SCHEDULER_VERSION = 'hero-p1-launch-v1';
