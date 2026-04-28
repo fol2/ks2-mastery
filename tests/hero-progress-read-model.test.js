@@ -689,3 +689,98 @@ test('completed task persists even if scheduler computes same tasks', () => {
   assert.equal(task.completionStatus, 'completed');
   assert.ok(model.dailyQuest.completedTaskCount >= 1);
 });
+
+// ── U8: Flag hierarchy gating ──────────────────────────────────────────
+
+test('U8: all four flags on → v4 read model with claim block', () => {
+  const allFlagsEnv = {
+    HERO_MODE_SHADOW_ENABLED: 'true',
+    HERO_MODE_LAUNCH_ENABLED: 'true',
+    HERO_MODE_CHILD_UI_ENABLED: 'true',
+    HERO_MODE_PROGRESS_ENABLED: 'true',
+  };
+
+  const model = buildHeroShadowReadModel({
+    learnerId: 'learner-flag-1',
+    accountId: 'account-flag-1',
+    subjectReadModels: makeSubjectReadModels(),
+    now: Date.now(),
+    env: allFlagsEnv,
+    progressEnabled: true,
+    heroProgressState: null,
+    recentCompletedSessions: [],
+  });
+
+  assert.equal(model.version, 4);
+  assert.equal(model.mode, 'progress');
+  assert.ok(model.claim, 'v4 must have claim block');
+  assert.equal(model.claim.enabled, true);
+  assert.equal(model.claim.command, 'claim-task');
+  assert.equal(model.launch.claimEnabled, true);
+  assert.equal(model.launch.heroStatePersistenceEnabled, true);
+  assert.ok(model.progress, 'v4 must have progress block');
+  assert.equal(model.progress.enabled, true);
+  assert.equal(model.writesEnabled, true);
+});
+
+test('U8: progress flag off, other three on → v3 read model, no progress/claim blocks', () => {
+  const noProgressEnv = {
+    HERO_MODE_SHADOW_ENABLED: 'true',
+    HERO_MODE_LAUNCH_ENABLED: 'true',
+    HERO_MODE_CHILD_UI_ENABLED: 'true',
+    HERO_MODE_PROGRESS_ENABLED: 'false',
+  };
+
+  const model = buildHeroShadowReadModel({
+    learnerId: 'learner-flag-2',
+    accountId: 'account-flag-2',
+    subjectReadModels: makeSubjectReadModels(),
+    now: Date.now(),
+    env: noProgressEnv,
+    progressEnabled: false,
+    heroProgressState: null,
+    recentCompletedSessions: [],
+  });
+
+  assert.equal(model.version, 3);
+  assert.equal(model.mode, 'shadow');
+  assert.equal('progress' in model, false, 'v3 must NOT have progress block');
+  assert.equal('claim' in model, false, 'v3 must NOT have claim block');
+  assert.equal(model.launch.claimEnabled, false);
+  assert.equal(model.launch.heroStatePersistenceEnabled, false);
+  assert.equal(model.writesEnabled, false);
+  assert.equal(model.childVisible, true, 'childVisible still true (child-ui flag is on)');
+});
+
+test('U8: progress on but child-ui off → v4 available, debug not stripped (route does stripping)', () => {
+  const progressNoChildUiEnv = {
+    HERO_MODE_SHADOW_ENABLED: 'true',
+    HERO_MODE_LAUNCH_ENABLED: 'true',
+    HERO_MODE_CHILD_UI_ENABLED: 'false',
+    HERO_MODE_PROGRESS_ENABLED: 'true',
+  };
+
+  const model = buildHeroShadowReadModel({
+    learnerId: 'learner-flag-3',
+    accountId: 'account-flag-3',
+    subjectReadModels: makeSubjectReadModels(),
+    now: Date.now(),
+    env: progressNoChildUiEnv,
+    progressEnabled: true,
+    heroProgressState: null,
+    recentCompletedSessions: [],
+  });
+
+  // Progress is still available at the read model layer
+  assert.equal(model.version, 4);
+  assert.equal(model.mode, 'progress');
+  assert.ok(model.progress, 'progress block present');
+  assert.ok(model.claim, 'claim block present');
+  // Child-ui disabled means childVisible is false
+  assert.equal(model.childVisible, false);
+  // Debug block is present (route-level stripping is separate)
+  assert.ok('debug' in model, 'debug present in raw build output');
+  // UI reason reflects child-ui-disabled
+  assert.equal(model.ui.reason, 'child-ui-disabled');
+  assert.equal(model.ui.enabled, false);
+});

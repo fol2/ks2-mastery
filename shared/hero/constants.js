@@ -1,3 +1,5 @@
+export const HERO_MODE_PROGRESS_FLAG = 'HERO_MODE_PROGRESS_ENABLED';
+
 export const HERO_CLAIM_GRACE_HOURS = 2;
 
 export const HERO_SCHEDULER_VERSION = 'hero-p0-shadow-v1';

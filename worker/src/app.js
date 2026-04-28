@@ -1430,6 +1430,14 @@ export function createWorkerApp({
           // P3 U6: claim-task command — full mutation with evidence, CAS, events.
           if (body?.command === 'claim-task') {
             if (!envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_claim_disabled_attempt',
+                  learnerId: body?.learnerId,
+                  command: body?.command,
+                }));
+              } catch { /* best-effort */ }
               return json({ ok: false, error: { code: 'hero_claim_disabled', message: 'Hero progress is not enabled' } }, 404);
             }
             if (!envFlagEnabled(env.HERO_MODE_CHILD_UI_ENABLED)) {
