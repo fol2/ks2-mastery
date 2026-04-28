@@ -10,6 +10,7 @@ import {
 import {
   createPunctuationGeneratedItems,
   createPunctuationRuntimeManifest,
+  GENERATED_TEMPLATE_BANK,
 } from '../shared/punctuation/generators.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
@@ -420,6 +421,262 @@ export function formatPunctuationContentAudit(audit) {
   return `${lines.join('\n')}\n`;
 }
 
+// ─── Reviewer report helpers ────────────────────────────────────────────────
+
+function groupByNormalisedText(items, textFn) {
+  const groups = new Map();
+  for (const item of items) {
+    const text = normaliseAuditText(textFn(item));
+    if (!text) continue;
+    if (!groups.has(text)) groups.set(text, []);
+    groups.get(text).push(item.id);
+  }
+  return [...groups.entries()]
+    .filter(([, ids]) => ids.length > 1)
+    .map(([key, ids]) => ({ key, ids: ids.sort(), count: ids.length }))
+    .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
+}
+
+function isDslBackedFamily(familyId) {
+  const templates = GENERATED_TEMPLATE_BANK[familyId];
+  if (!templates || !templates.length) return false;
+  return templates.some((t) => isPlainObject(t.tests));
+}
+
+export function buildReviewerReport({
+  audit,
+  manifest = PUNCTUATION_CONTENT_MANIFEST,
+  generatedItems = [],
+  capacityDepth = 8,
+}) {
+  // 1. Top duplicate generated stems
+  const duplicateStems = groupByNormalisedText(generatedItems, (item) => item.stem).slice(0, 10);
+
+  // 2. Top duplicate generated models
+  const duplicateModels = groupByNormalisedText(generatedItems, (item) => item.model).slice(0, 10);
+
+  // 3. Per-family spare capacity at capacityDepth
+  const perFamilyCapacity = audit.generatorFamilies
+    .filter((f) => f.published)
+    .map((f) => {
+      const productionSignatures = f.variantSignatures.length;
+      // To compute capacity at depth 8 we check the template bank size
+      const bankTemplates = GENERATED_TEMPLATE_BANK[f.id] || [];
+      const distinctAtCapacity = Math.min(bankTemplates.length, capacityDepth);
+      const spareCapacity = Math.max(0, distinctAtCapacity - productionSignatures);
+      return {
+        familyId: f.id,
+        productionSignatures,
+        capacitySignatures: distinctAtCapacity,
+        spareCapacity,
+        isDsl: isDslBackedFamily(f.id),
+      };
+    });
+
+  // 4. Per-skill mode coverage
+  const perSkillModes = audit.bySkill.map((row) => ({
+    skillId: row.skillId,
+    modes: row.modeCoverage,
+  }));
+
+  // 5. Per-skill validator/rubric coverage
+  const perSkillValidatorCoverage = audit.bySkill.map((row) => ({
+    skillId: row.skillId,
+    validatorCoverageCount: row.validatorCoverageCount,
+    totalRuntimeItems: row.runtimeItemCount,
+    hasValidators: row.validatorCoverageCount > 0,
+  }));
+
+  // 6. Per-family template count
+  const perFamilyTemplateCount = audit.generatorFamilies
+    .filter((f) => f.published)
+    .map((f) => ({
+      familyId: f.id,
+      templateCount: f.templateIds.length,
+      isDsl: isDslBackedFamily(f.id),
+    }));
+
+  // 7. Per-family signature count
+  const perFamilySignatureCount = audit.generatorFamilies
+    .filter((f) => f.published)
+    .map((f) => ({
+      familyId: f.id,
+      signatureCount: f.variantSignatures.length,
+    }));
+
+  // 8. Generated model-answer marking failures (already computed)
+  const modelFailures = audit.generatedModelFailures || [];
+
+  // 9. Templates missing accept/reject tests
+  const templatesMissingTests = [];
+  for (const [familyId, templates] of Object.entries(GENERATED_TEMPLATE_BANK)) {
+    if (!isDslBackedFamily(familyId)) continue;
+    for (let i = 0; i < templates.length; i += 1) {
+      const t = templates[i];
+      if (!isPlainObject(t.tests)) {
+        templatesMissingTests.push({ familyId, templateIndex: i });
+      }
+    }
+  }
+
+  // 10. Templates with no alternate-answer test
+  const templatesNoAlternateTest = [];
+  const ALTERNATE_FAMILIES = new Set(['dash_clause', 'apostrophe', 'speech']);
+  for (const [familyId, templates] of Object.entries(GENERATED_TEMPLATE_BANK)) {
+    if (!isDslBackedFamily(familyId)) continue;
+    const familySkillHint = familyId.replace(/^gen_/, '').replace(/_(?:fix|insert|combine)$/, '');
+    const needsAlternates = [...ALTERNATE_FAMILIES].some((s) => familySkillHint.includes(s));
+    if (!needsAlternates) continue;
+    for (let i = 0; i < templates.length; i += 1) {
+      const t = templates[i];
+      if (!isPlainObject(t.tests)) continue;
+      const acceptArray = Array.isArray(t.tests.accept) ? t.tests.accept : [];
+      if (acceptArray.length <= 1) {
+        templatesNoAlternateTest.push({
+          familyId,
+          templateIndex: i,
+          model: t.model || '',
+        });
+      }
+    }
+  }
+
+  // 11. Families using legacy non-DSL templates
+  const legacyFamilies = Object.keys(GENERATED_TEMPLATE_BANK)
+    .filter((familyId) => !isDslBackedFamily(familyId))
+    .sort();
+
+  return {
+    duplicateStems,
+    duplicateModels,
+    perFamilyCapacity,
+    perSkillModes,
+    perSkillValidatorCoverage,
+    perFamilyTemplateCount,
+    perFamilySignatureCount,
+    modelFailures,
+    templatesMissingTests,
+    templatesNoAlternateTest,
+    legacyFamilies,
+    capacityDepth,
+  };
+}
+
+export function formatReviewerReport(report) {
+  const lines = [
+    '',
+    '═══════════════════════════════════════════════════════════',
+    'REVIEWER REPORT (informational — does not affect exit code)',
+    '═══════════════════════════════════════════════════════════',
+    '',
+  ];
+
+  // 1. Top duplicate stems
+  lines.push('1. Top duplicate generated stems:');
+  if (report.duplicateStems.length === 0) {
+    lines.push('   (none)');
+  } else {
+    for (const entry of report.duplicateStems) {
+      lines.push(`   [${entry.count}x] "${entry.key}" — ${entry.ids.join(', ')}`);
+    }
+  }
+  lines.push('');
+
+  // 2. Top duplicate models
+  lines.push('2. Top duplicate generated models:');
+  if (report.duplicateModels.length === 0) {
+    lines.push('   (none)');
+  } else {
+    for (const entry of report.duplicateModels) {
+      lines.push(`   [${entry.count}x] "${entry.key}" — ${entry.ids.join(', ')}`);
+    }
+  }
+  lines.push('');
+
+  // 3. Per-family spare capacity
+  lines.push(`3. Per-family spare capacity at generatedPerFamily = ${report.capacityDepth}:`);
+  for (const row of report.perFamilyCapacity) {
+    const tag = row.isDsl ? '' : ' [legacy]';
+    lines.push(`   - ${row.familyId}: production=${row.productionSignatures}, capacity=${row.capacitySignatures}, spare=${row.spareCapacity}${tag}`);
+  }
+  lines.push('');
+
+  // 4. Per-skill mode coverage
+  lines.push('4. Per-skill mode coverage:');
+  for (const row of report.perSkillModes) {
+    lines.push(`   - ${row.skillId}: ${row.modes.join(', ') || '(none)'}`);
+  }
+  lines.push('');
+
+  // 5. Per-skill validator/rubric coverage
+  lines.push('5. Per-skill validator/rubric coverage:');
+  for (const row of report.perSkillValidatorCoverage) {
+    lines.push(`   - ${row.skillId}: ${row.validatorCoverageCount}/${row.totalRuntimeItems} items`);
+  }
+  lines.push('');
+
+  // 6. Per-family template count
+  lines.push('6. Per-family template count:');
+  for (const row of report.perFamilyTemplateCount) {
+    const tag = row.isDsl ? ' [DSL]' : ' [legacy]';
+    lines.push(`   - ${row.familyId}: ${row.templateCount}${tag}`);
+  }
+  lines.push('');
+
+  // 7. Per-family signature count
+  lines.push('7. Per-family signature count (production depth):');
+  for (const row of report.perFamilySignatureCount) {
+    lines.push(`   - ${row.familyId}: ${row.signatureCount}`);
+  }
+  lines.push('');
+
+  // 8. Generated model-answer marking failures
+  lines.push('8. Generated model-answer marking failures:');
+  if (report.modelFailures.length === 0) {
+    lines.push('   (none)');
+  } else {
+    for (const f of report.modelFailures) {
+      lines.push(`   - ${f.id} (${f.familyId}/${f.templateId})`);
+    }
+  }
+  lines.push('');
+
+  // 9. Templates missing accept/reject tests
+  lines.push('9. Templates missing accept/reject tests:');
+  if (report.templatesMissingTests.length === 0) {
+    lines.push('   (none)');
+  } else {
+    for (const entry of report.templatesMissingTests) {
+      lines.push(`   - ${entry.familyId} [template index ${entry.templateIndex}]`);
+    }
+  }
+  lines.push('');
+
+  // 10. Templates with no alternate-answer test
+  lines.push('10. Templates with no alternate-answer test (dash/apostrophe/speech):');
+  if (report.templatesNoAlternateTest.length === 0) {
+    lines.push('   (none)');
+  } else {
+    for (const entry of report.templatesNoAlternateTest) {
+      lines.push(`   - ${entry.familyId} [template index ${entry.templateIndex}]: "${entry.model}"`);
+    }
+  }
+  lines.push('');
+
+  // 11. Legacy non-DSL families
+  lines.push('11. Families using legacy non-DSL templates:');
+  if (report.legacyFamilies.length === 0) {
+    lines.push('   (none)');
+  } else {
+    for (const familyId of report.legacyFamilies) {
+      lines.push(`   - ${familyId}`);
+    }
+  }
+  lines.push('');
+
+  return `${lines.join('\n')}\n`;
+}
+
 class CliUsageError extends Error {
   constructor(message) {
     super(message);
@@ -501,6 +758,7 @@ function parseArgs(argv, { manifest = PUNCTUATION_CONTENT_MANIFEST } = {}) {
   return {
     json: args.has('--json'),
     strict: args.has('--strict'),
+    reviewerReport: args.has('--reviewer-report'),
     failOnDuplicateGeneratedSignatures: args.has('--fail-on-duplicate-generated-signatures')
       || args.has('--fail-on-duplicate-generated-content'),
     failOnDuplicateGeneratedContent: args.has('--fail-on-duplicate-generated-content'),
@@ -592,6 +850,23 @@ async function main() {
     ? `${JSON.stringify(audit, null, 2)}\n`
     : formatPunctuationContentAudit(audit));
   if (!audit.ok) process.exitCode = 1;
+
+  if (args.reviewerReport) {
+    const generatedItems = createPunctuationGeneratedItems({
+      seed: PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation-audit',
+      perFamily: args.generatedPerFamily,
+    });
+    const report = buildReviewerReport({
+      audit,
+      generatedItems,
+      capacityDepth: 8,
+    });
+    if (args.json) {
+      process.stdout.write(`${JSON.stringify({ reviewerReport: report }, null, 2)}\n`);
+    } else {
+      process.stdout.write(formatReviewerReport(report));
+    }
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

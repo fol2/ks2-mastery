@@ -123,7 +123,7 @@ function uniqueStrings(values = []) {
   return [...new Set(values.filter((entry) => typeof entry === 'string' && entry))];
 }
 
-const GENERATED_TEMPLATE_BANK = Object.freeze({
+export const GENERATED_TEMPLATE_BANK = Object.freeze({
   gen_sentence_endings_insert: expandDslTemplates(sentenceEndingsInsertDsl, { embedTemplateId: false }),
   gen_apostrophe_contractions_fix: expandDslTemplates(apostropheContractionsDsl, { embedTemplateId: false }),
   gen_apostrophe_possession_insert: Object.freeze([

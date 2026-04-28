@@ -9,7 +9,12 @@ import {
   validatePunctuationManifest,
 } from '../shared/punctuation/content.js';
 import {
+  createPunctuationGeneratedItems,
+} from '../shared/punctuation/generators.js';
+import {
   runPunctuationContentAudit,
+  buildReviewerReport,
+  formatReviewerReport,
 } from '../scripts/audit-punctuation-content.mjs';
 
 const auditCliPath = fileURLToPath(new URL('../scripts/audit-punctuation-content.mjs', import.meta.url));
@@ -600,4 +605,136 @@ test('punctuation content audit CLI rejects unknown by-family threshold ids', ()
   assert.equal(result.status, 2);
   assert.equal(result.stdout, '');
   assert.match(result.stderr, /Unknown generator family id "unknown_family" in --min-generated-by-family/);
+});
+
+test('punctuation content audit --reviewer-report passes strict gate AND produces reviewer section', () => {
+  const result = runAuditCli([
+    '--strict',
+    '--generated-per-family',
+    '4',
+    '--reviewer-report',
+  ]);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /REVIEWER REPORT/);
+  assert.match(result.stdout, /Top duplicate generated stems/);
+  assert.match(result.stdout, /Top duplicate generated models/);
+  assert.match(result.stdout, /Per-family spare capacity/);
+  assert.match(result.stdout, /Per-skill mode coverage/);
+  assert.match(result.stdout, /Per-skill validator\/rubric coverage/);
+  assert.match(result.stdout, /Per-family template count/);
+  assert.match(result.stdout, /Per-family signature count/);
+  assert.match(result.stdout, /Generated model-answer marking failures/);
+  assert.match(result.stdout, /Templates missing accept\/reject tests/);
+  assert.match(result.stdout, /Templates with no alternate-answer test/);
+  assert.match(result.stdout, /Families using legacy non-DSL templates/);
+});
+
+test('punctuation content audit reviewer report shows capacity at depth 8 for converted families', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-capacity-depth',
+    generatedPerFamily: 4,
+    thresholds: {
+      failOnDuplicateGeneratedSignatures: true,
+      minGeneratedItemsPerPublishedFamily: 4,
+      minSignaturesPerPublishedFamily: 4,
+    },
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-capacity-depth',
+    perFamily: 4,
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+  });
+
+  assert.equal(audit.ok, true, audit.failures.join('\n'));
+
+  // DSL-backed priority families have 8 templates, so capacity >= 8
+  for (const familyId of P2_U6_PRIORITY_CAPACITY_FAMILIES) {
+    const row = report.perFamilyCapacity.find((entry) => entry.familyId === familyId);
+    assert.ok(row, `${familyId} must be in capacity report`);
+    assert.equal(row.isDsl, true, `${familyId} must be DSL-backed`);
+    assert.ok(row.capacitySignatures >= 8, `${familyId} capacity must be >= 8, got ${row.capacitySignatures}`);
+  }
+});
+
+test('punctuation content audit reviewer report lists non-converted families as legacy', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-legacy-detect',
+    generatedPerFamily: 1,
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-legacy-detect',
+    perFamily: 1,
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+  });
+
+  // Legacy families exist (not all families are DSL-backed)
+  assert.ok(report.legacyFamilies.length > 0, 'There must be legacy families');
+  // Verify legacy families are NOT DSL-backed
+  for (const familyId of report.legacyFamilies) {
+    const capacityRow = report.perFamilyCapacity.find((entry) => entry.familyId === familyId);
+    if (capacityRow) {
+      assert.equal(capacityRow.isDsl, false, `${familyId} must be flagged as non-DSL`);
+    }
+  }
+});
+
+test('punctuation content audit reviewer report does not crash with empty generated items', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-no-dupes',
+    generatedPerFamily: 1,
+  });
+  // Pass an empty generated items array to guarantee zero duplicates
+  const report = buildReviewerReport({
+    audit,
+    generatedItems: [],
+    capacityDepth: 8,
+  });
+
+  // Zero items means zero duplicates
+  assert.deepEqual(report.duplicateStems, []);
+  assert.deepEqual(report.duplicateModels, []);
+
+  // Ensure all section arrays are present (no crash on empty)
+  assert.ok(Array.isArray(report.perFamilyCapacity));
+  assert.ok(Array.isArray(report.perSkillModes));
+  assert.ok(Array.isArray(report.perSkillValidatorCoverage));
+  assert.ok(Array.isArray(report.perFamilyTemplateCount));
+  assert.ok(Array.isArray(report.perFamilySignatureCount));
+  assert.ok(Array.isArray(report.modelFailures));
+  assert.ok(Array.isArray(report.templatesMissingTests));
+  assert.ok(Array.isArray(report.templatesNoAlternateTest));
+  assert.ok(Array.isArray(report.legacyFamilies));
+
+  // Formatting does not throw
+  const text = formatReviewerReport(report);
+  assert.match(text, /REVIEWER REPORT/);
+  assert.match(text, /\(none\)/);
+});
+
+test('punctuation content audit --min-signatures-by-family passes for converted families at depth 8', () => {
+  const signatureThresholds = Object.fromEntries(
+    P2_U6_PRIORITY_CAPACITY_FAMILIES.map((familyId) => [familyId, 8]),
+  );
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-sig-by-family',
+    generatedPerFamily: 8,
+    thresholds: {
+      minSignaturesByFamily: signatureThresholds,
+    },
+  });
+
+  assert.equal(audit.ok, true, audit.failures.join('\n'));
+  for (const familyId of P2_U6_PRIORITY_CAPACITY_FAMILIES) {
+    const row = audit.generatorFamilies.find((entry) => entry.id === familyId);
+    assert.ok(row.variantSignatures.length >= 8, `${familyId} signatures must be >= 8, got ${row.variantSignatures.length}`);
+  }
 });
