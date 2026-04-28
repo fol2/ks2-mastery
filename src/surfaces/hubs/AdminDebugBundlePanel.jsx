@@ -6,6 +6,11 @@ import {
   isSectionEmpty,
   formatBundleTimestamp,
 } from '../../platform/hubs/admin-debug-bundle-panel.js';
+import {
+  COPY_AUDIENCE,
+  prepareSafeCopy,
+  copyToClipboard,
+} from '../../platform/hubs/admin-safe-copy.js';
 
 // U8 (P4): Debug Bundle panel — extracted from AdminDebuggingSection.jsx.
 // Contains DebugBundlePanel + DebugBundleSectionTable + DebugBundleResult.
@@ -194,26 +199,20 @@ export function DebugBundlePanel({ model, actions }) {
 
   const copyJson = async () => {
     if (!canExportJson || !bundleData?.bundle) return;
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(bundleData.bundle, null, 2));
-      setCopyFeedback('JSON copied');
-      setTimeout(() => setCopyFeedback(''), 2000);
-    } catch {
-      setCopyFeedback('Copy failed');
-      setTimeout(() => setCopyFeedback(''), 2000);
-    }
+    const prepared = prepareSafeCopy(bundleData.bundle, COPY_AUDIENCE.ADMIN_ONLY);
+    if (!prepared.ok) { setCopyFeedback('Nothing to copy'); setTimeout(() => setCopyFeedback(''), 2000); return; }
+    const result = await copyToClipboard(prepared.text);
+    setCopyFeedback(result.ok ? 'JSON copied' : 'Copy failed');
+    setTimeout(() => setCopyFeedback(''), 2000);
   };
 
   const copySummary = async () => {
     if (!humanSummary) return;
-    try {
-      await navigator.clipboard.writeText(humanSummary);
-      setCopyFeedback('Summary copied');
-      setTimeout(() => setCopyFeedback(''), 2000);
-    } catch {
-      setCopyFeedback('Copy failed');
-      setTimeout(() => setCopyFeedback(''), 2000);
-    }
+    const prepared = prepareSafeCopy(bundleData, COPY_AUDIENCE.PARENT_SAFE);
+    const text = prepared.ok ? (JSON.parse(prepared.text).body || humanSummary) : humanSummary;
+    const result = await copyToClipboard(text);
+    setCopyFeedback(result.ok ? 'Summary copied' : 'Copy failed');
+    setTimeout(() => setCopyFeedback(''), 2000);
   };
 
   return (
