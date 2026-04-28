@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from '../scripts/lib/seo-practice-pages.mjs';
 
 test('public build emits the React app bundle entrypoint', () => {
   execFileSync(process.execPath, ['./scripts/build-bundles.mjs'], { stdio: 'ignore' });
@@ -13,6 +14,10 @@ test('public build emits the React app bundle entrypoint', () => {
   const indexHtml = readFileSync('dist/public/index.html', 'utf8');
   const robotsTxt = readFileSync('dist/public/robots.txt', 'utf8');
   const sitemapXml = readFileSync('dist/public/sitemap.xml', 'utf8');
+  const practicePages = new Map(PRACTICE_SEO_PAGES.map((page) => [
+    page.slug,
+    readFileSync(`dist/public/${page.slug}/index.html`, 'utf8'),
+  ]));
   const cspHashArtefact = readFileSync('dist/public/.csp-theme-hash', 'utf8');
   const appBundle = readFileSync('dist/public/src/bundles/app.bundle.js', 'utf8');
   const expectedAppBundleVersion = createHash('sha256').update(appBundle).digest('hex').slice(0, 12);
@@ -26,13 +31,38 @@ test('public build emits the React app bundle entrypoint', () => {
   assert.match(indexHtml, /<link rel="canonical" href="https:\/\/ks2\.eugnel\.uk\/" \/>/);
   assert.match(indexHtml, /application\/ld\+json/);
   assert.match(indexHtml, /KS2 spelling, grammar and punctuation practice/);
+  assert.match(indexHtml, /href="\/ks2-spelling-practice\/"/);
+  assert.match(indexHtml, /href="\/ks2-grammar-practice\/"/);
+  assert.match(indexHtml, /href="\/ks2-punctuation-practice\/"/);
   assert.match(robotsTxt, /Disallow: \/api\//);
   assert.match(robotsTxt, /Disallow: \/admin/);
   assert.match(robotsTxt, /Disallow: \/demo/);
+  assert.doesNotMatch(robotsTxt, /User-agent:\s*OAI-SearchBot[\s\S]*?Disallow:\s*\//i);
   assert.match(robotsTxt, /Sitemap: https:\/\/ks2\.eugnel\.uk\/sitemap\.xml/);
   assert.doesNotMatch(robotsTxt, /<!doctype html|<html/i);
   assert.match(sitemapXml, /<loc>https:\/\/ks2\.eugnel\.uk\/<\/loc>/);
-  assert.doesNotMatch(sitemapXml, /\/api\/|\/admin|localhost|127\.0\.0\.1/);
+  const sitemapLocs = Array.from(sitemapXml.matchAll(/<loc>([^<]+)<\/loc>/giu), (match) => match[1]);
+  assert.deepEqual(sitemapLocs, [
+    'https://ks2.eugnel.uk/',
+    ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+  ]);
+  for (const page of PRACTICE_SEO_PAGES) {
+    assert.match(sitemapXml, new RegExp(`<loc>${canonicalPracticePageUrl(page).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</loc>`));
+  }
+  assert.doesNotMatch(sitemapXml, /\/api\/|\/admin|\/demo|\.html|localhost|127\.0\.0\.1/);
+  for (const page of PRACTICE_SEO_PAGES) {
+    const html = practicePages.get(page.slug);
+    assert.ok(html, `${page.slug} should be emitted as a static page`);
+    assert.match(html, new RegExp(`<title>${page.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</title>`));
+    assert.match(html, new RegExp(`<link rel="canonical" href="${canonicalPracticePageUrl(page).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" \\/>`));
+    assert.match(html, new RegExp(`<h1>${page.heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</h1>`));
+    assert.match(html, /href="\/demo"/);
+    assert.match(html, /KS2 Mastery home/);
+    for (const point of page.points) {
+      assert.match(html, new RegExp(point.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    }
+    assert.doesNotMatch(html, /app\.bundle\.js|id="app"|application\/ld\+json|<script/i);
+  }
   assert.ok(
     cspHashArtefact.split(/\r?\n/u).filter(Boolean).length >= 2,
     'CSP hash artefact should list both theme and JSON-LD inline script hashes',

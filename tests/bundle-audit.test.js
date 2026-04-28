@@ -13,6 +13,10 @@ import {
   assertCacheSplitRules,
   parseHeadersBlocks,
 } from '../scripts/lib/headers-drift.mjs';
+import {
+  PRACTICE_SEO_PAGES,
+  canonicalPracticePageUrl,
+} from '../scripts/lib/seo-practice-pages.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -679,6 +683,31 @@ function seoAuditRootHtml({ omitCanonical = false } = {}) {
   ].join('');
 }
 
+function seoAuditPracticePageHtml(page, { omitCanonical = false, forbiddenToken = '' } = {}) {
+  const canonicalUrl = canonicalPracticePageUrl(page);
+  return [
+    '<!doctype html><html lang="en-GB"><head>',
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}" />`,
+    omitCanonical ? '' : `<link rel="canonical" href="${canonicalUrl}" />`,
+    `<meta property="og:title" content="${page.title}" />`,
+    `<meta property="og:description" content="${page.description}" />`,
+    `<meta property="og:url" content="${canonicalUrl}" />`,
+    '<meta name="twitter:card" content="summary" />',
+    '</head><body>',
+    `<main><h1>${page.heading}</h1>`,
+    `<p>${page.intro}</p>`,
+    '<ul>',
+    ...page.points.map((point) => `<li>${point}</li>`),
+    '</ul>',
+    forbiddenToken ? `<p>${forbiddenToken}</p>` : '',
+    '<a href="/demo">Try demo</a>',
+    '<a href="/">KS2 Mastery home</a>',
+    '</main>',
+    '</body></html>',
+  ].join('');
+}
+
 function createSeoAuditStubServer(options = {}) {
   const server = createServer((request, response) => {
     const url = request.url || '/';
@@ -691,6 +720,21 @@ function createSeoAuditStubServer(options = {}) {
     if (url === '/' || url === '/index.html') {
       write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml(options));
       return;
+    }
+    for (const page of PRACTICE_SEO_PAGES) {
+      if (url === `/${page.slug}/`) {
+        if (options.practiceFallbackSlug === page.slug) {
+          write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml());
+          return;
+        }
+        write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditPracticePageHtml(page, {
+          omitCanonical: options.omitPracticeCanonicalSlug === page.slug,
+          forbiddenToken: options.practiceForbiddenTokenSlug === page.slug
+            ? 'OPENAI_API_KEY'
+            : '',
+        }));
+        return;
+      }
     }
     if (url === '/robots.txt') {
       if (options.robotsFallback) {
@@ -710,12 +754,26 @@ function createSeoAuditStubServer(options = {}) {
       return;
     }
     if (url === '/sitemap.xml') {
+      const sitemapUrls = [
+        'https://ks2.eugnel.uk/',
+        ...PRACTICE_SEO_PAGES
+          .filter((page) => page.slug !== options.omitSitemapPageSlug)
+          .map((page) => canonicalPracticePageUrl(page)),
+      ];
+      if (options.sitemapForbiddenPath) {
+        sitemapUrls.push(`https://ks2.eugnel.uk${options.sitemapForbiddenPath}`);
+      }
+      if (options.sitemapExtraUrl) {
+        sitemapUrls.push(options.sitemapExtraUrl);
+      }
       write(200, { 'content-type': 'application/xml', 'cache-control': 'public, max-age=3600' }, [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-        '  <url>',
-        '    <loc>https://ks2.eugnel.uk/</loc>',
-        '  </url>',
+        ...sitemapUrls.flatMap((url) => [
+          '  <url>',
+          `    <loc>${url}</loc>`,
+          '  </url>',
+        ]),
         '</urlset>',
         '',
       ].join('\n'));
@@ -806,9 +864,156 @@ test('production bundle audit passes with SEO root, robots, and sitemap resource
       timeout: 8000,
     });
     assert.match(stdout, /Production bundle audit passed/);
-    assert.match(stdout, /cache-split checks: 7\/7/);
+    assert.match(stdout, /cache-split checks: 10\/10/);
   } finally {
     await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when a practice page is SPA fallback HTML', async () => {
+  const server = createSeoAuditStubServer({ practiceFallbackSlug: 'ks2-spelling-practice' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production SEO page \/ks2-spelling-practice\/ appears to be the root SPA shell/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when a practice page canonical URL disappears', async () => {
+  const server = createSeoAuditStubServer({ omitPracticeCanonicalSlug: 'ks2-grammar-practice' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production SEO page \/ks2-grammar-practice\/ is missing required token: <link rel="canonical"/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when a practice page leaks forbidden deployed text', async () => {
+  const server = createSeoAuditStubServer({ practiceForbiddenTokenSlug: 'ks2-punctuation-practice' });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = server.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production SEO page \/ks2-punctuation-practice\/ includes forbidden deployed token: OPENAI_API_KEY/);
+      return true;
+    });
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('production bundle audit fails when sitemap misses or leaks practice-page URLs', async () => {
+  const missingServer = createSeoAuditStubServer({ omitSitemapPageSlug: 'ks2-punctuation-practice' });
+  await new Promise((resolve) => missingServer.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = missingServer.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production sitemap.xml is missing required token: <loc>https:\/\/ks2\.eugnel\.uk\/ks2-punctuation-practice\/<\/loc>/);
+      return true;
+    });
+  } finally {
+    await closeServer(missingServer);
+  }
+
+  const leakServer = createSeoAuditStubServer({ sitemapForbiddenPath: '/demo' });
+  await new Promise((resolve) => leakServer.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = leakServer.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production sitemap.xml must not advertise private or local path: \/demo/);
+      return true;
+    });
+  } finally {
+    await closeServer(leakServer);
+  }
+
+  const extraServer = createSeoAuditStubServer({ sitemapExtraUrl: 'https://ks2.eugnel.uk/unplanned-public-page/' });
+  await new Promise((resolve) => extraServer.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const { port } = extraServer.address();
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, [
+        './scripts/production-bundle-audit.mjs',
+        '--skip-local',
+        '--url',
+        `http://127.0.0.1:${port}/`,
+      ], {
+        cwd: process.cwd(),
+        timeout: 8000,
+      });
+    }, (error) => {
+      assert.match(error.stderr, /Production sitemap\.xml must contain exactly/);
+      assert.match(error.stderr, /Unexpected: https:\/\/ks2\.eugnel\.uk\/unplanned-public-page\//);
+      return true;
+    });
+  } finally {
+    await closeServer(extraServer);
   }
 });
 
