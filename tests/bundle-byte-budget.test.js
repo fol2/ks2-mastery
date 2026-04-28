@@ -62,6 +62,11 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 // gate when ~50 KB of adult-only JS sneaks back into the critical path.
 const BASELINE_GZIP_BYTES = 203_227;
 const BUDGET_GZIP_BYTES = 215_000;
+const TEST_MODE_BUNDLE_MARKER = '__ks2_capacityMeta__';
+
+function isPlaywrightTestModeBundle(bundleBytes) {
+  return Buffer.isBuffer(bundleBytes) && bundleBytes.includes(TEST_MODE_BUNDLE_MARKER);
+}
 
 test('SH2-U10 baseline + budget constants stay in a sensible ratio', () => {
   // Guard rail: budget must exceed baseline, or every build fails.
@@ -92,6 +97,14 @@ test('real post-split app.bundle.js gzip size sits under the committed budget', 
     // contract the rest of the bundle-audit tests follow.
     return;
   }
+  if (isPlaywrightTestModeBundle(bundleBytes)) {
+    console.log(
+      'SH2-U10 budget note: skipping the real bundle-size assertion because '
+      + 'src/bundles/app.bundle.js is a Playwright KS2_BUILD_MODE=test artefact, '
+      + 'not the production bundle audited by npm run check.',
+    );
+    return;
+  }
   const gzipBytes = gzipSync(bundleBytes).byteLength;
   assert.ok(
     gzipBytes < BUDGET_GZIP_BYTES,
@@ -106,6 +119,11 @@ test('real post-split app.bundle.js gzip size sits under the committed budget', 
       + `${BASELINE_GZIP_BYTES}-byte committed baseline. Consider re-baselining.`,
     );
   }
+});
+
+test('bundle budget recognises Playwright test-mode bundle artefacts', () => {
+  assert.equal(isPlaywrightTestModeBundle(Buffer.from('globalThis.__ks2_capacityMeta__ = {};')), true);
+  assert.equal(isPlaywrightTestModeBundle(Buffer.from('console.log("production bundle");')), false);
 });
 
 test('runClientBundleAudit accepts a bundle below the passed budget', async () => {
