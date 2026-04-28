@@ -208,9 +208,9 @@ export function DebugBundlePanel({ model, actions }) {
 
   const copySummary = async () => {
     if (!humanSummary) return;
-    const prepared = prepareSafeCopy(bundleData, COPY_AUDIENCE.PARENT_SAFE);
-    const text = prepared.ok ? (JSON.parse(prepared.text).body || humanSummary) : humanSummary;
-    const result = await copyToClipboard(text);
+    const prepared = prepareSafeCopy(humanSummary, COPY_AUDIENCE.PARENT_SAFE);
+    if (!prepared.ok) { setCopyFeedback('Nothing to copy'); setTimeout(() => setCopyFeedback(''), 2000); return; }
+    const result = await copyToClipboard(prepared.text);
     setCopyFeedback(result.ok ? 'Summary copied' : 'Copy failed');
     setTimeout(() => setCopyFeedback(''), 2000);
   };

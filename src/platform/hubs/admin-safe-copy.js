@@ -69,7 +69,7 @@ function stripRequestBodies(obj) {
     return obj;
   }
   for (const key of Object.keys(obj)) {
-    if (key === 'requestBody' || key === 'rawBody' || key === 'body') {
+    if (key === 'requestBody' || key === 'rawBody') {
       delete obj[key];
     } else if (typeof obj[key] === 'object') {
       stripRequestBodies(obj[key]);
