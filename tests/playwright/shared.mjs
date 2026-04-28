@@ -113,6 +113,17 @@ export async function openSubject(page, subjectId) {
   await card.click();
 }
 
+export async function focusSubjectCard(page, subjectId) {
+  if (!SUBJECT_IDS.includes(subjectId)) {
+    throw new Error(`focusSubjectCard: unknown subjectId ${subjectId}`);
+  }
+  const card = page.locator(
+    `.subject-card[data-action="open-subject"][data-subject-id="${subjectId}"]`,
+  );
+  await expect(card).toBeVisible();
+  await card.focus();
+}
+
 /**
  * Navigate back to the home grid via the brand / breadcrumb button that
  * every subject surface ships. Used between subject scenes and after

@@ -42,6 +42,7 @@ import { test, expect } from '@playwright/test';
 import {
   applyDeterminism,
   createDemoSession,
+  focusSubjectCard,
 } from './shared.mjs';
 
 const TOAST_SHELF = '[data-testid="toast-shelf"]';
@@ -91,7 +92,7 @@ test.describe('accessibility golden — keyboard-only spelling round-trip', () =
     // card programmatically, then press Enter to activate it. The
     // keyboard-only contract we actually care about is that Enter on
     // the focused card opens the subject.
-    await page.locator('[data-action="open-subject"][data-subject-id="spelling"]').focus();
+    await focusSubjectCard(page, 'spelling');
     await page.keyboard.press('Enter');
 
     const start = page.locator('[data-action="spelling-start"]');
@@ -125,7 +126,7 @@ test.describe('accessibility golden — keyboard-only spelling round-trip', () =
   // ---------------------------------------------------------------
   test('Enter inside the session input submits the form and feedback renders', async ({ page }) => {
     await createDemoSession(page);
-    await page.locator('[data-action="open-subject"][data-subject-id="spelling"]').focus();
+    await focusSubjectCard(page, 'spelling');
     await page.keyboard.press('Enter');
     const start = page.locator('[data-action="spelling-start"]');
     await expect(start).toBeVisible();
@@ -171,7 +172,7 @@ test.describe('accessibility golden — keyboard-only spelling round-trip', () =
     // does not, the positive branch is skipped (the container-less
     // null render is itself compliant — there is no element to
     // announce).
-    await page.locator('[data-action="open-subject"][data-subject-id="spelling"]').focus();
+    await focusSubjectCard(page, 'spelling');
     await page.keyboard.press('Enter');
     const start = page.locator('[data-action="spelling-start"]');
     await expect(start).toBeVisible();
