@@ -186,9 +186,9 @@ Certification-tier runs (learners >= 20) MUST be invoked with a pinned threshold
 
 | Date | Commit | Env | Plan | Learners | Burst | Rounds | P95 Bootstrap | P95 Command | Max Bytes | 5xx | Signals | Decision | Evidence |
 | --- | --- | --- | --- | --: | --: | --: | --: | --: | --: | --: | --- | --- | --- |
-| 2026-04-27 | cbf39ec | production | small-pilot | 30 | 20 | 1 | 878.5 | 310.5 | 18578 | 0 | none | small-pilot-provisional | [json](reports/capacity/snapshots/2026-04-27-30-learner-production.json) |
+| 2026-04-28 | d2d9c29 | production | 30-learner-beta | 30 | 20 | 1 | 1126.3 | 288.7 | 36852 | 0 | none | fail | [json](reports/capacity/evidence/30-learner-beta-v2-20260428.json) |
 
-> **Tier-claim note (P3 U2, 2026-04-27).** This first dated run was launched with the `30-learner-beta-certified` release-gate command (`--learners 30 --bootstrap-burst 20`, full release-gate threshold set: `max5xx=0`, `maxBootstrapP95Ms=1000`, `maxCommandP95Ms=750`, `maxResponseBytes=600000`, `requireZeroSignals`). Every threshold passed at the higher tier's bar. The recorded `Decision` is the lower `small-pilot-provisional` tier because the load-driver still emits `evidenceSchemaVersion: 1` — `reports/capacity/configs/30-learner-beta.json` declares `minEvidenceSchemaVersion: 2`, which `verify-capacity-evidence.mjs` enforces. Promoting the row to `30-learner-beta-certified` requires the load-driver to capture `meta.capacity` U3 telemetry into the evidence (`queryCount`, `d1RowsRead`, per-endpoint capacity metrics) and bump the constant in `scripts/lib/capacity-evidence.mjs`. Tracked as a follow-up to this PR; the run itself does not need to be repeated.
+> **P4-U11 cert attempt (2026-04-28, fail).** First dated run under evidence schema v2 with full provenance (gitSha pinned, dirtyTreeFlag=false, thresholdConfigHash matches `30-learner-beta.json`). `requireBootstrapCapacity` passes (queryCount=12, d1RowsRead=10) and `requireZeroSignals` is clean. The single threshold violation is `maxBootstrapP95Ms`: observed 1126.3 ms vs configured 1000 ms ceiling (~12.6% over). Command P95 (288.7 ms) and payload max (36,852 B) both pass with comfortable headroom. The capacity claim therefore stays at `small-pilot-provisional` until a passing 30-learner run lands. Top suspected source of the bootstrap P95 regression: cold-bootstrap burst of 20 against a recently deployed worker hitting cold D1 statement caches; re-measure after a warm-cache window before opening any worker-side fix PR.
 
 When adding a row:
 
@@ -809,3 +809,19 @@ runs at `workers: 1` because the shared DB + demo rate-limit bucket
 serialise on the default `127.0.0.1` origin. See
 `tests/playwright/isolated/README.md` for the detailed rules that
 scenes in the isolated subset must follow.
+
+## Historical Capacity Evidence (pre-v2)
+
+Pre-U3 evidence rows whose `requireBootstrapCapacity` observation is the
+`"deferred-to-U3"` placeholder rather than a concrete `{ queryCount,
+d1RowsRead }` shape. `scripts/verify-capacity-evidence.mjs` recomputes
+threshold passes from the captured telemetry and rejects the placeholder
+under the schema v2 contract; rows are kept here so the historical
+context (commit SHAs, sample counts, observed P95s) is preserved without
+tripping the verifier on every run.
+
+| Date | Commit | Env | Plan | Learners | Burst | Rounds | P95 Bootstrap | P95 Command | Max Bytes | 5xx | Signals | Decision | Evidence |
+| --- | --- | --- | --- | --: | --: | --: | --: | --: | --: | --: | --- | --- | --- |
+| 2026-04-27 | cbf39ec | production | small-pilot | 30 | 20 | 1 | 878.5 | 310.5 | 18578 | 0 | none | small-pilot-provisional | [json](../../reports/capacity/snapshots/2026-04-27-30-learner-production.json) |
+
+> **Tier-claim note (P3 U2, 2026-04-27).** This first dated run was launched with the `30-learner-beta-certified` release-gate command (`--learners 30 --bootstrap-burst 20`, full release-gate threshold set: `max5xx=0`, `maxBootstrapP95Ms=1000`, `maxCommandP95Ms=750`, `maxResponseBytes=600000`, `requireZeroSignals`). Every numeric threshold passed at the higher tier's bar. The recorded `Decision` is the lower `small-pilot-provisional` tier because the load-driver emitted `evidenceSchemaVersion: 1` — `reports/capacity/configs/30-learner-beta.json` declares `minEvidenceSchemaVersion: 2`, which `verify-capacity-evidence.mjs` enforces. The 2026-04-28 v2 cert run (above) supersedes this row for forward certification claims; this entry is retained for historical commit/evidence traceability only.
