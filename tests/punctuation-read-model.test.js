@@ -4,9 +4,14 @@ import assert from 'node:assert/strict';
 import { buildPunctuationLearnerReadModel } from '../src/subjects/punctuation/read-model.js';
 
 const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+const OLD_RELEASE_ID = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
+
+function masteryKeyForRelease(releaseId, clusterId, rewardUnitId) {
+  return `punctuation:${releaseId}:${clusterId}:${rewardUnitId}`;
+}
 
 function masteryKey(clusterId, rewardUnitId) {
-  return `punctuation:${CURRENT_RELEASE_ID}:${clusterId}:${rewardUnitId}`;
+  return masteryKeyForRelease(CURRENT_RELEASE_ID, clusterId, rewardUnitId);
 }
 
 function freshSubjectState() {
@@ -91,6 +96,31 @@ test('learner with one secured reward unit reads as having one secured and attem
   assert.equal(model.progressSnapshot.securedRewardUnits, 1);
   assert.equal(model.overview.securedRewardUnits, 1);
   assert.equal(model.progressSnapshot.trackedRewardUnits, 1);
+});
+
+test('old-release reward units do not inflate current starView through the read-model', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+  const oldKey = masteryKeyForRelease(OLD_RELEASE_ID, 'endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[oldKey] = {
+    masteryKey: oldKey,
+    releaseId: OLD_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now - 10_000,
+  };
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.securedRewardUnits, 0);
+  assert.equal(model.releaseDiagnostics.trackedRewardUnitCount, 0);
+  assert.equal(model.starView.perMonster.pealark.secureStars, 0);
+  assert.equal(model.starView.perMonster.pealark.total, 0);
+  assert.equal(model.starView.grand.grandStars, 0);
 });
 
 test('hasEvidence is true when sessions exist even with zero attempts', () => {

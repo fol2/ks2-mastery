@@ -13,14 +13,19 @@ import {
 } from '../src/subjects/punctuation/components/punctuation-view-model.js';
 
 const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
+const OLD_RELEASE_ID = 'punctuation-r3-endmarks-apostrophe-speech-comma-flow-boundary';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
+function masteryKeyForRelease(releaseId, clusterId, rewardUnitId) {
+  return `punctuation:${releaseId}:${clusterId}:${rewardUnitId}`;
+}
+
 function masteryKey(clusterId, rewardUnitId) {
-  return `punctuation:${CURRENT_RELEASE_ID}:${clusterId}:${rewardUnitId}`;
+  return masteryKeyForRelease(CURRENT_RELEASE_ID, clusterId, rewardUnitId);
 }
 
 function freshProgress() {
@@ -65,11 +70,15 @@ function secureItemState(overrides = {}) {
 }
 
 function securedRewardUnit(clusterId, rewardUnitId) {
-  const key = masteryKey(clusterId, rewardUnitId);
+  return securedRewardUnitForRelease(CURRENT_RELEASE_ID, clusterId, rewardUnitId);
+}
+
+function securedRewardUnitForRelease(releaseId, clusterId, rewardUnitId) {
+  const key = masteryKeyForRelease(releaseId, clusterId, rewardUnitId);
   return {
     [key]: {
       masteryKey: key,
-      releaseId: CURRENT_RELEASE_ID,
+      releaseId,
       clusterId,
       rewardUnitId,
       securedAt: Date.UTC(2026, 3, 24),
@@ -394,6 +403,86 @@ test('Grand Stars: increase with multi-monster secured units', () => {
   const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
   assert.ok(result.grand.grandStars > 15, `Grand Stars should be > 15 with 3-monster breadth, got ${result.grand.grandStars}`);
   assert.ok(result.grand.grandStars > 0, 'Grand Stars must be positive');
+});
+
+test('old-release reward units cannot project current Secure, Mastery, or Grand Stars', () => {
+  const progress = freshProgress();
+  progress.rewardUnits = {
+    ...securedRewardUnitForRelease(OLD_RELEASE_ID, 'endmarks', 'sentence-endings-core'),
+    ...securedRewardUnitForRelease(OLD_RELEASE_ID, 'apostrophe', 'apostrophe-contractions-core'),
+    ...securedRewardUnitForRelease(OLD_RELEASE_ID, 'comma_flow', 'list-commas-core'),
+  };
+  progress.facets = {
+    'sentence_endings::choose': secureItemState({ lapses: 0 }),
+    'sentence_endings::insert': secureItemState({ lapses: 0 }),
+    'apostrophe_contractions::choose': secureItemState({ lapses: 0 }),
+    'apostrophe_contractions::insert': secureItemState({ lapses: 0 }),
+    'list_commas::choose': secureItemState({ lapses: 0 }),
+    'list_commas::insert': secureItemState({ lapses: 0 }),
+  };
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  for (const monsterId of ['pealark', 'claspin', 'curlune']) {
+    assert.equal(result.perMonster[monsterId].secureStars, 0, `${monsterId} secureStars`);
+    assert.equal(result.perMonster[monsterId].masteryStars, 0, `${monsterId} masteryStars`);
+    assert.equal(result.perMonster[monsterId].total, 0, `${monsterId} total`);
+  }
+  assert.equal(result.grand.grandStars, 0, 'old-release reward units must not lift Grand Stars');
+});
+
+test('mixed old and current release reward units count only current-release entries', () => {
+  const progress = freshProgress();
+  progress.rewardUnits = {
+    ...securedRewardUnit('apostrophe', 'apostrophe-contractions-core'),
+    ...securedRewardUnitForRelease(OLD_RELEASE_ID, 'apostrophe', 'apostrophe-possession-core'),
+  };
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.equal(result.perMonster.claspin.secureStars, 20, 'one current Claspin unit should count');
+  assert.equal(result.perMonster.claspin.masteryStars, 0, 'old paired unit must not unlock Mastery evidence');
+  assert.equal(result.perMonster.pealark.total, 0);
+  assert.equal(result.perMonster.curlune.total, 0);
+});
+
+test('release metadata falls back only to mastery keys that clearly belong to the current release', () => {
+  const progress = freshProgress();
+  const currentKey = masteryKey('endmarks', 'sentence-endings-core');
+  const oldKey = masteryKeyForRelease(OLD_RELEASE_ID, 'endmarks', 'speech-core');
+  const currentEntry = {
+    masteryKey: currentKey,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: Date.UTC(2026, 3, 24),
+  };
+  progress.rewardUnits = {
+    [currentKey]: currentEntry,
+    [oldKey]: {
+      masteryKey: oldKey,
+      clusterId: 'speech',
+      rewardUnitId: 'speech-core',
+      securedAt: Date.UTC(2026, 3, 24),
+    },
+    ambiguousLooseEntry: {
+      clusterId: 'boundary',
+      rewardUnitId: 'semicolons-core',
+      securedAt: Date.UTC(2026, 3, 24),
+    },
+  };
+  const currentOnly = freshProgress();
+  currentOnly.rewardUnits = { [currentKey]: currentEntry };
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  const baseline = projectPunctuationStars(currentOnly, CURRENT_RELEASE_ID);
+
+  assert.equal(
+    result.perMonster.pealark.secureStars,
+    baseline.perMonster.pealark.secureStars,
+    'only the clearly current mastery key should count',
+  );
+  assert.equal(result.perMonster.pealark.masteryStars, 0);
+  assert.equal(result.grand.grandStars, baseline.grand.grandStars);
 });
 
 test('pure function: calling twice with same input returns identical output', () => {
