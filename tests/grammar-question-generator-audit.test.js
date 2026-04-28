@@ -71,8 +71,9 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
 });
 
 test('Grammar generated variant signatures ignore choice shuffle order only', () => {
+  // With 8 modal verb cases, seed 1 and seed 9 wrap to the same case index (1%8 === 9%8 === 1)
   const sameModalQuestion = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 1 });
-  const sameModalQuestionDifferentShuffle = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 4 });
+  const sameModalQuestionDifferentShuffle = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 9 });
   const differentModalQuestion = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 2 });
 
   assert.equal(

@@ -4096,6 +4096,61 @@ const TEMPLATES = [
                   "It turns the verb into the past tense."
                 ],
                 why:"'Should' commonly gives advice or a recommendation."
+              },
+              {
+                sentence:"May I borrow the scissors, please?",
+                modal:"may",
+                correct:"It asks for permission politely.",
+                distractors:[
+                  "It shows that the action is certain to happen.",
+                  "It names the month of the year.",
+                  "It shows that the scissors belong to the speaker."
+                ],
+                why:"'May' can ask for or grant permission."
+              },
+              {
+                sentence:"She could swim before she started school.",
+                modal:"could",
+                correct:"It shows past ability.",
+                distractors:[
+                  "It shows a future obligation.",
+                  "It makes the sentence passive.",
+                  "It replaces the subject she."
+                ],
+                why:"'Could' often shows that someone had the ability to do something in the past."
+              },
+              {
+                sentence:"The package will arrive tomorrow morning.",
+                modal:"will",
+                correct:"It shows certainty about a future event.",
+                distractors:[
+                  "It shows that the action is only a weak possibility.",
+                  "It gives advice about what to do.",
+                  "It turns the sentence into a command."
+                ],
+                why:"'Will' is commonly used for future certainty or prediction."
+              },
+              {
+                sentence:"You shall not enter without a pass.",
+                modal:"shall",
+                correct:"It expresses a rule or prohibition.",
+                distractors:[
+                  "It shows a weak possibility.",
+                  "It asks a polite question.",
+                  "It places the action in the past."
+                ],
+                why:"'Shall' can express rules, obligations, or formal determination."
+              },
+              {
+                sentence:"The answer could be wrong.",
+                modal:"could",
+                correct:"It shows possibility or uncertainty.",
+                distractors:[
+                  "It shows that the answer was wrong in the past.",
+                  "It gives a command to check the answer.",
+                  "It turns the sentence into passive voice."
+                ],
+                why:"'Could' can also show possibility when the meaning is about the present or future."
               }
             ];
             const item = cases[seed % cases.length];
@@ -4170,6 +4225,61 @@ const TEMPLATES = [
                   "The hyphen marks direct speech."
                 ],
                 why:"The compound adjective comes before the noun, so the hyphen protects the intended meaning."
+              },
+              {
+                phrase:"well-known author",
+                contrast:"well known author",
+                correct:"The hyphen shows that 'well-known' is one describing idea before 'author'.",
+                distractors:[
+                  "The hyphen shows the author owns a well.",
+                  "The hyphen turns well into a noun.",
+                  "The hyphen separates two independent clauses."
+                ],
+                why:"Compound adjectives before a noun use a hyphen to show they form a single modifier."
+              },
+              {
+                phrase:"twenty-four children",
+                contrast:"twenty four children",
+                correct:"The hyphen links twenty and four as a single compound number.",
+                distractors:[
+                  "The hyphen separates two different groups of children.",
+                  "The hyphen shows possession by the number.",
+                  "The hyphen marks a question."
+                ],
+                why:"Compound numbers from twenty-one to ninety-nine use a hyphen."
+              },
+              {
+                phrase:"re-cover the book",
+                contrast:"recover the book",
+                correct:"The hyphen shows cover again, not get back.",
+                distractors:[
+                  "The hyphen shows that the book belongs to someone.",
+                  "The hyphen marks a subordinate clause.",
+                  "The hyphen means the same as a comma here."
+                ],
+                why:"A hyphen after 're' can prevent confusion with a different word."
+              },
+              {
+                phrase:"old-fashioned clock",
+                contrast:"old fashioned clock",
+                correct:"The hyphen shows that 'old-fashioned' is one describing idea before 'clock'.",
+                distractors:[
+                  "The hyphen shows that the clock is old and separately fashioned.",
+                  "The hyphen replaces a conjunction between old and fashioned.",
+                  "The hyphen shows possession by the clock."
+                ],
+                why:"Without the hyphen, 'old' could be read as describing 'fashioned clock' separately."
+              },
+              {
+                phrase:"long-term plan",
+                contrast:"long term plan",
+                correct:"The hyphen shows that 'long-term' is one describing idea before 'plan'.",
+                distractors:[
+                  "The hyphen shows that the plan is about long terms.",
+                  "The hyphen makes the phrase a question.",
+                  "The hyphen shows that term is a verb."
+                ],
+                why:"The compound adjective modifies the noun as a unit, and the hyphen makes this clear."
               }
             ];
             const item = cases[seed % cases.length];
@@ -4626,6 +4736,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "In KS2 grammar, an exclamation mark alone does not make the sentence function an exclamation.",
       misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this sentence a command even though it says 'please'?",
+      example: "Please tidy the books before you leave.",
+      correct: "It tells someone to do something; the polite word does not change the function.",
+      distractors: [
+        "It is a question because it uses the word please.",
+        "It is a statement because it gives information about the books.",
+        "It is an exclamation because the speaker feels strongly about tidiness."
+      ],
+      why: "A command instructs someone to act; politeness markers do not alter the sentence function.",
+      misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this sentence a grammatical exclamation?",
+      example: "How quickly the fox disappeared!",
+      correct: "It begins with How and expresses strong feeling about an adverb.",
+      distractors: [
+        "It is a question because it begins with the word How.",
+        "It is a command because it tells the fox to disappear.",
+        "It is a statement because it gives information about speed."
+      ],
+      why: "Grammatical exclamations at KS2 begin with What or How and express strong feeling.",
+      misconception: "sentence_function_confusion"
     }
   ],
   qg_p3_word_classes_explain: [
@@ -4699,6 +4833,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "It joins the two clauses because it means and."
       ],
       why: "Pronouns stand in for nouns or noun phrases when the reference is clear.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'swiftly' an adverb here?",
+      example: "The river flowed swiftly under the bridge.",
+      correct: "It modifies the verb flowed by telling how the river moved.",
+      distractors: [
+        "It names the bridge.",
+        "It describes the noun river.",
+        "It joins two clauses together."
+      ],
+      why: "Adverbs can modify verbs by explaining the manner of the action.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'across' a preposition here?",
+      example: "The children ran across the playground.",
+      correct: "It begins a phrase showing the place relationship between ran and playground.",
+      distractors: [
+        "It describes how the children felt.",
+        "It replaces the noun children.",
+        "It is a conjunction joining two clauses."
+      ],
+      why: "A preposition links a noun phrase to the rest of the sentence, often showing place or direction.",
       misconception: "word_class_confusion"
     }
   ],
@@ -4776,6 +4934,31 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "A noun phrase needs its head noun; adjectives alone do not make the complete noun phrase here.",
       misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is this an expanded noun phrase?",
+      example: "a rusty bicycle with a bent wheel",
+      correct: "It is centred on the noun bicycle and expanded with an adjective and a prepositional phrase.",
+      distractors: [
+        "It is a clause because it has a hidden verb.",
+        "It is an adverbial telling how something moved.",
+        "It is a conjunction linking two ideas."
+      ],
+      why: "Adjectives and prepositional phrases can both expand a noun phrase.",
+      misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is the underlined group a noun phrase?",
+      example: "The small grey kitten under the bench scratched the post.",
+      focus: "The small grey kitten under the bench",
+      correct: "The whole group is centred on the noun kitten and gives detail about it.",
+      distractors: [
+        "It is a verb phrase because scratching is implied.",
+        "It is an adverbial because it tells where the post was.",
+        "It is a subordinate clause because it has extra words."
+      ],
+      why: "Modifiers before and after the head noun can all belong inside one noun phrase.",
+      misconception: "noun_phrase_confusion"
     }
   ],
   qg_p3_clauses_explain: [
@@ -4851,6 +5034,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "A subordinate clause may contain a subject and verb but still depend on a main clause.",
       misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why does 'while' introduce a subordinate clause here?",
+      example: "While the audience waited, the actors prepared backstage.",
+      correct: "It introduces a time clause that depends on the main clause for full meaning.",
+      distractors: [
+        "It introduces a main clause because it names who was waiting.",
+        "It introduces a relative clause because it gives information about actors.",
+        "It introduces direct speech because a group is speaking."
+      ],
+      why: "While is a subordinating conjunction that signals a time relationship.",
+      misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why are both clauses main clauses here?",
+      example: "The wind howled but the tent held firm.",
+      correct: "Both parts carry independent meaning and are joined by a coordinating conjunction.",
+      distractors: [
+        "The second clause is subordinate because it comes after but.",
+        "The first clause is subordinate because it describes weather.",
+        "Neither is a main clause because two clauses cannot both be main."
+      ],
+      why: "Coordinating conjunctions join clauses of equal grammatical weight.",
+      misconception: "subordinate_clause_confusion"
     }
   ],
   qg_p3_relative_clauses_explain: [
@@ -4924,6 +5131,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "The commas mark possession by the chess club."
       ],
       why: "Non-essential relative clauses can be marked as parenthesis with commas.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why is 'where' introducing a relative clause here?",
+      example: "The park where we played football has a new fence.",
+      correct: "The clause gives more information about the noun park.",
+      distractors: [
+        "It introduces a question about direction.",
+        "It is a subordinating time conjunction.",
+        "It marks a fronted adverbial."
+      ],
+      why: "Where can introduce a relative clause that tells more about a place noun.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why is this a defining relative clause?",
+      example: "The boy who scored the goal ran to his team.",
+      correct: "It identifies which boy is meant and cannot be removed without losing meaning.",
+      distractors: [
+        "It is non-defining because commas could be added.",
+        "It is not a relative clause because it tells about an action.",
+        "It is a fronted adverbial because it comes before ran."
+      ],
+      why: "Defining relative clauses are essential for identifying the noun.",
       misconception: "relative_clause_confusion"
     }
   ],
@@ -4999,6 +5230,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "The form have been plus an -ing verb combines perfect and progressive meanings.",
       misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'will arrive' simple future here?",
+      example: "The bus will arrive at half past three.",
+      correct: "It uses will plus a base verb to refer to a time ahead.",
+      distractors: [
+        "It is present tense because will is in the sentence now.",
+        "It is past perfect because it names a specific time.",
+        "It is progressive because arrival takes time."
+      ],
+      why: "Will plus a base verb places the action in the future.",
+      misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'had been waiting' past perfect progressive?",
+      example: "They had been waiting for an hour before the doors opened.",
+      correct: "It shows a continuing action in the past that happened before another past event.",
+      distractors: [
+        "It is present perfect because it uses been.",
+        "It is simple past because the doors opened yesterday.",
+        "It is passive because waiting is received by them."
+      ],
+      why: "Had been plus an -ing verb shows an ongoing action that preceded another past action.",
+      misconception: "tense_confusion"
     }
   ],
   qg_p3_pronouns_cohesion_explain: [
@@ -5072,6 +5327,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "Him is unclear because it is plural."
       ],
       why: "Object pronouns still need a clear noun phrase to refer back to.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why does 'their' improve cohesion here?",
+      example: "The team packed up. They put their equipment in the shed.",
+      correct: "Their links clearly to the team, keeping both sentences connected.",
+      distractors: [
+        "Their replaces the shed.",
+        "Their is unclear because it could mean anyone.",
+        "Their changes the sentence into a question."
+      ],
+      why: "Possessive pronouns help cohesion when the owner is clear from the previous sentence.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why should 'it' be replaced with a noun here?",
+      example: "The cage was beside the hutch. It was empty.",
+      correct: "It could refer to the cage or the hutch, so a noun would remove ambiguity.",
+      distractors: [
+        "It is always wrong after a full stop.",
+        "It must refer to hutch because hutch is nearer.",
+        "It is a conjunction, not a pronoun, here."
+      ],
+      why: "When two possible referents exist, replacing the pronoun with a noun improves clarity.",
       misconception: "pronoun_cohesion_confusion"
     }
   ],
@@ -5147,6 +5426,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "Register depends on vocabulary and structure, not only on whether the grammar is understandable.",
       misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why is this sentence too informal for a school notice?",
+      example: "Loads of kids are gonna use the new hall.",
+      correct: "It uses slang ('loads of kids', 'gonna') that does not suit an official notice.",
+      distractors: [
+        "It is informal because it mentions children.",
+        "It is informal because 'hall' is a short word.",
+        "It is informal because it is in the present tense."
+      ],
+      why: "Slang and contractions like 'gonna' lower the formality below what official writing requires.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why does the passive voice help formality here?",
+      example: "All mobile devices must be switched off during assembly.",
+      correct: "It removes a personal subject and uses impersonal, official wording.",
+      distractors: [
+        "Passive voice is always more formal than active voice in every case.",
+        "It is formal because mobile devices is a plural noun.",
+        "It is formal because it uses the word during."
+      ],
+      why: "Impersonal passive structures suit formal contexts where the doer is less important than the rule.",
+      misconception: "formality_confusion"
     }
   ],
   qg_p3_active_passive_explain: [
@@ -5220,6 +5523,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "The sentence is informal because the doer is hidden."
       ],
       why: "A passive sentence does not have to include the doer.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why is this sentence active even though the subject is not a person?",
+      example: "The storm destroyed the fence.",
+      correct: "The storm is the subject that does the action of destroying.",
+      distractors: [
+        "Only people can be the subject in active voice.",
+        "It is passive because the fence receives the action.",
+        "It is passive because storms are natural forces."
+      ],
+      why: "Any noun phrase that does the verb can be the subject in active voice, including non-human agents.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why does changing to passive shift emphasis here?",
+      example: "The report was written by a group of Year 6 pupils.",
+      correct: "Passive voice foregrounds the report and backgrounds who wrote it.",
+      distractors: [
+        "The emphasis stays on the pupils because they are named.",
+        "The sentence becomes a question when made passive.",
+        "The report becomes the doer when it moves to the front."
+      ],
+      why: "Passive voice shifts attention to the thing affected, not the doer.",
       misconception: "active_passive_confusion"
     }
   ],
@@ -5295,6 +5622,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "Ask who or what receives the verb to find the object.",
       misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why is 'the audience' the subject even though it comes after a comma?",
+      example: "After the interval, the audience returned to their seats.",
+      correct: "The audience performs the action of returning; the opening phrase is an adverbial.",
+      distractors: [
+        "The audience is the object because it comes after a comma.",
+        "After the interval is the subject because it comes first.",
+        "Their seats is the subject because it receives the action."
+      ],
+      why: "A fronted adverbial does not change which noun phrase is the subject.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why does this sentence have no object?",
+      example: "The baby slept peacefully.",
+      correct: "Slept does not pass action onto another noun; no noun receives the action.",
+      distractors: [
+        "Peacefully is the object because it follows the verb.",
+        "The baby is both subject and object here.",
+        "Every sentence must have an object."
+      ],
+      why: "Some verbs are intransitive and do not require an object.",
+      misconception: "subject_object_confusion"
     }
   ],
   qg_p3_parenthesis_commas_explain: [
@@ -5368,6 +5719,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "It is direct speech because the comma comes early."
       ],
       why: "A fronted adverbial comma has a different job from parenthesis punctuation.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why do dashes work better than commas here?",
+      example: "The headteacher – who had been away all week – returned on Friday.",
+      correct: "Dashes give a stronger visual break for the parenthetical information.",
+      distractors: [
+        "Dashes are the only punctuation that can mark parenthesis.",
+        "Commas would be grammatically wrong here.",
+        "Dashes show that the headteacher owns something."
+      ],
+      why: "Dashes, commas, and brackets can all mark parenthesis, but dashes give a stronger break.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why can the bracketed words be removed?",
+      example: "The school hall (built in 1987) needs a new roof.",
+      correct: "The bracketed phrase adds optional extra detail and the sentence still makes sense without it.",
+      distractors: [
+        "Every part of a sentence in brackets is the main clause.",
+        "The brackets mark direct speech.",
+        "The brackets show that 1987 is the subject."
+      ],
+      why: "Parenthetical information is additional and removable without breaking the sentence.",
       misconception: "parenthesis_confusion"
     }
   ],
@@ -5443,6 +5818,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "The punctuation that ends the direct speech is part of the quoted words.",
       misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why does the reporting clause start with a lower-case letter here?",
+      example: "\"Pass the glue,\" whispered Luca.",
+      correct: "The reporting clause continues the same sentence after the spoken words.",
+      distractors: [
+        "Whispered always has a lower-case letter in every context.",
+        "The lower case shows possession by Luca.",
+        "The lower case turns the sentence into a question."
+      ],
+      why: "After a comma inside speech marks, the reporting clause does not start a new sentence.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why is there no full stop before the closing speech mark?",
+      example: "\"Where are the scissors?\" asked Priya.",
+      correct: "The question mark already ends the spoken sentence, so a full stop is not needed.",
+      distractors: [
+        "A full stop is always needed before closing speech marks.",
+        "The question mark shows possession, not a question.",
+        "The question mark belongs after asked."
+      ],
+      why: "One end-of-speech punctuation mark is enough; a question mark replaces a full stop.",
+      misconception: "speech_punctuation_confusion"
     }
   ],
   qg_p3_apostrophe_possession_explain: [
@@ -5516,6 +5915,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "The apostrophe shows dog is a verb."
       ],
       why: "Look at the owner, not only the owned noun, when placing the apostrophe.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why does 'James's' keep the extra s?",
+      example: "James's pencil case",
+      correct: "Names ending in s can take apostrophe + s to show singular possession.",
+      distractors: [
+        "The extra s shows there are two people called James.",
+        "The apostrophe replaces a missing letter from James is.",
+        "The extra s turns James into a verb."
+      ],
+      why: "For singular proper nouns ending in s, apostrophe + s is acceptable for possession.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why is the apostrophe wrong in 'the table's are set'?",
+      example: "the table's are set",
+      correct: "Tables here is a simple plural, not a possessive, so no apostrophe is needed.",
+      distractors: [
+        "The apostrophe is correct because are follows the noun.",
+        "The apostrophe shows the tables own the setting.",
+        "The apostrophe is needed because table ends with a vowel sound."
+      ],
+      why: "Plural nouns do not need an apostrophe unless they are showing possession.",
       misconception: "apostrophe_possession_confusion"
     }
   ]
