@@ -10,7 +10,7 @@ This runbook records how capacity is certified for `/api/bootstrap`, subject com
 | --- | --- | --- |
 | Family demo | Ready for bounded-bootstrap smoke checks | `npm run smoke:production:bootstrap` passes with a logged-in or demo session and no redaction failures. |
 | Small pilot | Provisional | High-history bootstrap fixture passes, production bootstrap probe stays below the configured byte/count caps, and no `exceededCpu` or D1 overload appears during a small load run. |
-| 30-learner classroom beta | Not certified — P95 regression (+12.6%) under investigation (P5) | `npm run capacity:classroom -- --production --confirm-production-load ...` passes for 30 active learners, including cold-bootstrap burst and human-paced Grammar command rounds. |
+| 30-learner classroom beta | Not certified — P5 warm-cache re-run FAIL (P95 1,167 ms vs 1,000 ms ceiling, +16.7%). D1 tail latency variance, not query/payload regression. Investigation required. | `npm run capacity:classroom -- --production --confirm-production-load ...` passes for 30 active learners, including cold-bootstrap burst and human-paced Grammar command rounds. |
 | 60-learner stretch | Not certified | Same evidence as classroom beta, with acceptable P95 wall time and zero 5xx across repeated runs. |
 | 100+ school-ready target | Not certified | Requires repeated 100+ learner runs, D1 row metrics, operational tail evidence, and a rollback/degrade drill. |
 

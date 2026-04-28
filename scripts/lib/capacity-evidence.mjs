@@ -153,6 +153,7 @@ function resolveEnvironmentName(options) {
 }
 
 function resolveAuthMode(options) {
+  if (options.sessionManifest) return 'session-manifest';
   if (options.demoSessions) return 'demo-sessions';
   if (options.cookie) return 'cookie';
   if (options.bearer) return 'bearer';

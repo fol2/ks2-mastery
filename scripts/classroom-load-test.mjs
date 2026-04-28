@@ -12,6 +12,7 @@ import {
   persistEvidenceFile,
   validateThresholdConfigKeys,
 } from './lib/capacity-evidence.mjs';
+import { loadSessionManifest } from './lib/session-manifest.mjs';
 
 const DEFAULT_PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -81,6 +82,7 @@ function hasExplicitAuthConfig(options = {}) {
     String(options.cookie || '').trim()
     || String(options.bearer || '').trim()
     || options.demoSessions
+    || options.sessionManifest
     || hasAuthHeader(options.headers),
   );
 }
@@ -106,7 +108,7 @@ function authHeaders(options, cookie = '') {
 
 function contextAuthHeaders(options, context) {
   const cookie = context.cookie || '';
-  if (options.demoSessions) {
+  if (options.demoSessions || options.sessionManifest) {
     return {
       accept: 'application/json',
       ...nonAuthOptionHeaders(options.headers),
@@ -270,6 +272,7 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     bearer: '',
     headers: [],
     demoSessions: false,
+    sessionManifest: '',
     confirmProductionLoad: false,
     confirmHighProductionLoad: false,
     includeMeasurements: true,
@@ -353,6 +356,10 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
       index += 1;
     } else if (arg === '--demo-sessions') {
       options.demoSessions = true;
+    } else if (arg === '--session-manifest') {
+      assignOnce(arg);
+      options.sessionManifest = readOptionValue(argv, index, arg);
+      index += 1;
     } else if (arg === '--confirm-production-load') {
       options.confirmProductionLoad = true;
     } else if (arg === '--confirm-high-production-load') {
@@ -404,6 +411,10 @@ export function parseClassroomLoadArgs(argv = process.argv.slice(2)) {
     }
   }
 
+  if (options.demoSessions && options.sessionManifest) {
+    throw new Error('--demo-sessions and --session-manifest are mutually exclusive; use one or the other.');
+  }
+
   return options;
 }
 
@@ -441,7 +452,7 @@ export function buildClassroomLoadPlan(options = {}) {
         endpoint: 'POST /api/subjects/grammar/command',
       },
     ],
-    expectedRequests: learners + bootstrapBurst + (learners * rounds * 3) + (options.demoSessions ? learners : 0),
+    expectedRequests: learners + bootstrapBurst + (learners * rounds * 3) + (options.demoSessions && !options.sessionManifest ? learners : 0),
     safety: {
       productionRequiresConfirmation: true,
       productionRequiresAuth: true,
@@ -474,8 +485,8 @@ export function validateClassroomLoadOptions(options = {}) {
     if (!isLocalOrigin(options.origin)) {
       throw new Error('local fixture load must use a localhost, loopback, or .test origin.');
     }
-    if (!options.demoSessions) {
-      throw new Error('local fixture load requires --demo-sessions so each virtual learner gets an isolated session.');
+    if (!options.demoSessions && !options.sessionManifest) {
+      throw new Error('local fixture load requires --demo-sessions or --session-manifest so each virtual learner gets an isolated session.');
     }
     return;
   }
@@ -714,6 +725,30 @@ export function hasThresholdFlags(options = {}) {
   );
 }
 
+/**
+ * Classify a failure into one of the canonical failure classes.
+ * The taxonomy covers the full lifecycle of a load-test request:
+ *   setup        — demo-session or manifest-based session creation
+ *   auth         — authentication/authorisation rejection
+ *   bootstrap    — /api/bootstrap failures
+ *   command      — subject command failures
+ *   threshold    — capacity threshold violation (evaluated post-hoc)
+ *   transport    — network-level failure (no HTTP response)
+ *   evidence-write — evidence persistence failure
+ */
+export const FAILURE_CLASSES = Object.freeze([
+  'setup', 'auth', 'bootstrap', 'command', 'threshold', 'transport', 'evidence-write',
+]);
+
+function classifyFailure(entry) {
+  if (!entry.status) return 'transport';
+  if (entry.scenario === 'demo-session-setup') return 'setup';
+  if (entry.status === 401 || entry.status === 403) return 'auth';
+  if (entry.endpoint && entry.endpoint.includes('/api/bootstrap')) return 'bootstrap';
+  if (entry.endpoint && entry.endpoint.includes('/command')) return 'command';
+  return 'command';
+}
+
 export function summariseCapacityResults(measurements = [], plan = {}) {
   const statusCounts = {};
   const endpointStatus = {};
@@ -758,6 +793,7 @@ export function summariseCapacityResults(measurements = [], plan = {}) {
         code: entry.code,
         message: entry.message,
         signal,
+        failureClass: classifyFailure(entry),
       });
     }
   }
@@ -916,7 +952,20 @@ async function prepareContexts(origin, options, plan) {
     revision: 0,
   }));
 
-  if (options.demoSessions) {
+  if (options.sessionManifest) {
+    // Load pre-created sessions from manifest — skips demo-session creation entirely
+    const manifest = loadSessionManifest(options.sessionManifest);
+    contexts = plan.virtualLearners.map((virtualLearner, i) => {
+      const entry = manifest.entries[i % manifest.count];
+      return {
+        ...virtualLearner,
+        cookie: entry.sessionCookie,
+        accountId: null,
+        learnerId: entry.learnerId,
+        revision: 0,
+      };
+    });
+  } else if (options.demoSessions) {
     contexts = [];
     for (const virtualLearner of plan.virtualLearners) {
       const context = await createDemoContextWithResponse(origin, options, virtualLearner);
@@ -1093,10 +1142,17 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
     violations: thresholdsBlock.violations,
     limits: thresholdsBlock.limits,
   };
+  const sessionSourceMode = options.sessionManifest
+    ? 'manifest'
+    : options.demoSessions
+      ? 'demo-sessions'
+      : 'shared-auth';
+
   const finalReport = {
     ...report,
     startedAt,
     finishedAt,
+    sessionSourceMode,
     thresholds: mergedThresholdsReport,
     failures: evidence.failures,
     safety: evidence.safety,
@@ -1143,6 +1199,7 @@ export function usage() {
     '  --bearer <token>                  Authorization bearer token',
     '  --header "name: value"            Extra request header, repeatable',
     '  --demo-sessions                   Create one isolated demo session per virtual learner',
+    '  --session-manifest <path>         Use pre-created sessions from a manifest JSON file (mutually exclusive with --demo-sessions)',
     '  --confirm-production-load         Required before --production sends requests',
     '  --confirm-high-production-load    Additional acknowledgement for larger production load shapes',
     '  --summary-only                    Omit per-request measurements from JSON output',
