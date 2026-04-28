@@ -1927,6 +1927,7 @@ export function createWorkerApp({
         // roles see the same data — evidence is non-sensitive operational state.
         if (url.pathname === '/api/admin/ops/production-evidence' && request.method === 'GET') {
           requireSameOrigin(request, env);
+          await repository.assertAdminHubActor(session.accountId);
           const evidenceLimit = await consumeRateLimit(env, {
             bucket: 'admin-ops-mutation',
             identifier: session.accountId,
