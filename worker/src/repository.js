@@ -8356,6 +8356,12 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
     async readHeroProgress(learnerId) {
       return readHeroProgressState(db, learnerId);
     },
+    // Hero Mode P3 U4: standalone hero progress write (no CAS / no revision bump).
+    async writeHeroProgress(learnerId, accountId, state) {
+      const nowTs = nowFactory();
+      const stmt = buildHeroProgressUpsertStatement(db, learnerId, accountId, state, nowTs, null);
+      await batch(db, [stmt]);
+    },
     async runHeroCommand(accountId, learnerId, command, applyCommand) {
       const nowTs = nowFactory();
       return runHeroCommandMutation(db, {

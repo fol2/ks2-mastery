@@ -46,6 +46,10 @@ import { getReadModelDerivedWriteBreaker } from './circuit-breaker-server.js';
 import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.js';
 import { handleHeroReadModel } from './hero/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
+import {
+  initialiseDailyProgress,
+  markTaskStarted,
+} from '../../shared/hero/progress-state.js';
 import { logRequestDenial } from './admin-denial-logger.js';
 import {
   DENIAL_RATE_LIMIT_EXCEEDED,
@@ -421,6 +425,22 @@ function requireSubjectCommandAvailable(command, env = {}) {
     subjectId: command.subjectId,
     command: command.command,
   });
+}
+
+// P3 U4: standalone hero progress marker write (non-fatal, no CAS).
+// Reads current progress, initialises daily if stale, marks task started.
+async function writeHeroProgressMarker({ repository, learnerId, accountId, questContext, taskId, requestId }) {
+  const nowTs = Date.now();
+  let state = await repository.readHeroProgress(learnerId);
+  // Initialise daily progress if needed (new day or first launch)
+  if (!state.daily || state.daily.dateKey !== questContext.dateKey) {
+    state = {
+      ...state,
+      daily: initialiseDailyProgress(questContext, questContext.dateKey, questContext.timezone, nowTs),
+    };
+  }
+  state = markTaskStarted(state, taskId, requestId, nowTs);
+  await repository.writeHeroProgress(learnerId, accountId, state);
 }
 
 function requireDemoWriteAllowed(session) {
@@ -1407,7 +1427,7 @@ export function createWorkerApp({
           // conflict errors emitted by resolveHeroStartTaskCommand are
           // logged before re-throwing to the main error handler.
           try {
-            const { heroLaunch, subjectCommand } = await resolveHeroStartTaskCommand({
+            const { heroLaunch, subjectCommand, questContext } = await resolveHeroStartTaskCommand({
               body,
               repository,
               env,
@@ -1417,6 +1437,20 @@ export function createWorkerApp({
 
             // P2 U2: already-started — safe response without running a subject command
             if (!subjectCommand) {
+              // P3 U4: ensure progress marker exists even for already-started
+              // (handles first start-task succeeded at subject level but progress write failed)
+              if (envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+                try {
+                  await writeHeroProgressMarker({
+                    repository, learnerId: heroLearnerId, accountId: session.accountId,
+                    questContext, taskId: heroLaunch.taskId, requestId: body?.requestId || '',
+                  });
+                } catch (err) {
+                  // Non-fatal: progress marker is informational
+                  // eslint-disable-next-line no-console
+                  console.error('[hero] progress marker write failed (already-started):', err.message);
+                }
+              }
               return json({
                 ok: true,
                 heroLaunch,
@@ -1446,6 +1480,20 @@ export function createWorkerApp({
                   capacity,
                 }),
               );
+
+              // P3 U4: write hero progress marker after subject command succeeds
+              if (envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+                try {
+                  await writeHeroProgressMarker({
+                    repository, learnerId: heroLearnerId, accountId: session.accountId,
+                    questContext, taskId: heroLaunch.taskId, requestId: body?.requestId || '',
+                  });
+                } catch (err) {
+                  // Non-fatal: progress marker is informational
+                  // eslint-disable-next-line no-console
+                  console.error('[hero] progress marker write failed:', err.message);
+                }
+              }
 
               // U10: hero_task_launch_succeeded — best-effort structured log.
               try {
