@@ -119,3 +119,9 @@ The 7-day window gives us:
 - Signal on whether production traffic hits any `'none'`-directive violation we missed.
 - Confidence that `challenges.cloudflare.com` / `fonts.googleapis.com` / `fonts.gstatic.com` third-party allowances are sufficient for the actual request mix (not just the test fixture mix).
 - An operator log that later SH2-U8-style migration PRs can cite when they reduce the `'unsafe-inline'` surface further.
+
+## P5 Cross-Assertion (2026-04-28)
+
+Added mechanical test in `tests/security-headers.test.js` that enforces agreement between `CSP_ENFORCEMENT_MODE` and the header key in `SECURITY_HEADERS`. The mode constant is no longer dead — if the flip PR changes the mode without updating the header key (or vice versa), tests fail.
+
+**Observation window status:** Open (2026-04-27 to 2026-05-04). Daily log remains unpopulated. The enforcement flip or dated deferral will be executed after the window closes.
