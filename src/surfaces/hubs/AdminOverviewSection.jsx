@@ -3,6 +3,7 @@ import { formatTimestamp } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
 import { AdminPanelFrame } from './AdminPanelFrame.jsx';
 import { AdminProductionEvidencePanel } from './AdminProductionEvidencePanel.jsx';
+import '../styles/admin-panels.css';
 
 // U4+U5: Overview section — top-level KPIs, recent ops activity, and demo
 // health. Extracted from AdminHubSurface.jsx as the default landing section
@@ -77,10 +78,9 @@ function DashboardKpiPanel({ model, actions }) {
     >
       {cronFailing ? (
         <div
-          className="callout warn small"
+          className="callout warn small admin-mb-12"
           role="alert"
           data-testid="dashboard-cron-failure-banner"
-          style={{ marginBottom: 12 }}
         >
           <strong>{cronFailureLegLabel} failed</strong> at {formatTimestamp(cronFailureMostRecentAt)}.
           {' '}Last success at {cronLastSuccessAt > 0 ? formatTimestamp(cronLastSuccessAt) : 'never'}.
@@ -137,11 +137,11 @@ function DemoOperationsSummary({ summary = {} }) {
     ['TTS fallback indicators', summary.ttsFallbacks],
   ];
   return (
-    <section className="card" style={{ marginBottom: 20 }}>
+    <section className="card admin-card-mb">
       <div className="card-header">
         <div>
           <div className="eyebrow">Demo operations</div>
-          <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Aggregate demo health</h3>
+          <h3 className="section-title admin-section-title-lg">Aggregate demo health</h3>
         </div>
         <span className="chip">Updated {formatTimestamp(summary.updatedAt)}</span>
       </div>

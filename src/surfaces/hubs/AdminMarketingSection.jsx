@@ -6,6 +6,7 @@ import { uid } from '../../platform/core/utils.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 import { formatTimestamp } from './hub-utils.js';
 import { AdminPanelFrame } from './AdminPanelFrame.jsx';
+import '../styles/admin-panels.css';
 
 // U6 (P4): Marketing section — wired to admin-marketing.js backend.
 //
@@ -70,18 +71,11 @@ function StatusBadge({ status }) {
   const description = STATUS_DESCRIPTIONS[status] || null;
   return (
     <span
-      className="chip"
+      className="chip admin-status-badge"
       data-status={status}
       title={description}
       aria-label={description || status}
-      style={{
-        ...style,
-        fontSize: '0.75rem',
-        padding: '2px 8px',
-        borderRadius: 4,
-        fontWeight: 600,
-        textTransform: 'capitalise',
-      }}
+      style={style}
     >
       {status}
     </span>

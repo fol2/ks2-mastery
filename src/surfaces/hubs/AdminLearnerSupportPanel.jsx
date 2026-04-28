@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatTimestamp, isBlocked } from './hub-utils.js';
+import '../styles/admin-panels.css';
 
 // U8 (P4): Learner support / diagnostics panel — extracted from
 // AdminDebuggingSection.jsx. Self-contained; no PanelHeader dependency
@@ -17,13 +18,13 @@ export function LearnerSupportPanel({ model, appState, accessContext, actions })
     || {};
 
   return (
-    <article className="card" data-admin-hub-panel="classroom-summary" style={{ marginBottom: 20 }}>
+    <article className="card admin-card-mb" data-admin-hub-panel="classroom-summary">
       <div className="eyebrow">Learner support / diagnostics</div>
-      <h3 className="section-title" style={{ fontSize: '1.2rem' }}>Readable learners</h3>
+      <h3 className="section-title admin-section-title-lg">Readable learners</h3>
       {classroomSummaryDegraded ? (
         <div className="feedback warn" data-admin-hub-degraded="classroom-summary">
           <strong>Classroom summary temporarily unavailable</strong>
-          <div style={{ marginTop: 8 }}>
+          <div className="admin-mt-8">
             Per-learner Grammar and Punctuation summary stats are taking too long to load. The learner list remains available below — use Select to drill into an individual learner. Practice is unaffected.
           </div>
         </div>
@@ -50,34 +51,34 @@ export function LearnerSupportPanel({ model, appState, accessContext, actions })
         </div>
       )) : <p className="small muted">No learner diagnostics are accessible from this account scope yet.</p>}
       {selectedDiagnostics && (
-        <div className="callout" style={{ marginTop: 16 }}>
+        <div className="callout admin-mt-16">
           <strong>{selectedDiagnostics.learnerName}</strong>
-          <div style={{ marginTop: 8 }}>
+          <div className="admin-mt-8">
             Secure: {String(selectedDiagnostics.overview?.secureWords ?? 0)} · Due: {String(selectedDiagnostics.overview?.dueWords ?? 0)} · Trouble: {String(selectedDiagnostics.overview?.troubleWords ?? 0)}
           </div>
-          <div style={{ marginTop: 8 }}>
+          <div className="admin-mt-8">
             <strong>Grammar diagnostics</strong>: secured {String(selectedGrammarEvidence.progressSnapshot?.securedConcepts ?? selectedDiagnostics.overview?.secureGrammarConcepts ?? 0)} · due {String(selectedGrammarEvidence.progressSnapshot?.dueConcepts ?? selectedDiagnostics.overview?.dueGrammarConcepts ?? 0)} · weak {String(selectedGrammarEvidence.progressSnapshot?.weakConcepts ?? selectedDiagnostics.overview?.weakGrammarConcepts ?? 0)}
           </div>
-          <div style={{ marginTop: 8 }}>
+          <div className="admin-mt-8">
             <strong>Punctuation diagnostics</strong>: secured {String(selectedPunctuationEvidence.progressSnapshot?.securedRewardUnits ?? selectedDiagnostics.overview?.securePunctuationUnits ?? 0)} · due {String(selectedPunctuationEvidence.progressSnapshot?.dueItems ?? selectedDiagnostics.overview?.duePunctuationItems ?? 0)} · weak {String(selectedPunctuationEvidence.progressSnapshot?.weakItems ?? selectedDiagnostics.overview?.weakPunctuationItems ?? 0)}
           </div>
-          <div className="small muted" style={{ marginTop: 8 }}>
+          <div className="small muted admin-mt-8">
             Punctuation release: {selectedPunctuationRelease.releaseId || 'unknown'} · tracked units {String(selectedPunctuationRelease.trackedRewardUnitCount ?? 0)} · sessions {String(selectedPunctuationRelease.sessionCount ?? 0)} · weak patterns {String(selectedPunctuationRelease.weakPatternCount ?? 0)} · exposure {selectedPunctuationRelease.productionExposureStatus || 'unknown'}
           </div>
           {selectedGrammarEvidence.questionTypeSummary?.[0] ? (
-            <div className="small muted" style={{ marginTop: 8 }}>
+            <div className="small muted admin-mt-8">
               Question-type focus: {selectedGrammarEvidence.questionTypeSummary[0].label || selectedGrammarEvidence.questionTypeSummary[0].id}
             </div>
           ) : null}
           {selectedPunctuationEvidence.weakestFacets?.[0] ? (
-            <div className="small muted" style={{ marginTop: 8 }}>
+            <div className="small muted admin-mt-8">
               Punctuation focus: {selectedPunctuationEvidence.weakestFacets[0].label || selectedPunctuationEvidence.weakestFacets[0].id}
             </div>
           ) : null}
-          <div className="small muted" style={{ marginTop: 8 }}>{selectedDiagnostics.currentFocus?.detail || 'No current focus surfaced.'}</div>
+          <div className="small muted admin-mt-8">{selectedDiagnostics.currentFocus?.detail || 'No current focus surfaced.'}</div>
         </div>
       )}
-      <div className="actions" style={{ marginTop: 16 }}>
+      <div className="actions admin-mt-16">
         {(model.learnerSupport.entryPoints || []).map((entry) => (
           <button
             className="btn secondary"
