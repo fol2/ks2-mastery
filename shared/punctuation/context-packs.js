@@ -198,6 +198,14 @@ function mainClause(pack, fallback = 'the crew checked the ropes') {
   return first(pack.acceptedAtoms.stems, fallback).toLowerCase();
 }
 
+function clausePair(pack, fallbackLeft = 'the crew checked the ropes', fallbackRight = 'we found another path') {
+  const stems = Array.isArray(pack.acceptedAtoms.stems) ? pack.acceptedAtoms.stems : [];
+  const left = (stems[0] || fallbackLeft).toLowerCase();
+  const rightCandidate = (stems[1] || '').toLowerCase();
+  const right = rightCandidate && rightCandidate !== left ? rightCandidate : fallbackRight;
+  return { left, right };
+}
+
 function placeSubject(pack, fallback = 'harbour') {
   const place = first(pack.acceptedAtoms.places, fallback);
   return `The ${place}`;
@@ -269,6 +277,60 @@ function frontedCombineTemplate(pack) {
       mainClause: clause,
     },
     misconceptionTags: ['comma.fronted_adverbial_missing'],
+    readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+  };
+}
+
+function commaClarityTemplate(pack) {
+  const phrase = first(pack.acceptedAtoms.frontedAdverbialPhrases, null);
+  if (!phrase) return null;
+  const clause = clausePair(pack, 'the harbour was quiet', 'the harbour was quiet').right;
+  return {
+    prompt: 'Add the comma that makes the meaning clear.',
+    stem: `${capitaliseSentence(phrase)} ${clause}.`,
+    model: `${capitaliseSentence(phrase)}, ${clause}.`,
+    validator: {
+      type: 'startsWithPhraseComma',
+      phrase: capitaliseSentence(phrase),
+    },
+    misconceptionTags: ['comma.clarity_missing'],
+    readiness: ['insertion', 'misconception', 'negative_test'],
+  };
+}
+
+function boundaryFixTemplate(pack, mark, prompt, misconceptionTag) {
+  const { left, right } = clausePair(pack);
+  const unpunctuatedJoin = mark === ';' ? ', ' : ' ';
+  const modelJoin = mark === ';' ? '; ' : ` ${mark} `;
+  return {
+    prompt,
+    stem: `${capitaliseSentence(left)}${unpunctuatedJoin}${right}.`,
+    model: `${capitaliseSentence(left)}${modelJoin}${right}.`,
+    validator: {
+      type: 'requiresBoundaryBetweenClauses',
+      left: capitaliseSentence(left),
+      right,
+      mark,
+    },
+    misconceptionTags: [misconceptionTag],
+    readiness: ['proofreading', 'misconception', 'negative_test'],
+  };
+}
+
+function boundaryCombineTemplate(pack, mark, prompt, misconceptionTag) {
+  const { left, right } = clausePair(pack);
+  const modelJoin = mark === ';' ? '; ' : ` ${mark} `;
+  return {
+    prompt,
+    stem: `${capitaliseSentence(left)}.\n${capitaliseSentence(right)}.`,
+    model: `${capitaliseSentence(left)}${modelJoin}${right}.`,
+    validator: {
+      type: 'combineBoundaryBetweenClauses',
+      left: capitaliseSentence(left),
+      right,
+      mark,
+    },
+    misconceptionTags: [misconceptionTag],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   };
 }
@@ -378,6 +440,31 @@ export function contextPackTemplatesForFamily(familyId, contextPack = {}) {
     gen_list_commas_combine: listCombineTemplate,
     gen_fronted_adverbial_fix: frontedFixTemplate,
     gen_fronted_adverbial_combine: frontedCombineTemplate,
+    gen_comma_clarity_insert: commaClarityTemplate,
+    gen_semicolon_fix: (normalisedPack) => boundaryFixTemplate(
+      normalisedPack,
+      ';',
+      'Replace the comma splice with a semi-colon.',
+      'boundary.semicolon_missing',
+    ),
+    gen_semicolon_combine: (normalisedPack) => boundaryCombineTemplate(
+      normalisedPack,
+      ';',
+      'Combine the two related clauses into one sentence with a semi-colon.',
+      'boundary.semicolon_missing',
+    ),
+    gen_dash_clause_fix: (normalisedPack) => boundaryFixTemplate(
+      normalisedPack,
+      '-',
+      'Add a dash between the related clauses.',
+      'boundary.dash_missing',
+    ),
+    gen_dash_clause_combine: (normalisedPack) => boundaryCombineTemplate(
+      normalisedPack,
+      '-',
+      'Combine the two related clauses into one sentence with a dash.',
+      'boundary.dash_missing',
+    ),
     gen_parenthesis_combine: parenthesisCombineTemplate,
     gen_hyphen_insert: hyphenTemplate,
   }[familyId]?.(pack);
@@ -393,6 +480,11 @@ export function affectedGeneratorFamiliesForContextPack(contextPack = {}) {
     'gen_list_commas_combine',
     'gen_fronted_adverbial_fix',
     'gen_fronted_adverbial_combine',
+    'gen_comma_clarity_insert',
+    'gen_semicolon_fix',
+    'gen_semicolon_combine',
+    'gen_dash_clause_fix',
+    'gen_dash_clause_combine',
     'gen_parenthesis_combine',
     'gen_hyphen_insert',
   ].filter((familyId) => contextPackTemplatesForFamily(familyId, pack).length > 0);

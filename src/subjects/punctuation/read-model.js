@@ -132,6 +132,7 @@ function normaliseAttempt(rawValue) {
     ts: asTs(raw.ts, 0),
     sessionId: typeof raw.sessionId === 'string' ? raw.sessionId : null,
     itemId: typeof raw.itemId === 'string' ? raw.itemId : '',
+    variantSignature: typeof raw.variantSignature === 'string' ? raw.variantSignature : '',
     itemMode,
     mode: itemMode,
     skillIds: normaliseStringArray(raw.skillIds),

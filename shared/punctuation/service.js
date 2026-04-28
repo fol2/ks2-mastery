@@ -173,6 +173,7 @@ export function normalisePunctuationData(value) {
               ts: normaliseTimestamp(attempt.ts, 0),
               sessionId: typeof attempt.sessionId === 'string' ? attempt.sessionId : null,
               itemId: typeof attempt.itemId === 'string' ? attempt.itemId : '',
+              variantSignature: typeof attempt.variantSignature === 'string' ? attempt.variantSignature : '',
               mode: typeof attempt.mode === 'string' ? attempt.mode : '',
               itemMode: typeof attempt.itemMode === 'string'
                 ? attempt.itemMode
@@ -214,6 +215,9 @@ function normaliseItemForState(item) {
     model: item.model || '',
     source: item.source || 'fixed',
   };
+  if (typeof item.variantSignature === 'string' && item.variantSignature) {
+    safe.variantSignature = item.variantSignature;
+  }
   if (item.mode === 'choose') {
     safe.options = Array.isArray(item.options)
       ? item.options.map((option, index) => {
@@ -248,6 +252,7 @@ function normaliseGpsResponse(value) {
   if (!itemId) return null;
   return {
     itemId,
+    variantSignature: typeof value.variantSignature === 'string' ? value.variantSignature : '',
     mode: typeof value.mode === 'string' ? value.mode : '',
     skillIds: normaliseStringArray(value.skillIds),
     rewardUnitId: typeof value.rewardUnitId === 'string' ? value.rewardUnitId : '',
@@ -808,6 +813,7 @@ function isMeaningfulPunctuationAnswer(item, answer = {}) {
 function reviewItemFromResult({ item, answer, result }) {
   return {
     itemId: item.id,
+    variantSignature: item.variantSignature || '',
     mode: item.mode,
     skillIds: Array.isArray(item.skillIds) ? [...item.skillIds] : [],
     rewardUnitId: item.rewardUnitId || '',
@@ -874,6 +880,7 @@ function applyMarkedAttemptToProgress({
     ts: nowValue,
     sessionId: session.id,
     itemId: item.id,
+    variantSignature: item.variantSignature || '',
     mode: item.mode,
     itemMode: item.mode,
     skillIds: item.skillIds || [],

@@ -258,18 +258,19 @@ function listCommaPattern(words = [], { finalComma = false } = {}) {
   for (let index = 1; index < escaped.length - 1; index += 1) {
     body += `,\\s*${escaped[index]}`;
   }
-  body += `${finalComma ? ',?' : ''}\\s+and\\s+${escaped[escaped.length - 1]}\\b`;
+  body += `${finalComma ? ',\\s+' : '\\s+'}and\\s+${escaped[escaped.length - 1]}\\b`;
   return new RegExp(body, 'i');
 }
 
-function listCommaOk(text, words = []) {
+function listCommaOk(text, words = [], { allowFinalComma = true } = {}) {
   const clean = canonicalPunctuationText(text).toLowerCase();
   const expected = listCommaPattern(words, { finalComma: false });
   const withFinalComma = listCommaPattern(words, { finalComma: true });
-  const commaPlacement = expected ? expected.test(clean) : false;
+  const noFinalCommaOk = expected ? expected.test(clean) : false;
+  const finalCommaOk = withFinalComma ? withFinalComma.test(clean) : false;
   return {
-    commaPlacement,
-    hasFinalComma: !commaPlacement && withFinalComma ? withFinalComma.test(clean) : false,
+    commaPlacement: noFinalCommaOk || (allowFinalComma && finalCommaOk),
+    hasFinalComma: finalCommaOk,
   };
 }
 
@@ -290,7 +291,7 @@ function openingPhraseMainClause(text, phrase) {
   };
 }
 
-function listCommaShapePattern(words = []) {
+function listCommaShapePattern(words = [], { allowFinalComma = true } = {}) {
   const items = words.map((word) => canonicalPunctuationText(word).toLowerCase()).filter(Boolean);
   if (items.length < 2) return null;
   const escaped = items.map(escapeRegExp);
@@ -299,7 +300,7 @@ function listCommaShapePattern(words = []) {
   for (let index = 1; index < escaped.length - 1; index += 1) {
     body += `,\\s*${escaped[index]}`;
   }
-  body += `\\s+and\\s+${escaped[escaped.length - 1]}`;
+  body += `${allowFinalComma ? ',?' : ''}\\s+and\\s+${escaped[escaped.length - 1]}`;
   return body;
 }
 
@@ -329,7 +330,7 @@ function boundaryBetweenClauses(text, validator = {}) {
   const mark = String(validator.mark || ';');
   const markOk = mark.trim() === ';'
     ? /^\s*;\s*$/.test(between)
-    : /^\s+-\s+$/.test(between);
+    : /^\s+[-–—]\s+$/.test(between);
   return { wordsOk, markOk, between, mark };
 }
 
@@ -378,7 +379,7 @@ function colonBeforeList(text, validator = {}) {
     && wordSequencePreserved(clean, [opening, ...items]);
   const afterOpening = wordsOk ? clean.slice(opening.length) : '';
   const colonOk = /^\s*:\s*/.test(afterOpening);
-  const expectedList = listCommaShapePattern(items);
+  const expectedList = listCommaShapePattern(items, { allowFinalComma: validator.allowFinalComma !== false });
   const tailPattern = validator.allowTrailingText === true
     ? '[.?!](?:\\s+\\S.*)?$'
     : '[.?!]?["\']?$';
@@ -507,7 +508,7 @@ function anchoredListSentence(text, validator = {}, requiredTerminal = null) {
   const items = (Array.isArray(validator.items) ? validator.items : [])
     .map((entry) => canonicalPunctuationText(entry))
     .filter(Boolean);
-  const expectedList = listCommaShapePattern(items);
+  const expectedList = listCommaShapePattern(items, { allowFinalComma: validator.allowFinalComma !== false });
   const wordsOk = Boolean(opening && expectedList) && wordSequencePreserved(clean, [opening, ...items]);
   const sentenceOk = singleSentenceOk(clean, requiredTerminal);
   const listOk = Boolean(opening && expectedList) && new RegExp(
@@ -556,7 +557,7 @@ function anchoredBoundarySentence(text, validator = {}, requiredTerminal = null)
   const wordsOk = Boolean(left && right)
     && clean.toLowerCase().startsWith(left.toLowerCase())
     && wordSequencePreserved(clean, [left, right]);
-  const markPattern = mark === ';' ? '\\s*;\\s*' : '\\s+-\\s+';
+  const markPattern = mark === ';' ? '\\s*;\\s*' : '\\s+[-–—]\\s+';
   const markOk = Boolean(left && right) && new RegExp(
     `^${escapeRegExp(left)}${markPattern}${escapeRegExp(right)}${terminalSuffixPattern(requiredTerminal)}`,
     'i',
@@ -678,7 +679,9 @@ function markTransfer(item, answer) {
     const clean = canonicalPunctuationText(text);
     const openingOk = !opening || clean.toLowerCase().startsWith(opening.toLowerCase());
     const wordsOk = words.length >= 2 && openingOk && wordSequencePreserved(text, opening ? [opening, ...words] : words);
-    const { commaPlacement, hasFinalComma } = listCommaOk(text, words);
+    const { commaPlacement, hasFinalComma } = listCommaOk(text, words, {
+      allowFinalComma: validator.allowFinalComma !== false,
+    });
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
     const sentenceOk = transferSentenceOk(item, text);

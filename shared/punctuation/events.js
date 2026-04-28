@@ -60,6 +60,7 @@ export function createPunctuationItemAttemptedEvent({
       [learnerId || 'default', session?.id || 'session', item.id, Number(session?.answeredCount) || 0],
     ),
     itemId: item.id,
+    variantSignature: item.variantSignature || '',
     mode: item.mode,
     skillIds: Array.isArray(item.skillIds) ? [...item.skillIds] : [],
     clusterId: item.clusterId || null,

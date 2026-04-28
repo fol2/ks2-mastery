@@ -210,6 +210,31 @@ test('10 same-item repeated attempts — Try/Practice Stars capped', () => {
   assert.ok(pealark.practiceStars <= 5, `Practice Stars should be capped for single item, got ${pealark.practiceStars}`);
 });
 
+test('generated variant signatures group equivalent surfaces for Try evidence', () => {
+  const progress = freshProgress();
+  progress.attempts.push(makeAttempt({
+    itemId: 'generated_sentence_1',
+    variantSignature: 'puncsig_equivalent',
+    skillIds: ['sentence_endings'],
+    correct: true,
+  }));
+  progress.attempts.push(makeAttempt({
+    itemId: 'generated_sentence_2',
+    variantSignature: 'puncsig_equivalent',
+    skillIds: ['sentence_endings'],
+    correct: true,
+  }));
+  progress.attempts.push(makeAttempt({
+    itemId: 'generated_sentence_3',
+    variantSignature: 'puncsig_distinct',
+    skillIds: ['sentence_endings'],
+    correct: true,
+  }));
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  assert.equal(result.perMonster.pealark.tryStars, 2);
+});
+
 test('supported-only answers (supportLevel > 0) — Try/Practice only, Secure/Mastery blocked', () => {
   const progress = freshProgress();
 

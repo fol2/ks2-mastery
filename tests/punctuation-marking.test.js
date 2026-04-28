@@ -120,8 +120,22 @@ test('comma list transfer requires preserved items and KS2 list comma placement'
     item: item('lc_transfer_trip'),
     answer: { typed: 'For the trip, we packed torches, maps, and water.' },
   });
-  assert.equal(finalComma.correct, false);
-  assert.equal(finalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
+  assert.equal(finalComma.correct, true);
+  assert.deepEqual(finalComma.misconceptionTags, []);
+
+  const strictListItem = {
+    ...item('lc_transfer_trip'),
+    validator: {
+      ...item('lc_transfer_trip').validator,
+      allowFinalComma: false,
+    },
+  };
+  const strictFinalComma = markPunctuationAnswer({
+    item: strictListItem,
+    answer: { typed: 'For the trip, we packed torches, maps, and water.' },
+  });
+  assert.equal(strictFinalComma.correct, false);
+  assert.equal(strictFinalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
 
   const anchored = markPunctuationAnswer({
     item: item('lc_transfer_bake_sale'),
@@ -193,6 +207,17 @@ test('boundary transfer validators require target marks between preserved clause
     answer: { typed: 'The path was flooded - we took the longer route.' },
   });
   assert.equal(dash.correct, true);
+
+  for (const typed of [
+    'The path was flooded – we took the longer route.',
+    'The path was flooded — we took the longer route.',
+  ]) {
+    const variant = markPunctuationAnswer({
+      item: item('dc_transfer_flooded_route'),
+      answer: { typed },
+    });
+    assert.equal(variant.correct, true, typed);
+  }
 
   const missingDash = markPunctuationAnswer({
     item: item('dc_transfer_flooded_route'),
@@ -311,8 +336,22 @@ test('mixed transfer validators constrain fronted speech and colon-list stems', 
     item: item('cl_lc_transfer_toolkit'),
     answer: { typed: 'Our toolkit contained three items: glue, card, and scissors.' },
   });
-  assert.equal(finalComma.correct, false);
-  assert.equal(finalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
+  assert.equal(finalComma.correct, true);
+  assert.deepEqual(finalComma.misconceptionTags, []);
+
+  const strictColonListItem = {
+    ...item('cl_lc_transfer_toolkit'),
+    validator: {
+      ...item('cl_lc_transfer_toolkit').validator,
+      allowFinalComma: false,
+    },
+  };
+  const strictFinalComma = markPunctuationAnswer({
+    item: strictColonListItem,
+    answer: { typed: 'Our toolkit contained three items: glue, card, and scissors.' },
+  });
+  assert.equal(strictFinalComma.correct, false);
+  assert.equal(strictFinalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
 });
 
 test('structure transfer validators require explicit punctuation roles', () => {

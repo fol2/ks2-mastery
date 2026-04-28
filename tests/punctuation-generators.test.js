@@ -22,11 +22,57 @@ test('generated punctuation items are deterministic, unique, and family-scoped',
   assert.equal(new Set(first.map((item) => item.id)).size, first.length);
   assert.equal(first.every((item) => item.source === 'generated'), true);
   assert.equal(first.every((item) => item.generatorFamilyId), true);
+  assert.equal(first.every((item) => item.templateId), true);
+  assert.equal(first.every((item) => /^puncsig_[a-z0-9]+$/.test(item.variantSignature)), true);
   assert.notDeepEqual(differentSeed.map((item) => item.id), first.map((item) => item.id));
 });
 
+test('generated punctuation first variants preserve legacy runtime surfaces when banks expand', () => {
+  const baseline = createPunctuationGeneratedItems({ seed: 'legacy-runtime', perFamily: 1 });
+  const expanded = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    generatorFamilies: PUNCTUATION_CONTENT_MANIFEST.generatorFamilies,
+  };
+  const after = createPunctuationGeneratedItems({ manifest: expanded, seed: 'legacy-runtime', perFamily: 1 });
+
+  assert.deepEqual(
+    after.map((item) => ({ id: item.id, stem: item.stem, model: item.model, templateId: item.templateId })),
+    baseline.map((item) => ({ id: item.id, stem: item.stem, model: item.model, templateId: item.templateId })),
+  );
+});
+
+test('generated punctuation signatures detect duplicate learner-visible surfaces', () => {
+  const items = createPunctuationGeneratedItems({ seed: 'signature', perFamily: 3 });
+  const clone = {
+    ...items[0],
+    id: `${items[0].id}_copy`,
+  };
+
+  assert.equal(clone.variantSignature, items[0].variantSignature);
+});
+
+test('expanded generated banks add distinct signatures after legacy variants', () => {
+  const targetFamilies = [
+    'gen_sentence_endings_insert',
+    'gen_apostrophe_contractions_fix',
+    'gen_comma_clarity_insert',
+    'gen_dash_clause_fix',
+    'gen_dash_clause_combine',
+    'gen_hyphen_insert',
+    'gen_semicolon_list_fix',
+  ];
+  const items = createPunctuationGeneratedItems({ seed: 'expanded-bank', perFamily: 4 });
+
+  for (const familyId of targetFamilies) {
+    const familyItems = items.filter((item) => item.generatorFamilyId === familyId);
+    assert.equal(familyItems.length, 4, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.variantSignature)).size, 4, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.templateId)).size, 4, familyId);
+  }
+});
+
 test('generated punctuation model answers pass deterministic marking', () => {
-  const generatedItems = createPunctuationGeneratedItems({ seed: 'marking-smoke', perFamily: 2 });
+  const generatedItems = createPunctuationGeneratedItems({ seed: 'marking-smoke', perFamily: 4 });
   for (const item of generatedItems) {
     const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
     assert.equal(result.correct, true, item.id);

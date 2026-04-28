@@ -77,7 +77,14 @@ Published practice modes include:
 - combine: join notes, clauses, or extra detail into one score-bearing punctuated sentence
 - paragraph: proofread a short passage where several punctuation skills can be exercised together
 
-Generated practice now runs through a deterministic compiler. Each published generator family can add extra practice items to the runtime manifest under a fixed release seed, so the Worker can broaden practice without using browser-owned random generation or changing the published reward denominator. Generated items carry `source: generated` internally, but the browser still receives only the redacted live-item read model.
+Generated practice now runs through a deterministic compiler. Each published generator family can add extra practice items to the runtime manifest under a fixed release seed, so the Worker can broaden practice without using browser-owned random generation, runtime AI, or changing the published reward denominator. Generated items carry `source: generated` internally, but the browser still receives only the redacted live-item read model.
+
+Generated item guardrails:
+
+- The production default remains `generatedPerFamily: 1`; wider banks are exercised by tests and audits before any runtime increase.
+- Each generated item carries a stable `templateId` and opaque `variantSignature`. The scheduler uses recent signatures to avoid equivalent retries, and Star evidence uses signatures before item ids when a generated surface has an available signature.
+- Template-bank expansion appends new templates after the first two legacy templates. The first generated runtime variant is preserved when the bank grows.
+- The audit command `npm run audit:punctuation-content -- --strict --generated-per-family 4` checks generated family coverage, validator coverage, distinct signature counts, and generated model-answer marking. Add `--fail-on-duplicate-generated-signatures` only when the requested generated-per-family count is within every family's available template count.
 
 Sentence-combining practice is now ported as a Worker-owned item mode rather than a separate browser session. Smart review and focused cluster sessions include `combine` at controlled frequency, weak spots can target weak `skill::combine` facets, and unsupported clusters fall back to their available item modes instead of exposing an empty queue.
 
@@ -94,7 +101,7 @@ The first Speech rubric is deliberately strict:
 
 Comma / Flow marking adds deterministic transfer validators for:
 
-- ordered KS2 list-comma patterns without an unnecessary final comma before `and`
+- ordered KS2 list-comma patterns; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma
 - opening phrase commas after fronted adverbials such as `After lunch,`
 - opening phrase commas that make meaning clearer, such as `In the morning,`
 
@@ -113,7 +120,7 @@ Structure marking adds deterministic transfer validators for:
 
 Combine marking adds stricter one-sentence validators for the first legacy-shaped rewrite families:
 
-- list-comma note combination without an unnecessary final comma
+- list-comma note combination; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma
 - fronted-adverbial rewrites with the opening comma
 - parenthesis rewrites with matched commas, brackets, or dashes
 - colon-list combinations after a complete opening clause

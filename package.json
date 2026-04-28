@@ -7,6 +7,7 @@
     "build": "node ./scripts/build-bundles.mjs && node ./scripts/build-public.mjs",
     "build:bundles": "node ./scripts/build-bundles.mjs",
     "audit:client": "node ./scripts/audit-client-bundle.mjs",
+    "audit:punctuation-content": "node ./scripts/audit-punctuation-content.mjs",
     "audit:production": "node ./scripts/production-bundle-audit.mjs",
     "assert:build-public": "node ./scripts/assert-build-public.mjs",
     "assets:monsters": "node ./scripts/generate-monster-assets.mjs",

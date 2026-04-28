@@ -23,10 +23,63 @@ function shortHash(value) {
   return hashString(value).toString(36).padStart(6, '0').slice(0, 8);
 }
 
-function pickTemplate(templates, seed, familyId, variantIndex) {
+function normaliseSignatureText(value) {
+  return String(value ?? '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function stableJson(value) {
+  if (Array.isArray(value)) return value.map(stableJson);
+  if (!isPlainObject(value)) return value;
+  return Object.fromEntries(Object.keys(value)
+    .sort()
+    .map((key) => [key, stableJson(value[key])]));
+}
+
+function templateIdFor(familyId, template, templateIndex = 0) {
+  const explicit = typeof template?.templateId === 'string' ? template.templateId.trim() : '';
+  return explicit || `${familyId}_template_${templateIndex + 1}`;
+}
+
+function variantSignatureFor({ family, template, templateId, model }) {
+  const signaturePayload = {
+    familyId: family.id,
+    mode: family.mode,
+    templateId,
+    prompt: normaliseSignatureText(template.prompt || ''),
+    stem: normaliseSignatureText(template.stem || ''),
+    model: normaliseSignatureText(model || ''),
+    skillIds: uniqueStrings(template.skillIds).sort(),
+    clusterId: template.clusterId || '',
+    validatorType: isPlainObject(template.validator) ? template.validator.type || '' : '',
+    rubricType: isPlainObject(template.rubric) ? template.rubric.type || '' : '',
+  };
+  return `puncsig_${shortHash(JSON.stringify(stableJson(signaturePayload)))}`;
+}
+
+function pickTemplate(templates, seed, familyId, variantIndex, { legacyTemplateCount = 2 } = {}) {
   if (!templates.length) return null;
-  const offset = hashString(`${seed}:${familyId}`) % templates.length;
-  return templates[(offset + variantIndex) % templates.length];
+  const legacyCount = Math.max(0, Math.min(Number(legacyTemplateCount) || 0, templates.length));
+  const expandedPool = templates.slice(legacyCount);
+  const pool = variantIndex < legacyCount || !expandedPool.length
+    ? templates.slice(0, legacyCount || templates.length)
+    : expandedPool;
+  const offset = hashString(`${seed}:${familyId}`) % pool.length;
+  const poolVariantIndex = variantIndex < legacyCount || !expandedPool.length
+    ? variantIndex
+    : variantIndex - legacyCount;
+  const poolIndex = (offset + poolVariantIndex) % pool.length;
+  const template = pool[poolIndex];
+  return {
+    template,
+    templateIndex: Math.max(0, templates.indexOf(template)),
+  };
 }
 
 function uniqueStrings(values = []) {
@@ -49,6 +102,20 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['endmarks.exclamation_mark_missing', 'endmarks.capitalisation_missing'],
       readiness: ['insertion', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Add the capital letter and end punctuation.',
+      stem: 'did the crew check the lanterns',
+      model: 'Did the crew check the lanterns?',
+      misconceptionTags: ['endmarks.question_mark_missing', 'endmarks.capitalisation_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the capital letter and end punctuation.',
+      stem: 'how quickly the fog cleared',
+      model: 'How quickly the fog cleared!',
+      misconceptionTags: ['endmarks.exclamation_mark_missing', 'endmarks.capitalisation_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
   ]),
   gen_apostrophe_contractions_fix: Object.freeze([
     {
@@ -62,6 +129,20 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       prompt: 'Correct the apostrophes in the contractions.',
       stem: 'Theyre sure we wont be late.',
       model: "They're sure we won't be late.",
+      misconceptionTags: ['apostrophe.contraction_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the apostrophes in the contractions.',
+      stem: 'I dont think theyve finished.',
+      model: "I don't think they've finished.",
+      misconceptionTags: ['apostrophe.contraction_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Correct the apostrophes in the contractions.',
+      stem: 'Youre sure he isnt coming.',
+      model: "You're sure he isn't coming.",
       misconceptionTags: ['apostrophe.contraction_missing'],
       readiness: ['proofreading', 'misconception', 'negative_test'],
     },
@@ -335,6 +416,28 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['comma.clarity_missing'],
       readiness: ['insertion', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Add the comma that makes the meaning clear.',
+      stem: 'Without a map the walkers lost time.',
+      model: 'Without a map, the walkers lost time.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'Without a map',
+      },
+      misconceptionTags: ['comma.clarity_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the comma that makes the meaning clear.',
+      stem: 'As the whistle blew the teams lined up.',
+      model: 'As the whistle blew, the teams lined up.',
+      validator: {
+        type: 'startsWithPhraseComma',
+        phrase: 'As the whistle blew',
+      },
+      misconceptionTags: ['comma.clarity_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
   ]),
   gen_semicolon_fix: Object.freeze([
     {
@@ -477,6 +580,32 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['boundary.dash_missing'],
       readiness: ['proofreading', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Add a dash between the related clauses.',
+      stem: 'The torch failed we used the lantern.',
+      model: 'The torch failed - we used the lantern.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The torch failed',
+        right: 'we used the lantern',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add a dash between the related clauses.',
+      stem: 'The bridge was closed the buses turned back.',
+      model: 'The bridge was closed - the buses turned back.',
+      validator: {
+        type: 'requiresBoundaryBetweenClauses',
+        left: 'The bridge was closed',
+        right: 'the buses turned back',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
   ]),
   gen_dash_clause_combine: Object.freeze([
     {
@@ -505,6 +634,32 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['boundary.dash_missing'],
       readiness: ['constrained_transfer', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Combine the two related clauses into one sentence with a dash.',
+      stem: 'The torch failed.\nWe used the lantern.',
+      model: 'The torch failed - we used the lantern.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The torch failed',
+        right: 'we used the lantern',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Combine the two related clauses into one sentence with a dash.',
+      stem: 'The bridge was closed.\nThe buses turned back.',
+      model: 'The bridge was closed - the buses turned back.',
+      validator: {
+        type: 'combineBoundaryBetweenClauses',
+        left: 'The bridge was closed',
+        right: 'the buses turned back',
+        mark: '-',
+      },
+      misconceptionTags: ['boundary.dash_missing'],
+      readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    },
   ]),
   gen_hyphen_insert: Object.freeze([
     {
@@ -525,6 +680,28 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       validator: {
         type: 'requiresHyphenatedPhrase',
         phrase: 'fast-moving tide',
+      },
+      misconceptionTags: ['boundary.hyphen_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the hyphen that avoids ambiguity.',
+      stem: 'The well known guide led us.',
+      model: 'The well-known guide led us.',
+      validator: {
+        type: 'requiresHyphenatedPhrase',
+        phrase: 'well-known guide',
+      },
+      misconceptionTags: ['boundary.hyphen_missing'],
+      readiness: ['insertion', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Add the hyphen that avoids ambiguity.',
+      stem: 'The cold blooded reptile rested.',
+      model: 'The cold-blooded reptile rested.',
+      validator: {
+        type: 'requiresHyphenatedPhrase',
+        phrase: 'cold-blooded reptile',
       },
       misconceptionTags: ['boundary.hyphen_missing'],
       readiness: ['insertion', 'misconception', 'negative_test'],
@@ -717,6 +894,28 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
       misconceptionTags: ['structure.semicolon_list_missing'],
       readiness: ['proofreading', 'misconception', 'negative_test'],
     },
+    {
+      prompt: 'Use semi-colons to separate the complex list items.',
+      stem: 'The stalls sold apples, Kent, pears, Devon and berries, Wales.',
+      model: 'The stalls sold apples, Kent; pears, Devon; and berries, Wales.',
+      validator: {
+        type: 'requiresSemicolonList',
+        items: ['apples, Kent', 'pears, Devon', 'berries, Wales'],
+      },
+      misconceptionTags: ['structure.semicolon_list_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
+    {
+      prompt: 'Use semi-colons to separate the complex list items.',
+      stem: 'The clubs met in Leeds, Monday, York, Tuesday and Bath, Friday.',
+      model: 'The clubs met in Leeds, Monday; York, Tuesday; and Bath, Friday.',
+      validator: {
+        type: 'requiresSemicolonList',
+        items: ['Leeds, Monday', 'York, Tuesday', 'Bath, Friday'],
+      },
+      misconceptionTags: ['structure.semicolon_list_missing'],
+      readiness: ['proofreading', 'misconception', 'negative_test'],
+    },
   ]),
   gen_bullet_points_fix: Object.freeze([
     {
@@ -794,14 +993,17 @@ const GENERATED_TEMPLATE_BANK = Object.freeze({
   ]),
 });
 
-function buildGeneratedItem({ family, skill, template, seed, variantIndex }) {
+function buildGeneratedItem({ family, skill, template, templateIndex, seed, variantIndex }) {
   const idSeed = `${seed}:${family.id}:${variantIndex}`;
   const model = typeof template.model === 'string' ? template.model : '';
   const templateSkillIds = uniqueStrings(template.skillIds);
   const skillIds = templateSkillIds.length ? templateSkillIds : [family.skillId];
+  const templateId = templateIdFor(family.id, template, templateIndex);
   return {
     id: `${family.id}_${shortHash(idSeed)}_${variantIndex + 1}`,
     mode: family.mode,
+    templateId,
+    variantSignature: variantSignatureFor({ family, template, templateId, model }),
     skillIds,
     clusterId: template.clusterId || skill.clusterId,
     rewardUnitId: family.rewardUnitId,
@@ -838,8 +1040,18 @@ export function createPunctuationGeneratedItems({
     const templates = contextTemplates.length ? contextTemplates : (GENERATED_TEMPLATE_BANK[family.id] || []);
     if (!skill || !templates.length) continue;
     for (let index = 0; index < limit; index += 1) {
-      const template = pickTemplate(templates, seed, family.id, index);
-      items.push(buildGeneratedItem({ family, skill, template, seed, variantIndex: index }));
+      const picked = pickTemplate(templates, seed, family.id, index, {
+        legacyTemplateCount: contextTemplates.length ? templates.length : 2,
+      });
+      if (!picked?.template) continue;
+      items.push(buildGeneratedItem({
+        family,
+        skill,
+        template: picked.template,
+        templateIndex: picked.templateIndex,
+        seed,
+        variantIndex: index,
+      }));
     }
   }
   return items;
