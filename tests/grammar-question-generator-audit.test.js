@@ -19,7 +19,7 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.deepEqual(audit.templatesMissingAnswerSpecs, []);
   assert.deepEqual(audit.invalidAnswerSpecs, []);
   assert.equal(audit.conceptCoverage.length, GRAMMAR_CONCEPTS.length);
-  assert.equal(audit.answerSpecTemplateCount, 39);
+  assert.equal(audit.answerSpecTemplateCount, 47);
   assert.equal(audit.constructedResponseTemplateCount, 20);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 20);
   assert.equal(audit.legacyAdapterTemplateCount, 0);
@@ -35,19 +35,19 @@ test('Grammar question-generator audit covers the current template inventory', (
   );
   assert.deepEqual(audit.answerSpecKindCounts, {
     acceptedSet: 2,
-    exact: 17,
+    exact: 23,
     manualReviewOnly: 4,
-    multiField: 2,
+    multiField: 4,
     normalisedText: 5,
     punctuationPattern: 9,
   });
 
-  // P4 mixed-transfer scaffold assertions
+  // P4 mixed-transfer assertions
   assert.equal(typeof audit.mixedTransferTemplateCount, 'number');
-  assert.equal(audit.mixedTransferTemplateCount, 0);
+  assert.equal(audit.mixedTransferTemplateCount, 8);
   assert.ok(Array.isArray(audit.conceptsMissingMixedTransferCoverage));
-  assert.equal(audit.conceptsMissingMixedTransferCoverage.length, 18);
-  assert.equal(audit.p4MixedTransferComplete, false);
+  assert.equal(audit.conceptsMissingMixedTransferCoverage.length, 0);
+  assert.equal(audit.p4MixedTransferComplete, true);
 });
 
 test('Grammar generated variants have stable answer-safe signatures', () => {
