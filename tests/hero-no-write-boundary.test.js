@@ -170,7 +170,9 @@ test('S5: client src/ files may import shared/hero/hero-copy only; all other sha
   );
 
   // Allowlist: these shared/hero/ module names are safe for client import.
-  const ALLOWED_SHARED_HERO_MODULES = new Set(['hero-copy']);
+  // hero-copy: copy definitions (P2)
+  // completion-status: pure derivation utility (P3 U10 — auto-claim trigger guard)
+  const ALLOWED_SHARED_HERO_MODULES = new Set(['hero-copy', 'completion-status']);
 
   // Forbidden module patterns that must never appear in client code.
   const FORBIDDEN_SHARED_HERO_MODULES = [
@@ -226,8 +228,12 @@ test('S6: no P0 Hero source file contains reward/economy tokens', () => {
     /streak\s+loss/i,
   ];
 
+  // P3 files that legitimately use economy-adjacent vocabulary as part of
+  // the claim/reward architecture — excluded from this P0-era scan.
+  const S6_EXCLUDED_SUFFIXES = ['hero-copy.js', 'claim-contract.js', 'claim-resolver.js'];
+
   for (const [rel, { code }] of HERO_SOURCES) {
-    if (rel.endsWith('hero-copy.js')) continue;
+    if (S6_EXCLUDED_SUFFIXES.some((suffix) => rel.endsWith(suffix))) continue;
     for (const pattern of FORBIDDEN_ECONOMY_TOKENS) {
       assert.ok(
         !pattern.test(code),

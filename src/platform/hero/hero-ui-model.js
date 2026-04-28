@@ -39,6 +39,16 @@ export function buildHeroHomeModel(heroUi) {
   const eligibleSubjects = (readModel?.eligibleSubjects || []).map(e => typeof e === 'string' ? e : e?.subjectId || '').filter(Boolean);
   const lockedSubjects = (readModel?.lockedSubjects || []).map(e => typeof e === 'string' ? e : e?.subjectId || '').filter(Boolean);
 
+  // P3 U10: progress and claim state derivation.
+  const progress = readModel?.progress || null;
+  const claiming = heroUi?.status === 'claiming';
+  const lastClaim = heroUi?.lastClaim || null;
+  const pendingCompletedHeroSession = readModel?.pendingCompletedHeroSession || null;
+  const canClaim = readModel?.claim?.enabled === true;
+  const dailyStatus = progress?.status || 'none';
+  const effortCompleted = progress?.effortCompleted || 0;
+  const completedTaskIds = progress?.completedTaskIds || [];
+
   return {
     status,
     enabled,
@@ -51,5 +61,14 @@ export function buildHeroHomeModel(heroUi) {
     eligibleSubjects,
     lockedSubjects,
     lastLaunch,
+    // P3 U10: progress and claim fields
+    progress,
+    claiming,
+    lastClaim,
+    pendingCompletedHeroSession,
+    canClaim,
+    dailyStatus,
+    effortCompleted,
+    completedTaskIds,
   };
 }

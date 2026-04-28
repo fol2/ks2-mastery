@@ -1173,7 +1173,7 @@ export function renderHomeSurfaceWithHeroFixture({ hero = null } = {}) {
   `);
 }
 
-export function renderHeroTaskBannerFixture({ lastLaunch = null, subjectName = 'Spelling' } = {}) {
+export function renderHeroTaskBannerFixture({ lastLaunch = null, subjectName = 'Spelling', taskCompleted = false } = {}) {
   return renderFixture(`
     import React from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
@@ -1181,7 +1181,8 @@ export function renderHeroTaskBannerFixture({ lastLaunch = null, subjectName = '
 
     const lastLaunch = ${JSON.stringify(lastLaunch)};
     const subjectName = ${JSON.stringify(subjectName)};
-    const html = renderToStaticMarkup(<HeroTaskBanner lastLaunch={lastLaunch} subjectName={subjectName} />);
+    const taskCompleted = ${JSON.stringify(taskCompleted)};
+    const html = renderToStaticMarkup(<HeroTaskBanner lastLaunch={lastLaunch} subjectName={subjectName} taskCompleted={taskCompleted} />);
     console.log(html);
   `);
 }

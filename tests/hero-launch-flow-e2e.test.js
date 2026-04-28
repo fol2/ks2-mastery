@@ -500,3 +500,273 @@ test('E2E P2: Punctuation Hero launch does not crash', async () => {
 
   server.close();
 });
+
+// ── P3 U4: Hero progress marker tests ────────────────────────────────
+
+function createP3ProgressServer() {
+  return createWorkerRepositoryServer({
+    env: {
+      HERO_MODE_SHADOW_ENABLED: 'true',
+      HERO_MODE_LAUNCH_ENABLED: 'true',
+      HERO_MODE_CHILD_UI_ENABLED: 'true',
+      HERO_MODE_PROGRESS_ENABLED: 'true',
+      PUNCTUATION_SUBJECT_ENABLED: 'true',
+    },
+  });
+}
+
+function createP3ProgressDisabledServer() {
+  return createWorkerRepositoryServer({
+    env: {
+      HERO_MODE_SHADOW_ENABLED: 'true',
+      HERO_MODE_LAUNCH_ENABLED: 'true',
+      HERO_MODE_CHILD_UI_ENABLED: 'true',
+      HERO_MODE_PROGRESS_ENABLED: 'false',
+      PUNCTUATION_SUBJECT_ENABLED: 'true',
+    },
+  });
+}
+
+function getHeroProgressRow(server, learnerId) {
+  const row = server.DB.db.prepare(
+    `SELECT state_json, updated_at FROM child_game_state
+     WHERE learner_id = ? AND system_id = 'hero-mode'`,
+  ).get(learnerId);
+  if (!row) return null;
+  return JSON.parse(row.state_json);
+}
+
+test('P3 U4: start-task with HERO_MODE_PROGRESS_ENABLED=true writes hero progress marker with status=started', async () => {
+  const server = createP3ProgressServer();
+  await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
+
+  const readModelPayload = await getReadModel(server);
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  if (!launchable) {
+    server.close();
+    assert.fail('No launchable task found — cannot exercise progress marker');
+  }
+
+  const revision = getLearnerRevision(server);
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'hero-p3u4-progress-1',
+    expectedLearnerRevision: revision,
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200, `Expected 200, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.heroLaunch.status, 'started');
+
+  // Verify hero progress row exists
+  const progress = getHeroProgressRow(server, 'learner-a');
+  assert.ok(progress, 'child_game_state hero-mode row must exist after start-task');
+  assert.ok(progress.daily, 'progress.daily must exist');
+  assert.equal(progress.daily.questId, launchable.questId);
+
+  // Verify the task has status='started'
+  const taskEntry = progress.daily.tasks[launchable.taskId];
+  assert.ok(taskEntry, 'Task entry must exist in progress.daily.tasks');
+  assert.equal(taskEntry.status, 'started');
+  assert.equal(taskEntry.launchRequestId, 'hero-p3u4-progress-1');
+  assert.ok(taskEntry.startedAt > 0, 'startedAt must be a positive timestamp');
+
+  // Verify daily metadata
+  assert.ok(progress.daily.dateKey, 'dateKey must be set');
+  assert.ok(progress.daily.firstStartedAt > 0, 'firstStartedAt must be set');
+  assert.equal(progress.daily.status, 'active');
+  assert.ok(progress.daily.taskOrder.length > 0, 'taskOrder must have tasks');
+
+  server.close();
+});
+
+test('P3 U4: start-task with HERO_MODE_PROGRESS_ENABLED=false does NOT write hero progress row', async () => {
+  const server = createP3ProgressDisabledServer();
+  await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
+
+  const readModelPayload = await getReadModel(server);
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  if (!launchable) {
+    server.close();
+    assert.fail('No launchable task found — cannot exercise disabled flag');
+  }
+
+  const revision = getLearnerRevision(server);
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'hero-p3u4-disabled-1',
+    expectedLearnerRevision: revision,
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200, `Expected 200, got ${response.status}: ${JSON.stringify(payload)}`);
+  assert.equal(payload.ok, true);
+
+  // No hero progress row should exist
+  const progress = getHeroProgressRow(server, 'learner-a');
+  assert.equal(progress, null, 'child_game_state hero-mode row must NOT exist when flag is off');
+
+  server.close();
+});
+
+test('P3 U4: second start-task for same task (idempotent) preserves progress marker', async () => {
+  const server = createP3ProgressServer();
+  await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
+
+  const readModelPayload = await getReadModel(server);
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  if (!launchable) {
+    server.close();
+    assert.fail('No launchable task found — cannot exercise idempotent path');
+  }
+
+  // First launch
+  const revision1 = getLearnerRevision(server);
+  const firstResp = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'hero-p3u4-idempotent-1',
+    expectedLearnerRevision: revision1,
+  });
+  const firstPayload = await firstResp.json();
+  assert.equal(firstResp.status, 200, `First launch expected 200: ${JSON.stringify(firstPayload)}`);
+
+  const progressAfterFirst = getHeroProgressRow(server, 'learner-a');
+  assert.ok(progressAfterFirst, 'Progress must exist after first launch');
+  const firstStartedAt = progressAfterFirst.daily.tasks[launchable.taskId].startedAt;
+
+  // Re-read model (quest shifts) and re-launch same task
+  const refreshedPayload = await getReadModel(server);
+  const refreshedQuest = refreshedPayload.hero.dailyQuest;
+  const refreshedFingerprint = refreshedPayload.hero.questFingerprint;
+  const revision2 = getLearnerRevision(server);
+
+  const secondResp = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: refreshedQuest.questId,
+    questFingerprint: refreshedFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'hero-p3u4-idempotent-2',
+    expectedLearnerRevision: revision2,
+  });
+  const secondPayload = await secondResp.json();
+  assert.equal(secondResp.status, 200, `Second launch expected 200: ${JSON.stringify(secondPayload)}`);
+  assert.equal(secondPayload.heroLaunch.status, 'already-started');
+
+  // Progress marker should still show started (status preserved)
+  const progressAfterSecond = getHeroProgressRow(server, 'learner-a');
+  assert.ok(progressAfterSecond, 'Progress must still exist after re-launch');
+  const taskAfterSecond = progressAfterSecond.daily.tasks[launchable.taskId];
+  assert.equal(taskAfterSecond.status, 'started',
+    'Task status must remain started on idempotent re-launch');
+  assert.ok(taskAfterSecond.startedAt >= firstStartedAt,
+    'startedAt must be >= original (non-fatal re-stamp is acceptable)');
+
+  server.close();
+});
+
+test('P3 U4: start-task on fresh day initialises daily progress from quest tasks', async () => {
+  const server = createP3ProgressServer();
+  await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
+
+  // No existing hero progress at all — this is the fresh-day case
+  const existingProgress = getHeroProgressRow(server, 'learner-a');
+  assert.equal(existingProgress, null, 'No hero progress should exist before first launch');
+
+  const readModelPayload = await getReadModel(server);
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  if (!launchable) {
+    server.close();
+    assert.fail('No launchable task found — cannot exercise fresh-day init');
+  }
+
+  const revision = getLearnerRevision(server);
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'hero-p3u4-freshday-1',
+    expectedLearnerRevision: revision,
+  });
+  const payload = await response.json();
+  assert.equal(response.status, 200, `Expected 200, got ${response.status}: ${JSON.stringify(payload)}`);
+
+  const progress = getHeroProgressRow(server, 'learner-a');
+  assert.ok(progress, 'Progress must exist after fresh-day launch');
+  assert.ok(progress.daily, 'daily must be initialised');
+  assert.equal(progress.daily.questId, launchable.questId);
+  assert.ok(progress.daily.taskOrder.length > 0, 'taskOrder must contain quest tasks');
+  assert.ok(progress.daily.generatedAt > 0, 'generatedAt must be set');
+
+  // All tasks except the launched one should be 'planned'
+  for (const tid of progress.daily.taskOrder) {
+    const t = progress.daily.tasks[tid];
+    assert.ok(t, `Task ${tid} must exist in daily.tasks`);
+    if (tid === launchable.taskId) {
+      assert.equal(t.status, 'started');
+    } else {
+      assert.equal(t.status, 'planned');
+    }
+  }
+
+  server.close();
+});
+
+test('P3 U4: subject command + hero progress both complete without error', async () => {
+  const server = createP3ProgressServer();
+  await seedLearnerWithSubjectState(server, 'adult-a', 'learner-a');
+
+  const readModelPayload = await getReadModel(server);
+  const launchable = findFirstLaunchableTask(readModelPayload);
+  if (!launchable) {
+    server.close();
+    assert.fail('No launchable task found');
+  }
+
+  const revision = getLearnerRevision(server);
+  const response = await postHeroCommand(server, {
+    command: 'start-task',
+    learnerId: 'learner-a',
+    questId: launchable.questId,
+    questFingerprint: launchable.questFingerprint,
+    taskId: launchable.taskId,
+    requestId: 'hero-p3u4-both-ok-1',
+    expectedLearnerRevision: revision,
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200, `Expected 200: ${JSON.stringify(payload)}`);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.heroLaunch.status, 'started');
+
+  // Subject state written
+  const session = getSubjectSessionState(server, 'learner-a', payload.heroLaunch.subjectId);
+  assert.ok(session, 'Subject session must exist');
+  assert.ok(session.heroContext, 'heroContext must exist on subject session');
+
+  // Hero progress written
+  const progress = getHeroProgressRow(server, 'learner-a');
+  assert.ok(progress, 'Hero progress must exist');
+  assert.equal(progress.daily.tasks[launchable.taskId].status, 'started');
+
+  // Revision bumped exactly once (subject command)
+  const newRevision = getLearnerRevision(server);
+  assert.equal(newRevision, revision + 1, 'Learner revision must bump exactly once');
+
+  server.close();
+});

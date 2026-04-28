@@ -362,5 +362,7 @@ export function normalisePunctuationSummary(value) {
     securedUnits: normaliseStringArray(value.securedUnits),
     misconceptionTags: normaliseStringArray(value.misconceptionTags),
     gps: normaliseGpsSummary(value.gps),
+    // Hero Mode P3: server-owned trust anchor for completion claims.
+    heroContext: isPlainObject(value.heroContext) ? value.heroContext : null,
   };
 }

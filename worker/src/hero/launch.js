@@ -170,7 +170,24 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
           questId: activeSession.questId,
         },
       };
-      return { heroLaunch, subjectCommand: null };
+      // P3 U4: expose quest metadata for progress marker (already-started path)
+      const questContext = {
+        questId: quest.questId,
+        questFingerprint: heroReadModel.questFingerprint,
+        schedulerVersion: heroReadModel.schedulerVersion || HERO_P2_SCHEDULER_VERSION,
+        effortTarget: quest.effortTarget || 0,
+        tasks: (quest.tasks || []).map(t => ({
+          taskId: t.taskId,
+          subjectId: t.subjectId,
+          intent: t.intent || null,
+          launcher: t.launcher || null,
+          effortTarget: t.effortTarget || 0,
+        })),
+        dateKey: heroReadModel.dateKey,
+        timezone: heroReadModel.timezone || HERO_DEFAULT_TIMEZONE,
+        copyVersion: heroReadModel.ui?.copyVersion || null,
+      };
+      return { heroLaunch, subjectCommand: null, questContext };
     }
 
     // Different Hero taskId → conflict
@@ -245,6 +262,7 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     version: HERO_LAUNCH_CONTRACT_VERSION,
     status: 'started',
     questId,
+    questFingerprint: heroReadModel.questFingerprint,
     taskId,
     dateKey: heroReadModel.dateKey,
     subjectId: adapterResult.subjectId,
@@ -257,5 +275,23 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     childVisible: childUiEnabled,
   };
 
-  return { heroLaunch, subjectCommand };
+  // P3 U4: expose quest metadata so the caller can initialise hero progress
+  const questContext = {
+    questId: quest.questId,
+    questFingerprint: heroReadModel.questFingerprint,
+    schedulerVersion: heroReadModel.schedulerVersion || HERO_P2_SCHEDULER_VERSION,
+    effortTarget: quest.effortTarget || 0,
+    tasks: (quest.tasks || []).map(t => ({
+      taskId: t.taskId,
+      subjectId: t.subjectId,
+      intent: t.intent || null,
+      launcher: t.launcher || null,
+      effortTarget: t.effortTarget || 0,
+    })),
+    dateKey: heroReadModel.dateKey,
+    timezone: heroReadModel.timezone || HERO_DEFAULT_TIMEZONE,
+    copyVersion: heroReadModel.ui?.copyVersion || null,
+  };
+
+  return { heroLaunch, subjectCommand, questContext };
 }

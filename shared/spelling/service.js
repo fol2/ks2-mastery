@@ -64,6 +64,7 @@ import {
   SPELLING_SESSION_PHASES,
   SPELLING_SESSION_TYPES,
 } from '../../src/subjects/spelling/service-contract.js';
+import { extractHeroSummaryContext } from '../hero/launch-context.js';
 
 // Re-export `isGuardianEligibleSlug` at the service layer so callers that
 // already import other helpers from `shared/spelling/service.js` do not
@@ -2135,9 +2136,11 @@ export function createSpellingService({ repository, storage, tts, now, random, c
           ? advanceGuardianCard(session)
           : engine.advanceCard(session, learnerId);
         if (next.done) {
+          const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
+          if (summary) summary.heroContext = extractHeroSummaryContext(session);
           return {
             session: null,
-            summary: normaliseSummary(engine.finalise(session), isRuntimeKnownSlug),
+            summary,
             error: '',
           };
         }
@@ -3751,6 +3754,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
         : 0;
       if (cardIndex >= cards.length) {
         const summary = buildPatternQuestSummary(session);
+        if (summary) summary.heroContext = extractHeroSummaryContext(session);
         const nextState = {
           version: SPELLING_SERVICE_STATE_VERSION,
           phase: 'summary',
@@ -3802,6 +3806,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
       // which emits SATs demotion copy. overrideBossSummary swaps in
       // Mega-safe copy without modifying legacy-engine.js.
       const summary = session.mode === 'boss' ? overrideBossSummary(rawSummary) : rawSummary;
+      if (summary) summary.heroContext = extractHeroSummaryContext(session);
       const nextState = {
         version: SPELLING_SERVICE_STATE_VERSION,
         phase: 'summary',
@@ -4004,6 +4009,7 @@ export function createSpellingService({ repository, storage, tts, now, random, c
     const advanced = engine.advanceCard(session, learnerId);
     if (advanced.done) {
       const summary = normaliseSummary(engine.finalise(session), isRuntimeKnownSlug);
+      if (summary) summary.heroContext = extractHeroSummaryContext(session);
       const nextState = {
         version: SPELLING_SERVICE_STATE_VERSION,
         phase: 'summary',
