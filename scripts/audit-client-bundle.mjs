@@ -27,13 +27,15 @@ const DEFAULT_PUBLIC_DIR = 'dist/public';
 // just above that at ~214,020 bytes. Phase 7's Punctuation remote-summary
 // safety and radio-focus accessibility fixes lift the Node 22 build to
 // ~215.1 KB. Punctuation's Star-based display parity added a small
-// first-paint utility footprint, so the committed ceiling is 216,000: still
-// tight enough to catch an adult-surface re-import, without blocking on
-// sub-kilobyte compression/runtime drift. Override via CLI
+// first-paint utility footprint. Grammar's matching display-state parity
+// adds another tiny cross-subject utility slice; Node 22's CI gzip output
+// measures about 216.4 KB for the PR merge commit, so the committed ceiling is
+// 216,500: still tight enough to catch an adult-surface re-import, without
+// blocking on sub-kilobyte compression/runtime drift. Override via CLI
 // `--main-bundle-budget-bytes` for experimentation. See
 // `tests/bundle-byte-budget.test.js` for the committed baseline +
 // rationale.
-const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 216_000;
+const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 216_500;
 
 const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/data\//, reason: 'full spelling content dataset' },

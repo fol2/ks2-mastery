@@ -81,6 +81,7 @@ function subjectIsInSession(subjectId, ui) {
   const phase = ui?.phase;
   if (subjectId === 'spelling') return phase === 'session';
   if (subjectId === 'punctuation') return phase === 'active-item' || phase === 'feedback';
+  if (subjectId === 'grammar') return phase === 'session' || phase === 'feedback';
   return false;
 }
 

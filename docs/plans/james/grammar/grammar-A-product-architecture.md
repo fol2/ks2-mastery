@@ -249,11 +249,13 @@ Adult / debug side 可以見更詳細 evidence：attempt count、recent miss、d
 
 ### 3.3 Secure 的角色
 
-Secure 仍然重要，但不是 monster Mega 的唯一門檻。
+Secure 仍然重要，但已經不屬於 monster reward event 的觸發條件。
 
 Secure 表示 concept 已經有一定 strength、streak、spacing evidence。但 Phase 5 後，Mega 要 retainedAfterSecure，即是 secure 之後再隔一段時間仍然能 independent correct。
 
 這樣做是正確的，因為 Grammar concepts 少。如果用 secure concept count 直接推 monster stage，就會出現小 denominator monster 太快 Mega 的問題。
+
+因此 secure skills 是 learner understanding / scheduling / analytics 的 evidence；monster display 和 celebration 則只由 Stars / displayState 驅動。這個分離跟 Punctuation reward correction 後的 cross-subject contract 一致。
 
 ### 3.4 Stars 的角色
 
@@ -261,12 +263,16 @@ Stars 是 child-facing progress translation，不是 learning state 本身。
 
 每隻 active Grammar monster 都用 0–100 Stars：
 
-- 0：Not found yet
-- 1：Egg found
-- 15：Hatched
-- 35：Growing
-- 65：Nearly Mega
-- 100：Mega
+| Stars | Machine `displayState` | Grammar child-facing label |
+|---:|---|---|
+| 0 | `not-found` | Not found yet |
+| 1+ | `egg-found` | Egg found |
+| 15+ | `hatch` | Hatched |
+| 35+ | `evolve` | Growing |
+| 65+ | `strong` | Nearly Mega |
+| 100 | `mega` | Mega |
+
+`displayState` 是 cross-subject machine enum；Grammar 可以保留自己的 child-facing wording。Subject landing、Home dashboard、Codex、summary 和 monster CSS 都應 consume 同一個 `displayState`，不能各自用 legacy `stage >= 1` 或 secure count 重新 derive found / egg / monster。
 
 Stars 來自五個 evidence tiers：
 
@@ -425,6 +431,8 @@ Egg 是 encouragement，不是 mastery。
 如果蛋要等 secure，孩子可能要幾日甚至幾星期才見到第一個 creature reward。這太慢。1 Star Egg 代表「你已經有第一個真實 learning evidence」。
 
 這給小朋友早期成功感，但不會令 Mega 變便宜，因為 100 Stars 仍然要 repeated、varied、secure、retained evidence。
+
+Egg Found 的 celebration event 使用 unified monster event kind `caught`，語義是 first-found / first-Star，不是 first secure。Hatch / Growing / Nearly Mega / Mega 的 overlay celebration 由 Star threshold transition 觸發，並在 session end 播放；mid-session toast 目前暫時保留。
 
 ### 5.7 Stars 為何不能是 XP？
 

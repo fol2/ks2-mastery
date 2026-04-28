@@ -36,7 +36,12 @@ function SummaryCards({ cards }) {
               <div className="grammar-summary-card-label">{card.label}</div>
               <ul className="grammar-summary-monster-list">
                 {monsters.map((monster) => (
-                  <li className="grammar-summary-monster" key={monster.monsterId} data-monster-id={monster.monsterId}>
+                  <li
+                    className="grammar-summary-monster"
+                    key={monster.monsterId}
+                    data-monster-id={monster.monsterId}
+                    data-display-state={monster.displayState || 'not-found'}
+                  >
                     <strong>{monster.name}</strong>
                     <span>{monster.stageName} — {monster.stars} / {monster.starMax} Stars</span>
                   </li>

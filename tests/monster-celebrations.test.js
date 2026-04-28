@@ -20,7 +20,14 @@ test('monster celebration timing defers Punctuation active-question overlays unt
   assert.equal(subjectSessionEnded('punctuation', { phase: 'setup' }, { phase: 'summary' }), false);
 });
 
-test('monster celebration timing leaves unsupported subjects immediate', () => {
-  assert.equal(shouldDelayMonsterCelebrations('grammar', { phase: 'session' }, { phase: 'session' }), false);
-  assert.equal(subjectSessionEnded('grammar', { phase: 'session' }, { phase: 'summary' }), false);
+test('monster celebration timing defers Grammar session overlays until session end', () => {
+  assert.equal(shouldDelayMonsterCelebrations('grammar', { phase: 'session' }, { phase: 'session' }), true);
+  assert.equal(shouldDelayMonsterCelebrations('grammar', { phase: 'feedback' }, { phase: 'summary' }), true);
+  assert.equal(subjectSessionEnded('grammar', { phase: 'session' }, { phase: 'summary' }), true);
+  assert.equal(subjectSessionEnded('grammar', { phase: 'setup' }, { phase: 'summary' }), false);
+});
+
+test('monster celebration timing leaves unknown subjects immediate', () => {
+  assert.equal(shouldDelayMonsterCelebrations('reading', { phase: 'session' }, { phase: 'session' }), false);
+  assert.equal(subjectSessionEnded('reading', { phase: 'session' }, { phase: 'summary' }), false);
 });

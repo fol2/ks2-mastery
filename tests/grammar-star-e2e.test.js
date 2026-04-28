@@ -31,6 +31,7 @@ import {
   grammarMasteryKey,
   progressForGrammarMonster,
   recordGrammarConceptMastery,
+  updateGrammarStarHighWater,
 } from '../src/platform/game/monster-system.js';
 import {
   computeGrammarMonsterStars,
@@ -111,6 +112,23 @@ function fullEvidenceForConcepts(conceptIds) {
   return { conceptNodes, recentAttempts };
 }
 
+function persistStarHighWaterFromProgress({
+  learnerId,
+  repository,
+  monsterId,
+  conceptId,
+  progress,
+}) {
+  return updateGrammarStarHighWater({
+    learnerId,
+    monsterId,
+    conceptId,
+    computedStars: progress.stars,
+    gameStateRepository: repository,
+    random: () => 0,
+  });
+}
+
 // =============================================================================
 // 1. Full 0->100 Star journey for Bracehart (6 concepts)
 // =============================================================================
@@ -127,14 +145,17 @@ test('star e2e: full 0->100 Star journey for Bracehart (6 concepts)', () => {
   // Secure concepts one by one.
   for (let i = 0; i < concepts.length; i += 1) {
     const conceptId = concepts[i];
-    const events = recordGrammarConceptMastery({
+    const secureEvents = recordGrammarConceptMastery({
       learnerId: 'learner-bracehart-e2e',
       conceptId,
       gameStateRepository: repository,
       random: () => 0,
     });
-    const bracehartEvents = events.filter((e) => e.monsterId === 'bracehart');
-    allEvents.push(...bracehartEvents);
+    assert.deepEqual(
+      secureEvents.filter((e) => e.monsterId === 'bracehart'),
+      [],
+      'secure concept state does not emit Bracehart monster events',
+    );
 
     // Build evidence for all concepts secured so far.
     const securedSoFar = concepts.slice(0, i + 1);
@@ -152,6 +173,15 @@ test('star e2e: full 0->100 Star journey for Bracehart (6 concepts)', () => {
     // starHighWater ratchets up.
     assert.ok(progress.starHighWater >= prevStarHighWater,
       `step ${i}: starHighWater ${progress.starHighWater} >= prev ${prevStarHighWater}`);
+
+    const starEvents = persistStarHighWaterFromProgress({
+      learnerId: 'learner-bracehart-e2e',
+      repository,
+      monsterId: 'bracehart',
+      conceptId,
+      progress,
+    });
+    allEvents.push(...starEvents.filter((e) => e.monsterId === 'bracehart'));
 
     prevStars = progress.stars;
     prevStarHighWater = progress.starHighWater;
@@ -195,14 +225,17 @@ test('star e2e: full 0->100 Star journey for Couronnail (3 concepts) — gradual
   // Secure concepts one by one, building incremental evidence each step.
   for (let i = 0; i < concepts.length; i += 1) {
     const conceptId = concepts[i];
-    const events = recordGrammarConceptMastery({
+    const secureEvents = recordGrammarConceptMastery({
       learnerId: 'learner-couronnail-e2e',
       conceptId,
       gameStateRepository: repository,
       random: () => 0,
     });
-    const couronnailEvents = events.filter((e) => e.monsterId === 'couronnail');
-    allEvents.push(...couronnailEvents);
+    assert.deepEqual(
+      secureEvents.filter((e) => e.monsterId === 'couronnail'),
+      [],
+      'secure concept state does not emit Couronnail monster events',
+    );
 
     // Build evidence for all concepts secured so far.
     const securedSoFar = concepts.slice(0, i + 1);
@@ -218,6 +251,14 @@ test('star e2e: full 0->100 Star journey for Couronnail (3 concepts) — gradual
     // Stars increase monotonically (evidence-driven, not legacy floor jumps).
     assert.ok(progress.stars >= prevStars,
       `step ${i}: stars ${progress.stars} >= prev ${prevStars}`);
+    const starEvents = persistStarHighWaterFromProgress({
+      learnerId: 'learner-couronnail-e2e',
+      repository,
+      monsterId: 'couronnail',
+      conceptId,
+      progress,
+    });
+    allEvents.push(...starEvents.filter((e) => e.monsterId === 'couronnail'));
     prevStars = progress.stars;
   }
 
@@ -499,14 +540,35 @@ test('star e2e: Concordium full 18-concept journey reaches 100 Stars', () => {
   const concordiumEventKinds = [];
 
   // Secure all 18 aggregate concepts.
-  for (const conceptId of GRAMMAR_AGGREGATE_CONCEPTS) {
-    const events = recordGrammarConceptMastery({
+  for (let i = 0; i < GRAMMAR_AGGREGATE_CONCEPTS.length; i += 1) {
+    const conceptId = GRAMMAR_AGGREGATE_CONCEPTS[i];
+    const secureEvents = recordGrammarConceptMastery({
       learnerId: 'learner-concordium-full-e2e',
       conceptId,
       gameStateRepository: repository,
       random: () => 0,
     });
-    const concordiumEvents = events.filter((e) => e.monsterId === 'concordium');
+    assert.deepEqual(
+      secureEvents.filter((e) => e.monsterId === 'concordium'),
+      [],
+      'secure concept state does not emit Concordium monster events',
+    );
+
+    const securedSoFar = GRAMMAR_AGGREGATE_CONCEPTS.slice(0, i + 1);
+    const { conceptNodes, recentAttempts } = fullEvidenceForConcepts(securedSoFar);
+    const progress = progressForGrammarMonster(repository.state(), 'concordium', {
+      conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+      conceptNodes,
+      recentAttempts,
+    });
+    const starEvents = persistStarHighWaterFromProgress({
+      learnerId: 'learner-concordium-full-e2e',
+      repository,
+      monsterId: 'concordium',
+      conceptId,
+      progress,
+    });
+    const concordiumEvents = starEvents.filter((e) => e.monsterId === 'concordium');
     concordiumEventKinds.push(...concordiumEvents.map((e) => e.kind));
   }
 
@@ -532,7 +594,7 @@ test('star e2e: Concordium full 18-concept journey reaches 100 Stars', () => {
 // 9. No event double-fire in full journey
 // =============================================================================
 
-test('star e2e: full Bracehart journey emits at most 1 event per monster per recordGrammarConceptMastery call', () => {
+test('star e2e: full Bracehart journey emits no monster events from secure-only calls', () => {
   const repository = makeRepository();
 
   for (const conceptId of GRAMMAR_MONSTER_CONCEPTS.bracehart) {
@@ -542,14 +604,11 @@ test('star e2e: full Bracehart journey emits at most 1 event per monster per rec
       gameStateRepository: repository,
       random: () => 0,
     });
-    const byMonster = {};
-    for (const event of events) {
-      byMonster[event.monsterId] = (byMonster[event.monsterId] || 0) + 1;
-    }
-    for (const [monsterId, count] of Object.entries(byMonster)) {
-      assert.equal(count, 1,
-        `${conceptId}: at most 1 event for ${monsterId}, got ${count}`);
-    }
+    assert.deepEqual(
+      events.filter((event) => event.subjectId === 'grammar'),
+      [],
+      `${conceptId}: secure concept state must not emit Grammar monster events`,
+    );
   }
 });
 

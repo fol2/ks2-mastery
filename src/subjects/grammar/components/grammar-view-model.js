@@ -786,10 +786,13 @@ export function buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, 
     return Object.freeze({
       monsterId,
       name: ACTIVE_GRAMMAR_MONSTER_DISPLAY_NAMES[monsterId] || monsterId,
-      stageName: grammarStarStageName(stars),
+      stageName: progress.stageName || grammarStarStageName(stars),
       stars,
       starMax: GRAMMAR_MONSTER_STAR_MAX,
-      stageIndex: grammarStarDisplayStage(stars),
+      stageIndex: Number.isFinite(Number(progress.displayStage))
+        ? Math.max(0, Math.floor(Number(progress.displayStage)))
+        : grammarStarDisplayStage(stars),
+      displayState: progress.displayState || 'not-found',
       accentColor,
     });
   });

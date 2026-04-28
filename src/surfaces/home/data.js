@@ -20,6 +20,9 @@ import {
 } from '../../platform/game/monster-visual-config.js';
 
 const MONSTER_VARIANTS = ['b1', 'b2'];
+const PUNCTUATION_CODEX_STAR_MILESTONES = [1, 10, 30, 60, 100];
+const PUNCTUATION_GRAND_CODEX_STAR_MILESTONES = [1, 10, 25, 50, 100];
+const GRAMMAR_CODEX_STAR_MILESTONES = [1, 15, 35, 65, 100];
 // Higher number = higher feature weight in pickFeaturedCodexEntry. The grand
 // creatures (Phaeton, Quoral, Concordium) outrank their direct siblings so
 // they win tie-breaks when a learner catches the grand. Reserved Punctuation
@@ -279,17 +282,39 @@ function variantForMonster(monsterId, stage, catalogueBranch) {
   return pickVariant(seed);
 }
 
+function subjectUsesStarDisplayState(subjectId) {
+  return subjectId === 'punctuation' || subjectId === 'grammar';
+}
+
 function entryDisplayInfo(entry = {}) {
   const progress = entry.progress || {};
   const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
-  if ((entry.subjectId || progress.subjectId) !== 'punctuation') {
-    return { displayStage: stage, found: Boolean(progress.caught) };
+  const subjectId = entry.subjectId || progress.subjectId || 'spelling';
+  if (!subjectUsesStarDisplayState(subjectId)) {
+    const found = Boolean(progress.caught);
+    return {
+      displayStage: stage,
+      assetStage: stage,
+      displayState: found && stage === 0 ? 'egg-found' : '',
+      found,
+      isEgg: found && stage === 0,
+      displayStars: 0,
+    };
   }
-  const displayStars = Math.max(0, Math.floor(Number(progress.displayStars ?? progress.starHighWater) || 0));
-  const displayStage = Math.max(0, Math.min(4, Number(progress.displayStage ?? progress.starStage ?? stage) || 0));
+  const displayStars = Math.max(0, Math.floor(Number(progress.displayStars ?? progress.stars ?? progress.starHighWater) || 0));
+  const rawDisplayStage = Math.max(0, Math.floor(Number(progress.displayStage ?? progress.starStage ?? stage) || 0));
   const displayState = typeof progress.displayState === 'string' ? progress.displayState : '';
   const found = displayState ? displayState !== 'not-found' : progress.caught === true || displayStars > 0 || (Number(progress.mastered) || 0) > 0;
-  return { displayStars, displayStage, displayState, found };
+  const isEgg = found && (displayState === 'egg-found' || (!displayState && rawDisplayStage === 0));
+  const assetStage = isEgg ? 0 : Math.max(0, Math.min(4, rawDisplayStage || stage));
+  return {
+    displayStars,
+    displayStage: rawDisplayStage,
+    assetStage,
+    displayState,
+    found,
+    isEgg,
+  };
 }
 
 /**
@@ -301,10 +326,16 @@ function entryDisplayInfo(entry = {}) {
  */
 export function buildMeadowMonsters(summary = [], { seed = 'default-meadow' } = {}) {
   const caughtEntries = meadowEntriesByPower(
-    summary.filter((entry) => entryDisplayInfo(entry).found && entryDisplayInfo(entry).displayStage >= 1),
+    summary.filter((entry) => {
+      const displayInfo = entryDisplayInfo(entry);
+      return displayInfo.found && !displayInfo.isEgg;
+    }),
   );
   const eggEntries = meadowEntriesByPower(
-    summary.filter((entry) => entryDisplayInfo(entry).found && entryDisplayInfo(entry).displayStage === 0),
+    summary.filter((entry) => {
+      const displayInfo = entryDisplayInfo(entry);
+      return displayInfo.found && displayInfo.isEgg;
+    }),
   );
   const placed = [];
   const monsters = caughtEntries
@@ -336,7 +367,7 @@ function meadowEntriesByPower(entries) {
 
 function buildRoamingMeadowEntry(entry, { index, placed, seed }) {
   const { monster, progress } = entry;
-  const stage = Math.max(1, Math.min(4, entryDisplayInfo(entry).displayStage || 1));
+  const stage = Math.max(1, Math.min(4, entryDisplayInfo(entry).assetStage || 1));
   const path = defaultPathForMonster(monster.id);
   const slot = randomMeadowSlot({ entry, zoneName: path, index, placed, seed, stage });
   const variant = variantForMonster(monster.id, stage, progress.branch);
@@ -634,19 +665,23 @@ export function buildCodexEntries(summary = []) {
       ? Math.max(1, Number(progress?.publishedTotal) || Number(monster?.masteredMax) || 1)
       : Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 213 : 100));
     const displayInfo = entryDisplayInfo({ subjectId: resolvedSubjectId, monster, progress });
-    const stage = displayInfo.displayStage;
+    const stage = displayInfo.assetStage;
     const caught = displayInfo.found;
-    const displayState = !caught ? 'fresh' : stage === 0 ? 'egg' : 'monster';
+    const displayState = !caught ? 'fresh' : displayInfo.isEgg ? 'egg' : 'monster';
     const variant = variantForMonster(monster.id, stage, progress?.branch);
     const displayName = caught && !(monster.id === 'phaeton' && stage === 0)
       ? monster.nameByStage?.[stage] || monster.name
       : caught
         ? monster.name
         : 'Unknown creature';
-    const pct = resolvedSubjectId === 'punctuation'
+    const pct = subjectUsesStarDisplayState(resolvedSubjectId)
       ? Math.max(0, Math.min(1, displayInfo.displayStars / 100))
       : Math.max(0, Math.min(1, mastered / max));
-    const nextMilestone = nextCodexMilestone(monster.id, mastered, { subjectId: resolvedSubjectId, max });
+    const nextMilestone = nextCodexMilestone(
+      monster.id,
+      subjectUsesStarDisplayState(resolvedSubjectId) ? displayInfo.displayStars : mastered,
+      { subjectId: resolvedSubjectId, max },
+    );
     const imageAlt = caught ? displayName : `${monster.name} not caught`;
 
     return {
@@ -670,7 +705,7 @@ export function buildCodexEntries(summary = []) {
       srcSet: caught ? monsterAssetSrcset(monster.id, variant, stage) : '',
       imageAlt,
       placeholder: caught ? '' : '?',
-      stageLabel: codexStageLabel(resolvedSubjectId, caught, stage, displayInfo.displayState),
+      stageLabel: codexStageLabel(resolvedSubjectId, caught, displayInfo.displayStage, displayInfo.displayState),
       secureLabel: secureProgressLabel(resolvedSubjectId, mastered),
       nextGoal: codexNextGoal({ subjectId: resolvedSubjectId, caught, nextMilestone }),
       wordBand: codexWordBand(monster.id, resolvedSubjectId),
@@ -920,7 +955,6 @@ function secureProgressLabel(subjectId, mastered) {
 
 function codexStageLabel(subjectId, caught, stage, rewardDisplayState) {
   if (!caught) return 'Not caught';
-  if (subjectId !== 'punctuation') return stage === 0 ? 'Egg' : `Stage ${stage}`;
   const label = {
     'egg-found': 'Egg Found',
     hatch: 'Hatch',
@@ -928,28 +962,44 @@ function codexStageLabel(subjectId, caught, stage, rewardDisplayState) {
     strong: 'Strong',
     mega: 'Mega',
   }[rewardDisplayState];
-  if (label) return label;
+  if (subjectId === 'grammar') {
+    const grammarLabel = {
+      'egg-found': 'Egg Found',
+      hatch: 'Hatched',
+      evolve: 'Growing',
+      strong: 'Nearly Mega',
+      mega: 'Mega',
+    }[rewardDisplayState];
+    if (grammarLabel) return grammarLabel;
+  }
+  if (subjectId === 'punctuation' && label) return label;
+  if (subjectId !== 'punctuation') return stage === 0 ? 'Egg' : `Stage ${stage}`;
   return stage === 0 ? 'Egg Found' : `Stage ${stage}`;
 }
 
 function codexNextGoal({ subjectId, caught, nextMilestone }) {
   if (!caught && nextMilestone) {
     if (subjectId === 'punctuation') return 'Find this egg with a punctuation round';
-    if (subjectId === 'grammar') return 'Secure grammar units to catch this creature';
+    if (subjectId === 'grammar') return 'Find this egg with a grammar round';
     return 'Secure words to catch this creature';
   }
   if (nextMilestone) {
-    if (subjectId === 'punctuation') return 'Keep securing punctuation units for the next change';
-    if (subjectId === 'grammar') return 'Keep securing grammar units for the next change';
+    if (subjectId === 'punctuation') return 'Earn punctuation Stars for the next change';
+    if (subjectId === 'grammar') return 'Earn Grammar Stars for the next change';
     return 'Keep securing words for the next change';
   }
   return 'Fully evolved';
 }
 
 function nextCodexMilestone(monsterId, mastered, { subjectId = 'spelling', max = null } = {}) {
-  if (subjectId === 'punctuation' || subjectId === 'grammar') {
-    const limit = Math.max(1, Number(max) || 1);
-    return mastered < limit ? mastered + 1 : null;
+  if (subjectId === 'punctuation') {
+    const thresholds = monsterId === 'quoral'
+      ? PUNCTUATION_GRAND_CODEX_STAR_MILESTONES
+      : PUNCTUATION_CODEX_STAR_MILESTONES;
+    return thresholds.find((threshold) => mastered < threshold) || null;
+  }
+  if (subjectId === 'grammar') {
+    return GRAMMAR_CODEX_STAR_MILESTONES.find((threshold) => mastered < threshold) || null;
   }
   const thresholds = monsterId === 'phaeton' ? PHAETON_STAGE_THRESHOLDS : DIRECT_STAGE_THRESHOLDS;
   return thresholds.find((threshold) => mastered < threshold) || null;

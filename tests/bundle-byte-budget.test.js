@@ -17,8 +17,11 @@
 // above that at ~214,020 bytes. Phase 7's Punctuation remote-summary
 // safety and radio-focus accessibility fixes lift the Node 22 build to
 // ~215.1 KB. Punctuation's Star-based display parity added a small first-paint
-// utility footprint, so the committed ceiling is now `216_000`. That keeps the
-// headroom narrow while avoiding a sub-kilobyte compression/runtime false blocker.
+// utility footprint; Grammar's matching display-state parity adds another
+// tiny cross-subject utility slice. Node 22's CI gzip output measures about
+// 216.4 KB for the PR merge commit. The committed ceiling is now `216_500`,
+// keeping the headroom narrow while avoiding a sub-kilobyte
+// compression/runtime false blocker.
 // The audit still fails
 // when ~50 KB of adult-only JS sneaks back into the critical path (the
 // exact regression the code-split protects against). The audit driver re-reads
@@ -61,13 +64,15 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 // baseline sits just above that. Phase 7's Punctuation remote-summary
 // safety and radio-focus accessibility fixes lift the Node 22 build to
 // ~215.1 KB. Punctuation's Star-based display parity adds a small first-paint
-// utility footprint, so the committed ceiling is 216,000
+// utility footprint; Grammar's matching display-state parity adds another
+// tiny cross-subject utility slice. Node 22's CI gzip output measures about
+// 216.4 KB for the PR merge commit, so the committed ceiling is 216,500
 // (matches `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES` in
 // `scripts/audit-client-bundle.mjs`). The narrow headroom lets the team
 // land small copy / utility growth without an audit bump, but trips the
 // gate when ~50 KB of adult-only JS sneaks back into the critical path.
 const BASELINE_GZIP_BYTES = 203_227;
-const BUDGET_GZIP_BYTES = 216_000;
+const BUDGET_GZIP_BYTES = 216_500;
 const TEST_MODE_BUNDLE_MARKER = '__ks2_capacityMeta__';
 
 function isPlaywrightTestModeBundle(bundleBytes) {

@@ -524,7 +524,58 @@ test('codex synthesises uncaught entries for every registered subject monster', 
   assert.equal(grammarEgg.subjectId, 'grammar');
   assert.equal(grammarEgg.secureLabel, 'No secure units yet');
   assert.equal(grammarEgg.wordBand, 'Sentence and clause');
-  assert.equal(grammarEgg.nextGoal, 'Secure grammar units to catch this creature');
+  assert.equal(grammarEgg.nextGoal, 'Find this egg with a grammar round');
+});
+
+test('codex entries use grammar displayState for first-Star Egg Found', async () => {
+  const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
+  const [entry] = buildCodexEntries([
+    {
+      subjectId: 'grammar',
+      monster: MONSTERS.bracehart,
+      progress: {
+        caught: true,
+        mastered: 0,
+        stage: 1,
+        displayStars: 1,
+        displayStage: 1,
+        displayState: 'egg-found',
+        level: 0,
+        branch: 'b2',
+      },
+    },
+  ]);
+
+  assert.equal(entry.caught, true);
+  assert.equal(entry.displayState, 'egg');
+  assert.equal(entry.stage, 0);
+  assert.equal(entry.stageLabel, 'Egg Found');
+  assert.equal(entry.progressPct, 1);
+  assert.equal(entry.nextGoal, 'Earn Grammar Stars for the next change');
+  assert.match(entry.img, /bracehart-b2-0\.640\.webp/);
+});
+
+test('home meadow keeps grammar first-Star Egg Found as an egg', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const [egg] = buildMeadowMonsters([
+    {
+      subjectId: 'grammar',
+      monster: MONSTERS.bracehart,
+      progress: {
+        caught: true,
+        mastered: 0,
+        stage: 1,
+        displayStars: 1,
+        displayStage: 1,
+        displayState: 'egg-found',
+        branch: 'b1',
+      },
+    },
+  ]);
+
+  assert.equal(egg.id, 'bracehart-egg');
+  assert.equal(egg.stage, 0);
+  assert.equal(egg.path, 'none');
 });
 
 test('codex subject groups arrive in spelling → punctuation → grammar order with totals', async () => {
