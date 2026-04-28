@@ -68,6 +68,45 @@ function baseContext() {
   };
 }
 
+function grammarOptionValue(option) {
+  if (Array.isArray(option)) return String(option[0] ?? '');
+  if (typeof option === 'string' || typeof option === 'number') return String(option);
+  return String(option?.value ?? '');
+}
+
+function firstGrammarOptionValue(options, fallback = 'a') {
+  const values = Array.isArray(options) ? options.map(grammarOptionValue).filter(Boolean) : [];
+  return values[0] || fallback;
+}
+
+function grammarAnswerPayloadFromInputSpec(spec) {
+  if (spec?.type === 'single_choice' && Array.isArray(spec.options) && spec.options.length > 0) {
+    return { response: { answer: firstGrammarOptionValue(spec.options) } };
+  }
+  if (spec?.type === 'checkbox_list' && Array.isArray(spec.options) && spec.options.length > 0) {
+    return { response: { selected: [firstGrammarOptionValue(spec.options)] } };
+  }
+  if (spec?.type === 'table_choice') {
+    const rows = Array.isArray(spec.rows) ? spec.rows : [];
+    const choice = firstGrammarOptionValue(spec.columns, 'A');
+    const response = {};
+    for (const row of rows) {
+      if (typeof row?.key === 'string' && row.key) response[row.key] = choice;
+    }
+    return { response: Object.keys(response).length > 0 ? response : { answer: choice } };
+  }
+  if (spec?.type === 'multi') {
+    const fields = Array.isArray(spec.fields) ? spec.fields : [];
+    const response = {};
+    for (const field of fields) {
+      if (typeof field?.key !== 'string' || !field.key) continue;
+      response[field.key] = firstGrammarOptionValue(field.options, 'test answer');
+    }
+    return { response: Object.keys(response).length > 0 ? response : { answer: 'test answer' } };
+  }
+  return { response: { answer: 'test answer' } };
+}
+
 // ── Spelling ─────────────────────────────────────────────────────────────
 
 test('spelling start-session with heroContext stores it on persisted session state', async () => {
@@ -500,9 +539,7 @@ test('grammar completed session summary contains heroContext fields', async () =
 
   // Submit an answer to complete the session.
   const item = sessionState.session.currentItem;
-  const answerPayload = item.inputSpec?.type === 'single_choice'
-    ? { response: { answer: item.inputSpec.options?.[0]?.value || item.inputSpec.options?.[0] || 'a' } }
-    : { response: { answer: 'test' } };
+  const answerPayload = grammarAnswerPayloadFromInputSpec(item.inputSpec);
 
   const submitCtx = {
     ...grammarContext,
