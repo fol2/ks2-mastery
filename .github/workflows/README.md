@@ -70,11 +70,36 @@ Concretely this means no nightly or scheduled workflow may run any of:
 Reviewers should grep every nightly or schedule-trigger workflow for the
 patterns above before approving a change in this directory.
 
+## Pull request Playwright policy
+
+`playwright.yml` is an opt-in PR workflow. It triggers on pull request
+events so GitHub can report the `Chromium + mobile-390 golden paths`
+check, but the job runs only when one of these is true:
+
+- the PR has the `run-playwright` label
+- a maintainer starts the workflow with `workflow_dispatch`
+
+This is deliberately a job-level `if`, not a path filter, branch filter,
+or skipped-workflow pattern. GitHub treats a conditionally skipped job as
+successful for required-check purposes, while a skipped workflow can leave
+the check pending and block a merge.
+
+Default PR gates are therefore:
+
+- `npm test + npm run check`
+- `npm run audit:client`
+
+Browser evidence remains expected for browser-facing changes, but the
+owner of that slice should run the targeted local Playwright command and
+include the command/result in the PR body. Use the `run-playwright` label
+when a reviewer wants GitHub-hosted confirmation before merge. The full
+matrix remains covered by `playwright-nightly.yml`.
+
 ## Current workflows
 
 | File | Trigger | Purpose |
 | --- | --- | --- |
-| `playwright.yml` | `pull_request` | Chromium + `mobile-390` golden paths on every PR. |
+| `playwright.yml` | `pull_request` + `workflow_dispatch` | Opt-in Chromium + `mobile-390` golden paths via `run-playwright` label or manual dispatch. |
 | `playwright-nightly.yml` | `schedule` (03:07 UTC) | Full 5-viewport Playwright matrix. |
 | `node-test.yml` | `pull_request` | `npm test` + `npm run check` (schema-drift canary). |
 | `audit.yml` | `pull_request` | `npm run audit:client`. |

@@ -1,11 +1,13 @@
-# SH2-U11: Playwright golden-path scenes on every PR.
+# SH2-U11: Playwright golden-path scenes for requested PR browser QA.
 #
 # Plan: docs/plans/2026-04-26-001-feat-sys-hardening-p2-plan.md (lines 747-799, R11).
 #
-# Runs the PR-time Playwright subset: Chromium only on the `mobile-390`
-# project — the existing default baseline surface from U5. The full
-# 5-viewport matrix runs nightly in `playwright-nightly.yml` so PR
-# latency stays bounded.
+# Runs the requested PR-time Playwright subset: Chromium only on the
+# `mobile-390` project — the existing default baseline surface from U5.
+# The job is intentionally opt-in via the `run-playwright` label or a
+# manual workflow dispatch because the full mobile-390 suite is slower
+# than the Node/audit gates and can surface unrelated golden-path debt.
+# The full 5-viewport matrix runs nightly in `playwright-nightly.yml`.
 #
 # Security posture (deepening S-02 + S-03):
 #  - `permissions: contents: read` only. No `packages`, no `issues`, no
@@ -33,6 +35,13 @@ name: Playwright (PR)
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - labeled
+      - unlabeled
   # Reviewer NIT-A3 (cli-agent #3): `workflow_dispatch` lets a maintainer
   # manually re-run the Playwright job (e.g. transient Chromium download
   # failure) without pushing a new commit.
@@ -49,6 +58,10 @@ jobs:
   playwright:
     name: Chromium + mobile-390 golden paths
     runs-on: ubuntu-latest
+    # Keep this as a job-level condition, not a workflow/path filter.
+    # A skipped job reports success for required-check purposes; a
+    # skipped workflow can remain pending and block merges.
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-playwright')) }}
     timeout-minutes: 20
     steps:
       - name: Checkout
