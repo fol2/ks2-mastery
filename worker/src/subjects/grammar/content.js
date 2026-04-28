@@ -1383,6 +1383,14 @@ const EXTRA_LEXICON = {
     [
       "The bus arrived",
       "everyone grabbed their bags"
+    ],
+    [
+      "The sun broke through the clouds",
+      "the ice on the pond started to melt"
+    ],
+    [
+      "The tide was rising quickly",
+      "the fishermen hauled in their nets"
     ]
   ],
   colonLists: [
@@ -1417,6 +1425,24 @@ const EXTRA_LEXICON = {
         "a certificate",
         "a book token"
       ]
+    },
+    {
+      intro: "The recipe called for five ingredients",
+      items: [
+        "flour",
+        "butter",
+        "eggs",
+        "sugar",
+        "milk"
+      ]
+    },
+    {
+      intro: "Three countries were represented at the fair",
+      items: [
+        "France",
+        "Japan",
+        "Brazil"
+      ]
     }
   ],
   dashBoundaries: [
@@ -1435,6 +1461,14 @@ const EXTRA_LEXICON = {
     [
       "One thought filled my mind",
       "where had the key gone"
+    ],
+    [
+      "She had made her decision",
+      "the letter would be posted today"
+    ],
+    [
+      "The message was clear",
+      "everyone must leave the building at once"
     ]
   ],
   speechQuestions: [
@@ -1492,6 +1526,28 @@ const EXTRA_LEXICON = {
       ],
       correct: "We visited the small-animal hospital after lunch.",
       why: "The hyphen shows that ‘small-animal’ is one combined idea describing the hospital."
+    },
+    {
+      ask: "Which sentence means the cabinet is used for drying clothes?",
+      options: [
+        "Dad opened the clothes-drying cabinet in the hall.",
+        "Dad opened the clothes drying cabinet in the hall.",
+        "Dad opened the cabinet for the hall clothes.",
+        "Dad opened the drying clothes in the cabinet."
+      ],
+      correct: "Dad opened the clothes-drying cabinet in the hall.",
+      why: "The hyphen links ‘clothes-drying’ into one compound modifier describing the cabinet."
+    },
+    {
+      ask: "Which sentence means the test is well known?",
+      options: [
+        "The teacher set a well-known test for the class.",
+        "The teacher set a well known test for the class.",
+        "The teacher knew the test well for the class.",
+        "The teacher set a known well test for the class."
+      ],
+      correct: "The teacher set a well-known test for the class.",
+      why: "The hyphen joins ‘well-known’ into a single compound adjective before the noun."
     }
   ],
   verbsRich: [
@@ -1614,10 +1670,30 @@ const EXTRA_LEXICON = {
       correct: "Several pupils were absent from the visit.",
       distractors: [
         "A few pupils were off for the visit.",
-        "Some pupils didn't come on the trip.",
+        "Some pupils didn’t come on the trip.",
         "Quite a few pupils were missing from it."
       ],
       why: "Formal writing often chooses more precise vocabulary and sentence structure."
+    },
+    {
+      prompt: "Which sentence is most appropriate for a school newsletter?",
+      correct: "We are delighted to announce the opening of the new library.",
+      distractors: [
+        "We’re so excited about the new library opening!",
+        "The new library is opening and it’s going to be great.",
+        "Guess what – there’s a new library starting up."
+      ],
+      why: "Formal register uses measured language rather than informal exclamations."
+    },
+    {
+      prompt: "Choose the sentence that fits best in a formal invitation.",
+      correct: "Guests are kindly requested to arrive by half past six.",
+      distractors: [
+        "Can everyone turn up by half six?",
+        "Please try to get there by about six-thirty.",
+        "Everyone should come at like half six."
+      ],
+      why: "Formal invitations use passive or impersonal constructions and precise time references."
     }
   ],
   modalFrames: [
@@ -1629,7 +1705,7 @@ const EXTRA_LEXICON = {
         "could",
         "should"
       ],
-      why: "‘Must’ shows strongest obligation."
+      why: "’Must’ shows strongest obligation."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: The clouds are dark, but the rain has not started. It ___ rain later.",
@@ -1639,7 +1715,7 @@ const EXTRA_LEXICON = {
         "should",
         "will"
       ],
-      why: "‘Might’ shows possibility, not certainty."
+      why: "’Might’ shows possibility, not certainty."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: You are giving advice to a friend. You ___ begin with the easier question.",
@@ -1649,17 +1725,37 @@ const EXTRA_LEXICON = {
         "might",
         "will"
       ],
-      why: "‘Should’ is the modal of advice here."
+      why: "’Should’ is the modal of advice here."
     },
     {
-      prompt: "Choose the modal verb that best fits the meaning: The timetable is fixed. The coach ___ leave at 9 o'clock.",
+      prompt: "Choose the modal verb that best fits the meaning: The timetable is fixed. The coach ___ leave at 9 o’clock.",
       correct: "will",
       distractors: [
         "might",
         "should",
         "must"
       ],
-      why: "‘Will’ fits a definite future event here."
+      why: "’Will’ fits a definite future event here."
+    },
+    {
+      prompt: "Choose the modal verb that best fits the meaning: The teacher says this is allowed. You ___ use a dictionary during the test.",
+      correct: "may",
+      distractors: [
+        "must",
+        "will",
+        "might"
+      ],
+      why: "’May’ is the modal of permission here."
+    },
+    {
+      prompt: "Choose the modal verb that best fits the meaning: The swimmers are very strong. They ___ cross the lake without stopping.",
+      correct: "could",
+      distractors: [
+        "must",
+        "should",
+        "will"
+      ],
+      why: "’Could’ expresses ability or capacity here."
     }
   ]
 };
@@ -2735,7 +2831,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const pair = pick(rng, EXTRA_LEXICON.clausePairs);
+          const pair = pickBySeed(seed, EXTRA_LEXICON.clausePairs);
           const correct = ";";
           const options = [
             { value:";", label:";" },
@@ -2783,7 +2879,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const item = pick(rng, EXTRA_LEXICON.colonLists);
+          const item = pickBySeed(seed, EXTRA_LEXICON.colonLists);
           const raw = ensureSentenceEnd(`${item.intro} ${item.items.join(", ")}`);
           const accepted = [ensureSentenceEnd(`${item.intro}: ${item.items.join(", ")}`)];
           const answerSpec = punctuationPatternAnswerSpec(accepted, [raw], {
@@ -2825,7 +2921,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const pair = pick(rng, EXTRA_LEXICON.dashBoundaries);
+          const pair = pickBySeed(seed, EXTRA_LEXICON.dashBoundaries);
           const raw = ensureSentenceEnd(`${pair[0]} ${pair[1]}`);
           const accepted = dedupePlain([
             `${pair[0]} – ${pair[1]}.`,
@@ -2868,7 +2964,7 @@ const TEMPLATES = [
       "hyphen_ambiguity"
     ],
     generator(seed) {
-          const item = EXTRA_LEXICON.hyphenPrompts[seed % EXTRA_LEXICON.hyphenPrompts.length];
+          const item = pickBySeed(seed, EXTRA_LEXICON.hyphenPrompts);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${escapeHtml(item.ask)}</p>`,
@@ -3131,7 +3227,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const item = generateModalCase(rng);
+          const item = generateModalCase(rng, seed);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${escapeHtml(item.prompt)}</p>`,
@@ -3159,7 +3255,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const item = generateFormalityCase(rng);
+          const item = generateFormalityCase(rng, seed);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${escapeHtml(item.prompt)}</p>`,
@@ -3600,30 +3696,23 @@ const TEMPLATES = [
     ],
     generator(seed) {
             const rng = mulberry32(seed);
-            const banks = {
-              because:[
-                ["we stayed inside","it was raining"],
-                ["Ben hurried home","he had forgotten his kit"],
-                ["Mia smiled","she had found the missing map"]
-              ],
-              although:[
-                ["Mia was tired","she finished the race"],
-                ["the path was muddy","the walkers kept going"],
-                ["the room was noisy","Jay carried on reading"]
-              ],
-              when:[
-                ["the bell rang","the pupils lined up"],
-                ["the gate opened","the crowd cheered"],
-                ["the lights went out","everyone fell silent"]
-              ],
-              if:[
-                ["you need help","call the office"],
-                ["the rain starts","go inside the tent"],
-                ["the torch stops working","fetch the spare one"]
-              ]
-            };
-            const conjunction = pick(rng, Object.keys(banks));
-            const pair = pick(rng, banks[conjunction]);
+            const flatBank = [
+              { conjunction:"because", pair:["we stayed inside","it was raining"] },
+              { conjunction:"because", pair:["Ben hurried home","he had forgotten his kit"] },
+              { conjunction:"because", pair:["Mia smiled","she had found the missing map"] },
+              { conjunction:"although", pair:["Mia was tired","she finished the race"] },
+              { conjunction:"although", pair:["the path was muddy","the walkers kept going"] },
+              { conjunction:"although", pair:["the room was noisy","Jay carried on reading"] },
+              { conjunction:"when", pair:["the bell rang","the pupils lined up"] },
+              { conjunction:"when", pair:["the gate opened","the crowd cheered"] },
+              { conjunction:"when", pair:["the lights went out","everyone fell silent"] },
+              { conjunction:"if", pair:["you need help","call the office"] },
+              { conjunction:"if", pair:["the rain starts","go inside the tent"] },
+              { conjunction:"if", pair:["the torch stops working","fetch the spare one"] }
+            ];
+            const item = pickBySeed(seed, flatBank);
+            const conjunction = item.conjunction;
+            const pair = item.pair;
             const main = pair[0];
             const sub = pair[1];
             let accepted;
@@ -5985,6 +6074,11 @@ function pick(rng, arr) {
   return arr[randInt(rng, 0, arr.length - 1)];
 }
 
+/** Deterministic seed-indexed pick — guarantees distinct items for consecutive seeds when bank.length >= 3. */
+function pickBySeed(seed, arr) {
+  return arr[(seed - 1) % arr.length];
+}
+
 function shuffle(rng, arr) {
   const copy = arr.slice();
   for (let i = copy.length - 1; i > 0; i--) {
@@ -6422,11 +6516,13 @@ function generateSubjectObjectCase(rng) {
   };
 }
 
-function generateFormalityCase(rng) {
+function generateFormalityCase(rng, seed) {
+  if (seed !== undefined) return pickBySeed(seed, EXTRA_LEXICON.formalFrames);
   return EXTRA_LEXICON.formalFrames[seededIndex(rng, EXTRA_LEXICON.formalFrames.length)];
 }
 
-function generateModalCase(rng) {
+function generateModalCase(rng, seed) {
+  if (seed !== undefined) return pickBySeed(seed, EXTRA_LEXICON.modalFrames);
   return EXTRA_LEXICON.modalFrames[seededIndex(rng, EXTRA_LEXICON.modalFrames.length)];
 }
 

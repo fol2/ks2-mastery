@@ -88,3 +88,44 @@ describe('Grammar QG P4 explanation case-bank depth', () => {
     }
   });
 });
+
+describe('Legacy repeat repair', () => {
+  const REPAIRED_FAMILIES = [
+    'proc_semicolon_choice',
+    'proc_colon_list_fix',
+    'proc_dash_boundary_fix',
+    'proc_hyphen_ambiguity_choice',
+    'proc2_modal_choice',
+    'proc2_formality_choice',
+    'proc3_clause_join_rewrite',
+  ];
+
+  for (const familyId of REPAIRED_FAMILIES) {
+    it(`${familyId} produces 3 distinct signatures for seeds [1,2,3]`, () => {
+      const template = GRAMMAR_TEMPLATE_METADATA.find(
+        (t) => t.generatorFamilyId === familyId || t.id === familyId,
+      );
+      assert.ok(template, `Template not found for ${familyId}`);
+      const sigs = new Set();
+      for (const seed of [1, 2, 3]) {
+        const q = createGrammarQuestion({ templateId: template.id, seed });
+        sigs.add(grammarQuestionVariantSignature(q));
+      }
+      assert.strictEqual(sigs.size, 3, `${familyId} still repeats within seeds [1,2,3]`);
+    });
+  }
+
+  it('repaired families still produce valid questions for seeds 1..10', () => {
+    for (const familyId of REPAIRED_FAMILIES) {
+      const template = GRAMMAR_TEMPLATE_METADATA.find(
+        (t) => t.generatorFamilyId === familyId || t.id === familyId,
+      );
+      for (let seed = 1; seed <= 10; seed++) {
+        const q = createGrammarQuestion({ templateId: template.id, seed });
+        assert.ok(q.stemHtml, `${familyId} seed=${seed} missing stemHtml`);
+        assert.ok(q.inputSpec, `${familyId} seed=${seed} missing inputSpec`);
+        assert.ok(q.solutionLines.length > 0, `${familyId} seed=${seed} missing solutionLines`);
+      }
+    }
+  });
+});

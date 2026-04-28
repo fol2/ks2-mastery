@@ -55,9 +55,10 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
   assert.deepEqual(audit.missingGeneratorMetadata, []);
   assert.deepEqual(audit.generatedSignatureCollisions, []);
   assert.deepEqual(audit.repeatedGeneratedVariants, []);
-  assert.ok(
-    audit.legacyRepeatedGeneratedVariants.length >= 1,
-    'Legacy generated repeated variants stay advisory rather than blocking P2 marking migration.',
+  assert.strictEqual(
+    audit.legacyRepeatedGeneratedVariants.length,
+    0,
+    'P4 requires zero legacy repeated variants in default seed window',
   );
   assert.ok(audit.sampleCount > 0);
 
