@@ -20,8 +20,8 @@ import {
 } from '../tests/helpers/forbidden-keys.mjs';
 
 const GRAMMAR_SMOKE_ITEM = Object.freeze({
-  templateId: 'fronted_adverbial_choose',
-  seed: 1,
+  templateId: 'qg_modal_verb_explain',
+  seed: 7,
 });
 
 const GRAMMAR_MINI_TEST_ITEM = Object.freeze({

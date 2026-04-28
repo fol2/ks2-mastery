@@ -2,10 +2,10 @@
 //
 // This test file is a pure documentation gate. It asserts that
 // `docs/plans/james/grammar/grammar-answer-spec-audit.md` exists, has exactly
-// one row per grammar template (51 rows total), every proposed
+// one row per grammar template, every proposed
 // `answerSpec.kind` belongs to `ANSWER_SPEC_KINDS`, every template id in the
 // doc exists in `GRAMMAR_TEMPLATES`, the manual-review-only candidate list
-// contains at least 5 entries, and all six thin-pool concepts are flagged
+// contains at least 5 entries, and all six P1 focus concepts are flagged
 // high-priority. The test does NOT touch `content.js`, `answer-spec.js`, or
 // any oracle fixture — the audit is inventory-only; Phase 5 executes the
 // migration one template at a time.
@@ -17,12 +17,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { ANSWER_SPEC_KINDS } from '../worker/src/subjects/grammar/answer-spec.js';
-import { GRAMMAR_TEMPLATES } from '../worker/src/subjects/grammar/content.js';
+import {
+  GRAMMAR_TEMPLATE_METADATA,
+  GRAMMAR_TEMPLATES,
+  createGrammarQuestion,
+} from '../worker/src/subjects/grammar/content.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const auditDocPath = path.join(rootDir, 'docs/plans/james/grammar/grammar-answer-spec-audit.md');
 
-const THIN_POOL_CONCEPTS = [
+const P1_FOCUS_CONCEPTS = [
   'pronouns_cohesion',
   'formality',
   'active_passive',
@@ -83,8 +87,8 @@ function extractManualReviewCandidatesSection(doc) {
 }
 
 function extractThinPoolConceptSection(doc) {
-  const sectionStart = doc.indexOf('## 4. Thin-pool concept priority');
-  assert.notEqual(sectionStart, -1, 'Section 4 (thin-pool concept priority) not found.');
+  const sectionStart = doc.indexOf('## 4. P1 focus concept priority');
+  assert.notEqual(sectionStart, -1, 'Section 4 (P1 focus concept priority) not found.');
   const after = doc.slice(sectionStart);
   const sectionEnd = after.indexOf('\n## ');
   const section = sectionEnd === -1 ? after : after.slice(0, sectionEnd);
@@ -103,14 +107,9 @@ test('audit doc exists on disk', () => {
   );
 });
 
-test('classification table has exactly 51 rows — one per template', () => {
+test('classification table has one row per template', () => {
   const doc = readAuditDoc();
   const rows = extractClassificationTableRows(doc);
-  assert.equal(
-    rows.length,
-    51,
-    `Expected 51 classification rows, got ${rows.length}.`
-  );
   assert.equal(
     rows.length,
     GRAMMAR_TEMPLATES.length,
@@ -128,6 +127,21 @@ test('every proposed answerSpec.kind is in ANSWER_SPEC_KINDS', () => {
       `Template ${row.id} proposes unknown kind: ${row.proposedKind}. ` +
         `Valid kinds: ${ANSWER_SPEC_KINDS.join(', ')}.`
     );
+  }
+});
+
+test('new opt-in generated templates must emit validated answerSpec data', async () => {
+  const { validateAnswerSpec } = await import('../worker/src/subjects/grammar/answer-spec.js');
+  const validKinds = new Set(ANSWER_SPEC_KINDS);
+  const templates = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.requiresAnswerSpec);
+  for (const template of templates) {
+    assert.ok(validKinds.has(template.answerSpecKind), `${template.id} has invalid answerSpecKind.`);
+    for (const seed of [1, 7, 19]) {
+      const question = createGrammarQuestion({ templateId: template.id, seed });
+      assert.ok(question?.answerSpec, `${template.id}:${seed} must emit question.answerSpec.`);
+      assert.equal(question.answerSpec.kind, template.answerSpecKind, `${template.id}:${seed} answerSpec kind drifted.`);
+      assert.equal(validateAnswerSpec(question.answerSpec), true, `${template.id}:${seed} answerSpec failed validation.`);
+    }
   }
 });
 
@@ -183,40 +197,40 @@ test('audit lists at least 5 manual-review-only candidates in section 3', () => 
   }
 });
 
-test('audit lists all 6 thin-pool concepts as high-priority in section 4', () => {
+test('audit lists all 6 P1 focus concepts as high-priority in section 4', () => {
   const doc = readAuditDoc();
   const listed = extractThinPoolConceptSection(doc);
-  for (const concept of THIN_POOL_CONCEPTS) {
+  for (const concept of P1_FOCUS_CONCEPTS) {
     assert.ok(
       listed.includes(concept),
-      `Section 4 must list thin-pool concept "${concept}". ` +
+      `Section 4 must list P1 focus concept "${concept}". ` +
         `Got: ${listed.join(', ')}`
     );
   }
   assert.equal(
     listed.length,
-    THIN_POOL_CONCEPTS.length,
-    `Section 4 must list exactly the 6 thin-pool concepts. ` +
+    P1_FOCUS_CONCEPTS.length,
+    `Section 4 must list exactly the 6 P1 focus concepts. ` +
       `Got ${listed.length}: ${listed.join(', ')}`
   );
 });
 
-test('every template carrying a thin-pool concept is priority=high', () => {
+test('every template carrying a P1 focus concept is priority=high', () => {
   // Cross-check: the narrative says templates tagged with any of the six
-  // thin-pool concept ids inherit high priority. Catch drift between the
+  // P1 focus concept ids inherit high priority. Catch drift between the
   // narrative and the table.
   const doc = readAuditDoc();
   const rows = extractClassificationTableRows(doc);
-  const thinSet = new Set(THIN_POOL_CONCEPTS);
+  const thinSet = new Set(P1_FOCUS_CONCEPTS);
   for (const template of GRAMMAR_TEMPLATES) {
     const hasThin = template.skillIds.some((skill) => thinSet.has(skill));
     if (!hasThin) continue;
     const row = rows.find((candidate) => candidate.id === template.id);
-    assert.ok(row, `Audit row missing for thin-pool template ${template.id}.`);
+    assert.ok(row, `Audit row missing for P1 focus template ${template.id}.`);
     assert.equal(
       row.priority,
       'high',
-      `Template "${template.id}" carries thin-pool concept(s) ` +
+      `Template "${template.id}" carries P1 focus concept(s) ` +
         `${template.skillIds.filter((skill) => thinSet.has(skill)).join(', ')} ` +
         `but audit priority is "${row.priority}" — expected "high".`
     );
@@ -263,14 +277,16 @@ test('release-id bump is NO for every selected-response row', () => {
   }
 });
 
-test('audit table proposes exactly 31 exact and 20 non-exact specs', () => {
-  // Sanity: 31 selected-response → `exact`; 20 constructed-response → one of
-  // the other five declarative kinds. Catches a drift where a selected-
-  // response row is proposed anything other than `exact`.
+test('audit table proposes the expected P1 answer-spec distribution', () => {
+  // Sanity: legacy selected-response rows use `exact`, while two new P1
+  // classify-table templates use `multiField` from day one. The 20 legacy
+  // constructed-response rows remain one of the other declarative kinds.
   const doc = readAuditDoc();
   const rows = extractClassificationTableRows(doc);
   const exactCount = rows.filter((row) => row.proposedKind === 'exact').length;
+  const multiFieldCount = rows.filter((row) => row.proposedKind === 'multiField').length;
   const nonExactCount = rows.length - exactCount;
-  assert.equal(exactCount, 31, `Expected 31 rows proposing 'exact', got ${exactCount}.`);
-  assert.equal(nonExactCount, 20, `Expected 20 rows proposing a non-exact kind, got ${nonExactCount}.`);
+  assert.equal(exactCount, 35, `Expected 35 rows proposing 'exact', got ${exactCount}.`);
+  assert.equal(multiFieldCount, 2, `Expected 2 rows proposing 'multiField', got ${multiFieldCount}.`);
+  assert.equal(nonExactCount, 22, `Expected 22 rows proposing a non-exact kind, got ${nonExactCount}.`);
 });

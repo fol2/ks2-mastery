@@ -106,7 +106,8 @@ function markExact(spec, response) {
     maxScore: spec.maxScore || 1,
     misconception: correct ? null : (spec.misconception || 'misread_question'),
     feedbackLong: spec.feedbackLong || (correct ? '' : `Correct answer: ${accepted}`),
-    answerText: accepted,
+    answerText: spec.answerText || accepted,
+    minimalHint: spec.minimalHint,
   });
 }
 
@@ -119,7 +120,8 @@ function markNormalisedText(spec, response) {
     maxScore: spec.maxScore || 1,
     misconception: correct ? null : (spec.misconception || 'misread_question'),
     feedbackLong: spec.feedbackLong || (correct ? '' : `Correct answer: ${accepted}`),
-    answerText: accepted,
+    answerText: spec.answerText || accepted,
+    minimalHint: spec.minimalHint,
   });
 }
 
@@ -145,7 +147,8 @@ function markAcceptedSet(spec, response) {
       score: fullMarks,
       maxScore: fullMarks,
       feedbackLong: spec.feedbackLong || `Correct answer: ${accepted[0]}`,
-      answerText: exactMatch,
+      answerText: spec.answerText || exactMatch,
+      minimalHint: spec.minimalHint,
     });
   }
   // Partial credit path (fullMarks > 1): normalised + punctuation-stripped match.
@@ -162,7 +165,8 @@ function markAcceptedSet(spec, response) {
         misconception: spec.punctuationMisconception || 'punctuation_precision',
         feedbackShort: 'The grammar idea is close, but the exact punctuation or wording is not fully correct.',
         feedbackLong: spec.feedbackLong || `Correct answer: ${accepted[0]}`,
-        answerText: bareMatch,
+        answerText: spec.answerText || bareMatch,
+        minimalHint: spec.minimalHint,
       });
     }
   }
@@ -172,7 +176,8 @@ function markAcceptedSet(spec, response) {
     maxScore: fullMarks,
     misconception: spec.misconception || 'misread_question',
     feedbackLong: spec.feedbackLong || `Correct answer: ${accepted[0]}`,
-    answerText: accepted[0],
+    answerText: spec.answerText || accepted[0],
+    minimalHint: spec.minimalHint,
   });
 }
 
@@ -187,7 +192,8 @@ function markPunctuationPattern(spec, response) {
     maxScore: spec.maxScore || 1,
     misconception: correct ? null : (spec.misconception || 'punctuation_precision'),
     feedbackLong: spec.feedbackLong || (correct ? '' : `Correct answer: ${accepted}`),
-    answerText: accepted,
+    answerText: spec.answerText || accepted,
+    minimalHint: spec.minimalHint,
   });
 }
 
@@ -220,7 +226,8 @@ function markMultiField(spec, response) {
     maxScore: max || (spec.maxScore || 1),
     misconception: correct ? null : (misconceptions[0] || spec.misconception || 'misread_question'),
     feedbackLong: spec.feedbackLong || '',
-    answerText: '',
+    answerText: spec.answerText || '',
+    minimalHint: spec.minimalHint,
   });
 }
 
@@ -233,6 +240,7 @@ function markManualReviewOnly(spec) {
     feedbackShort: 'Saved for review.',
     feedbackLong: spec.feedbackLong || 'This response is saved for teacher or parent review and is not auto-marked.',
     answerText: '',
+    minimalHint: spec.minimalHint,
   });
 }
 
@@ -317,4 +325,3 @@ export function validateAnswerSpec(spec, { requireGolden = true, requireNearMiss
   }
   return true;
 }
-

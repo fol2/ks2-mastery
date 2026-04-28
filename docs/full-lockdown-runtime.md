@@ -118,7 +118,7 @@ When Grammar is the deployed change, run:
 npm run smoke:production:grammar
 ```
 
-It verifies a production demo session, a fixed Worker-owned Grammar start-submit-summary path, and the same English Spelling prompt-token start path so Grammar changes do not regress the reference subject.
+It verifies a production demo session, a Worker-owned Grammar start-submit-summary path using the current QG P1 generated content release, read-model redaction for hidden answers and generator internals, and the same English Spelling prompt-token start path so Grammar changes do not regress the reference subject.
 
 This Grammar smoke is intentionally a manual post-deploy release gate. Do not wire it into `npm run check` or another dry-run script because it requires the deployed production origin and live demo-session/auth behaviour.
 

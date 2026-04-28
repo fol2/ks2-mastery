@@ -203,7 +203,7 @@ test('Grammar command route persists subject state, practice session, and events
   assert.equal(start.body.subjectId, 'grammar');
   assert.equal(start.body.subjectReadModel.authority, 'worker');
   assert.equal(start.body.subjectReadModel.content.conceptCount, 18);
-  assert.equal(start.body.subjectReadModel.content.templateCount, 51);
+  assert.equal(start.body.subjectReadModel.content.templateCount, 57);
   assert.equal(start.body.mutation.kind, 'subject_command.grammar.start-session');
   assert.equal(start.body.mutation.appliedRevision, 1);
 
@@ -596,6 +596,7 @@ test('Grammar command route accepts worked example mode with concept guidance', 
     payload: {
       mode: 'worked',
       roundLength: 1,
+      templateId: 'question_mark_select',
       seed: 120,
     },
   });
@@ -835,10 +836,10 @@ test('Grammar concept-secured events project monster rewards atomically', async 
     && event.monsterId === 'concordium'
   )), true);
   assert.ok(submit.body.projections.rewards.state.bracehart.mastered.includes(
-    'grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions',
+    'grammar:grammar-qg-p1-2026-04-28:sentence_functions',
   ));
   assert.ok(submit.body.projections.rewards.state.concordium.mastered.includes(
-    'grammar:grammar-legacy-reviewed-2026-04-24:speech_punctuation',
+    'grammar:grammar-qg-p1-2026-04-28:speech_punctuation',
   ));
   assert.equal(submit.body.projections.rewards.state.quoral, undefined);
 
@@ -848,7 +849,7 @@ test('Grammar concept-secured events project monster rewards atomically', async 
     WHERE learner_id = 'learner-a' AND system_id = 'monster-codex'
   `).get();
   const gameState = JSON.parse(gameRow.state_json);
-  assert.ok(gameState.bracehart.mastered.includes('grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions'));
+  assert.ok(gameState.bracehart.mastered.includes('grammar:grammar-qg-p1-2026-04-28:sentence_functions'));
   assert.equal(gameState.quoral, undefined);
 
   DB.close();

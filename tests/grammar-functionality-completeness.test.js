@@ -18,6 +18,7 @@ import {
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const baselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/legacy-baseline.json');
+const qgP1BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/grammar-qg-p1-baseline.json');
 const perfectionPassBaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/perfection-pass-baseline.json');
 const phase3BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-phase3-baseline.json');
 const phase4BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-phase4-baseline.json');
@@ -27,6 +28,7 @@ const perfectionPassPlanPath = path.join(rootDir, 'docs/plans/2026-04-25-002-fea
 const completenessDocPath = path.join(rootDir, 'docs/grammar-functionality-completeness.md');
 const transferDecisionPath = path.join(rootDir, 'docs/grammar-transfer-decision.md');
 const aiProviderDecisionPath = path.join(rootDir, 'docs/grammar-ai-provider-decision.md');
+const LEGACY_GRAMMAR_CONTENT_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
 
 function readBaseline() {
   return JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
@@ -34,6 +36,10 @@ function readBaseline() {
 
 function readPerfectionPassBaseline() {
   return JSON.parse(fs.readFileSync(perfectionPassBaselinePath, 'utf8'));
+}
+
+function readQgP1Baseline() {
+  return JSON.parse(fs.readFileSync(qgP1BaselinePath, 'utf8'));
 }
 
 function readPhase3Baseline() {
@@ -83,21 +89,36 @@ test('Grammar functionality completeness baseline is internally owned', () => {
   }
 });
 
-test('Grammar completeness baseline still matches the shipped content denominator', () => {
-  const baseline = readBaseline();
+test('Grammar QG P1 baseline matches the shipped content denominator', () => {
+  const baseline = readQgP1Baseline();
   const content = baseline.contentBaseline;
 
   assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
   assert.equal(content.conceptCount, 18);
-  assert.equal(content.templateCount, 51);
-  assert.equal(content.selectedResponseCount, 31);
+  assert.equal(content.templateCount, 57);
+  assert.equal(content.selectedResponseCount, 37);
   assert.equal(content.constructedResponseCount, 20);
+  assert.equal(content.generatedTemplateCount, 31);
+  assert.equal(content.fixedTemplateCount, 26);
+  assert.equal(content.answerSpecTemplateCount, 6);
+  assert.deepEqual(content.thinPoolConcepts, []);
   assert.equal(GRAMMAR_CONCEPTS.length, content.conceptCount);
   assert.equal(GRAMMAR_CLIENT_CONCEPTS.length, content.conceptCount);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.length, content.templateCount);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, content.selectedResponseCount);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, content.constructedResponseCount);
   assert.deepEqual(Object.keys(GRAMMAR_QUESTION_TYPES).sort(), content.questionTypes.slice().sort());
+
+  const actualPerQT = {};
+  const actualPerConcept = {};
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    actualPerQT[template.questionType] = (actualPerQT[template.questionType] || 0) + 1;
+    for (const conceptId of (template.skillIds || [])) {
+      actualPerConcept[conceptId] = (actualPerConcept[conceptId] || 0) + 1;
+    }
+  }
+  assert.deepEqual(actualPerQT, content.perQuestionType);
+  assert.deepEqual(actualPerConcept, content.perConcept);
 });
 
 test('Grammar completeness baseline pins legacy mode coverage separately from behaviour gaps', () => {
@@ -176,7 +197,7 @@ test('Grammar perfection-pass baseline is internally owned and well-formed', () 
   const seenIds = new Set();
 
   assert.equal(baseline.id, 'grammar-perfection-pass');
-  assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.contentReleaseId, LEGACY_GRAMMAR_CONTENT_RELEASE_ID);
   assert.equal(baseline.ownerPlan, 'docs/plans/2026-04-25-002-feat-grammar-perfection-pass-plan.md');
   assert.ok(Array.isArray(baseline.reviewIssues));
   assert.equal(baseline.reviewIssues.length, 9, 'The Phase 2 review defines nine issues (I1-I9).');
@@ -248,7 +269,7 @@ test('Grammar perfection-pass owner-unit cross-reference: every planned or compl
   assert.equal(capabilityById(readBaseline(), 'I7'), null, 'Perfection-pass issue ids do not leak into the legacy capability fixture.');
 });
 
-test('Grammar perfection-pass content floor matches the shipped content distribution', () => {
+test('Grammar perfection-pass content floor does not exceed the shipped content distribution', () => {
   const baseline = readPerfectionPassBaseline();
   const floor = baseline.contentFloor;
   const actualPerQT = {};
@@ -261,7 +282,10 @@ test('Grammar perfection-pass content floor matches the shipped content distribu
     }
   }
 
-  assert.equal(floor.templateCount, GRAMMAR_TEMPLATE_METADATA.length, 'Floor templateCount must match live content.');
+  assert.ok(
+    floor.templateCount <= GRAMMAR_TEMPLATE_METADATA.length,
+    `Floor templateCount ${floor.templateCount} must not exceed live content ${GRAMMAR_TEMPLATE_METADATA.length}.`,
+  );
 
   const registeredQuestionTypes = Object.keys(GRAMMAR_QUESTION_TYPES);
   for (const questionType of registeredQuestionTypes) {
@@ -321,7 +345,7 @@ test('Grammar Phase 3 baseline is internally owned and well-formed', () => {
   const baseline = readPhase3Baseline();
   assert.equal(baseline.id, 'grammar-phase3-ux-reset');
   assert.equal(baseline.ownerPlan, 'docs/plans/2026-04-25-004-feat-grammar-phase3-ux-reset-plan.md');
-  assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID,
+  assert.equal(baseline.contentReleaseId, LEGACY_GRAMMAR_CONTENT_RELEASE_ID,
     'Phase 3 must not touch contentReleaseId (hard rule from the plan).');
 
   const phaseRows = baseline.phase3;
@@ -419,7 +443,7 @@ test('Grammar Phase 4 baseline is internally owned and well-formed', () => {
   const baseline = readPhase4Baseline();
   assert.equal(baseline.id, 'grammar-phase4-learning-hardening');
   assert.equal(baseline.ownerPlan, 'docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md');
-  assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID,
+  assert.equal(baseline.contentReleaseId, LEGACY_GRAMMAR_CONTENT_RELEASE_ID,
     'Phase 4 must not touch contentReleaseId (hard rule from the plan).');
 
   const phaseRows = baseline.phase4;

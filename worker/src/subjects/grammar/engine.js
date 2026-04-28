@@ -18,7 +18,9 @@ import {
   GRAMMAR_CONCEPTS,
   GRAMMAR_CONTENT_RELEASE_ID,
   GRAMMAR_TEMPLATE_METADATA,
+  grammarQuestionVariantSignature,
   grammarTemplateById,
+  grammarTemplateGeneratorFamilyId,
   serialiseGrammarQuestion,
 } from './content.js';
 import {
@@ -872,7 +874,7 @@ export function buildGrammarMiniSet({ size = DEFAULT_MINI_SET_LENGTH, focusConce
   const seeds = miniSetSeeds(Number(seed) || 1, length);
   return pack.map((entry, index) => {
     const template = grammarTemplateById(entry.templateId);
-    return itemFromTemplate(template, seeds[index] + index);
+    return itemFromTemplate(template, seeds[index]);
   });
 }
 
@@ -906,10 +908,10 @@ function buildStrictMiniTestItems(state, { size, focusConceptId, seed, templateI
           templateId,
         });
       }
-      return itemFromTemplate(template, seeds[index] + index);
+      return itemFromTemplate(template, seeds[index]);
     }
     const template = grammarTemplateById(entry.templateId);
-    return itemFromTemplate(template, seeds[index] + index);
+    return itemFromTemplate(template, seeds[index]);
   });
 }
 
@@ -1545,6 +1547,9 @@ export function applyGrammarAttemptToState(state, {
     attempts,
   });
   const conceptIds = (question.skillIds || []).slice();
+  const template = grammarTemplateById(question.templateId);
+  const generatorFamilyId = grammarTemplateGeneratorFamilyId(template || { id: question.templateId });
+  const variantSignature = grammarQuestionVariantSignature(question) || '';
   const statusesBefore = new Map(conceptIds.map((conceptId) => [
     conceptId,
     grammarConceptStatus(state.mastery.concepts[conceptId] || defaultMasteryNode(), nowTs),
@@ -1566,6 +1571,8 @@ export function applyGrammarAttemptToState(state, {
     itemId: question.itemId,
     seed: question.seed,
     questionType: question.questionType,
+    generatorFamilyId,
+    variantSignature,
     conceptIds,
     response: cloneSerialisable(normalisedResponse) || {},
     result: cloneSerialisable(result) || {},
@@ -1591,6 +1598,8 @@ export function applyGrammarAttemptToState(state, {
     itemId: question.itemId,
     seed: question.seed,
     questionType: question.questionType,
+    generatorFamilyId,
+    variantSignature,
     conceptIds,
     score: result.score,
     maxScore: result.maxScore,

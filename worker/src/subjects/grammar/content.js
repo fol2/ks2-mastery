@@ -3734,6 +3734,403 @@ const TEMPLATES = [
           }
   },
   {
+    id: "qg_active_passive_choice",
+    label: "Choose active or passive voice",
+    domain: "Verb forms",
+    questionType: "choose",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    tags: [
+      "qg-p1",
+      "identify"
+    ],
+    skillIds: [
+      "active_passive"
+    ],
+    generator(seed) {
+            const rng = mulberry32(seed);
+            const cases = [
+              {
+                active:"Maya opened the heavy gate after lunch.",
+                passive:"The heavy gate was opened by Maya after lunch.",
+                distractors:[
+                  "Maya was opening the heavy gate after lunch.",
+                  "After lunch, Maya opened the heavy gate."
+                ],
+                why:"The passive sentence puts the thing affected first and uses 'was opened by'."
+              },
+              {
+                active:"The caretaker locked the hall before assembly.",
+                passive:"The hall was locked by the caretaker before assembly.",
+                distractors:[
+                  "The caretaker was locking the hall before assembly.",
+                  "Before assembly, the caretaker locked the hall."
+                ],
+                why:"The hall receives the action, so it comes first in the passive sentence."
+              },
+              {
+                active:"Aisha painted the scenery for the play.",
+                passive:"The scenery was painted by Aisha for the play.",
+                distractors:[
+                  "Aisha was painting the scenery for the play.",
+                  "For the play, Aisha painted the scenery."
+                ],
+                why:"The passive voice focuses on the scenery rather than the person doing the painting."
+              }
+            ];
+            const item = cases[seed % cases.length];
+            const answerSpec = exactAnswerSpec(item.passive, [item.active].concat(item.distractors), {
+              misconception:"active_passive_confusion",
+              feedbackLong:item.why
+            });
+            return makeBaseQuestion(this, seed, {
+              marks:1,
+              answerSpec,
+              stemHtml:`<p>Which sentence is written in the <strong>passive voice</strong>?</p>`,
+              inputSpec:{ type:"single_choice", label:"Choose one", options:buildChoiceOptions(rng, item.passive, [item.active].concat(item.distractors)) },
+              solutionLines:[
+                "In passive voice, the thing affected often comes before the doer.",
+                item.why,
+                `The passive sentence is: ${item.passive}`
+              ],
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
+            });
+          }
+  },
+  {
+    id: "qg_subject_object_classify_table",
+    label: "Classify subject and object roles",
+    domain: "Sentence structure",
+    questionType: "classify",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "multiField",
+    tags: [
+      "qg-p1",
+      "identify"
+    ],
+    skillIds: [
+      "subject_object"
+    ],
+    generator(seed) {
+            const rng = mulberry32(seed);
+            const first = proceduralSubjectObject(rng);
+            const second = proceduralSubjectObject(rng);
+            const rows = [
+              {
+                label:`In "${first.clause}.", what is "${first.name}"?`,
+                answer:"subject"
+              },
+              {
+                label:`In "${second.clause}.", what is "${second.object}"?`,
+                answer:"object"
+              }
+            ];
+            const fields = Object.fromEntries(rows.map((row, index) => [
+              `row${index}`,
+              exactAnswerSpec(row.answer, ["subject", "object", "neither"].filter(value => value !== row.answer), {
+                misconception:"subject_object_confusion",
+                feedbackLong:"The subject does the action; the object receives it."
+              })
+            ]));
+            const answerText = rows.map(row => `${row.label} ${row.answer}`).join(" | ");
+            const answerSpec = multiFieldAnswerSpec(fields, {
+              maxScore:2,
+              misconception:"subject_object_confusion",
+              feedbackLong:"The subject does the action; the object receives it.",
+              answerText
+            });
+            return makeBaseQuestion(this, seed, {
+              marks:2,
+              answerSpec,
+              stemHtml:`<p>Classify each named noun phrase as the <strong>subject</strong> or <strong>object</strong>.</p>`,
+              inputSpec:{ type:"table_choice", columns:["subject","object","neither"], rows: rows.map((row,i)=>({ key:`row${i}`, label:row.label })) },
+              solutionLines:[
+                "Ask who or what does the verb, then ask who or what receives it.",
+                answerText
+              ],
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
+            });
+          }
+  },
+  {
+    id: "qg_pronoun_referent_identify",
+    label: "Identify a pronoun referent",
+    domain: "Cohesion",
+    questionType: "identify",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    tags: [
+      "qg-p1",
+      "identify"
+    ],
+    skillIds: [
+      "pronouns_cohesion"
+    ],
+    generator(seed) {
+            const rng = mulberry32(seed);
+            const cases = [
+              {
+                sentence:"Lena put the map beside the torch because it was too large for her pocket.",
+                pronoun:"it",
+                correct:"the map",
+                distractors:["the torch", "Lena", "her pocket"],
+                why:"The pronoun 'it' refers to the map because the map is described as too large for the pocket."
+              },
+              {
+                sentence:"Sam thanked Oliver after he returned the library book.",
+                pronoun:"he",
+                correct:"Oliver",
+                distractors:["Sam", "the library book", "the library"],
+                why:"The pronoun 'he' refers to Oliver because Oliver returned the book."
+              },
+              {
+                sentence:"The pupils moved the benches after they finished lunch.",
+                pronoun:"they",
+                correct:"The pupils",
+                distractors:["the benches", "lunch", "the hall"],
+                why:"The pronoun 'they' refers to the pupils because the pupils finished lunch."
+              }
+            ];
+            const item = cases[seed % cases.length];
+            const answerSpec = exactAnswerSpec(item.correct, item.distractors, {
+              misconception:"pronoun_cohesion_confusion",
+              feedbackLong:item.why
+            });
+            return makeBaseQuestion(this, seed, {
+              marks:1,
+              answerSpec,
+              stemHtml:`<p>In this sentence, what does the pronoun <strong>${escapeHtml(item.pronoun)}</strong> refer to?</p><p><strong>${escapeHtml(item.sentence)}</strong></p>`,
+              inputSpec:{ type:"single_choice", label:"Choose one", options:buildChoiceOptions(rng, item.correct, item.distractors) },
+              solutionLines:[
+                "A pronoun should point clearly to a noun or noun phrase.",
+                item.why,
+                `The referent is: ${item.correct}`
+              ],
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
+            });
+          }
+  },
+  {
+    id: "qg_formality_classify_table",
+    label: "Classify formal and informal register",
+    domain: "Register",
+    questionType: "classify",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "multiField",
+    tags: [
+      "qg-p1",
+      "identify"
+    ],
+    skillIds: [
+      "formality"
+    ],
+    generator(seed) {
+            const cases = [
+              [
+                { text:"We request that visitors remain seated.", answer:"formal" },
+                { text:"Please hang on until we get started.", answer:"informal" }
+              ],
+              [
+                { text:"The equipment was inspected before use.", answer:"formal" },
+                { text:"The kit got checked before we used it.", answer:"informal" }
+              ],
+              [
+                { text:"Pupils are required to return the form by Friday.", answer:"formal" },
+                { text:"Bring the form back by Friday, OK?", answer:"informal" }
+              ]
+            ];
+            const rows = cases[seed % cases.length];
+            const fields = Object.fromEntries(rows.map((row, index) => [
+              `row${index}`,
+              exactAnswerSpec(row.answer, ["formal", "informal"].filter(value => value !== row.answer), {
+                misconception:"formality_confusion",
+                feedbackLong:"Formal writing avoids chatty phrasing and uses precise vocabulary."
+              })
+            ]));
+            const answerText = rows.map(row => `${row.text} -> ${row.answer}`).join(" | ");
+            const answerSpec = multiFieldAnswerSpec(fields, {
+              maxScore:2,
+              misconception:"formality_confusion",
+              feedbackLong:"Formal writing avoids chatty phrasing and uses precise vocabulary.",
+              answerText
+            });
+            return makeBaseQuestion(this, seed, {
+              marks:2,
+              answerSpec,
+              stemHtml:`<p>Classify each sentence as <strong>formal</strong> or <strong>informal</strong>.</p>`,
+              inputSpec:{ type:"table_choice", columns:["formal","informal"], rows: rows.map((row,i)=>({ key:`row${i}`, label:row.text })) },
+              solutionLines:[
+                "Match the language to the audience and purpose.",
+                answerText
+              ],
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
+            });
+          }
+  },
+  {
+    id: "qg_modal_verb_explain",
+    label: "Explain modal verb meaning",
+    domain: "Verb forms",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    tags: [
+      "qg-p1",
+      "explain"
+    ],
+    skillIds: [
+      "modal_verbs"
+    ],
+    generator(seed) {
+            const rng = mulberry32(seed);
+            const cases = [
+              {
+                sentence:"You must wear a helmet on the climbing wall.",
+                modal:"must",
+                correct:"It shows a rule or strong obligation.",
+                distractors:[
+                  "It shows a weak possibility.",
+                  "It makes the sentence a question.",
+                  "It shows the action happened yesterday."
+                ],
+                why:"'Must' is used here for a rule or strong obligation."
+              },
+              {
+                sentence:"The clouds are dark, so it might rain later.",
+                modal:"might",
+                correct:"It shows possibility, not certainty.",
+                distractors:[
+                  "It shows a fixed rule.",
+                  "It shows the action is happening now.",
+                  "It names the person doing the action."
+                ],
+                why:"'Might' shows that rain is possible but not certain."
+              },
+              {
+                sentence:"You should check your work before handing it in.",
+                modal:"should",
+                correct:"It gives advice.",
+                distractors:[
+                  "It shows something is impossible.",
+                  "It marks direct speech.",
+                  "It turns the verb into the past tense."
+                ],
+                why:"'Should' commonly gives advice or a recommendation."
+              }
+            ];
+            const item = cases[seed % cases.length];
+            const answerSpec = exactAnswerSpec(item.correct, item.distractors, {
+              misconception:"modal_verb_confusion",
+              feedbackLong:item.why
+            });
+            return makeBaseQuestion(this, seed, {
+              marks:1,
+              answerSpec,
+              stemHtml:`<p>In this sentence, what does the modal verb <strong>${escapeHtml(item.modal)}</strong> show?</p><p><strong>${escapeHtml(item.sentence)}</strong></p>`,
+              inputSpec:{ type:"single_choice", label:"Choose one", options:buildChoiceOptions(rng, item.correct, item.distractors) },
+              solutionLines:[
+                "Modal verbs show meanings such as possibility, certainty, obligation, permission, or advice.",
+                item.why
+              ],
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
+            });
+          }
+  },
+  {
+    id: "qg_hyphen_ambiguity_explain",
+    label: "Explain how a hyphen changes meaning",
+    domain: "Punctuation for grammar",
+    questionType: "explain",
+    difficulty: 2,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    punctStage: "sense",
+    tags: [
+      "qg-p1",
+      "explain"
+    ],
+    skillIds: [
+      "hyphen_ambiguity"
+    ],
+    generator(seed) {
+            const rng = mulberry32(seed);
+            const cases = [
+              {
+                phrase:"man-eating shark",
+                contrast:"man eating shark",
+                correct:"The hyphen shows that the shark eats people.",
+                distractors:[
+                  "The hyphen shows that a man is eating a shark.",
+                  "The hyphen turns the phrase into direct speech.",
+                  "The hyphen shows plural possession."
+                ],
+                why:"The hyphen joins 'man' and 'eating' into one describing idea before the noun."
+              },
+              {
+                phrase:"small-animal hospital",
+                contrast:"small animal hospital",
+                correct:"The hyphen shows that the hospital is for small animals.",
+                distractors:[
+                  "The hyphen shows that the hospital building is small.",
+                  "The hyphen marks a fronted adverbial.",
+                  "The hyphen shows a missing letter."
+                ],
+                why:"The hyphen joins 'small' and 'animal' so they work together before 'hospital'."
+              },
+              {
+                phrase:"last-minute poster",
+                contrast:"last minute poster",
+                correct:"The hyphen shows that 'last-minute' is one describing idea before 'poster'.",
+                distractors:[
+                  "The hyphen shows that the poster is the final minute.",
+                  "The hyphen joins two complete clauses.",
+                  "The hyphen marks direct speech."
+                ],
+                why:"The compound adjective comes before the noun, so the hyphen protects the intended meaning."
+              }
+            ];
+            const item = cases[seed % cases.length];
+            const answerSpec = exactAnswerSpec(item.correct, item.distractors, {
+              misconception:"hyphen_ambiguity_confusion",
+              feedbackLong:item.why
+            });
+            return makeBaseQuestion(this, seed, {
+              marks:1,
+              answerSpec,
+              stemHtml:`<p>Why does the hyphen matter in <strong>${escapeHtml(item.phrase)}</strong> rather than <strong>${escapeHtml(item.contrast)}</strong>?</p>`,
+              inputSpec:{ type:"single_choice", label:"Choose one", options:buildChoiceOptions(rng, item.correct, item.distractors) },
+              solutionLines:[
+                "A hyphen can join words so they work as one describing idea before a noun.",
+                item.why
+              ],
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
+            });
+          }
+  },
+  {
     id: "proc3_apostrophe_rewrite",
     label: "Rewrite with a possessive apostrophe",
     domain: "Punctuation for grammar",
@@ -3990,6 +4387,33 @@ function choiceResult(resp, correct, maxScore, why, misconception, answerText) {
   });
 }
 
+function exactAnswerSpec(correct, nearMiss, opts = {}) {
+  const misconception = opts.misconception || "misread_question";
+  return {
+    kind: "exact",
+    golden: [correct],
+    nearMiss: dedupePlain(nearMiss || []).filter(item => item !== correct),
+    maxScore: opts.maxScore || 1,
+    misconception,
+    feedbackLong: opts.feedbackLong || "",
+    answerText: opts.answerText || correct,
+    minimalHint: MINIMAL_HINTS[misconception] || "Check the sentence structure and the instruction again."
+  };
+}
+
+function multiFieldAnswerSpec(fields, opts = {}) {
+  const misconception = opts.misconception || "misread_question";
+  return {
+    kind: "multiField",
+    params: { fields },
+    maxScore: opts.maxScore || Object.keys(fields || {}).length || 1,
+    misconception,
+    feedbackLong: opts.feedbackLong || "",
+    answerText: opts.answerText || "",
+    minimalHint: MINIMAL_HINTS[misconception] || "Check the sentence structure and the instruction again."
+  };
+}
+
 function generateStandardEnglishCase(rng) {
   const kind = randInt(rng, 0, 3);
   if (kind === 0) {
@@ -4210,7 +4634,65 @@ function serialiseInputSpec(inputSpec) {
   return cloneSerialisable(inputSpec);
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
+function sortByStableJson(a, b) {
+  return JSON.stringify(a).localeCompare(JSON.stringify(b));
+}
+
+function canonicaliseInputSpecForSignature(inputSpec) {
+  const spec = serialiseInputSpec(inputSpec);
+  if (!spec) return null;
+
+  if (Array.isArray(spec.options)) {
+    spec.options = spec.options
+      .map((option) => ({
+        label: cleanSpaces(option?.label || option?.value || ''),
+        value: cleanSpaces(option?.value || option?.label || ''),
+      }))
+      .sort(sortByStableJson);
+  }
+
+  if (Array.isArray(spec.columns)) {
+    spec.columns = spec.columns.map((column) => cleanSpaces(column)).sort();
+  }
+
+  if (Array.isArray(spec.rows)) {
+    spec.rows = spec.rows
+      .map((row) => ({
+        label: cleanSpaces(row?.label || ''),
+      }))
+      .sort(sortByStableJson);
+  }
+
+  return spec;
+}
+
+function stableStringHash(value) {
+  const text = String(value || '');
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36).padStart(7, '0');
+}
+
+export function grammarTemplateGeneratorFamilyId(template = {}) {
+  const raw = template.generatorFamilyId || template.id || 'unknown';
+  return String(raw).replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'unknown';
+}
+
+export function grammarQuestionVariantSignature(question) {
+  if (!question || typeof question !== 'object' || Array.isArray(question)) return null;
+  const payload = {
+    promptText: stripLegacyHtml(question.stemHtml),
+    inputSpec: canonicaliseInputSpecForSignature(question.inputSpec),
+    questionType: question.questionType || '',
+    skillIds: Array.isArray(question.skillIds) ? question.skillIds.slice().sort() : [],
+  };
+  return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
+}
+
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p1-2026-04-28';
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);
@@ -4238,6 +4720,9 @@ export function grammarTemplateMetadata(template = {}) {
     satsFriendly: Boolean(template.satsFriendly),
     isSelectedResponse: Boolean(template.isSelectedResponse),
     generative: Boolean(template.generative),
+    generatorFamilyId: grammarTemplateGeneratorFamilyId(template),
+    answerSpecKind: template.answerSpecKind || null,
+    requiresAnswerSpec: Boolean(template.requiresAnswerSpec || template.answerSpecKind),
     tags: Object.freeze((template.tags || []).slice()),
     skillIds: Object.freeze((template.skillIds || []).slice()),
   };

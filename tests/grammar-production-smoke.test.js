@@ -13,8 +13,8 @@ import {
 
 function smokeQuestion() {
   const question = createGrammarQuestion({
-    templateId: 'fronted_adverbial_choose',
-    seed: 1,
+    templateId: 'qg_modal_verb_explain',
+    seed: 7,
   });
   assert.ok(question, 'Fixture question should exist.');
   return question;
@@ -30,6 +30,7 @@ function readItemFromQuestion(question) {
 
 test('Grammar production smoke answers from the production-visible option set', () => {
   const question = smokeQuestion();
+  assert.equal(question.templateId, 'qg_modal_verb_explain');
   const readItem = readItemFromQuestion(question);
   const response = correctResponseFor(readItem);
 
@@ -93,10 +94,10 @@ test('Grammar production smoke rejects extra production option fields', () => {
 
 test('Grammar production smoke scans feedback and summary models for forbidden keys', () => {
   assert.doesNotThrow(() => assertNoForbiddenGrammarReadModelKeys({
-    stats: { contentStats: { total: 51, selectedResponse: 31, constructedResponse: 20 } },
+    stats: { contentStats: { total: 57, selectedResponse: 37, constructedResponse: 20, generated: 31, answerSpecEnabled: 6, thinPoolConcepts: [] } },
     session: {
       currentItem: {
-        templateId: 'fronted_adverbial_choose',
+        templateId: 'qg_modal_verb_explain',
         inputSpec: { type: 'single_choice', options: [{ value: 'A', label: 'A' }] },
       },
     },
@@ -114,6 +115,27 @@ test('Grammar production smoke scans feedback and summary models for forbidden k
       session: { currentItem: { templates: [{ id: 'fronted_adverbial_choose' }] } },
     }, 'grammar.summaryModel'),
     /grammar\.summaryModel\.session\.currentItem\.templates exposed a server-only field/,
+  );
+
+  assert.throws(
+    () => assertNoForbiddenGrammarReadModelKeys({
+      analytics: { recentAttempts: [{ templateId: 'qg_modal_verb_explain', variantSignature: 'grammar-v1:hidden' }] },
+    }, 'grammar.recentAttempts'),
+    /grammar\.recentAttempts\.analytics\.recentAttempts\[0\]\.variantSignature exposed a server-only field/,
+  );
+
+  assert.throws(
+    () => assertNoForbiddenGrammarReadModelKeys({
+      analytics: { recentAttempts: [{ templateId: 'qg_modal_verb_explain', generatorFamilyId: 'qg_modal_verb_explain' }] },
+    }, 'grammar.recentAttempts'),
+    /grammar\.recentAttempts\.analytics\.recentAttempts\[0\]\.generatorFamilyId exposed a server-only field/,
+  );
+
+  assert.throws(
+    () => assertNoForbiddenGrammarReadModelKeys({
+      session: { currentItem: { answerSpec: { kind: 'exact', golden: ['A'], nearMiss: [] } } },
+    }, 'grammar.startModel'),
+    /grammar\.startModel\.session\.currentItem\.answerSpec exposed a server-only field/,
   );
 });
 

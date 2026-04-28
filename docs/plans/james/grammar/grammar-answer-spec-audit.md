@@ -9,21 +9,23 @@ unit: U11
 
 # Grammar answer-spec migration audit (inventory only)
 
-This document is the per-template classification Phase 5 will execute against. It inventories every one of the 51 Grammar templates (31 selected-response + 20 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. Phase 4 ships **zero** template code changes and does **not** bump `contentReleaseId`; Phase 5 picks this list up and migrates one template at a time, pairing every marking-behaviour change with an oracle-fixture refresh and a `contentReleaseId` bump.
+This document is the per-template classification Phase 5/P1 executes against. It inventories every one of the 57 Grammar templates (37 selected-response + 20 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. Phase 4 shipped **zero** template code changes and did **not** bump `contentReleaseId`; the P1 generated templates add typed `answerSpec` data from day one, while the legacy constructed-response migration remains paired with future oracle-fixture refreshes and `contentReleaseId` bumps.
 
 The authoritative answer-spec kind list lives at `worker/src/subjects/grammar/answer-spec.js` (`ANSWER_SPEC_KINDS`). The six kinds are: `exact`, `normalisedText`, `acceptedSet`, `punctuationPattern`, `multiField`, `manualReviewOnly`. Every row below proposes one of those kinds; the gate test asserts the set membership.
 
 This audit is a read-only pass over `worker/src/subjects/grammar/content.js`. It does not modify `content.js`, does not touch `answer-spec.js`, and does not touch any oracle fixture.
 
+Phase 5 and later generated templates now have an opt-in enforcement path: template metadata can set `requiresAnswerSpec: true` and `answerSpecKind`, and each generated question must emit hidden `question.answerSpec` data that passes `validateAnswerSpec()`. Legacy templates keep the adapter path until their own content-release migration, but new generated content must not add fresh marking debt.
+
 ---
 
 ## 1. Scope and ground rules
 
-- **51 templates total.** Confirmed by `GRAMMAR_TEMPLATES.length === 51` in `worker/src/subjects/grammar/content.js`. Split: 31 `isSelectedResponse: true`, 20 `isSelectedResponse: false`.
+- **57 templates total.** Confirmed by `GRAMMAR_TEMPLATES.length === 57` in `worker/src/subjects/grammar/content.js`. Split: 37 `isSelectedResponse: true`, 20 `isSelectedResponse: false`.
 - **Zero template code changes.** Proposed specs are Phase 5 backlog only.
 - **Zero `contentReleaseId` bump.** Any Phase 5 PR that changes marking behaviour (new accepted variants, stricter near-miss rejection, migration from `acceptedSet` adapter to declarative `punctuationPattern`) bumps `contentReleaseId` and refreshes the paired oracle fixture. Phase 4 touches neither.
-- **Thin-pool concepts drive priority.** Six concepts are confirmed thin-pool (from U12 ground truth): `pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`. Every template carrying one of these concept ids in `skillIds` inherits **high** priority, so that any Phase 5 reliability improvement lands on the fragile concepts first.
-- **Selected-response default is `exact`.** All 31 single-choice / checkbox-list / table-choice / multi templates are already marked by option-value equality today. Proposing `exact` is an additive migration: the marking result is byte-identical, so Phase 5 can ship these as a single no-`contentReleaseId`-impact batch if an oracle-fixture refresh proves the shape.
+- **P1 focus concepts drive priority.** Six concepts were the confirmed thin-pool backlog before P1 expansion: `pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`. Every template carrying one of these concept ids in `skillIds` inherits **high** priority, so reliability work continues to land on the concepts that were previously fragile.
+- **Selected-response default is `exact`, except classify-table specs.** 35 selected-response rows use `exact`. Two new P1 classify-table templates use `multiField` because they have per-row answers. These are additive migrations: the marking result is deterministic and no stored constructed-response evidence changes.
 - **Constructed-response triage is per-concept.** Rewrite templates for `active_passive` and `tense_aspect` migrate to `normalisedText` (whitespace + case tolerance, single golden). Punctuation-surgery templates migrate to `punctuationPattern` (the marker keeps the punctuation characters literal and can opt into `optionalCommas`). Multi-way rewrites (`clauses` combine / join) stay `acceptedSet` until Phase 5 has time to enumerate equivalence classes. Open-ended builders and ambiguous rewrites flag as `manualReviewOnly` candidates for Phase 5 to re-evaluate once the thin-pool concepts have expanded.
 
 ---
@@ -92,22 +94,28 @@ Priority column legend: `high` (thin-pool concept or structurally fragile markin
 | `proc3_clause_join_rewrite` | `clauses` | rewrite | adapter: markStringAnswer | `acceptedSet` | `When the gate opened, the crowd cheered.` (also accepts `The crowd cheered when the gate opened.`) | `The gate opened and the crowd cheered.` (coordination instead of subordination — target is `when`); `When the gate opened the crowd cheered` (missing comma and full stop — partial credit, not accept) | medium | YES |
 | `proc3_parenthesis_commas_fix` | `parenthesis_commas` | fix | adapter: markStringAnswer | `punctuationPattern` | `Our new puppy, to my surprise, slept through the storm.` | `Our new puppy to my surprise slept through the storm.` (no commas); `Our new puppy (to my surprise) slept through the storm.` (wrong punctuation family — target is commas) | medium | YES |
 | `proc3_hyphen_fix_meaning` | `hyphen_ambiguity` | fix | adapter: markStringAnswer | `punctuationPattern` | `The class made a last-minute poster for the hall.` | `The class made a last minute poster for the hall.` (no hyphen — ambiguous); `The class made a last-minute-poster for the hall.` (over-hyphenation) | high | YES |
+| `qg_active_passive_choice` | `active_passive` | choose | answerSpec: exact | `exact` | `The heavy gate was opened by Maya after lunch.` | `Maya opened the heavy gate after lunch.` (active voice); `Maya was opening the heavy gate after lunch.` (progressive active) | high | NO |
+| `qg_subject_object_classify_table` | `subject_object` | classify | answerSpec: multiField | `multiField` | per-row option value (`subject` / `object`) | swapped role labels; `neither` when the phrase is a subject or object | high | NO |
+| `qg_pronoun_referent_identify` | `pronouns_cohesion` | identify | answerSpec: exact | `exact` | `the map` | `the torch` (nearby noun but wrong referent); `Lena` (person, not the pronoun target) | high | NO |
+| `qg_formality_classify_table` | `formality` | classify | answerSpec: multiField | `multiField` | per-row option value (`formal` / `informal`) | swapped register labels | high | NO |
+| `qg_modal_verb_explain` | `modal_verbs` | explain | answerSpec: exact | `exact` | `It shows a rule or strong obligation.` | `It shows a weak possibility.` (wrong modal meaning); `It shows the action happened yesterday.` (tense confusion) | high | NO |
+| `qg_hyphen_ambiguity_explain` | `hyphen_ambiguity` | explain | answerSpec: exact | `exact` | `The hyphen shows that the shark eats people.` | `The hyphen shows that a man is eating a shark.` (opposite meaning); `The hyphen shows plural possession.` (wrong punctuation function) | high | NO |
 | `proc3_apostrophe_rewrite` | `apostrophes_possession` | rewrite | adapter: markStringAnswer | `normalisedText` | `the farmers' coats` | `the farmer's coats` (singular possessive — different meaning); `the farmers coats` (no apostrophe) | medium | YES |
 
 ### 2.1 Row count reconciliation
 
-The table above has exactly **51 rows**, one per template. The doc-gate test (§6) parses this table and asserts `rows.length === 51` and that every proposed kind is in `ANSWER_SPEC_KINDS`.
+The table above has exactly **57 rows**, one per template. The doc-gate test (§6) parses this table and asserts `rows.length === GRAMMAR_TEMPLATES.length` and that every proposed kind is in `ANSWER_SPEC_KINDS`.
 
 ### 2.2 Proposed-spec distribution
 
-- `exact`: **31** rows (all selected-response templates).
+- `exact`: **35** rows (selected-response templates with one answer value).
 - `normalisedText`: **5** rows (`tense_rewrite`, `active_passive_rewrite`, `proc2_standard_english_fix`, `proc2_passive_to_active`, `proc3_apostrophe_rewrite`).
 - `acceptedSet`: **2** rows (`combine_clauses_rewrite`, `proc3_clause_join_rewrite`).
 - `punctuationPattern`: **9** rows (every punctuation-surgery fix template: `fix_fronted_adverbial`, `parenthesis_fix_sentence`, `speech_punctuation_fix`, `proc_fronted_adverbial_fix`, `proc_colon_list_fix`, `proc_dash_boundary_fix`, `proc_speech_punctuation_fix`, `proc3_parenthesis_commas_fix`, `proc3_hyphen_fix_meaning`).
-- `multiField`: **0** rows (no current template splits a response into named sub-fields; reserved for Phase 5+ expansion).
+- `multiField`: **2** rows (`qg_subject_object_classify_table`, `qg_formality_classify_table`).
 - `manualReviewOnly`: **4** rows in the table (`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`). §3 additionally flags **2** explain templates as Phase 5 re-evaluation candidates for migration to `manualReviewOnly` once they become free-text, lifting the candidate list to **6**.
 
-Totals: 31 + 5 + 2 + 9 + 0 + 4 = 51.
+Totals: 35 + 5 + 2 + 9 + 2 + 4 = 57.
 
 ### 2.3 Constructed-response triage summary
 
@@ -141,9 +149,9 @@ Phase 5 should land `manualReviewOnly` for at least these candidates before enab
 
 ---
 
-## 4. Thin-pool concept priority (high)
+## 4. P1 focus concept priority (high)
 
-The six concepts below are confirmed thin-pool (Phase 4 U12 ground truth) and **must** all appear high-priority in Phase 5's migration ordering. Every template carrying one of these concept ids in its `skillIds` inherits **high** priority in the table above.
+The six concepts below were the confirmed thin-pool concepts in the Phase 4 U12 ground truth and **must** all remain high-priority in P1/P5 migration ordering. P1 content expansion lifts them above the two-template floor, but every template carrying one of these concept ids in its `skillIds` still inherits **high** priority in the table above.
 
 1. `pronouns_cohesion`
 2. `formality`
@@ -152,7 +160,7 @@ The six concepts below are confirmed thin-pool (Phase 4 U12 ground truth) and **
 5. `modal_verbs`
 6. `hyphen_ambiguity`
 
-The doc-gate test asserts every one of these six concept ids appears in the Phase 5 high-priority section and that the table rows tagged high match this set (plus their associated templates).
+The doc-gate test asserts every one of these six concept ids appears in this high-priority section and that the table rows tagged high match this set (plus their associated templates).
 
 Why high priority on thin-pool concepts specifically: each concept has fewer templates in the bank, so any marking fragility on one template disproportionately poisons the concept's mastery signal. Fixing answer-spec fragility here first maximises the learning-integrity return per Phase 5 PR.
 
@@ -162,8 +170,8 @@ Why high priority on thin-pool concepts specifically: each concept has fewer tem
 
 Every row where marking behaviour changes bumps `contentReleaseId` and invalidates stored attempt evidence against the prior release. Rows that are purely declarative (selected-response → `exact`, where the mark result is byte-identical for every stored attempt) do not bump.
 
-- **Rows requiring `contentReleaseId` bump: 20.** Every row marked `YES` in the table — all 20 constructed-response templates. Phase 5 should batch these per-concept so one content-release PR covers all templates for a given skill (e.g. one PR for `punctuation_*` surgery, one for `active_passive`, one for `standard_english`). Every such PR pairs with a `tests/fixtures/oracle-grammar-*.json` refresh.
-- **Rows NOT requiring `contentReleaseId` bump: 31.** Every selected-response row marked `NO` — the shift from `item.correct === resp.answer` to `markByAnswerSpec({kind: 'exact', golden: [item.correct]})` produces byte-identical mark results. Phase 5 can ship these in a single batch PR with no release-id bump, as long as the oracle fixture re-verifies the shape.
+- **Rows requiring `contentReleaseId` bump: 20.** Every row marked `YES` in the table — all 20 legacy constructed-response templates. Phase 5 should batch these per-concept so one content-release PR covers all templates for a given skill (e.g. one PR for `punctuation_*` surgery, one for `active_passive`, one for `standard_english`). Every such PR pairs with a `tests/fixtures/oracle-grammar-*.json` refresh.
+- **Rows NOT requiring `contentReleaseId` bump: 37.** Every selected-response row marked `NO` — legacy selected-response rows preserve option-value equality, and the new P1 rows emit typed `answerSpec` data from day one. The P1 content itself bumps the Grammar content release because the pool changed, but the answer-spec marking contract does not add a separate marking-behaviour bump.
 - **`explain_reason_choice` and `proc2_boundary_punctuation_explain`:** flagged `medium` priority and `NO` bump because today they are selected-response. If Phase 5 migrates them to free-text explanation, that migration **is** a marking-behaviour change and bumps `contentReleaseId` at that time.
 - **`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`:** `manualReviewOnly` migration **always** bumps `contentReleaseId`: the mark result shifts from `correct: true/false, score: 0..2` (adapter path) to `correct: false, score: 0, maxScore: 0` (manual-review path). Every stored attempt would need a mastery-signal downgrade, so the release-id bump is non-negotiable.
 
@@ -174,11 +182,11 @@ Every row where marking behaviour changes bumps `contentReleaseId` and invalidat
 The test file `tests/grammar-answer-spec-audit.test.js` enforces the following invariants. Any Phase 5 PR touching this doc must keep them green.
 
 - **Doc exists.** `docs/plans/james/grammar/grammar-answer-spec-audit.md` is readable.
-- **Row count.** The classification table in §2 parses to exactly **51** rows.
+- **Row count.** The classification table in §2 parses to exactly `GRAMMAR_TEMPLATES.length` rows.
 - **Template id coverage.** Every template id in the table exists in `GRAMMAR_TEMPLATES` (imported from `worker/src/subjects/grammar/content.js`); no typos, no orphaned rows.
 - **Kind validity.** Every proposed `answerSpec.kind` in the table is in `ANSWER_SPEC_KINDS` (imported from `worker/src/subjects/grammar/answer-spec.js`).
 - **Manual-review-only floor.** §3 lists **at least 5** `manualReviewOnly` candidates.
-- **Thin-pool coverage.** §4 lists all six thin-pool concept ids: `pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`.
+- **P1 focus coverage.** §4 lists all six concepts that were thin-pool before P1 expansion: `pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`.
 
 The test file does **not** touch `content.js`, `answer-spec.js`, or any oracle fixture. It is a pure doc gate.
 
@@ -196,7 +204,7 @@ These notes guide the Phase 5 backlog and are not enforced by this doc gate:
   4. Remaining rewrites (`normalisedText`) — 3 templates.
   5. Clause combine/join (`acceptedSet`) — 2 templates.
   6. Builders + ambiguous fixes (`manualReviewOnly`) — 4 templates.
-  7. Selected-response batch (`exact`) — 31 templates in one PR.
+  7. Selected-response batch (`exact`/`multiField`) — 37 templates in one PR, with the two P1 classify tables already carrying `multiField`.
   8. Explain-template re-evaluation (potential `manualReviewOnly` migration if they move to free-text) — deferred to Phase 6+ content-expansion work.
 - **Each Phase 5 PR** must land a new row in `tests/fixtures/grammar-phase5-answer-spec-migration/*.json` (per-template migration evidence) plus an `ownerUnit` + `landedIn: "PR #<num>"` row in the Phase 5 baseline. Phase 4's completeness gate (U13) does **not** read these; a new Phase 5 gate will.
 - **`params` usage.** Reserved parameters flagged above (`params.optionalCommas`, `params.acceptHyphenMinus`, `params.acceptQuoteStyle`) are Phase 5 enhancements. None are required for the first migration wave — drop them and rely on declared golden strings matching fixture output byte-for-byte.

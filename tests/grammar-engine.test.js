@@ -14,25 +14,50 @@ import {
   GRAMMAR_CONCEPTS,
   GRAMMAR_CONTENT_RELEASE_ID,
   GRAMMAR_TEMPLATE_METADATA,
+  grammarQuestionVariantSignature,
+  grammarTemplateById,
+  grammarTemplateGeneratorFamilyId,
   serialiseGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
-import { readGrammarLegacyOracle } from './helpers/grammar-legacy-oracle.js';
+import { buildGrammarReadModel } from '../worker/src/subjects/grammar/read-models.js';
+import {
+  readGrammarLegacyOracle,
+  readGrammarQuestionGeneratorBaseline,
+} from './helpers/grammar-legacy-oracle.js';
+import { assertNoForbiddenGrammarReadModelKeys } from '../scripts/grammar-production-smoke.mjs';
 
-test('Grammar legacy oracle fixture pins the reviewed content denominator', () => {
+const LEGACY_GRAMMAR_CONTENT_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
+
+test('Grammar legacy oracle fixture remains frozen for the reviewed denominator', () => {
   const oracle = readGrammarLegacyOracle();
 
-  assert.equal(oracle.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(oracle.contentReleaseId, LEGACY_GRAMMAR_CONTENT_RELEASE_ID);
   assert.equal(oracle.conceptCount, 18);
   assert.equal(oracle.templateCount, 51);
   assert.equal(oracle.selectedResponseCount, 31);
   assert.equal(oracle.constructedResponseCount, 20);
+});
+
+test('Grammar QG P1 baseline pins the shipped content denominator', () => {
+  const baseline = readGrammarQuestionGeneratorBaseline();
+
+  assert.equal(baseline.releaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.conceptCount, 18);
+  assert.equal(baseline.templateCount, 57);
+  assert.equal(baseline.selectedResponseCount, 37);
+  assert.equal(baseline.constructedResponseCount, 20);
+  assert.equal(baseline.generatedTemplateCount, 31);
+  assert.equal(baseline.fixedTemplateCount, 26);
+  assert.equal(baseline.answerSpecTemplateCount, 6);
+  assert.deepEqual(baseline.thinPoolConcepts, []);
+  assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 51);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 31);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 57);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 37);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 20);
 });
 
-test('Grammar content generates serialisable questions matching oracle samples', () => {
+test('Grammar legacy content still generates serialisable questions matching frozen oracle samples', () => {
   const oracle = readGrammarLegacyOracle();
   const conceptIds = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
   const questionTypes = new Set(Object.keys(oracle.questionTypes));
@@ -47,7 +72,8 @@ test('Grammar content generates serialisable questions matching oracle samples',
       seed: sample.sample.seed,
     });
     const serialised = serialiseGrammarQuestion(question);
-    assert.equal(serialised.contentReleaseId, oracle.contentReleaseId, sample.id);
+    assert.equal(serialised.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID, sample.id);
+    assert.equal(oracle.contentReleaseId, LEGACY_GRAMMAR_CONTENT_RELEASE_ID, sample.id);
     assert.equal(serialised.templateId, sample.id, sample.id);
     assert.equal(serialised.itemId, sample.sample.itemId, sample.id);
     assert.deepEqual(serialised.skillIds, sample.skillIds, sample.id);
@@ -60,10 +86,69 @@ test('Grammar content generates serialisable questions matching oracle samples',
   }
 });
 
+test('Grammar QG P1 templates emit answer specs and score their golden responses', () => {
+  const baseline = readGrammarQuestionGeneratorBaseline();
+  const p1TemplateIds = [
+    'qg_active_passive_choice',
+    'qg_subject_object_classify_table',
+    'qg_pronoun_referent_identify',
+    'qg_formality_classify_table',
+    'qg_modal_verb_explain',
+    'qg_hyphen_ambiguity_explain',
+  ];
+
+  for (const templateId of p1TemplateIds) {
+    assert.ok(
+      baseline.samples.some((sample) => sample.templateId === templateId),
+      `${templateId} should appear in the QG P1 signature baseline.`,
+    );
+    const question = createGrammarQuestion({ templateId, seed: 7 });
+    assert.ok(question.answerSpec, `${templateId} should emit hidden answerSpec data.`);
+    const serialised = serialiseGrammarQuestion(question);
+    assert.equal(serialised.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+    assert.equal(serialised.templateId, templateId);
+
+    const response = question.answerSpec.kind === 'multiField'
+      ? Object.fromEntries(Object.entries(question.answerSpec.params.fields).map(([key, spec]) => [key, { answer: spec.golden[0] }]))
+      : { answer: question.answerSpec.golden[0] };
+    const result = evaluateGrammarQuestion(question, response);
+    assert.equal(result.correct, true, templateId);
+    assert.equal(result.score, result.maxScore, templateId);
+  }
+});
+
+test('Grammar generated attempts store safe variant metadata without exposing it on currentItem', () => {
+  const state = createInitialGrammarState();
+  const question = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 7 });
+  const item = serialiseGrammarQuestion(question);
+  assert.equal(item.generatorFamilyId, undefined);
+  assert.equal(item.variantSignature, undefined);
+
+  const applied = applyGrammarAttemptToState(state, {
+    learnerId: 'learner-a',
+    item,
+    response: { answer: question.answerSpec.golden[0] },
+    supportLevel: 0,
+    attempts: 1,
+    now: 1_777_000_000_000,
+  });
+
+  const attempt = state.recentAttempts.at(-1);
+  assert.equal(attempt.generatorFamilyId, 'qg_modal_verb_explain');
+  assert.match(attempt.variantSignature, /^grammar-v1:[a-z0-9]+$/);
+  assert.equal(applied.events[0].generatorFamilyId, 'qg_modal_verb_explain');
+  assert.equal(applied.events[0].variantSignature, attempt.variantSignature);
+});
+
 test('Grammar mini-set generation covers mixed and focused pools without looping', () => {
   const mixed = buildGrammarMiniSet({ size: 8, seed: 1234 });
   assert.equal(mixed.length, 8);
   assert.ok(mixed.every((item) => item.contentReleaseId === GRAMMAR_CONTENT_RELEASE_ID));
+  assert.deepEqual(
+    mixed.map((item) => item.seed),
+    Array.from({ length: 8 }, (_, index) => (1234 + index * 104729) >>> 0),
+    'Mini-set item seeds must match the selector freshness seeds.',
+  );
 
   for (const concept of GRAMMAR_CONCEPTS) {
     const focused = buildGrammarMiniSet({ size: 4, focusConceptId: concept.id, seed: 9001 });
@@ -192,6 +277,32 @@ test('Grammar attempt history stores bounded response fields only', () => {
   const persisted = state.recentAttempts[0].response;
   assert.deepEqual(Object.keys(persisted), ['answer']);
   assert.equal(persisted.answer.length, 2_000);
+});
+
+test('Grammar attempt history stores generated variant metadata but keeps read models redacted', () => {
+  const state = createInitialGrammarState();
+  const question = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 1 });
+  const item = serialiseGrammarQuestion(question);
+  const template = grammarTemplateById(question.templateId);
+
+  applyGrammarAttemptToState(state, {
+    learnerId: 'learner-a',
+    item,
+    response: { answer: question.answerSpec.golden[0] },
+    now: 1_777_000_000_000,
+  });
+
+  const attempt = state.recentAttempts.at(-1);
+  assert.equal(attempt.generatorFamilyId, grammarTemplateGeneratorFamilyId(template));
+  assert.equal(attempt.variantSignature, grammarQuestionVariantSignature(question));
+  assert.ok(attempt.variantSignature.startsWith('grammar-v1:'));
+
+  const readModel = buildGrammarReadModel({ learnerId: 'learner-a', state, now: 1_777_000_000_000 });
+  assert.equal(readModel.analytics.recentAttempts[0].generatorFamilyId, undefined);
+  assert.equal(readModel.analytics.recentAttempts[0].variantSignature, undefined);
+  assert.equal(readModel.analytics.recentAttempts[0].response, undefined);
+  assert.equal(readModel.analytics.recentAttempts[0].result.answerText, undefined);
+  assertNoForbiddenGrammarReadModelKeys(readModel, 'grammar.variantMetadataReadModel');
 });
 
 test('Grammar engine rejects empty answers before mastery is mutated', () => {

@@ -3,7 +3,9 @@ import {
   GRAMMAR_RECENT_ATTEMPT_HORIZON,
   grammarConceptStatus,
 } from '../../../shared/grammar/confidence.js';
-import { GRAMMAR_CLIENT_CONCEPTS } from './metadata.js';
+import {
+  GRAMMAR_CLIENT_CONCEPTS,
+} from './metadata.js';
 
 const QUESTION_TYPE_LABELS = Object.freeze({
   identify: 'Identify the feature',
@@ -211,6 +213,15 @@ function progressSnapshotFromConcepts(concepts) {
     weakConcepts: concepts.filter((concept) => concept.status === 'weak').length,
     untouchedConcepts: concepts.filter((concept) => concept.status === 'new').length,
     accuracyPercent: accuracyPercent(correct, wrong),
+  };
+}
+
+function grammarCoverageDiagnostics() {
+  return {
+    releaseId: 'grammar-qg-p1-2026-04-28',
+    templateCount: 57,
+    generatedTemplateCount: 31,
+    thinPoolWarnings: [],
   };
 }
 
@@ -560,6 +571,7 @@ export function buildGrammarLearnerReadModel({
     weaknesses,
     misconceptionPatterns,
     questionTypeSummary,
+    coverageDiagnostics: grammarCoverageDiagnostics(),
     recentActivity,
     recentSessions: sessions,
     parentSummaryDraft,
