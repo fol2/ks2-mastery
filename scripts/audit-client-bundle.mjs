@@ -26,13 +26,14 @@ const DEFAULT_PUBLIC_DIR = 'dist/public';
 // 214,000. Node 24's zlib output for the current Hero P2 baseline sits
 // just above that at ~214,020 bytes. Phase 7's Punctuation remote-summary
 // safety and radio-focus accessibility fixes lift the Node 22 build to
-// ~215.1 KB, so the committed ceiling is 215,500: still tight enough to
-// catch an adult-surface re-import, without blocking on a sub-kilobyte
-// compression/runtime drift. Override via CLI
+// ~215.1 KB. Punctuation's Star-based display parity added a small
+// first-paint utility footprint, so the committed ceiling is 216,000: still
+// tight enough to catch an adult-surface re-import, without blocking on
+// sub-kilobyte compression/runtime drift. Override via CLI
 // `--main-bundle-budget-bytes` for experimentation. See
 // `tests/bundle-byte-budget.test.js` for the committed baseline +
 // rationale.
-const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 215_500;
+const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 216_000;
 
 const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/data\//, reason: 'full spelling content dataset' },

@@ -1,7 +1,7 @@
 // `particles-burst` template: covers the transient `caught` and `evolve`
-// celebration overlays. Both share <CelebrationShell> — they only differ in
-// eyebrow, body, and which decorative slots fire. The `kind` discriminator
-// (taken verbatim from the catalog entry) selects the per-mode behaviour.
+// celebration overlays. They share <CelebrationShell> and differ in eyebrow,
+// body, and which decorative slots fire. The `kind` discriminator (taken
+// verbatim from the catalog entry) selects the per-mode behaviour.
 //
 // JSX-bearing: imports CelebrationShell whose body uses JSX. This module
 // only loads via the bundler (esbuild in tests, esbuild in production),

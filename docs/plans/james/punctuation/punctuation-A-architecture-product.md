@@ -312,10 +312,10 @@ Subject landing、Codex card、Home dashboard / MonsterMeadow 唔可以用 first
 
 Reward narrative 決定：
 
-- 新增 `egg-found` event / light celebration，喺 first Star / first `displayState: egg-found` moment 觸發。呢個係 emotional safety moment：小朋友知道自己已經搵到蛋。
-- `egg-found` 只可以由 genuine Star evidence 觸發；skip、empty、duplicate replay、unsupported fake attempt、telemetry-only event 都唔可以 mint egg。
-- Legacy `caught` event / toast 如果保留，就應該只做 first-secured reward-unit celebration；唔再做 UI found truth。
-- Hatch / Evolve / Strong / Mega 呢類較大 celebration animation 要留到 session end，避免題目中途打斷 learning flow。State update / analytics event 可以即時記錄，但 visual animation 應該 queue 到 Summary / session end 先播。
+- Event kind 統一跟 Spelling 既有 vocabulary：first-found reward event 用 `caught`。喺 Punctuation，`caught` 喺 first Star / first `displayState: egg-found` moment 觸發；child-facing label 仍然可以係 Egg Found。呢個係 emotional safety moment：小朋友知道自己已經搵到蛋；toast 可以即時出，但 overlay celebration 要跟其他 monster celebration 一樣排到 session end。
+- `caught` 只可以由 genuine Star evidence 觸發；skip、empty、duplicate replay、unsupported fake attempt、telemetry-only event 都唔可以 mint egg。
+- Punctuation 唔再需要 legacy first-secured `caught` celebration；first-secured reward unit 只應該透過 Star/display-stage transition 觸發 Hatch / Evolve / Strong / Mega（如有 stage advance）。
+- 所有 monster celebration overlay animation（Egg Found / Hatch / Evolve / Strong / Mega）要留到 session end，避免題目中途打斷 learning flow。State update / analytics event / toast 可以即時記錄，但 visual animation 應該 queue 到 Summary / session end 先播。
 - Codex display 仍然要跟 `displayState`，唔可以跟 legacy `caught` boolean。
 
 ### 6.3 Game aim

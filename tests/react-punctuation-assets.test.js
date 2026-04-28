@@ -73,13 +73,14 @@ test('Codex entries describe Punctuation as secure units rather than spelling wo
   assert.equal(pealark.subjectId, 'punctuation');
   assert.equal(pealark.secureLabel, '1 secure unit');
   assert.equal(pealark.wordBand, 'Endmarks, speech and boundary');
-  // 1 of 5 secured = stage 1 (one-fifth of the way).
-  assert.equal(pealark.progressPct, 20);
+  // Display progress now follows the monotonic Star display floor, not the
+  // mastered-unit denominator.
+  assert.equal(pealark.progressPct, 10);
 
   assert.equal(quoral.subjectId, 'punctuation');
   assert.equal(quoral.secureLabel, '1 secure unit');
   assert.equal(quoral.wordBand, 'Published punctuation release');
-  assert.equal(quoral.progressPct, 7);
+  assert.equal(quoral.progressPct, 10);
 });
 
 test('Codex entry defaults remain spelling-compatible', () => {

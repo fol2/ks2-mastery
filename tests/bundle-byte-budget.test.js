@@ -16,7 +16,8 @@
 // Node 24's zlib output for the current Hero P2 baseline sits just
 // above that at ~214,020 bytes. Phase 7's Punctuation remote-summary
 // safety and radio-focus accessibility fixes lift the Node 22 build to
-// ~215.1 KB, so the committed ceiling is now `215_500`. That keeps the
+// ~215.1 KB. Punctuation's Star-based display parity added a small first-paint
+// utility footprint, so the committed ceiling is now `216_000`. That keeps the
 // headroom narrow while avoiding a sub-kilobyte compression/runtime false blocker.
 // The audit still fails
 // when ~50 KB of adult-only JS sneaks back into the critical path (the
@@ -59,13 +60,14 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 // rounded up to 214,000. Node 24's zlib output for the current Hero P2
 // baseline sits just above that. Phase 7's Punctuation remote-summary
 // safety and radio-focus accessibility fixes lift the Node 22 build to
-// ~215.1 KB, so the committed ceiling is 215,500
+// ~215.1 KB. Punctuation's Star-based display parity adds a small first-paint
+// utility footprint, so the committed ceiling is 216,000
 // (matches `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES` in
 // `scripts/audit-client-bundle.mjs`). The narrow headroom lets the team
 // land small copy / utility growth without an audit bump, but trips the
 // gate when ~50 KB of adult-only JS sneaks back into the critical path.
 const BASELINE_GZIP_BYTES = 203_227;
-const BUDGET_GZIP_BYTES = 215_500;
+const BUDGET_GZIP_BYTES = 216_000;
 const TEST_MODE_BUNDLE_MARKER = '__ks2_capacityMeta__';
 
 function isPlaywrightTestModeBundle(bundleBytes) {

@@ -160,11 +160,12 @@ function MonsterStarMeter({ monster }) {
   // never appears to de-evolve after evidence lapse.
   const stars = monster.displayStars ?? monster.totalStars;
   const stage = monster.displayStage ?? monster.starDerivedStage;
+  const displayState = monster.displayState || (stars > 0 ? 'egg-found' : 'not-found');
   const pct = Math.min(100, Math.max(0, Math.round((stars / cap) * 100)));
   const stageText = punctuationStageLabel(stage, stars);
 
   return (
-    <div className="punctuation-monster-meter" data-monster-id={monster.id}>
+    <div className="punctuation-monster-meter" data-monster-id={monster.id} data-display-state={displayState}>
       <div className="punctuation-monster-meter-name">{monster.name}</div>
       <div className="punctuation-monster-meter-stage">{stageText}</div>
       <div className="punctuation-monster-meter-bar" aria-hidden="true">

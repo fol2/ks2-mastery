@@ -115,6 +115,35 @@ test('one meaningful attempt in Pealark cluster — Try Stars increase, total > 
   assert.equal(result.perMonster.claspin.total, 0, 'Claspin must remain at 0');
 });
 
+test('non-meaningful attempts do not mint Try Stars', () => {
+  const progress = freshProgress();
+  progress.attempts.push(makeAttempt({
+    itemId: 'se_empty_submit',
+    skillIds: ['sentence_endings'],
+    rewardUnitId: 'sentence-endings-core',
+    meaningful: false,
+    correct: false,
+  }));
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  assert.equal(result.perMonster.pealark.tryStars, 0);
+  assert.equal(result.perMonster.pealark.total, 0);
+});
+
+test('legacy attempts without meaningful flag still count as meaningful', () => {
+  const progress = freshProgress();
+  const attempt = makeAttempt({
+    itemId: 'se_legacy_submit',
+    skillIds: ['sentence_endings'],
+    rewardUnitId: 'sentence-endings-core',
+  });
+  delete attempt.meaningful;
+  progress.attempts.push(attempt);
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  assert.equal(result.perMonster.pealark.tryStars, 1);
+});
+
 test('3+ independent correct in Claspin — Practice Stars accumulate', () => {
   const progress = freshProgress();
   for (let i = 0; i < 5; i++) {

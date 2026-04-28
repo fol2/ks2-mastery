@@ -10468,6 +10468,14 @@ html { scroll-behavior: smooth; }
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--panel-soft);
+  transition: filter var(--dur-med) var(--ease-out), opacity var(--dur-med) var(--ease-out);
+}
+.punctuation-monster-meter[data-display-state="not-found"] {
+  opacity: 0.58;
+  filter: grayscale(0.9);
+}
+.punctuation-monster-meter[data-display-state="not-found"] .punctuation-monster-meter-fill {
+  background: var(--muted);
 }
 .punctuation-monster-meter-name {
   font-weight: 800;

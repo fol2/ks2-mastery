@@ -75,6 +75,54 @@ test('home meadow shows all eggs once every species has been caught but stays in
   }
 });
 
+test('home meadow uses punctuation displayState instead of legacy caught for Egg Found', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const summary = [
+    {
+      subjectId: 'punctuation',
+      monster: MONSTERS.pealark,
+      progress: {
+        caught: false,
+        stage: 0,
+        displayStars: 1,
+        displayStage: 0,
+        displayState: 'egg-found',
+        branch: 'b1',
+      },
+    },
+  ];
+  const meadow = buildMeadowMonsters(summary);
+
+  assert.equal(meadow.length, 1);
+  assert.equal(meadow[0].species, 'pealark');
+  assert.equal(meadow[0].stage, 0);
+  assert.equal(meadow[0].path, 'none');
+});
+
+test('home meadow uses punctuation displayStage for evolved display', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const summary = [
+    {
+      subjectId: 'punctuation',
+      monster: MONSTERS.curlune,
+      progress: {
+        caught: false,
+        stage: 0,
+        displayStars: 30,
+        displayStage: 2,
+        displayState: 'evolve',
+        branch: 'b2',
+      },
+    },
+  ];
+  const meadow = buildMeadowMonsters(summary);
+
+  assert.equal(meadow.length, 1);
+  assert.equal(meadow[0].species, 'curlune');
+  assert.equal(meadow[0].stage, 2);
+  assert.notEqual(meadow[0].path, 'none');
+});
+
 test('home meadow uses seeded random foot positions for eggs', async () => {
   const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
   const summary = [
@@ -320,6 +368,60 @@ test('codex entries show fresh creatures as unknown and caught stage-zero creatu
   assert.equal(egg.secureLabel, '1 secure word');
   assert.equal(egg.nextGoal, 'Keep securing words for the next change');
   assert.match(egg.img, /glimmerbug-b2-0\.640\.webp/);
+});
+
+test('codex entries use punctuation displayState for first-Star Egg Found', async () => {
+  const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
+  const [entry] = buildCodexEntries([
+    {
+      subjectId: 'punctuation',
+      monster: MONSTERS.pealark,
+      progress: {
+        caught: false,
+        mastered: 0,
+        stage: 0,
+        displayStars: 1,
+        displayStage: 0,
+        displayState: 'egg-found',
+        level: 0,
+        branch: 'b1',
+      },
+    },
+  ]);
+
+  assert.equal(entry.caught, true);
+  assert.equal(entry.displayState, 'egg');
+  assert.equal(entry.stageLabel, 'Egg Found');
+  assert.equal(entry.secureLabel, 'No secure units yet');
+  assert.equal(entry.progressPct, 1);
+  assert.match(entry.img, /pealark-b1-0\.640\.webp/);
+});
+
+test('codex entries use punctuation displayStage for evolved visual state', async () => {
+  const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
+  const [entry] = buildCodexEntries([
+    {
+      subjectId: 'punctuation',
+      monster: MONSTERS.curlune,
+      progress: {
+        caught: false,
+        mastered: 0,
+        stage: 0,
+        displayStars: 30,
+        displayStage: 2,
+        displayState: 'evolve',
+        level: 0,
+        branch: 'b2',
+      },
+    },
+  ]);
+
+  assert.equal(entry.caught, true);
+  assert.equal(entry.displayState, 'monster');
+  assert.equal(entry.stage, 2);
+  assert.equal(entry.stageLabel, 'Evolve');
+  assert.equal(entry.progressPct, 30);
+  assert.match(entry.img, /curlune-b2-2\.640\.webp/);
 });
 
 test('codex progress copy omits total and remaining counts', async () => {

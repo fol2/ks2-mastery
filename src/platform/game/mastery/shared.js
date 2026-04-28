@@ -130,14 +130,25 @@ export function toastBodyFor(kind) {
   return 'Level increased.';
 }
 
-export function buildEvent(learnerId, kind, monsterId, previous, next) {
+export function buildRewardMonsterEvent({
+  id = '',
+  learnerId = '',
+  kind = '',
+  monsterId = '',
+  previous = null,
+  next = null,
+  createdAt = Date.now(),
+  subjectId = '',
+  extra = null,
+} = {}) {
   const monster = MONSTERS[monsterId];
-  const createdAt = Date.now();
-  return {
-    id: `reward.monster:${learnerId || 'default'}:${monsterId}:${kind}:${next.stage}:${next.level}`,
+  const fallbackId = `reward.monster:${learnerId || 'default'}:${monsterId}:${kind}:${next?.stage}:${next?.level}`;
+  const event = {
+    id: id || fallbackId,
     type: 'reward.monster',
     kind,
     learnerId,
+    ...(subjectId ? { subjectId } : {}),
     systemId: DEFAULT_SYSTEM_ID,
     monsterId,
     monster,
@@ -149,6 +160,13 @@ export function buildEvent(learnerId, kind, monsterId, previous, next) {
       body: toastBodyFor(kind),
     },
   };
+  return extra && typeof extra === 'object' && !Array.isArray(extra)
+    ? { ...event, ...extra }
+    : event;
+}
+
+export function buildEvent(learnerId, kind, monsterId, previous, next) {
+  return buildRewardMonsterEvent({ learnerId, kind, monsterId, previous, next });
 }
 
 export function eventFromTransition(learnerId, monsterId, previous, next) {

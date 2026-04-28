@@ -10,6 +10,7 @@ import {
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
 import { createPunctuationService, PunctuationServiceError } from '../shared/punctuation/service.js';
+import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
 
 function makeRepository() {
   let data = null;
@@ -94,6 +95,41 @@ test('punctuation service emits misconception events and serialisable feedback',
   assert.equal(result.state.feedback.kind, 'error');
   assert.equal(result.events.some((event) => event.type === PUNCTUATION_EVENT_TYPES.MISCONCEPTION_OBSERVED), true);
   assert.doesNotThrow(() => JSON.stringify(result.state));
+});
+
+test('empty non-GPS submit records non-meaningful evidence and mints no Try Stars', () => {
+  const repository = makeRepository();
+  const service = createPunctuationService({ repository, now: () => 1_800_000_000_000, random: () => 0 });
+  const start = service.startSession('learner-a', { mode: 'smart', roundLength: '1' }).state;
+
+  service.submitAnswer('learner-a', start, start.session.currentItem.inputKind === 'choice'
+    ? { choiceIndex: null }
+    : { typed: '   ' });
+
+  const attempt = repository.snapshot().data.progress.attempts.at(-1);
+  assert.equal(attempt.meaningful, false);
+
+  const stars = projectPunctuationStars(repository.snapshot().data.progress, PUNCTUATION_RELEASE_ID);
+  assert.equal(stars.perMonster.pealark.total, 0);
+  assert.equal(stars.perMonster.claspin.total, 0);
+  assert.equal(stars.perMonster.curlune.total, 0);
+});
+
+test('wrong non-empty submit remains meaningful Try evidence', () => {
+  const repository = makeRepository();
+  const service = createPunctuationService({ repository, now: () => 1_800_000_000_000, random: () => 0 });
+  const start = service.startSession('learner-a', { mode: 'smart', roundLength: '1' }).state;
+
+  service.submitAnswer('learner-a', start, start.session.currentItem.inputKind === 'choice'
+    ? { choiceIndex: 99 }
+    : { typed: 'not sure' });
+
+  const attempt = repository.snapshot().data.progress.attempts.at(-1);
+  assert.equal(attempt.meaningful, true);
+
+  const stars = projectPunctuationStars(repository.snapshot().data.progress, PUNCTUATION_RELEASE_ID);
+  assert.ok(stars.grand.grandStars >= 0);
+  assert.ok(Object.values(stars.perMonster).some((entry) => entry.tryStars > 0));
 });
 
 test('punctuation service rejects illegal transitions with named errors and no mutation', () => {

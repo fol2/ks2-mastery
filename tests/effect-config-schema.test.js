@@ -228,4 +228,3 @@ test('validateEffectConfig: missing celebrationTunables returns error naming the
   assert.equal(result.ok, false);
   assert.ok(result.errors.some((e) => /celebrationTunables/.test(e.message)));
 });
-

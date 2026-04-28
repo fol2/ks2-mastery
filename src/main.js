@@ -61,6 +61,10 @@ import {
   monsterSummary,
   monsterSummaryFromSpellingAnalytics,
 } from './platform/game/monster-system.js';
+import {
+  shouldDelayMonsterCelebrations,
+  subjectSessionEnded,
+} from './platform/game/monster-celebrations.js';
 import { createMonsterEffectConfigGetter } from './platform/game/monster-effect-runtime.js';
 import {
   acknowledgeMonsterCelebrationEvents,
@@ -3440,6 +3444,7 @@ function setPunctuationRuntimeError(message) {
 }
 
 function applyPunctuationCommandResponse(response) {
+  const previousPunctuationUi = store.getState().subjectUi?.punctuation || null;
   const subjectReadModel = response?.subjectReadModel;
   if (subjectReadModel) {
     store.reloadFromRepositories({ preserveRoute: true, preserveMonsterCelebrations: true });
@@ -3448,12 +3453,21 @@ function applyPunctuationCommandResponse(response) {
   if (subjectReadModel) {
     store.updateSubjectUi('punctuation', subjectReadModel);
   }
+  const nextPunctuationUi = store.getState().subjectUi?.punctuation || null;
   const rewards = response?.projections?.rewards;
   if (rewards?.toastEvents?.length) {
     store.pushToasts(rewards.toastEvents);
   }
-  if (rewards?.events?.length) {
-    store.pushMonsterCelebrations(rewards.events);
+  const monsterEvents = rewards?.events || [];
+  if (monsterEvents.length) {
+    if (shouldDelayMonsterCelebrations('punctuation', previousPunctuationUi, nextPunctuationUi)) {
+      store.deferMonsterCelebrations(monsterEvents);
+    } else {
+      store.pushMonsterCelebrations(monsterEvents);
+    }
+  }
+  if (subjectSessionEnded('punctuation', previousPunctuationUi, nextPunctuationUi)) {
+    store.releaseMonsterCelebrations();
   }
 }
 

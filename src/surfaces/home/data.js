@@ -279,20 +279,32 @@ function variantForMonster(monsterId, stage, catalogueBranch) {
   return pickVariant(seed);
 }
 
+function entryDisplayInfo(entry = {}) {
+  const progress = entry.progress || {};
+  const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
+  if ((entry.subjectId || progress.subjectId) !== 'punctuation') {
+    return { displayStage: stage, found: Boolean(progress.caught) };
+  }
+  const displayStars = Math.max(0, Math.floor(Number(progress.displayStars ?? progress.starHighWater) || 0));
+  const displayStage = Math.max(0, Math.min(4, Number(progress.displayStage ?? progress.starStage ?? stage) || 0));
+  const displayState = typeof progress.displayState === 'string' ? progress.displayState : '';
+  const found = displayState ? displayState !== 'not-found' : progress.caught === true || displayStars > 0 || (Number(progress.mastered) || 0) > 0;
+  return { displayStars, displayStage, displayState, found };
+}
+
 /**
  * Build the meadow monster list from the real monsterSummary payload. Only
- * caught species appear. Stage-1+ monsters and caught-but-unhatched
+ * found species appear. Stage-1+ monsters and found-but-unhatched
  * species are placed through a seeded meadow projection, so their foot
  * points can move around the hero while preserving depth and scale.
- * Uncaught species are hidden until the learner secures their first
- * qualifying word.
+ * Unfound species are hidden until the learner has meaningful evidence.
  */
 export function buildMeadowMonsters(summary = [], { seed = 'default-meadow' } = {}) {
   const caughtEntries = meadowEntriesByPower(
-    summary.filter((entry) => entry.progress?.caught && entry.progress.stage >= 1),
+    summary.filter((entry) => entryDisplayInfo(entry).found && entryDisplayInfo(entry).displayStage >= 1),
   );
   const eggEntries = meadowEntriesByPower(
-    summary.filter((entry) => entry.progress?.caught && entry.progress.stage === 0),
+    summary.filter((entry) => entryDisplayInfo(entry).found && entryDisplayInfo(entry).displayStage === 0),
   );
   const placed = [];
   const monsters = caughtEntries
@@ -315,8 +327,8 @@ function defaultPathForMonster(monsterId) {
 
 function meadowEntriesByPower(entries) {
   return entries.slice().sort((left, right) => {
-    const leftStage = Number(left.progress?.stage) || 0;
-    const rightStage = Number(right.progress?.stage) || 0;
+    const leftStage = entryDisplayInfo(left).displayStage;
+    const rightStage = entryDisplayInfo(right).displayStage;
     if (leftStage !== rightStage) return rightStage - leftStage;
     return codexPowerRank(right.monster?.id) - codexPowerRank(left.monster?.id);
   });
@@ -324,7 +336,7 @@ function meadowEntriesByPower(entries) {
 
 function buildRoamingMeadowEntry(entry, { index, placed, seed }) {
   const { monster, progress } = entry;
-  const stage = Math.max(1, Math.min(4, Number(progress?.stage) || 1));
+  const stage = Math.max(1, Math.min(4, entryDisplayInfo(entry).displayStage || 1));
   const path = defaultPathForMonster(monster.id);
   const slot = randomMeadowSlot({ entry, zoneName: path, index, placed, seed, stage });
   const variant = variantForMonster(monster.id, stage, progress.branch);
@@ -621,16 +633,19 @@ export function buildCodexEntries(summary = []) {
     const max = isUnitSubject
       ? Math.max(1, Number(progress?.publishedTotal) || Number(monster?.masteredMax) || 1)
       : Math.max(1, Number(monster?.masteredMax) || (monster?.id === 'phaeton' ? 213 : 100));
-    const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
-    const caught = Boolean(progress?.caught);
+    const displayInfo = entryDisplayInfo({ subjectId: resolvedSubjectId, monster, progress });
+    const stage = displayInfo.displayStage;
+    const caught = displayInfo.found;
     const displayState = !caught ? 'fresh' : stage === 0 ? 'egg' : 'monster';
     const variant = variantForMonster(monster.id, stage, progress?.branch);
     const displayName = caught && !(monster.id === 'phaeton' && stage === 0)
       ? monster.nameByStage?.[stage] || monster.name
       : caught
         ? monster.name
-      : 'Unknown creature';
-    const pct = Math.max(0, Math.min(1, mastered / max));
+        : 'Unknown creature';
+    const pct = resolvedSubjectId === 'punctuation'
+      ? Math.max(0, Math.min(1, displayInfo.displayStars / 100))
+      : Math.max(0, Math.min(1, mastered / max));
     const nextMilestone = nextCodexMilestone(monster.id, mastered, { subjectId: resolvedSubjectId, max });
     const imageAlt = caught ? displayName : `${monster.name} not caught`;
 
@@ -655,7 +670,7 @@ export function buildCodexEntries(summary = []) {
       srcSet: caught ? monsterAssetSrcset(monster.id, variant, stage) : '',
       imageAlt,
       placeholder: caught ? '' : '?',
-      stageLabel: caught ? (stage === 0 ? 'Egg' : `Stage ${stage}`) : 'Not caught',
+      stageLabel: codexStageLabel(resolvedSubjectId, caught, stage, displayInfo.displayState),
       secureLabel: secureProgressLabel(resolvedSubjectId, mastered),
       nextGoal: codexNextGoal({ subjectId: resolvedSubjectId, caught, nextMilestone }),
       wordBand: codexWordBand(monster.id, resolvedSubjectId),
@@ -863,8 +878,8 @@ function pickSubjectCompanion(monsterSummary, subjectId) {
   let best = null;
   for (const entry of monsterSummary) {
     const monsterId = entry?.monster?.id;
-    const progress = entry?.progress;
-    if (!monsterId || !progress?.caught) continue;
+    const displayInfo = entryDisplayInfo(entry);
+    if (!monsterId || !displayInfo.found) continue;
     // Roster membership is the hard gate — stale state may carry an explicit
     // `entry.subjectId` annotation for a reserved monster id (e.g. pre-flip
     // `{ monster.id:'colisk', subjectId:'punctuation' }`), which would
@@ -878,7 +893,7 @@ function pickSubjectCompanion(monsterSummary, subjectId) {
       ? entry.subjectId === subjectId
       : true;
     if (!isForSubject) continue;
-    const stage = Math.max(0, Math.min(4, Number(progress.stage) || 0));
+    const stage = displayInfo.displayStage;
     if (!best || stage > best.stage) {
       best = { monster: entry.monster, stage };
     }
@@ -903,9 +918,23 @@ function secureProgressLabel(subjectId, mastered) {
   return 'No secure words yet';
 }
 
+function codexStageLabel(subjectId, caught, stage, rewardDisplayState) {
+  if (!caught) return 'Not caught';
+  if (subjectId !== 'punctuation') return stage === 0 ? 'Egg' : `Stage ${stage}`;
+  const label = {
+    'egg-found': 'Egg Found',
+    hatch: 'Hatch',
+    evolve: 'Evolve',
+    strong: 'Strong',
+    mega: 'Mega',
+  }[rewardDisplayState];
+  if (label) return label;
+  return stage === 0 ? 'Egg Found' : `Stage ${stage}`;
+}
+
 function codexNextGoal({ subjectId, caught, nextMilestone }) {
   if (!caught && nextMilestone) {
-    if (subjectId === 'punctuation') return 'Secure punctuation units to catch this creature';
+    if (subjectId === 'punctuation') return 'Find this egg with a punctuation round';
     if (subjectId === 'grammar') return 'Secure grammar units to catch this creature';
     return 'Secure words to catch this creature';
   }

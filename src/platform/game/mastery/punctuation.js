@@ -1,8 +1,15 @@
-import { MONSTERS, stageFor, PUNCTUATION_MASTERED_THRESHOLDS, PUNCTUATION_STAR_THRESHOLDS, PUNCTUATION_GRAND_STAR_THRESHOLDS } from '../monsters.js';
+import {
+  MONSTERS,
+  stageFor,
+  punctuationDisplayStateForStars,
+  PUNCTUATION_MASTERED_THRESHOLDS,
+  PUNCTUATION_STAR_THRESHOLDS,
+  PUNCTUATION_GRAND_STAR_THRESHOLDS,
+} from '../monsters.js';
 import { PUNCTUATION_CURRENT_RELEASE_ID } from '../../../subjects/punctuation/service-contract.js';
 import {
   branchForMonster,
-  DEFAULT_SYSTEM_ID,
+  buildRewardMonsterEvent,
   ensureMonsterBranches,
   isPlainObject,
   masteredList,
@@ -11,7 +18,6 @@ import {
   PUNCTUATION_RESERVED_MONSTER_IDS,
   releaseIdForEntry,
   saveMonsterState,
-  toastBodyFor,
 } from './shared.js';
 
 // Pre-flip monster ids that should be unioned into the grand view after the
@@ -153,7 +159,7 @@ export function reservedPunctuationMonsterEntries(state = {}) {
 
 export function activePunctuationMonsterSummaryFromState(state = {}) {
   return punctuationMonsterSummaryFromState(state)
-    .filter((entry) => entry.progress.caught || entry.progress.mastered > 0);
+    .filter((entry) => entry.progress.displayState !== 'not-found' || entry.progress.caught || entry.progress.mastered > 0);
 }
 
 export function progressForPunctuationMonster(state, monsterId, { publishedTotal = null, releaseId = PUNCTUATION_CURRENT_RELEASE_ID } = {}) {
@@ -166,31 +172,42 @@ export function progressForPunctuationMonster(state, monsterId, { publishedTotal
   const fallback = publishedTotal || MONSTERS[monsterId]?.masteredMax || 1;
   const total = punctuationTotal(entry, fallback, { monsterId });
 
+  const masteredStage = stageFor(mastered, PUNCTUATION_MASTERED_THRESHOLDS);
+
   // Persisted high-water mark. Corrupted values (NaN, negative) → 0.
   const rawHW = Number(entry.starHighWater);
   const persistedHW = Number.isFinite(rawHW) && rawHW > 0 ? Math.floor(rawHW + 1e-9) : 0;
+  const legacyDisplayFloor = entry.starHighWater === undefined || entry.starHighWater === null
+    ? punctuationLegacyStarFloor(masteredStage)
+    : 0;
+  const displayStars = Math.max(persistedHW, legacyDisplayFloor);
+  const starThresholds = monsterId === PUNCTUATION_GRAND_MONSTER_ID
+    ? PUNCTUATION_GRAND_STAR_THRESHOLDS
+    : PUNCTUATION_STAR_THRESHOLDS;
+  const starStage = stageFor(displayStars, starThresholds);
+  const maxStageEver = Math.max(0, Math.min(4, Math.floor(Number(entry.maxStageEver) || 0)));
+  const displayStage = Math.max(starStage, maxStageEver, masteredStage);
+  const displayState = punctuationDisplayStateForStars(displayStars, displayStage);
 
   return {
     mastered,
     publishedTotal: total,
-    stage: stageFor(mastered, PUNCTUATION_MASTERED_THRESHOLDS),
+    stage: masteredStage,
     level: Math.min(10, Math.round((mastered / Math.max(1, total)) * 10)),
     caught: mastered >= 1,
     branch: branchForMonster(normalised, monsterId),
     masteredList: punctuationMasteredList(entry, releaseId),
     starHighWater: persistedHW,
+    displayStars,
+    displayStage,
+    displayState,
     // Star-derived stage from the monotonic starHighWater latch.
     // Used by punctuationEventFromTransition to align toast events
     // with the Star surface so a child never sees a toast that
     // contradicts the Star-derived stage.
     // Quoral (grand monster) uses GRAND thresholds [1,10,25,50,100]
     // while direct monsters use STAR thresholds [1,10,30,60,100].
-    starStage: stageFor(
-      persistedHW,
-      monsterId === PUNCTUATION_GRAND_MONSTER_ID
-        ? PUNCTUATION_GRAND_STAR_THRESHOLDS
-        : PUNCTUATION_STAR_THRESHOLDS,
-    ),
+    starStage,
   };
 }
 
@@ -206,28 +223,22 @@ function buildPunctuationEvent({
   masteryKey,
   createdAt = Date.now(),
 } = {}) {
-  const monster = MONSTERS[monsterId];
-  return {
+  return buildRewardMonsterEvent({
     id: `reward.monster:${learnerId || 'default'}:punctuation:${releaseId}:${clusterId}:${rewardUnitId}:${monsterId}:${kind}`,
-    type: 'reward.monster',
+    subjectId: 'punctuation',
     kind,
     learnerId,
-    subjectId: 'punctuation',
-    systemId: DEFAULT_SYSTEM_ID,
-    releaseId,
-    clusterId,
-    rewardUnitId,
-    masteryKey,
     monsterId,
-    monster,
     previous,
     next,
     createdAt,
-    toast: {
-      title: monster?.name || 'Reward update',
-      body: toastBodyFor(kind),
+    extra: {
+      releaseId,
+      clusterId,
+      rewardUnitId,
+      masteryKey,
     },
-  };
+  });
 }
 
 function punctuationEventFromTransition(payload, previous, next) {
@@ -238,14 +249,18 @@ function punctuationEventFromTransition(payload, previous, next) {
   const prevEffective = Math.max(previous.stage, previous.starStage || 0);
   const nextEffective = Math.max(next.stage, next.starStage || 0);
 
-  if (!previous.caught && next.caught) {
-    return buildPunctuationEvent({ ...payload, kind: 'caught', previous, next });
-  }
   if (nextEffective > prevEffective) {
     return buildPunctuationEvent({ ...payload, kind: nextEffective === 4 ? 'mega' : 'evolve', previous, next });
   }
   if (next.level > previous.level) {
     return buildPunctuationEvent({ ...payload, kind: 'levelup', previous, next });
+  }
+  return null;
+}
+
+function punctuationCaughtEventFromDisplayTransition(payload, previous, next) {
+  if (previous.displayStars < 1 && next.displayStars >= 1) {
+    return buildPunctuationEvent({ ...payload, kind: 'caught', previous, next });
   }
   return null;
 }
@@ -370,8 +385,8 @@ export function recordPunctuationRewardUnitMastery({
  * Also ratchets `maxStageEver = max(existing, derivedStage)` using the
  * appropriate threshold table (GRAND for Quoral, STAR for direct monsters).
  *
- * Returns an array of reward events (empty — latch writes do NOT emit toast
- * events; toast timing stays on reward-unit mastery only).
+ * Returns reward events only when the latch crosses the first-Star
+ * first-found boundary.
  */
 export function updatePunctuationStarHighWater({
   learnerId,
@@ -416,9 +431,17 @@ export function updatePunctuationStarHighWater({
 
   saveMonsterState(learnerId, after, gameStateRepository);
 
-  // Latch writes do NOT emit toast events — toast timing stays on
-  // reward-unit mastery only. Child-facing celebration timing is unchanged.
-  return [];
+  const previousProgress = progressForPunctuationMonster(before, monsterId);
+  const nextProgress = progressForPunctuationMonster(after, monsterId);
+  const event = punctuationCaughtEventFromDisplayTransition({
+    learnerId,
+    monsterId,
+    releaseId: PUNCTUATION_CURRENT_RELEASE_ID,
+    clusterId: 'star-evidence',
+    rewardUnitId: 'caught',
+    masteryKey: `punctuation:${PUNCTUATION_CURRENT_RELEASE_ID}:star-evidence:${monsterId}`,
+  }, previousProgress, nextProgress);
+  return event ? [event] : [];
 }
 
 export function punctuationMonsterSummaryFromState(state = {}, { clusterTotals = {}, aggregateTotal = 1, releaseId = PUNCTUATION_CURRENT_RELEASE_ID } = {}) {

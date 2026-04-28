@@ -133,11 +133,11 @@ displayState =
 
 Reward event contract：
 
-- Add a new `egg-found` event for the first transition into `displayState: egg-found`.
-- `egg-found` is a light celebration only. It must not imply secured/mastered evidence.
-- `egg-found` must only fire after genuine Star evidence mints `displayStars >= 1`; skips, empty answers, duplicate replay, unsupported fake attempts, and telemetry-only events must not mint the event.
-- Keep legacy `caught` for first secured reward-unit narrative if the event remains in use; do not use it as UI found truth.
-- Hatch / Evolve / Strong / Mega state transitions and analytics may be recorded immediately, but their celebration animations should be queued for session end, not interrupt the active learning question flow.
+- Use the existing cross-subject `caught` reward event kind for the first transition into `displayState: egg-found`. This aligns Punctuation with Spelling's first-found vocabulary while keeping the child-facing display label as Egg Found.
+- `caught` is a first-found event only in Punctuation. It must not imply secured/mastered evidence; its toast may appear immediately, while its overlay celebration follows the session-end queue.
+- Punctuation `caught` must only fire after genuine Star evidence mints `displayStars >= 1`; skips, empty answers, duplicate replay, unsupported fake attempts, and telemetry-only events must not mint the event.
+- Do not emit legacy first-secured `caught` for Punctuation. First-secured reward units only create a monster celebration when the shared Star/display-stage transition advances to Hatch / Evolve / Strong / Mega.
+- Egg Found / Hatch / Evolve / Strong / Mega state transitions and analytics may be recorded immediately, but their celebration overlays should be queued for session end, not interrupt the active learning question flow.
 - Codex / Home display must consume `displayState`, not legacy `caught`.
 
 ### Seam 問題仍可能存在

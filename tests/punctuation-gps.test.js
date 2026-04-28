@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { createPunctuationService } from '../shared/punctuation/service.js';
+import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
+import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
 
 function makeRepository(initialData = null) {
   let data = initialData;
@@ -231,6 +233,24 @@ test('gps completion releases review rows and then writes learning evidence', ()
   assert.equal(data.progress.attempts.every((attempt) => attempt.sessionMode === 'gps'), true);
   assert.equal(data.progress.attempts.every((attempt) => attempt.testMode === 'gps'), true);
   assert.equal(data.progress.sessionsCompleted, 1);
+});
+
+test('gps skip records non-meaningful review evidence and mints no Try Stars', () => {
+  const repository = makeRepository();
+  const service = createPunctuationService({ repository, now: () => 1_800_000_000_000, random: () => 0 });
+  const state = service.startSession('learner-a', { mode: 'gps', roundLength: '1' }).state;
+
+  const finished = skipGpsItem(service, 'learner-a', state);
+
+  assert.equal(finished.state.phase, 'summary');
+  assert.equal(finished.state.summary.total, 1);
+  assert.equal(repository.snapshot().data.progress.attempts.length, 1);
+  assert.equal(repository.snapshot().data.progress.attempts[0].meaningful, false);
+
+  const stars = projectPunctuationStars(repository.snapshot().data.progress, PUNCTUATION_RELEASE_ID);
+  assert.equal(stars.perMonster.pealark.total, 0);
+  assert.equal(stars.perMonster.claspin.total, 0);
+  assert.equal(stars.perMonster.curlune.total, 0);
 });
 
 test('gps end early releases accumulated delayed review and evidence once', () => {
