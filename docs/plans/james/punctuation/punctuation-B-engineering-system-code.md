@@ -53,7 +53,7 @@ Learner perspective 需要：清楚 landing、短 round、feedback、summary、P
    P5/P6/P7 已經修好多，但任何新 projection field 都要保證 Landing、Summary、Map、Codex、Home 同 Punctuation Doctor 一致。
 
 3. **Child-facing copy 與 technical state 要隔離**  
-   Child UI 應該講 Not caught / Egg / Hatch / Growing / Strong / Mega / Stars，不應講 reward unit、stage index、release id、mastery key。
+   Child UI 應該講 Not caught / Egg Found / Hatch / Evolve / Strong / Mega / Stars，不應講 reward unit、stage index、release id、mastery key。
 
 4. **Browser path vs Worker path 仍要防 drift**  
    Local/dev harness 可以存在，但 production authority 必須係 Worker。任何新 UI test 如果只靠 direct dispatch / fake fixture，都唔足夠。
@@ -114,6 +114,31 @@ Learner answer
 - Reward projection 不是由 UI click 直接觸發。
 - Star display 有 high-water merge，避免 child-facing downgrade。
 - Punctuation Doctor 可以 safe explain blockers。
+
+### 3.1 Display truth contract
+
+P5 / P6 已經定過 direct monster 嘅 product rule：`0 Stars = Not caught`，`1+ Stars = Egg Found`。工程上下一輪要將呢個 rule 變成明確 read-model contract，而唔係各 surface 自己 derive：
+
+```txt
+displayStars = max(liveStars, starHighWater)
+displayState =
+  not-found  when displayStars === 0
+  egg-found  when displayStars >= 1 and before hatch threshold
+  hatch / evolve / strong / mega from the shared Star thresholds and gates
+```
+
+`displayState` 應該係 child-facing UI truth。Landing、Summary、Map、Home dashboard / MonsterMeadow、Codex、Punctuation Doctor 如果要展示 Punctuation monster progress，都應該 consume 同一個 field / helper。
+
+重要：`Egg Found` / `displayState: egg-found` 不等於 first secured reward unit。Codex / Home display 唔可以再用 `caught: securedRewardUnits >= 1` 作為 found truth，否則會再次出現 Subject 顯示 Egg Found、Codex 顯示 Not caught。Hatch / Evolve / Strong / Mega display 亦唔可以用 mastered-count `stage` 直接判斷；要用 Star-derived `displayStage` / `displayState`。
+
+Reward event contract：
+
+- Add a new `egg-found` event for the first transition into `displayState: egg-found`.
+- `egg-found` is a light celebration only. It must not imply secured/mastered evidence.
+- `egg-found` must only fire after genuine Star evidence mints `displayStars >= 1`; skips, empty answers, duplicate replay, unsupported fake attempts, and telemetry-only events must not mint the event.
+- Keep legacy `caught` for first secured reward-unit narrative if the event remains in use; do not use it as UI found truth.
+- Hatch / Evolve / Strong / Mega state transitions and analytics may be recorded immediately, but their celebration animations should be queued for session end, not interrupt the active learning question flow.
+- Codex / Home display must consume `displayState`, not legacy `caught`.
 
 ### Seam 問題仍可能存在
 
@@ -228,13 +253,16 @@ punctuation:<releaseId>:<clusterId>:<rewardUnitId>
 
 ### 要核實
 
-1. **Punctuation Codex visibility under production flag**  
+1. **Punctuation Codex visibility under production flag**
    要有 journey / integration test：flag on 時 Pealark/Claspin/Curlune/Quoral 出現；flag off 時不出現；reserved monsters never active。
 
-2. **Home fallback behaviour**  
+2. **Display state parity across Subject, Codex and Home dashboard**
+   Subject landing、Codex card、Home dashboard / MonsterMeadow 要用同一個 `displayStars` / `displayStage` / `displayState` truth。`displayStars === 0` 時應係 Not caught / greyed out；`displayStars >= 1` 時應係 Egg Found / active egg；到 Hatch / Evolve / Strong / Mega thresholds 時，三邊都要顯示同一個 evolved state。唔可以 Subject 顯示 Egg Found / Evolve，但 Codex 或 Home meadow 仍然顯示 Not caught / earlier stage。
+
+3. **Home fallback behaviour**
    Home 如果無 due work 仍 Spelling-first，呢個可能係 product decision，但如果 Punctuation 已經 mature，應該明確定義：何時 Home recommend Punctuation？fresh Punctuation learner 是否應該有 first-egg mission？
 
-3. **Codex high-water race**  
+4. **Codex high-water race**
    P7 deferred 提到 CAS row_version。若多 tab / repeated Worker response 同時更新 high-water，要防 stale overwrite。
 
 ---

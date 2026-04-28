@@ -296,6 +296,28 @@ Game layer 要做四件事：
 | Codex high-water | 已顯示 progress 不倒退 |
 | Star-evidence events | 將 learning evidence change 連去 reward narrative |
 
+### 6.2.1 Direct monster display-state contract
+
+之前 P5 / P6 已經定過 direct monster 嘅 child-facing rule：
+
+| Display state | Star threshold | Product meaning |
+|---|---:|---|
+| Not caught | 0 Stars | 未有 meaningful evidence；subject landing / Codex 應該灰化，避免似已遇到 |
+| Egg Found | 1+ Stars | 小朋友已有 genuine start；見到蛋、active visual、但未代表 secure |
+| Hatch / Evolve / Strong / Mega | 10+ / 30+ / 60+ / 100 Stars | 越後面越需要 stronger evidence、spaced / mixed / deep secure gate |
+
+`Egg Found` 係 first-found display state，不等於 first secured reward unit。
+Subject landing、Codex card、Home dashboard / MonsterMeadow 唔可以用 first secured reward unit 先判斷是否 found；必須跟 `displayState`。
+同樣，Hatch / Evolve / Strong / Mega 嘅 child-facing display 都要跟 Star-derived `displayStage` / `displayState`，唔可以跌返去 mastered-count stage。
+
+Reward narrative 決定：
+
+- 新增 `egg-found` event / light celebration，喺 first Star / first `displayState: egg-found` moment 觸發。呢個係 emotional safety moment：小朋友知道自己已經搵到蛋。
+- `egg-found` 只可以由 genuine Star evidence 觸發；skip、empty、duplicate replay、unsupported fake attempt、telemetry-only event 都唔可以 mint egg。
+- Legacy `caught` event / toast 如果保留，就應該只做 first-secured reward-unit celebration；唔再做 UI found truth。
+- Hatch / Evolve / Strong / Mega 呢類較大 celebration animation 要留到 session end，避免題目中途打斷 learning flow。State update / analytics event 可以即時記錄，但 visual animation 應該 queue 到 Summary / session end 先播。
+- Codex display 仍然要跟 `displayState`，唔可以跟 legacy `caught` boolean。
+
 ### 6.3 Game aim
 
 Game aim 係：
@@ -364,7 +386,7 @@ Game 不應該派 learning evidence；Game 只應該展示 learning evidence。
 1. GPS / transfer context 要入 Star evidence，並有明確 correctness / quality gate。
 2. Quoral Grand Stars 要完全釘死：backend、UI、docs、events 一致。
 3. Star thresholds / wording 要同 docs 完全一致。
-4. Punctuation Map / Summary / Landing 要用同一個 stage label / Star source。
+4. Punctuation Map / Summary / Landing / Codex / Home dashboard / MonsterMeadow 要用同一個 stage label / Star source / display state。
 5. 需要用 real Worker journey + visual baseline 證明 child flow。
 6. Parent/Admin 要能夠解釋「點解未 Mega」，但 child UI 保持簡潔。
 
