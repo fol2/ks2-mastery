@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { assertCacheSplitRules, assertHeadersBlockIsFresh } from './lib/headers-drift.mjs';
 import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from './lib/seo-practice-pages.mjs';
 import { IDENTITY_SEO_PAGES, canonicalIdentityPageUrl } from './lib/seo-identity-pages.mjs';
+import { INTENT_SEO_PAGES, canonicalIntentPageUrl } from './lib/seo-intent-pages.mjs';
 import { crawlerPolicyFailures } from './lib/seo-crawler-policy.mjs';
 
 const rootDir = process.cwd();
@@ -163,6 +164,9 @@ for (const page of PRACTICE_SEO_PAGES) {
 for (const page of IDENTITY_SEO_PAGES) {
   await mustExist(`${page.slug}/index.html`);
 }
+for (const page of INTENT_SEO_PAGES) {
+  await mustExist(`${page.slug}/index.html`);
+}
 await mustExist('favicon.ico');
 await mustExist('_headers');
 await mustExist('styles/app.css');
@@ -223,6 +227,7 @@ const allowed = new Set([
   'sitemap.xml',
   ...PRACTICE_SEO_PAGES.map((page) => page.slug),
   ...IDENTITY_SEO_PAGES.map((page) => page.slug),
+  ...INTENT_SEO_PAGES.map((page) => page.slug),
   'styles',
   'src',
   'assets',
@@ -292,6 +297,10 @@ const identityPageHtml = new Map();
 for (const page of IDENTITY_SEO_PAGES) {
   identityPageHtml.set(page.slug, await readFile(path.join(publicDir, page.slug, 'index.html'), 'utf8'));
 }
+const intentPageHtml = new Map();
+for (const page of INTENT_SEO_PAGES) {
+  intentPageHtml.set(page.slug, await readFile(path.join(publicDir, page.slug, 'index.html'), 'utf8'));
+}
 const cspHashArtefact = await readFile(path.join(publicDir, '.csp-theme-hash'), 'utf8');
 const canonicalRoot = 'https://ks2.eugnel.uk/';
 if (!indexHtml.includes('/manifest.webmanifest')) {
@@ -328,6 +337,9 @@ assertContainsAll('Public index.html SEO identity', indexHtml, [
   'href="/ks2-spelling-practice/"',
   'href="/ks2-grammar-practice/"',
   'href="/ks2-punctuation-practice/"',
+  'href="/ks2-apostrophes-practice/"',
+  'href="/year-5-spelling-practice/"',
+  'href="/help-child-ks2-grammar-at-home/"',
   'href="/about/"',
 ]);
 
@@ -367,6 +379,7 @@ const crawlerFailures = crawlerPolicyFailures(robotsTxt, {
     '/',
     ...PRACTICE_SEO_PAGES.map((page) => `/${page.slug}/`),
     ...IDENTITY_SEO_PAGES.map((page) => `/${page.slug}/`),
+    ...INTENT_SEO_PAGES.map((page) => `/${page.slug}/`),
   ],
   privatePaths: ['/api/', '/admin', '/demo'],
 });
@@ -382,11 +395,13 @@ assertContainsAll('sitemap.xml', sitemapXml, [
   `<loc>${canonicalRoot}</loc>`,
   ...PRACTICE_SEO_PAGES.map((page) => `<loc>${canonicalPracticePageUrl(page)}</loc>`),
   ...IDENTITY_SEO_PAGES.map((page) => `<loc>${canonicalIdentityPageUrl(page)}</loc>`),
+  ...INTENT_SEO_PAGES.map((page) => `<loc>${canonicalIntentPageUrl(page)}</loc>`),
 ]);
 assertExactSitemapLocs('sitemap.xml', sitemapXml, [
   canonicalRoot,
   ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
   ...IDENTITY_SEO_PAGES.map((page) => canonicalIdentityPageUrl(page)),
+  ...INTENT_SEO_PAGES.map((page) => canonicalIntentPageUrl(page)),
 ]);
 if (sitemapXml.includes('llms.txt')) {
   throw new Error('sitemap.xml must not advertise llms.txt as a search-result page.');
@@ -423,6 +438,11 @@ for (const page of PRACTICE_SEO_PAGES) {
   if (!html.includes('href="/about/"')) {
     throw new Error(`Public ${page.slug} SEO page must link to the about page.`);
   }
+  for (const link of page.relatedLinks || []) {
+    if (!html.includes(`href="${link.href}"`) || !html.includes(link.label)) {
+      throw new Error(`Public ${page.slug} SEO page must include related link: ${link.label}`);
+    }
+  }
   assertNoPublicSeoForbiddenText(`Public ${page.slug} SEO page`, html);
 }
 
@@ -443,6 +463,7 @@ for (const page of IDENTITY_SEO_PAGES) {
     'href="/ks2-spelling-practice/"',
     'href="/ks2-grammar-practice/"',
     'href="/ks2-punctuation-practice/"',
+    ...INTENT_SEO_PAGES.map((intentPage) => `href="/${intentPage.slug}/"`),
     'href="/demo"',
   ]);
   for (const forbiddenToken of ['app.bundle.js', 'id="app"', 'application/ld+json', '<script']) {
@@ -458,14 +479,84 @@ for (const page of IDENTITY_SEO_PAGES) {
   assertNoPublicSeoForbiddenText(`Public ${page.slug} SEO page`, html);
 }
 
+for (const page of INTENT_SEO_PAGES) {
+  const html = intentPageHtml.get(page.slug);
+  const canonicalUrl = canonicalIntentPageUrl(page);
+  assertContainsAll(`Public ${page.slug} SEO page`, html, [
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}" />`,
+    `<link rel="canonical" href="${canonicalUrl}" />`,
+    `<meta property="og:url" content="${canonicalUrl}" />`,
+    `<h1>${page.heading}</h1>`,
+    page.intro,
+    page.lane,
+    '/demo',
+    'KS2 Mastery home',
+  ]);
+  for (const point of page.points) {
+    if (!html.includes(point)) {
+      throw new Error(`Public ${page.slug} SEO page must include intent point: ${point}`);
+    }
+  }
+  for (const link of page.relatedLinks || []) {
+    if (!html.includes(`href="${link.href}"`) || !html.includes(link.label)) {
+      throw new Error(`Public ${page.slug} SEO page must include related link: ${link.label}`);
+    }
+  }
+  for (const forbiddenToken of ['app.bundle.js', 'id="app"', 'application/ld+json', '<script']) {
+    if (html.includes(forbiddenToken)) {
+      throw new Error(`Public ${page.slug} SEO page must not include app-shell or inline-script token: ${forbiddenToken}`);
+    }
+  }
+  for (const overclaim of ['guaranteed', 'full curriculum', 'AI tutor', 'exam results']) {
+    if (html.toLowerCase().includes(overclaim.toLowerCase())) {
+      throw new Error(`Public ${page.slug} SEO page must not overclaim with token: ${overclaim}`);
+    }
+  }
+  if (page.slug === 'ks2-apostrophes-practice') {
+    assertContainsAll(`Public ${page.slug} SEO page`, html, [
+      'contractions',
+      'possession',
+    ]);
+    for (const internalToken of ['apostrophe_contractions', 'apostrophe_possession', 'generator']) {
+      if (html.includes(internalToken)) {
+        throw new Error(`Public ${page.slug} SEO page must not expose internal apostrophe token: ${internalToken}`);
+      }
+    }
+  }
+  if (page.slug === 'year-5-spelling-practice') {
+    for (const wordListClaim of ['complete official word list', 'statutory word list', 'complete word list']) {
+      if (html.toLowerCase().includes(wordListClaim)) {
+        throw new Error(`Public ${page.slug} SEO page must not claim a complete official word list: ${wordListClaim}`);
+      }
+    }
+  }
+  if (page.slug === 'help-child-ks2-grammar-at-home') {
+    assertContainsAll(`Public ${page.slug} SEO page`, html, [
+      'supporting adults',
+      'at home',
+    ]);
+    for (const privateToken of ['parent hub', 'learner records', 'analytics']) {
+      if (html.toLowerCase().includes(privateToken)) {
+        throw new Error(`Public ${page.slug} SEO page must not expose private parent-support token: ${privateToken}`);
+      }
+    }
+  }
+  assertNoPublicSeoForbiddenText(`Public ${page.slug} SEO page`, html);
+}
+
 assertContainsAll('Public llms.txt', llmsTxt, [
   'KS2 Mastery',
   canonicalRoot,
   ...IDENTITY_SEO_PAGES.map((page) => canonicalIdentityPageUrl(page)),
   ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+  ...INTENT_SEO_PAGES.map((page) => canonicalIntentPageUrl(page)),
   'KS2 spelling',
   'KS2 grammar',
   'KS2 punctuation',
+  'KS2 apostrophes practice',
+  'Year 5 spelling practice',
+  'KS2 grammar help at home',
   'Private learner progress, account state, operator tools and generated content stores are not public SEO content',
 ]);
 for (const forbiddenToken of [

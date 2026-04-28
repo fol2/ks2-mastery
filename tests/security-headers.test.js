@@ -485,6 +485,9 @@ test('_headers repo file contains expected security header block', async () => {
   assert.match(content, /\/ks2-spelling-practice\//);
   assert.match(content, /\/ks2-grammar-practice\//);
   assert.match(content, /\/ks2-punctuation-practice\//);
+  assert.match(content, /\/ks2-apostrophes-practice\//);
+  assert.match(content, /\/year-5-spelling-practice\//);
+  assert.match(content, /\/help-child-ks2-grammar-at-home\//);
   assert.match(content, /\/\*/);
   assert.match(content, /public, max-age=31536000, immutable/);
 });

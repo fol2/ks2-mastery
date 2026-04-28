@@ -1,4 +1,5 @@
 import { CANONICAL_ROOT, escapeHtml } from './seo-practice-pages.mjs';
+import { INTENT_SEO_PAGES } from './seo-intent-pages.mjs';
 
 export const IDENTITY_SEO_PAGES = Object.freeze([
   Object.freeze({
@@ -52,6 +53,10 @@ function renderSection(section) {
 ${section.points.map(renderPoint).join('\n')}
           </ul>
         </section>`;
+}
+
+function renderIntentLink(page) {
+  return `        <a href="/${escapeHtml(page.slug)}/">${escapeHtml(page.heading)}</a>`;
 }
 
 export function canonicalIdentityPageUrl(page) {
@@ -111,6 +116,7 @@ ${page.sections.map(renderSection).join('\n')}
         <a href="/ks2-spelling-practice/">KS2 spelling practice online</a>
         <a href="/ks2-grammar-practice/">KS2 grammar practice online</a>
         <a href="/ks2-punctuation-practice/">KS2 punctuation practice online</a>
+${INTENT_SEO_PAGES.map(renderIntentLink).join('\n')}
       </nav>
       <div class="actions practice-public-actions">
         <a class="btn primary lg" href="/demo">Try demo</a>

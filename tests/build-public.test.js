@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from '../scripts/lib/seo-practice-pages.mjs';
+import { INTENT_SEO_PAGES, canonicalIntentPageUrl } from '../scripts/lib/seo-intent-pages.mjs';
 
 test('public build emits the React app bundle entrypoint', () => {
   execFileSync(process.execPath, ['./scripts/build-bundles.mjs'], { stdio: 'ignore' });
@@ -17,6 +18,10 @@ test('public build emits the React app bundle entrypoint', () => {
   const sitemapXml = readFileSync('dist/public/sitemap.xml', 'utf8');
   const aboutHtml = readFileSync('dist/public/about/index.html', 'utf8');
   const practicePages = new Map(PRACTICE_SEO_PAGES.map((page) => [
+    page.slug,
+    readFileSync(`dist/public/${page.slug}/index.html`, 'utf8'),
+  ]));
+  const intentPages = new Map(INTENT_SEO_PAGES.map((page) => [
     page.slug,
     readFileSync(`dist/public/${page.slug}/index.html`, 'utf8'),
   ]));
@@ -37,6 +42,9 @@ test('public build emits the React app bundle entrypoint', () => {
   assert.match(indexHtml, /href="\/ks2-spelling-practice\/"/);
   assert.match(indexHtml, /href="\/ks2-grammar-practice\/"/);
   assert.match(indexHtml, /href="\/ks2-punctuation-practice\/"/);
+  assert.match(indexHtml, /href="\/ks2-apostrophes-practice\/"/);
+  assert.match(indexHtml, /href="\/year-5-spelling-practice\/"/);
+  assert.match(indexHtml, /href="\/help-child-ks2-grammar-at-home\/"/);
   assert.match(indexHtml, /href="\/about\/"/);
   assert.match(robotsTxt, /Disallow: \/api\//);
   assert.match(robotsTxt, /Disallow: \/admin/);
@@ -50,6 +58,7 @@ test('public build emits the React app bundle entrypoint', () => {
     'https://ks2.eugnel.uk/',
     ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
     'https://ks2.eugnel.uk/about/',
+    ...INTENT_SEO_PAGES.map((page) => canonicalIntentPageUrl(page)),
   ]);
   for (const page of PRACTICE_SEO_PAGES) {
     assert.match(sitemapXml, new RegExp(`<loc>${canonicalPracticePageUrl(page).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</loc>`));
@@ -62,9 +71,15 @@ test('public build emits the React app bundle entrypoint', () => {
   assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/ks2-spelling-practice\//);
   assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/ks2-grammar-practice\//);
   assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/ks2-punctuation-practice\//);
+  assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/ks2-apostrophes-practice\//);
+  assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/year-5-spelling-practice\//);
+  assert.match(llmsTxt, /https:\/\/ks2\.eugnel\.uk\/help-child-ks2-grammar-at-home\//);
   assert.match(llmsTxt, /KS2 spelling/);
   assert.match(llmsTxt, /KS2 grammar/);
   assert.match(llmsTxt, /KS2 punctuation/);
+  assert.match(llmsTxt, /KS2 apostrophes practice/);
+  assert.match(llmsTxt, /Year 5 spelling practice/);
+  assert.match(llmsTxt, /KS2 grammar help at home/);
   assert.match(llmsTxt, /Private learner progress, account state, operator tools and generated content stores are not public SEO content/);
   assert.doesNotMatch(
     llmsTxt,
@@ -83,6 +98,10 @@ test('public build emits the React app bundle entrypoint', () => {
     }
     assert.doesNotMatch(html, /app\.bundle\.js|id="app"|application\/ld\+json|<script/i);
     assert.match(html, /href="\/about\/"/);
+    for (const link of page.relatedLinks || []) {
+      assert.match(html, new RegExp(`href="${link.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
+      assert.match(html, new RegExp(link.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    }
   }
   assert.match(aboutHtml, /<title>About KS2 Mastery \| KS2 Spelling, Grammar and Punctuation Practice<\/title>/);
   assert.match(aboutHtml, /<link rel="canonical" href="https:\/\/ks2\.eugnel\.uk\/about\/" \/>/);
@@ -94,9 +113,39 @@ test('public build emits the React app bundle entrypoint', () => {
   assert.match(aboutHtml, /href="\/ks2-spelling-practice\/"/);
   assert.match(aboutHtml, /href="\/ks2-grammar-practice\/"/);
   assert.match(aboutHtml, /href="\/ks2-punctuation-practice\/"/);
+  assert.match(aboutHtml, /href="\/ks2-apostrophes-practice\/"/);
+  assert.match(aboutHtml, /href="\/year-5-spelling-practice\/"/);
+  assert.match(aboutHtml, /href="\/help-child-ks2-grammar-at-home\/"/);
   assert.match(aboutHtml, /href="\/demo"/);
   assert.doesNotMatch(aboutHtml, /app\.bundle\.js|id="app"|application\/ld\+json|<script/i);
   assert.doesNotMatch(aboutHtml, /guaranteed|full curriculum|AI tutor|exam results/i);
+  for (const page of INTENT_SEO_PAGES) {
+    const html = intentPages.get(page.slug);
+    assert.ok(html, `${page.slug} should be emitted as a static page`);
+    assert.match(html, new RegExp(`<title>${page.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</title>`));
+    assert.match(html, new RegExp(`<link rel="canonical" href="${canonicalIntentPageUrl(page).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" \\/>`));
+    assert.match(html, new RegExp(`<h1>${page.heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</h1>`));
+    assert.match(html, new RegExp(page.intro.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(html, new RegExp(page.lane.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(html, /href="\/demo"/);
+    assert.match(html, /KS2 Mastery home/);
+    for (const point of page.points) {
+      assert.match(html, new RegExp(point.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    }
+    for (const link of page.relatedLinks || []) {
+      assert.match(html, new RegExp(`href="${link.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
+      assert.match(html, new RegExp(link.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    }
+    assert.doesNotMatch(html, /app\.bundle\.js|id="app"|application\/ld\+json|<script/i);
+    assert.doesNotMatch(html, /guaranteed|full curriculum|AI tutor|exam results/i);
+  }
+  assert.match(intentPages.get('ks2-apostrophes-practice'), /contractions/);
+  assert.match(intentPages.get('ks2-apostrophes-practice'), /possession/);
+  assert.doesNotMatch(intentPages.get('ks2-apostrophes-practice'), /apostrophe_contractions|apostrophe_possession|generator/);
+  assert.doesNotMatch(intentPages.get('year-5-spelling-practice'), /complete official word list|statutory word list|complete word list/i);
+  assert.match(intentPages.get('help-child-ks2-grammar-at-home'), /supporting adults/);
+  assert.match(intentPages.get('help-child-ks2-grammar-at-home'), /at home/);
+  assert.doesNotMatch(intentPages.get('help-child-ks2-grammar-at-home'), /parent hub|learner records|analytics/i);
   assert.ok(
     cspHashArtefact.split(/\r?\n/u).filter(Boolean).length >= 2,
     'CSP hash artefact should list both theme and JSON-LD inline script hashes',
