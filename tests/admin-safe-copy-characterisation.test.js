@@ -161,37 +161,55 @@ describe('prepareSafeCopy with empty/null/invalid inputs', () => {
 });
 
 // ---------------------------------------------------------------------------
-// prepareSafeCopy — string input (known gap: passes through without redaction)
+// prepareSafeCopy — string input (P6 U3: gap closed — string redaction active)
 // ---------------------------------------------------------------------------
 
-describe('prepareSafeCopy with string input (documents pass-through gap)', () => {
-  const TEXT = 'Some raw text with email@test.com and accountId=acct-1234567890';
+describe('prepareSafeCopy with string input (string redaction active)', () => {
+  const TEXT_WITH_SENSITIVE = 'Some raw text with email@test.com and accountId=acct-1234567890';
+  const TEXT_CLEAN = 'Some raw text with no sensitive patterns';
 
-  it('ADMIN_ONLY — string passes through unchanged', () => {
-    const result = prepareSafeCopy(TEXT, COPY_AUDIENCE.ADMIN_ONLY);
+  it('ADMIN_ONLY — clean string passes through unchanged', () => {
+    const result = prepareSafeCopy(TEXT_CLEAN, COPY_AUDIENCE.ADMIN_ONLY);
     assert.equal(result.ok, true);
-    assert.equal(result.text, TEXT);
-    // No object redaction was applied (known gap).
-    assert.ok(!result.redactedFields.includes('emails_masked'));
+    assert.equal(result.text, TEXT_CLEAN);
+    assert.deepEqual(result.redactedFields, []);
   });
 
-  it('OPS_SAFE — string passes through unchanged (gap: no email masking on strings)', () => {
-    const result = prepareSafeCopy(TEXT, COPY_AUDIENCE.OPS_SAFE);
+  it('ADMIN_ONLY — string with sensitive content still passes (no email/ID redaction at admin level)', () => {
+    const result = prepareSafeCopy(TEXT_WITH_SENSITIVE, COPY_AUDIENCE.ADMIN_ONLY);
     assert.equal(result.ok, true);
-    // String passes through because typeof working !== 'object' branch skips redaction.
-    assert.equal(result.text, TEXT);
+    // At ADMIN_ONLY, only auth tokens/cookies are redacted — emails and account IDs pass through.
+    assert.ok(result.text.includes('email@test.com'));
   });
 
-  it('PARENT_SAFE — string passes through unchanged (gap: no child ID stripping on strings)', () => {
-    const result = prepareSafeCopy(TEXT, COPY_AUDIENCE.PARENT_SAFE);
+  it('OPS_SAFE — email and account ID masked in string', () => {
+    const result = prepareSafeCopy(TEXT_WITH_SENSITIVE, COPY_AUDIENCE.OPS_SAFE);
     assert.equal(result.ok, true);
-    assert.equal(result.text, TEXT);
+    // Email masked.
+    assert.ok(!result.text.includes('email@test.com'), 'Email must be masked');
+    assert.ok(result.redactedFields.includes('emails_masked'));
   });
 
-  it('PUBLIC_PREVIEW — string passes through unchanged (gap: no title/body extraction on strings)', () => {
-    const result = prepareSafeCopy(TEXT, COPY_AUDIENCE.PUBLIC_PREVIEW);
+  it('PARENT_SAFE — email masked in string', () => {
+    const result = prepareSafeCopy(TEXT_WITH_SENSITIVE, COPY_AUDIENCE.PARENT_SAFE);
     assert.equal(result.ok, true);
-    assert.equal(result.text, TEXT);
+    assert.ok(!result.text.includes('email@test.com'), 'Email must be masked');
+    assert.ok(result.redactedFields.includes('emails_masked'));
+  });
+
+  it('PUBLIC_PREVIEW — email masked in string (same redaction level as PARENT_SAFE)', () => {
+    const result = prepareSafeCopy(TEXT_WITH_SENSITIVE, COPY_AUDIENCE.PUBLIC_PREVIEW);
+    assert.equal(result.ok, true);
+    assert.ok(!result.text.includes('email@test.com'), 'Email must be masked');
+  });
+
+  it('clean string passes through unchanged at all audiences', () => {
+    for (const audience of Object.values(COPY_AUDIENCE)) {
+      const result = prepareSafeCopy(TEXT_CLEAN, audience);
+      assert.equal(result.ok, true, `Failed for ${audience}`);
+      assert.equal(result.text, TEXT_CLEAN, `Mutated for ${audience}`);
+      assert.deepEqual(result.redactedFields, [], `Unexpected redactions for ${audience}`);
+    }
   });
 });
 
