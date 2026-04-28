@@ -239,7 +239,7 @@ test('hero command: unsupported command returns 400 hero_command_unsupported', a
   await seedLearner(server, 'adult-a', 'learner-a');
 
   const response = await postHeroCommand(server, {
-    command: 'claim-task',
+    command: 'unsupported-command',
     learnerId: 'learner-a',
     questId: 'q-1',
     taskId: 't-1',
