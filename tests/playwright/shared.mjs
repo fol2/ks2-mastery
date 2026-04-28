@@ -28,13 +28,20 @@ export {
 
 export const SUBJECT_IDS = ['spelling', 'grammar', 'punctuation'];
 
-let demoClientIpCounter = 1;
+let syntheticDemoClientIndex = 0;
 
-async function applyDemoClientIp(page) {
-  const octet = (demoClientIpCounter % 250) + 1;
-  demoClientIpCounter += 1;
+export function syntheticDemoClientIpForIndex(index) {
+  const safeIndex = Math.max(0, Number(index) || 0);
+  const thirdOctet = Math.floor(safeIndex / 250);
+  const fourthOctet = (safeIndex % 250) + 1;
+  return `203.0.${thirdOctet}.${fourthOctet}`;
+}
+
+async function applySyntheticDemoClientIp(page) {
+  const clientIp = syntheticDemoClientIpForIndex(syntheticDemoClientIndex);
+  syntheticDemoClientIndex += 1;
   await page.setExtraHTTPHeaders({
-    'CF-Connecting-IP': `203.0.113.${octet}`,
+    'CF-Connecting-IP': clientIp,
   });
 }
 
@@ -85,9 +92,17 @@ const SCREENSHOT_DETERMINISM_CSS = `
  * `networkidle` alone returns before the font-swap frame, so screenshots
  * would otherwise capture the fallback font on one run and the loaded
  * face on the next. See `waitForFontsReady()`.
+ *
+ * The local worker harness still enforces the production demo-create
+ * rate limit. Full PR-time Playwright runs create many fresh browser
+ * contexts from the same loopback connection, so the helper stamps a
+ * deterministic synthetic client IP before `/demo`. Production rate
+ * limiting remains covered by Worker tests; browser scenes get isolated
+ * demo clients instead of competing for one shared `unknown:missing`
+ * bucket.
  */
 export async function createDemoSession(page) {
-  await applyDemoClientIp(page);
+  await applySyntheticDemoClientIp(page);
   await page.goto('/demo', { waitUntil: 'networkidle' });
   await expect(page.locator('.subject-grid')).toBeVisible({ timeout: 15_000 });
   // Re-inject the determinism stylesheet AFTER the first real
