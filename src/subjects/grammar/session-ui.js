@@ -146,6 +146,7 @@ export function grammarSessionFooterNote(session) {
  */
 export function grammarFeedbackTone(result) {
   if (!result || typeof result !== 'object') return 'neutral';
+  if (result.nonScored) return 'neutral';
   if (result.correct === true) return 'good';
   if (result.correct === false) return 'bad';
   return 'neutral';

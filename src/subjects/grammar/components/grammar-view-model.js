@@ -803,13 +803,20 @@ export function buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, 
 export function grammarSummaryCards(summary, rewardState, masteryConceptNodes = null, recentAttempts = null) {
   const safeSummary = summary && typeof summary === 'object' && !Array.isArray(summary) ? summary : {};
   const answered = safeNumber(safeSummary.answered, 0);
+  const nonScoredAnswered = safeNumber(safeSummary.nonScoredAnswered, 0);
+  const scoredAnswered = Object.prototype.hasOwnProperty.call(safeSummary, 'scoredAnswered')
+    ? safeNumber(safeSummary.scoredAnswered, 0)
+    : Math.max(0, answered - nonScoredAnswered);
   const correct = safeNumber(safeSummary.correct, 0);
   const troubleSpotsFound = safeNumber(safeSummary.troubleSpotsFound ?? safeSummary.weakConceptsSurfaced, 0);
   const newSecure = safeNumber(safeSummary.conceptsNewlySecured ?? safeSummary.newSecure, 0);
+  const correctDetail = scoredAnswered
+    ? `${Math.round((correct / scoredAnswered) * 100)}% accuracy`
+    : (nonScoredAnswered ? 'Saved for review' : 'No answers yet');
 
   return Object.freeze([
     Object.freeze({ id: 'answered', label: 'Answered', value: answered, detail: 'Questions this round' }),
-    Object.freeze({ id: 'correct', label: 'Correct', value: correct, detail: answered ? `${Math.round((correct / answered) * 100)}% accuracy` : 'No answers yet' }),
+    Object.freeze({ id: 'correct', label: 'Correct', value: correct, detail: correctDetail }),
     Object.freeze({ id: 'trouble', label: 'Trouble spots found', value: troubleSpotsFound, detail: 'We will come back to these' }),
     Object.freeze({ id: 'new-secure', label: 'New secure', value: newSecure, detail: 'Concepts you just locked in' }),
     Object.freeze({

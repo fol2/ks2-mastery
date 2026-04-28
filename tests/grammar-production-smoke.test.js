@@ -6,9 +6,11 @@ import {
   evaluateGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
 import {
+  GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS,
   assertNoForbiddenGrammarReadModelKeys,
   correctResponseFor,
   incorrectResponseFor,
+  visibleResponseForAnswerSpecFamily,
 } from '../scripts/grammar-production-smoke.mjs';
 
 function smokeQuestion() {
@@ -24,6 +26,7 @@ function readItemFromQuestion(question) {
   return {
     templateId: question.templateId,
     seed: question.seed,
+    promptText: question.promptText,
     inputSpec: question.inputSpec,
   };
 }
@@ -186,4 +189,23 @@ test('Grammar production smoke scans mini-test, support, and AI enrichment read 
     }, 'grammar.miniReviewModel'),
     /grammar\.miniReviewModel\.summary\.miniTestReview\.questions\[0\]\.marked\.result\.answers exposed a server-only field/,
   );
+});
+
+test('Grammar production smoke has visible-data probes for every answer-spec family', () => {
+  const expectedFamilies = new Set(['exact', 'multiField', 'normalisedText', 'punctuationPattern', 'acceptedSet', 'manualReviewOnly']);
+  assert.deepEqual(new Set(GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS.map((item) => item.family)), expectedFamilies);
+
+  for (const fixture of GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS) {
+    const question = createGrammarQuestion({ templateId: fixture.templateId, seed: fixture.seed });
+    const readItem = readItemFromQuestion(question);
+    const response = visibleResponseForAnswerSpecFamily(readItem);
+    const result = evaluateGrammarQuestion(question, response);
+    if (fixture.family === 'manualReviewOnly') {
+      assert.equal(result.correct, false, fixture.family);
+      assert.equal(result.nonScored, true, fixture.family);
+      assert.equal(result.manualReviewOnly, true, fixture.family);
+    } else {
+      assert.equal(result.correct, true, fixture.family);
+    }
+  }
 });

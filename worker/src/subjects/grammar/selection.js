@@ -72,7 +72,7 @@ function conceptStatus(node, nowTs) {
 
 function templateFitsMode(template, mode) {
   if (!template) return false;
-  if (mode === 'satsset' && !template.satsFriendly) return false;
+  if (mode === 'satsset' && (!template.satsFriendly || template.answerSpecKind === 'manualReviewOnly')) return false;
   if (mode === 'surgery' && !(template.tags || []).includes('surgery')) return false;
   if (mode === 'builder' && !(template.tags || []).includes('builder')) return false;
   return true;
@@ -91,6 +91,14 @@ function normaliseRecentAttempts(recentAttempts) {
     .slice(-40);
 }
 
+function isScoredAttempt(attempt) {
+  const result = isPlainObject(attempt?.result) ? attempt.result : {};
+  return attempt?.nonScored !== true
+    && attempt?.manualReviewOnly !== true
+    && result.nonScored !== true
+    && result.manualReviewOnly !== true;
+}
+
 function recentTemplateIndex(recentAttempts) {
   const index = new Map();
   const attempts = normaliseRecentAttempts(recentAttempts);
@@ -101,7 +109,7 @@ function recentTemplateIndex(recentAttempts) {
     entry.count += 1;
     if (distance < entry.lastDistance) entry.lastDistance = distance;
     const result = isPlainObject(attempt.result) ? attempt.result : {};
-    if (result.correct === false && distance < entry.lastMissDistance) {
+    if (isScoredAttempt(attempt) && result.correct === false && distance < entry.lastMissDistance) {
       entry.lastMissDistance = distance;
     }
     index.set(attempt.templateId, entry);
@@ -121,7 +129,7 @@ function recentConceptIndex(recentAttempts) {
       const existing = index.get(conceptId) || { lastDistance: Infinity, count: 0, lastMissDistance: Infinity };
       existing.count += 1;
       if (distance < existing.lastDistance) existing.lastDistance = distance;
-      if (result.correct === false && distance < existing.lastMissDistance) {
+      if (isScoredAttempt(attempt) && result.correct === false && distance < existing.lastMissDistance) {
         existing.lastMissDistance = distance;
       }
       index.set(conceptId, existing);
@@ -158,7 +166,7 @@ function recentVariantIndex(recentAttempts) {
     entry.count += 1;
     if (distance < entry.lastDistance) entry.lastDistance = distance;
     const result = isPlainObject(attempt.result) ? attempt.result : {};
-    if (result.correct === false && distance < entry.lastMissDistance) {
+    if (isScoredAttempt(attempt) && result.correct === false && distance < entry.lastMissDistance) {
       entry.lastMissDistance = distance;
     }
     index.set(key, entry);

@@ -578,7 +578,7 @@ function enqueueRetry(state, item, result, nowTs) {
 
 function templateFitsMode(template, mode) {
   if (!template) return false;
-  if (mode === 'satsset' && !template.satsFriendly) return false;
+  if (mode === 'satsset' && (!template.satsFriendly || template.answerSpecKind === 'manualReviewOnly')) return false;
   if (mode === 'surgery' && !(template.tags || []).includes('surgery')) return false;
   if (mode === 'builder' && !(template.tags || []).includes('builder')) return false;
   return true;
@@ -858,6 +858,45 @@ function practiceSessionRecord(learnerId, state, latestSession, nowTs) {
   return buildActiveRecord(learnerId, state, nowTs) || buildCompletedRecord(learnerId, state, latestSession, nowTs);
 }
 
+function buildAbandonedRecord(learnerId, latestSession, nowTs) {
+  if (!latestSession?.id || latestSession.status !== 'active') return null;
+  return normalisePracticeSessionRecord({
+    id: latestSession.id,
+    learnerId,
+    subjectId: SUBJECT_ID,
+    sessionKind: latestSession.sessionKind || latestSession.mode || 'smart',
+    status: 'abandoned',
+    sessionState: latestSession.sessionState || null,
+    summary: latestSession.summary || null,
+    createdAt: latestSession.createdAt || nowTs,
+    updatedAt: nowTs,
+  });
+}
+
+function isStaleGrammarItem(item) {
+  if (!item) return false;
+  return item.contentReleaseId !== GRAMMAR_CONTENT_RELEASE_ID;
+}
+
+function hasStaleActiveContentRelease(state) {
+  if (!state?.session || !['session', 'feedback'].includes(state.phase)) return false;
+  if (isStaleGrammarItem(state.session.currentItem)) return true;
+  const questions = state.session.miniTest?.questions;
+  if (!Array.isArray(questions)) return false;
+  return questions.some((entry) => isStaleGrammarItem(entry?.item));
+}
+
+function clearStaleContentSession(state) {
+  state.contentReleaseId = GRAMMAR_CONTENT_RELEASE_ID;
+  state.phase = 'dashboard';
+  state.awaitingAdvance = false;
+  state.session = null;
+  state.feedback = null;
+  state.summary = null;
+  state.error = '';
+  return [];
+}
+
 function miniSetSeeds(baseSeed, size) {
   return Array.from({ length: size }, (_, index) => (baseSeed + index * 104729) >>> 0);
 }
@@ -1003,6 +1042,8 @@ function startSession(state, payload, nowTs, learnerId) {
       startedAt: nowTs,
       targetCount: questions.length,
       answered: 0,
+      scoredAnswered: 0,
+      nonScoredAnswered: 0,
       correct: 0,
       totalScore: 0,
       totalMarks: items.reduce((sum, item) => sum + (Number(item.marks) || 1), 0),
@@ -1060,6 +1101,8 @@ function startSession(state, payload, nowTs, learnerId) {
     startedAt: nowTs,
     targetCount: sessionGoal.targetCount,
     answered: 0,
+    scoredAnswered: 0,
+    nonScoredAnswered: 0,
     correct: 0,
     totalScore: 0,
     totalMarks: 0,
@@ -1082,12 +1125,19 @@ function startSession(state, payload, nowTs, learnerId) {
 
 function completionSummary(state, nowTs) {
   const session = state.session || {};
+  const answered = Number(session.answered) || 0;
+  const nonScoredAnswered = clamp(Math.floor(Number(session.nonScoredAnswered) || 0), 0, answered);
+  const scoredAnswered = Object.prototype.hasOwnProperty.call(session, 'scoredAnswered')
+    ? clamp(Math.floor(Number(session.scoredAnswered) || 0), 0, answered)
+    : Math.max(0, answered - nonScoredAnswered);
   return {
     sessionId: session.id || `grammar-${nowTs}`,
     mode: session.mode || 'smart',
     startedAt: session.startedAt || nowTs,
     completedAt: nowTs,
-    answered: Number(session.answered) || 0,
+    answered,
+    scoredAnswered,
+    nonScoredAnswered,
     correct: Number(session.correct) || 0,
     totalScore: Number(session.totalScore) || 0,
     totalMarks: Number(session.totalMarks) || 0,
@@ -1120,6 +1170,8 @@ function completeSession(state, nowTs, command) {
     sessionId: summary.sessionId,
     mode: summary.mode,
     answered: summary.answered,
+    scoredAnswered: summary.scoredAnswered,
+    nonScoredAnswered: summary.nonScoredAnswered,
     correct: summary.correct,
     totalScore: summary.totalScore,
     totalMarks: summary.totalMarks,
@@ -1211,6 +1263,10 @@ function unansweredMiniTestResult(item) {
   };
 }
 
+function isNonScoredGrammarResult(result) {
+  return Boolean(result && (result.nonScored === true || result.manualReviewOnly === true));
+}
+
 function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
   if (!isActiveMiniTestSession(state)) {
     throw new BadRequestError('This Grammar mini-test is no longer active.', {
@@ -1222,14 +1278,14 @@ function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
   const questions = Array.isArray(session.miniTest?.questions) ? session.miniTest.questions : [];
   const events = [];
   let answered = 0;
+  let scoredAnswered = 0;
+  let nonScoredAnswered = 0;
   let correct = 0;
   let totalScore = 0;
   let totalMarks = 0;
 
   questions.forEach((entry, index) => {
     const item = entry?.item;
-    const maxMarks = Number(item?.marks) || 1;
-    totalMarks += maxMarks;
     if (entry?.answered && item) {
       const applied = applyGrammarAttemptToState(state, {
         learnerId: command.learnerId,
@@ -1246,10 +1302,20 @@ function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
         result: cloneSerialisable(applied.result) || {},
       };
       answered += 1;
-      if (applied.result.correct) correct += 1;
-      totalScore += Number(applied.result.score) || 0;
+      if (!isNonScoredGrammarResult(applied.result)) {
+        scoredAnswered += 1;
+        const maxMarks = Number(item?.marks) || 1;
+        if (applied.result.correct) correct += 1;
+        totalScore += Number(applied.result.score) || 0;
+        totalMarks += Number(applied.result.maxScore) || maxMarks;
+      } else {
+        nonScoredAnswered += 1;
+      }
       events.push(...applied.events);
     } else {
+      const question = item ? createGrammarQuestion({ templateId: item.templateId, seed: item.seed }) : null;
+      const isNonScoredQuestion = question?.answerSpec?.kind === 'manualReviewOnly';
+      if (!isNonScoredQuestion) totalMarks += Number(item?.marks) || 1;
       entry.marked = {
         response: cloneSerialisable(entry?.response) || {},
         result: unansweredMiniTestResult(item),
@@ -1261,6 +1327,8 @@ function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
   session.miniTest.finishedAt = nowTs;
   session.miniTest.timedOut = Boolean(timedOut);
   session.answered = answered;
+  session.scoredAnswered = scoredAnswered;
+  session.nonScoredAnswered = nonScoredAnswered;
   session.correct = correct;
   session.totalScore = totalScore;
   session.totalMarks = totalMarks;
@@ -1268,6 +1336,8 @@ function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
   const summary = {
     ...completionSummary(state, nowTs),
     answered,
+    scoredAnswered,
+    nonScoredAnswered,
     correct,
     totalScore,
     totalMarks,
@@ -1300,6 +1370,8 @@ function finishMiniTest(state, nowTs, command, { timedOut = false } = {}) {
     sessionId: summary.sessionId,
     mode: summary.mode,
     answered: summary.answered,
+    scoredAnswered: summary.scoredAnswered,
+    nonScoredAnswered: summary.nonScoredAnswered,
     correct: summary.correct,
     totalScore: summary.totalScore,
     totalMarks: summary.totalMarks,
@@ -1546,6 +1618,8 @@ export function applyGrammarAttemptToState(state, {
     supportLevel: attemptSupport.supportLevelAtScoring,
     attempts,
   });
+  const nonScoredAttempt = isNonScoredGrammarResult(result);
+  const scoringQuality = nonScoredAttempt ? 0 : quality;
   const conceptIds = (question.skillIds || []).slice();
   const template = grammarTemplateById(question.templateId);
   const generatorFamilyId = grammarTemplateGeneratorFamilyId(template || { id: question.templateId });
@@ -1555,15 +1629,17 @@ export function applyGrammarAttemptToState(state, {
     grammarConceptStatus(state.mastery.concepts[conceptId] || defaultMasteryNode(), nowTs),
   ]));
 
-  for (const conceptId of conceptIds) {
-    updateNodeFromQuality(ensureNode(state.mastery.concepts, conceptId), quality, nowTs);
-  }
-  updateNodeFromQuality(ensureNode(state.mastery.templates, question.templateId), quality, nowTs);
-  updateNodeFromQuality(ensureNode(state.mastery.questionTypes, question.questionType), quality, nowTs);
-  updateNodeFromQuality(ensureNode(state.mastery.items, question.itemId), quality, nowTs);
+  if (!nonScoredAttempt) {
+    for (const conceptId of conceptIds) {
+      updateNodeFromQuality(ensureNode(state.mastery.concepts, conceptId), quality, nowTs);
+    }
+    updateNodeFromQuality(ensureNode(state.mastery.templates, question.templateId), quality, nowTs);
+    updateNodeFromQuality(ensureNode(state.mastery.questionTypes, question.questionType), quality, nowTs);
+    updateNodeFromQuality(ensureNode(state.mastery.items, question.itemId), quality, nowTs);
 
-  if (result.misconception) bumpMisconception(state, result.misconception, nowTs);
-  if (!result.correct || quality < 4) enqueueRetry(state, serialiseGrammarQuestion(question), result, nowTs);
+    if (result.misconception) bumpMisconception(state, result.misconception, nowTs);
+    if (!result.correct || quality < 4) enqueueRetry(state, serialiseGrammarQuestion(question), result, nowTs);
+  }
 
   const attempt = {
     contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
@@ -1576,6 +1652,7 @@ export function applyGrammarAttemptToState(state, {
     conceptIds,
     response: cloneSerialisable(normalisedResponse) || {},
     result: cloneSerialisable(result) || {},
+    ...(nonScoredAttempt ? { nonScored: true, manualReviewOnly: result.manualReviewOnly === true } : {}),
     // Legacy fields (kept for one release for event-log / backcompat readers).
     supportLevel: attemptSupport.supportLevelAtScoring,
     attempts,
@@ -1589,8 +1666,10 @@ export function applyGrammarAttemptToState(state, {
   state.recentAttempts = [...(state.recentAttempts || []), attempt].slice(-80);
 
   const events = [{
-    id: `grammar.answer.${learnerId || 'learner'}.${requestId}.${question.itemId}`,
-    type: 'grammar.answer-submitted',
+    id: nonScoredAttempt
+      ? `grammar.manual-review.${learnerId || 'learner'}.${requestId}.${question.itemId}`
+      : `grammar.answer.${learnerId || 'learner'}.${requestId}.${question.itemId}`,
+    type: nonScoredAttempt ? 'grammar.manual-review-saved' : 'grammar.answer-submitted',
     subjectId: SUBJECT_ID,
     learnerId,
     contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
@@ -1604,6 +1683,7 @@ export function applyGrammarAttemptToState(state, {
     score: result.score,
     maxScore: result.maxScore,
     correct: Boolean(result.correct),
+    ...(nonScoredAttempt ? { nonScored: true, manualReviewOnly: result.manualReviewOnly === true } : {}),
     misconception: result.misconception || null,
     // Dual-write: legacy `supportLevel` plus the new U3 item-level fields so
     // pre-U3 and post-U3 event-log readers both see consistent projections.
@@ -1616,7 +1696,7 @@ export function applyGrammarAttemptToState(state, {
     supportContractVersion: SUPPORT_CONTRACT_VERSION,
     createdAt: nowTs,
   }];
-  if (result.misconception) {
+  if (!nonScoredAttempt && result.misconception) {
     events.push({
       id: `grammar.misconception.${learnerId || 'learner'}.${requestId}.${question.itemId}`,
       type: 'grammar.misconception-seen',
@@ -1627,24 +1707,26 @@ export function applyGrammarAttemptToState(state, {
       createdAt: nowTs,
     });
   }
-  for (const conceptId of conceptIds) {
-    const after = grammarConceptStatus(state.mastery.concepts[conceptId], nowTs);
-    if (statusesBefore.get(conceptId) !== 'secured' && after === 'secured') {
-      events.push({
-        id: `grammar.secured.${learnerId || 'learner'}.${conceptId}.${requestId}`,
-        type: 'grammar.concept-secured',
-        subjectId: SUBJECT_ID,
-        learnerId,
-        contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
-        conceptId,
-        masteryKey: `grammar:${GRAMMAR_CONTENT_RELEASE_ID}:${conceptId}`,
-        templateId: question.templateId,
-        itemId: question.itemId,
-        createdAt: nowTs,
-      });
+  if (!nonScoredAttempt) {
+    for (const conceptId of conceptIds) {
+      const after = grammarConceptStatus(state.mastery.concepts[conceptId], nowTs);
+      if (statusesBefore.get(conceptId) !== 'secured' && after === 'secured') {
+        events.push({
+          id: `grammar.secured.${learnerId || 'learner'}.${conceptId}.${requestId}`,
+          type: 'grammar.concept-secured',
+          subjectId: SUBJECT_ID,
+          learnerId,
+          contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+          conceptId,
+          masteryKey: `grammar:${GRAMMAR_CONTENT_RELEASE_ID}:${conceptId}`,
+          templateId: question.templateId,
+          itemId: question.itemId,
+          createdAt: nowTs,
+        });
+      }
     }
   }
-  return { result, quality, events, attempt, response: normalisedResponse };
+  return { result, quality: scoringQuality, events, attempt, response: normalisedResponse };
 }
 
 function submitAnswer(state, payload, command, nowTs) {
@@ -1700,10 +1782,16 @@ function submitAnswer(state, payload, command, nowTs) {
     mode: session.mode,
   });
   if (!retryingCurrent) {
+    const nonScoredResult = isNonScoredGrammarResult(applied.result);
     session.answered += 1;
-    session.correct += applied.result.correct ? 1 : 0;
-    session.totalScore += Number(applied.result.score) || 0;
-    session.totalMarks += Number(applied.result.maxScore) || Number(session.currentItem.marks) || 1;
+    if (nonScoredResult) {
+      session.nonScoredAnswered = (Number(session.nonScoredAnswered) || 0) + 1;
+    } else {
+      session.scoredAnswered = (Number(session.scoredAnswered) || 0) + 1;
+      session.correct += applied.result.correct ? 1 : 0;
+      session.totalScore += Number(applied.result.score) || 0;
+      session.totalMarks += Number(applied.result.maxScore) || Number(session.currentItem.marks) || 1;
+    }
   }
   repair.retryingCurrent = false;
   state.phase = 'feedback';
@@ -2077,9 +2165,13 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
       let events = [];
       let changed = true;
       let aiEnrichment = null;
+      let practiceSessionOverride = null;
 
       if (command === 'start-session') {
         events = startSession(state, { ...payload, requestId }, nowTs, learnerId);
+      } else if (hasStaleActiveContentRelease(state)) {
+        practiceSessionOverride = buildAbandonedRecord(learnerId, latestSession, nowTs);
+        events = clearStaleContentSession(state);
       } else if (state.phase === 'session' && !rawUiWasServerOwned) {
         throw new BadRequestError('This Grammar session is no longer active on the server.', {
           code: 'grammar_session_stale',
@@ -2133,7 +2225,9 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
       return {
         ...transition(state, { events, changed }),
         aiEnrichment,
-        practiceSession: changed ? practiceSessionRecord(learnerId, state, latestSession, nowTs) : null,
+        practiceSession: changed
+          ? (practiceSessionOverride || practiceSessionRecord(learnerId, state, latestSession, nowTs))
+          : null,
       };
     },
   };

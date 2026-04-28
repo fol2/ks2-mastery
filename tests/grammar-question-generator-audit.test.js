@@ -19,6 +19,20 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.deepEqual(audit.templatesMissingAnswerSpecs, []);
   assert.deepEqual(audit.invalidAnswerSpecs, []);
   assert.equal(audit.conceptCoverage.length, GRAMMAR_CONCEPTS.length);
+  assert.equal(audit.answerSpecTemplateCount, 26);
+  assert.equal(audit.constructedResponseTemplateCount, 20);
+  assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 20);
+  assert.equal(audit.legacyAdapterTemplateCount, 0);
+  assert.equal(audit.manualReviewOnlyTemplateCount, 4);
+  assert.equal(audit.p2MigrationComplete, true);
+  assert.deepEqual(audit.answerSpecKindCounts, {
+    acceptedSet: 2,
+    exact: 4,
+    manualReviewOnly: 4,
+    multiField: 2,
+    normalisedText: 5,
+    punctuationPattern: 9,
+  });
 });
 
 test('Grammar generated variants have stable answer-safe signatures', () => {
@@ -26,6 +40,10 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
   assert.deepEqual(audit.missingGeneratorMetadata, []);
   assert.deepEqual(audit.generatedSignatureCollisions, []);
   assert.deepEqual(audit.repeatedGeneratedVariants, []);
+  assert.ok(
+    audit.legacyRepeatedGeneratedVariants.length >= 1,
+    'Legacy generated repeated variants stay advisory rather than blocking P2 marking migration.',
+  );
   assert.ok(audit.sampleCount > 0);
 
   const sample = createGrammarQuestion({ templateId: 'proc2_subject_object_identify', seed: 7 });

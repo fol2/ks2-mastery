@@ -29,6 +29,48 @@ const GRAMMAR_MINI_TEST_ITEM = Object.freeze({
   seed: 11,
 });
 
+export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
+  Object.freeze({
+    family: 'exact',
+    templateId: 'qg_modal_verb_explain',
+    seed: 7,
+  }),
+  Object.freeze({
+    family: 'multiField',
+    templateId: 'qg_subject_object_classify_table',
+    seed: 7,
+    response: Object.freeze({ row0: 'subject', row1: 'object' }),
+  }),
+  Object.freeze({
+    family: 'normalisedText',
+    templateId: 'tense_rewrite',
+    seed: 0,
+    response: Object.freeze({ answer: 'The dog was chasing the cat.' }),
+  }),
+  Object.freeze({
+    family: 'punctuationPattern',
+    templateId: 'fix_fronted_adverbial',
+    seed: 0,
+    response: Object.freeze({ answer: 'Before sunrise, the campers packed their bags.' }),
+  }),
+  Object.freeze({
+    family: 'acceptedSet',
+    templateId: 'combine_clauses_rewrite',
+    seed: 0,
+    response: Object.freeze({ answer: 'Although Mia was tired, she finished the race.' }),
+  }),
+  Object.freeze({
+    family: 'manualReviewOnly',
+    templateId: 'build_noun_phrase',
+    seed: 0,
+    response: Object.freeze({
+      part1: 'The tall',
+      part2: 'captain',
+      part3: 'with curly hair',
+    }),
+  }),
+]);
+
 // Sets are built at module load from the shared Array exports so the single
 // source of truth in tests/helpers/forbidden-keys.mjs cannot drift from this
 // smoke test's checks.
@@ -91,6 +133,15 @@ export function incorrectResponseFor(readItem) {
   }
 
   throw new Error(`Grammar production options did not contain an incorrect answer for ${readItem?.templateId}.`);
+}
+
+export function visibleResponseForAnswerSpecFamily(readItem) {
+  const fixture = GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS.find((item) => (
+    item.templateId === readItem?.templateId && Number(item.seed) === Number(readItem?.seed)
+  ));
+  if (!fixture) return correctResponseFor(readItem);
+  if (!fixture.response) return correctResponseFor(readItem);
+  return { ...fixture.response };
 }
 
 async function smokeGrammarNormalRound({ origin, cookie, learnerId, revision }) {
@@ -320,6 +371,68 @@ async function smokeGrammarRepairAndAi({ origin, cookie, learnerId, revision }) 
   };
 }
 
+async function smokeGrammarAnswerSpecFamilies({ origin, cookie, learnerId, revision }) {
+  const covered = [];
+  for (const fixture of GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS) {
+    let step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'start-session',
+      payload: {
+        mode: 'smart',
+        roundLength: 1,
+        templateId: fixture.templateId,
+        seed: fixture.seed,
+      },
+    });
+    revision = step.revision;
+    const startModel = step.payload.subjectReadModel;
+    assert.equal(startModel?.phase, 'session', `Grammar ${fixture.family} smoke did not start in session phase.`);
+    assert.equal(startModel?.session?.currentItem?.templateId, fixture.templateId);
+    assertNoForbiddenGrammarReadModelKeys(startModel, `grammar.${fixture.family}.startModel`);
+
+    const response = visibleResponseForAnswerSpecFamily(startModel.session.currentItem);
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'submit-answer',
+      payload: { response },
+    });
+    revision = step.revision;
+    const feedbackModel = step.payload.subjectReadModel;
+    assert.equal(feedbackModel?.phase, 'feedback', `Grammar ${fixture.family} submit did not return feedback.`);
+    if (fixture.family === 'manualReviewOnly') {
+      assert.equal(feedbackModel?.feedback?.result?.correct, false, 'Manual-review smoke must not auto-correct.');
+      assert.equal(feedbackModel?.feedback?.result?.nonScored, true, 'Manual-review smoke must be non-scored.');
+      assert.equal(feedbackModel?.feedback?.result?.manualReviewOnly, true, 'Manual-review smoke must carry manual-review marker.');
+    } else {
+      assert.equal(feedbackModel?.feedback?.result?.correct, true, `Grammar ${fixture.family} smoke answer was not accepted.`);
+    }
+    assertNoForbiddenGrammarReadModelKeys(feedbackModel, `grammar.${fixture.family}.feedbackModel`);
+
+    step = await subjectCommand({
+      origin,
+      cookie,
+      subjectId: 'grammar',
+      learnerId,
+      revision,
+      command: 'continue-session',
+    });
+    revision = step.revision;
+    assert.equal(step.payload.subjectReadModel?.phase, 'summary', `Grammar ${fixture.family} smoke did not reach summary.`);
+    assertNoForbiddenGrammarReadModelKeys(step.payload.subjectReadModel, `grammar.${fixture.family}.summaryModel`);
+    covered.push(fixture.family);
+  }
+
+  return { revision, covered };
+}
+
 async function smokeGrammar({ origin, cookie, learnerId, revision }) {
   const normal = await smokeGrammarNormalRound({ origin, cookie, learnerId, revision });
   const miniTest = await smokeGrammarMiniTest({
@@ -334,12 +447,19 @@ async function smokeGrammar({ origin, cookie, learnerId, revision }) {
     learnerId,
     revision: miniTest.revision,
   });
+  const answerSpecFamilies = await smokeGrammarAnswerSpecFamilies({
+    origin,
+    cookie,
+    learnerId,
+    revision: repairAi.revision,
+  });
 
   return {
-    revision: repairAi.revision,
+    revision: answerSpecFamilies.revision,
     normal,
     miniTest,
     repairAi,
+    answerSpecFamilies,
   };
 }
 
@@ -400,6 +520,7 @@ async function main() {
       miniTestReviewSize: grammar.miniTest.reviewSize,
       repairSupportKind: grammar.repairAi.supportKind,
       aiKind: grammar.repairAi.aiKind,
+      answerSpecFamilies: grammar.answerSpecFamilies.covered,
     },
     spelling: {
       progressTotal: spelling.progressTotal,

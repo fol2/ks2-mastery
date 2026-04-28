@@ -257,6 +257,10 @@ test('U8 session-ui: grammarFeedbackTone neutral returns neutral', () => {
   assert.equal(grammarFeedbackTone({}), 'neutral');
 });
 
+test('P2 session-ui: grammarFeedbackTone treats non-scored manual-review feedback as neutral', () => {
+  assert.equal(grammarFeedbackTone({ correct: false, nonScored: true, manualReviewOnly: true }), 'neutral');
+});
+
 // -----------------------------------------------------------------------------
 // GRAMMAR_PRIMARY_MODE_CARDS — roster + shape contract
 // -----------------------------------------------------------------------------
@@ -768,6 +772,27 @@ test('U8 view-model: grammarSummaryCards accuracy detail is computed from answer
   const correctCard = cards.find((card) => card.id === 'correct');
   assert.equal(correctCard.value, 3);
   assert.ok(correctCard.detail.includes('75%'));
+});
+
+test('U8 view-model: grammarSummaryCards excludes manual-review saves from accuracy', () => {
+  const manualOnlyCards = grammarSummaryCards({
+    answered: 1,
+    scoredAnswered: 0,
+    nonScoredAnswered: 1,
+    correct: 0,
+  }, null);
+  const manualOnlyCorrect = manualOnlyCards.find((card) => card.id === 'correct');
+  assert.equal(manualOnlyCorrect.value, 0);
+  assert.equal(manualOnlyCorrect.detail, 'Saved for review');
+
+  const mixedCards = grammarSummaryCards({
+    answered: 2,
+    scoredAnswered: 1,
+    nonScoredAnswered: 1,
+    correct: 1,
+  }, null);
+  const mixedCorrect = mixedCards.find((card) => card.id === 'correct');
+  assert.equal(mixedCorrect.detail, '100% accuracy');
 });
 
 // =============================================================================

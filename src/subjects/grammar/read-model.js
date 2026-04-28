@@ -101,10 +101,19 @@ function recentAttemptsWindow(recentAttempts) {
     : [];
 }
 
+function isScoredAttempt(attempt) {
+  const result = isPlainObject(attempt?.result) ? attempt.result : {};
+  return attempt?.nonScored !== true
+    && attempt?.manualReviewOnly !== true
+    && result.nonScored !== true
+    && result.manualReviewOnly !== true;
+}
+
 function recentMissCountForConceptId(recentAttempts, conceptId) {
   if (!conceptId) return 0;
   let count = 0;
   for (const attempt of recentAttemptsWindow(recentAttempts)) {
+    if (!isScoredAttempt(attempt)) continue;
     const conceptIds = Array.isArray(attempt?.conceptIds) ? attempt.conceptIds : [];
     const result = isPlainObject(attempt?.result) ? attempt.result : {};
     if (conceptIds.includes(conceptId) && result.correct === false) count += 1;
@@ -116,6 +125,7 @@ function distinctTemplatesForConceptId(recentAttempts, conceptId) {
   if (!conceptId) return 0;
   const seen = new Set();
   for (const attempt of recentAttemptsWindow(recentAttempts)) {
+    if (!isScoredAttempt(attempt)) continue;
     const conceptIds = Array.isArray(attempt?.conceptIds) ? attempt.conceptIds : [];
     if (conceptIds.includes(conceptId) && typeof attempt?.templateId === 'string' && attempt.templateId) {
       seen.add(attempt.templateId);
@@ -435,6 +445,11 @@ function recentGrammarSessions(practiceSessions = []) {
     .map((record) => {
       const answered = Number(record?.summary?.answered) || 0;
       const correct = Number(record?.summary?.correct) || 0;
+      const scoredAnswered = Number(record?.summary?.scoredAnswered);
+      const nonScoredAnswered = Number(record?.summary?.nonScoredAnswered);
+      const scoringDenominator = Number.isFinite(scoredAnswered)
+        ? scoredAnswered
+        : Math.max(0, answered - (Number.isFinite(nonScoredAnswered) ? nonScoredAnswered : 0));
       return {
         id: record.id,
         subjectId: 'grammar',
@@ -442,8 +457,8 @@ function recentGrammarSessions(practiceSessions = []) {
         sessionKind: record.sessionKind || record.summary?.mode || 'practice',
         label: record?.summary?.mode ? `Grammar ${record.summary.mode}` : 'Grammar practice',
         updatedAt: asTs(record.updatedAt, asTs(record.createdAt, 0)),
-        mistakeCount: Math.max(0, answered - correct),
-        headline: answered ? `${correct}/${answered}` : '',
+        mistakeCount: Math.max(0, scoringDenominator - correct),
+        headline: scoringDenominator ? `${correct}/${scoringDenominator}` : (nonScoredAnswered ? 'Saved for review' : ''),
       };
     });
 }

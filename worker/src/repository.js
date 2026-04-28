@@ -738,11 +738,38 @@ function recentSessionHeadline(record) {
   const correctCard = cards.find((card) => String(card?.label || '').toLowerCase().includes('correct'));
   if (correctCard?.value != null) return String(correctCard.value);
   const answered = Number(summary.answered);
+  const scoredAnswered = Number(summary.scoredAnswered);
+  const nonScoredAnswered = Number(summary.nonScoredAnswered);
   const correct = Number(summary.correct);
+  const scoringDenominator = Number.isFinite(scoredAnswered)
+    ? scoredAnswered
+    : (Number.isFinite(answered) ? Math.max(0, answered - (Number.isFinite(nonScoredAnswered) ? nonScoredAnswered : 0)) : NaN);
+  if (Number.isFinite(scoringDenominator) && scoringDenominator > 0 && Number.isFinite(correct)) {
+    return `${correct}/${scoringDenominator}`;
+  }
+  if (Number.isFinite(nonScoredAnswered) && nonScoredAnswered > 0) {
+    return 'Saved for review';
+  }
   if (Number.isFinite(answered) && answered > 0 && Number.isFinite(correct)) {
     return `${correct}/${answered}`;
   }
   return '';
+}
+
+function recentSessionMistakeCount(record) {
+  const summary = record?.summary || {};
+  if (Array.isArray(summary.mistakes)) return summary.mistakes.length;
+  const correct = Number(summary.correct);
+  const scoredAnswered = Number(summary.scoredAnswered);
+  if (Number.isFinite(scoredAnswered)) {
+    return Math.max(0, scoredAnswered - (Number.isFinite(correct) ? correct : 0));
+  }
+  const answered = Number(summary.answered);
+  const nonScoredAnswered = Number(summary.nonScoredAnswered);
+  if (Number.isFinite(answered) && Number.isFinite(nonScoredAnswered)) {
+    return Math.max(0, answered - nonScoredAnswered - (Number.isFinite(correct) ? correct : 0));
+  }
+  return Math.max(0, (Number.isFinite(answered) ? answered : 0) - (Number.isFinite(correct) ? correct : 0));
 }
 
 function parentRecentSessionFromRecord(record) {
@@ -753,9 +780,7 @@ function parentRecentSessionFromRecord(record) {
     sessionKind: record.sessionKind,
     label: recentSessionLabel(record),
     updatedAt: Number(record.updatedAt) || Number(record.createdAt) || 0,
-    mistakeCount: Array.isArray(record?.summary?.mistakes)
-      ? record.summary.mistakes.length
-      : Math.max(0, (Number(record?.summary?.answered) || 0) - (Number(record?.summary?.correct) || 0)),
+    mistakeCount: recentSessionMistakeCount(record),
     headline: recentSessionHeadline(record),
   };
 }
