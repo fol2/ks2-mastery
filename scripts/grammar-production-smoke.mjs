@@ -30,9 +30,9 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 
 const CLI_ARGS = process.argv.slice(2);
 const JSON_OUTPUT = CLI_ARGS.includes('--json');
-const ORIGIN_FLAG_INDEX = CLI_ARGS.indexOf('--origin');
-const CONFIGURED_ORIGIN_VALUE = ORIGIN_FLAG_INDEX !== -1 && CLI_ARGS[ORIGIN_FLAG_INDEX + 1]
-  ? CLI_ARGS[ORIGIN_FLAG_INDEX + 1]
+const EVIDENCE_ORIGIN_FLAG_INDEX = CLI_ARGS.indexOf('--evidence-origin');
+const CONFIGURED_ORIGIN_VALUE = EVIDENCE_ORIGIN_FLAG_INDEX !== -1 && CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
+  ? CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
   : 'repository';
 
 const GRAMMAR_SMOKE_ITEM = Object.freeze({
