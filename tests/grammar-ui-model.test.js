@@ -44,6 +44,9 @@ import {
   isGrammarChildCopy,
   isGrammarFocusAllowedMode,
 } from '../src/subjects/grammar/components/grammar-view-model.js';
+import {
+  GRAMMAR_GRAND_STAR_MODEL_VERSION,
+} from '../shared/grammar/grammar-stars.js';
 
 // -----------------------------------------------------------------------------
 // grammarSessionSubmitLabel
@@ -827,7 +830,12 @@ test('P7-U2 view-model: Concordium at 100 Stars shows "Mega" stage', () => {
   const rewardState = {
     bracehart: { mastered: [], caught: true, starHighWater: 1 },
     couronnail: { mastered: [], caught: true, starHighWater: 1 },
-    concordium: { mastered: [], caught: true, starHighWater: 100 },
+    concordium: {
+      mastered: [],
+      caught: true,
+      starHighWater: 100,
+      starModelVersion: GRAMMAR_GRAND_STAR_MODEL_VERSION,
+    },
   };
   const cards = grammarSummaryCards({}, rewardState);
   const monsterCard = cards.find((card) => card.id === 'monster-progress');
@@ -1243,6 +1251,7 @@ test('P5-U10 view-model: monsterStrip + concordiumProgress do not conflict — b
       ],
       caught: true,
       starHighWater: 5,
+      starModelVersion: GRAMMAR_GRAND_STAR_MODEL_VERSION,
     },
     bracehart: {
       mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:sentence_functions'],

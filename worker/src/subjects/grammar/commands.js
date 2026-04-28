@@ -9,6 +9,7 @@ import { resolveProjectionInput } from '../projection-input.js';
 import {
   deriveGrammarConceptStarEvidence,
   computeGrammarMonsterStars,
+  GRAMMAR_GRAND_STAR_MODEL_VERSION,
 } from '../../../../shared/grammar/grammar-stars.js';
 import { GRAMMAR_EVENT_TYPES } from '../../../../src/subjects/grammar/event-hooks.js';
 import {
@@ -111,7 +112,10 @@ function deriveStarEvidenceEvents({ domainEvents, engineState, learnerId, gameSt
 
     // Read current starHighWater from monster codex state.
     const monsterEntry = codexState[monsterId];
-    const existingHW = monsterEntry && typeof monsterEntry === 'object'
+    const hasCurrentGrandStarModel =
+      monsterId !== GRAMMAR_GRAND_MONSTER_ID
+      || Number(monsterEntry?.starModelVersion) === GRAMMAR_GRAND_STAR_MODEL_VERSION;
+    const existingHW = monsterEntry && typeof monsterEntry === 'object' && hasCurrentGrandStarModel
       ? Math.max(0, Math.floor(Number(monsterEntry.starHighWater) || 0))
       : 0;
 

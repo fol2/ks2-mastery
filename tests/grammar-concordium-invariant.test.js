@@ -6,19 +6,19 @@
 // Invariants: docs/plans/james/grammar/grammar-phase5-invariants.md R6, R7.
 //
 // The single top-level assertion this file exists to prove:
-// **Concordium.stage and Concordium.raw Stars are sticky
-// ratchets — no mutator (retry, re-scoring, writer self-heal, import/export
-// round-trip, cross-release state carry, legacy migration, or adversarial
-// payload) may decrement any of them across the full replay of a random or
-// named mutator sequence. Child-facing display Stars may be gated while the
-// Grand monster is still waiting for enough direct-monster breadth.**
+// **Concordium.stage and versioned Concordium Stars are sticky ratchets** —
+// no mutator (retry, re-scoring, writer self-heal, import/export round-trip,
+// cross-release state carry, legacy migration, or adversarial payload) may
+// decrement them across the full replay of a random or named mutator sequence.
+// Old unversioned aggregate Concordium Stars are deliberately not sticky:
+// the Grand model can take them back while preserving legacy stage reads.
 //
 // P5 U9 extends the ratchet to Stars (R6 — Stars are monotonically non-
 // decreasing). The Star ratchet is checked both without conceptNodes (reward-
 // layer path: Stars derive from starHighWater latch and legacy floor) and
 // with synthetic conceptNodes (client read path: full evidence-tier
-// derivation). Legacy migration shapes verify that pre-P5 learners never
-// see a stage or Star regression after the Star curve ships (R7).
+// derivation). Legacy migration shapes verify that pre-P5 direct monsters do
+// not downgrade; Concordium has a documented Grand-model exception.
 //
 // The assertion is enforced after every step in every sequence using the
 // same recordGrammarConceptMastery surface the production reward pipeline
@@ -65,6 +65,7 @@ import { rewardEventsFromGrammarEvents } from '../src/subjects/grammar/event-hoo
 import { snapshotGrammarRewardState } from './helpers/grammar-reward-invariant.js';
 import {
   GRAMMAR_MONSTER_STAR_MAX,
+  GRAMMAR_GRAND_STAR_MODEL_VERSION,
   legacyStarFloorFromStage,
   deriveGrammarConceptStarEvidence,
   computeGrammarMonsterStars,
@@ -178,12 +179,11 @@ function assertConcordiumRatchet(state, maxPrior, context, { conceptNodes = null
     concordium.mastered >= maxPrior.mastered,
     `${context}: Concordium.mastered=${concordium.mastered} < priorMax=${maxPrior.mastered} — monotonic-count violated`,
   );
-  // P5 Star ratchet: raw Stars are monotonically non-decreasing (R6). When
+  // P5/P7 Star ratchet: versioned Stars are monotonically non-decreasing. When
   // conceptNodes are provided, the Star computation path is exercised and
   // the ratchet covers the full evidence-derived Stars pipeline. The
-  // child-facing `stars` field can be temporarily gated to 0 for Concordium
-  // until enough direct Grammar monsters have been found; the persisted
-  // starHighWater remains the monotonic latch.
+  // Grand model intentionally ignores old unversioned aggregate high-water;
+  // once a versioned starHighWater is written, it remains the monotonic latch.
   assert.ok(
     rawStars >= maxPrior.stars,
     `${context}: Concordium.rawStars=${rawStars} < priorMax=${maxPrior.stars} — Star sticky-ratchet violated (R6)`,
@@ -650,17 +650,16 @@ test('U9 named shape 8 (P5 legacy): pre-P5 Couronnail at Mega (3/3 secure, no re
   };
 
   // Concordium progress with NO conceptNodes (reward-layer read path):
-  // legacy stage from 3/18 = 0.167 → raw legacy floor = 1 Star. The
-  // child-facing display is still gated because only one direct Grammar
-  // monster is found.
+  // legacy stage is still retained for compatibility, but unversioned
+  // aggregate high-water no longer drives child-facing Grand Stars.
   const concordium = progressForGrammarMonster(initialState, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
   assert.equal(concordium.caught, false, 'Concordium display remains gated with only one direct monster found');
   assert.equal(concordium.mastered, 3, 'Concordium has 3 mastered concepts');
   assert.ok(concordium.stage >= 1, 'Concordium stage >= 1 via legacy floor');
-  assert.ok(concordium.starHighWater >= 1, 'Concordium raw Star latch preserves the legacy floor');
-  assert.equal(concordium.stars, 0, 'Concordium child-facing Stars stay hidden until the Grand gate opens');
+  assert.equal(concordium.starHighWater, 0, 'Concordium old aggregate Star floor is ignored');
+  assert.equal(concordium.stars, 0, 'Concordium child-facing Stars stay hidden until the Grand tier model qualifies');
 
   // Couronnail progress: legacy 3/3 = 1.0 → stage 4. Legacy floor = 100 Stars.
   const couronnail = progressForGrammarMonster(initialState, 'couronnail', {
@@ -704,11 +703,11 @@ test('U9 named shape 8 (P5 legacy): pre-P5 Couronnail at Mega (3/3 secure, no re
 
 // ----- Named shape 9 (P5 legacy): pre-P5 Concordium at stage 3 (14/18 secure) ----
 //
-// Plan §U9: Under the new Star curve, derived Stars for Concordium with 14/18
-// mastered but no conceptNodes would be 0. Legacy floor must hold at stage 3
-// (Stars >= 35) so the learner does not see a stage downgrade.
+// Plan §U9 was superseded by the Grand model: unversioned Concordium Star
+// high-water is ignored so old aggregate Stars can be taken back, while the
+// legacy stage still stays available for backward-compatible status reads.
 
-test('U9 named shape 9 (P5 legacy): pre-P5 Concordium at stage 3 (14/18 secure) → legacy floor preserves Growing stage', () => {
+test('U9 named shape 9 (P5 legacy): pre-P5 Concordium at stage 3 (14/18 secure) → Grand Stars reset', () => {
   // Build pre-P5 Concordium state: 14/18 mastered, no starHighWater.
   // Under old ratio-based staging: 14/18 = 0.778 → stage 3.
   const concepts14 = GRAMMAR_AGGREGATE_CONCEPTS.slice(0, 14);
@@ -723,15 +722,16 @@ test('U9 named shape 9 (P5 legacy): pre-P5 Concordium at stage 3 (14/18 secure) 
     },
   };
 
-  // Without conceptNodes: computedStars = 0, legacy floor from stage 3 = 35.
+  // Without conceptNodes: computedStars = 0, and old unversioned aggregate
+  // Star latches are not accepted by the Grand model.
   const concordium = progressForGrammarMonster(initialState, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
   assert.equal(concordium.mastered, 14, 'Concordium has 14 mastered concepts');
   assert.ok(concordium.stage >= 3, 'Concordium stage >= 3 (legacy floor preserves Growing)');
-  assert.ok(concordium.starHighWater >= 35, `Concordium raw Stars=${concordium.starHighWater} >= 35 (legacy floor from stage 3) (R7)`);
-  assert.equal(concordium.stars, 0, 'Concordium child-facing Stars are hidden by the Grand display gate');
-  assert.equal(concordium.caught, false, 'Concordium display remains gated without direct-monster breadth');
+  assert.equal(concordium.starHighWater, 0, 'Concordium old aggregate Star floor is ignored by the Grand model');
+  assert.equal(concordium.stars, 0, 'Concordium child-facing Stars are reset');
+  assert.equal(concordium.caught, false, 'Concordium display remains gated without Grand breadth/depth');
 
   // Run a 20-step random replay on top — ratchet must hold from baseline.
   const repository = makeRepository(initialState);
@@ -742,7 +742,7 @@ test('U9 named shape 9 (P5 legacy): pre-P5 Concordium at stage 3 (14/18 secure) 
     learnerId: 'learner-legacy-concordium',
   });
   assert.ok(maxPrior.stage >= 3, `Ratchet: final maxPrior.stage=${maxPrior.stage} >= 3`);
-  assert.ok(maxPrior.stars >= 35, `Ratchet: final maxPrior.stars=${maxPrior.stars} >= 35`);
+  assert.equal(maxPrior.stars, 0, 'Grand-model Concordium Stars remain reset until versioned Star evidence writes them');
 });
 
 // ----- Named shape 10 (P5 legacy): reserved monster evidence → normaliser unions ----
@@ -1159,7 +1159,7 @@ test('U9 integration — F2 end-to-end: concept-secured → reward → Star ratc
   });
   assert.equal(final.mastered, 18, 'all 18 concepts mastered');
   assert.equal(final.stage, 4, 'Concordium at Mega (stage 4)');
-  assert.equal(final.caught, false, 'Concordium display remains gated in this secure-only fixture');
+  assert.equal(final.caught, false, 'Concordium display remains locked in this secure-only fixture');
   assert.equal(final.displayState, 'not-found');
   // starHighWater must be at its maximum for the sequence.
   assert.ok(final.starHighWater >= maxStars,
@@ -1380,6 +1380,7 @@ test('U7 P6 named shape 11: sub-secure Stars earned → recentAttempts rolls →
     stateAfterWrite.concordium.starHighWater || 0,
     derivedStars,
   );
+  stateAfterWrite.concordium.starModelVersion = GRAMMAR_GRAND_STAR_MODEL_VERSION;
 
   // Phase 3: Session ends — read WITHOUT conceptNodes or recentAttempts.
   // Only the persisted starHighWater protects the Stars.
