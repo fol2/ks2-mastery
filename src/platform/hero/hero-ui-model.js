@@ -49,6 +49,15 @@ export function buildHeroHomeModel(heroUi) {
   const effortCompleted = progress?.effortCompleted || 0;
   const completedTaskIds = progress?.completedTaskIds || [];
 
+  // P4 U6: Economy fields from read model v5
+  const coinsEnabled = readModel?.coinsEnabled === true;
+  const economyBlock = readModel?.economy || null;
+  const coinBalance = coinsEnabled ? (economyBlock?.balance || 0) : 0;
+  const coinsAwardedToday = coinsEnabled ? (economyBlock?.today?.coinsAwarded || 0) : 0;
+  const dailyAwardStatus = economyBlock?.today?.awardStatus || 'not-eligible';
+  const showCoinsAwarded = coinsEnabled && dailyAwardStatus === 'awarded' && coinsAwardedToday > 0;
+  const showCoinBalance = coinsEnabled;
+
   return {
     status,
     enabled,
@@ -70,5 +79,12 @@ export function buildHeroHomeModel(heroUi) {
     dailyStatus,
     effortCompleted,
     completedTaskIds,
+    // P4 U6: economy
+    coinsEnabled,
+    coinBalance,
+    coinsAwardedToday,
+    dailyAwardStatus,
+    showCoinsAwarded,
+    showCoinBalance,
   };
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import {
   HERO_CTA_TEXT,
   HERO_PROGRESS_COPY,
+  HERO_ECONOMY_COPY,
   HERO_SUBJECT_LABELS,
   HERO_UI_REASON_LABELS,
 } from '../../../shared/hero/hero-copy.js';
@@ -26,7 +27,7 @@ export function HeroQuestCard({ hero, actions }) {
   const isLaunching = hero.status === 'launching';
   const hasError = Boolean(hero.error);
 
-  // (p3-a) Daily complete — highest priority P3 display (no CTA, no pressure)
+  // (p3-a) Daily complete — with optional economy acknowledgement
   if (hero.dailyStatus === 'completed') {
     return (
       <div className="hero-quest-card hero-quest-card--complete" data-hero-card>
@@ -34,9 +35,21 @@ export function HeroQuestCard({ hero, actions }) {
         <p className="hero-quest-card__daily-complete" aria-live="polite">
           {HERO_PROGRESS_COPY.dailyComplete}
         </p>
-        <p className="hero-quest-card__daily-complete-detail">
-          {HERO_PROGRESS_COPY.dailyCompleteDetail}
-        </p>
+        {hero.showCoinsAwarded && (
+          <div className="hero-quest-card__economy" aria-live="polite">
+            <p className="hero-quest-card__coins-added">
+              {hero.coinsAwardedToday} {HERO_ECONOMY_COPY.coinsAdded}
+            </p>
+            <p className="hero-quest-card__coin-balance">
+              Balance: {hero.coinBalance} {HERO_ECONOMY_COPY.balanceLabel}.
+            </p>
+          </div>
+        )}
+        {!hero.showCoinsAwarded && (
+          <p className="hero-quest-card__daily-complete-detail">
+            {HERO_PROGRESS_COPY.dailyCompleteDetail}
+          </p>
+        )}
       </div>
     );
   }

@@ -51,6 +51,18 @@ export const HERO_PROGRESS_COPY = Object.freeze({
 });
 
 /**
+ * P4 economy copy — shown in HeroQuestCard when daily Coins are awarded.
+ * Calm, non-pressurising. No shop/deal/streak/loot language.
+ */
+export const HERO_ECONOMY_COPY = Object.freeze({
+  coinsAdded: 'Hero Coins added.',
+  coinsAddedDetail: 'You completed today\'s Hero Quest.',
+  balanceLabel: 'Hero Coins',
+  savedForCamp: 'Hero Coins saved for Hero Camp.',
+  dailyAvailable: 'Complete today\'s Hero Quest to add 100 Hero Coins.',
+});
+
+/**
  * Child-facing labels by intent.  Explains *why* this task was chosen
  * in age-appropriate language.
  */
