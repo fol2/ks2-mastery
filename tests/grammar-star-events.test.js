@@ -316,7 +316,9 @@ test('U6 star event: secure-driven level increase emits no levelup event', () =>
 });
 
 test('U6 star event: direct and Concordium caught can both emit from Star evidence', () => {
-  const repository = makeRepository();
+  const repository = makeRepository({
+    couronnail: { caught: true, starHighWater: 1 },
+  });
   const events = rewardEventsFromGrammarEvents([
     {
       type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
@@ -345,9 +347,17 @@ test('U6 star event: direct and Concordium caught can both emit from Star eviden
   assert.equal(events.length, 2, 'exactly two events (one per monster)');
 });
 
-test('U6 star event: punctuation-for-grammar Star evidence catches only Concordium', () => {
+test('U6 star event: punctuation-for-grammar Star evidence catches its direct owner, not gated Concordium', () => {
   const repository = makeRepository();
   const events = rewardEventsFromGrammarEvents([
+    {
+      type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
+      subjectId: 'grammar',
+      learnerId: 'learner-u6-punct-gram',
+      conceptId: 'speech_punctuation',
+      monsterId: 'bracehart',
+      computedStars: 1,
+    },
     {
       type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
       subjectId: 'grammar',
@@ -360,8 +370,8 @@ test('U6 star event: punctuation-for-grammar Star evidence catches only Concordi
     gameStateRepository: repository,
     random: () => 0,
   });
-  assert.equal(events.length, 1, 'only one event for punctuation-for-grammar concept');
-  assert.equal(events[0].monsterId, 'concordium', 'event is for Concordium');
+  assert.equal(events.length, 1, 'only one visible event before Concordium breadth gate');
+  assert.equal(events[0].monsterId, 'bracehart', 'event is for the direct owner');
   assert.equal(events[0].kind, 'caught', 'kind is caught');
 });
 
@@ -471,7 +481,7 @@ test('U5 Egg: fresh Bracehart, star-evidence Stars=1 fires caught and persists c
 // U5-2. Fresh Concordium: star-evidence Stars=1 -> Concordium caught event
 // ---------------------------------------------------------------------------
 
-test('U5 Egg: fresh Concordium, star-evidence Stars=1 fires Concordium caught', () => {
+test('U5 Egg: fresh Concordium, star-evidence Stars=1 latches state but does not fire before direct breadth', () => {
   const repository = makeRepository();
 
   const events = updateGrammarStarHighWater({
@@ -483,12 +493,10 @@ test('U5 Egg: fresh Concordium, star-evidence Stars=1 fires Concordium caught', 
     random: () => 0,
   });
 
-  assert.equal(events.length, 1, 'exactly one event');
-  assert.equal(events[0].kind, 'caught', 'event kind is caught');
-  assert.equal(events[0].monsterId, 'concordium', 'event targets Concordium');
+  assert.equal(events.length, 0, 'no visible Concordium event before direct breadth');
 
   const state = repository.state();
-  assert.equal(state.concordium.caught, true, 'Concordium caught persisted');
+  assert.equal(state.concordium.caught, true, 'raw Concordium latch persists for later gate release');
   assert.equal(state.concordium.starHighWater, 1, 'Concordium starHighWater=1');
 });
 
@@ -716,14 +724,16 @@ test('U5 Egg: Egg fires from sub-secure evidence without any concept-secured eve
     random: () => 0,
   });
 
-  // caught events for both Chronalyx and Concordium
+  // caught event for Chronalyx only; Concordium remains visually gated until
+  // at least two direct monsters have been found.
   assert.ok(
     events.some((e) => e.monsterId === 'chronalyx' && e.kind === 'caught'),
     'Chronalyx caught from sub-secure evidence',
   );
-  assert.ok(
+  assert.equal(
     events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
-    'Concordium caught from sub-secure evidence',
+    false,
+    'Concordium remains gated from sub-secure evidence',
   );
 
   // mastered[] remains empty (no concept-secured fired)
@@ -873,14 +883,15 @@ test('U5 Egg: full integration — sub-secure evidence catches, concept-secured 
     random: () => 0,
   });
 
-  // Both monsters caught
+  // Only the direct monster catches; Concordium stores the raw high-water but
+  // stays visually gated until there is enough direct breadth.
   const phase1Caught = phase1Events.filter((e) => e.kind === 'caught');
-  assert.equal(phase1Caught.length, 2, 'phase 1: two caught events (Bracehart + Concordium)');
+  assert.equal(phase1Caught.length, 1, 'phase 1: one caught event (Bracehart only)');
 
   // Verify persisted state
   const stateAfterPhase1 = repository.state();
   assert.equal(stateAfterPhase1.bracehart.caught, true, 'Bracehart caught after phase 1');
-  assert.equal(stateAfterPhase1.concordium.caught, true, 'Concordium caught after phase 1');
+  assert.equal(stateAfterPhase1.concordium.caught, true, 'Concordium raw latch stored after phase 1');
   assert.deepEqual(stateAfterPhase1.bracehart.mastered || [], [], 'Bracehart mastered[] empty after phase 1');
 
   // Phase 2: concept-secured (learner reaches secure status)

@@ -6,11 +6,12 @@
 // Invariants: docs/plans/james/grammar/grammar-phase5-invariants.md R6, R7.
 //
 // The single top-level assertion this file exists to prove:
-// **Concordium.stage, Concordium.caught, and Concordium.stars are sticky
+// **Concordium.stage and Concordium.raw Stars are sticky
 // ratchets — no mutator (retry, re-scoring, writer self-heal, import/export
 // round-trip, cross-release state carry, legacy migration, or adversarial
 // payload) may decrement any of them across the full replay of a random or
-// named mutator sequence.**
+// named mutator sequence. Child-facing display Stars may be gated while the
+// Grand monster is still waiting for enough direct-monster breadth.**
 //
 // P5 U9 extends the ratchet to Stars (R6 — Stars are monotonically non-
 // decreasing). The Star ratchet is checked both without conceptNodes (reward-
@@ -159,6 +160,7 @@ function assertConcordiumRatchet(state, maxPrior, context, { conceptNodes = null
   if (conceptNodes) progressOpts.conceptNodes = conceptNodes;
   if (recentAttempts) progressOpts.recentAttempts = recentAttempts;
   const concordium = progressForGrammarMonster(state, 'concordium', progressOpts);
+  const rawStars = Math.max(0, Math.floor(Number(concordium.starHighWater ?? concordium.stars) || 0));
   assert.ok(
     concordium.stage >= maxPrior.stage,
     `${context}: Concordium.stage=${concordium.stage} < priorMax=${maxPrior.stage} — sticky-ratchet violated`,
@@ -176,18 +178,21 @@ function assertConcordiumRatchet(state, maxPrior, context, { conceptNodes = null
     concordium.mastered >= maxPrior.mastered,
     `${context}: Concordium.mastered=${concordium.mastered} < priorMax=${maxPrior.mastered} — monotonic-count violated`,
   );
-  // P5 Star ratchet: Stars are monotonically non-decreasing (R6). When
+  // P5 Star ratchet: raw Stars are monotonically non-decreasing (R6). When
   // conceptNodes are provided, the Star computation path is exercised and
-  // the ratchet covers the full evidence-derived Stars pipeline.
+  // the ratchet covers the full evidence-derived Stars pipeline. The
+  // child-facing `stars` field can be temporarily gated to 0 for Concordium
+  // until enough direct Grammar monsters have been found; the persisted
+  // starHighWater remains the monotonic latch.
   assert.ok(
-    concordium.stars >= maxPrior.stars,
-    `${context}: Concordium.stars=${concordium.stars} < priorMax=${maxPrior.stars} — Star sticky-ratchet violated (R6)`,
+    rawStars >= maxPrior.stars,
+    `${context}: Concordium.rawStars=${rawStars} < priorMax=${maxPrior.stars} — Star sticky-ratchet violated (R6)`,
   );
   return {
     stage: Math.max(maxPrior.stage, concordium.stage),
     caught: maxPrior.caught || concordium.caught,
     mastered: Math.max(maxPrior.mastered, concordium.mastered),
-    stars: Math.max(maxPrior.stars, concordium.stars),
+    stars: Math.max(maxPrior.stars, rawStars),
   };
 }
 
@@ -206,7 +211,7 @@ function initialMaxPriorFromState(state, { conceptNodes = null, recentAttempts =
     stage: concordium.stage,
     caught: Boolean(concordium.caught),
     mastered: concordium.mastered,
-    stars: concordium.stars || 0,
+    stars: Math.max(0, Math.floor(Number(concordium.starHighWater ?? concordium.stars) || 0)),
   };
 }
 
@@ -349,7 +354,7 @@ if (PROPERTY_SEED_RAW !== undefined && PROPERTY_SEED_RAW !== '' && !Number.isFin
 // Plan §U3 named shape 1: fresh learner + 18 secure answers in random order
 // → Concordium reaches Mega exactly once.
 
-test('U3 named shape 1: 18 secure answers in random order → Concordium reaches Mega exactly once', () => {
+test('U3 named shape 1: 18 secure answers in random order → Concordium mastery reaches legacy Mega while display stays Star-gated', () => {
   const random = makeSeededRandom(PROPERTY_SEED);
   // Shuffle GRAMMAR_AGGREGATE_CONCEPTS deterministically.
   const shuffled = GRAMMAR_AGGREGATE_CONCEPTS.slice();
@@ -364,13 +369,19 @@ test('U3 named shape 1: 18 secure answers in random order → Concordium reaches
   const { events } = runSequence(repository, actions, { label: 'shape-1-18-secure' });
 
   assert.deepEqual(events, [], 'secure-only replay emits no monster reward events');
-  // Final state: Concordium stage = 4.
+  // Final state: secure-only mastery reaches the legacy Mega stage, but
+  // child-facing Grand display remains gated until Star-display breadth is
+  // present on enough direct Grammar monsters. Secure skills are learner
+  // progress evidence; they no longer mint monster reward display by
+  // themselves.
   const concordium = progressForGrammarMonster(repository.state(), 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
   assert.equal(concordium.stage, 4);
   assert.equal(concordium.mastered, 18);
-  assert.equal(concordium.caught, true);
+  assert.equal(concordium.caught, false);
+  assert.equal(concordium.displayState, 'not-found');
+  assert.equal(concordium.stars, 0);
 });
 
 // ----- Named shape 2: pre-flip Glossbloom + post-flip answer -----------------
@@ -639,14 +650,17 @@ test('U9 named shape 8 (P5 legacy): pre-P5 Couronnail at Mega (3/3 secure, no re
   };
 
   // Concordium progress with NO conceptNodes (reward-layer read path):
-  // legacy stage from 3/18 = 0.167 → stage 1 (Egg). Legacy floor = 1 Star.
-  // displayStars = max(0 computed, 0 HW, 1 floor) = 1.
+  // legacy stage from 3/18 = 0.167 → raw legacy floor = 1 Star. The
+  // child-facing display is still gated because only one direct Grammar
+  // monster is found.
   const concordium = progressForGrammarMonster(initialState, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
-  assert.ok(concordium.caught, 'Concordium remains caught');
+  assert.equal(concordium.caught, false, 'Concordium display remains gated with only one direct monster found');
   assert.equal(concordium.mastered, 3, 'Concordium has 3 mastered concepts');
   assert.ok(concordium.stage >= 1, 'Concordium stage >= 1 via legacy floor');
+  assert.ok(concordium.starHighWater >= 1, 'Concordium raw Star latch preserves the legacy floor');
+  assert.equal(concordium.stars, 0, 'Concordium child-facing Stars stay hidden until the Grand gate opens');
 
   // Couronnail progress: legacy 3/3 = 1.0 → stage 4. Legacy floor = 100 Stars.
   const couronnail = progressForGrammarMonster(initialState, 'couronnail', {
@@ -715,8 +729,9 @@ test('U9 named shape 9 (P5 legacy): pre-P5 Concordium at stage 3 (14/18 secure) 
   });
   assert.equal(concordium.mastered, 14, 'Concordium has 14 mastered concepts');
   assert.ok(concordium.stage >= 3, 'Concordium stage >= 3 (legacy floor preserves Growing)');
-  assert.ok(concordium.stars >= 35, `Concordium Stars=${concordium.stars} >= 35 (legacy floor from stage 3) (R7)`);
-  assert.ok(concordium.caught, 'Concordium remains caught');
+  assert.ok(concordium.starHighWater >= 35, `Concordium raw Stars=${concordium.starHighWater} >= 35 (legacy floor from stage 3) (R7)`);
+  assert.equal(concordium.stars, 0, 'Concordium child-facing Stars are hidden by the Grand display gate');
+  assert.equal(concordium.caught, false, 'Concordium display remains gated without direct-monster breadth');
 
   // Run a 20-step random replay on top — ratchet must hold from baseline.
   const repository = makeRepository(initialState);
@@ -728,7 +743,6 @@ test('U9 named shape 9 (P5 legacy): pre-P5 Concordium at stage 3 (14/18 secure) 
   });
   assert.ok(maxPrior.stage >= 3, `Ratchet: final maxPrior.stage=${maxPrior.stage} >= 3`);
   assert.ok(maxPrior.stars >= 35, `Ratchet: final maxPrior.stars=${maxPrior.stars} >= 35`);
-  assert.equal(maxPrior.caught, true, 'Ratchet: caught remains true');
 });
 
 // ----- Named shape 10 (P5 legacy): reserved monster evidence → normaliser unions ----
@@ -752,12 +766,14 @@ test('U9 named shape 10 (P5 legacy): reserved monster evidence normalised into C
   };
   const repository = makeRepository(initialState);
 
-  // After normalisation, Concordium should show caught via retired evidence.
+  // After normalisation, Concordium preserves retired evidence, but the
+  // child-facing display is gated until enough direct monsters are found.
   const normState = normaliseGrammarRewardState(repository.state());
   const concordiumInit = progressForGrammarMonster(normState, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
-  assert.ok(concordiumInit.caught, 'Concordium caught via retired evidence');
+  assert.equal(concordiumInit.caught, false, 'Concordium display remains gated via retired evidence');
+  assert.equal(concordiumInit.mastered, 1, 'retired evidence still contributes to the aggregate mastered count');
 
   // Replay 30 steps — ratchet must never drop below the initial state.
   const actionRng = makeSeededRandom(PROPERTY_SEED * 17 + 3);
@@ -766,7 +782,6 @@ test('U9 named shape 10 (P5 legacy): reserved monster evidence normalised into C
     label: 'shape-10-reserved-normalised',
     learnerId: 'learner-reserved',
   });
-  assert.ok(maxPrior.caught, 'Ratchet: caught remains true after replay');
   assert.ok(maxPrior.stars >= 0, 'Ratchet: Stars non-negative throughout');
 });
 
@@ -916,13 +931,16 @@ test('U3 post-mega branch: pre-seed 17/18 state + 40-step random replay → ratc
   };
   const repository = makeRepository(initialState);
 
-  // Baseline sanity: Concordium reads stage=3 (17/18 >= 0.75 but < 1.0).
+  // Baseline sanity: Concordium reads stage=3 (17/18 >= 0.75 but < 1.0),
+  // while child-facing caught/display stay gated because direct monsters do
+  // not have Star-display breadth in this synthetic secure-only fixture.
   const baseline = progressForGrammarMonster(repository.state(), 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
   assert.equal(baseline.stage, 3, 'precondition: 17/18 mastered maps to stage 3');
   assert.equal(baseline.mastered, 17);
-  assert.equal(baseline.caught, true);
+  assert.equal(baseline.caught, false);
+  assert.equal(baseline.displayState, 'not-found');
 
   // 40-step random replay. The random sequence may or may not fire the
   // final secure for `remaining`; either way, ratchet never drops from
@@ -945,11 +963,6 @@ test('U3 post-mega branch: pre-seed 17/18 state + 40-step random replay → ratc
   assert.ok(
     maxPrior.mastered >= 17,
     `post-mega ratchet: final maxPrior.mastered=${maxPrior.mastered} below baseline mastered=17`,
-  );
-  assert.equal(
-    maxPrior.caught,
-    true,
-    'post-mega ratchet: caught must remain true throughout the replay',
   );
 });
 
@@ -1036,7 +1049,7 @@ test('U3 adversarial: import pre-flip Glossbloom-only state JSON → normaliseGr
   const concordium = progressForGrammarMonster(view, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
-  assert.equal(concordium.caught, true);
+  assert.equal(concordium.caught, false);
   assert.equal(concordium.mastered, 1);
   // Idempotency: re-normalising the view produces the same shape.
   const reNormalised = normaliseGrammarRewardState(view);
@@ -1065,7 +1078,7 @@ test('U3 adversarial: Spelling cross-subject regression — monsterSummaryFromSt
   assert.ok(concordium, 'Concordium must appear in the combined meadow summary via the normaliser at spelling.js:148');
   assert.equal(concordium.progress.mastered, 1,
     'Concordium.mastered === 1 confirms the normaliser callsite (spelling.js:148) routes retired-id evidence');
-  assert.equal(concordium.progress.caught, true);
+  assert.equal(concordium.progress.caught, false);
 });
 
 // ----- Integration — Covers F2: end-to-end reward pipeline -------------------
@@ -1125,14 +1138,16 @@ test('U9 integration — F2 end-to-end: concept-secured → reward → Star ratc
     const concordium = progressForGrammarMonster(state, 'concordium', {
       conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
     });
-    // Stars field must exist and be non-negative.
+    // Stars field must exist and be non-negative. The child-facing Stars may
+    // remain gated to zero; the raw starHighWater field is the ratchet.
     assert.ok(typeof concordium.stars === 'number' && concordium.stars >= 0,
       `step ${i + 1}: stars must be a non-negative number, got ${concordium.stars}`);
-    // Star ratchet: once earned, never lost.
-    assert.ok(concordium.stars >= maxStars,
-      `step ${i + 1}: stars=${concordium.stars} < maxPrior=${maxStars} — Star ratchet violated`);
-    maxStars = Math.max(maxStars, concordium.stars);
-    // starHighWater must be persisted and >= stars.
+    const rawStars = Math.max(0, Math.floor(Number(concordium.starHighWater ?? concordium.stars) || 0));
+    // Raw Star ratchet: once earned, never lost.
+    assert.ok(rawStars >= maxStars,
+      `step ${i + 1}: rawStars=${rawStars} < maxPrior=${maxStars} — Star ratchet violated`);
+    maxStars = Math.max(maxStars, rawStars);
+    // starHighWater must be persisted and >= child-facing stars.
     assert.ok(concordium.starHighWater >= concordium.stars,
       `step ${i + 1}: starHighWater=${concordium.starHighWater} < stars=${concordium.stars}`);
   }
@@ -1144,7 +1159,8 @@ test('U9 integration — F2 end-to-end: concept-secured → reward → Star ratc
   });
   assert.equal(final.mastered, 18, 'all 18 concepts mastered');
   assert.equal(final.stage, 4, 'Concordium at Mega (stage 4)');
-  assert.ok(final.caught, 'Concordium caught');
+  assert.equal(final.caught, false, 'Concordium display remains gated in this secure-only fixture');
+  assert.equal(final.displayState, 'not-found');
   // starHighWater must be at its maximum for the sequence.
   assert.ok(final.starHighWater >= maxStars,
     `final starHighWater=${final.starHighWater} must be >= maxStars=${maxStars}`);
@@ -1371,9 +1387,11 @@ test('U7 P6 named shape 11: sub-secure Stars earned → recentAttempts rolls →
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
 
-  // The starHighWater latch must preserve the derived Stars across the roll.
-  assert.ok(starsAfterRoll.stars >= derivedStars,
-    `After recentAttempts roll: displayStars=${starsAfterRoll.stars} ` +
+  // The raw starHighWater latch must preserve the derived Stars across the
+  // roll. Child-facing displayStars may be gated to 0 for Concordium when
+  // the direct-monster breadth gate is not met on this later read.
+  assert.ok(starsAfterRoll.starHighWater >= derivedStars,
+    `After recentAttempts roll: raw starHighWater=${starsAfterRoll.starHighWater} ` +
     `must be >= derived ${derivedStars} (P6-4: starHighWater holds)`);
   assert.ok(starsAfterRoll.starHighWater >= derivedStars,
     `After recentAttempts roll: starHighWater=${starsAfterRoll.starHighWater} ` +
@@ -1390,8 +1408,8 @@ test('U7 P6 named shape 11: sub-secure Stars earned → recentAttempts rolls →
     conceptNodes: lowNodes,
     recentAttempts: lowRecentAttempts,
   });
-  assert.ok(starsLowEvidence.stars >= derivedStars,
-    `With reduced evidence: displayStars=${starsLowEvidence.stars} ` +
+  assert.ok(starsLowEvidence.starHighWater >= derivedStars,
+    `With reduced evidence: raw starHighWater=${starsLowEvidence.starHighWater} ` +
     `must be >= original ${derivedStars} because starHighWater holds`);
 });
 

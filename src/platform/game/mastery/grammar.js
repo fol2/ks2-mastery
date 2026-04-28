@@ -31,6 +31,10 @@ export { GRAMMAR_MONSTER_CONCEPTS, GRAMMAR_AGGREGATE_CONCEPTS, GRAMMAR_CONCEPT_T
 
 export const GRAMMAR_REWARD_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
 
+const DIRECT_GRAMMAR_MONSTER_IDS = Object.freeze(
+  GRAMMAR_MONSTER_IDS.filter((id) => id !== GRAMMAR_GRAND_MONSTER_ID),
+);
+
 function grammarTotal(entry, fallback = 1) {
   const count = Number(entry?.conceptTotal);
   return Number.isFinite(count) && count > 0 ? Math.floor(count) : Math.max(1, Number(fallback) || 1);
@@ -74,6 +78,26 @@ function seedStarHighWater(entry, total, releaseId = GRAMMAR_REWARD_RELEASE_ID) 
 function grammarMonsterConceptTotal(monsterId) {
   if (monsterId === GRAMMAR_GRAND_MONSTER_ID) return GRAMMAR_AGGREGATE_CONCEPTS.length;
   return GRAMMAR_MONSTER_CONCEPTS[monsterId]?.length || MONSTERS[monsterId]?.masteredMax || 1;
+}
+
+function grammarGrandDisplayGateMet(state, {
+  releaseId = GRAMMAR_REWARD_RELEASE_ID,
+  conceptNodes = null,
+  recentAttempts = null,
+} = {}) {
+  let foundDirects = 0;
+  for (const directMonsterId of DIRECT_GRAMMAR_MONSTER_IDS) {
+    const progress = progressForGrammarMonster(state, directMonsterId, {
+      releaseId,
+      conceptTotal: grammarMonsterConceptTotal(directMonsterId),
+      conceptNodes,
+      recentAttempts,
+    });
+    if (progress.displayState !== 'not-found' || progress.displayStars >= 1) {
+      foundDirects += 1;
+    }
+  }
+  return foundDirects >= 2;
 }
 
 export function monsterIdForGrammarConcept(conceptId) {
@@ -213,17 +237,32 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
     legacyStage: legacyFloor,
   });
 
+  let visibleDisplayStars = displayStars;
+  let displayStage = grammarStarDisplayStage(displayStars);
+  let displayState = grammarDisplayStateForStars(displayStars);
+  let grandDisplayGateMet = true;
+  if (monsterId === GRAMMAR_GRAND_MONSTER_ID && displayStars >= 1) {
+    grandDisplayGateMet = grammarGrandDisplayGateMet(state, {
+      releaseId,
+      conceptNodes,
+      recentAttempts,
+    });
+    if (!grandDisplayGateMet) {
+      visibleDisplayStars = 0;
+      displayStage = 0;
+      displayState = 'not-found';
+    }
+  }
+
   // Star-derived stage for backward compat: max(legacyStage, starDerivedStage).
-  const starDerivedStage = grammarStarStageFor(displayStars);
+  const starDerivedStage = grammarStarStageFor(visibleDisplayStars);
   const stage = Math.max(legacyStage, starDerivedStage);
-  const displayStage = grammarStarDisplayStage(displayStars);
-  const displayState = grammarDisplayStateForStars(displayStars);
 
   // Level calculation: max of legacy ratio-based level and Star-based level.
   // Legacy: Math.round(mastered/total * 10), capped at 10.
   // Star-based: every 10 Stars is one level, capped at 10.
   const legacyLevel = Math.min(10, Math.round((mastered / Math.max(1, total)) * 10));
-  const starLevel = Math.min(10, Math.floor(displayStars / 10));
+  const starLevel = Math.min(10, Math.floor(visibleDisplayStars / 10));
   const level = Math.max(legacyLevel, starLevel);
 
   return {
@@ -231,18 +270,19 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
     conceptTotal: total,
     stage,
     level,
-    caught: mastered >= 1 || displayStars >= 1,
+    caught: (mastered >= 1 || visibleDisplayStars >= 1) && displayState !== 'not-found',
     branch: branchForMonster(state, monsterId),
     masteredList: grammarMasteredList(entry, releaseId),
     // Star fields
-    stars: displayStars,
-    displayStars,
+    stars: visibleDisplayStars,
+    displayStars: visibleDisplayStars,
     starMax: GRAMMAR_MONSTER_STAR_MAX,
     displayStage,
     displayState,
-    stageName: grammarStarStageName(displayStars),
+    stageName: grammarStarStageName(visibleDisplayStars),
     starHighWater: updatedHighWater,
     starStage: starDerivedStage,
+    grandDisplayGateMet,
   };
 }
 

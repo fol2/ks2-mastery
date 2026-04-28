@@ -176,10 +176,12 @@ test('P7 drift guard: concept-to-monster mapping covers all 18 aggregate concept
   for (const conceptId of GRAMMAR_AGGREGATE_CONCEPTS) {
     assert.ok(typeof conceptId === 'string' && conceptId.length > 0);
   }
-  // Direct monster concepts sum to 13, aggregate has 18 (13 + 5 punctuation-for-grammar).
+  // Direct monster concepts now cover all 18 aggregate concepts. The
+  // punctuation-for-grammar bridge concepts still contribute to Concordium,
+  // but they also have direct owners for child-facing progress.
   const directCount = Object.values(GRAMMAR_MONSTER_CONCEPTS).reduce(
     (sum, ids) => sum + ids.length,
     0,
   );
-  assert.equal(directCount, 13);
+  assert.equal(directCount, 18);
 });

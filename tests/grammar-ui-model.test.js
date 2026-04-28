@@ -490,12 +490,12 @@ test('U8 view-model: grammarMonsterClusterForConcept maps direct clusters (word_
   assert.equal(grammarMonsterClusterForConcept('formality'), 'couronnail');
 });
 
-test('U8 view-model: grammarMonsterClusterForConcept punctuation-for-grammar concepts fall back to concordium', () => {
-  assert.equal(grammarMonsterClusterForConcept('parenthesis_commas'), 'concordium');
-  assert.equal(grammarMonsterClusterForConcept('speech_punctuation'), 'concordium');
-  assert.equal(grammarMonsterClusterForConcept('apostrophes_possession'), 'concordium');
-  assert.equal(grammarMonsterClusterForConcept('boundary_punctuation'), 'concordium');
-  assert.equal(grammarMonsterClusterForConcept('hyphen_ambiguity'), 'concordium');
+test('U8 view-model: grammarMonsterClusterForConcept maps punctuation-for-grammar concepts to direct owners', () => {
+  assert.equal(grammarMonsterClusterForConcept('parenthesis_commas'), 'bracehart');
+  assert.equal(grammarMonsterClusterForConcept('speech_punctuation'), 'bracehart');
+  assert.equal(grammarMonsterClusterForConcept('boundary_punctuation'), 'bracehart');
+  assert.equal(grammarMonsterClusterForConcept('apostrophes_possession'), 'couronnail');
+  assert.equal(grammarMonsterClusterForConcept('hyphen_ambiguity'), 'couronnail');
 });
 
 test('U8 view-model: grammarMonsterClusterForConcept unknown/empty concept ids default to concordium', () => {
@@ -689,9 +689,9 @@ test('U8 view-model: buildGrammarBankModel cluster filter concordium shows all 1
   assert.equal(model.cards.length, 18);
 });
 
-test('U8 view-model: buildGrammarBankModel cluster filter bracehart narrows to 6', () => {
+test('U8 view-model: buildGrammarBankModel cluster filter bracehart narrows to 9', () => {
   const model = buildGrammarBankModel({}, { clusterFilter: 'bracehart' });
-  assert.equal(model.cards.length, 6);
+  assert.equal(model.cards.length, 9);
   for (const card of model.cards) {
     assert.equal(card.cluster, 'bracehart');
   }
@@ -825,6 +825,8 @@ test('P7-U2 view-model: 42-Star Bracehart summary shows "Hatched" stage name (ac
 
 test('P7-U2 view-model: Concordium at 100 Stars shows "Mega" stage', () => {
   const rewardState = {
+    bracehart: { mastered: [], caught: true, starHighWater: 1 },
+    couronnail: { mastered: [], caught: true, starHighWater: 1 },
     concordium: { mastered: [], caught: true, starHighWater: 100 },
   };
   const cards = grammarSummaryCards({}, rewardState);
@@ -1004,9 +1006,9 @@ test('U2 view-model: buildGrammarBankModel exposes clusterCounts for chip badges
   const { buildGrammarBankModel } = await import('../src/subjects/grammar/components/grammar-view-model.js');
   const model = buildGrammarBankModel({}, { statusFilter: 'all', clusterFilter: 'all', query: '' });
   assert.equal(model.clusterCounts.all, 18);
-  assert.equal(model.clusterCounts.bracehart, 6);
+  assert.equal(model.clusterCounts.bracehart, 9);
   assert.equal(model.clusterCounts.chronalyx, 4);
-  assert.equal(model.clusterCounts.couronnail, 3);
+  assert.equal(model.clusterCounts.couronnail, 5);
   assert.equal(model.clusterCounts.concordium, 18);
 });
 
@@ -1247,6 +1249,11 @@ test('P5-U10 view-model: monsterStrip + concordiumProgress do not conflict — b
       caught: true,
       starHighWater: 15,
     },
+    couronnail: {
+      mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:word_classes'],
+      caught: true,
+      starHighWater: 1,
+    },
   };
   const model = buildGrammarDashboardModel({}, null, rewardState);
   // Legacy concordiumProgress reads mastered count.
@@ -1277,9 +1284,9 @@ test('P5-U10 view-model: reserved monsters never leak into monsterStrip from das
 // =============================================================================
 
 test('P6-U6 view-model: dashboard model with evidence → monsterStrip Stars match live derivation', () => {
-  // Bracehart has 6 concepts. Provide mastery nodes showing a secured concept
+  // Bracehart has 9 concepts after bridge ownership. Provide mastery nodes showing a secured concept
   // with 2 independent corrects across 2 templates → all 5 evidence tiers
-  // should be true for that concept, yielding floor(100/6 * 1.0) = 16 Stars.
+  // should be true for that concept, yielding floor(100/9 * 1.0) = 11 Stars.
   const rewardState = {
     bracehart: { mastered: [], caught: false, starHighWater: 0 },
   };
@@ -1296,9 +1303,9 @@ test('P6-U6 view-model: dashboard model with evidence → monsterStrip Stars mat
   ];
   const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
   const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
-  // 1 concept fully evidenced out of 6: floor(100/6 * 1.0) = floor(16.667) = 16
-  assert.equal(bracehart.stars, 16, 'Live evidence yields 16 Stars for 1 fully-evidenced concept');
-  assert.equal(bracehart.stageName, 'Hatched', '16 Stars = Hatched stage');
+  // 1 concept fully evidenced out of 9: floor(100/9 * 1.0) = floor(11.111) = 11
+  assert.equal(bracehart.stars, 11, 'Live evidence yields 11 Stars for 1 fully-evidenced concept');
+  assert.equal(bracehart.stageName, 'Egg found', '11 Stars = Egg found stage');
 });
 
 test('P6-U6 view-model: dashboard model without evidence (null, null) → graceful fallback to starHighWater', () => {
@@ -1317,8 +1324,8 @@ test('P6-U6 view-model: live evidence > persisted starHighWater → dashboard sh
   const rewardState = {
     couronnail: { mastered: [], caught: true, starHighWater: 5 },
   };
-  // Couronnail has 3 concepts. Give word_classes all 5 tiers:
-  // floor(100/3 * 1.0) = floor(33.333) = 33 Stars.
+  // Couronnail has 5 concepts after bridge ownership. Give word_classes all 5 tiers:
+  // floor(100/5 * 1.0) = 20 Stars.
   const conceptNodes = {
     word_classes: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
   };
@@ -1331,7 +1338,32 @@ test('P6-U6 view-model: live evidence > persisted starHighWater → dashboard sh
   const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
   const couronnail = model.monsterStrip.find((e) => e.monsterId === 'couronnail');
   assert.ok(couronnail.stars > 5, `Live evidence (${couronnail.stars}) must exceed persisted starHighWater (5)`);
-  assert.equal(couronnail.stars, 33, '1 fully-evidenced Couronnail concept = 33 Stars');
+  assert.equal(couronnail.stars, 20, '1 fully-evidenced Couronnail concept = 20 Stars');
+});
+
+test('P6-U6 view-model: bridge-only evidence shows direct egg and hides Concordium until breadth gate', () => {
+  const rewardState = {
+    concordium: {
+      mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:speech_punctuation'],
+      caught: true,
+      starHighWater: 14,
+    },
+  };
+  const conceptNodes = {
+    speech_punctuation: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
+  };
+  const now = Date.now();
+  const recentAttempts = [
+    { conceptIds: ['speech_punctuation'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: now },
+    { conceptIds: ['speech_punctuation'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: now },
+  ];
+  const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
+  const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
+  const concordium = model.monsterStrip.find((e) => e.monsterId === 'concordium');
+  assert.ok(bracehart.stars >= 1, 'speech_punctuation contributes to Bracehart');
+  assert.notEqual(bracehart.displayState, 'not-found', 'Bracehart egg appears');
+  assert.equal(concordium.stars, 0, 'Concordium display Stars are taken back');
+  assert.equal(concordium.displayState, 'not-found', 'Concordium egg is hidden');
 });
 
 test('P6-U6 view-model: live evidence < persisted starHighWater → dashboard shows starHighWater (latch holds)', () => {

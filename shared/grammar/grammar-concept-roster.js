@@ -13,6 +13,9 @@ export const GRAMMAR_MONSTER_CONCEPTS = Object.freeze({
     'noun_phrases',
     'active_passive',
     'subject_object',
+    'parenthesis_commas',
+    'speech_punctuation',
+    'boundary_punctuation',
   ]),
   chronalyx: Object.freeze([
     'tense_aspect',
@@ -24,6 +27,8 @@ export const GRAMMAR_MONSTER_CONCEPTS = Object.freeze({
     'word_classes',
     'standard_english',
     'formality',
+    'apostrophes_possession',
+    'hyphen_ambiguity',
   ]),
 });
 

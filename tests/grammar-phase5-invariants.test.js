@@ -10,7 +10,7 @@
 // Structure:
 //  1. Denominator-freeze hard gate (invariant 15, preserving P4 invariant 7).
 //  2. Active monster roster assertion (invariant 11, preserving P4 invariant 8).
-//  3. Concept-to-monster mapping completeness (all 18 aggregate concepts map).
+//  3. Concept-to-monster mapping completeness (all 18 aggregate concepts have direct ownership).
 //  4. Phase 5 Star constants contract documentation (invariants 1, 3, 5, 6).
 //
 // NOTE: The Star constants module (`shared/grammar/grammar-stars.js`) does not
@@ -113,13 +113,10 @@ test('Phase 5 invariant 11: active monster roster is exactly Bracehart + Chronal
 // -----------------------------------------------------------------------------
 // 3. Concept-to-monster mapping completeness.
 //
-// Every concept in GRAMMAR_AGGREGATE_CONCEPTS that belongs to a direct
-// monster must appear in GRAMMAR_CONCEPT_TO_MONSTER. The 5 punctuation-
-// for-grammar concepts (parenthesis_commas, speech_punctuation,
-// apostrophes_possession, boundary_punctuation, hyphen_ambiguity)
-// contribute to Concordium only — they are NOT mapped to a direct monster.
-// This test pins the mapping shape so that Phase 5's per-concept Star
-// budget computation has a stable denominator for direct monsters.
+// Every concept in GRAMMAR_AGGREGATE_CONCEPTS now has direct-monster
+// ownership. The 5 punctuation-for-grammar bridge concepts still contribute
+// to Concordium, but also route to Bracehart / Couronnail so a Grand egg
+// cannot be the learner's first visible Grammar reward.
 // -----------------------------------------------------------------------------
 
 test('Phase 5 invariant 15: concept-to-monster mapping covers all direct-monster concepts', () => {
@@ -141,47 +138,42 @@ test('Phase 5 invariant 15: concept-to-monster mapping covers all direct-monster
     );
   }
 
-  // Direct monster concept counts: Bracehart 6, Chronalyx 4, Couronnail 3.
-  assert.equal(GRAMMAR_MONSTER_CONCEPTS.bracehart.length, 6, 'Bracehart has 6 concepts');
+  // Direct monster concept counts: Bracehart 9, Chronalyx 4, Couronnail 5.
+  assert.equal(GRAMMAR_MONSTER_CONCEPTS.bracehart.length, 9, 'Bracehart has 9 concepts');
   assert.equal(GRAMMAR_MONSTER_CONCEPTS.chronalyx.length, 4, 'Chronalyx has 4 concepts');
-  assert.equal(GRAMMAR_MONSTER_CONCEPTS.couronnail.length, 3, 'Couronnail has 3 concepts');
+  assert.equal(GRAMMAR_MONSTER_CONCEPTS.couronnail.length, 5, 'Couronnail has 5 concepts');
 
-  // Total direct concepts (13) + punctuation-for-grammar (5) = 18 aggregate.
+  // Direct ownership now covers the full 18-concept aggregate.
   const totalDirect = directConcepts.length;
-  assert.equal(totalDirect, 13, 'Direct monsters cover 13 concepts total');
-  assert.equal(
-    GRAMMAR_AGGREGATE_CONCEPTS.length - totalDirect,
-    5,
-    '5 punctuation-for-grammar concepts contribute to Concordium only',
-  );
+  assert.equal(totalDirect, 18, 'Direct monsters cover all 18 concepts total');
+  assert.equal(GRAMMAR_AGGREGATE_CONCEPTS.length - totalDirect, 0);
 });
 
 // -----------------------------------------------------------------------------
-// 4. Punctuation-for-grammar concepts are aggregate-only (not direct-mapped).
+// 4. Punctuation-for-grammar concepts bridge into direct monsters.
 //
-// The 5 punctuation concepts that contribute to Concordium must NOT appear
-// in GRAMMAR_CONCEPT_TO_MONSTER. If they were mapped to a direct monster,
-// Phase 5's Star budget computation would double-count them.
+// The 5 punctuation concepts still contribute to Concordium, but now also
+// have direct ownership for child-facing progress.
 // -----------------------------------------------------------------------------
 
-test('Phase 5 invariant 15: punctuation-for-grammar concepts are aggregate-only', () => {
-  const punctuationForGrammar = [
-    'parenthesis_commas',
-    'speech_punctuation',
-    'apostrophes_possession',
-    'boundary_punctuation',
-    'hyphen_ambiguity',
-  ];
+test('Phase 5 invariant 15: punctuation-for-grammar bridge concepts have direct owners', () => {
+  const punctuationForGrammar = {
+    parenthesis_commas: 'bracehart',
+    speech_punctuation: 'bracehart',
+    boundary_punctuation: 'bracehart',
+    apostrophes_possession: 'couronnail',
+    hyphen_ambiguity: 'couronnail',
+  };
 
-  for (const conceptId of punctuationForGrammar) {
+  for (const [conceptId, monsterId] of Object.entries(punctuationForGrammar)) {
     assert.ok(
       GRAMMAR_AGGREGATE_CONCEPTS.includes(conceptId),
       `Punctuation-for-grammar concept "${conceptId}" must be in GRAMMAR_AGGREGATE_CONCEPTS`,
     );
     assert.equal(
       GRAMMAR_CONCEPT_TO_MONSTER[conceptId],
-      undefined,
-      `Punctuation-for-grammar concept "${conceptId}" must NOT be mapped to a direct monster`,
+      monsterId,
+      `Punctuation-for-grammar concept "${conceptId}" must be mapped to ${monsterId}`,
     );
   }
 });

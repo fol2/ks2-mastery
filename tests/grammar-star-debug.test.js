@@ -4,7 +4,7 @@
 //
 // Structure:
 //  1. Fresh learner: 0 Stars, source 'live', empty conceptEvidence
-//  2. 42-Star Bracehart: per-concept tier breakdown with 6 concepts
+//  2. Bracehart: per-concept tier breakdown with current 9-concept roster
 //  3. Concordium at Mega: all 18 concepts × 5 tiers → 100 Stars
 //  4. Legacy learner: starHighWater=35, computed=12 → source 'highWater', warning
 //  5. Missing conceptNodes: source 'highWater' when rewardEntry present
@@ -17,7 +17,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { buildGrammarStarDebugModel } from '../shared/grammar/grammar-star-debug.js';
-import { GRAMMAR_AGGREGATE_CONCEPTS } from '../shared/grammar/grammar-concept-roster.js';
+import {
+  GRAMMAR_AGGREGATE_CONCEPTS,
+  GRAMMAR_MONSTER_CONCEPTS,
+} from '../shared/grammar/grammar-concept-roster.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -56,14 +59,7 @@ function fullEvidenceInputs(conceptIds) {
 test('fresh learner: 0 Stars, source live, empty conceptEvidence', () => {
   const result = buildGrammarStarDebugModel({
     monsterId: 'bracehart',
-    conceptNodes: {
-      sentence_functions: null,
-      clauses: null,
-      relative_clauses: null,
-      noun_phrases: null,
-      active_passive: null,
-      subject_object: null,
-    },
+    conceptNodes: Object.fromEntries(GRAMMAR_MONSTER_CONCEPTS.bracehart.map((id) => [id, null])),
     recentAttempts: [],
     rewardEntry: null,
     nowTs: NOW_TS,
@@ -72,7 +68,7 @@ test('fresh learner: 0 Stars, source live, empty conceptEvidence', () => {
   assert.equal(result.displayStars, 0);
   assert.equal(result.computedLiveStars, 0);
   assert.equal(result.source, 'live');
-  assert.equal(result.conceptEvidence.length, 6);
+  assert.equal(result.conceptEvidence.length, 9);
   for (const ce of result.conceptEvidence) {
     assert.equal(ce.tiers.firstIndependentWin, false);
     assert.equal(ce.tiers.repeatIndependentWin, false);
@@ -87,11 +83,11 @@ test('fresh learner: 0 Stars, source live, empty conceptEvidence', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. 42-Star Bracehart: partial per-concept tier breakdown
+// 2. Bracehart: partial per-concept tier breakdown
 // ---------------------------------------------------------------------------
 
-test('42-Star Bracehart: correct per-concept tier breakdown with 6 concepts', () => {
-  // Bracehart has 6 concepts. Budget per concept = 100/6 ≈ 16.667.
+test('28-Star Bracehart: correct per-concept tier breakdown with 9 concepts', () => {
+  // Bracehart has 9 concepts. Budget per concept = 100/9 ≈ 11.111.
   // We give 4 concepts all tiers except retainedAfterSecure (weight 0.40 each)
   // and 2 concepts firstIndependentWin + repeatIndependentWin (weight 0.15 each).
   // Expected: 4 × 16.667 × 0.40 + 2 × 16.667 × 0.15 = 26.667 + 5.0 = 31.667
@@ -129,7 +125,7 @@ test('42-Star Bracehart: correct per-concept tier breakdown with 6 concepts', ()
   // Concept 5-6: nothing → 0
   // Total: 33.333 + 6.667 + 2.5 = 42.5 → floor = 42 ✓
 
-  const bracehartConcepts = ['sentence_functions', 'clauses', 'relative_clauses', 'noun_phrases', 'active_passive', 'subject_object'];
+  const bracehartConcepts = GRAMMAR_MONSTER_CONCEPTS.bracehart;
 
   const conceptNodes = {};
   const recentAttempts = [];
@@ -154,9 +150,10 @@ test('42-Star Bracehart: correct per-concept tier breakdown with 6 concepts', ()
     { conceptId: 'noun_phrases', templateId: 'np-a', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   );
 
-  // Concepts 5-6: active_passive, subject_object — nothing
-  conceptNodes['active_passive'] = null;
-  conceptNodes['subject_object'] = null;
+  // Remaining Bracehart concepts — nothing
+  for (const id of bracehartConcepts) {
+    if (!(id in conceptNodes)) conceptNodes[id] = null;
+  }
 
   const result = buildGrammarStarDebugModel({
     monsterId: 'bracehart',
@@ -166,10 +163,10 @@ test('42-Star Bracehart: correct per-concept tier breakdown with 6 concepts', ()
     nowTs: NOW_TS,
   });
 
-  assert.equal(result.displayStars, 42, `Expected 42 Stars, got ${result.displayStars}`);
-  assert.equal(result.computedLiveStars, 42);
+  assert.equal(result.displayStars, 28, `Expected 28 Stars, got ${result.displayStars}`);
+  assert.equal(result.computedLiveStars, 28);
   assert.equal(result.source, 'live');
-  assert.equal(result.conceptEvidence.length, 6);
+  assert.equal(result.conceptEvidence.length, 9);
 
   // Check sentence_functions has all 5 tiers
   const sf = result.conceptEvidence.find(c => c.conceptId === 'sentence_functions');
@@ -293,8 +290,8 @@ test('missing conceptNodes: computedLiveStars=0, source highWater from rewardEnt
 // ---------------------------------------------------------------------------
 
 test('missing rewardEntry: displayStars from live derivation only', () => {
-  // Give Couronnail (3 concepts) full evidence → 100 Stars computed.
-  const couronnailConcepts = ['word_classes', 'standard_english', 'formality'];
+  // Give Couronnail (5 concepts) full evidence → 100 Stars computed.
+  const couronnailConcepts = GRAMMAR_MONSTER_CONCEPTS.couronnail;
   const { nodes, attempts } = fullEvidenceInputs(couronnailConcepts);
 
   const result = buildGrammarStarDebugModel({
@@ -317,7 +314,7 @@ test('missing rewardEntry: displayStars from live derivation only', () => {
 // ---------------------------------------------------------------------------
 
 test('redaction: output never contains correctAnswer, acceptedAnswers, templateClosure, aiPrompt, aiOutput', () => {
-  const { nodes, attempts } = fullEvidenceInputs(['sentence_functions', 'clauses', 'relative_clauses', 'noun_phrases', 'active_passive', 'subject_object']);
+  const { nodes, attempts } = fullEvidenceInputs(GRAMMAR_MONSTER_CONCEPTS.bracehart);
   const result = buildGrammarStarDebugModel({
     monsterId: 'bracehart',
     conceptNodes: nodes,

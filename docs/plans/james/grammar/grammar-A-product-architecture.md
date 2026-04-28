@@ -412,6 +412,20 @@ Direct monsters 對應 direct grammar clusters：
 
 Concordium 是 aggregate monster，吃全 18 Grammar concepts，包括 punctuation-for-grammar bridge concepts。
 
+The five punctuation-for-grammar bridge concepts still belong to Grammar's
+18-concept Concordium aggregate, but they also have direct monster ownership
+for child-facing progress:
+
+- Bracehart owns parenthesis commas, speech punctuation, and boundary punctuation.
+- Couronnail owns apostrophes possession and hyphen ambiguity.
+
+This keeps bridge practice from making the grand monster appear before any
+corresponding direct monster. Concordium display is additionally gated: the
+grand monster must stay `not-found` until at least two direct Grammar monsters
+are already found. Stored Concordium high-water can remain for audit/backward
+compatibility, but the child-facing egg can be taken back when it was produced
+only by aggregate bridge evidence.
+
 ### 5.5 100-Star curve 為何好過 raw concept count？
 
 Grammar concepts 太少。用 secure concept count 直接 staging 會令 small-denominator monsters 太快 Mega。例如三個 concepts 的 monster 可以很快從 early progress 跳到 Mega。
@@ -433,6 +447,8 @@ Egg 是 encouragement，不是 mastery。
 這給小朋友早期成功感，但不會令 Mega 變便宜，因為 100 Stars 仍然要 repeated、varied、secure、retained evidence。
 
 Egg Found 的 celebration event 使用 unified monster event kind `caught`，語義是 first-found / first-Star，不是 first secure。Hatch / Growing / Nearly Mega / Mega 的 overlay celebration 由 Star threshold transition 觸發，並在 session end 播放；mid-session toast 目前暫時保留。
+
+Concordium 是例外：它是 grand monster，不應該因為單一 bridge concept 或單一 direct family 率先出蛋。Concordium 的 raw Star latch 可以記住 aggregate evidence，但 child-facing `displayState` 要等至少兩隻 direct Grammar monsters 已 found 才可以離開 `not-found`。
 
 ### 5.7 Stars 為何不能是 XP？
 

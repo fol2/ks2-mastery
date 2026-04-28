@@ -2115,17 +2115,17 @@ test('U2: Grammar Bank status filter "trouble" narrows to needs-repair concepts'
   assert.match(html, /Trouble spot/);
 });
 
-test('U2: Grammar Bank cluster filter "bracehart" narrows to exactly 6 concepts', () => {
+test('U2: Grammar Bank cluster filter "bracehart" narrows to exactly 9 concepts', () => {
   const harness = openGrammarBankHarness();
   harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'bracehart' });
   const html = harness.render();
   const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
-  assert.equal(cards.length, 6, 'bracehart cluster contains exactly 6 concepts');
+  assert.equal(cards.length, 9, 'bracehart cluster contains exactly 9 concepts');
   // Cluster chip toggles aria-pressed.
   assert.match(html, /aria-pressed="true"[^>]*data-value="bracehart"/);
   // Every rendered card carries the bracehart cluster badge.
   const badges = html.match(/grammar-bank-card-cluster-badge"[^>]*data-cluster-id="bracehart"/g) || [];
-  assert.equal(badges.length, 6);
+  assert.equal(badges.length, 9);
 });
 
 test('U2: Grammar Bank cluster filter "concordium" shows all 18 concepts', () => {
@@ -2360,9 +2360,9 @@ test('U2 follower: Grammar Bank aggregate "Total" card stays at 18 under a clust
   const harness = openGrammarBankHarness();
   harness.dispatch('grammar-concept-bank-cluster-filter', { value: 'bracehart' });
   const html = harness.render();
-  // Grid narrows to the bracehart cluster's 6 cards.
+  // Grid narrows to the bracehart cluster's 9 cards.
   const cards = html.match(/<article[^>]*class="grammar-bank-card[^"]*"/g) || [];
-  assert.equal(cards.length, 6);
+  assert.equal(cards.length, 9);
   // Total aggregate card still shows the global 18 so the sub-label
   // "Grammar concepts tracked" stays truthful under narrower filters.
   const totalCard = html.match(/data-aggregate-id="total"[\s\S]*?<\/div><\/div>/);

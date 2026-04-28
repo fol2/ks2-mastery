@@ -102,9 +102,9 @@ test('U0 shape: GRAMMAR_MONSTER_ROUTES has exactly four entries', () => {
 
 // -------- Cluster remap ----------------------------------------------------
 
-test('U0 cluster remap: Bracehart absorbs Sentence structure + noun_phrases (6 concepts)', () => {
-  assert.equal(GRAMMAR_MONSTER_CONCEPTS.bracehart.length, 6);
-  for (const conceptId of ['sentence_functions', 'clauses', 'relative_clauses', 'noun_phrases', 'active_passive', 'subject_object']) {
+test('U0 cluster remap: Bracehart absorbs Sentence structure + punctuation boundary bridges (9 concepts)', () => {
+  assert.equal(GRAMMAR_MONSTER_CONCEPTS.bracehart.length, 9);
+  for (const conceptId of ['sentence_functions', 'clauses', 'relative_clauses', 'noun_phrases', 'active_passive', 'subject_object', 'parenthesis_commas', 'speech_punctuation', 'boundary_punctuation']) {
     assert.ok(
       GRAMMAR_MONSTER_CONCEPTS.bracehart.includes(conceptId),
       `Bracehart cluster must include ${conceptId}`,
@@ -122,9 +122,9 @@ test('U0 cluster remap: Chronalyx absorbs Flow / Linkage (4 concepts)', () => {
   }
 });
 
-test('U0 cluster remap: Couronnail absorbs Word classes (3 concepts)', () => {
-  assert.equal(GRAMMAR_MONSTER_CONCEPTS.couronnail.length, 3);
-  for (const conceptId of ['word_classes', 'standard_english', 'formality']) {
+test('U0 cluster remap: Couronnail absorbs Word classes + word-form bridge concepts (5 concepts)', () => {
+  assert.equal(GRAMMAR_MONSTER_CONCEPTS.couronnail.length, 5);
+  for (const conceptId of ['word_classes', 'standard_english', 'formality', 'apostrophes_possession', 'hyphen_ambiguity']) {
     assert.ok(
       GRAMMAR_MONSTER_CONCEPTS.couronnail.includes(conceptId),
       `Couronnail cluster must include ${conceptId}`,
@@ -132,10 +132,10 @@ test('U0 cluster remap: Couronnail absorbs Word classes (3 concepts)', () => {
   }
 });
 
-test('U0 cluster remap: 3 direct clusters cover 13 concepts (18 total - 5 punctuation-for-grammar)', () => {
+test('U0 cluster remap: 3 direct clusters cover all 18 Grammar concepts', () => {
   const total = Object.values(GRAMMAR_MONSTER_CONCEPTS)
     .reduce((sum, conceptIds) => sum + conceptIds.length, 0);
-  assert.equal(total, 13);
+  assert.equal(total, 18);
 });
 
 test('U0 cluster remap: monsterIdForGrammarConcept routes concepts to new directs', () => {
@@ -145,6 +145,8 @@ test('U0 cluster remap: monsterIdForGrammarConcept routes concepts to new direct
   assert.equal(monsterIdForGrammarConcept('noun_phrases'), 'bracehart');
   assert.equal(monsterIdForGrammarConcept('adverbials'), 'chronalyx');
   assert.equal(monsterIdForGrammarConcept('subject_object'), 'bracehart');
+  assert.equal(monsterIdForGrammarConcept('speech_punctuation'), 'bracehart');
+  assert.equal(monsterIdForGrammarConcept('apostrophes_possession'), 'couronnail');
 });
 
 test('U0 cluster remap: Concordium published total stays at 18', () => {
@@ -157,14 +159,12 @@ test('U0 cluster remap: Concordium published total stays at 18', () => {
   assert.equal(progress.stage, 4);
 });
 
-test('U0 cluster remap: punctuation-for-grammar concepts have no direct monster', () => {
-  for (const conceptId of ['parenthesis_commas', 'speech_punctuation', 'apostrophes_possession', 'boundary_punctuation', 'hyphen_ambiguity']) {
-    assert.equal(
-      monsterIdForGrammarConcept(conceptId),
-      null,
-      `${conceptId} must not route to a direct monster; only Concordium aggregates it`,
-    );
-  }
+test('U0 cluster remap: punctuation-for-grammar concepts now have direct monster owners', () => {
+  assert.equal(monsterIdForGrammarConcept('parenthesis_commas'), 'bracehart');
+  assert.equal(monsterIdForGrammarConcept('speech_punctuation'), 'bracehart');
+  assert.equal(monsterIdForGrammarConcept('boundary_punctuation'), 'bracehart');
+  assert.equal(monsterIdForGrammarConcept('apostrophes_possession'), 'couronnail');
+  assert.equal(monsterIdForGrammarConcept('hyphen_ambiguity'), 'couronnail');
 });
 
 // -------- Read-time normaliser --------------------------------------------
@@ -252,8 +252,8 @@ test('activeGrammarMonsterSummaryFromState surfaces Concordium for pre-flip Glos
   const active = activeGrammarMonsterSummaryFromState(normalised);
   assert.ok(active.length >= 1);
   assert.ok(
-    active.some((entry) => entry.monster.id === 'concordium' && entry.progress.caught),
-    'Concordium surfaces via the unioned view for pre-flip glossbloom-only learners',
+    active.some((entry) => entry.monster.id === 'concordium' && entry.progress.mastered >= 1),
+    'Concordium surfaces as mastered-but-display-gated via the unioned view for pre-flip glossbloom-only learners',
   );
 });
 
@@ -495,13 +495,14 @@ test('Codex landmine #3: withSynthesisedUncaughtMonsters uses an explicit allow-
 
 // -------- Concept-to-monster lookup ---------------------------------------
 
-test('GRAMMAR_CONCEPT_TO_MONSTER covers all 13 direct-cluster concepts', () => {
-  // 13 = 18 aggregate - 5 punctuation-for-grammar
-  assert.equal(Object.keys(GRAMMAR_CONCEPT_TO_MONSTER).length, 13);
+test('GRAMMAR_CONCEPT_TO_MONSTER covers all 18 active Grammar concepts', () => {
+  assert.equal(Object.keys(GRAMMAR_CONCEPT_TO_MONSTER).length, 18);
   // Spot-check the remapped entries.
   assert.equal(GRAMMAR_CONCEPT_TO_MONSTER.word_classes, 'couronnail');
   assert.equal(GRAMMAR_CONCEPT_TO_MONSTER.noun_phrases, 'bracehart');
   assert.equal(GRAMMAR_CONCEPT_TO_MONSTER.adverbials, 'chronalyx');
+  assert.equal(GRAMMAR_CONCEPT_TO_MONSTER.speech_punctuation, 'bracehart');
+  assert.equal(GRAMMAR_CONCEPT_TO_MONSTER.hyphen_ambiguity, 'couronnail');
 });
 
 // -------- spelling.js callsites route through the normaliser (U0 follower) --
@@ -525,7 +526,8 @@ test('monsterSummaryFromState routes Grammar state through the normaliser for re
   ));
 
   assert.ok(grammarConcordium, 'Concordium must appear in the combined meadow summary');
-  assert.equal(grammarConcordium.progress.caught, true);
+  assert.equal(grammarConcordium.progress.caught, false,
+    'Concordium display remains gated until direct monster breadth exists');
   assert.ok(grammarConcordium.progress.mastered >= 1,
     'Concordium mastered count must include the retired-id concept via the unioned view');
 });
@@ -675,7 +677,8 @@ test('monsterSummaryFromSpellingAnalytics routes persisted branch state through 
   ));
 
   assert.ok(grammarConcordium, 'Concordium must appear in the meadow summary from persisted retired-id state');
-  assert.equal(grammarConcordium.progress.caught, true);
+  assert.equal(grammarConcordium.progress.caught, false,
+    'Concordium display remains gated until direct monster breadth exists');
   assert.ok(grammarConcordium.progress.mastered >= 1,
     'Concordium mastered count must reflect the unioned retired-id evidence');
 });

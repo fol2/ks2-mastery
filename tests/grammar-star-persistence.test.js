@@ -74,7 +74,9 @@ function securedEvent(conceptId, overrides = {}) {
 // ---------------------------------------------------------------------------
 
 test('star-evidence-updated with computedStars=1 sets starHighWater=1 and marks Egg caught on the specified monster only', () => {
-  const repository = makeRepository();
+  const repository = makeRepository({
+    couronnail: { caught: true, starHighWater: 1 },
+  });
 
   // Each star-evidence-updated event targets a single monster. The command
   // handler emits one per monster with monster-specific computedStars.
@@ -337,7 +339,9 @@ test('starHighWater survives recentAttempts truncation: stored value persists ac
 // ---------------------------------------------------------------------------
 
 test('updateGrammarStarHighWater directly latches starHighWater on specified monster only', () => {
-  const repository = makeRepository();
+  const repository = makeRepository({
+    bracehart: { caught: true, starHighWater: 1 },
+  });
 
   // Call once for the direct monster.
   const directEvents = updateGrammarStarHighWater({
@@ -409,13 +413,14 @@ test('updateGrammarStarHighWater returns empty when computedStars < 1', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Punctuation-for-grammar concepts: Concordium only, no direct monster
+// Punctuation-for-grammar concepts now have direct Grammar owners.
 // ---------------------------------------------------------------------------
 
-test('star-evidence-updated for punctuation-for-grammar concept updates only Concordium', () => {
+test('star-evidence-updated for punctuation-for-grammar concept updates direct owner and gates Concordium', () => {
   const repository = makeRepository();
 
   const events = rewardEventsFromGrammarEvents([
+    starEvidenceEvent('speech_punctuation', 2, { monsterId: 'bracehart' }),
     starEvidenceEvent('speech_punctuation', 2, { monsterId: 'concordium' }),
   ], {
     gameStateRepository: repository,
@@ -424,19 +429,28 @@ test('star-evidence-updated for punctuation-for-grammar concept updates only Con
 
   const state = repository.state();
 
-  // Concordium should be updated.
+  assert.ok(state.bracehart, 'Bracehart entry exists');
+  assert.equal(state.bracehart.caught, true, 'Bracehart caught');
+  assert.equal(state.bracehart.starHighWater, 2, 'Bracehart starHighWater=2');
+
+  // Concordium raw latch is updated, but its visible caught event is gated.
   assert.ok(state.concordium, 'Concordium entry exists');
-  assert.equal(state.concordium.caught, true, 'Concordium caught');
+  assert.equal(state.concordium.caught, true, 'Concordium raw caught latch stored');
   assert.equal(state.concordium.starHighWater, 2, 'Concordium starHighWater=2');
 
   // No Quoral or other punctuation monster touched.
   assert.equal(state.quoral, undefined, 'Quoral not created');
 
-  // Caught event for Concordium only.
+  // Caught event for direct owner only.
+  assert.equal(
+    events.some((e) => e.monsterId === 'bracehart' && e.kind === 'caught'),
+    true,
+    'Bracehart caught event emitted',
+  );
   assert.equal(
     events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
-    true,
-    'Concordium caught event emitted',
+    false,
+    'Concordium caught event gated',
   );
 });
 
@@ -486,7 +500,9 @@ test('mixed event stream processes both star-evidence-updated and concept-secure
 // ---------------------------------------------------------------------------
 
 test('different computedStars per monster do not cross-inflate starHighWater', () => {
-  const repository = makeRepository();
+  const repository = makeRepository({
+    couronnail: { caught: true, starHighWater: 1 },
+  });
 
   // The command handler emits two star-evidence-updated events for the same
   // concept but with different computedStars per monster. Concordium (18
@@ -510,11 +526,12 @@ test('different computedStars per monster do not cross-inflate starHighWater', (
   assert.equal(state.bracehart.starHighWater, 4, 'Bracehart starHighWater is 4');
   assert.equal(state.bracehart.caught, true, 'Bracehart caught');
 
-  // Both caught events emitted.
+  // Bracehart catches; Concordium stores its raw latch but remains visually
+  // gated because the aggregate event arrived before the second direct egg.
   assert.equal(
     events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
-    true,
-    'Concordium caught event',
+    false,
+    'Concordium caught event gated',
   );
   assert.equal(
     events.some((e) => e.monsterId === 'bracehart' && e.kind === 'caught'),
@@ -663,13 +680,13 @@ test('U5 persistence: Egg fires independently per monster — catching one does 
 });
 
 // ---------------------------------------------------------------------------
-// U5-P4. Concordium Egg from punctuation-for-grammar concept persists
+// U5-P4. Concordium raw latch from punctuation-for-grammar concept persists,
+// but display remains gated until direct-monster breadth is present.
 // ---------------------------------------------------------------------------
 
-test('U5 persistence: Concordium Egg from punctuation-for-grammar concept persists', () => {
+test('U5 persistence: Concordium latch from punctuation-for-grammar concept persists but display is gated', () => {
   const repository = makeRepository();
 
-  // speech_punctuation is a punctuation-for-grammar concept (no direct monster)
   const events = updateGrammarStarHighWater({
     learnerId: 'learner-u5-p4',
     monsterId: 'concordium',
@@ -679,17 +696,17 @@ test('U5 persistence: Concordium Egg from punctuation-for-grammar concept persis
     random: () => 0,
   });
 
-  assert.ok(
-    events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
-    'Concordium caught from punctuation-for-grammar concept',
-  );
+  assert.equal(events.length, 0, 'Concordium caught event is gated without direct breadth');
 
   // Persists
   const state = repository.state();
-  assert.equal(state.concordium.caught, true, 'Concordium caught persisted');
+  assert.equal(state.concordium.caught, true, 'Concordium raw caught latch persisted');
   assert.equal(state.concordium.starHighWater, 1, 'Concordium starHighWater=1');
+  const progress = progressForGrammarMonster(state, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+  });
+  assert.equal(progress.displayState, 'not-found', 'Concordium display remains gated');
 
-  // No direct monster created for the punctuation concept
   assert.equal(state.quoral, undefined, 'Quoral not created');
 });
 
