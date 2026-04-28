@@ -418,6 +418,37 @@ test('P2 U3 free-text fixed anchors accept golden answers and tag representative
   }
 });
 
+test('P2 U3 transfer anchors reject target-only sentence fragments', () => {
+  const cases = [
+    {
+      itemId: 'ac_transfer_dont_theyre',
+      model: "Don't worry because they're on the way.",
+      fragment: "Don't they're.",
+    },
+    {
+      itemId: 'hy_transfer_part_time_job',
+      model: 'My sister found a part-time job at the library.',
+      fragment: 'Part-time job.',
+    },
+  ];
+
+  for (const { itemId, model, fragment } of cases) {
+    const modelResult = markPunctuationAnswer({
+      item: item(itemId),
+      answer: { typed: model },
+    });
+    assert.equal(modelResult.correct, true, `${itemId}: model answer should pass`);
+
+    const fragmentResult = markPunctuationAnswer({
+      item: item(itemId),
+      answer: { typed: fragment },
+    });
+    assert.equal(fragmentResult.correct, false, `${itemId}: ${fragment}`);
+    assert.equal(fragmentResult.misconceptionTags.includes('transfer.sentence_fragment'), true, `${itemId}: sentence fragment tag`);
+    assert.equal(facet(fragmentResult, 'sentence_completeness')?.ok, false, `${itemId}: sentence completeness facet`);
+  }
+});
+
 test('mixed transfer validators constrain fronted speech and colon-list stems', () => {
   const frontedSpeech = markPunctuationAnswer({
     item: item('sp_fa_transfer_at_last_speech'),

@@ -19,6 +19,7 @@ const FACET_LABELS = Object.freeze({
   bullet_punctuation: 'Bullet punctuation',
   terminal_punctuation: 'Terminal punctuation',
   single_sentence: 'One combined sentence',
+  sentence_completeness: 'Complete sentence',
   unwanted_punctuation: 'No duplicated punctuation outside the quote',
 });
 
@@ -212,6 +213,16 @@ function wordSequencePreserved(text, words = []) {
 function wordCount(value) {
   const clean = stripPunctuation(value);
   return clean ? clean.split(' ').filter(Boolean).length : 0;
+}
+
+function minimumWordCount(validator = {}) {
+  const minimum = Number(validator.minimumWordCount);
+  return Number.isFinite(minimum) && minimum > 0 ? minimum : 0;
+}
+
+function completeEnoughSentence(text, validator = {}) {
+  const minimum = minimumWordCount(validator);
+  return minimum === 0 || wordCount(text) >= minimum;
 }
 
 function requiredTokenCoverage(text, tokens = []) {
@@ -653,7 +664,8 @@ function markTransfer(item, answer) {
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
     const sentenceOk = transferSentenceOk(item, text);
-    const correct = tokensOk && capitalOk && terminalOk && sentenceOk;
+    const completeOk = completeEnoughSentence(text, validator);
+    const correct = tokensOk && capitalOk && terminalOk && sentenceOk && completeOk;
     return {
       correct,
       expected: item.model || '',
@@ -663,12 +675,14 @@ function markTransfer(item, answer) {
         ...(capitalOk ? [] : ['apostrophe.capitalisation_missing']),
         ...(terminalOk ? [] : ['apostrophe.terminal_missing']),
         ...(sentenceOk ? [] : ['transfer.extra_sentence']),
+        ...(completeOk ? [] : ['transfer.sentence_fragment']),
       ])],
       facets: [
         facet('preservation', tokensOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
         ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
+        ...(minimumWordCount(validator) > 0 ? [facet('sentence_completeness', completeOk)] : []),
       ],
     };
   }
@@ -822,13 +836,15 @@ function markTransfer(item, answer) {
     const capitalOk = sentenceStartsWithCapital(text);
     const terminalOk = sentenceEnds(text);
     const sentenceOk = transferSentenceOk(item, text);
-    const correct = wordsOk && hyphenOk && capitalOk && terminalOk && sentenceOk;
+    const completeOk = completeEnoughSentence(text, validator);
+    const correct = wordsOk && hyphenOk && capitalOk && terminalOk && sentenceOk && completeOk;
     const tags = [];
     if (!wordsOk) tags.push('boundary.words_changed');
     if (wordsOk && !hyphenOk) tags.push('boundary.hyphen_missing');
     if (!capitalOk) tags.push('boundary.capitalisation_missing');
     if (!terminalOk) tags.push('boundary.terminal_missing');
     if (terminalOk && !sentenceOk) tags.push('transfer.extra_sentence');
+    if (!completeOk) tags.push('transfer.sentence_fragment');
     return {
       correct,
       expected: item.model || '',
@@ -840,6 +856,7 @@ function markTransfer(item, answer) {
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
         ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
+        ...(minimumWordCount(validator) > 0 ? [facet('sentence_completeness', completeOk)] : []),
       ],
     };
   }
