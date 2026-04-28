@@ -8,7 +8,7 @@ Source plan: `docs/plans/james/punctuation/questions-generator/punctuation-qg-p2
 
 Implementation plan: `docs/plans/2026-04-28-002-feat-punctuation-qg-p2-depth-release-gate-plan.md`
 
-Current verification base: `origin/main` at `d1e0be77 docs(admin): add P5 completion report - operator readiness, evidence, and QoL (#537)`
+Current verification base: `origin/main` at `6f5beffa docs(hero): add P3 completion report (#538)`
 
 Primary production target: `https://ks2.eugnel.uk`
 
@@ -382,14 +382,14 @@ misconceptionTags: speech.quote_missing
 Other smoke probes:
 
 ```text
-smartItemId: sl_choose_clubs
+smartItemId: ac_choose_contractions
 smartSummaryTotal: 1
 generatedIncorrectItemId: gen_speech_insert_1shvsd2_4
 generatedIncorrectMisconceptionTags: speech.quote_missing
 advancedMode: gps
-advancedItemId: dc_choose_flooded_route
+advancedItemId: sl_choose_clubs
 advancedReviewItems: 1
-parentHubAttempts: 24
+parentHubAttempts: 17
 spelling.progressTotal: 1
 spelling.hasPromptToken: true
 ```
@@ -398,14 +398,14 @@ Dash acceptance through the live Worker command path:
 
 | Variant | Item id | Mode | Skill |
 | --- | --- | --- | --- |
-| spaced hyphen | `gen_dash_clause_combine_4v5txn_1` | combine | `dash_clause` |
+| spaced hyphen | `gen_dash_clause_fix_146goqu_2` | fix | `dash_clause` |
 | en dash | `dc_insert_door_froze` | insert | `dash_clause` |
-| em dash | `dc_insert_door_froze` | insert | `dash_clause` |
+| em dash | `gen_dash_clause_fix_13wh31v_3` | fix | `dash_clause` |
 
 Oxford-comma probe:
 
 ```text
-oxfordCommaItemId: gen_list_commas_combine_p4l027_4
+oxfordCommaItemId: gen_list_commas_combine_ouled8_3
 ```
 
 ## Verification History
