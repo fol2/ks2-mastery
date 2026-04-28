@@ -157,8 +157,7 @@ export function GrammarAnalyticsScene({
           <h4>Punctuation-for-grammar stays in Grammar</h4>
           <p>
             These {punctuationConcepts.length} concepts count in the 18-concept Grammar denominator for
-            KS2 GPS mastery. Bellstorm Coast remains the separate Punctuation subject for richer punctuation
-            progression.
+            KS2 GPS mastery. Bellstorm Coast remains separate Punctuation practice.
           </p>
         </div>
         <div className="grammar-bridge-counts" aria-label="Punctuation-for-grammar concept progress">
