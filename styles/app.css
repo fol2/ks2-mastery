@@ -11438,6 +11438,28 @@ html { scroll-behavior: smooth; }
   padding: 16px 0;
 }
 
+.admin-evidence-overall-row {
+  margin-bottom: 8px;
+}
+
+.admin-evidence-generated {
+  margin-bottom: 12px;
+}
+
+.admin-evidence-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-evidence-th {
+  text-align: left;
+  padding: 4px 8px;
+}
+
+.admin-evidence-td {
+  padding: 4px 8px;
+}
+
 .admin-section-title {
   font-size: 1.2rem;
 }
