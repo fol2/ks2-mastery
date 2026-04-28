@@ -107,3 +107,39 @@ All other admin endpoints operate independently of learner routes during capacit
 
 - No Admin route touched by P5 lacks access tests (verified by `tests/redaction-access-matrix.test.js` — covers parent, admin, ops roles across all route axes)
 - Admin KPI live-count cost does not affect learner-route certification (admin sessions are not used during capacity runs)
+
+## Post-P4 Drift Audit Results (2026-04-28)
+
+Audit performed on commit `d6cc388` (latest origin/main at P5 start), rebased to `3d312cc` after merging U1 baseline.
+
+### Audit Suite Results
+
+| Audit | Result | Details |
+| --- | --- | --- |
+| Client bundle audit (`npm run audit:client`) | **PASSED** | 831 public files, 7 chunks scanned, main bundle 217,934 / 218,000 bytes gzip. All allowlisted tokens present and justified. |
+| Production bundle audit (`npm run audit:production -- --skip-local`) | **PASSED** | 1 HTML-referenced bundle, 7 chunks transitively scanned, 19 direct paths, matrix demo check: ok, security-header checks: 5/5, cache-split checks: 12/12. |
+| Multi-learner regression (`tests/worker-bootstrap-multi-learner-regression.test.js`) | **13/13 PASSED** | 4-learner account contract intact. Sibling compact state present. Not-modified invalidation working. Single-learner regression guard passing. |
+| Query budget (`tests/worker-query-budget.test.js`) | **19/19 PASSED** | Bootstrap budget ≤13 queries. Admin role matrix (7 denied routes). Hero route budget. |
+| Bootstrap capacity (`tests/worker-bootstrap-capacity.test.js`) | **3/3 PASSED** | High-history payloads bounded and redacted. Auth required. Capacity telemetry emitted. |
+| Evidence schema v2 (`tests/capacity-evidence-schema.test.js`) | **14/14 PASSED** | requireBootstrapCapacity gate, NaN rejection, vacuous-truth guard, tier-schema mapping. |
+| Security headers (`tests/security-headers.test.js`) | **ALL PASSED** | CSP cross-assertion (U6), HSTS preload gate, header drift checks. |
+
+### Drift Assessment
+
+**No regressions detected.** Post-P4 changes in rewards, SEO, Grammar, and Punctuation surfaces have not:
+
+- Exposed private learner/admin/generated-answer/source data via public pages
+- Weakened source lockdown (`/src/*`, `/shared/*`, `/worker/*`, `/tests/*`, `/docs/*`, `/legacy/*` still denied)
+- Introduced reward presentation replay mutations
+- Added Hero economy mutations
+- Widened bootstrap payloads beyond P4 evidence baselines (response bytes: 34,919 B for full bootstrap, well within 600,000 B budget)
+- Broken multi-learner bootstrap correctness (all 4-learner account contract assertions pass)
+- Violated query budgets (bootstrap ≤13, command ≤13)
+
+### Capacity Impact
+
+Bootstrap response bytes for a high-history 3-learner account: **34,919 B** (vs P4 evidence of 36,852 B max). No material payload growth from post-P4 changes. The reward presentation, SEO, and Grammar/Punctuation changes are client-side rendering or worker-side write-path only — they do not add bootstrap-path queries.
+
+### Conclusion
+
+Current main is safe for capacity certification attempts. No drift-related blocker exists for the 30-learner re-run.
