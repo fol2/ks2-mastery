@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { execSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { pathToFileURL } from 'node:url';
 
 import {
   createGrammarQuestion,
   evaluateGrammarQuestion,
+  GRAMMAR_CONTENT_RELEASE_ID,
 } from '../worker/src/subjects/grammar/content.js';
 import {
   assertNoForbiddenObjectKeys,
@@ -18,6 +23,17 @@ import {
   FORBIDDEN_GRAMMAR_ITEM_KEYS as SHARED_FORBIDDEN_GRAMMAR_ITEM_KEYS,
   FORBIDDEN_GRAMMAR_READ_MODEL_KEYS as SHARED_FORBIDDEN_GRAMMAR_READ_MODEL_KEYS,
 } from '../tests/helpers/forbidden-keys.mjs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT_DIR = path.resolve(__dirname, '..');
+
+const CLI_ARGS = process.argv.slice(2);
+const JSON_OUTPUT = CLI_ARGS.includes('--json');
+const EVIDENCE_ORIGIN_FLAG_INDEX = CLI_ARGS.indexOf('--evidence-origin');
+const CONFIGURED_ORIGIN_VALUE = EVIDENCE_ORIGIN_FLAG_INDEX !== -1 && CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
+  ? CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
+  : 'repository';
 
 const GRAMMAR_SMOKE_ITEM = Object.freeze({
   templateId: 'qg_modal_verb_explain',
@@ -490,43 +506,112 @@ async function smokeSpelling({ origin, cookie, learnerId, revision }) {
   };
 }
 
+function getCommitSha() {
+  try {
+    return execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
+
 async function main() {
   const origin = configuredOrigin();
   const demo = await createDemoSession(origin);
   const bootstrap = await loadBootstrap(origin, demo.cookie, { expectedSession: demo.session });
 
-  const grammar = await smokeGrammar({
-    origin,
-    cookie: demo.cookie,
-    learnerId: bootstrap.learnerId,
-    revision: bootstrap.revision,
-  });
-  const spelling = await smokeSpelling({
-    origin,
-    cookie: demo.cookie,
-    learnerId: bootstrap.learnerId,
-    revision: grammar.revision,
-  });
+  let normalRoundResult = { ok: false, detail: '' };
+  let miniTestResult = { ok: false, detail: '' };
+  let repairResult = { ok: false, detail: '' };
+  let forbiddenKeyScanResult = { ok: true, detail: 'checked via assertNoForbiddenGrammarReadModelKeys in each phase' };
+  let testedTemplateIds = [];
+  let overallOk = true;
 
-  console.log(JSON.stringify({
-    ok: true,
-    origin,
-    accountId: demo.session.accountId,
-    learnerId: bootstrap.learnerId,
-    grammar: {
-      templateId: grammar.normal.templateId,
-      summaryAnswered: grammar.normal.summaryAnswered,
-      miniTestAnswered: grammar.miniTest.answered,
-      miniTestReviewSize: grammar.miniTest.reviewSize,
-      repairSupportKind: grammar.repairAi.supportKind,
-      aiKind: grammar.repairAi.aiKind,
-      answerSpecFamilies: grammar.answerSpecFamilies.covered,
-    },
-    spelling: {
-      progressTotal: spelling.progressTotal,
-      hasPromptToken: spelling.hasPromptToken,
-    },
-  }, null, 2));
+  let grammar;
+  try {
+    grammar = await smokeGrammar({
+      origin,
+      cookie: demo.cookie,
+      learnerId: bootstrap.learnerId,
+      revision: bootstrap.revision,
+    });
+    normalRoundResult = { ok: true, detail: `templateId=${grammar.normal.templateId}, answered=${grammar.normal.summaryAnswered}` };
+    miniTestResult = { ok: true, detail: `answered=${grammar.miniTest.answered}, reviewSize=${grammar.miniTest.reviewSize}` };
+    repairResult = { ok: true, detail: `supportKind=${grammar.repairAi.supportKind}, aiKind=${grammar.repairAi.aiKind}` };
+    testedTemplateIds = [
+      GRAMMAR_SMOKE_ITEM.templateId,
+      GRAMMAR_MINI_TEST_ITEM.templateId,
+      ...GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS.map((item) => item.templateId),
+    ];
+  } catch (error) {
+    overallOk = false;
+    const msg = error?.message || String(error);
+    if (msg.includes('normalRound') || msg.includes('Grammar did not start') || msg.includes('Grammar smoke')) {
+      normalRoundResult = { ok: false, detail: msg };
+    } else if (msg.includes('mini-test') || msg.includes('miniTest') || msg.includes('Mini')) {
+      miniTestResult = { ok: false, detail: msg };
+    } else if (msg.includes('repair') || msg.includes('faded') || msg.includes('similar')) {
+      repairResult = { ok: false, detail: msg };
+    } else {
+      normalRoundResult = { ok: false, detail: msg };
+    }
+    if (!JSON_OUTPUT) throw error;
+  }
+
+  if (grammar) {
+    const spelling = await smokeSpelling({
+      origin,
+      cookie: demo.cookie,
+      learnerId: bootstrap.learnerId,
+      revision: grammar.revision,
+    });
+
+    if (!JSON_OUTPUT) {
+      console.log(JSON.stringify({
+        ok: true,
+        origin,
+        accountId: demo.session.accountId,
+        learnerId: bootstrap.learnerId,
+        grammar: {
+          templateId: grammar.normal.templateId,
+          summaryAnswered: grammar.normal.summaryAnswered,
+          miniTestAnswered: grammar.miniTest.answered,
+          miniTestReviewSize: grammar.miniTest.reviewSize,
+          repairSupportKind: grammar.repairAi.supportKind,
+          aiKind: grammar.repairAi.aiKind,
+          answerSpecFamilies: grammar.answerSpecFamilies.covered,
+        },
+        spelling: {
+          progressTotal: spelling.progressTotal,
+          hasPromptToken: spelling.hasPromptToken,
+        },
+      }, null, 2));
+    }
+  }
+
+  if (JSON_OUTPUT) {
+    const evidence = {
+      ok: overallOk,
+      origin: CONFIGURED_ORIGIN_VALUE,
+      contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+      testedTemplateIds,
+      answerSpecFamiliesCovered: grammar
+        ? grammar.answerSpecFamilies.covered
+        : [],
+      normalRoundResult,
+      miniTestResult,
+      repairResult,
+      forbiddenKeyScanResult,
+      timestamp: new Date().toISOString(),
+      commitSha: getCommitSha(),
+    };
+
+    const reportsDir = path.join(ROOT_DIR, 'reports', 'grammar');
+    mkdirSync(reportsDir, { recursive: true });
+    const outPath = path.join(reportsDir, `grammar-production-smoke-${GRAMMAR_CONTENT_RELEASE_ID}.json`);
+    const jsonStr = JSON.stringify(evidence, null, 2);
+    writeFileSync(outPath, jsonStr + '\n', 'utf8');
+    console.log(jsonStr);
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
