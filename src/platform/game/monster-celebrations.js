@@ -1,8 +1,13 @@
 import { normaliseMonsterBranch } from './monsters.js';
 
 const OVERLAY_KINDS = new Set(['caught', 'evolve', 'mega']);
+const REWARD_PRESENTATION_TYPE = 'reward.presentation';
 
-export function isMonsterCelebrationEvent(event) {
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isLegacyMonsterCelebrationEvent(event) {
   return event?.type === 'reward.monster'
     && OVERLAY_KINDS.has(event.kind)
     && typeof event.monsterId === 'string'
@@ -23,12 +28,21 @@ function normaliseProgressSnapshot(value) {
 }
 
 export function normaliseMonsterCelebrationEvent(event) {
-  if (!isMonsterCelebrationEvent(event)) return null;
+  if (isLegacyMonsterCelebrationEvent(event)) return normaliseLegacyMonsterCelebrationEvent(event);
+  return normalisePresentationCelebrationEvent(event);
+}
+
+export function isMonsterCelebrationEvent(event) {
+  return Boolean(normaliseMonsterCelebrationEvent(event));
+}
+
+function normaliseLegacyMonsterCelebrationEvent(event) {
   const monster = event.monster;
+  const id = typeof event.id === 'string' && event.id
+    ? event.id
+    : `reward.monster:${event.learnerId || 'default'}:${event.monsterId}:${event.kind}`;
   return {
-    id: typeof event.id === 'string' && event.id
-      ? event.id
-      : `reward.monster:${event.learnerId || 'default'}:${event.monsterId}:${event.kind}`,
+    id,
     type: 'reward.monster',
     kind: event.kind,
     learnerId: typeof event.learnerId === 'string' ? event.learnerId : 'default',
@@ -54,6 +68,44 @@ export function normaliseMonsterCelebrationEvent(event) {
           body: typeof event.toast.body === 'string' ? event.toast.body : '',
         }
       : null,
+    presentationAckKey: `reward:reward.presentation:${id}:celebration:0`,
+  };
+}
+
+function normalisePresentationCelebrationEvent(event) {
+  if (!isPlainObject(event) || event.type !== REWARD_PRESENTATION_TYPE) return null;
+  const celebrationIntent = Array.isArray(event.presentations?.celebration)
+    ? event.presentations.celebration.find(isPlainObject)
+    : null;
+  if (!celebrationIntent) return null;
+
+  const payload = isPlainObject(event.payload) ? event.payload : {};
+  const monster = isPlainObject(payload.monster) ? payload.monster : {};
+  const monsterId = payload.monsterId || celebrationIntent.assetRef?.monsterId || monster.id || '';
+  const normalisedMonster = {
+    ...monster,
+    id: monster.id || monsterId,
+    name: monster.name || celebrationIntent.title || 'Reward',
+  };
+  const previous = event.fromState || {};
+  const next = {
+    ...(event.toState || {}),
+    branch: event.toState?.branch || celebrationIntent.assetRef?.branch || previous.branch,
+    stage: event.toState?.stage ?? celebrationIntent.assetRef?.stage,
+  };
+
+  return {
+    id: event.id,
+    type: REWARD_PRESENTATION_TYPE,
+    kind: celebrationIntent.visualKind || event.kind,
+    learnerId: event.learnerId,
+    monsterId,
+    monster: normalisedMonster,
+    previous: normaliseProgressSnapshot(previous),
+    next: normaliseProgressSnapshot(next),
+    createdAt: Math.max(0, Number(event.occurredAt) || Date.now()),
+    sourceEventId: event.sourceEventId || '',
+    presentationAckKey: celebrationIntent.dedupeKey || '',
   };
 }
 

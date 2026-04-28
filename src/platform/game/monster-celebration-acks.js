@@ -1,5 +1,6 @@
 import {
   isMonsterCelebrationEvent,
+  normaliseMonsterCelebrationEvent,
   normaliseMonsterCelebrationEvents,
 } from './monster-celebrations.js';
 
@@ -10,8 +11,14 @@ function storage() {
   return globalThis.localStorage || null;
 }
 
-function eventId(event) {
-  return typeof event?.id === 'string' && event.id ? event.id : '';
+function acknowledgementIdsForEvent(event) {
+  const normalised = normaliseMonsterCelebrationEvent(event);
+  if (!normalised) return [];
+  return [
+    normalised.id,
+    normalised.sourceEventId,
+    normalised.presentationAckKey,
+  ].filter(Boolean);
 }
 
 function readSnapshot(store = storage()) {
@@ -106,8 +113,7 @@ export function acknowledgeMonsterCelebrationEvents(events, { learnerId = '', st
   const current = normaliseLearnerAckEntry(snapshot[key]);
   const ids = new Set(current.ids);
   for (const event of validEvents) {
-    const id = eventId(event);
-    if (id) ids.add(id);
+    for (const id of acknowledgementIdsForEvent(event)) ids.add(id);
   }
   saveLearnerAckEntry(snapshot, key, {
     ...current,
@@ -130,10 +136,10 @@ function baselineExistingEvents(events, {
   const baselineIds = normaliseIdSet(baselineEventIds);
   const existingIds = (Array.isArray(events) ? events : [])
     .filter((event) => {
-      const id = eventId(event);
-      return id && (!baselineIds || baselineIds.has(id));
+      const ids = acknowledgementIdsForEvent(event);
+      return ids.length && (!baselineIds || ids.some((id) => baselineIds.has(id)));
     })
-    .map(eventId);
+    .flatMap(acknowledgementIdsForEvent);
 
   saveLearnerAckEntry(snapshot, learnerId, {
     ids: [...new Set([...entry.ids, ...existingIds])],
@@ -169,8 +175,9 @@ export function unacknowledgedMonsterCelebrationEvents(events, {
   const excluded = normaliseIdSet(excludeEventIds);
   const candidates = scopedEvents
     .filter((event) => {
-      const id = eventId(event);
-      return id && !acknowledgedIds.has(id) && !ignored.has(id) && (!excluded || !excluded.has(id));
+      const ids = acknowledgementIdsForEvent(event);
+      return ids.length
+        && ids.every((id) => !acknowledgedIds.has(id) && !ignored.has(id) && (!excluded || !excluded.has(id)));
     })
     .sort((a, b) => (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0));
 
