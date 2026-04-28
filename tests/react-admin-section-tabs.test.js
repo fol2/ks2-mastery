@@ -4,7 +4,7 @@
 //  1. All 5 tabs render with correct labels.
 //  2. Active tab has aria-selected="true" and the visual indicator class.
 //  3. Inactive tabs have aria-selected="false".
-//  4. Marketing tab shows the "Soon" chip.
+//  4. Marketing tab is live and no longer shows the "Soon" chip.
 //  5. Each tab carries a data-section attribute matching its key.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -103,12 +103,10 @@ test('inactive tabs have aria-selected="false"', async () => {
   }
 });
 
-test('marketing tab shows "Soon" chip', async () => {
+test('marketing tab is live and no longer shows the "Soon" chip', async () => {
   const html = await renderTabs();
-  // The "Soon" chip should appear inside the marketing tab button.
-  // Look for the chip after the marketing data-section attribute.
   assert.match(html, /data-section="marketing"/, 'marketing tab should exist');
-  assert.match(html, /Marketing<span class="chip"[^>]*>Soon<\/span>/, 'marketing tab should contain "Soon" chip');
+  assert.doesNotMatch(html, /Marketing<span class="chip"[^>]*>Soon<\/span>/, 'marketing tab should not be marked as coming soon');
 });
 
 test('each tab carries a data-section attribute matching its key', async () => {
