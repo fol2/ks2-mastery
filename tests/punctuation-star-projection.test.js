@@ -86,6 +86,26 @@ function securedRewardUnitForRelease(releaseId, clusterId, rewardUnitId) {
   };
 }
 
+function richCurrentReleaseProgress() {
+  const progress = freshProgress();
+  const units = [
+    { cluster: 'endmarks', ru: 'sentence-endings-core', skill: 'sentence_endings' },
+    { cluster: 'apostrophe', ru: 'apostrophe-contractions-core', skill: 'apostrophe_contractions' },
+    { cluster: 'comma_flow', ru: 'list-commas-core', skill: 'list_commas' },
+  ];
+
+  for (const { cluster, ru, skill } of units) {
+    progress.rewardUnits = {
+      ...progress.rewardUnits,
+      ...securedRewardUnit(cluster, ru),
+    };
+    progress.facets[`${skill}::choose`] = secureItemState({ lapses: 0 });
+    progress.facets[`${skill}::insert`] = secureItemState({ lapses: 0 });
+  }
+
+  return progress;
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -444,6 +464,132 @@ test('mixed old and current release reward units count only current-release entr
   assert.equal(result.perMonster.claspin.masteryStars, 0, 'old paired unit must not unlock Mastery evidence');
   assert.equal(result.perMonster.pealark.total, 0);
   assert.equal(result.perMonster.curlune.total, 0);
+});
+
+test('canonical duplicate and current-looking loose rows cannot inflate Secure or Grand Stars', () => {
+  const baselineProgress = richCurrentReleaseProgress();
+  const progress = richCurrentReleaseProgress();
+  const now = Date.UTC(2026, 3, 24);
+
+  progress.rewardUnits.looseDuplicateEndmarks = {
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now,
+  };
+  progress.rewardUnits.looseDuplicateApostrophe = {
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'apostrophe',
+    rewardUnitId: 'apostrophe-contractions-core',
+    securedAt: now,
+  };
+  progress.rewardUnits.looseDuplicateCommaFlow = {
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'comma_flow',
+    rewardUnitId: 'list-commas-core',
+    securedAt: now,
+  };
+
+  const baseline = projectPunctuationStars(baselineProgress, CURRENT_RELEASE_ID);
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(baseline.grand.grandStars > 0, 'baseline must exercise Grand Stars');
+  for (const monsterId of ['pealark', 'claspin', 'curlune']) {
+    assert.equal(
+      result.perMonster[monsterId].secureStars,
+      baseline.perMonster[monsterId].secureStars,
+      `${monsterId} duplicate loose row must not add Secure Stars`,
+    );
+  }
+  assert.equal(result.grand.grandStars, baseline.grand.grandStars,
+    'duplicate loose rows must not add Grand Stars');
+});
+
+test('malformed current-looking mastery keys with extra segments do not count', () => {
+  const progress = freshProgress();
+  const malformedKey = `${masteryKey('endmarks', 'sentence-endings-core')}:extra`;
+  progress.rewardUnits[malformedKey] = {
+    masteryKey: malformedKey,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: Date.UTC(2026, 3, 24),
+  };
+  progress.facets = {
+    'sentence_endings::choose': secureItemState({ lapses: 0 }),
+    'sentence_endings::insert': secureItemState({ lapses: 0 }),
+  };
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.equal(result.perMonster.pealark.secureStars, 0);
+  assert.equal(result.perMonster.pealark.masteryStars, 0);
+  assert.equal(result.grand.grandStars, 0);
+});
+
+test('unknown current-release rewardUnitId and clusterId entries do not count', () => {
+  const progress = freshProgress();
+  const unknownRewardKey = masteryKey('endmarks', 'not-published-core');
+  const unknownClusterKey = masteryKey('unknown_cluster', 'sentence-endings-core');
+  progress.rewardUnits[unknownRewardKey] = {
+    masteryKey: unknownRewardKey,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'not-published-core',
+    securedAt: Date.UTC(2026, 3, 24),
+  };
+  progress.rewardUnits[unknownClusterKey] = {
+    masteryKey: unknownClusterKey,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'unknown_cluster',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: Date.UTC(2026, 3, 24),
+  };
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.equal(result.perMonster.pealark.secureStars, 0);
+  assert.equal(result.perMonster.claspin.secureStars, 0);
+  assert.equal(result.perMonster.curlune.secureStars, 0);
+  assert.equal(result.grand.grandStars, 0);
+});
+
+test('mixed old and current projection matches a current-only baseline for Mastery and Grand Stars', () => {
+  const baselineProgress = richCurrentReleaseProgress();
+  const progress = richCurrentReleaseProgress();
+  progress.rewardUnits = {
+    ...progress.rewardUnits,
+    ...securedRewardUnitForRelease(OLD_RELEASE_ID, 'speech', 'speech-core'),
+    ...securedRewardUnitForRelease(OLD_RELEASE_ID, 'boundary', 'semicolons-core'),
+  };
+  progress.rewardUnits.currentLookingUnknown = {
+    masteryKey: masteryKey('endmarks', 'not-published-core'),
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'not-published-core',
+    securedAt: Date.UTC(2026, 3, 24),
+  };
+
+  const baseline = projectPunctuationStars(baselineProgress, CURRENT_RELEASE_ID);
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.ok(baseline.perMonster.pealark.masteryStars > 0, 'baseline must exercise Pealark Mastery Stars');
+  assert.ok(baseline.perMonster.claspin.masteryStars > 0, 'baseline must exercise Claspin Mastery Stars');
+  assert.ok(baseline.perMonster.curlune.masteryStars > 0, 'baseline must exercise Curlune Mastery Stars');
+  assert.ok(baseline.grand.grandStars > 0, 'baseline must exercise Grand Stars');
+  for (const monsterId of ['pealark', 'claspin', 'curlune']) {
+    assert.equal(
+      result.perMonster[monsterId].secureStars,
+      baseline.perMonster[monsterId].secureStars,
+      `${monsterId} Secure Stars must match current-only baseline`,
+    );
+    assert.equal(
+      result.perMonster[monsterId].masteryStars,
+      baseline.perMonster[monsterId].masteryStars,
+      `${monsterId} Mastery Stars must match current-only baseline`,
+    );
+  }
+  assert.equal(result.grand.grandStars, baseline.grand.grandStars);
 });
 
 test('release metadata falls back only to mastery keys that clearly belong to the current release', () => {

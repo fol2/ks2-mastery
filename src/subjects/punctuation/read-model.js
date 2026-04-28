@@ -1,8 +1,7 @@
-import { projectPunctuationStars } from './star-projection.js';
+import { currentReleaseRewardEntries, projectPunctuationStars } from './star-projection.js';
 import { stageFor, PUNCTUATION_STAR_THRESHOLDS, PUNCTUATION_GRAND_STAR_THRESHOLDS } from '../../platform/game/monsters.js';
 import {
   PUNCTUATION_CLIENT_SKILLS,
-  PUNCTUATION_CLIENT_REWARD_UNITS,
 } from './punctuation-manifest.js';
 
 export { PUNCTUATION_CLIENT_SKILLS };
@@ -11,14 +10,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 const TOTAL_REWARD_UNITS = 14;
 const DAILY_TARGET_ATTEMPTS = 4;
-
-function clientMasteryKey({ clusterId, rewardUnitId } = {}) {
-  return `punctuation:${CURRENT_RELEASE_ID}:${clusterId}:${rewardUnitId}`;
-}
-
-const PUNCTUATION_CLIENT_REWARD_UNIT_KEYS = new Set(
-  PUNCTUATION_CLIENT_REWARD_UNITS.map(clientMasteryKey),
-);
 
 const ITEM_MODE_LABELS = Object.freeze({
   choose: 'Choice',
@@ -152,17 +143,6 @@ function normaliseAttempt(rawValue) {
       }))
       .filter((facet) => facet.id),
   };
-}
-
-function currentPublishedRewardUnits(rewardUnits) {
-  const rows = new Map();
-  for (const [key, value] of Object.entries(isPlainObject(rewardUnits) ? rewardUnits : {})) {
-    if (!isPlainObject(value)) continue;
-    const masteryKey = typeof value.masteryKey === 'string' && value.masteryKey ? value.masteryKey : key;
-    if (!PUNCTUATION_CLIENT_REWARD_UNIT_KEYS.has(masteryKey)) continue;
-    rows.set(masteryKey, value);
-  }
-  return [...rows.values()];
 }
 
 function groupAttemptAccuracy(attempts, keyFn, labelFn) {
@@ -406,7 +386,7 @@ export function buildPunctuationLearnerReadModel({
   const secureItems = itemSnapshots.filter((entry) => entry.bucket === 'secure').length;
   const dueItems = itemSnapshots.filter((entry) => entry.bucket === 'due').length;
   const weakItems = itemSnapshots.filter((entry) => entry.bucket === 'weak').length;
-  const trackedRewardUnitEntries = currentPublishedRewardUnits(rewardUnits);
+  const trackedRewardUnitEntries = currentReleaseRewardEntries(rewardUnits, CURRENT_RELEASE_ID);
   const trackedRewardUnitCount = trackedRewardUnitEntries.length;
   const securedRewardUnitCount = trackedRewardUnitEntries.filter(
     (entry) => asTs(entry.securedAt, 0) > 0,

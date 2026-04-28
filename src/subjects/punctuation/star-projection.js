@@ -20,6 +20,7 @@ import {
   CLASPIN_REQUIRED_SKILLS,
   SKILL_TO_CLUSTER,
   RU_TO_CLUSTERS,
+  PUNCTUATION_CLIENT_REWARD_UNITS,
   MONSTER_CLUSTERS,
   MONSTER_UNIT_COUNT,
   DIRECT_PUNCTUATION_MONSTER_IDS,
@@ -188,41 +189,140 @@ function normaliseReleaseId(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : '';
 }
 
-function releaseIdFromMasteryKey(masteryKey) {
-  if (typeof masteryKey !== 'string' || !masteryKey) return '';
-  const parts = masteryKey.split(':');
-  if (parts.length < 4 || parts[0] !== 'punctuation') return '';
-  return normaliseReleaseId(parts[1]);
+function exactString(value) {
+  return typeof value === 'string' && value && value === value.trim() ? value : '';
 }
 
-function rewardEntryMasteryKey(storageKey, entry) {
-  if (typeof entry.masteryKey === 'string' && entry.masteryKey) return entry.masteryKey;
-  return typeof storageKey === 'string' && storageKey ? storageKey : '';
+function canonicalRewardUnitKey(releaseId, clusterId, rewardUnitId) {
+  return `punctuation:${releaseId}:${clusterId}:${rewardUnitId}`;
 }
 
-function isCurrentReleaseRewardEntry(storageKey, entry, releaseId) {
+function publishedRewardUnitByKey(releaseId) {
   const currentReleaseId = normaliseReleaseId(releaseId);
-  if (!currentReleaseId) return false;
+  const rows = new Map();
+  if (!currentReleaseId) return rows;
+  for (const unit of PUNCTUATION_CLIENT_REWARD_UNITS) {
+    rows.set(
+      canonicalRewardUnitKey(currentReleaseId, unit.clusterId, unit.rewardUnitId),
+      unit,
+    );
+  }
+  return rows;
+}
 
-  const explicitReleaseId = normaliseReleaseId(entry.releaseId);
-  const masteryKeyReleaseId = releaseIdFromMasteryKey(rewardEntryMasteryKey(storageKey, entry));
+export function parsePunctuationRewardMasteryKey(masteryKey) {
+  if (!exactString(masteryKey)) return null;
+  const parts = masteryKey.split(':');
+  if (parts.length !== 4 || parts[0] !== 'punctuation') return null;
+  const [, releaseId, clusterId, rewardUnitId] = parts;
+  if (!releaseId || !clusterId || !rewardUnitId) return null;
+  return {
+    releaseId,
+    clusterId,
+    rewardUnitId,
+    canonicalKey: masteryKey,
+  };
+}
 
-  if (explicitReleaseId) {
-    if (masteryKeyReleaseId && masteryKeyReleaseId !== explicitReleaseId) return false;
-    return explicitReleaseId === currentReleaseId;
+function parseMaybePunctuationKey(value) {
+  if (typeof value !== 'string' || !value) return { parsed: null, malformed: false };
+  if (value !== value.trim()) {
+    return { parsed: null, malformed: value.trim().startsWith('punctuation:') };
+  }
+  if (!value.startsWith('punctuation:')) return { parsed: null, malformed: false };
+  const parsed = parsePunctuationRewardMasteryKey(value);
+  return { parsed, malformed: parsed == null };
+}
+
+function metadataValue(entry, key) {
+  return typeof entry[key] === 'string' && entry[key] ? entry[key] : '';
+}
+
+function canonicalUnitForMetadata(publishedUnits, releaseId, entry) {
+  const clusterId = metadataValue(entry, 'clusterId');
+  const rewardUnitId = metadataValue(entry, 'rewardUnitId');
+  if (!clusterId || !rewardUnitId) return null;
+  const canonicalKey = canonicalRewardUnitKey(releaseId, clusterId, rewardUnitId);
+  const unit = publishedUnits.get(canonicalKey);
+  return unit ? { unit, canonicalKey } : null;
+}
+
+function canonicalUnitForParsedKey(publishedUnits, parsed) {
+  if (!parsed) return null;
+  const unit = publishedUnits.get(parsed.canonicalKey);
+  return unit ? { unit, canonicalKey: parsed.canonicalKey } : null;
+}
+
+function parsedKeyMatchesMetadata(parsed, entry) {
+  if (!parsed) return true;
+  const clusterId = metadataValue(entry, 'clusterId');
+  const rewardUnitId = metadataValue(entry, 'rewardUnitId');
+  if (clusterId && clusterId !== parsed.clusterId) return false;
+  if (rewardUnitId && rewardUnitId !== parsed.rewardUnitId) return false;
+  return true;
+}
+
+function canonicalCurrentReleaseRewardEntry(storageKey, entry, releaseId, publishedUnits) {
+  const currentReleaseId = normaliseReleaseId(releaseId);
+  if (!currentReleaseId) return null;
+
+  const storage = typeof storageKey === 'string' ? storageKey : '';
+  const masteryKey = typeof entry.masteryKey === 'string' ? entry.masteryKey : '';
+  const storageKeyParse = parseMaybePunctuationKey(storage);
+  const entryKey = parseMaybePunctuationKey(masteryKey);
+  if (storageKeyParse.malformed || entryKey.malformed) return null;
+
+  if (
+    storageKeyParse.parsed &&
+    entryKey.parsed &&
+    storageKeyParse.parsed.canonicalKey !== entryKey.parsed.canonicalKey
+  ) {
+    return null;
   }
 
-  return masteryKeyReleaseId === currentReleaseId;
+  const parsed = entryKey.parsed || storageKeyParse.parsed;
+  const explicitReleaseId = normaliseReleaseId(entry.releaseId);
+
+  if (explicitReleaseId && explicitReleaseId !== currentReleaseId) return null;
+  if (parsed && parsed.releaseId !== currentReleaseId) return null;
+  if (!parsedKeyMatchesMetadata(parsed, entry)) return null;
+
+  const parsedCanonical = canonicalUnitForParsedKey(publishedUnits, parsed);
+  const metadataCanonical = canonicalUnitForMetadata(publishedUnits, currentReleaseId, entry);
+
+  if (parsedCanonical && metadataCanonical && parsedCanonical.canonicalKey !== metadataCanonical.canonicalKey) {
+    return null;
+  }
+
+  const canonical = parsedCanonical || metadataCanonical;
+  if (!canonical) return null;
+  if (!explicitReleaseId && !parsedCanonical) return null;
+
+  return {
+    ...entry,
+    masteryKey: canonical.canonicalKey,
+    releaseId: currentReleaseId,
+    clusterId: canonical.unit.clusterId,
+    rewardUnitId: canonical.unit.rewardUnitId,
+  };
 }
 
-function currentReleaseRewardEntries(rewardUnits, releaseId) {
+export function currentReleaseRewardEntries(rewardUnits, releaseId) {
+  const publishedUnits = publishedRewardUnitByKey(releaseId);
   const rows = new Map();
   for (const [storageKey, entry] of Object.entries(isPlainObject(rewardUnits) ? rewardUnits : {})) {
     if (!isPlainObject(entry)) continue;
-    if (!isCurrentReleaseRewardEntry(storageKey, entry, releaseId)) continue;
-    rows.set(rewardEntryMasteryKey(storageKey, entry) || storageKey, entry);
+    const canonicalEntry = canonicalCurrentReleaseRewardEntry(storageKey, entry, releaseId, publishedUnits);
+    if (!canonicalEntry) continue;
+    const hasExactKey =
+      exactString(storageKey) === canonicalEntry.masteryKey ||
+      exactString(entry.masteryKey) === canonicalEntry.masteryKey;
+    const existing = rows.get(canonicalEntry.masteryKey);
+    if (!existing || (hasExactKey && !existing.hasExactKey)) {
+      rows.set(canonicalEntry.masteryKey, { entry: canonicalEntry, hasExactKey });
+    }
   }
-  return [...rows.values()];
+  return [...rows.values()].map((row) => row.entry);
 }
 
 // ---------------------------------------------------------------------------

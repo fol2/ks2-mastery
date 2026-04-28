@@ -123,6 +123,32 @@ test('old-release reward units do not inflate current starView through the read-
   assert.equal(model.starView.grand.grandStars, 0);
 });
 
+test('mismatched current storage key and old release metadata do not split counters from starView', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+  const currentStorageKey = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[currentStorageKey] = {
+    releaseId: OLD_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now - 10_000,
+  };
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.trackedRewardUnits, 0);
+  assert.equal(model.progressSnapshot.securedRewardUnits, 0);
+  assert.equal(model.overview.securedRewardUnits, 0);
+  assert.equal(model.releaseDiagnostics.trackedRewardUnitCount, 0);
+  assert.equal(model.starView.perMonster.pealark.secureStars, 0);
+  assert.equal(model.starView.perMonster.pealark.total, 0);
+  assert.equal(model.starView.grand.grandStars, 0);
+});
+
 test('hasEvidence is true when sessions exist even with zero attempts', () => {
   const now = Date.UTC(2026, 3, 25);
   const model = buildPunctuationLearnerReadModel({
