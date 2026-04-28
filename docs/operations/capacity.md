@@ -214,6 +214,25 @@ Expected behaviour:
 
 Record dense-history runs by appending a row to the launch-evidence table above with `summary.endpoints['POST /api/subjects/spelling/command'].p95WallMs` populating the P95 Command column and the persisted JSON in the Evidence column. Only rows produced with `--cookie` are meaningful dense-history evidence; demo-mode runs satisfy the contract check only.
 
+## Capacity Preflight
+
+Exploratory load-shape probes that look for the next bottleneck beyond
+the certified tier. Preflight rows are NOT certification evidence — they
+exist to flag the capacity discontinuity that a future hardening unit
+should investigate. Schema is intentionally lighter than the
+`## Capacity Evidence` table; rows here are skipped by
+`verify-capacity-evidence.mjs`.
+
+| Target | Status | Date | Commit | Evidence |
+| --- | --- | --- | --- | --- |
+| 60-learner stretch | **Preflight: fail** | 2026-04-28 | `42ec29b` | [json](../../reports/capacity/evidence/60-learner-stretch-preflight-20260428.json) |
+
+> **P4-U12 preflight (2026-04-28, fail-with-root-cause).** The 60-learner stretch shape needs 60 demo sessions, one per virtual learner. Production trusts only the Cloudflare-signed `CF-Connecting-IP` header (see `worker/src/rate-limit.js::normaliseRateLimitSubject`), so a single load-generator host shares one IP-aggregated bucket against `/api/demo/session`. With `DEMO_LIMITS.createIp = 30` per 10-minute window (`worker/src/demo/sessions.js`), virtual `learner-31` and every subsequent learner are rejected with HTTP 429 (`code: demo_rate_limited`) before any `/api/bootstrap` or subject-command load runs. The driver detects the setup failure and aborts cleanly rather than reusing global auth, which would silently corrupt threshold readings.
+>
+> **Top bottleneck:** `demo-session-create-ip-rate-limit` (test-infrastructure, NOT production-traffic). Real classroom traffic at 60 students has 60 distinct `CF-Connecting-IP` values (one per device on the school's network egress, in the worst case clustered across a small NAT pool) and does not share the same per-IP rate-limit bucket; the preflight exposes a load-test infrastructure bottleneck rather than a production-capacity one.
+>
+> **Next step:** Extend the load-test driver with a multi-IP source mode (e.g. a small per-IP CF Worker proxy fan-out, or N independent runners) before re-attempting the 60-learner shape. Until that lands, `/api/bootstrap`, subject-command, and projection-path bottlenecks beyond 30 learners stay unmeasured; the existing 30-learner cert run on commit `d2d9c29` (decision=fail on `maxBootstrapP95Ms`) remains the highest-evidence claim and should be re-run after the bootstrap-P95 regression is investigated.
+
 ## Operational Thresholds
 
 Treat any of these as release blockers until investigated:
