@@ -826,7 +826,7 @@ test('Grammar faded guidance omits contrast examples that match current options'
       mode: 'faded',
       roundLength: 1,
       templateId: 'proc2_formality_choice',
-      seed: 1,
+      seed: 2,
     },
   });
 
@@ -1584,6 +1584,48 @@ test('stale Grammar command revisions do not double-apply mastery or events', as
   assert.equal(stale.body.code, 'stale_write');
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar'").get().count, 0);
   assert.equal(DB.db.prepare('SELECT state_revision FROM learner_profiles WHERE id = ?').get('learner-a').state_revision, 1);
+
+  DB.close();
+});
+
+// --- QG P4 worker runtime regression ---
+
+test('P4 template internal fields not exposed in serialised item via Worker command route', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const p4Template = GRAMMAR_TEMPLATE_METADATA.find(
+    (t) => (t.tags || []).includes('qg-p4') && (t.tags || []).includes('mixed-transfer'),
+  );
+
+  const start = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-p4-serialisation-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: p4Template.id,
+      seed: 1,
+    },
+  });
+
+  assert.equal(start.response.status, 200, JSON.stringify(start.body));
+  const currentItem = start.body.subjectReadModel.session.currentItem;
+
+  // Internal generator fields must not be exposed to the client
+  assert.equal(currentItem.generatorFamilyId, undefined, 'generatorFamilyId must not appear in serialised item');
+  assert.equal(currentItem.variantSignature, undefined, 'variantSignature must not appear in serialised item');
+  assert.equal(currentItem.answerSpec, undefined, 'answerSpec must not appear in serialised item');
+  assert.equal(currentItem.evaluate, undefined, 'evaluate function must not appear in serialised item');
+
+  // The item should still have the expected public fields
+  assert.equal(currentItem.templateId, p4Template.id);
+  assert.deepEqual(currentItem.skillIds, p4Template.skillIds);
+  assert.equal(currentItem.questionType, p4Template.questionType);
+  assert.ok(currentItem.promptText, 'serialised item must have promptText');
 
   DB.close();
 });

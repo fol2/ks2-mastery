@@ -286,7 +286,7 @@ test('audit table proposes the expected current answer-spec distribution', () =>
   const exactCount = rows.filter((row) => row.proposedKind === 'exact').length;
   const multiFieldCount = rows.filter((row) => row.proposedKind === 'multiField').length;
   const nonExactCount = rows.length - exactCount;
-  assert.equal(exactCount, 48, `Expected 48 rows proposing 'exact', got ${exactCount}.`);
-  assert.equal(multiFieldCount, 2, `Expected 2 rows proposing 'multiField', got ${multiFieldCount}.`);
-  assert.equal(nonExactCount, 22, `Expected 22 rows proposing a non-exact kind, got ${nonExactCount}.`);
+  assert.equal(exactCount, 54, `Expected 54 rows proposing 'exact', got ${exactCount}.`);
+  assert.equal(multiFieldCount, 4, `Expected 4 rows proposing 'multiField', got ${multiFieldCount}.`);
+  assert.equal(nonExactCount, 24, `Expected 24 rows proposing a non-exact kind, got ${nonExactCount}.`);
 });

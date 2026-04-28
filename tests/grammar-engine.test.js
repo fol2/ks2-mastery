@@ -75,10 +75,10 @@ test('Grammar QG P2 baseline remains frozen for the shipped declarative marking 
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
 });
 
-test('Grammar QG P3 baseline pins the active explanation-depth release', () => {
+test('Grammar QG P3 baseline pins the historical explanation-depth release', () => {
   const baseline = readGrammarQuestionGeneratorP3Baseline();
 
-  assert.equal(baseline.releaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(baseline.releaseId, 'grammar-qg-p3-2026-04-28');
   assert.equal(baseline.conceptCount, 18);
   assert.equal(baseline.templateCount, 70);
   assert.equal(baseline.selectedResponseCount, 50);
@@ -96,9 +96,10 @@ test('Grammar QG P3 baseline pins the active explanation-depth release', () => {
   assert.equal(baseline.p3ExplanationComplete, true);
   assert.deepEqual(baseline.thinPoolConcepts, []);
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
+  // Live content now reflects P4 denominator
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 70);
-  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 50);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 78);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 58);
   assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 20);
 });
 
@@ -1423,4 +1424,93 @@ test('Grammar save-prefs clears completed summary state', () => {
   assert.equal(saved.state.awaitingAdvance, false);
   assert.equal(saved.state.prefs.mode, 'learn');
   assert.equal(saved.practiceSession, null);
+});
+
+// --- QG P4 mixed-transfer engine regression ---
+
+test('P4 mixed-transfer template (choose/exact) correct answer scores correctly', () => {
+  const templateId = 'qg_p4_sentence_speech_transfer';
+  const question = createGrammarQuestion({ templateId, seed: 1 });
+  assert.ok(question.answerSpec, 'P4 template must emit answerSpec');
+  assert.equal(question.answerSpec.kind, 'exact');
+
+  const result = evaluateGrammarQuestion(question, { answer: question.answerSpec.golden[0] });
+  assert.equal(result.correct, true, 'Correct golden answer must score as correct');
+  assert.equal(result.score, result.maxScore, 'Correct answer must achieve maxScore');
+});
+
+test('P4 mixed-transfer template wrong answer returns feedback', () => {
+  const templateId = 'qg_p4_sentence_speech_transfer';
+  const question = createGrammarQuestion({ templateId, seed: 1 });
+  const wrongAnswer = question.answerSpec.nearMiss[0] || 'totally_wrong';
+
+  const result = evaluateGrammarQuestion(question, { answer: wrongAnswer });
+  assert.equal(result.correct, false, 'Near-miss answer must score as incorrect');
+  assert.equal(result.score, 0, 'Wrong answer must score 0');
+  assert.ok(
+    result.feedbackShort || result.misconception,
+    'Wrong answer must produce feedback or misconception label',
+  );
+});
+
+test('P4 classify template multi-field marking works (voice_roles_transfer)', () => {
+  const templateId = 'qg_p4_voice_roles_transfer';
+  const question = createGrammarQuestion({ templateId, seed: 1 });
+  assert.ok(question.answerSpec, 'P4 classify template must emit answerSpec');
+  assert.equal(question.answerSpec.kind, 'multiField');
+
+  // Build the correct multi-field response from golden values
+  const fields = question.answerSpec.params.fields;
+  const correctResponse = {};
+  for (const [key, fieldSpec] of Object.entries(fields)) {
+    correctResponse[key] = fieldSpec.golden[0];
+  }
+
+  const result = evaluateGrammarQuestion(question, correctResponse);
+  assert.equal(result.correct, true, 'All-correct multi-field response must score as correct');
+  assert.equal(result.score, result.maxScore, 'Full-score multi-field response must hit maxScore');
+});
+
+test('P4 classify template multi-field marking works (word_class_noun_phrase_transfer)', () => {
+  const templateId = 'qg_p4_word_class_noun_phrase_transfer';
+  const question = createGrammarQuestion({ templateId, seed: 1 });
+  assert.ok(question.answerSpec, 'P4 classify template must emit answerSpec');
+  assert.equal(question.answerSpec.kind, 'multiField');
+
+  // Submit all wrong answers
+  const fields = question.answerSpec.params.fields;
+  const wrongResponse = {};
+  for (const [key, fieldSpec] of Object.entries(fields)) {
+    wrongResponse[key] = fieldSpec.nearMiss[0] || 'wrong';
+  }
+
+  const result = evaluateGrammarQuestion(question, wrongResponse);
+  assert.equal(result.correct, false, 'All-wrong multi-field response must score as incorrect');
+});
+
+test('P4 mixed-transfer template updates all concept nodes in mastery', () => {
+  const state = createInitialGrammarState();
+  const templateId = 'qg_p4_adverbial_clause_boundary_transfer';
+  const question = createGrammarQuestion({ templateId, seed: 1 });
+  const item = serialiseGrammarQuestion(question);
+  const template = grammarTemplateById(templateId);
+
+  // Submit the correct answer
+  const correctResponse = { answer: question.answerSpec.golden[0] };
+  applyGrammarAttemptToState(state, {
+    learnerId: 'learner-a',
+    item,
+    response: correctResponse,
+    supportLevel: 0,
+    attempts: 1,
+    now: 1_777_000_000_000,
+  });
+
+  // All 3 skillIds should be updated
+  for (const conceptId of template.skillIds) {
+    assert.equal(
+      state.mastery.concepts[conceptId].attempts, 1,
+      `Concept ${conceptId} should have 1 attempt after P4 multi-concept submission`,
+    );
+  }
 });

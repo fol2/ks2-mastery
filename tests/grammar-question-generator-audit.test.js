@@ -19,7 +19,7 @@ test('Grammar question-generator audit covers the current template inventory', (
   assert.deepEqual(audit.templatesMissingAnswerSpecs, []);
   assert.deepEqual(audit.invalidAnswerSpecs, []);
   assert.equal(audit.conceptCoverage.length, GRAMMAR_CONCEPTS.length);
-  assert.equal(audit.answerSpecTemplateCount, 39);
+  assert.equal(audit.answerSpecTemplateCount, 47);
   assert.equal(audit.constructedResponseTemplateCount, 20);
   assert.equal(audit.constructedResponseAnswerSpecTemplateCount, 20);
   assert.equal(audit.legacyAdapterTemplateCount, 0);
@@ -35,12 +35,19 @@ test('Grammar question-generator audit covers the current template inventory', (
   );
   assert.deepEqual(audit.answerSpecKindCounts, {
     acceptedSet: 2,
-    exact: 17,
+    exact: 23,
     manualReviewOnly: 4,
-    multiField: 2,
+    multiField: 4,
     normalisedText: 5,
     punctuationPattern: 9,
   });
+
+  // P4 mixed-transfer assertions
+  assert.equal(typeof audit.mixedTransferTemplateCount, 'number');
+  assert.equal(audit.mixedTransferTemplateCount, 8);
+  assert.ok(Array.isArray(audit.conceptsMissingMixedTransferCoverage));
+  assert.equal(audit.conceptsMissingMixedTransferCoverage.length, 0);
+  assert.equal(audit.p4MixedTransferComplete, true);
 });
 
 test('Grammar generated variants have stable answer-safe signatures', () => {
@@ -48,9 +55,10 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
   assert.deepEqual(audit.missingGeneratorMetadata, []);
   assert.deepEqual(audit.generatedSignatureCollisions, []);
   assert.deepEqual(audit.repeatedGeneratedVariants, []);
-  assert.ok(
-    audit.legacyRepeatedGeneratedVariants.length >= 1,
-    'Legacy generated repeated variants stay advisory rather than blocking P2 marking migration.',
+  assert.strictEqual(
+    audit.legacyRepeatedGeneratedVariants.length,
+    0,
+    'P4 requires zero legacy repeated variants in default seed window',
   );
   assert.ok(audit.sampleCount > 0);
 
@@ -64,8 +72,9 @@ test('Grammar generated variants have stable answer-safe signatures', () => {
 });
 
 test('Grammar generated variant signatures ignore choice shuffle order only', () => {
+  // With 8 modal verb cases, seed 1 and seed 9 wrap to the same case index (1%8 === 9%8 === 1)
   const sameModalQuestion = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 1 });
-  const sameModalQuestionDifferentShuffle = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 4 });
+  const sameModalQuestionDifferentShuffle = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 9 });
   const differentModalQuestion = createGrammarQuestion({ templateId: 'qg_modal_verb_explain', seed: 2 });
 
   assert.equal(

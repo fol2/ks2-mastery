@@ -1383,6 +1383,14 @@ const EXTRA_LEXICON = {
     [
       "The bus arrived",
       "everyone grabbed their bags"
+    ],
+    [
+      "The sun broke through the clouds",
+      "the ice on the pond started to melt"
+    ],
+    [
+      "The tide was rising quickly",
+      "the fishermen hauled in their nets"
     ]
   ],
   colonLists: [
@@ -1417,6 +1425,24 @@ const EXTRA_LEXICON = {
         "a certificate",
         "a book token"
       ]
+    },
+    {
+      intro: "The recipe called for five ingredients",
+      items: [
+        "flour",
+        "butter",
+        "eggs",
+        "sugar",
+        "milk"
+      ]
+    },
+    {
+      intro: "Three countries were represented at the fair",
+      items: [
+        "France",
+        "Japan",
+        "Brazil"
+      ]
     }
   ],
   dashBoundaries: [
@@ -1435,6 +1461,14 @@ const EXTRA_LEXICON = {
     [
       "One thought filled my mind",
       "where had the key gone"
+    ],
+    [
+      "She had made her decision",
+      "the letter would be posted today"
+    ],
+    [
+      "The message was clear",
+      "everyone must leave the building at once"
     ]
   ],
   speechQuestions: [
@@ -1492,6 +1526,28 @@ const EXTRA_LEXICON = {
       ],
       correct: "We visited the small-animal hospital after lunch.",
       why: "The hyphen shows that ‘small-animal’ is one combined idea describing the hospital."
+    },
+    {
+      ask: "Which sentence means the cabinet is used for drying clothes?",
+      options: [
+        "Dad opened the clothes-drying cabinet in the hall.",
+        "Dad opened the clothes drying cabinet in the hall.",
+        "Dad opened the cabinet for the hall clothes.",
+        "Dad opened the drying clothes in the cabinet."
+      ],
+      correct: "Dad opened the clothes-drying cabinet in the hall.",
+      why: "The hyphen links ‘clothes-drying’ into one compound modifier describing the cabinet."
+    },
+    {
+      ask: "Which sentence means the test is well known?",
+      options: [
+        "The teacher set a well-known test for the class.",
+        "The teacher set a well known test for the class.",
+        "The teacher knew the test well for the class.",
+        "The teacher set a known well test for the class."
+      ],
+      correct: "The teacher set a well-known test for the class.",
+      why: "The hyphen joins ‘well-known’ into a single compound adjective before the noun."
     }
   ],
   verbsRich: [
@@ -1614,10 +1670,30 @@ const EXTRA_LEXICON = {
       correct: "Several pupils were absent from the visit.",
       distractors: [
         "A few pupils were off for the visit.",
-        "Some pupils didn't come on the trip.",
+        "Some pupils didn’t come on the trip.",
         "Quite a few pupils were missing from it."
       ],
       why: "Formal writing often chooses more precise vocabulary and sentence structure."
+    },
+    {
+      prompt: "Which sentence is most appropriate for a school newsletter?",
+      correct: "We are delighted to announce the opening of the new library.",
+      distractors: [
+        "We’re so excited about the new library opening!",
+        "The new library is opening and it’s going to be great.",
+        "Guess what – there’s a new library starting up."
+      ],
+      why: "Formal register uses measured language rather than informal exclamations."
+    },
+    {
+      prompt: "Choose the sentence that fits best in a formal invitation.",
+      correct: "Guests are kindly requested to arrive by half past six.",
+      distractors: [
+        "Can everyone turn up by half six?",
+        "Please try to get there by about six-thirty.",
+        "Everyone should come at like half six."
+      ],
+      why: "Formal invitations use passive or impersonal constructions and precise time references."
     }
   ],
   modalFrames: [
@@ -1629,7 +1705,7 @@ const EXTRA_LEXICON = {
         "could",
         "should"
       ],
-      why: "‘Must’ shows strongest obligation."
+      why: "’Must’ shows strongest obligation."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: The clouds are dark, but the rain has not started. It ___ rain later.",
@@ -1639,7 +1715,7 @@ const EXTRA_LEXICON = {
         "should",
         "will"
       ],
-      why: "‘Might’ shows possibility, not certainty."
+      why: "’Might’ shows possibility, not certainty."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: You are giving advice to a friend. You ___ begin with the easier question.",
@@ -1649,17 +1725,37 @@ const EXTRA_LEXICON = {
         "might",
         "will"
       ],
-      why: "‘Should’ is the modal of advice here."
+      why: "’Should’ is the modal of advice here."
     },
     {
-      prompt: "Choose the modal verb that best fits the meaning: The timetable is fixed. The coach ___ leave at 9 o'clock.",
+      prompt: "Choose the modal verb that best fits the meaning: The timetable is fixed. The coach ___ leave at 9 o’clock.",
       correct: "will",
       distractors: [
         "might",
         "should",
         "must"
       ],
-      why: "‘Will’ fits a definite future event here."
+      why: "’Will’ fits a definite future event here."
+    },
+    {
+      prompt: "Choose the modal verb that best fits the meaning: The teacher says this is allowed. You ___ use a dictionary during the test.",
+      correct: "may",
+      distractors: [
+        "must",
+        "will",
+        "might"
+      ],
+      why: "’May’ is the modal of permission here."
+    },
+    {
+      prompt: "Choose the modal verb that best fits the meaning: The swimmers are very strong. They ___ cross the lake without stopping.",
+      correct: "could",
+      distractors: [
+        "must",
+        "should",
+        "will"
+      ],
+      why: "’Could’ expresses ability or capacity here."
     }
   ]
 };
@@ -2735,7 +2831,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const pair = pick(rng, EXTRA_LEXICON.clausePairs);
+          const pair = pickBySeed(seed, EXTRA_LEXICON.clausePairs);
           const correct = ";";
           const options = [
             { value:";", label:";" },
@@ -2783,7 +2879,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const item = pick(rng, EXTRA_LEXICON.colonLists);
+          const item = pickBySeed(seed, EXTRA_LEXICON.colonLists);
           const raw = ensureSentenceEnd(`${item.intro} ${item.items.join(", ")}`);
           const accepted = [ensureSentenceEnd(`${item.intro}: ${item.items.join(", ")}`)];
           const answerSpec = punctuationPatternAnswerSpec(accepted, [raw], {
@@ -2825,7 +2921,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const pair = pick(rng, EXTRA_LEXICON.dashBoundaries);
+          const pair = pickBySeed(seed, EXTRA_LEXICON.dashBoundaries);
           const raw = ensureSentenceEnd(`${pair[0]} ${pair[1]}`);
           const accepted = dedupePlain([
             `${pair[0]} – ${pair[1]}.`,
@@ -2868,7 +2964,7 @@ const TEMPLATES = [
       "hyphen_ambiguity"
     ],
     generator(seed) {
-          const item = EXTRA_LEXICON.hyphenPrompts[seed % EXTRA_LEXICON.hyphenPrompts.length];
+          const item = pickBySeed(seed, EXTRA_LEXICON.hyphenPrompts);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${escapeHtml(item.ask)}</p>`,
@@ -3131,7 +3227,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const item = generateModalCase(rng);
+          const item = generateModalCase(rng, seed);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${escapeHtml(item.prompt)}</p>`,
@@ -3159,7 +3255,7 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const rng = mulberry32(seed);
-          const item = generateFormalityCase(rng);
+          const item = generateFormalityCase(rng, seed);
           return makeBaseQuestion(this, seed, {
             marks:1,
             stemHtml:`<p>${escapeHtml(item.prompt)}</p>`,
@@ -3600,30 +3696,23 @@ const TEMPLATES = [
     ],
     generator(seed) {
             const rng = mulberry32(seed);
-            const banks = {
-              because:[
-                ["we stayed inside","it was raining"],
-                ["Ben hurried home","he had forgotten his kit"],
-                ["Mia smiled","she had found the missing map"]
-              ],
-              although:[
-                ["Mia was tired","she finished the race"],
-                ["the path was muddy","the walkers kept going"],
-                ["the room was noisy","Jay carried on reading"]
-              ],
-              when:[
-                ["the bell rang","the pupils lined up"],
-                ["the gate opened","the crowd cheered"],
-                ["the lights went out","everyone fell silent"]
-              ],
-              if:[
-                ["you need help","call the office"],
-                ["the rain starts","go inside the tent"],
-                ["the torch stops working","fetch the spare one"]
-              ]
-            };
-            const conjunction = pick(rng, Object.keys(banks));
-            const pair = pick(rng, banks[conjunction]);
+            const flatBank = [
+              { conjunction:"because", pair:["we stayed inside","it was raining"] },
+              { conjunction:"because", pair:["Ben hurried home","he had forgotten his kit"] },
+              { conjunction:"because", pair:["Mia smiled","she had found the missing map"] },
+              { conjunction:"although", pair:["Mia was tired","she finished the race"] },
+              { conjunction:"although", pair:["the path was muddy","the walkers kept going"] },
+              { conjunction:"although", pair:["the room was noisy","Jay carried on reading"] },
+              { conjunction:"when", pair:["the bell rang","the pupils lined up"] },
+              { conjunction:"when", pair:["the gate opened","the crowd cheered"] },
+              { conjunction:"when", pair:["the lights went out","everyone fell silent"] },
+              { conjunction:"if", pair:["you need help","call the office"] },
+              { conjunction:"if", pair:["the rain starts","go inside the tent"] },
+              { conjunction:"if", pair:["the torch stops working","fetch the spare one"] }
+            ];
+            const item = pickBySeed(seed, flatBank);
+            const conjunction = item.conjunction;
+            const pair = item.pair;
             const main = pair[0];
             const sub = pair[1];
             let accepted;
@@ -4096,6 +4185,61 @@ const TEMPLATES = [
                   "It turns the verb into the past tense."
                 ],
                 why:"'Should' commonly gives advice or a recommendation."
+              },
+              {
+                sentence:"May I borrow the scissors, please?",
+                modal:"may",
+                correct:"It asks for permission politely.",
+                distractors:[
+                  "It shows that the action is certain to happen.",
+                  "It names the month of the year.",
+                  "It shows that the scissors belong to the speaker."
+                ],
+                why:"'May' can ask for or grant permission."
+              },
+              {
+                sentence:"She could swim before she started school.",
+                modal:"could",
+                correct:"It shows past ability.",
+                distractors:[
+                  "It shows a future obligation.",
+                  "It makes the sentence passive.",
+                  "It replaces the subject she."
+                ],
+                why:"'Could' often shows that someone had the ability to do something in the past."
+              },
+              {
+                sentence:"The package will arrive tomorrow morning.",
+                modal:"will",
+                correct:"It shows certainty about a future event.",
+                distractors:[
+                  "It shows that the action is only a weak possibility.",
+                  "It gives advice about what to do.",
+                  "It turns the sentence into a command."
+                ],
+                why:"'Will' is commonly used for future certainty or prediction."
+              },
+              {
+                sentence:"You shall not enter without a pass.",
+                modal:"shall",
+                correct:"It expresses a rule or prohibition.",
+                distractors:[
+                  "It shows a weak possibility.",
+                  "It asks a polite question.",
+                  "It places the action in the past."
+                ],
+                why:"'Shall' can express rules, obligations, or formal determination."
+              },
+              {
+                sentence:"The answer could be wrong.",
+                modal:"could",
+                correct:"It shows possibility or uncertainty.",
+                distractors:[
+                  "It shows that the answer was wrong in the past.",
+                  "It gives a command to check the answer.",
+                  "It turns the sentence into passive voice."
+                ],
+                why:"'Could' can also show possibility when the meaning is about the present or future."
               }
             ];
             const item = cases[seed % cases.length];
@@ -4170,6 +4314,61 @@ const TEMPLATES = [
                   "The hyphen marks direct speech."
                 ],
                 why:"The compound adjective comes before the noun, so the hyphen protects the intended meaning."
+              },
+              {
+                phrase:"well-known author",
+                contrast:"well known author",
+                correct:"The hyphen shows that 'well-known' is one describing idea before 'author'.",
+                distractors:[
+                  "The hyphen shows the author owns a well.",
+                  "The hyphen turns well into a noun.",
+                  "The hyphen separates two independent clauses."
+                ],
+                why:"Compound adjectives before a noun use a hyphen to show they form a single modifier."
+              },
+              {
+                phrase:"twenty-four children",
+                contrast:"twenty four children",
+                correct:"The hyphen links twenty and four as a single compound number.",
+                distractors:[
+                  "The hyphen separates two different groups of children.",
+                  "The hyphen shows possession by the number.",
+                  "The hyphen marks a question."
+                ],
+                why:"Compound numbers from twenty-one to ninety-nine use a hyphen."
+              },
+              {
+                phrase:"re-cover the book",
+                contrast:"recover the book",
+                correct:"The hyphen shows cover again, not get back.",
+                distractors:[
+                  "The hyphen shows that the book belongs to someone.",
+                  "The hyphen marks a subordinate clause.",
+                  "The hyphen means the same as a comma here."
+                ],
+                why:"A hyphen after 're' can prevent confusion with a different word."
+              },
+              {
+                phrase:"old-fashioned clock",
+                contrast:"old fashioned clock",
+                correct:"The hyphen shows that 'old-fashioned' is one describing idea before 'clock'.",
+                distractors:[
+                  "The hyphen shows that the clock is old and separately fashioned.",
+                  "The hyphen replaces a conjunction between old and fashioned.",
+                  "The hyphen shows possession by the clock."
+                ],
+                why:"Without the hyphen, 'old' could be read as describing 'fashioned clock' separately."
+              },
+              {
+                phrase:"long-term plan",
+                contrast:"long term plan",
+                correct:"The hyphen shows that 'long-term' is one describing idea before 'plan'.",
+                distractors:[
+                  "The hyphen shows that the plan is about long terms.",
+                  "The hyphen makes the phrase a question.",
+                  "The hyphen shows that term is a verb."
+                ],
+                why:"The compound adjective modifies the noun as a unit, and the hyphen makes this clear."
               }
             ];
             const item = cases[seed % cases.length];
@@ -4550,6 +4749,150 @@ const TEMPLATES = [
               evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
             });
           }
+  },
+  {
+    id: "qg_p4_sentence_speech_transfer",
+    label: "Sentence function meets speech punctuation",
+    domain: "Sentence function",
+    questionType: "choose",
+    difficulty: 3,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p4_sentence_speech_transfer",
+    tags: ["qg-p4", "mixed-transfer"],
+    skillIds: ["sentence_functions", "speech_punctuation"],
+    generator(seed) {
+      return buildP4MixedTransferChoiceQuestion(this, seed, P4_MIXED_TRANSFER_CASES.qg_p4_sentence_speech_transfer);
+    }
+  },
+  {
+    id: "qg_p4_word_class_noun_phrase_transfer",
+    label: "Word class and noun phrase analysis",
+    domain: "Phrases",
+    questionType: "classify",
+    difficulty: 3,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "multiField",
+    generatorFamilyId: "qg_p4_word_class_noun_phrase_transfer",
+    tags: ["qg-p4", "mixed-transfer"],
+    skillIds: ["word_classes", "noun_phrases"],
+    generator(seed) {
+      return buildP4MixedTransferClassifyQuestion(this, seed, P4_MIXED_TRANSFER_CASES.qg_p4_word_class_noun_phrase_transfer);
+    }
+  },
+  {
+    id: "qg_p4_adverbial_clause_boundary_transfer",
+    label: "Adverbial placement with clause boundaries",
+    domain: "Clauses",
+    questionType: "choose",
+    difficulty: 3,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p4_adverbial_clause_boundary_transfer",
+    tags: ["qg-p4", "mixed-transfer"],
+    skillIds: ["adverbials", "clauses", "boundary_punctuation"],
+    generator(seed) {
+      return buildP4MixedTransferChoiceQuestion(this, seed, P4_MIXED_TRANSFER_CASES.qg_p4_adverbial_clause_boundary_transfer);
+    }
+  },
+  {
+    id: "qg_p4_relative_parenthesis_transfer",
+    label: "Relative clause with parenthesis commas",
+    domain: "Clauses",
+    questionType: "choose",
+    difficulty: 3,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p4_relative_parenthesis_transfer",
+    tags: ["qg-p4", "mixed-transfer"],
+    skillIds: ["relative_clauses", "parenthesis_commas"],
+    generator(seed) {
+      return buildP4MixedTransferChoiceQuestion(this, seed, P4_MIXED_TRANSFER_CASES.qg_p4_relative_parenthesis_transfer);
+    }
+  },
+  {
+    id: "qg_p4_verb_form_register_transfer",
+    label: "Verb form meets register and standard English",
+    domain: "Verb forms",
+    questionType: "choose",
+    difficulty: 3,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p4_verb_form_register_transfer",
+    tags: ["qg-p4", "mixed-transfer"],
+    skillIds: ["tense_aspect", "modal_verbs", "standard_english"],
+    generator(seed) {
+      return buildP4MixedTransferChoiceQuestion(this, seed, P4_MIXED_TRANSFER_CASES.qg_p4_verb_form_register_transfer);
+    }
+  },
+  {
+    id: "qg_p4_cohesion_formality_transfer",
+    label: "Pronoun cohesion meets formality",
+    domain: "Cohesion",
+    questionType: "choose",
+    difficulty: 3,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p4_cohesion_formality_transfer",
+    tags: ["qg-p4", "mixed-transfer"],
+    skillIds: ["pronouns_cohesion", "formality"],
+    generator(seed) {
+      return buildP4MixedTransferChoiceQuestion(this, seed, P4_MIXED_TRANSFER_CASES.qg_p4_cohesion_formality_transfer);
+    }
+  },
+  {
+    id: "qg_p4_voice_roles_transfer",
+    label: "Active/passive voice with subject and object roles",
+    domain: "Sentence structure",
+    questionType: "classify",
+    difficulty: 3,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "multiField",
+    generatorFamilyId: "qg_p4_voice_roles_transfer",
+    tags: ["qg-p4", "mixed-transfer"],
+    skillIds: ["active_passive", "subject_object"],
+    generator(seed) {
+      return buildP4MixedTransferClassifyQuestion(this, seed, P4_MIXED_TRANSFER_CASES.qg_p4_voice_roles_transfer);
+    }
+  },
+  {
+    id: "qg_p4_possession_hyphen_clarity_transfer",
+    label: "Apostrophe possession meets hyphen clarity",
+    domain: "Punctuation for grammar",
+    questionType: "choose",
+    difficulty: 3,
+    satsFriendly: true,
+    isSelectedResponse: true,
+    generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "exact",
+    generatorFamilyId: "qg_p4_possession_hyphen_clarity_transfer",
+    tags: ["qg-p4", "mixed-transfer"],
+    skillIds: ["apostrophes_possession", "hyphen_ambiguity"],
+    generator(seed) {
+      return buildP4MixedTransferChoiceQuestion(this, seed, P4_MIXED_TRANSFER_CASES.qg_p4_possession_hyphen_clarity_transfer);
+    }
   }
 ];
 
@@ -4626,6 +4969,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "In KS2 grammar, an exclamation mark alone does not make the sentence function an exclamation.",
       misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this sentence a command even though it says 'please'?",
+      example: "Please tidy the books before you leave.",
+      correct: "It tells someone to do something; the polite word does not change the function.",
+      distractors: [
+        "It is a question because it uses the word please.",
+        "It is a statement because it gives information about the books.",
+        "It is an exclamation because the speaker feels strongly about tidiness."
+      ],
+      why: "A command instructs someone to act; politeness markers do not alter the sentence function.",
+      misconception: "sentence_function_confusion"
+    },
+    {
+      prompt: "Why is this sentence a grammatical exclamation?",
+      example: "How quickly the fox disappeared!",
+      correct: "It begins with How and expresses strong feeling about an adverb.",
+      distractors: [
+        "It is a question because it begins with the word How.",
+        "It is a command because it tells the fox to disappear.",
+        "It is a statement because it gives information about speed."
+      ],
+      why: "Grammatical exclamations at KS2 begin with What or How and express strong feeling.",
+      misconception: "sentence_function_confusion"
     }
   ],
   qg_p3_word_classes_explain: [
@@ -4699,6 +5066,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "It joins the two clauses because it means and."
       ],
       why: "Pronouns stand in for nouns or noun phrases when the reference is clear.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'swiftly' an adverb here?",
+      example: "The river flowed swiftly under the bridge.",
+      correct: "It modifies the verb flowed by telling how the river moved.",
+      distractors: [
+        "It names the bridge.",
+        "It describes the noun river.",
+        "It joins two clauses together."
+      ],
+      why: "Adverbs can modify verbs by explaining the manner of the action.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Why is the word 'across' a preposition here?",
+      example: "The children ran across the playground.",
+      correct: "It begins a phrase showing the place relationship between ran and playground.",
+      distractors: [
+        "It describes how the children felt.",
+        "It replaces the noun children.",
+        "It is a conjunction joining two clauses."
+      ],
+      why: "A preposition links a noun phrase to the rest of the sentence, often showing place or direction.",
       misconception: "word_class_confusion"
     }
   ],
@@ -4776,6 +5167,31 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "A noun phrase needs its head noun; adjectives alone do not make the complete noun phrase here.",
       misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is this an expanded noun phrase?",
+      example: "a rusty bicycle with a bent wheel",
+      correct: "It is centred on the noun bicycle and expanded with an adjective and a prepositional phrase.",
+      distractors: [
+        "It is a clause because it has a hidden verb.",
+        "It is an adverbial telling how something moved.",
+        "It is a conjunction linking two ideas."
+      ],
+      why: "Adjectives and prepositional phrases can both expand a noun phrase.",
+      misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Why is the underlined group a noun phrase?",
+      example: "The small grey kitten under the bench scratched the post.",
+      focus: "The small grey kitten under the bench",
+      correct: "The whole group is centred on the noun kitten and gives detail about it.",
+      distractors: [
+        "It is a verb phrase because scratching is implied.",
+        "It is an adverbial because it tells where the post was.",
+        "It is a subordinate clause because it has extra words."
+      ],
+      why: "Modifiers before and after the head noun can all belong inside one noun phrase.",
+      misconception: "noun_phrase_confusion"
     }
   ],
   qg_p3_clauses_explain: [
@@ -4851,6 +5267,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "A subordinate clause may contain a subject and verb but still depend on a main clause.",
       misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why does 'while' introduce a subordinate clause here?",
+      example: "While the audience waited, the actors prepared backstage.",
+      correct: "It introduces a time clause that depends on the main clause for full meaning.",
+      distractors: [
+        "It introduces a main clause because it names who was waiting.",
+        "It introduces a relative clause because it gives information about actors.",
+        "It introduces direct speech because a group is speaking."
+      ],
+      why: "While is a subordinating conjunction that signals a time relationship.",
+      misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Why are both clauses main clauses here?",
+      example: "The wind howled but the tent held firm.",
+      correct: "Both parts carry independent meaning and are joined by a coordinating conjunction.",
+      distractors: [
+        "The second clause is subordinate because it comes after but.",
+        "The first clause is subordinate because it describes weather.",
+        "Neither is a main clause because two clauses cannot both be main."
+      ],
+      why: "Coordinating conjunctions join clauses of equal grammatical weight.",
+      misconception: "subordinate_clause_confusion"
     }
   ],
   qg_p3_relative_clauses_explain: [
@@ -4924,6 +5364,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "The commas mark possession by the chess club."
       ],
       why: "Non-essential relative clauses can be marked as parenthesis with commas.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why is 'where' introducing a relative clause here?",
+      example: "The park where we played football has a new fence.",
+      correct: "The clause gives more information about the noun park.",
+      distractors: [
+        "It introduces a question about direction.",
+        "It is a subordinating time conjunction.",
+        "It marks a fronted adverbial."
+      ],
+      why: "Where can introduce a relative clause that tells more about a place noun.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Why is this a defining relative clause?",
+      example: "The boy who scored the goal ran to his team.",
+      correct: "It identifies which boy is meant and cannot be removed without losing meaning.",
+      distractors: [
+        "It is non-defining because commas could be added.",
+        "It is not a relative clause because it tells about an action.",
+        "It is a fronted adverbial because it comes before ran."
+      ],
+      why: "Defining relative clauses are essential for identifying the noun.",
       misconception: "relative_clause_confusion"
     }
   ],
@@ -4999,6 +5463,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "The form have been plus an -ing verb combines perfect and progressive meanings.",
       misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'will arrive' simple future here?",
+      example: "The bus will arrive at half past three.",
+      correct: "It uses will plus a base verb to refer to a time ahead.",
+      distractors: [
+        "It is present tense because will is in the sentence now.",
+        "It is past perfect because it names a specific time.",
+        "It is progressive because arrival takes time."
+      ],
+      why: "Will plus a base verb places the action in the future.",
+      misconception: "tense_confusion"
+    },
+    {
+      prompt: "Why is 'had been waiting' past perfect progressive?",
+      example: "They had been waiting for an hour before the doors opened.",
+      correct: "It shows a continuing action in the past that happened before another past event.",
+      distractors: [
+        "It is present perfect because it uses been.",
+        "It is simple past because the doors opened yesterday.",
+        "It is passive because waiting is received by them."
+      ],
+      why: "Had been plus an -ing verb shows an ongoing action that preceded another past action.",
+      misconception: "tense_confusion"
     }
   ],
   qg_p3_pronouns_cohesion_explain: [
@@ -5072,6 +5560,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "Him is unclear because it is plural."
       ],
       why: "Object pronouns still need a clear noun phrase to refer back to.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why does 'their' improve cohesion here?",
+      example: "The team packed up. They put their equipment in the shed.",
+      correct: "Their links clearly to the team, keeping both sentences connected.",
+      distractors: [
+        "Their replaces the shed.",
+        "Their is unclear because it could mean anyone.",
+        "Their changes the sentence into a question."
+      ],
+      why: "Possessive pronouns help cohesion when the owner is clear from the previous sentence.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Why should 'it' be replaced with a noun here?",
+      example: "The cage was beside the hutch. It was empty.",
+      correct: "It could refer to the cage or the hutch, so a noun would remove ambiguity.",
+      distractors: [
+        "It is always wrong after a full stop.",
+        "It must refer to hutch because hutch is nearer.",
+        "It is a conjunction, not a pronoun, here."
+      ],
+      why: "When two possible referents exist, replacing the pronoun with a noun improves clarity.",
       misconception: "pronoun_cohesion_confusion"
     }
   ],
@@ -5147,6 +5659,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "Register depends on vocabulary and structure, not only on whether the grammar is understandable.",
       misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why is this sentence too informal for a school notice?",
+      example: "Loads of kids are gonna use the new hall.",
+      correct: "It uses slang ('loads of kids', 'gonna') that does not suit an official notice.",
+      distractors: [
+        "It is informal because it mentions children.",
+        "It is informal because 'hall' is a short word.",
+        "It is informal because it is in the present tense."
+      ],
+      why: "Slang and contractions like 'gonna' lower the formality below what official writing requires.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Why does the passive voice help formality here?",
+      example: "All mobile devices must be switched off during assembly.",
+      correct: "It removes a personal subject and uses impersonal, official wording.",
+      distractors: [
+        "Passive voice is always more formal than active voice in every case.",
+        "It is formal because mobile devices is a plural noun.",
+        "It is formal because it uses the word during."
+      ],
+      why: "Impersonal passive structures suit formal contexts where the doer is less important than the rule.",
+      misconception: "formality_confusion"
     }
   ],
   qg_p3_active_passive_explain: [
@@ -5220,6 +5756,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "The sentence is informal because the doer is hidden."
       ],
       why: "A passive sentence does not have to include the doer.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why is this sentence active even though the subject is not a person?",
+      example: "The storm destroyed the fence.",
+      correct: "The storm is the subject that does the action of destroying.",
+      distractors: [
+        "Only people can be the subject in active voice.",
+        "It is passive because the fence receives the action.",
+        "It is passive because storms are natural forces."
+      ],
+      why: "Any noun phrase that does the verb can be the subject in active voice, including non-human agents.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Why does changing to passive shift emphasis here?",
+      example: "The report was written by a group of Year 6 pupils.",
+      correct: "Passive voice foregrounds the report and backgrounds who wrote it.",
+      distractors: [
+        "The emphasis stays on the pupils because they are named.",
+        "The sentence becomes a question when made passive.",
+        "The report becomes the doer when it moves to the front."
+      ],
+      why: "Passive voice shifts attention to the thing affected, not the doer.",
       misconception: "active_passive_confusion"
     }
   ],
@@ -5295,6 +5855,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "Ask who or what receives the verb to find the object.",
       misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why is 'the audience' the subject even though it comes after a comma?",
+      example: "After the interval, the audience returned to their seats.",
+      correct: "The audience performs the action of returning; the opening phrase is an adverbial.",
+      distractors: [
+        "The audience is the object because it comes after a comma.",
+        "After the interval is the subject because it comes first.",
+        "Their seats is the subject because it receives the action."
+      ],
+      why: "A fronted adverbial does not change which noun phrase is the subject.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Why does this sentence have no object?",
+      example: "The baby slept peacefully.",
+      correct: "Slept does not pass action onto another noun; no noun receives the action.",
+      distractors: [
+        "Peacefully is the object because it follows the verb.",
+        "The baby is both subject and object here.",
+        "Every sentence must have an object."
+      ],
+      why: "Some verbs are intransitive and do not require an object.",
+      misconception: "subject_object_confusion"
     }
   ],
   qg_p3_parenthesis_commas_explain: [
@@ -5368,6 +5952,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
         "It is direct speech because the comma comes early."
       ],
       why: "A fronted adverbial comma has a different job from parenthesis punctuation.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why do dashes work better than commas here?",
+      example: "The headteacher – who had been away all week – returned on Friday.",
+      correct: "Dashes give a stronger visual break for the parenthetical information.",
+      distractors: [
+        "Dashes are the only punctuation that can mark parenthesis.",
+        "Commas would be grammatically wrong here.",
+        "Dashes show that the headteacher owns something."
+      ],
+      why: "Dashes, commas, and brackets can all mark parenthesis, but dashes give a stronger break.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Why can the bracketed words be removed?",
+      example: "The school hall (built in 1987) needs a new roof.",
+      correct: "The bracketed phrase adds optional extra detail and the sentence still makes sense without it.",
+      distractors: [
+        "Every part of a sentence in brackets is the main clause.",
+        "The brackets mark direct speech.",
+        "The brackets show that 1987 is the subject."
+      ],
+      why: "Parenthetical information is additional and removable without breaking the sentence.",
       misconception: "parenthesis_confusion"
     }
   ],
@@ -5443,6 +6051,30 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "The punctuation that ends the direct speech is part of the quoted words.",
       misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why does the reporting clause start with a lower-case letter here?",
+      example: "\"Pass the glue,\" whispered Luca.",
+      correct: "The reporting clause continues the same sentence after the spoken words.",
+      distractors: [
+        "Whispered always has a lower-case letter in every context.",
+        "The lower case shows possession by Luca.",
+        "The lower case turns the sentence into a question."
+      ],
+      why: "After a comma inside speech marks, the reporting clause does not start a new sentence.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Why is there no full stop before the closing speech mark?",
+      example: "\"Where are the scissors?\" asked Priya.",
+      correct: "The question mark already ends the spoken sentence, so a full stop is not needed.",
+      distractors: [
+        "A full stop is always needed before closing speech marks.",
+        "The question mark shows possession, not a question.",
+        "The question mark belongs after asked."
+      ],
+      why: "One end-of-speech punctuation mark is enough; a question mark replaces a full stop.",
+      misconception: "speech_punctuation_confusion"
     }
   ],
   qg_p3_apostrophe_possession_explain: [
@@ -5517,9 +6149,858 @@ const P3_EXPLANATION_CASES = Object.freeze({
       ],
       why: "Look at the owner, not only the owned noun, when placing the apostrophe.",
       misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why does 'James's' keep the extra s?",
+      example: "James's pencil case",
+      correct: "Names ending in s can take apostrophe + s to show singular possession.",
+      distractors: [
+        "The extra s shows there are two people called James.",
+        "The apostrophe replaces a missing letter from James is.",
+        "The extra s turns James into a verb."
+      ],
+      why: "For singular proper nouns ending in s, apostrophe + s is acceptable for possession.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Why is the apostrophe wrong in 'the table's are set'?",
+      example: "the table's are set",
+      correct: "Tables here is a simple plural, not a possessive, so no apostrophe is needed.",
+      distractors: [
+        "The apostrophe is correct because are follows the noun.",
+        "The apostrophe shows the tables own the setting.",
+        "The apostrophe is needed because table ends with a vowel sound."
+      ],
+      why: "Plural nouns do not need an apostrophe unless they are showing possession.",
+      misconception: "apostrophe_possession_confusion"
     }
   ]
 });
+
+const P4_MIXED_TRANSFER_CASES = Object.freeze({
+  qg_p4_sentence_speech_transfer: [
+    {
+      prompt: "Which option correctly punctuates the direct speech AND keeps the whole sentence as a question?",
+      example: "Did Mum really say ___",
+      correct: "Did Mum really say, \"Pack your bag now\"?",
+      distractors: [
+        "Did Mum really say, \"Pack your bag now?\"",
+        "Did Mum really say \"Pack your bag now\"?",
+        "Did Mum really say, \"pack your bag now\"?"
+      ],
+      why: "The whole sentence is a question (sentence function), so the question mark comes outside the closing speech marks. The reported speech inside is a command, not a question.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the speech AND makes the sentence a statement?",
+      example: "The teacher told us ___",
+      correct: "The teacher told us, \"Open your books to page twelve.\"",
+      distractors: [
+        "The teacher told us \"Open your books to page twelve.\"",
+        "The teacher told us, \"Open your books to page twelve\".",
+        "The teacher told us, \"open your books to page twelve.\""
+      ],
+      why: "The whole sentence is a statement (reporting what was said). The speech inside is a command. The full stop goes inside the closing speech marks.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the direct speech AND identifies the sentence as an exclamation?",
+      example: "What a surprise it was when Grandad announced ___",
+      correct: "What a surprise it was when Grandad announced, \"We are moving to Wales!\"",
+      distractors: [
+        "What a surprise it was when Grandad announced, \"We are moving to Wales\"!",
+        "What a surprise it was when Grandad announced \"We are moving to Wales!\"",
+        "What a surprise it was when Grandad announced, \"we are moving to Wales!\""
+      ],
+      why: "The whole sentence begins with 'What a surprise' making it a grammatical exclamation. The speech inside is a statement. The exclamation mark goes inside because the spoken words carry the force.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Which option keeps the reported command inside speech marks AND makes the whole sentence a question?",
+      example: "Did the coach shout ___",
+      correct: "Did the coach shout, \"Run faster\"?",
+      distractors: [
+        "Did the coach shout, \"Run faster?\"",
+        "Did the coach shout \"Run faster\"?",
+        "Did the coach shout, \"run faster\"?"
+      ],
+      why: "The sentence function is a question (it asks whether the coach shouted). The reported speech is a command. The question mark belongs to the outer sentence, placed after the closing speech marks.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the question inside speech marks within a statement?",
+      example: "Lena asked ___",
+      correct: "Lena asked, \"Where is the library?\"",
+      distractors: [
+        "Lena asked, \"Where is the library\"?",
+        "Lena asked \"Where is the library?\"",
+        "Lena asked, \"where is the library?\""
+      ],
+      why: "The sentence is a statement (reporting what Lena asked). The speech inside is a question. The question mark stays inside the speech marks because the spoken words form the question.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Which option punctuates the exclamation inside speech marks AND keeps the outer sentence as a statement?",
+      example: "Ben shouted ___",
+      correct: "Ben shouted, \"What a fantastic goal that was!\"",
+      distractors: [
+        "Ben shouted, \"What a fantastic goal that was\"!",
+        "Ben shouted \"What a fantastic goal that was!\"",
+        "Ben shouted, \"what a fantastic goal that was!\""
+      ],
+      why: "The outer sentence is a statement (it reports what Ben shouted). The speech is a grammatical exclamation beginning with 'What'. The exclamation mark stays inside the speech marks.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Which option correctly places punctuation when the speech is a statement inside a question?",
+      example: "Did the head teacher really announce ___",
+      correct: "Did the head teacher really announce, \"School closes early on Friday\"?",
+      distractors: [
+        "Did the head teacher really announce, \"School closes early on Friday.\"?",
+        "Did the head teacher really announce, \"School closes early on Friday?\"",
+        "Did the head teacher really announce \"School closes early on Friday\"?"
+      ],
+      why: "The outer sentence is a question. The speech inside is a statement. The question mark belongs to the whole sentence and goes outside the closing speech marks. No full stop is needed inside.",
+      misconception: "speech_punctuation_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the command inside speech marks within an exclamation?",
+      example: "How loudly the sergeant bellowed ___",
+      correct: "How loudly the sergeant bellowed, \"Stand to attention!\"",
+      distractors: [
+        "How loudly the sergeant bellowed, \"Stand to attention\"!",
+        "How loudly the sergeant bellowed \"Stand to attention!\"",
+        "How loudly the sergeant bellowed, \"stand to attention!\""
+      ],
+      why: "The whole sentence begins with 'How loudly' making it an exclamation. The spoken words are a command. The exclamation mark inside the speech marks serves both the command force and the overall exclamation.",
+      misconception: "speech_punctuation_confusion"
+    }
+  ],
+
+  qg_p4_word_class_noun_phrase_transfer: [
+    {
+      prompt: "Identify the head noun and its word class in this expanded noun phrase.",
+      example: "the rusty old bicycle",
+      fields: [
+        { label: "Head noun", correct: "bicycle", options: ["the", "rusty", "old", "bicycle"] },
+        { label: "Word class of 'rusty'", correct: "adjective", options: ["noun", "adjective", "adverb", "determiner"] }
+      ],
+      why: "The head noun is the main word the phrase is built around. 'Rusty' is an adjective modifying the noun.",
+      misconception: "noun_phrase_confusion"
+    },
+    {
+      prompt: "Identify the head noun and the word class of the modifier before it.",
+      example: "a terrifying mountain storm",
+      fields: [
+        { label: "Head noun", correct: "storm", options: ["terrifying", "mountain", "storm", "a"] },
+        { label: "Word class of 'mountain'", correct: "noun", options: ["noun", "adjective", "adverb", "verb"] }
+      ],
+      why: "'Storm' is the head noun. 'Mountain' is a noun used as a modifier (a noun adjunct), not an adjective.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Identify the head noun and the word class of the underlined word in this noun phrase.",
+      example: "those incredibly brave firefighters",
+      fields: [
+        { label: "Head noun", correct: "firefighters", options: ["those", "incredibly", "brave", "firefighters"] },
+        { label: "Word class of 'incredibly'", correct: "adverb", options: ["adjective", "adverb", "noun", "determiner"] }
+      ],
+      why: "'Firefighters' is the head noun. 'Incredibly' is an adverb modifying the adjective 'brave', not itself an adjective.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Identify the head noun and the word class of the first word in this noun phrase.",
+      example: "every single morning lesson",
+      fields: [
+        { label: "Head noun", correct: "lesson", options: ["every", "single", "morning", "lesson"] },
+        { label: "Word class of 'every'", correct: "determiner", options: ["determiner", "adjective", "pronoun", "adverb"] }
+      ],
+      why: "'Lesson' is the head noun the phrase centres on. 'Every' is a determiner specifying which lesson, not an adjective.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Identify the head noun and the word class of the describing word.",
+      example: "the brightly painted fence",
+      fields: [
+        { label: "Head noun", correct: "fence", options: ["the", "brightly", "painted", "fence"] },
+        { label: "Word class of 'painted'", correct: "adjective", options: ["verb", "adjective", "adverb", "noun"] }
+      ],
+      why: "'Fence' is the head noun. 'Painted' here is used as an adjective describing the fence, not as a verb showing ongoing action.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Identify the head noun and classify the word that tells us 'how many'.",
+      example: "several heavy wooden crates",
+      fields: [
+        { label: "Head noun", correct: "crates", options: ["several", "heavy", "wooden", "crates"] },
+        { label: "Word class of 'several'", correct: "determiner", options: ["determiner", "adjective", "noun", "adverb"] }
+      ],
+      why: "'Crates' is the head noun. 'Several' is a determiner telling us how many, not an adjective describing a quality.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Identify the head noun and the word class of the word before it.",
+      example: "her new swimming costume",
+      fields: [
+        { label: "Head noun", correct: "costume", options: ["her", "new", "swimming", "costume"] },
+        { label: "Word class of 'swimming'", correct: "adjective", options: ["verb", "adjective", "noun", "adverb"] }
+      ],
+      why: "'Costume' is the head noun. 'Swimming' is used as an adjective here, telling us the type of costume, not a verb showing action.",
+      misconception: "word_class_confusion"
+    },
+    {
+      prompt: "Identify the head noun and the word class of the word that specifies whose.",
+      example: "their ancient stone castle",
+      fields: [
+        { label: "Head noun", correct: "castle", options: ["their", "ancient", "stone", "castle"] },
+        { label: "Word class of 'their'", correct: "determiner", options: ["determiner", "pronoun", "adjective", "noun"] }
+      ],
+      why: "'Castle' is the head noun. 'Their' is a possessive determiner showing ownership, not a pronoun standing alone for a noun.",
+      misconception: "word_class_confusion"
+    }
+  ],
+
+  qg_p4_adverbial_clause_boundary_transfer: [
+    {
+      prompt: "Which option correctly joins a fronted adverbial to a main clause AND uses the right boundary punctuation?",
+      example: "before the bell rang / the children lined up quietly",
+      correct: "Before the bell rang, the children lined up quietly.",
+      distractors: [
+        "Before the bell rang the children lined up quietly.",
+        "Before, the bell rang the children lined up quietly.",
+        "Before the bell rang; the children lined up quietly."
+      ],
+      why: "A fronted adverbial clause needs a comma after it to mark the boundary between the adverbial and the main clause. A semicolon is wrong because the adverbial is not an independent clause.",
+      misconception: "fronted_adverbial_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the sentence with a fronted adverbial AND identifies the main clause boundary?",
+      example: "after the storm cleared / we inspected the damage",
+      correct: "After the storm cleared, we inspected the damage.",
+      distractors: [
+        "After the storm cleared we inspected the damage.",
+        "After the storm, cleared we inspected the damage.",
+        "After the storm cleared: we inspected the damage."
+      ],
+      why: "The adverbial 'After the storm cleared' needs a comma to show where the subordinate clause ends and the main clause begins. A colon is not used to join an adverbial to a main clause.",
+      misconception: "fronted_adverbial_confusion"
+    },
+    {
+      prompt: "Which option places the comma correctly when the adverbial clause appears at the front?",
+      example: "although the path was icy / nobody slipped",
+      correct: "Although the path was icy, nobody slipped.",
+      distractors: [
+        "Although the path was icy nobody slipped.",
+        "Although, the path was icy nobody slipped.",
+        "Although the path was icy; nobody slipped."
+      ],
+      why: "'Although the path was icy' is a subordinate adverbial clause showing concession. It needs a comma after it because it is fronted. A semicolon would wrongly treat it as an independent clause.",
+      misconception: "subordinate_clause_confusion"
+    },
+    {
+      prompt: "Which option uses the correct boundary punctuation when two independent clauses follow a fronted adverbial?",
+      example: "during the assembly / the head announced sports day; parents are invited",
+      correct: "During the assembly, the head announced sports day; parents are invited.",
+      distractors: [
+        "During the assembly the head announced sports day; parents are invited.",
+        "During the assembly, the head announced sports day, parents are invited.",
+        "During the assembly; the head announced sports day; parents are invited."
+      ],
+      why: "A comma marks the fronted adverbial boundary, and a semicolon correctly separates the two independent clauses that follow. Using only commas creates a comma splice.",
+      misconception: "boundary_punctuation_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the fronted adverbial and the clause boundary after it?",
+      example: "when the museum opened / visitors rushed to the dinosaur hall",
+      correct: "When the museum opened, visitors rushed to the dinosaur hall.",
+      distractors: [
+        "When the museum opened visitors rushed to the dinosaur hall.",
+        "When, the museum opened visitors rushed to the dinosaur hall.",
+        "When the museum opened; visitors rushed to the dinosaur hall."
+      ],
+      why: "'When the museum opened' is a fronted adverbial clause. A comma is needed after it. A semicolon is wrong because the adverbial is subordinate, not independent.",
+      misconception: "fronted_adverbial_confusion"
+    },
+    {
+      prompt: "Which option correctly uses a fronted adverbial with proper boundary punctuation between two clauses?",
+      example: "as soon as the whistle blew / the players sprinted; the crowd cheered",
+      correct: "As soon as the whistle blew, the players sprinted; the crowd cheered.",
+      distractors: [
+        "As soon as the whistle blew the players sprinted; the crowd cheered.",
+        "As soon as the whistle blew, the players sprinted, the crowd cheered.",
+        "As soon as the whistle blew; the players sprinted; the crowd cheered."
+      ],
+      why: "A comma separates the fronted adverbial from the first main clause. A semicolon then correctly joins the two independent main clauses. Without the comma, the adverbial boundary is unclear.",
+      misconception: "boundary_punctuation_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the fronted time adverbial AND the clause it introduces?",
+      example: "by the time we arrived / the cake had already been eaten",
+      correct: "By the time we arrived, the cake had already been eaten.",
+      distractors: [
+        "By the time we arrived the cake had already been eaten.",
+        "By the time, we arrived the cake had already been eaten.",
+        "By the time we arrived: the cake had already been eaten."
+      ],
+      why: "'By the time we arrived' is a subordinate time adverbial. It needs a comma after the whole adverbial phrase, not after the first word. A colon does not introduce a main clause after an adverbial.",
+      misconception: "fronted_adverbial_confusion"
+    },
+    {
+      prompt: "Which option correctly places the comma after the fronted adverbial AND avoids a comma splice between clauses?",
+      example: "despite the heavy rain / the match continued; nobody complained",
+      correct: "Despite the heavy rain, the match continued; nobody complained.",
+      distractors: [
+        "Despite the heavy rain the match continued; nobody complained.",
+        "Despite the heavy rain, the match continued, nobody complained.",
+        "Despite, the heavy rain the match continued; nobody complained."
+      ],
+      why: "The fronted adverbial 'Despite the heavy rain' needs a comma. The two independent main clauses after it need a semicolon, not another comma, to avoid a comma splice.",
+      misconception: "boundary_punctuation_confusion"
+    }
+  ],
+
+  qg_p4_relative_parenthesis_transfer: [
+    {
+      prompt: "Which option correctly adds a relative clause as parenthesis with commas?",
+      example: "The oak tree ___ has stood for two hundred years.",
+      correct: "The oak tree, which was planted by the village founders, has stood for two hundred years.",
+      distractors: [
+        "The oak tree which was planted by the village founders has stood for two hundred years.",
+        "The oak tree, which was planted by the village founders has stood for two hundred years.",
+        "The oak tree which, was planted by the village founders, has stood for two hundred years."
+      ],
+      why: "A non-defining relative clause adds extra information about a specific noun and needs commas at both ends to show it is parenthesis. The commas show you could remove the clause and the sentence still works.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the non-defining relative clause as parenthesis?",
+      example: "Mrs Patel ___ organised the whole event.",
+      correct: "Mrs Patel, who teaches Year 6, organised the whole event.",
+      distractors: [
+        "Mrs Patel who teaches Year 6 organised the whole event.",
+        "Mrs Patel, who teaches Year 6 organised the whole event.",
+        "Mrs Patel who, teaches Year 6, organised the whole event."
+      ],
+      why: "The relative clause 'who teaches Year 6' is extra information about Mrs Patel. It needs a comma before and after because it is parenthetical. Without both commas, the boundary is unclear.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Which option correctly uses commas around the relative clause as parenthesis?",
+      example: "The River Thames ___ flows through London.",
+      correct: "The River Thames, which is over 200 miles long, flows through London.",
+      distractors: [
+        "The River Thames which is over 200 miles long flows through London.",
+        "The River Thames, which is over 200 miles long flows through London.",
+        "The River Thames which is over 200 miles long, flows through London."
+      ],
+      why: "The relative clause adds extra information about the Thames. It is parenthetical, so both commas are needed to show where the extra detail starts and ends.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Which option correctly places the relative clause within commas?",
+      example: "The head teacher ___ congratulated the team.",
+      correct: "The head teacher, who had been watching from the sideline, congratulated the team.",
+      distractors: [
+        "The head teacher who had been watching from the sideline congratulated the team.",
+        "The head teacher, who had been watching from the sideline congratulated the team.",
+        "The head teacher who had been watching, from the sideline, congratulated the team."
+      ],
+      why: "The relative clause 'who had been watching from the sideline' is non-defining parenthesis. Both commas are required to bracket it. Commas in the wrong place break the clause boundaries.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Which option correctly uses parenthesis commas for the relative clause?",
+      example: "The school hall ___ was packed with parents.",
+      correct: "The school hall, which had been decorated overnight, was packed with parents.",
+      distractors: [
+        "The school hall which had been decorated overnight was packed with parents.",
+        "The school hall, which had been decorated overnight was packed with parents.",
+        "The school hall which had been decorated, overnight, was packed with parents."
+      ],
+      why: "The clause 'which had been decorated overnight' is extra information (parenthesis). Both commas are needed to show where the extra detail begins and ends.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Which option correctly punctuates the parenthetical relative clause?",
+      example: "My grandfather ___ loves telling stories about the war.",
+      correct: "My grandfather, who served in the navy, loves telling stories about the war.",
+      distractors: [
+        "My grandfather who served in the navy loves telling stories about the war.",
+        "My grandfather, who served in the navy loves telling stories about the war.",
+        "My grandfather who served, in the navy, loves telling stories about the war."
+      ],
+      why: "The relative clause 'who served in the navy' is parenthetical: it adds extra detail about a specific person. Both commas are needed because the information could be lifted out.",
+      misconception: "relative_clause_confusion"
+    },
+    {
+      prompt: "Which option correctly adds a 'which' clause as parenthesis?",
+      example: "The old bridge ___ was finally repaired last summer.",
+      correct: "The old bridge, which had been damaged in the flood, was finally repaired last summer.",
+      distractors: [
+        "The old bridge which had been damaged in the flood was finally repaired last summer.",
+        "The old bridge, which had been damaged in the flood was finally repaired last summer.",
+        "The old bridge which had been damaged, in the flood, was finally repaired last summer."
+      ],
+      why: "The relative clause adds non-essential information and acts as parenthesis. You need both a comma before 'which' and a comma after the clause to bracket the extra detail.",
+      misconception: "parenthesis_confusion"
+    },
+    {
+      prompt: "Which option correctly places parenthesis commas around the relative clause?",
+      example: "The library book ___ must be returned by Friday.",
+      correct: "The library book, which Amir borrowed last week, must be returned by Friday.",
+      distractors: [
+        "The library book which Amir borrowed last week must be returned by Friday.",
+        "The library book, which Amir borrowed last week must be returned by Friday.",
+        "The library book which Amir, borrowed last week, must be returned by Friday."
+      ],
+      why: "The clause 'which Amir borrowed last week' is extra detail about the specific book. Both commas are needed because it is a non-defining relative clause functioning as parenthesis.",
+      misconception: "parenthesis_confusion"
+    }
+  ],
+
+  qg_p4_verb_form_register_transfer: [
+    {
+      prompt: "Which option uses the correct tense, an appropriate modal verb, AND Standard English?",
+      example: "A letter to parents about a school trip that will happen next week.",
+      correct: "Your child will need a packed lunch and should wear comfortable shoes.",
+      distractors: [
+        "Your child will need a packed lunch and should of wore comfortable shoes.",
+        "Your child needed a packed lunch and should wear comfortable shoes.",
+        "Your child will need a packed lunch and must of worn comfortable shoes."
+      ],
+      why: "The future tense ('will need') matches the upcoming trip. 'Should wear' is a suitable modal for advice. 'Should of' is non-standard (Standard English uses 'should have'), and past tense is wrong for a future event.",
+      misconception: "standard_english_confusion"
+    },
+    {
+      prompt: "Which option combines the correct past tense, a modal showing possibility, AND Standard English?",
+      example: "A report about what happened during a science experiment yesterday.",
+      correct: "The mixture changed colour, which could indicate a chemical reaction.",
+      distractors: [
+        "The mixture changed colour, which could of indicated a chemical reaction.",
+        "The mixture changes colour, which could indicate a chemical reaction.",
+        "The mixture changed colour, which can indicate a chemical reaction."
+      ],
+      why: "Past tense ('changed') matches yesterday. 'Could indicate' shows possibility. 'Could of' is non-standard. Present tense is wrong for a past event. 'Can' shows general ability, not past possibility.",
+      misconception: "tense_confusion"
+    },
+    {
+      prompt: "Which option uses the present perfect tense, a modal of certainty, AND Standard English?",
+      example: "A notice about lost property that has been found.",
+      correct: "A blue coat has been found; it must belong to someone in Year 5.",
+      distractors: [
+        "A blue coat has been found; it must of belonged to someone in Year 5.",
+        "A blue coat was found; it must belong to someone in Year 5.",
+        "A blue coat has been found; it might of belonged to someone in Year 5."
+      ],
+      why: "Present perfect ('has been found') shows the action is relevant now. 'Must belong' expresses certainty. 'Must of' is non-standard English; the correct form is 'must have'.",
+      misconception: "standard_english_confusion"
+    },
+    {
+      prompt: "Which option uses the correct future tense, an appropriate modal, AND Standard English?",
+      example: "An announcement about a visitor coming to school tomorrow.",
+      correct: "An author will visit tomorrow; pupils may ask questions afterwards.",
+      distractors: [
+        "An author will visit tomorrow; pupils may of asked questions afterwards.",
+        "An author visited tomorrow; pupils may ask questions afterwards.",
+        "An author will visit tomorrow; pupils might of ask questions afterwards."
+      ],
+      why: "Future tense ('will visit') fits tomorrow. 'May ask' is a suitable modal for permission. 'May of' is non-standard. Past tense is wrong for a future event.",
+      misconception: "standard_english_confusion"
+    },
+    {
+      prompt: "Which option combines past progressive tense, a modal of obligation, AND Standard English?",
+      example: "A note explaining what happened when the fire alarm sounded.",
+      correct: "Children were lining up when the alarm rang; they had to leave calmly.",
+      distractors: [
+        "Children were lining up when the alarm rang; they had of left calmly.",
+        "Children are lining up when the alarm rang; they had to leave calmly.",
+        "Children were lining up when the alarm rang; they should of left calmly."
+      ],
+      why: "Past progressive ('were lining up') shows an ongoing action interrupted by the alarm. 'Had to' expresses obligation. 'Had of' and 'should of' are non-standard English forms.",
+      misconception: "standard_english_confusion"
+    },
+    {
+      prompt: "Which option uses the present tense for a general truth, a modal of ability, AND Standard English?",
+      example: "A poster about recycling for the school corridor.",
+      correct: "Plastic takes hundreds of years to break down; we can reduce waste by recycling.",
+      distractors: [
+        "Plastic takes hundreds of years to break down; we can of reduced waste by recycling.",
+        "Plastic took hundreds of years to break down; we can reduce waste by recycling.",
+        "Plastic takes hundreds of years to break down; we could of reduce waste by recycling."
+      ],
+      why: "Present tense ('takes') states a general truth. 'Can reduce' shows ability. 'Can of' and 'could of' are non-standard English. Past tense is wrong for a timeless fact.",
+      misconception: "standard_english_confusion"
+    },
+    {
+      prompt: "Which option combines past perfect tense, a modal of likelihood, AND Standard English?",
+      example: "A diary entry about a surprise that happened at a birthday party.",
+      correct: "Grandma had hidden the present before I arrived; she might have planned it for weeks.",
+      distractors: [
+        "Grandma had hidden the present before I arrived; she might of planned it for weeks.",
+        "Grandma hid the present before I arrived; she might have planned it for weeks.",
+        "Grandma had hidden the present before I arrived; she might of plan it for weeks."
+      ],
+      why: "Past perfect ('had hidden') shows an action completed before another past event. 'Might have planned' combines the modal of likelihood with the correct Standard English form. 'Might of' is non-standard.",
+      misconception: "standard_english_confusion"
+    },
+    {
+      prompt: "Which option uses present tense for a rule, a modal of permission, AND Standard English?",
+      example: "A classroom charter about behaviour during reading time.",
+      correct: "Pupils read silently for twenty minutes; they may choose their own book.",
+      distractors: [
+        "Pupils read silently for twenty minutes; they may of chose their own book.",
+        "Pupils were reading silently for twenty minutes; they may choose their own book.",
+        "Pupils read silently for twenty minutes; they might of choose their own book."
+      ],
+      why: "Present tense ('read') suits a standing rule. 'May choose' grants permission. 'May of' and 'might of' are non-standard English. Past progressive is wrong for an ongoing rule.",
+      misconception: "standard_english_confusion"
+    }
+  ],
+
+  qg_p4_cohesion_formality_transfer: [
+    {
+      prompt: "Which option replaces the repeated noun with a pronoun AND maintains formal register?",
+      example: "The council has approved the plans. The council will begin work in September.",
+      correct: "The council has approved the plans. It will begin work in September.",
+      distractors: [
+        "The council has approved the plans. They're gonna start work in September.",
+        "The council has approved the plans. The council will begin work in September.",
+        "The council has approved the plans. Them lot will begin work in September."
+      ],
+      why: "'It' avoids repetition of 'the council' (cohesion) while keeping the formal tone. 'They're gonna' is too informal. Repeating the noun weakens cohesion. 'Them lot' is non-standard.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Which option improves cohesion AND keeps the writing formal?",
+      example: "The museum opens at nine. The museum closes at five. Visitors must book online.",
+      correct: "The museum opens at nine and closes at five. Visitors must book online.",
+      distractors: [
+        "The museum opens at nine. It shuts at five. Visitors have gotta book online.",
+        "The museum opens at nine. The museum closes at five. You lot must book online.",
+        "It opens at nine and shuts at five. People gotta book online."
+      ],
+      why: "Joining the clauses avoids repeating 'The museum' (cohesion) and keeps formal vocabulary ('closes', 'must book'). 'Gotta' and 'You lot' are informal.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Which option uses a pronoun for cohesion AND keeps formal vocabulary?",
+      example: "Dr Patel presented the findings. Dr Patel explained the next steps.",
+      correct: "Dr Patel presented the findings. She then explained the next steps.",
+      distractors: [
+        "Dr Patel presented the findings. She then chatted about what's next.",
+        "Dr Patel presented the findings. Dr Patel explained the next steps.",
+        "Patel presented the findings. She banged on about what comes next."
+      ],
+      why: "'She then explained' uses a pronoun to avoid repetition (cohesion) while maintaining formal language. 'Chatted about' and 'banged on' are informal.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Which option links the ideas cohesively AND keeps a formal tone?",
+      example: "The project was completed on time. The project received praise from the governors.",
+      correct: "The project was completed on time and received praise from the governors.",
+      distractors: [
+        "The project was done on time and the governors were well chuffed.",
+        "The project was completed on time. The project received praise from the governors.",
+        "It got done on time and the governors loved it."
+      ],
+      why: "Joining with 'and' avoids repetition (cohesion). 'Completed' and 'received praise' maintain formality. 'Well chuffed', 'got done', and 'loved it' are informal.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Which option improves pronoun cohesion AND keeps the tone suitable for a school report?",
+      example: "James has improved his reading. James now reads chapter books independently.",
+      correct: "James has improved his reading. He now reads chapter books independently.",
+      distractors: [
+        "James has improved his reading. The lad now reads chapter books on his own.",
+        "James has improved his reading. James now reads chapter books independently.",
+        "He's got better at reading. He reads chapter books by himself now."
+      ],
+      why: "'He' replaces the repeated name (cohesion) and the sentence stays formal. 'The lad' is too informal for a report. 'Got better' reduces formality.",
+      misconception: "pronoun_cohesion_confusion"
+    },
+    {
+      prompt: "Which option removes repetition AND maintains formal register?",
+      example: "The charity raised three thousand pounds. The charity will donate it to the hospital.",
+      correct: "The charity raised three thousand pounds, which it will donate to the hospital.",
+      distractors: [
+        "The charity got three grand and is giving it to the hospital.",
+        "The charity raised three thousand pounds. The charity will donate it to the hospital.",
+        "They raised three thousand pounds and they're gonna give it to the hospital."
+      ],
+      why: "Using 'which it will' avoids repetition (cohesion) with a relative clause and maintains the formal register. 'Three grand', 'gonna', and 'They' without a clear referent weaken both cohesion and formality.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Which option uses a pronoun to improve flow AND keeps formal language?",
+      example: "The headteacher addressed the assembly. The headteacher reminded pupils about uniform.",
+      correct: "The headteacher addressed the assembly. She reminded pupils about uniform expectations.",
+      distractors: [
+        "The headteacher addressed the assembly. She had a go at everyone about uniform.",
+        "The headteacher addressed the assembly. The headteacher reminded pupils about uniform.",
+        "The head gave a speech. She told kids to sort their uniform out."
+      ],
+      why: "'She reminded' uses a pronoun for cohesion and keeps the formal vocabulary. 'Had a go at' and 'told kids to sort' are too informal for this context.",
+      misconception: "formality_confusion"
+    },
+    {
+      prompt: "Which option avoids repetition through a pronoun AND uses formal phrasing?",
+      example: "The experiment was successful. The experiment will be repeated next term.",
+      correct: "The experiment was successful. It will be repeated next term.",
+      distractors: [
+        "The experiment was successful. We're gonna do it again next term.",
+        "The experiment was successful. The experiment will be repeated next term.",
+        "It went well so we'll have another go next term."
+      ],
+      why: "'It will be repeated' uses a pronoun to avoid repetition (cohesion) and keeps the passive, formal style of scientific writing. 'Gonna' and 'have another go' are informal.",
+      misconception: "pronoun_cohesion_confusion"
+    }
+  ],
+
+  qg_p4_voice_roles_transfer: [
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The trophy was awarded to Amir by the head teacher.",
+      fields: [
+        { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
+        { label: "Role of 'the trophy'", correct: "subject", options: ["subject", "object"] }
+      ],
+      why: "The sentence is passive because the action is done TO the trophy. In a passive sentence, the thing affected ('the trophy') becomes the grammatical subject.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The goalkeeper saved the penalty brilliantly.",
+      fields: [
+        { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
+        { label: "Role of 'the penalty'", correct: "object", options: ["subject", "object"] }
+      ],
+      why: "The sentence is active because the doer ('the goalkeeper') comes first and does the action. 'The penalty' receives the action, so it is the object.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The cake was eaten by the children before lunch.",
+      fields: [
+        { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
+        { label: "Role of 'the cake'", correct: "subject", options: ["subject", "object"] }
+      ],
+      why: "This is passive voice: the thing affected ('the cake') has been moved to the subject position. Even though the children did the eating, 'the cake' is the grammatical subject.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "Lena painted the scenery for the school play.",
+      fields: [
+        { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
+        { label: "Role of 'the scenery'", correct: "object", options: ["subject", "object"] }
+      ],
+      why: "The sentence is active because the doer ('Lena') performs the action. 'The scenery' receives the painting, making it the object.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The windows were smashed by the hailstones during the storm.",
+      fields: [
+        { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
+        { label: "Role of 'the windows'", correct: "subject", options: ["subject", "object"] }
+      ],
+      why: "This is passive voice: the affected thing ('the windows') is the grammatical subject. The doer ('the hailstones') appears later in a 'by' phrase.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The librarian shelved the new books carefully.",
+      fields: [
+        { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
+        { label: "Role of 'the new books'", correct: "object", options: ["subject", "object"] }
+      ],
+      why: "The sentence is active: the doer ('the librarian') performs the action. 'The new books' receive the shelving, so they are the object.",
+      misconception: "subject_object_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The letter was posted by Grandma yesterday afternoon.",
+      fields: [
+        { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
+        { label: "Role of 'the letter'", correct: "subject", options: ["subject", "object"] }
+      ],
+      why: "Passive voice places the affected thing ('the letter') in the subject position. Grandma did the posting but appears in the 'by' phrase, not as the grammatical subject.",
+      misconception: "active_passive_confusion"
+    },
+    {
+      prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
+      example: "The children carried the heavy equipment across the field.",
+      fields: [
+        { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
+        { label: "Role of 'the heavy equipment'", correct: "object", options: ["subject", "object"] }
+      ],
+      why: "The sentence is active: the doer ('the children') performs the action. 'The heavy equipment' receives the carrying and is therefore the object.",
+      misconception: "subject_object_confusion"
+    }
+  ],
+
+  qg_p4_possession_hyphen_clarity_transfer: [
+    {
+      prompt: "Which option correctly uses both the possessive apostrophe AND a hyphen to avoid ambiguity?",
+      example: "The well known author's latest book topped the charts.",
+      correct: "The well-known author's latest book topped the charts.",
+      distractors: [
+        "The well known authors latest book topped the charts.",
+        "The well known author's latest book topped the charts.",
+        "The well-known authors' latest book topped the charts."
+      ],
+      why: "A hyphen in 'well-known' links the compound adjective before the noun, avoiding the misreading 'well known-author'. The apostrophe in 'author's' shows singular possession of the book.",
+      misconception: "hyphen_ambiguity_confusion"
+    },
+    {
+      prompt: "Which option uses the apostrophe for possession AND the hyphen to clarify meaning?",
+      example: "The children's long awaited trip finally arrived.",
+      correct: "The children's long-awaited trip finally arrived.",
+      distractors: [
+        "The childrens long-awaited trip finally arrived.",
+        "The children's long awaited trip finally arrived.",
+        "The childrens' long-awaited trip finally arrived."
+      ],
+      why: "'Children's' uses an apostrophe before 's' because 'children' is an irregular plural. 'Long-awaited' needs a hyphen to show the two words work together as one adjective before 'trip'.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Which option correctly shows plural possession AND uses a hyphen to avoid misreading?",
+      example: "The players hard earned medals were displayed in the cabinet.",
+      correct: "The players' hard-earned medals were displayed in the cabinet.",
+      distractors: [
+        "The player's hard-earned medals were displayed in the cabinet.",
+        "The players' hard earned medals were displayed in the cabinet.",
+        "The players hard-earned medals were displayed in the cabinet."
+      ],
+      why: "'Players'' has the apostrophe after the 's' because multiple players own the medals (plural possession). 'Hard-earned' needs a hyphen to show it is a single compound adjective.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Which option uses both the possessive apostrophe AND the hyphen correctly?",
+      example: "The school's state of the art science lab impressed visitors.",
+      correct: "The school's state-of-the-art science lab impressed visitors.",
+      distractors: [
+        "The schools state-of-the-art science lab impressed visitors.",
+        "The school's state of the art science lab impressed visitors.",
+        "The schools' state-of-the-art science lab impressed visitors."
+      ],
+      why: "'School's' shows the lab belongs to one school (singular possession). 'State-of-the-art' needs hyphens to form a single compound adjective modifying 'science lab'.",
+      misconception: "hyphen_ambiguity_confusion"
+    },
+    {
+      prompt: "Which option uses the possessive apostrophe AND the hyphen to prevent a misreading?",
+      example: "My sister's hand painted vase sits on the shelf.",
+      correct: "My sister's hand-painted vase sits on the shelf.",
+      distractors: [
+        "My sisters hand-painted vase sits on the shelf.",
+        "My sister's hand painted vase sits on the shelf.",
+        "My sisters' hand-painted vase sits on the shelf."
+      ],
+      why: "'Sister's' shows the vase belongs to one sister. 'Hand-painted' needs a hyphen so the reader understands the vase was painted by hand, not that a hand was painted on the vase.",
+      misconception: "hyphen_ambiguity_confusion"
+    },
+    {
+      prompt: "Which option uses both possession and hyphenation correctly?",
+      example: "The teachers well prepared lesson plan impressed the inspector.",
+      correct: "The teacher's well-prepared lesson plan impressed the inspector.",
+      distractors: [
+        "The teachers well-prepared lesson plan impressed the inspector.",
+        "The teacher's well prepared lesson plan impressed the inspector.",
+        "The teachers' well prepared lesson plan impressed the inspector."
+      ],
+      why: "'Teacher's' shows one teacher owns the plan (singular possession). 'Well-prepared' needs a hyphen because the two words form a single adjective before 'lesson plan'.",
+      misconception: "apostrophe_possession_confusion"
+    },
+    {
+      prompt: "Which option uses both the apostrophe and hyphen correctly in context?",
+      example: "The company's award winning product sold out quickly.",
+      correct: "The company's award-winning product sold out quickly.",
+      distractors: [
+        "The companys award-winning product sold out quickly.",
+        "The company's award winning product sold out quickly.",
+        "The companies' award-winning product sold out quickly."
+      ],
+      why: "'Company's' uses an apostrophe to show singular possession. 'Award-winning' needs a hyphen to show the compound adjective modifies 'product' as a unit.",
+      misconception: "hyphen_ambiguity_confusion"
+    },
+    {
+      prompt: "Which version makes ownership and compound meaning clear?",
+      example: "The dog's bright orange collar stood out, or the dogs bright-orange collar stood out.",
+      correct: "The dog's bright-orange collar stood out.",
+      distractors: [
+        "The dogs bright-orange collar stood out.",
+        "The dog's bright orange collar stood out.",
+        "The dogs' bright orange collar stood out."
+      ],
+      why: "The apostrophe shows the collar belongs to one dog, and the hyphen in 'bright-orange' shows that both words together describe the colour of the collar.",
+      misconception: "possession_hyphen_transfer_confusion"
+    }
+  ]
+});
+
+function buildP4MixedTransferChoiceQuestion(template, seed, cases) {
+  const rng = mulberry32(seed);
+  const item = pickBySeed(seed, cases);
+  const correct = cleanSpaces(item.correct);
+  const distractors = dedupePlain(item.distractors || []).filter(option => option !== correct);
+  const answerSpec = exactAnswerSpec(correct, distractors, {
+    misconception: item.misconception,
+    feedbackLong: item.why,
+    answerText: correct
+  });
+  const stemParts = [`<p>${escapeHtml(item.prompt)}</p>`];
+  if (item.example) stemParts.push(`<p><strong>${escapeHtml(item.example)}</strong></p>`);
+  return makeBaseQuestion(template, seed, {
+    marks: 1,
+    answerSpec,
+    stemHtml: stemParts.join(""),
+    inputSpec: { type: "single_choice", label: "Choose one", options: buildChoiceOptions(rng, correct, distractors) },
+    solutionLines: [
+      "Apply both grammar concepts together to find the correct answer.",
+      item.why,
+      `The correct option is: ${correct}`
+    ],
+    evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+  });
+}
+
+function buildP4MixedTransferClassifyQuestion(template, seed, cases) {
+  const item = pickBySeed(seed, cases);
+  const rows = item.fields.map((field, index) => ({
+    key: `row${index}`,
+    label: field.label,
+    correct: field.correct,
+    options: field.options
+  }));
+  const allColumns = [...new Set(rows.flatMap(r => r.options))];
+  const fields = Object.fromEntries(rows.map((row) => [
+    row.key,
+    exactAnswerSpec(row.correct, row.options.filter(o => o !== row.correct), {
+      misconception: item.misconception,
+      feedbackLong: item.why
+    })
+  ]));
+  const answerText = rows.map(row => `${row.label}: ${row.correct}`).join(" | ");
+  const answerSpec = multiFieldAnswerSpec(fields, {
+    maxScore: rows.length,
+    misconception: item.misconception,
+    feedbackLong: item.why,
+    answerText
+  });
+  return makeBaseQuestion(template, seed, {
+    marks: rows.length,
+    answerSpec,
+    stemHtml: `<p>${escapeHtml(item.prompt)}</p><p><strong>${escapeHtml(item.example)}</strong></p>`,
+    inputSpec: { type: "table_choice", columns: allColumns, rows: rows.map(r => ({ key: r.key, label: r.label })) },
+    solutionLines: [
+      "Classify each row by applying both grammar concepts.",
+      item.why,
+      answerText
+    ],
+    evaluate: (resp) => markByAnswerSpec(answerSpec, resp)
+  });
+}
 
 function buildP3ExplanationChoiceQuestion(template, seed, cases) {
   const rng = mulberry32(seed);
@@ -5560,6 +7041,11 @@ function randInt(rng, min, max) {
 
 function pick(rng, arr) {
   return arr[randInt(rng, 0, arr.length - 1)];
+}
+
+/** Deterministic seed-indexed pick — guarantees distinct items for consecutive seeds when bank.length >= 3. */
+function pickBySeed(seed, arr) {
+  return arr[((seed - 1) % arr.length + arr.length) % arr.length];
 }
 
 function shuffle(rng, arr) {
@@ -5999,11 +7485,13 @@ function generateSubjectObjectCase(rng) {
   };
 }
 
-function generateFormalityCase(rng) {
+function generateFormalityCase(rng, seed) {
+  if (seed !== undefined) return pickBySeed(seed, EXTRA_LEXICON.formalFrames);
   return EXTRA_LEXICON.formalFrames[seededIndex(rng, EXTRA_LEXICON.formalFrames.length)];
 }
 
-function generateModalCase(rng) {
+function generateModalCase(rng, seed) {
+  if (seed !== undefined) return pickBySeed(seed, EXTRA_LEXICON.modalFrames);
   return EXTRA_LEXICON.modalFrames[seededIndex(rng, EXTRA_LEXICON.modalFrames.length)];
 }
 
@@ -6095,7 +7583,7 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p3-2026-04-28';
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p4-2026-04-28';
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);
