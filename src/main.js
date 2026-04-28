@@ -551,7 +551,12 @@ const heroClient = createHeroModeClient({
   fetch: credentialFetch,
   getLearnerRevision: (learnerId) => repositories.runtime?.readLearnerRevision?.(learnerId) || 0,
   onLaunchApplied: (/* response — wired via applyHeroLaunchResponse below */) => {},
-  onStaleWrite: (/* { error, learnerId } — handled in startHeroTask catch */) => {},
+  onStaleWrite: ({ error, learnerId }) => {
+    const revision = staleWriteCurrentRevision(error);
+    if (revision !== null && learnerId) {
+      repositories.runtime?.applyLearnerRevisionHint?.(learnerId, revision);
+    }
+  },
 });
 
 // Non-persistent Hero UI state — lost on reload (quest is recomputed fresh),

@@ -268,7 +268,14 @@ export function createHeroModeClient({
     // Auto-retry once on stale_write (revision conflict)
     if (!response.ok && responsePayload?.code === 'stale_write') {
       if (typeof onStaleWrite === 'function') {
-        onStaleWrite({ error: null, learnerId: cleanLearnerId });
+        onStaleWrite({
+          error: new HeroModeClientError({
+            code: 'stale_write',
+            status: response.status,
+            payload: responsePayload,
+          }),
+          learnerId: cleanLearnerId,
+        });
       }
 
       const freshRevision = typeof getLearnerRevision === 'function'
