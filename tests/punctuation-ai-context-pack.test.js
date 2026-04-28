@@ -62,6 +62,11 @@ test('context packs affect only deterministic generator families', () => {
     'gen_list_commas_combine',
     'gen_fronted_adverbial_fix',
     'gen_fronted_adverbial_combine',
+    'gen_comma_clarity_insert',
+    'gen_semicolon_fix',
+    'gen_semicolon_combine',
+    'gen_dash_clause_fix',
+    'gen_dash_clause_combine',
     'gen_parenthesis_combine',
     'gen_hyphen_insert',
   ]);
@@ -81,6 +86,9 @@ test('context-pack generated items still pass deterministic marking', () => {
   assert.match(generatedText, /Maya asked/);
   assert.match(generatedText, /ropes, maps and snacks/);
   assert.match(generatedText, /Before sunrise/);
+  assert.match(generatedText, /Before sunrise, the harbour was quiet/);
+  assert.match(generatedText, /The crew checked the ropes; we found another path/);
+  assert.match(generatedText, /The crew checked the ropes - we found another path/);
   assert.match(generatedText, /The harbour, our meeting place, was busy/);
   assert.match(generatedText, /well-known author/);
   for (const item of generatedItems) {

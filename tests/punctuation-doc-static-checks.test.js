@@ -197,6 +197,19 @@ test('punctuation-production.md documents the Punctuation Doctor diagnostic', ()
   );
 });
 
+test('punctuation-production.md documents generated practice guardrails', () => {
+  for (const pattern of [
+    /generatedPerFamily:\s*1/,
+    /templateId/,
+    /variantSignature/,
+    /runtime AI/,
+    /audit:punctuation-content/,
+    /generated-per-family 4/,
+  ]) {
+    assert.match(docContent, pattern);
+  }
+});
+
 test('punctuation-production.md documents time-windowed telemetry caps', () => {
   const hits = grepLines(/rolling.*7-day|7-day.*window|time-windowed/i);
   assert.ok(

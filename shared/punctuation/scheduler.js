@@ -213,6 +213,7 @@ function recentMissForItem(progress, item) {
   return attempts.slice(-12).reverse().find((attempt) => {
     if (!attempt || attempt.correct === true) return false;
     if (attempt.itemId === item.id) return true;
+    if (item.variantSignature && attempt.variantSignature === item.variantSignature) return true;
     if (attempt.mode !== item.mode) return false;
     const attemptSkills = Array.isArray(attempt.skillIds) ? attempt.skillIds : [];
     return item.skillIds?.some((skillId) => attemptSkills.includes(skillId));
@@ -237,7 +238,7 @@ function strongestFacet(indexes, progress, item, now) {
     .sort((a, b) => b.rank - a.rank || a.mastery - b.mastery || a.skillId.localeCompare(b.skillId))[0] || null;
 }
 
-function weakCandidateRow(indexes, progress, item, now, order, recent) {
+function weakCandidateRow(indexes, progress, item, now, order, recent, recentSignatures) {
   const itemSnap = memorySnapshot(progressForItem(progress, item.id), now);
   const facet = strongestFacet(indexes, progress, item, now);
   const recentMiss = recentMissForItem(progress, item);
@@ -276,6 +277,7 @@ function weakCandidateRow(indexes, progress, item, now, order, recent) {
   }
 
   if (recent.has(item.id)) priority *= 0.08;
+  else if (item.variantSignature && recentSignatures.has(item.variantSignature)) priority *= 0.18;
 
   const focusSkillId = facet?.skillId || item.skillIds?.[0] || '';
   return {
@@ -320,15 +322,51 @@ function itemEvidenceRows(progress, now, bucket) {
     .sort((a, b) => a.snap.mastery - b.snap.mastery || a.itemId.localeCompare(b.itemId));
 }
 
+function recentSignatureSet(indexes, session = {}, progress = {}) {
+  const signatures = new Set();
+  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-8) : [];
+  for (const itemId of recentIds) {
+    const signature = indexes.itemById.get(itemId)?.variantSignature;
+    if (signature) signatures.add(signature);
+  }
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts.slice(-8) : [];
+  for (const attempt of attempts) {
+    if (typeof attempt?.variantSignature === 'string' && attempt.variantSignature) {
+      signatures.add(attempt.variantSignature);
+      continue;
+    }
+    const signature = indexes.itemById.get(attempt?.itemId)?.variantSignature;
+    if (signature) signatures.add(signature);
+  }
+  return signatures;
+}
+
+function avoidRecentSignatureRows(rows, recentSignatures) {
+  const freshRows = rows.filter((row) => {
+    const signature = row.item?.variantSignature;
+    return !signature || !recentSignatures.has(signature);
+  });
+  return freshRows.length ? freshRows : rows;
+}
+
+function avoidRecentSignatureItems(items, recentSignatures) {
+  const freshItems = items.filter((item) => {
+    const signature = item?.variantSignature;
+    return !signature || !recentSignatures.has(signature);
+  });
+  return freshItems.length ? freshItems : items;
+}
+
 function weakRows(indexes, progress, session, now, maxWindow) {
   const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
+  const recentSignatures = recentSignatureSet(indexes, session, progress);
   const rows = [];
   const seen = new Set();
   const limit = Math.max(1, maxWindow);
   const addItem = (item) => {
     if (rows.length >= limit || !publishedItem(indexes, item) || seen.has(item.id)) return;
     seen.add(item.id);
-    rows.push(weakCandidateRow(indexes, progress, item, now, rows.length, recent));
+    rows.push(weakCandidateRow(indexes, progress, item, now, rows.length, recent, recentSignatures));
   };
   const addFacet = ({ skillId, mode }) => {
     for (const item of indexes.itemsByMode.get(mode) || []) {
@@ -349,7 +387,8 @@ function weakRows(indexes, progress, session, now, maxWindow) {
     if (rows.length >= limit) break;
   }
 
-  return rows.sort((a, b) => b.priority - a.priority || a.order - b.order);
+  const sortedRows = rows.sort((a, b) => b.priority - a.priority || a.order - b.order);
+  return avoidRecentSignatureRows(sortedRows, recentSignatures);
 }
 
 export function selectPunctuationItem({
@@ -384,6 +423,7 @@ export function selectPunctuationItem({
 
   const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : [];
   const recent = new Set(recentIds);
+  const recentSignatures = recentSignatureSet(indexes, session, progress);
   const previousItemId = typeof session?.currentItemId === 'string' && session.currentItemId
     ? session.currentItemId
     : recentIds.at(-1) || null;
@@ -394,10 +434,11 @@ export function selectPunctuationItem({
       const candidates = modeSuppressed
         ? []
         : candidateItems(indexes, { mode: candidateMode, clusterId, skillId: guidedSkillId });
+      const nonRepeatCandidates = candidates.filter((item) => item.id !== previousItemId);
       return {
         mode: candidateMode,
         candidates,
-        nonRepeatCandidates: candidates.filter((item) => item.id !== previousItemId),
+        nonRepeatCandidates: avoidRecentSignatureItems(nonRepeatCandidates, recentSignatures),
       };
     });
   const selectedMode = modeRows.find((row) => row.nonRepeatCandidates.length)
@@ -413,6 +454,7 @@ export function selectPunctuationItem({
     if (snap.bucket === 'new') weight *= 1.35;
     if (snap.bucket === 'secure') weight *= 0.25;
     if (recent.has(item.id)) weight *= 0.12;
+    else if (item.variantSignature && recentSignatures.has(item.variantSignature)) weight *= 0.2;
     return { item, weight };
   }).filter((row) => row.weight > 0);
 

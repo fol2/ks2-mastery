@@ -210,6 +210,77 @@ test('10 same-item repeated attempts — Try/Practice Stars capped', () => {
   assert.ok(pealark.practiceStars <= 5, `Practice Stars should be capped for single item, got ${pealark.practiceStars}`);
 });
 
+test('generated variant signatures group equivalent surfaces for Try evidence', () => {
+  const progress = freshProgress();
+  progress.attempts.push(makeAttempt({
+    itemId: 'generated_sentence_1',
+    variantSignature: 'puncsig_equivalent',
+    skillIds: ['sentence_endings'],
+    correct: true,
+  }));
+  progress.attempts.push(makeAttempt({
+    itemId: 'generated_sentence_2',
+    variantSignature: 'puncsig_equivalent',
+    skillIds: ['sentence_endings'],
+    correct: true,
+  }));
+  progress.attempts.push(makeAttempt({
+    itemId: 'generated_sentence_3',
+    variantSignature: 'puncsig_distinct',
+    skillIds: ['sentence_endings'],
+    correct: true,
+  }));
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  assert.equal(result.perMonster.pealark.tryStars, 2);
+});
+
+test('legacy unsigned attempts coalesce with signed attempts for the same generated item', () => {
+  const progress = freshProgress();
+  for (let i = 0; i < 3; i++) {
+    progress.attempts.push(makeAttempt({
+      ts: Date.UTC(2026, 3, 20 + i, 10, 0, 0),
+      itemId: 'generated_sentence_legacy',
+      skillIds: ['sentence_endings'],
+      correct: true,
+    }));
+  }
+  for (let i = 0; i < 3; i++) {
+    progress.attempts.push(makeAttempt({
+      ts: Date.UTC(2026, 3, 23 + i, 10, 0, 0),
+      itemId: 'generated_sentence_legacy',
+      variantSignature: 'puncsig_legacy_surface',
+      skillIds: ['sentence_endings'],
+      correct: true,
+    }));
+  }
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  assert.equal(result.perMonster.pealark.tryStars, 3);
+  assert.equal(result.perMonster.pealark.practiceStars, 3);
+});
+
+test('secure Stars dedupe generated items with the same variant signature', () => {
+  const progress = freshProgress();
+  progress.items.generated_sentence_a = secureItemState();
+  progress.items.generated_sentence_b = secureItemState();
+  progress.attempts.push(makeAttempt({
+    itemId: 'generated_sentence_a',
+    variantSignature: 'puncsig_same_surface',
+    skillIds: ['sentence_endings'],
+    correct: true,
+  }));
+  progress.attempts.push(makeAttempt({
+    itemId: 'generated_sentence_b',
+    variantSignature: 'puncsig_same_surface',
+    skillIds: ['sentence_endings'],
+    correct: true,
+  }));
+
+  const result = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+  assert.equal(result.perMonster.pealark.secureStars, 2);
+});
+
 test('supported-only answers (supportLevel > 0) — Try/Practice only, Secure/Mastery blocked', () => {
   const progress = freshProgress();
 

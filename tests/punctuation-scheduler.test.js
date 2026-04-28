@@ -86,6 +86,46 @@ test('weak mode avoids repeating a recent item when another weak alternative exi
   assert.equal(result.weakFocus.source, 'weak_facet');
 });
 
+test('scheduler avoids recently seen generated variant signatures when alternatives exist', () => {
+  const signatureItem = (id, variantSignature) => ({
+    id,
+    mode: 'choose',
+    skillIds: ['sentence_endings'],
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    prompt: 'Choose the best punctuated sentence.',
+    options: [{ text: 'Where is the tide bell?', index: 0 }, { text: 'where is the tide bell', index: 1 }],
+    correctIndex: 0,
+    explanation: 'Capitalise the first word and use a question mark.',
+    model: 'Where is the tide bell?',
+    source: 'generated',
+    variantSignature,
+  });
+  const previous = signatureItem('generated_previous_same', 'puncsig_same');
+  const sameSignature = signatureItem('generated_same_signature', 'puncsig_same');
+  const differentSignature = signatureItem('generated_different_signature', 'puncsig_different');
+  const items = [sameSignature, differentSignature, previous];
+  const indexes = {
+    items,
+    itemById: new Map(items.map((item) => [item.id, item])),
+    itemsByMode: new Map([['choose', [sameSignature, differentSignature]]]),
+    skillById: new Map([['sentence_endings', { id: 'sentence_endings', name: 'Capital letters and sentence endings', published: true }]]),
+  };
+
+  for (const randomValue of [0, 0.05, 0.2, 0.99]) {
+    const result = selectPunctuationItem({
+      indexes,
+      progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },
+      session: { answeredCount: 0, recentItemIds: [previous.id] },
+      prefs: { mode: 'smart' },
+      now: 0,
+      random: () => randomValue,
+    });
+
+    assert.equal(result.item.id, differentSignature.id, `random=${randomValue}`);
+  }
+});
+
 test('weak mode falls back to mixed review when no weak evidence exists', () => {
   const result = selectPunctuationItem({
     progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },

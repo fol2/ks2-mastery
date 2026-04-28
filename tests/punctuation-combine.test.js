@@ -63,8 +63,22 @@ test('combine validators cover list commas, fronted adverbials, and colon lists'
     item: item('lc_combine_trip_list'),
     answer: { typed: 'We packed torches, maps, and water.' },
   });
-  assert.equal(finalComma.correct, false);
-  assert.equal(finalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
+  assert.equal(finalComma.correct, true);
+  assert.deepEqual(finalComma.misconceptionTags, []);
+
+  const strictListItem = {
+    ...item('lc_combine_trip_list'),
+    validator: {
+      ...item('lc_combine_trip_list').validator,
+      allowFinalComma: false,
+    },
+  };
+  const strictFinalComma = markPunctuationAnswer({
+    item: strictListItem,
+    answer: { typed: 'We packed torches, maps, and water.' },
+  });
+  assert.equal(strictFinalComma.correct, false);
+  assert.equal(strictFinalComma.misconceptionTags.includes('comma.unnecessary_final_comma'), true);
 
   const fronted = markPunctuationAnswer({
     item: item('fa_combine_after_storm'),
@@ -122,6 +136,17 @@ test('dash combine requires a spaced dash between preserved clauses', () => {
     answer: { typed: 'The path was flooded - we took the longer route.' },
   });
   assert.equal(dash.correct, true);
+
+  for (const typed of [
+    'The path was flooded – we took the longer route.',
+    'The path was flooded — we took the longer route.',
+  ]) {
+    const variant = markPunctuationAnswer({
+      item: item('dc_combine_flooded_route'),
+      answer: { typed },
+    });
+    assert.equal(variant.correct, true, typed);
+  }
 
   const unpunctuated = markPunctuationAnswer({
     item: item('dc_combine_flooded_route'),

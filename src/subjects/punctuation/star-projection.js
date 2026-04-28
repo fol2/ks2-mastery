@@ -140,6 +140,50 @@ function monsterForCluster(clusterId) {
   return PUNCTUATION_CLIENT_CLUSTER_TO_MONSTER[clusterId] || null;
 }
 
+function attemptEvidenceKey(attempt) {
+  return attempt?.evidenceKey || attempt?.variantSignature || attempt?.itemId || '';
+}
+
+function itemVariantSignatureAliasMap(attempts) {
+  const signaturesByItemId = new Map();
+  for (const attempt of attempts) {
+    if (!attempt.itemId || !attempt.variantSignature) continue;
+    if (!signaturesByItemId.has(attempt.itemId)) signaturesByItemId.set(attempt.itemId, new Set());
+    signaturesByItemId.get(attempt.itemId).add(attempt.variantSignature);
+  }
+
+  const aliases = new Map();
+  for (const [itemId, signatures] of signaturesByItemId) {
+    if (signatures.size === 1) aliases.set(itemId, [...signatures][0]);
+  }
+  return aliases;
+}
+
+function normaliseAttempts(rawAttempts) {
+  const attempts = rawAttempts.map((raw) => {
+    const a = isPlainObject(raw) ? raw : {};
+    return {
+      ts: Math.max(0, Number(a.ts) || 0),
+      itemId: typeof a.itemId === 'string' ? a.itemId : '',
+      variantSignature: typeof a.variantSignature === 'string' ? a.variantSignature : '',
+      skillIds: Array.isArray(a.skillIds) ? a.skillIds.filter((s) => typeof s === 'string') : [],
+      rewardUnitId: typeof a.rewardUnitId === 'string' ? a.rewardUnitId : '',
+      correct: a.correct === true,
+      supportLevel: Math.max(0, Number(a.supportLevel) || 0),
+      supportKind: typeof a.supportKind === 'string' ? a.supportKind : null,
+      itemMode: typeof a.itemMode === 'string' ? a.itemMode : '',
+      sessionMode: typeof a.sessionMode === 'string' ? a.sessionMode : 'smart',
+      testMode: a.testMode === 'gps' ? 'gps' : null,
+      meaningful: a.meaningful !== false,
+    };
+  });
+  const itemSignatureAliases = itemVariantSignatureAliasMap(attempts);
+  return attempts.map((attempt) => ({
+    ...attempt,
+    evidenceKey: attempt.variantSignature || itemSignatureAliases.get(attempt.itemId) || attempt.itemId,
+  }));
+}
+
 // ---------------------------------------------------------------------------
 // Per-monster Star computations
 // ---------------------------------------------------------------------------
@@ -150,11 +194,11 @@ function computeTryStars(monsterAttempts) {
   const perItem = new Map();
   for (const attempt of monsterAttempts) {
     if (attempt.meaningful === false) continue;
-    const itemId = attempt.itemId || '';
-    if (!itemId) continue;
-    const count = perItem.get(itemId) || 0;
+    const evidenceKey = attemptEvidenceKey(attempt);
+    if (!evidenceKey) continue;
+    const count = perItem.get(evidenceKey) || 0;
     if (count >= MAX_ATTEMPTS_PER_ITEM) continue;
-    perItem.set(itemId, count + 1);
+    perItem.set(evidenceKey, count + 1);
   }
 
   // Cap same-day items.
@@ -162,10 +206,10 @@ function computeTryStars(monsterAttempts) {
   for (const attempt of monsterAttempts) {
     if (attempt.meaningful === false) continue;
     const day = dayIndex(attempt.ts);
-    const itemId = attempt.itemId || '';
-    if (!itemId) continue;
+    const evidenceKey = attemptEvidenceKey(attempt);
+    if (!evidenceKey) continue;
     if (!perDay.has(day)) perDay.set(day, new Set());
-    perDay.get(day).add(itemId);
+    perDay.get(day).add(evidenceKey);
   }
 
   let totalCapped = 0;
@@ -194,11 +238,11 @@ function computePracticeStars(monsterAttempts) {
   let independentCorrect = 0;
 
   for (const attempt of monsterAttempts) {
-    const itemId = attempt.itemId || '';
-    if (!itemId) continue;
-    const count = perItem.get(itemId) || 0;
+    const evidenceKey = attemptEvidenceKey(attempt);
+    if (!evidenceKey) continue;
+    const count = perItem.get(evidenceKey) || 0;
     if (count >= MAX_ATTEMPTS_PER_ITEM) continue;
-    perItem.set(itemId, count + 1);
+    perItem.set(evidenceKey, count + 1);
 
     const supportLevel = Math.max(0, Number(attempt.supportLevel) || 0);
     if (supportLevel === 0 && attempt.correct === true) {
@@ -206,8 +250,8 @@ function computePracticeStars(monsterAttempts) {
       if (!perDayCorrectItems.has(day)) perDayCorrectItems.set(day, new Set());
       const dayItems = perDayCorrectItems.get(day);
       // Only count this item if the day hasn't hit the daily cap yet.
-      if (dayItems.size < MAX_SAME_DAY_PRACTICE_ITEMS || dayItems.has(itemId)) {
-        dayItems.add(itemId);
+      if (dayItems.size < MAX_SAME_DAY_PRACTICE_ITEMS || dayItems.has(evidenceKey)) {
+        dayItems.add(evidenceKey);
         independentCorrect += 1;
       }
     }
@@ -230,16 +274,16 @@ function computePracticeStars(monsterAttempts) {
   let nearRetryCorrections = 0;
   const itemAttemptOrder = new Map();
   for (const attempt of monsterAttempts) {
-    const itemId = attempt.itemId || '';
-    if (!itemId) continue;
-    if (!itemAttemptOrder.has(itemId)) itemAttemptOrder.set(itemId, []);
-    itemAttemptOrder.get(itemId).push(attempt);
+    const evidenceKey = attemptEvidenceKey(attempt);
+    if (!evidenceKey) continue;
+    if (!itemAttemptOrder.has(evidenceKey)) itemAttemptOrder.set(evidenceKey, []);
+    itemAttemptOrder.get(evidenceKey).push(attempt);
   }
-  for (const [itemId, attempts] of itemAttemptOrder) {
+  for (const [evidenceKey, attempts] of itemAttemptOrder) {
     for (let i = 1; i < attempts.length && i < MAX_ATTEMPTS_PER_ITEM; i++) {
       if (!attempts[i - 1].correct && attempts[i].correct && (attempts[i].supportLevel || 0) === 0) {
         const day = dayIndex(attempts[i].ts);
-        if (perDayCorrectItems.get(day)?.has(itemId)) {
+        if (perDayCorrectItems.get(day)?.has(evidenceKey)) {
           nearRetryCorrections += 1;
         }
       }
@@ -251,14 +295,17 @@ function computePracticeStars(monsterAttempts) {
   return Math.min(PRACTICE_CAP, Math.floor(rawScore));
 }
 
-function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId, monsterId) {
+function computeSecureStars(monsterClusterIds, items, rewardUnits, releaseId, monsterId, itemSignatureAliases) {
   // Count items that have reached the secure bucket.
-  let secureItemCount = 0;
+  const secureEvidenceKeys = new Set();
   const itemEntries = isPlainObject(items) ? items : {};
-  for (const [, itemState] of Object.entries(itemEntries)) {
+  for (const [itemId, itemState] of Object.entries(itemEntries)) {
     const snap = memorySnapshot(itemState);
-    if (snap.secure) secureItemCount += 1;
+    if (snap.secure) {
+      secureEvidenceKeys.add(itemSignatureAliases.get(itemId) || itemId);
+    }
   }
+  const secureItemCount = secureEvidenceKeys.size;
 
   // Count secured reward units for this monster's clusters.
   let securedUnitCount = 0;
@@ -587,24 +634,8 @@ export function projectPunctuationStars(progress, releaseId, options) {
   const facets = isPlainObject(safeProgress.facets) ? safeProgress.facets : {};
   const rewardUnits = isPlainObject(safeProgress.rewardUnits) ? safeProgress.rewardUnits : {};
   const rawAttempts = Array.isArray(safeProgress.attempts) ? safeProgress.attempts : [];
-
-  // Normalise attempts: ensure required fields are present.
-  const attempts = rawAttempts.map((raw) => {
-    const a = isPlainObject(raw) ? raw : {};
-    return {
-      ts: Math.max(0, Number(a.ts) || 0),
-      itemId: typeof a.itemId === 'string' ? a.itemId : '',
-      skillIds: Array.isArray(a.skillIds) ? a.skillIds.filter((s) => typeof s === 'string') : [],
-      rewardUnitId: typeof a.rewardUnitId === 'string' ? a.rewardUnitId : '',
-      correct: a.correct === true,
-      supportLevel: Math.max(0, Number(a.supportLevel) || 0),
-      supportKind: typeof a.supportKind === 'string' ? a.supportKind : null,
-      itemMode: typeof a.itemMode === 'string' ? a.itemMode : '',
-      sessionMode: typeof a.sessionMode === 'string' ? a.sessionMode : 'smart',
-      testMode: a.testMode === 'gps' ? 'gps' : null,
-      meaningful: a.meaningful !== false,
-    };
-  });
+  const attempts = normaliseAttempts(rawAttempts);
+  const itemSignatureAliases = itemVariantSignatureAliasMap(attempts);
 
   // Build per-monster attempt arrays.
   const monsterAttempts = new Map();
@@ -630,7 +661,7 @@ export function projectPunctuationStars(progress, releaseId, options) {
 
     const tryStars = computeTryStars(mAttempts);
     const practiceStars = computePracticeStars(mAttempts);
-    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnits, releaseId, monsterId);
+    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnits, releaseId, monsterId, itemSignatureAliases);
     const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnits, monsterId);
     const total = tryStars + practiceStars + secureStars + masteryStars;
 

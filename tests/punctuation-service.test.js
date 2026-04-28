@@ -8,6 +8,7 @@ import {
   PUNCTUATION_RELEASE_ID,
 } from '../shared/punctuation/content.js';
 import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
+import { createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
 import { createMemoryState, updateMemoryState } from '../shared/punctuation/scheduler.js';
 import { createPunctuationService, PunctuationServiceError } from '../shared/punctuation/service.js';
 import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
@@ -81,6 +82,33 @@ test('punctuation service uses injected randomness for stable session ids and ge
 
   assert.equal(secondStart.session.id, firstStart.session.id);
   assert.equal(firstGenerated.session.currentItem.source, 'generated');
+});
+
+test('punctuation service carries generated variant signatures into state and attempts', () => {
+  const manifest = createPunctuationRuntimeManifest({
+    seed: 'service-signature',
+    generatedPerFamily: 1,
+  });
+  const repository = makeRepository();
+  const service = createPunctuationService({
+    repository,
+    now: () => 1_800_000_000_000,
+    random: () => 0.99,
+    manifest,
+    indexes: createPunctuationContentIndexes(manifest),
+  });
+  const start = service.startSession('learner-a', { mode: 'endmarks', roundLength: '2' }).state;
+  const first = service.submitAnswer('learner-a', start, correctAnswerFor(start.session.currentItem)).state;
+  const generated = service.continueSession('learner-a', first).state;
+
+  assert.equal(generated.session.currentItem.source, 'generated');
+  assert.match(generated.session.currentItem.variantSignature, /^puncsig_[a-z0-9]+$/);
+
+  const submitted = service.submitAnswer('learner-a', generated, correctAnswerFor(generated.session.currentItem));
+  const attempt = repository.snapshot().data.progress.attempts.at(-1);
+  const event = submitted.events.find((entry) => entry.type === PUNCTUATION_EVENT_TYPES.ITEM_ATTEMPTED);
+  assert.equal(attempt.variantSignature, generated.session.currentItem.variantSignature);
+  assert.equal(event.variantSignature, generated.session.currentItem.variantSignature);
 });
 
 test('punctuation service emits misconception events and serialisable feedback', () => {

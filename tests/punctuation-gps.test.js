@@ -224,6 +224,7 @@ test('gps completion releases review rows and then writes learning evidence', ()
   assert.equal(finished.state.summary.gps.reviewItems.length, 3);
   assert.equal(finished.state.summary.gps.reviewItems[1].correct, false);
   assert.equal(finished.state.summary.gps.reviewItems[1].displayCorrection.length > 0, true);
+  assert.equal(finished.state.summary.gps.reviewItems.every((entry) => !('variantSignature' in entry)), true);
   assert.equal(finished.state.summary.gps.recommendedMode, 'weak');
   assert.equal(finished.events.filter((event) => event.type === PUNCTUATION_EVENT_TYPES.ITEM_ATTEMPTED).length, 3);
   assert.equal(finished.events.some((event) => event.type === PUNCTUATION_EVENT_TYPES.SESSION_COMPLETED), true);
