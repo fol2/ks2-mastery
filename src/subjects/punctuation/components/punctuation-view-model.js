@@ -1001,9 +1001,9 @@ export const PUNCTUATION_SKILL_MODAL_CONTENT = Object.freeze({
   }),
   dash_clause: Object.freeze({
     rule: 'A dash shows a sharp pause between two closely related ideas.',
-    workedGood: 'The bus was late - we walked instead.',
-    contrastGood: 'The bus was late - we walked instead.',
-    contrastBad: 'The path was flooded -and we took the longer route.',
+    workedGood: 'The bus was late – we walked instead.',
+    contrastGood: 'The bus was late – we walked instead.',
+    contrastBad: 'The path was flooded –and we took the longer route.',
   }),
   semicolon_list: Object.freeze({
     rule: 'Use semi-colons to separate list items when each item already contains commas.',

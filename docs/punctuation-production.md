@@ -101,14 +101,14 @@ The first Speech rubric is deliberately strict:
 
 Comma / Flow marking adds deterministic transfer validators for:
 
-- ordered KS2 list-comma patterns; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma
+- ordered KS2 list-comma patterns; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma with visible no-final-comma context
 - opening phrase commas after fronted adverbials such as `After lunch,`
 - opening phrase commas that make meaning clearer, such as `In the morning,`
 
 Boundary marking adds deterministic transfer validators for:
 
 - semi-colons between preserved related clauses
-- spaced hyphen, en dash, or em dash marks between preserved related clauses
+- spaced hyphen, en dash, or em dash marks between preserved related clauses; model answers display a spaced en dash when the item is teaching a dash
 - exact hyphenated phrases that avoid ambiguity, such as `well-known author`
 
 Structure marking adds deterministic transfer validators for:
@@ -120,12 +120,12 @@ Structure marking adds deterministic transfer validators for:
 
 Combine marking adds stricter one-sentence validators for the first legacy-shaped rewrite families:
 
-- list-comma note combination; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma
+- list-comma note combination; an otherwise-correct Oxford comma before `and` is accepted unless the item explicitly forbids the final comma with visible no-final-comma context
 - fronted-adverbial rewrites with the opening comma
 - parenthesis rewrites with matched commas, brackets, or dashes
 - colon-list combinations after a complete opening clause
 - semi-colon clause combinations that reject comma splices
-- spaced hyphen, en dash, or em dash clause combinations that reject unpunctuated joins
+- spaced hyphen, en dash, or em dash clause combinations that reject unpunctuated joins while displaying the spaced en dash as the canonical model
 
 Paragraph marking composes the deterministic validators across a short passage for the first legacy-shaped proofreading families:
 

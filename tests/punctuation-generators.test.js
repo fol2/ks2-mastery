@@ -129,7 +129,7 @@ const LEGACY_RUNTIME_GENERATED_FIXTURE = Object.freeze([
     id: 'gen_dash_clause_fix_kwbiay_1',
     generatorFamilyId: 'gen_dash_clause_fix',
     stem: 'The gate was stuck we found another path.',
-    model: 'The gate was stuck - we found another path.',
+    model: 'The gate was stuck – we found another path.',
     templateId: 'gen_dash_clause_fix_template_11ejvfc',
     variantSignature: 'puncsig_erog6d',
   },
@@ -137,7 +137,7 @@ const LEGACY_RUNTIME_GENERATED_FIXTURE = Object.freeze([
     id: 'gen_dash_clause_combine_n82560_1',
     generatorFamilyId: 'gen_dash_clause_combine',
     stem: 'The gate was stuck.\nWe found another path.',
-    model: 'The gate was stuck - we found another path.',
+    model: 'The gate was stuck – we found another path.',
     templateId: 'gen_dash_clause_combine_template_1o45ea6',
     variantSignature: 'puncsig_5qqk8w',
   },
@@ -282,6 +282,36 @@ test('generated punctuation model answers pass deterministic marking', () => {
   for (const item of generatedItems) {
     const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
     assert.equal(result.correct, true, item.id);
+  }
+});
+
+test('generated dash and list-comma model answers stay aligned with deterministic marking', () => {
+  const generatedItems = createPunctuationGeneratedItems({ seed: 'dash-list-policy', perFamily: 4 });
+  const policyItems = generatedItems.filter((item) => [
+    'gen_dash_clause_fix',
+    'gen_dash_clause_combine',
+    'gen_list_commas_insert',
+    'gen_list_commas_combine',
+  ].includes(item.generatorFamilyId));
+
+  assert.equal(policyItems.length, 16);
+  for (const item of policyItems) {
+    const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
+    assert.equal(result.correct, true, item.id);
+  }
+
+  const dashItems = policyItems.filter((item) => item.generatorFamilyId.startsWith('gen_dash_clause_'));
+  for (const item of dashItems) {
+    assert.match(item.model, /\s–\s/, item.id);
+    assert.doesNotMatch(item.model, /\s-\s/, item.id);
+    for (const typed of [
+      item.model.replace(' – ', ' - '),
+      item.model,
+      item.model.replace(' – ', ' — '),
+    ]) {
+      const result = markPunctuationAnswer({ item, answer: { typed } });
+      assert.equal(result.correct, true, `${item.id}: ${typed}`);
+    }
   }
 });
 

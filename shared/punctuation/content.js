@@ -152,9 +152,9 @@ export const PUNCTUATION_SKILLS = Object.freeze([
     published: true,
     rule: 'A dash can mark a sharp boundary between two closely related ideas.',
     workedBad: 'The path was flooded, we took the longer route.',
-    workedGood: 'The path was flooded - we took the longer route.',
-    contrastBad: 'The path was flooded -and we took the longer route.',
-    contrastGood: 'The path was flooded - we took the longer route.',
+    workedGood: 'The path was flooded – we took the longer route.',
+    contrastBad: 'The path was flooded –and we took the longer route.',
+    contrastGood: 'The path was flooded – we took the longer route.',
   },
   {
     id: 'semicolon_list',
@@ -441,6 +441,11 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     accepted: ['We needed pencils, rulers and glue.'],
     explanation: 'Use a comma between pencils and rulers to separate the list items.',
     model: 'We needed pencils, rulers and glue.',
+    validator: {
+      type: 'requiresListCommas',
+      opening: 'We needed',
+      items: ['pencils', 'rulers', 'glue'],
+    },
     misconceptionTags: ['comma.list_separator_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -454,8 +459,13 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     prompt: 'Correct the list punctuation in this sentence.',
     stem: 'The display showed shells pebbles, and fossils.',
     accepted: ['The display showed shells, pebbles and fossils.'],
-    explanation: 'The comma belongs between shells and pebbles. The final comma before and is not needed here.',
+    explanation: 'The comma belongs between shells and pebbles. A final comma before and is accepted here too.',
     model: 'The display showed shells, pebbles and fossils.',
+    validator: {
+      type: 'requiresListCommas',
+      opening: 'The display showed',
+      items: ['shells', 'pebbles', 'fossils'],
+    },
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -482,15 +492,16 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     skillIds: ['list_commas'],
     clusterId: 'comma_flow',
     rewardUnitId: 'list-commas-core',
-    prompt: 'Write one sentence using this exact stem and list: For the bake sale we needed eggs, flour, butter and sugar.',
+    prompt: 'Write one sentence using this exact stem and list: For the bake sale we needed eggs, flour, butter and sugar. For this question, do not put a comma before the final and.',
     stem: '',
     accepted: ['For the bake sale we needed eggs, flour, butter and sugar.'],
-    explanation: 'The sentence keeps the stem and separates the list items with commas.',
+    explanation: 'The sentence keeps the exact stem and list items, with commas between the list items. For this question, there is no comma before the final and.',
     model: 'For the bake sale we needed eggs, flour, butter and sugar.',
     validator: {
       type: 'requiresListCommas',
       opening: 'For the bake sale we needed',
       items: ['eggs', 'flour', 'butter', 'sugar'],
+      allowFinalComma: false,
     },
     misconceptionTags: ['comma.list_separator_missing', 'comma.list_words_changed', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
@@ -1126,13 +1137,13 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     prompt: 'Choose the best punctuated sentence.',
     options: [
       'The path was flooded, we took the longer route.',
-      'The path was flooded - we took the longer route.',
-      'The path was flooded -and we took the longer route.',
+      'The path was flooded – we took the longer route.',
+      'The path was flooded –and we took the longer route.',
       'The path was flooded we took the longer route.',
     ],
     correctIndex: 1,
     explanation: 'The dash marks a sharp boundary between two related clauses.',
-    model: 'The path was flooded - we took the longer route.',
+    model: 'The path was flooded – we took the longer route.',
     misconceptionTags: ['boundary.comma_splice', 'boundary.dash_missing', 'boundary.dash_spacing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -1146,12 +1157,12 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     prompt: 'Add the punctuation between the related clauses.',
     stem: 'The door creaked open we froze.',
     accepted: [
-      'The door creaked open - we froze.',
       'The door creaked open – we froze.',
+      'The door creaked open - we froze.',
       'The door creaked open — we froze.',
     ],
     explanation: 'The dash creates a clear break between the two related clauses.',
-    model: 'The door creaked open - we froze.',
+    model: 'The door creaked open – we froze.',
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -1163,14 +1174,14 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     clusterId: 'boundary',
     rewardUnitId: 'dash-clauses-core',
     prompt: 'Correct the dash punctuation in this sentence.',
-    stem: 'The signal failed -and the team waited.',
+    stem: 'The signal failed –and the team waited.',
     accepted: [
-      'The signal failed - the team waited.',
       'The signal failed – the team waited.',
+      'The signal failed - the team waited.',
       'The signal failed — the team waited.',
     ],
     explanation: 'Leave a space either side of the dash and avoid attaching it to and.',
-    model: 'The signal failed - the team waited.',
+    model: 'The signal failed – the team waited.',
     misconceptionTags: ['boundary.dash_spacing', 'boundary.extra_conjunction'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -1183,9 +1194,13 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     rewardUnitId: 'dash-clauses-core',
     prompt: 'Write one sentence that links these clauses with a dash: The path was flooded / we took the longer route.',
     stem: '',
-    accepted: ['The path was flooded - we took the longer route.'],
+    accepted: [
+      'The path was flooded – we took the longer route.',
+      'The path was flooded - we took the longer route.',
+      'The path was flooded — we took the longer route.',
+    ],
     explanation: 'The dash sits between the two related clauses.',
-    model: 'The path was flooded - we took the longer route.',
+    model: 'The path was flooded – we took the longer route.',
     validator: {
       type: 'requiresBoundaryBetweenClauses',
       mark: ' - ',
@@ -1204,9 +1219,13 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     rewardUnitId: 'dash-clauses-core',
     prompt: 'Combine the two related clauses into one sentence with a dash.',
     stem: 'The path was flooded.\nWe took the longer route.',
-    accepted: ['The path was flooded - we took the longer route.'],
+    accepted: [
+      'The path was flooded – we took the longer route.',
+      'The path was flooded - we took the longer route.',
+      'The path was flooded — we took the longer route.',
+    ],
     explanation: 'A spaced dash marks the sharp boundary between the related clauses.',
-    model: 'The path was flooded - we took the longer route.',
+    model: 'The path was flooded – we took the longer route.',
     validator: {
       type: 'combineBoundaryBetweenClauses',
       mark: '-',
@@ -1226,13 +1245,13 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     prompt: 'Choose the sentence where the dash marks a clear break between ideas.',
     options: [
       'The lights went out, everyone stayed still.',
-      'The lights went out - everyone stayed still.',
-      'The lights went out -and everyone stayed still.',
+      'The lights went out – everyone stayed still.',
+      'The lights went out –and everyone stayed still.',
       'The lights went out everyone stayed still.',
     ],
     correctIndex: 1,
     explanation: 'The dash marks a sharp break between two closely related ideas.',
-    model: 'The lights went out - everyone stayed still.',
+    model: 'The lights went out – everyone stayed still.',
     misconceptionTags: ['boundary.comma_splice', 'boundary.dash_missing', 'boundary.dash_spacing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -1246,12 +1265,12 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     prompt: 'Add the dash between the related ideas.',
     stem: 'The alarm rang everyone lined up.',
     accepted: [
-      'The alarm rang - everyone lined up.',
       'The alarm rang – everyone lined up.',
+      'The alarm rang - everyone lined up.',
       'The alarm rang — everyone lined up.',
     ],
     explanation: 'The dash creates a clear break between the two ideas.',
-    model: 'The alarm rang - everyone lined up.',
+    model: 'The alarm rang – everyone lined up.',
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
     source: 'fixed',
@@ -1264,9 +1283,13 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     rewardUnitId: 'dash-clauses-core',
     prompt: 'Write one sentence that links these ideas with a dash: The curtain rose / the hall fell silent.',
     stem: '',
-    accepted: ['The curtain rose - the hall fell silent.'],
+    accepted: [
+      'The curtain rose – the hall fell silent.',
+      'The curtain rose - the hall fell silent.',
+      'The curtain rose — the hall fell silent.',
+    ],
     explanation: 'The dash sits between the two related ideas.',
-    model: 'The curtain rose - the hall fell silent.',
+    model: 'The curtain rose – the hall fell silent.',
     validator: {
       type: 'requiresBoundaryBetweenClauses',
       mark: '-',
@@ -2464,6 +2487,35 @@ function transferValidatorRequirements(item) {
   }
 }
 
+const STRICT_FINAL_COMMA_VALIDATORS = new Set([
+  'requiresListCommas',
+  'combineListSentence',
+  'requiresColonBeforeList',
+  'combineColonList',
+]);
+
+function strictFinalCommaPolicyVisible(item) {
+  const validator = item?.validator || {};
+  if (validator.allowFinalComma !== false || !STRICT_FINAL_COMMA_VALIDATORS.has(validator.type)) {
+    return true;
+  }
+  const visibleText = normaliseVisibleContractText(`${item.prompt || ''} ${item.explanation || ''}`);
+  const mentionsComma = /\bcomma\b/.test(visibleText);
+  const mentionsFinalAnd = /\bfinal\b.*\band\b|\bbefore\b.*\band\b/.test(visibleText);
+  const forbidsComma = /\b(no|not|without|avoid|unneeded|unnecessary)\b|do not|not needed/.test(visibleText);
+  return mentionsComma && mentionsFinalAnd && forbidsComma;
+}
+
+function dashClauseDisplayUsesEnDash(item) {
+  if (!asArray(item?.skillIds).includes('dash_clause')) return true;
+  const displayTexts = [
+    item.model,
+    item.mode === 'choose' ? asArray(item.options)[Number(item.correctIndex)] : '',
+  ].filter((entry) => typeof entry === 'string' && entry.trim());
+  return displayTexts.length > 0
+    && displayTexts.every((text) => text.includes(' – ') && !text.includes(' - '));
+}
+
 function pushIndexed(map, key, value) {
   if (!map.has(key)) map.set(key, []);
   map.get(key).push(value);
@@ -2600,6 +2652,12 @@ export function validatePunctuationManifest(manifest = PUNCTUATION_CONTENT_MANIF
       if (!visibleContractIncludes(visibleContract, requirement)) {
         errors.push(`Transfer item ${item.id} hides validator requirement ${requirement}.`);
       }
+    }
+    if (!strictFinalCommaPolicyVisible(item)) {
+      errors.push(`List-comma item ${item.id} forbids the final comma without visible no-final-comma context.`);
+    }
+    if (!dashClauseDisplayUsesEnDash(item)) {
+      errors.push(`Dash-clause item ${item.id} must use a spaced en dash in model display.`);
     }
   }
 
