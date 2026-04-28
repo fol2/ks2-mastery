@@ -1,4 +1,4 @@
-// Hero Mode — Shadow read-model assembler (v3 / v4).
+// Hero Mode — Shadow read-model assembler (v3 / v4 / v5).
 //
 // Orchestrates providers, eligibility, and the scheduler into a complete
 // shadow response. Pure read-only path — MUST NOT mutate any state, write
@@ -9,6 +9,9 @@
 //
 // v4 adds: progress merge, per-task completionStatus, pending completed
 // session detection, progress/claim blocks, writesEnabled, and mode='progress'.
+//
+// v5 adds: child-safe economy block (balance, today award status, recent
+// ledger summary), coinsEnabled=true, behind HERO_MODE_ECONOMY_ENABLED.
 
 import {
   HERO_DEFAULT_EFFORT_TARGET,
@@ -28,6 +31,7 @@ import { determineLaunchStatus } from '../../../shared/hero/launch-status.js';
 import { deriveHeroQuestFingerprint } from '../../../shared/hero/quest-fingerprint.js';
 import { resolveChildLabel, resolveChildReason } from '../../../shared/hero/hero-copy.js';
 import { deriveTaskCompletionStatus, deriveDailyCompletionStatus } from '../../../shared/hero/completion-status.js';
+import { selectChildSafeEconomyReadModel } from '../../../shared/hero/economy.js';
 import { mapHeroEnvelopeToSubjectPayload } from './launch-adapters/index.js';
 import { runProvider } from './providers/index.js';
 
@@ -104,7 +108,7 @@ function detectPendingCompletedSession(heroProgressState, recentCompletedSession
 }
 
 /**
- * Assemble the full Hero shadow read model for a learner (v3/v4).
+ * Assemble the full Hero shadow read model for a learner (v3/v4/v5).
  *
  * @param {Object} params
  * @param {string} params.learnerId
@@ -113,10 +117,11 @@ function detectPendingCompletedSession(heroProgressState, recentCompletedSession
  *   per-subject read-model (or null when absent)
  * @param {number} params.now — epoch milliseconds
  * @param {Object} [params.env] — Worker environment bindings (optional for P0 compat)
- * @param {Object} [params.heroProgressState] — normalised hero progress state (v4)
- * @param {Array}  [params.recentCompletedSessions] — recent completed practice session rows (v4)
- * @param {boolean} [params.progressEnabled] — whether progress mode is enabled (v4)
- * @returns {Object} shadow read model v3 or v4
+ * @param {Object} [params.heroProgressState] — normalised hero progress state (v4+)
+ * @param {Array}  [params.recentCompletedSessions] — recent completed practice session rows (v4+)
+ * @param {boolean} [params.progressEnabled] — whether progress mode is enabled (v4+)
+ * @param {boolean} [params.economyEnabled] — whether economy (coins) is enabled (v5)
+ * @returns {Object} shadow read model v3, v4, or v5
  */
 export function buildHeroShadowReadModel({
   learnerId,
@@ -127,6 +132,7 @@ export function buildHeroShadowReadModel({
   heroProgressState = null,
   recentCompletedSessions = [],
   progressEnabled = false,
+  economyEnabled = false,
 } = {}) {
   const dateKey = deriveDateKey(now, HERO_DEFAULT_TIMEZONE);
   const safeEnv = env || {};
@@ -397,8 +403,8 @@ export function buildHeroShadowReadModel({
   const canClaim = mergedTasks.some(t => t.canClaim);
   const pendingClaimTaskId = pendingCompletedHeroSession?.taskId || null;
 
-  // 16. Assemble v4 response shape
-  return {
+  // 16. Assemble v4 (or v5 with economy) response shape
+  const v4Base = {
     version: 4,
     mode: 'progress',
     childVisible: childUiEnabled,
@@ -448,5 +454,37 @@ export function buildHeroShadowReadModel({
     activeHeroSession,
     pendingCompletedHeroSession,
     debug: quest.debug,
+  };
+
+  // 17. If economy enabled → evolve to v5 with child-safe economy block
+  if (!economyEnabled) return v4Base;
+
+  const economyBlock = selectChildSafeEconomyReadModel(
+    heroProgressState,
+    dateKey,
+    quest.questId,
+  );
+
+  return {
+    ...v4Base,
+    version: 5,
+    coinsEnabled: true,
+    economy: economyBlock || {
+      enabled: true,
+      version: 1,
+      balance: 0,
+      lifetimeEarned: 0,
+      lifetimeSpent: 0,
+      today: {
+        dateKey,
+        questId: quest.questId,
+        awardStatus: 'not-eligible',
+        coinsAvailable: 100,
+        coinsAwarded: 0,
+        ledgerEntryId: null,
+        awardedAt: null,
+      },
+      recentLedger: [],
+    },
   };
 }

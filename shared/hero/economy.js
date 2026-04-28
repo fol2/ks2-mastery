@@ -140,6 +140,55 @@ export function applyDailyCompletionCoinAward(heroState, { learnerId, nowTs, dai
 
 // ── State helpers ────────────────────────────────────────────────
 
+// ── Child-safe read model projection ───────────────────────────
+
+export function selectChildSafeEconomyReadModel(heroState, dateKey, questId) {
+  const economy = heroState?.economy;
+  if (!economy) return null;
+  const daily = heroState?.daily;
+  const todayMatch = daily?.dateKey === dateKey;
+
+  let awardStatus = 'not-eligible';
+  if (todayMatch) {
+    if (daily.economy?.dailyAwardStatus === 'awarded') awardStatus = 'awarded';
+    else if (daily.status === 'completed') awardStatus = 'available';
+    else awardStatus = 'available';
+  }
+
+  const safeNum = (v) => (typeof v === 'number' && Number.isFinite(v)) ? v : 0;
+
+  return {
+    enabled: true,
+    version: HERO_ECONOMY_VERSION,
+    balance: safeNum(economy.balance),
+    lifetimeEarned: safeNum(economy.lifetimeEarned),
+    lifetimeSpent: safeNum(economy.lifetimeSpent),
+    today: {
+      dateKey,
+      questId,
+      awardStatus,
+      coinsAvailable: HERO_DAILY_COMPLETION_COINS,
+      coinsAwarded: todayMatch ? safeNum(daily.economy?.dailyAwardCoinsAwarded) : 0,
+      ledgerEntryId: todayMatch ? (daily.economy?.dailyAwardLedgerEntryId || null) : null,
+      awardedAt: todayMatch ? (daily.economy?.dailyAwardedAt || null) : null,
+    },
+    recentLedger: buildChildSafeLedgerEntries(economy.ledger),
+  };
+}
+
+function buildChildSafeLedgerEntries(ledger) {
+  if (!Array.isArray(ledger)) return [];
+  return ledger.slice(-10).map(entry => ({
+    entryId: entry.entryId,
+    type: entry.type,
+    amount: entry.amount,
+    dateKey: entry.dateKey,
+    createdAt: entry.createdAt,
+  }));
+}
+
+// ── State helpers ────────────────────────────────────────────────
+
 export function normaliseHeroEconomyState(raw) {
   if (!raw || typeof raw !== 'object') return emptyEconomyState();
   if (raw.version !== HERO_ECONOMY_VERSION) return emptyEconomyState();
