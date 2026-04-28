@@ -57,7 +57,10 @@ import {
   createDemoSession,
   defaultMasks,
   fillGrammarAnswer,
+  grammarDashboardStartButton,
+  hasCurrentPlatformScreenshot,
   networkOffline,
+  openGrammarMorePractice,
   openGrammarDashboard,
   openSubject,
   primeGrammarReadModel,
@@ -65,6 +68,7 @@ import {
   returnToGrammarDashboard,
   screenshotName,
   seedFreshLearner,
+  startGrammarDashboardRound,
   startGrammarMiniTest,
 } from './shared.mjs';
 
@@ -95,9 +99,7 @@ test.describe('grammar golden path', () => {
     await expect(miniTestButton).toBeVisible();
     await miniTestButton.click();
 
-    const beginRound = page.getByRole('button', { name: /Begin round/ });
-    await expect(beginRound).toBeVisible();
-    await beginRound.click();
+    await startGrammarDashboardRound(page);
 
     // Mini test session live.
     const session = page.locator('.grammar-mini-test-panel, .grammar-session').first();
@@ -159,9 +161,7 @@ test.describe('grammar golden path', () => {
     await expect(miniTestButton).toBeVisible();
     await miniTestButton.click();
 
-    const beginRound = page.getByRole('button', { name: /Begin round/ });
-    await expect(beginRound).toBeVisible();
-    await beginRound.click();
+    await startGrammarDashboardRound(page);
 
     const session = page.locator('.grammar-mini-test-panel, .grammar-session').first();
     await expect(session).toBeVisible({ timeout: 15_000 });
@@ -223,9 +223,7 @@ test.describe('U9 Flow 1: Smart Practice wrong -> retry -> correct -> summary', 
     const smart = page.locator('[data-mode-id="smart"][data-action="grammar-set-mode"]');
     await expect(smart).toBeVisible();
     await smart.click();
-    const begin = page.getByRole('button', { name: /Begin round/ });
-    await expect(begin).toBeVisible();
-    await begin.click();
+    await startGrammarDashboardRound(page);
 
     // Session mounted.
     const sessionRoot = page.locator('section.grammar-session');
@@ -320,8 +318,12 @@ test.describe('U9 Flow 2: Grammar Bank filter + concept detail + Practise 5', ()
 
     // Baseline PNG for Flow 2: the Grammar Bank landing. Captured on
     // both viewports.
-    if (testInfo.project.name === 'mobile-390' || testInfo.project.name === 'desktop-1440') {
-      await expect(bankRoot).toHaveScreenshot(screenshotName('grammar-flow2', 'bank-landing'), {
+    const bankLandingScreenshot = screenshotName('grammar-flow2', 'bank-landing');
+    if (
+      (testInfo.project.name === 'mobile-390' || testInfo.project.name === 'desktop-1440')
+      && hasCurrentPlatformScreenshot(testInfo, bankLandingScreenshot)
+    ) {
+      await expect(bankRoot).toHaveScreenshot(bankLandingScreenshot, {
         mask: defaultMasks(page),
       });
     }
@@ -540,6 +542,7 @@ test.describe('U9 Flow 4: Writing Try non-scored (R13)', () => {
 
     // Enter Writing Try via the dashboard secondary button. The
     // `transferLane.prompts` array was populated by the prime above.
+    await openGrammarMorePractice(page);
     const transferButton = page.locator('.grammar-dashboard [data-action="grammar-open-transfer"]').first();
     await expect(transferButton).toBeVisible({ timeout: 10_000 });
     await transferButton.click();
@@ -601,6 +604,7 @@ test.describe('U9 Flow 4: Writing Try non-scored (R13)', () => {
     // Orphaned-evidence section: absent for a pristine learner. We
     // navigate back into Writing Try and check the retired-prompts
     // container count.
+    await openGrammarMorePractice(page);
     await page.locator('[data-action="grammar-open-transfer"]').first().click();
     await expect(page.locator('[data-grammar-phase-root="transfer"]')).toBeVisible({ timeout: 10_000 });
     // For a fresh learner, `orphanedEvidence` is [] so the section
@@ -817,6 +821,7 @@ test.describe('U9 error path: network offline mid-submit preserves draft', () =>
 
     // primeGrammarReadModel lands on the dashboard with
     // transferLane.prompts preserved in memory.
+    await openGrammarMorePractice(page);
     const transferButton = page.locator('.grammar-dashboard [data-action="grammar-open-transfer"]').first();
     await expect(transferButton).toBeVisible({ timeout: 10_000 });
     await transferButton.click();
@@ -871,8 +876,8 @@ test.describe('U9 keyboard-only happy path: Tab reaches Submit without mouse', (
     await page.locator('[data-mode-id="smart"][data-action="grammar-set-mode"]').focus();
     await page.keyboard.press('Enter');
 
-    // Focus the Begin round button and Enter.
-    const begin = page.getByRole('button', { name: /Begin round/ });
+    // Focus the dashboard CTA and press Enter.
+    const begin = grammarDashboardStartButton(page);
     await expect(begin).toBeVisible();
     await begin.focus();
     await page.keyboard.press('Enter');

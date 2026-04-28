@@ -43,6 +43,7 @@ import { test, expect } from '@playwright/test';
 import {
   applyDeterminism,
   createDemoSession,
+  grammarDashboardStartButton,
   grammarAnswer,
   openSubject,
   punctuationAnswer,
@@ -236,9 +237,8 @@ test.describe('SH2-U1 double-submit guard', () => {
     await expect(dashboard).toBeVisible({ timeout: 15_000 });
 
     // Drive into an in-session round: smart mode is the default
-    // GrammarDashboard entry point. Fall back to any "Begin round"
-    // button the dashboard exposes first.
-    const beginRound = page.getByRole('button', { name: /Begin round/ });
+    // GrammarDashboard entry point.
+    const beginRound = grammarDashboardStartButton(page);
     await expect(beginRound.first()).toBeVisible({ timeout: 10_000 });
     await beginRound.first().click();
 

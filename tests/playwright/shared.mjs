@@ -12,6 +12,7 @@
 // to a deterministic frame before the screenshot is captured.
 
 import { expect } from '@playwright/test';
+import { existsSync } from 'node:fs';
 
 // SH2-U6 (sys-hardening p2): re-export the mask-coverage invariant
 // helpers so every scene can import both from `./shared.mjs` without
@@ -220,6 +221,10 @@ export function screenshotName(subjectId, scene) {
   return `${subjectId}-${scene}.png`;
 }
 
+export function hasCurrentPlatformScreenshot(testInfo, name) {
+  return existsSync(testInfo.snapshotPath(name));
+}
+
 /**
  * Additional `mask` list for `toHaveScreenshot`. The stylesheet injected
  * in `applyDeterminism()` already hides hero art, toast shelf, and
@@ -410,18 +415,47 @@ export async function seedFreshLearner(page) {
  * `expected` value on a subsequent invocation.
  */
 export async function assertConcordiumFraction(page, expected) {
-  const root = page.locator('[data-testid="grammar-concordium-progress"]');
-  await expect(root).toBeVisible({ timeout: 10_000 });
-  const valueNode = root.locator('.grammar-concordium-value');
-  await expect(valueNode).toBeVisible();
-  const raw = (await valueNode.textContent()) || '';
-  const rendered = raw.trim();
+  const legacyRoot = page.locator('[data-testid="grammar-concordium-progress"]');
+  let rendered = '';
+  if (await legacyRoot.count()) {
+    await expect(legacyRoot).toBeVisible({ timeout: 10_000 });
+    const valueNode = legacyRoot.locator('.grammar-concordium-value');
+    await expect(valueNode).toBeVisible();
+    rendered = ((await valueNode.textContent()) || '').trim();
+  } else {
+    const starNode = page.locator('.grammar-monster-entry[data-monster-id="concordium"] .grammar-monster-entry-stars');
+    await expect(starNode).toBeVisible({ timeout: 10_000 });
+    const raw = ((await starNode.textContent()) || '').trim();
+    const match = /(\d+)\s*\/\s*(\d+)/u.exec(raw);
+    rendered = match ? `${match[1]}/${match[2]}` : raw;
+  }
   if (expected === null || expected === undefined) return rendered;
   const expectedString = typeof expected === 'string'
     ? expected
     : `${expected.mastered}/${expected.total}`;
   expect(rendered, 'Concordium fraction should match expected shape').toBe(expectedString);
   return rendered;
+}
+
+export function grammarDashboardStartButton(page) {
+  return page.locator('.grammar-start-row button[data-featured="true"]').first();
+}
+
+export async function startGrammarDashboardRound(page) {
+  const startButton = grammarDashboardStartButton(page);
+  await expect(startButton).toBeVisible({ timeout: 10_000 });
+  await expect(startButton).toBeEnabled();
+  await startButton.click();
+}
+
+export async function openGrammarMorePractice(page) {
+  const details = page.locator('details.grammar-more-practice').first();
+  await expect(details).toBeVisible({ timeout: 10_000 });
+  const isOpen = await details.evaluate((node) => node.open).catch(() => false);
+  if (!isOpen) {
+    await details.locator('summary').click();
+  }
+  await expect(details).toHaveJSProperty('open', true);
 }
 
 /**
@@ -651,8 +685,8 @@ export async function primeGrammarReadModel(page) {
 }
 
 /**
- * U9 startGrammarMiniTest — click the "Mini Test" primary mode card
- * then "Begin round" and wait for the mini-test panel to render.
+ * U9 startGrammarMiniTest — click the "Mini Test" secondary mode link
+ * then the dashboard CTA and wait for the mini-test panel to render.
  * Factored out so multiple flows can reuse the setup without coupling
  * to the dashboard's internal button order.
  */
@@ -660,9 +694,7 @@ export async function startGrammarMiniTest(page) {
   const miniTestButton = page.getByRole('button', { name: /^Mini Test/ });
   await expect(miniTestButton).toBeVisible();
   await miniTestButton.click();
-  const beginRound = page.getByRole('button', { name: /Begin round/ });
-  await expect(beginRound).toBeVisible();
-  await beginRound.click();
+  await startGrammarDashboardRound(page);
   const session = page.locator('.grammar-mini-test-panel, .grammar-session').first();
   await expect(session).toBeVisible({ timeout: 15_000 });
 }

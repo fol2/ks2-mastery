@@ -11,7 +11,9 @@ import {
   grammarStarStageName,
   grammarStarDisplayStage,
   GRAMMAR_MONSTER_STAR_MAX,
+  GRAMMAR_CONCEPT_STAR_WEIGHTS,
   legacyStarFloorFromStage,
+  grammarStarNextMilestone,
 } from './grammar-stars.js';
 import { conceptIdsForGrammarMonster } from './grammar-concept-roster.js';
 
@@ -39,16 +41,6 @@ const REJECTED_CATEGORIES = Object.freeze([
   'wrong_concept',
   'duplicate_tier',
   'non_scored_event',
-]);
-
-// Next milestone lookup keyed by display stage.
-const NEXT_MILESTONES = Object.freeze([
-  { stars: 1, label: 'Egg found' },
-  { stars: 15, label: 'Hatched' },
-  { stars: 35, label: 'Growing' },
-  { stars: 65, label: 'Nearly Mega' },
-  { stars: 100, label: 'Mega' },
-  null,
 ]);
 
 // ---------------------------------------------------------------------------
@@ -108,10 +100,8 @@ export function buildGrammarStarDebugModel({ monsterId, conceptNodes, recentAtte
       // computeGrammarMonsterStars for transparency.
       const conceptBudget = conceptIds.length > 0 ? GRAMMAR_MONSTER_STAR_MAX / conceptIds.length : 0;
       let weightSum = 0;
-      const tierKeys = ['firstIndependentWin', 'repeatIndependentWin', 'variedPractice', 'secureConfidence', 'retainedAfterSecure'];
-      const tierWeights = [0.05, 0.10, 0.10, 0.15, 0.60];
-      for (let i = 0; i < tierKeys.length; i++) {
-        if (tiers[tierKeys[i]] === true) weightSum += tierWeights[i];
+      for (const [tier, weight] of Object.entries(GRAMMAR_CONCEPT_STAR_WEIGHTS)) {
+        if (tiers[tier] === true) weightSum += weight;
       }
       const starsContributed = conceptBudget * weightSum;
 
@@ -125,7 +115,7 @@ export function buildGrammarStarDebugModel({ monsterId, conceptNodes, recentAtte
 
       conceptEvidenceArray.push({
         conceptId,
-        tiers: { ...tiers },
+        tiers,
         starsContributed,
         retentionEstimate,
       });
@@ -178,14 +168,14 @@ export function buildGrammarStarDebugModel({ monsterId, conceptNodes, recentAtte
   // -------------------------------------------------------------------------
   const displayStage = grammarStarDisplayStage(displayStars);
   const stageName = grammarStarStageName(displayStars);
-  const nextMilestone = NEXT_MILESTONES[displayStage] || null;
+  const nextMilestone = grammarStarNextMilestone(displayStage);
 
   // -------------------------------------------------------------------------
   // 7. Warnings
   // -------------------------------------------------------------------------
   const warnings = [];
   if (computedLiveStars < starHighWater) {
-    warnings.push('Rolling window may have truncated older evidence');
+    warnings.push('High-water holds evidence');
   }
 
   // -------------------------------------------------------------------------
@@ -203,7 +193,7 @@ export function buildGrammarStarDebugModel({ monsterId, conceptNodes, recentAtte
     nextMilestone,
     source,
     conceptEvidence: conceptEvidenceArray,
-    rejectedCategories: [...REJECTED_CATEGORIES],
+    rejectedCategories: REJECTED_CATEGORIES,
     warnings,
   };
 }

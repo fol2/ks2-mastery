@@ -277,7 +277,7 @@ export function computeGrammarMonsterStars(monsterId, conceptEvidenceMap = {}) {
 
 function _buildStarResult(stars) {
   const displayStage = grammarStarDisplayStage(stars);
-  const milestone = NEXT_MILESTONE[displayStage] || null;
+  const milestone = grammarStarNextMilestone(displayStage);
 
   return {
     stars,
@@ -287,6 +287,11 @@ function _buildStarResult(stars) {
     nextMilestoneStars: milestone ? milestone.stars : null,
     nextMilestoneLabel: milestone ? milestone.label : null,
   };
+}
+
+export function grammarStarNextMilestone(displayStage) {
+  const index = Math.max(0, Math.floor(safeNum(displayStage)));
+  return NEXT_MILESTONE[index] || null;
 }
 
 // ---------------------------------------------------------------------------

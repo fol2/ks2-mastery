@@ -3306,7 +3306,7 @@ test('U10: star explanation details element is rendered on the analytics scene',
   const { harness } = u7OpenAnalyticsFromSummary();
   const html = harness.render();
   assert.match(html, /<details class="grammar-star-explanation">/);
-  assert.match(html, /<summary>Star explanation<\/summary>/);
+  assert.match(html, /<summary>Star<\/summary>/);
   // All four active monsters are present in the debug output.
   assert.match(html, /class="grammar-star-debug-entry"/);
   assert.match(html, />Bracehart</);

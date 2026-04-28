@@ -30,6 +30,7 @@ import {
   applyDeterminism,
   createDemoSession,
   openGrammarDashboard,
+  openGrammarMorePractice,
   seedFreshLearner,
 } from './shared.mjs';
 
@@ -308,6 +309,7 @@ test.describe('Grammar Star transitions', () => {
     // grammar dashboard. It dispatches `grammar-open-transfer` and is
     // visible regardless of AI feature flags — Writing Try is a non-AI
     // self-assessment activity.
+    await openGrammarMorePractice(page);
     const writingTryButton = page.locator('[data-action="grammar-open-transfer"]').first();
     await expect(writingTryButton).toBeVisible({ timeout: 10_000 });
 
