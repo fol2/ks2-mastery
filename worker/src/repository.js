@@ -174,6 +174,7 @@ import {
   createInitialGrammarState,
   deleteGrammarTransferEvidenceState,
 } from './subjects/grammar/engine.js';
+import { normaliseHeroProgressState } from '../../shared/hero/progress-state.js';
 import { grammarTransferPromptById } from './subjects/grammar/transfer-prompts.js';
 import {
   BadRequestError,
@@ -7914,6 +7915,205 @@ async function runSubjectCommandMutation(db, {
   });
 }
 
+// ─── Hero Mode P3 U3: Hero progress repository helpers ───────────────────────
+
+async function readHeroProgressState(db, learnerId) {
+  const row = await first(db, `
+    SELECT state_json, updated_at
+    FROM child_game_state
+    WHERE learner_id = ? AND system_id = 'hero-mode'
+  `, [learnerId]);
+  if (!row) return normaliseHeroProgressState(null);
+  const parsed = safeJsonParse(row.state_json, null);
+  return normaliseHeroProgressState(parsed);
+}
+
+function buildHeroProgressUpsertStatement(db, learnerId, accountId, state, nowTs, guard) {
+  const stateJson = JSON.stringify(state);
+  const params = [learnerId, 'hero-mode', stateJson, nowTs, accountId];
+  return bindStatement(db, `
+    INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
+    ${guardedValueSource(params.length, guard)}
+    ON CONFLICT(learner_id, system_id) DO UPDATE SET
+      state_json = excluded.state_json,
+      updated_at = excluded.updated_at,
+      updated_by_account_id = excluded.updated_by_account_id
+  `, guardedParams(params, guard));
+}
+
+async function runHeroCommandMutation(db, {
+  accountId,
+  learnerId,
+  command,
+  applyCommand,
+  nowTs,
+}) {
+  if (!(typeof learnerId === 'string' && learnerId)) {
+    throw new BadRequestError('Learner id is required for this mutation.', {
+      code: 'learner_id_required',
+      kind: 'hero_command',
+    });
+  }
+  if (typeof applyCommand !== 'function') {
+    throw new TypeError('runHeroCommandMutation requires an applyCommand function.');
+  }
+
+  const kind = `hero_command.${command.command}`;
+  const payload = {
+    command: command.command,
+    learnerId,
+    payload: command.payload,
+  };
+  const nextMutation = normaliseMutationInput({
+    requestId: command.requestId,
+    correlationId: command.correlationId,
+    expectedLearnerRevision: command.expectedLearnerRevision,
+  }, 'learner');
+  const requestHash = mutationPayloadHash(kind, payload);
+
+  await requireLearnerWriteAccess(db, accountId, learnerId);
+
+  const combinedRow = await first(db, `
+    SELECT
+      l.id AS learner_id,
+      l.state_revision AS learner_state_revision,
+      r.account_id AS receipt_account_id,
+      r.request_id AS receipt_request_id,
+      r.scope_type AS receipt_scope_type,
+      r.scope_id AS receipt_scope_id,
+      r.mutation_kind AS receipt_mutation_kind,
+      r.request_hash AS receipt_request_hash,
+      r.response_json AS receipt_response_json,
+      r.status_code AS receipt_status_code,
+      r.correlation_id AS receipt_correlation_id,
+      r.applied_at AS receipt_applied_at
+    FROM learner_profiles l
+    LEFT JOIN mutation_receipts r
+      ON r.account_id = ? AND r.request_id = ?
+    WHERE l.id = ?
+  `, [accountId, nextMutation.requestId, learnerId]);
+
+  if (!combinedRow || !combinedRow.learner_id) {
+    throw new NotFoundError('Learner was not found.', { learnerId });
+  }
+
+  const existingReceipt = combinedRow.receipt_request_id
+    ? {
+      account_id: combinedRow.receipt_account_id,
+      request_id: combinedRow.receipt_request_id,
+      scope_type: combinedRow.receipt_scope_type,
+      scope_id: combinedRow.receipt_scope_id,
+      mutation_kind: combinedRow.receipt_mutation_kind,
+      request_hash: combinedRow.receipt_request_hash,
+      response_json: combinedRow.receipt_response_json,
+      status_code: combinedRow.receipt_status_code,
+      correlation_id: combinedRow.receipt_correlation_id,
+      applied_at: combinedRow.receipt_applied_at,
+    }
+    : null;
+
+  if (existingReceipt) {
+    if (existingReceipt.request_hash !== requestHash) {
+      throw idempotencyReuseError({
+        kind,
+        scopeType: 'learner',
+        scopeId: learnerId,
+        requestId: nextMutation.requestId,
+        correlationId: nextMutation.correlationId,
+      });
+    }
+    const replayed = safeJsonParse(existingReceipt.response_json, {});
+    replayed.mutation = buildMutationMeta({
+      ...replayed.mutation,
+      kind,
+      scopeType: 'learner',
+      scopeId: learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      replayed: true,
+    });
+    logMutation('info', 'mutation.replayed', {
+      kind,
+      scopeType: 'learner',
+      scopeId: learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+    });
+    return replayed;
+  }
+
+  const learner = {
+    id: combinedRow.learner_id,
+    state_revision: combinedRow.learner_state_revision,
+  };
+
+  const expectedRevision = nextMutation.expectedRevision;
+  const currentRevision = Number(learner.state_revision) || 0;
+  if (currentRevision !== expectedRevision) {
+    throw staleWriteError({
+      kind,
+      scopeType: 'learner',
+      scopeId: learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision,
+      currentRevision,
+    });
+  }
+
+  const result = await applyCommand();
+  const appliedRevision = expectedRevision + 1;
+  const response = {
+    ...result,
+    mutation: buildMutationMeta({
+      kind,
+      scopeType: 'learner',
+      scopeId: learnerId,
+      requestId: nextMutation.requestId,
+      correlationId: nextMutation.correlationId,
+      expectedRevision,
+      appliedRevision,
+    }),
+  };
+
+  const guard = { learnerId, expectedRevision };
+  const statements = [
+    buildHeroProgressUpsertStatement(db, learnerId, accountId, result.state, nowTs, guard),
+    storeMutationReceiptStatement(db, {
+      accountId,
+      requestId: nextMutation.requestId,
+      scopeType: 'learner',
+      scopeId: learnerId,
+      mutationKind: kind,
+      requestHash,
+      response,
+      correlationId: nextMutation.correlationId,
+      appliedAt: nowTs,
+    }, { guard }),
+    bindStatement(db, `
+      UPDATE learner_profiles
+      SET state_revision = state_revision + 1,
+          updated_at = ?
+      WHERE id = ?
+        AND state_revision = ?
+    `, [nowTs, learnerId, expectedRevision]),
+  ];
+
+  await batch(db, statements);
+
+  logMutation('info', 'mutation.applied', {
+    kind,
+    scopeType: 'learner',
+    scopeId: learnerId,
+    requestId: nextMutation.requestId,
+    correlationId: nextMutation.correlationId,
+    expectedRevision,
+    appliedRevision,
+  });
+
+  return response;
+}
+
 export function createWorkerRepository({ env = {}, now = Date.now, capacity = null } = {}) {
   // U3: when a per-request `capacity` CapacityCollector is supplied, wrap
   // the D1 handle so every .prepare()-backed call contributes row counts
@@ -8150,6 +8350,20 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         // `derivedWriteSkipped: {reason: 'concurrent-retry-exhausted'}`
         // when the projection write is skipped.
         capacity,
+      });
+    },
+    // Hero Mode P3 U3: hero progress repository public surface.
+    async readHeroProgress(learnerId) {
+      return readHeroProgressState(db, learnerId);
+    },
+    async runHeroCommand(accountId, learnerId, command, applyCommand) {
+      const nowTs = nowFactory();
+      return runHeroCommandMutation(db, {
+        accountId,
+        learnerId,
+        command,
+        nowTs,
+        applyCommand,
       });
     },
     async clearSubjectState(accountId, learnerId, subjectId = null, mutation = {}) {
