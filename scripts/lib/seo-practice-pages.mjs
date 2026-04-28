@@ -1,4 +1,4 @@
-const CANONICAL_ROOT = 'https://ks2.eugnel.uk/';
+export const CANONICAL_ROOT = 'https://ks2.eugnel.uk/';
 
 export const PRACTICE_SEO_PAGES = Object.freeze([
   Object.freeze({
@@ -42,7 +42,7 @@ export const PRACTICE_SEO_PAGES = Object.freeze([
   }),
 ]);
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -100,6 +100,7 @@ export function renderPracticeSeoPage(page) {
 <body class="practice-public-page">
   <header class="practice-public-nav" aria-label="Site">
     <a href="/">KS2 Mastery</a>
+    <a href="/about/">About</a>
   </header>
   <main class="practice-public-shell">
     <section class="practice-public-panel">
@@ -112,6 +113,7 @@ ${page.points.map(renderPoint).join('\n')}
       <div class="actions practice-public-actions">
         <a class="btn primary lg" href="/demo">Try demo</a>
         <a class="btn secondary lg" href="/">KS2 Mastery home</a>
+        <a class="btn secondary lg" href="/about/">About KS2 Mastery</a>
       </div>
     </section>
   </main>

@@ -14,6 +14,7 @@ test('auth surface renders through React with credential and social sign-in stat
   assert.match(html, /href="\/ks2-spelling-practice\/"/);
   assert.match(html, /href="\/ks2-grammar-practice\/"/);
   assert.match(html, /href="\/ks2-punctuation-practice\/"/);
+  assert.match(html, /href="\/about\/"/);
   assert.match(html, /expired/);
   assert.match(html, /autoComplete="email"/);
   assert.match(html, /Social sign-in/);

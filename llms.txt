@@ -1,0 +1,22 @@
+# KS2 Mastery
+
+KS2 Mastery is an online KS2 spelling, grammar and punctuation practice product for learners and supporting adults.
+
+Canonical public pages:
+- https://ks2.eugnel.uk/
+- https://ks2.eugnel.uk/about/
+- https://ks2.eugnel.uk/ks2-spelling-practice/
+- https://ks2.eugnel.uk/ks2-grammar-practice/
+- https://ks2.eugnel.uk/ks2-punctuation-practice/
+
+Current subject coverage:
+- KS2 spelling practice for word confidence and recall
+- KS2 grammar practice for sentence-level accuracy
+- KS2 punctuation practice for clearer written English
+
+Product notes:
+- Learners can try the product before creating or using a signed-in account.
+- Signed-in accounts can save learner profiles and practice progress.
+- Public pages describe the product at a high level for humans, search crawlers and AI assistants.
+- Private learner progress, account state, operator tools and generated content stores are not public SEO content.
+- KS2 Mastery does not promise search placement, AI recommendations or fixed learning results.

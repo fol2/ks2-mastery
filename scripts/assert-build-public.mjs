@@ -4,6 +4,8 @@ import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { assertCacheSplitRules, assertHeadersBlockIsFresh } from './lib/headers-drift.mjs';
 import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from './lib/seo-practice-pages.mjs';
+import { IDENTITY_SEO_PAGES, canonicalIdentityPageUrl } from './lib/seo-identity-pages.mjs';
+import { crawlerPolicyFailures } from './lib/seo-crawler-policy.mjs';
 
 const rootDir = process.cwd();
 const publicDir = path.join(rootDir, 'dist', 'public');
@@ -151,10 +153,14 @@ async function currentMonsterAssetKeys() {
 }
 
 await mustExist('index.html');
+await mustExist('llms.txt');
 await mustExist('manifest.webmanifest');
 await mustExist('robots.txt');
 await mustExist('sitemap.xml');
 for (const page of PRACTICE_SEO_PAGES) {
+  await mustExist(`${page.slug}/index.html`);
+}
+for (const page of IDENTITY_SEO_PAGES) {
   await mustExist(`${page.slug}/index.html`);
 }
 await mustExist('favicon.ico');
@@ -211,10 +217,12 @@ const allowed = new Set([
   '_headers',
   'favicon.ico',
   'index.html',
+  'llms.txt',
   'manifest.webmanifest',
   'robots.txt',
   'sitemap.xml',
   ...PRACTICE_SEO_PAGES.map((page) => page.slug),
+  ...IDENTITY_SEO_PAGES.map((page) => page.slug),
   'styles',
   'src',
   'assets',
@@ -273,11 +281,16 @@ assertCacheSplitRules(publishedHeadersContent);
 
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
 const appBundle = await readFile(path.join(publicDir, 'src/bundles/app.bundle.js'), 'utf8');
+const llmsTxt = await readFile(path.join(publicDir, 'llms.txt'), 'utf8');
 const robotsTxt = await readFile(path.join(publicDir, 'robots.txt'), 'utf8');
 const sitemapXml = await readFile(path.join(publicDir, 'sitemap.xml'), 'utf8');
 const practicePageHtml = new Map();
 for (const page of PRACTICE_SEO_PAGES) {
   practicePageHtml.set(page.slug, await readFile(path.join(publicDir, page.slug, 'index.html'), 'utf8'));
+}
+const identityPageHtml = new Map();
+for (const page of IDENTITY_SEO_PAGES) {
+  identityPageHtml.set(page.slug, await readFile(path.join(publicDir, page.slug, 'index.html'), 'utf8'));
 }
 const cspHashArtefact = await readFile(path.join(publicDir, '.csp-theme-hash'), 'utf8');
 const canonicalRoot = 'https://ks2.eugnel.uk/';
@@ -307,6 +320,7 @@ assertContainsAll('Public index.html SEO identity', indexHtml, [
   '<meta property="og:description"',
   `<meta property="og:url" content="${canonicalRoot}" />`,
   '<meta name="twitter:card" content="summary" />',
+  '<link rel="alternate" type="text/plain" href="/llms.txt"',
   'KS2 spelling, grammar and punctuation practice',
   'Spelling practice for KS2 word confidence',
   'Grammar practice for sentence-level accuracy',
@@ -314,6 +328,7 @@ assertContainsAll('Public index.html SEO identity', indexHtml, [
   'href="/ks2-spelling-practice/"',
   'href="/ks2-grammar-practice/"',
   'href="/ks2-punctuation-practice/"',
+  'href="/about/"',
 ]);
 
 const productIdentity = jsonLdBlocks(indexHtml).find((entry) => entry?.name === 'KS2 Mastery');
@@ -346,6 +361,18 @@ assertContainsAll('robots.txt', robotsTxt, [
   'Allow: /',
   `Sitemap: ${canonicalRoot}sitemap.xml`,
 ]);
+const crawlerFailures = crawlerPolicyFailures(robotsTxt, {
+  userAgent: 'OAI-SearchBot',
+  publicPaths: [
+    '/',
+    ...PRACTICE_SEO_PAGES.map((page) => `/${page.slug}/`),
+    ...IDENTITY_SEO_PAGES.map((page) => `/${page.slug}/`),
+  ],
+  privatePaths: ['/api/', '/admin', '/demo'],
+});
+if (crawlerFailures.length) {
+  throw new Error(crawlerFailures.join('\n'));
+}
 
 if (/<\/?html|<!doctype/i.test(sitemapXml)) {
   throw new Error('sitemap.xml must not be the SPA HTML fallback.');
@@ -354,11 +381,16 @@ assertContainsAll('sitemap.xml', sitemapXml, [
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   `<loc>${canonicalRoot}</loc>`,
   ...PRACTICE_SEO_PAGES.map((page) => `<loc>${canonicalPracticePageUrl(page)}</loc>`),
+  ...IDENTITY_SEO_PAGES.map((page) => `<loc>${canonicalIdentityPageUrl(page)}</loc>`),
 ]);
 assertExactSitemapLocs('sitemap.xml', sitemapXml, [
   canonicalRoot,
   ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+  ...IDENTITY_SEO_PAGES.map((page) => canonicalIdentityPageUrl(page)),
 ]);
+if (sitemapXml.includes('llms.txt')) {
+  throw new Error('sitemap.xml must not advertise llms.txt as a search-result page.');
+}
 for (const forbiddenPublicPath of ['/api/', '/admin', '/demo', '.html', 'localhost', '127.0.0.1']) {
   if (sitemapXml.includes(forbiddenPublicPath)) {
     throw new Error(`sitemap.xml must not advertise private or local path: ${forbiddenPublicPath}`);
@@ -388,8 +420,70 @@ for (const page of PRACTICE_SEO_PAGES) {
       throw new Error(`Public ${page.slug} SEO page must not include app-shell or inline-script token: ${forbiddenToken}`);
     }
   }
+  if (!html.includes('href="/about/"')) {
+    throw new Error(`Public ${page.slug} SEO page must link to the about page.`);
+  }
   assertNoPublicSeoForbiddenText(`Public ${page.slug} SEO page`, html);
 }
+
+for (const page of IDENTITY_SEO_PAGES) {
+  const html = identityPageHtml.get(page.slug);
+  const canonicalUrl = canonicalIdentityPageUrl(page);
+  assertContainsAll(`Public ${page.slug} SEO page`, html, [
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}" />`,
+    `<link rel="canonical" href="${canonicalUrl}" />`,
+    `<meta property="og:url" content="${canonicalUrl}" />`,
+    `<h1>${page.heading}</h1>`,
+    page.intro,
+    'KS2 spelling, grammar and punctuation practice',
+    'Learners can try a demo before signing in',
+    'Signing in saves learner profiles and progress',
+    'Private learner progress, admin tools and generated content stores are not public SEO content',
+    'href="/ks2-spelling-practice/"',
+    'href="/ks2-grammar-practice/"',
+    'href="/ks2-punctuation-practice/"',
+    'href="/demo"',
+  ]);
+  for (const forbiddenToken of ['app.bundle.js', 'id="app"', 'application/ld+json', '<script']) {
+    if (html.includes(forbiddenToken)) {
+      throw new Error(`Public ${page.slug} SEO page must not include app-shell or inline-script token: ${forbiddenToken}`);
+    }
+  }
+  for (const overclaim of ['guaranteed', 'full curriculum', 'AI tutor', 'exam results']) {
+    if (html.toLowerCase().includes(overclaim.toLowerCase())) {
+      throw new Error(`Public ${page.slug} SEO page must not overclaim with token: ${overclaim}`);
+    }
+  }
+  assertNoPublicSeoForbiddenText(`Public ${page.slug} SEO page`, html);
+}
+
+assertContainsAll('Public llms.txt', llmsTxt, [
+  'KS2 Mastery',
+  canonicalRoot,
+  ...IDENTITY_SEO_PAGES.map((page) => canonicalIdentityPageUrl(page)),
+  ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+  'KS2 spelling',
+  'KS2 grammar',
+  'KS2 punctuation',
+  'Private learner progress, account state, operator tools and generated content stores are not public SEO content',
+]);
+for (const forbiddenToken of [
+  '/api/',
+  '/admin',
+  'OPENAI_API_KEY',
+  'GEMINI_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'guaranteed',
+  'full curriculum',
+  'AI tutor',
+  'exam results',
+]) {
+  if (llmsTxt.toLowerCase().includes(forbiddenToken.toLowerCase())) {
+    throw new Error(`Public llms.txt must not include forbidden token: ${forbiddenToken}`);
+  }
+}
+assertNoPublicSeoForbiddenText('Public llms.txt', llmsTxt);
 
 for (const token of [
   '__ks2HomeSurface',
