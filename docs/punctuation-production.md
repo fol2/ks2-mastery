@@ -81,7 +81,7 @@ Generated practice now runs through a deterministic compiler. Each published gen
 
 Generated item guardrails:
 
-- The production runtime service uses `generatedPerFamily: 4`, giving 171 runtime items while keeping the published reward denominator unchanged. Lower-level generator and audit compatibility fixtures still exercise `generatedPerFamily: 1`.
+- The production runtime service uses `generatedPerFamily: 4`, giving 100 generated items and 192 runtime items after the P2 fixed-anchor expansion while keeping the published reward denominator unchanged at 14. Lower-level generator and audit compatibility fixtures still exercise `generatedPerFamily: 1`.
 - Each generated item carries a stable internal `templateId` and opaque `variantSignature`. The scheduler uses recent signatures to avoid equivalent retries, and Star evidence uses signatures before item ids when a generated surface has an available signature. The `templateId` stays server-only; only the opaque signature may cross to the active generated item read model.
 - Template-bank expansion appends new templates after the first two legacy templates. The first generated runtime variant is preserved when the bank grows.
 - The audit command `npm run audit:punctuation-content -- --strict --generated-per-family 4` checks generated family coverage, validator coverage, duplicate variant signatures, distinct signature counts, and generated model-answer marking. Duplicate stems/models remain reported for content review; add `--fail-on-duplicate-generated-content` when a review specifically wants those surfaced as hard failures.
@@ -298,7 +298,7 @@ The Punctuation release gate includes:
 - Worker command tests for start, submit, continue, stale transitions, redaction, and idempotent reward projection
 - React scene tests for setup, active, feedback, summary, and hidden-field absence
 - subject expansion conformance and golden-path smoke coverage
-- deterministic demo release smoke proving default hidden exposure, Smart review, GPS delayed review, Parent Hub evidence, gated Worker command execution, and English Spelling startup
+- deterministic demo release smoke proving default hidden exposure, P2 runtime stats, current release id, generated active-item metadata policy, generated misconception evidence, GPS delayed-review redaction, dash acceptance, Oxford-comma acceptance, Parent Hub evidence, gated Worker command execution, and English Spelling startup
 - asset tests for Bellstorm Coast scenes and Punctuation monster artwork
 - bundle/public-output audits proving engine/content source and raw source paths are not shipped to the browser
 - performance coverage for bounded scheduling across fixed items, generated items, sentence combining, and paragraph repair
@@ -322,6 +322,8 @@ npm run smoke:production:punctuation
 ```
 
 The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Smart review item through summary, completes one GPS test item through delayed review, checks Parent Hub Punctuation evidence for hidden-field redaction, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
+
+For P2, the same smoke also verifies the deployed Punctuation read model reports release `punctuation-r4-full-14-skill-structure`, 192 runtime items, and 14 published reward units. It drives bounded command-boundary searches for a generated active item, submits an intentionally incorrect generated answer to confirm misconception evidence without generated internals, proves spaced hyphen / en dash / em dash dash-clause marking, and proves a default list-comma item accepts an Oxford comma unless its validator explicitly forbids the final comma.
 
 ## Expansion Path
 
