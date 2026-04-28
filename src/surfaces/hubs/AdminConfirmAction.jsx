@@ -31,7 +31,7 @@ export function AdminConfirmAction({
 
   const isCritical = level === 'critical';
   const typedMatch = isCritical
-    ? typedInput.trim() === String(typedConfirmValue || '').trim()
+    ? (typedConfirmValue && typedInput.trim() === String(typedConfirmValue).trim())
     : true;
   const confirmDisabled = locked || (isCritical && !typedMatch);
 
@@ -47,7 +47,7 @@ export function AdminConfirmAction({
       className="admin-confirm-action"
       role="alertdialog"
       aria-labelledby="admin-confirm-title"
-      aria-describedby="admin-confirm-desc"
+      aria-describedby={dangerCopy ? 'admin-confirm-desc' : undefined}
       data-level={level}
     >
       <h3 id="admin-confirm-title" className="admin-confirm-action__title">
@@ -90,7 +90,7 @@ export function AdminConfirmAction({
         <button
           type="button"
           className="admin-confirm-action__cancel"
-          onClick={onCancel}
+          onClick={typeof onCancel === 'function' ? onCancel : undefined}
           disabled={locked}
         >
           Cancel
