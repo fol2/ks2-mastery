@@ -315,10 +315,14 @@ function commaClarityTemplate(pack, variantIndex = 0) {
   };
 }
 
+function modelJoinForBoundaryMark(mark) {
+  return mark === ';' ? '; ' : ` ${mark === '-' ? '–' : mark} `;
+}
+
 function boundaryFixTemplate(pack, mark, prompt, misconceptionTag, variantIndex = 0) {
   const { left, right } = clausePair(pack, 'the crew checked the ropes', 'we found another path', variantIndex);
   const unpunctuatedJoin = mark === ';' ? ', ' : ' ';
-  const modelJoin = mark === ';' ? '; ' : ` ${mark} `;
+  const modelJoin = modelJoinForBoundaryMark(mark);
   return {
     prompt,
     stem: `${capitaliseSentence(left)}${unpunctuatedJoin}${right}.`,
@@ -336,7 +340,7 @@ function boundaryFixTemplate(pack, mark, prompt, misconceptionTag, variantIndex 
 
 function boundaryCombineTemplate(pack, mark, prompt, misconceptionTag, variantIndex = 0) {
   const { left, right } = clausePair(pack, 'the crew checked the ropes', 'we found another path', variantIndex);
-  const modelJoin = mark === ';' ? '; ' : ` ${mark} `;
+  const modelJoin = modelJoinForBoundaryMark(mark);
   return {
     prompt,
     stem: `${capitaliseSentence(left)}.\n${capitaliseSentence(right)}.`,

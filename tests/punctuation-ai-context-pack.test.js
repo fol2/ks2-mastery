@@ -108,9 +108,23 @@ test('context-pack generated items still pass deterministic marking', () => {
   assert.match(generatedText, /Before sunrise/);
   assert.match(generatedText, /Before sunrise, the harbour was quiet/);
   assert.match(generatedText, /The crew checked the ropes; we found another path/);
-  assert.match(generatedText, /The crew checked the ropes - we found another path/);
+  assert.match(generatedText, /The crew checked the ropes – we found another path/);
   assert.match(generatedText, /The harbour, our meeting place, was busy/);
   assert.match(generatedText, /well-known author/);
+  const dashItems = generatedItems.filter((item) => item.generatorFamilyId.startsWith('gen_dash_clause_'));
+  assert.equal(dashItems.length, 2);
+  for (const item of dashItems) {
+    assert.match(item.model, /\s–\s/, item.id);
+    assert.doesNotMatch(item.model, /\s-\s/, item.id);
+    for (const typed of [
+      item.model.replace(' – ', ' - '),
+      item.model,
+      item.model.replace(' – ', ' — '),
+    ]) {
+      const result = markPunctuationAnswer({ item, answer: { typed } });
+      assert.equal(result.correct, true, `${item.id}: ${typed}`);
+    }
+  }
   for (const item of generatedItems) {
     const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
     assert.equal(result.correct, true, item.id);
