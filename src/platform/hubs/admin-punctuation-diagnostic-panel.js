@@ -9,6 +9,8 @@
 // worker endpoint and returns a rendering-ready object. No side
 // effects, no storage, no fetch.
 
+import { formatAdminTimestamp } from './admin-refresh-envelope.js';
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -175,11 +177,5 @@ export function isDiagnosticSectionEmpty(diagnostic, sectionKey) {
 // ---------- Format timestamp for display ----------
 
 export function formatDiagnosticTimestamp(ts) {
-  const numeric = Number(ts);
-  if (!Number.isFinite(numeric) || numeric <= 0) return '—';
-  try {
-    return new Date(numeric).toISOString().replace('T', ' ').replace(/\.000Z$/, ' UTC');
-  } catch {
-    return '—';
-  }
+  return formatAdminTimestamp(ts);
 }
