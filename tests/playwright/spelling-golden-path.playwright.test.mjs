@@ -30,6 +30,7 @@ import {
   spellingAnswer,
   spellingContinue,
   defaultMasks,
+  hasCurrentPlatformScreenshot,
 } from './shared.mjs';
 
 test.describe('spelling golden path', () => {
@@ -70,10 +71,11 @@ test.describe('spelling golden path', () => {
     // that float over the session card mid-capture.
     await expect(page.locator('.spelling-in-session.is-question-revealed input[name="typed"]')).toBeVisible({ timeout: 15_000 });
 
-    if (testInfo.project.name === 'mobile-390') {
+    const sessionScreenshot = screenshotName('spelling', 'session-start');
+    if (testInfo.project.name === 'mobile-390' && hasCurrentPlatformScreenshot(testInfo, sessionScreenshot)) {
       const sessionCard = page.locator('.spelling-in-session .session').first();
       await expect(sessionCard).toBeVisible();
-      await expect(sessionCard).toHaveScreenshot(screenshotName('spelling', 'session-start'), {
+      await expect(sessionCard).toHaveScreenshot(sessionScreenshot, {
         mask: defaultMasks(page),
       });
     }

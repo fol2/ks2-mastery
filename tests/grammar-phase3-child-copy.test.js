@@ -7,8 +7,8 @@
 // are already covered by the frozen fixture.
 //
 // The adult `analytics` phase is treated differently: it is the one place
-// where the adult vocabulary (`Evidence snapshot`, `Stage 1`, `Bellstorm
-// bridge`, `Reserved reward routes`) is legitimately required — these four
+// where the adult vocabulary (`Grammar progress`, `Bellstorm bridge`,
+// `Grammar creature routes`) is legitimately required — these phrases
 // phrases are **asserted PRESENT** here as the R7 copy preservation gate.
 // A future refactor that strips the adult surface would fail this inverse
 // matrix rather than silently erasing parent-facing evidence copy.
@@ -92,15 +92,14 @@ for (const phase of GRAMMAR_PHASE3_CHILD_PHASES) {
 
 test('U10: analytics phase retains the adult-only Evidence vocabulary (R7 inverse-presence)', () => {
   // The analytics phase is the single adult-facing surface. A stripped-adult
-  // refactor that erased Evidence snapshot / Stage 1 / Bellstorm bridge /
-  // Reserved reward routes would silently remove parent-facing evidence
+  // refactor that erased Grammar progress / Bellstorm bridge /
+  // Grammar creature routes would silently remove parent-facing evidence
   // copy. This matrix fails such a regression.
   const { rawHtml } = renderGrammarChildPhaseFixture('analytics');
   const requiredAdultPhrases = [
-    'Evidence snapshot',
-    'Stage 1',
+    'Grammar progress',
     'Bellstorm bridge',
-    'Reserved reward routes',
+    'Grammar creature routes',
   ];
   for (const phrase of requiredAdultPhrases) {
     assert.match(

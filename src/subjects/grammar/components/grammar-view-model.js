@@ -12,9 +12,9 @@
 // child surface inherits the guard through U10's fixture-driven test.
 
 import {
-  grammarChildConfidenceLabel as grammarChildConfidenceLabelShared,
   isGrammarConfidenceLabel,
 } from '../../../../shared/grammar/confidence.js';
+import { grammarChildLabelForInternal, grammarChildToneForInternal } from '../../../../shared/grammar/grammar-status.js';
 import {
   grammarStarStageName,
   grammarStarDisplayStage,
@@ -160,7 +160,7 @@ export const GRAMMAR_BANK_HERO = Object.freeze({
 // Nearly secure · Secure · New.
 export const GRAMMAR_BANK_STATUS_CHIPS = Object.freeze([
   Object.freeze({ id: 'all', label: 'All', tone: 'all' }),
-  Object.freeze({ id: 'due', label: 'Due', tone: 'due' }),
+  Object.freeze({ id: 'due', label: 'Practise next', tone: 'due' }),
   Object.freeze({ id: 'trouble', label: 'Trouble', tone: 'trouble' }),
   Object.freeze({ id: 'learning', label: 'Learning', tone: 'learning' }),
   Object.freeze({ id: 'nearly-secure', label: 'Nearly secure', tone: 'nearly-secure' }),
@@ -370,40 +370,32 @@ export function isGrammarChildCopy(text) {
 }
 
 // --- Child confidence label mapping -----------------------------------------
-// The internal-label → child-copy mapping lives in `shared/grammar/confidence.js`
-// (U8 consolidation). The tone map stays local because tone is CSS-class
-// vocabulary the shared module has no opinion about. Validation of incoming
-// labels uses `isGrammarConfidenceLabel` so we never silently accept an
-// out-of-taxonomy label.
-
-const CHILD_CONFIDENCE_TONES = Object.freeze({
-  emerging: 'new',
-  building: 'learning',
-  'needs-repair': 'trouble',
-  consolidating: 'nearly-secure',
-  secure: 'secure',
-});
+// U9 Phase 7: label and tone mappings are centralised in
+// `shared/grammar/grammar-status.js`. The view-model delegates to
+// `grammarChildLabelForInternal` and `grammarChildToneForInternal` so the
+// truth table lives in a single place. Validation of incoming labels uses
+// `isGrammarConfidenceLabel` so we never silently accept an out-of-taxonomy
+// label.
 
 /**
  * Translates the internal five-label taxonomy into child-friendly copy.
- * Thin wrapper over the shared helper so existing view-model imports
- * continue to work; validates the incoming label via
- * `isGrammarConfidenceLabel` first (defensive against fixture drift) and
- * delegates the actual mapping to `shared/grammar/confidence.js`.
+ * Delegates to the centralised `grammarChildLabelForInternal` in
+ * `shared/grammar/grammar-status.js`. Validates the incoming label via
+ * `isGrammarConfidenceLabel` first (defensive against fixture drift).
  */
 export function grammarChildConfidenceLabel({ label } = {}) {
-  if (!isGrammarConfidenceLabel(label)) return 'Learning';
-  return grammarChildConfidenceLabelShared({ label });
+  if (!isGrammarConfidenceLabel(label)) return grammarChildLabelForInternal(null);
+  return grammarChildLabelForInternal(label);
 }
 
 /**
- * CSS-class-appropriate tone for each child confidence label. Matches the
- * status-chip tone family used by Spelling's Word Bank so the visual hierarchy
- * is consistent across subjects.
+ * CSS-class-appropriate tone for each child confidence label. Delegates to
+ * `grammarChildToneForInternal` in `shared/grammar/grammar-status.js`.
+ * Matches the status-chip tone family used by Spelling's Word Bank so the
+ * visual hierarchy is consistent across subjects.
  */
 export function grammarChildConfidenceTone(label) {
-  if (typeof label !== 'string') return 'learning';
-  return CHILD_CONFIDENCE_TONES[label] || 'learning';
+  return grammarChildToneForInternal(label);
 }
 
 // --- Concept → cluster resolver ---------------------------------------------
@@ -558,7 +550,7 @@ export function buildGrammarDashboardModel(grammar, _learner, rewardState, maste
     monsterStrip: buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, recentAttempts),
     primaryMode,
     moreModes: GRAMMAR_MORE_PRACTICE_MODES,
-    writingTryAvailable: aiEnabled,
+    writingTryAvailable: true,
   };
 }
 
@@ -805,7 +797,7 @@ export function buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, 
 
 // --- Summary cards builder --------------------------------------------------
 
-export function grammarSummaryCards(summary, rewardState) {
+export function grammarSummaryCards(summary, rewardState, masteryConceptNodes = null, recentAttempts = null) {
   const safeSummary = summary && typeof summary === 'object' && !Array.isArray(summary) ? summary : {};
   const answered = safeNumber(safeSummary.answered, 0);
   const correct = safeNumber(safeSummary.correct, 0);
@@ -820,7 +812,7 @@ export function grammarSummaryCards(summary, rewardState) {
     Object.freeze({
       id: 'monster-progress',
       label: 'Monster progress',
-      value: masteredSummaryFromReward(rewardState),
+      value: buildGrammarMonsterStripModel(rewardState, masteryConceptNodes, recentAttempts),
       detail: 'Your four Grammar creatures',
     }),
   ]);

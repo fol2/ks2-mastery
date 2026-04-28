@@ -114,7 +114,7 @@
       "supportingTests": [
         "tests/react-grammar-surface.test.js"
       ],
-      "plannedReason": "Adult analytics gated behind grammar-open-analytics (phase 'analytics') routed from summary Grown-up view button. Adult surface retains Evidence snapshot / Stage 1 / Bellstorm bridge / Reserved reward routes vocabulary; child scenes never leak adult terms."
+      "plannedReason": "Adult analytics gated behind grammar-open-analytics (phase 'analytics') routed from summary Grown-up view button. Adult surface retains Grammar progress / Bellstorm bridge / Grammar creature routes vocabulary; child scenes never leak adult terms."
     },
     {
       "id": "P3-U9",
@@ -152,7 +152,7 @@
       "supportingTests": [
         "tests/grammar-phase3-child-copy.test.js"
       ],
-      "plannedReason": "Iterates the frozen forbidden-term list across dashboard/session-pre/session-post-correct/session-post-wrong/mini-test-before/mini-test-after/summary/bank/transfer + /\\bWorker\\b/i catch-all. Adult-only analytics phase inverse-checked for Evidence snapshot / Stage 1 / Bellstorm bridge / Reserved reward routes presence."
+      "plannedReason": "Iterates the frozen forbidden-term list across dashboard/session-pre/session-post-correct/session-post-wrong/mini-test-before/mini-test-after/summary/bank/transfer + /\\bWorker\\b/i catch-all. Adult-only analytics phase inverse-checked for Grammar progress / Bellstorm bridge / Grammar creature routes presence."
     },
     {
       "id": "P3-INV-roster-absence",

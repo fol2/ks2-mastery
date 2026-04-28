@@ -133,7 +133,7 @@ function ChoiceItem({ item, disabled, submitLabel, onSubmit, errorMessageId = ''
         aria-describedby={errorMessageId || undefined}
         aria-invalid={errorMessageId ? 'true' : undefined}
       >
-        {(item.options || []).map((option) => (
+        {(item.options || []).map((option, index) => (
           <label className="choice-card" key={`${item.id}-${option.index}`}>
             <input
               type="radio"
@@ -141,6 +141,7 @@ function ChoiceItem({ item, disabled, submitLabel, onSubmit, errorMessageId = ''
               value={option.index}
               checked={String(choiceIndex) === String(option.index)}
               disabled={disabled}
+              data-autofocus={index ? null : 'true'}
               onChange={() => setChoiceIndex(String(option.index))}
             />
             <span style={newlineTextStyle(option.text)}>{option.text}</span>

@@ -240,8 +240,8 @@ function renderTransfer() {
 function renderAnalytics() {
   // Adult-facing: drives the summary flow then dispatches
   // `grammar-open-analytics`. The scene is the only child-exempt surface
-  // that carries Evidence snapshot / Stage 1 / Bellstorm bridge / Reserved
-  // reward routes copy, so we inverse-check presence downstream.
+  // that carries Grammar progress / Bellstorm bridge / Grammar creature
+  // routes copy, so we inverse-check presence downstream.
   const harness = renderSummary();
   harness.dispatch('grammar-open-analytics');
   return harness;
@@ -357,7 +357,7 @@ const PHASE_RENDERERS = Object.freeze({
 // The disclosure body embeds `GrammarAnalyticsScene` (adult copy) and
 // must be excluded from the child-facing sweep — otherwise the
 // forbidden-term check flags terms the adult scene is *allowed* to
-// carry (`Stage 1`, `Evidence snapshot`, ...).
+// carry (`Grammar progress`, `Bellstorm bridge`, ...).
 //
 // Each scope helper returns only the child-facing subtree. The adult
 // disclosure is swept separately via the `analytics` phase.

@@ -13,6 +13,18 @@ import { execSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  GRAMMAR_MONSTER_CONCEPTS,
+  GRAMMAR_AGGREGATE_CONCEPTS,
+} from '../shared/grammar/grammar-concept-roster.js';
+import {
+  GRAMMAR_STAR_STAGE_THRESHOLDS,
+  GRAMMAR_CONCEPT_STAR_WEIGHTS,
+} from '../shared/grammar/grammar-stars.js';
+import {
+  GRAMMAR_REWARD_RELEASE_ID,
+} from '../src/platform/game/mastery/grammar.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, '..');
 
@@ -112,4 +124,62 @@ test('star drift guard: GRAMMAR_CONCEPT_STAR_WEIGHTS defined only in canonical s
     `GRAMMAR_CONCEPT_STAR_WEIGHTS must be defined only in shared/grammar/grammar-stars.js ` +
     `(and optionally re-exported). Found extra definitions in: ${violations.join(', ')}`,
   );
+});
+
+// ---------------------------------------------------------------------------
+// P7 drift guards — value-level pins for the Grammar reward contract
+// ---------------------------------------------------------------------------
+
+test('P7 drift guard: active Grammar monster roster is 3 direct + Concordium', () => {
+  assert.deepEqual(
+    Object.keys(GRAMMAR_MONSTER_CONCEPTS).sort(),
+    ['bracehart', 'chronalyx', 'couronnail'],
+  );
+  assert.equal(GRAMMAR_AGGREGATE_CONCEPTS.length, 18);
+});
+
+test('P7 drift guard: shared/grammar/grammar-stars.js has zero src/ imports', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const content = await readFile(
+    new URL('../shared/grammar/grammar-stars.js', import.meta.url),
+    'utf8',
+  );
+  const srcImports = content.match(/from\s+['"][^'"]*src\//g);
+  assert.equal(srcImports, null);
+});
+
+test('P7 drift guard: Star thresholds unchanged', () => {
+  assert.deepEqual(GRAMMAR_STAR_STAGE_THRESHOLDS, {
+    egg: 1,
+    hatch: 15,
+    evolve2: 35,
+    evolve3: 65,
+    mega: 100,
+  });
+});
+
+test('P7 drift guard: Star weights unchanged', () => {
+  assert.deepEqual(GRAMMAR_CONCEPT_STAR_WEIGHTS, {
+    firstIndependentWin: 0.05,
+    repeatIndependentWin: 0.10,
+    variedPractice: 0.10,
+    secureConfidence: 0.15,
+    retainedAfterSecure: 0.60,
+  });
+});
+
+test('P7 drift guard: GRAMMAR_REWARD_RELEASE_ID unchanged', () => {
+  assert.equal(GRAMMAR_REWARD_RELEASE_ID, 'grammar-legacy-reviewed-2026-04-24');
+});
+
+test('P7 drift guard: concept-to-monster mapping covers all 18 aggregate concepts', () => {
+  for (const conceptId of GRAMMAR_AGGREGATE_CONCEPTS) {
+    assert.ok(typeof conceptId === 'string' && conceptId.length > 0);
+  }
+  // Direct monster concepts sum to 13, aggregate has 18 (13 + 5 punctuation-for-grammar).
+  const directCount = Object.values(GRAMMAR_MONSTER_CONCEPTS).reduce(
+    (sum, ids) => sum + ids.length,
+    0,
+  );
+  assert.equal(directCount, 13);
 });

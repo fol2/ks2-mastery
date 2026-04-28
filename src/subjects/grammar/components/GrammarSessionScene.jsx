@@ -42,12 +42,19 @@ function ChoiceList({ inputSpec, required = true, response = {}, describedBy = '
       aria-describedby={describedBy || undefined}
       aria-invalid={describedBy ? 'true' : undefined}
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const value = optionValue(option);
         const checked = type === 'checkbox' ? selectedValues.has(value) : selectedAnswer === value;
         return (
           <label className="grammar-choice" key={value}>
-            <input type={type} name={name} value={value} required={required && type === 'radio'} defaultChecked={checked} />
+            <input
+              type={type}
+              name={name}
+              value={value}
+              required={required && type === 'radio'}
+              defaultChecked={checked}
+              data-autofocus={index ? null : 'true'}
+            />
             <span>{optionLabel(option)}</span>
           </label>
         );
@@ -78,10 +85,10 @@ function TableChoice({ inputSpec, required = true, response = {}, describedBy = 
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {rows.map((row, rowIndex) => (
             <tr key={row.key}>
               <td>{row.label}</td>
-              {columns.map((column) => (
+              {columns.map((column, columnIndex) => (
                 <td key={`${row.key}-${column}`}>
                   <input
                     type="radio"
@@ -90,6 +97,7 @@ function TableChoice({ inputSpec, required = true, response = {}, describedBy = 
                     aria-label={`${row.label}: ${column}`}
                     required={required}
                     defaultChecked={String(response[row.key] ?? '') === String(column)}
+                    data-autofocus={rowIndex || columnIndex ? null : 'true'}
                   />
                 </td>
               ))}

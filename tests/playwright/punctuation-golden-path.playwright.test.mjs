@@ -27,9 +27,7 @@ import {
   applyDeterminism,
   createDemoSession,
   openSubject,
-  navigateHome,
-  punctuationAnswer,
-  punctuationContinue,
+  drivePunctuationSessionToSummary,
   reload,
 } from './shared.mjs';
 
@@ -93,62 +91,18 @@ function parseStarCount(text) {
 
 /**
  * Drive the Punctuation session to completion (summary). Answers items
- * and uses "Finish now" when available. Returns once the summary scene
- * is visible. Handles the variable queue length the deterministic seed
- * produces.
+ * naturally so "Finish now" keeps its product behaviour as an early
+ * exit back to setup.
  */
 async function driveSessionToSummary(page) {
-  // First answer.
-  await punctuationAnswer(page, {
-    typed: 'full-journey-answer-attempt',
-    choiceIndex: 0,
-  });
-  await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
-
-  // Try to finish early via "Finish now" on the feedback card.
-  const finishNow = page.getByRole('button', { name: /Finish now/ });
-  if (await finishNow.count()) {
-    await finishNow.first().click();
-  } else {
-    await punctuationContinue(page);
-  }
-
-  // The session may present more items before summary. Loop up to a
-  // reasonable bound to drive through any remaining items.
-  for (let i = 0; i < 12; i += 1) {
-    const summaryOrSubmit = page.locator(
-      '[data-punctuation-summary], [data-punctuation-submit]',
-    ).first();
-    await expect(summaryOrSubmit).toBeVisible({ timeout: 15_000 });
-
-    // If summary already visible, we are done.
-    if (await page.locator('[data-punctuation-summary]').count()) break;
-
-    // Still in session — answer and try to finish again.
-    await punctuationAnswer(page, {
-      typed: 'another-journey-attempt',
-      choiceIndex: 0,
-    });
-    const continueBtn = page.locator('[data-punctuation-continue]');
-    await expect(continueBtn).toBeVisible({ timeout: 10_000 });
-
-    const finish = page.getByRole('button', { name: /Finish now/ });
-    if (await finish.count()) {
-      await finish.first().click();
-    } else {
-      await punctuationContinue(page);
-    }
-  }
-
-  await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
+  await drivePunctuationSessionToSummary(page, { typedPrefix: 'punctuation-golden' });
 }
 
 /**
  * Start CTA selector — the mission-dashboard primary CTA carries
- * `data-punctuation-cta`; legacy paths used `[data-punctuation-start]`.
- * Match either for robustness.
+ * `data-punctuation-cta`.
  */
-const START_CTA_SELECTOR = '[data-punctuation-cta], [data-punctuation-start]';
+const START_CTA_SELECTOR = '[data-punctuation-cta]';
 
 // -----------------------------------------------------------------------
 // Tests
@@ -171,39 +125,10 @@ test.describe('punctuation golden path', () => {
     await expect(startBtn).toBeVisible({ timeout: 15_000 });
     await startBtn.click();
 
-    // Active item. The first item may be a choice (radio) or a text
-    // item depending on the seeded smart-review cohort; the helper
-    // handles either shape.
-    await punctuationAnswer(page, {
-      typed: 'not a sentence that matches the answer',
-      choiceIndex: 0,
-    });
-    await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
-    await punctuationContinue(page);
-
-    // Second attempt (this may transition into summary depending on
-    // the smart-review queue length; both paths are valid).
-    const summaryOrActive = page.locator('[data-punctuation-summary], [data-punctuation-submit]').first();
-    await expect(summaryOrActive).toBeVisible({ timeout: 15_000 });
-
-    const submitStillAround = page.locator('[data-punctuation-submit]');
-    if (await submitStillAround.count()) {
-      await punctuationAnswer(page, {
-        typed: 'another attempt',
-        choiceIndex: 0,
-      });
-      await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
-
-      // End via "Finish now" secondary action on the feedback card.
-      const finishNow = page.getByRole('button', { name: /Finish now/ });
-      if (await finishNow.count()) {
-        await finishNow.first().click();
-      } else {
-        await punctuationContinue(page);
-      }
-    }
-
-    await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
+    // Complete the full round so the summary scene appears. "Finish
+    // now" is intentionally not used here because it exits back to
+    // setup.
+    await driveSessionToSummary(page);
 
     // Reload and verify the demo session survives. Either the
     // summary persists (mid-flow preserved) or the app bounces to
@@ -232,23 +157,7 @@ test.describe('punctuation golden path', () => {
     await expect(startBtn).toBeVisible({ timeout: 15_000 });
     await startBtn.click();
 
-    // Drive the session to summary. The deterministic path is: first
-    // active item → answer (any) → continue → if still in session,
-    // end via "Finish now".
-    await punctuationAnswer(page, {
-      typed: 'stub answer',
-      choiceIndex: 0,
-    });
-    await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
-    const finishNow = page.getByRole('button', { name: /Finish now/ });
-    if (await finishNow.count()) {
-      await finishNow.first().click();
-    } else {
-      await punctuationContinue(page);
-    }
-
-    // Wait for summary scene.
-    await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
+    await driveSessionToSummary(page);
 
     // Reload -- this is the R2 hazard. After reload, the rehydrate
     // sanitiser drops the persisted summary and coerces phase='summary'
@@ -349,57 +258,9 @@ test.describe('P7-U10: full Worker-backed Punctuation journey', () => {
     await expect(inputPresent).toBeVisible({ timeout: 10_000 });
 
     // ---------------------------------------------------------------
-    // Step 4: Submit answer
+    // Steps 4-6: Submit answers, follow feedback, and reach summary
     // ---------------------------------------------------------------
-    await punctuationAnswer(page, {
-      typed: 'full-journey-first-answer',
-      choiceIndex: 0,
-    });
-
-    // ---------------------------------------------------------------
-    // Step 5: Feedback renders (or GPS delayed path)
-    // ---------------------------------------------------------------
-    const feedbackOrContinue = page.locator(
-      '[data-punctuation-continue], [data-punctuation-session-feedback-live]',
-    ).first();
-    await expect(feedbackOrContinue).toBeVisible({ timeout: 10_000 });
-
-    // ---------------------------------------------------------------
-    // Step 6: Drive to summary
-    // ---------------------------------------------------------------
-    // Use the helper to drive through remaining items to summary.
-    const finishNow = page.getByRole('button', { name: /Finish now/ });
-    if (await finishNow.count()) {
-      await finishNow.first().click();
-    } else {
-      await punctuationContinue(page);
-    }
-
-    // Handle any remaining session items.
-    for (let i = 0; i < 12; i += 1) {
-      const summaryOrSubmit = page.locator(
-        '[data-punctuation-summary], [data-punctuation-submit]',
-      ).first();
-      await expect(summaryOrSubmit).toBeVisible({ timeout: 15_000 });
-
-      if (await page.locator('[data-punctuation-summary]').count()) break;
-
-      await punctuationAnswer(page, {
-        typed: 'journey-follow-up',
-        choiceIndex: 0,
-      });
-      const cont = page.locator('[data-punctuation-continue]');
-      await expect(cont).toBeVisible({ timeout: 10_000 });
-
-      const fin = page.getByRole('button', { name: /Finish now/ });
-      if (await fin.count()) {
-        await fin.first().click();
-      } else {
-        await punctuationContinue(page);
-      }
-    }
-
-    await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
+    await driveSessionToSummary(page);
 
     // Read summary star meters.
     const summaryMeters = await readStarMeters(page);
@@ -407,10 +268,12 @@ test.describe('P7-U10: full Worker-backed Punctuation journey', () => {
     // ---------------------------------------------------------------
     // Step 7: Return to landing
     // ---------------------------------------------------------------
-    // Navigate back via the home brand button, then re-open punctuation.
-    await navigateHome(page);
-    await expect(page.locator('.subject-grid')).toBeVisible();
-    await openSubject(page, 'punctuation');
+    // Use the Punctuation summary escape action so the subject surface
+    // clears back to setup. The global dashboard button preserves the
+    // summary for re-entry, which is a different journey.
+    const backToLanding = page.locator('[data-action="punctuation-back"]').first();
+    await expect(backToLanding).toBeVisible({ timeout: 10_000 });
+    await backToLanding.click();
     await expect(page.locator(START_CTA_SELECTOR).first()).toBeVisible({ timeout: 15_000 });
 
     // Read post-session landing star meters.
@@ -666,8 +529,13 @@ test.describe('P7-U10: full Worker-backed Punctuation journey', () => {
 
     // The journey must complete without page errors. Filter out
     // benign telemetry-related messages (rate-limit logs are expected).
+    // Chromium reports the optional Hero read-model 404 as a URL-less
+    // generic resource error, which is unrelated to this telemetry path.
     const realErrors = consoleErrors.filter(
-      (msg) => !msg.includes('rate') && !msg.includes('telemetry') && !msg.includes('Rate'),
+      (msg) => !msg.includes('rate')
+        && !msg.includes('telemetry')
+        && !msg.includes('Rate')
+        && msg !== 'Failed to load resource: the server responded with a status of 404 (Not Found)',
     );
     expect(
       realErrors,

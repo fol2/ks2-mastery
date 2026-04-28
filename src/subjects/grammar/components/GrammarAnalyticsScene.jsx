@@ -6,6 +6,7 @@ import {
   GRAMMAR_MONSTER_ROUTES,
   groupedGrammarConcepts,
 } from '../metadata.js';
+import { buildGrammarStarDebugModel } from '../../../../shared/grammar/grammar-star-debug.js';
 
 function StatusCount({ label, value, className = '' }) {
   return (
@@ -108,6 +109,7 @@ export function GrammarAnalyticsScene({
   const grouped = groupedGrammarConcepts(concepts);
   const rewardState = providedRewardState || grammar.projections?.rewards?.state || {};
   const recentActivity = recentActivityForAnalytics(grammar.analytics || {});
+  const recentAttemptsRaw = Array.isArray(grammar.analytics?.recentAttempts) ? grammar.analytics.recentAttempts : [];
   const punctuationConcepts = punctuationGrammarConcepts(concepts);
   const securedPunctuationConcepts = punctuationConcepts.filter((concept) => concept.status === 'secured').length;
 
@@ -119,14 +121,13 @@ export function GrammarAnalyticsScene({
     >
       <div className="card-header">
         <div>
-          <div className="eyebrow">Evidence snapshot</div>
+          <div className="eyebrow">Grammar progress</div>
           <h3 className="section-title" id="grammar-analytics-title">Grown-up view</h3>
           <p className="grammar-analytics-intro small muted">
-            Detailed Grammar progress for parents and teachers. Nothing here is a grade.
+            Detailed progress for parents and teachers. Nothing here is a grade.
           </p>
         </div>
         <div className="grammar-analytics-actions">
-          <span className="chip">Stage 1</span>
           {actions?.dispatch ? (
             <button
               className="btn secondary"
@@ -155,9 +156,8 @@ export function GrammarAnalyticsScene({
           <div className="eyebrow">Bellstorm bridge</div>
           <h4>Punctuation-for-grammar stays in Grammar</h4>
           <p>
-            These {punctuationConcepts.length} concepts count inside the 18-concept Grammar denominator for
-            KS2 GPS mastery. Bellstorm Coast remains the separate Punctuation subject for richer punctuation
-            progression.
+            These {punctuationConcepts.length} concepts count in the 18-concept Grammar denominator for
+            KS2 GPS mastery. Bellstorm Coast remains separate Punctuation practice.
           </p>
         </div>
         <div className="grammar-bridge-counts" aria-label="Punctuation-for-grammar concept progress">
@@ -215,7 +215,7 @@ export function GrammarAnalyticsScene({
         </div>
 
         <div className="grammar-route-panel">
-          <div className="eyebrow">Reserved reward routes</div>
+          <div className="eyebrow">Grammar creature routes</div>
           <div className="grammar-monster-grid">
             {GRAMMAR_MONSTER_ROUTES.map((route) => {
               const secured = securedCountForRoute(route, conceptsById);
@@ -242,6 +242,31 @@ export function GrammarAnalyticsScene({
           </div>
         </div>
       </div>
+
+      <details className="grammar-star-explanation">
+        <summary>Star</summary>
+        <div className="grammar-star-explanation-content">
+          {GRAMMAR_MONSTER_ROUTES.map((route) => {
+            const conceptNodeMap = {};
+            for (const id of route.conceptIds) {
+              conceptNodeMap[id] = conceptsById.get(id);
+            }
+            const debug = buildGrammarStarDebugModel({
+              monsterId: route.id,
+              conceptNodes: conceptNodeMap,
+              recentAttempts: recentAttemptsRaw,
+              rewardEntry: rewardState[route.id],
+            });
+            return (
+              <div key={route.id} className="grammar-star-debug-entry">
+                <strong>{debug.name}</strong>
+                <span>{debug.displayStars} / 100 Stars — {debug.stageName}</span>
+                <small>Source: {debug.source}{debug.warnings[0] ? ` · ${debug.warnings[0]}` : ''}</small>
+              </div>
+            );
+          })}
+        </div>
+      </details>
 
       <div className="grammar-evidence-panels">
         <div>

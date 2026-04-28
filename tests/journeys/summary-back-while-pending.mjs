@@ -41,7 +41,7 @@ export default async function run({ driver, artefacts, log, assert }) {
   await driver.screenshot(artefacts.path('01-setup'));
 
   log('start Smart Review and drive through to Summary');
-  await driver.click('[data-punctuation-start]');
+  await driver.click('[data-punctuation-cta]');
   await driver.waitForSelector('[data-punctuation-submit]', 15_000);
   await driver.screenshot(artefacts.path('02-session-q1'));
 

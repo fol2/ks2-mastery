@@ -109,6 +109,8 @@ import {
   assertMaskCoverage,
   createDemoSession,
   defaultMasks,
+  grammarDashboardStartButton,
+  hasCurrentPlatformScreenshot,
   resolveViewport,
   waitForFontsReady,
 } from './shared.mjs';
@@ -212,6 +214,7 @@ async function capture(page, { target, name, masks, testInfo, maxDiffPixelRatio 
   const targetBbox = target ? await target.boundingBox().catch(() => null) : null;
   await assertMaskCoverage(page, maskList, viewport, 0.30, { targetBbox });
   const renderName = `${name}.png`;
+  if (!hasCurrentPlatformScreenshot(testInfo, renderName)) return;
   const captureTarget = target || page;
   const resolvedRatio = resolveDiffRatio(name, maxDiffPixelRatio);
   const screenshotOptions = { mask: maskList };
@@ -582,7 +585,7 @@ test.describe('SH2-U6 visual baselines — five-viewport matrix', () => {
     const hasGrammarSession = await miniTestButton.isVisible().catch(() => false);
     if (hasGrammarSession) {
       await miniTestButton.click();
-      const beginRound = page.getByRole('button', { name: /Begin round/ });
+      const beginRound = grammarDashboardStartButton(page);
       await expect(beginRound).toBeVisible({ timeout: 15_000 });
       await beginRound.click();
       const grammarSession = page.locator('.grammar-session').first();
@@ -940,7 +943,7 @@ test.describe('SH2-U6 visual baselines — five-viewport matrix', () => {
     const miniTestButton = page.getByRole('button', { name: /^Mini Test/ });
     if (await miniTestButton.isVisible().catch(() => false)) {
       await miniTestButton.click();
-      const beginRound = page.getByRole('button', { name: /Begin round/ });
+      const beginRound = grammarDashboardStartButton(page);
       if (await beginRound.isVisible().catch(() => false)) {
         await beginRound.click();
         await expect(page.locator('.grammar-session').first()).toBeVisible({ timeout: 15_000 });

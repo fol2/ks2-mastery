@@ -36,9 +36,9 @@ function SummaryCards({ cards }) {
               <div className="grammar-summary-card-label">{card.label}</div>
               <ul className="grammar-summary-monster-list">
                 {monsters.map((monster) => (
-                  <li className="grammar-summary-monster" key={monster.id} data-monster-id={monster.id}>
+                  <li className="grammar-summary-monster" key={monster.monsterId} data-monster-id={monster.monsterId}>
                     <strong>{monster.name}</strong>
-                    <span>{monster.mastered}/{monster.total}</span>
+                    <span>{monster.stageName} — {monster.stars} / {monster.starMax} Stars</span>
                   </li>
                 ))}
               </ul>
@@ -156,7 +156,7 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
   // resolved prop (e.g. a direct snapshot harness render).
   const effectiveRewardState = rewardState || grammar.projections?.rewards?.state || {};
   const miniTest = isMiniTestSummary(summary);
-  const cards = grammarSummaryCards(summary, effectiveRewardState);
+  const cards = grammarSummaryCards(summary, effectiveRewardState, null, null);
   const handleGrownUp = () => actions.dispatch('grammar-open-analytics');
   // U5 follower: regular-practice `Practise missed` is a silent no-op
   // when there is no actionable missed / weak / due concept. Compute the

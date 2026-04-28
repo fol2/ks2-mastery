@@ -22,61 +22,14 @@ import {
   grammarStarStageName,
   legacyStarFloorFromStage,
 } from './grammar-stars.js';
+import {
+  GRAMMAR_MONSTER_CONCEPTS,
+  GRAMMAR_AGGREGATE_CONCEPTS,
+  GRAMMAR_CONCEPT_TO_MONSTER,
+} from '../../../../shared/grammar/grammar-concept-roster.js';
+export { GRAMMAR_MONSTER_CONCEPTS, GRAMMAR_AGGREGATE_CONCEPTS, GRAMMAR_CONCEPT_TO_MONSTER };
 
 export const GRAMMAR_REWARD_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
-// Phase 3 U0 cluster remap. The six pre-flip direct clusters collapse into
-// three post-flip direct clusters plus Concordium's 18-concept aggregate.
-// Bracehart absorbs Sentence structure (`active_passive`, `subject_object`)
-// and Phrases (`noun_phrases`) on top of its existing Sentences and clauses.
-// Chronalyx absorbs Flow / Linkage (`adverbials`, `pronouns_cohesion`) on
-// top of Verb forms. Couronnail absorbs Word classes (`word_classes`) on
-// top of Standard English and register. Concordium continues to aggregate
-// every Grammar concept including the five punctuation-for-grammar ones.
-export const GRAMMAR_MONSTER_CONCEPTS = Object.freeze({
-  bracehart: Object.freeze([
-    'sentence_functions',
-    'clauses',
-    'relative_clauses',
-    'noun_phrases',
-    'active_passive',
-    'subject_object',
-  ]),
-  chronalyx: Object.freeze([
-    'tense_aspect',
-    'modal_verbs',
-    'adverbials',
-    'pronouns_cohesion',
-  ]),
-  couronnail: Object.freeze([
-    'word_classes',
-    'standard_english',
-    'formality',
-  ]),
-});
-export const GRAMMAR_AGGREGATE_CONCEPTS = Object.freeze([
-  'sentence_functions',
-  'word_classes',
-  'noun_phrases',
-  'adverbials',
-  'clauses',
-  'relative_clauses',
-  'tense_aspect',
-  'standard_english',
-  'pronouns_cohesion',
-  'formality',
-  'active_passive',
-  'subject_object',
-  'modal_verbs',
-  'parenthesis_commas',
-  'speech_punctuation',
-  'apostrophes_possession',
-  'boundary_punctuation',
-  'hyphen_ambiguity',
-]);
-export const GRAMMAR_CONCEPT_TO_MONSTER = Object.freeze(Object.fromEntries(
-  Object.entries(GRAMMAR_MONSTER_CONCEPTS)
-    .flatMap(([monsterId, conceptIds]) => conceptIds.map((conceptId) => [conceptId, monsterId])),
-));
 
 function grammarTotal(entry, fallback = 1) {
   const count = Number(entry?.conceptTotal);

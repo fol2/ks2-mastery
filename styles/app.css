@@ -2370,6 +2370,13 @@ textarea:focus-visible {
   font-size: 0.92rem;
   line-height: 1.4;
 }
+@media (prefers-reduced-motion: reduce) {
+  .spelling-tts-pending-chip,
+  .spelling-tts-failure-banner {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 
 /* ---------- Profile settings surface ---------- */
 .sr-only {

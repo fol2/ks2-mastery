@@ -25,9 +25,8 @@ import { test, expect } from '@playwright/test';
 import {
   applyDeterminism,
   createDemoSession,
+  drivePunctuationSessionToSummary,
   openSubject,
-  punctuationAnswer,
-  punctuationContinue,
 } from './shared.mjs';
 import { __ks2_injectFault_TESTS_ONLY__ as faultInjection } from '../helpers/fault-injection.mjs';
 
@@ -91,38 +90,10 @@ async function removeAllRoutes(page) {
  */
 async function driveToSummary(page) {
   // Start a session.
-  const startBtn = page.locator('[data-punctuation-start]');
+  const startBtn = page.locator('[data-punctuation-cta]');
   await expect(startBtn).toBeVisible({ timeout: 15_000 });
   await startBtn.click();
-
-  // Answer the first question.
-  await punctuationAnswer(page, { typed: 'stub answer', choiceIndex: 0 });
-  await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
-
-  // Try "Finish now" if available, otherwise continue and loop.
-  const finishNow = page.getByRole('button', { name: /Finish now/ });
-  if (await finishNow.count()) {
-    await finishNow.first().click();
-  } else {
-    await punctuationContinue(page);
-  }
-
-  // If we landed on another question instead of summary, keep going.
-  const summaryOrSubmit = page.locator('[data-punctuation-summary], [data-punctuation-submit]').first();
-  await expect(summaryOrSubmit).toBeVisible({ timeout: 15_000 });
-
-  if (await page.locator('[data-punctuation-submit]').count()) {
-    await punctuationAnswer(page, { typed: 'another answer', choiceIndex: 0 });
-    await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
-    const finishNow2 = page.getByRole('button', { name: /Finish now/ });
-    if (await finishNow2.count()) {
-      await finishNow2.first().click();
-    } else {
-      await punctuationContinue(page);
-    }
-  }
-
-  await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
+  await drivePunctuationSessionToSummary(page, { typedPrefix: 'punctuation-pending' });
 }
 
 // ---------------------------------------------------------------------------
@@ -230,36 +201,12 @@ test.describe('P7-U11: pending/degraded navigation proof', () => {
     await expect(page.locator('.subject-grid')).toBeVisible();
     await openSubject(page, 'punctuation');
 
-    // Start session, answer a question, land on feedback.
-    const startBtn = page.locator('[data-punctuation-start]');
+    // Start session and complete the round naturally. "Finish now"
+    // exits back to setup, so summary assertions must not use it.
+    const startBtn = page.locator('[data-punctuation-cta]');
     await expect(startBtn).toBeVisible({ timeout: 15_000 });
     await startBtn.click();
-
-    await punctuationAnswer(page, { typed: 'stub answer', choiceIndex: 0 });
-    await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
-
-    // Complete the session naturally (to reach Summary without stall).
-    const finishNow = page.getByRole('button', { name: /Finish now/ });
-    if (await finishNow.count()) {
-      await finishNow.first().click();
-    } else {
-      await punctuationContinue(page);
-      // Drive until summary.
-      const summaryOrSubmit = page.locator('[data-punctuation-summary], [data-punctuation-submit]').first();
-      await expect(summaryOrSubmit).toBeVisible({ timeout: 15_000 });
-      if (await page.locator('[data-punctuation-submit]').count()) {
-        await punctuationAnswer(page, { typed: 'another attempt', choiceIndex: 0 });
-        const finish2 = page.getByRole('button', { name: /Finish now/ });
-        if (await finish2.count()) {
-          await finish2.first().click();
-        } else {
-          await expect(page.locator('[data-punctuation-continue]')).toBeVisible({ timeout: 10_000 });
-          await punctuationContinue(page);
-        }
-      }
-    }
-
-    await expect(page.locator('[data-punctuation-summary]')).toBeVisible({ timeout: 15_000 });
+    await drivePunctuationSessionToSummary(page, { typedPrefix: 'punctuation-pending-summary' });
 
     // NOW install the stall fault. The next command will hang.
     await installStallFault(page, stallPlan({ durationMs: 20_000 }));

@@ -333,7 +333,6 @@ test('drainQueue aborts a hung POST after 10s timeout (Finding 3)', async (t) =>
 // U6 review follow-up (Finding 4): exponential backoff on consecutive 5xx.
 test('nextBackoffDelay escalates exponentially on consecutive 5xx (Finding 4)', async (t) => {
   _resetErrorCaptureState();
-  t.after(() => _resetErrorCaptureState());
 
   const statusSequence = [500, 500, 500, 200];
   let call = 0;
@@ -346,9 +345,15 @@ test('nextBackoffDelay escalates exponentially on consecutive 5xx (Finding 4)', 
   // Pin Math.random so jitter contributes exactly 0 (midpoint) and we can
   // assert on the deterministic base.
   const originalRandom = Math.random;
+  let cleanupDelayMs = 0;
   Math.random = () => 0.5;
-  t.after(() => {
+  t.after(async () => {
     Math.random = originalRandom;
+    _resetErrorCaptureState();
+    if (cleanupDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, cleanupDelayMs));
+      _resetErrorCaptureState();
+    }
   });
 
   // Feed one event and let the pipeline retry through 3 failures + 1 success.
@@ -381,6 +386,11 @@ test('nextBackoffDelay escalates exponentially on consecutive 5xx (Finding 4)', 
     const secondDelay = afterSecond.backoffUntil - Date.now();
     assert.ok(secondDelay >= 3000, `expected ≥ 3000ms after 2 failures, got ${secondDelay}`);
   }
+  // The retry loop has scheduled its next delayed drain. Let that timer fire
+  // against the reset empty queue before the next test starts; otherwise the
+  // captured credentialFetch from this test can mutate the next test's module
+  // state under full-suite CPU pressure.
+  cleanupDelayMs = Math.max(500, Math.max(0, afterSecond.backoffUntil - Date.now()) + 100);
 
   // Success path: reset on 2xx. Simulate by manually reseting — but the
   // time budget here is too tight to wait through 4s + 8s sequences in a

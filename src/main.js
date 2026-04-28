@@ -3440,15 +3440,26 @@ function setPunctuationRuntimeError(message) {
 }
 
 function applyPunctuationCommandResponse(response) {
-  const responseLearnerId = String(response?.learnerId || store.getState().learners?.selectedId || '');
-  store.reloadFromRepositories({ preserveRoute: true, preserveMonsterCelebrations: true });
-  if (responseLearnerId && store.getState().learners?.selectedId !== responseLearnerId) return;
-  if (response?.projections?.rewards?.toastEvents?.length) {
-    store.pushToasts(response.projections.rewards.toastEvents);
+  const subjectReadModel = response?.subjectReadModel;
+  if (subjectReadModel) {
+    store.reloadFromRepositories({ preserveRoute: true, preserveMonsterCelebrations: true });
   }
-  if (response?.projections?.rewards?.events?.length) {
-    store.pushMonsterCelebrations(response.projections.rewards.events);
+  if (response?.learnerId && store.getState().learners?.selectedId !== String(response.learnerId)) return;
+  if (subjectReadModel) {
+    store.updateSubjectUi('punctuation', subjectReadModel);
   }
+  const rewards = response?.projections?.rewards;
+  if (rewards?.toastEvents?.length) {
+    store.pushToasts(rewards.toastEvents);
+  }
+  if (rewards?.events?.length) {
+    store.pushMonsterCelebrations(rewards.events);
+  }
+}
+
+function updatePunctuationPendingCommand({ command } = {}, pending = true) {
+  if (command === 'record-event') return;
+  store.updateSubjectUi('punctuation', { pendingCommand: pending ? command : '' });
 }
 
 const pendingPunctuationCommandKeys = new Set();
@@ -3460,7 +3471,9 @@ const punctuationCommandActions = createSubjectCommandActionHandler({
   isReadOnly: runtimeIsReadOnly,
   setSubjectError: setPunctuationRuntimeError,
   pendingKeys: pendingPunctuationCommandKeys,
+  onBeforeCommand: updatePunctuationPendingCommand,
   onCommandResult: applyPunctuationCommandResponse,
+  onCommandSettled: (context) => updatePunctuationPendingCommand(context, false),
   // adv-234-006 MEDIUM: on `save-prefs` failure, clear the `prefsMigrated`
   // latch so the Setup scene's one-shot stale-prefs migration can retry
   // on the next render. See `createPunctuationOnCommandError`.
