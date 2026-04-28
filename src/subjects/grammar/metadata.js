@@ -643,7 +643,7 @@ export function normaliseGrammarReadModel(rawValue = {}, learnerId = '') {
     content: {
       releaseId: raw.content?.releaseId || '',
       conceptCount: GRAMMAR_CLIENT_CONCEPTS.length,
-      templateCount: 70,
+      templateCount: 78,
       questionTypes: raw.content?.questionTypes || {},
     },
     phase,
