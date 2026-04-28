@@ -38,6 +38,11 @@ function asTs(value, fallback = 0) {
   return Number.isFinite(numeric) && numeric >= 0 ? numeric : fallback;
 }
 
+function positiveTs(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -70,8 +75,8 @@ function normaliseMemoryState(value) {
     streak: Math.max(0, Number(raw.streak) || 0),
     lapses: Math.max(0, Number(raw.lapses) || 0),
     dueAt: Math.max(0, Number(raw.dueAt) || 0),
-    firstCorrectAt: Number.isFinite(Number(raw.firstCorrectAt)) ? Number(raw.firstCorrectAt) : null,
-    lastCorrectAt: Number.isFinite(Number(raw.lastCorrectAt)) ? Number(raw.lastCorrectAt) : null,
+    firstCorrectAt: positiveTs(raw.firstCorrectAt),
+    lastCorrectAt: positiveTs(raw.lastCorrectAt),
     lastSeen: Math.max(0, Number(raw.lastSeen) || 0),
   };
 }
@@ -80,7 +85,7 @@ function memorySnapshot(value, nowTs) {
   const state = normaliseMemoryState(value);
   const attempts = state.attempts;
   const accuracy = attempts ? state.correct / attempts : 0;
-  const correctSpanDays = state.firstCorrectAt != null && state.lastCorrectAt != null
+  const correctSpanDays = state.firstCorrectAt != null && state.lastCorrectAt != null && state.lastCorrectAt >= state.firstCorrectAt
     ? Math.floor((state.lastCorrectAt - state.firstCorrectAt) / DAY_MS)
     : 0;
   let bucket = 'new';

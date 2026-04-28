@@ -332,10 +332,10 @@ test('previous release reward units do not count towards the current release den
 
 test('spaced clean attempts emit a secure-unit event once', () => {
   const repository = makeRepository();
-  let now = 0;
+  let now = 24 * 60 * 60 * 1000;
   const service = createPunctuationService({ repository, now: () => now, random: () => 0 });
   let unitEvents = [];
-  for (const day of [0, 4, 8]) {
+  for (const day of [1, 5, 9]) {
     now = day * 24 * 60 * 60 * 1000;
     const start = service.startSession('learner-a', { mode: 'endmarks', roundLength: '1' }).state;
     const submit = service.submitAnswer('learner-a', start, { choiceIndex: 1 });

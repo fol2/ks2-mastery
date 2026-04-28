@@ -13,16 +13,37 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 test('secure status requires repeated clean spaced evidence', () => {
   let state = createMemoryState();
-  state = updateMemoryState(state, true, 0);
-  assert.equal(memorySnapshot(state, 0).secure, false);
-  state = updateMemoryState(state, true, 4 * DAY_MS);
-  assert.equal(memorySnapshot(state, 4 * DAY_MS).secure, false);
-  state = updateMemoryState(state, true, 8 * DAY_MS);
-  const secure = memorySnapshot(state, 8 * DAY_MS);
+  state = updateMemoryState(state, true, DAY_MS);
+  assert.equal(memorySnapshot(state, DAY_MS).secure, false);
+  state = updateMemoryState(state, true, 5 * DAY_MS);
+  assert.equal(memorySnapshot(state, 5 * DAY_MS).secure, false);
+  state = updateMemoryState(state, true, 9 * DAY_MS);
+  const secure = memorySnapshot(state, 9 * DAY_MS);
   assert.equal(secure.secure, true);
   assert.equal(secure.bucket, 'secure');
   assert.ok(secure.accuracy >= 0.8);
   assert.ok(secure.correctSpanDays >= 7);
+});
+
+test('secure status ignores epoch-zero firstCorrectAt sentinels', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const state = {
+    attempts: 4,
+    correct: 4,
+    incorrect: 0,
+    streak: 4,
+    lapses: 0,
+    dueAt: 0,
+    firstCorrectAt: 0,
+    lastCorrectAt: now,
+    lastSeen: now,
+  };
+
+  const snap = memorySnapshot(state, now);
+
+  assert.equal(snap.correctSpanDays, 0);
+  assert.equal(snap.secure, false);
+  assert.equal(snap.bucket, 'learning');
 });
 
 test('scheduler is deterministic under fixed state and random input', () => {
