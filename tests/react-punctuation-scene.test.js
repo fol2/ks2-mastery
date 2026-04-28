@@ -1372,7 +1372,7 @@ test('punctuation Skill Detail modal rejects invalid tab value (handler regressi
   );
 });
 
-test('punctuation Skill Detail modal SSR contains none of the 12 FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS', () => {
+test('punctuation Skill Detail modal SSR contains none of the forbidden Punctuation read-model keys', () => {
   const harness = createPunctuationHarness();
   openSkillDetailForSpeech(harness);
   const html = harness.render();

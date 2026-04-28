@@ -5,6 +5,7 @@ import { PUNCTUATION_EVENT_TYPES } from '../shared/punctuation/events.js';
 import { createPunctuationService } from '../shared/punctuation/service.js';
 import { PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
 import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
+import { FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS } from './helpers/forbidden-keys.mjs';
 
 function makeRepository(initialData = null) {
   let data = initialData;
@@ -224,7 +225,15 @@ test('gps completion releases review rows and then writes learning evidence', ()
   assert.equal(finished.state.summary.gps.reviewItems.length, 3);
   assert.equal(finished.state.summary.gps.reviewItems[1].correct, false);
   assert.equal(finished.state.summary.gps.reviewItems[1].displayCorrection.length > 0, true);
-  assert.equal(finished.state.summary.gps.reviewItems.every((entry) => !('variantSignature' in entry)), true);
+  for (const [index, reviewItem] of finished.state.summary.gps.reviewItems.entries()) {
+    for (const key of FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS) {
+      assert.equal(
+        Object.hasOwn(reviewItem, key),
+        false,
+        `GPS review item ${index + 1} must not expose ${key}`,
+      );
+    }
+  }
   assert.equal(finished.state.summary.gps.recommendedMode, 'weak');
   assert.equal(finished.events.filter((event) => event.type === PUNCTUATION_EVENT_TYPES.ITEM_ATTEMPTED).length, 3);
   assert.equal(finished.events.some((event) => event.type === PUNCTUATION_EVENT_TYPES.SESSION_COMPLETED), true);

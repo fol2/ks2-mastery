@@ -19,7 +19,8 @@
 //   (a) plumbing a forbidden key from the Worker payload through the Map /
 //       Modal render path, or
 //   (b) introducing a child-facing copy string that literally reads the
-//       internal key name `validator` / `rubric` / `correctIndex` / etc.
+//       internal key name `validator` / `rubric` / `correctIndex` /
+//       `variantSignature` / etc.
 //
 // The forbidden list comes from `tests/helpers/forbidden-keys.mjs` — the
 // single source of truth for the Punctuation read-model key universe
@@ -31,11 +32,11 @@
 //   `tests/react-punctuation-scene.test.js:1022` (word-boundary regex) but
 //   fanned out across both key families:
 //     * CAMELCASE_KEYS — `correctIndex` / `hiddenQueue` / `rawGenerator` /
-//       `queueItemIds` / `unpublished`. JS `\b` treats the internal
+//       `queueItemIds` / `variantSignature` / `unpublished`. JS `\b` treats the internal
 //       case-boundary oddly, so substring match is the correct probe — a
 //       camelCase identifier has no legitimate child-copy analogue.
 //     * WORDBOUNDARY_KEYS — `accepted` / `answers` / `generator` / `responses`
-//       / `rubric` / `seed` / `validator`. These are English words that
+//       / `rubric` / `seed` / `validator` / `validators`. These are English words that
 //       appear legitimately in unrelated copy (e.g. "seed" inside "seeded",
 //       "answers" as a child-facing label on the GPS chip row) so a naive
 //       substring probe false-positives. Word-boundary regex lets legitimate
@@ -138,11 +139,16 @@ function applyMapFilters(harness, { statusFilter, monsterFilter }) {
 // in ways that surprise). These identifiers have no legitimate child-copy
 // analogue, so a plain substring probe is both correct and strictest.
 const CAMELCASE_KEYS = Object.freeze([
+  'acceptedAnswers',
   'correctIndex',
+  'generatorFamilyId',
   'hiddenQueue',
   'rawGenerator',
+  'rawResponse',
   'queueItemIds',
+  'templateId',
   'unpublished',
+  'variantSignature',
 ]);
 
 // English-word keys: word-boundary regex so legitimate copy like "seeded"
@@ -157,6 +163,7 @@ const WORDBOUNDARY_KEYS = Object.freeze([
   'rubric',
   'seed',
   'validator',
+  'validators',
 ]);
 
 function findForbiddenHits(html) {
@@ -271,39 +278,43 @@ test('U7: Skill Detail modal SSR is clean across 14 skills × 2 tabs (28 combina
 });
 
 // ---------------------------------------------------------------------------
-// Phase 2 redaction contract unchanged — the universal forbidden key list
-// shape hasn't widened nor narrowed. Pairs with the characterisation-only
-// claim in the PR body: U7 does not weaken Phase 2 redaction.
+// U4 redaction contract — generated metadata is forbidden everywhere except
+// the active generated currentItem's opaque variantSignature transport.
 // ---------------------------------------------------------------------------
 
-test('U7: FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS is unchanged at 12 entries (Phase 2 contract)', () => {
-  // Phase 2 U2 shipped the 12-entry list. U7 is characterisation-only —
-  // we confirm alignment rather than extend the list. A future unit that
-  // introduces a new Worker projection must extend
-  // `tests/helpers/forbidden-keys.mjs` first (the single source of truth)
-  // and this assertion forces that discipline.
-  assert.equal(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.length, 12);
+test('U4: FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS pins generated metadata redaction', () => {
+  // U4 intentionally extends the Phase 2 U2 list so GPS review rows and
+  // adult evidence cannot expose generated metadata or raw response fields.
+  // A future unit introducing a new Worker projection must extend
+  // `tests/helpers/forbidden-keys.mjs` first (the single source of truth).
+  assert.equal(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.length, 18);
   assert.equal(Object.isFrozen(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS), true);
 
   // Content-lock — a rename like `rubric` → `rubricSpec` keeps the length
-  // at 12 but silently narrows the sweep's coverage (the renamed key is no
+  // stable but silently narrows the sweep's coverage (the renamed key is no
   // longer probed). Pinning the sorted contents forces any rename to land
   // here as a paired update, keeping the oracle and the probe aligned.
   assert.deepEqual(
     [...FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS].sort(),
     [
       'accepted',
+      'acceptedAnswers',
       'answers',
       'correctIndex',
       'generator',
+      'generatorFamilyId',
       'hiddenQueue',
       'queueItemIds',
       'rawGenerator',
+      'rawResponse',
       'responses',
       'rubric',
       'seed',
+      'templateId',
       'unpublished',
       'validator',
+      'validators',
+      'variantSignature',
     ],
     'FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS sorted contents must not drift silently',
   );

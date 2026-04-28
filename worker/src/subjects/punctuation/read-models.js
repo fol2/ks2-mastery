@@ -7,13 +7,18 @@ import {
 
 const FORBIDDEN_ITEM_FIELDS = new Set([
   'accepted',
+  'acceptedAnswers',
   'answers',
   'correctIndex',
+  'generatorFamilyId',
   'rubric',
   'validator',
+  'validators',
   'seed',
   'generator',
   'hiddenQueue',
+  'rawResponse',
+  'templateId',
   'unpublished',
 ]);
 
@@ -26,10 +31,18 @@ const FORBIDDEN_READ_MODEL_KEYS = new Set([
   'rawGenerator',
   'queueItemIds',
   'responses',
+  'variantSignature',
 ]);
+const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normaliseOpaqueVariantSignature(value) {
+  if (typeof value !== 'string') return '';
+  const signature = value.trim();
+  return OPAQUE_VARIANT_SIGNATURE_PATTERN.test(signature) ? signature : '';
 }
 
 function safeCurrentItem(item) {
@@ -51,6 +64,10 @@ function safeCurrentItem(item) {
         text: typeof option.text === 'string' ? option.text : '',
         index: Number.isInteger(Number(option.index)) ? Number(option.index) : 0,
       }));
+  }
+  const variantSignature = normaliseOpaqueVariantSignature(item.variantSignature);
+  if (safe.source === 'generated' && variantSignature) {
+    safe.variantSignature = variantSignature;
   }
   return safe;
 }
@@ -218,7 +235,8 @@ function assertNoForbiddenReadModelKeys(value, path = 'punctuation') {
     return;
   }
   for (const [key, child] of Object.entries(value)) {
-    if (FORBIDDEN_READ_MODEL_KEYS.has(key)) {
+    const allowedActiveItemSignature = key === 'variantSignature' && path.endsWith('.session.currentItem');
+    if (FORBIDDEN_READ_MODEL_KEYS.has(key) && !allowedActiveItemSignature) {
       throw new Error(`Punctuation read model attempted to expose server-only ${path}.${key} field: ${key}`);
     }
     assertNoForbiddenReadModelKeys(child, `${path}.${key}`);

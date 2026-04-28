@@ -13,6 +13,18 @@ import { createMemoryState, updateMemoryState } from '../shared/punctuation/sche
 import { createPunctuationService, PunctuationServiceError } from '../shared/punctuation/service.js';
 import { projectPunctuationStars } from '../src/subjects/punctuation/star-projection.js';
 
+const GENERATED_METADATA_FORBIDDEN_ON_ACTIVE_ITEM = Object.freeze([
+  'templateId',
+  'generatorFamilyId',
+  'validator',
+  'validators',
+  'accepted',
+  'acceptedAnswers',
+  'answers',
+  'rawResponse',
+  'rawGenerator',
+]);
+
 function makeRepository() {
   let data = null;
   let practiceSession = null;
@@ -123,6 +135,13 @@ test('punctuation service carries generated variant signatures into state and at
 
   assert.equal(generated.session.currentItem.source, 'generated');
   assert.match(generated.session.currentItem.variantSignature, /^puncsig_[a-z0-9]+$/);
+  for (const key of GENERATED_METADATA_FORBIDDEN_ON_ACTIVE_ITEM) {
+    assert.equal(
+      Object.hasOwn(generated.session.currentItem, key),
+      false,
+      `generated active currentItem must not expose ${key}`,
+    );
+  }
 
   const submitted = service.submitAnswer('learner-a', generated, correctAnswerFor(generated.session.currentItem));
   const attempt = repository.snapshot().data.progress.attempts.at(-1);

@@ -18,6 +18,7 @@ import {
   subjectCommand,
 } from './lib/production-smoke.mjs';
 import {
+  ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS as SHARED_ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS,
   FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS as SHARED_FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS,
   FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS as SHARED_FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS,
 } from '../tests/helpers/forbidden-keys.mjs';
@@ -30,9 +31,25 @@ import {
 // deploy time.
 const FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS = new Set(SHARED_FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS);
 const FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS = new Set(SHARED_FORBIDDEN_PUNCTUATION_ADULT_EVIDENCE_KEYS);
+const ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS = new Set(SHARED_ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS);
+const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
 
 export function assertNoForbiddenPunctuationReadModelKeys(value, path = 'punctuation.subjectReadModel') {
-  assertNoForbiddenObjectKeys(value, FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS, path);
+  if (value == null || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => assertNoForbiddenPunctuationReadModelKeys(entry, `${path}[${index}]`));
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    const allowedActiveItemMetadata = ALLOWED_PUNCTUATION_ACTIVE_ITEM_METADATA_KEYS.has(key)
+      && path.endsWith('.session.currentItem');
+    assert.equal(
+      FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.has(key) && !allowedActiveItemMetadata,
+      false,
+      `${path}.${key} exposed a server-only field.`,
+    );
+    assertNoForbiddenPunctuationReadModelKeys(child, `${path}.${key}`);
+  }
 }
 
 export function assertNoForbiddenPunctuationAdultEvidenceKeys(value, path = 'punctuation.adultEvidence') {
@@ -74,6 +91,15 @@ function assertVisiblePunctuationItemMatchesSource(readItem, source, path = 'pun
   assert.equal(readItem?.clusterId || null, source.clusterId || null, `${path}.clusterId did not match the source item.`);
   assert.deepEqual(readItem?.skillIds || [], Array.isArray(source.skillIds) ? source.skillIds : [], `${path}.skillIds did not match the source item.`);
   assert.equal(readItem?.source, source.source === 'generated' ? 'generated' : 'fixed', `${path}.source did not match the source item.`);
+  if (source.source === 'generated') {
+    assert.equal(readItem?.variantSignature, source.variantSignature, `${path}.variantSignature did not match the generated source item.`);
+    assert.match(readItem.variantSignature, OPAQUE_VARIANT_SIGNATURE_PATTERN, `${path}.variantSignature was not opaque.`);
+  } else {
+    assert.equal(Object.hasOwn(readItem || {}, 'variantSignature'), false, `${path}.variantSignature was exposed for a fixed item.`);
+  }
+  for (const forbiddenKey of ['templateId', 'generatorFamilyId', 'validator', 'validators', 'accepted', 'acceptedAnswers', 'answers', 'rawResponse']) {
+    assert.equal(Object.hasOwn(readItem || {}, forbiddenKey), false, `${path}.${forbiddenKey} exposed generated internals.`);
+  }
 
   if (readItem.inputKind === 'choice') {
     const expectedOptions = (Array.isArray(source.options) ? source.options : []).map(normaliseSourceOption);
