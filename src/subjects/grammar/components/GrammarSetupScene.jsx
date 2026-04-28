@@ -62,8 +62,9 @@ function TodayCard({ card }) {
 // U7 Phase 5: Monster strip entry — one per active Grammar monster.
 function MonsterStripEntry({ entry }) {
   const pct = entry.starMax > 0 ? Math.round((entry.stars / entry.starMax) * 100) : 0;
+  const displayState = entry.displayState || 'not-found';
   return (
-    <div className="grammar-monster-entry" data-monster-id={entry.monsterId}>
+    <div className="grammar-monster-entry" data-monster-id={entry.monsterId} data-display-state={displayState}>
       <img
         className="grammar-monster-entry-image"
         src={grammarMonsterAsset(entry.monsterId, 320)}

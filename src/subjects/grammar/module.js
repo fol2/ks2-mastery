@@ -8,6 +8,10 @@ import {
 } from './metadata.js';
 import { normaliseGrammarSpeechRate } from './speech.js';
 import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
+import {
+  shouldDelayMonsterCelebrations,
+  subjectSessionEnded,
+} from '../../platform/game/monster-celebrations.js';
 
 // U6a: Child-facing copy for the four known `save-transfer-evidence` error
 // codes emitted by the Worker (worker/src/subjects/grammar/engine.js:1723-1803,
@@ -127,11 +131,9 @@ function applyRemoteReadModel(context, response, { learnerId } = {}) {
   const responseLearnerId = String(response?.subjectReadModel?.learnerId || learnerId);
   if (responseLearnerId && responseLearnerId !== learnerId) return;
   const isSelectedLearner = selectedLearnerId(context) === learnerId;
+  const previousGrammarUi = isSelectedLearner ? selectedGrammarUi(context) : null;
   if (isSelectedLearner && response?.projections?.rewards?.toastEvents?.length) {
     context.store.pushToasts(response.projections.rewards.toastEvents);
-  }
-  if (isSelectedLearner && response?.projections?.rewards?.events?.length) {
-    context.store.pushMonsterCelebrations(response.projections.rewards.events);
   }
   if (response?.subjectReadModel) {
     updateGrammarUiForLearner(context, learnerId, {
@@ -139,10 +141,30 @@ function applyRemoteReadModel(context, response, { learnerId } = {}) {
       pendingCommand: '',
       error: '',
     });
-    return;
+  } else if (isSelectedLearner) {
+    context.store.reloadFromRepositories?.({ preserveRoute: true });
   }
   if (!isSelectedLearner) return;
-  context.store.reloadFromRepositories?.({ preserveRoute: true });
+  const nextGrammarUi = selectedGrammarUi(context);
+  const monsterEvents = Array.isArray(response?.projections?.rewards?.events)
+    ? response.projections.rewards.events
+    : [];
+  if (monsterEvents.length) {
+    if (
+      shouldDelayMonsterCelebrations(GRAMMAR_SUBJECT_ID, previousGrammarUi, nextGrammarUi)
+      && typeof context.store.deferMonsterCelebrations === 'function'
+    ) {
+      context.store.deferMonsterCelebrations(monsterEvents);
+    } else {
+      context.store.pushMonsterCelebrations(monsterEvents);
+    }
+  }
+  if (
+    subjectSessionEnded(GRAMMAR_SUBJECT_ID, previousGrammarUi, nextGrammarUi)
+    && typeof context.store.releaseMonsterCelebrations === 'function'
+  ) {
+    context.store.releaseMonsterCelebrations();
+  }
 }
 
 function sendGrammarCommand(context, command, payload = {}, { translateError, onResolved } = {}) {

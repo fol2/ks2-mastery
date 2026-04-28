@@ -54,6 +54,7 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   // U7 Phase 5: Monster strip with 4 active creatures + child-facing copy.
   assert.match(html, /grammar-monster-strip/);
   assert.match(html, /data-monster-id="bracehart"/);
+  assert.match(html, /data-monster-id="bracehart" data-display-state="not-found"/);
   assert.match(html, /data-monster-id="concordium"/);
   assert.match(html, /0 \/ 100 Stars/);
   assert.match(html, /Get 1 Star to find the Egg\. Reach 100 Stars for Mega\./);
@@ -1317,6 +1318,69 @@ test('Grammar command responses are pinned to the learner that sent them', async
   assert.equal(grammar.summary, null);
   assert.equal(toasts.length, 0);
   assert.equal(celebrations.length, 0);
+});
+
+test('Grammar remote command defers monster celebrations until session end', async () => {
+  const calls = [];
+  const context = {
+    appState: {
+      learners: { selectedId: 'learner-a' },
+      subjectUi: {
+        grammar: normaliseGrammarReadModel({
+          phase: 'session',
+          session: { id: 'grammar-session', mode: 'smart' },
+        }, 'learner-a'),
+      },
+    },
+    runtimeReadOnly: false,
+    subjectCommands: {
+      send() {
+        return Promise.resolve({
+          learnerId: 'learner-a',
+          subjectReadModel: normaliseGrammarReadModel({
+            learnerId: 'learner-a',
+            phase: 'summary',
+            summary: { sessionId: 'grammar-session' },
+          }, 'learner-a'),
+          projections: {
+            rewards: {
+              toastEvents: [{ id: 'toast-a' }],
+              events: [{ id: 'reward.monster:learner-a:grammar:bracehart:caught', type: 'reward.monster', kind: 'caught' }],
+            },
+          },
+        });
+      },
+    },
+    store: {
+      getState() { return context.appState; },
+      updateSubjectUi(subjectId, updater) {
+        const previous = context.appState.subjectUi[subjectId] || {};
+        const next = typeof updater === 'function' ? updater(previous) : { ...previous, ...updater };
+        context.appState = {
+          ...context.appState,
+          subjectUi: {
+            ...context.appState.subjectUi,
+            [subjectId]: next,
+          },
+        };
+      },
+      pushToasts(events) { calls.push(['pushToasts', events]); },
+      pushMonsterCelebrations(events) { calls.push(['pushMonsterCelebrations', events]); },
+      deferMonsterCelebrations(events) { calls.push(['deferMonsterCelebrations', events]); },
+      releaseMonsterCelebrations() { calls.push(['releaseMonsterCelebrations']); return true; },
+    },
+  };
+
+  grammarModule.handleAction('grammar-continue', context);
+  await Promise.resolve();
+  await Promise.resolve();
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'pushToasts',
+    'deferMonsterCelebrations',
+    'releaseMonsterCelebrations',
+  ]);
+  assert.equal(calls.some(([name]) => name === 'pushMonsterCelebrations'), false);
 });
 
 test('Grammar normaliser preserves Worker concept copy over client placeholders', () => {

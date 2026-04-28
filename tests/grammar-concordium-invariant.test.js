@@ -363,12 +363,7 @@ test('U3 named shape 1: 18 secure answers in random order → Concordium reaches
   const actions = shuffled.map((conceptId) => ({ conceptId, correct: true, isTransferSave: false }));
   const { events } = runSequence(repository, actions, { label: 'shape-1-18-secure' });
 
-  // Concordium reaches Mega exactly once: one `mega` event on the 18th secure,
-  // plus one `caught` event on the first secure. No Mega kind appears twice.
-  const concordiumMegas = events.filter((e) => e.monsterId === 'concordium' && e.kind === 'mega');
-  assert.equal(concordiumMegas.length, 1, 'Concordium mega fires exactly once across the 18-secure sweep');
-  const concordiumCaughts = events.filter((e) => e.monsterId === 'concordium' && e.kind === 'caught');
-  assert.equal(concordiumCaughts.length, 1, 'Concordium caught fires exactly once on first secure');
+  assert.deepEqual(events, [], 'secure-only replay emits no monster reward events');
   // Final state: Concordium stage = 4.
   const concordium = progressForGrammarMonster(repository.state(), 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
@@ -392,12 +387,7 @@ test('U3 named shape 2: pre-flip Glossbloom-secured + answer on noun_phrases →
   const actions = [{ conceptId: 'noun_phrases', correct: true, isTransferSave: false }];
   const { events } = runSequence(repository, actions, { label: 'shape-2-self-heal' });
 
-  // Bracehart caught MUST be suppressed by self-heal.
-  const bracehartCaught = events.filter((e) => e.monsterId === 'bracehart' && e.kind === 'caught');
-  assert.equal(bracehartCaught.length, 0, 'self-heal suppresses Bracehart caught');
-  // Concordium caught still fires (first aggregate secure).
-  const concordiumCaught = events.filter((e) => e.monsterId === 'concordium' && e.kind === 'caught');
-  assert.equal(concordiumCaught.length, 1, 'Concordium caught fires on first aggregate secure');
+  assert.deepEqual(events, [], 'secure-only self-heal emits no monster reward events');
   // State delta: Bracehart seeded silently.
   const state = repository.state();
   assert.equal(state.bracehart?.caught, true);
@@ -458,7 +448,7 @@ test('U3 named shape 4: re-securing an already-secured concept emits zero events
     gameStateRepository: repository,
     random: () => 0,
   });
-  assert.ok(first.length > 0, 'first secure emits events');
+  assert.deepEqual(first, [], 'first secure persists mastery but emits no monster reward events');
   const stateAfterFirst = repository.state();
   const concordiumAfterFirst = progressForGrammarMonster(stateAfterFirst, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
@@ -489,9 +479,10 @@ test('U3 named shape 4: re-securing an already-secured concept emits zero events
 // ----- Named shape 5: mini-test with 3 concepts crossing threshold -----------
 //
 // Plan §U3 named shape 5: mini-test with 3 concepts crossing secure threshold
-// in one command → 3 distinct OR 1 batched event — pin current behaviour.
+// in one command. Monster reward events are now Star-threshold driven, so
+// concept-secured events persist state but emit zero reward.monster events.
 
-test('U3 named shape 5: 3 concepts crossing threshold in one batch emit per-monster events per transition boundary (current behaviour pinned)', () => {
+test('U3 named shape 5: 3 concepts crossing secure threshold in one batch persist state without monster events', () => {
   const repository = makeRepository();
   // Simulate a mini-test that emits 3 concept-secured events in one
   // projection pass. The reward subscriber iterates and dispatches each.
@@ -510,51 +501,13 @@ test('U3 named shape 5: 3 concepts crossing threshold in one batch emit per-mons
     { gameStateRepository: repository, random: () => 0 },
   );
 
-  // The reward writer emits events only on "transition boundary crossings"
-  // (caught, stage change, level change via `grammarEventFromTransition`).
-  // Pinning current behaviour (measured via a probe):
-  //   secure #1 (sentence_functions): bracehart:caught, concordium:caught
-  //     (Concordium 0→1 mastered, level round(1/18*10)=1)
-  //   secure #2 (word_classes): couronnail:caught
-  //     (Concordium 1→2 mastered, level round(2/18*10)=1, no Concordium event)
-  //   secure #3 (clauses): bracehart:levelup (2nd Bracehart concept),
-  //     concordium:levelup (Concordium 2→3 mastered, level round(3/18*10)=2).
-  // Shape assertion: exactly 5 events, specific kinds per monster.
-  const bracehart = events.filter((e) => e.monsterId === 'bracehart');
-  const couronnail = events.filter((e) => e.monsterId === 'couronnail');
-  const concordium = events.filter((e) => e.monsterId === 'concordium');
-  assert.equal(bracehart.length, 2, 'Bracehart: caught + levelup across 2 Bracehart-concept events');
-  assert.equal(bracehart.filter((e) => e.kind === 'caught').length, 1);
-  assert.equal(bracehart.filter((e) => e.kind === 'levelup').length, 1);
-  assert.equal(couronnail.length, 1);
-  assert.equal(couronnail[0].kind, 'caught');
-  // Concordium: caught on first secure, levelup on third secure, NONE on
-  // second secure because the level round(2/18*10)=1 did not change.
-  assert.equal(concordium.length, 2,
-    'Concordium: 1 caught + 1 levelup across 3 secures (no event on #2 because level round unchanged)');
-  assert.equal(concordium.filter((e) => e.kind === 'caught').length, 1, 'exactly one Concordium caught across the batch');
-  assert.equal(concordium.filter((e) => e.kind === 'levelup').length, 1, 'exactly one Concordium levelup on the transition crossing');
-  // Total event shape assertion: 5 events total.
-  assert.equal(events.length, 5,
-    'per-monster events fire per transition boundary (current behaviour pinned); expansion to a 19th concept would need a paired test update');
-
-  // Positional assertion on emission order. recordGrammarConceptMastery
-  // emits direct-before-aggregate per secure (see grammar.js:349-369). A
-  // refactor that swaps this order — so aggregate-caught toast fires before
-  // direct-caught toast — would silently regress UX sequencing without this
-  // positional pin. Sequence is:
-  //   secure #1 sentence_functions → bracehart:caught, then concordium:caught
-  //   secure #2 word_classes       → couronnail:caught (no aggregate event;
-  //                                   level round unchanged)
-  //   secure #3 clauses            → bracehart:levelup, then concordium:levelup
-  const orderedPairs = events.map((e) => `${e.monsterId}:${e.kind}`);
-  assert.deepEqual(orderedPairs, [
-    'bracehart:caught',
-    'concordium:caught',
-    'couronnail:caught',
-    'bracehart:levelup',
-    'concordium:levelup',
-  ], 'direct-before-aggregate emission order pinned (grammar.js:349-369) — a swap would regress toast sequencing');
+  assert.deepEqual(events, [], 'secure batch emits no monster reward events');
+  const state = repository.state();
+  assert.equal(progressForGrammarMonster(state, 'bracehart', { conceptTotal: 6 }).mastered, 2);
+  assert.equal(progressForGrammarMonster(state, 'couronnail', { conceptTotal: 3 }).mastered, 1);
+  assert.equal(progressForGrammarMonster(state, 'concordium', {
+    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
+  }).mastered, 3);
 });
 
 // ----- Named shape 6: transfer save + scored answer -------------------------
@@ -596,15 +549,10 @@ test('U3 named shape 6: transfer-save-evidence never reaches reward pipeline; sc
 
   // Every emitted reward event is a reward.monster for the noun_phrases
   // concept secure — the transfer-save produced zero entries.
-  assert.ok(events.length > 0, 'the concept secure produced events');
-  for (const event of events) {
-    assert.equal(event.type, 'reward.monster');
-    assert.equal(event.conceptId, 'noun_phrases',
-      'no reward event can be traced back to the transfer save (which had no conceptId)');
-  }
-  // Positive assertion: exactly one Bracehart + one Concordium caught.
-  const kinds = events.map((e) => `${e.monsterId}:${e.kind}`).sort();
-  assert.deepEqual(kinds, ['bracehart:caught', 'concordium:caught']);
+  assert.deepEqual(events, [], 'transfer save and secure-only event emit zero monster rewards');
+  const state = repository.state();
+  assert.deepEqual(state.bracehart.mastered, [grammarMasteryKey('noun_phrases')]);
+  assert.deepEqual(state.concordium.mastered, [grammarMasteryKey('noun_phrases')]);
 });
 
 // ----- Named shape 7 (adversarial): retired entry with v7 mastery key, no releaseId --
@@ -648,11 +596,8 @@ test('U3 named shape 7 (adversarial): retired v7 mastery key with no releaseId f
   assert.deepEqual(view.glossbloom.mastered, ['grammar:v7:noun_phrases']);
   assert.equal(view.glossbloom.caught, true);
 
-  // Document the residual fragility: a subsequent real answer on
-  // `noun_phrases` under the CURRENT releaseId fires Bracehart caught
-  // because `retiredStateHoldsConcept` cannot match the v7 key against the
-  // current releaseId. This is the fragility the plan calls out; current
-  // behaviour is pinned.
+  // Subsequent real answers persist current-release state but no longer emit
+  // secure-driven monster reward events. Star evidence owns those events.
   const repository = makeRepository(state);
   const events = recordGrammarConceptMastery({
     learnerId: 'learner-v7',
@@ -660,9 +605,7 @@ test('U3 named shape 7 (adversarial): retired v7 mastery key with no releaseId f
     gameStateRepository: repository,
     random: () => 0,
   });
-  const bracehartCaught = events.filter((e) => e.monsterId === 'bracehart' && e.kind === 'caught');
-  assert.equal(bracehartCaught.length, 1,
-    'current behaviour pinned: retired v7 key with no releaseId does NOT suppress direct caught on subsequent real answer');
+  assert.deepEqual(events, [], 'secure-only replay emits no monster reward events');
 });
 
 // ----- Named shape 8 (P5 legacy): pre-P5 Couronnail at Mega (3/3 secure, no retention evidence) ----

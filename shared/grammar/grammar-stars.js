@@ -36,6 +36,15 @@ export const GRAMMAR_STAR_STAGE_THRESHOLDS = Object.freeze({
   mega: 100,
 });
 
+export const GRAMMAR_DISPLAY_STATES = [
+  'not-found',
+  'egg-found',
+  'hatch',
+  'evolve',
+  'strong',
+  'mega',
+];
+
 /**
  * Per-concept evidence-tier weights. Sum must equal 1.0.
  * 60% of the budget requires retention evidence (retainedAfterSecure),
@@ -284,6 +293,7 @@ function _buildStarResult(stars) {
     starMax: GRAMMAR_MONSTER_STAR_MAX,
     stageName: grammarStarStageName(stars),
     displayStage,
+    displayState: grammarDisplayStateForStars(stars),
     nextMilestoneStars: milestone ? milestone.stars : null,
     nextMilestoneLabel: milestone ? milestone.label : null,
   };
@@ -345,6 +355,14 @@ export function grammarStarDisplayStage(stars) {
  */
 export function grammarStarStageName(stars) {
   return DISPLAY_STAGE_NAMES[grammarStarDisplayStage(stars)] || 'Not found yet';
+}
+
+/**
+ * Returns the cross-subject machine display state for Grammar reward surfaces.
+ * Child-facing labels stay subject-specific via grammarStarStageName().
+ */
+export function grammarDisplayStateForStars(stars) {
+  return GRAMMAR_DISPLAY_STATES[grammarStarDisplayStage(stars)] || 'not-found';
 }
 
 // ---------------------------------------------------------------------------

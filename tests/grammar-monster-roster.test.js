@@ -284,8 +284,7 @@ test('writer self-heal: retired-id evidence seeds new direct silently', () => {
   const bracehartCaught = events.filter((event) => event.monsterId === 'bracehart' && event.kind === 'caught');
   assert.equal(bracehartCaught.length, 0, 'Bracehart caught suppressed by self-heal');
 
-  // Concordium caught fires (first time crossing the threshold).
-  assert.ok(events.some((event) => event.monsterId === 'concordium' && event.kind === 'caught'));
+  assert.deepEqual(events, [], 'secure-only self-heal emits no monster reward events');
 
   // State delta persists — Bracehart is now caught + mastered.
   const state = repository.state();
@@ -303,8 +302,7 @@ test('writer self-heal: fresh learner still earns the direct caught event', () =
     random: () => 0,
   });
 
-  assert.ok(events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'));
-  assert.ok(events.some((event) => event.monsterId === 'concordium' && event.kind === 'caught'));
+  assert.deepEqual(events, [], 'secure-only fresh learner emits no monster reward events');
 });
 
 // -------- Projection-layer dedupe (cross-monster) --------------------------

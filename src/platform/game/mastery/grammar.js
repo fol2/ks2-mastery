@@ -1,22 +1,22 @@
 import { MONSTERS } from '../monsters.js';
 import {
   branchForMonster,
-  DEFAULT_SYSTEM_ID,
   ensureMonsterBranches,
   GRAMMAR_GRAND_MONSTER_ID,
   GRAMMAR_MONSTER_IDS,
   GRAMMAR_RESERVED_MONSTER_IDS,
+  buildRewardMonsterEvent,
   isPlainObject,
   masteredList,
   releaseIdForEntry,
   saveMonsterState,
-  toastBodyFor,
 } from './shared.js';
 import {
   GRAMMAR_MONSTER_STAR_MAX,
   applyStarHighWaterLatch,
   computeGrammarMonsterStars,
   deriveGrammarConceptStarEvidence,
+  grammarDisplayStateForStars,
   grammarStarDisplayStage,
   grammarStarStageFor,
   grammarStarStageName,
@@ -216,6 +216,8 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
   // Star-derived stage for backward compat: max(legacyStage, starDerivedStage).
   const starDerivedStage = grammarStarStageFor(displayStars);
   const stage = Math.max(legacyStage, starDerivedStage);
+  const displayStage = grammarStarDisplayStage(displayStars);
+  const displayState = grammarDisplayStateForStars(displayStars);
 
   // Level calculation: max of legacy ratio-based level and Star-based level.
   // Legacy: Math.round(mastered/total * 10), capped at 10.
@@ -234,10 +236,13 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
     masteredList: grammarMasteredList(entry, releaseId),
     // Star fields
     stars: displayStars,
+    displayStars,
     starMax: GRAMMAR_MONSTER_STAR_MAX,
-    displayStage: grammarStarDisplayStage(displayStars),
+    displayStage,
+    displayState,
     stageName: grammarStarStageName(displayStars),
     starHighWater: updatedHighWater,
+    starStage: starDerivedStage,
   };
 }
 
@@ -252,64 +257,56 @@ function buildGrammarEvent({
   masteryKey,
   createdAt = Date.now(),
 } = {}) {
-  const monster = MONSTERS[monsterId];
-  return {
-    id: `reward.monster:${learnerId || 'default'}:grammar:${releaseId}:${conceptId}:${monsterId}:${kind}`,
-    type: 'reward.monster',
+  const nextStage = Math.max(0, Math.floor(Number(next?.displayStage ?? next?.stage) || 0));
+  const nextStars = Math.max(0, Math.floor(Number(next?.displayStars ?? next?.stars ?? next?.starHighWater) || 0));
+  return buildRewardMonsterEvent({
+    id: `reward.monster:${learnerId || 'default'}:grammar:${releaseId}:${conceptId}:${monsterId}:${kind}:${nextStage}:${nextStars}`,
+    subjectId: 'grammar',
     kind,
     learnerId,
-    subjectId: 'grammar',
-    systemId: DEFAULT_SYSTEM_ID,
-    releaseId,
-    conceptId,
-    masteryKey,
     monsterId,
-    monster,
     previous,
     next,
     createdAt,
-    toast: {
-      title: monster?.name || 'Reward update',
-      body: toastBodyFor(kind),
+    extra: {
+      releaseId,
+      conceptId,
+      masteryKey,
     },
-  };
+  });
 }
 
-function grammarEventFromTransition(payload, previous, next) {
-  if (!previous.caught && next.caught) {
-    return buildGrammarEvent({ ...payload, kind: 'caught', previous, next });
-  }
-  if (next.stage > previous.stage) {
-    return buildGrammarEvent({ ...payload, kind: next.stage === 4 ? 'mega' : 'evolve', previous, next });
-  }
-  if (next.level > previous.level) {
-    return buildGrammarEvent({ ...payload, kind: 'levelup', previous, next });
-  }
-  return null;
+function progressDisplayStars(progress) {
+  return Math.max(0, Math.floor(Number(progress?.displayStars ?? progress?.stars ?? progress?.starHighWater) || 0));
 }
 
-// Phase 3 U0 writer self-heal. When a learner had pre-flip direct evidence
-// under a retired id (Glossbloom / Loomrill / Mirrane) for the same concept
-// now being recorded, seed the post-flip direct's `mastered[]` silently and
-// suppress the `caught` event for the seed path. Without this, the existing
-// early-out at line 190 only consults the current direct's `mastered[]`, so
-// a pre-flip Glossbloom-caught learner answering any remapped concept would
-// cause the writer to re-fire a spurious Bracehart `caught` toast. The
-// persistence path delivers the state delta; the emission path independently
-// decides whether to emit — see the cross-direct re-emission landmine
-// flagged in docs/plans/james/punctuation/punctuation-p2-completion-report.md
-// §2.U5.
-function retiredStateHoldsConcept({ before, conceptId, releaseId }) {
-  for (const retiredId of GRAMMAR_RESERVED_MONSTER_IDS) {
-    const retiredEntry = before?.[retiredId];
-    if (!isPlainObject(retiredEntry)) continue;
-    const retiredScopedReleaseId = releaseIdForEntry(retiredEntry, releaseId) || releaseId;
-    for (const retiredKey of masteredList(retiredEntry)) {
-      const retiredConceptId = grammarConceptIdFromMasteryKey(retiredKey, retiredScopedReleaseId);
-      if (retiredConceptId === conceptId) return true;
-    }
+function progressDisplayStage(progress) {
+  const explicitStage = Number(progress?.displayStage);
+  if (Number.isFinite(explicitStage)) return Math.max(0, Math.floor(explicitStage));
+  return grammarStarDisplayStage(progressDisplayStars(progress));
+}
+
+function grammarEventsFromStarDisplayTransition(payload, previous, next) {
+  const prevStars = progressDisplayStars(previous);
+  const nextStars = progressDisplayStars(next);
+  const prevDisplayStage = progressDisplayStage(previous);
+  const nextDisplayStage = progressDisplayStage(next);
+  const events = [];
+
+  if (prevStars < 1 && nextStars >= 1) {
+    events.push(buildGrammarEvent({ ...payload, kind: 'caught', previous, next }));
   }
-  return false;
+
+  if (nextDisplayStage > prevDisplayStage && nextDisplayStage >= 2) {
+    events.push(buildGrammarEvent({
+      ...payload,
+      kind: nextDisplayStage >= 5 ? 'mega' : 'evolve',
+      previous,
+      next,
+    }));
+  }
+
+  return events;
 }
 
 export function recordGrammarConceptMastery({
@@ -336,28 +333,9 @@ export function recordGrammarConceptMastery({
     : { mastered: [], caught: false };
   const directMastered = directMonsterId ? masteredList(directEntry) : [];
 
-  // Pre-flip learners with evidence under retired ids must have their new
-  // direct silently seeded before any emission decision runs. The seed
-  // persists the state delta but does not emit a `caught` event for the
-  // direct — the learner already earned that milestone under the retired id.
-  const shouldSelfHealDirect = Boolean(directMonsterId)
-    && !directMastered.includes(masteryKey)
-    && retiredStateHoldsConcept({ before, conceptId, releaseId });
-
   if (aggregateMastered.includes(masteryKey) && (!directMonsterId || directMastered.includes(masteryKey))) {
     return [];
   }
-
-  const beforeAggregate = progressForGrammarMonster(before, GRAMMAR_GRAND_MONSTER_ID, {
-    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
-    releaseId,
-  });
-  const beforeDirect = directMonsterId
-    ? progressForGrammarMonster(before, directMonsterId, {
-      conceptTotal: grammarMonsterConceptTotal(directMonsterId),
-      releaseId,
-    })
-    : null;
 
   // Ratchet starHighWater: preserve the existing high-water mark on each
   // monster entry. For pre-P5 learners (no starHighWater field), seed the
@@ -396,42 +374,8 @@ export function recordGrammarConceptMastery({
     };
   }
 
-  const afterAggregate = progressForGrammarMonster(after, GRAMMAR_GRAND_MONSTER_ID, {
-    conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
-    releaseId,
-  });
-  const afterDirect = directMonsterId
-    ? progressForGrammarMonster(after, directMonsterId, {
-      conceptTotal: grammarMonsterConceptTotal(directMonsterId),
-      releaseId,
-    })
-    : null;
   saveMonsterState(learnerId, after, gameStateRepository);
-
-  const events = [];
-  if (directMonsterId && !shouldSelfHealDirect) {
-    const directEvent = grammarEventFromTransition({
-      learnerId,
-      monsterId: directMonsterId,
-      releaseId,
-      conceptId,
-      masteryKey,
-      createdAt,
-    }, beforeDirect, afterDirect);
-    if (directEvent) events.push(directEvent);
-  }
-
-  const aggregateEvent = grammarEventFromTransition({
-    learnerId,
-    monsterId: GRAMMAR_GRAND_MONSTER_ID,
-    releaseId,
-    conceptId,
-    masteryKey,
-    createdAt,
-  }, beforeAggregate, afterAggregate);
-  if (aggregateEvent) events.push(aggregateEvent);
-
-  return events;
+  return [];
 }
 
 /**
@@ -447,11 +391,11 @@ export function recordGrammarConceptMastery({
  * call updates exactly one monster — preventing cross-inflation where a
  * direct monster's higher Stars would overwrite Concordium's lower value.
  *
- * Sets `caught: true` if Stars >= 1 and was previously false, emitting a
- * `caught` reward event for the newly-caught monster.
+ * Sets `caught: true` if Stars >= 1 and emits Star-threshold monster events.
+ * Secure concept state is deliberately separate from these reward events.
  *
- * Returns an array of reward events (caught event if the monster newly
- * crossed the threshold, otherwise empty).
+ * Returns reward events for first-found (`caught`), stage growth (`evolve`)
+ * and Mega (`mega`) when the monotonic Star latch crosses those thresholds.
  */
 export function updateGrammarStarHighWater({
   learnerId,
@@ -483,46 +427,38 @@ export function updateGrammarStarHighWater({
     return [];
   }
 
-  const wasCaught = entry.caught === true;
-  const nowCaught = wasCaught || stars >= 1;
   const total = grammarMonsterConceptTotal(targetMonsterId);
+  const beforeProgress = progressForGrammarMonster(before, targetMonsterId, {
+    conceptTotal: total,
+  });
   const after = {
     ...before,
     [targetMonsterId]: {
       ...entry,
-      caught: nowCaught,
+      caught: entry.caught === true || stars >= 1,
       conceptTotal: total,
       starHighWater: Math.min(GRAMMAR_MONSTER_STAR_MAX, stars),
     },
   };
+  const afterProgress = progressForGrammarMonster(after, targetMonsterId, {
+    conceptTotal: total,
+  });
 
   saveMonsterState(learnerId, after, gameStateRepository);
 
-  const events = [];
-  if (!wasCaught && nowCaught) {
-    const beforeProgress = progressForGrammarMonster(before, targetMonsterId, {
-      conceptTotal: total,
-    });
-    const afterProgress = progressForGrammarMonster(after, targetMonsterId, {
-      conceptTotal: total,
-    });
-    const ev = grammarEventFromTransition({
-      learnerId,
-      monsterId: targetMonsterId,
-      releaseId: GRAMMAR_REWARD_RELEASE_ID,
-      conceptId,
-      masteryKey: grammarMasteryKey(conceptId),
-      createdAt: Date.now(),
-    }, beforeProgress, afterProgress);
-    if (ev) events.push(ev);
-  }
-
-  return events;
+  return grammarEventsFromStarDisplayTransition({
+    learnerId,
+    monsterId: targetMonsterId,
+    releaseId: GRAMMAR_REWARD_RELEASE_ID,
+    conceptId,
+    masteryKey: grammarMasteryKey(conceptId),
+    createdAt: Date.now(),
+  }, beforeProgress, afterProgress);
 }
 
 export function activeGrammarMonsterSummaryFromState(state = {}) {
   return grammarMonsterSummaryFromState(state)
-    .filter((entry) => entry.progress.caught || entry.progress.mastered > 0);
+    .filter((entry) => entry.progress.displayState !== 'not-found' || entry.progress.caught || entry.progress.mastered > 0);
 }
 
 export function grammarMonsterSummaryFromState(state = {}) {

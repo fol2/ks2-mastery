@@ -81,6 +81,7 @@ Learner perspective 想做到「mixed, varied, durable, transferable Grammar mas
 - starHighWater 確保 child-facing Stars 不倒退。
 - legacy floor 確保 pre-P5 learners 不降級。
 - P7 child surfaces 不再用 legacy stage field 作 monster display。
+- Cross-surface display uses `displayState` (`not-found` / `egg-found` / `hatch` / `evolve` / `strong` / `mega`) rather than secure count or `stage >= 1`.
 
 ### 2.2 工程上對 game 的支撐
 
@@ -115,8 +116,8 @@ Learner perspective 想做到「mixed, varied, durable, transferable Grammar mas
 2. Worker Grammar engine marks deterministically and updates learning state。
 3. Engine emits domain events，例如 `grammar.answer-submitted`、`grammar.concept-secured`。
 4. Command handler derives `grammar.star-evidence-updated` events from post-answer engine state。
-5. Reward projection consumes domain events and updates monster codex state。
-6. React read model renders Stars / stage / creature progress。
+5. Reward projection consumes Star evidence and updates monster codex state。
+6. React read model renders Stars / `displayState` / creature progress。
 
 這條鏈條重點是：**game follows learning，game does not control learning**。
 
@@ -124,7 +125,7 @@ Learner perspective 想做到「mixed, varied, durable, transferable Grammar mas
 
 它不是 UI 自己算 reward。它不是 click-based reward。它不是 game layer 自己 mark answer。
 
-Star evidence derived from Worker-owned post-answer state；sub-secure Stars 由 `star-evidence-updated` event persist；concept-secured 由 `recordGrammarConceptMastery` persist mastery list；both feed the same active monster progress.
+Star evidence derived from Worker-owned post-answer state；sub-secure Stars 由 `star-evidence-updated` event persist。`grammar.concept-secured` 仍由 `recordGrammarConceptMastery` persist mastery list for analytics / scheduling / adult understanding，但不再觸發 monster reward events。Active monster display 由 `displayStars = max(computedStars, starHighWater, legacyFloor)` 和 `displayState` 統一驅動。
 
 ### 3.3 為何仍有 ledger gap？
 
@@ -146,10 +147,11 @@ Star evidence derived from Worker-owned post-answer state；sub-secure Stars 由
 
 已正確連接：
 
-- `grammar.concept-secured` → `recordGrammarConceptMastery`
-- `grammar.star-evidence-updated` → `updateGrammarStarHighWater`
-- 1 Star Egg persisted via `caught: true`
+- `grammar.concept-secured` → `recordGrammarConceptMastery` for mastered[] / secure analytics only
+- `grammar.star-evidence-updated` → `updateGrammarStarHighWater` for Star latch + monster events
+- 1 Star Egg persisted via `caught: true` and machine `displayState = egg-found`
 - `starHighWater` monotonic latch
+- `displayState` parity across Grammar landing, summary, Home dashboard and Codex
 - Concordium aggregate from all 18 concepts
 - Direct monsters from shared concept roster
 - Reserved monsters not active child-facing
@@ -162,12 +164,15 @@ Star evidence derived from Worker-owned post-answer state；sub-secure Stars 由
 
 Reward event design 有幾個健康點：
 
-- event IDs deterministic，以 requestId + computedStars 組合，方便 idempotency。
+- event IDs deterministic，並包含 kind / display stage / Star high-water，方便 idempotency。
 - duplicate processing is safe。
 - stale lower Stars 不會 reduce starHighWater。
 - caught never reverts。
 - zero-star events ignored。
 - concept-secured 和 star-evidence-updated 的 ordering 不應破壞 state。
+- `caught` means first-found / first-Star, matching Spelling / Punctuation unified event naming。
+- Hatch / Growing / Nearly Mega emit `evolve`; Mega emits `mega`。
+- celebration overlays defer to session end via shared `subjectIsInSession` / `shouldDelayMonsterCelebrations`; mid-session toasts remain unchanged for now。
 
 ### 4.3 要繼續守住的 reward boundary
 
@@ -244,7 +249,8 @@ Grammar reward state 已接入 platform monster system：
 - active roster from game/monster registry
 - concept-to-monster mapping from shared roster
 - reward projection from Grammar events
-- child UI renders Stars via view model
+- child UI renders Stars and `displayState` via view model
+- Home / Codex consume `displayState`, not `stage >= 1`, so Grammar first-Star eggs remain eggs rather than roaming monsters
 - reserve monsters excluded from active Grammar progress
 
 ### 6.4 Analytics / adult system

@@ -59,8 +59,7 @@ test('first secure Grammar concept records its domain monster and Concordium onc
   });
   const state = repository.state();
 
-  assert.equal(events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'), true);
-  assert.equal(events.some((event) => event.monsterId === 'concordium' && event.kind === 'caught'), true);
+  assert.deepEqual(events, [], 'secure concept state emits no monster reward events');
   assert.deepEqual(state.bracehart.mastered, [key]);
   assert.deepEqual(state.concordium.mastered, [key]);
   assert.equal(state.pealark, undefined);
@@ -83,8 +82,7 @@ test('punctuation-for-grammar concepts count for Concordium without touching Pun
   });
   const state = repository.state();
 
-  assert.equal(events.length, 1);
-  assert.equal(events[0].monsterId, 'concordium');
+  assert.deepEqual(events, [], 'secure-only punctuation-for-grammar event emits no monster rewards');
   assert.deepEqual(state.concordium.mastered, [key]);
   assert.equal(state.quoral, undefined);
 });
@@ -160,11 +158,7 @@ test('Phase 3 U0: word_classes now records Couronnail (not Glossbloom) as the di
   });
   const state = repository.state();
 
-  assert.equal(
-    events.some((event) => event.monsterId === 'couronnail' && event.kind === 'caught'),
-    true,
-    'Couronnail absorbs the retired Glossbloom word_classes cluster',
-  );
+  assert.deepEqual(events, [], 'secure-only event emits no Couronnail reward event');
   assert.equal(events.some((event) => event.monsterId === 'glossbloom'), false);
   assert.ok(state.couronnail);
   assert.equal(state.glossbloom, undefined);
@@ -176,7 +170,7 @@ test('Phase 3 U0: noun_phrases records Bracehart (Sentence structure absorption)
     gameStateRepository: repository,
     random: () => 0,
   });
-  assert.equal(events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'), true);
+  assert.deepEqual(events, [], 'secure-only event emits no Bracehart reward event');
   assert.equal(events.some((event) => event.monsterId === 'glossbloom'), false);
 });
 
@@ -186,7 +180,7 @@ test('Phase 3 U0: adverbials records Chronalyx (Flow / Linkage absorption)', () 
     gameStateRepository: repository,
     random: () => 0,
   });
-  assert.equal(events.some((event) => event.monsterId === 'chronalyx' && event.kind === 'caught'), true);
+  assert.deepEqual(events, [], 'secure-only event emits no Chronalyx reward event');
   assert.equal(events.some((event) => event.monsterId === 'loomrill'), false);
 });
 
@@ -196,7 +190,7 @@ test('Phase 3 U0: active_passive records Bracehart (Sentence structure absorptio
     gameStateRepository: repository,
     random: () => 0,
   });
-  assert.equal(events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'), true);
+  assert.deepEqual(events, [], 'secure-only event emits no Bracehart reward event');
   assert.equal(events.some((event) => event.monsterId === 'mirrane'), false);
 });
 
@@ -224,12 +218,7 @@ test('writer self-heal silently seeds Bracehart from retired Glossbloom noun_phr
     false,
     'writer self-heal suppresses Bracehart caught for pre-flip retired-id holders',
   );
-  // Concordium still emits (first secure on the aggregate).
-  assert.equal(
-    events.some((event) => event.monsterId === 'concordium' && event.kind === 'caught'),
-    true,
-    'Concordium aggregate still emits when crossing the caught threshold',
-  );
+  assert.deepEqual(events, [], 'secure-only self-heal emits no monster reward events');
 
   // State delta still persists — Bracehart mastered contains the key.
   const state = repository.state();
@@ -248,12 +237,7 @@ test('writer self-heal does not fire for a truly fresh learner (no retired state
     random: () => 0,
   });
 
-  // A fresh learner MUST get a Bracehart caught event.
-  assert.equal(
-    events.some((event) => event.monsterId === 'bracehart' && event.kind === 'caught'),
-    true,
-    'fresh learners still earn the Bracehart caught milestone',
-  );
+  assert.deepEqual(events, [], 'fresh secure-only learner emits no monster reward events');
 });
 
 // -------- Phase 4 U3: adversarial scenarios from flow-analyst --------------
@@ -265,7 +249,7 @@ test('writer self-heal does not fire for a truly fresh learner (no retired state
 //   3. Malformed state shapes — the reward subscriber stays shape-stable and
 //      never throws.
 
-test('Phase 4 U3 edge case: supported-correct secure (worked/faded mode) emits an identical reward-event shape as independent-correct', () => {
+test('Phase 4 U3 edge case: supported-correct secure (worked/faded mode) emits no monster reward events, matching independent-correct secure', () => {
   // The reward pipeline consumes a `grammar.concept-secured` event that
   // carries NO `supportLevelAtScoring` field — support flags live on the
   // upstream `grammar.answer-submitted` event. By the time a secure is
@@ -313,11 +297,8 @@ test('Phase 4 U3 edge case: supported-correct secure (worked/faded mode) emits a
     .sort();
   assert.deepEqual(supportedShape, independentShape,
     'reward event shape is identical whether the secure came from supported-correct or independent-correct');
-  // Ratio: one Chronalyx caught + one Concordium caught.
-  assert.deepEqual(supportedShape, [
-    'chronalyx:caught:modal_verbs',
-    'concordium:caught:modal_verbs',
-  ]);
+  assert.deepEqual(supportedShape, [],
+    'secure-only events do not mint monster rewards; Star evidence drives those transitions');
 });
 
 test('Phase 4 U3 edge case — Covers AE3: transfer-save event never reaches the reward pipeline', () => {
