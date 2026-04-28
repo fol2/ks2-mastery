@@ -42,9 +42,22 @@ function stableJson(value) {
     .map((key) => [key, stableJson(value[key])]));
 }
 
-function templateIdFor(familyId, template, templateIndex = 0) {
+function templateIdFor(familyId, template) {
   const explicit = typeof template?.templateId === 'string' ? template.templateId.trim() : '';
-  return explicit || `${familyId}_template_${templateIndex + 1}`;
+  if (explicit) return explicit;
+  const payload = {
+    prompt: normaliseSignatureText(template.prompt || ''),
+    stem: normaliseSignatureText(template.stem || ''),
+    model: normaliseSignatureText(template.model || ''),
+    accepted: Array.isArray(template.accepted)
+      ? template.accepted.map(normaliseSignatureText).sort()
+      : [],
+    skillIds: uniqueStrings(template.skillIds).sort(),
+    clusterId: template.clusterId || '',
+    validator: stableJson(template.validator || {}),
+    rubric: stableJson(template.rubric || {}),
+  };
+  return `${familyId}_template_${shortHash(JSON.stringify(stableJson(payload)))}`;
 }
 
 function variantSignatureFor({ family, template, templateId, model }) {
