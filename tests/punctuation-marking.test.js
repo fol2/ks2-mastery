@@ -227,6 +227,38 @@ test('boundary transfer validators require target marks between preserved clause
   assert.equal(missingDash.misconceptionTags.includes('boundary.dash_missing'), true);
 });
 
+test('fixed dash-clause exact items accept spaced hyphen, en dash, and em dash answers', () => {
+  const cases = [
+    {
+      itemId: 'dc_insert_door_froze',
+      answers: [
+        'The door creaked open - we froze.',
+        'The door creaked open – we froze.',
+        'The door creaked open — we froze.',
+      ],
+    },
+    {
+      itemId: 'dc_fix_signal_team',
+      answers: [
+        'The signal failed - the team waited.',
+        'The signal failed – the team waited.',
+        'The signal failed — the team waited.',
+      ],
+    },
+  ];
+
+  for (const { itemId, answers } of cases) {
+    for (const typed of answers) {
+      const result = markPunctuationAnswer({
+        item: item(itemId),
+        answer: { typed },
+      });
+      assert.equal(result.correct, true, `${itemId}: ${typed}`);
+      assert.deepEqual(result.misconceptionTags, [], `${itemId}: ${typed}`);
+    }
+  }
+});
+
 test('hyphen transfer validator requires the exact hyphenated phrase', () => {
   const correct = markPunctuationAnswer({
     item: item('hy_transfer_well_known'),
