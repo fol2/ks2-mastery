@@ -107,7 +107,8 @@ export function assertHeadersBlockIsFresh(headersContent, { allowPlaceholderHash
 //
 // The list is kept in sync with:
 //   - `_headers` (single source of truth at repo root)
-//   - `worker/src/security-headers.js` (`/src/bundles/*` immutable override)
+//   - `worker/src/security-headers.js` (`/src/bundles/app.bundle.js`
+//     no-store + split-chunk immutable override)
 //   - `scripts/production-bundle-audit.mjs` (live HEAD checks)
 //   - `docs/operations/capacity.md` (post-deploy cache-split check)
 //

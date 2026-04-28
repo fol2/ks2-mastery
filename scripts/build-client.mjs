@@ -111,14 +111,12 @@ export async function runBuildClient({ buildHash } = {}) {
   //
   // `splitting: true` requires `format: 'esm'` (already in place) and
   // uses `outdir` instead of `outfile`. `entryNames: 'app.bundle'`
-  // keeps the entry name stable at `app.bundle.js` so the Worker
-  // allowlist, `_headers` `/src/bundles/` cache rules, and the
-  // `index.html` `<script type="module" src="./src/bundles/app.bundle.js">`
-  // reference continue to resolve to the same filename. Chunk names
-  // (`chunkNames: '[name]-[hash]'`) give each split chunk a content-
-  // hashed filename so the immutable cache in
-  // `worker/src/security-headers.js::isImmutableBundlePath` is safe
-  // across redeploys.
+  // keeps the entry name stable at `app.bundle.js` so the Worker allowlist
+  // and `index.html` can point at one entry. `scripts/build-public.mjs`
+  // appends a content-hash query string to that script URL, and
+  // `worker/src/security-headers.js` serves the stable entry with no-store.
+  // Chunk names (`chunkNames: '[name]-[hash]'`) give each split chunk a
+  // content-hashed filename so immutable caching is safe across redeploys.
   //
   // F-01 (same-PR atomicity): `worker/src/app.js::publicSourceAssetResponse`
   // is updated in the same commit to match `/src/bundles/*.js` by prefix,

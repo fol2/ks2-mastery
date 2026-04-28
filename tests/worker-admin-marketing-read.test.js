@@ -355,3 +355,17 @@ test('U11 Marketing Read Routes', async (t) => {
     assert.equal(data.message.title, 'Hidden Draft');
   });
 });
+
+test('active-messages soft-fails open when the marketing table is not migrated', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    server.DB.db.exec('DROP TABLE admin_marketing_messages;');
+    const res = await getActiveMessages(server, 'adult-parent');
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.ok, true);
+    assert.deepEqual(data.messages, []);
+  } finally {
+    server.close();
+  }
+});

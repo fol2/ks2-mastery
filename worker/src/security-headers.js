@@ -143,18 +143,26 @@ export const SECURITY_HEADERS = Object.freeze({
   'Reporting-Endpoints': REPORTING_ENDPOINTS_VALUE,
 });
 
-// Path segments that receive the hashed-bundle immutable cache policy.
-// The Worker response wrapper matches these with explicit `set()` so that
-// ASSETS responses carrying `no-store` from `_headers` are overridden, not
-// appended to (security F-01 + feasibility Claim 5).
-const IMMUTABLE_BUNDLE_PREFIXES = ['/src/bundles/', '/assets/bundles/'];
+// Path segments that receive the content-hashed immutable cache policy.
+// `app.bundle.js` is deliberately excluded: it is a stable entry filename
+// referenced by HTML, so caching it as immutable can strand clients on stale
+// dynamic-import chunk names after a deploy.
+const IMMUTABLE_ASSET_BUNDLE_PREFIX = '/assets/bundles/';
+const SOURCE_BUNDLE_PREFIX = '/src/bundles/';
+const STABLE_SOURCE_ENTRY_BUNDLES = new Set(['/src/bundles/app.bundle.js']);
 
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 const FALLBACK_CACHE_CONTROL = 'no-store';
 
+function isStableSourceEntryBundlePath(pathname) {
+  return STABLE_SOURCE_ENTRY_BUNDLES.has(pathname);
+}
+
 function isImmutableBundlePath(pathname) {
   if (!pathname) return false;
-  return IMMUTABLE_BUNDLE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  if (pathname.startsWith(IMMUTABLE_ASSET_BUNDLE_PREFIX)) return true;
+  if (!pathname.startsWith(SOURCE_BUNDLE_PREFIX)) return false;
+  return pathname.endsWith('.js') && !isStableSourceEntryBundlePath(pathname);
 }
 
 function isTtsBinaryResponse(response) {
@@ -190,16 +198,17 @@ export function applySecurityHeaders(response, { path: pathname = '' } = {}) {
     headers.set(name, value);
   }
 
-  // Path-specific cache rules. Order matters: bundle immutable takes
-  // precedence over any existing `Cache-Control` because ASSETS responses
-  // arrive with `no-store` from the `_headers` `/*` rule.
+  // Path-specific cache rules. Order matters: the stable entry bundle must be
+  // no-store even on 2xx, while content-hashed split chunks can be immutable.
   //
   // Security residual (review security-residual-1): the immutable cache must
   // only bind to 2xx responses. A 404 or 5xx under `/src/bundles/<unknown>.js`
   // would otherwise poison client caches for a year. Non-2xx bundle responses
   // fall through to the normal preservation/fallback logic below.
   const isSuccess = response.status >= 200 && response.status < 300;
-  if (isImmutableBundlePath(pathname) && isSuccess) {
+  if (isStableSourceEntryBundlePath(pathname)) {
+    headers.set('Cache-Control', FALLBACK_CACHE_CONTROL);
+  } else if (isImmutableBundlePath(pathname) && isSuccess) {
     headers.set('Cache-Control', IMMUTABLE_CACHE_CONTROL);
   } else if (isTtsBinaryResponse(response)) {
     // TTS preserves its existing Cache-Control; do nothing.
