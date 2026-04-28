@@ -86,6 +86,31 @@ function securedRewardUnitForRelease(releaseId, clusterId, rewardUnitId) {
   };
 }
 
+test('Secure Stars ignore epoch-zero firstCorrectAt sentinels', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const progress = freshProgress();
+  progress.items['epoch-sentinel-item'] = {
+    attempts: 4,
+    correct: 4,
+    incorrect: 0,
+    streak: 4,
+    lapses: 0,
+    firstCorrectAt: 0,
+    lastCorrectAt: now,
+    lastSeen: now,
+  };
+  progress.attempts.push(makeAttempt({
+    itemId: 'epoch-sentinel-item',
+    ts: now,
+    skillIds: ['sentence_endings'],
+    rewardUnitId: 'sentence-endings-core',
+  }));
+
+  const view = projectPunctuationStars(progress, CURRENT_RELEASE_ID);
+
+  assert.equal(view.perMonster.pealark.secureStars, 0);
+});
+
 function richCurrentReleaseProgress() {
   const progress = freshProgress();
   const units = [

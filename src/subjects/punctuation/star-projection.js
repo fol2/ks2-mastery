@@ -94,6 +94,11 @@ function dayIndex(ts) {
   return Math.floor(Math.max(0, Number(ts) || 0) / DAY_MS);
 }
 
+function positiveTimestamp(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
+
 /** Mirror of `memorySnapshot` from read-model.js:118-139 */
 function memorySnapshot(value) {
   const raw = isPlainObject(value) ? value : {};
@@ -101,10 +106,10 @@ function memorySnapshot(value) {
   const correct = Math.max(0, Number(raw.correct) || 0);
   const streak = Math.max(0, Number(raw.streak) || 0);
   const lapses = Math.max(0, Number(raw.lapses) || 0);
-  const firstCorrectAt = Number.isFinite(Number(raw.firstCorrectAt)) ? Number(raw.firstCorrectAt) : null;
-  const lastCorrectAt = Number.isFinite(Number(raw.lastCorrectAt)) ? Number(raw.lastCorrectAt) : null;
+  const firstCorrectAt = positiveTimestamp(raw.firstCorrectAt);
+  const lastCorrectAt = positiveTimestamp(raw.lastCorrectAt);
   const accuracy = attempts ? correct / attempts : 0;
-  const correctSpanDays = firstCorrectAt != null && lastCorrectAt != null
+  const correctSpanDays = firstCorrectAt != null && lastCorrectAt != null && lastCorrectAt >= firstCorrectAt
     ? Math.floor((lastCorrectAt - firstCorrectAt) / DAY_MS)
     : 0;
   const secure = streak >= 3 && accuracy >= 0.8 && correctSpanDays >= 7;

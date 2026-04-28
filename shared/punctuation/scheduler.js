@@ -28,6 +28,11 @@ function timestamp(now = Date.now) {
   return Number.isFinite(value) ? value : Date.now();
 }
 
+function positiveTimestamp(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
+
 export function createMemoryState() {
   return {
     attempts: 0,
@@ -57,8 +62,8 @@ export function normaliseMemoryState(value) {
     ease: Math.max(1.25, Math.min(3.2, Number(raw.ease) || 2.3)),
     intervalDays: Math.max(0, Number(raw.intervalDays) || 0),
     dueAt: Math.max(0, Number(raw.dueAt) || 0),
-    firstCorrectAt: Number.isFinite(Number(raw.firstCorrectAt)) ? Number(raw.firstCorrectAt) : null,
-    lastCorrectAt: Number.isFinite(Number(raw.lastCorrectAt)) ? Number(raw.lastCorrectAt) : null,
+    firstCorrectAt: positiveTimestamp(raw.firstCorrectAt),
+    lastCorrectAt: positiveTimestamp(raw.lastCorrectAt),
     lastSeen: Math.max(0, Number(raw.lastSeen) || 0),
     lastCorrect: raw.lastCorrect === true || raw.lastCorrect === false ? raw.lastCorrect : null,
     recent: Array.isArray(raw.recent) ? raw.recent.map((entry) => (entry ? 1 : 0)).slice(-12) : [],
@@ -69,7 +74,7 @@ export function memorySnapshot(value, now = Date.now) {
   const state = normaliseMemoryState(value);
   const attempts = state.attempts;
   const accuracy = attempts ? state.correct / attempts : 0;
-  const correctSpanDays = state.firstCorrectAt != null && state.lastCorrectAt != null
+  const correctSpanDays = state.firstCorrectAt != null && state.lastCorrectAt != null && state.lastCorrectAt >= state.firstCorrectAt
     ? Math.floor((state.lastCorrectAt - state.firstCorrectAt) / DAY_MS)
     : 0;
   let bucket = 'new';

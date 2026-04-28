@@ -730,6 +730,40 @@ test('U7: facet in learning bucket with zero lapses is NOT deep-secured', () => 
     'reward unit itself is still secured');
 });
 
+test('U7: epoch-zero firstCorrectAt does not deep-secure reward units', () => {
+  const now = Date.UTC(2026, 3, 25);
+  const subjectState = freshSubjectState();
+
+  const key = masteryKey('endmarks', 'sentence-endings-core');
+  subjectState.data.progress.rewardUnits[key] = {
+    masteryKey: key,
+    releaseId: CURRENT_RELEASE_ID,
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    securedAt: now - 10_000,
+  };
+  subjectState.data.progress.facets['sentence_endings::choose'] = {
+    attempts: 4,
+    correct: 4,
+    incorrect: 0,
+    streak: 4,
+    lapses: 0,
+    dueAt: 0,
+    firstCorrectAt: 0,
+    lastCorrectAt: now,
+    lastSeen: now,
+  };
+
+  const model = buildPunctuationLearnerReadModel({
+    subjectStateRecord: subjectState,
+    practiceSessions: [],
+    now: () => now,
+  });
+
+  assert.equal(model.progressSnapshot.deepSecuredRewardUnits, 0);
+  assert.equal(model.progressSnapshot.securedRewardUnits, 1);
+});
+
 test('U7: multiple reward units in same cluster — shared deep-secure facet promotes both', () => {
   const now = Date.UTC(2026, 3, 25);
   const subjectState = freshSubjectState();
