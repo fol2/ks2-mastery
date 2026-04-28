@@ -578,6 +578,10 @@ export function normaliseSummary(value, isKnownSlug) {
     totalWords,
     correct,
     accuracy,
+    // Hero Mode P3: server-owned trust anchor for completion claims.
+    heroContext: value.heroContext && typeof value.heroContext === 'object' && !Array.isArray(value.heroContext)
+      ? value.heroContext
+      : null,
   };
 }
 

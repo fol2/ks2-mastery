@@ -32,6 +32,7 @@ import {
   PUNCTUATION_PHASES,
   PUNCTUATION_SERVICE_STATE_VERSION,
 } from '../../src/subjects/punctuation/service-contract.js';
+import { extractHeroSummaryContext } from '../hero/launch-context.js';
 
 const SUBJECT_ID = 'punctuation';
 const SERVER_AUTHORITY = 'worker';
@@ -363,6 +364,7 @@ function normaliseSession(value) {
       : null,
     weakFocus: mode === 'weak' ? normaliseWeakFocus(value.weakFocus) : null,
     gps: mode === 'gps' ? normaliseGpsSession(value.gps) : null,
+    heroContext: isPlainObject(value.heroContext) ? cloneSerialisable(value.heroContext) : null,
     serverAuthority: value.serverAuthority === SERVER_AUTHORITY ? SERVER_AUTHORITY : null,
   };
 }
@@ -1118,6 +1120,7 @@ function sessionSummary(session, data, indexes, now = Date.now) {
       reviewItems,
     };
   }
+  summary.heroContext = extractHeroSummaryContext(session);
   return summary;
 }
 

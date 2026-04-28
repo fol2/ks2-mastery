@@ -82,6 +82,18 @@ export function validateHeroContext(ctx) {
   return { valid: errors.length === 0, errors };
 }
 
+export function extractHeroSummaryContext(session) {
+  if (!session?.heroContext || session.heroContext.source !== 'hero-mode') return null;
+  const ctx = session.heroContext;
+  return {
+    source: ctx.source,
+    questId: ctx.questId || null,
+    taskId: ctx.taskId || null,
+    questFingerprint: ctx.questFingerprint || null,
+    launchRequestId: ctx.launchRequestId || null,
+  };
+}
+
 export function sanitiseHeroContext(ctx) {
   if (!isPlainObject(ctx)) return {};
   const result = {};

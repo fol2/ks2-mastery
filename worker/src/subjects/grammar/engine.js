@@ -2,6 +2,7 @@ import {
   cloneSerialisable,
   normalisePracticeSessionRecord,
 } from '../../../../src/platform/core/repositories/helpers.js';
+import { extractHeroSummaryContext } from '../../../../shared/hero/launch-context.js';
 import { grammarConceptStatus } from '../../../../shared/grammar/confidence.js';
 import { BadRequestError, NotFoundError } from '../../errors.js';
 import { compileGrammarAiEnrichment } from './ai-enrichment.js';
@@ -1144,6 +1145,7 @@ function completionSummary(state, nowTs) {
     targetCount: Number(session.targetCount) || 0,
     goal: isPlainObject(session.goal) ? cloneSerialisable(session.goal) : { type: 'questions' },
     timedOut: sessionGoalExpired(session, nowTs),
+    heroContext: extractHeroSummaryContext(session),
   };
 }
 
