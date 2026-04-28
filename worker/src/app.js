@@ -1571,9 +1571,9 @@ export function createWorkerApp({
               updatedState = { ...updatedState, recentClaims: [...(updatedState.recentClaims || []), claimRecord] };
 
               // P4: Check if daily just completed and award coins
-              let economyResult = { awarded: false, alreadyAwarded: false, amount: 0, ledgerEntryId: null, balanceAfter: 0 };
+              let economyResult = { awarded: false, alreadyAwarded: false, amount: 0, ledgerEntryId: null, balanceAfter: 0, blockedReason: null };
               if (economyEnabled) {
-                const { canAward } = canAwardDailyCompletionCoins(updatedState, economyEnabled);
+                const { canAward, reason } = canAwardDailyCompletionCoins(updatedState, economyEnabled);
                 if (canAward) {
                   economyResult = applyDailyCompletionCoinAward(updatedState, {
                     learnerId: heroLearnerId,
@@ -1581,6 +1581,8 @@ export function createWorkerApp({
                     dailyCompletionCoins: HERO_DAILY_COMPLETION_COINS,
                   });
                   updatedState = economyResult.state;
+                } else {
+                  economyResult.blockedReason = reason;
                 }
               }
 
@@ -1666,6 +1668,15 @@ export function createWorkerApp({
                   balanceAfter: mutationResult.economyResult.balanceAfter,
                   ledgerEntryId: mutationResult.economyResult.ledgerEntryId,
                 }));
+              } else if (mutationResult.economyResult?.alreadyAwarded) {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_daily_coins_duplicate_prevented',
+                  learnerId: heroLearnerId,
+                  questId: body.questId || '',
+                  taskId: body.taskId || '',
+                  ledgerEntryId: mutationResult.economyResult.ledgerEntryId || '',
+                }));
               } else if (!economyEnabled) {
                 // eslint-disable-next-line no-console
                 console.log(JSON.stringify({
@@ -1673,6 +1684,15 @@ export function createWorkerApp({
                   learnerId: heroLearnerId,
                   questId: body.questId || '',
                   taskId: body.taskId || '',
+                }));
+              } else if (economyEnabled && mutationResult.economyResult?.blockedReason) {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_daily_coins_blocked',
+                  learnerId: heroLearnerId,
+                  questId: body.questId || '',
+                  taskId: body.taskId || '',
+                  reason: mutationResult.economyResult.blockedReason,
                 }));
               }
             } catch { /* best-effort */ }
