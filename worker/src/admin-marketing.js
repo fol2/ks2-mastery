@@ -760,7 +760,7 @@ export async function listMarketingMessages(db, { actorAccountId }) {
     throw error;
   }
 
-  return { messages: rows.map(adminMessageFields) };
+  return { messages: rows.map(adminMessageFields), schedulingSemantics: 'manual_publish_required' };
 }
 
 export async function getMarketingMessage(db, { actorAccountId, messageId }) {
@@ -788,7 +788,7 @@ export async function getMarketingMessage(db, { actorAccountId, messageId }) {
     throw new NotFoundError('Marketing message not found.', { code: 'not_found', messageId });
   }
 
-  return { message: adminMessageFields(row) };
+  return { message: adminMessageFields(row), schedulingSemantics: 'manual_publish_required' };
 }
 
 // Public-facing active messages — any authenticated user.
