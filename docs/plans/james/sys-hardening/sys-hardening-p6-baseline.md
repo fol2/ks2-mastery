@@ -1,10 +1,10 @@
 # System Hardening P6 — Baseline and Drift Record
 
-**Phase:** P6 — Capacity Certification and Operations Handover  
-**Recorded:** 2026-04-28T22:36:59Z  
-**Branch:** `codex/sys-hardening-p6-capacity`  
-**Current main commit:** `d1e0be7756f94fb008b049720e5f919a5a746c33` (`docs(admin): add P5 completion report — operator readiness, evidence, and QoL (#537)`)  
-**P5 reported final commit:** `7ea8a0074544b84399a9c02fe13abdd9b0a6834b` (`capacity(evidence): record 60-learner preflight status — infrastructure ready, manifest prep rate-limited`)  
+**Phase:** P6 — Capacity Certification and Operations Handover
+**Recorded:** 2026-04-28T22:36:59Z
+**Branch:** `codex/sys-hardening-p6-capacity`
+**Current main commit:** `d1e0be7756f94fb008b049720e5f919a5a746c33` (`docs(admin): add P5 completion report — operator readiness, evidence, and QoL (#537)`)
+**P5 reported final commit:** `7ea8a0074544b84399a9c02fe13abdd9b0a6834b` (`capacity(evidence): record 60-learner preflight status — infrastructure ready, manifest prep rate-limited`)
 **Implementation plan:** `docs/plans/2026-04-28-006-fix-p6-capacity-certification-handover-plan.md`
 
 This record is the P6 starting point. It captures current `main` before any P6 bootstrap mitigation, certification rerun, CSP decision, HSTS activation, or Admin evidence follow-up is attempted.
@@ -19,7 +19,7 @@ This record is the P6 starting point. It captures current `main` before any P6 b
 | Public capacity decision | Remains `small-pilot-provisional` until new schema-v2 evidence passes the 30-learner release gate. |
 | CSP enforcement | **Deferred by date gate.** Observation window is open from 2026-04-27T00:00:00Z to 2026-05-04T00:00:00Z; the daily log is still unpopulated. |
 | HSTS preload | **Deferred by operator gate.** `HSTS_PRELOAD_ENABLED` remains `false`; DNS-zone enumeration and sign-off are incomplete. |
-| Admin production evidence | Present as a P5 panel/model, but the checked-in `latest-evidence-summary.json` is still a placeholder until P6 regenerates or documents the evidence summary. |
+| Admin production evidence | Present as a P5 panel/model. P6 replaces the placeholder summary with generated failed/non-certifying metrics, and the panel must continue to fail closed on stale or diagnostic evidence. |
 | Worktree hygiene | Behavioural mitigation work starts from `origin/main`; the only pre-mitigation local addition is the P6 implementation plan and this baseline record. |
 
 ## Post-P5 Drift Since `7ea8a00`
@@ -29,7 +29,7 @@ The current branch contains 14 commits after the P5 reported final commit. The d
 | Area | Current drift | P6 interpretation |
 | --- | --- | --- |
 | P5/P6 documents | Added P5 completion report, P6 contract, Admin Page P5 report, Punctuation QG P2 report, and the D1 latency evidence-culture solution note. | These are source-of-truth updates, not runtime behaviour changes. P6 must reconcile against them. |
-| Capacity evidence summary | Added `scripts/generate-evidence-summary.mjs` and placeholder `reports/capacity/latest-evidence-summary.json`. | Needs P6 truth pass so failing/blocked evidence cannot look like success or absence. |
+| Capacity evidence summary | Added `scripts/generate-evidence-summary.mjs`; P6 replaces the placeholder `reports/capacity/latest-evidence-summary.json` with generated failed/non-certifying metrics. | Needs P6 truth pass so failing/blocked/diagnostic evidence cannot look like success or absence. |
 | Admin Production Evidence | Added `admin-production-evidence` model, React panel, and tests. | Good taxonomy exists; P6 must ensure current evidence summary feeds it honestly. |
 | Admin support incident flow | Added incident flow model/UI/tests and Worker admin app wiring. | Admin-only drift; no learner-route certification claim depends on it, but Admin residuals stay in the P6 ledger. |
 | Admin marketing/content QoL | Added/changed marketing edit, scheduling truth, subject drilldown actions, fixtures, destructive confirmation, and Debug Bundle UI tests. | Admin-only/product-support drift. P6 should avoid broad UI churn unless evidence panels need truth wording. |
@@ -44,7 +44,7 @@ The current branch contains 14 commits after the P5 reported final commit. The d
 | `reports/capacity/evidence/30-learner-beta-v2-20260428.json` | Fail | Earlier 30-learner production run, bootstrap P95 1,126.3 ms, same single threshold class. |
 | `reports/capacity/evidence/60-learner-stretch-preflight-20260428-p5.json` | Non-certifying setup blocker | Did not reach application load; current shape cannot certify 60 learners. |
 | `reports/capacity/evidence/60-learner-stretch-preflight-20260428.json` | Non-certifying setup blocker | Earlier preflight blocker; retained for history only. |
-| `reports/capacity/latest-evidence-summary.json` | Placeholder | `{ "schema": 2, "metrics": {}, "generatedAt": null }` must not be interpreted as a successful certification state. |
+| `reports/capacity/latest-evidence-summary.json` | Generated summary | P6-generated schema-v2 summary currently reports the latest 30-learner evidence as failed and the latest 60-learner evidence as non-certifying; regeneration must not promote stale or diagnostic evidence. |
 
 ## Current Decision Gates
 

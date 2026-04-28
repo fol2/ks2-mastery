@@ -70,14 +70,14 @@ test('classifyEvidenceMetric returns STALE when generatedAt is older than 24h', 
 test('classifyEvidenceMetric returns FAILING when ok is false', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('certified_30_learner_beta', { ok: false, failures: [] }, freshDate, now);
+  const result = classifyEvidenceMetric('certified_30_learner_beta', { ok: false, failures: [], finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.FAILING);
 });
 
 test('classifyEvidenceMetric returns FAILING when failures array is non-empty', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('certified_30_learner_beta', { ok: true, failures: ['max5xx'] }, freshDate, now);
+  const result = classifyEvidenceMetric('certified_30_learner_beta', { ok: true, failures: ['max5xx'], finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.FAILING);
 });
 
@@ -88,7 +88,7 @@ test('classifyEvidenceMetric returns FAILING when failures array is non-empty', 
 test('classifyEvidenceMetric returns NON_CERTIFYING for dry-run evidence', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('smoke_pass', { ok: true, dryRun: true, failures: [] }, freshDate, now);
+  const result = classifyEvidenceMetric('smoke_pass', { ok: true, dryRun: true, failures: [], finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.NON_CERTIFYING);
 });
 
@@ -100,6 +100,7 @@ test('classifyEvidenceMetric returns NON_CERTIFYING for setup-blocked preflight 
     status: 'non_certifying',
     evidenceKind: 'preflight',
     failures: [],
+    finishedAt: freshDate,
   }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.NON_CERTIFYING);
 });
@@ -111,7 +112,7 @@ test('classifyEvidenceMetric returns NON_CERTIFYING for setup-blocked preflight 
 test('classifyEvidenceMetric returns SMOKE_PASS for passing smoke tier', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('smoke_pass', { ok: true, failures: [] }, freshDate, now);
+  const result = classifyEvidenceMetric('smoke_pass', { ok: true, failures: [], finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.SMOKE_PASS);
 });
 
@@ -122,7 +123,7 @@ test('classifyEvidenceMetric returns SMOKE_PASS for passing smoke tier', () => {
 test('classifyEvidenceMetric returns SMALL_PILOT_PROVISIONAL for passing small pilot', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('small_pilot_provisional', { ok: true, failures: [] }, freshDate, now);
+  const result = classifyEvidenceMetric('small_pilot_provisional', { ok: true, failures: [], finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL);
 });
 
@@ -133,7 +134,7 @@ test('classifyEvidenceMetric returns SMALL_PILOT_PROVISIONAL for passing small p
 test('classifyEvidenceMetric returns CERTIFIED_30 for passing 30-learner tier', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('certified_30_learner_beta', { ok: true, failures: [] }, freshDate, now);
+  const result = classifyEvidenceMetric('certified_30_learner_beta', { ok: true, failures: [], certifying: true, finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.CERTIFIED_30);
 });
 
@@ -144,7 +145,7 @@ test('classifyEvidenceMetric returns CERTIFIED_30 for passing 30-learner tier', 
 test('classifyEvidenceMetric returns CERTIFIED_60 for passing 60-learner tier', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('certified_60_learner_stretch', { ok: true, failures: [] }, freshDate, now);
+  const result = classifyEvidenceMetric('certified_60_learner_stretch', { ok: true, failures: [], certifying: true, finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.CERTIFIED_60);
 });
 
@@ -155,7 +156,7 @@ test('classifyEvidenceMetric returns CERTIFIED_60 for passing 60-learner tier', 
 test('classifyEvidenceMetric returns CERTIFIED_100 for passing 100+ learner tier', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('certified_100_plus', { ok: true, failures: [] }, freshDate, now);
+  const result = classifyEvidenceMetric('certified_100_plus', { ok: true, failures: [], certifying: true, finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.CERTIFIED_100);
 });
 
@@ -166,7 +167,7 @@ test('classifyEvidenceMetric returns CERTIFIED_100 for passing 100+ learner tier
 test('classifyEvidenceMetric returns UNKNOWN for unrecognised tier key', () => {
   const now = Date.now();
   const freshDate = new Date(now - 1000).toISOString();
-  const result = classifyEvidenceMetric('totally_new_tier', { ok: true, failures: [] }, freshDate, now);
+  const result = classifyEvidenceMetric('totally_new_tier', { ok: true, failures: [], finishedAt: freshDate }, freshDate, now);
   assert.equal(result, EVIDENCE_STATES.UNKNOWN);
 });
 
@@ -343,7 +344,7 @@ test('buildEvidencePanelModel keeps setup-blocked 60-learner preflight non-certi
         decision: 'invalid-with-named-setup-blocker',
         failureReason: 'session-manifest-preparation-rate-limited',
         learners: 60,
-        finishedAt: '2026-04-28T00:00:00.000Z',
+        finishedAt: freshDate,
         commit: '0f744c3',
         failures: [],
         thresholdViolations: [],
@@ -417,6 +418,35 @@ test('buildEvidencePanelModel overall is STALE when generatedAt exceeds 24h', ()
   };
   const result = buildEvidencePanelModel(summary, now);
   assert.equal(result.isFresh, false);
+  assert.equal(result.overallState, EVIDENCE_STATES.STALE);
+});
+
+test('buildEvidencePanelModel treats fresh summary generation with stale evidence run as stale', () => {
+  const now = Date.now();
+  const generatedAt = new Date(now - 60_000).toISOString();
+  const staleFinishedAt = new Date(now - EVIDENCE_FRESH_THRESHOLD_MS - 1000).toISOString();
+  const summary = {
+    schema: 2,
+    generatedAt,
+    metrics: {
+      certified_30_learner_beta: {
+        tier: 'certified_30_learner_beta',
+        status: 'passed',
+        ok: true,
+        certifying: true,
+        dryRun: false,
+        learners: 30,
+        finishedAt: staleFinishedAt,
+        commit: 'abc1234',
+        failures: [],
+        fileName: '30-pass.json',
+      },
+    },
+  };
+  const result = buildEvidencePanelModel(summary, now);
+  assert.equal(result.isFresh, false);
+  assert.equal(result.latestEvidenceAt, staleFinishedAt);
+  assert.equal(result.metrics[0].state, EVIDENCE_STATES.STALE);
   assert.equal(result.overallState, EVIDENCE_STATES.STALE);
 });
 

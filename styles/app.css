@@ -11449,6 +11449,7 @@ html { scroll-behavior: smooth; }
 .admin-evidence-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .admin-evidence-th {
@@ -11458,6 +11459,12 @@ html { scroll-behavior: smooth; }
 
 .admin-evidence-td {
   padding: 4px 8px;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+.admin-evidence-detail {
+  max-width: 32rem;
 }
 
 .admin-section-title {

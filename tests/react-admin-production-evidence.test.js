@@ -125,6 +125,35 @@ test('renders fresh evidence panel with passing 30-learner certification', async
   assert.match(html, /\(fresh\)/, 'shows fresh indicator');
 });
 
+test('uses the 24-hour evidence threshold for the frame stale banner', async () => {
+  const now = Date.now();
+  const tenMinutesOld = new Date(now - 10 * 60_000).toISOString();
+  const model = {
+    productionEvidence: {
+      schema: 2,
+      generatedAt: tenMinutesOld,
+      metrics: {
+        certified_30_learner_beta: {
+          tier: 'certified_30_learner_beta',
+          status: 'passed',
+          ok: true,
+          certifying: true,
+          dryRun: false,
+          learners: 30,
+          finishedAt: tenMinutesOld,
+          commit: 'abc1234',
+          failures: [],
+          fileName: '30-learner.json',
+        },
+      },
+    },
+  };
+  const html = await renderFixture(buildEntry(model));
+
+  assert.match(html, /\(fresh\)/, 'evidence is still fresh inside the 24-hour evidence window');
+  assert.doesNotMatch(html, /data-panel-frame-stale="true"/, 'frame does not show the default 5-minute stale warning');
+});
+
 // ---------------------------------------------------------------------------
 // 2. Stale evidence (generatedAt older than 24h)
 // ---------------------------------------------------------------------------
@@ -156,6 +185,37 @@ test('renders stale evidence panel when generatedAt exceeds 24h', async () => {
 
   assert.match(html, /Latest certification evidence/, 'renders panel title');
   assert.match(html, /data-evidence-state="stale"/, 'overall state is stale');
+  assert.match(html, /\(stale\)/, 'shows stale indicator');
+});
+
+test('renders stale when summary generation is fresh but the evidence run is stale', async () => {
+  const now = Date.now();
+  const freshGeneratedAt = new Date(now - 60_000).toISOString();
+  const staleFinishedAt = new Date(now - 25 * 60 * 60 * 1000).toISOString();
+  const model = {
+    productionEvidence: {
+      schema: 2,
+      generatedAt: freshGeneratedAt,
+      metrics: {
+        certified_30_learner_beta: {
+          tier: 'certified_30_learner_beta',
+          status: 'passed',
+          ok: true,
+          certifying: true,
+          dryRun: false,
+          learners: 30,
+          finishedAt: staleFinishedAt,
+          commit: 'abc1234',
+          failures: [],
+          fileName: '30-learner.json',
+        },
+      },
+    },
+  };
+  const html = await renderFixture(buildEntry(model));
+
+  assert.match(html, /data-evidence-state="stale"/, 'overall state is stale');
+  assert.match(html, /data-panel-frame-stale="true"/, 'frame stale warning follows evidence run age');
   assert.match(html, /\(stale\)/, 'shows stale indicator');
 });
 
@@ -295,7 +355,7 @@ test('renders 60-learner preflight as non-certifying rather than certified', asy
           decision: 'invalid-with-named-setup-blocker',
           failureReason: 'session-manifest-preparation-rate-limited',
           learners: 60,
-          finishedAt: '2026-04-28T00:00:00.000Z',
+          finishedAt: freshDate,
           commit: '0f744c3',
           failures: [],
           thresholdViolations: [],
@@ -309,4 +369,37 @@ test('renders 60-learner preflight as non-certifying rather than certified', asy
   assert.match(html, /data-evidence-state="non_certifying"/, 'shows non-certifying badge');
   assert.doesNotMatch(html, /Certified: 60-learner stretch/, 'does not render 60-learner certification');
   assert.match(html, /Reason: session-manifest-preparation-rate-limited/, 'shows setup blocker reason');
+});
+
+test('renders non-certifying diagnostics with an explicit eligibility reason', async () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 60_000).toISOString();
+  const model = {
+    productionEvidence: {
+      schema: 2,
+      generatedAt: freshDate,
+      metrics: {
+        certified_30_learner_beta: {
+          tier: 'certified_30_learner_beta',
+          status: 'non_certifying',
+          ok: true,
+          certifying: false,
+          dryRun: false,
+          evidenceKind: 'capacity-run',
+          certificationEligible: false,
+          certificationReasons: ['session-source-not-isolated-demo'],
+          learners: 30,
+          finishedAt: freshDate,
+          failures: [],
+          thresholdViolations: [],
+          fileName: '30-shared-auth.json',
+        },
+      },
+    },
+  };
+  const html = await renderFixture(buildEntry(model));
+
+  assert.match(html, /data-evidence-state="non_certifying"/, 'shows non-certifying badge');
+  assert.match(html, /Reason: not-certification-eligible: session-source-not-isolated-demo/, 'explains why the passing-shaped run cannot certify');
+  assert.match(html, /30-learner beta/, 'uses a human tier label');
 });

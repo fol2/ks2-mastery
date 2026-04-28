@@ -2,6 +2,7 @@ import React from 'react';
 import { AdminPanelFrame } from './AdminPanelFrame.jsx';
 import {
   buildEvidencePanelModel,
+  EVIDENCE_FRESH_THRESHOLD_MS,
   EVIDENCE_STATES,
   isValidEvidenceState,
 } from '../../platform/hubs/admin-production-evidence.js';
@@ -38,10 +39,22 @@ const STATE_BADGES = {
   [EVIDENCE_STATES.UNKNOWN]: 'badge muted',
 };
 
+const TIER_LABELS = {
+  smoke_pass: 'Smoke pass',
+  small_pilot_provisional: 'Small pilot',
+  certified_30_learner_beta: '30-learner beta',
+  certified_60_learner_stretch: '60-learner stretch',
+  certified_100_plus: '100+ learners',
+};
+
 function StateBadge({ state }) {
   const label = STATE_LABELS[state] || state;
   const className = STATE_BADGES[state] || 'badge muted';
   return <span className={className} data-evidence-state={state}>{label}</span>;
+}
+
+function formatTierLabel(tier) {
+  return TIER_LABELS[tier] || String(tier || 'Unknown').replace(/[_-]+/g, ' ');
 }
 
 function formatEvidenceTimestamp(isoString) {
@@ -76,6 +89,11 @@ function formatMetricDetail(metric) {
     details.push(`Threshold violation: ${thresholdDetails.join(' ')}`);
   } else if (metric.failureReason) {
     details.push(`Reason: ${metric.failureReason}.`);
+  } else if (metric.state === EVIDENCE_STATES.NON_CERTIFYING) {
+    const reasons = Array.isArray(metric.certificationReasons) && metric.certificationReasons.length > 0
+      ? metric.certificationReasons.join(', ')
+      : (metric.status || metric.evidenceKind || metric.decision || 'not eligible for certification');
+    details.push(`Reason: not-certification-eligible: ${reasons}.`);
   }
   if (metric.fileName) {
     details.push(`Source: ${metric.fileName}.`);
@@ -88,17 +106,18 @@ export function AdminProductionEvidencePanel({ model, actions }) {
   const now = Date.now();
   const panelModel = buildEvidencePanelModel(evidenceSummary, now);
 
-  const refreshedAtMs = panelModel.generatedAt
-    ? new Date(panelModel.generatedAt).getTime()
+  const latestEvidenceAtMs = panelModel.latestEvidenceAt
+    ? new Date(panelModel.latestEvidenceAt).getTime()
     : null;
 
   return (
     <AdminPanelFrame
       eyebrow="Production evidence"
       title="Latest certification evidence"
-      refreshedAt={refreshedAtMs}
+      refreshedAt={latestEvidenceAtMs}
       refreshError={null}
       onRefresh={actions?.dispatch ? () => actions.dispatch('admin-ops-evidence-refresh') : undefined}
+      staleThresholdMs={EVIDENCE_FRESH_THRESHOLD_MS}
       data={panelModel.metrics.length > 0 ? panelModel.metrics : null}
       loading={false}
       emptyState={
@@ -113,8 +132,11 @@ export function AdminProductionEvidencePanel({ model, actions }) {
           <div><StateBadge state={panelModel.overallState} /></div>
         </div>
         <div className="small muted admin-evidence-generated">
-          Summary generated: {formatEvidenceTimestamp(panelModel.generatedAt)}
+          Latest evidence run: {formatEvidenceTimestamp(panelModel.latestEvidenceAt)}
           {panelModel.isFresh ? ' (fresh)' : ' (stale)'}
+        </div>
+        <div className="small muted admin-evidence-generated">
+          Summary generated: {formatEvidenceTimestamp(panelModel.generatedAt)}
         </div>
       </div>
 
@@ -137,13 +159,13 @@ export function AdminProductionEvidencePanel({ model, actions }) {
               const detail = formatMetricDetail(metric);
               return (
                 <tr key={metric.key} data-metric-key={metric.key}>
-                  <td className="admin-evidence-td">{metric.tier}</td>
+                  <td className="admin-evidence-td">{formatTierLabel(metric.tier)}</td>
                   <td className="admin-evidence-td"><StateBadge state={metric.state} /></td>
                   <td className="admin-evidence-td">{metric.learners ?? '—'}</td>
                   <td className="small muted admin-evidence-td">
                     {formatEvidenceTimestamp(metric.finishedAt)}
                   </td>
-                  <td className="small muted admin-evidence-td">{detail || '—'}</td>
+                  <td className="small muted admin-evidence-td admin-evidence-detail">{detail || '—'}</td>
                 </tr>
               );
             })}

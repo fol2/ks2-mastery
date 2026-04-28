@@ -37,7 +37,7 @@ export function isValidEvidenceState(value) {
  *
  * @param {string} metricKey — the metric tier key (e.g. 'certified_30_learner_beta')
  * @param {object|null} metricValue — the metric summary object from the evidence summary
- * @param {string|null} generatedAt — ISO timestamp of when the summary was generated
+ * @param {string|null} generatedAt — retained for backwards-compatible call sites
  * @param {number} now — current time in ms (Date.now())
  * @returns {string} one of EVIDENCE_STATES values
  */
@@ -46,12 +46,14 @@ export function classifyEvidenceMetric(metricKey, metricValue, generatedAt, now)
     return EVIDENCE_STATES.NOT_AVAILABLE;
   }
 
-  // Check freshness of the summary generation time.
-  const generatedAtMs = generatedAt ? new Date(generatedAt).getTime() : 0;
-  if (!generatedAtMs || !Number.isFinite(generatedAtMs)) {
+  // Evidence freshness is tied to the run completion time, not the summary
+  // build time. Regenerating latest-evidence-summary.json must never refresh
+  // an old certification run.
+  const finishedAtMs = metricValue.finishedAt ? new Date(metricValue.finishedAt).getTime() : 0;
+  if (!finishedAtMs || !Number.isFinite(finishedAtMs)) {
     return EVIDENCE_STATES.STALE;
   }
-  const ageMs = now - generatedAtMs;
+  const ageMs = now - finishedAtMs;
   if (ageMs > EVIDENCE_FRESH_THRESHOLD_MS) {
     return EVIDENCE_STATES.STALE;
   }
@@ -119,15 +121,6 @@ export function buildEvidencePanelModel(summaryJson, now) {
   // Schema 3 adds a sources manifest; schema 2 omits it — default to null.
   const sources = summary.sources && typeof summary.sources === 'object' ? summary.sources : null;
 
-  // Determine freshness.
-  const generatedAtMs = generatedAt ? new Date(generatedAt).getTime() : 0;
-  const isFresh = Boolean(
-    generatedAtMs &&
-    Number.isFinite(generatedAtMs) &&
-    (now - generatedAtMs) <= EVIDENCE_FRESH_THRESHOLD_MS,
-  );
-
-  // Classify each metric.
   const metrics = Object.entries(rawMetrics).map(([key, value]) => ({
     key,
     tier: value?.tier || key,
@@ -147,13 +140,17 @@ export function buildEvidencePanelModel(summaryJson, now) {
     failures: Array.isArray(value?.failures) ? value.failures : [],
     thresholdViolations: Array.isArray(value?.thresholdViolations) ? value.thresholdViolations : [],
     thresholdsPassed: value?.thresholdsPassed ?? null,
+    certificationEligible: value?.certificationEligible ?? null,
+    certificationReasons: Array.isArray(value?.certificationReasons) ? value.certificationReasons : [],
     fileName: value?.fileName || null,
   })).sort(compareMetricRows);
 
-  // Overall state: highest-tier passing state, or the most severe problem.
+  const latestEvidenceAt = latestMetricTimestamp(metrics);
+  const isFresh = metrics.some((metric) => metric.state !== EVIDENCE_STATES.STALE);
+
   const overallState = deriveOverallState(metrics, isFresh);
 
-  return { metrics, generatedAt, isFresh, overallState, sources };
+  return { metrics, generatedAt, latestEvidenceAt, isFresh, overallState, sources };
 }
 
 /**
@@ -215,4 +212,17 @@ function compareMetricRows(left, right) {
   const rightRank = rightIndex === -1 ? order.length : rightIndex;
   if (leftRank !== rightRank) return leftRank - rightRank;
   return left.key.localeCompare(right.key);
+}
+
+function latestMetricTimestamp(metrics) {
+  let latest = null;
+  let latestMs = 0;
+  for (const metric of metrics) {
+    const timestampMs = metric.finishedAt ? new Date(metric.finishedAt).getTime() : 0;
+    if (Number.isFinite(timestampMs) && timestampMs > latestMs) {
+      latestMs = timestampMs;
+      latest = new Date(timestampMs).toISOString();
+    }
+  }
+  return latest;
 }
