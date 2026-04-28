@@ -381,6 +381,19 @@ textarea:focus-visible {
   margin-top: 24px;
 }
 
+.intent-public-lane {
+  display: inline-flex;
+  margin: 18px 0 0;
+  color: var(--brand);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.intent-public-links,
+.practice-public-related {
+  margin-top: 22px;
+}
+
 .practice-public-actions {
   margin-top: 24px;
 }

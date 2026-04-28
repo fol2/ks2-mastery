@@ -13,6 +13,9 @@ export const PRACTICE_SEO_PAGES = Object.freeze([
       'Strengthen accuracy, recall and independent word confidence',
       'Try the demo before signing in to save learner progress',
     ],
+    relatedLinks: [
+      Object.freeze({ href: '/year-5-spelling-practice/', label: 'Year 5 spelling practice online' }),
+    ],
   }),
   Object.freeze({
     slug: 'ks2-grammar-practice',
@@ -26,6 +29,9 @@ export const PRACTICE_SEO_PAGES = Object.freeze([
       'Build sentence-level accuracy and language confidence',
       'Use the demo path to try the practice flow before signing in',
     ],
+    relatedLinks: [
+      Object.freeze({ href: '/help-child-ks2-grammar-at-home/', label: 'Help your child with KS2 grammar at home' }),
+    ],
   }),
   Object.freeze({
     slug: 'ks2-punctuation-practice',
@@ -38,6 +44,9 @@ export const PRACTICE_SEO_PAGES = Object.freeze([
       'Practise KS2 punctuation in focused online sessions',
       'Work on clearer sentence meaning and written accuracy',
       'Start with the demo, then sign in when you want saved progress',
+    ],
+    relatedLinks: [
+      Object.freeze({ href: '/ks2-apostrophes-practice/', label: 'KS2 apostrophes practice online' }),
     ],
   }),
 ]);
@@ -53,6 +62,10 @@ export function escapeHtml(value) {
 
 function renderPoint(point) {
   return `          <li>${escapeHtml(point)}</li>`;
+}
+
+function renderRelatedLink(link) {
+  return `        <a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`;
 }
 
 export function canonicalPracticePageUrl(page) {
@@ -110,6 +123,10 @@ export function renderPracticeSeoPage(page) {
       <ul class="practice-public-list" aria-label="${escapedEyebrow} benefits">
 ${page.points.map(renderPoint).join('\n')}
       </ul>
+      <nav class="seo-practice-links practice-public-related" aria-label="Related KS2 Mastery pages">
+${(page.relatedLinks || []).map(renderRelatedLink).join('\n')}
+        <a href="/about/">About KS2 Mastery</a>
+      </nav>
       <div class="actions practice-public-actions">
         <a class="btn primary lg" href="/demo">Try demo</a>
         <a class="btn secondary lg" href="/">KS2 Mastery home</a>

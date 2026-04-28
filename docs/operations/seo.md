@@ -20,6 +20,9 @@ The canonical public HTML URLs intended for search results are:
 - `https://ks2.eugnel.uk/ks2-spelling-practice/`
 - `https://ks2.eugnel.uk/ks2-grammar-practice/`
 - `https://ks2.eugnel.uk/ks2-punctuation-practice/`
+- `https://ks2.eugnel.uk/ks2-apostrophes-practice/`
+- `https://ks2.eugnel.uk/year-5-spelling-practice/`
+- `https://ks2.eugnel.uk/help-child-ks2-grammar-at-home/`
 
 The supplementary AI-readable summary is:
 
@@ -27,9 +30,11 @@ The supplementary AI-readable summary is:
 
 The root and about pages should describe KS2 Mastery as an online KS2 spelling, grammar, and punctuation practice product. The copy must stay aligned with the actual app experience and must not expose private learner state, admin surfaces, generated content stores, or internal analytics.
 
-The practice-tool landing pages should stay focused on the product's real subject areas. `llms.txt` is a short factual summary for AI agents, not a replacement for crawlable HTML, sitemap coverage, robots access, or Search Console validation.
+The practice-tool landing pages should stay focused on the product's real subject areas. The focused V4 intent pages are the first small post-foundation slice: apostrophes practice, Year 5 spelling practice, and grammar help at home. They should stay aligned with actual product capability and should not become a broad blog or curriculum library.
 
-Future subject/problem or parent-support pages should be added only after they exist as accurate public pages and there is measurement evidence to guide the next slice.
+`llms.txt` is a short factual summary for AI agents, not a replacement for crawlable HTML, sitemap coverage, robots access, or Search Console validation.
+
+Future subject/problem or parent-support pages should be added only after there is measurement evidence or a clear product-support reason to guide the next slice.
 
 ## Production Checks
 
@@ -38,9 +43,10 @@ After deployment, verify:
 - `https://ks2.eugnel.uk/` returns public identity copy, meta description, canonical URL, share metadata, and JSON-LD product identity.
 - `https://ks2.eugnel.uk/about/` returns page-specific static public HTML, not the root SPA shell.
 - `https://ks2.eugnel.uk/ks2-spelling-practice/`, `https://ks2.eugnel.uk/ks2-grammar-practice/`, and `https://ks2.eugnel.uk/ks2-punctuation-practice/` each return page-specific public HTML, not the root SPA shell.
+- `https://ks2.eugnel.uk/ks2-apostrophes-practice/`, `https://ks2.eugnel.uk/year-5-spelling-practice/`, and `https://ks2.eugnel.uk/help-child-ks2-grammar-at-home/` each return page-specific public HTML, not the root SPA shell.
 - `https://ks2.eugnel.uk/llms.txt` returns plain text with the product identity, canonical public pages, subject coverage, and privacy boundary. It must not include private paths, internal implementation tokens, secret names, or recommendation guarantees.
 - `https://ks2.eugnel.uk/robots.txt` returns a robots policy, not the SPA HTML fallback, and excludes `/api/`, `/admin`, and `/demo` from normal crawler discovery.
-- `https://ks2.eugnel.uk/sitemap.xml` returns an XML sitemap with exactly the root, about page, and three canonical practice-tool page URLs. It must not list `llms.txt`, `/api/`, `/admin`, `/demo`, local, or `.html` variants.
+- `https://ks2.eugnel.uk/sitemap.xml` returns an XML sitemap with exactly the root, about page, three canonical practice-tool page URLs, and three V4 intent-page URLs. It must not list `llms.txt`, `/api/`, `/admin`, `/demo`, local, or `.html` variants.
 - `npm run audit:production -- --skip-local` passes against the live origin.
 
 Search engines can still take time to crawl and index the site after these checks pass.
@@ -51,12 +57,12 @@ Use Google Search Console or equivalent search tooling to:
 
 - Verify ownership for `https://ks2.eugnel.uk/`.
 - Submit `https://ks2.eugnel.uk/sitemap.xml`.
-- Inspect all five canonical public HTML URLs after deployment: root, about, spelling practice, grammar practice, and punctuation practice.
+- Inspect all eight canonical public HTML URLs after deployment: root, about, spelling practice, grammar practice, punctuation practice, apostrophes practice, Year 5 spelling practice, and grammar help at home.
 - Review indexing status, impressions, clicks, CTR, average position, queries, and landing pages before choosing the next SEO content page.
 
 The verification method depends on the external account setup. Do not add placeholder verification tokens to the repo.
 
-Track the first baseline after deployment, then review again once Search Console has enough crawl and query data to show signal. Record:
+Track the first baseline after deployment in `docs/operations/seo-measurement-baseline.md`, then review again once Search Console has enough crawl and query data to show signal. Record:
 
 - Which canonical URLs are indexed.
 - Which queries produce impressions.
@@ -74,7 +80,7 @@ For a proxied Cloudflare hostname, enable Web Analytics from the Cloudflare dash
 
 If the dashboard requires manual snippet installation instead, treat that as a code change: use the real site token only, review CSP `script-src` and `connect-src`, and update production audit coverage in the same PR. Do not commit placeholder analytics tokens.
 
-Cloudflare Web Analytics can track SPA interactions, but the V3 SEO landing pages are static pages and should first be measured as page views, landing pages, referrers, and search traffic trends.
+Cloudflare Web Analytics can track SPA interactions, but the SEO landing pages are static pages and should first be measured as page views, landing pages, referrers, and search traffic trends.
 
 GA4 or Zaraz can be added later if James chooses that stack and supplies the real property or site-token configuration.
 
@@ -119,10 +125,12 @@ Use one of these gates before adding the next public content slice:
 - Existing public pages are indexed but have no meaningful impressions after a reasonable observation window, suggesting a more specific intent page is needed.
 - Product direction needs a durable support page that can also serve organic intent.
 
-Likely next candidates:
+Likely next candidates after the V4 intent pages have measurable signal:
 
-- `how to practise apostrophes KS2`
-- `Year 5 spelling words practice`
 - `relative clauses KS2 practice`
 - `commas in a list KS2`
-- `help my child with KS2 grammar at home`
+- `plural possession apostrophes`
+- `Year 5 spelling words practice`
+- additional parent-support grammar topics
+
+Use the decision table in `docs/operations/seo-measurement-baseline.md` before adding another page. Add a new page when product fit and evidence support it; improve an existing page first when it is indexed and receives impressions but weak clicks. Do not add pages that require unverified curriculum coverage, external source licensing, private product data, or broad keyword chasing.
