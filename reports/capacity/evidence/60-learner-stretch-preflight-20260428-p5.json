@@ -1,0 +1,27 @@
+{
+  "ok": false,
+  "decision": "invalid-with-named-setup-blocker",
+  "rootCause": "session-manifest-preparation-rate-limited",
+  "explanation": "P5 session-manifest infrastructure is implemented and tested (PR #521). However, the 60-learner manifest preparation failed because the per-IP demo-session rate limit (30/10min) was exhausted by the preceding 30-learner certification run. The session-manifest mode bypasses this limit during load testing by using pre-created sessions, but the PREPARATION of those sessions is still subject to the same per-IP rate limit.",
+  "resolution": "The 60-learner preflight requires either: (a) waiting for rate-limit window expiry before manifest preparation, (b) preparing manifests from multiple source IPs, or (c) an operator-approved fixture path. The SESSION-MANIFEST load driver mode itself works correctly — only the manifest preparation step is rate-limited.",
+  "infrastructure_status": {
+    "sessionManifestMode": "implemented-and-tested",
+    "failureClassTaxonomy": "implemented",
+    "setupAppSeparation": "implemented",
+    "60learnerDriverReady": true,
+    "manifestPreparationBlocked": true
+  },
+  "metrics": null,
+  "previousBlocker": "demo-session-create-ip-rate-limit (P4-U12, single-IP test driver hit DEMO_LIMITS.createIp=30)",
+  "currentBlocker": "demo-session-create-ip-rate-limit (manifest preparation exhausted by preceding 30-learner run)",
+  "improvement": "The blocker is now at manifest PREPARATION time, not load TEST time. Once a manifest is prepared (from multiple IPs or after rate-limit expiry), the load test itself will bypass the limit entirely.",
+  "reportMeta": {
+    "commit": "0f744c3",
+    "environment": "production",
+    "origin": "https://ks2.eugnel.uk",
+    "date": "2026-04-28",
+    "phase": "P5",
+    "evidenceSchemaVersion": 2,
+    "operator": "B52620"
+  }
+}
