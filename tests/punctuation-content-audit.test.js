@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 import {
   PUNCTUATION_CONTENT_MANIFEST,
@@ -7,6 +9,16 @@ import {
 import {
   runPunctuationContentAudit,
 } from '../scripts/audit-punctuation-content.mjs';
+
+const auditCliPath = fileURLToPath(new URL('../scripts/audit-punctuation-content.mjs', import.meta.url));
+const repoRoot = fileURLToPath(new URL('..', import.meta.url));
+
+function runAuditCli(args) {
+  return spawnSync(process.execPath, [auditCliPath, ...args], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  });
+}
 
 test('punctuation content audit reports the current fixed and generated baseline', () => {
   const audit = runPunctuationContentAudit({
@@ -39,6 +51,9 @@ test('punctuation content audit reports per-skill coverage and generated signatu
   assert.equal(sentenceEndings.generatedItemCount, 1);
   assert.equal(sentenceEndings.generatedSignatureCount, 1);
   assert.ok(sentenceEndings.readinessCoverage.includes('insertion'));
+  assert.equal(sentenceEndings.choiceItemCount, 1);
+  assert.equal(sentenceEndings.answerContractCoverageCount, 2);
+  assert.equal(sentenceEndings.validatorCoverageCount, 1);
   assert.ok(speech.generatedItemCount >= 2);
   assert.ok(speech.validatorCoverageCount > 0);
 });
@@ -49,10 +64,14 @@ test('punctuation content audit can prove expanded deterministic bank variety', 
     generatedPerFamily: 4,
     thresholds: {
       failOnDuplicateGeneratedSignatures: true,
+      minGeneratedItemsPerPublishedFamily: 4,
+      minTemplatesPerPublishedFamily: 4,
+      minSignaturesPerPublishedFamily: 4,
     },
   });
 
   assert.equal(audit.ok, true, audit.failures.join('\n'));
+  assert.deepEqual(audit.failureDetails, []);
   for (const row of audit.generatorFamilies.filter((entry) => entry.published)) {
     assert.equal(row.generatedItemCount, 4, row.id);
     assert.equal(row.variantSignatures.length, 4, row.id);
@@ -60,10 +79,13 @@ test('punctuation content audit can prove expanded deterministic bank variety', 
   }
 });
 
-test('punctuation content audit can fail when generated variants exceed unique bank capacity', () => {
+test('punctuation content audit detects crafted duplicate generated signatures', () => {
   const audit = runPunctuationContentAudit({
-    seed: 'audit-over-capacity',
-    generatedPerFamily: 5,
+    seed: 'audit-crafted-duplicate-signatures',
+    generatedPerFamily: 2,
+    contextPack: {
+      stems: ['the crew checked the ropes', 'we found another path'],
+    },
     thresholds: {
       failOnDuplicateGeneratedSignatures: true,
     },
@@ -71,6 +93,10 @@ test('punctuation content audit can fail when generated variants exceed unique b
 
   assert.equal(audit.ok, false);
   assert.match(audit.failures.join('\n'), /Duplicate generated variant signatures/);
+  assert.ok(audit.failureDetails.some((failure) => (
+    failure.code === 'duplicate_generated_signature'
+      && failure.groups.some((group) => group.ids.length > 1)
+  )));
 });
 
 test('punctuation content audit detects missing generated family coverage', () => {
@@ -88,10 +114,21 @@ test('punctuation content audit detects missing generated family coverage', () =
       },
     ],
   };
-  const audit = runPunctuationContentAudit({ manifest, seed: 'missing-family', generatedPerFamily: 1 });
+  const audit = runPunctuationContentAudit({
+    manifest,
+    seed: 'missing-family',
+    generatedPerFamily: 1,
+    thresholds: {
+      minGeneratedItemsPerPublishedFamily: 1,
+    },
+  });
 
   assert.equal(audit.ok, false);
   assert.match(audit.failures.join('\n'), /gen_sentence_endings_missing_templates produced no generated items/);
+  assert.ok(audit.failureDetails.some((failure) => (
+    failure.code === 'generated_family_minimum'
+      && failure.familyId === 'gen_sentence_endings_missing_templates'
+  )));
 });
 
 test('punctuation content audit threshold failures are machine-readable', () => {
@@ -108,4 +145,129 @@ test('punctuation content audit threshold failures are machine-readable', () => 
   assert.match(audit.failures.join('\n'), /sentence_endings has 1 generated signatures/);
   assert.equal(Array.isArray(audit.bySkill), true);
   assert.equal(Array.isArray(audit.generatorFamilies), true);
+  assert.ok(audit.failureDetails.some((failure) => (
+    failure.code === 'skill_generated_signature_minimum'
+      && failure.skillId === 'sentence_endings'
+  )));
+});
+
+test('punctuation content audit leaves duplicate generated stems and models review-visible by default', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'audit-review-visible-duplicates',
+    generatedPerFamily: 5,
+    thresholds: {
+      failOnDuplicateGeneratedSignatures: false,
+    },
+  });
+
+  assert.equal(audit.ok, true, audit.failures.join('\n'));
+  assert.ok(audit.duplicates.generated.stems.length > 0);
+  assert.ok(audit.duplicates.generated.models.length > 0);
+  assert.ok(audit.duplicates.generated.signatures.length > 0);
+});
+
+test('punctuation content audit can fail future P2 fixed-anchor thresholds without activating them by default', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'audit-p2-fixed-anchor-depth',
+    generatedPerFamily: 4,
+    thresholds: {
+      minFixedItemsBySkill: {
+        sentence_endings: 8,
+        apostrophe_contractions: 8,
+        comma_clarity: 8,
+        semicolon_list: 8,
+        hyphen: 8,
+        dash_clause: 8,
+      },
+    },
+  });
+
+  assert.equal(audit.ok, false);
+  assert.match(audit.failures.join('\n'), /Published skill sentence_endings has 4 fixed items; expected at least 8/);
+  assert.ok(audit.failureDetails.some((failure) => (
+    failure.code === 'fixed_anchor_minimum'
+      && failure.skillId === 'sentence_endings'
+      && failure.actual === 4
+      && failure.expected === 8
+  )));
+});
+
+test('punctuation content audit fails generated model-answer marking with family and template context', () => {
+  const manifest = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    generatorFamilies: PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.map((family) => (
+      family.id === 'gen_sentence_endings_insert'
+        ? { ...family, mode: 'choose' }
+        : family
+    )),
+  };
+  const audit = runPunctuationContentAudit({
+    manifest,
+    seed: 'audit-generated-model-marking',
+    generatedPerFamily: 1,
+  });
+
+  assert.equal(audit.ok, false);
+  assert.match(audit.failures.join('\n'), /Generated model answer does not pass marking/);
+  assert.ok(audit.failureDetails.some((failure) => (
+    failure.code === 'generated_model_marking'
+      && failure.familyId === 'gen_sentence_endings_insert'
+      && failure.templateId
+  )));
+});
+
+test('punctuation content audit CLI applies by-skill fixed-anchor thresholds', () => {
+  const result = runAuditCli([
+    '--strict',
+    '--generated-per-family',
+    '4',
+    '--min-fixed-items-per-skill',
+    '1',
+    '--min-fixed-items-by-skill',
+    'sentence_endings=8',
+    '--json',
+  ]);
+  const audit = JSON.parse(result.stdout);
+
+  assert.equal(result.status, 1);
+  assert.equal(audit.ok, false);
+  assert.ok(audit.failureDetails.some((failure) => (
+    failure.code === 'fixed_anchor_minimum'
+      && failure.skillId === 'sentence_endings'
+      && failure.actual === 4
+      && failure.expected === 8
+  )));
+});
+
+test('punctuation content audit CLI rejects malformed by-skill threshold entries', () => {
+  const result = runAuditCli([
+    '--min-fixed-items-by-skill',
+    'sentence_endings=not-a-number',
+  ]);
+
+  assert.equal(result.status, 2);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Malformed --min-fixed-items-by-skill entry "sentence_endings=not-a-number"/);
+});
+
+test('punctuation content audit CLI rejects unknown by-skill threshold ids', () => {
+  const result = runAuditCli([
+    '--min-fixed-items-by-skill',
+    'unknown_skill=8',
+  ]);
+
+  assert.equal(result.status, 2);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Unknown skill id "unknown_skill" in --min-fixed-items-by-skill/);
+});
+
+test('punctuation content audit CLI rejects unknown by-family threshold ids', () => {
+  const result = runAuditCli([
+    '--min-generated-by-family',
+    'unknown_family=4',
+  ]);
+
+  assert.equal(result.status, 2);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Unknown generator family id "unknown_family" in --min-generated-by-family/);
 });

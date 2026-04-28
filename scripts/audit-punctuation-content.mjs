@@ -42,9 +42,12 @@ function groupDuplicates(rows, keyFn) {
     .sort((a, b) => a.key.localeCompare(b.key));
 }
 
-function hasValidatorCoverage(item) {
-  if (item.mode === 'choose') return true;
+function hasValidatorOrRubricCoverage(item) {
   return isPlainObject(item.validator) || isPlainObject(item.rubric);
+}
+
+function hasAnswerContractCoverage(item) {
+  return item.mode === 'choose' || hasValidatorOrRubricCoverage(item);
 }
 
 function readinessRowsFor(items) {
@@ -78,37 +81,203 @@ function thresholdValue(thresholds, key, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
 
-function buildFailures({ validation, generatorFamilies, generatedDuplicates, bySkill, generatedFailures, thresholds }) {
-  const failures = [...validation.errors];
+function thresholdValueForSkill(thresholds, globalKey, bySkillKey, skillId, fallback = 0) {
+  const skillValue = Number(thresholds?.[bySkillKey]?.[skillId]);
+  if (Number.isFinite(skillValue)) return skillValue;
+  return thresholdValue(thresholds, globalKey, fallback);
+}
+
+function thresholdValueForFamily(thresholds, globalKey, byFamilyKey, familyId, fallback = 0) {
+  const familyValue = Number(thresholds?.[byFamilyKey]?.[familyId]);
+  if (Number.isFinite(familyValue)) return familyValue;
+  return thresholdValue(thresholds, globalKey, fallback);
+}
+
+function failureDetail(code, message, detail = {}) {
+  return {
+    code,
+    message,
+    ...detail,
+  };
+}
+
+function buildFailureDetails({ validation, generatorFamilies, generatedDuplicates, bySkill, generatedFailures, thresholds }) {
+  const failures = validation.errors.map((message) => failureDetail('manifest_validation', message));
   if (thresholds?.requireTemplatesForPublishedFamilies !== false) {
     for (const family of generatorFamilies) {
       if (family.published && family.generatedItemCount === 0) {
-        failures.push(`Published generator family ${family.id} produced no generated items.`);
+        failures.push(failureDetail(
+          'generated_family_empty',
+          `Published generator family ${family.id} produced no generated items.`,
+          {
+            familyId: family.id,
+            skillId: family.skillId,
+            actual: family.generatedItemCount,
+            expected: 1,
+          },
+        ));
       }
     }
   }
+  const minGeneratedItems = thresholdValue(thresholds, 'minGeneratedItemsPerPublishedFamily', 0);
+  const minTemplates = thresholdValue(thresholds, 'minTemplatesPerPublishedFamily', 0);
+  const minSignatures = thresholdValue(thresholds, 'minSignaturesPerPublishedFamily', 0);
+  for (const family of generatorFamilies) {
+    if (!family.published) continue;
+    const familyMinGeneratedItems = thresholdValueForFamily(
+      thresholds,
+      'minGeneratedItemsPerPublishedFamily',
+      'minGeneratedItemsByFamily',
+      family.id,
+      minGeneratedItems,
+    );
+    const familyMinTemplates = thresholdValueForFamily(
+      thresholds,
+      'minTemplatesPerPublishedFamily',
+      'minTemplatesByFamily',
+      family.id,
+      minTemplates,
+    );
+    const familyMinSignatures = thresholdValueForFamily(
+      thresholds,
+      'minSignaturesPerPublishedFamily',
+      'minSignaturesByFamily',
+      family.id,
+      minSignatures,
+    );
+    if (family.generatedItemCount < familyMinGeneratedItems) {
+      failures.push(failureDetail(
+        'generated_family_minimum',
+        `Published generator family ${family.id} has ${family.generatedItemCount} generated items; expected at least ${familyMinGeneratedItems}.`,
+        {
+          familyId: family.id,
+          skillId: family.skillId,
+          actual: family.generatedItemCount,
+          expected: familyMinGeneratedItems,
+        },
+      ));
+    }
+    if (family.templateIds.length < familyMinTemplates) {
+      failures.push(failureDetail(
+        'generated_template_minimum',
+        `Published generator family ${family.id} has ${family.templateIds.length} distinct templates; expected at least ${familyMinTemplates}.`,
+        {
+          familyId: family.id,
+          skillId: family.skillId,
+          actual: family.templateIds.length,
+          expected: familyMinTemplates,
+        },
+      ));
+    }
+    if (family.variantSignatures.length < familyMinSignatures) {
+      failures.push(failureDetail(
+        'generated_signature_minimum',
+        `Published generator family ${family.id} has ${family.variantSignatures.length} distinct signatures; expected at least ${familyMinSignatures}.`,
+        {
+          familyId: family.id,
+          skillId: family.skillId,
+          actual: family.variantSignatures.length,
+          expected: familyMinSignatures,
+        },
+      ));
+    }
+  }
   if (thresholds?.failOnDuplicateGeneratedSignatures && generatedDuplicates.signatures.length) {
-    failures.push(`Duplicate generated variant signatures: ${generatedDuplicates.signatures.length}.`);
+    failures.push(failureDetail(
+      'duplicate_generated_signature',
+      `Duplicate generated variant signatures: ${generatedDuplicates.signatures.length}.`,
+      {
+        duplicateCount: generatedDuplicates.signatures.length,
+        groups: generatedDuplicates.signatures,
+      },
+    ));
   }
   if (thresholds?.failOnDuplicateGeneratedStems && generatedDuplicates.stems.length) {
-    failures.push(`Duplicate generated stems: ${generatedDuplicates.stems.length}.`);
+    failures.push(failureDetail(
+      'duplicate_generated_stem',
+      `Duplicate generated stems: ${generatedDuplicates.stems.length}.`,
+      {
+        duplicateCount: generatedDuplicates.stems.length,
+        groups: generatedDuplicates.stems,
+      },
+    ));
   }
   if (thresholds?.failOnDuplicateGeneratedModels && generatedDuplicates.models.length) {
-    failures.push(`Duplicate generated models: ${generatedDuplicates.models.length}.`);
+    failures.push(failureDetail(
+      'duplicate_generated_model',
+      `Duplicate generated models: ${generatedDuplicates.models.length}.`,
+      {
+        duplicateCount: generatedDuplicates.models.length,
+        groups: generatedDuplicates.models,
+      },
+    ));
   }
   const minGeneratedSignatures = thresholdValue(thresholds, 'minGeneratedSignaturesPerPublishedSkill', 0);
-  const minValidatorCoverage = thresholdValue(thresholds, 'minValidatorCoveragePerPublishedSkill', 0);
   for (const row of bySkill) {
     if (!row.published) continue;
-    if (row.generatedSignatureCount < minGeneratedSignatures) {
-      failures.push(`Published skill ${row.skillId} has ${row.generatedSignatureCount} generated signatures; expected at least ${minGeneratedSignatures}.`);
+    const skillMinGeneratedSignatures = thresholdValueForSkill(
+      thresholds,
+      'minGeneratedSignaturesPerPublishedSkill',
+      'minGeneratedSignaturesBySkill',
+      row.skillId,
+      minGeneratedSignatures,
+    );
+    const skillMinValidatorCoverage = thresholdValueForSkill(
+      thresholds,
+      'minValidatorCoveragePerPublishedSkill',
+      'minValidatorCoverageBySkill',
+      row.skillId,
+      0,
+    );
+    const skillMinFixedItems = thresholdValueForSkill(
+      thresholds,
+      'minFixedItemsPerPublishedSkill',
+      'minFixedItemsBySkill',
+      row.skillId,
+      0,
+    );
+    if (row.generatedSignatureCount < skillMinGeneratedSignatures) {
+      failures.push(failureDetail(
+        'skill_generated_signature_minimum',
+        `Published skill ${row.skillId} has ${row.generatedSignatureCount} generated signatures; expected at least ${skillMinGeneratedSignatures}.`,
+        {
+          skillId: row.skillId,
+          actual: row.generatedSignatureCount,
+          expected: skillMinGeneratedSignatures,
+        },
+      ));
     }
-    if (row.validatorCoverageCount < minValidatorCoverage) {
-      failures.push(`Published skill ${row.skillId} has ${row.validatorCoverageCount} validator-covered runtime items; expected at least ${minValidatorCoverage}.`);
+    if (row.validatorCoverageCount < skillMinValidatorCoverage) {
+      failures.push(failureDetail(
+        'validator_coverage_minimum',
+        `Published skill ${row.skillId} has ${row.validatorCoverageCount} validator-covered runtime items; expected at least ${skillMinValidatorCoverage}.`,
+        {
+          skillId: row.skillId,
+          actual: row.validatorCoverageCount,
+          expected: skillMinValidatorCoverage,
+        },
+      ));
+    }
+    if (row.fixedItemCount < skillMinFixedItems) {
+      failures.push(failureDetail(
+        'fixed_anchor_minimum',
+        `Published skill ${row.skillId} has ${row.fixedItemCount} fixed items; expected at least ${skillMinFixedItems}.`,
+        {
+          skillId: row.skillId,
+          actual: row.fixedItemCount,
+          expected: skillMinFixedItems,
+        },
+      ));
     }
   }
-  for (const failure of generatedFailures) {
-    failures.push(`Generated model answer does not pass marking: ${failure.id} (${failure.familyId}/${failure.templateId}).`);
+  if (thresholds?.requireGeneratedModelAnswersPass !== false) {
+    for (const failure of generatedFailures) {
+      failures.push(failureDetail(
+        'generated_model_marking',
+        `Generated model answer does not pass marking: ${failure.id} (${failure.familyId}/${failure.templateId}).`,
+        failure,
+      ));
+    }
   }
   return failures;
 }
@@ -117,12 +286,23 @@ export function runPunctuationContentAudit({
   manifest = PUNCTUATION_CONTENT_MANIFEST,
   seed = manifest.releaseId || 'punctuation-audit',
   generatedPerFamily = 1,
+  contextPack = null,
   thresholds = {},
 } = {}) {
   const validation = validatePunctuationManifest(manifest);
   const fixedIndexes = createPunctuationContentIndexes(manifest);
-  const generatedItems = createPunctuationGeneratedItems({ manifest, seed, perFamily: generatedPerFamily });
-  const runtimeManifest = createPunctuationRuntimeManifest({ manifest, seed, generatedPerFamily });
+  const generatedItems = createPunctuationGeneratedItems({
+    manifest,
+    seed,
+    perFamily: generatedPerFamily,
+    contextPack,
+  });
+  const runtimeManifest = createPunctuationRuntimeManifest({
+    manifest,
+    seed,
+    generatedPerFamily,
+    contextPack,
+  });
   const runtimeIndexes = createPunctuationContentIndexes(runtimeManifest);
   const fixedItems = fixedIndexes.items;
   const runtimeItems = runtimeIndexes.items;
@@ -147,7 +327,9 @@ export function runPunctuationContentAudit({
       generatedSignatureCount: new Set(generatedSkillItems.map((item) => item.variantSignature).filter(Boolean)).size,
       modeCoverage: [...new Set(runtimeSkillItems.map((item) => item.mode).filter(Boolean))].sort(),
       readinessCoverage: readinessRowsFor(runtimeSkillItems),
-      validatorCoverageCount: runtimeSkillItems.filter(hasValidatorCoverage).length,
+      choiceItemCount: runtimeSkillItems.filter((item) => item.mode === 'choose').length,
+      answerContractCoverageCount: runtimeSkillItems.filter(hasAnswerContractCoverage).length,
+      validatorCoverageCount: runtimeSkillItems.filter(hasValidatorOrRubricCoverage).length,
     };
   });
 
@@ -175,7 +357,7 @@ export function runPunctuationContentAudit({
     signatures: groupDuplicates(generatedItems, (item) => item.variantSignature || ''),
   };
   const generatedFailures = generatedModelFailures(generatedItems);
-  const failures = buildFailures({
+  const failureDetails = buildFailureDetails({
     validation,
     generatorFamilies,
     generatedDuplicates,
@@ -183,10 +365,12 @@ export function runPunctuationContentAudit({
     generatedFailures,
     thresholds,
   });
+  const failures = failureDetails.map((failure) => failure.message);
 
   return {
     ok: failures.length === 0,
     failures,
+    failureDetails,
     seed,
     generatedPerFamily,
     summary: {
@@ -215,11 +399,18 @@ export function formatPunctuationContentAudit(audit) {
     `generated items: ${audit.summary.generatedItemCount}`,
     `runtime items: ${audit.summary.runtimeItemCount}`,
     `published reward units: ${audit.summary.publishedRewardUnitCount}`,
+    `generated duplicate signatures: ${audit.duplicates.generated.signatures.length}`,
+    `generated duplicate stems: ${audit.duplicates.generated.stems.length}`,
+    `generated duplicate models: ${audit.duplicates.generated.models.length}`,
     '',
     'Per-skill coverage:',
   ];
   for (const row of audit.bySkill) {
-    lines.push(`- ${row.skillId}: fixed=${row.fixedItemCount}, generated=${row.generatedItemCount}, signatures=${row.generatedSignatureCount}, modes=${row.modeCoverage.join('|') || 'none'}, readiness=${row.readinessCoverage.join('|') || 'none'}, validators=${row.validatorCoverageCount}`);
+    lines.push(`- ${row.skillId}: fixed=${row.fixedItemCount}, generated=${row.generatedItemCount}, signatures=${row.generatedSignatureCount}, modes=${row.modeCoverage.join('|') || 'none'}, readiness=${row.readinessCoverage.join('|') || 'none'}, choices=${row.choiceItemCount}, answerContracts=${row.answerContractCoverageCount}, validators=${row.validatorCoverageCount}`);
+  }
+  lines.push('', 'Per-family generated coverage:');
+  for (const row of audit.generatorFamilies) {
+    lines.push(`- ${row.id}: generated=${row.generatedItemCount}, templates=${row.templateIds.length}, signatures=${row.variantSignatures.length}`);
   }
   if (audit.failures.length) {
     lines.push('', 'Failures:');
@@ -228,39 +419,173 @@ export function formatPunctuationContentAudit(audit) {
   return `${lines.join('\n')}\n`;
 }
 
-function parseArgs(argv) {
+class CliUsageError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CliUsageError';
+  }
+}
+
+function cliReferenceIds(manifest = PUNCTUATION_CONTENT_MANIFEST) {
+  const indexes = createPunctuationContentIndexes(manifest);
+  return {
+    skillIds: new Set(indexes.skills.map((skill) => skill.id)),
+    familyIds: new Set(indexes.generatorFamilies.map((family) => family.id)),
+  };
+}
+
+function parseThresholdMap({ name, rawValue, validKeys, keyLabel }) {
+  const map = {};
+  const text = String(rawValue || '').trim();
+  if (!text) return map;
+  for (const rawEntry of text.split(',')) {
+    const entry = rawEntry.trim();
+    if (!entry) continue;
+    const separator = entry.indexOf('=');
+    if (separator <= 0 || separator === entry.length - 1) {
+      throw new CliUsageError(`Malformed ${name} entry "${entry}". Expected ${keyLabel}=number.`);
+    }
+    const key = entry.slice(0, separator).trim();
+    const rawNumber = entry.slice(separator + 1).trim();
+    const value = Number(rawNumber);
+    if (!key || !Number.isFinite(value)) {
+      throw new CliUsageError(`Malformed ${name} entry "${entry}". Expected ${keyLabel}=number.`);
+    }
+    if (!validKeys.has(key)) {
+      throw new CliUsageError(`Unknown ${keyLabel} "${key}" in ${name}.`);
+    }
+    if (Object.hasOwn(map, key)) {
+      throw new CliUsageError(`Duplicate ${keyLabel} "${key}" in ${name}.`);
+    }
+    map[key] = value;
+  }
+  return map;
+}
+
+function parseArgs(argv, { manifest = PUNCTUATION_CONTENT_MANIFEST } = {}) {
   const args = new Set(argv);
   const valueAfter = (name, fallback) => {
     const index = argv.indexOf(name);
-    return index >= 0 && index + 1 < argv.length ? argv[index + 1] : fallback;
+    if (index < 0) return fallback;
+    if (index + 1 >= argv.length || argv[index + 1].startsWith('--')) {
+      throw new CliUsageError(`Missing value for ${name}.`);
+    }
+    return argv[index + 1];
   };
+  const numberAfter = (name, fallback) => {
+    const index = argv.indexOf(name);
+    if (index < 0 || index + 1 >= argv.length) return fallback;
+    if (argv[index + 1].startsWith('--')) {
+      throw new CliUsageError(`Missing numeric value for ${name}.`);
+    }
+    const value = Number(argv[index + 1]);
+    if (!Number.isFinite(value)) {
+      throw new CliUsageError(`Invalid numeric value for ${name}: "${argv[index + 1]}".`);
+    }
+    return value;
+  };
+  const { skillIds, familyIds } = cliReferenceIds(manifest);
+  const skillMapAfter = (name) => parseThresholdMap({
+    name,
+    rawValue: valueAfter(name, ''),
+    validKeys: skillIds,
+    keyLabel: 'skill id',
+  });
+  const familyMapAfter = (name) => parseThresholdMap({
+    name,
+    rawValue: valueAfter(name, ''),
+    validKeys: familyIds,
+    keyLabel: 'generator family id',
+  });
   return {
     json: args.has('--json'),
     strict: args.has('--strict'),
     failOnDuplicateGeneratedSignatures: args.has('--fail-on-duplicate-generated-signatures')
       || args.has('--fail-on-duplicate-generated-content'),
     failOnDuplicateGeneratedContent: args.has('--fail-on-duplicate-generated-content'),
-    generatedPerFamily: Number(valueAfter('--generated-per-family', 1)) || 1,
+    generatedPerFamily: numberAfter('--generated-per-family', 1),
+    minGeneratedItemsPerPublishedFamily: numberAfter('--min-generated-per-family', null),
+    minTemplatesPerPublishedFamily: numberAfter('--min-templates-per-family', null),
+    minSignaturesPerPublishedFamily: numberAfter('--min-signatures-per-family', null),
+    minGeneratedSignaturesPerPublishedSkill: numberAfter('--min-generated-signatures-per-skill', null),
+    minValidatorCoveragePerPublishedSkill: numberAfter('--min-validator-coverage-per-skill', null),
+    minFixedItemsPerPublishedSkill: numberAfter('--min-fixed-items-per-skill', null),
+    minGeneratedSignaturesBySkill: skillMapAfter('--min-generated-signatures-by-skill'),
+    minValidatorCoverageBySkill: skillMapAfter('--min-validator-coverage-by-skill'),
+    minFixedItemsBySkill: skillMapAfter('--min-fixed-items-by-skill'),
+    minGeneratedItemsByFamily: familyMapAfter('--min-generated-by-family'),
+    minTemplatesByFamily: familyMapAfter('--min-templates-by-family'),
+    minSignaturesByFamily: familyMapAfter('--min-signatures-by-family'),
+  };
+}
+
+function optionalThresholds(args) {
+  return Object.fromEntries([
+    ['minGeneratedItemsPerPublishedFamily', args.minGeneratedItemsPerPublishedFamily],
+    ['minTemplatesPerPublishedFamily', args.minTemplatesPerPublishedFamily],
+    ['minSignaturesPerPublishedFamily', args.minSignaturesPerPublishedFamily],
+    ['minGeneratedSignaturesPerPublishedSkill', args.minGeneratedSignaturesPerPublishedSkill],
+    ['minValidatorCoveragePerPublishedSkill', args.minValidatorCoveragePerPublishedSkill],
+    ['minFixedItemsPerPublishedSkill', args.minFixedItemsPerPublishedSkill],
+  ].filter(([, value]) => Number.isFinite(value)));
+}
+
+function cliThresholds(args) {
+  const strictThresholds = args.strict
+    ? {
+        failOnDuplicateGeneratedSignatures: true,
+        failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
+        failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
+        minGeneratedItemsPerPublishedFamily: args.generatedPerFamily,
+        minTemplatesPerPublishedFamily: args.generatedPerFamily,
+        minSignaturesPerPublishedFamily: args.generatedPerFamily,
+        minGeneratedSignaturesPerPublishedSkill: 1,
+        minValidatorCoveragePerPublishedSkill: 1,
+      }
+    : {
+        failOnDuplicateGeneratedSignatures: args.failOnDuplicateGeneratedSignatures,
+        failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
+        failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
+      };
+  return {
+    ...strictThresholds,
+    ...optionalThresholds(args),
+    ...(Object.keys(args.minGeneratedSignaturesBySkill).length
+      ? { minGeneratedSignaturesBySkill: args.minGeneratedSignaturesBySkill }
+      : {}),
+    ...(Object.keys(args.minValidatorCoverageBySkill).length
+      ? { minValidatorCoverageBySkill: args.minValidatorCoverageBySkill }
+      : {}),
+    ...(Object.keys(args.minFixedItemsBySkill).length
+      ? { minFixedItemsBySkill: args.minFixedItemsBySkill }
+      : {}),
+    ...(Object.keys(args.minGeneratedItemsByFamily).length
+      ? { minGeneratedItemsByFamily: args.minGeneratedItemsByFamily }
+      : {}),
+    ...(Object.keys(args.minTemplatesByFamily).length
+      ? { minTemplatesByFamily: args.minTemplatesByFamily }
+      : {}),
+    ...(Object.keys(args.minSignaturesByFamily).length
+      ? { minSignaturesByFamily: args.minSignaturesByFamily }
+      : {}),
   };
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  let args;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    if (error instanceof CliUsageError) {
+      process.stderr.write(`Punctuation content audit argument error: ${error.message}\n`);
+      process.exitCode = 2;
+      return;
+    }
+    throw error;
+  }
   const audit = runPunctuationContentAudit({
     generatedPerFamily: args.generatedPerFamily,
-    thresholds: args.strict
-      ? {
-          failOnDuplicateGeneratedSignatures: true,
-          failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
-          failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
-          minGeneratedSignaturesPerPublishedSkill: 1,
-          minValidatorCoveragePerPublishedSkill: 1,
-        }
-      : {
-          failOnDuplicateGeneratedSignatures: args.failOnDuplicateGeneratedSignatures,
-          failOnDuplicateGeneratedStems: args.failOnDuplicateGeneratedContent,
-          failOnDuplicateGeneratedModels: args.failOnDuplicateGeneratedContent,
-        },
+    thresholds: cliThresholds(args),
   });
   process.stdout.write(args.json
     ? `${JSON.stringify(audit, null, 2)}\n`
