@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   HERO_CTA_TEXT,
+  HERO_PROGRESS_COPY,
   HERO_SUBJECT_LABELS,
   HERO_UI_REASON_LABELS,
 } from '../../../shared/hero/hero-copy.js';
@@ -24,6 +25,72 @@ export function HeroQuestCard({ hero, actions }) {
 
   const isLaunching = hero.status === 'launching';
   const hasError = Boolean(hero.error);
+
+  // (p3-a) Daily complete — highest priority P3 display (no CTA, no pressure)
+  if (hero.dailyStatus === 'completed') {
+    return (
+      <div className="hero-quest-card hero-quest-card--complete" data-hero-card>
+        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
+        <p className="hero-quest-card__daily-complete" aria-live="polite">
+          {HERO_PROGRESS_COPY.dailyComplete}
+        </p>
+        <p className="hero-quest-card__daily-complete-detail">
+          {HERO_PROGRESS_COPY.dailyCompleteDetail}
+        </p>
+      </div>
+    );
+  }
+
+  // (p3-b) Claiming state — background progress check in flight
+  if (hero.claiming) {
+    return (
+      <div className="hero-quest-card hero-quest-card--claiming" data-hero-card>
+        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
+        <p className="hero-quest-card__claiming" aria-live="polite">
+          {HERO_PROGRESS_COPY.claiming}
+        </p>
+        <div className="hero-quest-card__cta-row">
+          <button type="button" className="btn primary xl" disabled aria-busy="true">
+            {HERO_PROGRESS_COPY.claiming}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // (p3-c) Task just claimed — transient feedback
+  if (hero.lastClaim && hero.lastClaim.status === 'claimed') {
+    const totalTasks = Math.ceil((hero.effortPlanned || 0) / 6) || 1;
+    const completedCount = hero.completedTaskIds?.length || 0;
+    const hasMore = completedCount < totalTasks;
+    return (
+      <div className="hero-quest-card hero-quest-card--claimed" data-hero-card aria-live="polite">
+        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
+        <p className="hero-quest-card__task-complete">
+          {HERO_PROGRESS_COPY.taskComplete}
+        </p>
+        <p className="hero-quest-card__task-complete-detail">
+          {HERO_PROGRESS_COPY.taskCompleteDetail}
+        </p>
+        {hasMore && (
+          <p className="hero-quest-card__next-ready">
+            {HERO_PROGRESS_COPY.nextTaskReady}
+          </p>
+        )}
+        {hasMore && hero.canStart && (
+          <div className="hero-quest-card__cta-row">
+            <button
+              type="button"
+              className="btn primary xl"
+              onClick={() => actions.startHeroQuestTask(hero.nextTask?.taskId)}
+            >
+              {HERO_CTA_TEXT.start}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // (g) Stale quest / error state
   if (hasError && !hero.canStart && !hero.canContinue) {
@@ -53,12 +120,19 @@ export function HeroQuestCard({ hero, actions }) {
     const session = hero.activeHeroSession;
     if (!session) return null;
     const subjectName = HERO_SUBJECT_LABELS[session.subjectId] || session.subjectId;
+    const totalTasks = Math.ceil((hero.effortPlanned || 0) / 6) || 0;
+    const completedCount = hero.completedTaskIds?.length || 0;
     return (
       <div className="hero-quest-card hero-quest-card--continue" data-hero-card>
-        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
+        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
         <p className="hero-quest-card__subtitle">
           You have a {subjectName} task in progress.
         </p>
+        {totalTasks > 0 && completedCount > 0 && (
+          <p className="hero-quest-card__progress">
+            {completedCount} of {totalTasks} tasks complete
+          </p>
+        )}
         <div className="hero-quest-card__cta-row">
           <button
             type="button"
@@ -76,10 +150,12 @@ export function HeroQuestCard({ hero, actions }) {
   if (hero.canStart) {
     const task = hero.nextTask;
     const subjectName = HERO_SUBJECT_LABELS[task.subjectId] || task.subjectId;
+    const totalTasks = Math.ceil((hero.effortPlanned || 0) / 6) || 0;
+    const completedCount = hero.completedTaskIds?.length || 0;
 
     return (
       <div className="hero-quest-card hero-quest-card--ready" data-hero-card>
-        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
+        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
         <p className="hero-quest-card__subtitle">
           A few strong rounds picked from your ready subjects.
         </p>
@@ -87,6 +163,12 @@ export function HeroQuestCard({ hero, actions }) {
         {hero.effortPlanned > 0 && (
           <p className="hero-quest-card__effort">
             {hero.effortPlanned} effort planned
+          </p>
+        )}
+
+        {totalTasks > 0 && completedCount > 0 && (
+          <p className="hero-quest-card__progress">
+            {completedCount} of {totalTasks} tasks complete
           </p>
         )}
 

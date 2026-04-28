@@ -24,7 +24,31 @@ export const HERO_FORBIDDEN_VOCABULARY = Object.freeze([
   'daily deal',
   "don't miss out",
   'earn',
+  'claim your reward',
+  'earn coins',
+  'grind',
+  'you missed out',
+  'unlock now',
+  'spend now',
+  'jackpot',
+  'streak reward',
 ]);
+
+/**
+ * P3 progress copy — shown in HeroQuestCard and HeroTaskBanner for
+ * claiming, task-complete, daily-complete, and refresh states.
+ * All terms are economy-free.
+ */
+export const HERO_PROGRESS_COPY = Object.freeze({
+  taskComplete: 'Task complete.',
+  taskCompleteDetail: 'Nice work — your Hero Quest has moved forward.',
+  nextTaskReady: 'Next Hero task is ready.',
+  dailyComplete: "Today's Hero Quest is complete.",
+  dailyCompleteDetail: 'You kept your ready subjects strong today.',
+  claiming: 'Checking your Hero progress…',
+  refreshed: 'Your Hero Quest refreshed. Try the next task now.',
+  bannerComplete: 'Hero task complete. Return to your Hero Quest for the next round.',
+});
 
 /**
  * Child-facing labels by intent.  Explains *why* this task was chosen
