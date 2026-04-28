@@ -30,6 +30,10 @@
  * @property {boolean} hasDraft      — whether a draft document exists
  * @property {boolean} hasPublished  — whether a published document exists
  * @property {Array}  versions       — available version history for restore
+ * @property {Array<string>} publishBlockers — blocker descriptions (empty = can publish)
+ * @property {string|null} previewUrl — URL for asset preview (null = no preview)
+ * @property {string|null} reducedMotionStatus — reduced-motion variant state
+ * @property {string|null} fallbackStatus — fallback asset state
  */
 
 function isPlainObject(value) {
@@ -64,11 +68,48 @@ function deriveReviewStatus(validation) {
  *   config has never been initialised.
  * @returns {RegistryEntry}
  */
+/**
+ * Derive publish blockers from the validation state and draft presence.
+ * Returns an array of human-readable blocker descriptions. Empty array = OK to publish.
+ */
+function derivePublishBlockers(validation, hasDraft, canManage) {
+  const blockers = [];
+  if (!canManage) {
+    blockers.push('Insufficient permissions to publish this asset.');
+  }
+  if (!hasDraft) {
+    blockers.push('No draft exists — nothing to publish.');
+  }
+  if (isPlainObject(validation) && 'ok' in validation && !validation.ok) {
+    const count = safeNonNegativeInt(validation.errorCount);
+    if (count > 0) {
+      blockers.push(`${count} validation error${count === 1 ? '' : 's'} must be resolved.`);
+    }
+  }
+  return blockers;
+}
+
 export function buildMonsterVisualRegistryEntry(monsterVisualConfig) {
   const mvc = isPlainObject(monsterVisualConfig) ? monsterVisualConfig : {};
   const status = isPlainObject(mvc.status) ? mvc.status : {};
   const validation = isPlainObject(status.validation) ? status.validation : {};
   const permissions = isPlainObject(mvc.permissions) ? mvc.permissions : {};
+
+  const canManage = permissions.canManageMonsterVisualConfig === true;
+  const hasDraft = mvc.draft != null && isPlainObject(mvc.draft);
+
+  // P6 U8: preview URL — derived from status when available (Worker provides it).
+  const previewUrl = typeof status.previewUrl === 'string' && status.previewUrl
+    ? status.previewUrl
+    : null;
+
+  // P6 U8: reduced-motion and fallback status — surfaced from the asset metadata.
+  const reducedMotionStatus = typeof status.reducedMotionStatus === 'string'
+    ? status.reducedMotionStatus
+    : null;
+  const fallbackStatus = typeof status.fallbackStatus === 'string'
+    ? status.fallbackStatus
+    : null;
 
   return {
     assetId: 'monster-visual-config',
@@ -87,10 +128,14 @@ export function buildMonsterVisualRegistryEntry(monsterVisualConfig) {
     },
     lastPublishedAt: safeNonNegativeInt(status.publishedAt),
     lastPublishedBy: safeString(status.publishedByAccountId, ''),
-    canManage: permissions.canManageMonsterVisualConfig === true,
-    hasDraft: mvc.draft != null && isPlainObject(mvc.draft),
+    canManage,
+    hasDraft,
     hasPublished: mvc.published != null && isPlainObject(mvc.published),
     versions: Array.isArray(mvc.versions) ? mvc.versions : [],
+    publishBlockers: derivePublishBlockers(validation, hasDraft, canManage),
+    previewUrl,
+    reducedMotionStatus,
+    fallbackStatus,
   };
 }
 

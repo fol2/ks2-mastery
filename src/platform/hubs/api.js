@@ -227,6 +227,41 @@ export function createHubApi({
         body: JSON.stringify({ version, mutation }),
       }, authSession);
     },
+    // P6 U8: Generic asset CAS routes — delegate to asset-specific handlers
+    // on the Worker. The assetId identifies which asset the operation targets.
+    async saveAssetDraft({ assetId, data, expectedDraftRevision, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/assets/${encodeURIComponent(assetId)}/draft`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ data, expectedDraftRevision, mutation }),
+      }, authSession);
+    },
+    async publishAsset({ assetId, expectedDraftRevision, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/assets/${encodeURIComponent(assetId)}/publish`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ expectedDraftRevision, mutation }),
+      }, authSession);
+    },
+    async restoreAssetVersion({ assetId, version, expectedPublishedVersion, mutation } = {}) {
+      const url = buildRequestUrl(
+        baseUrl,
+        `/api/admin/assets/${encodeURIComponent(assetId)}/restore`,
+      );
+      return fetchHubJson(fetch, url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ version, expectedPublishedVersion, mutation }),
+      }, authSession);
+    },
     async readAdminOpsKpi() {
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/kpi');
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
