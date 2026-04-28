@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { validateAnswerSpec } from '../worker/src/subjects/grammar/answer-spec.js';
+import { createServerGrammarEngine } from '../worker/src/subjects/grammar/engine.js';
+import { buildGrammarReadModel } from '../worker/src/subjects/grammar/read-models.js';
 import {
   GRAMMAR_CONTENT_RELEASE_ID,
   GRAMMAR_TEMPLATE_METADATA,
@@ -10,6 +12,7 @@ import {
   grammarQuestionVariantSignature,
   serialiseGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
+import { assertNoForbiddenGrammarReadModelKeys } from '../scripts/grammar-production-smoke.mjs';
 
 const P3_TEMPLATE_IDS = Object.freeze([
   'qg_p3_sentence_functions_explain',
@@ -100,11 +103,46 @@ test('Grammar QG P3 explanation questions auto-score exactly one visible option'
       assert.equal(serialised.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID, templateId);
       assert.equal(serialised.templateId, templateId, templateId);
       assert.equal(serialised.promptText.length > 0, true, templateId);
+      assert.ok(serialised.solutionLines.length > 0, `${templateId}:${seed} keeps internal solution lines for feedback.`);
       assert.equal(Object.hasOwn(serialised, 'answerSpec'), false, templateId);
       assert.equal(Object.hasOwn(serialised, 'generatorFamilyId'), false, templateId);
       assert.equal(Object.hasOwn(serialised, 'variantSignature'), false, templateId);
       assert.doesNotMatch(JSON.stringify(serialised), /"golden"|"nearMiss"|"misconception"/, templateId);
     }
+  }
+});
+
+test('Grammar QG P3 learner read models redact internal explanation answers', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  for (const [index, templateId] of P3_TEMPLATE_IDS.entries()) {
+    const start = engine.apply({
+      learnerId: 'learner-a',
+      subjectRecord: {},
+      command: 'start-session',
+      requestId: `p3-redaction-${index}`,
+      payload: {
+        mode: 'smart',
+        roundLength: 1,
+        templateId,
+        seed: index + 1,
+      },
+    });
+
+    assert.equal(start.state.session.currentItem.templateId, templateId, templateId);
+    assert.ok(start.state.session.currentItem.solutionLines.length > 0, `${templateId} has internal solution lines.`);
+
+    const readModel = buildGrammarReadModel({
+      learnerId: 'learner-a',
+      state: start.state,
+      now: 1_777_000_000_000,
+    });
+    assert.equal(readModel.session.currentItem.templateId, templateId, templateId);
+    assert.equal(readModel.session.currentItem.solutionLines, undefined, templateId);
+    assert.equal(readModel.session.currentItem.answerSpec, undefined, templateId);
+    assert.equal(readModel.session.currentItem.generatorFamilyId, undefined, templateId);
+    assert.equal(readModel.session.currentItem.variantSignature, undefined, templateId);
+    assertNoForbiddenGrammarReadModelKeys(readModel, `grammar.qgP3.${templateId}`);
   }
 });
 
