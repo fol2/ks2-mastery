@@ -1,89 +1,127 @@
 # Admin Console P4 — Completion Report
 
-**Plan**: `docs/plans/james/admin-page/admin-page-p4.md`  
+**Contract**: `docs/plans/james/admin-page/admin-page-p4.md`  
+**Implementation plan**: `docs/plans/2026-04-27-004-feat-admin-console-p4-reliability-hardening-plan.md`  
 **Preceded by**: `docs/plans/james/admin-page/admin-page-p3-completion-report.md`  
 **Date**: 2026-04-27  
-**Aggregate diff**: 8 PRs across 9 units  
-**Execution mode**: hardening phase — no new feature expansion
+**Aggregate diff**: 9 PRs (#429–#448), +4,762 / -1,032  
+**New tests**: ~95 across 6 test files  
+**Execution mode**: fully autonomous SDLC — scrum-master orchestration with isolated worktree workers, adversarial reviewers, review followers, squash-merge to main
 
 ---
 
 ## Executive Summary
 
-P4 is a truthfulness and hardening phase. The Admin Console gained enough breadth in P3 that the primary risk shifted from "missing panels" to "an operator trusting a panel, filter, or label that is partially wired, stale, or inconsistent with source." P4 shipped 9 units across 8 PRs to make Admin boringly reliable.
+P4 is a truthfulness and hardening phase. After P3 shipped 13 units of new Admin surface, the primary risk shifted from "missing panels" to "an operator trusting a panel, filter, route, or label that is partially wired, stale, inconsistent with source, or not covered by production-shaped evidence." P4 shipped 9 units across 9 PRs to make Admin boringly reliable.
 
 The driving question from the P4 contract: **can the operator open Admin, locate the right section, trust the shown state, and understand whether a feature is live, backend-only, or deferred — without being surprised?**
 
-After P4: yes. Every Admin section is fully live (no "coming soon" labels remain). Marketing is wired end-to-end with UI, API client, and lifecycle transitions. Debug Bundle identifiers are unambiguous. Denial reason filters match the 5 canonical codes. The Debugging section has been structurally refactored from 949 lines into a 30-line thin shell composing 4 focused sub-panels. Production smoke covers 14 steps including the marketing write-path.
+After P4: yes.
+
+### What changed
+
+1. **Three source-truth bugs fixed**: the denial filter dropdown offered 5 values that matched zero real records; the Debug Bundle treated the same input as both a fingerprint and an event ID; the Marketing section said "Coming soon" while the backend was production-ready.
+2. **Two P3 adversarial advisories closed**: `confirmBroadPublish` gate extended to `scheduled` transitions (ADV-U11-005); idempotent replay now returns the same response shape as first-call (ADV-U11-007).
+3. **Marketing section wired end-to-end**: 790-line backend connected to a new lifecycle panel with API client, CAS conflict handling, broad-publish confirmation, and fetch-generation guards.
+4. **Debugging section structurally refactored**: 949-line monolith extracted into 4 focused sub-panels + 30-line thin shell, under characterisation-test discipline.
+5. **Admin smoke coverage doubled**: from 7 steps to 14, covering Debug Bundle, denials, account search, account detail, content overview, marketing read, and marketing write-path round-trip.
+6. **Documentation reconciled**: `operating-surfaces.md` corrected (active-messages auth, denial codes, Marketing state, Debug Bundle identifiers), P3 deferred items annotated, this completion report.
+
+Every Admin section is now fully live. No "coming soon" labels remain. All 11 P1-P3 invariants are preserved.
 
 ---
 
 ## Implementation Units — Full Inventory
 
-| U-ID | PR | Scope | Status |
-|------|-----|-------|--------|
-| U1 | #431 | Characterisation tests for AdminDebuggingSection (13 tests) | **Shipped** |
-| U2 | #436 | Denial reason filter mismatch — 5 values corrected + friendly labels | **Shipped** |
-| U3 | #437 | Debug Bundle identifier semantics — split `errorFingerprint` + `errorEventId` + empty-match guard | **Shipped** |
-| U4 | #430 | `confirmBroadPublish` gate on scheduled transition | **Shipped** |
-| U5 | #429 | Idempotent replay response-shape parity | **Shipped** |
-| U6 | #440 | Wire Marketing section to existing backend (API client, normaliser, panel, CAS, lifecycle) | **Shipped** |
-| U7 | #445 | Extend admin smoke coverage — 7 new steps (steps 8–14) including marketing write-path | **Shipped** |
-| U8 | #441 | Extract Debugging section into 4 sub-panels (949 → 30 lines) | **Shipped** |
-| U9 | this PR | Truth audit — operating surfaces, P3 annotations, P4 completion report | **Shipped** |
+| U-ID | PR | Merge time | Scope | +/- | Status |
+|------|-----|-----------|-------|-----|--------|
+| U5 | #429 | 19:37 UTC | Idempotent replay response-shape parity — ADV-U11-007 | +111/-1 | **Shipped** |
+| U4 | #430 | 19:37 UTC | `confirmBroadPublish` + `requireMaintenanceEndsAt` on `scheduled` — ADV-U11-005 | +163/-5 | **Shipped** |
+| U1 | #431 | 19:42 UTC | Characterisation tests for AdminDebuggingSection (13 tests, 4 panels) | +972/-0 | **Shipped** |
+| U2 | #436 | 19:54 UTC | Denial reason filter: 5 values corrected + friendly labels + round-trip tests | +238/-43 | **Shipped** |
+| U3 | #437 | 19:55 UTC | Debug Bundle identifier split + empty-match guard — ER-3 | +378/-10 | **Shipped** |
+| U6 | #440 | 20:10 UTC | Wire Marketing section to existing backend — full lifecycle panel | +1,364/-12 | **Shipped** |
+| U8 | #441 | 20:10 UTC | Extract Debugging section into 4 sub-panels (949 → 30 lines) | +980/-941 | **Shipped** |
+| U7 | #445 | 20:23 UTC | Extend admin smoke coverage — 7 new steps (14 total) | +367/-8 | **Shipped** |
+| U9 | #448 | 20:30 UTC | Docs truth audit + completion report | +189/-12 | **Shipped** |
+
+Total wall-clock from first merge to last: **53 minutes**.
 
 ---
 
 ## Source-Truth Reconciliation
 
-P4's first priority (Priority A in the contract) was to make source, reports, docs, and UI agree. Here is what was found wrong and what was fixed.
+P4's first priority (Priority A in the contract) was: "the current source, reports, docs, and UI agree." Source review against `main` revealed six discrepancies. All were fixed.
 
-### Marketing section state
+### 1. Denial reason filter was non-functional
 
-**Found**: P3 backend shipped the full marketing lifecycle (`admin-marketing.js`, 723 lines), but the Admin UI Marketing tab was still a placeholder. The `AdminSectionTabs.jsx` tab definition no longer had `comingSoon: true`, but `AdminMarketingSection.jsx` was still a stub.
+**Severity**: correctness bug — the filter dropdown matched zero real records.
 
-**Fixed**: U6 (PR #440) wired the Marketing section to the existing backend via `createAdminMarketingApi()`, `normaliseMarketingMessage`, and a full lifecycle editor with CAS transitions, broad-publish confirmation, and submit locks.
+**Found**: `AdminDebuggingSection.jsx` line 495 defined `DENIAL_REASON_OPTIONS` as:
+```
+['suspended_account', 'rate_limited', 'forbidden', 'invalid_session', 'demo_expired']
+```
+The Worker's `ALLOWED_DENIAL_REASONS` Set contained:
+```
+['account_suspended', 'payment_hold', 'session_invalidated', 'csrf_rejection', 'rate_limit_exceeded']
+```
+All 5 UI values were wrong — 3 were name-mangled (`suspended_account` vs `account_suspended`), and 2 were phantom codes (`forbidden`, `demo_expired`) that the logger silently dropped. The filter dropdown appeared functional but returned empty results for every selection.
 
-### Active-messages endpoint auth contract
+**Fixed**: U2 (PR #436) replaced all 5 values with canonical `DENIAL_*` constants from `error-codes.js`, added operator-friendly display labels (e.g. `csrf_rejection` → "CSRF / Same-Origin"), and added a `DENIAL_REASON_LABEL_MAP` for row rendering. 7 round-trip filter tests prove each code returns matching records.
 
-**Found**: `docs/operating-surfaces.md` described `GET /api/ops/active-messages` as "public unauthenticated". The Worker source places this route after `auth.requireSession(request)` — it is authenticated (any signed-in role).
+**Critical trap avoided**: `error-codes.js` exports both `ACCOUNT_PAYMENT_HOLD` (`'account_payment_hold'`) and `DENIAL_PAYMENT_HOLD` (`'payment_hold'`). These are different strings. The adversarial reviewer caught this ambiguity and the plan explicitly mandated `DENIAL_*` prefixed imports.
 
-**Fixed**: U9 (this PR) corrected `operating-surfaces.md` to say "authenticated (any signed-in role)".
+### 2. Debug Bundle identifier was semantically overloaded
 
-### Denial reason filter mismatch
+**Severity**: correctness bug — occurrence queries returned zero results when searching by fingerprint.
 
-**Found**: The Debugging section denial filter only listed 3 reason values. The Worker logs 5 canonical denial reasons: `account_suspended`, `payment_hold`, `session_invalidated`, `csrf_rejection`, `rate_limit_exceeded`.
+**Found**: `admin-debug-bundle.js` accepted a single `errorFingerprint` parameter. In section 3 (recent errors), it correctly matched `ops_error_events.fingerprint`. In section 4 (occurrences), it was pushed into `event_id = ?` — but `event_id` is a FK referencing `ops_error_events.id` (a UUID-style primary key), not a fingerprint string. An operator entering `fp-xxxx` always got zero occurrence results.
 
-**Fixed**: U2 (PR #436) corrected the filter to expose all 5 values with friendly display labels.
+**Fixed**: U3 (PR #437) split the input into two explicit fields: `errorFingerprint` (matches `ops_error_events.fingerprint`) and `errorEventId` (matches `ops_error_events.id`). The occurrence sub-query now resolves fingerprints to event IDs first via an intermediate SELECT, then filters `event_id IN (...)`. An empty-match guard returns `[]` when the fingerprint matches zero events, preventing a SQLite `WHERE event_id IN ()` syntax error.
 
-### Debug Bundle identifier confusion
+**Architectural note**: The resolution sub-query runs inside the `safeSection('errorOccurrences', ...)` callback to preserve the `Promise.all` parallel structure. The UNIQUE index on `ops_error_events(fingerprint)` bounds the intermediate SELECT to at most 1 row.
 
-**Found**: The Debug Bundle UI accepted a single "fingerprint" field. The occurrence table uses `event_id` (referencing `ops_error_events.id`). The bundle code filtered by `event_id` when the user might have entered a fingerprint.
+### 3. Marketing UI was a placeholder while docs said "shipped"
 
-**Fixed**: U3 (PR #437) split the input into two explicit fields: `errorFingerprint` (dedupe/grouping fingerprint) and `errorEventId` (`ops_error_events.id`). Added empty-match guard so the API returns a clear signal when neither field matches.
+**Severity**: truth mismatch — backend production-ready, client was 18-line static text.
 
-### Broad-publish confirmation gap
+**Found**: `AdminMarketingSection.jsx` was 18 lines of "Coming soon" placeholder receiving zero props. `AdminSectionTabs.jsx` had `comingSoon: true` on the marketing tab. Meanwhile, `admin-marketing.js` (790 lines) was a complete lifecycle state machine with CAS, XSS validation, and 46 tests — all unreachable from the UI.
 
-**Found**: The `confirmBroadPublish` gate only fired on `published` transitions, not `scheduled`. A scheduled message with `audience: 'all_signed_in'` could bypass the confirmation gate.
+**Fixed**: U6 (PR #440) replaced the placeholder with a full lifecycle panel:
+- Created `admin-marketing-api.js` with 5 fetch wrappers (list, create, get, update, transition)
+- Added `normaliseMarketingMessage()` to the admin read model
+- Built a self-contained panel with: message list + status badges, create form with client-side validation, lifecycle transition buttons from `VALID_TRANSITIONS` map, broad-publish confirmation dialog, CAS conflict handling with auto-refresh, XSS-safe Markdown preview
+- Marketing data lazy-loads on tab activation via existing `GET /api/admin/marketing/messages` endpoint — no hub payload inflation
+- Ops role sees read-only view; mutation buttons hidden
 
-**Fixed**: U4 (PR #430) extended the gate to fire on both `published` and `scheduled` transitions.
+### 4. Active-messages endpoint auth was misdocumented
 
-### Idempotent replay shape mismatch
+**Severity**: documentation error — docs said "public unauthenticated", source says authenticated.
 
-**Found**: First-success marketing transitions returned a `message` field. Idempotent replay (same `requestId`) returned only `{ messageId, previousStatus, newStatus }` — a different shape that could confuse retry logic.
+**Found**: `docs/operating-surfaces.md` described `GET /api/ops/active-messages` as "public unauthenticated" in 3 locations. The Worker source places this route after `auth.requireSession(request)` — it requires authentication (any signed-in role).
 
-**Fixed**: U5 (PR #429) made replay responses include the `message` field matching first-success shape.
+**Fixed**: U9 (PR #448) corrected all 3 references.
 
----
+### 5. Broad-publish confirmation gate had a bypass path
 
-## P3 Residuals Resolved
+**Severity**: defence-in-depth gap — ADV-U11-005 from P3 adversarial review.
 
-| P3 deferred item | P4 resolution |
-|-----------------|---------------|
-| `confirmBroadPublish` on scheduled transition | **Resolved** — PR #430 (U4) |
-| Idempotent replay response-shape parity | **Resolved** — PR #429 (U5) |
-| Production smoke harmonisation | **Partially resolved** — PR #445 (U7) added 14-step coverage with structured JSON, `--help`, distinct exit codes |
-| Debug Bundle Playwright end-to-end | **Not resolved** — P4 added smoke coverage but not Playwright browser test |
+**Found**: The `confirmBroadPublish` gate at `admin-marketing.js:639` only checked `action === 'published'`. The `draft → scheduled` transition for `audience: 'all_signed_in'` was ungated. No auto-publisher exists today, but if one were added, a scheduled message could reach broad-audience visibility without operator confirmation.
+
+**Fixed**: U4 (PR #430) extended both gates:
+- `confirmBroadPublish`: `action === 'published'` → `(action === 'published' || action === 'scheduled')`
+- `requireMaintenanceEndsAt`: same extension (defence-in-depth symmetry — a maintenance message scheduled without `ends_at` should be caught at scheduling time)
+- 7 new test cases; 2 existing tests adapted (now require `confirmBroadPublish: true` on their intermediate `draft → scheduled` step)
+
+**Adversarial verification**: The reviewer confirmed no bypass exists through any combination of transitions in `VALID_TRANSITIONS`. The `scheduled → draft → scheduled` unschedule path re-triggers the gate because `row.audience` is immutable after creation.
+
+### 6. Idempotent replay returned a different response shape
+
+**Severity**: contract inconsistency — ADV-U11-007 from P3 adversarial review.
+
+**Found**: First-call marketing transitions returned `{ messageId, previousStatus, newStatus, message: adminMessageFields(updated), mutation: { replayed: false } }`. Replay returned `{ messageId, previousStatus, newStatus, mutation: { replayed: true } }` — missing the `message` field. Clients parsing the response would fail on replay.
+
+**Fixed**: U5 (PR #429) re-reads the current message row from DB on replay and includes `message: adminMessageFields(currentRow)` with a null guard. 4 new tests including strict `Object.keys` shape parity assertion.
 
 ---
 
@@ -91,38 +129,99 @@ P4's first priority (Priority A in the contract) was to make source, reports, do
 
 ### Debugging section extraction (U8, PR #441)
 
-`AdminDebuggingSection.jsx` was 949 lines containing the error log centre, occurrence timeline, denial log, Debug Bundle panel, and learner support. U8 extracted these into four focused sub-panel files:
+`AdminDebuggingSection.jsx` was 949 lines containing 4 distinct panel components, 4 private helpers, filter state, expanded-row state, and form state. U8 extracted these into 4 self-contained files:
 
-| File | Content |
-|------|---------|
-| `AdminErrorTimelinePanel.jsx` | ErrorLogCentrePanel + OccurrenceTimeline + ErrorEventDetailsDrawer |
-| `AdminRequestDenialsPanel.jsx` | DenialLogPanel + DENIAL_REASON_OPTIONS + DENIAL_REASON_LABEL_MAP |
-| `AdminDebugBundlePanel.jsx` | DebugBundlePanel + DebugBundleSectionTable + DebugBundleResult |
-| `AdminLearnerSupportPanel.jsx` | LearnerSupportPanel |
+| File | Content | Lines |
+|------|---------|-------|
+| `AdminErrorTimelinePanel.jsx` | ErrorLogCentrePanel + OccurrenceTimeline + ErrorEventDetailsDrawer | ~300 |
+| `AdminLearnerSupportPanel.jsx` | LearnerSupportPanel (different prop contract: needs `appState`, `accessContext`) | ~100 |
+| `AdminRequestDenialsPanel.jsx` | DenialLogPanel + DENIAL_REASON_OPTIONS + DENIAL_REASON_LABEL_MAP + normaliseDenialEntry | ~200 |
+| `AdminDebugBundlePanel.jsx` | DebugBundlePanel + DebugBundleSectionTable + DebugBundleResult | ~300 |
 
-The parent `AdminDebuggingSection.jsx` is now a 30-line thin composition shell preserving the original prop contract.
+The parent `AdminDebuggingSection.jsx` is now a 30-line thin composition shell. Each extracted panel carries its own private helpers — no cross-imports between panel files. This follows the P2 extraction pattern where `AdminHubSurface.jsx` went from 1,579 → 179 lines.
 
-Characterisation tests (U1, PR #431, 13 tests) were written before the extraction to guarantee behaviour preservation.
+**Characterisation-first discipline**: U1 (PR #431) wrote 13 characterisation tests pinning all 4 panels' rendered output before any extraction. The reviewer identified 2 HIGH gaps (DebugBundleResult rendering path and error centre filters were unpinned), which a follower fixed before merge. The extraction then proceeded with full regression safety.
 
-### Marketing API client (U6, PR #440)
+### Marketing client architecture (U6, PR #440)
 
-`createAdminMarketingApi()` provides `fetchMarketingMessages`, `createMarketingMessage`, and `transitionMarketingMessage` — a standalone API client that talks to the P3 marketing Worker routes. The `AdminMarketingSection.jsx` component manages local state with generation-counter stale-response guards, `useSubmitLock` for mutation debouncing, and CAS `expectedRowVersion` threading for lifecycle transitions.
+The Marketing panel uses a standalone API client pattern rather than integrating into the hub dispatcher:
+
+```
+AdminMarketingSection (local state)
+  → createAdminMarketingApi() (5 fetch wrappers)
+    → GET/POST/PUT /api/admin/marketing/messages (existing P3 Worker routes)
+      → admin-marketing.js (790-line state machine)
+        → D1 batch() with CAS
+```
+
+Key design decisions:
+- **Lazy-load on tab activation**: avoids bloating `readAdminHub` payload for every admin page load
+- **Self-contained local state**: message list, loading, error, selected message, form state, CAS `expectedRowVersion` — no new store/dispatcher actions
+- **Generation-counter stale-response guard**: `fetchGeneration` ref prevents rapid Refresh clicks from producing last-write-wins with stale data
+- **Form-reset-on-success-only**: after adversarial review caught premature form clearing, `handleSubmit` awaits the API promise and only clears on success
+- **CAS conflict auto-refresh**: after a 409 conflict, the message list is auto-refreshed so the detail view shows current server state
+
+### Production smoke architecture (U7, PR #445)
+
+7 new smoke steps (8–14) follow the established pattern (try/catch, correlation ID, exit code escalation) with one addition: the marketing write-path round-trip (step 14) creates a draft with `audience: 'internal'`, then archives it, with state-drift retry — exercising CAS, XSS validation, and the lifecycle state machine in production without leaving visible state.
+
+The adversarial reviewer caught 2 BLOCKER-level contract mismatches (wrong response keys for denials `entries` vs `rows` and accounts `results` vs `rows/accounts`) plus a HIGH (snake_case `row_version` vs camelCase `rowVersion` in the CAS flow). All fixed by follower before merge.
+
+---
+
+## Adversarial Review Telemetry
+
+P4 ran adversarial review on every PR. **~20 subagents total** (9 workers + 8 reviewers + 5 followers). The review pipeline caught issues that would have been production bugs:
+
+| PR | Review | Findings | Resolution |
+|----|--------|----------|------------|
+| #429 (U5) | Adversarial | 2 LOW: null guard untested, key-parity is structural only | Advisory — accepted |
+| #430 (U4) | Adversarial | 3 LOW: rate-limit reset safe, test fixes correct, no bypass path | Advisory — accepted |
+| #431 (U1) | Adversarial | **2 HIGH**: DebugBundleResult path unpinned (106 lines), error centre filters unpinned (6 inputs) | **Follower fixed** — added 2 new tests (12→13) |
+| #436 (U2) | Adversarial | **1 HIGH**: `worker-admin-request-denials-read.test.js` still seeded old wrong codes. 1 MEDIUM: raw codes in denial rows | **Follower fixed** — 8 legacy codes replaced, friendly labels added to rows |
+| #437 (U3) | Adversarial | 1 MEDIUM: theoretical cross-section race. 2 LOW: safeSection hides failure signal, prefill inherits falsy guard | Advisory — accepted |
+| #440 (U6) | Adversarial | **2 HIGH**: CAS conflict stale state, form reset before server response. 4 MEDIUM: dead onRefresh prop, rapid-refresh race, datetime NaN, body_text untrimmed | **Follower fixed** — CAS auto-refresh, form-reset-on-success, removed dead prop, fetch generation guard |
+| #441 (U8) | Adversarial | 2 HIGH (merge-order artifact from U2/U3 landing first). 1 MEDIUM: CI red (pre-existing). 1 LOW: CSS class→inline | Merge-order artifact — HIGHs were correct changes from U2/U3 |
+| #445 (U7) | Adversarial | **2 BLOCKER**: wrong response keys (`rows` vs `entries`/`results`). **2 HIGH**: `rowVersion` casing, drift-return bypasses summary | **Follower fixed** — all 4 response key/casing/control-flow issues corrected |
+| #448 (U9) | Docs only | No review | — |
+
+### What the reviews caught that tests did not
+
+The most valuable adversarial catches were **contract mismatches** — cases where the code was internally consistent but disagreed with the actual API response shape:
+
+1. **U7 denial response key**: smoke checked `payload.rows` but the API returns `entries`. Tests using mocks would pass; only the review caught it by tracing through `repository.js`.
+2. **U7 account search key**: smoke checked `payload.rows` / `payload.accounts` but the API returns `results`. Same class of bug.
+3. **U7 `row_version` casing**: smoke read `rowVersion` (camelCase) but the API returns `row_version` (snake_case). The initial archive worked by coincidence (both 0), masking the bug.
+4. **U2 legacy test codes**: `worker-admin-request-denials-read.test.js` seeded old wrong codes via raw SQL, bypassing the `ALLOWED_DENIAL_REASONS` validation gate. The tests passed but tested a production-unreachable scenario.
+
+These are the bug class that unit tests with mocks cannot catch. The adversarial reviewers' source-tracing methodology — following data from Worker response through app.js spread through API client to assertion — is what found them.
+
+---
+
+## P3 Residuals Resolved
+
+| P3 deferred item | P4 resolution |
+|-----------------|---------------|
+| `confirmBroadPublish` on `scheduled` transition (ADV-U11-005) | **Resolved** — PR #430 (U4). Extended to both `published` and `scheduled`. `requireMaintenanceEndsAt` extended symmetrically. |
+| Idempotent replay response-shape parity (ADV-U11-007) | **Resolved** — PR #429 (U5). Replay re-reads current row for `message` field. |
+| Production smoke harmonisation | **Resolved** — PR #445 (U7). 14-step coverage with structured JSON, `--help`, distinct exit codes, marketing write-path round-trip. |
+| Debug Bundle Playwright end-to-end | **Not resolved** — P4 added unit tests + smoke coverage but not a Playwright browser test. Deferred. |
 
 ---
 
 ## Invariants Preserved
 
-All 11 P1–P3 hard invariants remain intact after P4:
+All 11 P1-P3 hard invariants remain intact after P4:
 
 1. **R24 fingerprint dedup** `(error_kind, message_first_line, first_frame)` — unchanged.
-2. **`row_version` CAS on `account_ops_metadata`** — unchanged.
+2. **`row_version` CAS on `account_ops_metadata`** — unchanged. Marketing CAS follows the same `batch()` + post-batch guard pattern.
 3. **Auto-reopen with CAS guard** — unchanged.
 4. **`ops_status` enforcement** (`requireActiveAccount`, `requireMutationCapability`) — unchanged.
 5. **Session invalidation via `status_revision`** — unchanged.
-6. **Additive hub payload** — unchanged. Marketing uses a dedicated API client, not hub payload inflation.
-7. **Content-free leaf module boundary** — all P4 client modules verified zero-import.
-8. **Mutation receipt pattern** — unchanged.
-9. **Rate-limit before body-cap** — unchanged.
+6. **Additive hub payload** — unchanged. Marketing uses a dedicated lazy-load API client, not hub payload inflation.
+7. **Content-free leaf module boundary** — all P4 client modules verified zero-import from worker/.
+8. **Mutation receipt pattern** — unchanged. Marketing transitions write receipts via `mutationReceiptStatement`.
+9. **Rate-limit before body-cap** — unchanged. Marketing routes share `admin-ops-mutation` bucket.
 10. **Dirty-row section-switch guard** — unchanged.
 11. **Counter-based hashchange guard** — unchanged.
 
@@ -130,46 +229,96 @@ All 11 P1–P3 hard invariants remain intact after P4:
 
 ## Deferred Items
 
-### Deferred from P4 scope (explicit non-goals)
+### Deferred from P4 scope (explicit non-goals in plan)
 
-These items from the P4 contract (sections PR-7, PR-9, PR-10) were intentionally deferred to P5:
+| Item | Origin | Reason for deferral |
+|------|--------|-------------------|
+| Operational evidence panel | Contract PR-7 | Evidence schema and telemetry not strong enough to avoid misleading the business owner. Needs capacity-evidence v3, CSP/HSTS gate state, and a clear "provisional vs certified" taxonomy. |
+| Panel freshness/failure framework | Contract PR-9 | Cross-cutting concern (last-refreshed timestamp, stale-data warning, retry button, partial failure). Should be designed once as `AdminPanelFrame`, not per-panel. P4's `safeSection` pattern is the per-query version; the UI-level version is P5. |
+| Safe-copy redaction framework | Contract PR-10 | Current role-based redaction is sufficient. `safeCopyDebugBundle` with shareable vs internal-only output adds value only when more copy targets exist (account summary, marketing preview). |
+| Debug Bundle Playwright e2e | P3 residual | Unit tests + 14-step production smoke cover aggregation, redaction, endpoint shape. Browser-level test of search→generate→copy flow remains deferred. |
+| Complex audience targeting | Contract non-goal | Per-child, per-cohort marketing targeting is a future Marketing iteration. |
+| Full search infrastructure | Contract non-goal | SQL LIKE sufficient at current scale (~hundreds of accounts, not thousands). |
 
-- **Operational evidence panel (PR-7)** — compact display of release/build, smoke status, capacity posture, CSP/HSTS state. Deferred because the evidence schema and telemetry are not strong enough to avoid misleading the business owner.
-- **Panel freshness/failure framework (PR-9)** — last-refreshed timestamp, stale-data warning, partial-failure visibility. Deferred as a cross-cutting concern that should be designed once, not per-panel.
-- **Safe-copy redaction framework (PR-10)** — standardised redaction for Debug Bundle JSON, account summary, fingerprint copy. Deferred because the current role-based redaction is sufficient; the framework adds value only when more copy targets exist.
+### Items from the P4 contract that P4 delivered
 
-### Carried forward from P3
-
-- **Debug Bundle Playwright end-to-end** — unit tests and 14-step production smoke cover aggregation, redaction, and endpoint shape. No browser-level test of the full search → generate → copy flow. Deferred.
-- **Complex audience targeting** (per-child, per-cohort) for Marketing — future phase.
-- **Full search infrastructure** (Elasticsearch, Meilisearch) — SQL LIKE sufficient at current scale.
-- **Production Arithmetic/Reasoning/Reading content providers** — placeholder-only in content overview.
+| Contract requirement | Delivery |
+|---------------------|----------|
+| PR-1: Section truthfulness | All 5 sections live. No "coming soon" labels. |
+| PR-2: Debug Bundle correctness | Two-field identifier with resolution sub-query. |
+| PR-3: Occurrence timeline usefulness | Fields preserved from P3. No additional fields added (kind, message summary, source classification remain as P3 shipped). |
+| PR-4: Request-denial evidence | 5 canonical codes, friendly labels, round-trip tests. |
+| PR-5: Account support QoL | Unchanged from P3 (search, detail, Debug Bundle link). |
+| PR-6: Marketing truth and safety | Marketing is live. Broad-publish covers scheduled. Replay is shape-consistent. |
+| PR-8: Admin navigation QoL | Unchanged from P2 (hash deep-linking, SPA fallback, login redirect stash). |
+| ER-1: Worker-authoritative mutations | Unchanged. Marketing transitions are Worker-authoritative. |
+| ER-2: Explicit auth contracts | Active-messages auth corrected in docs. Marketing mutations admin-only. |
+| ER-3: Identifier clarity | Debug Bundle uses `errorFingerprint` vs `errorEventId`. |
+| ER-4: No silent filter loss | Denial filter now matches real records. |
+| ER-5: Characterisation before refactor | 13 characterisation tests preceded U8 extraction. |
+| ER-7: Production-shaped evidence | 14-step admin smoke with marketing write-path. |
 
 ---
 
-## Review Telemetry
+## Execution Pattern
 
-| PR | Review type | Findings |
-|----|------------|----------|
-| #431 (U1) | Characterisation test — no review needed | — |
-| #436 (U2) | Correctness | Values aligned to Worker constants |
-| #437 (U3) | Correctness | Identifier split verified against occurrence table schema |
-| #430 (U4) | Correctness | Gate condition confirmed on both `published` and `scheduled` |
-| #429 (U5) | Correctness | Replay shape now includes `message` field |
-| #440 (U6) | Adversarial | HIGH-1: form clears on success only; HIGH-2: CAS conflict triggers list refresh; MEDIUM-1: generation counter guards stale fetch; MEDIUM-2: broad-publish gate covers both transitions |
-| #441 (U8) | Correctness | Extraction verified by U1 characterisation tests |
-| #445 (U7) | Adversarial | Smoke steps 8–14 wrapped in individual try/catch for maximum coverage; state-drift guard for marketing create/archive pair |
+### Batch orchestration
+
+The sprint ran in 5 dependency-ordered batches with all work in isolated git worktrees. Main repo never changed branch.
+
+```
+Batch 1 (parallel):  U1 + U4 + U5  → review → merge
+Batch 2 (parallel):  U2 + U3        → review → follower → merge
+Batch 3 (parallel):  U6 + U8        → review → follower → merge
+Batch 4:             U7             → review → follower → merge
+Batch 5:             U9             → merge
+```
+
+### SDLC cycle per unit
+
+```
+Worker (isolated worktree) → implement + test + commit + push + create PR
+  → Adversarial reviewer → construct failure scenarios, trace data paths
+    → (if BLOCKER/HIGH) Follower → fix findings + push to same PR
+      → (optional re-review)
+  → Squash merge to main
+```
+
+### Throughput
+
+- 9 PRs merged in 53 minutes wall-clock
+- ~20 subagents total (9 workers, 8 reviewers, 5 followers)
+- 6 BLOCKER/HIGH findings caught by review and fixed before merge
+- 0 regressions in main
 
 ---
 
-## Admin Console Evolution: P1 → P1.5 → P2 → P3 → P4
+## Admin Console Evolution: P1 → P4
 
-| Phase | PR(s) | Focus | Tests added |
-|-------|-------|-------|-------------|
-| P1 | #188 | 4 panels + public error ingest | ~80 |
-| P1.5 | #216, #227, #270, #292, #308 | CAS + enforcement + error cockpit | ~150 |
-| P2 | #363 | IA restructure + section navigation | ~40 |
-| P3 | #382–#409 | Command centre — 12 PRs | 227 |
-| **P4** | **#429–#445** | **Hardening — 8 PRs** | **~60** |
+| Phase | PR(s) | Focus | Files Δ | Tests |
+|-------|-------|-------|---------|-------|
+| P1 | #188 | 4 panels + public error ingest | +3,200 | ~80 |
+| P1.5 | #216–#308 | CAS + enforcement + error cockpit | +4,100 | ~150 |
+| P2 | #344–#363 | IA restructure + section navigation (1,579→179 lines) | +1,800/-1,400 | ~40 |
+| P3 | #382–#409 | Command centre — 13 units, 12 PRs | +12,325/-80 | 227 |
+| **P4** | **#429–#448** | **Hardening — 9 units, 9 PRs** | **+4,762/-1,032** | **~95** |
 
-P4 closed the gap between P3's claimed delivery and source truth. The Admin Console is now a five-section command centre where every section is fully live, every identifier is unambiguous, and every filter matches its backend. The next phase (P5) can safely expand features because the foundation is now honest.
+**Cumulative**: the Admin Console is now a five-section command centre with ~600 tests, 14-step production smoke, characterisation-tested structure, and honest documentation. Every section is live, every identifier is unambiguous, every filter matches its backend, and the debugging workflow supports evidence-based operator decision-making from account search through to copied Debug Bundle.
+
+---
+
+## P4 done means
+
+From the contract, section 13: "P4 is done when Admin is less exciting and more dependable."
+
+The business owner should feel:
+
+- "I know where to go." → 5 live sections, hash deep-linking, login redirect stash.
+- "I know whether this feature is actually live." → No "coming soon" labels. Marketing wired.
+- "I can debug from evidence." → Debug Bundle with unambiguous identifiers. Denial filter works.
+- "I can trust the labels and filters." → 5 canonical denial codes with friendly labels. Round-trip tested.
+- "I can copy a safe bundle." → Existing role-based redaction preserved. Copy buttons functional.
+- "I can see production health without reading five docs." → 14-step smoke script. (Evidence panel deferred to P5.)
+- "The code is ready for the next feature phase." → 949→30 line extraction. Characterisation tests. No coupling debt.
+
+Only after that should Admin move back into larger product expansion: operational evidence panels, advanced Marketing/Live Ops, content management, or future Hero Mode operational surfaces.
