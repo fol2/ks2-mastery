@@ -298,7 +298,7 @@ The Punctuation release gate includes:
 - Worker command tests for start, submit, continue, stale transitions, redaction, and idempotent reward projection
 - React scene tests for setup, active, feedback, summary, and hidden-field absence
 - subject expansion conformance and golden-path smoke coverage
-- deterministic demo release smoke proving default hidden exposure, P2 runtime stats, current release id, generated active-item metadata policy, generated misconception evidence, GPS delayed-review redaction, dash acceptance, Oxford-comma acceptance, Parent Hub evidence, gated Worker command execution, and English Spelling startup
+- deterministic demo release smoke proving default hidden exposure, deployed P2 release id/runtime total/reward-unit count, generated active-item command-path metadata policy, generated misconception evidence, GPS delayed-review redaction, dash acceptance, Oxford-comma acceptance, Parent Hub evidence, gated Worker command execution, and English Spelling startup; local manifest/audit checks separately pin generated composition
 - asset tests for Bellstorm Coast scenes and Punctuation monster artwork
 - bundle/public-output audits proving engine/content source and raw source paths are not shipped to the browser
 - performance coverage for bounded scheduling across fixed items, generated items, sentence combining, and paragraph repair
@@ -324,6 +324,10 @@ npm run smoke:production:punctuation
 The smoke creates an isolated demo session on production, confirms `punctuationProduction` is enabled, completes one Worker-backed Smart review item through summary, completes one GPS test item through delayed review, checks Parent Hub Punctuation evidence for hidden-field redaction, and starts a Worker-backed English Spelling session with a redacted prompt token. This keeps the Punctuation rollout gate tied to the live subject command boundary while also proving the reference Spelling subject still starts correctly.
 
 For P2, the same smoke also verifies the deployed Punctuation read model reports release `punctuation-r4-full-14-skill-structure`, 192 runtime items, and 14 published reward units. It drives bounded command-boundary searches for a generated active item, submits an intentionally incorrect generated answer to confirm misconception evidence without generated internals, proves spaced hyphen / en dash / em dash dash-clause marking, and proves a default list-comma item accepts an Oxford comma unless its validator explicitly forbids the final comma.
+
+The production-smoke report separates live evidence from local release-manifest expectations. `productionObserved` is read from deployed command responses and contains the release id, runtime item total, reward-unit count, and generated command-path probe. `localReleaseManifestExpectation` is the local manifest/audit expectation for this release (`generatedPerFamily: 4`, 92 fixed items, 100 generated items, 192 runtime items, 14 published reward units); it is not a production-observed generated-item count.
+
+This gate does not assert a deployed commit or build hash. The demo-accessible production APIs used by the smoke do not expose `BUILD_HASH`, so commit-level deployment identity remains separate Cloudflare/GitHub deployment evidence rather than part of this release-smoke command.
 
 ## Expansion Path
 

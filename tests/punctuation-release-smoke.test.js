@@ -8,7 +8,7 @@ import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 import { SUBJECT_EXPOSURE_GATES } from '../src/platform/core/subject-availability.js';
 import {
   PUNCTUATION_DASH_POLICY_VARIANTS,
-  PUNCTUATION_P2_SMOKE_EXPECTATIONS,
+  PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS,
   assertGeneratedActiveItemPolicy,
   assertNoForbiddenPunctuationAdultEvidenceKeys,
   assertNoForbiddenPunctuationReadModelKeys,
@@ -256,8 +256,24 @@ test('Punctuation production rollout config intentionally enables the exposure g
   assert.equal(vars.PUNCTUATION_SUBJECT_ENABLED, 'true');
 });
 
-test('Punctuation P2 smoke helper pins runtime stats and generated active-item policy', () => {
-  assert.deepEqual(punctuationRuntimeStatsForSmoke(), PUNCTUATION_P2_SMOKE_EXPECTATIONS);
+test('Punctuation P2 smoke helper separates local manifest expectations from production-observed stats', () => {
+  assert.deepEqual(punctuationRuntimeStatsForSmoke(), PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS);
+  const observed = assertPunctuationP2RuntimeStats({
+    content: {
+      releaseId: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.releaseId,
+      publishedRewardUnitCount: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
+    },
+    stats: {
+      total: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.runtimeItemCount,
+      publishedRewardUnits: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
+    },
+  }, 'releaseSmoke.mockReadModel');
+  assert.deepEqual(observed, {
+    releaseId: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.releaseId,
+    runtimeItems: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.runtimeItemCount,
+    publishedRewardUnits: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
+  });
+  assert.equal(Object.hasOwn(observed, 'generatedItems'), false);
 
   const indexes = productionPunctuationIndexes();
   const generated = indexes.items.find((item) => item.source === 'generated' && item.mode === 'insert');

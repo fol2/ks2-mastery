@@ -57,7 +57,7 @@ U7 extends `scripts/punctuation-production-smoke.mjs` rather than introducing an
 
 - current release id: `punctuation-r4-full-14-skill-structure`
 - P2 runtime stats through command responses: total 192, published reward units 14
-- local production manifest generated count: 100 generated items
+- local release-manifest/audit expectation: `generatedPerFamily: 4`, 100 generated items, 192 runtime items, and 14 published reward units; the live smoke does not observe a production generated-item total
 - generated active-item metadata policy, including opaque `variantSignature`
 - an incorrect generated answer producing misconception evidence
 - GPS delayed-review redaction
@@ -80,25 +80,35 @@ Result: passed against `https://ks2.eugnel.uk` on 28 April 2026.
 Key output:
 
 ```text
-releaseId: punctuation-r4-full-14-skill-structure
-generatedItems: 100
-runtimeItems: 192
-publishedRewardUnits: 14
-generatedIncorrectItemId: gen_speech_insert_1s7w6o3_1
+productionObserved:
+  releaseId: punctuation-r4-full-14-skill-structure
+  runtimeItems: 192
+  publishedRewardUnits: 14
+  generatedItemCommandPathProbe:
+    itemId: gen_speech_insert_1shvsd2_4
+    mode: insert
+    misconceptionTags: speech.quote_missing
+localReleaseManifestExpectation:
+  fixedItems: 92
+  generatedItems: 100
+  generatedPerFamily: 4
+  runtimeItems: 192
+  publishedRewardUnits: 14
+generatedIncorrectItemId: gen_speech_insert_1shvsd2_4
 generatedIncorrectMisconceptionTags: speech.quote_missing
 dashAcceptance:
-  spaced-hyphen -> dc_insert_door_froze
-  en-dash -> gen_dash_clause_fix_146goqu_2
-  em-dash -> dc_insert_alarm_rang
-oxfordCommaItemId: lc_fix_display
+  spaced-hyphen -> dc_insert_alarm_rang
+  en-dash -> gen_dash_clause_fix_13mhhcw_4
+  em-dash -> dc_transfer_flooded_route
+oxfordCommaItemId: lc_transfer_trip
 advancedMode: gps
 advancedReviewItems: 1
-parentHubAttempts: 20
+parentHubAttempts: 19
 spelling.progressTotal: 1
 spelling.hasPromptToken: true
 ```
 
-No live-production smoke check was skipped. The smoke used an isolated demo session and did not require an admin session.
+No live-production smoke check was skipped. The smoke used an isolated demo session and did not require an admin session. The generated count shown above is the local release-manifest/audit expectation, not a production-observed generated-item count.
 
 ## Audit Evidence
 
@@ -142,6 +152,7 @@ The first `npm test` attempt stopped at the worktree preflight because this fres
 
 - The production smoke uses bounded command-boundary searches for policy-specific generated/dash/list-comma items. It fails with the seen item ids if routing drifts, but it does not force a private item id through a special test-only command.
 - Live production smoke does not exercise Admin Hub evidence because the production command is designed to run from a demo session without admin credentials. Local release-smoke tests still cover Admin Hub Punctuation evidence redaction.
+- Live production smoke verifies release id and runtime behaviour rather than the deployed commit or build hash. The demo-accessible production APIs used here do not expose `BUILD_HASH`, so commit-level deployment identity remains a separate Cloudflare/GitHub deployment evidence risk.
 - U7 documents the P2 release and opens the review PR; it does not merge or deploy this final report branch.
 
 ## Post-Deploy Monitoring And Validation

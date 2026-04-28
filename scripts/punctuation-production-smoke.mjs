@@ -37,12 +37,13 @@ const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
 const PRODUCTION_GENERATED_PER_FAMILY = 4;
 const LIST_COMMA_VALIDATOR_TYPES = new Set(['requiresListCommas', 'combineListSentence']);
 
-export const PUNCTUATION_P2_SMOKE_EXPECTATIONS = Object.freeze({
+export const PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS = Object.freeze({
   releaseId: PUNCTUATION_RELEASE_ID,
   fixedItemCount: 92,
   generatedItemCount: 100,
   runtimeItemCount: 192,
   publishedRewardUnits: 14,
+  generatedPerFamily: PRODUCTION_GENERATED_PER_FAMILY,
 });
 
 export const PUNCTUATION_DASH_POLICY_VARIANTS = Object.freeze([
@@ -71,31 +72,42 @@ export function punctuationRuntimeStatsForSmoke({
     generatedItemCount: indexes.items.filter((item) => item.source === 'generated').length,
     runtimeItemCount: indexes.items.length,
     publishedRewardUnits: indexes.publishedRewardUnits.length,
+    generatedPerFamily: PRODUCTION_GENERATED_PER_FAMILY,
+  };
+}
+
+export function punctuationObservedRuntimeStats(readModel) {
+  return {
+    releaseId: readModel?.content?.releaseId || null,
+    runtimeItems: Number(readModel?.stats?.total) || 0,
+    publishedRewardUnits: Number(readModel?.stats?.publishedRewardUnits) || 0,
   };
 }
 
 export function assertPunctuationP2RuntimeStats(readModel, path = 'punctuation.subjectReadModel') {
   assert.deepEqual(
     punctuationRuntimeStatsForSmoke(),
-    PUNCTUATION_P2_SMOKE_EXPECTATIONS,
-    'Local P2 smoke expectations no longer match the production runtime manifest.',
+    PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS,
+    'Local P2 release-manifest expectations no longer match the production runtime manifest.',
   );
-  assert.equal(readModel?.content?.releaseId, PUNCTUATION_P2_SMOKE_EXPECTATIONS.releaseId, `${path}.content.releaseId did not match P2.`);
+  const observed = punctuationObservedRuntimeStats(readModel);
+  assert.equal(observed.releaseId, PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.releaseId, `${path}.content.releaseId did not match P2.`);
   assert.equal(
     Number(readModel?.content?.publishedRewardUnitCount),
-    PUNCTUATION_P2_SMOKE_EXPECTATIONS.publishedRewardUnits,
+    PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
     `${path}.content.publishedRewardUnitCount did not match P2.`,
   );
   assert.equal(
-    Number(readModel?.stats?.total),
-    PUNCTUATION_P2_SMOKE_EXPECTATIONS.runtimeItemCount,
+    observed.runtimeItems,
+    PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.runtimeItemCount,
     `${path}.stats.total did not match the P2 runtime item count.`,
   );
   assert.equal(
-    Number(readModel?.stats?.publishedRewardUnits),
-    PUNCTUATION_P2_SMOKE_EXPECTATIONS.publishedRewardUnits,
+    observed.publishedRewardUnits,
+    PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
     `${path}.stats.publishedRewardUnits did not preserve the P2 reward denominator.`,
   );
+  return observed;
 }
 
 function isAllowedActiveCurrentItemMetadata({ key, child, parent, pathSegments, rootPhase }) {
@@ -306,7 +318,7 @@ async function smokePunctuationSmartRound({ origin, cookie, learnerId, revision 
   });
   revision = step.revision;
   const startModel = step.payload.subjectReadModel;
-  assertPunctuationP2RuntimeStats(startModel, 'punctuation.smart.startModel');
+  const observedRuntimeStats = assertPunctuationP2RuntimeStats(startModel, 'punctuation.smart.startModel');
   assert.equal(startModel?.phase, 'active-item', 'Punctuation did not start in active-item phase.');
   assert.equal(startModel?.session?.serverAuthority, 'worker', 'Punctuation session was not Worker-owned.');
   assert.equal(startModel?.session?.length, 1, 'Punctuation smoke round did not use length 1.');
@@ -348,6 +360,7 @@ async function smokePunctuationSmartRound({ origin, cookie, learnerId, revision 
 
   return {
     revision,
+    observedRuntimeStats,
     itemId: currentItem.id,
     summaryTotal: summaryModel.summary.total,
   };
@@ -775,11 +788,22 @@ async function main() {
     accountId: demo.session.accountId,
     learnerId: bootstrap.learnerId,
     punctuation: {
-      releaseId: PUNCTUATION_P2_SMOKE_EXPECTATIONS.releaseId,
-      runtimeStats: {
-        generatedItems: PUNCTUATION_P2_SMOKE_EXPECTATIONS.generatedItemCount,
-        runtimeItems: PUNCTUATION_P2_SMOKE_EXPECTATIONS.runtimeItemCount,
-        publishedRewardUnits: PUNCTUATION_P2_SMOKE_EXPECTATIONS.publishedRewardUnits,
+      productionObserved: {
+        ...punctuation.smart.observedRuntimeStats,
+        generatedItemCommandPathProbe: {
+          itemId: punctuation.generatedIncorrect.itemId,
+          mode: punctuation.generatedIncorrect.mode,
+          skillIds: punctuation.generatedIncorrect.skillIds,
+          feedbackKind: punctuation.generatedIncorrect.feedbackKind,
+          misconceptionTags: punctuation.generatedIncorrect.misconceptionTags,
+        },
+      },
+      localReleaseManifestExpectation: {
+        fixedItems: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.fixedItemCount,
+        generatedItems: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.generatedItemCount,
+        generatedPerFamily: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.generatedPerFamily,
+        runtimeItems: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.runtimeItemCount,
+        publishedRewardUnits: PUNCTUATION_P2_LOCAL_RELEASE_MANIFEST_EXPECTATIONS.publishedRewardUnits,
       },
       smartItemId: punctuation.smart.itemId,
       smartSummaryTotal: punctuation.smart.summaryTotal,
