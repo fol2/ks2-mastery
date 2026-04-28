@@ -493,10 +493,14 @@ test('button labels: every statically extractable label is classified', () => {
     // scanner after the button-label completeness gate tightened. "Debug
     // Bundle" navigates from the account detail drawer to the debug panel;
     // "Copy JSON" / "Copy Summary" are clipboard-copy actions scoped to the
-    // generated bundle output.
+    // generated bundle output. "Copy support summary" is the parent-safe
+    // account-detail export, while "Return to account" is the incident-flow
+    // back-navigation affordance after opening a debug bundle.
     'Debug Bundle',
     'Copy JSON',
     'Copy Summary',
+    'Copy support summary',
+    'Return to account',
     // U11 Marketing/Live Ops: AdminMarketingSection broad-publish confirm
     // dialog uses a contextual confirm CTA ("Yes, publish to all users" or
     // "Yes, schedule to all users"); the static prefix the scanner extracts
