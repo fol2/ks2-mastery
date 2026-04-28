@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 
 import {
   HERO_FORBIDDEN_VOCABULARY,
+  HERO_FORBIDDEN_PRESSURE_VOCABULARY,
+  HERO_ECONOMY_ALLOWED_VOCABULARY,
+  HERO_ECONOMY_ALLOWED_FILES,
   HERO_INTENT_LABELS,
   HERO_SUBJECT_LABELS,
   HERO_INTENT_REASONS,
@@ -31,8 +34,8 @@ test('HERO_FORBIDDEN_VOCABULARY is frozen', () => {
   assert.ok(Object.isFrozen(HERO_FORBIDDEN_VOCABULARY));
 });
 
-test('HERO_FORBIDDEN_VOCABULARY contains expected tokens', () => {
-  const expected = ['coin', 'shop', 'deal', 'loot', 'streak', 'claim', 'reward', 'treasure', 'buy', 'earn'];
+test('HERO_FORBIDDEN_VOCABULARY contains expected pressure tokens', () => {
+  const expected = ['shop', 'deal', 'loot', 'treasure', 'jackpot', 'grind'];
   for (const token of expected) {
     assert.ok(
       HERO_FORBIDDEN_VOCABULARY.includes(token),
@@ -41,10 +44,31 @@ test('HERO_FORBIDDEN_VOCABULARY contains expected tokens', () => {
   }
 });
 
-test('HERO_FORBIDDEN_VOCABULARY contains multi-word tokens', () => {
+test('HERO_FORBIDDEN_VOCABULARY aliases HERO_FORBIDDEN_PRESSURE_VOCABULARY', () => {
+  assert.equal(HERO_FORBIDDEN_VOCABULARY, HERO_FORBIDDEN_PRESSURE_VOCABULARY);
+});
+
+test('HERO_ECONOMY_ALLOWED_VOCABULARY contains economy tokens', () => {
+  const expected = ['coin', 'balance', 'Hero Coins'];
+  for (const token of expected) {
+    assert.ok(
+      HERO_ECONOMY_ALLOWED_VOCABULARY.includes(token),
+      `HERO_ECONOMY_ALLOWED_VOCABULARY must include "${token}"`,
+    );
+  }
+});
+
+test('HERO_ECONOMY_ALLOWED_FILES is frozen and non-empty', () => {
+  assert.ok(Object.isFrozen(HERO_ECONOMY_ALLOWED_FILES));
+  assert.ok(HERO_ECONOMY_ALLOWED_FILES.length > 0);
+});
+
+test('HERO_FORBIDDEN_VOCABULARY contains multi-word pressure tokens', () => {
   assert.ok(HERO_FORBIDDEN_VOCABULARY.includes('limited time'));
   assert.ok(HERO_FORBIDDEN_VOCABULARY.includes('daily deal'));
   assert.ok(HERO_FORBIDDEN_VOCABULARY.includes("don't miss out"));
+  assert.ok(HERO_FORBIDDEN_VOCABULARY.includes('claim your reward'));
+  assert.ok(HERO_FORBIDDEN_VOCABULARY.includes('earn coins'));
 });
 
 // ── Zero economy vocabulary in all exported copy ───────────────────────
