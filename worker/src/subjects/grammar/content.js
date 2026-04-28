@@ -1391,6 +1391,14 @@ const EXTRA_LEXICON = {
     [
       "The tide was rising quickly",
       "the fishermen hauled in their nets"
+    ],
+    [
+      "The whistle blew",
+      "the runners set off down the track"
+    ],
+    [
+      "The audience clapped loudly",
+      "the choir took a bow"
     ]
   ],
   colonLists: [
@@ -1443,6 +1451,32 @@ const EXTRA_LEXICON = {
         "Japan",
         "Brazil"
       ]
+    },
+    {
+      intro: "The explorer carried four essential supplies",
+      items: [
+        "a compass",
+        "a water bottle",
+        "a rope",
+        "a first-aid kit"
+      ]
+    },
+    {
+      intro: "The school banned three items from the playground",
+      items: [
+        "skateboards",
+        "glass bottles",
+        "footballs"
+      ]
+    },
+    {
+      intro: "The gardener planted four types of vegetable",
+      items: [
+        "carrots",
+        "beans",
+        "potatoes",
+        "onions"
+      ]
     }
   ],
   dashBoundaries: [
@@ -1469,6 +1503,18 @@ const EXTRA_LEXICON = {
     [
       "The message was clear",
       "everyone must leave the building at once"
+    ],
+    [
+      "He remembered just one rule",
+      "never open the gate after dark"
+    ],
+    [
+      "The result surprised us all",
+      "the youngest team had won"
+    ],
+    [
+      "Only one thing could save us",
+      "the map in her rucksack"
     ]
   ],
   speechQuestions: [
@@ -1548,6 +1594,61 @@ const EXTRA_LEXICON = {
       ],
       correct: "The teacher set a well-known test for the class.",
       why: "The hyphen joins ‘well-known’ into a single compound adjective before the noun."
+    },
+    {
+      ask: "Which sentence means the building has ten storeys?",
+      options: [
+        "We looked up at the ten-storey building.",
+        "We looked up at the ten storey building.",
+        "We looked up at ten buildings in a storey.",
+        "We looked up at the storey with ten buildings."
+      ],
+      correct: "We looked up at the ten-storey building.",
+      why: "The hyphen links ‘ten-storey’ into one compound modifier describing the building."
+    },
+    {
+      ask: "Which sentence means the race lasts for three miles?",
+      options: [
+        "Sam ran in the three-mile race on Saturday.",
+        "Sam ran in the three mile race on Saturday.",
+        "Sam ran three miles in a race on Saturday.",
+        "Sam ran in a race with three miles on Saturday."
+      ],
+      correct: "Sam ran in the three-mile race on Saturday.",
+      why: "The hyphen joins ‘three-mile’ so it works as a single modifier before the noun."
+    },
+    {
+      ask: "Which sentence means the shop has second-hand items?",
+      options: [
+        "Mum found a bargain at the second-hand shop.",
+        "Mum found a bargain at the second hand shop.",
+        "Mum found a second bargain handed to her at the shop.",
+        "Mum found a shop with a second hand at the counter."
+      ],
+      correct: "Mum found a bargain at the second-hand shop.",
+      why: "The hyphen turns ‘second-hand’ into one describing idea for the shop."
+    },
+    {
+      ask: "Which sentence means the child is six years old?",
+      options: [
+        "The six-year-old child ran across the park.",
+        "The six year old child ran across the park.",
+        "The child ran across the park for six years.",
+        "The child of six ran old across the park."
+      ],
+      correct: "The six-year-old child ran across the park.",
+      why: "Hyphens connect ‘six-year-old’ into a single compound adjective before the noun."
+    },
+    {
+      ask: "Which sentence means the ice cream is sugar free?",
+      options: [
+        "Jay chose the sugar-free ice cream from the van.",
+        "Jay chose the sugar free ice cream from the van.",
+        "Jay chose the ice cream and sugar from the free van.",
+        "Jay freed the sugar from the ice cream van."
+      ],
+      correct: "Jay chose the sugar-free ice cream from the van.",
+      why: "The hyphen makes ‘sugar-free’ one combined describing idea for the ice cream."
     }
   ],
   verbsRich: [
@@ -1694,6 +1795,46 @@ const EXTRA_LEXICON = {
         "Everyone should come at like half six."
       ],
       why: "Formal invitations use passive or impersonal constructions and precise time references."
+    },
+    {
+      prompt: "Which sentence would be most suitable for a formal science report?",
+      correct: "The experiment was conducted under controlled conditions.",
+      distractors: [
+        "We just did the experiment and it worked out fine.",
+        "The experiment happened and everything was OK.",
+        "We tried the experiment and it sort of worked."
+      ],
+      why: "Formal scientific writing uses passive constructions and precise vocabulary."
+    },
+    {
+      prompt: "Which sentence is most appropriate for an official complaint letter?",
+      correct: "I wish to draw your attention to the unsatisfactory service we received.",
+      distractors: [
+        "I want to tell you the service was rubbish.",
+        "Your service was awful and I'm not happy about it.",
+        "Just so you know, the service was really bad."
+      ],
+      why: "Formal complaint letters use measured, impersonal language rather than emotional outbursts."
+    },
+    {
+      prompt: "Which sentence fits best in a formal assembly speech?",
+      correct: "It is with great pleasure that I introduce our guest speaker.",
+      distractors: [
+        "I'm dead chuffed to get our speaker up here.",
+        "Here's the person who's going to talk to us now.",
+        "So yeah, this is the speaker we got in today."
+      ],
+      why: "Formal spoken register avoids slang and uses established ceremonial phrases."
+    },
+    {
+      prompt: "Which sentence is most suitable for a formal thank-you letter?",
+      correct: "I am writing to express my gratitude for your generous donation.",
+      distractors: [
+        "Thanks so much for the cash you gave us.",
+        "Cheers for the donation – it was really kind.",
+        "Just wanted to say thanks for giving us that money."
+      ],
+      why: "Formal thank-you letters use measured expressions rather than chatty abbreviations."
     }
   ],
   modalFrames: [
@@ -1756,6 +1897,36 @@ const EXTRA_LEXICON = {
         "will"
       ],
       why: "’Could’ expresses ability or capacity here."
+    },
+    {
+      prompt: "Choose the modal verb that best fits the meaning: The ice is very thin. You ___ not walk on the pond.",
+      correct: "must",
+      distractors: [
+        "might",
+        "could",
+        "would"
+      ],
+      why: "’Must not’ expresses a strong prohibition here."
+    },
+    {
+      prompt: "Choose the modal verb that best fits the meaning: The forecast says sun all day. It ___ be warm enough for a picnic.",
+      correct: "should",
+      distractors: [
+        "must",
+        "might",
+        "could"
+      ],
+      why: "’Should’ expresses a reasonable expectation based on evidence."
+    },
+    {
+      prompt: "Choose the modal verb that best fits the meaning: Ask your parents first. They ___ let you come to the party.",
+      correct: "might",
+      distractors: [
+        "must",
+        "will",
+        "shall"
+      ],
+      why: "’Might’ shows an uncertain possibility that depends on someone else’s decision."
     }
   ]
 };
@@ -2824,7 +2995,8 @@ const TEMPLATES = [
     isSelectedResponse: true,
     generative: true,
     tags: [
-      "identify"
+      "identify",
+      "qg-p5"
     ],
     skillIds: [
       "boundary_punctuation"
@@ -2872,7 +3044,8 @@ const TEMPLATES = [
     requiresAnswerSpec: true,
     answerSpecKind: "punctuationPattern",
     tags: [
-      "surgery"
+      "surgery",
+      "qg-p5"
     ],
     skillIds: [
       "boundary_punctuation"
@@ -2914,7 +3087,8 @@ const TEMPLATES = [
     requiresAnswerSpec: true,
     answerSpecKind: "punctuationPattern",
     tags: [
-      "surgery"
+      "surgery",
+      "qg-p5"
     ],
     skillIds: [
       "boundary_punctuation"
@@ -2958,7 +3132,8 @@ const TEMPLATES = [
     isSelectedResponse: true,
     generative: true,
     tags: [
-      "identify"
+      "identify",
+      "qg-p5"
     ],
     skillIds: [
       "hyphen_ambiguity"
@@ -3222,6 +3397,9 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: true,
     generative: true,
+    tags: [
+      "qg-p5"
+    ],
     skillIds: [
       "modal_verbs"
     ],
@@ -3250,6 +3428,9 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: true,
     generative: true,
+    tags: [
+      "qg-p5"
+    ],
     skillIds: [
       "formality"
     ],
@@ -3568,7 +3749,8 @@ const TEMPLATES = [
     isSelectedResponse: true,
     generative: true,
     tags: [
-      "identify"
+      "identify",
+      "qg-p5"
     ],
     skillIds: [
       "word_classes"
@@ -3610,7 +3792,25 @@ const TEMPLATES = [
                 stem:"In the sentence <strong>We stayed inside during the storm.</strong>, what is the word <strong>during</strong>?",
                 correct:"preposition",
                 distractors:["conjunction","adverb","pronoun"],
-                why:"‘During’ introduces the phrase ‘during the storm’, so it is a preposition."
+                why:"’During’ introduces the phrase ‘during the storm’, so it is a preposition."
+              },
+              {
+                stem:"In the sentence <strong>The old bridge creaked loudly.</strong>, what is the word <strong>loudly</strong>?",
+                correct:"adverb",
+                distractors:["adjective","verb","preposition"],
+                why:"’Loudly’ tells us how the bridge creaked, so it is an adverb."
+              },
+              {
+                stem:"In the sentence <strong>She packed her bag and left.</strong>, what is the word <strong>and</strong>?",
+                correct:"conjunction",
+                distractors:["preposition","adverb","pronoun"],
+                why:"’And’ joins two clauses together, so it is a conjunction."
+              },
+              {
+                stem:"In the sentence <strong>Several children waited by the gate.</strong>, what is the word <strong>Several</strong>?",
+                correct:"determiner",
+                distractors:["adjective","pronoun","adverb"],
+                why:"’Several’ tells us how many children, working as a determiner before the noun."
               }
             ];
             const item = cases[seed % cases.length];
@@ -3771,7 +3971,8 @@ const TEMPLATES = [
     requiresAnswerSpec: true,
     answerSpecKind: "punctuationPattern",
     tags: [
-      "surgery"
+      "surgery",
+      "qg-p5"
     ],
     skillIds: [
       "parenthesis_commas"
@@ -3797,6 +3998,31 @@ const TEMPLATES = [
                 raw:"The coach without any warning changed the teams.",
                 accepted:"The coach, without any warning, changed the teams.",
                 why:"The phrase ‘without any warning’ is inserted as extra information here."
+              },
+              {
+                raw:"The old bridge as everyone knew was unsafe.",
+                accepted:"The old bridge, as everyone knew, was unsafe.",
+                why:"The phrase ‘as everyone knew’ is extra commentary inserted into the sentence."
+              },
+              {
+                raw:"The visitors despite the rain stayed until the end.",
+                accepted:"The visitors, despite the rain, stayed until the end.",
+                why:"The phrase ‘despite the rain’ adds extra information about the circumstances."
+              },
+              {
+                raw:"Her answer I think was correct.",
+                accepted:"Her answer, I think, was correct.",
+                why:"The phrase ‘I think’ is a parenthetical aside that could be removed."
+              },
+              {
+                raw:"The new path believe it or not was finished in a day.",
+                accepted:"The new path, believe it or not, was finished in a day.",
+                why:"The phrase ‘believe it or not’ is an inserted aside adding the speaker’s surprise."
+              },
+              {
+                raw:"The hall to be honest needed a new coat of paint.",
+                accepted:"The hall, to be honest, needed a new coat of paint.",
+                why:"The phrase ‘to be honest’ is parenthetical commentary by the writer."
               }
             ];
             const item = items[seed % items.length];
@@ -3833,7 +4059,8 @@ const TEMPLATES = [
     requiresAnswerSpec: true,
     answerSpecKind: "punctuationPattern",
     tags: [
-      "surgery"
+      "surgery",
+      "qg-p5"
     ],
     skillIds: [
       "hyphen_ambiguity"
@@ -3859,6 +4086,31 @@ const TEMPLATES = [
                 raw:"She bought a sugar free drink for the journey.",
                 accepted:"She bought a sugar-free drink for the journey.",
                 why:"The hyphen joins the words into one describing idea before the noun."
+              },
+              {
+                raw:"The team needed a well earned break after the match.",
+                accepted:"The team needed a well-earned break after the match.",
+                why:"The hyphen joins 'well-earned' into one compound modifier before the noun."
+              },
+              {
+                raw:"Ben wore his brand new trainers to the park.",
+                accepted:"Ben wore his brand-new trainers to the park.",
+                why:"The hyphen links 'brand-new' into a single compound adjective."
+              },
+              {
+                raw:"We crossed the narrow, fast flowing stream.",
+                accepted:"We crossed the narrow, fast-flowing stream.",
+                why:"The hyphen joins 'fast-flowing' because both words describe the stream together."
+              },
+              {
+                raw:"The school held a fun filled sports day on Friday.",
+                accepted:"The school held a fun-filled sports day on Friday.",
+                why:"The hyphen makes 'fun-filled' one describing idea modifying the sports day."
+              },
+              {
+                raw:"Mia drew a life size portrait of her brother.",
+                accepted:"Mia drew a life-size portrait of her brother.",
+                why:"The hyphen makes 'life-size' a single compound adjective describing the portrait."
               }
             ];
             const item = items[seed % items.length];
@@ -3895,7 +4147,8 @@ const TEMPLATES = [
     answerSpecKind: "exact",
     tags: [
       "qg-p1",
-      "identify"
+      "identify",
+      "qg-p5"
     ],
     skillIds: [
       "active_passive"
@@ -3929,6 +4182,60 @@ const TEMPLATES = [
                   "For the play, Aisha painted the scenery."
                 ],
                 why:"The passive voice focuses on the scenery rather than the person doing the painting."
+              },
+              {
+                active:"The gardener trimmed the hedges on Monday.",
+                passive:"The hedges were trimmed by the gardener on Monday.",
+                distractors:[
+                  "The gardener was trimming the hedges on Monday.",
+                  "On Monday, the gardener trimmed the hedges."
+                ],
+                why:"The hedges receive the action and come first in the passive sentence."
+              },
+              {
+                active:"Noah carried the boxes to the office.",
+                passive:"The boxes were carried by Noah to the office.",
+                distractors:[
+                  "Noah was carrying the boxes to the office.",
+                  "To the office, Noah carried the boxes."
+                ],
+                why:"In the passive, the boxes are placed before the doer."
+              },
+              {
+                active:"The chef prepared the meal before noon.",
+                passive:"The meal was prepared by the chef before noon.",
+                distractors:[
+                  "The chef was preparing the meal before noon.",
+                  "Before noon, the chef prepared the meal."
+                ],
+                why:"The passive puts the thing affected (the meal) into the subject position."
+              },
+              {
+                active:"Lena designed the poster for the fair.",
+                passive:"The poster was designed by Lena for the fair.",
+                distractors:[
+                  "Lena was designing the poster for the fair.",
+                  "For the fair, Lena designed the poster."
+                ],
+                why:"The poster receives the action and appears first in the passive form."
+              },
+              {
+                active:"The librarian sorted the returned books.",
+                passive:"The returned books were sorted by the librarian.",
+                distractors:[
+                  "The librarian was sorting the returned books.",
+                  "The returned books needed sorting by the librarian."
+                ],
+                why:"In the passive, the books are the grammatical subject and the librarian follows 'by'."
+              },
+              {
+                active:"Sam repaired the puncture during break.",
+                passive:"The puncture was repaired by Sam during break.",
+                distractors:[
+                  "Sam was repairing the puncture during break.",
+                  "During break, Sam repaired the puncture."
+                ],
+                why:"The passive moves the thing affected into the subject position with 'was repaired by'."
               }
             ];
             const item = cases[seed % cases.length];
@@ -4022,7 +4329,8 @@ const TEMPLATES = [
     answerSpecKind: "exact",
     tags: [
       "qg-p1",
-      "identify"
+      "identify",
+      "qg-p5"
     ],
     skillIds: [
       "pronouns_cohesion"
@@ -4050,6 +4358,48 @@ const TEMPLATES = [
                 correct:"The pupils",
                 distractors:["the benches", "lunch", "the hall"],
                 why:"The pronoun 'they' refers to the pupils because the pupils finished lunch."
+              },
+              {
+                sentence:"Mia handed the trophy to Ava because she had won the race.",
+                pronoun:"she",
+                correct:"Ava",
+                distractors:["Mia", "the trophy", "the race"],
+                why:"The pronoun 'she' refers to Ava because Ava won the race and received the trophy."
+              },
+              {
+                sentence:"The dog chased the cat until it climbed over the fence.",
+                pronoun:"it",
+                correct:"the cat",
+                distractors:["the dog", "the fence", "the garden"],
+                why:"The pronoun 'it' refers to the cat because the cat escaped by climbing the fence."
+              },
+              {
+                sentence:"Jay told Noah that he needed to finish the project today.",
+                pronoun:"he",
+                correct:"Noah",
+                distractors:["Jay", "the project", "the teacher"],
+                why:"The pronoun 'he' refers to Noah because Jay is giving the information to Noah."
+              },
+              {
+                sentence:"The teachers praised the choir after they performed so well.",
+                pronoun:"they",
+                correct:"the choir",
+                distractors:["The teachers", "the audience", "the hall"],
+                why:"The pronoun 'they' refers to the choir because the choir performed."
+              },
+              {
+                sentence:"Elsie placed the book beside the lamp because it was heavy.",
+                pronoun:"it",
+                correct:"the book",
+                distractors:["the lamp", "Elsie", "the table"],
+                why:"The pronoun 'it' refers to the book because the book is described as heavy."
+              },
+              {
+                sentence:"Ben asked Zac whether he could borrow the compass.",
+                pronoun:"he",
+                correct:"Ben",
+                distractors:["Zac", "the compass", "the teacher"],
+                why:"The pronoun 'he' refers to Ben because Ben is the one making the request."
               }
             ];
             const item = cases[seed % cases.length];
@@ -4084,7 +4434,8 @@ const TEMPLATES = [
     answerSpecKind: "multiField",
     tags: [
       "qg-p1",
-      "identify"
+      "identify",
+      "qg-p5"
     ],
     skillIds: [
       "formality"
@@ -4102,6 +4453,30 @@ const TEMPLATES = [
               [
                 { text:"Pupils are required to return the form by Friday.", answer:"formal" },
                 { text:"Bring the form back by Friday, OK?", answer:"informal" }
+              ],
+              [
+                { text:"The committee has resolved to postpone the event.", answer:"formal" },
+                { text:"We've decided to put the event off for now.", answer:"informal" }
+              ],
+              [
+                { text:"Residents are advised to secure their windows.", answer:"formal" },
+                { text:"You should probably shut your windows.", answer:"informal" }
+              ],
+              [
+                { text:"The headteacher wishes to commend the volunteers.", answer:"formal" },
+                { text:"The head wants to say well done to the helpers.", answer:"informal" }
+              ],
+              [
+                { text:"All participants must register prior to the deadline.", answer:"formal" },
+                { text:"Everyone needs to sign up before it's too late.", answer:"informal" }
+              ],
+              [
+                { text:"The council has undertaken to repair the footpath.", answer:"formal" },
+                { text:"The council said they'd fix the path.", answer:"informal" }
+              ],
+              [
+                { text:"Visitors are respectfully reminded to switch off mobile devices.", answer:"formal" },
+                { text:"Can everyone turn their phones off, please?", answer:"informal" }
               ]
             ];
             const rows = cases[seed % cases.length];
