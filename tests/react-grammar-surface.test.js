@@ -3084,7 +3084,7 @@ test('U7: analytics phase heading reads Grown-up view and carries the non-grade 
   assert.match(html, /aria-labelledby="grammar-analytics-title"/);
   assert.match(html, /id="grammar-analytics-title"[^>]*>Grown-up view</);
   // Intro copy frames the scene as non-scored.
-  assert.match(html, /Detailed Grammar progress for parents and teachers\. Nothing here is a grade\./);
+  assert.match(html, /Detailed progress for parents and teachers\. Nothing here is a grade\./);
 });
 
 test('U7: analytics phase renders the back affordance dispatching grammar-close-analytics', () => {

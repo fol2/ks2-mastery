@@ -264,7 +264,7 @@ test('legacy learner: starHighWater=35, computedStars=12 → source highWater, w
   assert.equal(result.starHighWater, 35);
   assert.equal(result.displayStars, 35);
   assert.equal(result.source, 'highWater');
-  assert.ok(result.warnings.includes('High-water holds evidence'));
+  assert.ok(result.warnings.includes('High-water evidence'));
 });
 
 // ---------------------------------------------------------------------------
@@ -285,7 +285,7 @@ test('missing conceptNodes: computedLiveStars=0, source highWater from rewardEnt
   assert.equal(result.starHighWater, 20);
   assert.equal(result.source, 'highWater');
   assert.equal(result.conceptEvidence.length, 0);
-  assert.ok(result.warnings.includes('High-water holds evidence'));
+  assert.ok(result.warnings.includes('High-water evidence'));
 });
 
 // ---------------------------------------------------------------------------

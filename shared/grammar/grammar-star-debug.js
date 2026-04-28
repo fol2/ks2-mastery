@@ -175,7 +175,7 @@ export function buildGrammarStarDebugModel({ monsterId, conceptNodes, recentAtte
   // -------------------------------------------------------------------------
   const warnings = [];
   if (computedLiveStars < starHighWater) {
-    warnings.push('High-water holds evidence');
+    warnings.push('High-water evidence');
   }
 
   // -------------------------------------------------------------------------

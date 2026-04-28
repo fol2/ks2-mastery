@@ -124,7 +124,7 @@ export function GrammarAnalyticsScene({
           <div className="eyebrow">Grammar progress</div>
           <h3 className="section-title" id="grammar-analytics-title">Grown-up view</h3>
           <p className="grammar-analytics-intro small muted">
-            Detailed Grammar progress for parents and teachers. Nothing here is a grade.
+            Detailed progress for parents and teachers. Nothing here is a grade.
           </p>
         </div>
         <div className="grammar-analytics-actions">
@@ -156,7 +156,7 @@ export function GrammarAnalyticsScene({
           <div className="eyebrow">Bellstorm bridge</div>
           <h4>Punctuation-for-grammar stays in Grammar</h4>
           <p>
-            These {punctuationConcepts.length} concepts count inside the 18-concept Grammar denominator for
+            These {punctuationConcepts.length} concepts count in the 18-concept Grammar denominator for
             KS2 GPS mastery. Bellstorm Coast remains the separate Punctuation subject for richer punctuation
             progression.
           </p>
