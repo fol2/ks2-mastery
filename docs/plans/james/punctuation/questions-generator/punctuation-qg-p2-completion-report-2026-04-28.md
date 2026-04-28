@@ -2,7 +2,7 @@
 
 Date: 28 April 2026
 
-Status: U7 open for review; U1-U6 completed and merged to remote `main`
+Status: U7 open for review in PR #514; U1-U6 completed and merged to remote `main`
 
 Source plan: `docs/plans/james/punctuation/questions-generator/punctuation-qg-p2.md`
 
@@ -18,7 +18,7 @@ Shipped PRs:
 | U4 | [#502](https://github.com/fol2/ks2-mastery/pull/502) | `fe70dc9b63175d9c921dbafc7603b5c289ad7922` | 2026-04-28 19:49:44 UTC | Codify generated metadata transport and redaction policy. |
 | U5 | [#506](https://github.com/fol2/ks2-mastery/pull/506) | `4ab2525a6fd87d7a0cd68098bfec713e5cb21409` | 2026-04-28 20:22:31 UTC | Clarify dash display and list-comma marking policy. |
 | U6 | [#508](https://github.com/fol2/ks2-mastery/pull/508) | `d6cc3887b69f751b3c8fab1dc8926fcbd82de2d3` | 2026-04-28 20:58:13 UTC | Expand deterministic generator and context-pack capacity. |
-| U7 | Pending PR | Pending merge | Not merged | Extend production smoke and record P2 completion evidence. |
+| U7 | [#514](https://github.com/fol2/ks2-mastery/pull/514) | Pending merge | Open for review | Extend production smoke and record P2 completion evidence. |
 
 ## Executive Summary
 
