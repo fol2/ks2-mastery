@@ -619,20 +619,15 @@ export async function fillGrammarAnswer(page, { typed = 'zzz-not-a-real-answer' 
   // radio for each group.
   const tableRoot = form.locator('.grammar-table-choice');
   if (await tableRoot.count()) {
-    const rowNames = await tableRoot.evaluate((root) => {
-      const radios = Array.from(root.querySelectorAll('input[type="radio"]'));
-      const seen = new Set();
-      for (const radio of radios) {
-        const name = radio.getAttribute('name');
-        if (name) seen.add(name);
-      }
-      return Array.from(seen);
-    });
-    for (const name of rowNames) {
-      const firstRadio = form.locator(`input[type="radio"][name="${name}"]`).first();
-      if (await firstRadio.count()) {
-        await firstRadio.check({ force: true }).catch(() => firstRadio.click({ force: true }));
-      }
+    const radios = tableRoot.locator('input[type="radio"]');
+    const radioCount = await radios.count();
+    const seen = new Set();
+    for (let i = 0; i < radioCount; i += 1) {
+      const radio = radios.nth(i);
+      const name = await radio.getAttribute('name');
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+      await radio.check({ force: true }).catch(() => radio.click({ force: true }));
     }
     return { kind: 'tableChoice' };
   }
