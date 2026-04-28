@@ -6934,7 +6934,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
         "The dogs' bright orange collar stood out."
       ],
       why: "The apostrophe shows the collar belongs to one dog, and the hyphen in 'bright-orange' shows that both words together describe the colour of the collar.",
-      misconception: "possession_hyphen_transfer_confusion"
+      misconception: "apostrophe_possession_confusion"
     }
   ]
 });
