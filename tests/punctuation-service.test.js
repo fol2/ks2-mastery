@@ -45,16 +45,23 @@ function correctAnswerFor(item) {
   return { typed: item.model };
 }
 
-test('punctuation service default runtime bank exposes 171 practice items', () => {
+test('punctuation service default runtime bank exposes P2 fixed-anchor depth', () => {
   const service = createPunctuationService({
     repository: makeRepository(),
     now: () => 1_800_000_000_000,
     random: () => 0,
   });
   const stats = service.getStats('learner-a');
+  const runtimeManifest = createPunctuationRuntimeManifest({
+    generatedPerFamily: 4,
+  });
+  const fixedItems = runtimeManifest.items.filter((item) => item.source === 'fixed');
+  const generatedItems = runtimeManifest.items.filter((item) => item.source === 'generated');
 
-  assert.equal(stats.total, 171);
-  assert.equal(stats.fresh, 171);
+  assert.equal(fixedItems.length, 92);
+  assert.equal(generatedItems.length, 100);
+  assert.equal(stats.total, 192);
+  assert.equal(stats.fresh, 192);
   assert.equal(stats.publishedRewardUnits, 14);
 });
 

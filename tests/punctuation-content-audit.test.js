@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -12,6 +13,22 @@ import {
 
 const auditCliPath = fileURLToPath(new URL('../scripts/audit-punctuation-content.mjs', import.meta.url));
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
+const workflowPath = fileURLToPath(new URL('../.github/workflows/punctuation-content-audit.yml', import.meta.url));
+
+const P2_U3_FIXED_THRESHOLDS = Object.freeze({
+  sentence_endings: 8,
+  apostrophe_contractions: 8,
+  comma_clarity: 8,
+  semicolon_list: 8,
+  hyphen: 8,
+  dash_clause: 8,
+});
+
+function fixedThresholdArg(thresholds = P2_U3_FIXED_THRESHOLDS) {
+  return Object.entries(thresholds)
+    .map(([skillId, count]) => `${skillId}=${count}`)
+    .join(',');
+}
 
 function runAuditCli(args) {
   return spawnSync(process.execPath, [auditCliPath, ...args], {
@@ -28,10 +45,10 @@ test('punctuation content audit reports the current fixed and generated baseline
 
   assert.equal(audit.ok, true, audit.failures.join('\n'));
   assert.deepEqual(audit.summary, {
-    fixedItemCount: 71,
+    fixedItemCount: 92,
     generatorFamilyCount: 25,
     generatedItemCount: 25,
-    runtimeItemCount: 96,
+    runtimeItemCount: 117,
     publishedRewardUnitCount: 14,
     publishedSkillCount: 14,
   });
@@ -47,15 +64,40 @@ test('punctuation content audit reports per-skill coverage and generated signatu
   const sentenceEndings = audit.bySkill.find((row) => row.skillId === 'sentence_endings');
   const speech = audit.bySkill.find((row) => row.skillId === 'speech');
 
-  assert.equal(sentenceEndings.fixedItemCount, 4);
+  assert.equal(sentenceEndings.fixedItemCount, 8);
   assert.equal(sentenceEndings.generatedItemCount, 1);
   assert.equal(sentenceEndings.generatedSignatureCount, 1);
   assert.ok(sentenceEndings.readinessCoverage.includes('insertion'));
-  assert.equal(sentenceEndings.choiceItemCount, 1);
-  assert.equal(sentenceEndings.answerContractCoverageCount, 2);
-  assert.equal(sentenceEndings.validatorCoverageCount, 1);
+  assert.equal(sentenceEndings.choiceItemCount, 2);
+  assert.equal(sentenceEndings.answerContractCoverageCount, 4);
+  assert.equal(sentenceEndings.validatorCoverageCount, 2);
   assert.ok(speech.generatedItemCount >= 2);
   assert.ok(speech.validatorCoverageCount > 0);
+});
+
+test('punctuation content audit proves P2 U3 runtime growth comes from fixed anchors only', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'audit-p2-u3-runtime-depth',
+    generatedPerFamily: 4,
+    thresholds: {
+      failOnDuplicateGeneratedSignatures: true,
+      minGeneratedItemsPerPublishedFamily: 4,
+      minTemplatesPerPublishedFamily: 4,
+      minSignaturesPerPublishedFamily: 4,
+      minFixedItemsBySkill: P2_U3_FIXED_THRESHOLDS,
+    },
+  });
+
+  assert.equal(audit.ok, true, audit.failures.join('\n'));
+  assert.equal(audit.summary.fixedItemCount, 92);
+  assert.equal(audit.summary.generatedItemCount, 100);
+  assert.equal(audit.summary.runtimeItemCount, 192);
+  assert.equal(audit.summary.publishedRewardUnitCount, 14);
+
+  for (const [skillId, expected] of Object.entries(P2_U3_FIXED_THRESHOLDS)) {
+    const row = audit.bySkill.find((entry) => entry.skillId === skillId);
+    assert.equal(row.fixedItemCount, expected, `${skillId} fixed anchors`);
+  }
 });
 
 test('punctuation content audit can prove expanded deterministic bank variety', () => {
@@ -166,19 +208,22 @@ test('punctuation content audit leaves duplicate generated stems and models revi
   assert.ok(audit.duplicates.generated.signatures.length > 0);
 });
 
-test('punctuation content audit can fail future P2 fixed-anchor thresholds without activating them by default', () => {
+test('punctuation content audit detects a P2 fixed-anchor regression', () => {
+  const regressionManifest = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    items: PUNCTUATION_CONTENT_MANIFEST.items.filter((item) => ![
+      'se_choose_direct_question',
+      'se_insert_quiet_command',
+      'se_fix_excited_statement',
+      'se_transfer_where',
+    ].includes(item.id)),
+  };
   const audit = runPunctuationContentAudit({
+    manifest: regressionManifest,
     seed: 'audit-p2-fixed-anchor-depth',
     generatedPerFamily: 4,
     thresholds: {
-      minFixedItemsBySkill: {
-        sentence_endings: 8,
-        apostrophe_contractions: 8,
-        comma_clarity: 8,
-        semicolon_list: 8,
-        hyphen: 8,
-        dash_clause: 8,
-      },
+      minFixedItemsBySkill: P2_U3_FIXED_THRESHOLDS,
     },
   });
 
@@ -224,19 +269,26 @@ test('punctuation content audit CLI applies by-skill fixed-anchor thresholds', (
     '--min-fixed-items-per-skill',
     '1',
     '--min-fixed-items-by-skill',
-    'sentence_endings=8',
+    fixedThresholdArg(),
     '--json',
   ]);
   const audit = JSON.parse(result.stdout);
 
-  assert.equal(result.status, 1);
-  assert.equal(audit.ok, false);
-  assert.ok(audit.failureDetails.some((failure) => (
-    failure.code === 'fixed_anchor_minimum'
-      && failure.skillId === 'sentence_endings'
-      && failure.actual === 4
-      && failure.expected === 8
-  )));
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(audit.ok, true, audit.failures.join('\n'));
+  assert.deepEqual(
+    audit.failureDetails.filter((failure) => failure.code === 'fixed_anchor_minimum'),
+    [],
+  );
+});
+
+test('punctuation content audit workflow enforces P2 fixed-anchor thresholds', () => {
+  const workflow = readFileSync(workflowPath, 'utf8');
+
+  assert.match(workflow, /--min-fixed-items-by-skill/);
+  for (const entry of fixedThresholdArg().split(',')) {
+    assert.match(workflow, new RegExp(entry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
 });
 
 test('punctuation content audit CLI rejects malformed by-skill threshold entries', () => {

@@ -308,6 +308,147 @@ test('hyphen transfer validator requires the exact hyphenated phrase', () => {
   assert.equal(embeddedWellKnownPhrase.misconceptionTags.includes('boundary.words_changed'), true);
 });
 
+test('P2 U3 free-text fixed anchors accept golden answers and tag representative misconceptions', () => {
+  const cases = [
+    {
+      itemId: 'se_insert_quiet_command',
+      correct: 'Please close the classroom door.',
+      wrong: 'please close the classroom door',
+      tag: 'endmarks.capitalisation_missing',
+    },
+    {
+      itemId: 'se_fix_excited_statement',
+      correct: 'What a clever idea!',
+      wrong: 'what a clever idea.',
+      tag: 'endmarks.mark_mismatch',
+    },
+    {
+      itemId: 'se_transfer_where',
+      correct: 'Where did the trail begin?',
+      wrong: 'Where did the trail begin.',
+      tag: 'endmarks.question_mark_missing',
+    },
+    {
+      itemId: 'ac_insert_well_youre',
+      correct: "We'll check that you're ready before we leave.",
+      wrong: 'Well check that youre ready before we leave.',
+      tag: 'apostrophe.contraction_missing',
+    },
+    {
+      itemId: 'ac_transfer_dont_theyre',
+      correct: "Don't worry because they're on the way.",
+      wrong: 'Dont worry because theyre on the way.',
+      tag: 'apostrophe.contraction_missing',
+    },
+    {
+      itemId: 'cc_insert_after_supper',
+      correct: 'After supper, we read quietly.',
+      wrong: 'After supper we read quietly.',
+      tag: 'comma.clarity_missing',
+    },
+    {
+      itemId: 'cc_fix_if_lost',
+      correct: 'If you get lost, ask a helper.',
+      wrong: 'If you get lost ask a helper.',
+      tag: 'comma.opening_clause_missing',
+    },
+    {
+      itemId: 'cc_transfer_after_the_match',
+      correct: 'After the match, the team shook hands.',
+      wrong: 'After the match the team shook hands.',
+      tag: 'comma.clarity_missing',
+    },
+    {
+      itemId: 'sl_insert_helper_roles',
+      correct: 'The helpers were Maya, register monitor; Leo, equipment monitor; and Aisha, line leader.',
+      wrong: 'The helpers were Maya, register monitor, Leo, equipment monitor and Aisha, line leader.',
+      tag: 'structure.semicolon_list_missing',
+    },
+    {
+      itemId: 'sl_fix_stalls',
+      correct: 'The stalls were crafts, table one; games, table two; and snacks, table three.',
+      wrong: 'The stalls were crafts, table one, games, table two and snacks, table three.',
+      tag: 'structure.semicolon_list_missing',
+    },
+    {
+      itemId: 'sl_transfer_event_stalls',
+      correct: 'The stalls were crafts, table one; games, table two; and snacks, table three.',
+      wrong: 'The stalls were crafts, table one, games, table two and snacks, table three.',
+      tag: 'structure.semicolon_list_missing',
+    },
+    {
+      itemId: 'hy_insert_well_behaved',
+      correct: 'The well-behaved puppy waited by the gate.',
+      wrong: 'The well behaved puppy waited by the gate.',
+      tag: 'boundary.hyphen_missing',
+    },
+    {
+      itemId: 'hy_transfer_part_time_job',
+      correct: 'My sister found a part-time job at the library.',
+      wrong: 'My sister found a part time job at the library.',
+      tag: 'boundary.hyphen_missing',
+    },
+    {
+      itemId: 'dc_insert_alarm_rang',
+      correct: 'The alarm rang - everyone lined up.',
+      wrong: 'The alarm rang everyone lined up.',
+      tag: 'boundary.dash_missing',
+    },
+    {
+      itemId: 'dc_transfer_curtain_rose',
+      correct: 'The curtain rose - the hall fell silent.',
+      wrong: 'The curtain rose, the hall fell silent.',
+      tag: 'boundary.dash_missing',
+    },
+  ];
+
+  for (const { itemId, correct, wrong, tag } of cases) {
+    const correctResult = markPunctuationAnswer({
+      item: item(itemId),
+      answer: { typed: correct },
+    });
+    assert.equal(correctResult.correct, true, `${itemId}: ${correct}`);
+
+    const wrongResult = markPunctuationAnswer({
+      item: item(itemId),
+      answer: { typed: wrong },
+    });
+    assert.equal(wrongResult.correct, false, `${itemId}: ${wrong}`);
+    assert.equal(wrongResult.misconceptionTags.includes(tag), true, `${itemId}: expected ${tag}`);
+  }
+});
+
+test('P2 U3 transfer anchors reject target-only sentence fragments', () => {
+  const cases = [
+    {
+      itemId: 'ac_transfer_dont_theyre',
+      model: "Don't worry because they're on the way.",
+      fragment: "Don't they're.",
+    },
+    {
+      itemId: 'hy_transfer_part_time_job',
+      model: 'My sister found a part-time job at the library.',
+      fragment: 'Part-time job.',
+    },
+  ];
+
+  for (const { itemId, model, fragment } of cases) {
+    const modelResult = markPunctuationAnswer({
+      item: item(itemId),
+      answer: { typed: model },
+    });
+    assert.equal(modelResult.correct, true, `${itemId}: model answer should pass`);
+
+    const fragmentResult = markPunctuationAnswer({
+      item: item(itemId),
+      answer: { typed: fragment },
+    });
+    assert.equal(fragmentResult.correct, false, `${itemId}: ${fragment}`);
+    assert.equal(fragmentResult.misconceptionTags.includes('transfer.sentence_fragment'), true, `${itemId}: sentence fragment tag`);
+    assert.equal(facet(fragmentResult, 'sentence_completeness')?.ok, false, `${itemId}: sentence completeness facet`);
+  }
+});
+
 test('mixed transfer validators constrain fronted speech and colon-list stems', () => {
   const frontedSpeech = markPunctuationAnswer({
     item: item('sp_fa_transfer_at_last_speech'),

@@ -3,9 +3,9 @@
 # Plan: docs/plans/2026-04-28-002-feat-punctuation-qg-p2-depth-release-gate-plan.md
 #
 # Runs the deterministic Punctuation content audit as its own PR gate.
-# This uses the current-compatible generated-per-family depth of 4 and pins
-# current validator/rubric coverage per skill. Later P2 units can activate
-# stricter fixed-anchor thresholds once the authored fixed content has landed.
+# This uses the approved generated-per-family depth of 4, pins validator/rubric
+# coverage per skill, and enforces the P2 fixed-anchor depth for priority
+# Punctuation skills.
 #
 # Security posture:
 #  - `permissions: contents: read` only.
@@ -47,3 +47,5 @@ jobs:
           npm run audit:punctuation-content -- --strict --generated-per-family 4
           --min-validator-coverage-by-skill
           sentence_endings=1,list_commas=12,apostrophe_contractions=6,apostrophe_possession=10,speech=18,fronted_adverbial=16,parenthesis=17,comma_clarity=5,colon_list=16,semicolon=15,dash_clause=10,semicolon_list=5,bullet_points=12,hyphen=6
+          --min-fixed-items-by-skill
+          sentence_endings=8,apostrophe_contractions=8,comma_clarity=8,semicolon_list=8,hyphen=8,dash_clause=8
