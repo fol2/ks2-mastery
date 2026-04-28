@@ -87,7 +87,16 @@ export function renderSharedSurfaceFixture() {
       inFlightWriteCount: 0,
       lastError: { message: 'remote unavailable', code: 'remote_error', phase: 'remote-write' },
     };
-    const toast = { id: 'toast-1', type: 'reward.monster', kind: 'caught', monster, next: { stage: 0, branch: 'b1' } };
+    const toast = {
+      id: 'toast-1',
+      type: 'reward.presentation.toast',
+      rewardType: 'reward.monster',
+      kind: 'caught',
+      title: 'Inklet joined your Codex',
+      body: 'You caught a new friend!',
+      monster,
+      assetRef: { family: 'monster', monsterId: 'inklet', stage: 0, branch: 'b1' },
+    };
     const celebration = { kind: 'caught', monster, previous: null, next: { stage: 0, branch: 'b1' } };
     const html = renderToStaticMarkup(
       <>
@@ -371,10 +380,13 @@ export function renderMonsterVisualRendererFixture() {
           <ToastShelf
             toasts={[{
               id: 'toast-a',
-              type: 'reward.monster',
+              type: 'reward.presentation.toast',
+              rewardType: 'reward.monster',
               kind: 'caught',
+              title: 'Inklet joined your Codex',
+              body: 'You caught a new friend!',
               monster: { id: 'inklet', name: 'Inklet' },
-              next: { stage: 1, branch: 'b1' },
+              assetRef: { family: 'monster', monsterId: 'inklet', stage: 1, branch: 'b1' },
             }]}
             onDismiss={() => {}}
           />
