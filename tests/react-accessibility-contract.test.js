@@ -606,6 +606,38 @@ test('Punctuation session textarea carries the autofocus shim and feedback live 
   );
 });
 
+test('Punctuation session choice items autofocus the first radio for keyboard-only entry', () => {
+  const html = renderPunctuationSessionSceneStandalone({
+    ui: {
+      phase: 'active-item',
+      session: {
+        id: 'sess-a11y-choice',
+        mode: 'smart',
+        answeredCount: 0,
+        length: 4,
+        currentItem: {
+          id: 'item-a11y-choice',
+          prompt: 'Which sentence is punctuated correctly?',
+          inputKind: 'choice',
+          mode: 'identify',
+          skillIds: [],
+          options: [
+            { index: 0, text: 'Hello, world!' },
+            { index: 1, text: 'Hello world!' },
+          ],
+        },
+      },
+    },
+    actions: { dispatch() {} },
+  });
+
+  assert.match(
+    html,
+    /<input[^>]*type="radio"[^>]*data-autofocus="true"/,
+    'punctuation choice sessions must autofocus the first radio for keyboard-only learners',
+  );
+});
+
 test('Punctuation feedback heading block exposes role="status" + aria-live="polite" for assistive tech', () => {
   const html = renderPunctuationSessionSceneStandalone({
     ui: {
