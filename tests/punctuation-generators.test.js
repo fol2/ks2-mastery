@@ -215,6 +215,61 @@ const LEGACY_RUNTIME_GENERATED_FIXTURE = Object.freeze([
   },
 ]);
 
+const P2_PRIORITY_CAPACITY_FAMILIES = Object.freeze([
+  'gen_sentence_endings_insert',
+  'gen_apostrophe_contractions_fix',
+  'gen_comma_clarity_insert',
+  'gen_dash_clause_fix',
+  'gen_dash_clause_combine',
+  'gen_hyphen_insert',
+  'gen_semicolon_list_fix',
+]);
+
+const P2_RELEASE_PRIORITY_RUNTIME_FOUR = Object.freeze({
+  gen_sentence_endings_insert: [
+    ['gen_sentence_endings_insert_template_ojehq4', 'puncsig_16hqza'],
+    ['gen_sentence_endings_insert_template_xsusve', 'puncsig_rqywyf'],
+    ['gen_sentence_endings_insert_template_fce7xq', 'puncsig_1uxeibz'],
+    ['gen_sentence_endings_insert_template_1030eck', 'puncsig_1et5kmk'],
+  ],
+  gen_apostrophe_contractions_fix: [
+    ['gen_apostrophe_contractions_fix_template_1x2iyq1', 'puncsig_7ipffv'],
+    ['gen_apostrophe_contractions_fix_template_vcqv1j', 'puncsig_1l2jy9t'],
+    ['gen_apostrophe_contractions_fix_template_1bwdvbz', 'puncsig_1ny1ioc'],
+    ['gen_apostrophe_contractions_fix_template_zq96k9', 'puncsig_irs7ic'],
+  ],
+  gen_comma_clarity_insert: [
+    ['gen_comma_clarity_insert_template_410pln', 'puncsig_m24dve'],
+    ['gen_comma_clarity_insert_template_i1jwnt', 'puncsig_1czkw5m'],
+    ['gen_comma_clarity_insert_template_1iru80y', 'puncsig_1yp62hb'],
+    ['gen_comma_clarity_insert_template_2c385o', 'puncsig_1g84wrh'],
+  ],
+  gen_dash_clause_fix: [
+    ['gen_dash_clause_fix_template_172ndjv', 'puncsig_ynmwrz'],
+    ['gen_dash_clause_fix_template_11ejvfc', 'puncsig_erog6d'],
+    ['gen_dash_clause_fix_template_1h1bmqa', 'puncsig_0gz5fc'],
+    ['gen_dash_clause_fix_template_1jrdtf5', 'puncsig_7hfpqd'],
+  ],
+  gen_dash_clause_combine: [
+    ['gen_dash_clause_combine_template_1y5wkx', 'puncsig_cntndu'],
+    ['gen_dash_clause_combine_template_1o45ea6', 'puncsig_5qqk8w'],
+    ['gen_dash_clause_combine_template_1l9y3bg', 'puncsig_16braa6'],
+    ['gen_dash_clause_combine_template_128nltn', 'puncsig_lin61y'],
+  ],
+  gen_hyphen_insert: [
+    ['gen_hyphen_insert_template_1sq39kj', 'puncsig_jymsjm'],
+    ['gen_hyphen_insert_template_1cjtd6l', 'puncsig_1lmq2gq'],
+    ['gen_hyphen_insert_template_9wwl7p', 'puncsig_043436'],
+    ['gen_hyphen_insert_template_1s9zvda', 'puncsig_1bp2lu0'],
+  ],
+  gen_semicolon_list_fix: [
+    ['gen_semicolon_list_fix_template_im9cuv', 'puncsig_16xjpox'],
+    ['gen_semicolon_list_fix_template_zurnf7', 'puncsig_1gq3mzq'],
+    ['gen_semicolon_list_fix_template_1ssfry4', 'puncsig_plkjc8'],
+    ['gen_semicolon_list_fix_template_u5ri7n', 'puncsig_j0zb2u'],
+  ],
+});
+
 test('generated punctuation items are deterministic, unique, and family-scoped', () => {
   const first = createPunctuationGeneratedItems({ seed: 'release-a', perFamily: 2 });
   const second = createPunctuationGeneratedItems({ seed: 'release-a', perFamily: 2 });
@@ -257,31 +312,46 @@ test('generated punctuation signatures detect duplicate learner-visible surfaces
   assert.equal(clone.variantSignature, items[0].variantSignature);
 });
 
-test('expanded generated banks add distinct signatures after legacy variants', () => {
-  const targetFamilies = [
-    'gen_sentence_endings_insert',
-    'gen_apostrophe_contractions_fix',
-    'gen_comma_clarity_insert',
-    'gen_dash_clause_fix',
-    'gen_dash_clause_combine',
-    'gen_hyphen_insert',
-    'gen_semicolon_list_fix',
-  ];
-  const items = createPunctuationGeneratedItems({ seed: 'expanded-bank', perFamily: 4 });
+test('expanded priority generated banks add spare distinct capacity after runtime variants', () => {
+  const items = createPunctuationGeneratedItems({ seed: 'expanded-bank', perFamily: 8 });
 
-  for (const familyId of targetFamilies) {
+  for (const familyId of P2_PRIORITY_CAPACITY_FAMILIES) {
     const familyItems = items.filter((item) => item.generatorFamilyId === familyId);
-    assert.equal(familyItems.length, 4, familyId);
-    assert.equal(new Set(familyItems.map((item) => item.variantSignature)).size, 4, familyId);
-    assert.equal(new Set(familyItems.map((item) => item.templateId)).size, 4, familyId);
+    assert.equal(familyItems.length, 8, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.variantSignature)).size, 8, familyId);
+    assert.equal(new Set(familyItems.map((item) => item.templateId)).size, 8, familyId);
   }
 });
 
 test('generated punctuation model answers pass deterministic marking', () => {
-  const generatedItems = createPunctuationGeneratedItems({ seed: 'marking-smoke', perFamily: 4 });
+  const generatedItems = createPunctuationGeneratedItems({ seed: 'marking-smoke', perFamily: 8 });
   for (const item of generatedItems) {
     const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
     assert.equal(result.correct, true, item.id);
+  }
+});
+
+test('priority capacity expansion preserves production four-variant generated surfaces', () => {
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: PUNCTUATION_CONTENT_MANIFEST.releaseId,
+    perFamily: 4,
+  });
+  const generatedRuntime = generatedItems.filter((item) => item.source === 'generated');
+  const runtimeManifest = createPunctuationRuntimeManifest({
+    seed: PUNCTUATION_CONTENT_MANIFEST.releaseId,
+    generatedPerFamily: 4,
+  });
+  const runtimeIndexes = createPunctuationContentIndexes(runtimeManifest);
+
+  assert.equal(generatedRuntime.length, 100);
+  assert.equal(runtimeIndexes.items.length, 192);
+  assert.equal(runtimeIndexes.items.filter((item) => item.source === 'generated').length, 100);
+
+  for (const [familyId, expected] of Object.entries(P2_RELEASE_PRIORITY_RUNTIME_FOUR)) {
+    const actual = generatedItems
+      .filter((item) => item.generatorFamilyId === familyId)
+      .map((item) => [item.templateId, item.variantSignature]);
+    assert.deepEqual(actual, expected, familyId);
   }
 });
 

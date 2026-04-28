@@ -1,6 +1,7 @@
 const MAX_ATOM_LENGTH = 48;
 const MAX_ATOMS_PER_KIND = 6;
 const MAX_TOTAL_ATOMS = 32;
+const MAX_CONTEXT_TEMPLATE_VARIANTS = 2;
 
 const STRING_ATOM_KINDS = Object.freeze([
   'names',
@@ -185,34 +186,50 @@ function asNormalisedPack(pack = {}) {
   return isPlainObject(pack?.acceptedAtoms) ? pack : normalisePunctuationContextPack(pack);
 }
 
-function first(values, fallback) {
-  return Array.isArray(values) && values.length ? values[0] : fallback;
+function valueAt(values, index, fallback) {
+  return Array.isArray(values) && values.length ? values[index % values.length] : fallback;
 }
 
-function listItems(pack) {
+function templateVariants(pack, builder) {
+  const seen = new Set();
+  const templates = [];
+  for (let index = 0; index < MAX_CONTEXT_TEMPLATE_VARIANTS; index += 1) {
+    const template = builder(pack, index);
+    if (!template) continue;
+    const key = `${template.prompt || ''}\n${template.stem || ''}\n${template.model || ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    templates.push(template);
+  }
+  return templates;
+}
+
+function listItems(pack, variantIndex = 0) {
   const nouns = pack.acceptedAtoms.listNouns || [];
-  return nouns.length >= 3 ? nouns.slice(0, 3) : null;
+  if (nouns.length < 3) return null;
+  const start = Math.min(variantIndex * 3, Math.max(0, nouns.length - 3));
+  return nouns.slice(start, start + 3);
 }
 
-function mainClause(pack, fallback = 'the crew checked the ropes') {
-  return first(pack.acceptedAtoms.stems, fallback).toLowerCase();
+function mainClause(pack, fallback = 'the crew checked the ropes', variantIndex = 0) {
+  return valueAt(pack.acceptedAtoms.stems, variantIndex, fallback).toLowerCase();
 }
 
-function clausePair(pack, fallbackLeft = 'the crew checked the ropes', fallbackRight = 'we found another path') {
+function clausePair(pack, fallbackLeft = 'the crew checked the ropes', fallbackRight = 'we found another path', variantIndex = 0) {
   const stems = Array.isArray(pack.acceptedAtoms.stems) ? pack.acceptedAtoms.stems : [];
-  const left = (stems[0] || fallbackLeft).toLowerCase();
-  const rightCandidate = (stems[1] || '').toLowerCase();
+  const left = (stems[variantIndex * 2] || fallbackLeft).toLowerCase();
+  const rightCandidate = (stems[(variantIndex * 2) + 1] || '').toLowerCase();
   const right = rightCandidate && rightCandidate !== left ? rightCandidate : fallbackRight;
   return { left, right };
 }
 
-function placeSubject(pack, fallback = 'harbour') {
-  const place = first(pack.acceptedAtoms.places, fallback);
+function placeSubject(pack, fallback = 'harbour', variantIndex = 0) {
+  const place = valueAt(pack.acceptedAtoms.places, variantIndex, fallback);
   return `The ${place}`;
 }
 
-function listInsertTemplate(pack) {
-  const items = listItems(pack);
+function listInsertTemplate(pack, variantIndex = 0) {
+  const items = listItems(pack, variantIndex);
   if (!items) return null;
   const [firstItem, secondItem, thirdItem] = items;
   return {
@@ -228,8 +245,8 @@ function listInsertTemplate(pack) {
   };
 }
 
-function listCombineTemplate(pack) {
-  const items = listItems(pack);
+function listCombineTemplate(pack, variantIndex = 0) {
+  const items = listItems(pack, variantIndex);
   if (!items) return null;
   const [firstItem, secondItem, thirdItem] = items;
   return {
@@ -246,10 +263,10 @@ function listCombineTemplate(pack) {
   };
 }
 
-function frontedFixTemplate(pack) {
-  const phrase = first(pack.acceptedAtoms.frontedAdverbialPhrases, null);
+function frontedFixTemplate(pack, variantIndex = 0) {
+  const phrase = valueAt(pack.acceptedAtoms.frontedAdverbialPhrases, variantIndex, null);
   if (!phrase) return null;
-  const clause = mainClause(pack);
+  const clause = mainClause(pack, 'the crew checked the ropes', variantIndex);
   return {
     prompt: 'Correct the comma after the fronted adverbial.',
     stem: `${capitaliseSentence(phrase)} ${clause}.`,
@@ -263,10 +280,10 @@ function frontedFixTemplate(pack) {
   };
 }
 
-function frontedCombineTemplate(pack) {
-  const phrase = first(pack.acceptedAtoms.frontedAdverbialPhrases, null);
+function frontedCombineTemplate(pack, variantIndex = 0) {
+  const phrase = valueAt(pack.acceptedAtoms.frontedAdverbialPhrases, variantIndex, null);
   if (!phrase) return null;
-  const clause = mainClause(pack);
+  const clause = mainClause(pack, 'the crew checked the ropes', variantIndex);
   return {
     prompt: 'Combine the adverbial and main clause into one sentence.',
     stem: `${capitaliseSentence(phrase)}\n${capitaliseSentence(clause)}.`,
@@ -281,10 +298,10 @@ function frontedCombineTemplate(pack) {
   };
 }
 
-function commaClarityTemplate(pack) {
-  const phrase = first(pack.acceptedAtoms.frontedAdverbialPhrases, null);
+function commaClarityTemplate(pack, variantIndex = 0) {
+  const phrase = valueAt(pack.acceptedAtoms.frontedAdverbialPhrases, variantIndex, null);
   if (!phrase) return null;
-  const clause = clausePair(pack, 'the harbour was quiet', 'the harbour was quiet').right;
+  const clause = clausePair(pack, 'the harbour was quiet', 'the harbour was quiet', variantIndex).right;
   return {
     prompt: 'Add the comma that makes the meaning clear.',
     stem: `${capitaliseSentence(phrase)} ${clause}.`,
@@ -298,8 +315,8 @@ function commaClarityTemplate(pack) {
   };
 }
 
-function boundaryFixTemplate(pack, mark, prompt, misconceptionTag) {
-  const { left, right } = clausePair(pack);
+function boundaryFixTemplate(pack, mark, prompt, misconceptionTag, variantIndex = 0) {
+  const { left, right } = clausePair(pack, 'the crew checked the ropes', 'we found another path', variantIndex);
   const unpunctuatedJoin = mark === ';' ? ', ' : ' ';
   const modelJoin = mark === ';' ? '; ' : ` ${mark} `;
   return {
@@ -317,8 +334,8 @@ function boundaryFixTemplate(pack, mark, prompt, misconceptionTag) {
   };
 }
 
-function boundaryCombineTemplate(pack, mark, prompt, misconceptionTag) {
-  const { left, right } = clausePair(pack);
+function boundaryCombineTemplate(pack, mark, prompt, misconceptionTag, variantIndex = 0) {
+  const { left, right } = clausePair(pack, 'the crew checked the ropes', 'we found another path', variantIndex);
   const modelJoin = mark === ';' ? '; ' : ` ${mark} `;
   return {
     prompt,
@@ -335,9 +352,9 @@ function boundaryCombineTemplate(pack, mark, prompt, misconceptionTag) {
   };
 }
 
-function speechTemplate(pack) {
-  const name = first(pack.acceptedAtoms.names, 'Maya');
-  const question = first(pack.acceptedAtoms.speechQuestions, null);
+function speechTemplate(pack, variantIndex = 0) {
+  const name = valueAt(pack.acceptedAtoms.names, variantIndex, 'Maya');
+  const question = valueAt(pack.acceptedAtoms.speechQuestions, variantIndex, null);
   if (question) {
     return {
       prompt: 'Add the direct-speech punctuation.',
@@ -353,7 +370,7 @@ function speechTemplate(pack) {
       readiness: ['insertion', 'misconception', 'negative_test'],
     };
   }
-  const command = first(pack.acceptedAtoms.speechCommands, null);
+  const command = valueAt(pack.acceptedAtoms.speechCommands, variantIndex, null);
   if (!command) return null;
   return {
     prompt: 'Add the direct-speech punctuation.',
@@ -370,8 +387,8 @@ function speechTemplate(pack) {
   };
 }
 
-function sentenceEndingTemplate(pack) {
-  const question = first(pack.acceptedAtoms.speechQuestions, null);
+function sentenceEndingTemplate(pack, variantIndex = 0) {
+  const question = valueAt(pack.acceptedAtoms.speechQuestions, variantIndex, null);
   if (question) {
     return {
       prompt: 'Add the capital letter and end punctuation.',
@@ -381,7 +398,7 @@ function sentenceEndingTemplate(pack) {
       readiness: ['insertion', 'misconception', 'negative_test'],
     };
   }
-  const stem = first(pack.acceptedAtoms.stems, null);
+  const stem = valueAt(pack.acceptedAtoms.stems, variantIndex, null);
   if (!stem) return null;
   return {
     prompt: 'Add the capital letter and end punctuation.',
@@ -392,10 +409,10 @@ function sentenceEndingTemplate(pack) {
   };
 }
 
-function parenthesisCombineTemplate(pack) {
-  const phrase = first(pack.acceptedAtoms.parenthesisPhrases, null);
+function parenthesisCombineTemplate(pack, variantIndex = 0) {
+  const phrase = valueAt(pack.acceptedAtoms.parenthesisPhrases, variantIndex, null);
   if (!phrase) return null;
-  const before = placeSubject(pack);
+  const before = placeSubject(pack, 'harbour', variantIndex);
   const after = 'was busy';
   return {
     prompt: 'Combine the sentence and extra detail using parenthesis.',
@@ -412,8 +429,8 @@ function parenthesisCombineTemplate(pack) {
   };
 }
 
-function hyphenTemplate(pack) {
-  const row = first(pack.acceptedAtoms.hyphenCompoundRows, null);
+function hyphenTemplate(pack, variantIndex = 0) {
+  const row = valueAt(pack.acceptedAtoms.hyphenCompoundRows, variantIndex, null);
   if (!row) return null;
   const openPhrase = `${row.left} ${row.right} ${row.noun}`;
   const hyphenatedPhrase = `${row.left}-${row.right} ${row.noun}`;
@@ -433,42 +450,46 @@ function hyphenTemplate(pack) {
 export function contextPackTemplatesForFamily(familyId, contextPack = {}) {
   const pack = asNormalisedPack(contextPack);
   if (!pack.summary.acceptedCount) return [];
-  const template = {
-    gen_sentence_endings_insert: sentenceEndingTemplate,
-    gen_speech_insert: speechTemplate,
-    gen_list_commas_insert: listInsertTemplate,
-    gen_list_commas_combine: listCombineTemplate,
-    gen_fronted_adverbial_fix: frontedFixTemplate,
-    gen_fronted_adverbial_combine: frontedCombineTemplate,
-    gen_comma_clarity_insert: commaClarityTemplate,
-    gen_semicolon_fix: (normalisedPack) => boundaryFixTemplate(
+  const templates = {
+    gen_sentence_endings_insert: () => templateVariants(pack, sentenceEndingTemplate),
+    gen_speech_insert: () => templateVariants(pack, speechTemplate),
+    gen_list_commas_insert: () => templateVariants(pack, listInsertTemplate),
+    gen_list_commas_combine: () => templateVariants(pack, listCombineTemplate),
+    gen_fronted_adverbial_fix: () => templateVariants(pack, frontedFixTemplate),
+    gen_fronted_adverbial_combine: () => templateVariants(pack, frontedCombineTemplate),
+    gen_comma_clarity_insert: () => templateVariants(pack, commaClarityTemplate),
+    gen_semicolon_fix: () => templateVariants(pack, (normalisedPack, variantIndex) => boundaryFixTemplate(
       normalisedPack,
       ';',
       'Replace the comma splice with a semi-colon.',
       'boundary.semicolon_missing',
-    ),
-    gen_semicolon_combine: (normalisedPack) => boundaryCombineTemplate(
+      variantIndex,
+    )),
+    gen_semicolon_combine: () => templateVariants(pack, (normalisedPack, variantIndex) => boundaryCombineTemplate(
       normalisedPack,
       ';',
       'Combine the two related clauses into one sentence with a semi-colon.',
       'boundary.semicolon_missing',
-    ),
-    gen_dash_clause_fix: (normalisedPack) => boundaryFixTemplate(
+      variantIndex,
+    )),
+    gen_dash_clause_fix: () => templateVariants(pack, (normalisedPack, variantIndex) => boundaryFixTemplate(
       normalisedPack,
       '-',
       'Add a dash between the related clauses.',
       'boundary.dash_missing',
-    ),
-    gen_dash_clause_combine: (normalisedPack) => boundaryCombineTemplate(
+      variantIndex,
+    )),
+    gen_dash_clause_combine: () => templateVariants(pack, (normalisedPack, variantIndex) => boundaryCombineTemplate(
       normalisedPack,
       '-',
       'Combine the two related clauses into one sentence with a dash.',
       'boundary.dash_missing',
-    ),
-    gen_parenthesis_combine: parenthesisCombineTemplate,
-    gen_hyphen_insert: hyphenTemplate,
-  }[familyId]?.(pack);
-  return template ? [template] : [];
+      variantIndex,
+    )),
+    gen_parenthesis_combine: () => templateVariants(pack, parenthesisCombineTemplate),
+    gen_hyphen_insert: () => templateVariants(pack, hyphenTemplate),
+  }[familyId]?.();
+  return Array.isArray(templates) ? templates : [];
 }
 
 export function affectedGeneratorFamiliesForContextPack(contextPack = {}) {

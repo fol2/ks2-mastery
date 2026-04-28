@@ -25,6 +25,16 @@ const P2_U3_FIXED_THRESHOLDS = Object.freeze({
   dash_clause: 8,
 });
 
+const P2_U6_PRIORITY_CAPACITY_FAMILIES = Object.freeze([
+  'gen_sentence_endings_insert',
+  'gen_apostrophe_contractions_fix',
+  'gen_comma_clarity_insert',
+  'gen_dash_clause_fix',
+  'gen_dash_clause_combine',
+  'gen_hyphen_insert',
+  'gen_semicolon_list_fix',
+]);
+
 function fixedThresholdArg(thresholds = P2_U3_FIXED_THRESHOLDS) {
   return Object.entries(thresholds)
     .map(([skillId, count]) => `${skillId}=${count}`)
@@ -123,6 +133,40 @@ test('punctuation content audit can prove expanded deterministic bank variety', 
     assert.equal(row.generatedItemCount, 4, row.id);
     assert.equal(row.variantSignatures.length, 4, row.id);
     assert.equal(row.templateIds.length, 4, row.id);
+  }
+});
+
+test('punctuation content audit proves spare priority capacity without raising production runtime', () => {
+  const capacityThresholds = Object.fromEntries(P2_U6_PRIORITY_CAPACITY_FAMILIES.map((familyId) => [familyId, 8]));
+  const productionAudit = runPunctuationContentAudit({
+    seed: 'audit-p2-u6-production-runtime',
+    generatedPerFamily: 4,
+  });
+  const capacityAudit = runPunctuationContentAudit({
+    seed: 'audit-p2-u6-priority-capacity',
+    generatedPerFamily: 8,
+    thresholds: {
+      minGeneratedItemsByFamily: capacityThresholds,
+      minTemplatesByFamily: capacityThresholds,
+      minSignaturesByFamily: capacityThresholds,
+    },
+  });
+
+  assert.equal(productionAudit.ok, true, productionAudit.failures.join('\n'));
+  assert.equal(productionAudit.summary.generatedItemCount, 100);
+  assert.equal(productionAudit.summary.runtimeItemCount, 192);
+  assert.equal(capacityAudit.ok, true, capacityAudit.failures.join('\n'));
+  assert.deepEqual(
+    capacityAudit.failureDetails.filter((failure) => failure.code === 'generated_model_marking'),
+    [],
+  );
+  assert.equal(capacityAudit.summary.generatedItemCount, 200);
+  assert.equal(capacityAudit.summary.runtimeItemCount, 292);
+  for (const familyId of P2_U6_PRIORITY_CAPACITY_FAMILIES) {
+    const row = capacityAudit.generatorFamilies.find((entry) => entry.id === familyId);
+    assert.equal(row.generatedItemCount, 8, familyId);
+    assert.equal(row.templateIds.length, 8, familyId);
+    assert.equal(row.variantSignatures.length, 8, familyId);
   }
 });
 
