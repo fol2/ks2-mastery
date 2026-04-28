@@ -821,23 +821,23 @@ test('production bundle audit fails when live manifest Cache-Control drifts off 
     const url = request.url || '/';
     if (url === '/' || url === '/index.html') {
       response.writeHead(200, { 'content-type': 'text/html', 'cache-control': 'no-store' });
-      response.end('<!doctype html><script src="/assets/app.js"></script>');
+      response.end('<!doctype html><script type="module" src="/src/bundles/app.bundle.js?v=test"></script>');
       return;
     }
-    if (url === '/assets/app.js') {
+    if (url === '/src/bundles/app.bundle.js' || url === '/src/bundles/app.bundle.js?v=test') {
+      response.writeHead(200, {
+        'content-type': 'application/javascript',
+        'cache-control': 'no-store',
+      });
+      response.end('import"./chunk-CLEAN.js"; console.log("ok");');
+      return;
+    }
+    if (url === '/src/bundles/chunk-CLEAN.js') {
       response.writeHead(200, {
         'content-type': 'application/javascript',
         'cache-control': 'public, max-age=31536000, immutable',
       });
-      response.end('console.log("ok");');
-      return;
-    }
-    if (url === '/src/bundles/app.bundle.js') {
-      response.writeHead(200, {
-        'content-type': 'application/javascript',
-        'cache-control': 'public, max-age=31536000, immutable',
-      });
-      response.end('console.log("ok");');
+      response.end('console.log("clean");');
       return;
     }
     if (url === '/assets/app-icons/favicon-32.png') {
@@ -913,7 +913,7 @@ test('production bundle audit walks dynamic import chunks referenced only via im
       // split chunk. Esbuild emits `import("./chunk-CAFEBABE.js")` here.
       response.writeHead(200, {
         'content-type': 'application/javascript',
-        'cache-control': 'public, max-age=31536000, immutable',
+        'cache-control': 'no-store',
       });
       response.end('const m = import("./chunk-CAFEBABE.js"); console.log(m);');
       return;
@@ -998,7 +998,7 @@ test('production audit walks chunks referenced via minified static imports (no w
       // static import AND a side-effect import — both zero-whitespace.
       response.writeHead(200, {
         'content-type': 'application/javascript',
-        'cache-control': 'public, max-age=31536000, immutable',
+        'cache-control': 'no-store',
       });
       response.end(
         'import{X as a,Y as b}from"./chunk-static.js";import"./side-effect.js";console.log(a,b);',

@@ -3,9 +3,14 @@
 ## Overview
 
 This runbook covers the end-to-end procedure for (re)generating the
-236-word × 2-voice = 472-object Word Bank audio cache that backs
-`tts.speak({ wordOnly: true })` on production R2 (bucket
-`ks2-spelling-buffers`).
+Word Bank audio cache that backs `tts.speak({ wordOnly: true })` on
+production R2 (bucket `ks2-spelling-buffers`). The current seeded
+runtime has 246 spelling words, so the word-only lane is 246 × 2
+voices = 492 objects.
+
+For new content, prefer the all-in-one pre-cache loader:
+`npm run spelling:audio-cache`. It can fill word-only and sentence
+dictation cache lanes together for the same slug set and run id.
 
 It is the operator-facing companion to plan
 [`docs/plans/2026-04-26-001-feat-spelling-word-audio-cache-plan.md`](./plans/2026-04-26-001-feat-spelling-word-audio-cache-plan.md)
@@ -43,16 +48,16 @@ Trigger a regeneration whenever any of the following changes:
 4. **Published spelling snapshot version bump** — any change to
    `SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug` in
    `src/subjects/spelling/data/content-data.js` that affects
-   `(slug, word, sentence)` for any of the 236 words. The Worker
+   `(slug, word, sentence)` for any published word. The Worker
    validates Word Bank prompt tokens against the snapshot's
    `wordBySlug[slug].word`, which is the exact text used to compute
    `contentKey`; if `WORDS[i].word` and snapshot diverge, the
    generator's preflight assertion will hard-stop the run before any
    Gemini spend.
 
-> **Sentence audio (the 8 612 pre-PR-71 files) is out of scope.** Those
-> files are served via PR 252's `legacyBufferedAudioKey` fallback; this
-> runbook does not cover their regeneration.
+> **Sentence audio:** legacy pre-PR-71 sentence files still serve through
+> `legacyBufferedAudioKey`, but new or changed content should be filled
+> through `npm run spelling:audio-cache -- --lane sentence` or `--lane all`.
 
 ---
 
@@ -96,22 +101,23 @@ preflight gate, so a missing tool aborts before any Gemini spend.
 ```bash
 # Eyeball-confirm word count
 node -e "import('./src/subjects/spelling/data/word-data.js').then(m => console.log(m.WORDS.length))"
-# Expected: 236
+# Expected: current published word count (246 at the 2026-04-27 SC/CH expansion)
 ```
 
 The generator's preflight asserts this plus per-slug `cleanText`
 parity between `WORDS[i].word` and
-`SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug[slug].word` for all
-236 entries.
+`SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug[slug].word` for every
+published entry.
 
 ---
 
 ## 3. Standard run recipe
 
 Follow this sequence for any production fill. Do **not** skip the
-small-sample step. The cost of a wrong-prompt full run (472 wasted
-Gemini calls + 472 corrupt R2 objects requiring batch deletion +
-regen) far exceeds the 30-minute small-sample loop.
+small-sample step. The cost of a wrong-prompt full run (hundreds or
+thousands of wasted Gemini calls plus corrupt R2 objects requiring
+batch deletion and regeneration) far exceeds the 30-minute small-sample
+loop.
 
 Detailed Appendix A command reference lives in the run report
 template:
@@ -158,15 +164,25 @@ Confirm chosen race-mitigation policy from §6 is in effect.
 npm run spelling:word-audio -- generate --concurrency 4
 ```
 
-No `--slug` filter → all 236 words; auto-skips the 4 already-uploaded
+No `--slug` filter → all current words; auto-skips the 4 already-uploaded
 from §3.2. Operator monitors logs; on transient 429/502, the script
 auto-retries.
+
+For new or changed words where sentence dictation should be filled at
+the same time, use the all-in-one loader:
+
+```bash
+npm run spelling:audio-cache -- generate --lane all --slug abscess,ascend --concurrency 4
+```
+
+Omit `--slug` only when intentionally filling every current word and
+sentence lane.
 
 ### 3.5 Post-run smoke (15 min)
 
 ```bash
 npm run spelling:word-audio -- status --run-id <RUNID>
-# Expected: 472 uploaded / 0 failed
+# Expected: all planned word-only entries uploaded / 0 failed
 
 npm run smoke:production:spelling-audio \
   -- --require-word-hit \

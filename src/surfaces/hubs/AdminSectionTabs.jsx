@@ -15,7 +15,7 @@ export const ADMIN_SECTION_TABS = [
   { key: 'accounts', label: 'Accounts' },
   { key: 'debug', label: 'Debugging & Logs' },
   { key: 'content', label: 'Content' },
-  { key: 'marketing', label: 'Marketing', comingSoon: true },
+  { key: 'marketing', label: 'Marketing' },
 ];
 
 export function AdminSectionTabs({ activeSection = 'overview', onTabChange }) {

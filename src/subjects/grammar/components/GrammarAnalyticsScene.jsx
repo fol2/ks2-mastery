@@ -124,13 +124,14 @@ export function GrammarAnalyticsScene({
     >
       <div className="card-header">
         <div>
-          <div className="eyebrow">Grammar progress</div>
+          <div className="eyebrow">Evidence snapshot</div>
           <h3 className="section-title" id="grammar-analytics-title">Grown-up view</h3>
           <p className="grammar-analytics-intro small muted">
             Detailed Grammar progress for parents and teachers. Nothing here is a grade.
           </p>
         </div>
         <div className="grammar-analytics-actions">
+          <span className="chip">Stage 1</span>
           {actions?.dispatch ? (
             <button
               className="btn secondary"

@@ -13,6 +13,7 @@ import { buildSpellingContentSummary, validateSpellingContentBundle } from '../.
 import { getSpellingPostMasteryState } from '../../subjects/spelling/read-model.js';
 import { POST_MEGA_SEED_SHAPES } from '../../../shared/spelling/post-mastery-seed-shapes.js';
 import { buildParentHubReadModel } from './parent-read-model.js';
+export { normaliseMarketingMessage } from './admin-marketing-message.js';
 
 // U1 (P2): neutral "empty" debug envelope for the admin hub when no
 // learner is selected or when the role check forbids debug fields. The

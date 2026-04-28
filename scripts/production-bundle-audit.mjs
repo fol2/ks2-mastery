@@ -204,6 +204,16 @@ function assertNoForbiddenText(label, text, failures) {
   }
 }
 
+function firstSourceSplitChunkPath(paths) {
+  return Array.from(paths)
+    .sort()
+    .find((path) => (
+      path.startsWith('/src/bundles/')
+      && path.endsWith('.js')
+      && path !== '/src/bundles/app.bundle.js'
+    )) || null;
+}
+
 async function auditProduction(origin) {
   const failures = [];
   const base = new URL(origin);
@@ -292,7 +302,7 @@ async function auditProduction(origin) {
   // origin. We hit paths that cover each response-construction lane:
   //   - `/` — static HTML served by ASSETS (`_headers` `/` group).
   //   - `/src/bundles/app.bundle.js` — run_worker_first path that flows
-  //     through applySecurityHeaders with explicit immutable cache.
+  //     through applySecurityHeaders with explicit no-store entry caching.
   //   - `/manifest.webmanifest` — ASSETS direct with `_headers` manifest rule.
   //   - `/api/auth/logout` — Worker-produced 4xx/2xx that must carry
   //     Clear-Site-Data plus the full security set (review testing-gap-4).
@@ -401,7 +411,8 @@ async function auditProduction(origin) {
   // origin. Covers one representative per cache lane so a regression in
   // `_headers` or the Worker wrapper surfaces immediately:
   //   - `/` — HTML must never be cached (no-store).
-  //   - `/src/bundles/app.bundle.js` — Worker-wrapped hashed bundle (immutable).
+  //   - `/src/bundles/app.bundle.js` — stable Worker-wrapped entry (no-store).
+  //   - a discovered `/src/bundles/*-HASH.js` split chunk — immutable.
   //   - `/assets/app-icons/favicon-32.png` — ASSETS-direct hashed asset (immutable).
   //   - `/manifest.webmanifest` — intentional 1-hour short cache (neither
   //     immutable nor no-store).
@@ -411,12 +422,19 @@ async function auditProduction(origin) {
   // would always pass against the fallback path rather than the real GET
   // handler. `json()`'s hardcoded cache-control already makes the GET
   // endpoint no-store by construction (adv-1).
+  const splitChunkPath = firstSourceSplitChunkPath(visitedChunks);
+  if (!splitChunkPath) {
+    failures.push('Cache-split HEAD check could not discover any /src/bundles/ split chunk to verify immutable caching.');
+  }
   const CACHE_SPLIT_CHECKS = [
     { path: '/', label: 'root index', expected: 'no-store' },
-    { path: '/src/bundles/app.bundle.js', label: 'Worker-wrapped bundle', expected: 'public, max-age=31536000, immutable' },
+    { path: '/src/bundles/app.bundle.js', label: 'Worker-wrapped entry bundle', expected: 'no-store' },
+    splitChunkPath
+      ? { path: splitChunkPath, label: 'Worker-wrapped split chunk', expected: 'public, max-age=31536000, immutable' }
+      : null,
     { path: '/assets/app-icons/favicon-32.png', label: 'ASSETS app icon', expected: 'public, max-age=31536000, immutable' },
     { path: '/manifest.webmanifest', label: 'web app manifest', expected: 'public, max-age=3600' },
-  ];
+  ].filter(Boolean);
   let cacheChecksPassed = 0;
   for (const check of CACHE_SPLIT_CHECKS) {
     const target = new URL(check.path, base);

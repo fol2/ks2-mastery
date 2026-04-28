@@ -102,6 +102,7 @@ export async function aggregateDebugBundle(db, {
   timeFrom = null,
   timeTo = null,
   errorFingerprint = null,
+  errorEventId = null,
   route = null,
   now = Date.now(),
   buildHash = null,
@@ -175,6 +176,10 @@ export async function aggregateDebugBundle(db, {
         whereClauses.push('fingerprint = ?');
         whereParams.push(errorFingerprint);
       }
+      if (typeof errorEventId === 'string' && errorEventId) {
+        whereClauses.push('id = ?');
+        whereParams.push(errorEventId);
+      }
       const rows = await allSafe(db, `
         SELECT id, fingerprint, error_kind, message_first_line, first_frame,
                route_name, user_agent, account_id, first_seen, last_seen,
@@ -204,13 +209,46 @@ export async function aggregateDebugBundle(db, {
       }));
     }),
 
-    // 4. Error occurrences (filtered by fingerprint when present)
+    // 4. Error occurrences (filtered by fingerprint → resolved event IDs,
+    //    or directly by errorEventId when present).
+    //    CRITICAL: fingerprint is resolved to event IDs inside this
+    //    safeSection callback so the Promise.all parallel structure is
+    //    preserved and a resolution failure is caught by safeSection.
     safeSection('errorOccurrences', async () => {
+      // --- Resolve fingerprint → event IDs ---
+      let resolvedEventIds = null;
+      if (typeof errorFingerprint === 'string' && errorFingerprint) {
+        const eventRows = await allSafe(db,
+          'SELECT id FROM ops_error_events WHERE fingerprint = ?',
+          [errorFingerprint], 'ops_error_events');
+        resolvedEventIds = eventRows.map((r) => r.id);
+        // EMPTY-MATCH GUARD: fingerprint matched zero events →
+        // return empty immediately to avoid `WHERE event_id IN ()`.
+        if (resolvedEventIds.length === 0) return [];
+      }
+
+      // --- Build event ID set from both sources ---
+      let eventIdSet = null;
+      if (resolvedEventIds && typeof errorEventId === 'string' && errorEventId) {
+        // Both provided: intersection (AND). Only include errorEventId
+        // if it is among the resolved set.
+        const intersection = resolvedEventIds.includes(errorEventId)
+          ? [errorEventId]
+          : [];
+        if (intersection.length === 0) return [];
+        eventIdSet = intersection;
+      } else if (resolvedEventIds) {
+        eventIdSet = resolvedEventIds;
+      } else if (typeof errorEventId === 'string' && errorEventId) {
+        eventIdSet = [errorEventId];
+      }
+
       const whereClauses = ['occurred_at >= ?', 'occurred_at <= ?'];
       const whereParams = [effectiveTimeFrom, effectiveTimeTo];
-      if (typeof errorFingerprint === 'string' && errorFingerprint) {
-        whereClauses.push('event_id = ?');
-        whereParams.push(errorFingerprint);
+      if (eventIdSet) {
+        const placeholders = eventIdSet.map(() => '?').join(', ');
+        whereClauses.push(`event_id IN (${placeholders})`);
+        whereParams.push(...eventIdSet);
       }
       if (typeof route === 'string' && route) {
         whereClauses.push('route_name LIKE ?');
@@ -324,6 +362,7 @@ export async function aggregateDebugBundle(db, {
       timeFromExplicit: Number.isFinite(Number(timeFrom)),
       timeToExplicit: Number.isFinite(Number(timeTo)),
       errorFingerprint: errorFingerprint || null,
+      errorEventId: errorEventId || null,
       route: route || null,
     },
     buildHash: buildHash || null,
@@ -444,6 +483,7 @@ export function buildHumanSummary(bundle) {
     if (bundle.query.learnerId) lines.push(`Learner: ${bundle.query.learnerId}`);
     lines.push(`Time window: ${new Date(bundle.query.timeFrom).toISOString()} to ${new Date(bundle.query.timeTo).toISOString()}`);
     if (bundle.query.errorFingerprint) lines.push(`Error fingerprint: ${bundle.query.errorFingerprint}`);
+    if (bundle.query.errorEventId) lines.push(`Error event ID: ${bundle.query.errorEventId}`);
     if (bundle.query.route) lines.push(`Route filter: ${bundle.query.route}`);
     lines.push('');
   }

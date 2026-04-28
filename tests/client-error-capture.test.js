@@ -407,8 +407,17 @@ test('consecutive-failure counter resets on 2xx success (Finding 4)', async (t) 
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(_peekErrorCaptureBackoffState().consecutiveFailures, 1);
 
-  // Wait 4s (base=2000ms + jitter + scheduler-delay headroom under concurrent test load).
-  await new Promise((resolve) => setTimeout(resolve, 4000));
+  // The retry kicks in after backoff base=2000ms + jitter. Under
+  // parallel-suite CPU pressure the retry's setTimeout itself can be
+  // delayed well past the 4 s window we used to wait for; poll for up
+  // to 15 s so the assertion fires as soon as the retry lands without
+  // padding the happy-path runtime.
+  const deadline = Date.now() + 15000;
+  while (Date.now() < deadline) {
+    const state = _peekErrorCaptureBackoffState();
+    if (state.consecutiveFailures === 0 && state.backoffUntil === 0) break;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
   const finalState = _peekErrorCaptureBackoffState();
   assert.equal(finalState.consecutiveFailures, 0, 'a 2xx must reset the failure counter');
   assert.equal(finalState.backoffUntil, 0, 'a 2xx must clear the backoff window');

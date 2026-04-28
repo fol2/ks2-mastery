@@ -459,7 +459,7 @@ test('U1 view-model: punctuationPrimaryModeFromPrefs collapses cluster modes to 
   }
 });
 
-test('U1 view-model: punctuationPrimaryModeFromPrefs preserves primary modes', () => {
+test('U1 view-model: punctuationPrimaryModeFromPrefs preserves active mode ids', () => {
   assert.equal(punctuationPrimaryModeFromPrefs({ mode: 'smart' }), 'smart');
   assert.equal(punctuationPrimaryModeFromPrefs({ mode: 'weak' }), 'weak');
   assert.equal(punctuationPrimaryModeFromPrefs({ mode: 'gps' }), 'gps');
@@ -577,6 +577,8 @@ test('U1 view-model: buildPunctuationDashboardModel returns safe empty shape on 
   assert.equal(Array.isArray(model.activeMonsters), true);
   assert.equal(model.activeMonsters.length, 4);
   assert.equal(model.primaryMode, 'smart');
+  // P7-U7: grandStars field defaults to 0 for fresh learner.
+  assert.equal(model.grandStars, 0);
 });
 
 test('U1 view-model: buildPunctuationDashboardModel surfaces non-zero stats', () => {
@@ -638,8 +640,8 @@ test('U1 view-model: buildPunctuationDashboardModel activeMonsters iterate only 
 });
 
 test('U1 view-model: buildPunctuationDashboardModel normalises stale cluster-mode prefs', () => {
-  // Returning learners with a legacy cluster mode see the Smart Review card
-  // as the pressed option; U2's scene migrates the stored value.
+  // Returning learners with a legacy cluster mode see Smart Review as the
+  // pre-selected CTA option; U2's scene migrates the stored value.
   const model = buildPunctuationDashboardModel(
     {},
     { prefs: { mode: 'endmarks' } },
@@ -1303,4 +1305,63 @@ test('U3 view-model: all four monsters receive displayStage and displayStars fie
     assert.ok(monster.displayStage >= 0, `${monster.id} displayStage must be >= 0`);
     assert.ok(monster.displayStars >= 0, `${monster.id} displayStars must be >= 0`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// P7-U7 — Landing QoL metric clarification: Grand Stars replaces ambiguous
+// aggregate. The progress row now shows Quoral's Grand Stars (cross-monster
+// overall progress) instead of the sum of all direct + grand Stars.
+// ---------------------------------------------------------------------------
+
+test('P7-U7: grandStars equals Quoral displayStars from starView', () => {
+  const rewardState = {
+    quoral: { mastered: ['m1'], starHighWater: 30 },
+  };
+  const starView = {
+    perMonster: {
+      pealark: { total: 22, starDerivedStage: 1 },
+      claspin: { total: 10, starDerivedStage: 1 },
+    },
+    grand: { grandStars: 25, total: 100, starDerivedStage: 1 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  // grandStars = max(grandStars 25, starHighWater 30) = 30 (monotonic merge)
+  assert.equal(model.grandStars, 30, 'grandStars should reflect monotonic Quoral displayStars');
+  // Verify it does NOT equal the sum of all monsters.
+  const allStarsSum = model.activeMonsters.reduce(
+    (sum, m) => sum + (m.displayStars ?? m.totalStars ?? 0), 0,
+  );
+  assert.notEqual(model.grandStars, allStarsSum, 'grandStars must not be the ambiguous all-monster sum');
+});
+
+test('P7-U7: grandStars is 0 for a fresh learner with no starView', () => {
+  const model = buildPunctuationDashboardModel({}, null, {}, null);
+  assert.equal(model.grandStars, 0, 'fresh learner grandStars must be 0');
+});
+
+test('P7-U7: grandStars uses monotonic displayStars (starHighWater wins over live)', () => {
+  const rewardState = {
+    quoral: { mastered: ['m1'], starHighWater: 50 },
+  };
+  const starView = {
+    perMonster: {},
+    grand: { grandStars: 35, total: 100, starDerivedStage: 2 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  // starHighWater 50 > live grandStars 35
+  assert.equal(model.grandStars, 50, 'grandStars should use the monotonic high-water mark');
+});
+
+test('P7-U7: grandStars does not include direct monster Stars (Pealark only has Stars)', () => {
+  // Scenario: Pealark has 40 Stars, Quoral grand has 5 Grand Stars.
+  // grandStars should be 5, NOT 45.
+  const rewardState = {};
+  const starView = {
+    perMonster: {
+      pealark: { total: 40, starDerivedStage: 2 },
+    },
+    grand: { grandStars: 5, total: 100, starDerivedStage: 0 },
+  };
+  const model = buildPunctuationDashboardModel({}, null, rewardState, starView);
+  assert.equal(model.grandStars, 5, 'grandStars must be Quoral-only, not include direct monster Stars');
 });

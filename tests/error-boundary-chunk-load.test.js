@@ -7,6 +7,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { isChunkLoadError } from '../src/platform/react/chunk-load-detect.js';
+import {
+  CHUNK_RELOAD_SESSION_KEY,
+  clearChunkReloadAttempt,
+  scheduleChunkReloadOnce,
+} from '../src/platform/react/chunk-load-recovery.js';
+
+function memoryStorage(initial = {}) {
+  const values = new Map(Object.entries(initial));
+  return {
+    getItem(key) {
+      return values.has(key) ? values.get(key) : null;
+    },
+    setItem(key, value) {
+      values.set(key, String(value));
+    },
+    removeItem(key) {
+      values.delete(key);
+    },
+  };
+}
 
 // --- isChunkLoadError detection tests ---
 
@@ -63,4 +83,84 @@ test('isChunkLoadError matches "Failed to fetch dynamically imported module" wit
     'Failed to fetch dynamically imported module: https://ks2.eugnel.uk/src/bundles/ParentHubSurface-ZYHGNFPW.js',
   );
   assert.equal(isChunkLoadError(error), true);
+});
+
+test('scheduleChunkReloadOnce reloads once for a chunk-load failure', () => {
+  const storage = memoryStorage();
+  let reloads = 0;
+  const scheduled = scheduleChunkReloadOnce(
+    new TypeError('Failed to fetch dynamically imported module: /src/bundles/AdminHubSurface-OLD.js'),
+    {
+      storage,
+      location: { reload() { reloads += 1; } },
+      setTimeoutFn(callback) { callback(); },
+    },
+  );
+
+  assert.equal(scheduled, true);
+  assert.equal(reloads, 1);
+  assert.equal(storage.getItem(CHUNK_RELOAD_SESSION_KEY), '1');
+});
+
+test('scheduleChunkReloadOnce does not reload repeatedly in the same page session', () => {
+  const storage = memoryStorage({ [CHUNK_RELOAD_SESSION_KEY]: '1' });
+  let reloads = 0;
+  const scheduled = scheduleChunkReloadOnce(
+    new Error('Loading chunk admin failed'),
+    {
+      storage,
+      location: { reload() { reloads += 1; } },
+      setTimeoutFn(callback) { callback(); },
+    },
+  );
+
+  assert.equal(scheduled, false);
+  assert.equal(reloads, 0);
+});
+
+test('scheduleChunkReloadOnce ignores non-chunk errors', () => {
+  const storage = memoryStorage();
+  let reloads = 0;
+  const scheduled = scheduleChunkReloadOnce(
+    new TypeError("Cannot read properties of undefined (reading 'foo')"),
+    {
+      storage,
+      location: { reload() { reloads += 1; } },
+      setTimeoutFn(callback) { callback(); },
+    },
+  );
+
+  assert.equal(scheduled, false);
+  assert.equal(reloads, 0);
+  assert.equal(storage.getItem(CHUNK_RELOAD_SESSION_KEY), null);
+});
+
+test('scheduleChunkReloadOnce leaves the fallback visible when storage is unavailable', () => {
+  let reloads = 0;
+  const scheduled = scheduleChunkReloadOnce(
+    new Error('Loading chunk admin failed'),
+    {
+      storage: {
+        getItem() {
+          throw new Error('sessionStorage unavailable');
+        },
+        setItem() {
+          throw new Error('sessionStorage unavailable');
+        },
+      },
+      location: { reload() { reloads += 1; } },
+      setTimeoutFn(callback) { callback(); },
+    },
+  );
+
+  assert.equal(scheduled, false);
+  assert.equal(reloads, 0);
+});
+
+test('clearChunkReloadAttempt removes the reload guard after a successful boot', () => {
+  const storage = memoryStorage({ [CHUNK_RELOAD_SESSION_KEY]: '1' });
+
+  clearChunkReloadAttempt(storage);
+
+  assert.equal(storage.getItem(CHUNK_RELOAD_SESSION_KEY), null);
 });

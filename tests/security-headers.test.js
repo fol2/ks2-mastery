@@ -5,15 +5,19 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  CSP_ENFORCEMENT_MODE,
   CSP_INLINE_SCRIPT_HASH,
   CSP_POLICY_VALUE,
+  HSTS_PRELOAD_ENABLED,
+  HSTS_VALUE,
   REPORT_TO_VALUE,
   REPORTING_ENDPOINTS_VALUE,
   SECURITY_HEADERS,
   applySecurityHeaders,
+  buildHstsValue,
   serialiseHeadersBlock,
 } from '../worker/src/security-headers.js';
-import { applySecurityHeadersSafely } from '../worker/src/index.js';
+import { applySecurityHeadersSafely } from '../worker/src/security-headers-safe.js';
 import { assertHeadersBlockIsFresh } from '../scripts/lib/headers-drift.mjs';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
@@ -149,20 +153,37 @@ test('applySecurityHeaders treats x-ks2-tts-* metadata as TTS signal even when c
   assert.equal(wrapped.headers.get('cache-control'), 'no-store');
 });
 
-test('applySecurityHeaders forces immutable cache on /src/bundles/*', () => {
+test('applySecurityHeaders keeps the stable app entry bundle no-store', () => {
   const response = new Response('console.log("bundle")', {
     status: 200,
     headers: {
       'content-type': 'application/javascript',
-      'cache-control': 'no-store',
+      'cache-control': 'public, max-age=31536000, immutable',
     },
   });
   const wrapped = applySecurityHeaders(response, { path: '/src/bundles/app.bundle.js' });
   assertHasAllSecurityHeaders(wrapped);
   assert.equal(
     wrapped.headers.get('cache-control'),
+    'no-store',
+    'The stable entry filename must not strand clients on stale lazy chunk names.',
+  );
+});
+
+test('applySecurityHeaders forces immutable cache on hashed /src/bundles/* split chunks', () => {
+  const response = new Response('console.log("chunk")', {
+    status: 200,
+    headers: {
+      'content-type': 'application/javascript',
+      'cache-control': 'no-store',
+    },
+  });
+  const wrapped = applySecurityHeaders(response, { path: '/src/bundles/AdminHubSurface-ABC12345.js' });
+  assertHasAllSecurityHeaders(wrapped);
+  assert.equal(
+    wrapped.headers.get('cache-control'),
     'public, max-age=31536000, immutable',
-    'Bundle path explicitly overrides ASSETS-response no-store via set()',
+    'Content-hashed split chunks explicitly override ASSETS-response no-store via set()',
   );
 });
 
@@ -222,6 +243,72 @@ test('Worker 404 plaintext from publicSourceAssetResponse carries all seven secu
   const server = createWorkerRepositoryServer();
   const response = await server.fetchRaw('https://repo.test/src/main.js');
   assert.equal(response.status, 404);
+  assertHasAllSecurityHeaders(response);
+  server.close();
+});
+
+test('Worker bundle allowlist refuses ASSETS SPA fallback HTML for missing chunks', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      ASSETS: {
+        async fetch() {
+          return new Response('<!doctype html><div id="app"></div>', {
+            status: 200,
+            headers: { 'content-type': 'text/html' },
+          });
+        },
+      },
+    },
+  });
+  const response = await server.fetchRaw('https://repo.test/src/bundles/AdminHubSurface-OLD.js');
+  assert.equal(response.status, 404);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assertHasAllSecurityHeaders(response);
+  server.close();
+});
+
+test('Worker bundle allowlist serves JavaScript chunks through ASSETS with split-chunk cache policy', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      ASSETS: {
+        async fetch() {
+          return new Response('export default 1;', {
+            status: 200,
+            headers: {
+              'content-type': 'text/javascript',
+              'cache-control': 'no-store',
+            },
+          });
+        },
+      },
+    },
+  });
+  const response = await server.fetchRaw('https://repo.test/src/bundles/AdminHubSurface-OK123456.js');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  assertHasAllSecurityHeaders(response);
+  server.close();
+});
+
+test('Worker bundle allowlist preserves ASSETS 304 responses for conditional chunk requests', async () => {
+  const server = createWorkerRepositoryServer({
+    env: {
+      ASSETS: {
+        async fetch() {
+          return new Response(null, {
+            status: 304,
+            headers: { etag: '"chunk-etag"' },
+          });
+        },
+      },
+    },
+  });
+  const response = await server.fetchRaw('https://repo.test/src/bundles/AdminHubSurface-CACHED12.js', {
+    headers: { 'if-none-match': '"chunk-etag"' },
+  });
+  assert.equal(response.status, 304);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
   assertHasAllSecurityHeaders(response);
   server.close();
 });
@@ -477,7 +564,7 @@ test('applySecurityHeaders does NOT apply immutable cache to non-2xx bundle resp
       'cache-control': 'private, max-age=30',
     },
   });
-  const wrapped500 = applySecurityHeaders(serverError, { path: '/src/bundles/app.bundle.js' });
+  const wrapped500 = applySecurityHeaders(serverError, { path: '/src/bundles/chunk-ERROR123.js' });
   assertHasAllSecurityHeaders(wrapped500);
   assert.equal(
     wrapped500.headers.get('cache-control'),
@@ -495,7 +582,7 @@ test('applySecurityHeaders does NOT apply immutable cache to non-2xx bundle resp
     status: 304,
     headers: {},
   });
-  const wrapped304 = applySecurityHeaders(notModified, { path: '/src/bundles/app.bundle.js' });
+  const wrapped304 = applySecurityHeaders(notModified, { path: '/src/bundles/chunk-NOTMOD12.js' });
   assert.notEqual(
     wrapped304.headers.get('cache-control'),
     'public, max-age=31536000, immutable',
@@ -603,6 +690,69 @@ test('/api/auth/logout response carries all seven security headers plus Clear-Si
     `logout must carry Clear-Site-Data with cache, cookies, storage — got ${clearSiteData}`,
   );
   server.close();
+});
+
+// ---------------------------------------------------------------------------
+// U10 (P4): HSTS preload operator sign-off gate.
+// ---------------------------------------------------------------------------
+
+test('HSTS_PRELOAD_ENABLED is false — preload must not ship without operator sign-off', () => {
+  assert.equal(
+    HSTS_PRELOAD_ENABLED,
+    false,
+    'HSTS_PRELOAD_ENABLED must be false until the operator completes the sign-off checklist in docs/hardening/hsts-preload-audit.md',
+  );
+});
+
+test('HSTS_VALUE omits preload when HSTS_PRELOAD_ENABLED is false', () => {
+  // This is the live export; confirm it matches the expected no-preload value.
+  assert.equal(HSTS_VALUE, 'max-age=63072000; includeSubDomains');
+  assert.ok(
+    !HSTS_VALUE.includes('preload'),
+    'HSTS_VALUE must not contain "preload" while the operator gate is closed',
+  );
+});
+
+test('buildHstsValue returns correct strings for both branches', () => {
+  assert.equal(
+    buildHstsValue(true),
+    'max-age=63072000; includeSubDomains; preload',
+    'buildHstsValue(true) must append "; preload"',
+  );
+  assert.equal(
+    buildHstsValue(false),
+    'max-age=63072000; includeSubDomains',
+    'buildHstsValue(false) must omit preload',
+  );
+  // Verify the live HSTS_VALUE export is wired through buildHstsValue.
+  assert.equal(
+    HSTS_VALUE,
+    buildHstsValue(HSTS_PRELOAD_ENABLED),
+    'HSTS_VALUE must equal buildHstsValue(HSTS_PRELOAD_ENABLED)',
+  );
+});
+
+test('Worker HSTS header and _headers file carry identical HSTS value (no drift)', async () => {
+  // The Worker SECURITY_HEADERS object is the runtime source of truth.
+  const workerHsts = SECURITY_HEADERS['Strict-Transport-Security'];
+  // The _headers file is the static-asset source of truth.
+  const headersContent = await readFile(path.join(REPO_ROOT, '_headers'), 'utf8');
+  // Extract every Strict-Transport-Security value from the _headers file.
+  const hstsLines = headersContent.match(
+    /^\s*Strict-Transport-Security:\s*(.+)$/gm,
+  );
+  assert.ok(
+    hstsLines && hstsLines.length > 0,
+    '_headers file must contain at least one Strict-Transport-Security line',
+  );
+  for (const line of hstsLines) {
+    const value = line.replace(/^\s*Strict-Transport-Security:\s*/, '').trim();
+    assert.equal(
+      value,
+      workerHsts,
+      `_headers HSTS value "${value}" must match Worker HSTS value "${workerHsts}" — no drift permitted`,
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -720,4 +870,61 @@ test('_headers repo file contains the CSP Report-Only line (pre-substitution via
   assert.match(content, /report-uri \/api\/security\/csp-report/);
   assert.match(content, /Report-To:[^\n]*csp-endpoint/);
   assert.match(content, /Reporting-Endpoints:[^\n]*csp-endpoint/);
+});
+
+// ---------------------------------------------------------------------------
+// P4-U4: CSP enforcement decision gate — mode constant and header assertions.
+// ---------------------------------------------------------------------------
+
+test('CSP_ENFORCEMENT_MODE export equals "report-only" (P4-U4 decision gate)', () => {
+  assert.equal(
+    CSP_ENFORCEMENT_MODE,
+    'report-only',
+    'CSP_ENFORCEMENT_MODE must be "report-only" until the observation window '
+      + 'closes and the enforcement flip PR lands. See '
+      + 'docs/hardening/csp-enforcement-decision.md.',
+  );
+});
+
+test('SECURITY_HEADERS contains Content-Security-Policy-Report-Only, not Content-Security-Policy (P4-U4)', () => {
+  assert.ok(
+    SECURITY_HEADERS['Content-Security-Policy-Report-Only'],
+    'SECURITY_HEADERS must carry the Report-Only key while CSP_ENFORCEMENT_MODE is "report-only".',
+  );
+  assert.equal(
+    SECURITY_HEADERS['Content-Security-Policy'],
+    undefined,
+    'SECURITY_HEADERS must NOT carry the enforced Content-Security-Policy key '
+      + 'while in report-only mode.',
+  );
+});
+
+test('upgrade-insecure-requests is NOT present in CSP directives while in report-only mode (P4-U4)', () => {
+  // Per CSP3, upgrade-insecure-requests is ignored in Report-Only delivery
+  // and Chrome emits a console warning. It should only be restored in the
+  // same PR that flips the header to enforced.
+  assert.ok(
+    !CSP_POLICY_VALUE.includes('upgrade-insecure-requests'),
+    'upgrade-insecure-requests must not appear in CSP while delivery is '
+      + 'Report-Only. Re-add it in the enforcement flip PR.',
+  );
+});
+
+test('applySecurityHeaders response contains Content-Security-Policy-Report-Only header (P4-U4)', () => {
+  const response = new Response('test', {
+    status: 200,
+    headers: { 'content-type': 'text/plain' },
+  });
+  const wrapped = applySecurityHeaders(response, { path: '/test' });
+  assert.ok(
+    wrapped.headers.get('content-security-policy-report-only'),
+    'applySecurityHeaders must stamp Content-Security-Policy-Report-Only '
+      + 'on every response while in report-only mode.',
+  );
+  assert.equal(
+    wrapped.headers.get('content-security-policy'),
+    null,
+    'applySecurityHeaders must NOT stamp the enforced Content-Security-Policy '
+      + 'header while CSP_ENFORCEMENT_MODE is "report-only".',
+  );
 });

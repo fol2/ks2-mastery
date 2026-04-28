@@ -35,6 +35,8 @@ The smoke account is **not a scoped smoke role**. It is a full `platform_role = 
 
 ## What the smoke exercises
 
+### Core steps (1-7) — abort on first failure
+
 1. `POST /api/auth/login` — obtain cookie.
 2. `GET /api/hubs/admin` — envelope carries `adminHub.{dashboardKpis, opsActivityStream, errorLogSummary, accountOpsMetadata}` (matches `worker/src/repository.js::readAdminHub`).
 3. Four narrow refresh routes (`/api/admin/ops/{kpi,activity,error-events,accounts-metadata}`).
@@ -42,6 +44,16 @@ The smoke account is **not a scoped smoke role**. It is a full `platform_role = 
 5. `PUT /api/admin/accounts/:id/ops-metadata` — inverse restore wrapped in try/finally with one retry before exiting with `EXIT_STATE_DRIFT`.
 6. `POST /api/ops/error-event` — synthetic error tagged `release: '0000000'` (7-char hex, passes Phase E's `^[a-f0-9]{6,40}$` gate).
 7. `PUT /api/admin/ops/error-events/:id/status` — investigating → open transition.
+
+### P3 panel steps (8-14) — continue on failure
+
+8. `GET /api/admin/debug-bundle?account_id=<smoke-id>&time_from=<24h-ago>&time_to=<now>` — Debug Bundle generation. Verifies the 7 expected section keys (`accountSummary`, `recentErrors`, `errorOccurrences`, `recentDenials`, `recentMutations`, `linkedLearners`, `capacityState`).
+9. `GET /api/admin/ops/request-denials?limit=5` — denial log read. Empty array is valid.
+10. `GET /api/admin/accounts/search?q=<smoke-email>&limit=5` — account search. Verifies the smoke account appears in results.
+11. `GET /api/admin/accounts/<smoke-id>/detail` — account detail. Verifies section keys (`account`, `learners`, `recentErrors`, `recentDenials`, `recentMutations`, `opsMetadata`).
+12. `GET /api/admin/ops/content-overview` — content overview narrow panel.
+13. `GET /api/admin/marketing/messages` — marketing messages list.
+14. `POST /api/admin/marketing/messages` + `PUT /api/admin/marketing/messages/:id` — marketing write-path round-trip. Creates an `audience: 'internal'` draft then transitions to `archived`. If create succeeds but archive fails, exits with `EXIT_STATE_DRIFT` (code `3`).
 
 Every mutation carries a `smoke-<iso-date>-<sequence>-<uuid8>` requestId for idempotency + telemetry filtering. The trailing 8-char UUID slice prevents receipt-cache collisions between two same-day runs.
 

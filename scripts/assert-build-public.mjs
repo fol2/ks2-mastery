@@ -1,6 +1,7 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
 import { assertCacheSplitRules, assertHeadersBlockIsFresh } from './lib/headers-drift.mjs';
 
 const rootDir = process.cwd();
@@ -169,20 +170,25 @@ assertHeadersBlockIsFresh(publishedHeadersContent);
 assertCacheSplitRules(publishedHeadersContent);
 
 const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
+const appBundle = await readFile(path.join(publicDir, 'src/bundles/app.bundle.js'), 'utf8');
 if (!indexHtml.includes('/manifest.webmanifest')) {
   throw new Error('Public index.html must link the web app manifest.');
 }
 if (!indexHtml.includes('/assets/app-icons/apple-touch-icon.png')) {
   throw new Error('Public index.html must link the Apple home-screen icon.');
 }
-if (!indexHtml.includes('./src/bundles/app.bundle.js')) {
-  throw new Error('Public index.html must load the React app bundle.');
+const appBundleVersionMatch = indexHtml.match(/\.\/src\/bundles\/app\.bundle\.js\?v=([a-f0-9]{12})/);
+if (!appBundleVersionMatch) {
+  throw new Error('Public index.html must load the React app bundle with a content-hash query string.');
+}
+const expectedAppBundleVersion = createHash('sha256').update(appBundle).digest('hex').slice(0, 12);
+if (appBundleVersionMatch[1] !== expectedAppBundleVersion) {
+  throw new Error('Public index.html app.bundle.js version query does not match the bundle content hash.');
 }
 if (indexHtml.includes('home.bundle.js') || indexHtml.includes('src/main.js')) {
   throw new Error('Public index.html must not load legacy home islands or the raw source entry.');
 }
 
-const appBundle = await readFile(path.join(publicDir, 'src/bundles/app.bundle.js'), 'utf8');
 for (const token of [
   '__ks2HomeSurface',
   '__ks2CodexSurface',

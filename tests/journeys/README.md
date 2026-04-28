@@ -3,9 +3,9 @@
 Six end-to-end journey scripts that exercise the **real child critical-path
 click flow** against a live dev server. These are the regression-catching
 surface the Phase 3 SSR harness missed: every assertion in
-`tests/react-punctuation-scene.test.js` passed while the primary-mode
-`onClick` dispatched the wrong action. Journey specs here click with a real
-browser — the wire cannot lie.
+`tests/react-punctuation-scene.test.js` passed while the mission-dashboard
+CTA `onClick` dispatched the wrong action. Journey specs here click with a
+real browser — the wire cannot lie.
 
 ## Driver priority
 
@@ -15,16 +15,39 @@ first one that responds to `status` (bb-browser) or `--help` (agent-browser)
 wins. Playwright is not loaded; the existing Playwright golden-path specs
 under `tests/playwright/` are orthogonal and keep working.
 
-## Six journeys
+## Six journeys (bb-browser driver)
 
 | Script                              | Journey                                                  |
 | ----------------------------------- | -------------------------------------------------------- |
-| `smart-review.mjs`                  | Home -> Punctuation -> Smart Review -> Q1 renders        |
-| `wobbly-spots.mjs`                  | Home -> Punctuation -> Wobbly Spots -> Q1 OR left-setup  |
-| `gps-check.mjs`                     | Home -> Punctuation -> GPS Check -> Q1 with test banner  |
+| `smart-review.mjs`                  | Home -> Punctuation -> Smart Review CTA -> Q1 renders    |
+| `wobbly-spots.mjs`                  | Home -> Punctuation -> Wobbly Spots CTA -> Q1 OR left-setup |
+| `gps-check.mjs`                     | Home -> Punctuation -> GPS Check CTA -> Q1 with test banner |
 | `map-guided-skill.mjs`              | Map -> skill card -> Practise this -> Guided Q1          |
-| `summary-back-while-pending.mjs`    | SKIPPED: needs dev-only stall endpoint (see below)       |
+| `summary-back-while-pending.mjs`    | Summary Back enabled + navigates from Summary (P7-U11)   |
 | `reward-parity-visual.mjs`          | Map + Setup + Summary reward-state parity                |
+
+## Playwright golden-path coverage (P7-U10)
+
+The Playwright golden-path test at `tests/playwright/punctuation-golden-path.playwright.test.mjs`
+exercises the **full Worker-backed journey** through the real Worker/D1 command
+path in a Chromium browser. This is separate from the bb-browser journeys above
+and runs via `npx playwright test`. Coverage added in P7-U10:
+
+| Test name                                          | Journey                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------ |
+| complete journey (star consistency)                 | Home -> landing -> session -> summary -> landing -> refresh -> map; star meter consistency across all surfaces |
+| refresh after full journey (SH2-U2 regression)     | Full session -> summary -> reload -> clean setup; zombie-phase guard |
+| map opens from landing and closes back to landing   | Landing -> open map -> map body visible -> close map -> landing CTA |
+| telemetry disabled journey                          | Session to summary with telemetry rate-limited via route intercept; no console errors |
+
+**Star consistency contract (§5.5):** After completing a round, Star counts
+from the landing monster meters, the summary monster meters, and the map
+monster-group headers must agree (within display rounding). The test reads
+`.punctuation-monster-meter-count` elements on each surface and compares
+parsed numeric values.
+
+**Mobile-390 baseline:** All Playwright tests run against the `mobile-390`
+project (390 x 844 viewport). Desktop/tablet matrix deferred to follow-up.
 
 ## Prerequisites
 
@@ -119,17 +142,27 @@ Journey specs reuse the **existing `/demo` endpoint** exposed by
 session primes learner state, sets the auth cookie, and redirects to `/` —
 the same path the Playwright golden-path uses.
 
-## Summary-Back-while-pending SKIP
+## Summary-Back-while-pending (P7-U11 — now ACTIVE)
 
-`summary-back-while-pending.mjs` emits `status: 'SKIPPED'` (FINDING B fix).
-The earlier revision asserted that Back was not disabled on a CLEAN
-Summary render, which is a tautology — U6's real invariant is that Back
-stays enabled DURING an in-flight pendingCommand. Producing legitimate
-evidence requires a dev-only stall endpoint (`x-ks2-fault-opt-in` +
-`stall-command` plan) which has not landed; we emit SKIP to avoid shipping
-a false-green assertion. The spec body is preserved as documentation and
-future-executable scaffold — once the stall hook ships in a follow-on
-unit, the early-return flips to a gated live assertion.
+`summary-back-while-pending.mjs` is now **ACTIVE** (was SKIPPED per P4-U8
+fix B). The dev-only stall endpoint shipped in P7-U9
+(`stall-punctuation-command` in `tests/helpers/fault-injection.mjs`).
+
+The journey drives a real Punctuation session to Summary via the
+Worker-backed dev server and asserts:
+
+1. The Back button is present, not `disabled`, not `aria-disabled="true"`.
+2. The "Start again" and "Open Map" mutation buttons exist.
+3. Clicking Back navigates to Setup or home grid (Summary disappears).
+
+The deeper pending-state proof — injecting a stall fault so a command is
+genuinely in flight while asserting button states — lives in the Playwright
+suite at `tests/playwright/punctuation-pending-navigation.playwright.test.mjs`.
+Playwright supports per-request header interception via `page.route()` which
+is required to attach the `x-ks2-fault-opt-in` header that activates the
+fault hook. The bb-browser / agent-browser drivers used by journeys do not
+support request interception, so the journey exercises the wiring invariant
+while Playwright exercises the full pending-state contract.
 
 ## Artefacts hygiene
 
@@ -184,7 +217,7 @@ tests/journeys/
   wobbly-spots.mjs                     <- journey 2
   gps-check.mjs                        <- journey 3
   map-guided-skill.mjs                 <- journey 4
-  summary-back-while-pending.mjs       <- journey 5 (SKIP; future-executable scaffold)
+  summary-back-while-pending.mjs       <- journey 5 (ACTIVE; P7-U11 pending navigation proof)
   reward-parity-visual.mjs             <- journey 6
   artefacts/                           <- gitignored screenshot + results.json output
 ```
@@ -216,5 +249,6 @@ Deferred (acknowledged, not fixed):
 
 - Driver probe cache invalidation (re-runs per invocation — acceptable).
 - Single-journey `--list` mode (nice-to-have).
-- Dev-only stall endpoint for `summary-back-while-pending` real
-  assertion (future unit).
+- ~~Dev-only stall endpoint for `summary-back-while-pending` real
+  assertion (future unit).~~ — Shipped in P7-U9; journey activated in
+  P7-U11. Full pending-state proof in Playwright suite.

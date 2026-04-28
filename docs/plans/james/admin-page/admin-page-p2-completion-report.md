@@ -235,6 +235,6 @@ Each implementation unit ran on its own worktree, produced its own PR, and went 
 | R8 | Updated header copy | **Met** | "Admin Console" + accurate subtitle |
 | R9 | Section deep-linking | **Met** | `/admin#section=debug` via hash parser |
 | R10 | Content section grouping | **Met** | AdminContentSection.jsx groups 7 panels |
-| R11 | Marketing placeholder | **Met** | AdminMarketingSection.jsx with "Coming soon" |
+| R11 | Marketing placeholder | **Met** | AdminMarketingSection.jsx with "Coming soon" (P2 state; later wired to full lifecycle by P3 backend + P4 U6 UI) |
 | R12 | Structural meta-test coverage | **Met** | No new Worker routes added |
 | R13 | Bundle audit passes | **Met** | 808 public files, 7 chunks, 206KB gzip |

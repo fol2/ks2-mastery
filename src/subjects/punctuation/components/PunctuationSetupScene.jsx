@@ -5,7 +5,7 @@
 // Bellstorm Coast. Layout:
 //
 //   Hero: Bellstorm Coast backdrop + headline + primary CTA
-//   Progress row: Due today | Wobbly | Stars earned (compact)
+//   Progress row: Due today | Wobbly | Grand Stars (compact)
 //   Monster row: 4 active monsters with star meters (X / 100 Stars)
 //     and stage labels (Not caught / Egg Found / Hatch / Evolve / Strong / Mega)
 //   Map link: "Open Punctuation Map"
@@ -20,7 +20,7 @@
 // Every major section carries a `data-section` landmark for journey spec
 // testing (U9). The primary CTA carries `data-punctuation-cta`.
 
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
@@ -220,29 +220,35 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   );
 
   // One-shot stale-prefs migration (unchanged from Phase 3 U2).
+  // P7-U2: moved from render body to useEffect for concurrent-mode safety.
   const migratedRef = useRef(false);
   const prefsMigrated = Boolean(ui && typeof ui === 'object' && !Array.isArray(ui) && ui.prefsMigrated);
   const storedMode = prefs && typeof prefs === 'object' && !Array.isArray(prefs)
     ? prefs.mode
     : null;
   const legacyCluster = typeof storedMode === 'string' && LEGACY_PUNCTUATION_MODE_IDS.has(storedMode);
-  if (legacyCluster && !migratedRef.current && !prefsMigrated) {
-    migratedRef.current = true;
-    if (typeof actions.updateSubjectUi === 'function') {
-      actions.updateSubjectUi('punctuation', { prefsMigrated: true });
+  useEffect(() => {
+    if (legacyCluster && !migratedRef.current && !prefsMigrated) {
+      migratedRef.current = true;
+      if (typeof actions.updateSubjectUi === 'function') {
+        actions.updateSubjectUi('punctuation', { prefsMigrated: true });
+      }
+      actions.dispatch('punctuation-set-mode', { value: 'smart' });
     }
-    actions.dispatch('punctuation-set-mode', { value: 'smart' });
-  }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Phase 4 U4 telemetry smoke — Setup mount.
+  // P7-U2: moved from render body to useEffect for concurrent-mode safety.
   const cardOpenedRef = useRef(false);
-  if (!cardOpenedRef.current) {
-    cardOpenedRef.current = true;
-    emitPunctuationEvent('card-opened', { cardId: 'smart' }, {
-      actions,
-      learnerId: learner && typeof learner === 'object' ? learner.id : null,
-    });
-  }
+  useEffect(() => {
+    if (!cardOpenedRef.current) {
+      cardOpenedRef.current = true;
+      emitPunctuationEvent('card-opened', { cardId: 'smart' }, {
+        actions,
+        learnerId: learner && typeof learner === 'object' ? learner.id : null,
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedLengthValue = selectedRoundLength(prefs);
 
@@ -255,14 +261,13 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   // Progress row values
   const dueCount = Number(stats?.due) || 0;
   const weakCount = Number(stats?.weak) || 0;
-  // U3 review follow-up (HIGH 1): use displayStars (monotonic) for the
-  // aggregate, matching MonsterStarMeter which already reads displayStars.
-  // Prior code used raw totalStars, causing a mismatch between the
-  // progress-row aggregate and the individual meter values after evidence
-  // lapse.
-  const totalStarsEarned = dashboard.activeMonsters.reduce(
-    (sum, m) => sum + (m.displayStars ?? m.totalStars ?? 0), 0,
-  );
+  // P7-U7: replaced the ambiguous "Stars earned" aggregate (which summed
+  // direct monster Stars + Grand Stars into one confusing number) with
+  // Quoral's Grand Stars — the cross-monster overall progress metric.
+  // Individual monster meters already show per-monster Star totals, so
+  // the aggregate was redundant. Grand Stars is the only metric that
+  // represents whole-subject progress without double-counting.
+  const grandStars = dashboard.grandStars;
 
   const learnerName = learner && typeof learner === 'object' && !Array.isArray(learner)
     && typeof learner.name === 'string' && learner.name.trim()
@@ -328,9 +333,9 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
             <dt>Wobbly</dt>
             <dd>{weakCount}</dd>
           </div>
-          <div className="punctuation-progress-item">
-            <dt>Stars earned</dt>
-            <dd>{totalStarsEarned}</dd>
+          <div className="punctuation-progress-item" data-metric="grand-stars">
+            <dt>Grand Stars</dt>
+            <dd>{grandStars}</dd>
           </div>
         </dl>
       </section>

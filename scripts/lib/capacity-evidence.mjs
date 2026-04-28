@@ -1,8 +1,9 @@
+import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
-import { mkdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-export const EVIDENCE_SCHEMA_VERSION = 1;
+export const EVIDENCE_SCHEMA_VERSION = 2;
 
 // Request-sample cap per endpoint when --include-request-samples is enabled.
 // Plan says 100 + 100 (first N and last N); this preserves post-mortem utility
@@ -33,8 +34,13 @@ export function validateThresholdConfigKeys(thresholds = {}) {
  * fail just because git metadata or env hints are missing.
  */
 export function buildReportMeta(options = {}, timings = {}) {
+  // ADV-001: resolve the commit SHA once and pass it to buildProvenance so
+  // reportMeta.commit and provenance.gitSha are guaranteed identical. Two
+  // independent calls to resolveCommitSha() created a TOCTOU gap — HEAD could
+  // change between the calls, causing the values to diverge.
+  const commitSha = resolveCommitSha();
   return {
-    commit: resolveCommitSha(),
+    commit: commitSha,
     environment: resolveEnvironmentName(options),
     origin: options.origin || 'unknown',
     authMode: resolveAuthMode(options),
@@ -44,7 +50,77 @@ export function buildReportMeta(options = {}, timings = {}) {
     startedAt: timings.startedAt || null,
     finishedAt: timings.finishedAt || null,
     evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+    provenance: buildProvenance(options, commitSha),
   };
+}
+
+/**
+ * Build the provenance sub-block for evidence anti-fabrication.
+ * Every field degrades to `'unknown'` (or a safe default) rather than throwing;
+ * `verify-capacity-evidence.mjs` enforces strictness for certifiable tiers.
+ */
+export function buildProvenance(options = {}, cachedCommitSha) {
+  const serverUrl = process.env.GITHUB_SERVER_URL || '';
+  const repo = process.env.GITHUB_REPOSITORY || '';
+  const runId = process.env.GITHUB_RUN_ID || '';
+  const workflowRunUrl = (serverUrl && repo && runId)
+    ? `${serverUrl}/${repo}/actions/runs/${runId}`
+    : 'unknown';
+
+  return {
+    workflowRunUrl,
+    workflowName: process.env.GITHUB_WORKFLOW || 'unknown',
+    // ADV-001: use the cached SHA from buildReportMeta when available, so
+    // provenance.gitSha is always identical to reportMeta.commit.
+    gitSha: cachedCommitSha ?? resolveCommitSha(),
+    dirtyTreeFlag: resolveGitDirty(),
+    thresholdConfigHash: resolveThresholdConfigHash(options),
+    loadDriverVersion: resolveLoadDriverVersion(),
+    operator: process.env.GITHUB_ACTOR || process.env.USER || process.env.USERNAME || 'unknown',
+    rawLogArtifactPath: options.rawLogArtifactPath || 'none',
+  };
+}
+
+function resolveGitDirty() {
+  try {
+    const status = execSync('git status --porcelain', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 3000,
+    }).toString().trim();
+    return status.length > 0;
+  } catch {
+    // Cannot determine; degrade to true (conservative — verify will reject
+    // dirty-tree for certifiable tiers).
+    return true;
+  }
+}
+
+/**
+ * SHA-256 of the threshold config file content when a --config path is supplied.
+ * Returns `'none'` when no config was used (e.g. dry-run or CLI-only thresholds).
+ * Returns `'unknown'` when the file cannot be read.
+ */
+function resolveThresholdConfigHash(options = {}) {
+  const configPath = options.configPath;
+  if (!configPath) return 'none';
+  try {
+    const content = readFileSync(resolve(process.cwd(), configPath), 'utf8');
+    return createHash('sha256').update(content).digest('hex');
+  } catch {
+    return 'unknown';
+  }
+}
+
+function resolveLoadDriverVersion() {
+  try {
+    const pkgPath = resolve(import.meta.url.startsWith('file://')
+      ? new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Z]:)/i, '$1')
+      : resolve(process.cwd(), 'package.json'));
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+    return pkg.version || 'unknown';
+  } catch {
+    return 'unknown';
+  }
 }
 
 function resolveCommitSha() {
@@ -154,18 +230,36 @@ export function evaluateThresholds(summary = {}, thresholds = {}, { dryRun = fal
     };
   }
   if (thresholds.requireBootstrapCapacity) {
-    // The full assertion (bootstrapCapacity metadata present in responses)
-    // requires U3's `meta.capacity` telemetry. Until U3 ships, record the
-    // gate as explicitly deferred: passed=true so it does not fail runs that
-    // correctly reference it in tier configs, but observed='deferred-to-U3'
-    // so evidence readers can see the gate is not yet enforced. U3 replaces
-    // this with the real bootstrapCapacity check.
-    evaluated.requireBootstrapCapacity = {
-      configured: true,
-      observed: 'deferred-to-U3',
-      passed: true,
-      note: 'full check requires U3 meta.capacity telemetry; tracked by evidenceSchemaVersion',
-    };
+    // Assert that the bootstrap endpoint has non-null `queryCount` and
+    // `d1RowsRead`, matching the `CapacityCollector.toPublicJSON()` shape.
+    // This gate has teeth: empty endpoints, missing bootstrap entry, or
+    // null capacity fields all fail. `queryCount: 0` is valid (a cached
+    // bootstrap that issued no D1 queries is legitimate).
+    const bootstrapEntry = bootstrapMetrics || {};
+    const hasEndpoint = bootstrapKey != null;
+    const qc = bootstrapEntry.queryCount;
+    const rows = bootstrapEntry.d1RowsRead;
+    const queryCountValid = typeof qc === 'number' && Number.isFinite(qc) && qc >= 0;
+    const d1RowsReadValid = typeof rows === 'number' && Number.isFinite(rows) && rows >= 0;
+    const allPresent = hasEndpoint && queryCountValid && d1RowsReadValid;
+
+    if (!hasEndpoint && dryRun) {
+      evaluated.requireBootstrapCapacity = {
+        configured: true,
+        observed: 'no-bootstrap-endpoint (dry-run)',
+        passed: true,
+      };
+    } else {
+      evaluated.requireBootstrapCapacity = {
+        configured: true,
+        observed: allPresent
+          ? { queryCount: qc, d1RowsRead: rows }
+          : hasEndpoint
+            ? { queryCount: qc ?? null, d1RowsRead: rows ?? null }
+            : 'no-bootstrap-endpoint',
+        passed: allPresent,
+      };
+    }
   }
 
   for (const [name, value] of Object.entries(evaluated)) {

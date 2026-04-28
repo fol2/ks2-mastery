@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { execSync, execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -701,6 +702,91 @@ function checkNumericDrift(row, payload) {
 }
 
 /**
+ * P4 U8: Evidence provenance and anti-fabrication guard.
+ *
+ * Certifiable tiers (30-learner-beta-certified, 60-learner-stretch-certified,
+ * 100-plus-certified) MUST carry a provenance block with:
+ *   - gitSha not 'unknown'
+ *   - dirtyTreeFlag not true
+ *   - thresholdConfigHash matching the committed config file (when config present)
+ *
+ * Lower tiers (smoke-pass, small-pilot-provisional) accept missing provenance
+ * for manual/local runs.
+ *
+ * Returns an array of failure messages; empty on a clean check.
+ */
+function checkProvenance(payload, rowDecision) {
+  const messages = [];
+  const provenance = payload.reportMeta?.provenance;
+  const requiresProvenance = TIERS_ABOVE_SMALL_PILOT.has(rowDecision);
+
+  // Lower tiers tolerate absent provenance.
+  if (!provenance) {
+    if (requiresProvenance) {
+      messages.push(
+        `tier "${rowDecision}" requires reportMeta.provenance for certification traceability. `
+        + 'Evidence must be produced by a CI workflow, not hand-authored.',
+      );
+    }
+    return messages;
+  }
+
+  // When provenance is present, validate its contents for certifiable tiers.
+  if (requiresProvenance) {
+    if (!provenance.gitSha || provenance.gitSha === 'unknown') {
+      messages.push(
+        `provenance.gitSha is "${provenance.gitSha || 'missing'}"; certifiable tiers require a resolved git SHA. `
+        + 'Ensure the capacity run executes within a git repository.',
+      );
+    }
+    if (provenance.dirtyTreeFlag === true) {
+      messages.push(
+        'provenance.dirtyTreeFlag is true; certifiable tiers require a clean git working tree. '
+        + 'Commit all changes before running a certification capacity test.',
+      );
+    }
+    // ADV-002: reject thresholdConfigHash='unknown' for certifiable tiers when
+    // a configPath is present. Previously this value silently skipped the hash
+    // cross-check below, so an attacker could hand-edit evidence to set the
+    // hash to 'unknown' and bypass tamper detection entirely.
+    if (payload.tier?.configPath && provenance.thresholdConfigHash === 'unknown') {
+      messages.push(
+        'provenance.thresholdConfigHash is unknown — config integrity cannot be verified for certifiable tiers',
+      );
+    }
+  }
+
+  // thresholdConfigHash cross-check: when the evidence records a configPath
+  // AND provenance records a hash, re-hash the committed config and compare.
+  // Mismatch means the config was tampered with after the run or the evidence
+  // was generated against a different config file.
+  const configPath = payload.tier?.configPath;
+  if (configPath && provenance.thresholdConfigHash
+      && provenance.thresholdConfigHash !== 'none'
+      && provenance.thresholdConfigHash !== 'unknown') {
+    const absoluteConfigPath = resolve(process.cwd(), configPath);
+    if (existsSync(absoluteConfigPath)) {
+      try {
+        const content = readFileSync(absoluteConfigPath, 'utf8');
+        const currentHash = createHash('sha256').update(content).digest('hex');
+        if (currentHash !== provenance.thresholdConfigHash) {
+          messages.push(
+            `provenance.thresholdConfigHash mismatch: evidence recorded "${provenance.thresholdConfigHash.slice(0, 16)}..." `
+            + `but committed config "${configPath}" now hashes to "${currentHash.slice(0, 16)}...". `
+            + 'The config file was modified after the evidence was produced; regenerate the evidence.',
+          );
+        }
+      } catch {
+        // Cannot read config for hash comparison — surface but do not fail.
+        // The config-existence check elsewhere will catch missing files.
+      }
+    }
+  }
+
+  return messages;
+}
+
+/**
  * Verify a single evidence row against its persisted JSON file.
  * Returns `{ ok, messages: string[], warnings: string[] }` where `ok: false`
  * means the row fails the cross-check. `warnings` surface non-fatal concerns
@@ -828,14 +914,14 @@ export function verifyEvidenceRow(row) {
   if (!Number.isFinite(schemaVersion) || schemaVersion < 1) {
     messages.push(
       `evidenceSchemaVersion is missing or invalid (found: ${JSON.stringify(payload.reportMeta?.evidenceSchemaVersion)}). `
-      + 'Evidence must carry a numeric schema version (U1 = 1, U3+ = 2).',
+      + 'Evidence must carry a numeric schema version (v1 = pre-P4, v2 = P4 U1+).',
     );
   }
   // Reject a future-schema-version value we don't know how to verify; this
-  // prevents an operator from hand-editing `evidenceSchemaVersion: 2` into a
-  // U1 run to unlock classroom-tier claims before U3 actually ships the
-  // telemetry. The compiled-in `EVIDENCE_SCHEMA_VERSION` constant is the
-  // authoritative ceiling.
+  // prevents an operator from hand-editing a schema version higher than the
+  // tool's compiled-in ceiling to unlock gates the tool cannot yet enforce.
+  // The compiled-in `EVIDENCE_SCHEMA_VERSION` constant is the authoritative
+  // ceiling.
   if (Number.isFinite(schemaVersion) && schemaVersion > EVIDENCE_SCHEMA_VERSION) {
     messages.push(
       `evidenceSchemaVersion ${schemaVersion} is higher than the current tool version (${EVIDENCE_SCHEMA_VERSION}). `
@@ -845,7 +931,7 @@ export function verifyEvidenceRow(row) {
   if (TIERS_ABOVE_SMALL_PILOT.has(row.decision) && schemaVersion < 2) {
     messages.push(
       `tier "${row.decision}" requires evidenceSchemaVersion >= 2; found v${Number.isFinite(schemaVersion) ? schemaVersion : 'unknown'}. `
-      + 'U3 telemetry (meta.capacity queryCount, d1RowsRead) must ship before classroom-tier claims.',
+      + 'Bootstrap capacity telemetry (queryCount, d1RowsRead) is required for classroom-tier claims.',
     );
   }
 
@@ -952,6 +1038,15 @@ export function verifyEvidenceRow(row) {
   const coherenceFailures = checkStructuralCoherence(payload);
   if (coherenceFailures.length) {
     messages.push(...coherenceFailures);
+  }
+
+  // Provenance anti-fabrication guard (P4 U8). Certifiable tiers (above
+  // small-pilot-provisional) MUST carry a provenance block with valid CI
+  // metadata. Lower tiers (smoke-pass, small-pilot-provisional) accept
+  // missing provenance for manual/local runs.
+  const provenanceMessages = checkProvenance(payload, row.decision);
+  if (provenanceMessages.length) {
+    messages.push(...provenanceMessages);
   }
 
   // Cross-check numeric cells in the capacity.md row against evidence

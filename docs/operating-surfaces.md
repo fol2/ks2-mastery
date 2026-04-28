@@ -96,7 +96,7 @@ That keeps the surface explicitly separate from Operations-only accounts while l
 
 ## Admin Console
 
-The Admin Console is a five-section command centre for support, debugging, content operations, and live ops.
+The Admin Console is a five-section command centre for support, debugging, content operations, and live ops. All five sections (Overview, Accounts, Debugging & Logs, Content, Marketing) are fully live — no section is marked "coming soon".
 
 Direct entry at `/admin` with hash-based section deep-linking (`/admin#section=debug`, `/admin#section=accounts`, `/admin#section=content`, `/admin#section=marketing`). TopNav shows an "Admin" button for admin/ops users. Login redirect preservation via sessionStorage stash returns admins to the intended section after sign-in.
 
@@ -106,11 +106,11 @@ Direct entry at `/admin` with hash-based section deep-linking (`/admin#section=d
 
 **Accounts** — account search (email/ID/display name with ops_status and platform_role filters), account detail view (linked learners, recent errors, denials, mutations, ops metadata), account role management, ops metadata editing (status, plan label, tags, internal notes), mutation receipt/audit lookup. Account detail links into Debug Bundle generation.
 
-**Debugging & Logs** — Debug Bundle (Worker-authoritative evidence packet aggregating errors, occurrences, denials, mutations, account/learner state, capacity metrics with per-section error boundary), error log centre (status filter, route/kind/date/release/reopened filters, auto-reopen on release transition, build-hash attribution), error occurrence timeline (per-fingerprint history with release context), request denial log (filterable by reason, route, time range), learner support/diagnostics.
+**Debugging & Logs** — composed from four extracted sub-panels (P4 U8: `AdminErrorTimelinePanel`, `AdminRequestDenialsPanel`, `AdminDebugBundlePanel`, `AdminLearnerSupportPanel`; thin shell is 30 lines). Debug Bundle (Worker-authoritative evidence packet aggregating errors, occurrences, denials, mutations, account/learner state, capacity metrics with per-section error boundary; two-field identifier contract: `errorFingerprint` for dedupe/grouping fingerprint, `errorEventId` for `ops_error_events.id` — the UI and API accept both fields independently). Error log centre (status filter, route/kind/date/release/reopened filters, auto-reopen on release transition, build-hash attribution). Error occurrence timeline (per-fingerprint history with release context). Request denial log (filterable by the 5 canonical denial reasons: `account_suspended` → "Account Suspended", `payment_hold` → "Payment Hold", `session_invalidated` → "Session Invalidated", `csrf_rejection` → "CSRF / Same-Origin", `rate_limit_exceeded` → "Rate Limited"; also filterable by route and time range). Learner support/diagnostics.
 
 **Content** — cross-subject content overview (live/placeholder/gated status per subject, error counts, release state), spelling content release/import status, post-Mega spelling debug, post-Mastery seed harness, grammar/punctuation diagnostics panels, Asset & Effect Registry (registry-shaped UI over Monster Visual Config with asset list, effect catalog, bindings, tunables — data model unchanged).
 
-**Marketing / Live Ops** — announcement and maintenance banner lifecycle (draft, scheduled, published, paused, archived), body_text validation (restricted-safe subset, no raw HTML/JS/CSS), active message delivery via public endpoint for client-runtime banner rendering.
+**Marketing / Live Ops** — fully wired UI with announcement and maintenance banner lifecycle (draft, scheduled, published, paused, archived), body_text validation (restricted-safe subset, no raw HTML/JS/CSS), active message delivery via authenticated endpoint for client-runtime banner rendering. P4 U6 wired the Marketing section to the existing backend: `createAdminMarketingApi()` API client, `normaliseMarketingMessage` normaliser, CAS-guarded lifecycle transitions, broad-publish confirmation gate on both `published` and `scheduled` transitions (P4 U4).
 
 ### Current data source
 
@@ -173,10 +173,12 @@ Marketing / Live Ops:
 - only `admin` can create, edit, publish, pause, or archive messages
 - `ops` can view live/scheduled messages but cannot mutate
 - lifecycle state machine: `draft -> scheduled -> published -> paused -> archived` (Worker-enforced, client cannot skip states)
-- `GET /api/ops/active-messages` is a public unauthenticated endpoint for banner delivery (fail-open: fetch failure shows no banner, does not block the app)
+- `GET /api/ops/active-messages` is an authenticated endpoint (any signed-in role) for banner delivery (fail-open: fetch failure shows no banner, does not block the app)
 - marketing messages have zero imports from subject engines — structural invariant enforced by test
 
 See `docs/monster-visual-config.md` for the authoritative publish-blocker list, authoring workflow, bundled-fallback coverage, and the `npm run smoke:production:effect` post-deploy probe.
+
+Production smoke coverage: `scripts/admin-ops-production-smoke.mjs` exercises 14 steps end-to-end against the live deployment — login, admin hub + 4 narrow refresh routes, ops-metadata forward/reverse mutation, error-event ingest + status transition, Debug Bundle generation, denial log read, account search + detail, content overview, marketing messages list, and marketing write-path round-trip (create draft then archive). Steps 1–7 abort on first failure; steps 8–14 continue on failure for maximum coverage per invocation. Exit codes: 0 (all green), 1 (step failure), 2 (usage/config error), 3 (state drift — forward mutation applied but reverse failed).
 
 ## Admin console data infrastructure
 
@@ -186,9 +188,9 @@ The Admin Console data infrastructure grew across P1 through P3.
 
 `POST /api/ops/error-event` ingests client-side runtime errors from any surface (adult / learner / demo / signed-out). Unauthenticated, rate-limited per source IP (60 / 10 min via `request_limits`), byte-capped at 8KB via `request.arrayBuffer()` length check, redacted on both sides via closed allowlist + all-caps word scrubbing. Fingerprint dedup authoritative on `(error_kind, message_first_line, first_frame)` tuple; fingerprint SHA-256 is cache-only.
 
-### Public active-messages endpoint
+### Active-messages endpoint
 
-`GET /api/ops/active-messages` delivers published announcement and maintenance banners. Unauthenticated so banners can reach users during auth outages. Returns only schema-bound safe fields (`type`, `title`, `body_text`, `severity`). The client banner component fails open.
+`GET /api/ops/active-messages` delivers published announcement and maintenance banners. Authenticated (any signed-in role — parent, admin, or ops) so banners reach all active users. Returns only schema-bound safe fields (`type`, `title`, `body_text`, `severity`). The client banner component fails open (fetch failure shows no banner, does not block the app).
 
 ### Request denial logging
 
@@ -302,7 +304,7 @@ The hub read models consume durable records after the fact.
 - cross-subject content overview with live/placeholder/gated status per subject
 - Asset & Effect Registry UI over Monster Visual Config
 - Marketing/Live Ops V0 with lifecycle state machine (draft/scheduled/published/paused/archived)
-- active message banner delivery via public endpoint with fail-open client rendering
+- active message banner delivery via authenticated endpoint with fail-open client rendering
 - `ops_status` enforcement at auth boundary: suspended accounts cannot create sessions; payment-held accounts can read but not mutate
 
 ### Still intentionally thin or placeholder

@@ -5,6 +5,10 @@
 # U4 note: `local-worker-stdout.log` is produced by the capacity-local-worker
 # orchestrator (redacted wrangler stdout/stderr) and is covered by the `*`
 # rule below. Never commit it; it is scrubbed but still operator-facing log.
+#
+# P4-U11: certifiable cert-run evidence lives under `evidence/` and is
+# tracked alongside the capacity.md row that cites it; verify-capacity-evidence
+# fails on a row whose evidence path does not exist on disk.
 *
 !.gitignore
 !latest-*.json
@@ -12,4 +16,6 @@
 !snapshots/**
 !configs/
 !configs/**
+!evidence/
+!evidence/**
 !README.md

@@ -1093,6 +1093,114 @@ export function renderTopNavFixture({
   `);
 }
 
+export function renderHeroQuestCardFixture({ hero, actions = {} } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HeroQuestCard } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HeroQuestCard.jsx'))};
+
+    const hero = ${JSON.stringify(hero)};
+    const actions = {
+      startHeroQuestTask: () => {},
+      continueHeroTask: () => {},
+      refreshHeroQuest: () => {},
+    };
+    const html = renderToStaticMarkup(<HeroQuestCard hero={hero} actions={actions} />);
+    console.log(html);
+  `);
+}
+
+export function renderHomeSurfaceWithHeroFixture({ hero = null } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HomeSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HomeSurface.jsx'))};
+
+    const model = {
+      theme: 'light',
+      learner: { id: 'learner-a', name: 'Ava' },
+      learnerLabel: 'Ava',
+      learnerOptions: [{ id: 'learner-a', name: 'Ava', yearGroup: 'Y5' }],
+      signedInAs: null,
+      persistence: { mode: 'local-only', label: 'Local-only' },
+      monsterSummary: [],
+      subjects: [
+        { id: 'spelling', name: 'Spelling', blurb: 'KS2 spelling.', accent: '#3E6FA8', status: 'live', glyph: 'S', progress: 0, progressLabel: '0 words secure' },
+        { id: 'grammar', name: 'Grammar', blurb: 'KS2 grammar.', accent: '#A83E6F', status: 'live', glyph: 'G', progress: 0, progressLabel: '0 concepts' },
+        { id: 'punctuation', name: 'Punctuation', blurb: 'KS2 punctuation.', accent: '#6FA83E', status: 'live', glyph: 'P', progress: 0, progressLabel: '0 units' },
+      ],
+      dashboardStats: {
+        spelling: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+        grammar: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+        punctuation: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+      },
+      dueTotal: 0,
+      roundNumber: 1,
+      now: new Date('2026-04-22T12:00:00Z'),
+      permissions: { canOpenParentHub: false },
+      hero: ${JSON.stringify(hero)},
+    };
+    const actions = {
+      dispatch() {},
+      toggleTheme() {},
+      selectLearner() {},
+      navigateHome() {},
+      openProfileSettings() {},
+      openSubject() {},
+      openCodex() {},
+      openParentHub() {},
+      openAdminHub() {},
+      logout() {},
+      retryPersistence() {},
+      startHeroQuestTask() {},
+      continueHeroTask() {},
+      refreshHeroQuest() {},
+    };
+    const html = renderToStaticMarkup(<HomeSurface model={model} actions={actions} />);
+    console.log(html);
+  `);
+}
+
+export function renderHeroTaskBannerFixture({ lastLaunch = null, subjectName = 'Spelling' } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HeroTaskBanner } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/HeroTaskBanner.jsx'))};
+
+    const lastLaunch = ${JSON.stringify(lastLaunch)};
+    const subjectName = ${JSON.stringify(subjectName)};
+    const html = renderToStaticMarkup(<HeroTaskBanner lastLaunch={lastLaunch} subjectName={subjectName} />);
+    console.log(html);
+  `);
+}
+
+export function renderSubjectRouteWithHeroBannerFixture({ lastLaunch = null } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SubjectRoute } from ${JSON.stringify(absoluteSpecifier('src/surfaces/subject/SubjectRoute.jsx'))};
+    import { createLocalAppController } from ${JSON.stringify(absoluteSpecifier('src/platform/app/create-local-app-controller.js'))};
+    import { installMemoryStorage } from ${JSON.stringify(absoluteSpecifier('tests/helpers/memory-storage.js'))};
+
+    installMemoryStorage();
+    const controller = createLocalAppController();
+    controller.dispatch('open-subject', { subjectId: 'spelling' });
+    const appState = controller.store.getState();
+    const context = controller.contextFor('spelling');
+    const actions = {
+      dispatch(action, data) { controller.dispatch(action, data); },
+      navigateHome() { controller.dispatch('navigate-home'); },
+      openParentHub() { controller.dispatch('open-parent-hub'); },
+      openAdminHub() { controller.dispatch('open-admin-hub'); },
+    };
+    const heroLastLaunch = ${JSON.stringify(lastLaunch)};
+    const html = renderToStaticMarkup(
+      <SubjectRoute appState={appState} context={context} actions={actions} heroLastLaunch={heroLastLaunch} />
+    );
+    console.log(html);
+  `);
+}
+
 export function renderAppFixture({ route = 'dashboard' } = {}) {
   return renderFixture(`
     import React from 'react';

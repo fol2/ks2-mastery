@@ -1,49 +1,16 @@
 import { projectPunctuationStars } from './star-projection.js';
 import { stageFor, PUNCTUATION_STAR_THRESHOLDS, PUNCTUATION_GRAND_STAR_THRESHOLDS } from '../../platform/game/monsters.js';
+import {
+  PUNCTUATION_CLIENT_SKILLS,
+  PUNCTUATION_CLIENT_REWARD_UNITS,
+} from './punctuation-manifest.js';
+
+export { PUNCTUATION_CLIENT_SKILLS };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CURRENT_RELEASE_ID = 'punctuation-r4-full-14-skill-structure';
 const TOTAL_REWARD_UNITS = 14;
 const DAILY_TARGET_ATTEMPTS = 4;
-
-export const PUNCTUATION_CLIENT_SKILLS = Object.freeze([
-  { id: 'sentence_endings', name: 'Capital letters and sentence endings', clusterId: 'endmarks' },
-  { id: 'list_commas', name: 'Commas in lists', clusterId: 'comma_flow' },
-  { id: 'apostrophe_contractions', name: 'Apostrophes for contraction', clusterId: 'apostrophe' },
-  { id: 'apostrophe_possession', name: 'Apostrophes for possession', clusterId: 'apostrophe' },
-  { id: 'speech', name: 'Inverted commas and speech punctuation', clusterId: 'speech' },
-  // Phase 4 U7: child-register name. Prior "Commas after fronted
-  // adverbials" used adult grammar terminology; the new name matches
-  // the `punctuationChildRegisterOverride` table swap so the rendered
-  // surface is consistent whether the skill name is read from this
-  // client mirror or passed through the override helper.
-  { id: 'fronted_adverbial', name: 'Commas after starter phrases', clusterId: 'comma_flow' },
-  { id: 'parenthesis', name: 'Parenthesis with commas, brackets or dashes', clusterId: 'structure' },
-  { id: 'comma_clarity', name: 'Commas for clarity', clusterId: 'comma_flow' },
-  { id: 'colon_list', name: 'Colon before a list', clusterId: 'structure' },
-  { id: 'semicolon', name: 'Semi-colons between related clauses', clusterId: 'boundary' },
-  { id: 'dash_clause', name: 'Dashes between related clauses', clusterId: 'boundary' },
-  { id: 'semicolon_list', name: 'Semi-colons within lists', clusterId: 'structure' },
-  { id: 'bullet_points', name: 'Punctuation of bullet points', clusterId: 'structure' },
-  { id: 'hyphen', name: 'Hyphens to avoid ambiguity', clusterId: 'boundary' },
-]);
-
-const PUNCTUATION_CLIENT_REWARD_UNITS = Object.freeze([
-  { clusterId: 'endmarks', rewardUnitId: 'sentence-endings-core' },
-  { clusterId: 'apostrophe', rewardUnitId: 'apostrophe-contractions-core' },
-  { clusterId: 'apostrophe', rewardUnitId: 'apostrophe-possession-core' },
-  { clusterId: 'speech', rewardUnitId: 'speech-core' },
-  { clusterId: 'comma_flow', rewardUnitId: 'list-commas-core' },
-  { clusterId: 'comma_flow', rewardUnitId: 'fronted-adverbials-core' },
-  { clusterId: 'comma_flow', rewardUnitId: 'comma-clarity-core' },
-  { clusterId: 'boundary', rewardUnitId: 'semicolons-core' },
-  { clusterId: 'boundary', rewardUnitId: 'dash-clauses-core' },
-  { clusterId: 'boundary', rewardUnitId: 'hyphens-core' },
-  { clusterId: 'structure', rewardUnitId: 'parenthesis-core' },
-  { clusterId: 'structure', rewardUnitId: 'colons-core' },
-  { clusterId: 'structure', rewardUnitId: 'semicolon-lists-core' },
-  { clusterId: 'structure', rewardUnitId: 'bullet-points-core' },
-]);
 
 function clientMasteryKey({ clusterId, rewardUnitId } = {}) {
   return `punctuation:${CURRENT_RELEASE_ID}:${clusterId}:${rewardUnitId}`;

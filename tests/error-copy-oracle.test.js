@@ -145,16 +145,28 @@ const FORBIDDEN_TOKENS = Object.freeze([
 
 const ALLOWLIST = Object.freeze([
   {
-    file: 'src/surfaces/hubs/AdminDebuggingSection.jsx',
+    file: 'src/surfaces/hubs/AdminErrorTimelinePanel.jsx',
     literal: 'TypeError',
     reason:
-      'Admin-only Error Centre filter placeholder. Used to let an operator search `error_events.kind` for "TypeError" rows; the placeholder is a hint, not a user-facing diagnosis. Scoped to AdminDebuggingSection.jsx so a child-facing surface cannot reuse the word without triage.',
+      'Admin-only Error Timeline filter placeholder. Lets an operator search `error_events.kind` for "TypeError" rows; the placeholder is a hint, not a user-facing diagnosis. Scoped to AdminErrorTimelinePanel.jsx so a child-facing surface cannot reuse the word without triage.',
   },
   {
-    file: 'src/surfaces/hubs/AdminDebuggingSection.jsx',
+    file: 'src/surfaces/hubs/AdminErrorTimelinePanel.jsx',
     literal: '/api/',
     reason:
-      'Admin-only Error Centre filter placeholder. Lets an operator filter error rows by route prefix. Scoped to AdminDebuggingSection.jsx; scoped to this admin surface because the Error Centre is gated by platform role.',
+      'Admin-only Error Timeline route-prefix filter. Lets an operator filter error rows by route. Scoped to AdminErrorTimelinePanel.jsx; the panel is gated by platform role.',
+  },
+  {
+    file: 'src/surfaces/hubs/AdminDebugBundlePanel.jsx',
+    literal: '/api/',
+    reason:
+      'Admin-only Debug Bundle route-prefix filter. Lets an operator pull diagnostic bundles for a specific route. Scoped to AdminDebugBundlePanel.jsx; the panel is gated by platform role.',
+  },
+  {
+    file: 'src/surfaces/hubs/AdminRequestDenialsPanel.jsx',
+    literal: '/api/',
+    reason:
+      'Admin-only Request Denials route-prefix filter. Lets an operator filter denial rows by route. Scoped to AdminRequestDenialsPanel.jsx; the panel is gated by platform role.',
   },
 ]);
 

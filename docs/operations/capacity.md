@@ -186,9 +186,9 @@ Certification-tier runs (learners >= 20) MUST be invoked with a pinned threshold
 
 | Date | Commit | Env | Plan | Learners | Burst | Rounds | P95 Bootstrap | P95 Command | Max Bytes | 5xx | Signals | Decision | Evidence |
 | --- | --- | --- | --- | --: | --: | --: | --: | --: | --: | --: | --- | --- | --- |
-| 2026-04-27 | cbf39ec | production | small-pilot | 30 | 20 | 1 | 878.5 | 310.5 | 18578 | 0 | none | small-pilot-provisional | [json](reports/capacity/snapshots/2026-04-27-30-learner-production.json) |
+| 2026-04-28 | d2d9c29 | production | 30-learner-beta | 30 | 20 | 1 | 1126.3 | 288.7 | 36852 | 0 | none | fail | [json](reports/capacity/evidence/30-learner-beta-v2-20260428.json) |
 
-> **Tier-claim note (P3 U2, 2026-04-27).** This first dated run was launched with the `30-learner-beta-certified` release-gate command (`--learners 30 --bootstrap-burst 20`, full release-gate threshold set: `max5xx=0`, `maxBootstrapP95Ms=1000`, `maxCommandP95Ms=750`, `maxResponseBytes=600000`, `requireZeroSignals`). Every threshold passed at the higher tier's bar. The recorded `Decision` is the lower `small-pilot-provisional` tier because the load-driver still emits `evidenceSchemaVersion: 1` — `reports/capacity/configs/30-learner-beta.json` declares `minEvidenceSchemaVersion: 2`, which `verify-capacity-evidence.mjs` enforces. Promoting the row to `30-learner-beta-certified` requires the load-driver to capture `meta.capacity` U3 telemetry into the evidence (`queryCount`, `d1RowsRead`, per-endpoint capacity metrics) and bump the constant in `scripts/lib/capacity-evidence.mjs`. Tracked as a follow-up to this PR; the run itself does not need to be repeated.
+> **P4-U11 cert attempt (2026-04-28, fail).** First dated run under evidence schema v2 with full provenance (gitSha pinned, dirtyTreeFlag=false, thresholdConfigHash matches `30-learner-beta.json`). `requireBootstrapCapacity` passes (queryCount=12, d1RowsRead=10) and `requireZeroSignals` is clean. The single threshold violation is `maxBootstrapP95Ms`: observed 1126.3 ms vs configured 1000 ms ceiling (~12.6% over). Command P95 (288.7 ms) and payload max (36,852 B) both pass with comfortable headroom. The capacity claim therefore stays at `small-pilot-provisional` until a passing 30-learner run lands. Top suspected source of the bootstrap P95 regression: cold-bootstrap burst of 20 against a recently deployed worker hitting cold D1 statement caches; re-measure after a warm-cache window before opening any worker-side fix PR.
 
 When adding a row:
 
@@ -213,6 +213,25 @@ Expected behaviour:
 - Structural plan-note: against a local worker-server harness the 12.5 ms claim is not reproducible because the local SQLite double does not carry dense production progress rows. The smoke falls back to a structural contract check (session phase + redaction pass + `bootstrapCapacity` present) in CI and the latency gate fires only against a live production run with `--cookie`.
 
 Record dense-history runs by appending a row to the launch-evidence table above with `summary.endpoints['POST /api/subjects/spelling/command'].p95WallMs` populating the P95 Command column and the persisted JSON in the Evidence column. Only rows produced with `--cookie` are meaningful dense-history evidence; demo-mode runs satisfy the contract check only.
+
+## Capacity Preflight
+
+Exploratory load-shape probes that look for the next bottleneck beyond
+the certified tier. Preflight rows are NOT certification evidence — they
+exist to flag the capacity discontinuity that a future hardening unit
+should investigate. Schema is intentionally lighter than the
+`## Capacity Evidence` table; rows here are skipped by
+`verify-capacity-evidence.mjs`.
+
+| Target | Status | Date | Commit | Evidence |
+| --- | --- | --- | --- | --- |
+| 60-learner stretch | **Preflight: fail** | 2026-04-28 | `42ec29b` | [json](../../reports/capacity/evidence/60-learner-stretch-preflight-20260428.json) |
+
+> **P4-U12 preflight (2026-04-28, fail-with-root-cause).** The 60-learner stretch shape needs 60 demo sessions, one per virtual learner. Production trusts only the Cloudflare-signed `CF-Connecting-IP` header (see `worker/src/rate-limit.js::normaliseRateLimitSubject`), so a single load-generator host shares one IP-aggregated bucket against `/api/demo/session`. With `DEMO_LIMITS.createIp = 30` per 10-minute window (`worker/src/demo/sessions.js`), virtual `learner-31` and every subsequent learner are rejected with HTTP 429 (`code: demo_rate_limited`) before any `/api/bootstrap` or subject-command load runs. The driver detects the setup failure and aborts cleanly rather than reusing global auth, which would silently corrupt threshold readings.
+>
+> **Top bottleneck:** `demo-session-create-ip-rate-limit` (test-infrastructure, NOT production-traffic). Real classroom traffic at 60 students has 60 distinct `CF-Connecting-IP` values (one per device on the school's network egress, in the worst case clustered across a small NAT pool) and does not share the same per-IP rate-limit bucket; the preflight exposes a load-test infrastructure bottleneck rather than a production-capacity one.
+>
+> **Next step:** Extend the load-test driver with a multi-IP source mode (e.g. a small per-IP CF Worker proxy fan-out, or N independent runners) before re-attempting the 60-learner shape. Until that lands, `/api/bootstrap`, subject-command, and projection-path bottlenecks beyond 30 learners stay unmeasured; the existing 30-learner cert run on commit `d2d9c29` (decision=fail on `maxBootstrapP95Ms`) remains the highest-evidence claim and should be re-run after the bootstrap-P95 regression is investigated.
 
 ## Operational Thresholds
 
@@ -518,8 +537,10 @@ Expected values on every path:
 
 Path-specific cache expectations:
 
-- `/src/bundles/app.bundle.js` — `Cache-Control: public, max-age=31536000, immutable` (Worker
-  wrapper explicitly overrides the `no-store` that ASSETS applies from the `_headers` `/*` group).
+- `/src/bundles/app.bundle.js` — `Cache-Control: no-store`. The public HTML adds a content-hash
+  `?v=` query to this stable entry filename so browsers do not keep an entry bundle that points at
+  retired lazy chunks.
+- `/src/bundles/*-HASH.js` split chunks — `Cache-Control: public, max-age=31536000, immutable`.
 - `/manifest.webmanifest` — `Cache-Control: public, max-age=3600` (1-hour cache updated in U8
   so app-manifest churn is visible to installed PWAs within the hour).
 - `/favicon.ico` — `Cache-Control: public, max-age=86400`.
@@ -537,7 +558,7 @@ Manual spot-check (use when the audit script is unavailable):
 
 ```bash
 curl -sI https://ks2.eugnel.uk/                                  | grep -i cache-control   # expect: no-store
-curl -sI https://ks2.eugnel.uk/src/bundles/app.bundle.js         | grep -i cache-control   # expect: public, max-age=31536000, immutable
+curl -sI https://ks2.eugnel.uk/src/bundles/app.bundle.js         | grep -i cache-control   # expect: no-store
 curl -sI https://ks2.eugnel.uk/assets/app-icons/favicon-32.png   | grep -i cache-control   # expect: public, max-age=31536000, immutable
 curl -sI https://ks2.eugnel.uk/api/bootstrap                     | grep -i cache-control   # expect: no-store
 curl -sI https://ks2.eugnel.uk/manifest.webmanifest              | grep -i cache-control   # expect: public, max-age=3600
@@ -809,3 +830,19 @@ runs at `workers: 1` because the shared DB + demo rate-limit bucket
 serialise on the default `127.0.0.1` origin. See
 `tests/playwright/isolated/README.md` for the detailed rules that
 scenes in the isolated subset must follow.
+
+## Historical Capacity Evidence (pre-v2)
+
+Pre-U3 evidence rows whose `requireBootstrapCapacity` observation is the
+`"deferred-to-U3"` placeholder rather than a concrete `{ queryCount,
+d1RowsRead }` shape. `scripts/verify-capacity-evidence.mjs` recomputes
+threshold passes from the captured telemetry and rejects the placeholder
+under the schema v2 contract; rows are kept here so the historical
+context (commit SHAs, sample counts, observed P95s) is preserved without
+tripping the verifier on every run.
+
+| Date | Commit | Env | Plan | Learners | Burst | Rounds | P95 Bootstrap | P95 Command | Max Bytes | 5xx | Signals | Decision | Evidence |
+| --- | --- | --- | --- | --: | --: | --: | --: | --: | --: | --: | --- | --- | --- |
+| 2026-04-27 | cbf39ec | production | small-pilot | 30 | 20 | 1 | 878.5 | 310.5 | 18578 | 0 | none | small-pilot-provisional | [json](../../reports/capacity/snapshots/2026-04-27-30-learner-production.json) |
+
+> **Tier-claim note (P3 U2, 2026-04-27).** This first dated run was launched with the `30-learner-beta-certified` release-gate command (`--learners 30 --bootstrap-burst 20`, full release-gate threshold set: `max5xx=0`, `maxBootstrapP95Ms=1000`, `maxCommandP95Ms=750`, `maxResponseBytes=600000`, `requireZeroSignals`). Every numeric threshold passed at the higher tier's bar. The recorded `Decision` is the lower `small-pilot-provisional` tier because the load-driver emitted `evidenceSchemaVersion: 1` — `reports/capacity/configs/30-learner-beta.json` declares `minEvidenceSchemaVersion: 2`, which `verify-capacity-evidence.mjs` enforces. The 2026-04-28 v2 cert run (above) supersedes this row for forward certification claims; this entry is retained for historical commit/evidence traceability only.

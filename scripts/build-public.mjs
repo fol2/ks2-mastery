@@ -1,5 +1,6 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { computeInlineScriptHash } from './compute-inline-script-hash.mjs';
 
 const rootDir = process.cwd();
@@ -21,6 +22,11 @@ const tmpDir = path.join(rootDir, 'dist', 'public.tmp');
 const generatedCspHashPath = path.join(rootDir, 'worker', 'src', 'generated-csp-hash.js');
 const publicCspHashArtefactPath = path.join(outputDir, '.csp-theme-hash');
 const publicHeadersPath = path.join(outputDir, '_headers');
+const appBundleScriptSrc = './src/bundles/app.bundle.js';
+
+function shortContentHash(buffer) {
+  return createHash('sha256').update(buffer).digest('hex').slice(0, 12);
+}
 
 const entries = [
   '_headers',
@@ -108,14 +114,31 @@ try {
     { force: true },
   );
 
+  // `app.bundle.js` has a stable filename because index.html is the only
+  // entry point. Stamp the public HTML with the bundle content hash so a
+  // no-store HTML refresh never reuses a browser-cached stale entry bundle
+  // that points at retired lazy chunks.
+  const appBundlePath = path.join(tmpDir, 'src', 'bundles', 'app.bundle.js');
+  const appBundleBytes = await readFile(appBundlePath);
+  const appBundleVersion = shortContentHash(appBundleBytes);
+  const tmpIndexPath = path.join(tmpDir, 'index.html');
+  const tmpIndexHtml = await readFile(tmpIndexPath, 'utf8');
+  if (!tmpIndexHtml.includes(appBundleScriptSrc)) {
+    throw new Error(`index.html must reference ${appBundleScriptSrc} before build-public can version it.`);
+  }
+  await writeFile(
+    tmpIndexPath,
+    tmpIndexHtml.replaceAll(appBundleScriptSrc, `${appBundleScriptSrc}?v=${appBundleVersion}`),
+    'utf8',
+  );
+
   await rm(outputDir, { recursive: true, force: true });
   await cp(tmpDir, outputDir, { recursive: true, force: true });
   await rm(tmpDir, { recursive: true, force: true });
 
   // U7: compute the inline theme-script SHA-256 from the canonical
-  // source (`index.html` at repo root). The build already asserts the
-  // copied dist/public/index.html is byte-identical; we hash the
-  // repo-root copy so a failing copy step surfaces elsewhere.
+  // source (`index.html` at repo root). The public HTML rewrites only the
+  // external module script URL, so the inline theme script hash is unchanged.
   const sourceHtml = await readFile(path.join(rootDir, 'index.html'), 'utf8');
   const cspThemeHash = computeInlineScriptHash(sourceHtml);
 

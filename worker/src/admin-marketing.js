@@ -59,6 +59,10 @@ const VALID_TRANSITIONS = new Map([
 const TITLE_MAX_LENGTH = 200;
 const BODY_MAX_LENGTH = 4000;
 
+function isMissingMarketingMessagesTableError(error) {
+  return /no such table:\s*admin_marketing_messages\b/i.test(String(error?.message || ''));
+}
+
 // ---------------------------------------------------------------------------
 // body_text validation (XSS gate)
 // ---------------------------------------------------------------------------
@@ -604,7 +608,12 @@ export async function transitionMarketingMessage(db, {
       });
     }
     const stored = JSON.parse(existingReceipt.response_json || '{}');
-    return { ...stored, mutation: { requestId, correlationId, replayed: true } };
+    const currentRow = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [stored.messageId]);
+    return {
+      ...stored,
+      message: currentRow ? adminMessageFields(currentRow) : null,
+      mutation: { requestId, correlationId, replayed: true },
+    };
   }
 
   const row = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
@@ -636,15 +645,15 @@ export async function transitionMarketingMessage(db, {
   }
 
   // Broad publish confirmation gate
-  if (action === 'published' && row.audience === 'all_signed_in' && !confirmBroadPublish) {
+  if ((action === 'published' || action === 'scheduled') && row.audience === 'all_signed_in' && !confirmBroadPublish) {
     throw new BadRequestError('Publishing to all_signed_in requires confirmBroadPublish: true.', {
       code: MARKETING_BROAD_PUBLISH_UNCONFIRMED,
       audience: row.audience,
     });
   }
 
-  // Maintenance + all_signed_in requires future ends_at for publish
-  if (action === 'published') {
+  // Maintenance + all_signed_in requires future ends_at for publish or schedule
+  if (action === 'published' || action === 'scheduled') {
     requireMaintenanceEndsAt(row.message_type, row.audience, row.ends_at, nowTs);
   }
 
@@ -729,19 +738,26 @@ export async function listMarketingMessages(db, { actorAccountId }) {
   const role = (actor.platform_role || '').toLowerCase();
 
   let rows;
-  if (role === 'admin') {
-    // Admin sees all messages
-    rows = await all(db, `
-      SELECT * FROM admin_marketing_messages
-      ORDER BY updated_at DESC
-    `);
-  } else {
-    // Ops sees only published + scheduled
-    rows = await all(db, `
-      SELECT * FROM admin_marketing_messages
-      WHERE status IN ('published', 'scheduled')
-      ORDER BY updated_at DESC
-    `);
+  try {
+    if (role === 'admin') {
+      // Admin sees all messages
+      rows = await all(db, `
+        SELECT * FROM admin_marketing_messages
+        ORDER BY updated_at DESC
+      `);
+    } else {
+      // Ops sees only published + scheduled
+      rows = await all(db, `
+        SELECT * FROM admin_marketing_messages
+        WHERE status IN ('published', 'scheduled')
+        ORDER BY updated_at DESC
+      `);
+    }
+  } catch (error) {
+    if (isMissingMarketingMessagesTableError(error)) {
+      return { messages: [] };
+    }
+    throw error;
   }
 
   return { messages: rows.map(adminMessageFields) };
@@ -751,7 +767,15 @@ export async function getMarketingMessage(db, { actorAccountId, messageId }) {
   const actor = await loadActor(db, actorAccountId);
   requireAdminOrOpsRole(actor);
 
-  const row = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
+  let row;
+  try {
+    row = await first(db, 'SELECT * FROM admin_marketing_messages WHERE id = ?', [messageId]);
+  } catch (error) {
+    if (isMissingMarketingMessagesTableError(error)) {
+      throw new NotFoundError('Marketing message not found.', { code: 'not_found', messageId });
+    }
+    throw error;
+  }
   if (!row) {
     throw new NotFoundError('Marketing message not found.', { code: 'not_found', messageId });
   }
@@ -776,14 +800,22 @@ export async function listActiveMessages(db, { nowTs }) {
   // ADV-U11-003: filter by audience = 'all_signed_in' so internal and demo
   // audience messages are only visible in the admin list view, never in
   // the public client delivery endpoint.
-  const rows = await all(db, `
-    SELECT * FROM admin_marketing_messages
-    WHERE status = 'published'
-      AND audience = 'all_signed_in'
-      AND (starts_at IS NULL OR starts_at <= ?)
-      AND (ends_at IS NULL OR ends_at >= ?)
-    ORDER BY created_at DESC
-  `, [ts, ts]);
+  let rows;
+  try {
+    rows = await all(db, `
+      SELECT * FROM admin_marketing_messages
+      WHERE status = 'published'
+        AND audience = 'all_signed_in'
+        AND (starts_at IS NULL OR starts_at <= ?)
+        AND (ends_at IS NULL OR ends_at >= ?)
+      ORDER BY created_at DESC
+    `, [ts, ts]);
+  } catch (error) {
+    if (isMissingMarketingMessagesTableError(error)) {
+      return { messages: [] };
+    }
+    throw error;
+  }
 
   return { messages: rows.map(safeMessageFields) };
 }

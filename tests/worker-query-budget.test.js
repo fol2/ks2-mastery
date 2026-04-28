@@ -16,6 +16,7 @@ import { createWorkerApp } from '../worker/src/app.js';
 import { COMMAND_PROJECTION_MODEL_KEY } from '../worker/src/read-models/learner-read-models.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
+import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
 
 // ---------------------------------------------------------------------------
 // Budget constants — measured first, then locked.
@@ -51,6 +52,47 @@ const BUDGET_PARENT_RECENT_SESSIONS = 7;
 // set to POST bounded — the GET path is upgraded to v2 bounded on the
 // public read-models path). Headroom +1.
 const BUDGET_BOOTSTRAP_GET_FULL = 13;
+
+// Measured: 4 queries for Hero read-model GET (ops_status JOIN +
+// ensureAccount upsert + membership learner-access check +
+// child_subject_state read). Headroom +1.
+const BUDGET_HERO_READ_MODEL = 5;
+
+// Measured: 20 queries for Admin Ops KPI dashboard (ops_status JOIN +
+// ensureAccount upsert + assertAdminHubActor SELECT + 14 COUNT(*)
+// aggregates across accounts/learners/sessions/events/mutations/errors
+// + 3 admin_kpi_metrics reads). Headroom +1.
+const BUDGET_ADMIN_OPS_KPI = 21;
+
+// Measured: 4 queries for Admin accounts search (ops_status JOIN +
+// ensureAccount upsert + assertAdminHubActor SELECT + search query
+// with LIKE filter). Headroom +1.
+const BUDGET_ADMIN_ACCOUNTS_SEARCH = 5;
+
+// Measured: 3 queries via capacity collector for Admin debug-bundle
+// (ops_status JOIN + ensureAccount upsert + assertAdminHubActorForBundle
+// SELECT). The bundle aggregation itself uses a raw DB reference that
+// bypasses the capacity collector — the budget covers only the
+// repository-tracked auth preamble. Headroom +1.
+const BUDGET_ADMIN_DEBUG_BUNDLE = 4;
+
+// Measured: 19 queries for Hero command POST start-task (ops_status JOIN +
+// ensureAccount upsert + requireLearnerReadAccess + readHeroSubjectReadModels
+// [1st child_subject_state read for server-side quest recomputation] +
+// requireLearnerReadAccess [2nd, within runSubjectCommand] + learner+account
+// revision CAS + child_subject_state [2nd read for subject dispatch] +
+// active_session scan + spelling_content + projection read-model +
+// child_game_state + event_log + sqlite_master + 6 batch writes).
+// The 2x child_subject_state reads are inherent to the Hero launch
+// architecture: resolveHeroStartTaskCommand recomputes the quest from
+// live subject state, then runSubjectCommand re-reads it for dispatch.
+// Headroom +1.
+const BUDGET_HERO_COMMAND = 20;
+
+// Measured: 5 queries for Admin Ops error-events (ops_status JOIN +
+// ensureAccount upsert + assertAdminHubActor SELECT + totals GROUP BY
+// + entries SELECT). Headroom +1.
+const BUDGET_ADMIN_OPS_ERROR_EVENTS = 6;
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -455,6 +497,436 @@ test('U3 query budget: GET bootstrap full bundle ≤ BUDGET_BOOTSTRAP_GET_FULL',
       capacity.queryCount > BUDGET_BOOTSTRAP_NOT_MODIFIED,
       `GET bootstrap full (${capacity.queryCount}) must exceed notModified budget (${BUDGET_BOOTSTRAP_NOT_MODIFIED})`,
     );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Shared admin helpers
+// ---------------------------------------------------------------------------
+
+function createAdminServer() {
+  const server = createWorkerRepositoryServer({
+    defaultAccountId: 'adult-admin',
+    env: {
+      HERO_MODE_SHADOW_ENABLED: '1',
+      HERO_MODE_LAUNCH_ENABLED: '1',
+    },
+  });
+  runSql(server, `
+    INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at, selected_learner_id)
+    VALUES ('adult-admin', 'admin@test', 'Admin User', 'admin', ?, ?, NULL)
+  `, [NOW, NOW]);
+  return server;
+}
+
+async function fetchAsAdmin(server, url, init = {}) {
+  return server.fetchAs('adult-admin', url, {
+    ...init,
+    headers: {
+      accept: 'application/json',
+      origin: BASE_URL,
+      'x-ks2-dev-platform-role': 'admin',
+      ...(init.headers || {}),
+    },
+  });
+}
+
+async function fetchAsRole(server, accountId, platformRole, url, init = {}) {
+  return server.fetchAs(accountId, url, {
+    ...init,
+    headers: {
+      accept: 'application/json',
+      origin: BASE_URL,
+      'x-ks2-dev-platform-role': platformRole,
+      ...(init.headers || {}),
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Scenario 6 — Hero read-model GET
+// ---------------------------------------------------------------------------
+test('U3 query budget: Hero read-model GET ≤ BUDGET_HERO_READ_MODEL', async () => {
+  const server = createWorkerRepositoryServer({
+    defaultAccountId: 'adult-hero',
+    env: {
+      HERO_MODE_SHADOW_ENABLED: '1',
+      HERO_MODE_LAUNCH_ENABLED: '1',
+    },
+  });
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-hero', 'hero@test', 'Hero Parent', 'parent', ?, ?, NULL)
+    `, [NOW, NOW]);
+    insertLearner(server, 'adult-hero', { id: 'learner-hero', name: 'Hero Learner', sortIndex: 0, selected: true });
+    insertSubjectState(server, 'adult-hero', 'learner-hero', 'spelling');
+    insertSubjectState(server, 'adult-hero', 'learner-hero', 'grammar');
+
+    const response = await server.fetch(`${BASE_URL}/api/hero/read-model?learnerId=learner-hero`, {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+    });
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'Hero read-model must expose meta.capacity');
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_HERO_READ_MODEL,
+      `Hero read-model queryCount must be ≤ ${BUDGET_HERO_READ_MODEL}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 6b — Hero command POST (start-task)
+// ---------------------------------------------------------------------------
+test('U3 query budget: Hero command POST start-task ≤ BUDGET_HERO_COMMAND', async () => {
+  const server = createWorkerRepositoryServer({
+    defaultAccountId: 'adult-hero-cmd',
+    env: {
+      HERO_MODE_SHADOW_ENABLED: 'true',
+      HERO_MODE_LAUNCH_ENABLED: 'true',
+      PUNCTUATION_SUBJECT_ENABLED: 'true',
+    },
+  });
+  try {
+    // Seed account + learner via platform repositories (mirrors hero-launch-flow.test.js).
+    const repos = createApiPlatformRepositories({
+      baseUrl: BASE_URL,
+      fetch: server.fetch.bind(server),
+      authSession: server.authSessionFor('adult-hero-cmd'),
+    });
+    await repos.hydrate();
+    repos.learners.write({
+      byId: {
+        'learner-hero-cmd': {
+          id: 'learner-hero-cmd',
+          name: 'Hero Budget Learner',
+          yearGroup: 'Y5',
+          goal: 'sats',
+          dailyMinutes: 15,
+          avatarColor: '#3E6FA8',
+          createdAt: 1,
+        },
+      },
+      allIds: ['learner-hero-cmd'],
+      selectedId: 'learner-hero-cmd',
+    });
+    await repos.flush();
+
+    // Seed spelling subject state with enough stats so the Hero spelling
+    // provider produces launchable envelopes (mirrors hero-launch-flow).
+    const spellingData = {
+      stats: {
+        core: { total: 50, secure: 30, due: 10, fresh: 5, trouble: 5, attempts: 200, correct: 160, accuracy: 0.8 },
+        all: { total: 50, secure: 30, due: 10, fresh: 5, trouble: 5, attempts: 200, correct: 160, accuracy: 0.8 },
+      },
+    };
+    server.DB.db.prepare(`
+      INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
+      VALUES (?, 'spelling', '{}', ?, ?, ?)
+    `).run('learner-hero-cmd', JSON.stringify(spellingData), NOW, 'adult-hero-cmd');
+
+    // Read model to discover a launchable task.
+    const rmResponse = await server.fetch(`${BASE_URL}/api/hero/read-model?learnerId=learner-hero-cmd`);
+    assert.equal(rmResponse.status, 200);
+    const rmPayload = await readJsonBody(rmResponse);
+    assert.ok(rmPayload.hero?.dailyQuest, 'Read model must contain a daily quest');
+    const quest = rmPayload.hero.dailyQuest;
+    const task = quest.tasks.find((t) => t.launchStatus === 'launchable');
+    assert.ok(task, 'Read model must contain at least one launchable task');
+
+    // Get current learner revision for CAS.
+    const revRow = server.DB.db.prepare(
+      `SELECT lp.state_revision FROM learner_profiles lp
+       JOIN account_learner_memberships alm ON alm.learner_id = lp.id
+       WHERE alm.account_id = ?`,
+    ).get('adult-hero-cmd');
+    const revision = revRow?.state_revision ?? 0;
+
+    // POST the Hero command.
+    const response = await server.fetchAs('adult-hero-cmd', `${BASE_URL}/api/hero/command`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        command: 'start-task',
+        learnerId: 'learner-hero-cmd',
+        questId: quest.questId,
+        taskId: task.taskId,
+        requestId: 'hero-budget-cmd-1',
+        expectedLearnerRevision: revision,
+      }),
+    });
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+    assert.ok(payload.heroLaunch, 'Response must include heroLaunch block');
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'Hero command POST must expose meta.capacity');
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_HERO_COMMAND,
+      `Hero command POST queryCount must be ≤ ${BUDGET_HERO_COMMAND}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 7 — Admin Ops KPI dashboard GET
+// ---------------------------------------------------------------------------
+test('U3 query budget: Admin ops/kpi GET ≤ BUDGET_ADMIN_OPS_KPI', async () => {
+  const server = createAdminServer();
+  try {
+    const response = await fetchAsAdmin(server, `${BASE_URL}/api/admin/ops/kpi`);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'Admin ops/kpi must expose meta.capacity');
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_ADMIN_OPS_KPI,
+      `Admin ops/kpi queryCount must be ≤ ${BUDGET_ADMIN_OPS_KPI}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 8 — Admin accounts search GET
+// ---------------------------------------------------------------------------
+test('U3 query budget: Admin accounts/search GET ≤ BUDGET_ADMIN_ACCOUNTS_SEARCH', async () => {
+  const server = createAdminServer();
+  try {
+    const response = await fetchAsAdmin(server, `${BASE_URL}/api/admin/accounts/search?q=test`);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'Admin accounts/search must expose meta.capacity');
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_ADMIN_ACCOUNTS_SEARCH,
+      `Admin accounts/search queryCount must be ≤ ${BUDGET_ADMIN_ACCOUNTS_SEARCH}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 9 — Admin debug-bundle GET
+// ---------------------------------------------------------------------------
+test('U3 query budget: Admin debug-bundle GET ≤ BUDGET_ADMIN_DEBUG_BUNDLE', async () => {
+  const server = createAdminServer();
+  try {
+    const response = await fetchAsAdmin(server, `${BASE_URL}/api/admin/debug-bundle?account_id=adult-admin`);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'Admin debug-bundle must expose meta.capacity');
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_ADMIN_DEBUG_BUNDLE,
+      `Admin debug-bundle queryCount must be ≤ ${BUDGET_ADMIN_DEBUG_BUNDLE}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 10 — Admin Ops error-events GET
+// ---------------------------------------------------------------------------
+test('U3 query budget: Admin ops/error-events GET ≤ BUDGET_ADMIN_OPS_ERROR_EVENTS', async () => {
+  const server = createAdminServer();
+  try {
+    const response = await fetchAsAdmin(server, `${BASE_URL}/api/admin/ops/error-events`);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const capacity = payload.meta?.capacity;
+    assert.ok(capacity, 'Admin ops/error-events must expose meta.capacity');
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_ADMIN_OPS_ERROR_EVENTS,
+      `Admin ops/error-events queryCount must be ≤ ${BUDGET_ADMIN_OPS_ERROR_EVENTS}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 11 — Role matrix: parent cannot reach admin routes (403)
+// ---------------------------------------------------------------------------
+test('U3 role matrix: parent cannot reach admin ops/kpi (403)', async () => {
+  const server = createAdminServer();
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-parent', 'parent@test', 'Parent User', 'parent', ?, ?, NULL)
+    `, [NOW, NOW]);
+
+    const response = await fetchAsRole(server, 'adult-parent', 'parent', `${BASE_URL}/api/admin/ops/kpi`);
+    assert.equal(response.status, 403, 'parent must receive 403 on admin route');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+test('U3 role matrix: parent cannot reach admin debug-bundle (403)', async () => {
+  const server = createAdminServer();
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-parent', 'parent@test', 'Parent User', 'parent', ?, ?, NULL)
+    `, [NOW, NOW]);
+
+    const response = await fetchAsRole(server, 'adult-parent', 'parent', `${BASE_URL}/api/admin/debug-bundle`);
+    assert.equal(response.status, 403, 'parent must receive 403 on admin debug-bundle');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+test('U3 role matrix: parent cannot reach admin accounts/search (403)', async () => {
+  const server = createAdminServer();
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-parent', 'parent@test', 'Parent User', 'parent', ?, ?, NULL)
+    `, [NOW, NOW]);
+
+    const response = await fetchAsRole(server, 'adult-parent', 'parent', `${BASE_URL}/api/admin/accounts/search?q=test`);
+    assert.equal(response.status, 403, 'parent must receive 403 on admin accounts/search');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+test('U3 role matrix: parent cannot reach admin error-events (403)', async () => {
+  const server = createAdminServer();
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-parent', 'parent@test', 'Parent User', 'parent', ?, ?, NULL)
+    `, [NOW, NOW]);
+
+    const response = await fetchAsRole(server, 'adult-parent', 'parent', `${BASE_URL}/api/admin/ops/error-events`);
+    assert.equal(response.status, 403, 'parent must receive 403 on admin error-events');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 12 — Role matrix: demo cannot reach admin routes (403)
+// ---------------------------------------------------------------------------
+test('U3 role matrix: demo account cannot reach admin ops/kpi (403)', async () => {
+  const server = createWorkerRepositoryServer({ defaultAccountId: 'adult-demo' });
+  try {
+    // Demo account with admin platform_role — the account_type='demo' gate
+    // must still block access regardless of the role claim.
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, account_type, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-demo', 'demo@test', 'Demo Admin', 'admin', 'demo', ?, ?, NULL)
+    `, [NOW, NOW]);
+
+    const response = await fetchAsRole(server, 'adult-demo', 'admin', `${BASE_URL}/api/admin/ops/kpi`);
+    assert.equal(response.status, 403, 'demo must receive 403 on admin route even with admin role');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+test('U3 role matrix: demo account cannot reach admin debug-bundle (403)', async () => {
+  const server = createWorkerRepositoryServer({ defaultAccountId: 'adult-demo' });
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, account_type, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-demo', 'demo@test', 'Demo Admin', 'admin', 'demo', ?, ?, NULL)
+    `, [NOW, NOW]);
+
+    const response = await fetchAsRole(server, 'adult-demo', 'admin', `${BASE_URL}/api/admin/debug-bundle`);
+    assert.equal(response.status, 403, 'demo must receive 403 on admin debug-bundle');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+test('U3 role matrix: demo account cannot reach admin accounts/search (403)', async () => {
+  const server = createWorkerRepositoryServer({ defaultAccountId: 'adult-demo' });
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, account_type, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-demo', 'demo@test', 'Demo Admin', 'admin', 'demo', ?, ?, NULL)
+    `, [NOW, NOW]);
+
+    const response = await fetchAsRole(server, 'adult-demo', 'admin', `${BASE_URL}/api/admin/accounts/search?q=test`);
+    assert.equal(response.status, 403, 'demo must receive 403 on admin accounts/search');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+test('U3 role matrix: demo account cannot reach admin error-events (403)', async () => {
+  const server = createWorkerRepositoryServer({ defaultAccountId: 'adult-demo' });
+  try {
+    runSql(server, `
+      INSERT INTO adult_accounts (id, email, display_name, platform_role, account_type, created_at, updated_at, selected_learner_id)
+      VALUES ('adult-demo', 'demo@test', 'Demo Admin', 'admin', 'demo', ?, ?, NULL)
+    `, [NOW, NOW]);
+
+    const response = await fetchAsRole(server, 'adult-demo', 'admin', `${BASE_URL}/api/admin/ops/error-events`);
+    assert.equal(response.status, 403, 'demo must receive 403 on admin error-events');
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, false);
+    assert.equal(payload.code, 'admin_hub_forbidden');
   } finally {
     server.close();
   }

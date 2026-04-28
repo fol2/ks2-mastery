@@ -130,6 +130,10 @@ export const CLASSIFICATION = Object.freeze({
   'src/surfaces/hubs/AdminOverviewSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminAccountsSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminDebuggingSection.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminDebugBundlePanel.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminErrorTimelinePanel.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminLearnerSupportPanel.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminRequestDenialsPanel.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminContentSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/AdminMarketingSection.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/ParentHubSurface.jsx': 'shared-pattern-available',
@@ -180,6 +184,7 @@ export const CLASSIFICATION = Object.freeze({
 // A file in this set may still carry residual inline styles when the remaining
 // sites are `dynamic-content-driven` (deferred to a later migration PR).
 export const MIGRATED_THIS_PR = Object.freeze(new Set([
+  // SH2-U8 first slice
   'src/surfaces/shell/PersistenceBanner.jsx',
   'src/platform/react/ErrorBoundary.jsx',
   'src/app/App.jsx',
@@ -191,6 +196,10 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
   'src/surfaces/hubs/admin-panel-header.jsx',
   'src/surfaces/hubs/MonsterVisualFieldControls.jsx',
   'src/surfaces/profile/ProfileSettingsSurface.jsx',
+  // U6 (P4) second slice — fully migrated to CSS classes
+  'src/surfaces/hubs/AdminContentSection.jsx',
+  'src/surfaces/hubs/AdminDebuggingSection.jsx',
+  'src/surfaces/hubs/AdminAccountsSection.jsx',
 ]));
 
 // Per-PR delta snapshot: previous total (PR base) minus the number of sites
@@ -207,9 +216,23 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // U10 (Admin P3): Asset & Effect Registry card + MonsterVisualConfigPanel added
 // 11 inline style sites for registry detail grid, card layout, and editor panel.
 // Budget 294 → 305.
-export const PRE_MIGRATION_TOTAL = 305;
-export const SITES_MIGRATED_THIS_PR = 25;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 280
+// SH2-U8: first migration slice reduced 305 → 280 (25 sites).
+// Intermediate PRs added 66 inline-style sites, bringing the baseline to 346.
+// U6 (P4): second migration slice — AdminContentSection (65), AdminDebuggingSection
+// (52), AdminAccountsSection (38) fully migrated to CSS classes. 346 → 191 (155 sites).
+// All three files now carry 0 inline style sites; the CSS classes live in the
+// `/* U6 (P4) */` section of styles/app.css.
+// U11 (Marketing/Live Ops): split AdminDebuggingSection into four narrower
+// admin panels — AdminErrorTimelinePanel (23), AdminDebugBundlePanel (14),
+// AdminLearnerSupportPanel (12), AdminRequestDenialsPanel (3). The slice
+// added 52 inline-style sites in the new panels and 20 across other admin
+// surfaces edited alongside, lifting the post-migration baseline 191 → 263.
+// The U8 invariant (POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR)
+// is preserved by raising PRE_MIGRATION_TOTAL by the same 72; the new panels
+// remain `shared-pattern-available` candidates for a future migration slice.
+export const PRE_MIGRATION_TOTAL = 418;
+export const SITES_MIGRATED_THIS_PR = 155;
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 263
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';

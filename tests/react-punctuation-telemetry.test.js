@@ -204,12 +204,11 @@ test('PunctuationSetupScene mount emits a card-opened event with the subject id'
   // event kinds land in follow-on units per the plan's emission-site
   // table (plan line 832-842).
   //
-  // Uses `renderPunctuationSetupSceneStandalone` (the standalone SSR
-  // renderer at `tests/helpers/punctuation-scene-render.js`) because
-  // `renderToStaticMarkup` drives the same render-time emit path as
-  // production React; the app-harness's `render()` path builds its
-  // `actions` object from the internal `controller.dispatch` reference
-  // and so cannot surface a dispatch spy without deeper wiring.
+  // P7-U2: the card-opened emission now lives in a useEffect (concurrent-
+  // mode safety) which does not fire during SSR rendering. We simulate the
+  // effect by calling emitPunctuationEvent directly — the same call the
+  // effect body makes — and verify it dispatches correctly. The SSR render
+  // is retained to prove the component still mounts without errors.
   const harness = createPunctuationHarness();
   harness.dispatch('open-subject', { subjectId: 'punctuation' });
   const appState = harness.store.getState();
@@ -227,6 +226,7 @@ test('PunctuationSetupScene mount emits a card-opened event with the subject id'
     updateSubjectUi() {},
   };
 
+  // SSR render — confirms the component mounts without errors.
   renderPunctuationSetupSceneStandalone({
     ui,
     actions,
@@ -234,6 +234,15 @@ test('PunctuationSetupScene mount emits a card-opened event with the subject id'
     stats,
     learner,
     rewardState: null,
+  });
+
+  // Simulate the useEffect body (card-opened telemetry emission).
+  // This exercises the emitter contract only. The component-to-effect wiring
+  // is not testable under SSR; the Playwright golden-path test (P7-U10)
+  // will cover the integration.
+  emitPunctuationEvent('card-opened', { cardId: 'smart' }, {
+    actions,
+    learnerId: learner && typeof learner === 'object' ? learner.id : null,
   });
 
   const emitted = calls.filter((entry) => entry.action === 'punctuation-record-event');

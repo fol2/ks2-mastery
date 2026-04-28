@@ -190,7 +190,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, /value="extra"[^>]*>\s*<span>Extra<\/span>/);
   assert.match(html, /data-pref="extraWordFamilies"[\s\S]*Word-family variants/);
-  assert.match(html, /ss-stat-label">Total spellings<\/div>\s*<div class="ss-stat-value"[^>]*>23<\/div>/);
+  assert.match(html, /ss-stat-label">Total spellings<\/div>\s*<div class="ss-stat-value"[^>]*>33<\/div>/);
   assert.match(html, /value="trouble"[^>]*disabled[^>]*>[\s\S]*Trouble Drill/);
 
   /* The Codex Journal redesign folds the old Analytics tab into a standalone
@@ -246,12 +246,12 @@ test('spelling word bank opens from setup and exposes searchable progress with e
     Unseen: '104',
   });
   assert.deepEqual(extractWordBankAggregateStats(html, 'Expansion spelling pool'), {
-    Total: '23',
+    Total: '33',
     Secure: '0',
     'Due now': '0',
     Trouble: '0',
     Learning: '0',
-    Unseen: '23',
+    Unseen: '33',
   });
   // Word-bank entries render as legacy-style colour pills. The tooltip carries
   // the progress details, while clicking the pill opens the explainer modal.
@@ -301,7 +301,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, />accommodate</);
   assert.doesNotMatch(html, />accident</);
-  assert.match(html, /Years 5-6 selected — 104 of 236 words, 0 secure, 1 due today, 0 weak spots/);
+  assert.match(html, /Years 5-6 selected — 104 of 246 words, 0 secure, 1 due today, 0 weak spots/);
   assert.match(html, /Showing 104 of 104 Years 5-6 spellings/);
   assert.deepEqual(extractWordBankAggregateStats(html, 'Upper KS2 spelling pool'), {
     Total: '104',
@@ -324,7 +324,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, />accident</);
   assert.doesNotMatch(html, />accommodate</);
-  assert.match(html, /Years 3-4 selected — 109 of 236 words, 1 secure, 0 due today, 0 weak spots/);
+  assert.match(html, /Years 3-4 selected — 109 of 246 words, 1 secure, 0 due today, 0 weak spots/);
   assert.match(html, /Showing 109 of 109 Years 3-4 spellings/);
   assert.deepEqual(extractWordBankAggregateStats(html, 'Lower KS2 spelling pool'), {
     Total: '109',
@@ -346,8 +346,8 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   html = harness.render();
   assert.match(html, />mollusc</);
   assert.doesNotMatch(html, />accident</);
-  assert.match(html, /Extra selected — 23 of 236 words, 0 secure, 0 due today, 0 weak spots/);
-  assert.match(html, /Showing 23 of 23 Extra spellings/);
+  assert.match(html, /Extra selected — 33 of 246 words, 0 secure, 0 due today, 0 weak spots/);
+  assert.match(html, /Showing 33 of 33 Extra spellings/);
 
   harness.dispatch('spelling-analytics-year-filter', { value: 'all' });
 
@@ -394,7 +394,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   harness.dispatch('spelling-analytics-search', { value: 'division' });
   html = harness.render();
   assert.match(html, />divide</);
-  assert.match(html, /Showing 1 of 236 tracked spellings/);
+  assert.match(html, /Showing 1 of 246 tracked spellings/);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'divide', value: 'explain' });
   html = harness.render();
@@ -408,7 +408,7 @@ test('spelling word bank opens from setup and exposes searchable progress with e
   assert.match(html, />mollusc</);
   assert.match(html, /title="mollusc[^"]*Correct: 0[^"]*Wrong: 0[^"]*Attempts: 0[^"]*Accuracy: —[^"]*Next due: Unseen"/);
   assert.doesNotMatch(html, /title="mollusc[^"]*Extra • Extra/);
-  assert.match(html, /Showing 1 of 236 tracked spellings/);
+  assert.match(html, /Showing 1 of 246 tracked spellings/);
   assert.doesNotMatch(html, />accident</);
 
   harness.dispatch('spelling-word-detail-open', { slug: 'mollusc', value: 'explain' });

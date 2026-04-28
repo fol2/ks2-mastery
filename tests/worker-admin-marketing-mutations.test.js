@@ -112,6 +112,15 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
   t.after(() => server.close());
   seedCore(server, 1000);
 
+  // The shared `server` runs ~30 subtests through the same `adult-admin`
+  // session within one wall-clock minute. Without this reset the 60/min
+  // `admin-ops-mutation` bucket fills up partway through and later
+  // subtests fail with a 429. No subtest in this file exercises the
+  // rate limiter itself, so clearing the bucket between subtests is safe.
+  t.beforeEach(() => {
+    server.DB.db.prepare('DELETE FROM request_limits').run();
+  });
+
   await t.test('create a draft message', async () => {
     const res = await createMessage(server, 'adult-admin', {
       title: 'Welcome message',
@@ -295,7 +304,7 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     });
     const { message: msg } = await createRes.json();
     await transitionMessage(server, 'adult-admin', msg.id, {
-      action: 'scheduled', expectedRowVersion: 0, requestId: 'broad-s1',
+      action: 'scheduled', expectedRowVersion: 0, confirmBroadPublish: true, requestId: 'broad-s1',
     });
     const res = await transitionMessage(server, 'adult-admin', msg.id, {
       action: 'published',
@@ -317,7 +326,7 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     });
     const { message: msg } = await createRes.json();
     await transitionMessage(server, 'adult-admin', msg.id, {
-      action: 'scheduled', expectedRowVersion: 0, requestId: 'noconfirm-s1',
+      action: 'scheduled', expectedRowVersion: 0, confirmBroadPublish: true, requestId: 'noconfirm-s1',
     });
     const res = await transitionMessage(server, 'adult-admin', msg.id, {
       action: 'published',
@@ -327,6 +336,160 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     assert.equal(res.status, 400);
     const data = await res.json();
     assert.equal(data.code, 'marketing_broad_publish_unconfirmed');
+  });
+
+  // --- ADV-U11-005: confirmBroadPublish + requireMaintenanceEndsAt on scheduled ---
+
+  await t.test('ADV-U11-005: draft → scheduled with all_signed_in + confirmBroadPublish succeeds', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched broad confirm',
+      body_text: 'Body.',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 86400000,
+    });
+    const { message: msg } = await createRes.json();
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      confirmBroadPublish: true,
+      requestId: 'adv005-sched-ok',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.newStatus, 'scheduled');
+  });
+
+  await t.test('ADV-U11-005: draft → scheduled with all_signed_in WITHOUT confirmBroadPublish → 400', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched broad no-confirm',
+      body_text: 'Body.',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 86400000,
+    });
+    const { message: msg } = await createRes.json();
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      requestId: 'adv005-sched-noconfirm',
+    });
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data.code, 'marketing_broad_publish_unconfirmed');
+  });
+
+  await t.test('ADV-U11-005: draft → scheduled with audience internal succeeds without confirmBroadPublish', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched internal no-confirm',
+      body_text: 'Body.',
+      audience: 'internal',
+    });
+    const { message: msg } = await createRes.json();
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      requestId: 'adv005-sched-internal',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.newStatus, 'scheduled');
+  });
+
+  await t.test('ADV-U11-005: paused → published with all_signed_in WITHOUT confirmBroadPublish → 400', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Paused broad no-confirm',
+      body_text: 'Body.',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 86400000,
+    });
+    const { message: msg } = await createRes.json();
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, confirmBroadPublish: true, requestId: 'adv005-p2p-s',
+    });
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published', expectedRowVersion: 1, confirmBroadPublish: true, requestId: 'adv005-p2p-pub',
+    });
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'paused', expectedRowVersion: 2, requestId: 'adv005-p2p-pause',
+    });
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published',
+      expectedRowVersion: 3,
+      requestId: 'adv005-p2p-noconfirm',
+    });
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data.code, 'marketing_broad_publish_unconfirmed');
+  });
+
+  await t.test('ADV-U11-005: paused → published with all_signed_in + confirmBroadPublish succeeds', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Paused broad confirm',
+      body_text: 'Body.',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 86400000,
+    });
+    const { message: msg } = await createRes.json();
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, confirmBroadPublish: true, requestId: 'adv005-p2p-ok-s',
+    });
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published', expectedRowVersion: 1, confirmBroadPublish: true, requestId: 'adv005-p2p-ok-pub',
+    });
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'paused', expectedRowVersion: 2, requestId: 'adv005-p2p-ok-pause',
+    });
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published',
+      expectedRowVersion: 3,
+      confirmBroadPublish: true,
+      requestId: 'adv005-p2p-ok-repub',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.newStatus, 'published');
+  });
+
+  await t.test('ADV-U11-005: draft → scheduled maintenance + all_signed_in without ends_at → marketing_maintenance_requires_ends_at', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched maint no ends_at',
+      body_text: 'Body.',
+      message_type: 'maintenance',
+      audience: 'internal',
+    });
+    const { message: msg } = await createRes.json();
+    // Patch audience to all_signed_in directly so create doesn't reject it
+    server.DB.db.prepare(
+      'UPDATE admin_marketing_messages SET audience = ? WHERE id = ?',
+    ).run('all_signed_in', msg.id);
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      confirmBroadPublish: true,
+      requestId: 'adv005-maint-noends',
+    });
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data.code, 'marketing_maintenance_requires_ends_at');
+  });
+
+  await t.test('ADV-U11-005: draft → scheduled maintenance + all_signed_in with valid future ends_at succeeds', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Sched maint with ends_at',
+      body_text: 'Planned maintenance.',
+      message_type: 'maintenance',
+      audience: 'all_signed_in',
+      ends_at: Date.now() + 3600000,
+    });
+    const { message: msg } = await createRes.json();
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled',
+      expectedRowVersion: 0,
+      confirmBroadPublish: true,
+      requestId: 'adv005-maint-ok',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.newStatus, 'scheduled');
   });
 
   await t.test('ops mutation attempt → 403', async () => {
@@ -412,6 +575,111 @@ test('U11 Marketing Lifecycle Mutations', async (t) => {
     assert.equal(res2.status, 200);
     const d2 = await res2.json();
     assert.equal(d2.mutation.replayed, true);
+  });
+
+  await t.test('ADV-U11-007: first transition returns message field with full details', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Shape parity first-call',
+      body_text: 'First call message field.',
+    });
+    const { message: msg } = await createRes.json();
+
+    const res = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, requestId: 'shape-first-1',
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.mutation.replayed, false);
+    assert.ok(data.message, 'first-call must include message field');
+    assert.equal(data.message.id, msg.id);
+    assert.equal(data.message.status, 'scheduled');
+    assert.equal(data.message.title, 'Shape parity first-call');
+    assert.equal(typeof data.message.row_version, 'number');
+  });
+
+  await t.test('ADV-U11-007: replay returns message field with current state and replayed: true', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Shape parity replay',
+      body_text: 'Replay message field.',
+    });
+    const { message: msg } = await createRes.json();
+
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, requestId: 'shape-replay-1',
+    });
+
+    const res2 = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, requestId: 'shape-replay-1',
+    });
+    assert.equal(res2.status, 200);
+    const data = await res2.json();
+    assert.equal(data.mutation.replayed, true);
+    assert.ok(data.message, 'replay must include message field');
+    assert.equal(data.message.id, msg.id);
+    assert.equal(data.message.status, 'scheduled');
+  });
+
+  await t.test('ADV-U11-007: first-call and replay have identical top-level and message keys', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Key parity test',
+      body_text: 'Key parity.',
+    });
+    const { message: msg } = await createRes.json();
+
+    const res1 = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, requestId: 'keyparity-1',
+    });
+    const d1 = await res1.json();
+
+    const res2 = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, requestId: 'keyparity-1',
+    });
+    const d2 = await res2.json();
+
+    // Strict top-level key parity
+    assert.deepEqual(
+      Object.keys(d1).sort(),
+      Object.keys(d2).sort(),
+      'first-call and replay must have identical top-level keys',
+    );
+    // Strict message-field key parity
+    assert.deepEqual(
+      Object.keys(d1.message).sort(),
+      Object.keys(d2.message).sort(),
+      'first-call and replay message fields must have identical keys',
+    );
+  });
+
+  await t.test('ADV-U11-007: replay after subsequent modification returns current state, not stale cache', async () => {
+    const createRes = await createMessage(server, 'adult-admin', {
+      title: 'Stale cache test',
+      body_text: 'Original body.',
+    });
+    const { message: msg } = await createRes.json();
+
+    // First transition: draft → scheduled (row_version 0 → 1)
+    const res1 = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, requestId: 'stalecache-1',
+    });
+    const d1 = await res1.json();
+    assert.equal(d1.message.status, 'scheduled');
+    assert.equal(d1.message.row_version, 1);
+
+    // Subsequent transition: scheduled → published (row_version 1 → 2)
+    await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'published', expectedRowVersion: 1, requestId: 'stalecache-2',
+    });
+
+    // Replay the original draft → scheduled transition
+    const res3 = await transitionMessage(server, 'adult-admin', msg.id, {
+      action: 'scheduled', expectedRowVersion: 0, requestId: 'stalecache-1',
+    });
+    const d3 = await res3.json();
+    assert.equal(d3.mutation.replayed, true);
+    // The message field must reflect the CURRENT DB state (published, row_version 2),
+    // not the stale cached state from the original transition.
+    assert.equal(d3.message.status, 'published');
+    assert.equal(d3.message.row_version, 2);
   });
 
   await t.test('ADV-U11-001: transition post-batch CAS detects concurrent row_version bump', async () => {

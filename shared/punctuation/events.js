@@ -7,6 +7,7 @@ export const PUNCTUATION_EVENT_TYPES = Object.freeze({
   UNIT_SECURED: 'punctuation.unit-secured',
   SESSION_COMPLETED: 'punctuation.session-completed',
   AVAILABILITY_DENIED: 'punctuation.availability-denied',
+  STAR_EVIDENCE_UPDATED: 'punctuation.star-evidence-updated',
 });
 
 function safeTimestamp(value) {

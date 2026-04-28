@@ -347,10 +347,10 @@ Worker (isolated worktree) → PR → Adversarial review → Follower fix → Re
 - **Complex audience targeting** (per-child, per-cohort) for Marketing — future phase
 - **Full search infrastructure** (Elasticsearch, Meilisearch) — P3 uses SQL LIKE, sufficient at current scale
 - **Production Arithmetic/Reasoning/Reading content providers** — placeholder-only in P3 subject overview
-- **Production smoke harmonisation** — `--help` and structured exit codes deferred to separate cleanup
-- **`confirmBroadPublish` on `scheduled` transition** — current gate only fires on `published`, not `scheduled`. If a future auto-publisher transitions scheduled→published without the flag, the gate is bypassed. (Review finding ADV-U11-005, advisory severity.)
-- **Idempotent replay response shape parity** — first-call returns `message` field, replay returns only `{ messageId, previousStatus, newStatus }`. (Review finding ADV-U11-007, advisory severity.)
-- **Debug Bundle Playwright end-to-end** — unit tests cover aggregation and redaction; no browser-level test of the full search→generate→copy flow yet.
+- **Production smoke harmonisation** — `--help` and structured exit codes deferred to separate cleanup. **→ Partially resolved by P4 PR #445 (U7): admin smoke now covers 14 steps with structured JSON output, `--help` flag, and distinct exit codes (0/1/2/3). Full harmonisation across all smoke scripts remains deferred.**
+- **`confirmBroadPublish` on `scheduled` transition** — current gate only fires on `published`, not `scheduled`. If a future auto-publisher transitions scheduled→published without the flag, the gate is bypassed. (Review finding ADV-U11-005, advisory severity.) **→ Resolved by P4 PR #430 (U4): gate now fires on both `published` and `scheduled` transitions.**
+- **Idempotent replay response shape parity** — first-call returns `message` field, replay returns only `{ messageId, previousStatus, newStatus }`. (Review finding ADV-U11-007, advisory severity.) **→ Resolved by P4 PR #429 (U5): replay response now includes `message` field matching first-success shape.**
+- **Debug Bundle Playwright end-to-end** — unit tests cover aggregation and redaction; no browser-level test of the full search→generate→copy flow yet. **→ Still deferred after P4. P4 added 14-step production smoke coverage (PR #445 U7) including Debug Bundle generation, but no Playwright browser-level test.**
 
 ---
 

@@ -12,15 +12,6 @@ import { installMemoryStorage } from './helpers/memory-storage.js';
 import { coreOnlyVersionOneContent } from './helpers/spelling-content.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
-async function waitForPersistenceIdle(repositories, attempts = 60) {
-  await Promise.resolve();
-  for (let index = 0; index < attempts; index += 1) {
-    if (repositories.persistence.read().inFlightWriteCount === 0) break;
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
-  await new Promise((resolve) => setTimeout(resolve, 0));
-}
-
 function learnerSnapshot(name = 'Ava') {
   return {
     byId: {
@@ -353,7 +344,7 @@ test('content writes share the account revision without leaving later learner wr
     assert.equal(content.getAccountRevision(), 2);
 
     platform.learners.write(learnerSnapshot('Ava Rebased'));
-    await waitForPersistenceIdle(platform);
+    await platform.flush();
 
     const persistence = platform.persistence.read();
     assert.equal(persistence.mode, 'remote-sync');

@@ -417,6 +417,23 @@ test('runCli unknown flag returns EXIT_USAGE without calling fetch', async () =>
 
 test('runCli P95 violation exits EXIT_VALIDATION', async () => {
   const fixture = installDemoBootstrapHandlers();
+  // The start-session fetch in the production smoke is measured with
+  // performance.now() rounded to 0.1 ms (scripts/spelling-dense-history-smoke.mjs).
+  // The synchronous mock can resolve in well under 0.05 ms on fast hardware,
+  // rounding wallMs to 0 and silently passing the `wallMs > 0` ceiling.
+  // Wrap the start-session fetch with a 1 ms delay so the violation is
+  // observable; other tests using this fixture are unaffected.
+  const wrappedFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    const pathname = new URL(String(url)).pathname;
+    if (pathname === '/api/subjects/spelling/command') {
+      const body = JSON.parse(init.body || '{}');
+      if (body.command === 'start-session') {
+        await new Promise((resolve) => { setTimeout(resolve, 1); });
+      }
+    }
+    return wrappedFetch(url, init);
+  };
   const previousLog = console.log;
   console.log = () => {};
   try {

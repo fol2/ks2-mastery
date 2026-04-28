@@ -1261,10 +1261,13 @@ test('P6-U6 view-model: dashboard model with evidence → monsterStrip Stars mat
   const conceptNodes = {
     clauses: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
   };
-  const postSecureTs = Date.now() - 1000;
+  // P6-U2/U3 (#387) requires `createdAt` strictly after the estimated
+  // `securedAtTs = now - intervalDays * 86_400_000` for `retainedAfterSecure`
+  // to fire. `Date.now()` satisfies that for any positive intervalDays.
+  const now = Date.now();
   const recentAttempts = [
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: postSecureTs },
-    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: postSecureTs },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: now },
+    { conceptIds: ['clauses'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: now },
   ];
   const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
   const bracehart = model.monsterStrip.find((e) => e.monsterId === 'bracehart');
@@ -1294,10 +1297,11 @@ test('P6-U6 view-model: live evidence > persisted starHighWater → dashboard sh
   const conceptNodes = {
     word_classes: { attempts: 12, correct: 11, wrong: 1, strength: 0.88, intervalDays: 14, correctStreak: 6 },
   };
-  const postSecureTs = Date.now() - 1000;
+  // P6-U2/U3 (#387) `retainedAfterSecure` temporal proof — see sibling test.
+  const now = Date.now();
   const recentAttempts = [
-    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: postSecureTs },
-    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: postSecureTs },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-a', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: now },
+    { conceptIds: ['word_classes'], result: { correct: true }, templateId: 'tmpl-b', firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: now },
   ];
   const model = buildGrammarDashboardModel({}, null, rewardState, conceptNodes, recentAttempts);
   const couronnail = model.monsterStrip.find((e) => e.monsterId === 'couronnail');

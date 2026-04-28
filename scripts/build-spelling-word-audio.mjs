@@ -36,6 +36,9 @@ import { fileURLToPath } from 'node:url';
 import { WORDS } from '../src/subjects/spelling/data/word-data.js';
 import { SEEDED_SPELLING_PUBLISHED_SNAPSHOT } from '../src/subjects/spelling/data/content-data.js';
 import {
+  buildAudioAssetKey,
+  buildBufferedDictationTranscript,
+  buildBufferedSpeechPrompt,
   BUFFERED_GEMINI_VOICE_OPTIONS,
   SPELLING_AUDIO_MODEL,
   buildBufferedWordSpeechPrompt,
@@ -78,6 +81,26 @@ export async function computeWordContentKey(slug, word) {
   let binary = '';
   for (const byte of new Uint8Array(digest)) binary += String.fromCharCode(byte);
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+export async function computeSentenceContentKey(slug, sentenceIndex, word, sentence) {
+  const input = [
+    'spelling-audio-content-v2',
+    cleanText(slug).toLowerCase(),
+    String(Number(sentenceIndex)),
+    cleanText(word),
+    cleanText(sentence),
+  ].join('|');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  let binary = '';
+  for (const byte of new Uint8Array(digest)) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+export function buildFallbackSentenceSpeechPrompt({ wordText, sentence, slow }) {
+  const transcript = buildBufferedDictationTranscript(wordText, sentence);
+  const pace = slow ? 'slowly and clearly' : 'clearly';
+  return `Read exactly this KS2 spelling dictation in natural British English ${pace}. Do not add any extra words:\n\n${transcript}`;
 }
 
 // `parseArgs` follows the existing `scripts/spelling-dense-history-smoke.mjs`
@@ -576,10 +599,11 @@ export async function runWithConcurrency(items, concurrency, worker) {
 // `worker/src/tts.js:687-704` (responseModalities, languageCode 'en-GB',
 // prebuiltVoiceConfig.voiceName) so both lanes synthesise from the same
 // contract — see `tests/spelling-word-prompt.test.js` for prompt parity.
-export function buildGeminiRequestBody({ wordText, voice }) {
+export function buildGeminiRequestBody({ wordText, voice, promptText = '' }) {
+  const text = promptText || buildBufferedWordSpeechPrompt({ wordText });
   return {
     contents: [{
-      parts: [{ text: buildBufferedWordSpeechPrompt({ wordText }) }],
+      parts: [{ text }],
     }],
     generationConfig: {
       responseModalities: ['AUDIO'],
@@ -604,6 +628,7 @@ export async function callGeminiSpeech({
   model,
   voice,
   wordText,
+  promptText = '',
   fetchImpl = fetch,
   timeoutMs = 60000,
 } = {}) {
@@ -620,7 +645,7 @@ export async function callGeminiSpeech({
         'content-type': 'application/json',
         accept: 'application/json',
       },
-      body: JSON.stringify(buildGeminiRequestBody({ wordText, voice })),
+      body: JSON.stringify(buildGeminiRequestBody({ wordText, voice, promptText })),
     });
   } finally {
     clearTimeout(timer);
@@ -717,8 +742,9 @@ export async function processEntry({
   const upload = dependencies.upload || uploadObjectToR2;
 
   const audioDir = path.join(runDir, 'audio', entry.voice);
-  const wavPath = path.join(audioDir, `${entry.slug}.wav`);
-  const mp3Path = path.join(audioDir, `${entry.slug}.mp3`);
+  const fileStem = cleanText(entry.fileStem) || entry.slug;
+  const wavPath = path.join(audioDir, `${fileStem}.wav`);
+  const mp3Path = path.join(audioDir, `${fileStem}.mp3`);
 
   if (entry.status === 'uploaded') return entry;
 
@@ -729,6 +755,7 @@ export async function processEntry({
       model,
       voice: entry.voice,
       wordText: entry.word,
+      promptText: entry.promptText || '',
     });
     const wavBytes = pcmToWavBuffer(inline.data, inline.mimeType || inline.mime_type);
     await writeWav(wavPath, wavBytes);
@@ -763,10 +790,121 @@ export async function processEntry({
   throw lastError;
 }
 
-function isGeminiQuotaError(error) {
+export function isGeminiQuotaError(error) {
   const status = Number(error?.status);
   if (status === 429 || status === 403) return true;
   return /RESOURCE_EXHAUSTED|quota|rate.?limit/i.test(String(error?.message || error));
+}
+
+export function isGeminiTransientError(error) {
+  const status = Number(error?.status);
+  if (status === 500 || status === 502 || status === 503 || status === 504) return true;
+  return /INTERNAL|UNAVAILABLE|temporar(?:y|ily)|overload/i.test(String(error?.message || error));
+}
+
+export async function buildSentencePlannedEntries({
+  words,
+  voices,
+  speeds,
+  model = SPELLING_AUDIO_MODEL,
+  includeVariants = true,
+} = {}) {
+  const entries = [];
+  const safeWords = Array.isArray(words) ? words : [];
+  const safeVoices = Array.isArray(voices) ? voices : [];
+  const safeSpeeds = Array.isArray(speeds) && speeds.length
+    ? speeds
+    : [{ id: 'standard', slow: false }];
+
+  function pushPrompt({ baseWord, promptedWord, sentence, sentenceIndex, promptKey }) {
+    const cleanSlug = cleanText(baseWord.slug).toLowerCase();
+    const cleanWord = cleanText(promptedWord);
+    const cleanSentence = cleanText(sentence);
+    if (!cleanSlug || !cleanWord || !cleanSentence) return;
+    for (const voice of safeVoices) {
+      for (const speed of safeSpeeds) {
+        entries.push({
+          id: `sentence:${voice}:${speed.id}:${cleanSlug}:${promptKey}:${sentenceIndex}`,
+          kind: 'sentence',
+          slug: cleanSlug,
+          word: cleanWord,
+          sentence: cleanSentence,
+          sentenceIndex,
+          voice,
+          speed: speed.id,
+          slow: Boolean(speed.slow),
+          promptText: buildBufferedSpeechPrompt({
+            wordText: cleanWord,
+            sentence: cleanSentence,
+            slow: Boolean(speed.slow),
+          }),
+          fallbackPromptText: buildFallbackSentenceSpeechPrompt({
+            wordText: cleanWord,
+            sentence: cleanSentence,
+            slow: Boolean(speed.slow),
+          }),
+          status: 'pending',
+          attempts: 0,
+          lastError: null,
+        });
+      }
+    }
+  }
+
+  for (const word of safeWords) {
+    const baseSentences = Array.isArray(word.sentences) && word.sentences.length
+      ? word.sentences
+      : (word.sentence ? [word.sentence] : []);
+    baseSentences.forEach((sentence, sentenceIndex) => {
+      pushPrompt({
+        baseWord: word,
+        promptedWord: word.word,
+        sentence,
+        sentenceIndex,
+        promptKey: `base:${sentenceIndex}`,
+      });
+    });
+
+    if (!includeVariants || !Array.isArray(word.variants)) continue;
+    for (const variant of word.variants) {
+      const variantSentences = Array.isArray(variant.sentences) && variant.sentences.length
+        ? variant.sentences
+        : (variant.sentence ? [variant.sentence] : []);
+      variantSentences.forEach((sentence, variantSentenceIndex) => {
+        pushPrompt({
+          baseWord: word,
+          promptedWord: variant.word,
+          sentence,
+          // Runtime variant prompts resolve against the base canonical word.
+          // They therefore use the same fallback index the Worker computes
+          // when the variant sentence is not present in the base sentence list.
+          sentenceIndex: 0,
+          promptKey: `variant:${cleanText(variant.word).toLowerCase()}:${variantSentenceIndex}`,
+        });
+      });
+    }
+  }
+
+  for (const entry of entries) {
+    entry.contentKey = await computeSentenceContentKey(entry.slug, entry.sentenceIndex, entry.word, entry.sentence);
+    entry.key = buildAudioAssetKey({
+      model,
+      voice: entry.voice,
+      speed: entry.speed,
+      contentKey: entry.contentKey,
+      slug: entry.slug,
+      sentenceIndex: entry.sentenceIndex,
+    });
+    entry.fileStem = [
+      entry.slug,
+      entry.kind,
+      entry.speed,
+      String(entry.sentenceIndex).padStart(2, '0'),
+      entry.contentKey.slice(0, 10),
+    ].join('-');
+  }
+
+  return entries;
 }
 
 // `commandList` (no API call) prints the planned (slug, voice, key) tuples.
@@ -865,8 +1003,9 @@ export async function commandGenerate({
 
   // Preflight (run once before any work).
   assertWordsSnapshotParity({ words: WORDS, snapshot: SEEDED_SPELLING_PUBLISHED_SNAPSHOT });
-  if (WORDS.length !== 236) {
-    throw new Error(`WORDS must contain exactly 236 entries (saw ${WORDS.length}); aborting before Gemini spend.`);
+  const snapshotWordCount = Object.keys(SEEDED_SPELLING_PUBLISHED_SNAPSHOT.wordBySlug || {}).length;
+  if (WORDS.length !== snapshotWordCount) {
+    throw new Error(`WORDS/snapshot word count mismatch (WORDS=${WORDS.length}, snapshot=${snapshotWordCount}); aborting before Gemini spend.`);
   }
   if (!dryRun) {
     const apiKeys = (dependencies.getDirectApiKeyPool || getDirectApiKeyPool)(env);
@@ -999,18 +1138,15 @@ export async function commandGenerate({
     const remaining = entries.filter((entry) => entry.status !== 'uploaded');
     await runWithConcurrency(remaining, concurrency, async (entry) => {
       let lastError = null;
-      // Two budgets, two loops:
-      //   1. Quota rotation (outer-ish): bounded by key pool size — once
-      //      every key in the pool returns 429/RESOURCE_EXHAUSTED for THIS
-      //      entry, give up. Each rotation does NOT consume the retry
-      //      budget — rotating to a healthy key is a deterministic
-      //      recovery action, not a retry of the same failing call.
-      //   2. Non-quota errors: break immediately with a single attempt.
-      //      The retry-budget knob `--max-retries` is currently reserved
-      //      for upload-side 502/503 (handled inside `processEntry`) and
-      //      a future transport-error lane (see deferred tech debt). A
-      //      non-quota Gemini error is unlikely to resolve on the same
-      //      key without operator action, so we fail fast.
+      let transientRetries = 0;
+      let usingFallbackPrompt = false;
+      // Two recovery paths, kept deliberately separate:
+      //   1. Quota rotation is bounded by key pool size and does not consume
+      //      the retry budget because switching to a healthy key is a
+      //      deterministic recovery action.
+      //   2. Gemini 5xx/UNAVAILABLE responses retry on the same key using
+      //      the retry budget because they are transient service failures.
+      //      Other Gemini failures still fail fast.
       // Hard upper bound on quota rotations: the size of the key pool.
       // Once every key is exhausted, `nextKey()` returns null and we exit.
       while (true) {
@@ -1047,9 +1183,28 @@ export async function commandGenerate({
             activeKeyIndex = (activeKeyIndex + 1) % apiKeys.length;
             continue;
           }
-          // Non-quota Gemini failure: break immediately. `--max-retries`
-          // budget is reserved for upload-side 5xx (already handled in
-          // `processEntry`) and a future transport-error lane.
+          if (isGeminiTransientError(error) && transientRetries < maxRetries) {
+            transientRetries += 1;
+            entry.lastError = String(error?.message || error);
+            await flushState();
+            await new Promise((resolve) => setTimeout(resolve, Math.min(15000, 500 * (2 ** Math.max(0, transientRetries - 1)))));
+            continue;
+          }
+          if (
+            isGeminiTransientError(error)
+            && !usingFallbackPrompt
+            && entry.fallbackPromptText
+            && entry.promptText !== entry.fallbackPromptText
+          ) {
+            usingFallbackPrompt = true;
+            transientRetries = 0;
+            entry.promptText = entry.fallbackPromptText;
+            entry.promptMode = 'fallback-simple';
+            entry.lastError = String(error?.message || error);
+            await flushState();
+            continue;
+          }
+          // Non-transient Gemini failure: break immediately.
           break;
         }
       }
@@ -1085,7 +1240,7 @@ function printUsage() {
   ].join('\n'));
 }
 
-async function preflightExternalCommands({
+export async function preflightExternalCommands({
   env = process.env,
   execFileImpl = execFileAsync,
 } = {}) {

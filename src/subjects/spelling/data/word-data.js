@@ -1,4 +1,4 @@
-// Generated from content\spelling.seed.json via scripts/generate-spelling-content.mjs
+// Generated from content/spelling.seed.json via scripts/generate-spelling-content.mjs
 // This file stays as a small compatibility shim for the existing spelling runtime.
 
 export {
@@ -2095,11 +2095,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
-    "patternIds": [
-      "root-graph-scribe"
-    ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -3491,11 +3490,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
-    "patternIds": [
-      "homophone"
-    ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -6613,11 +6611,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
-    "patternIds": [
-      "root-graph-scribe"
-    ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -9231,11 +9228,10 @@ export const WORDS = [
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
-    "patternIds": [
-      "root-graph-scribe"
-    ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -11375,6 +11371,759 @@ export const WORDS = [
       "importedAt": 1776816000000
     },
     "sortIndex": 235
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "abscess",
+    "slug": "abscess",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "abscess",
+      "abscesses",
+      "abscessed"
+    ],
+    "sentence": "The nurse checked the abscess and cleaned the skin carefully.",
+    "sentences": [
+      "The nurse checked the abscess and cleaned the skin carefully."
+    ],
+    "accepted": [
+      "abscess"
+    ],
+    "variants": [
+      {
+        "word": "abscesses",
+        "sentence": "Small abscesses need careful medical treatment.",
+        "sentences": [
+          "Small abscesses need careful medical treatment."
+        ],
+        "accepted": [
+          "abscesses"
+        ],
+        "explanation": "Abscesses are swollen infected areas that need proper care.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the abscess base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "abscessed",
+        "sentence": "The abscessed tooth was checked by a dentist.",
+        "sentences": [
+          "The abscessed tooth was checked by a dentist."
+        ],
+        "accepted": [
+          "abscessed"
+        ],
+        "explanation": "Abscessed describes a tooth or area affected by an abscess.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the abscess base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "An abscess is a painful swollen area where infection has formed pus.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "medicine"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 236
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "ascend",
+    "slug": "ascend",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "ascend",
+      "ascent",
+      "ascending"
+    ],
+    "sentence": "The hikers ascend the steep path before lunch.",
+    "sentences": [
+      "The hikers ascend the steep path before lunch."
+    ],
+    "accepted": [
+      "ascend"
+    ],
+    "variants": [
+      {
+        "word": "ascent",
+        "sentence": "The ascent up the hill took nearly an hour.",
+        "sentences": [
+          "The ascent up the hill took nearly an hour."
+        ],
+        "accepted": [
+          "ascent"
+        ],
+        "explanation": "An ascent is a climb or upward journey.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the ascend base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "ascending",
+        "sentence": "The ascending path became steeper near the top.",
+        "sentences": [
+          "The ascending path became steeper near the top."
+        ],
+        "accepted": [
+          "ascending"
+        ],
+        "explanation": "Ascending means moving upwards or rising.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the ascend base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "To ascend means to go up or climb higher.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "word-building",
+      "verbs"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 237
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "descend",
+    "slug": "descend",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "descend",
+      "descent",
+      "descending"
+    ],
+    "sentence": "We descend the stairs quietly after assembly.",
+    "sentences": [
+      "We descend the stairs quietly after assembly."
+    ],
+    "accepted": [
+      "descend"
+    ],
+    "variants": [
+      {
+        "word": "descent",
+        "sentence": "The descent from the hill was slow and careful.",
+        "sentences": [
+          "The descent from the hill was slow and careful."
+        ],
+        "accepted": [
+          "descent"
+        ],
+        "explanation": "A descent is a journey downwards.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the descend base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "descending",
+        "sentence": "The descending lift stopped at the ground floor.",
+        "sentences": [
+          "The descending lift stopped at the ground floor."
+        ],
+        "accepted": [
+          "descending"
+        ],
+        "explanation": "Descending means moving downwards.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the descend base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "To descend means to go down from a higher place.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "word-building",
+      "verbs"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 238
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "fascinate",
+    "slug": "fascinate",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "fascinate",
+      "fascinating",
+      "fascination"
+    ],
+    "sentence": "The fossil display can fascinate the whole class.",
+    "sentences": [
+      "The fossil display can fascinate the whole class."
+    ],
+    "accepted": [
+      "fascinate"
+    ],
+    "variants": [
+      {
+        "word": "fascinating",
+        "sentence": "The science talk was fascinating to the class.",
+        "sentences": [
+          "The science talk was fascinating to the class."
+        ],
+        "accepted": [
+          "fascinating"
+        ],
+        "explanation": "Fascinating means very interesting.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the fascinate base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "fascination",
+        "sentence": "Her fascination with space began after the museum trip.",
+        "sentences": [
+          "Her fascination with space began after the museum trip."
+        ],
+        "accepted": [
+          "fascination"
+        ],
+        "explanation": "Fascination is a very strong interest in something.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the fascinate base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "To fascinate means to interest someone very strongly.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "word-building",
+      "verbs"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 239
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "scene",
+    "slug": "scene",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "scene",
+      "scenery",
+      "scenic"
+    ],
+    "sentence": "The final scene in the play was set in a forest.",
+    "sentences": [
+      "The final scene in the play was set in a forest."
+    ],
+    "accepted": [
+      "scene"
+    ],
+    "variants": [
+      {
+        "word": "scenery",
+        "sentence": "The mountain scenery looked bright after the rain.",
+        "sentences": [
+          "The mountain scenery looked bright after the rain."
+        ],
+        "accepted": [
+          "scenery"
+        ],
+        "explanation": "Scenery is the natural view around a place, or the background used on a stage.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scene base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "scenic",
+        "sentence": "We followed the scenic route by the river.",
+        "sentences": [
+          "We followed the scenic route by the river."
+        ],
+        "accepted": [
+          "scenic"
+        ],
+        "explanation": "Scenic means having beautiful natural views.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scene base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "A scene is a part of a play, film, story or a view of a place.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "arts"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 240
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: Greek ch says k",
+    "word": "school",
+    "slug": "school",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "school",
+      "schooling",
+      "schoolwork"
+    ],
+    "sentence": "Our school opened a new library this term.",
+    "sentences": [
+      "Our school opened a new library this term."
+    ],
+    "accepted": [
+      "school"
+    ],
+    "variants": [
+      {
+        "word": "schooling",
+        "sentence": "His schooling included music, science and sport.",
+        "sentences": [
+          "His schooling included music, science and sport."
+        ],
+        "accepted": [
+          "schooling"
+        ],
+        "explanation": "Schooling is the education someone receives.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the school base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "schoolwork",
+        "sentence": "The schoolwork included a short science task.",
+        "sentences": [
+          "The schoolwork included a short science task."
+        ],
+        "accepted": [
+          "schoolwork"
+        ],
+        "explanation": "Schoolwork is work set or done for school.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the school base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "A school is a place where children learn.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "hard-ch",
+      "greek-ch",
+      "school-life"
+    ],
+    "patternIds": [],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 241
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "science",
+    "slug": "science",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "science",
+      "scientist",
+      "scientific"
+    ],
+    "sentence": "Science helps us test ideas with evidence.",
+    "sentences": [
+      "Science helps us test ideas with evidence."
+    ],
+    "accepted": [
+      "science"
+    ],
+    "variants": [
+      {
+        "word": "scientist",
+        "sentence": "The scientist recorded the results carefully.",
+        "sentences": [
+          "The scientist recorded the results carefully."
+        ],
+        "accepted": [
+          "scientist"
+        ],
+        "explanation": "A scientist studies the natural world and tests ideas with evidence.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the science base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "scientific",
+        "sentence": "The scientific method helped us test the idea.",
+        "sentences": [
+          "The scientific method helped us test the idea."
+        ],
+        "accepted": [
+          "scientific"
+        ],
+        "explanation": "Scientific means connected with science or careful testing.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the science base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "Science is the study of the natural world through evidence and experiments.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "science"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 242
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "scissors",
+    "slug": "scissors",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "scissors",
+      "scissor"
+    ],
+    "sentence": "The scissors were kept safely in the craft tray.",
+    "sentences": [
+      "The scissors were kept safely in the craft tray."
+    ],
+    "accepted": [
+      "scissors"
+    ],
+    "variants": [
+      {
+        "word": "scissor",
+        "sentence": "A scissor action helped the tool cut cleanly.",
+        "sentences": [
+          "A scissor action helped the tool cut cleanly."
+        ],
+        "accepted": [
+          "scissor"
+        ],
+        "explanation": "Scissor can describe a cutting action or one blade-like part of a tool.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scissors base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      }
+    ],
+    "explanation": "Scissors are a cutting tool with two blades joined in the middle.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "tools"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 243
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "scented",
+    "slug": "scented",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "scented",
+      "scent",
+      "scentless"
+    ],
+    "sentence": "The scented herbs made the garden path pleasant.",
+    "sentences": [
+      "The scented herbs made the garden path pleasant."
+    ],
+    "accepted": [
+      "scented"
+    ],
+    "variants": [
+      {
+        "word": "scent",
+        "sentence": "The scent of mint drifted through the kitchen.",
+        "sentences": [
+          "The scent of mint drifted through the kitchen."
+        ],
+        "accepted": [
+          "scent"
+        ],
+        "explanation": "A scent is a smell, especially a pleasant one.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scented base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "scentless",
+        "sentence": "The scentless flower still looked beautiful.",
+        "sentences": [
+          "The scentless flower still looked beautiful."
+        ],
+        "accepted": [
+          "scentless"
+        ],
+        "explanation": "Scentless means having no smell.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scented base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "Scented means having a pleasant or noticeable smell.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "word-building",
+      "adjectives"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 244
+  },
+  {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "crescent",
+    "slug": "crescent",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "crescent",
+      "crescents",
+      "crescent-shaped"
+    ],
+    "sentence": "A thin crescent moon rose above the rooftops.",
+    "sentences": [
+      "A thin crescent moon rose above the rooftops."
+    ],
+    "accepted": [
+      "crescent"
+    ],
+    "variants": [
+      {
+        "word": "crescents",
+        "sentence": "The baker cut the pastry into small crescents.",
+        "sentences": [
+          "The baker cut the pastry into small crescents."
+        ],
+        "accepted": [
+          "crescents"
+        ],
+        "explanation": "Crescents are curved shapes like a young moon.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the crescent base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "crescent-shaped",
+        "sentence": "The crescent-shaped bay curved around the village.",
+        "sentences": [
+          "The crescent-shaped bay curved around the village."
+        ],
+        "accepted": [
+          "crescent-shaped"
+        ],
+        "explanation": "Crescent-shaped means curved like a crescent moon.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the crescent base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "A crescent is a curved shape that is wider in the middle and pointed at both ends.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "shapes"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 245
   }
 ];
 
@@ -13468,11 +14217,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
-    "patternIds": [
-      "root-graph-scribe"
-    ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -14864,11 +15612,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
-    "patternIds": [
-      "homophone"
-    ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -17986,11 +18733,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
-    "patternIds": [
-      "root-graph-scribe"
-    ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -20604,11 +21350,10 @@ export const WORD_BY_SLUG = {
     ],
     "tags": [
       "statutory",
-      "legacy-seed"
+      "legacy-seed",
+      "exception-word"
     ],
-    "patternIds": [
-      "root-graph-scribe"
-    ],
+    "patternIds": [],
     "sourceNote": "Seeded from preserved legacy spelling word list.",
     "provenance": {
       "source": "legacy/vendor/word-list.js",
@@ -22748,5 +23493,758 @@ export const WORD_BY_SLUG = {
       "importedAt": 1776816000000
     },
     "sortIndex": 235
+  },
+  "abscess": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "abscess",
+    "slug": "abscess",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "abscess",
+      "abscesses",
+      "abscessed"
+    ],
+    "sentence": "The nurse checked the abscess and cleaned the skin carefully.",
+    "sentences": [
+      "The nurse checked the abscess and cleaned the skin carefully."
+    ],
+    "accepted": [
+      "abscess"
+    ],
+    "variants": [
+      {
+        "word": "abscesses",
+        "sentence": "Small abscesses need careful medical treatment.",
+        "sentences": [
+          "Small abscesses need careful medical treatment."
+        ],
+        "accepted": [
+          "abscesses"
+        ],
+        "explanation": "Abscesses are swollen infected areas that need proper care.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the abscess base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "abscessed",
+        "sentence": "The abscessed tooth was checked by a dentist.",
+        "sentences": [
+          "The abscessed tooth was checked by a dentist."
+        ],
+        "accepted": [
+          "abscessed"
+        ],
+        "explanation": "Abscessed describes a tooth or area affected by an abscess.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the abscess base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "An abscess is a painful swollen area where infection has formed pus.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "medicine"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 236
+  },
+  "ascend": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "ascend",
+    "slug": "ascend",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "ascend",
+      "ascent",
+      "ascending"
+    ],
+    "sentence": "The hikers ascend the steep path before lunch.",
+    "sentences": [
+      "The hikers ascend the steep path before lunch."
+    ],
+    "accepted": [
+      "ascend"
+    ],
+    "variants": [
+      {
+        "word": "ascent",
+        "sentence": "The ascent up the hill took nearly an hour.",
+        "sentences": [
+          "The ascent up the hill took nearly an hour."
+        ],
+        "accepted": [
+          "ascent"
+        ],
+        "explanation": "An ascent is a climb or upward journey.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the ascend base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "ascending",
+        "sentence": "The ascending path became steeper near the top.",
+        "sentences": [
+          "The ascending path became steeper near the top."
+        ],
+        "accepted": [
+          "ascending"
+        ],
+        "explanation": "Ascending means moving upwards or rising.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the ascend base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "To ascend means to go up or climb higher.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "word-building",
+      "verbs"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 237
+  },
+  "descend": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "descend",
+    "slug": "descend",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "descend",
+      "descent",
+      "descending"
+    ],
+    "sentence": "We descend the stairs quietly after assembly.",
+    "sentences": [
+      "We descend the stairs quietly after assembly."
+    ],
+    "accepted": [
+      "descend"
+    ],
+    "variants": [
+      {
+        "word": "descent",
+        "sentence": "The descent from the hill was slow and careful.",
+        "sentences": [
+          "The descent from the hill was slow and careful."
+        ],
+        "accepted": [
+          "descent"
+        ],
+        "explanation": "A descent is a journey downwards.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the descend base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "descending",
+        "sentence": "The descending lift stopped at the ground floor.",
+        "sentences": [
+          "The descending lift stopped at the ground floor."
+        ],
+        "accepted": [
+          "descending"
+        ],
+        "explanation": "Descending means moving downwards.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the descend base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "To descend means to go down from a higher place.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "word-building",
+      "verbs"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 238
+  },
+  "fascinate": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "fascinate",
+    "slug": "fascinate",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "fascinate",
+      "fascinating",
+      "fascination"
+    ],
+    "sentence": "The fossil display can fascinate the whole class.",
+    "sentences": [
+      "The fossil display can fascinate the whole class."
+    ],
+    "accepted": [
+      "fascinate"
+    ],
+    "variants": [
+      {
+        "word": "fascinating",
+        "sentence": "The science talk was fascinating to the class.",
+        "sentences": [
+          "The science talk was fascinating to the class."
+        ],
+        "accepted": [
+          "fascinating"
+        ],
+        "explanation": "Fascinating means very interesting.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the fascinate base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "fascination",
+        "sentence": "Her fascination with space began after the museum trip.",
+        "sentences": [
+          "Her fascination with space began after the museum trip."
+        ],
+        "accepted": [
+          "fascination"
+        ],
+        "explanation": "Fascination is a very strong interest in something.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the fascinate base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "To fascinate means to interest someone very strongly.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "word-building",
+      "verbs"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 239
+  },
+  "scene": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "scene",
+    "slug": "scene",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "scene",
+      "scenery",
+      "scenic"
+    ],
+    "sentence": "The final scene in the play was set in a forest.",
+    "sentences": [
+      "The final scene in the play was set in a forest."
+    ],
+    "accepted": [
+      "scene"
+    ],
+    "variants": [
+      {
+        "word": "scenery",
+        "sentence": "The mountain scenery looked bright after the rain.",
+        "sentences": [
+          "The mountain scenery looked bright after the rain."
+        ],
+        "accepted": [
+          "scenery"
+        ],
+        "explanation": "Scenery is the natural view around a place, or the background used on a stage.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scene base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "scenic",
+        "sentence": "We followed the scenic route by the river.",
+        "sentences": [
+          "We followed the scenic route by the river."
+        ],
+        "accepted": [
+          "scenic"
+        ],
+        "explanation": "Scenic means having beautiful natural views.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scene base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "A scene is a part of a play, film, story or a view of a place.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "arts"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 240
+  },
+  "school": {
+    "year": "extra",
+    "family": "Spelling pattern: Greek ch says k",
+    "word": "school",
+    "slug": "school",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "school",
+      "schooling",
+      "schoolwork"
+    ],
+    "sentence": "Our school opened a new library this term.",
+    "sentences": [
+      "Our school opened a new library this term."
+    ],
+    "accepted": [
+      "school"
+    ],
+    "variants": [
+      {
+        "word": "schooling",
+        "sentence": "His schooling included music, science and sport.",
+        "sentences": [
+          "His schooling included music, science and sport."
+        ],
+        "accepted": [
+          "schooling"
+        ],
+        "explanation": "Schooling is the education someone receives.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the school base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "schoolwork",
+        "sentence": "The schoolwork included a short science task.",
+        "sentences": [
+          "The schoolwork included a short science task."
+        ],
+        "accepted": [
+          "schoolwork"
+        ],
+        "explanation": "Schoolwork is work set or done for school.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the school base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "A school is a place where children learn.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "hard-ch",
+      "greek-ch",
+      "school-life"
+    ],
+    "patternIds": [],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 241
+  },
+  "science": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "science",
+    "slug": "science",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "science",
+      "scientist",
+      "scientific"
+    ],
+    "sentence": "Science helps us test ideas with evidence.",
+    "sentences": [
+      "Science helps us test ideas with evidence."
+    ],
+    "accepted": [
+      "science"
+    ],
+    "variants": [
+      {
+        "word": "scientist",
+        "sentence": "The scientist recorded the results carefully.",
+        "sentences": [
+          "The scientist recorded the results carefully."
+        ],
+        "accepted": [
+          "scientist"
+        ],
+        "explanation": "A scientist studies the natural world and tests ideas with evidence.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the science base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "scientific",
+        "sentence": "The scientific method helped us test the idea.",
+        "sentences": [
+          "The scientific method helped us test the idea."
+        ],
+        "accepted": [
+          "scientific"
+        ],
+        "explanation": "Scientific means connected with science or careful testing.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the science base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "Science is the study of the natural world through evidence and experiments.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "science"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 242
+  },
+  "scissors": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "scissors",
+    "slug": "scissors",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "scissors",
+      "scissor"
+    ],
+    "sentence": "The scissors were kept safely in the craft tray.",
+    "sentences": [
+      "The scissors were kept safely in the craft tray."
+    ],
+    "accepted": [
+      "scissors"
+    ],
+    "variants": [
+      {
+        "word": "scissor",
+        "sentence": "A scissor action helped the tool cut cleanly.",
+        "sentences": [
+          "A scissor action helped the tool cut cleanly."
+        ],
+        "accepted": [
+          "scissor"
+        ],
+        "explanation": "Scissor can describe a cutting action or one blade-like part of a tool.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scissors base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      }
+    ],
+    "explanation": "Scissors are a cutting tool with two blades joined in the middle.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "tools"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 243
+  },
+  "scented": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "scented",
+    "slug": "scented",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "scented",
+      "scent",
+      "scentless"
+    ],
+    "sentence": "The scented herbs made the garden path pleasant.",
+    "sentences": [
+      "The scented herbs made the garden path pleasant."
+    ],
+    "accepted": [
+      "scented"
+    ],
+    "variants": [
+      {
+        "word": "scent",
+        "sentence": "The scent of mint drifted through the kitchen.",
+        "sentences": [
+          "The scent of mint drifted through the kitchen."
+        ],
+        "accepted": [
+          "scent"
+        ],
+        "explanation": "A scent is a smell, especially a pleasant one.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scented base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "scentless",
+        "sentence": "The scentless flower still looked beautiful.",
+        "sentences": [
+          "The scentless flower still looked beautiful."
+        ],
+        "accepted": [
+          "scentless"
+        ],
+        "explanation": "Scentless means having no smell.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the scented base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "Scented means having a pleasant or noticeable smell.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "word-building",
+      "adjectives"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 244
+  },
+  "crescent": {
+    "year": "extra",
+    "family": "Spelling pattern: silent c in sc",
+    "word": "crescent",
+    "slug": "crescent",
+    "spellingPool": "extra",
+    "yearLabel": "Extra",
+    "familyWords": [
+      "crescent",
+      "crescents",
+      "crescent-shaped"
+    ],
+    "sentence": "A thin crescent moon rose above the rooftops.",
+    "sentences": [
+      "A thin crescent moon rose above the rooftops."
+    ],
+    "accepted": [
+      "crescent"
+    ],
+    "variants": [
+      {
+        "word": "crescents",
+        "sentence": "The baker cut the pastry into small crescents.",
+        "sentences": [
+          "The baker cut the pastry into small crescents."
+        ],
+        "accepted": [
+          "crescents"
+        ],
+        "explanation": "Crescents are curved shapes like a young moon.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the crescent base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 1
+      },
+      {
+        "word": "crescent-shaped",
+        "sentence": "The crescent-shaped bay curved around the village.",
+        "sentences": [
+          "The crescent-shaped bay curved around the village."
+        ],
+        "accepted": [
+          "crescent-shaped"
+        ],
+        "explanation": "Crescent-shaped means curved like a crescent moon.",
+        "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+        "provenance": {
+          "source": "James Extra spelling sc/ch expansion",
+          "note": "Variant prompt for the crescent base word family.",
+          "importedAt": 1777248000000
+        },
+        "sortIndex": 2
+      }
+    ],
+    "explanation": "A crescent is a curved shape that is wider in the middle and pointed at both ends.",
+    "listId": "extra-science-word-building",
+    "yearGroups": [],
+    "tags": [
+      "extra",
+      "silent-c",
+      "sc-pattern",
+      "shapes"
+    ],
+    "patternIds": [
+      "silent-letter"
+    ],
+    "sourceNote": "Added as an Extra spelling sc/ch pattern expansion on 27 April 2026.",
+    "provenance": {
+      "source": "James Extra spelling sc/ch expansion",
+      "note": "Extra sc/ch spelling pattern expansion for spelling practice.",
+      "importedAt": 1777248000000
+    },
+    "sortIndex": 245
   }
 };

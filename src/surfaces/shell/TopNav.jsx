@@ -121,7 +121,6 @@ export function TopNav({
   persistenceMode,
   persistenceLabel,
   platformRole,
-  onOpenAdmin,
   currentScreen,
 }) {
   const showAdminLink = platformRole === 'admin' || platformRole === 'ops';
@@ -143,15 +142,14 @@ export function TopNav({
       </button>
       <div className="nav-right">
         {showAdminLink && (
-          <button
-            type="button"
-            className={'topnav-admin-link' + (adminActive ? ' is-active' : '')}
+          <a
+            className={'topnav-link topnav-admin-link' + (adminActive ? ' is-active' : '')}
             data-action="open-admin-hub"
+            href="/admin"
             aria-current={adminActive ? 'page' : undefined}
-            onClick={onOpenAdmin}
           >
             Admin
-          </button>
+          </a>
         )}
         <PersistenceDot mode={persistenceMode} label={persistenceLabel} />
         <UserPill
