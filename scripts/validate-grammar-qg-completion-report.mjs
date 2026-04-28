@@ -56,7 +56,7 @@ function extractDenominatorTable(reportContent) {
  */
 function extractContentReleaseBlock(reportContent) {
   const values = new Map();
-  const codeBlockMatch = reportContent.match(/```text\n([\s\S]*?)```/);
+  const codeBlockMatch = reportContent.match(/```text\r?\n([\s\S]*?)```/);
   if (!codeBlockMatch) return values;
 
   const lines = codeBlockMatch[1].split(/\r?\n/);
