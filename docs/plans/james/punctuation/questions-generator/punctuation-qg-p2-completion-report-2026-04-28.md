@@ -8,7 +8,7 @@ Source plan: `docs/plans/james/punctuation/questions-generator/punctuation-qg-p2
 
 Implementation plan: `docs/plans/2026-04-28-002-feat-punctuation-qg-p2-depth-release-gate-plan.md`
 
-Current verification base: `origin/main` at `6f5beffa docs(hero): add P3 completion report (#538)`
+PR branch merge-base at final verification: `b8f66541 test(admin): classify support labels and refresh CI gates`
 
 Primary production target: `https://ks2.eugnel.uk`
 
@@ -347,7 +347,7 @@ gen_bullet_points_fix: generated=4, templates=4, signatures=4
 gen_bullet_points_paragraph: generated=4, templates=4, signatures=4
 ```
 
-## Final Current-Main Production Smoke Evidence
+## Final Production Smoke Evidence
 
 Command run from the isolated report worktree:
 
@@ -356,6 +356,8 @@ npm run smoke:production:punctuation
 ```
 
 Result: passed against `https://ks2.eugnel.uk`.
+
+The headline values below are the stable acceptance contract. The later item ids and attempt count are a dated diagnostic snapshot from the 28 April 2026 report verification run; bounded production search may select different valid items while preserving the same release, runtime, reward, generated-attempt, review-redaction, dash-acceptance, Oxford-comma, and English Spelling parity checks.
 
 Headline output:
 
@@ -372,7 +374,7 @@ generatedPerFamily expectation: 4
 Generated command-path probe:
 
 ```text
-itemId: gen_speech_insert_1shvsd2_4
+itemId: gen_speech_insert_1s7w6o3_1
 mode: insert
 skillIds: speech
 feedbackKind: error
@@ -382,14 +384,14 @@ misconceptionTags: speech.quote_missing
 Other smoke probes:
 
 ```text
-smartItemId: ac_choose_contractions
+smartItemId: ac_choose_theyre_dont
 smartSummaryTotal: 1
-generatedIncorrectItemId: gen_speech_insert_1shvsd2_4
+generatedIncorrectItemId: gen_speech_insert_1s7w6o3_1
 generatedIncorrectMisconceptionTags: speech.quote_missing
 advancedMode: gps
-advancedItemId: sl_choose_clubs
+advancedItemId: ac_choose_theyre_dont
 advancedReviewItems: 1
-parentHubAttempts: 17
+parentHubAttempts: 24
 spelling.progressTotal: 1
 spelling.hasPromptToken: true
 ```
@@ -398,14 +400,14 @@ Dash acceptance through the live Worker command path:
 
 | Variant | Item id | Mode | Skill |
 | --- | --- | --- | --- |
-| spaced hyphen | `gen_dash_clause_fix_146goqu_2` | fix | `dash_clause` |
-| en dash | `dc_insert_door_froze` | insert | `dash_clause` |
-| em dash | `gen_dash_clause_fix_13wh31v_3` | fix | `dash_clause` |
+| spaced hyphen | `gen_dash_clause_combine_5f51bl_3` | combine | `dash_clause` |
+| en dash | `dc_fix_signal_team` | fix | `dash_clause` |
+| em dash | `dc_fix_signal_team` | fix | `dash_clause` |
 
 Oxford-comma probe:
 
 ```text
-oxfordCommaItemId: gen_list_commas_combine_ouled8_3
+oxfordCommaItemId: lc_fix_display
 ```
 
 ## Verification History
