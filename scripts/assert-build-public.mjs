@@ -3,6 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { assertCacheSplitRules, assertHeadersBlockIsFresh } from './lib/headers-drift.mjs';
+import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from './lib/seo-practice-pages.mjs';
 
 const rootDir = process.cwd();
 const publicDir = path.join(rootDir, 'dist', 'public');
@@ -39,6 +40,71 @@ function assertContainsAll(label, value, expectedTokens) {
   for (const token of expectedTokens) {
     if (!value.includes(token)) {
       throw new Error(`${label} must include: ${token}`);
+    }
+  }
+}
+
+function sitemapLocs(xml) {
+  return Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/giu), (match) => match[1]);
+}
+
+function assertExactSitemapLocs(label, xml, expectedLocs) {
+  const actual = sitemapLocs(xml);
+  const expected = new Set(expectedLocs);
+  const actualSet = new Set(actual);
+  const duplicates = actual.filter((loc, index) => actual.indexOf(loc) !== index);
+  const missing = expectedLocs.filter((loc) => !actualSet.has(loc));
+  const unexpected = actual.filter((loc) => !expected.has(loc));
+  if (
+    actual.length !== expectedLocs.length
+    || actualSet.size !== actual.length
+    || missing.length
+    || unexpected.length
+  ) {
+    throw new Error(`${label} must contain exactly ${expectedLocs.join(', ')}. Missing: ${missing.join(', ') || 'none'}. Unexpected: ${unexpected.join(', ') || 'none'}. Duplicates: ${duplicates.join(', ') || 'none'}.`);
+  }
+}
+
+const PUBLIC_SEO_PAGE_FORBIDDEN_TEXT = Object.freeze([
+  'SEEDED_SPELLING_CONTENT_BUNDLE',
+  'SEEDED_SPELLING_PUBLISHED_SNAPSHOT',
+  'Legacy vendor seed for Pass 11 content model',
+  'createLegacySpellingEngine',
+  'KS2_WORDS_ENRICHED',
+  'spelling-prompt-v1',
+  'PUNCTUATION_CONTENT_MANIFEST',
+  'PUNCTUATION_CONTEXT_PACK_LIMITS',
+  'createPunctuationContentIndexes',
+  'createPunctuationGeneratedItems',
+  'createPunctuationRuntimeManifest',
+  'normalisePunctuationContextPack',
+  'createPunctuationService',
+  'PunctuationServiceError',
+  'punctuation-r1-endmarks-apostrophe-speech',
+  '/api/child-subject-state',
+  '/api/practice-sessions',
+  '/api/child-game-state',
+  '/api/event-log',
+  '/api/debug/reset',
+  'OPENAI_API_KEY',
+  'GEMINI_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'PUNCTUATION_AI_CONTEXT_PACK_JSON',
+  'PUNCTUATION_AI_CONTEXT_PACK_KEY',
+  'generativelanguage.googleapis.com',
+  'api.openai.com/v1',
+  '?local=1',
+  'data-home-mount',
+  'data-subject-mount',
+  'home.bundle.js',
+  '__ks2_injectFault_TESTS_ONLY__',
+  '__ks2_capacityMeta__',
+]);
+
+function assertNoPublicSeoForbiddenText(label, html) {
+  for (const token of PUBLIC_SEO_PAGE_FORBIDDEN_TEXT) {
+    if (html.includes(token)) {
+      throw new Error(`${label} includes forbidden public SEO token: ${token}`);
     }
   }
 }
@@ -88,6 +154,9 @@ await mustExist('index.html');
 await mustExist('manifest.webmanifest');
 await mustExist('robots.txt');
 await mustExist('sitemap.xml');
+for (const page of PRACTICE_SEO_PAGES) {
+  await mustExist(`${page.slug}/index.html`);
+}
 await mustExist('favicon.ico');
 await mustExist('_headers');
 await mustExist('styles/app.css');
@@ -145,6 +214,7 @@ const allowed = new Set([
   'manifest.webmanifest',
   'robots.txt',
   'sitemap.xml',
+  ...PRACTICE_SEO_PAGES.map((page) => page.slug),
   'styles',
   'src',
   'assets',
@@ -205,6 +275,10 @@ const indexHtml = await readFile(path.join(publicDir, 'index.html'), 'utf8');
 const appBundle = await readFile(path.join(publicDir, 'src/bundles/app.bundle.js'), 'utf8');
 const robotsTxt = await readFile(path.join(publicDir, 'robots.txt'), 'utf8');
 const sitemapXml = await readFile(path.join(publicDir, 'sitemap.xml'), 'utf8');
+const practicePageHtml = new Map();
+for (const page of PRACTICE_SEO_PAGES) {
+  practicePageHtml.set(page.slug, await readFile(path.join(publicDir, page.slug, 'index.html'), 'utf8'));
+}
 const cspHashArtefact = await readFile(path.join(publicDir, '.csp-theme-hash'), 'utf8');
 const canonicalRoot = 'https://ks2.eugnel.uk/';
 if (!indexHtml.includes('/manifest.webmanifest')) {
@@ -237,6 +311,9 @@ assertContainsAll('Public index.html SEO identity', indexHtml, [
   'Spelling practice for KS2 word confidence',
   'Grammar practice for sentence-level accuracy',
   'Punctuation practice for clearer written English',
+  'href="/ks2-spelling-practice/"',
+  'href="/ks2-grammar-practice/"',
+  'href="/ks2-punctuation-practice/"',
 ]);
 
 const productIdentity = jsonLdBlocks(indexHtml).find((entry) => entry?.name === 'KS2 Mastery');
@@ -276,11 +353,42 @@ if (/<\/?html|<!doctype/i.test(sitemapXml)) {
 assertContainsAll('sitemap.xml', sitemapXml, [
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   `<loc>${canonicalRoot}</loc>`,
+  ...PRACTICE_SEO_PAGES.map((page) => `<loc>${canonicalPracticePageUrl(page)}</loc>`),
 ]);
-for (const forbiddenPublicPath of ['/api/', '/admin', 'localhost', '127.0.0.1']) {
+assertExactSitemapLocs('sitemap.xml', sitemapXml, [
+  canonicalRoot,
+  ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+]);
+for (const forbiddenPublicPath of ['/api/', '/admin', '/demo', '.html', 'localhost', '127.0.0.1']) {
   if (sitemapXml.includes(forbiddenPublicPath)) {
     throw new Error(`sitemap.xml must not advertise private or local path: ${forbiddenPublicPath}`);
   }
+}
+
+for (const page of PRACTICE_SEO_PAGES) {
+  const html = practicePageHtml.get(page.slug);
+  const canonicalUrl = canonicalPracticePageUrl(page);
+  assertContainsAll(`Public ${page.slug} SEO page`, html, [
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}" />`,
+    `<link rel="canonical" href="${canonicalUrl}" />`,
+    `<meta property="og:url" content="${canonicalUrl}" />`,
+    `<h1>${page.heading}</h1>`,
+    page.intro,
+    '/demo',
+    'KS2 Mastery home',
+  ]);
+  for (const point of page.points) {
+    if (!html.includes(point)) {
+      throw new Error(`Public ${page.slug} SEO page must include practice point: ${point}`);
+    }
+  }
+  for (const forbiddenToken of ['app.bundle.js', 'id="app"', 'application/ld+json', '<script']) {
+    if (html.includes(forbiddenToken)) {
+      throw new Error(`Public ${page.slug} SEO page must not include app-shell or inline-script token: ${forbiddenToken}`);
+    }
+  }
+  assertNoPublicSeoForbiddenText(`Public ${page.slug} SEO page`, html);
 }
 
 for (const token of [

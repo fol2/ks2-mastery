@@ -131,6 +131,9 @@ export const CACHE_SPLIT_RULES = Object.freeze([
   { path: '/manifest.webmanifest', cacheControl: 'public, max-age=3600' },
   { path: '/robots.txt', cacheControl: 'public, max-age=3600' },
   { path: '/sitemap.xml', cacheControl: 'public, max-age=3600' },
+  { path: '/ks2-spelling-practice/', cacheControl: 'no-store' },
+  { path: '/ks2-grammar-practice/', cacheControl: 'no-store' },
+  { path: '/ks2-punctuation-practice/', cacheControl: 'no-store' },
   { path: '/', cacheControl: 'no-store' },
   { path: '/index.html', cacheControl: 'no-store' },
 ]);

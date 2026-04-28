@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { computeInlineScriptHashes } from './compute-inline-script-hash.mjs';
+import { PRACTICE_SEO_PAGES, renderPracticeSeoPage } from './lib/seo-practice-pages.mjs';
 
 const rootDir = process.cwd();
 const outputDir = path.join(rootDir, 'dist', 'public');
@@ -133,6 +134,12 @@ try {
     tmpIndexHtml.replaceAll(appBundleScriptSrc, `${appBundleScriptSrc}?v=${appBundleVersion}`),
     'utf8',
   );
+
+  for (const page of PRACTICE_SEO_PAGES) {
+    const pageDir = path.join(tmpDir, page.slug);
+    await mkdir(pageDir, { recursive: true });
+    await writeFile(path.join(pageDir, 'index.html'), renderPracticeSeoPage(page), 'utf8');
+  }
 
   await rm(outputDir, { recursive: true, force: true });
   await cp(tmpDir, outputDir, { recursive: true, force: true });

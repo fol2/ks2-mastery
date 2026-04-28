@@ -225,6 +225,11 @@ function AuthSurfaceStandard({ initialMode = 'login', initialError = '', onSubmi
           <li>Grammar practice for sentence-level accuracy</li>
           <li>Punctuation practice for clearer written English</li>
         </ul>
+        <nav className="auth-practice-links" aria-label="KS2 practice pages">
+          <a href="/ks2-spelling-practice/">KS2 spelling practice online</a>
+          <a href="/ks2-grammar-practice/">KS2 grammar practice online</a>
+          <a href="/ks2-punctuation-practice/">KS2 punctuation practice online</a>
+        </nav>
         {/* SH2-U8: inline style prop migrated to `.auth-standard-error` class
             (see docs/hardening/csp-inline-style-inventory.md). */}
         {error && (

@@ -1,5 +1,6 @@
 import { runClientBundleAudit } from './audit-client-bundle.mjs';
 import { createDemoSession, loadBootstrap } from './lib/production-smoke.mjs';
+import { PRACTICE_SEO_PAGES, canonicalPracticePageUrl } from './lib/seo-practice-pages.mjs';
 import { FORBIDDEN_KEYS_EVERYWHERE } from '../tests/helpers/forbidden-keys.mjs';
 
 const DEFAULT_ORIGIN = 'https://ks2.eugnel.uk';
@@ -189,6 +190,54 @@ function assertSeoRootHtml(index, failures) {
   }
 }
 
+function assertSeoPracticePageHtml(page, response, failures) {
+  const path = `/${page.slug}/`;
+  const canonicalUrl = canonicalPracticePageUrl(page);
+  if (response.status < 200 || response.status >= 300) {
+    failures.push(`Production SEO page ${path} fetch failed: ${response.status} ${response.url}`);
+    return;
+  }
+  if (!/text\/html/i.test(response.contentType)) {
+    failures.push(`Production SEO page ${path} expected text/html, got: ${response.contentType || 'absent'}`);
+  }
+  if (
+    response.text.includes('<title>KS2 Mastery | KS2 Spelling, Grammar and Punctuation Practice</title>')
+    || response.text.includes(`<link rel="canonical" href="${SEO_CANONICAL_ROOT}"`)
+    || response.text.includes('app.bundle.js')
+    || response.text.includes('id="app"')
+  ) {
+    failures.push(`Production SEO page ${path} appears to be the root SPA shell, not page-specific public HTML.`);
+  }
+  for (const token of [
+    `<title>${page.title}</title>`,
+    `<meta name="description" content="${page.description}"`,
+    `<link rel="canonical" href="${canonicalUrl}"`,
+    `<meta property="og:url" content="${canonicalUrl}"`,
+    `<h1>${page.heading}</h1>`,
+    page.intro,
+    '/demo',
+    'KS2 Mastery home',
+    ...page.points,
+  ]) {
+    if (!response.text.includes(token)) {
+      failures.push(`Production SEO page ${path} is missing required token: ${token}`);
+    }
+  }
+  for (const forbiddenToken of ['application/ld+json', '<script']) {
+    if (response.text.includes(forbiddenToken)) {
+      failures.push(`Production SEO page ${path} must remain static and script-free; found token: ${forbiddenToken}`);
+    }
+  }
+  assertNoForbiddenText(`Production SEO page ${path}`, response.text, failures);
+}
+
+async function assertSeoPracticePages(base, failures) {
+  for (const page of PRACTICE_SEO_PAGES) {
+    const response = await fetchText(new URL(`/${page.slug}/`, base).href);
+    assertSeoPracticePageHtml(page, response, failures);
+  }
+}
+
 async function assertSeoDiscoveryResources(base, failures) {
   const robots = await fetchText(new URL('/robots.txt', base).href);
   if (robots.status < 200 || robots.status >= 300) {
@@ -209,6 +258,9 @@ async function assertSeoDiscoveryResources(base, failures) {
       failures.push(`Production robots.txt is missing required token: ${token}`);
     }
   }
+  if (/User-agent:\s*OAI-SearchBot[\s\S]*?Disallow:\s*\//i.test(robots.text)) {
+    failures.push('Production robots.txt must not explicitly disallow OAI-SearchBot from public SEO pages.');
+  }
 
   const sitemap = await fetchText(new URL('/sitemap.xml', base).href);
   if (sitemap.status < 200 || sitemap.status >= 300) {
@@ -220,12 +272,17 @@ async function assertSeoDiscoveryResources(base, failures) {
   for (const token of [
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     `<loc>${SEO_CANONICAL_ROOT}</loc>`,
+    ...PRACTICE_SEO_PAGES.map((page) => `<loc>${canonicalPracticePageUrl(page)}</loc>`),
   ]) {
     if (!sitemap.text.includes(token)) {
       failures.push(`Production sitemap.xml is missing required token: ${token}`);
     }
   }
-  for (const forbiddenPath of ['/api/', '/admin', 'localhost', '127.0.0.1']) {
+  assertExactSitemapLocs('Production sitemap.xml', sitemap.text, [
+    SEO_CANONICAL_ROOT,
+    ...PRACTICE_SEO_PAGES.map((page) => canonicalPracticePageUrl(page)),
+  ], failures);
+  for (const forbiddenPath of ['/api/', '/admin', '/demo', '.html', 'localhost', '127.0.0.1']) {
     if (sitemap.text.includes(forbiddenPath)) {
       failures.push(`Production sitemap.xml must not advertise private or local path: ${forbiddenPath}`);
     }
@@ -312,6 +369,27 @@ function assertNoForbiddenText(label, text, failures) {
   }
 }
 
+function sitemapLocs(xml) {
+  return Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/giu), (match) => match[1]);
+}
+
+function assertExactSitemapLocs(label, xml, expectedLocs, failures) {
+  const actual = sitemapLocs(xml);
+  const expected = new Set(expectedLocs);
+  const actualSet = new Set(actual);
+  const duplicates = actual.filter((loc, index) => actual.indexOf(loc) !== index);
+  const missing = expectedLocs.filter((loc) => !actualSet.has(loc));
+  const unexpected = actual.filter((loc) => !expected.has(loc));
+  if (
+    actual.length !== expectedLocs.length
+    || actualSet.size !== actual.length
+    || missing.length
+    || unexpected.length
+  ) {
+    failures.push(`${label} must contain exactly ${expectedLocs.join(', ')}. Missing: ${missing.join(', ') || 'none'}. Unexpected: ${unexpected.join(', ') || 'none'}. Duplicates: ${duplicates.join(', ') || 'none'}.`);
+  }
+}
+
 function firstSourceSplitChunkPath(paths) {
   return Array.from(paths)
     .sort()
@@ -332,6 +410,7 @@ async function auditProduction(origin) {
   assertNoForbiddenText('Production HTML', index.text, failures);
   assertSeoRootHtml(index, failures);
   await assertSeoDiscoveryResources(base, failures);
+  await assertSeoPracticePages(base, failures);
 
   const scripts = scriptSources(index.text)
     .filter((src) => !/^https?:\/\//i.test(src) || new URL(src, base).origin === base.origin);
@@ -546,6 +625,11 @@ async function auditProduction(origin) {
     { path: '/manifest.webmanifest', label: 'web app manifest', expected: 'public, max-age=3600' },
     { path: '/robots.txt', label: 'robots policy', expected: 'public, max-age=3600' },
     { path: '/sitemap.xml', label: 'sitemap', expected: 'public, max-age=3600' },
+    ...PRACTICE_SEO_PAGES.map((page) => ({
+      path: `/${page.slug}/`,
+      label: `${page.slug} SEO page`,
+      expected: 'no-store',
+    })),
   ].filter(Boolean);
   let cacheChecksPassed = 0;
   for (const check of CACHE_SPLIT_CHECKS) {
