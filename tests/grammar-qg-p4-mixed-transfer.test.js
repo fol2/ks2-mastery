@@ -190,5 +190,29 @@ describe('Grammar QG P4 mixed-transfer templates', () => {
         }
       });
     }
+
+    it('classify template partial credit: 1 correct field, 1 wrong', () => {
+      const q = createGrammarQuestion({ templateId: 'qg_p4_word_class_noun_phrase_transfer', seed: 1 });
+      assert.strictEqual(q.answerSpec.kind, 'multiField');
+      const fields = q.answerSpec.params.fields;
+      const keys = Object.keys(fields);
+      assert.ok(keys.length >= 2, 'need at least 2 fields for partial credit test');
+      const resp = {};
+      // First field correct, second field wrong
+      resp[keys[0]] = fields[keys[0]].golden[0];
+      resp[keys[1]] = fields[keys[1]].nearMiss[0] || 'wrong';
+      const result = q.evaluate(resp);
+      assert.strictEqual(result.correct, false, 'partial credit should not be fully correct');
+      assert.strictEqual(result.score, 1, 'one correct field yields score 1');
+      assert.strictEqual(result.maxScore, 2, 'two fields yields maxScore 2');
+    });
+  });
+
+  describe('seed boundary', () => {
+    it('pickBySeed handles seed=0 gracefully', () => {
+      const q = createGrammarQuestion({ templateId: 'qg_p4_sentence_speech_transfer', seed: 0 });
+      assert.ok(q, 'seed=0 should produce a valid question');
+      assert.ok(q.stemHtml, 'seed=0 question has prompt');
+    });
   });
 });

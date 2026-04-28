@@ -6925,16 +6925,16 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
       misconception: "hyphen_ambiguity_confusion"
     },
     {
-      prompt: "Which option correctly applies both the possessive apostrophe AND the clarifying hyphen?",
-      example: "The dog's brightly coloured collar stood out in the park.",
-      correct: "The dog's brightly-coloured collar stood out in the park.",
+      prompt: "Which version makes ownership and compound meaning clear?",
+      example: "The dog's bright orange collar stood out, or the dogs bright-orange collar stood out.",
+      correct: "The dog's bright-orange collar stood out.",
       distractors: [
-        "The dogs brightly-coloured collar stood out in the park.",
-        "The dog's brightly coloured collar stood out in the park.",
-        "The dogs' brightly-coloured collar stood out in the park."
+        "The dogs bright-orange collar stood out.",
+        "The dog's bright orange collar stood out.",
+        "The dogs' bright orange collar stood out."
       ],
-      why: "'Dog's' shows one dog owns the collar (singular possession). 'Brightly-coloured' uses a hyphen to bind the adverb to the adjective, making it clear they work as one modifier.",
-      misconception: "hyphen_ambiguity_confusion"
+      why: "The apostrophe shows the collar belongs to one dog, and the hyphen in 'bright-orange' shows that both words together describe the colour of the collar.",
+      misconception: "possession_hyphen_transfer_confusion"
     }
   ]
 });
@@ -7045,7 +7045,7 @@ function pick(rng, arr) {
 
 /** Deterministic seed-indexed pick — guarantees distinct items for consecutive seeds when bank.length >= 3. */
 function pickBySeed(seed, arr) {
-  return arr[(seed - 1) % arr.length];
+  return arr[((seed - 1) % arr.length + arr.length) % arr.length];
 }
 
 function shuffle(rng, arr) {
