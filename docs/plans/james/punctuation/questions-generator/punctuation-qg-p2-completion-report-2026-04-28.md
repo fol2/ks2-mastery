@@ -2,15 +2,15 @@
 
 Date: 28 April 2026
 
-Status: U7 open for review in PR #514; U1-U6 completed and merged to remote `main`
+Status: U7 evidence is tracked in PR #514; GitHub PR state is the source of truth for merge status. U1-U6 completed and merged to remote `main`
 
 Source plan: `docs/plans/james/punctuation/questions-generator/punctuation-qg-p2.md`
 
 Implementation plan: `docs/plans/2026-04-28-002-feat-punctuation-qg-p2-depth-release-gate-plan.md`
 
-Shipped PRs:
+P2 PR evidence:
 
-| Unit | PR | Merge commit | Merged at | Purpose |
+| Unit | PR | Merge evidence | Status evidence | Purpose |
 | --- | --- | --- | --- | --- |
 | U1 | [#492](https://github.com/fol2/ks2-mastery/pull/492) | `ac7bf726badc83d60ac52c92a45212a66de6bb55` | 2026-04-28 18:05:57 UTC | Add the dedicated Punctuation content-audit CI gate. |
 | U2 | [#495](https://github.com/fol2/ks2-mastery/pull/495) | `74a605183b99ab2aa880673a0494612f35ba0072` | 2026-04-28 18:33:21 UTC | Scope Punctuation Stars to current release evidence. |
@@ -18,11 +18,11 @@ Shipped PRs:
 | U4 | [#502](https://github.com/fol2/ks2-mastery/pull/502) | `fe70dc9b63175d9c921dbafc7603b5c289ad7922` | 2026-04-28 19:49:44 UTC | Codify generated metadata transport and redaction policy. |
 | U5 | [#506](https://github.com/fol2/ks2-mastery/pull/506) | `4ab2525a6fd87d7a0cd68098bfec713e5cb21409` | 2026-04-28 20:22:31 UTC | Clarify dash display and list-comma marking policy. |
 | U6 | [#508](https://github.com/fol2/ks2-mastery/pull/508) | `d6cc3887b69f751b3c8fab1dc8926fcbd82de2d3` | 2026-04-28 20:58:13 UTC | Expand deterministic generator and context-pack capacity. |
-| U7 | [#514](https://github.com/fol2/ks2-mastery/pull/514) | Pending merge | Open for review | Extend production smoke and record P2 completion evidence. |
+| U7 | [#514](https://github.com/fol2/ks2-mastery/pull/514) | GitHub PR state is the source of truth | Evidence tracked in PR #514 | Extend production smoke and record P2 completion evidence. |
 
 ## Executive Summary
 
-The P2 Punctuation question-generator release is ready for review with a production-smoke gate that now exercises the deployed Worker-backed subject boundary instead of relying only on source-level tests.
+The P2 Punctuation question-generator release is documented with a production-smoke gate that exercises the deployed Worker-backed subject boundary instead of relying only on source-level tests.
 
 The release still does **not** use runtime AI to create learner questions or marking decisions. P2 deepens the deterministic portfolio and release controls around the existing Worker-owned Punctuation subject:
 
@@ -153,7 +153,7 @@ The first `npm test` attempt stopped at the worktree preflight because this fres
 - The production smoke uses bounded command-boundary searches for policy-specific generated/dash/list-comma items. It fails with the seen item ids if routing drifts, but it does not force a private item id through a special test-only command.
 - Live production smoke does not exercise Admin Hub evidence because the production command is designed to run from a demo session without admin credentials. Local release-smoke tests still cover Admin Hub Punctuation evidence redaction.
 - Live production smoke verifies release id and runtime behaviour rather than the deployed commit or build hash. The demo-accessible production APIs used here do not expose `BUILD_HASH`, so commit-level deployment identity remains a separate Cloudflare/GitHub deployment evidence risk.
-- U7 documents the P2 release and opens the review PR; it does not merge or deploy this final report branch.
+- U7 documents the P2 release. Its evidence is tracked in PR #514, and GitHub PR state is the source of truth for merge and deployment follow-up status.
 
 ## Post-Deploy Monitoring And Validation
 
