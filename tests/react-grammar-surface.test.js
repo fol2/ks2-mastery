@@ -788,6 +788,49 @@ test('Grammar session exposes non-scored AI enrichment triggers after marking', 
   assert.match(html, /Spot the fronted adverbial/);
 });
 
+test('Grammar manual-review feedback is neutral and hides repair actions', () => {
+  const storage = installMemoryStorage();
+  const harness = createGrammarHarness({ storage });
+
+  harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-start', {
+    payload: {
+      roundLength: 1,
+      templateId: 'build_noun_phrase',
+      seed: 1,
+    },
+  });
+
+  harness.dispatch('grammar-submit-form', {
+    formData: grammarResponseFormData({
+      part1: 'The nervous young',
+      part2: 'explorer',
+      part3: 'from our class',
+    }),
+  });
+
+  const grammar = harness.store.getState().subjectUi.grammar;
+  assert.equal(grammar.phase, 'feedback');
+  assert.equal(grammar.feedback.result.nonScored, true);
+  assert.equal(grammar.feedback.result.manualReviewOnly, true);
+
+  let html = harness.render();
+  assert.match(html, /class="feedback neutral"/);
+  assert.match(html, /Saved for review\./);
+  assert.match(html, /not auto-marked for mastery/i);
+  assert.doesNotMatch(html, /Retry/);
+  assert.doesNotMatch(html, /Worked solution/);
+  assert.doesNotMatch(html, /Similar problem/);
+  assert.doesNotMatch(html, /Explain another way/);
+  assert.doesNotMatch(html, /Revision cards/);
+
+  harness.dispatch('grammar-continue');
+  assert.equal(harness.store.getState().subjectUi.grammar.phase, 'summary');
+  html = harness.render();
+  assert.match(html, /Saved for review/);
+  assert.doesNotMatch(html, /0% accuracy/);
+});
+
 test('Grammar analytics exposes parent summary draft enrichment', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });

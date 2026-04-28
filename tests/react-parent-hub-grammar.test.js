@@ -35,7 +35,7 @@ function nodePaths() {
   ].filter((entry) => entry && existsSync(entry));
 }
 
-async function renderParentHub({ conceptStatus }) {
+async function renderParentHub({ conceptStatus = [], recentSessions = [] }) {
   const tmpDir = await mkdtemp(path.join(tmpdir(), 'ks2-parent-grammar-'));
   const entryPath = path.join(tmpDir, 'entry.jsx');
   const bundlePath = path.join(tmpDir, 'entry.cjs');
@@ -46,6 +46,7 @@ async function renderParentHub({ conceptStatus }) {
       import { ParentHubSurface } from ${JSON.stringify(path.join(rootDir, 'src/surfaces/hubs/ParentHubSurface.jsx'))};
 
       const conceptStatus = ${JSON.stringify(conceptStatus)};
+      const recentSessions = ${JSON.stringify(recentSessions)};
       const model = {
         learner: { id: 'learner-a', name: 'Ava', lastActivityAt: 0 },
         learnerOverview: {
@@ -57,7 +58,7 @@ async function renderParentHub({ conceptStatus }) {
           accuracyPercent: null,
         },
         dueWork: [],
-        recentSessions: [],
+        recentSessions,
         strengths: [],
         weaknesses: [],
         misconceptionPatterns: [],
@@ -241,4 +242,25 @@ test('U7: Parent Hub — single recent miss uses singular "miss" (not "misses")'
   const html = await renderParentHub({ conceptStatus });
   assert.match(html, /1 recent miss</);
   assert.doesNotMatch(html, /1 recent misses/);
+});
+
+test('P2: Parent Hub renders Grammar manual-review sessions without mistake warning', async () => {
+  const html = await renderParentHub({
+    recentSessions: [{
+      id: 'grammar-manual-review',
+      subjectId: 'grammar',
+      status: 'completed',
+      sessionKind: 'practice',
+      label: 'Grammar practice',
+      updatedAt: Date.UTC(2026, 3, 28, 12, 0),
+      mistakeCount: 0,
+      headline: 'Saved for review',
+    }],
+  });
+
+  assert.match(html, /Grammar practice/);
+  assert.match(html, /Saved for review/);
+  assert.match(html, /0 mistakes/);
+  assert.doesNotMatch(html, /1 mistake/);
+  assert.doesNotMatch(html, /chip warn">0 mistakes/);
 });

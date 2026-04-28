@@ -103,6 +103,8 @@ function safeMiniTestQuestion(entry, index, currentIndex, { includeItem = false,
         feedbackLong: typeof result.feedbackLong === 'string' ? result.feedbackLong : '',
         answerText: typeof result.answerText === 'string' ? result.answerText : '',
         minimalHint: typeof result.minimalHint === 'string' ? result.minimalHint : '',
+        ...(result.nonScored === true ? { nonScored: true } : {}),
+        ...(result.manualReviewOnly === true ? { manualReviewOnly: true } : {}),
       },
     };
   }
@@ -171,12 +173,19 @@ function safeGoal(goal, now = Date.now()) {
 
 function safeSummary(summary) {
   if (!isPlainObject(summary)) return null;
+  const answered = Number.isFinite(Number(summary.answered)) ? Number(summary.answered) : 0;
+  const nonScoredAnswered = Number.isFinite(Number(summary.nonScoredAnswered)) ? Number(summary.nonScoredAnswered) : 0;
+  const scoredAnswered = Object.prototype.hasOwnProperty.call(summary, 'scoredAnswered') && Number.isFinite(Number(summary.scoredAnswered))
+    ? Number(summary.scoredAnswered)
+    : Math.max(0, answered - nonScoredAnswered);
   const output = {
     sessionId: typeof summary.sessionId === 'string' ? summary.sessionId : '',
     mode: typeof summary.mode === 'string' ? summary.mode : 'smart',
     startedAt: asTs(summary.startedAt, 0),
     completedAt: asTs(summary.completedAt, 0),
-    answered: Number.isFinite(Number(summary.answered)) ? Number(summary.answered) : 0,
+    answered,
+    scoredAnswered,
+    nonScoredAnswered,
     correct: Number.isFinite(Number(summary.correct)) ? Number(summary.correct) : 0,
     totalScore: Number.isFinite(Number(summary.totalScore)) ? Number(summary.totalScore) : 0,
     totalMarks: Number.isFinite(Number(summary.totalMarks)) ? Number(summary.totalMarks) : 0,
@@ -367,6 +376,8 @@ function safeSession(session, now = Date.now()) {
     startedAt: Number.isFinite(Number(session.startedAt)) ? Number(session.startedAt) : 0,
     targetCount: Number.isFinite(Number(session.targetCount)) ? Number(session.targetCount) : 0,
     answered: Number.isFinite(Number(session.answered)) ? Number(session.answered) : 0,
+    scoredAnswered: Number.isFinite(Number(session.scoredAnswered)) ? Number(session.scoredAnswered) : 0,
+    nonScoredAnswered: Number.isFinite(Number(session.nonScoredAnswered)) ? Number(session.nonScoredAnswered) : 0,
     correct: Number.isFinite(Number(session.correct)) ? Number(session.correct) : 0,
     totalScore: Number.isFinite(Number(session.totalScore)) ? Number(session.totalScore) : 0,
     totalMarks: Number.isFinite(Number(session.totalMarks)) ? Number(session.totalMarks) : 0,
@@ -410,10 +421,19 @@ function recentWindow(recentAttempts) {
   return Array.isArray(recentAttempts) ? recentAttempts.slice(-GRAMMAR_RECENT_ATTEMPT_HORIZON) : [];
 }
 
+function isScoredAttempt(attempt) {
+  const result = isPlainObject(attempt?.result) ? attempt.result : {};
+  return attempt?.nonScored !== true
+    && attempt?.manualReviewOnly !== true
+    && result.nonScored !== true
+    && result.manualReviewOnly !== true;
+}
+
 function recentMissCountForConcept(recentAttempts, conceptId) {
   if (!conceptId) return 0;
   let count = 0;
   for (const attempt of recentWindow(recentAttempts)) {
+    if (!isScoredAttempt(attempt)) continue;
     const conceptIds = Array.isArray(attempt?.conceptIds) ? attempt.conceptIds : [];
     const result = isPlainObject(attempt?.result) ? attempt.result : {};
     if (conceptIds.includes(conceptId) && result.correct === false) count += 1;
@@ -425,6 +445,7 @@ function recentMissCountForQuestionType(recentAttempts, questionType) {
   if (!questionType) return 0;
   let count = 0;
   for (const attempt of recentWindow(recentAttempts)) {
+    if (!isScoredAttempt(attempt)) continue;
     const result = isPlainObject(attempt?.result) ? attempt.result : {};
     if (attempt?.questionType === questionType && result.correct === false) count += 1;
   }
@@ -436,6 +457,7 @@ function recentMissCountForQuestionType(recentAttempts, questionType) {
 function distinctTemplatesFor(recentAttempts, matcher) {
   const seen = new Set();
   for (const attempt of recentWindow(recentAttempts)) {
+    if (!isScoredAttempt(attempt)) continue;
     if (matcher(attempt) && typeof attempt?.templateId === 'string' && attempt.templateId) {
       seen.add(attempt.templateId);
     }
@@ -656,8 +678,10 @@ function recentActivityFromAttempts(attempts = []) {
         conceptIds: Array.isArray(attempt?.conceptIds) ? attempt.conceptIds.filter(Boolean).map(String) : [],
         correct: Boolean(result.correct),
         score: Number(result.score) || 0,
-        maxScore: Number(result.maxScore) || 1,
+        maxScore: Number.isFinite(Number(result.maxScore)) ? Number(result.maxScore) : 1,
         misconception: typeof result.misconception === 'string' ? result.misconception : '',
+        ...(result.nonScored === true ? { nonScored: true } : {}),
+        ...(result.manualReviewOnly === true ? { manualReviewOnly: true } : {}),
         // U3 item-level support attribution. Older attempts have been
         // normalised at load time so these fields are always present.
         firstAttemptIndependent: Boolean(attempt?.firstAttemptIndependent),
@@ -682,6 +706,8 @@ function safeRecentAttempt(attempt = {}) {
       score: Number.isFinite(Number(result.score)) ? Number(result.score) : 0,
       maxScore: Number.isFinite(Number(result.maxScore)) ? Number(result.maxScore) : 1,
       misconception: typeof result.misconception === 'string' ? result.misconception : '',
+      ...(result.nonScored === true ? { nonScored: true } : {}),
+      ...(result.manualReviewOnly === true ? { manualReviewOnly: true } : {}),
     },
     supportLevel: Number.isFinite(Number(attempt?.supportLevel)) ? Math.max(0, Math.min(2, Number(attempt.supportLevel))) : 0,
     attempts: Number.isFinite(Number(attempt?.attempts)) ? Math.max(1, Number(attempt.attempts)) : 1,

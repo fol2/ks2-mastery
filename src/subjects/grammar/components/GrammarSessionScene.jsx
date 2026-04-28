@@ -10,6 +10,7 @@ import {
   grammarSessionSubmitLabel,
   grammarSessionProgressLabel,
   grammarSessionInfoChips,
+  grammarFeedbackTone,
 } from '../session-ui.js';
 import { translateGrammarSessionError } from '../module.js';
 
@@ -229,6 +230,8 @@ function GrammarInput({ inputSpec, required = true, response = {}, describedBy =
 function FeedbackPanel({ feedback }) {
   if (!feedback?.result) return null;
   const result = feedback.result;
+  const tone = grammarFeedbackTone(result);
+  const toneClass = tone === 'good' ? 'good' : tone === 'bad' ? 'warn' : 'neutral';
   // SH2-U7 review follow-up (FIX-3): `data-grammar-session-feedback-live`
   // mirrors Punctuation's `data-punctuation-session-feedback-live` anchor
   // so agent-native / a11y scenes can query the live region deterministically
@@ -236,12 +239,12 @@ function FeedbackPanel({ feedback }) {
   // surface uses for many other panels).
   return (
     <div
-      className={`feedback ${result.correct ? 'good' : 'warn'}`}
+      className={`feedback ${toneClass}`}
       role="status"
       aria-live="polite"
       data-grammar-session-feedback-live
     >
-      <strong>{result.feedbackShort || (result.correct ? 'Correct.' : 'Not quite.')}</strong>
+      <strong>{result.feedbackShort || (tone === 'good' ? 'Correct.' : tone === 'bad' ? 'Not quite.' : 'Saved for review')}</strong>
       <div>{result.feedbackLong || result.minimalHint || ''}</div>
       {result.answerText ? <div className="small muted">Answer: {result.answerText}</div> : null}
     </div>
@@ -448,9 +451,9 @@ function RepairActions({ isMiniTest, isFeedback, help, feedback, pending, runtim
   // answer. A correct answer funnels the learner to the single `Next question`
   // primary action — no retry / worked solution / similar problem clutter.
   if (isFeedback) {
+    const tone = grammarFeedbackTone(feedback?.result);
     if (!help?.showRepairActions) return null;
-    const isCorrect = Boolean(feedback?.result?.correct);
-    if (isCorrect) return null;
+    if (tone !== 'bad') return null;
     return (
       <div className="grammar-repair-actions" aria-label="Grammar repair actions">
         <button
@@ -648,7 +651,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
         <ReadAloudControls grammar={grammar} />
         {!isMiniTest ? <GuidancePanel support={session.supportGuidance} /> : null}
-        {help.showAiActions && !(isFeedback && grammar.feedback?.result?.correct === true) ? (
+        {help.showAiActions && !(isFeedback && grammarFeedbackTone(grammar.feedback?.result) !== 'bad') ? (
           <AiEnrichmentActions
             isMiniTest={isMiniTest}
             isFeedback={isFeedback}

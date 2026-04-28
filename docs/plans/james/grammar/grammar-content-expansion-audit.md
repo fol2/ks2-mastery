@@ -1,19 +1,19 @@
 ---
 title: "Grammar content-expansion audit (Phase 5 backlog)"
 type: audit
-status: p1-updated
+status: p2-updated
 date: 2026-04-28
 plan: docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md
 unit: U12
-contentReleaseId: grammar-qg-p1-2026-04-28
+contentReleaseId: grammar-qg-p2-2026-04-28
 contentReleaseBump: yes
 ---
 
 # Grammar content-expansion audit (Phase 5 backlog)
 
-This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the P1 generator expansion that landed six focused generated templates, each with hidden typed `answerSpec` data. The `GRAMMAR_CONTENT_RELEASE_ID` is bumped to `grammar-qg-p1-2026-04-28`; the legacy `grammar-legacy-reviewed-2026-04-24` fixtures remain frozen for historical compatibility checks.
+This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the P1 generator expansion that landed six focused generated templates, each with hidden typed `answerSpec` data, and the P2 constructed-response marking migration that made the current 57-template release fully declarative. The `GRAMMAR_CONTENT_RELEASE_ID` is bumped to `grammar-qg-p2-2026-04-28`; the legacy `grammar-legacy-reviewed-2026-04-24` and QG P1 fixtures remain frozen for historical compatibility checks.
 
-The audit is produced by reading `worker/src/subjects/grammar/content.js` at release id `grammar-qg-p1-2026-04-28` and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 57 templates in the pool at the time of the audit.
+The audit is produced by reading `worker/src/subjects/grammar/content.js` at release id `grammar-qg-p2-2026-04-28` and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 57 templates in the pool at the time of the audit.
 
 An executable generator audit now backs this document:
 
@@ -164,7 +164,7 @@ Each P1 focus concept below keeps five proposed follow-up templates. P1 has alre
 
 ## Release-id discipline
 
-Every future proposal above is a content-release candidate. P1 touches `content.js`, adds generated templates with typed `answerSpec`, and bumps `GRAMMAR_CONTENT_RELEASE_ID` to `grammar-qg-p1-2026-04-28`. The previous `grammar-legacy-reviewed-2026-04-24` oracle remains frozen rather than overwritten.
+Every future proposal above is a content-release candidate. P1 touched `content.js`, added generated templates with typed `answerSpec`, and bumped `GRAMMAR_CONTENT_RELEASE_ID` to `grammar-qg-p1-2026-04-28`. P2 keeps the same 57-template denominator, migrates every constructed-response template to explicit declarative marking, and bumps the active release id to `grammar-qg-p2-2026-04-28`. The previous `grammar-legacy-reviewed-2026-04-24` oracle and QG P1 baseline remain frozen rather than overwritten.
 
 When a later phase lands any of the remaining proposals, the PR author must:
 
@@ -203,7 +203,7 @@ When a later phase lands any of the remaining proposals, the PR author must:
 - Concepts with an `explain` template today: **5 (represented by 4 templates)** — `adverbials` and `standard_english` both via `explain_reason_choice`; `boundary_punctuation` via `proc2_boundary_punctuation_explain`; `modal_verbs` via `qg_modal_verb_explain`; `hyphen_ambiguity` via `qg_hyphen_ambiguity_explain`.
 - Future template ideas proposed: **30** (five per P1 focus concept × six concepts)
 - Phase 5 release-id bumps implied (one per new-template PR landed, assuming each ships atomically): up to **30**
-- `contentReleaseId` bumps produced by P1: **1** (`grammar-qg-p1-2026-04-28`)
+- `contentReleaseId` bumps produced by QG work so far: **2** (`grammar-qg-p1-2026-04-28`, `grammar-qg-p2-2026-04-28`)
 
 ---
 
@@ -212,5 +212,5 @@ When a later phase lands any of the remaining proposals, the PR author must:
 - Plan: `docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md` §U12 (~line 929).
 - Invariants: `docs/plans/james/grammar/grammar-phase4-invariants.md`.
 - Answer-spec audit (sibling Phase 5 backlog): `docs/plans/james/grammar/grammar-answer-spec-audit.md`.
-- Content source: `worker/src/subjects/grammar/content.js` at `GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p1-2026-04-28'`.
+- Content source: `worker/src/subjects/grammar/content.js` at `GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p2-2026-04-28'`.
 - Concept list: `src/platform/game/mastery/grammar.js` — `GRAMMAR_AGGREGATE_CONCEPTS`.

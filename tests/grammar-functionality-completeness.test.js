@@ -19,6 +19,7 @@ import {
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const baselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/legacy-baseline.json');
 const qgP1BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/grammar-qg-p1-baseline.json');
+const qgP2BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/grammar-qg-p2-baseline.json');
 const perfectionPassBaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/perfection-pass-baseline.json');
 const phase3BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-phase3-baseline.json');
 const phase4BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-phase4-baseline.json');
@@ -40,6 +41,10 @@ function readPerfectionPassBaseline() {
 
 function readQgP1Baseline() {
   return JSON.parse(fs.readFileSync(qgP1BaselinePath, 'utf8'));
+}
+
+function readQgP2Baseline() {
+  return JSON.parse(fs.readFileSync(qgP2BaselinePath, 'utf8'));
 }
 
 function readPhase3Baseline() {
@@ -89,8 +94,23 @@ test('Grammar functionality completeness baseline is internally owned', () => {
   }
 });
 
-test('Grammar QG P1 baseline matches the shipped content denominator', () => {
+test('Grammar QG P1 baseline remains frozen for the previous question-generator release', () => {
   const baseline = readQgP1Baseline();
+  const content = baseline.contentBaseline;
+
+  assert.equal(baseline.contentReleaseId, 'grammar-qg-p1-2026-04-28');
+  assert.equal(content.conceptCount, 18);
+  assert.equal(content.templateCount, 57);
+  assert.equal(content.selectedResponseCount, 37);
+  assert.equal(content.constructedResponseCount, 20);
+  assert.equal(content.generatedTemplateCount, 31);
+  assert.equal(content.fixedTemplateCount, 26);
+  assert.equal(content.answerSpecTemplateCount, 6);
+  assert.deepEqual(content.thinPoolConcepts, []);
+});
+
+test('Grammar QG P2 baseline matches the shipped declarative marking denominator', () => {
+  const baseline = readQgP2Baseline();
   const content = baseline.contentBaseline;
 
   assert.equal(baseline.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
@@ -100,7 +120,11 @@ test('Grammar QG P1 baseline matches the shipped content denominator', () => {
   assert.equal(content.constructedResponseCount, 20);
   assert.equal(content.generatedTemplateCount, 31);
   assert.equal(content.fixedTemplateCount, 26);
-  assert.equal(content.answerSpecTemplateCount, 6);
+  assert.equal(content.answerSpecTemplateCount, 26);
+  assert.equal(content.constructedResponseAnswerSpecTemplateCount, 20);
+  assert.equal(content.legacyAdapterTemplateCount, 0);
+  assert.equal(content.manualReviewOnlyTemplateCount, 4);
+  assert.equal(content.p2MigrationComplete, true);
   assert.deepEqual(content.thinPoolConcepts, []);
   assert.equal(GRAMMAR_CONCEPTS.length, content.conceptCount);
   assert.equal(GRAMMAR_CLIENT_CONCEPTS.length, content.conceptCount);

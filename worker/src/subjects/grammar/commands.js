@@ -4,6 +4,7 @@ import { buildCommandProjectionReadModel } from '../../projections/read-models.j
 import { projectGrammarRewards } from '../../projections/rewards.js';
 import { createServerGrammarEngine } from './engine.js';
 import { buildGrammarReadModel } from './read-models.js';
+import { GRAMMAR_CONTENT_RELEASE_ID } from './content.js';
 import { resolveProjectionInput } from '../projection-input.js';
 import {
   deriveGrammarConceptStarEvidence,
@@ -123,6 +124,7 @@ function deriveStarEvidenceEvents({ domainEvents, engineState, learnerId, gameSt
         type: GRAMMAR_EVENT_TYPES.STAR_EVIDENCE_UPDATED,
         subjectId: 'grammar',
         learnerId,
+        contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
         conceptId: representativeConcept,
         monsterId,
         computedStars: starResult.stars,

@@ -1,32 +1,30 @@
 ---
-title: "Grammar answer-spec migration audit (inventory only)"
+title: "Grammar answer-spec migration audit"
 type: audit
-status: inventory
-date: 2026-04-26
-plan: docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md
-unit: U11
+status: implemented
+date: 2026-04-28
+plan: docs/plans/james/grammar/questions-generator/grammar-qg-p2.md
+unit: QG-P2
 ---
 
-# Grammar answer-spec migration audit (inventory only)
+# Grammar answer-spec migration audit
 
-This document is the per-template classification Phase 5/P1 executes against. It inventories every one of the 57 Grammar templates (37 selected-response + 20 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. Phase 4 shipped **zero** template code changes and did **not** bump `contentReleaseId`; the P1 generated templates add typed `answerSpec` data from day one, while the legacy constructed-response migration remains paired with future oracle-fixture refreshes and `contentReleaseId` bumps.
+This document is the per-template classification and shipped-state audit for the Grammar answer-spec migration. It inventories every one of the 57 Grammar templates (37 selected-response + 20 constructed-response) with the target `answerSpec.kind`, a golden accepted answer, near-miss examples that must be rejected, and migration priority. QG P2 ships the legacy constructed-response migration under `grammar-qg-p2-2026-04-28`; the previous QG P1 baseline remains frozen for regression comparison.
 
 The authoritative answer-spec kind list lives at `worker/src/subjects/grammar/answer-spec.js` (`ANSWER_SPEC_KINDS`). The six kinds are: `exact`, `normalisedText`, `acceptedSet`, `punctuationPattern`, `multiField`, `manualReviewOnly`. Every row below proposes one of those kinds; the gate test asserts the set membership.
 
-This audit is a read-only pass over `worker/src/subjects/grammar/content.js`. It does not modify `content.js`, does not touch `answer-spec.js`, and does not touch any oracle fixture.
-
-Phase 5 and later generated templates now have an opt-in enforcement path: template metadata can set `requiresAnswerSpec: true` and `answerSpecKind`, and each generated question must emit hidden `question.answerSpec` data that passes `validateAnswerSpec()`. Legacy templates keep the adapter path until their own content-release migration, but new generated content must not add fresh marking debt.
+QG P2 makes this audit executable: every constructed-response template now sets `requiresAnswerSpec: true` and `answerSpecKind`, and each generated question emits hidden `question.answerSpec` data that passes `validateAnswerSpec()`. Legacy `markStringAnswer` remains as a compatibility adapter, but the shipped P2 release has zero constructed-response templates left on that adapter path.
 
 ---
 
 ## 1. Scope and ground rules
 
 - **57 templates total.** Confirmed by `GRAMMAR_TEMPLATES.length === 57` in `worker/src/subjects/grammar/content.js`. Split: 37 `isSelectedResponse: true`, 20 `isSelectedResponse: false`.
-- **Zero template code changes.** Proposed specs are Phase 5 backlog only.
-- **Zero `contentReleaseId` bump.** Any Phase 5 PR that changes marking behaviour (new accepted variants, stricter near-miss rejection, migration from `acceptedSet` adapter to declarative `punctuationPattern`) bumps `contentReleaseId` and refreshes the paired oracle fixture. Phase 4 touches neither.
+- **P2 template migration shipped.** The 20 constructed-response templates now emit hidden answer specs directly.
+- **`contentReleaseId` bumped.** QG P2 uses `grammar-qg-p2-2026-04-28` and adds separate P2 fixtures. The QG P1 fixtures remain unchanged.
 - **P1 focus concepts drive priority.** Six concepts were the confirmed thin-pool backlog before P1 expansion: `pronouns_cohesion`, `formality`, `active_passive`, `subject_object`, `modal_verbs`, `hyphen_ambiguity`. Every template carrying one of these concept ids in `skillIds` inherits **high** priority, so reliability work continues to land on the concepts that were previously fragile.
 - **Selected-response default is `exact`, except classify-table specs.** 35 selected-response rows use `exact`. Two new P1 classify-table templates use `multiField` because they have per-row answers. These are additive migrations: the marking result is deterministic and no stored constructed-response evidence changes.
-- **Constructed-response triage is per-concept.** Rewrite templates for `active_passive` and `tense_aspect` migrate to `normalisedText` (whitespace + case tolerance, single golden). Punctuation-surgery templates migrate to `punctuationPattern` (the marker keeps the punctuation characters literal and can opt into `optionalCommas`). Multi-way rewrites (`clauses` combine / join) stay `acceptedSet` until Phase 5 has time to enumerate equivalence classes. Open-ended builders and ambiguous rewrites flag as `manualReviewOnly` candidates for Phase 5 to re-evaluate once the thin-pool concepts have expanded.
+- **Constructed-response triage is per-concept.** Rewrite templates for `active_passive` and `tense_aspect` migrate to `normalisedText` (whitespace + case tolerance, single golden). Punctuation-surgery templates migrate to `punctuationPattern` (the marker keeps the punctuation characters literal and can opt into `optionalCommas`). Multi-way rewrites (`clauses` combine / join) use explicit `acceptedSet` alternatives. Open-ended builders and ambiguous rewrites are `manualReviewOnly` in P2, with neutral feedback and no auto-scored mastery or reward progression.
 
 ---
 
@@ -138,7 +136,7 @@ Totals: 35 + 5 + 2 + 9 + 2 + 4 = 57.
 
 ## 3. Manual-review-only candidates (≥ 5)
 
-Phase 5 should land `manualReviewOnly` for at least these candidates before enabling a declarative-only content-release PR. The doc-gate test asserts this list contains **at least 5** entries.
+P2 lands `manualReviewOnly` for the four open constructed-response candidates. The two selected-response explain templates remain future re-evaluation candidates if they ever become free text. The doc-gate test asserts this list contains **at least 5** entries so the future free-text risk stays visible.
 
 1. `build_noun_phrase` — open-ended builder; any syntactically valid expanded noun phrase with three+ words should count, but the fixture cannot enumerate every adjective/post-modifier combination.
 2. `proc2_fronted_adverbial_build` — free-form sentence building; many valid rewrites preserve the fronted-adverbial target.
@@ -170,10 +168,10 @@ Why high priority on thin-pool concepts specifically: each concept has fewer tem
 
 Every row where marking behaviour changes bumps `contentReleaseId` and invalidates stored attempt evidence against the prior release. Rows that are purely declarative (selected-response → `exact`, where the mark result is byte-identical for every stored attempt) do not bump.
 
-- **Rows requiring `contentReleaseId` bump: 20.** Every row marked `YES` in the table — all 20 legacy constructed-response templates. Phase 5 should batch these per-concept so one content-release PR covers all templates for a given skill (e.g. one PR for `punctuation_*` surgery, one for `active_passive`, one for `standard_english`). Every such PR pairs with a `tests/fixtures/oracle-grammar-*.json` refresh.
+- **Rows requiring `contentReleaseId` bump: 20.** Every row marked `YES` in the table — all 20 legacy constructed-response templates. QG P2 batches these as one content release and pairs them with separate QG P2 fixtures.
 - **Rows NOT requiring `contentReleaseId` bump: 37.** Every selected-response row marked `NO` — legacy selected-response rows preserve option-value equality, and the new P1 rows emit typed `answerSpec` data from day one. The P1 content itself bumps the Grammar content release because the pool changed, but the answer-spec marking contract does not add a separate marking-behaviour bump.
 - **`explain_reason_choice` and `proc2_boundary_punctuation_explain`:** flagged `medium` priority and `NO` bump because today they are selected-response. If Phase 5 migrates them to free-text explanation, that migration **is** a marking-behaviour change and bumps `contentReleaseId` at that time.
-- **`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`:** `manualReviewOnly` migration **always** bumps `contentReleaseId`: the mark result shifts from `correct: true/false, score: 0..2` (adapter path) to `correct: false, score: 0, maxScore: 0` (manual-review path). Every stored attempt would need a mastery-signal downgrade, so the release-id bump is non-negotiable.
+- **`build_noun_phrase`, `standard_fix_sentence`, `proc2_fronted_adverbial_build`, `proc3_noun_phrase_build`:** `manualReviewOnly` migration **always** bumps `contentReleaseId`: the mark result shifts from `correct: true/false, score: 0..2` (adapter path) to `correct: false, score: 0, maxScore: 0, nonScored: true` (manual-review path). Stored attempt evidence must not be replayed as P2 mastery evidence.
 
 ---
 
@@ -192,12 +190,12 @@ The test file does **not** touch `content.js`, `answer-spec.js`, or any oracle f
 
 ---
 
-## 7. Phase 5 execution notes (out of scope for this PR)
+## 7. Migration notes and future boundaries
 
-These notes guide the Phase 5 backlog and are not enforced by this doc gate:
+These notes are now historical migration guidance plus future backlog boundaries:
 
-- **One template per content-release PR** unless the PR batches templates under the same concept with an identical marking-behaviour change. Paired oracle-fixture refresh per PR.
-- **Migration ordering suggestion.**
+- **QG P2 batching.** P2 intentionally shipped all 20 constructed-response migrations in one release so the answer-spec denominator, release id, redaction gate, smoke family coverage, and reward safety moved together.
+- **Historical migration ordering suggestion.**
   1. Thin-pool `active_passive` rewrites (`normalisedText`) — 2 templates.
   2. Thin-pool `hyphen_ambiguity` surgery (`punctuationPattern`) — 1 template (`proc3_hyphen_fix_meaning`).
   3. Remaining punctuation-surgery templates (`punctuationPattern`) — 7 templates.
@@ -205,15 +203,15 @@ These notes guide the Phase 5 backlog and are not enforced by this doc gate:
   5. Clause combine/join (`acceptedSet`) — 2 templates.
   6. Builders + ambiguous fixes (`manualReviewOnly`) — 4 templates.
   7. Selected-response batch (`exact`/`multiField`) — 37 templates in one PR, with the two P1 classify tables already carrying `multiField`.
-  8. Explain-template re-evaluation (potential `manualReviewOnly` migration if they move to free-text) — deferred to Phase 6+ content-expansion work.
-- **Each Phase 5 PR** must land a new row in `tests/fixtures/grammar-phase5-answer-spec-migration/*.json` (per-template migration evidence) plus an `ownerUnit` + `landedIn: "PR #<num>"` row in the Phase 5 baseline. Phase 4's completeness gate (U13) does **not** read these; a new Phase 5 gate will.
-- **`params` usage.** Reserved parameters flagged above (`params.optionalCommas`, `params.acceptHyphenMinus`, `params.acceptQuoteStyle`) are Phase 5 enhancements. None are required for the first migration wave — drop them and rely on declared golden strings matching fixture output byte-for-byte.
+  8. Explain-template re-evaluation (potential `manualReviewOnly` migration if they move to free-text) — still deferred to future content-expansion work.
+- **`params` usage.** Reserved parameters flagged above (`params.optionalCommas`, `params.acceptHyphenMinus`, `params.acceptQuoteStyle`) remain future enhancements. P2 relies on declared golden strings matching fixture output byte-for-byte.
 
 ---
 
 ## 8. References
 
-- Plan: `docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md` — U11 section.
+- Plan: `docs/plans/james/grammar/questions-generator/grammar-qg-p2.md`.
+- Historical plan: `docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md` — U11 section.
 - Source of truth: `worker/src/subjects/grammar/content.js` (`GRAMMAR_TEMPLATES`).
 - Answer-spec module: `worker/src/subjects/grammar/answer-spec.js` (`ANSWER_SPEC_KINDS`, `markByAnswerSpec`, `validateAnswerSpec`).
 - Phase 3 deferral of record: `docs/plans/james/grammar/grammar-phase3-implementation-report.md` §5 item 5.

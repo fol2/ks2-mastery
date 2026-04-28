@@ -1901,6 +1901,8 @@ const TEMPLATES = [
     difficulty: 2,
     satsFriendly: true,
     isSelectedResponse: false,
+    requiresAnswerSpec: true,
+    answerSpecKind: "manualReviewOnly",
     tags: [
       "builder"
     ],
@@ -1931,28 +1933,19 @@ const TEMPLATES = [
             }
           ];
           const item = variants[seed % variants.length];
+          const answerSpec = manualReviewOnlyAnswerSpec({
+            feedbackLong:"Your noun phrase has been saved for review. It is not auto-marked for mastery."
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>Build a noun phrase of at least three words to complete the sentence below.</p><p><strong>${escapeHtml(item.sentence)}</strong></p>`,
             inputSpec:{ type:"multi", fields:item.fields },
             solutionLines:[
               "Choose a sensible determiner/adjective opening, then a noun, then extra detail attached to that noun.",
               `A strong answer is: ${item.final}.`
             ],
-            evaluate:(resp)=>{
-              const got = [resp.part1 || "", resp.part2 || "", resp.part3 || ""];
-              const correctBits = got.filter((x,i)=>x===item.answerParts[i]).length;
-              const score = correctBits === 3 ? 2 : correctBits >= 2 ? 1 : 0;
-              return mkResult({
-                correct: correctBits === 3,
-                score,
-                maxScore:2,
-                misconception: correctBits === 3 ? null : "noun_phrase_confusion",
-                feedbackShort: correctBits === 3 ? "Correct." : (score ? "Close, but not all the parts build a full noun phrase." : "Not quite."),
-                feedbackLong:`A strong answer is: ${item.final}.`,
-                answerText:item.final
-              });
-            }
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2000,6 +1993,8 @@ const TEMPLATES = [
     difficulty: 2,
     satsFriendly: true,
     isSelectedResponse: false,
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -2008,8 +2003,15 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const item = FRONTED_FIX_ITEMS[seed % FRONTED_FIX_ITEMS.length];
+          const answerSpec = punctuationPatternAnswerSpec([item.answer], [item.raw], {
+            maxScore:2,
+            misconception:"fronted_adverbial_confusion",
+            feedbackLong:`The correct sentence is: ${item.answer}`,
+            answerText:item.answer
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>${item.prompt}</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Type the corrected sentence here." },
             solutionLines:[
@@ -2017,12 +2019,7 @@ const TEMPLATES = [
               "Add a comma after that opening phrase.",
               `Correct answer: ${item.answer}`
             ],
-            evaluate:(resp)=>markStringAnswer(resp.answer||"", [item.answer], {
-              maxScore:2,
-              misconception:"fronted_adverbial_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`The correct sentence is: ${item.answer}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2071,6 +2068,8 @@ const TEMPLATES = [
     difficulty: 3,
     satsFriendly: true,
     isSelectedResponse: false,
+    requiresAnswerSpec: true,
+    answerSpecKind: "acceptedSet",
     tags: [
       "builder",
       "surgery"
@@ -2080,17 +2079,20 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const item = CLAUSE_COMBINE_ITEMS[seed % CLAUSE_COMBINE_ITEMS.length];
+          const answerSpec = acceptedSetAnswerSpec(item.accepted, [], {
+            maxScore:2,
+            misconception:"subordinate_clause_confusion",
+            punctuationMisconception:"punctuation_precision",
+            feedbackLong:`A correct answer is: ${item.accepted[0]}`,
+            answerText:item.accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>${item.instruction}</p><p><strong>${item.parts[0]}</strong><br><strong>${item.parts[1]}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Combined sentence", placeholder:"Write one complete sentence." },
             solutionLines:item.solution,
-            evaluate:(resp)=>markStringAnswer(resp.answer||"", item.accepted, {
-              maxScore:2,
-              misconception:"subordinate_clause_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${item.accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2210,6 +2212,8 @@ const TEMPLATES = [
     difficulty: 3,
     satsFriendly: true,
     isSelectedResponse: false,
+    requiresAnswerSpec: true,
+    answerSpecKind: "normalisedText",
     tags: [
       "surgery",
       "builder"
@@ -2219,17 +2223,19 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const item = TENSE_REWRITE_ITEMS[seed % TENSE_REWRITE_ITEMS.length];
+          const answerSpec = normalisedTextAnswerSpec(item.accepted, [], {
+            maxScore:2,
+            misconception:"tense_confusion",
+            feedbackLong:`A correct answer is: ${item.accepted[0]}`,
+            answerText:item.accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>${item.instruction}</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full sentence." },
             solutionLines:item.solution,
-            evaluate:(resp)=>markStringAnswer(resp.answer||"", item.accepted, {
-              maxScore:2,
-              misconception:"tense_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${item.accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2361,6 +2367,8 @@ const TEMPLATES = [
     difficulty: 3,
     satsFriendly: true,
     isSelectedResponse: false,
+    requiresAnswerSpec: true,
+    answerSpecKind: "normalisedText",
     tags: [
       "builder",
       "surgery"
@@ -2370,17 +2378,19 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const item = ACTIVE_PASSIVE_ITEMS[seed % ACTIVE_PASSIVE_ITEMS.length];
+          const answerSpec = normalisedTextAnswerSpec(item.accepted, [], {
+            maxScore:2,
+            misconception:"active_passive_confusion",
+            feedbackLong:`A correct answer is: ${item.accepted[0]}`,
+            answerText:item.accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>${item.instruction}</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full transformed sentence." },
             solutionLines:item.solution,
-            evaluate:(resp)=>markStringAnswer(resp.answer||"", item.accepted, {
-              maxScore:2,
-              misconception:"active_passive_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${item.accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2500,6 +2510,8 @@ const TEMPLATES = [
     difficulty: 3,
     satsFriendly: true,
     isSelectedResponse: false,
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -2508,17 +2520,19 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const item = PARENTHESIS_FIX_ITEMS[seed % PARENTHESIS_FIX_ITEMS.length];
+          const answerSpec = punctuationPatternAnswerSpec(item.accepted, [item.raw], {
+            maxScore:2,
+            misconception:"parenthesis_confusion",
+            feedbackLong:`A correct answer is: ${item.accepted[0]}`,
+            answerText:item.accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>${item.prompt}</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Type the corrected sentence." },
             solutionLines:item.solution,
-            evaluate:(resp)=>markStringAnswer(resp.answer||"", item.accepted, {
-              maxScore:2,
-              misconception:"parenthesis_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${item.accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2530,6 +2544,8 @@ const TEMPLATES = [
     difficulty: 3,
     satsFriendly: true,
     isSelectedResponse: false,
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -2538,17 +2554,19 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const item = SPEECH_FIX_ITEMS[seed % SPEECH_FIX_ITEMS.length];
+          const answerSpec = punctuationPatternAnswerSpec(item.accepted, [item.raw], {
+            maxScore:2,
+            misconception:"speech_punctuation_confusion",
+            feedbackLong:`A correct answer is: ${item.accepted[0]}`,
+            answerText:item.accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>${item.prompt}</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Correctly punctuated sentence", placeholder:"Type the corrected sentence." },
             solutionLines:item.solution,
-            evaluate:(resp)=>markStringAnswer(resp.answer||"", item.accepted, {
-              maxScore:2,
-              misconception:"speech_punctuation_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${item.accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2633,6 +2651,8 @@ const TEMPLATES = [
     difficulty: 2,
     satsFriendly: true,
     isSelectedResponse: false,
+    requiresAnswerSpec: true,
+    answerSpecKind: "manualReviewOnly",
     tags: [
       "surgery"
     ],
@@ -2641,17 +2661,16 @@ const TEMPLATES = [
     ],
     generator(seed) {
           const item = STANDARD_FIX_ITEMS[seed % STANDARD_FIX_ITEMS.length];
+          const answerSpec = manualReviewOnlyAnswerSpec({
+            feedbackLong:"Your Standard English rewrite has been saved for review. It is not auto-marked for mastery."
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>${item.instruction}</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Write the corrected sentence." },
             solutionLines:item.solution,
-            evaluate:(resp)=>markStringAnswer(resp.answer||"", item.accepted, {
-              maxScore:2,
-              misconception:"standard_english_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${item.accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2664,6 +2683,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -2676,8 +2697,15 @@ const TEMPLATES = [
           const clause = proceduralSubjectObject(rng).clause;
           const raw = ensureSentenceEnd(`${adv} ${clause}`);
           const accepted = [ensureSentenceEnd(`${adv}, ${clause}`)];
+          const answerSpec = punctuationPatternAnswerSpec(accepted, [raw], {
+            maxScore:2,
+            misconception:"fronted_adverbial_confusion",
+            feedbackLong:`A correct answer is: ${accepted[0]}`,
+            answerText:accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>Rewrite the sentence with the punctuation corrected.</p><p><strong>${escapeHtml(raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Write the corrected sentence." },
             solutionLines:[
@@ -2686,12 +2714,7 @@ const TEMPLATES = [
               `A correct answer is: ${accepted[0]}`
             ],
             contrastHtml:`<div class="contrast-card"><strong>Useful contrast</strong><p style="margin:8px 0 4px;">${escapeHtml(accepted[0])}</p><p style="margin:0 0 4px;">${escapeHtml(raw)}</p><p style="margin:0;">The comma separates the opening adverbial from the main clause.</p></div>`,
-            evaluate:(resp)=>markStringAnswer(resp.answer || "", accepted, {
-              maxScore:2,
-              misconception:"fronted_adverbial_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2750,6 +2773,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -2761,8 +2786,15 @@ const TEMPLATES = [
           const item = pick(rng, EXTRA_LEXICON.colonLists);
           const raw = ensureSentenceEnd(`${item.intro} ${item.items.join(", ")}`);
           const accepted = [ensureSentenceEnd(`${item.intro}: ${item.items.join(", ")}`)];
+          const answerSpec = punctuationPatternAnswerSpec(accepted, [raw], {
+            maxScore:2,
+            misconception:"boundary_punctuation_confusion",
+            feedbackLong:`A correct answer is: ${accepted[0]}`,
+            answerText:accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>Rewrite the sentence with a colon in the correct place.</p><p><strong>${escapeHtml(raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Write the corrected sentence." },
             solutionLines:[
@@ -2770,12 +2802,7 @@ const TEMPLATES = [
               "A colon can introduce the list that follows.",
               `A correct answer is: ${accepted[0]}`
             ],
-            evaluate:(resp)=>markStringAnswer(resp.answer || "", accepted, {
-              maxScore:2,
-              misconception:"boundary_punctuation_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2788,6 +2815,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -2803,8 +2832,15 @@ const TEMPLATES = [
             `${pair[0]} — ${pair[1]}.`,
             `${pair[0]} - ${pair[1]}.`
           ]);
+          const answerSpec = punctuationPatternAnswerSpec(accepted, [raw], {
+            maxScore:2,
+            misconception:"boundary_punctuation_confusion",
+            feedbackLong:`A correct answer is: ${accepted[0]}`,
+            answerText:accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>Rewrite the sentence with a dash in the correct place.</p><p><strong>${escapeHtml(raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Write the corrected sentence." },
             solutionLines:[
@@ -2812,12 +2848,7 @@ const TEMPLATES = [
               "A dash can mark that strong break.",
               `A correct answer is: ${accepted[0]}`
             ],
-            evaluate:(resp)=>markStringAnswer(resp.answer || "", accepted, {
-              maxScore:2,
-              misconception:"boundary_punctuation_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -2869,6 +2900,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -2911,17 +2944,19 @@ const TEMPLATES = [
               `A correct answer is: ${accepted[0]}`
             ];
           }
+          const answerSpec = punctuationPatternAnswerSpec(accepted, [raw], {
+            maxScore:2,
+            misconception:"speech_punctuation_confusion",
+            feedbackLong:`A correct answer is: ${accepted[0]}`,
+            answerText:accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>Punctuate the direct speech correctly.</p><p><strong>${escapeHtml(raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Correctly punctuated sentence", placeholder:"Type the corrected sentence." },
             solutionLines,
-            evaluate:(resp)=>markStringAnswer(resp.answer || "", accepted, {
-              maxScore:2,
-              misconception:"speech_punctuation_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -3023,6 +3058,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "normalisedText",
     tags: [
       "surgery"
     ],
@@ -3032,8 +3069,15 @@ const TEMPLATES = [
     generator(seed) {
           const rng = mulberry32(seed);
           const item = generateStandardEnglishCase(rng);
+          const answerSpec = normalisedTextAnswerSpec([item.correct], [item.raw], {
+            maxScore:2,
+            misconception:"standard_english_confusion",
+            feedbackLong:`A correct answer is: ${item.correct}`,
+            answerText:item.correct
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>Rewrite the sentence in Standard English.</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Write the corrected sentence." },
             solutionLines:[
@@ -3041,11 +3085,7 @@ const TEMPLATES = [
               "Replace it with the Standard English verb form.",
               `A correct answer is: ${item.correct}`
             ],
-            evaluate:(resp)=>markStringAnswer(resp.answer || "", [item.correct], {
-              maxScore:2,
-              misconception:"standard_english_confusion",
-              feedbackLong:`A correct answer is: ${item.correct}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -3198,6 +3238,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "normalisedText",
     tags: [
       "builder"
     ],
@@ -3207,8 +3249,15 @@ const TEMPLATES = [
     generator(seed) {
           const rng = mulberry32(seed);
           const item = generatePassiveCase(rng);
+          const answerSpec = normalisedTextAnswerSpec(item.accepted, [item.raw], {
+            maxScore:2,
+            misconception:"active_passive_confusion",
+            feedbackLong:`A correct answer is: ${item.accepted[0]}`,
+            answerText:item.accepted[0]
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>Rewrite the sentence in the active voice.</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
             inputSpec:{ type:"textarea", label:"Rewritten sentence", placeholder:"Write the full sentence." },
             solutionLines:[
@@ -3216,11 +3265,7 @@ const TEMPLATES = [
               "Move that doer into the subject position and keep the tense steady.",
               `A correct answer is: ${item.accepted[0]}`
             ],
-            evaluate:(resp)=>markStringAnswer(resp.answer || "", item.accepted, {
-              maxScore:2,
-              misconception:"active_passive_confusion",
-              feedbackLong:`A correct answer is: ${item.accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -3261,6 +3306,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "manualReviewOnly",
     tags: [
       "builder"
     ],
@@ -3273,8 +3320,12 @@ const TEMPLATES = [
           const adv = pick(rng, EXTRA_LEXICON.fronted);
           const clause = proceduralSubjectObject(rng).clause;
           const accepted = [ensureSentenceEnd(`${adv}, ${clause}`)];
+          const answerSpec = manualReviewOnlyAnswerSpec({
+            feedbackLong:"Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery."
+          });
           return makeBaseQuestion(this, seed, {
             marks:2,
+            answerSpec,
             stemHtml:`<p>Use this opening phrase and clause to build one correct sentence.</p><p><strong>Opening phrase:</strong> ${escapeHtml(adv)}</p><p><strong>Main clause:</strong> ${escapeHtml(capFirst(clause))}</p>`,
             inputSpec:{ type:"textarea", label:"Your sentence", placeholder:"Write one complete sentence." },
             solutionLines:[
@@ -3282,12 +3333,7 @@ const TEMPLATES = [
               "Add a comma after it before the main clause begins.",
               `A correct answer is: ${accepted[0]}`
             ],
-            evaluate:(resp)=>markStringAnswer(resp.answer || "", accepted, {
-              maxScore:2,
-              misconception:"fronted_adverbial_confusion",
-              punctuationMisconception:"punctuation_precision",
-              feedbackLong:`A correct answer is: ${accepted[0]}`
-            })
+            evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
           });
         }
   },
@@ -3494,6 +3540,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "manualReviewOnly",
     tags: [
       "builder"
     ],
@@ -3516,8 +3564,12 @@ const TEMPLATES = [
             const noun = pick(rng, nouns);
             const sentence = pick(rng, endings);
             const correct = `the ${sizeWord} ${colourWord} ${noun}`;
+            const answerSpec = manualReviewOnlyAnswerSpec({
+              feedbackLong:"Your expanded noun phrase has been saved for review. It is not auto-marked for mastery."
+            });
             return makeBaseQuestion(this, seed, {
               marks:2,
+              answerSpec,
               stemHtml:`<p>Use all the words to build an <strong>expanded noun phrase</strong> that could complete the sentence.</p><p><strong>Words:</strong> the / ${sizeWord} / ${colourWord} / ${noun}</p><p><strong>${sentence}</strong></p>`,
               inputSpec:{ type:"text", label:"Expanded noun phrase", placeholder:"Type the noun phrase." },
               solutionLines:[
@@ -3525,12 +3577,7 @@ const TEMPLATES = [
                 `A clear expanded noun phrase is: ${correct}.`,
                 "The whole phrase centres on the noun at the end."
               ],
-              evaluate:(resp)=>markStringAnswer(resp.answer || "", [correct], {
-                maxScore:2,
-                misconception:"noun_phrase_confusion",
-                punctuationMisconception:"punctuation_precision",
-                feedbackLong:`A correct expanded noun phrase is: ${correct}.`
-              })
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
             });
           }
   },
@@ -3543,6 +3590,8 @@ const TEMPLATES = [
     satsFriendly: true,
     isSelectedResponse: false,
     generative: true,
+    requiresAnswerSpec: true,
+    answerSpecKind: "acceptedSet",
     tags: [
       "builder"
     ],
@@ -3599,8 +3648,16 @@ const TEMPLATES = [
                 `${capFirst(sub)} if ${main}.`
               ]);
             }
+            const answerSpec = acceptedSetAnswerSpec(accepted, [], {
+              maxScore:2,
+              misconception:"subordinate_clause_confusion",
+              punctuationMisconception:"punctuation_precision",
+              feedbackLong:`A correct answer is: ${accepted[0]}`,
+              answerText:accepted[0]
+            });
             return makeBaseQuestion(this, seed, {
               marks:2,
+              answerSpec,
               stemHtml:`<p>Combine these ideas into one sentence using <strong>${conjunction}</strong>.</p><ul><li>${capFirst(main)}.</li><li>${capFirst(sub)}.</li></ul>`,
               inputSpec:{ type:"textarea", label:"Combined sentence", placeholder:"Write one combined sentence." },
               solutionLines:[
@@ -3608,12 +3665,7 @@ const TEMPLATES = [
                 accepted[0],
                 "Check that the sentence is complete and punctuated as one whole sentence."
               ],
-              evaluate:(resp)=>markStringAnswer(resp.answer || "", accepted, {
-                maxScore:2,
-                misconception:"subordinate_clause_confusion",
-                punctuationMisconception:"punctuation_precision",
-                feedbackLong:`A correct answer is: ${accepted[0]}`
-              })
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
             });
           }
   },
@@ -3627,6 +3679,8 @@ const TEMPLATES = [
     isSelectedResponse: false,
     generative: true,
     punctStage: "repair",
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -3657,8 +3711,15 @@ const TEMPLATES = [
               }
             ];
             const item = items[seed % items.length];
+            const answerSpec = punctuationPatternAnswerSpec([item.accepted], [item.raw], {
+              maxScore:2,
+              misconception:"parenthesis_confusion",
+              feedbackLong:`A correct answer is: ${item.accepted}`,
+              answerText:item.accepted
+            });
             return makeBaseQuestion(this, seed, {
               marks:2,
+              answerSpec,
               stemHtml:`<p>Add commas to show the <strong>parenthesis</strong>.</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
               inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Type the corrected sentence." },
               solutionLines:[
@@ -3666,12 +3727,7 @@ const TEMPLATES = [
                 item.why,
                 `A correct answer is: ${item.accepted}`
               ],
-              evaluate:(resp)=>markStringAnswer(resp.answer || "", [item.accepted], {
-                maxScore:2,
-                misconception:"parenthesis_confusion",
-                punctuationMisconception:"punctuation_precision",
-                feedbackLong:`A correct answer is: ${item.accepted}`
-              })
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
             });
           }
   },
@@ -3685,6 +3741,8 @@ const TEMPLATES = [
     isSelectedResponse: false,
     generative: true,
     punctStage: "produce",
+    requiresAnswerSpec: true,
+    answerSpecKind: "punctuationPattern",
     tags: [
       "surgery"
     ],
@@ -3715,8 +3773,15 @@ const TEMPLATES = [
               }
             ];
             const item = items[seed % items.length];
+            const answerSpec = punctuationPatternAnswerSpec([item.accepted], [item.raw], {
+              maxScore:2,
+              misconception:"punctuation_precision",
+              feedbackLong:`A correct answer is: ${item.accepted}`,
+              answerText:item.accepted
+            });
             return makeBaseQuestion(this, seed, {
               marks:2,
+              answerSpec,
               stemHtml:`<p>Rewrite the sentence with a <strong>hyphen</strong> to make the meaning clear.</p><p><strong>${escapeHtml(item.raw)}</strong></p>`,
               inputSpec:{ type:"textarea", label:"Corrected sentence", placeholder:"Type the corrected sentence." },
               solutionLines:[
@@ -3724,12 +3789,7 @@ const TEMPLATES = [
                 item.why,
                 `A correct answer is: ${item.accepted}`
               ],
-              evaluate:(resp)=>markStringAnswer(resp.answer || "", [item.accepted], {
-                maxScore:2,
-                misconception:"punctuation_precision",
-                punctuationMisconception:"punctuation_precision",
-                feedbackLong:`A correct answer is: ${item.accepted}`
-              })
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
             });
           }
   },
@@ -4140,6 +4200,8 @@ const TEMPLATES = [
     isSelectedResponse: false,
     generative: true,
     punctStage: "produce",
+    requiresAnswerSpec: true,
+    answerSpecKind: "normalisedText",
     tags: [
       "builder"
     ],
@@ -4167,8 +4229,15 @@ const TEMPLATES = [
               accepted = `the ${owner}'s ${item}`;
               why = "An irregular plural owner that does not end in s usually takes apostrophe + s.";
             }
+            const answerSpec = normalisedTextAnswerSpec([accepted], [prompt], {
+              maxScore:2,
+              misconception:"apostrophe_possession_confusion",
+              feedbackLong:`A correct answer is: ${accepted}`,
+              answerText:accepted
+            });
             return makeBaseQuestion(this, seed, {
               marks:2,
+              answerSpec,
               stemHtml:`<p>Rewrite this phrase using the correct <strong>possessive apostrophe</strong>.</p><p><strong>${escapeHtml(prompt)}</strong></p>`,
               inputSpec:{ type:"text", label:"Rewritten phrase", placeholder:"Type the rewritten phrase." },
               solutionLines:[
@@ -4176,12 +4245,7 @@ const TEMPLATES = [
                 why,
                 `A correct answer is: ${accepted}`
               ],
-              evaluate:(resp)=>markStringAnswer(resp.answer || "", [accepted], {
-                maxScore:2,
-                misconception:"apostrophe_possession_confusion",
-                punctuationMisconception:"punctuation_precision",
-                feedbackLong:`A correct answer is: ${accepted}`
-              })
+              evaluate:(resp)=>markByAnswerSpec(answerSpec, resp)
             });
           }
   }
@@ -4385,6 +4449,46 @@ function choiceResult(resp, correct, maxScore, why, misconception, answerText) {
     feedbackLong: why,
     answerText: answerText || correct
   });
+}
+
+function answerSpecBase(kind, golden, nearMiss, opts = {}) {
+  const misconception = opts.misconception || "misread_question";
+  return {
+    kind,
+    golden: dedupePlain(Array.isArray(golden) ? golden : [golden]),
+    nearMiss: dedupePlain(nearMiss || []),
+    maxScore: opts.maxScore || 1,
+    misconception,
+    feedbackLong: opts.feedbackLong || "",
+    answerText: opts.answerText || (Array.isArray(golden) ? golden[0] : golden) || "",
+    minimalHint: MINIMAL_HINTS[misconception] || "Check the sentence structure and the instruction again.",
+    ...(opts.punctuationMisconception ? { punctuationMisconception: opts.punctuationMisconception } : {}),
+    ...(opts.params ? { params: opts.params } : {})
+  };
+}
+
+function normalisedTextAnswerSpec(correct, nearMiss, opts = {}) {
+  return answerSpecBase("normalisedText", correct, nearMiss, opts);
+}
+
+function acceptedSetAnswerSpec(accepted, nearMiss, opts = {}) {
+  return answerSpecBase("acceptedSet", accepted, nearMiss, {
+    maxScore: 2,
+    ...opts
+  });
+}
+
+function punctuationPatternAnswerSpec(accepted, nearMiss, opts = {}) {
+  return answerSpecBase("punctuationPattern", accepted, nearMiss, opts);
+}
+
+function manualReviewOnlyAnswerSpec(opts = {}) {
+  return {
+    kind: "manualReviewOnly",
+    maxScore: 0,
+    feedbackLong: opts.feedbackLong || "Your response has been saved for teacher or parent review.",
+    minimalHint: opts.minimalHint || "This writing response is for review, not automatic marking."
+  };
 }
 
 function exactAnswerSpec(correct, nearMiss, opts = {}) {
@@ -4692,7 +4796,7 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p1-2026-04-28';
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p2-2026-04-28';
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);

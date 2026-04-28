@@ -34,25 +34,30 @@ function seedAccount(server, {
 function insertSession(server, {
   id,
   learnerId = 'learner-history',
+  subjectId = 'spelling',
+  sessionKind = 'learning',
+  summary = {
+    label: 'Smart review',
+    cards: [{ label: 'Correct', value: '6/8' }],
+    mistakes: [{ word: 'secret-word', year: '5-6' }],
+  },
   updatedAt,
 }) {
   runSql(server, `
     INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
-    VALUES (?, ?, 'spelling', 'learning', 'completed', ?, ?, ?, ?, 'adult-parent')
+    VALUES (?, ?, ?, ?, 'completed', ?, ?, ?, ?, 'adult-parent')
   `, [
     id,
     learnerId,
+    subjectId,
+    sessionKind,
     JSON.stringify({
       currentCard: {
         word: { word: 'secret-word' },
         prompt: { sentence: 'secret-prompt-sentence' },
       },
     }),
-    JSON.stringify({
-      label: 'Smart review',
-      cards: [{ label: 'Correct', value: '6/8' }],
-      mistakes: [{ word: 'secret-word', year: '5-6' }],
-    }),
+    JSON.stringify(summary),
     updatedAt - 1,
     updatedAt,
   ]);
@@ -128,6 +133,38 @@ test('parent recent sessions route is paginated, scoped, and redacted', async ()
   assert.equal(secondResponse.status, 200);
   assert.deepEqual(secondPayload.sessions.map((session) => session.id), ['session-4', 'session-3', 'session-2']);
   assert.equal(secondPayload.sessions.some((session) => firstPayload.sessions.some((first) => first.id === session.id)), false);
+
+  server.close();
+});
+
+test('parent recent sessions route treats Grammar manual-review saves as non-scored', async () => {
+  const server = createWorkerRepositoryServer();
+  seedAccount(server, { accountId: 'adult-parent' });
+
+  insertSession(server, {
+    id: 'grammar-manual-review',
+    subjectId: 'grammar',
+    sessionKind: 'practice',
+    summary: {
+      mode: 'practice',
+      answered: 1,
+      scoredAnswered: 0,
+      nonScoredAnswered: 1,
+      correct: 0,
+    },
+    updatedAt: NOW + 1,
+  });
+
+  const response = await server.fetchAs(
+    'adult-parent',
+    `${BASE_URL}/api/hubs/parent/recent-sessions?learnerId=learner-history&limit=1`,
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.recentSessions[0].id, 'grammar-manual-review');
+  assert.equal(payload.recentSessions[0].mistakeCount, 0);
+  assert.equal(payload.recentSessions[0].headline, 'Saved for review');
 
   server.close();
 });

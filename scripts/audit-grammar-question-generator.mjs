@@ -63,7 +63,7 @@ function buildSignatureAudit(seeds) {
   for (const template of GRAMMAR_TEMPLATE_METADATA) {
     if (!template.generative) continue;
     if (!template.generatorFamilyId) missing.push(template.id);
-    const strictVariantTemplate = Boolean(template.requiresAnswerSpec || (template.tags || []).includes('qg-p1'));
+    const strictVariantTemplate = (template.tags || []).includes('qg-p1');
     for (const seed of seeds) {
       const question = createGrammarQuestion({ templateId: template.id, seed });
       const signature = grammarQuestionVariantSignature(question);
@@ -105,8 +105,14 @@ function buildSignatureAudit(seeds) {
 
 function buildAnswerSpecAudit(seeds) {
   const required = GRAMMAR_TEMPLATE_METADATA.filter((template) => template.requiresAnswerSpec);
+  const constructed = GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse);
   const missing = [];
   const invalid = [];
+  const kindCounts = {};
+  for (const template of required) {
+    const kind = template.answerSpecKind || 'missing';
+    kindCounts[kind] = (kindCounts[kind] || 0) + 1;
+  }
 
   for (const template of required) {
     for (const seed of seeds) {
@@ -137,6 +143,12 @@ function buildAnswerSpecAudit(seeds) {
 
   return {
     answerSpecTemplateCount: required.length,
+    answerSpecKindCounts: Object.fromEntries(Object.entries(kindCounts).sort(([a], [b]) => a.localeCompare(b))),
+    constructedResponseTemplateCount: constructed.length,
+    constructedResponseAnswerSpecTemplateCount: constructed.filter((template) => template.requiresAnswerSpec).length,
+    legacyAdapterTemplateCount: constructed.filter((template) => !template.requiresAnswerSpec).length,
+    manualReviewOnlyTemplateCount: required.filter((template) => template.answerSpecKind === 'manualReviewOnly').length,
+    p2MigrationComplete: constructed.every((template) => template.requiresAnswerSpec),
     templatesMissingAnswerSpecs: uniqueSorted(missing),
     invalidAnswerSpecs: invalid,
   };
@@ -181,6 +193,9 @@ function formatSummary(audit) {
     `Repeated strict P1 variants within a template: ${audit.repeatedGeneratedVariants.length}`,
     `Legacy/advisory repeated variants within a template: ${audit.legacyRepeatedGeneratedVariants.length}`,
     `Answer-spec templates: ${audit.answerSpecTemplateCount}`,
+    `Constructed-response answer-spec templates: ${audit.constructedResponseAnswerSpecTemplateCount}/${audit.constructedResponseTemplateCount}`,
+    `Legacy adapter templates: ${audit.legacyAdapterTemplateCount}`,
+    `Manual-review-only templates: ${audit.manualReviewOnlyTemplateCount}`,
   ];
   if (audit.duplicateTemplateIds.length) lines.push(`Duplicate template ids: ${audit.duplicateTemplateIds.join(', ')}`);
   if (audit.missingGeneratorMetadata.length) lines.push(`Missing generator metadata: ${audit.missingGeneratorMetadata.join(', ')}`);

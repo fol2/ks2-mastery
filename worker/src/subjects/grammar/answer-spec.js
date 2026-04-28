@@ -80,13 +80,25 @@ function comparePunctuationPattern(response, accepted, { optionalCommas = false 
   return false;
 }
 
-function mkMarkResult({ correct, score, maxScore, misconception, feedbackShort, feedbackLong, answerText, minimalHint }) {
+function mkMarkResult({
+  correct,
+  score,
+  maxScore,
+  misconception,
+  feedbackShort,
+  feedbackLong,
+  answerText,
+  minimalHint,
+  nonScored,
+  manualReviewOnly,
+}) {
+  const normalisedCorrect = Boolean(correct);
   return {
-    correct: Boolean(correct),
+    correct: normalisedCorrect,
     score: Number.isFinite(Number(score)) ? Number(score) : 0,
     maxScore: Number.isFinite(Number(maxScore)) ? Number(maxScore) : 1,
     misconception: misconception || null,
-    feedbackShort: feedbackShort || (correct ? 'Correct.' : 'Not quite.'),
+    feedbackShort: feedbackShort || (normalisedCorrect ? 'Correct.' : 'Not quite.'),
     feedbackLong: feedbackLong || '',
     answerText: safeString(answerText),
     // Default hint so direct callers (U7 transfer lane, future content-release
@@ -94,6 +106,8 @@ function mkMarkResult({ correct, score, maxScore, misconception, feedbackShort, 
     // legacy content.js mkResult guarantees. Adapter paths can still inject
     // a concept-specific hint via content.js markStringAnswer.
     minimalHint: minimalHint ?? DEFAULT_MINIMAL_HINT,
+    ...(nonScored ? { nonScored: true } : {}),
+    ...(manualReviewOnly ? { manualReviewOnly: true } : {}),
   };
 }
 
@@ -112,15 +126,17 @@ function markExact(spec, response) {
 }
 
 function markNormalisedText(spec, response) {
-  const accepted = Array.isArray(spec.golden) && spec.golden.length ? spec.golden[0] : '';
-  const correct = compareNormalisedText(response, accepted);
+  const accepted = Array.isArray(spec.golden) && spec.golden.length ? spec.golden : [];
+  const matched = accepted.find((entry) => compareNormalisedText(response, entry)) || null;
+  const answerText = spec.answerText || matched || accepted[0] || '';
+  const correct = Boolean(matched);
   return mkMarkResult({
     correct,
     score: correct ? (spec.maxScore || 1) : 0,
     maxScore: spec.maxScore || 1,
     misconception: correct ? null : (spec.misconception || 'misread_question'),
-    feedbackLong: spec.feedbackLong || (correct ? '' : `Correct answer: ${accepted}`),
-    answerText: spec.answerText || accepted,
+    feedbackLong: spec.feedbackLong || (correct ? '' : `Correct answer: ${accepted[0] || ''}`),
+    answerText,
     minimalHint: spec.minimalHint,
   });
 }
@@ -182,17 +198,19 @@ function markAcceptedSet(spec, response) {
 }
 
 function markPunctuationPattern(spec, response) {
-  const accepted = Array.isArray(spec.golden) && spec.golden.length ? spec.golden[0] : '';
-  const correct = comparePunctuationPattern(response, accepted, {
+  const accepted = Array.isArray(spec.golden) && spec.golden.length ? spec.golden : [];
+  const compareParams = {
     optionalCommas: Boolean(spec.params?.optionalCommas),
-  });
+  };
+  const matched = accepted.find((entry) => comparePunctuationPattern(response, entry, compareParams)) || null;
+  const correct = Boolean(matched);
   return mkMarkResult({
     correct,
     score: correct ? (spec.maxScore || 1) : 0,
     maxScore: spec.maxScore || 1,
     misconception: correct ? null : (spec.misconception || 'punctuation_precision'),
-    feedbackLong: spec.feedbackLong || (correct ? '' : `Correct answer: ${accepted}`),
-    answerText: spec.answerText || accepted,
+    feedbackLong: spec.feedbackLong || (correct ? '' : `Correct answer: ${accepted[0] || ''}`),
+    answerText: spec.answerText || matched || accepted[0] || '',
     minimalHint: spec.minimalHint,
   });
 }
@@ -241,6 +259,8 @@ function markManualReviewOnly(spec) {
     feedbackLong: spec.feedbackLong || 'This response is saved for teacher or parent review and is not auto-marked.',
     answerText: '',
     minimalHint: spec.minimalHint,
+    nonScored: true,
+    manualReviewOnly: true,
   });
 }
 

@@ -23,6 +23,7 @@ import { buildGrammarReadModel } from '../worker/src/subjects/grammar/read-model
 import {
   readGrammarLegacyOracle,
   readGrammarQuestionGeneratorBaseline,
+  readGrammarQuestionGeneratorP2Baseline,
 } from './helpers/grammar-legacy-oracle.js';
 import { assertNoForbiddenGrammarReadModelKeys } from '../scripts/grammar-production-smoke.mjs';
 
@@ -38,8 +39,27 @@ test('Grammar legacy oracle fixture remains frozen for the reviewed denominator'
   assert.equal(oracle.constructedResponseCount, 20);
 });
 
-test('Grammar QG P1 baseline pins the shipped content denominator', () => {
+test('Grammar QG P1 baseline remains frozen for the previous content release', () => {
   const baseline = readGrammarQuestionGeneratorBaseline();
+
+  assert.equal(baseline.releaseId, 'grammar-qg-p1-2026-04-28');
+  assert.equal(baseline.conceptCount, 18);
+  assert.equal(baseline.templateCount, 57);
+  assert.equal(baseline.selectedResponseCount, 37);
+  assert.equal(baseline.constructedResponseCount, 20);
+  assert.equal(baseline.generatedTemplateCount, 31);
+  assert.equal(baseline.fixedTemplateCount, 26);
+  assert.equal(baseline.answerSpecTemplateCount, 6);
+  assert.deepEqual(baseline.thinPoolConcepts, []);
+  assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
+  assert.equal(GRAMMAR_CONCEPTS.length, 18);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.length, 57);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => template.isSelectedResponse).length, 37);
+  assert.equal(GRAMMAR_TEMPLATE_METADATA.filter((template) => !template.isSelectedResponse).length, 20);
+});
+
+test('Grammar QG P2 baseline pins the shipped declarative marking denominator', () => {
+  const baseline = readGrammarQuestionGeneratorP2Baseline();
 
   assert.equal(baseline.releaseId, GRAMMAR_CONTENT_RELEASE_ID);
   assert.equal(baseline.conceptCount, 18);
@@ -48,7 +68,11 @@ test('Grammar QG P1 baseline pins the shipped content denominator', () => {
   assert.equal(baseline.constructedResponseCount, 20);
   assert.equal(baseline.generatedTemplateCount, 31);
   assert.equal(baseline.fixedTemplateCount, 26);
-  assert.equal(baseline.answerSpecTemplateCount, 6);
+  assert.equal(baseline.answerSpecTemplateCount, 26);
+  assert.equal(baseline.constructedResponseAnswerSpecTemplateCount, 20);
+  assert.equal(baseline.legacyAdapterTemplateCount, 0);
+  assert.equal(baseline.manualReviewOnlyTemplateCount, 4);
+  assert.equal(baseline.p2MigrationComplete, true);
   assert.deepEqual(baseline.thinPoolConcepts, []);
   assert.deepEqual(baseline.singleQuestionTypeConcepts, []);
   assert.equal(GRAMMAR_CONCEPTS.length, 18);
@@ -80,8 +104,28 @@ test('Grammar legacy content still generates serialisable questions matching fro
     assert.equal(serialised.promptText, sample.sample.promptText, sample.id);
     assert.equal(typeof question.evaluate, 'function', sample.id);
 
-    const correct = evaluateGrammarQuestion(question, sample.correctResponse);
-    assert.deepEqual(correct, sample.correctResult, sample.id);
+    const template = grammarTemplateById(sample.id);
+    const migratedAnswerSpecResponse = (
+      !template?.isSelectedResponse
+      && question.answerSpec?.kind !== 'manualReviewOnly'
+      && Array.isArray(question.answerSpec.golden)
+    )
+      ? { answer: question.answerSpec.golden[0] }
+      : sample.correctResponse;
+    const correct = evaluateGrammarQuestion(question, migratedAnswerSpecResponse);
+    if (question.answerSpec?.kind === 'manualReviewOnly') {
+      assert.equal(correct.correct, false, sample.id);
+      assert.equal(correct.nonScored, true, sample.id);
+      assert.equal(correct.manualReviewOnly, true, sample.id);
+      assert.equal(correct.score, 0, sample.id);
+      assert.equal(correct.maxScore, 0, sample.id);
+    } else if (!template?.isSelectedResponse && question.answerSpec) {
+      assert.equal(correct.correct, true, sample.id);
+      assert.equal(correct.score, correct.maxScore, sample.id);
+      assert.equal(typeof correct.feedbackShort, 'string', sample.id);
+    } else {
+      assert.deepEqual(correct, sample.correctResult, sample.id);
+    }
     assert.doesNotThrow(() => evaluateGrammarQuestion(question, {}), sample.id);
   }
 });
@@ -138,6 +182,126 @@ test('Grammar generated attempts store safe variant metadata without exposing it
   assert.match(attempt.variantSignature, /^grammar-v1:[a-z0-9]+$/);
   assert.equal(applied.events[0].generatorFamilyId, 'qg_modal_verb_explain');
   assert.equal(applied.events[0].variantSignature, attempt.variantSignature);
+});
+
+test('Grammar manual-review-only attempts save responses without scoring or reward evidence', () => {
+  const state = createInitialGrammarState();
+  const question = createGrammarQuestion({ templateId: 'build_noun_phrase', seed: 1 });
+  const item = serialiseGrammarQuestion(question);
+  const before = JSON.parse(JSON.stringify({
+    mastery: state.mastery,
+    retryQueue: state.retryQueue,
+    misconceptions: state.misconceptions,
+  }));
+
+  const applied = applyGrammarAttemptToState(state, {
+    learnerId: 'learner-a',
+    item,
+    response: {
+      part1: 'The nervous',
+      part2: 'young explorer',
+      part3: 'from our class',
+    },
+    supportLevel: 0,
+    attempts: 1,
+    requestId: 'manual-review',
+    now: 1_777_000_000_000,
+  });
+
+  assert.equal(applied.result.correct, false);
+  assert.equal(applied.result.nonScored, true);
+  assert.equal(applied.result.manualReviewOnly, true);
+  assert.equal(applied.quality, 0);
+  assert.deepEqual(state.mastery, before.mastery);
+  assert.deepEqual(state.retryQueue, before.retryQueue);
+  assert.deepEqual(state.misconceptions, before.misconceptions);
+  assert.equal(state.recentAttempts.length, 1);
+  assert.equal(state.recentAttempts[0].nonScored, true);
+  const readModel = buildGrammarReadModel({ state, now: 1_777_000_000_000 });
+  const nounPhraseConcept = readModel.analytics.concepts.find((concept) => concept.id === 'noun_phrases');
+  assert.equal(nounPhraseConcept.confidence.recentMisses, 0);
+  assert.equal(nounPhraseConcept.confidence.distinctTemplates, 0);
+  assert.deepEqual(applied.events.map((event) => event.type), ['grammar.manual-review-saved']);
+  assert.equal(applied.events.some((event) => event.type === 'grammar.answer-submitted'), false);
+  assert.equal(applied.events.some((event) => event.type === 'grammar.concept-secured'), false);
+});
+
+test('Grammar manual-review-only practice summary separates answered from scored answers', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+  const start = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'manual-review-summary-start',
+    payload: {
+      roundLength: 1,
+      templateId: 'build_noun_phrase',
+      seed: 1,
+    },
+  });
+
+  const submit = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: start.state, data: start.data },
+    latestSession: start.practiceSession,
+    command: 'submit-answer',
+    requestId: 'manual-review-summary-submit',
+    payload: {
+      response: {
+        part1: 'The nervous young',
+        part2: 'explorer',
+        part3: 'from our class',
+      },
+    },
+  });
+  assert.equal(submit.state.session.answered, 1);
+  assert.equal(submit.state.session.scoredAnswered, 0);
+  assert.equal(submit.state.session.nonScoredAnswered, 1);
+
+  const finished = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: { ui: submit.state, data: submit.data },
+    latestSession: submit.practiceSession,
+    command: 'continue-session',
+    requestId: 'manual-review-summary-finish',
+    payload: {},
+  });
+
+  assert.equal(finished.state.phase, 'summary');
+  assert.equal(finished.state.summary.answered, 1);
+  assert.equal(finished.state.summary.scoredAnswered, 0);
+  assert.equal(finished.state.summary.nonScoredAnswered, 1);
+  assert.equal(finished.state.summary.correct, 0);
+  const completed = finished.events.find((event) => event.type === 'grammar.session-completed');
+  assert.equal(completed.scoredAnswered, 0);
+  assert.equal(completed.nonScoredAnswered, 1);
+});
+
+test('Grammar mini-test packs exclude manual-review-only templates', () => {
+  for (let seed = 1; seed <= 200; seed += 1) {
+    const items = buildGrammarMiniSet({ size: 8, seed });
+    assert.equal(items.length, 8, `seed ${seed}`);
+    for (const item of items) {
+      const template = grammarTemplateById(item.templateId);
+      assert.notEqual(template?.answerSpecKind, 'manualReviewOnly', `${item.templateId} in seed ${seed}`);
+    }
+  }
+});
+
+test('Grammar strict mini-test rejects forced manual-review-only templates', () => {
+  const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+
+  assert.throws(() => engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'manual-review-mini-test',
+    payload: {
+      mode: 'satsset',
+      templateId: 'build_noun_phrase',
+      seed: 1,
+    },
+  }), (error) => error?.extra?.code === 'grammar_template_unavailable_for_mode');
 });
 
 test('Grammar mini-set generation covers mixed and focused pools without looping', () => {
@@ -237,6 +401,48 @@ test('Grammar engine rejects stale content release evidence', () => {
     item,
     response: {},
   }), (error) => error?.extra?.code === 'grammar_content_release_mismatch');
+});
+
+test('Grammar command engine clears active sessions from an older content release', () => {
+  const now = 1_777_000_000_000;
+  const engine = createServerGrammarEngine({ now: () => now });
+  const started = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {},
+    command: 'start-session',
+    requestId: 'stale-release-start',
+    payload: {
+      templateId: 'fronted_adverbial_choose',
+      seed: 1,
+      roundLength: 1,
+    },
+  });
+  const staleState = JSON.parse(JSON.stringify(started.state));
+  staleState.contentReleaseId = 'grammar-qg-p1-2026-04-28';
+  staleState.session.currentItem.contentReleaseId = 'grammar-qg-p1-2026-04-28';
+
+  const cleared = engine.apply({
+    learnerId: 'learner-a',
+    subjectRecord: {
+      ui: staleState,
+      data: {
+        ...started.data,
+        contentReleaseId: 'grammar-qg-p1-2026-04-28',
+      },
+    },
+    latestSession: started.practiceSession,
+    command: 'submit-answer',
+    requestId: 'stale-release-submit',
+    payload: { response: { answer: 'Before the match' } },
+  });
+
+  assert.equal(cleared.changed, true);
+  assert.equal(cleared.state.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+  assert.equal(cleared.state.phase, 'dashboard');
+  assert.equal(cleared.state.session, null);
+  assert.equal(cleared.practiceSession.status, 'abandoned');
+  assert.equal(cleared.practiceSession.id, started.practiceSession.id);
+  assert.deepEqual(cleared.events, []);
 });
 
 test('Grammar retry queue de-duplicates repeated misses for the same template and seed', () => {

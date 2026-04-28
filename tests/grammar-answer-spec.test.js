@@ -126,6 +126,10 @@ test('manualReviewOnly: never auto-scores correct', () => {
   const result = markByAnswerSpec(spec, { answer: 'My storm paragraph with a relative clause...' });
   assert.equal(result.correct, false, 'manualReviewOnly must never auto-correct');
   assert.equal(result.score, 0);
+  assert.equal(result.maxScore, 0);
+  assert.equal(result.nonScored, true);
+  assert.equal(result.manualReviewOnly, true);
+  assert.equal(result.feedbackShort, 'Saved for review.');
 });
 
 test('markByAnswerSpec preserves spec-owned answer text and hint metadata', () => {

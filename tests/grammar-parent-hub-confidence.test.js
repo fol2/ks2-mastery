@@ -121,6 +121,68 @@ test('U7 parity: client Parent-Hub read-model label matches Worker label for eve
   }
 });
 
+test('P2 manual-review-only attempts do not count as recent misses or distinct templates', () => {
+  const nowTs = 1_780_000_000_000;
+  const state = {
+    mastery: {
+      concepts: {
+        noun_phrases: {
+          attempts: 4, correct: 3, wrong: 1, strength: 0.65,
+          intervalDays: 2, dueAt: nowTs + 86_400_000, correctStreak: 2,
+        },
+      },
+    },
+    recentAttempts: [
+      {
+        templateId: 'build_noun_phrase',
+        conceptIds: ['noun_phrases'],
+        result: { correct: false, nonScored: true, manualReviewOnly: true },
+        nonScored: true,
+        manualReviewOnly: true,
+        createdAt: nowTs - 1_000,
+      },
+    ],
+  };
+
+  const workerConcept = workerConceptsById(state, nowTs).get('noun_phrases');
+  const clientModel = buildGrammarLearnerReadModel({
+    subjectStateRecord: { data: state, updatedAt: nowTs },
+    now: () => nowTs,
+  });
+  const clientConcept = clientModel.conceptStatus.find((concept) => concept.id === 'noun_phrases');
+
+  assert.equal(workerConcept.confidence.recentMisses, 0);
+  assert.equal(workerConcept.confidence.distinctTemplates, 0);
+  assert.equal(clientConcept.confidence.recentMisses, 0);
+  assert.equal(clientConcept.confidence.distinctTemplates, 0);
+});
+
+test('P2 client Parent-Hub read-model does not count manual-review saves as mistakes', () => {
+  const nowTs = 1_780_000_000_000;
+  const model = buildGrammarLearnerReadModel({
+    subjectStateRecord: { data: {}, updatedAt: nowTs },
+    practiceSessions: [{
+      id: 'grammar-manual-review',
+      subjectId: 'grammar',
+      status: 'completed',
+      sessionKind: 'practice',
+      summary: {
+        mode: 'practice',
+        answered: 1,
+        scoredAnswered: 0,
+        nonScoredAnswered: 1,
+        correct: 0,
+      },
+      createdAt: nowTs - 1000,
+      updatedAt: nowTs,
+    }],
+    now: () => nowTs,
+  });
+
+  assert.equal(model.recentSessions[0].mistakeCount, 0);
+  assert.equal(model.recentSessions[0].headline, 'Saved for review');
+});
+
 test('U7: client read-model includes the full confidence projection shape on every concept', () => {
   const nowTs = 1_780_000_000_000;
   const state = seededGrammarState(nowTs);
