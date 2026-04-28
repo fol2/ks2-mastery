@@ -127,14 +127,14 @@ export function recordMonsterMastery(learnerId, monsterId, wordSlug, gameStateRe
   return events;
 }
 
-export function monsterSummary(learnerId, gameStateRepository) {
+export function monsterSummary(learnerId, gameStateRepository, { punctuationStarView = null } = {}) {
   const state = ensureMonsterBranches(learnerId, gameStateRepository, {
     monsterIds: SPELLING_MONSTER_IDS,
   });
-  return monsterSummaryFromState(state);
+  return monsterSummaryFromState(state, { punctuationStarView });
 }
 
-export function monsterSummaryFromState(state = {}) {
+export function monsterSummaryFromState(state = {}, { punctuationStarView = null } = {}) {
   const spelling = SPELLING_MONSTER_IDS.map((monsterId) => ({
     subjectId: 'spelling',
     monster: MONSTERS[monsterId],
@@ -148,7 +148,7 @@ export function monsterSummaryFromState(state = {}) {
   const normalisedGrammarState = normaliseGrammarRewardState(state);
   return [
     ...spelling,
-    ...activePunctuationMonsterSummaryFromState(state),
+    ...activePunctuationMonsterSummaryFromState(state, { starView: punctuationStarView }),
     ...activeGrammarMonsterSummaryFromState(normalisedGrammarState),
   ];
 }
@@ -156,6 +156,7 @@ export function monsterSummaryFromState(state = {}) {
 export function monsterSummaryFromSpellingAnalytics(analytics, {
   learnerId = null,
   gameStateRepository = null,
+  punctuationStarView = null,
   random = Math.random,
   persistBranches = true,
 } = {}) {
@@ -167,7 +168,7 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
   }
 
   if (!analyticsHasWordRows(analytics) && hasMonsterMasteryProgress(branchState)) {
-    return monsterSummaryFromState(branchState);
+    return monsterSummaryFromState(branchState, { punctuationStarView });
   }
 
   const state = secureWordsFromAnalytics(analytics, branchState);
@@ -177,7 +178,7 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
   const normalisedBranchState = normaliseGrammarRewardState(branchState);
   return [
     ...monsterSummaryFromState(state),
-    ...activePunctuationMonsterSummaryFromState(branchState),
+    ...activePunctuationMonsterSummaryFromState(branchState, { starView: punctuationStarView }),
     ...activeGrammarMonsterSummaryFromState(normalisedBranchState),
   ];
 }

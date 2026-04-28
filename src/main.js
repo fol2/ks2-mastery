@@ -2381,17 +2381,26 @@ function buildHomeDashboardStats(appState, context) {
   return out;
 }
 
-function buildHomeMonsterSummary(learnerId, context) {
+function punctuationStarViewForMonsterSummary(appState) {
+  const starView = appState?.subjectUi?.punctuation?.starView;
+  return starView && typeof starView === 'object' && !Array.isArray(starView)
+    ? starView
+    : null;
+}
+
+function buildHomeMonsterSummary(learnerId, context, appState = null) {
   if (!learnerId) return [];
+  const punctuationStarView = punctuationStarViewForMonsterSummary(appState);
   const spelling = context.services?.spelling;
   if (spelling?.getAnalyticsSnapshot) {
     return monsterSummaryFromSpellingAnalytics(spelling.getAnalyticsSnapshot(learnerId), {
       learnerId,
       gameStateRepository: context.repositories?.gameState,
+      punctuationStarView,
       persistBranches: false,
     });
   }
-  return monsterSummary(learnerId, context.repositories?.gameState);
+  return monsterSummary(learnerId, context.repositories?.gameState, { punctuationStarView });
 }
 
 function buildHomeDueTotal(learnerId, context) {
@@ -2451,7 +2460,7 @@ function buildHomeModel(appState, context) {
 
   return {
     ...buildSurfaceChromeModel(appState),
-    monsterSummary: buildHomeMonsterSummary(learnerId, context),
+    monsterSummary: buildHomeMonsterSummary(learnerId, context, appState),
     subjects: visibleSubjects,
     dashboardStats: buildHomeDashboardStats(appState, context),
     dueTotal: buildHomeDueTotal(learnerId, context),
@@ -2467,7 +2476,7 @@ function buildCodexModel(appState, context) {
 
   return {
     ...buildSurfaceChromeModel(appState),
-    monsterSummary: buildHomeMonsterSummary(learnerId, context),
+    monsterSummary: buildHomeMonsterSummary(learnerId, context, appState),
     now: new Date(),
   };
 }
