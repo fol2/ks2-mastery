@@ -11,6 +11,7 @@ import {
   prepareSafeCopy,
   copyToClipboard,
 } from '../../platform/hubs/admin-safe-copy.js';
+import { consumeIncidentStash } from '../../platform/hubs/admin-incident-flow.js';
 
 // U8 (P4): Debug Bundle panel — extracted from AdminDebuggingSection.jsx.
 // Contains DebugBundlePanel + DebugBundleSectionTable + DebugBundleResult.
@@ -174,6 +175,25 @@ export function DebugBundlePanel({ model, actions }) {
   const [routeFilter, setRouteFilter] = React.useState('');
   const [copyFeedback, setCopyFeedback] = React.useState('');
 
+  // U6 (P5): Consume incident stash on mount — enables "Return to account" link.
+  const [incidentReturn, setIncidentReturn] = React.useState(null);
+  React.useEffect(() => {
+    const stash = consumeIncidentStash();
+    if (stash) setIncidentReturn(stash);
+  }, []);
+
+  const handleReturnToAccount = () => {
+    if (!incidentReturn) return;
+    const { returnAccountId, returnSection } = incidentReturn;
+    if (typeof window !== 'undefined') {
+      window.location.hash = `section=${returnSection || 'accounts'}`;
+    }
+    // Re-open the account detail after navigation
+    if (returnAccountId) {
+      actions.dispatch('account-detail-load', { accountId: returnAccountId });
+    }
+  };
+
   // R7: pre-fill from error drawer link.
   const prefill = debugBundle.prefill || null;
   React.useEffect(() => {
@@ -224,6 +244,13 @@ export function DebugBundlePanel({ model, actions }) {
         refreshError={error}
         onRefresh={generateBundle}
       />
+      {incidentReturn ? (
+        <div className="admin-incident-return-bar" data-testid="incident-return-bar">
+          <button className="btn ghost" type="button" onClick={handleReturnToAccount} data-testid="incident-return-btn">
+            Return to account
+          </button>
+        </div>
+      ) : null}
 
       <div
         className="filters admin-filters-grid"

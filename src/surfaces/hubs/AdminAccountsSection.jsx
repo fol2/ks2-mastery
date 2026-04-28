@@ -20,6 +20,12 @@ import {
   normaliseSearchResult,
   debugBundleLinkForAccount,
 } from '../../platform/hubs/admin-account-search.js';
+import {
+  prepareSafeCopy,
+  copyToClipboard,
+  COPY_AUDIENCE,
+} from '../../platform/hubs/admin-safe-copy.js';
+import { saveIncidentStash } from '../../platform/hubs/admin-incident-flow.js';
 
 // U4+U5: Accounts section — role management, ops metadata, and audit log.
 // Extracted from AdminHubSurface.jsx. All inline components preserved
@@ -413,7 +419,7 @@ function AccountSearchResultRow({ result, onSelect }) {
   );
 }
 
-function AccountDetailPanel({ detail, onClose, onDebugBundle }) {
+function AccountDetailPanel({ detail, onClose, onDebugBundle, onCopySupportSummary, copySummaryFeedback }) {
   if (!detail || !detail.account) return null;
   const { account, learners, recentErrors, recentDenials, recentMutations, opsMetadata } = detail;
   return (
@@ -425,6 +431,8 @@ function AccountDetailPanel({ detail, onClose, onDebugBundle }) {
           <p className="subtitle">{account.displayName || 'No display name'} &middot; {platformRoleLabel(account.platformRole)} &middot; {account.accountType}</p>
         </div>
         <div className="actions">
+          <button className="btn secondary" type="button" onClick={onCopySupportSummary} data-testid="detail-copy-support-summary">Copy support summary</button>
+          {copySummaryFeedback ? <span className="chip good" data-testid="detail-copy-feedback">{copySummaryFeedback}</span> : null}
           <button className="btn secondary" type="button" onClick={onDebugBundle} data-testid="detail-debug-bundle-link">Debug Bundle</button>
           <button className="btn secondary" type="button" onClick={onClose}>Close</button>
         </div>
@@ -519,11 +527,38 @@ function AccountSearchPanel({ model, actions }) {
 
   const handleDebugBundle = () => {
     if (detail?.account?.id) {
+      saveIncidentStash({
+        returnSection: 'accounts',
+        returnAccountId: detail.account.id,
+        returnScrollY: typeof window !== 'undefined' ? window.scrollY : 0,
+      });
       const link = debugBundleLinkForAccount(detail.account.id);
       if (typeof window !== 'undefined') {
         window.location.hash = link.replace(/^\/admin/, '');
       }
     }
+  };
+
+  const [copySummaryFeedback, setCopySummaryFeedback] = React.useState('');
+  const handleCopySupportSummary = async () => {
+    if (!detail?.account) return;
+    const summaryData = {
+      account: detail.account.email || detail.account.id,
+      role: detail.account.platformRole,
+      learnerCount: detail.learners?.length || 0,
+      recentErrorCount: detail.recentErrors?.length || 0,
+      recentDenialCount: detail.recentDenials?.length || 0,
+      opsStatus: detail.opsMetadata?.opsStatus || 'active',
+    };
+    const prepared = prepareSafeCopy(summaryData, COPY_AUDIENCE.PARENT_SAFE);
+    if (!prepared.ok) {
+      setCopySummaryFeedback('Nothing to copy');
+      setTimeout(() => setCopySummaryFeedback(''), 2000);
+      return;
+    }
+    const result = await copyToClipboard(prepared.text);
+    setCopySummaryFeedback(result.ok ? 'Summary copied' : 'Copy failed');
+    setTimeout(() => setCopySummaryFeedback(''), 2000);
   };
 
   if (detail) {
@@ -532,6 +567,8 @@ function AccountSearchPanel({ model, actions }) {
         detail={detail}
         onClose={handleCloseDetail}
         onDebugBundle={handleDebugBundle}
+        onCopySupportSummary={handleCopySupportSummary}
+        copySummaryFeedback={copySummaryFeedback}
       />
     );
   }
