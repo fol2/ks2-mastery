@@ -11,6 +11,7 @@ import {
   normaliseMonsterCelebrationEvents,
   normaliseMonsterCelebrations,
 } from '../game/monster-celebrations.js';
+import { normaliseRewardToastEvents } from '../rewards/reward-toast-events.js';
 
 const DEFAULT_ROUTE = {
   screen: 'dashboard',
@@ -137,9 +138,7 @@ function normaliseRoute(rawRoute, subjects) {
 }
 
 function normaliseToasts(rawValue) {
-  return (Array.isArray(rawValue) ? rawValue : [])
-    .filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry))
-    .slice(-25);
+  return normaliseRewardToastEvents(rawValue);
 }
 
 const VALID_SPELLING_WORD_BANK_FILTERS = new Set([
@@ -705,8 +704,7 @@ export function createStore(
     updateSubjectUi,
     updateSubjectUiForLearner,
     pushToasts(events) {
-      const entries = Array.isArray(events) ? events : [events];
-      const validEvents = entries.filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry));
+      const validEvents = normaliseRewardToastEvents(events);
       if (!validEvents.length) return;
       setState((current) => ({
         ...current,

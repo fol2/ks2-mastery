@@ -64,6 +64,42 @@ test('shared store can preserve transient monster celebrations across command re
   assert.equal(store.getState().monsterCelebrations.queue.length, 0);
 });
 
+test('shared store normalises reward toast events into presentation toast rows', () => {
+  const storage = installMemoryStorage();
+  const repositories = createLocalPlatformRepositories({ storage });
+  const store = createStore(SUBJECTS, { repositories });
+
+  store.pushToasts([
+    {
+      id: 'reward.toast:guardian.renewed:learner-a:session-1:word-1',
+      type: 'reward.toast',
+      kind: 'guardian.renewed',
+      subjectId: 'spelling',
+      learnerId: store.getState().learners.selectedId,
+      toast: { title: 'Word renewed.', body: '"because" held steady.' },
+    },
+    {
+      id: 'reward.presentation:module:hero-mode:reward.hero:purchase:txn-1',
+      type: 'reward.presentation',
+      producerType: 'module',
+      producerId: 'hero-mode',
+      rewardType: 'reward.hero',
+      kind: 'purchase',
+      learnerId: store.getState().learners.selectedId,
+      presentations: {
+        toast: [],
+        celebration: [{ visualKind: 'hero-purchase', title: 'Unlocked' }],
+      },
+    },
+  ]);
+
+  const { toasts } = store.getState();
+  assert.equal(toasts.length, 1);
+  assert.equal(toasts[0].type, 'reward.presentation.toast');
+  assert.equal(toasts[0].rewardType, 'reward.toast');
+  assert.equal(toasts[0].title, 'Word renewed.');
+});
+
 test('shared store caches subject setup reset when runtime UI writes are cached', () => {
   const storage = installMemoryStorage();
   const repositories = createLocalPlatformRepositories({ storage });

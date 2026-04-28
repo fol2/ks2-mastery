@@ -18,9 +18,9 @@
 // safety and radio-focus accessibility fixes lift the Node 22 build to
 // ~215.1 KB. Punctuation's Star-based display parity added a small first-paint
 // utility footprint; Grammar's matching display-state parity adds another
-// tiny cross-subject utility slice. The reward presentation queue
-// compatibility layer keeps Node 22's CI gzip output near 216.8 KB. The
-// committed ceiling is now `217_000`, keeping the headroom narrow while
+// tiny cross-subject utility slice. The reward presentation queue and toast
+// compatibility layers keep Node 22's gzip output near 217.4 KB. The
+// committed ceiling is now `218_000`, keeping the headroom narrow while
 // avoiding a sub-kilobyte compression/runtime false blocker.
 // The audit still fails
 // when ~50 KB of adult-only JS sneaks back into the critical path (the
@@ -65,14 +65,14 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 // safety and radio-focus accessibility fixes lift the Node 22 build to
 // ~215.1 KB. Punctuation's Star-based display parity adds a small first-paint
 // utility footprint; Grammar's matching display-state parity adds another
-// tiny cross-subject utility slice. The reward presentation queue compatibility
-// layer keeps Node 22's CI gzip output near 216.8 KB, so the committed ceiling is 217,000
+// tiny cross-subject utility slice. The reward presentation queue and toast
+// compatibility layers keep Node 22's gzip output near 217.4 KB, so the committed ceiling is 218,000
 // (matches `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES` in
 // `scripts/audit-client-bundle.mjs`). The narrow headroom lets the team
 // land small copy / utility growth without an audit bump, but trips the
 // gate when ~50 KB of adult-only JS sneaks back into the critical path.
 const BASELINE_GZIP_BYTES = 203_227;
-const BUDGET_GZIP_BYTES = 217_000;
+const BUDGET_GZIP_BYTES = 218_000;
 const TEST_MODE_BUNDLE_MARKER = '__ks2_capacityMeta__';
 
 function isPlaywrightTestModeBundle(bundleBytes) {

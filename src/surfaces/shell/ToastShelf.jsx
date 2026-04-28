@@ -22,41 +22,26 @@ function portraitStyle(visual) {
 }
 
 function toastTitle(toast) {
-  if (toast?.type === 'reward.monster') {
-    if (toast.kind === 'caught') return `${toast.monster?.name || 'Monster'} joined your Codex`;
-    if (toast.kind === 'evolve') return `${toast.monster?.name || 'Monster'} evolved`;
-    if (toast.kind === 'mega') return `${toast.monster?.name || 'Monster'} reached its final form`;
-  }
-  // P2 U12: reward.achievement surfaces the toast.title directly — the
-  // subscriber (event-hooks.js) already pre-composes from the achievement
-  // definition. Keeping the title verbatim avoids double-wrapping the
-  // "Achievement unlocked:" phrasing.
-  if (toast?.type === 'reward.toast' && toast?.kind === 'reward.achievement') {
-    return toast.toast?.title || toast.title || 'Achievement unlocked';
-  }
-  return toast?.toast?.title || toast?.title || 'Notification';
+  return toast?.title || 'Notification';
 }
 
 function toastBody(toast) {
-  if (toast?.type === 'reward.monster') {
-    if (toast.kind === 'caught') return 'You caught a new friend!';
-    if (toast.kind === 'evolve') return `${toast.monster?.name || 'A monster'} grew stronger after that mastery milestone.`;
-    if (toast.kind === 'mega') return `${toast.monster?.name || 'A monster'} reached its mega form.`;
-  }
-  if (toast?.type === 'reward.toast' && toast?.kind === 'reward.achievement') {
-    // Body comes pre-composed from the subscriber. MVP copy: "Achievement
-    // unlocked: <title>". No SVG badge art per F3; text-only styling.
-    return toast.toast?.body || toast.body || '';
-  }
-  return toast?.toast?.body || toast?.body || toast?.message || '';
+  return toast?.body || '';
+}
+
+function toastMonster(toast) {
+  if (toast?.monster?.id) return toast.monster;
+  const monsterId = toast?.assetRef?.family === 'monster' ? toast.assetRef.monsterId : '';
+  return monsterId ? { id: monsterId, name: toast.title || 'Monster' } : null;
 }
 
 function ToastContent({ toast }) {
   const monsterVisualConfig = useMonsterVisualConfig();
-  if (toast?.type === 'reward.monster' && toast.monster?.id) {
-    const stage = Math.max(0, Math.min(4, Number(toast.next?.stage) || 0));
-    const branch = toast.next?.branch || toast.previous?.branch;
-    const visual = imageVisual(toast.monster.id, stage, branch, monsterVisualConfig?.config);
+  const monster = toastMonster(toast);
+  if (monster?.id) {
+    const stage = Math.max(0, Math.min(4, Number(toast.assetRef?.stage ?? toast.next?.stage) || 0));
+    const branch = toast.assetRef?.branch || toast.next?.branch || toast.previous?.branch;
+    const visual = imageVisual(monster.id, stage, branch, monsterVisualConfig?.config);
     return (
       <>
         <div className="cm-port" aria-hidden="true">
@@ -65,7 +50,7 @@ function ToastContent({ toast }) {
               value reserves the box so the toast does not jump while
               the .webp decodes. */}
           <img
-            alt={`${toast.monster.name || 'Monster'} portrait`}
+            alt={`${monster.name || 'Monster'} portrait`}
             src={visual.src}
             srcSet={visual.srcSet}
             sizes="56px"
@@ -89,17 +74,15 @@ function ToastContent({ toast }) {
   );
 }
 
-// P2 U12: kind class mapping. `catch` for monster caught (existing), new
-// `achievement` for reward.achievement kind (distinct CSS hook without
-// changing the DOM structure — still the same single-live-region container).
 function toastKindClass(toast) {
-  if (toast?.type === 'reward.monster' && toast?.kind === 'caught') return 'catch';
-  if (toast?.type === 'reward.toast' && toast?.kind === 'reward.achievement') return 'achievement';
+  if (toast?.rewardType === 'reward.monster' && toast?.kind === 'caught') return 'catch';
+  if (toast?.tone === 'achievement' || toast?.kind === 'reward.achievement') return 'achievement';
   return 'info';
 }
 
 export function ToastShelf({ toasts = [], onDismiss }) {
-  if (!toasts.length) return null;
+  const toastRows = Array.isArray(toasts) ? toasts : [];
+  if (!toastRows.length) return null;
   // U10 (sys-hardening p1): the container is the single live region.
   // `role="status"` + `aria-live="polite"` announce new toast inserts
   // once. The inner `<aside>` elements are plain containers — nesting
@@ -116,7 +99,7 @@ export function ToastShelf({ toasts = [], onDismiss }) {
   // `data-testid="toast-shelf"` anchors the accessibility scene.
   return (
     <div className="toast-shelf" role="status" aria-live="polite" aria-label="Notifications" data-testid="toast-shelf">
-      {toasts.map((toast, index) => {
+      {toastRows.map((toast, index) => {
         const kind = toastKindClass(toast);
         return (
           <aside

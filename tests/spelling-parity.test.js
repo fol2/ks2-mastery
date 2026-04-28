@@ -175,7 +175,7 @@ test('monster caught celebrations wait until the live spelling session ends', ()
     const liveState = harness.store.getState();
     assert.equal(liveState.subjectUi.spelling.phase, 'session');
     assert.equal(liveState.subjectUi.spelling.awaitingAdvance, true);
-    assert.ok(liveState.toasts.some((event) => event.type === 'reward.monster' && event.kind === 'caught'));
+    assert.ok(liveState.toasts.some((event) => event.type === 'reward.presentation.toast' && event.rewardType === 'reward.monster' && event.kind === 'caught'));
     assert.doesNotMatch(harness.render(), /monster-celebration-overlay/);
 
     globalThis.confirm = () => true;
