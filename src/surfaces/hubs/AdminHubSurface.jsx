@@ -37,6 +37,16 @@ function useAdminDirtyRegistry() {
 export function AdminHubSurface({ appState, model, hubState = {}, accountDirectory = {}, accessContext = {}, actions, initialSection }) {
   const [activeSection, setActiveSection] = React.useState(initialSection || DEFAULT_SECTION);
   const dirtyRegistry = useAdminDirtyRegistry();
+  // Keep every AdminHubSurface hook above the remote-loading / access guards.
+  // The admin route can render the loading guard first, then re-render with the
+  // loaded model in the same component instance; adding hooks after those guards
+  // trips React's hook-order invariant.
+  const sectionActions = React.useMemo(() => ({
+    ...actions,
+    registerAccountOpsMetadataRowDirty: (accountId, isDirty) => {
+      dirtyRegistry.setDirty(accountId, isDirty);
+    },
+  }), [actions, dirtyRegistry]);
 
   const loadingRemote = accessContext?.shellAccess?.source === 'worker-session' && hubState.status === 'loading' && !model;
   if (loadingRemote) {
@@ -93,15 +103,6 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
     setActiveSection(nextSection);
     actions.dispatch('admin-section-change', { section: nextSection });
   };
-
-  // Augment actions with dirty-registry callback so AccountOpsMetadataRow
-  // can register/clear its dirty state.
-  const sectionActions = React.useMemo(() => ({
-    ...actions,
-    registerAccountOpsMetadataRowDirty: (accountId, isDirty) => {
-      dirtyRegistry.setDirty(accountId, isDirty);
-    },
-  }), [actions, dirtyRegistry]);
 
   const sectionProps = {
     model,
