@@ -894,6 +894,44 @@ test('_headers repo file contains the CSP Report-Only line (pre-substitution via
 });
 
 // ---------------------------------------------------------------------------
+// P5-U6: CSP enforcement mode cross-assertion guard.
+// ---------------------------------------------------------------------------
+
+test('CSP_ENFORCEMENT_MODE cross-asserts the actual header key in SECURITY_HEADERS', () => {
+  const hasReportOnly = 'Content-Security-Policy-Report-Only' in SECURITY_HEADERS;
+  const hasEnforced = 'Content-Security-Policy' in SECURITY_HEADERS;
+
+  if (CSP_ENFORCEMENT_MODE === 'report-only') {
+    assert.equal(
+      hasReportOnly,
+      true,
+      'When CSP_ENFORCEMENT_MODE is "report-only", SECURITY_HEADERS must have key "Content-Security-Policy-Report-Only".',
+    );
+    assert.equal(
+      hasEnforced,
+      false,
+      'When CSP_ENFORCEMENT_MODE is "report-only", SECURITY_HEADERS must NOT have key "Content-Security-Policy".',
+    );
+  } else if (CSP_ENFORCEMENT_MODE === 'enforced') {
+    assert.equal(
+      hasEnforced,
+      true,
+      'When CSP_ENFORCEMENT_MODE is "enforced", SECURITY_HEADERS must have key "Content-Security-Policy".',
+    );
+    assert.equal(
+      hasReportOnly,
+      false,
+      'When CSP_ENFORCEMENT_MODE is "enforced", SECURITY_HEADERS must NOT have key "Content-Security-Policy-Report-Only".',
+    );
+  } else {
+    assert.fail(
+      `CSP_ENFORCEMENT_MODE has unexpected value "${CSP_ENFORCEMENT_MODE}". `
+        + 'Only "report-only" and "enforced" are valid. Dead constant guard tripped.',
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
 // P4-U4: CSP enforcement decision gate — mode constant and header assertions.
 // ---------------------------------------------------------------------------
 
