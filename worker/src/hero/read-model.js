@@ -1,4 +1,4 @@
-// Hero Mode — Shadow read-model assembler (v3 / v4 / v5).
+// Hero Mode — Shadow read-model assembler (v3 / v4 / v5 / v6).
 //
 // Orchestrates providers, eligibility, and the scheduler into a complete
 // shadow response. Pure read-only path — MUST NOT mutate any state, write
@@ -12,6 +12,9 @@
 //
 // v5 adds: child-safe economy block (balance, today award status, recent
 // ledger summary), coinsEnabled=true, behind HERO_MODE_ECONOMY_ENABLED.
+//
+// v6 adds: child-safe Camp block (monster roster, ownership, affordability,
+// recent actions), behind HERO_MODE_CAMP_ENABLED.
 
 import {
   HERO_DEFAULT_EFFORT_TARGET,
@@ -32,6 +35,8 @@ import { deriveHeroQuestFingerprint } from '../../../shared/hero/quest-fingerpri
 import { resolveChildLabel, resolveChildReason } from '../../../shared/hero/hero-copy.js';
 import { deriveTaskCompletionStatus, deriveDailyCompletionStatus } from '../../../shared/hero/completion-status.js';
 import { selectChildSafeEconomyReadModel } from '../../../shared/hero/economy.js';
+import { HERO_POOL_REGISTRY, HERO_POOL_INITIAL_MONSTER_IDS, getGrowCost } from '../../../shared/hero/hero-pool.js';
+import { HERO_POOL_ROSTER_VERSION } from '../../../shared/hero/progress-state.js';
 import { mapHeroEnvelopeToSubjectPayload } from './launch-adapters/index.js';
 import { runProvider } from './providers/index.js';
 
@@ -121,7 +126,8 @@ function detectPendingCompletedSession(heroProgressState, recentCompletedSession
  * @param {Array}  [params.recentCompletedSessions] — recent completed practice session rows (v4+)
  * @param {boolean} [params.progressEnabled] — whether progress mode is enabled (v4+)
  * @param {boolean} [params.economyEnabled] — whether economy (coins) is enabled (v5)
- * @returns {Object} shadow read model v3, v4, or v5
+ * @param {boolean} [params.campEnabled] — whether camp (monster pool) is enabled (v6)
+ * @returns {Object} shadow read model v3, v4, v5, or v6
  */
 export function buildHeroShadowReadModel({
   learnerId,
@@ -133,6 +139,7 @@ export function buildHeroShadowReadModel({
   recentCompletedSessions = [],
   progressEnabled = false,
   economyEnabled = false,
+  campEnabled = false,
 } = {}) {
   const dateKey = deriveDateKey(now, HERO_DEFAULT_TIMEZONE);
   const safeEnv = env || {};
@@ -457,7 +464,13 @@ export function buildHeroShadowReadModel({
   };
 
   // 17. If economy enabled → evolve to v5 with child-safe economy block
-  if (!economyEnabled) return v4Base;
+  if (!economyEnabled) {
+    // Camp enabled but economy disabled → camp cannot function (needs balance)
+    if (campEnabled) {
+      return { ...v4Base, camp: { enabled: false } };
+    }
+    return v4Base;
+  }
 
   const economyBlock = selectChildSafeEconomyReadModel(
     heroProgressState,
@@ -465,7 +478,7 @@ export function buildHeroShadowReadModel({
     quest.questId,
   );
 
-  return {
+  const v5Result = {
     ...v4Base,
     version: 5,
     coinsEnabled: true,
@@ -486,5 +499,118 @@ export function buildHeroShadowReadModel({
       },
       recentLedger: [],
     },
+  };
+
+  // 18. If camp enabled → evolve to v6 with child-safe Camp block
+  if (!campEnabled) return v5Result;
+
+  const campBlock = buildChildSafeCampBlock(heroProgressState, economyBlock?.balance ?? 0);
+
+  return {
+    ...v5Result,
+    version: 6,
+    camp: campBlock,
+  };
+}
+
+// ── Camp block helpers ────────────────────────────────────────────────
+
+function buildChildSafeCampBlock(heroProgressState, balance) {
+  const heroPool = heroProgressState?.heroPool;
+
+  if (!heroPool || typeof heroPool !== 'object') {
+    return buildEmptyCampBlock(balance);
+  }
+
+  const monsters = HERO_POOL_INITIAL_MONSTER_IDS.map(monsterId => {
+    const def = HERO_POOL_REGISTRY[monsterId];
+    const owned = heroPool.monsters?.[monsterId];
+
+    const stage = owned?.stage ?? 0;
+    const isOwned = owned?.owned === true;
+    const fullyGrown = isOwned && stage >= def.maxStage;
+    const nextStage = isOwned && !fullyGrown ? stage + 1 : null;
+    const nextGrowCost = nextStage ? getGrowCost(nextStage) : null;
+
+    return {
+      monsterId: def.monsterId,
+      displayName: def.displayName,
+      childBlurb: def.childBlurb,
+      sourceAssetMonsterId: def.sourceAssetMonsterId,
+      owned: isOwned,
+      stage,
+      branch: owned?.branch || null,
+      maxStage: def.maxStage,
+      inviteCost: def.inviteCost,
+      nextGrowCost,
+      nextStage,
+      canInvite: !isOwned,
+      canGrow: isOwned && !fullyGrown,
+      canAffordInvite: !isOwned && balance >= def.inviteCost,
+      canAffordGrow: isOwned && !fullyGrown && nextGrowCost !== null && balance >= nextGrowCost,
+      fullyGrown,
+    };
+  });
+
+  const recentActions = Array.isArray(heroPool.recentActions)
+    ? heroPool.recentActions.slice(-5).map(a => ({
+        type: a.type,
+        monsterId: a.monsterId,
+        stageAfter: a.stageAfter,
+        cost: a.cost,
+        createdAt: a.createdAt,
+      }))
+    : [];
+
+  return {
+    enabled: true,
+    version: 1,
+    commandRoute: '/api/hero/command',
+    commands: {
+      unlockMonster: 'unlock-monster',
+      evolveMonster: 'evolve-monster',
+    },
+    rosterVersion: HERO_POOL_ROSTER_VERSION,
+    balance,
+    selectedMonsterId: heroPool.selectedMonsterId || null,
+    monsters,
+    recentActions,
+  };
+}
+
+function buildEmptyCampBlock(balance) {
+  return {
+    enabled: true,
+    version: 1,
+    commandRoute: '/api/hero/command',
+    commands: {
+      unlockMonster: 'unlock-monster',
+      evolveMonster: 'evolve-monster',
+    },
+    rosterVersion: HERO_POOL_ROSTER_VERSION,
+    balance: balance || 0,
+    selectedMonsterId: null,
+    monsters: HERO_POOL_INITIAL_MONSTER_IDS.map(monsterId => {
+      const def = HERO_POOL_REGISTRY[monsterId];
+      return {
+        monsterId: def.monsterId,
+        displayName: def.displayName,
+        childBlurb: def.childBlurb,
+        sourceAssetMonsterId: def.sourceAssetMonsterId,
+        owned: false,
+        stage: 0,
+        branch: null,
+        maxStage: def.maxStage,
+        inviteCost: def.inviteCost,
+        nextGrowCost: null,
+        nextStage: null,
+        canInvite: true,
+        canGrow: false,
+        canAffordInvite: (balance || 0) >= def.inviteCost,
+        canAffordGrow: false,
+        fullyGrown: false,
+      };
+    }),
+    recentActions: [],
   };
 }
