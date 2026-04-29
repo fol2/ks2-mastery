@@ -580,6 +580,7 @@ textarea:focus-visible {
 }
 
 .subject-card {
+  appearance: none;
   padding: 0;
   overflow: hidden;
   text-align: left;

@@ -1,5 +1,3 @@
-import React from 'react';
-
 /* Slot-based Setup-scene sidebar shell. Lifts .ss-card / .ss-head /
  * body / footer shape out of Spelling's SpellingSetupScene and
  * Grammar's GrammarSetupScene.

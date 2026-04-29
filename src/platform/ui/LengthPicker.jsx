@@ -1,5 +1,3 @@
-import React from 'react';
-
 /* Platform slide-button length picker.
  *
  * Canonicalisation of Grammar's `RoundLengthPicker` and Spelling's

@@ -1,4 +1,3 @@
-import React from 'react';
 import { heroWelcomeLine } from './hero-copy.js';
 
 /* Subject-agnostic "Hi {name} — ready for a short round?" hero welcome line.

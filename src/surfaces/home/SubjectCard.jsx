@@ -14,7 +14,6 @@ export function SubjectCard({ subject, onOpen }) {
       data-subject-id={subject.id}
       type="button"
       onClick={() => onOpen?.(subject.id)}
-      style={{ appearance: 'none', textAlign: 'left' }}
     >
       {hasRegion ? (
         <div className="sc-banner sc-banner--art">

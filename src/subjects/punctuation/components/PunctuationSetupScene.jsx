@@ -49,6 +49,7 @@ import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.js';
 import { HeroWelcome } from '../../../platform/ui/HeroWelcome.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
+import { Button } from '../../../platform/ui/Button.jsx';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
 // one-shot stored-prefs migration. Local to this scene because the
@@ -322,17 +323,21 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
             <h2 className="section-title">Today's punctuation mission</h2>
             <HeroWelcome name={learnerName} className="punctuation-hero-welcome" />
             <div className="punctuation-dashboard-cta-row">
-              <button
-                type="button"
-                className="btn primary xl"
-                style={{ '--btn-accent': '#B8873F' }}
-                data-punctuation-cta
-                data-action={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
+              {/* `--btn-accent: #B8873F` already set by `.punctuation-surface`
+               * on the scene root (`styles/app.css:1132-1136`); CSS variable
+               * inheritance carries it down to this CTA. The inline
+               * `style={{ '--btn-accent' }}` left over from the U1
+               * byte-identical migration is therefore redundant and
+               * dropped here as part of the U1 follow-up bundle sweep. */}
+              <Button
+                size="xl"
+                data-punctuation-cta=""
+                dataAction={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
                 disabled={disabled}
                 onClick={handlePrimaryCta}
               >
                 {ctaLabel}
-              </button>
+              </Button>
             </div>
 
             {/* Progress row — compact stats strip */}

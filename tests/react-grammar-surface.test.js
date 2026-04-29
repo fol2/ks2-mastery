@@ -917,7 +917,22 @@ test('Grammar dashboard disables mode cards, controls, and Begin button while a 
   // selected and the option buttons reflect the pending-disabled state.
   assert.match(html, /<button[^>]*class="length-option selected"[^>]*value="5"[^>]*disabled="">/);
   // Aligned design: CTA renders the pending label inside the merged panel.
-  assert.match(html, /<button class="btn primary xl" type="button" data-featured="true" disabled="">Starting\.\.\.<\/button>/);
+  // P2 U1 migrated this CTA to the shared `Button` primitive — the
+  // rendered HTML still carries `.btn primary xl`, `type="button"`,
+  // `data-featured="true"`, and `disabled` plus the "Starting..."
+  // label, but the primitive emits attributes in its own canonical
+  // order (`type` → `class` → `disabled` → `data-featured`) which
+  // diverges from the pre-migration legacy hand-rolled string. The
+  // regex below is order-agnostic so the test stays load-bearing on
+  // the *content* of the button (correct classes, correct disabled
+  // state, correct label) without pinning a brittle attribute order.
+  const startingCta = html.match(/<button[^>]*>Starting\.\.\.<\/button>/);
+  assert.ok(startingCta, 'expected a <button>Starting...</button> in the rendered output');
+  const cta = startingCta[0];
+  assert.match(cta, /class="btn primary xl"/, 'Begin CTA must render with `.btn primary xl` classes');
+  assert.match(cta, /type="button"/, 'Begin CTA must render type="button"');
+  assert.match(cta, /data-featured="true"/, 'Begin CTA must preserve the data-featured locator');
+  assert.match(cta, /disabled=""/, 'Begin CTA must render disabled while the start command is pending');
 });
 
 test('Grammar dashboard hides adult-diagnostic goal/teaching toggles but preserves the preference round-trip', () => {
