@@ -27,6 +27,7 @@ import {
 } from '../../platform/hubs/admin-safe-copy.js';
 import { saveIncidentStash } from '../../platform/hubs/admin-incident-flow.js';
 import { buildAccountLifecycleModel, classifyLifecycleField } from '../../platform/hubs/admin-account-lifecycle.js';
+import { formatIncidentStatus } from '../../platform/hubs/admin-incident-panel.js';
 
 // U4+U5: Accounts section — role management, ops metadata, and audit log.
 // Extracted from AdminHubSurface.jsx. All inline components preserved
@@ -451,6 +452,34 @@ function AccountLifecycleSubSection({ detail }) {
   );
 }
 
+function AccountIncidentsMini({ incidents }) {
+  if (!Array.isArray(incidents) || incidents.length === 0) return null;
+  const openCount = incidents.filter((i) => i.status !== 'resolved' && i.status !== 'ignored').length;
+  return (
+    <div data-testid="account-incidents-mini" style={{ marginTop: 8 }}>
+      <div className="eyebrow">
+        Open incidents{' '}
+        {openCount > 0 && (
+          <span className="chip warn" data-testid="open-incident-count" style={{ fontSize: '0.7rem' }}>{openCount}</span>
+        )}
+      </div>
+      {incidents.slice(0, 5).map((inc) => {
+        const display = formatIncidentStatus(inc.status);
+        return (
+          <div className="skill-row" key={inc.id} data-testid="account-incident-row">
+            <div style={{ flex: 1 }}>
+              <strong style={{ fontSize: '0.85rem' }}>{inc.title}</strong>
+            </div>
+            <span className="chip" style={{ backgroundColor: display.colour, color: '#fff', fontSize: '0.7rem' }}>
+              {display.label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function AccountDetailPanel({ detail, onClose, onDebugBundle, onCopySupportSummary, copySummaryFeedback }) {
   if (!detail || !detail.account) return null;
   const { account, learners, recentErrors, recentDenials, recentMutations, opsMetadata } = detail;
@@ -486,6 +515,8 @@ function AccountDetailPanel({ detail, onClose, onDebugBundle, onCopySupportSumma
       )}
 
       <AccountLifecycleSubSection detail={detail} />
+
+      <AccountIncidentsMini incidents={detail.incidents} />
 
       <div className="eyebrow admin-account-learners-eyebrow">Learners ({learners.length})</div>
       {learners.length ? learners.map((l) => (

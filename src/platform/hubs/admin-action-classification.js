@@ -51,6 +51,12 @@ const REGISTRY = new Map([
   // medium: asset draft save (single-entity write, CAS-protected)
   ['asset-draft-save', { level: LEVELS.medium }],
 
+  // U7 (P7): Support incident actions
+  ['incident-create', { level: LEVELS.medium }],
+  ['incident-status-change', { level: LEVELS.medium }],
+  ['incident-resolve', { level: LEVELS.high }],
+  ['incident-ignore', { level: LEVELS.high }],
+
   // low: asset read / preview (no mutation)
   ['asset-preview', { level: LEVELS.low }],
   ['asset-read', { level: LEVELS.low }],
