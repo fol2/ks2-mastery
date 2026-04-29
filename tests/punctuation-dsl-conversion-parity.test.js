@@ -166,6 +166,12 @@ test('content audit logic passes for DSL-converted families at perFamily=4', () 
     assert.match(item.variantSignature, /^puncsig_[a-z0-9]+$/);
   }
 
+  // Generated items must NOT carry the DSL 'tests' field (metadata leak guard)
+  for (const item of generatedItems) {
+    assert.equal(item.tests, undefined,
+      `${item.id}: 'tests' field leaked from DSL template into generated item`);
+  }
+
   // No duplicate variant signatures within any family
   for (const familyId of PRIORITY_FAMILIES) {
     const familyItems = generatedItems.filter((i) => i.generatorFamilyId === familyId);

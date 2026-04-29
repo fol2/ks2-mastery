@@ -174,6 +174,7 @@ test('context-pack runtime manifest keeps reward denominators stable', () => {
     seed: 'context-pack-runtime',
     generatedPerFamily: 1,
     contextPack,
+    allowContextPacks: true,
   }));
 
   assert.equal(runtimeIndexes.items.length, baseIndexes.items.length + baseIndexes.generatorFamilies.length);
