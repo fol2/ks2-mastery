@@ -49,11 +49,11 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `shared-pattern-available` | 116 |
+| `shared-pattern-available` | 135 |
 | `dynamic-content-driven` | 108 |
 | `css-var-ready` | 3 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **229** |
+| **TOTAL** | **248** |
 
 ## Per-file inventory
 

@@ -239,9 +239,9 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 //
 // P5-U11: Migrated 34 inline styles (21 AdminMarketingSection + 13 AdminDebugBundlePanel)
 // to CSS classes. Only dynamic-content-driven styles remain (1 each).
-export const PRE_MIGRATION_TOTAL = 418;
+export const PRE_MIGRATION_TOTAL = 437;
 export const SITES_MIGRATED_THIS_PR = 189;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 229
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 248
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';

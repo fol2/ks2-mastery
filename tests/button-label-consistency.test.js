@@ -518,6 +518,11 @@ test('button labels: every statically extractable label is classified', () => {
     // the post-action acknowledgement / insufficient-balance message.
     'Not now',
     'Done',
+    // Admin Console P7: incident lifecycle panel CTAs. "Add note" appends
+    // a timestamped admin note to the incident timeline; "Create incident"
+    // opens a new incident from the error-centre context.
+    'Add note',
+    'Create incident',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to

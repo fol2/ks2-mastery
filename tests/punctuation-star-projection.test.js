@@ -1944,7 +1944,7 @@ test('U4 verification: adding items beyond daily cap produces zero additional Pr
   const result100 = projectPunctuationStars(progress100, CURRENT_RELEASE_ID);
 
   assert.equal(result100.perMonster.pealark.practiceStars, pealark.practiceStars,
-    `100 items in 1 day must produce the same Practice Stars as 50 items (daily cap enforced), got ${result100.perMonster.pealark.practiceStars} vs ${pealark.practiceStars}`)
+    `100 items in 1 day must produce the same Practice Stars as 50 items (daily cap enforced), got ${result100.perMonster.pealark.practiceStars} vs ${pealark.practiceStars}`);
 });
 
 test('U4 near-retry + daily-cap interaction: 30 fail-then-correct items equal 25 items under PRACTICE_CAP', () => {
