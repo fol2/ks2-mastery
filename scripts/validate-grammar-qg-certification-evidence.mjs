@@ -259,8 +259,85 @@ export function validateReportAgainstManifest(reportContent, manifest) {
 }
 
 /**
- * Validate smoke evidence — checks that smoke evidence files exist when claimed.
- * (Stub for U9 extension — currently checks file existence.)
+ * Required fields in a production smoke evidence JSON file.
+ */
+export const SMOKE_EVIDENCE_REQUIRED_FIELDS = [
+  'releaseId',
+  'deployedUrl',
+  'timestamp',
+  'command',
+  'learnerFixtureType',
+  'itemCreationResult',
+  'answerSubmissionResult',
+  'readModelUpdateResult',
+  'noAnswerLeakAssertion',
+  'failureDetails',
+];
+
+/**
+ * Extract the certification_decision from report frontmatter.
+ * Returns the raw string value or null if not present.
+ */
+export function extractCertificationDecision(reportContent) {
+  const fmBlock = reportContent.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmBlock) return null;
+  const match = fmBlock[1].match(/^certification_decision:\s+(.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
+/**
+ * Extract the post_deploy_smoke_evidence value from report frontmatter.
+ * Returns the raw string value or null if not present.
+ */
+export function extractPostDeploySmokeEvidence(reportContent) {
+  const fmBlock = reportContent.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmBlock) return null;
+  const match = fmBlock[1].match(/^post_deploy_smoke_evidence:\s+(.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
+/**
+ * Extract the limitations list from report frontmatter.
+ * Returns an array of limitation strings, or empty array if not present.
+ */
+export function extractLimitations(reportContent) {
+  const fmBlock = reportContent.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmBlock) return [];
+
+  const lines = fmBlock[1].split(/\r?\n/);
+  const limitations = [];
+  let inLimitations = false;
+
+  for (const line of lines) {
+    if (/^limitations:\s*$/.test(line)) {
+      inLimitations = true;
+      continue;
+    }
+    if (inLimitations) {
+      const itemMatch = line.match(/^\s+-\s+(.+)$/);
+      if (itemMatch) {
+        limitations.push(itemMatch[1].trim());
+      } else if (/^\w/.test(line)) {
+        // New top-level key — stop collecting limitations
+        break;
+      }
+    }
+  }
+  return limitations;
+}
+
+/**
+ * Validate smoke evidence — checks that smoke evidence files exist when required.
+ *
+ * Rules:
+ * - If certification_decision is CERTIFIED_POST_DEPLOY:
+ *   - A valid smoke evidence file MUST exist at reports/grammar/grammar-production-smoke-<releaseId>.json
+ *   - The file must contain all required fields
+ *   - The file's releaseId must match the report's content release ID
+ * - If certification_decision is CERTIFIED_PRE_DEPLOY or CERTIFIED_WITH_LIMITATIONS:
+ *   - No smoke evidence file required (pass without it)
+ * - Legacy behaviour: if no certification_decision in frontmatter, fall back to
+ *   checking text claims of "smoke passed"
  *
  * @param {object} manifest - Parsed certification manifest JSON.
  * @param {string} reportContent - Markdown content of the completion report.
@@ -272,7 +349,86 @@ export function validateSmokeEvidence(manifest, reportContent, opts = {}) {
   const rootDir = opts.rootDir || ROOT_DIR;
   const mismatches = [];
 
-  // Check if report claims smoke passed
+  const certDecision = extractCertificationDecision(reportContent);
+  const postDeploySmokeField = extractPostDeploySmokeEvidence(reportContent);
+
+  // --- CERTIFIED_PRE_DEPLOY: no smoke file required ---
+  if (certDecision && /certified[_-]?pre[_-]?deploy/i.test(certDecision)) {
+    return { pass: true, mismatches: [] };
+  }
+
+  // --- CERTIFIED_WITH_LIMITATIONS: no smoke file required ---
+  if (certDecision && /certified[_-]?with[_-]?limitations/i.test(certDecision)) {
+    return { pass: true, mismatches: [] };
+  }
+
+  // --- CERTIFIED_POST_DEPLOY: smoke file MUST exist and be valid ---
+  if (certDecision && /certified[_-]?post[_-]?deploy/i.test(certDecision)) {
+    const releaseId = manifest.contentReleaseId;
+    if (!releaseId) {
+      mismatches.push({
+        field: 'smokeEvidenceFile',
+        claimed: 'CERTIFIED_POST_DEPLOY',
+        actual: 'no contentReleaseId in manifest',
+        message: 'Cannot validate smoke evidence: manifest has no contentReleaseId',
+      });
+      return { pass: false, mismatches };
+    }
+
+    const evidencePath = path.join(rootDir, 'reports', 'grammar', `grammar-production-smoke-${releaseId}.json`);
+
+    // Check file existence
+    if (!existsSync(evidencePath)) {
+      mismatches.push({
+        field: 'smokeEvidenceFile',
+        claimed: 'CERTIFIED_POST_DEPLOY',
+        actual: `evidence file not found at reports/grammar/grammar-production-smoke-${releaseId}.json`,
+        message: `Report claims CERTIFIED_POST_DEPLOY but smoke evidence file does not exist: reports/grammar/grammar-production-smoke-${releaseId}.json`,
+      });
+      return { pass: false, mismatches };
+    }
+
+    // Parse and validate the evidence file
+    let evidence;
+    try {
+      evidence = JSON.parse(readFileSync(evidencePath, 'utf8'));
+    } catch (err) {
+      mismatches.push({
+        field: 'smokeEvidenceFileSchema',
+        claimed: 'valid JSON',
+        actual: `parse error: ${err.message}`,
+        message: `Smoke evidence file is not valid JSON: ${err.message}`,
+      });
+      return { pass: false, mismatches };
+    }
+
+    // Check required fields — a field is present if it exists in the object (null is valid for failureDetails)
+    for (const field of SMOKE_EVIDENCE_REQUIRED_FIELDS) {
+      if (!(field in evidence)) {
+        mismatches.push({
+          field: 'smokeEvidenceFieldMissing',
+          claimed: `field "${field}" present`,
+          actual: 'missing',
+          message: `Smoke evidence file is missing required field: ${field}`,
+        });
+      }
+    }
+
+    // Validate releaseId matches
+    if (evidence.releaseId && evidence.releaseId !== releaseId) {
+      mismatches.push({
+        field: 'smokeEvidenceReleaseIdMismatch',
+        claimed: releaseId,
+        actual: evidence.releaseId,
+        message: `Smoke evidence releaseId "${evidence.releaseId}" does not match manifest contentReleaseId "${releaseId}"`,
+      });
+    }
+
+    return { pass: mismatches.length === 0, mismatches };
+  }
+
+  // --- Legacy fallback: no certification_decision in frontmatter ---
+  // Check if report claims smoke passed via text
   const smokePassedRegex = /(?:production\s+smoke|repository\s+smoke|post-deploy\s+smoke)\s*[:=]?\s*(passed|pass)/i;
   const claimsSmokePassed = smokePassedRegex.test(reportContent);
 
