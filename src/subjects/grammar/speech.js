@@ -52,14 +52,33 @@ function inputSpecSpeechParts(inputSpec = {}) {
   }
 
   if (inputSpec.type === 'table_choice') {
-    const rows = (Array.isArray(inputSpec.rows) ? inputSpec.rows : [])
-      .map((row) => cleanSpeechText(row?.label, 180))
-      .filter(Boolean);
+    const rows = Array.isArray(inputSpec.rows) ? inputSpec.rows : [];
     const columns = (Array.isArray(inputSpec.columns) ? inputSpec.columns : [])
       .map((column) => cleanSpeechText(column, 80))
       .filter(Boolean);
-    if (rows.length) parts.push(`Rows: ${rows.join('. ')}`);
-    if (columns.length) parts.push(`Choices: ${columns.join(', ')}`);
+    const isHeterogeneous = rows.some(
+      (r) => Array.isArray(r?.options) && r.options.length > 0
+    );
+    if (isHeterogeneous) {
+      for (const row of rows) {
+        const label = cleanSpeechText(row?.label, 180);
+        if (!label) continue;
+        const rowOpts = (Array.isArray(row?.options) ? row.options : [])
+          .map((opt) => cleanSpeechText(opt, 80))
+          .filter(Boolean);
+        if (rowOpts.length) {
+          parts.push(`Row ${label}: choices ${rowOpts.join(', ')}`);
+        } else {
+          parts.push(`Row ${label}`);
+        }
+      }
+    } else {
+      const rowLabels = rows
+        .map((row) => cleanSpeechText(row?.label, 180))
+        .filter(Boolean);
+      if (rowLabels.length) parts.push(`Rows: ${rowLabels.join('. ')}`);
+      if (columns.length) parts.push(`Choices: ${columns.join(', ')}`);
+    }
     return parts;
   }
 
@@ -134,7 +153,23 @@ export function buildGrammarSpeechText(grammar = {}) {
   const item = miniItem || session.currentItem || {};
   const parts = [];
   pushText(parts, item.templateLabel, 180);
-  pushText(parts, item.promptText, 520);
+
+  // P10 U3 preference chain: readAloudText > screenReaderPromptText > promptText
+  const readAloud = typeof item.readAloudText === 'string' && item.readAloudText.trim()
+    ? item.readAloudText
+    : '';
+  const srPrompt = typeof item.screenReaderPromptText === 'string' && item.screenReaderPromptText.trim()
+    ? item.screenReaderPromptText
+    : '';
+
+  if (readAloud) {
+    pushText(parts, readAloud, 520);
+  } else if (srPrompt) {
+    pushText(parts, srPrompt, 520);
+  } else {
+    pushText(parts, item.promptText, 520);
+  }
+
   pushText(parts, item.checkLine, 360);
   parts.push(...inputSpecSpeechParts(item.inputSpec || {}));
 
