@@ -105,13 +105,11 @@ test('A) Parity matrix: Grammar provider launchers vs adapter support', () => {
     }
   }
 
-  // smart-practice and trouble-practice are supported
+  // All Grammar launchers are now supported (pA2 U3 closed the mini-test gap)
   assert.ok(supported.includes('smart-practice'), 'smart-practice must be launchable');
   assert.ok(supported.includes('trouble-practice'), 'trouble-practice must be launchable');
-
-  // mini-test is the known gap — not supported by the adapter
-  assert.ok(unsupported.includes('mini-test'), 'mini-test is known non-launchable');
-  assert.equal(unsupported.length, 1, 'only mini-test should be unsupported');
+  assert.ok(supported.includes('mini-test'), 'mini-test must be launchable (pA2 U3 fix)');
+  assert.equal(unsupported.length, 0, 'no Grammar launcher should be unsupported');
 });
 
 test('A) Parity matrix: Spelling provider launchers vs adapter support', () => {
@@ -140,38 +138,10 @@ test('A) Parity matrix: Punctuation provider launchers vs adapter support', () =
 // B) Grammar mini-test safety proof
 // ═══════════════════════════════════════════════════════════════════════
 
-test('B) Grammar mini-test safety: breadth-maintenance always co-occurs with launchable task', () => {
+test('B) Grammar mini-test safety: breadth-maintenance is now launchable (pA2 U3)', () => {
   // State: secureCount >= 3, weakCount = 0, dueCount = 0, retentionDueCount = 0
-  // This is the ONLY state that produces ONLY the mini-test envelope from
-  // the specific-intent paths. But the fallback at line 140 fires because
-  // no other envelope was added first (weak=0, due=0, retDue=0).
-  //
-  // Wait — secureCount >= 3 triggers breadth-maintenance, so envelopes.length > 0,
-  // and the fallback does NOT fire. But mini-test is still accompanied by the
-  // scheduler's subject-mix logic picking from OTHER subjects.
-  //
-  // The critical insight: even when Grammar produces ONLY mini-test,
-  // the quest will contain tasks from other subjects. And if Grammar is the
-  // ONLY eligible subject, the fallback fires because:
-  //   weakCount=0, dueCount=0, retDueCount=0, secureCount>=3 →
-  //   envelopes has mini-test → envelopes.length === 1 → fallback does NOT fire.
-  //
-  // So we must prove: can we reach a state where the ONLY emitted envelope
-  // from Grammar is mini-test? YES — secureCount >=3, all others zero.
-  //
-  // Is that state safe? YES — because the client skips non-launchable tasks.
-  // A quest with Grammar-only mini-test would have no launchable tasks,
-  // which means `canStart = false` in the UI. The quest is rendered but
-  // un-startable, which is safe (no dead CTA).
-  //
-  // BUT WAIT: the actual analysis reveals this state CANNOT exist in isolation:
-  //   - If secureCount >= 3, the learner has been working on Grammar
-  //   - With total > 0 and secured concepts, there will always be either
-  //     due or retention-due concepts (spaced repetition guarantees this)
-  //
-  // For the test, we construct the theoretical worst case and prove:
-  //   1. The provider does emit mini-test
-  //   2. We can verify whether it also emits a launchable envelope
+  // This is the ONLY state that produces ONLY the mini-test envelope.
+  // Since pA2 U3, mini-test maps to satsset mode — always launchable.
 
   const readModel = {
     stats: { concepts: { total: 10, weak: 0, due: 0, secured: 5, learning: 5, new: 0 } },
@@ -186,19 +156,17 @@ test('B) Grammar mini-test safety: breadth-maintenance always co-occurs with lau
   assert.ok(miniTest, 'breadth-maintenance mini-test is emitted');
 
   // In this theoretical state, the ONLY envelope is mini-test
-  // (weak=0, due=0, retDue=0, secure>=3 → only breadth-maintenance fires)
   assert.equal(result.envelopes.length, 1,
     'only mini-test emitted when weak=0, due=0, retDue=0, secure>=3');
   assert.equal(result.envelopes[0].launcher, 'mini-test');
 
-  // Classify: mini-test is not launchable
+  // Classify: mini-test IS launchable now (pA2 U3 added satsset mapping)
   const classified = classifyEnvelopes(result.envelopes);
-  assert.equal(classified[0].launchable, false);
+  assert.equal(classified[0].launchable, true);
 });
 
-test('B) Grammar mini-test safety: quest with ONLY mini-test produces canStart=false (safe)', () => {
-  // Prove that the UI correctly handles a quest where the only Grammar task
-  // is mini-test (not launchable) — canStart becomes false, no dead CTA.
+test('B) Grammar mini-test safety: quest with ONLY mini-test produces canStart=true (pA2 U3)', () => {
+  // Since pA2 U3, mini-test IS launchable → canStart=true, no dead CTA.
   const heroUi = {
     status: 'loaded',
     readModel: {
@@ -210,7 +178,7 @@ test('B) Grammar mini-test safety: quest with ONLY mini-test produces canStart=f
             subjectId: 'grammar',
             launcher: 'mini-test',
             intent: 'breadth-maintenance',
-            launchStatus: 'not-launchable',
+            launchStatus: 'launchable',
           },
         ],
       },
@@ -222,8 +190,9 @@ test('B) Grammar mini-test safety: quest with ONLY mini-test produces canStart=f
 
   const model = buildHeroHomeModel(heroUi);
   assert.equal(model.enabled, true);
-  assert.equal(model.nextTask, null, 'no launchable task found');
-  assert.equal(model.canStart, false, 'canStart must be false when no launchable tasks');
+  assert.ok(model.nextTask !== null, 'mini-test is now a launchable task');
+  assert.equal(model.nextTask.launcher, 'mini-test');
+  assert.equal(model.canStart, true, 'canStart must be true when mini-test is launchable');
 });
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -349,11 +318,10 @@ test('E) Single-subject Grammar: when due or weak exist, quest is launchable', (
     'single-subject Grammar with due concepts has launchable tasks');
 });
 
-test('E) Single-subject Grammar: only breadth-maintenance (theoretical worst case) — quest is safe via UI', () => {
+test('E) Single-subject Grammar: only breadth-maintenance — quest is fully launchable (pA2 U3)', () => {
   // Grammar is the ONLY eligible subject AND its only specific intent is
   // breadth-maintenance (secure>=3, weak=0, due=0, retDue=0).
-  // The fallback does NOT fire because envelopes.length > 0 (has mini-test).
-  // So the quest would contain ONLY mini-test tasks.
+  // Since pA2 U3, mini-test maps to satsset — quest IS launchable.
   const grammarRM = {
     stats: { concepts: { total: 10, weak: 0, due: 0, secured: 5, learning: 5, new: 0 } },
     analytics: { concepts: [] },
@@ -366,16 +334,16 @@ test('E) Single-subject Grammar: only breadth-maintenance (theoretical worst cas
   const allMiniTest = quest.tasks.every(t => t.launcher === 'mini-test');
   assert.equal(allMiniTest, true, 'all tasks are mini-test in this edge case');
 
-  // Build registry — no launchable tasks
+  // Build registry — mini-test IS launchable now
   const registry = buildCapabilityRegistry(quest.tasks);
   const hasLaunchable = quest.tasks.some(task => {
     const result = determineLaunchStatus(task.subjectId, task.launcher, registry);
     return result.launchable;
   });
-  assert.equal(hasLaunchable, false,
-    'no launchable tasks when only mini-test exists');
+  assert.equal(hasLaunchable, true,
+    'mini-test tasks are launchable (pA2 U3 satsset mapping)');
 
-  // But the UI handles this safely: canStart = false
+  // UI gets canStart = true
   const heroUi = {
     status: 'loaded',
     readModel: {
@@ -384,7 +352,7 @@ test('E) Single-subject Grammar: only breadth-maintenance (theoretical worst cas
       dailyQuest: {
         tasks: quest.tasks.map(t => ({
           ...t,
-          launchStatus: 'not-launchable',
+          launchStatus: 'launchable',
         })),
       },
       activeHeroSession: null,
@@ -394,9 +362,9 @@ test('E) Single-subject Grammar: only breadth-maintenance (theoretical worst cas
   };
 
   const model = buildHeroHomeModel(heroUi);
-  assert.equal(model.nextTask, null);
-  assert.equal(model.canStart, false,
-    'UI correctly shows no dead CTA for all-mini-test quest');
+  assert.ok(model.nextTask !== null, 'mini-test is launchable');
+  assert.equal(model.canStart, true,
+    'UI shows CTA for launchable mini-test quest');
 });
 
 test('E) Grammar fallback fires when total>0 but no specific intents match', () => {
@@ -523,7 +491,7 @@ test('G) buildHeroHomeModel picks the first launchable task', () => {
       childVisible: true,
       dailyQuest: {
         tasks: [
-          { subjectId: 'grammar', launcher: 'mini-test', intent: 'breadth-maintenance', launchStatus: 'not-launchable' },
+          { subjectId: 'grammar', launcher: 'mini-test', intent: 'breadth-maintenance', launchStatus: 'launchable' },
           { subjectId: 'grammar', launcher: 'smart-practice', intent: 'due-review', launchStatus: 'launchable' },
           { subjectId: 'spelling', launcher: 'smart-practice', intent: 'due-review', launchStatus: 'launchable' },
         ],
@@ -537,7 +505,7 @@ test('G) buildHeroHomeModel picks the first launchable task', () => {
   const model = buildHeroHomeModel(heroUi);
   assert.equal(model.enabled, true);
   assert.ok(model.nextTask !== null);
-  assert.equal(model.nextTask.launcher, 'smart-practice');
+  assert.equal(model.nextTask.launcher, 'mini-test');
   assert.equal(model.nextTask.subjectId, 'grammar');
   assert.equal(model.canStart, true);
 });
@@ -550,8 +518,8 @@ test('G) buildHeroHomeModel: all tasks not-launchable → nextTask=null, canStar
       childVisible: true,
       dailyQuest: {
         tasks: [
-          { subjectId: 'grammar', launcher: 'mini-test', intent: 'breadth-maintenance', launchStatus: 'not-launchable' },
-          { subjectId: 'grammar', launcher: 'mini-test', intent: 'breadth-maintenance', launchStatus: 'not-launchable' },
+          { subjectId: 'grammar', launcher: 'unknown-future-mode', intent: 'experimental', launchStatus: 'not-launchable' },
+          { subjectId: 'grammar', launcher: 'unknown-future-mode', intent: 'experimental', launchStatus: 'not-launchable' },
         ],
       },
       activeHeroSession: null,
@@ -611,23 +579,15 @@ test('G) buildHeroHomeModel: activeHeroSession blocks canStart even with launcha
 // Summary proof: architectural safety statement
 // ═══════════════════════════════════════════════════════════════════════
 
-test('PROOF: Grammar mini-test gap is architecturally safe — no dead CTA can appear', () => {
-  // This test encapsulates the complete safety argument:
+test('PROOF: Grammar mini-test gap is CLOSED — all learner states produce launchable quests (pA2 U3)', () => {
+  // This test encapsulates the complete parity proof after pA2 U3:
   //
-  // 1. Grammar adapter supports: smart-practice, trouble-practice (NOT mini-test)
-  // 2. Grammar provider emits mini-test ONLY when secureCount >= 3
-  // 3. In multi-subject quests: other subjects always provide launchable tasks
-  // 4. In single-subject Grammar quests with mini-test only:
-  //    - The UI sets canStart=false (no CTA rendered)
-  //    - This is safe: the card is visible but non-interactive
-  // 5. In practice, a learner with secured>=3 will almost always also have
-  //    due or retention-due concepts (spaced repetition), so this edge case
-  //    is extremely rare in production.
-  // 6. The fallback at line 140 of grammar.js fires when NO specific intents
+  // 1. Grammar adapter supports: smart-practice, trouble-practice, mini-test (satsset)
+  // 2. ALL Grammar provider launcher values are now launchable
+  // 3. No learner state produces a dead CTA
+  // 4. The fallback at line 140 of grammar.js fires when NO specific intents
   //    match (weak=0, due=0, retDue=0, secure<3), which produces a launchable
   //    smart-practice. This covers the early-learner case.
-
-  // Verify the two distinct safe states:
 
   // State A: secure<3, no other signals → fallback fires → launchable
   const stateA = grammarProvider({
@@ -639,7 +599,7 @@ test('PROOF: Grammar mini-test gap is architecturally safe — no dead CTA can a
   const classifiedA = classifyEnvelopes(stateA.envelopes);
   assert.equal(classifiedA[0].launchable, true, 'State A: fallback is launchable');
 
-  // State B: secure>=3, no other signals → mini-test only → UI blocks CTA
+  // State B: secure>=3, no other signals → mini-test only → NOW launchable (pA2 U3)
   const stateB = grammarProvider({
     stats: { concepts: { total: 10, weak: 0, due: 0, secured: 5, learning: 5, new: 0 } },
     analytics: { concepts: [] },
@@ -647,23 +607,23 @@ test('PROOF: Grammar mini-test gap is architecturally safe — no dead CTA can a
   assert.equal(stateB.envelopes.length, 1);
   assert.equal(stateB.envelopes[0].launcher, 'mini-test');
   const classifiedB = classifyEnvelopes(stateB.envelopes);
-  assert.equal(classifiedB[0].launchable, false, 'State B: mini-test is not launchable');
+  assert.equal(classifiedB[0].launchable, true, 'State B: mini-test IS launchable (satsset)');
 
-  // UI proof for State B:
+  // UI proof for State B: canStart = true
   const uiModel = buildHeroHomeModel({
     status: 'loaded',
     readModel: {
       ui: { enabled: true },
       childVisible: true,
       dailyQuest: {
-        tasks: [{ subjectId: 'grammar', launcher: 'mini-test', launchStatus: 'not-launchable' }],
+        tasks: [{ subjectId: 'grammar', launcher: 'mini-test', launchStatus: 'launchable' }],
       },
       activeHeroSession: null,
     },
   });
-  assert.equal(uiModel.canStart, false, 'State B UI: no dead CTA');
+  assert.equal(uiModel.canStart, true, 'State B UI: CTA available for mini-test');
 
-  // State C: secure>=3 WITH due concepts → both mini-test and smart-practice → launchable
+  // State C: secure>=3 WITH due concepts → both mini-test and smart-practice → all launchable
   const stateC = grammarProvider({
     stats: { concepts: { total: 10, weak: 0, due: 3, secured: 5, learning: 2, new: 0 } },
     analytics: { concepts: [] },
@@ -673,6 +633,6 @@ test('PROOF: Grammar mini-test gap is architecturally safe — no dead CTA can a
   assert.equal(hasMiniTest, true, 'State C: mini-test emitted');
   assert.equal(hasSmartPractice, true, 'State C: smart-practice emitted');
   const classifiedC = classifyEnvelopes(stateC.envelopes);
-  const anyLaunchable = classifiedC.some(e => e.launchable);
-  assert.equal(anyLaunchable, true, 'State C: has launchable task');
+  const allLaunchable = classifiedC.every(e => e.launchable);
+  assert.equal(allLaunchable, true, 'State C: ALL tasks are launchable');
 });
