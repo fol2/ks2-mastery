@@ -8,6 +8,7 @@ import { AdminAccountsSection } from './AdminAccountsSection.jsx';
 import { AdminDebuggingSection } from './AdminDebuggingSection.jsx';
 import { AdminContentSection } from './AdminContentSection.jsx';
 import { AdminMarketingSection } from './AdminMarketingSection.jsx';
+import { AdminBusinessSection } from './AdminBusinessSection.jsx';
 import { createAccountOpsMetadataDirtyRegistry } from '../../platform/hubs/admin-metadata-dirty-registry.js';
 import { shouldBlockSectionChange } from '../../platform/hubs/admin-section-guard.js';
 // U4+U5: AdminHubSurface is now a thin shell that renders:
@@ -176,6 +177,9 @@ export function AdminHubSurface({ appState, model, hubState = {}, accountDirecto
         <AdminMarketingSection
           accessContext={{ role: model.permissions.platformRole }}
         />
+      )}
+      {activeSection === 'business' && (
+        <AdminBusinessSection {...sectionProps} />
       )}
     </>
   );

@@ -75,6 +75,7 @@ import {
   redactBundleForRole,
   buildHumanSummary,
 } from './admin-debug-bundle.js';
+import { getBusinessKpis } from './admin-kpi-analytics.js';
 
 
 // U7 (sys-hardening p1): CSP report endpoint constants. The endpoint
@@ -2581,6 +2582,33 @@ export function createWorkerApp({
           }
           const evidenceSummary = await readBundledProductionEvidenceSummary();
           return json({ ok: true, refreshedAt: new Date().toISOString(), ...evidenceSummary });
+        }
+
+        // P7 U5: Business KPI analytics — real/demo split, activation,
+        // retention, conversion, subject engagement, support friction.
+        // Rate-limited at 60/min per session (admin-ops-mutation bucket).
+        // Admin or ops role required via assertAdminHubActorForBundle.
+        if (url.pathname === '/api/admin/ops/business-kpis' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          await repository.assertAdminHubActorForBundle(session.accountId);
+          const businessKpiLimit = await consumeRateLimit(env, {
+            bucket: 'admin-ops-mutation',
+            identifier: session.accountId,
+            limit: 60,
+            windowMs: 60_000,
+          });
+          if (!businessKpiLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_ops_mutation_rate_limited',
+              retryAfterSeconds: businessKpiLimit.retryAfterSeconds,
+              extra: {
+                message: 'Admin-ops reads are rate-limited at 60 per minute per session.',
+              },
+            });
+          }
+          const db = requireDatabase(env);
+          const kpiResult = await getBusinessKpis(db);
+          return json({ ok: true, ...kpiResult });
         }
 
         // R31: regex dispatch for parameterised admin ops mutations. Placed
