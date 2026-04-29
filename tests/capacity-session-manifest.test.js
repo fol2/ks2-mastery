@@ -12,6 +12,12 @@ import {
   parseClassroomLoadArgs,
   FAILURE_CLASSES,
 } from '../scripts/classroom-load-test.mjs';
+import {
+  BATCH_SIZE as SESSION_MANIFEST_BATCH_SIZE,
+  DEFAULT_DELAY_MS as SESSION_MANIFEST_DEFAULT_DELAY_MS,
+  parseArgs as parseSessionManifestArgs,
+  validate as validateSessionManifestOptions,
+} from '../scripts/prepare-session-manifest.mjs';
 
 // ---------------------------------------------------------------------------
 // loadSessionManifest — rejection cases
@@ -211,4 +217,35 @@ test('FAILURE_CLASSES taxonomy covers all expected values', () => {
 
 test('FAILURE_CLASSES is frozen (immutable)', () => {
   assert.ok(Object.isFrozen(FAILURE_CLASSES));
+});
+
+// ---------------------------------------------------------------------------
+// prepare-session-manifest — rate-limit-safe defaults
+// ---------------------------------------------------------------------------
+
+test('prepare-session-manifest defaults span the full demo-session rate-limit window', () => {
+  const options = parseSessionManifestArgs([
+    '--origin', 'https://ks2.eugnel.uk',
+    '--learners', '60',
+    '--output', 'reports/capacity/manifests/60-learners.json',
+  ]);
+
+  assert.equal(options.delayMs, SESSION_MANIFEST_DEFAULT_DELAY_MS);
+  assert.equal(options.delayMs, 610_000);
+  assert.equal(options.batchSize, SESSION_MANIFEST_BATCH_SIZE);
+  assert.equal(options.batchSize, 28);
+});
+
+test('prepare-session-manifest rejects batches above the production per-IP demo limit', () => {
+  const options = parseSessionManifestArgs([
+    '--origin', 'https://ks2.eugnel.uk',
+    '--learners', '60',
+    '--output', 'reports/capacity/manifests/60-learners.json',
+    '--batch-size', '31',
+  ]);
+
+  assert.throws(
+    () => validateSessionManifestOptions(options),
+    /--batch-size must be an integer from 1 to 30/i,
+  );
 });

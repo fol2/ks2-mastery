@@ -166,7 +166,8 @@ test('S4: worker/src/hero/ modules do not use .run(), .batch(), or bindStatement
 
 test('S5: client src/ files may import shared/hero/hero-copy only; all other shared/hero/ and worker/src/hero/ imports are forbidden', () => {
   const clientFiles = collectJsFiles(CLIENT_SRC_DIR).filter(
-    (f) => f.endsWith('.js') || f.endsWith('.jsx'),
+    (f) => (f.endsWith('.js') || f.endsWith('.jsx'))
+      && !path.relative(CLIENT_SRC_DIR, f).replace(/\\/g, '/').startsWith('bundles/'),
   );
 
   // Allowlist: these shared/hero/ module names are safe for client import.

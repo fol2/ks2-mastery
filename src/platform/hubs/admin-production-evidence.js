@@ -9,6 +9,7 @@ export const EVIDENCE_STATES = Object.freeze({
   NOT_AVAILABLE: 'not_available',
   STALE: 'stale',
   FAILING: 'failing',
+  NON_CERTIFYING: 'non_certifying',
   SMOKE_PASS: 'smoke_pass',
   SMALL_PILOT_PROVISIONAL: 'small_pilot_provisional',
   CERTIFIED_30: 'certified_30_learner_beta',
@@ -18,6 +19,18 @@ export const EVIDENCE_STATES = Object.freeze({
 });
 
 const VALID_STATES = new Set(Object.values(EVIDENCE_STATES));
+const CERTIFICATION_STATES = new Set([
+  EVIDENCE_STATES.CERTIFIED_30,
+  EVIDENCE_STATES.CERTIFIED_60,
+  EVIDENCE_STATES.CERTIFIED_100,
+]);
+const CAPACITY_METRIC_KEYS = new Set([
+  'smoke_pass',
+  'small_pilot_provisional',
+  'certified_30_learner_beta',
+  'certified_60_learner_stretch',
+  'certified_100_plus',
+]);
 
 /** Fresh threshold: 24 hours in milliseconds. */
 export const EVIDENCE_FRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
@@ -36,7 +49,7 @@ export function isValidEvidenceState(value) {
  *
  * @param {string} metricKey — the metric tier key (e.g. 'certified_30_learner_beta')
  * @param {object|null} metricValue — the metric summary object from the evidence summary
- * @param {string|null} generatedAt — ISO timestamp of when the summary was generated
+ * @param {string|null} generatedAt — retained for backwards-compatible call sites
  * @param {number} now — current time in ms (Date.now())
  * @returns {string} one of EVIDENCE_STATES values
  */
@@ -45,23 +58,39 @@ export function classifyEvidenceMetric(metricKey, metricValue, generatedAt, now)
     return EVIDENCE_STATES.NOT_AVAILABLE;
   }
 
-  // Check freshness of the summary generation time.
-  const generatedAtMs = generatedAt ? new Date(generatedAt).getTime() : 0;
-  if (!generatedAtMs || !Number.isFinite(generatedAtMs)) {
+  // Evidence freshness is tied to the run completion time, not the summary
+  // build time. Regenerating latest-evidence-summary.json must never refresh
+  // an old certification run.
+  const finishedAtMs = metricValue.finishedAt ? new Date(metricValue.finishedAt).getTime() : 0;
+  if (!finishedAtMs || !Number.isFinite(finishedAtMs)) {
     return EVIDENCE_STATES.STALE;
   }
-  const ageMs = now - generatedAtMs;
+  const ageMs = now - finishedAtMs;
   if (ageMs > EVIDENCE_FRESH_THRESHOLD_MS) {
     return EVIDENCE_STATES.STALE;
   }
 
-  // Dry-run evidence is not certifiable.
-  if (metricValue.dryRun) {
-    return EVIDENCE_STATES.UNKNOWN;
+  // Dry-runs, setup-blocked preflights, and invalid tier evidence cannot
+  // promote certification, even when their filename mentions a tier.
+  if (
+    metricValue.dryRun
+    || metricValue.status === 'non_certifying'
+    || metricValue.evidenceKind === 'preflight'
+  ) {
+    return EVIDENCE_STATES.NON_CERTIFYING;
   }
 
+  const thresholdViolations = Array.isArray(metricValue.thresholdViolations)
+    ? metricValue.thresholdViolations
+    : [];
+
   // Failing: evidence file exists but did not pass.
-  if (!metricValue.ok || (Array.isArray(metricValue.failures) && metricValue.failures.length > 0)) {
+  if (
+    metricValue.status === 'failed'
+    || !metricValue.ok
+    || (Array.isArray(metricValue.failures) && metricValue.failures.length > 0)
+    || thresholdViolations.length > 0
+  ) {
     return EVIDENCE_STATES.FAILING;
   }
 
@@ -77,7 +106,12 @@ export function classifyEvidenceMetric(metricKey, metricValue, generatedAt, now)
     certified_100_plus: EVIDENCE_STATES.CERTIFIED_100,
   };
 
-  return tierMap[metricKey] || EVIDENCE_STATES.UNKNOWN;
+  const mappedState = tierMap[metricKey] || EVIDENCE_STATES.UNKNOWN;
+  if (CERTIFICATION_STATES.has(mappedState) && metricValue.certifying !== true) {
+    return EVIDENCE_STATES.NON_CERTIFYING;
+  }
+
+  return mappedState;
 }
 
 /**
@@ -94,31 +128,38 @@ export function buildEvidencePanelModel(summaryJson, now) {
   // Schema 3 adds a sources manifest; schema 2 omits it — default to null.
   const sources = summary.sources && typeof summary.sources === 'object' ? summary.sources : null;
 
-  // Determine freshness.
-  const generatedAtMs = generatedAt ? new Date(generatedAt).getTime() : 0;
-  const isFresh = Boolean(
-    generatedAtMs &&
-    Number.isFinite(generatedAtMs) &&
-    (now - generatedAtMs) <= EVIDENCE_FRESH_THRESHOLD_MS,
-  );
-
-  // Classify each metric.
   const metrics = Object.entries(rawMetrics).map(([key, value]) => ({
     key,
     tier: value?.tier || key,
     state: classifyEvidenceMetric(key, value, generatedAt, now),
+    isCapacityEvidence: CAPACITY_METRIC_KEYS.has(key),
+    status: value?.status || null,
     ok: Boolean(value?.ok),
+    certifying: value?.certifying === true,
+    evidenceKind: value?.evidenceKind || null,
+    decision: value?.decision || null,
+    failureReason: value?.failureReason || null,
     learners: value?.learners ?? null,
+    bootstrapBurst: value?.bootstrapBurst ?? null,
+    rounds: value?.rounds ?? null,
     finishedAt: value?.finishedAt || null,
+    finishedAtPrecision: value?.finishedAtPrecision || null,
     commit: value?.commit || null,
     failures: Array.isArray(value?.failures) ? value.failures : [],
+    thresholdViolations: Array.isArray(value?.thresholdViolations) ? value.thresholdViolations : [],
+    thresholdsPassed: value?.thresholdsPassed ?? null,
+    certificationEligible: value?.certificationEligible ?? null,
+    certificationReasons: Array.isArray(value?.certificationReasons) ? value.certificationReasons : [],
     fileName: value?.fileName || null,
-  }));
+  })).sort(compareMetricRows);
 
-  // Overall state: highest-tier passing state, or the most severe problem.
-  const overallState = deriveOverallState(metrics, isFresh);
+  const capacityMetrics = metrics.filter((metric) => metric.isCapacityEvidence);
+  const latestEvidenceAt = latestMetricTimestamp(capacityMetrics);
+  const isFresh = capacityMetrics.some((metric) => metric.state !== EVIDENCE_STATES.STALE);
 
-  return { metrics, generatedAt, isFresh, overallState, sources };
+  const overallState = deriveOverallState(capacityMetrics, isFresh);
+
+  return { metrics, generatedAt, latestEvidenceAt, isFresh, overallState, sources };
 }
 
 /**
@@ -126,8 +167,8 @@ export function buildEvidencePanelModel(summaryJson, now) {
  * Priority: highest certified tier wins, else failing > stale > not_available.
  */
 function deriveOverallState(metrics, isFresh) {
-  if (!isFresh) return EVIDENCE_STATES.STALE;
   if (metrics.length === 0) return EVIDENCE_STATES.NOT_AVAILABLE;
+  if (!isFresh) return EVIDENCE_STATES.STALE;
 
   // Tier rank (higher = better).
   const TIER_RANK = {
@@ -136,7 +177,8 @@ function deriveOverallState(metrics, isFresh) {
     [EVIDENCE_STATES.CERTIFIED_30]: 5,
     [EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL]: 4,
     [EVIDENCE_STATES.SMOKE_PASS]: 3,
-    [EVIDENCE_STATES.UNKNOWN]: 2,
+    [EVIDENCE_STATES.NON_CERTIFYING]: 2,
+    [EVIDENCE_STATES.UNKNOWN]: 1,
     [EVIDENCE_STATES.FAILING]: 1,
     [EVIDENCE_STATES.STALE]: 0,
     [EVIDENCE_STATES.NOT_AVAILABLE]: -1,
@@ -155,8 +197,41 @@ function deriveOverallState(metrics, isFresh) {
     if (m.state === EVIDENCE_STATES.FAILING) hasFailing = true;
   }
 
-  // If the best state is still non-passing but we have failures, surface that.
-  if (bestRank <= 2 && hasFailing) return EVIDENCE_STATES.FAILING;
+  // A failing certification-tier run is the latest evidence and must not be
+  // hidden behind an older provisional/smoke success. A genuine certified
+  // state still wins once new passing certification evidence exists.
+  if (hasFailing && bestRank < TIER_RANK[EVIDENCE_STATES.CERTIFIED_30]) {
+    return EVIDENCE_STATES.FAILING;
+  }
 
   return best;
+}
+
+function compareMetricRows(left, right) {
+  const order = [
+    EVIDENCE_STATES.CERTIFIED_100,
+    EVIDENCE_STATES.CERTIFIED_60,
+    EVIDENCE_STATES.CERTIFIED_30,
+    EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL,
+    EVIDENCE_STATES.SMOKE_PASS,
+  ];
+  const leftIndex = order.indexOf(left.key);
+  const rightIndex = order.indexOf(right.key);
+  const leftRank = leftIndex === -1 ? order.length : leftIndex;
+  const rightRank = rightIndex === -1 ? order.length : rightIndex;
+  if (leftRank !== rightRank) return leftRank - rightRank;
+  return left.key.localeCompare(right.key);
+}
+
+function latestMetricTimestamp(metrics) {
+  let latest = null;
+  let latestMs = 0;
+  for (const metric of metrics) {
+    const timestampMs = metric.finishedAt ? new Date(metric.finishedAt).getTime() : 0;
+    if (Number.isFinite(timestampMs) && timestampMs > latestMs) {
+      latestMs = timestampMs;
+      latest = new Date(timestampMs).toISOString();
+    }
+  }
+  return latest;
 }

@@ -138,7 +138,7 @@ function isPlaceholderRow(row) {
   return row.date.includes(PLACEHOLDER_DATE_SENTINEL);
 }
 
-function extractEvidencePath(evidenceCell) {
+export function extractEvidencePath(evidenceCell) {
   // Accept bare paths and Markdown `[label](path)` links.
   const linkMatch = evidenceCell.match(/\((reports\/capacity\/[^)]+)\)/);
   if (linkMatch) return linkMatch[1];
@@ -497,6 +497,9 @@ function compareConfigAgainstEvidence(absoluteConfigPath, payload, rowDecision) 
 
   const configThresholds = config.thresholds || {};
   const evidenceThresholds = payload.thresholds || {};
+  const evidenceLimits = evidenceThresholds.limits && typeof evidenceThresholds.limits === 'object' && !Array.isArray(evidenceThresholds.limits)
+    ? evidenceThresholds.limits
+    : null;
 
   // `classroom-load-test.mjs` merges the per-key threshold map (U1 shape) with
   // legacy PR #177 block-level summary keys (`configured`, `violations`,
@@ -539,6 +542,18 @@ function compareConfigAgainstEvidence(absoluteConfigPath, payload, rowDecision) 
     }
 
     const configured = evidenceEntry.configured;
+    if (evidenceLimits && Object.prototype.hasOwnProperty.call(evidenceLimits, key)) {
+      const limitValue = evidenceLimits[key];
+      const limitsMatch = typeof configured === 'boolean'
+        ? Boolean(limitValue) === configured
+        : Number(limitValue) === Number(configured);
+      if (!limitsMatch) {
+        messages.push(
+          `evidence.thresholds.limits.${key} = ${limitValue} but evidence.thresholds.${key}.configured = ${configured}. `
+          + 'The summary limits block must agree with the per-threshold gate result.',
+        );
+      }
+    }
     if (typeof configValue === 'boolean') {
       if (configValue !== Boolean(configured)) {
         messages.push(

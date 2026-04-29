@@ -26,6 +26,7 @@ import {
   applyAdminHubErrorLogSummaryPatch,
   applyAdminHubOpsActivityPatch,
   applyAdminHubPanelRefreshError,
+  applyAdminHubProductionEvidencePatch,
 } from './platform/hubs/admin-panel-patches.js';
 import { routeAdminRefreshError } from './platform/hubs/admin-refresh-error-text.js';
 import { createAccountOpsMetadataDirtyRegistry } from './platform/hubs/admin-metadata-dirty-registry.js';
@@ -1328,6 +1329,21 @@ async function refreshAdminOpsAccountsMetadata() {
   } catch (error) {
     if (!isAdminOpsRefreshTokenLatest('accountOpsMetadata', token)) return { ok: false, reason: 'superseded' };
     applyAdminOpsRefreshError('accountOpsMetadata', error);
+    return { ok: false, reason: 'error', error };
+  }
+}
+
+async function refreshAdminProductionEvidence() {
+  if (!hubApi) return { ok: false, reason: 'no-hub' };
+  const token = beginAdminOpsRefreshToken('productionEvidence');
+  try {
+    const payload = await hubApi.readAdminProductionEvidence();
+    if (!isAdminOpsRefreshTokenLatest('productionEvidence', token)) return { ok: false, reason: 'superseded' };
+    applyAdminHubPanelPatch((adminHub) => applyAdminHubProductionEvidencePatch(adminHub, payload));
+    return { ok: true };
+  } catch (error) {
+    if (!isAdminOpsRefreshTokenLatest('productionEvidence', token)) return { ok: false, reason: 'superseded' };
+    applyAdminOpsRefreshError('productionEvidence', error);
     return { ok: false, reason: 'error', error };
   }
 }
@@ -3194,6 +3210,11 @@ function handleGlobalAction(action, data) {
         reopenedAfterResolved,
       });
     }
+    return true;
+  }
+
+  if (action === 'admin-ops-evidence-refresh') {
+    if (boot.session.signedIn) refreshAdminProductionEvidence();
     return true;
   }
 

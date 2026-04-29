@@ -303,6 +303,10 @@ export function createHubApi({
       const url = buildRequestUrl(baseUrl, '/api/admin/ops/accounts-metadata');
       return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
     },
+    async readAdminProductionEvidence() {
+      const url = buildRequestUrl(baseUrl, '/api/admin/ops/production-evidence');
+      return fetchHubJson(fetch, url, { method: 'GET' }, authSession);
+    },
     async updateAccountOpsMetadata({ accountId, patch, expectedRowVersion = null, mutation } = {}) {
       const url = buildRequestUrl(
         baseUrl,

@@ -164,6 +164,7 @@ function baseModel(overrides = {}) {
           validationErrors: 0,
           errorCount7d: 2,
           supportLoadSignal: 'low',
+          hasRealDiagnostics: true,
         },
         {
           subjectKey: 'grammar',
@@ -173,6 +174,7 @@ function baseModel(overrides = {}) {
           validationErrors: 0,
           errorCount7d: 0,
           supportLoadSignal: 'none',
+          hasRealDiagnostics: true,
         },
         {
           subjectKey: 'punctuation',

@@ -19,10 +19,13 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const DEFAULT_DELAY_MS = 22_000; // ~22s between batches to stay under 30/10min
-const BATCH_SIZE = 28; // create 28 per batch, then pause (safe margin under 30)
+// Wait for the full per-IP demo-session window before starting the next batch.
+// A shorter inter-batch delay can still exhaust DEMO_LIMITS.createIp on 60+
+// learner manifests, which turns a capacity preflight into setup noise.
+export const DEFAULT_DELAY_MS = 610_000;
+export const BATCH_SIZE = 28; // safe margin under the 30 sessions / 10 min bucket
 
-function parseArgs(argv = process.argv.slice(2)) {
+export function parseArgs(argv = process.argv.slice(2)) {
   const options = {
     origin: '',
     learners: 0,
@@ -59,12 +62,17 @@ function parseArgs(argv = process.argv.slice(2)) {
   return options;
 }
 
-function validate(options) {
+export function validate(options) {
   if (!options.origin) throw new Error('--origin is required.');
-  if (!options.learners || options.learners < 1) throw new Error('--learners must be a positive integer.');
+  if (!Number.isInteger(options.learners) || options.learners < 1) {
+    throw new Error('--learners must be a positive integer.');
+  }
   if (!options.output) throw new Error('--output is required.');
   if (!Number.isFinite(options.delayMs) || options.delayMs < 0) {
     throw new Error('--delay-ms must be a non-negative number.');
+  }
+  if (!Number.isInteger(options.batchSize) || options.batchSize < 1 || options.batchSize > 30) {
+    throw new Error('--batch-size must be an integer from 1 to 30.');
   }
 }
 
@@ -76,7 +84,7 @@ function usage() {
     '  --origin <url>       Target origin (required)',
     '  --learners <n>       Number of demo sessions to create (required)',
     '  --output <path>      Output path for the manifest JSON (required)',
-    '  --delay-ms <ms>      Delay between batches, default 22000',
+    '  --delay-ms <ms>      Delay between batches, default 610000',
     '  --batch-size <n>     Sessions per batch before pausing, default 28',
     '  --help               Show this help',
     '',

@@ -218,6 +218,33 @@ test('evaluateCapacityThresholds flags --require-zero-signals with any operation
   assert.ok(violations[0].signals.includes('exceededCpu'));
 });
 
+test('evaluateCapacityThresholds includes meta.capacity signals on successful responses', () => {
+  const summary = summariseCapacityResults([
+    {
+      scenario: 'cold-bootstrap-burst',
+      method: 'GET',
+      endpoint: '/api/bootstrap',
+      status: 200,
+      ok: true,
+      wallMs: 40,
+      responseBytes: 200,
+      capacity: {
+        queryCount: 3,
+        d1RowsRead: 4,
+        signals: ['d1Overloaded'],
+      },
+    },
+  ], { expectedRequests: 1 });
+
+  assert.deepEqual(summary.signals, { d1Overloaded: 1 });
+  assert.equal(summary.ok, false);
+
+  const violations = evaluateCapacityThresholds(summary, { requireZeroSignals: true });
+  assert.equal(violations.length, 1);
+  assert.equal(violations[0].threshold, 'require-zero-signals');
+  assert.deepEqual(violations[0].signals, ['d1Overloaded']);
+});
+
 test('classroom load dry-run with thresholds absent exits ok (back-compat)', async () => {
   const previousFetch = globalThis.fetch;
   globalThis.fetch = async () => {

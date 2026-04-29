@@ -1,7 +1,7 @@
-// P4 U1: Evidence schema v2 + requireBootstrapCapacity gate integration tests.
+// P4 U1/P6: Evidence schema + requireBootstrapCapacity gate integration tests.
 //
-// These tests verify the end-to-end behaviour of the schema v2 upgrade:
-// - v2 evidence with bootstrap capacity data passes the gate
+// These tests verify the end-to-end behaviour of the evidence schema upgrade:
+// - current-schema evidence with bootstrap capacity data passes the gate
 // - v1 evidence is rejected for tiers above small-pilot-provisional
 // - The requireBootstrapCapacity gate rejects vacuous-truth (empty endpoints)
 // - queryCount=0 is valid (cached bootstrap with no D1 queries)
@@ -25,20 +25,20 @@ import {
 // Schema version constant
 // ---------------------------------------------------------------------------
 
-test('EVIDENCE_SCHEMA_VERSION is 2 after P4 U1 bump', () => {
-  assert.equal(EVIDENCE_SCHEMA_VERSION, 2);
+test('EVIDENCE_SCHEMA_VERSION is 3 after schema 3 summary upgrade', () => {
+  assert.equal(EVIDENCE_SCHEMA_VERSION, 3);
 });
 
-test('buildReportMeta emits evidenceSchemaVersion: 2', () => {
+test('buildReportMeta emits the current evidenceSchemaVersion', () => {
   const meta = buildReportMeta({ mode: 'production', origin: 'https://ks2.eugnel.uk' });
-  assert.equal(meta.evidenceSchemaVersion, 2);
+  assert.equal(meta.evidenceSchemaVersion, EVIDENCE_SCHEMA_VERSION);
 });
 
 // ---------------------------------------------------------------------------
 // requireBootstrapCapacity gate — happy path
 // ---------------------------------------------------------------------------
 
-test('v2 evidence with both queryCount and d1RowsRead passes the gate', () => {
+test('current-schema evidence with both queryCount and d1RowsRead passes the gate', () => {
   const summary = {
     endpoints: {
       'GET /api/bootstrap': {
@@ -146,9 +146,9 @@ test('v1 evidence fails beta certification (schema version gate)', () => {
 
   // The threshold evaluation itself does not check schema version —
   // that's the verify script's responsibility. So here we confirm
-  // that the EVIDENCE_SCHEMA_VERSION constant is 2, which is the
+  // that the EVIDENCE_SCHEMA_VERSION constant is at least 2, which is the
   // authoritative ceiling the verify script checks against.
-  assert.equal(EVIDENCE_SCHEMA_VERSION, 2);
+  assert.ok(EVIDENCE_SCHEMA_VERSION >= 2);
   // And v1 < 2, so a v1 evidence file WILL be rejected by the verify
   // script's `schemaVersion < 2` check for tiers above small-pilot.
   assert.ok(1 < EVIDENCE_SCHEMA_VERSION);

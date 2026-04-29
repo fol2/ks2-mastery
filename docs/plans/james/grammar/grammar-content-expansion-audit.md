@@ -1,19 +1,19 @@
 ---
 title: "Grammar content-expansion audit (Phase 5 backlog)"
 type: audit
-status: p4-updated
+status: p5-updated
 date: 2026-04-28
 plan: docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md
 unit: U12
-contentReleaseId: grammar-qg-p4-2026-04-28
+contentReleaseId: grammar-qg-p5-2026-04-28
 contentReleaseBump: yes
 ---
 
 # Grammar content-expansion audit (Phase 5 backlog)
 
-This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the P1 generator expansion that landed six focused generated templates, the P2 constructed-response marking migration that made the 57-template release fully declarative, and the P3 explanation-depth expansion that adds 13 selected-response explanation templates. The `GRAMMAR_CONTENT_RELEASE_ID` is bumped to `grammar-qg-p3-2026-04-28`; the legacy, QG P1, and QG P2 fixtures remain frozen for historical compatibility checks.
+This document started as the Phase 5 content-expansion backlog for the Grammar subject. It now records the P1 generator expansion that landed six focused generated templates, the P2 constructed-response marking migration that made the 57-template release fully declarative, and the P3 explanation-depth expansion that adds 13 selected-response explanation templates. The current `GRAMMAR_CONTENT_RELEASE_ID` is `grammar-qg-p5-2026-04-28`; the legacy, QG P1, and QG P2 fixtures remain frozen for historical compatibility checks.
 
-The audit is produced by reading `worker/src/subjects/grammar/content.js` at release id `grammar-qg-p3-2026-04-28` and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 70 templates in the pool at the time of the audit.
+The audit is produced by reading `worker/src/subjects/grammar/content.js` at the current Grammar content release id and cross-referencing `GRAMMAR_AGGREGATE_CONCEPTS` in `src/platform/game/mastery/grammar.js`. There are 18 aggregate concepts and 70 templates in the audited pool.
 
 An executable generator audit now backs this document:
 
