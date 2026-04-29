@@ -63,7 +63,7 @@ export function expandEvent(event) {
     conceptStatusBefore: extractConceptStatus(event.conceptStatusBefore, conceptId),
     conceptStatusAfter: extractConceptStatus(event.conceptStatusAfter, conceptId),
     isMixedTransfer: tags.includes('mixed-transfer'),
-    isExplanation: tags.includes('explanation'),
+    isExplanation: tags.includes('explain') || tags.includes('explanation') || event.questionType === 'explain',
     isSurgery: event.mode === 'surgery',
     isManualReviewOnly: event.result?.manualReviewOnly === true,
   }));
