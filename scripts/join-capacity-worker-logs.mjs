@@ -428,8 +428,12 @@ function indexRecordsByRequestId(records) {
   const index = new Map();
   for (const record of records) {
     for (const requestId of record.requestIds || []) {
-      if (!index.has(requestId)) index.set(requestId, []);
-      index.get(requestId).push(record);
+      const keys = [requestId, redactDiagnosticRequestId(requestId)]
+        .filter((entry, index, values) => entry && values.indexOf(entry) === index);
+      for (const key of keys) {
+        if (!index.has(key)) index.set(key, []);
+        index.get(key).push(record);
+      }
     }
   }
   for (const entries of index.values()) {

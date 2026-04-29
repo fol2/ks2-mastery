@@ -61,7 +61,7 @@ Budget ledger:
 ## Top-Tail Attribution
 
 - Classification: `unclassified-insufficient-logs`.
-- Request IDs: `ks2_req_b9099eab-d7f2-4c02-b8ae-839492c29477`, `ks2_req_9756b1f4-cd61-4c08-9868-a82c8d13fac0`, `ks2_req_da31a9d2-566c-452a-9119-de4dd131eadd`, `ks2_req_0a249677-fd09-42d6-8b6e-5cc52d535888`, `ks2_req_76455802-b0fd-42f7-8300-46888147cbfe`, `ks2_req_0649a1b6-dfb5-44a6-9bd8-134b8b0e2c1c`, `ks2_req_90ffc06b-39f4-4524-9c4e-7b17bd7bf0f9`, `ks2_req_b6147ffa-e7b2-4053-a4df-3a9d42e12fc6`, `ks2_req_8d36f59e-df52-4df5-8a39-24cc8f659714`, `ks2_req_cb696116-6a49-4166-9987-6318371d8114`.
+- Request IDs: retained only as opaque `req_<hash>` identifiers in committed JSON artefacts; raw `ks2_req_*` values stay out of git.
 - Cloudflare CPU: unavailable for 10/10 T5 top-tail samples.
 - Worker wall: unavailable from invocation telemetry for 10/10 T5 top-tail samples. App-exposed `serverWallMs` for the T5 top-tail samples ranged from 115 ms to 507 ms.
 - App/client wall: T5 top-tail sample range 826.3 ms to 2062.2 ms.
@@ -89,4 +89,4 @@ Budget ledger:
 ## Residual Blockers
 
 - The current pretty tail path can capture sampled statement logs but not machine-joinable invocation CPU/wall telemetry.
-- A first strict attempt failed during demo-session setup for `learner-01` and wrote no evidence file because the load driver aborts before persisting setup-failure artefacts. A later retry succeeded after the demo-session bucket reset, so this is recorded as an evidence-capture limitation rather than a capacity finding.
+- Setup-phase failures now persist non-certifying evidence when `--output` is supplied before the load driver rejects. The earlier first-attempt setup failure remains historical context only; future evidence chains must include the setup-failure JSON instead of relying on a later retry.

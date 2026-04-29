@@ -16,8 +16,8 @@ These artefacts can explain which Phase 2 path to take, but they cannot promote 
 | --- | --- | --- |
 | Family demo | Ready for bounded-bootstrap smoke checks | `npm run smoke:production:bootstrap` passes with a logged-in or demo session and no redaction failures. |
 | Small pilot | Provisional | High-history bootstrap fixture passes, production bootstrap probe stays below the configured byte/count caps, and no `exceededCpu` or D1 overload appears during a small load run. |
-| 30-learner classroom beta | Not certified — P5 warm-cache re-run FAIL (P95 1,167 ms vs 1,000 ms ceiling, +16.7%). D1 tail latency variance, not query/payload regression. Investigation required. | `npm run capacity:classroom -- --production --confirm-production-load ...` passes for 30 active learners, including cold-bootstrap burst and human-paced Grammar command rounds. |
-| 60-learner stretch | Not certified | Same evidence as classroom beta, with acceptable P95 wall time and zero 5xx across repeated runs. |
+| 30-learner classroom beta | Not certified — P2 T5 strict repeat FAIL (P95 1,354.5 ms vs 1,000 ms ceiling, +35.5%). A prior T1 strict run passed, but the latest/Admin row remains failed. | `npm run capacity:classroom -- --production --confirm-production-load ...` passes for 30 active learners, including cold-bootstrap burst and human-paced Grammar command rounds. |
+| 60-learner stretch | Not certified — latest 60-learner preflight reached app load but failed bootstrap P95 (854.0 ms vs 750 ms ceiling). | Same evidence as classroom beta, with passing P95 wall time and zero 5xx across repeated runs. |
 | 100+ school-ready target | Not certified | Requires repeated 100+ learner runs, D1 row metrics, operational tail evidence, and a rollback/degrade drill. |
 
 ## Standard Commands

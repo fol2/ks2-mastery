@@ -399,6 +399,7 @@ test('classroom load writes non-certifying evidence when demo-session setup fail
 
     const written = JSON.parse(readFileSync(outputPath, 'utf8'));
     assert.equal(written.ok, false);
+    assert.equal(JSON.stringify(written).includes('ks2_req_'), false);
     assert.equal(written.dryRun, false);
     assert.equal(written.setupFailure.phase, 'setup');
     assert.equal(written.setupFailure.measurements, 1);
@@ -658,6 +659,11 @@ test('classroom load happy-path test with all network-failure-paired thresholds 
     assert.equal(written.thresholds.max5xx.configured, 0);
     assert.equal(written.thresholds.max5xx.observed, 0);
     assert.equal(written.thresholds.max5xx.passed, true);
+    assert.match(
+      written.summary.endpoints['GET /api/bootstrap'].topTailSamples[0].serverRequestId,
+      /^req_[0-9a-f]{24}$/,
+    );
+    assert.equal(JSON.stringify(written).includes('ks2_req_'), false);
   } finally {
     globalThis.fetch = previousFetch;
     rmSync(tempDir, { recursive: true, force: true });
