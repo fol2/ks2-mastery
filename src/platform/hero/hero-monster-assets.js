@@ -1,18 +1,13 @@
 // Hero Monster asset adapter — client-only.
-// Maps Hero Pool monster IDs to the existing platform asset structure.
 // Does NOT import from shared/ or worker/.
 //
-// Asset keys follow the convention in monster-asset-manifest.js:
-//   key = `${sourceAssetMonsterId}-${branchId}-${stage}`
-//   path = `./assets/monsters/${key}/${size}.webp`
+// On-disk layout:
+//   ./assets/monsters/<monsterId>/<branch>/<monsterId>-<branch>-<stage>.<size>.webp
 
 /**
- * Get the asset source set for a Hero Pool monster.
- * Falls back gracefully if assets are missing.
- *
- * @param {string} sourceAssetMonsterId — base monster id (e.g. "bracehart")
- * @param {number} stage — evolution stage (0-based)
- * @param {string} [branch] — branch id (e.g. "b1")
+ * @param {string} sourceAssetMonsterId
+ * @param {number} stage
+ * @param {string} [branch]
  * @returns {{ key: string, src: string, fallback: string, srcSet: string }}
  */
 export function getHeroMonsterAssetSrc(sourceAssetMonsterId, stage, branch) {
@@ -20,15 +15,16 @@ export function getHeroMonsterAssetSrc(sourceAssetMonsterId, stage, branch) {
   const stageNum = Number(stage) || 0;
   const key = `${sourceAssetMonsterId}-${branchPart}-${stageNum}`;
   const fallbackKey = `${sourceAssetMonsterId}-${branchPart}-0`;
+  const base = `./assets/monsters/${sourceAssetMonsterId}/${branchPart}`;
 
   return {
     key,
-    src: `./assets/monsters/${key}/640.webp`,
-    fallback: `./assets/monsters/${fallbackKey}/640.webp`,
+    src: `${base}/${key}.640.webp`,
+    fallback: `${base}/${fallbackKey}.640.webp`,
     srcSet: [
-      `./assets/monsters/${key}/320.webp 320w`,
-      `./assets/monsters/${key}/640.webp 640w`,
-      `./assets/monsters/${key}/1280.webp 1280w`,
+      `${base}/${key}.320.webp 320w`,
+      `${base}/${key}.640.webp 640w`,
+      `${base}/${key}.1280.webp 1280w`,
     ].join(', '),
   };
 }

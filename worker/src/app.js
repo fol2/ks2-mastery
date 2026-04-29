@@ -1566,6 +1566,7 @@ export function createWorkerApp({
               requestId: body.requestId,
               correlationId: body.correlationId || null,
               expectedLearnerRevision: body.expectedLearnerRevision,
+              payload: { questId: body.questId, questFingerprint: body.questFingerprint, taskId: body.taskId },
             };
 
             const mutationResult = await repository.runHeroCommand(session.accountId, heroLearnerId, heroCommand, async () => {
@@ -1631,12 +1632,14 @@ export function createWorkerApp({
               }
 
               for (const evt of events) {
+                // Deterministic event ID: requestId + event type suffix (idempotent on replay)
+                const evtIdSuffix = evt.type.replace(/\./g, '-');
                 await run(db, `
                   INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                   ON CONFLICT(id) DO NOTHING
                 `, [
-                  `hero-evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                  `hero-evt-${body.requestId}-${evtIdSuffix}`,
                   heroLearnerId,
                   evt.subjectId || null,
                   evt.systemId,
@@ -1678,6 +1681,10 @@ export function createWorkerApp({
             // Build response — structured logs for economy
             try {
               if (mutationResult.economyResult?.awarded) {
+                const completedTaskCount = mutationResult.state?.daily?.completedTaskIds?.length || 0;
+                const coinsDateKey = mutationResult.state?.daily?.dateKey || heroProgressState?.daily?.dateKey || null;
+                const coinsDailyTasks = heroProgressState?.daily?.tasks || {};
+                const coinsUniqueSubjects = new Set(Object.values(coinsDailyTasks).map(t => t.subjectId).filter(Boolean));
                 // eslint-disable-next-line no-console
                 console.log(JSON.stringify({
                   event: 'hero_daily_coins_awarded',
@@ -1686,6 +1693,9 @@ export function createWorkerApp({
                   amount: mutationResult.economyResult.amount,
                   balanceAfter: mutationResult.economyResult.balanceAfter,
                   ledgerEntryId: mutationResult.economyResult.ledgerEntryId,
+                  eligibleSubjectCount: coinsUniqueSubjects.size || null,
+                  completedTaskCount,
+                  dateKey: coinsDateKey,
                 }));
               } else if (mutationResult.economyResult?.alreadyAwarded) {
                 // eslint-disable-next-line no-console
@@ -1716,6 +1726,13 @@ export function createWorkerApp({
               }
             } catch { /* best-effort */ }
             try {
+              // Derive learning-health dimensions for telemetry enrichment
+              const claimedProgressTask = heroProgressState?.daily?.tasks?.[body.taskId];
+              const dailyTasks = heroProgressState?.daily?.tasks || {};
+              const dailyTaskValues = Object.values(dailyTasks);
+              const totalTaskCount = dailyTaskValues.length || 1;
+              const sameSubjectCount = dailyTaskValues.filter(t => t.subjectId === (claimResult.subjectId || null)).length;
+              const uniqueSubjects = new Set(dailyTaskValues.map(t => t.subjectId).filter(Boolean));
               // eslint-disable-next-line no-console
               console.log(JSON.stringify({
                 event: 'hero_task_claim_succeeded',
@@ -1724,6 +1741,11 @@ export function createWorkerApp({
                 taskId: body.taskId || '',
                 subjectId: claimResult.subjectId || '',
                 dailyStatus: mutationResult.state?.daily?.status || '',
+                heroTaskIntent: claimedProgressTask?.intent || null,
+                launcher: claimedProgressTask?.launcher || null,
+                eligibleSubjectCount: uniqueSubjects.size || null,
+                postMegaFlag: null,
+                subjectMixShare: sameSubjectCount > 0 ? Math.round((sameSubjectCount / totalTaskCount) * 100) / 100 : null,
               }));
             } catch { /* best-effort */ }
 
@@ -1803,8 +1825,10 @@ export function createWorkerApp({
                     event: 'hero_monster_insufficient_coins',
                     learnerId: heroLearnerId,
                     monsterId: body.monsterId || '',
-                    balance: heroProgressState?.economy?.balance ?? 0,
                     required: campResult.reason,
+                    // P6 U8: economy health dimensions
+                    currentBalance: heroProgressState?.economy?.balance ?? 0,
+                    requiredAmount: campResult.requiredAmount ?? 0,
                   }));
                 }
               } catch { /* best-effort */ }
@@ -1832,6 +1856,7 @@ export function createWorkerApp({
               requestId: body.requestId,
               correlationId: body.correlationId || null,
               expectedLearnerRevision: body.expectedLearnerRevision,
+              payload: { monsterId: body.monsterId, branch: body.branch || 'b1', targetStage: body.targetStage },
             };
 
             const mutationResult = await repository.runHeroCommand(session.accountId, heroLearnerId, heroCommand, async () => {
@@ -1870,7 +1895,7 @@ export function createWorkerApp({
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO NOTHING
               `, [
-                `hero-evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                `hero-evt-${campResult.intent.ledgerEntry.entryId}`,
                 heroLearnerId,
                 null,
                 'hero-mode',
@@ -1885,6 +1910,7 @@ export function createWorkerApp({
             }
 
             try {
+              const totalOwnedMonsters = Object.values(mutationResult.state?.heroPool?.monsters || {}).filter(m => m.owned).length;
               // eslint-disable-next-line no-console
               console.log(JSON.stringify({
                 event: 'hero_camp_command_succeeded',
@@ -1893,6 +1919,10 @@ export function createWorkerApp({
                 monsterId: body.monsterId || '',
                 cost: campResult.intent.ledgerEntry.amount * -1,
                 balanceAfter: campResult.intent.newBalance,
+                // P6 U8: economy health dimensions
+                balanceAfterSpend: campResult.intent.newBalance,
+                monsterStageAfter: campResult.intent.newMonsterState?.stage ?? 0,
+                totalOwnedMonsters: totalOwnedMonsters,
               }));
               // Specific invite/grow telemetry
               if (body.command === 'unlock-monster') {
@@ -1904,6 +1934,10 @@ export function createWorkerApp({
                   branch: body.branch || '',
                   cost: campResult.intent.ledgerEntry.amount * -1,
                   balance: campResult.intent.newBalance,
+                  // P6 U8: economy health dimensions
+                  balanceAfterSpend: campResult.intent.newBalance,
+                  monsterStageAfter: 0,
+                  totalOwnedMonsters: totalOwnedMonsters,
                 }));
               } else {
                 // eslint-disable-next-line no-console
@@ -1915,6 +1949,10 @@ export function createWorkerApp({
                   stageAfter: campResult.intent.ledgerEntry.stageAfter,
                   cost: campResult.intent.ledgerEntry.amount * -1,
                   balance: campResult.intent.newBalance,
+                  // P6 U8: economy health dimensions
+                  balanceAfterSpend: campResult.intent.newBalance,
+                  monsterStageAfter: campResult.intent.ledgerEntry.stageAfter ?? 0,
+                  totalOwnedMonsters: totalOwnedMonsters,
                 }));
               }
             } catch { /* best-effort */ }
