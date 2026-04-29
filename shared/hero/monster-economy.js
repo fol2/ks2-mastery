@@ -16,6 +16,9 @@ import { deriveLedgerEntryId } from './economy.js';
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
+/** Re-export for spend-side — same DJB2 hash as economy.js earning entries. */
+export const deriveSpendLedgerEntryId = deriveLedgerEntryId;
+
 function buildIdempotencyKey(prefix, learnerId, monsterId, discriminator) {
   return `${prefix}:v1:${learnerId}:${monsterId}:${discriminator}`;
 }
@@ -36,8 +39,8 @@ export function computeMonsterInviteIntent({
     return { ok: false, code: 'hero_monster_unknown', reason: `Unknown monsterId: ${monsterId}` };
   }
 
-  // Validate branch — must be provided
-  if (branch === null || branch === undefined) {
+  // Validate branch — must be provided and non-empty
+  if (branch === null || branch === undefined || branch === '') {
     return { ok: false, code: 'hero_monster_branch_required', reason: 'Branch is required for invite' };
   }
   if (!isValidHeroMonsterBranch(branch)) {
@@ -49,7 +52,7 @@ export function computeMonsterInviteIntent({
     ? heroPoolState.monsters[monsterId]
     : undefined;
   if (existingMonster && existingMonster.owned) {
-    return { ok: true, status: 'already-owned', cost: 0, coinsUsed: 0, ledgerEntryId: null };
+    return { ok: true, status: 'already-owned', cost: 0, coinsUsed: 0 };
   }
 
   // Cost and affordability
@@ -80,7 +83,7 @@ export function computeMonsterInviteIntent({
   };
 
   // Build new monster state
-  const monsterState = {
+  const newMonsterState = {
     monsterId,
     owned: true,
     stage: 0,
@@ -105,21 +108,17 @@ export function computeMonsterInviteIntent({
     createdAt: nowTs,
   };
 
+  const newLifetimeSpent = economyState.lifetimeSpent + cost;
+
   return {
     ok: true,
     status: 'invited',
-    cost,
-    coinsUsed: cost,
-    ledgerEntryId: entryId,
     intent: {
+      newBalance: balanceAfter,
+      newLifetimeSpent,
       ledgerEntry,
-      monsterState,
+      newMonsterState,
       actionRecord,
-      economyDelta: {
-        balanceDelta: -cost,
-        lifetimeSpentDelta: cost,
-        balanceAfter,
-      },
     },
   };
 }
@@ -166,7 +165,7 @@ export function computeMonsterGrowIntent({
 
   // Already at or past target
   if (currentStage >= targetStage) {
-    return { ok: true, status: 'already-stage', cost: 0, coinsUsed: 0, ledgerEntryId: null };
+    return { ok: true, status: 'already-stage', cost: 0, coinsUsed: 0 };
   }
 
   // Must be next sequential stage
@@ -202,7 +201,7 @@ export function computeMonsterGrowIntent({
   };
 
   // Build updated monster state
-  const monsterState = {
+  const newMonsterState = {
     ...existingMonster,
     stage: targetStage,
     investedCoins: (existingMonster.investedCoins || 0) + cost,
@@ -218,27 +217,23 @@ export function computeMonsterGrowIntent({
     monsterId,
     stageBefore: currentStage,
     stageAfter: targetStage,
-    branch: existingMonster.branch,
+    branch: existingMonster.branch || null,
     cost,
     ledgerEntryId: entryId,
     createdAt: nowTs,
   };
 
+  const newLifetimeSpent = economyState.lifetimeSpent + cost;
+
   return {
     ok: true,
     status: 'grown',
-    cost,
-    coinsUsed: cost,
-    ledgerEntryId: entryId,
     intent: {
+      newBalance: balanceAfter,
+      newLifetimeSpent,
       ledgerEntry,
-      monsterState,
+      newMonsterState,
       actionRecord,
-      economyDelta: {
-        balanceDelta: -cost,
-        lifetimeSpentDelta: cost,
-        balanceAfter,
-      },
     },
   };
 }
