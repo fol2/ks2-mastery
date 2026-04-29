@@ -1,11 +1,14 @@
 ---
 title: "System Hardening Optimisation P2 — Bootstrap Tail Reduction and 30/60 Evidence Attempt"
 type: plan
-status: draft
+status: completed
 language: en-GB
 date: 2026-04-29
 route: system-hardening-and-optimisation
 owner: james / engineering agent
+completion_report: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p2-completion-report.md
+implementation_pr: https://github.com/fol2/ks2-mastery/pull/652
+implementation_merge_commit: aa4e69070dab53281a7342cc1ed19b0a01fda0fa
 source_docs:
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p1.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p1-completion-report.md
@@ -18,7 +21,7 @@ source_docs:
 
 # System Hardening Optimisation P2 — Bootstrap Tail Reduction and 30/60 Evidence Attempt
 
-> Implementation note (2026-04-29): the evidence-capture implementation slice is tracked by the canonical implementation plan and PR #652. This source contract remains `draft` until the post-merge completion report PR records the final SDLC outcome under `docs/plans/james/sys-hardening/A/`.
+> Completion note (2026-04-29): the evidence-capture implementation slice was merged in PR #652 at `aa4e69070dab53281a7342cc1ed19b0a01fda0fa`. The final SDLC outcome is recorded in `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p2-completion-report.md`.
 
 ## 0. One-sentence summary
 
