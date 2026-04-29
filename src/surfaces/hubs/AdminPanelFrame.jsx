@@ -97,7 +97,7 @@ export function AdminPanelFrame({
 
       {frameState.showLoadingSkeleton ? (
         <div data-panel-frame-loading="true" aria-busy="true">
-          {loadingSkeleton || <LoadingSkeleton rows={3} />}
+          {loadingSkeleton || <LoadingSkeleton />}
         </div>
       ) : null}
 

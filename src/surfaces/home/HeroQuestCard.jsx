@@ -108,11 +108,14 @@ export function HeroQuestCard({ hero, actions }) {
   // (g) Stale quest / error state — routed through the shared ErrorCard
   // primitive so `data-error-code="hero-quest-load"` carries telemetry +
   // the canonical retry button is consistent with other error fallbacks.
+  // The outer `<h2>` keeps heading hierarchy consistent with every other
+  // Hero Quest branch (canStart / canContinue / complete / claiming /
+  // claimed all render the same h2). ErrorCard provides h3 + body inside.
   if (hasError && !hero.canStart && !hero.canContinue) {
     return (
-      <div className="hero-quest-card hero-quest-card--error" data-hero-card>
+      <div className="hero-quest-card" data-hero-card>
+        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
         <ErrorCard
-          title="Today's Hero Quest"
           body={hero.error === 'hero_active_session_conflict'
             ? 'Quest updated. Try again.'
             : 'Your Hero Quest refreshed. Try the next task now.'}
@@ -230,11 +233,14 @@ export function HeroQuestCard({ hero, actions }) {
   }
 
   // (e) No launchable tasks — enabled but nothing to start or continue.
-  // Routed through the shared EmptyState primitive. Title + body keep
-  // the canonical "No Hero task is ready yet" anchor + "your subjects
-  // are still available below" hint that the dashboard tests pin.
+  // Routed through the shared EmptyState primitive. The outer `<h2>`
+  // keeps heading hierarchy consistent with every other Hero Quest
+  // branch; EmptyState provides h3 + body inside. Title + body keep the
+  // canonical "No Hero task is ready yet" anchor + "your subjects are
+  // still available below" hint that the dashboard tests pin.
   return (
-    <div className="hero-quest-card hero-quest-card--empty" data-hero-card>
+    <div className="hero-quest-card" data-hero-card>
+      <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
       <EmptyState
         title="No Hero task is ready yet"
         body="Your Hero progress is safe — your subjects are still available below."
