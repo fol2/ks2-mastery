@@ -48,6 +48,13 @@ const REGISTRY = new Map([
   // medium: asset draft deletion (recoverable via restore)
   ['asset-delete-draft', { level: LEVELS.medium }],
 
+  // medium: asset draft save (single-entity write, CAS-protected)
+  ['asset-draft-save', { level: LEVELS.medium }],
+
+  // low: asset read / preview (no mutation)
+  ['asset-preview', { level: LEVELS.low }],
+  ['asset-read', { level: LEVELS.low }],
+
   // critical: broad-audience mutations, irreversible deletes, seed operations
   ['post-mega-seed-apply', { level: LEVELS.critical }],
   ['grammar-transfer-admin-delete', { level: LEVELS.critical }],

@@ -1,4 +1,5 @@
 // U10 (Admin Console P3): Asset & Effect Registry adapter.
+// P7 U11: Security hardening — URL allowlist integration + handler capability metadata.
 //
 // Transforms the existing `monsterVisualConfig` admin read-model (produced by
 // `normaliseMonsterVisualConfigAdminModel` in admin-read-model.js) into a
@@ -13,6 +14,8 @@
 //
 // The adapter is pure: it accepts the read-model sibling and returns a
 // registry entry array. No side effects, no storage, no fetch.
+
+import { getSafePreviewUrl, getPreviewBlockedReason } from './admin-asset-url-allowlist.js';
 
 /**
  * @typedef {object} RegistryEntry
@@ -98,10 +101,12 @@ export function buildMonsterVisualRegistryEntry(monsterVisualConfig) {
   const canManage = permissions.canManageMonsterVisualConfig === true;
   const hasDraft = mvc.draft != null && isPlainObject(mvc.draft);
 
-  // P6 U8: preview URL — derived from status when available (Worker provides it).
-  const previewUrl = typeof status.previewUrl === 'string' && status.previewUrl
+  // P6 U8 + P7 U11: preview URL — derived from status, validated via allowlist.
+  const rawPreviewUrl = typeof status.previewUrl === 'string' && status.previewUrl
     ? status.previewUrl
     : null;
+  const previewUrl = getSafePreviewUrl(rawPreviewUrl);
+  const previewBlockedReason = getPreviewBlockedReason(rawPreviewUrl);
 
   // P6 U8: reduced-motion and fallback status — surfaced from the asset metadata.
   const reducedMotionStatus = typeof status.reducedMotionStatus === 'string'
@@ -134,6 +139,7 @@ export function buildMonsterVisualRegistryEntry(monsterVisualConfig) {
     versions: Array.isArray(mvc.versions) ? mvc.versions : [],
     publishBlockers: derivePublishBlockers(validation, hasDraft, canManage),
     previewUrl,
+    previewBlockedReason,
     reducedMotionStatus,
     fallbackStatus,
   };
@@ -154,3 +160,73 @@ export function buildAssetRegistry(model) {
     buildMonsterVisualRegistryEntry(hub.monsterVisualConfig),
   ];
 }
+
+// ─── P7 U11: Handler Capability Registry ──────────────────────────────────────
+//
+// Each asset handler declares its security and operational metadata:
+//   - roleRequired: minimum RBAC role to invoke the handler
+//   - mutationClass: 'read' | 'draft-write' | 'publish' | 'delete'
+//   - casFields: fields used for CAS conflict detection
+//   - auditBehaviour: 'silent' | 'log' | 'log-and-notify'
+
+/**
+ * @typedef {object} HandlerCapability
+ * @property {string} roleRequired
+ * @property {string} mutationClass
+ * @property {string[]} casFields
+ * @property {string} auditBehaviour
+ */
+
+const HANDLER_CAPABILITY_REGISTRY = Object.freeze({
+  'monster-visual-config-read': Object.freeze({
+    roleRequired: 'viewer',
+    mutationClass: 'read',
+    casFields: [],
+    auditBehaviour: 'silent',
+  }),
+  'monster-visual-config-draft-save': Object.freeze({
+    roleRequired: 'editor',
+    mutationClass: 'draft-write',
+    casFields: ['draftRevision'],
+    auditBehaviour: 'log',
+  }),
+  'monster-visual-config-publish': Object.freeze({
+    roleRequired: 'publisher',
+    mutationClass: 'publish',
+    casFields: ['draftRevision', 'publishedVersion'],
+    auditBehaviour: 'log-and-notify',
+  }),
+  'monster-visual-config-restore': Object.freeze({
+    roleRequired: 'publisher',
+    mutationClass: 'publish',
+    casFields: ['publishedVersion'],
+    auditBehaviour: 'log-and-notify',
+  }),
+  'monster-visual-config-delete-draft': Object.freeze({
+    roleRequired: 'editor',
+    mutationClass: 'delete',
+    casFields: ['draftRevision'],
+    auditBehaviour: 'log',
+  }),
+});
+
+/**
+ * Retrieve the capability metadata for a handler by key.
+ *
+ * @param {string} handlerKey
+ * @returns {HandlerCapability|null}
+ */
+export function getHandlerCapability(handlerKey) {
+  return HANDLER_CAPABILITY_REGISTRY[handlerKey] || null;
+}
+
+/**
+ * List all registered handler keys.
+ *
+ * @returns {string[]}
+ */
+export function listHandlerKeys() {
+  return Object.keys(HANDLER_CAPABILITY_REGISTRY);
+}
+
+export { HANDLER_CAPABILITY_REGISTRY };

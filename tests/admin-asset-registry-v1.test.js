@@ -26,7 +26,7 @@ const PUBLISHABLE_CONFIG = {
     manifestHash: 'abc123def456',
     publishedAt: 1714300800000,
     publishedByAccountId: 'account-admin-42',
-    previewUrl: 'https://preview.example.com/monster-visual-config',
+    previewUrl: 'https://ks2-mastery.pages.dev/monster-visual-config',
     reducedMotionStatus: 'available',
     fallbackStatus: 'static-sprite',
     validation: {
@@ -142,7 +142,7 @@ describe('buildMonsterVisualRegistryEntry — publishBlockers', () => {
 describe('buildMonsterVisualRegistryEntry — previewUrl', () => {
   it('populates previewUrl from status.previewUrl', () => {
     const entry = buildMonsterVisualRegistryEntry(PUBLISHABLE_CONFIG);
-    assert.equal(entry.previewUrl, 'https://preview.example.com/monster-visual-config');
+    assert.equal(entry.previewUrl, 'https://ks2-mastery.pages.dev/monster-visual-config');
   });
 
   it('returns null when previewUrl is not present', () => {
@@ -199,7 +199,7 @@ describe('buildAssetRegistry — v1 extended shape', () => {
   it('entries include previewUrl', () => {
     const model = { monsterVisualConfig: PUBLISHABLE_CONFIG };
     const registry = buildAssetRegistry(model);
-    assert.equal(registry[0].previewUrl, 'https://preview.example.com/monster-visual-config');
+    assert.equal(registry[0].previewUrl, 'https://ks2-mastery.pages.dev/monster-visual-config');
   });
 
   it('entries include reducedMotionStatus and fallbackStatus', () => {
