@@ -102,6 +102,15 @@ function extractFrontmatter(reportContent) {
   let currentList = null;
 
   for (const line of lines) {
+    // Inline empty array: `key: []`
+    const inlineEmptyArrayMatch = line.match(/^(\w[\w_]*):\s+\[\]\s*$/);
+    if (inlineEmptyArrayMatch) {
+      if (currentKey && currentList) fm[currentKey] = currentList;
+      currentKey = inlineEmptyArrayMatch[1];
+      currentList = null;
+      fm[currentKey] = [];
+      continue;
+    }
     const scalarMatch = line.match(/^(\w[\w_]*):\s+(.+)$/);
     if (scalarMatch) {
       if (currentKey && currentList) fm[currentKey] = currentList;

@@ -101,11 +101,11 @@ describe('P9 prompt cue: serialisation includes structured fields', () => {
     assert.ok(s.promptText.length > 0, 'promptText must be non-empty');
   });
 
-  it('contentReleaseId reflects P9', () => {
+  it('contentReleaseId matches current code export', () => {
     const s = serialiseQuestion('word_class_underlined_choice', 1);
     assert.ok(s, 'serialised question must exist');
-    assert.strictEqual(s.contentReleaseId, 'grammar-qg-p9-2026-04-29');
-    assert.strictEqual(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p9-2026-04-29');
+    assert.strictEqual(s.contentReleaseId, GRAMMAR_CONTENT_RELEASE_ID);
+    assert.match(GRAMMAR_CONTENT_RELEASE_ID, /^grammar-qg-p\d+-\d{4}-\d{2}-\d{2}$/);
   });
 });
 

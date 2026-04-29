@@ -272,16 +272,15 @@ describe('Grammar QG P7 — Smoke artefact schema enforcement', () => {
     assert.ok(missing.includes('timestamp'));
   });
 
-  it('P9 bumps the content release ID for prompt cue contract', async () => {
-    // P9 adds structured prompt cues and bumps the release ID
+  it('content release ID follows expected grammar-qg-pN pattern', async () => {
     const { GRAMMAR_CONTENT_RELEASE_ID } = await import('../worker/src/subjects/grammar/content.js');
-    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p9-2026-04-29',
-      'P9 must use new content release ID since it adds learner-visible serialisation fields');
+    assert.match(GRAMMAR_CONTENT_RELEASE_ID, /^grammar-qg-p\d+-\d{4}-\d{2}-\d{2}$/,
+      'Release ID must follow grammar-qg-pN-YYYY-MM-DD pattern');
   });
 
-  it('smoke evidence file path uses current content release ID', () => {
-    const contentReleaseId = 'grammar-qg-p9-2026-04-29';
-    const expectedFileName = `grammar-production-smoke-${contentReleaseId}.json`;
-    assert.equal(expectedFileName, 'grammar-production-smoke-grammar-qg-p9-2026-04-29.json');
+  it('smoke evidence file path uses current content release ID', async () => {
+    const { GRAMMAR_CONTENT_RELEASE_ID } = await import('../worker/src/subjects/grammar/content.js');
+    const expectedFileName = `grammar-production-smoke-${GRAMMAR_CONTENT_RELEASE_ID}.json`;
+    assert.match(expectedFileName, /^grammar-production-smoke-grammar-qg-p\d+-\d{4}-\d{2}-\d{2}\.json$/);
   });
 });

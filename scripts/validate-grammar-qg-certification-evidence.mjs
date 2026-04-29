@@ -19,6 +19,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { GRAMMAR_CONTENT_RELEASE_ID } from '../worker/src/subjects/grammar/content.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -442,6 +444,43 @@ export function validateSmokeEvidence(manifest, reportContent, opts = {}) {
         message: `Report claims smoke passed but evidence file does not exist: ${path.relative(rootDir, evidencePath)}`,
       });
     }
+  }
+
+  return { pass: mismatches.length === 0, mismatches };
+}
+
+// ---------------------------------------------------------------------------
+// Cross-check: manifest ↔ code ↔ report release ID consistency (P10-U0)
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that the manifest contentReleaseId matches the code-exported
+ * GRAMMAR_CONTENT_RELEASE_ID, and optionally that a report's release ID
+ * also matches.
+ *
+ * @param {object} manifest - Parsed certification manifest JSON.
+ * @param {string} [reportReleaseId] - Release ID extracted from a completion report (optional).
+ * @returns {{ pass: boolean, mismatches: Array<{ field: string, claimed: any, actual: any, message: string }> }}
+ */
+export function validateReleaseIdConsistency(manifest, reportReleaseId) {
+  const mismatches = [];
+
+  if (manifest.contentReleaseId !== GRAMMAR_CONTENT_RELEASE_ID) {
+    mismatches.push({
+      field: 'manifestVsCodeReleaseId',
+      claimed: manifest.contentReleaseId,
+      actual: GRAMMAR_CONTENT_RELEASE_ID,
+      message: `Manifest contentReleaseId "${manifest.contentReleaseId}" does not match code GRAMMAR_CONTENT_RELEASE_ID "${GRAMMAR_CONTENT_RELEASE_ID}"`,
+    });
+  }
+
+  if (reportReleaseId != null && reportReleaseId !== manifest.contentReleaseId) {
+    mismatches.push({
+      field: 'reportVsManifestReleaseId',
+      claimed: reportReleaseId,
+      actual: manifest.contentReleaseId,
+      message: `Report release ID "${reportReleaseId}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
+    });
   }
 
   return { pass: mismatches.length === 0, mismatches };

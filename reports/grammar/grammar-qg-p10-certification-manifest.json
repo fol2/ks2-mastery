@@ -1,0 +1,25 @@
+{
+  "contentReleaseId": "grammar-qg-p10-2026-04-29",
+  "templateDenominator": 78,
+  "seedWindow": {
+    "certification": "1..30"
+  },
+  "seedWindowPerEvidenceType": {
+    "selected-response-oracle": "1..15",
+    "constructed-response-oracle": "1..10",
+    "manual-review-oracle": "1..5",
+    "redaction-oracle": "1..30",
+    "content-quality-audit": "1..30"
+  },
+  "expectedItemCount": 2340,
+  "expectedOutputPaths": [
+    "reports/grammar/grammar-qg-p10-question-inventory.json",
+    "reports/grammar/grammar-qg-p10-question-inventory-redacted.md"
+  ],
+  "generatorScript": "scripts/generate-grammar-qg-quality-inventory.mjs",
+  "generatorScriptHash": "82b0bf220b9bd6b6d0190dbd5bb64bc98777f191b0ea4e2adaa471ec140535c8",
+  "generationCommand": "node scripts/generate-grammar-qg-quality-inventory.mjs --seeds=1..30 --release=p10",
+  "generatedAt": "2026-04-29T22:26:53.702Z",
+  "answerInternalsIncluded": true,
+  "answerInternalsRedacted": true
+}
