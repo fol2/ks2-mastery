@@ -1,608 +1,459 @@
-# Punctuation QG P6 — Production Quality Certification and Question Pool Review
+# Punctuation QG P6 — Production Question Quality, Manual QA, and UX Support
 
-**Owner:** KS2 Mastery / Punctuation  
-**Phase type:** Production hardening, content quality certification, and learner UX alignment  
-**Recommended status at start:** P5 complete; P6 required before declaring the Punctuation question pool production-certified  
-**Language standard:** UK English  
-
----
+Date: 29 April 2026  
+Owner: KS2 Mastery / Punctuation  
+Phase type: final production-quality acceptance phase  
+Recommended release posture: keep production generated depth at 4 until this phase is complete
 
 ## 1. Why P6 exists
 
-P1–P5 built the deterministic question-generation engine. They moved Punctuation from a small fixed bank into a governed, DSL-backed, telemetry-attested question system with production depth kept at 4 and capacity verified up to 8.
+P1–P5 built the deterministic Punctuation question-generation engine. P6 is not another volume-increase phase. It is the final production-quality phase that asks whether every learner-visible question is good enough to trust.
 
-P6 should not be treated as another generator-building phase. It should be the production quality phase that goes back to first principles:
+The first principle is simple: the point of the generator is not merely to have more questions. The point is to have a higher-quality, deeper, wider, and proven question pool. The engine must give children fair questions, mark fair answers correctly, reject real misconceptions, explain the rule clearly, and avoid repeated surface patterns that create false confidence.
 
-> We are doing this to give children a higher-quality, deeper, wider, and proven Punctuation question pool.
-
-The question pool must therefore be checked as actual learner-facing content, not only as code, counts, signatures, telemetry events, or generated-item uniqueness.
-
-P6 should answer these questions:
-
-1. Are all questions logically sound?
-2. Are model answers and accepted answers actually accepted by the production marking engine?
-3. Are validators neither over-strict nor too loose?
-4. Are the prompts clear enough for a KS2 learner?
-5. Are explanations accurate and helpful?
-6. Are misconception tags precise enough to support repair?
-7. Are duplicate or near-duplicate surfaces acceptable in context?
-8. Does the UI help the child understand the task, especially for speech, bullets, paragraphs, and transfer writing?
-9. Is depth 6 safe to activate from a content-quality perspective, not only from a signature/marking perspective?
-
----
+P6 should therefore focus on content proof, marking fairness, explanation quality, reviewer workflow, and small UX support for clarity. Do not spend this phase on cosmetic UI work.
 
 ## 2. Current validated baseline
 
-At the end of P5, the expected baseline is:
+The current P5/Punctuation QG baseline is:
 
-```text
+- Release id: `punctuation-r4-full-14-skill-structure`
+- Fixed items: 92
+- Generator families: 25/25 DSL-backed
+- Production generated depth: 4 per family
+- Production generated items: 100
+- Production runtime pool: 192 items
+- Capacity-audit depth: 8 per family
+- Capacity-audit runtime pool: 292 items
+- Depth-6 candidate pool: 242 items
+- Published reward units: 14
+- Runtime AI generation: none
 
-Release id:                       punctuation-r4-full-14-skill-structure
-Fixed items:                      92
-Published generator families:     25
-DSL-backed families:              25 / 25
-Production generated depth:       4 variants per family
-Production generated items:       100
-Production runtime items:         192
-Depth-6 runtime items:            242, verified but not activated
-Depth-8 capacity runtime items:   292, audit/capacity only
-Published reward units:           14
-Runtime AI generation:            none
-Telemetry events declared:        11
-Telemetry events emitted:         10
-Telemetry events reserved:        1
+P5 substantially closed the engineering gaps from P4. The following claims are supported by the codebase and targeted local validation from the uploaded bundle:
 
-```
+- 25/25 generator families are DSL-backed.
+- Golden marking now covers all 25 DSL families.
+- Local targeted run of `tests/punctuation-golden-marking.test.js` passed with 200 templates, 360 accept cases, and 592 reject cases.
+- Strict production audit at generated depth 4 passed.
+- Strict depth-6 audit passed.
+- Strict depth-8 capacity audit passed.
+- Production runtime count remains 192.
+- Depth 6 mechanically produces 242 runtime items with no duplicate generated signatures.
+- Depth 8 mechanically produces 292 runtime items with no duplicate generated signatures.
+- Mixed review and sibling-retry tests exist and pass in targeted local runs.
+- Support evidence exclusion from Secure/Mastery exists and passes in targeted local runs.
+- Smoke attestation tests exist and pass in targeted local runs.
 
-P5 is directionally strong. The engine is deterministic, DSL-backed, self-checking at template-family level, and has much better scheduler/evidence protection than at P1.
+This is a strong engineering baseline. It is not yet the same as final content-quality acceptance.
 
-P6 should preserve that work but add a stricter content certification layer.
+## 3. P5 validation findings that P6 must address
 
-## 3. Important validation findings to address first
+### 3.1 Critical fixed-bank self-marking bug
 
-### 3.1 Fixed accepted-answer marking gap
+A local fixed-bank self-marking audit found one fixed item whose own model answer is rejected by the production marking engine:
 
-A local source-level audit found that at least one fixed item model answer currently fails the production marking function.
+- Item id: `ap_transfer_possession`
+- Prompt: `Write one sentence that includes both children's and teachers'.`
+- Model answer: `The children's paintings were hanging beside the teachers' notices.`
+- Current validator: `requiresTokens`, requiring `children's` and `teachers'`
+- Current result: rejected
+- Observed feedback: `Include these exact forms: teachers'.`
 
-Affected item:
+Likely cause: punctuation canonicalisation removes the space after a terminal possessive apostrophe, turning `teachers' notices` into `teachers'notices`, which then breaks required-token boundary matching.
 
-```text
+This is a real production-quality issue because the learner could type the model answer and be marked wrong. P6 must fix this before any generated-depth increase.
 
-Item id:   ap_transfer_possession
-Mode:      transfer
-Skill:     apostrophe_possession
-Prompt:    Write one sentence that includes both children's and teachers'.
-Model:     The children's paintings were hanging beside the teachers' notices.
-Validator: requiresTokens ["children's", "teachers'"]
-Observed:  The model answer is marked incorrect, with teachers' reported as missing.
+### 3.2 Fixed-bank model and accepted-answer coverage is incomplete
 
-```
+P1–P5 heavily validate generated model answers and DSL golden cases. They do not yet sufficiently hard-gate every fixed item model answer, fixed accepted alternative, and fixed-choice correct answer through production marking.
 
-Likely cause:
+P6 must make fixed-bank self-marking part of the normal audit and CI flow.
 
-canonicalPunctuationText() treats apostrophes as quote characters and removes whitespace after an apostrophe. That is sensible for quotation clean-up, but unsafe for plural possessive tokens such as teachers' notices, because it can collapse the text into teachers'notices, causing token-boundary matching to fail.
+### 3.3 Speech transfer is too narrow in at least one learner-valid case
 
-Required P6 action:
+A fixed speech transfer item asks the child to write one sentence of direct speech using exact spoken words:
 
-- Add a regression test proving `ap_transfer_possession` model and accepted answer are marked correct.
-- Add plural possessive token tests for teachers', girls', boys', and similar forms before a following noun.
-- Fix token normalisation so possessive apostrophes are not treated as quote delimiters in token-preservation matching.
-- Add a full fixed-bank self-check: every non-choice fixed item model and every accepted answer must pass `markPunctuationAnswer()`.
+- Item id: `sp_transfer_question`
+- Spoken words: `Can we start now?`
+- Model answer: `Mia asked, "Can we start now?"`
 
-This is the highest-priority P6 bug because it is not just an audit nicety. It can cause a child to type the exact model answer and still be marked wrong.
+The marking accepts the reporting-before form but rejects a valid reporting-after form such as:
 
-### 3.2 P5 telemetry proof is improved but still partly probabilistic
+`"Can we start now?" asked Mia.`
 
-P5 added command-path tests and a telemetry manifest, which is a real improvement. However, some command-path telemetry tests still use loop-based selection and degrade to weak assertions if the event does not fire. P5 acknowledges this as a residual risk.
+This is unfair unless the prompt explicitly requires a reporting-before structure. P6 must either make the validator accept both common direct-speech orders or tighten the prompt so only the intended structure is asked for.
 
-Required P6 action:
+### 3.4 Generated explanations are still generic
 
-- Replace probabilistic telemetry command-path tests with deterministic fixtures or direct scheduler setup.
-- Every event marked emitted should have at least one non-vacuous test where the event must appear.
-- Keep `STAR_EVIDENCE_DEDUPED_BY_TEMPLATE` as reserved unless a real callsite is added.
+At production depth 4, depth 6, and depth 8, generated items currently fall back to the generic explanation:
 
-### 3.3 Depth-6 should remain unactivated until content certification is complete
+`This generated item practises the same published punctuation skill.`
 
-P5 shows that depth 6 is technically safe: no signature collisions, no mode-scoped duplicate clusters, and generated model answers pass marking. That is not yet the same as content-quality certification.
+This is not good enough for production learning quality. A correct/incorrect answer should reinforce the actual punctuation rule, for example why a comma follows a fronted adverbial, why the question mark stays inside speech marks, or why `teachers'` shows plural possession.
 
-Required P6 action:
+P6 must require rule-specific explanations for every generated template.
 
-- Do not raise production depth at the start of P6.
-- Revisit the depth-6 decision only after the full learner-facing catalogue has been reviewed and signed off.
-- If depth 6 is activated, bump the release id and production smoke expected count in the same commit.
+### 3.5 Telemetry proof is improved but still partly smoke-level
 
-## 4. Non-goals
+P5 correctly declares 10 telemetry events as emitted and one event as reserved. However, some command-path telemetry tests can fall back to asserting that an event name exists when scheduling randomness does not produce the target event. This is useful smoke coverage, but it is not proof-level event emission coverage.
 
-P6 must not become a cosmetic redesign or a broad product rewrite.
+P6 must either make these tests deterministic or label them honestly as smoke tests rather than proof tests.
 
-Do not:
+### 3.6 Duplicate governance is mode-scoped, but perceived variety still needs human review
 
-- introduce runtime AI generation;
-- raise production depth before quality certification;
-- rebuild the Punctuation UI from scratch;
-- change Star semantics unless a content-quality defect forces a small evidence fix;
-- hide quality gaps behind “capacity verified” language;
-- add more templates simply to increase counts.
+P5 reports zero mode-scoped duplicate stem/model clusters at production, depth 6, and depth 8. That is a good engineering signal.
 
-P6 may use AI as a reviewer assistant, but the source of truth must remain deterministic, teacher-authored, and test-backed content.
+However, cross-mode generated model overlap still exists. For example, the same final sentence can appear in both a `fix` context and a `combine` context. This may be pedagogically acceptable, but it still needs human review because children experience mixed sessions and GPS-style review as one pool, not as isolated mode buckets.
 
-## 5. P6 workstreams
+P6 should not treat every cross-mode overlap as a bug. It should require an explicit reviewer decision: approve, rewrite, or retire.
 
-### U1 — Fix fixed-bank answer-contract self-checks
+### 3.7 Production depth should not be raised yet
 
-Add a fixed-bank marking audit that covers all fixed non-choice items, not just generated model answers.
+P5 demonstrates that depth 6 is mechanically viable. P6 must decide whether depth 6 is content-quality viable.
+
+Until the fixed-bank bug, generated explanations, speech fairness, and reviewer-pack work are complete, keep production generated depth at 4.
+
+## 4. P6 objectives
+
+P6 has six objectives:
+
+1. Prove that every learner-visible fixed item is logically sound and self-marking.
+2. Prove that every production generated item, and every depth-6 candidate item if activation is being considered, has fair marking, useful explanations, and acceptable surface variety.
+3. Replace generic generated explanations with rule-specific teaching feedback.
+4. Add reviewer tooling so a human can inspect the exact questions children will see.
+5. Add small UX support that makes feedback clearer without turning this into cosmetic redesign.
+6. Make a deliberate depth decision: keep depth 4, raise selected families, or raise all families to depth 6 with release evidence.
+
+## 5. Work units
+
+### P6-U1 — Fixed-bank self-marking gate
+
+Add a fixed-content audit that runs every fixed learner-visible item through the production marking function.
 
 Required checks:
 
-- Every fixed non-choice item has a model answer.
-- Every fixed non-choice item model answer is marked correct.
-- Every fixed accepted answer is marked correct.
-- Every validator-backed fixed item has at least one negative case.
-- Every transfer item checks the intended target without rejecting reasonable punctuation variants.
-- Every paragraph item has a model answer that passes through the paragraph marking path.
+- Every fixed item `model` answer must mark correct.
+- Every fixed item `accepted` answer must mark correct.
+- Every choice item must have a valid correct option.
+- Every choice item explanation must match the correct option.
+- Every fixed transfer item must have at least one fair accepted answer.
+- Every fixed open item must have at least one misconception/negative test, either inline or in a companion fixture.
 
 Acceptance criteria:
 
-```text
+- `ap_transfer_possession` no longer fails on the model answer.
+- A new audit option exists, for example `npm run audit:punctuation-content -- --strict --include-fixed-answers`.
+- CI fails if any fixed model/accepted answer is rejected.
+- The audit report names the exact item id, prompt, model, validator, failure note, and misconception tags.
 
-fixedNonChoiceModelFailures = 0
-fixedAcceptedAnswerFailures = 0
-generatedModelFailuresDepth4 = 0
-generatedModelFailuresDepth6 = 0
-generatedModelFailuresDepth8 = 0
+### P6-U2 — Apostrophe and quote normalisation hardening
 
+Fix punctuation normalisation so possessive apostrophes are not treated as opening quotation marks.
+
+Required regression cases:
+
+- `The children's paintings were hanging beside the teachers' notices.`
+- `The boys' jackets were beside the girls' bags.`
+- `The doctors' notes were on the desk.`
+- `The children's books were on the teachers' shelves.`
+- Curly apostrophe equivalents should also work.
+
+Acceptance criteria:
+
+- Required-token validation accepts terminal plural possessives followed by whitespace and a noun.
+- Speech quote normalisation still works for straight and curly quotation marks.
+- No regression in speech, contractions, or possessive singular marking.
+
+Implementation note:
+
+Do not globally remove whitespace after a straight apostrophe. Only collapse spaces around actual quotation marks or contexts that are clearly opening/closing speech marks.
+
+### P6-U3 — Speech transfer fairness
+
+Review all fixed and generated speech transfer/insert/fix/paragraph items for legitimate alternate structures.
+
+At minimum, decide whether these should be accepted:
+
+- `Mia asked, "Can we start now?"`
+- `"Can we start now?" asked Mia.`
+- `Mia asked, 'Can we start now?'`
+- `'Can we start now?' asked Mia.`
+
+Acceptance criteria:
+
+- If the prompt asks generally for direct speech, both reporting-before and reporting-after structures are accepted when otherwise correct.
+- If the prompt requires a specific reporting-clause position, the prompt says so explicitly.
+- Golden accept/reject tests include reporting-before and reporting-after cases.
+- Feedback explains the real issue, not a misleading capitalisation or extra-sentence diagnosis.
+
+### P6-U4 — Rule-specific generated explanations
+
+Every DSL template must provide a specific explanation or use an explanation builder.
+
+Examples of acceptable explanation quality:
+
+- Fronted adverbial: `The comma comes after the starter phrase because it appears before the main clause.`
+- Speech question: `The question mark belongs to the spoken words, so it stays inside the closing inverted comma.`
+- Plural possession: `The apostrophe comes after the plural noun because the notices belong to more than one teacher.`
+- Hyphen: `The hyphen joins the words so the reader knows the phrase acts as one description.`
+
+Acceptance criteria:
+
+- No generated item at depth 4, depth 6, or depth 8 uses the generic fallback explanation.
+- Audit fails if any generated item explanation equals or closely matches `This generated item practises the same published punctuation skill.`
+- Explanation text is child-readable and rule-specific.
+- Explanation text does not expose internal ids, validator names, template ids, or misconception tags.
+
+### P6-U5 — Per-question human QA pack
+
+Create a reviewer artefact that lets a human inspect the actual question bank.
+
+Required command:
+
+`npm run review:punctuation-questions`
+
+Recommended outputs:
+
+- Markdown report for reading.
+- CSV or JSON for filtering.
+- Optional HTML preview for admin/reviewer use.
+
+Each row/card should include:
+
+- Item id
+- Source: fixed/generated
+- Skill id(s)
+- Reward unit
+- Mode
+- Prompt
+- Stem
+- Model answer
+- Accepted alternatives
+- Reject/negative examples, where available
+- Explanation
+- Validator/rubric summary in reviewer language
+- Misconception tags
+- Readiness tags
+- Template id and variant signature for reviewer/admin only
+- Production marking result for the model answer
+- Production marking result for accepted alternatives
+- Reviewer status: `approved`, `rewrite`, `retire`, `needs-marking-fix`, `needs-prompt-tightening`
+- Reviewer notes
+
+Acceptance criteria:
+
+- The pack covers all 92 fixed items.
+- The pack covers all 100 production generated items.
+- If depth 6 activation is being considered, the pack also covers all 150 depth-6 generated candidates.
+- Reviewer decisions are committed as a durable artefact or machine-readable allowlist.
+- CI can fail on any item marked `rewrite`, `retire`, or `needs-marking-fix` if that item remains in the production pool.
+
+### P6-U6 — Edge-case matrix by skill
+
+Add a documented edge-case test matrix for all 14 skills.
+
+Minimum coverage:
+
+- Sentence endings: statement, question, exclamation, capitalisation, sentence fragments.
+- List commas: standard KS2 list style, optional Oxford comma policy, no comma after final `and` unless policy allows it.
+- Apostrophe contractions: straight/curly apostrophes, common contractions, false possessives.
+- Apostrophe possession: singular, regular plural, irregular plural, names ending in `s`, terminal plural possessive before a noun.
+- Speech: reporting-before, reporting-after, question/exclamation inside speech marks, comma before speech, straight/curly inverted commas.
+- Fronted adverbials: short and longer starter phrases, comma missing, comma in wrong place.
+- Parenthesis: commas, brackets, dashes, balanced punctuation, removable extra information.
+- Comma clarity: comma after opening subordinate clause, comma not inserted inside a simple noun phrase.
+- Colon lists: complete clause before colon, list after colon, no colon after incomplete stem unless bullet-list style is intended.
+- Semicolons: two independent related clauses, no semicolon joining fragment to clause.
+- Dash clauses: spaced hyphen, en dash, em dash; dash between related clauses only.
+- Semicolon lists: complex list items containing internal commas.
+- Bullet points: consistent no-punctuation or consistent full-stop style, colon/stem alignment.
+- Hyphens: ambiguity-avoiding compounds, not random hyphen insertion.
+
+Acceptance criteria:
+
+- Each skill has explicit accept and reject tests.
+- Edge-case tests are run through production `markPunctuationAnswer`.
+- Any house-style policy is visible in the test name and explanation.
+
+### P6-U7 — Perceived-variety review
+
+Mode-scoped duplicate governance is not enough for learner experience. Add a perceived-variety report.
+
+The report should group items by:
+
+- Normalised stem
+- Normalised model
+- Same semantic sentence across modes
+- Same character/topic context repeated too often
+- Same correction pattern repeated too often inside a skill
+- Same explanation repeated too often
+
+Acceptance criteria:
+
+- Every global duplicate model/stem cluster is either rewritten or explicitly approved.
+- Approved duplicates include a rationale, for example `same sentence intentionally appears once as fix and once as combine`.
+- Mixed/GPS session exposure is considered, not only within-mode exposure.
+- Depth 6 is not activated if perceived variety is poor.
+
+### P6-U8 — Production depth decision gate
+
+After P6 content QA, make a deliberate depth decision.
+
+Allowed outcomes:
+
+1. Keep production depth at 4.
+2. Raise selected families to 6.
+3. Raise all families to 6.
+
+Do not raise to 8 in P6. Depth 8 should remain a capacity/audit candidate unless a later monitoring phase proves it safe.
+
+Acceptance criteria if depth changes:
+
+- Release id changes. Suggested shape: `punctuation-r5-qg-depth-6` or clearer equivalent.
+- Production service and generator use one canonical depth source, not divergent constants.
+- Production smoke expected runtime changes from 192 to the new expected count.
+- Star evidence remains release-scoped.
+- P6 report includes before/after runtime counts.
+- Deployment evidence includes commit SHA or an explicit statement that commit attestation is unavailable.
+
+### P6-U9 — UX support for answer trust
+
+Add only UX changes that directly support learning quality and answer trust.
+
+Required UX improvements:
+
+- Show rule-specific generated explanations after marking.
+- For house-style cases, show plain-English policy notes, for example Oxford comma accepted/optional/avoided depending on item policy.
+- For speech items, make clear whether the reporting clause can come before or after the speech.
+- For sibling retry, explain that the next question is a new sentence with the same trap, not a replay.
+- Keep raw ids, template ids, validator names, and misconception tags hidden from children.
+- Keep reviewer/admin metadata available only in admin/debug surfaces.
+
+Acceptance criteria:
+
+- Child UI never surfaces raw validator/template internals.
+- Feedback is specific enough that a child knows what to fix.
+- No new competing primary CTAs are added to the learner screen.
+- The UI remains aligned to the one-primary-action principle.
+
+### P6-U10 — Telemetry proof hardening
+
+Separate proof-level telemetry tests from opportunistic smoke tests.
+
+Acceptance criteria:
+
+- If a report says an event is command-path proven, the test must deterministically force that event and assert its emission.
+- If deterministic forcing is not practical, the event is labelled `smoke-covered` rather than `proven`.
+- `STAR_EVIDENCE_DEDUPED_BY_TEMPLATE` remains reserved unless a real callsite exists.
+- Health reports distinguish `declared`, `emitted`, `proof-tested`, `smoke-tested`, and `reserved`.
+
+### P6-U11 — P6 verification command
+
+Add a new command:
+
+`npm run verify:punctuation-qg:p6`
+
+It should run the P5 verification gates plus:
+
+- Fixed-bank self-marking audit.
+- Fixed accepted-answer audit.
+- Generated explanation specificity audit.
+- 14-skill edge-case matrix.
+- Perceived-variety report in strict mode.
+- Speech transfer fairness tests.
+- Apostrophe normalisation regression tests.
+- Telemetry proof/smoke classification tests.
+- Reviewer decision gate, if reviewer decisions are committed.
+
+Acceptance criteria:
+
+- One command gives a reliable go/no-go answer for production question quality.
+- The command prints measured counts, not only pass/fail.
+
+### P6-U12 — Final production-quality report
+
+Create:
+
+`docs/plans/james/punctuation/questions-generator/punctuation-qg-p6-completion-report.md`
+
+The report must include:
+
+- Exact runtime counts.
+- Exact fixed/generator/depth counts.
+- Number of fixed model answers tested.
+- Number of fixed accepted alternatives tested.
+- Number of generated explanations audited.
+- Number of edge-case matrix tests.
+- Number of reviewer-approved, rewritten, retired, or blocked items.
+- Duplicate/perceived-variety summary.
+- Telemetry proof-vs-smoke summary.
+- Depth decision and rationale.
+- Remaining risks, if any.
+
+## 6. Recommended immediate fixes
+
+### 6.1 Fix `ap_transfer_possession`
+
+Do not only add an accepted alternative. Fix the normalisation/token-boundary bug so the model itself passes.
+
+Regression expectation:
+
+```js
+markPunctuationAnswer({
+  item: apTransferPossessionItem,
+  answer: { typed: "The children's paintings were hanging beside the teachers' notices." }
+}).correct === true
 ```
 
-Add a new test file, for example:
+### 6.2 Fix or clarify `sp_transfer_question`
 
-- `tests/punctuation-fixed-answer-contract.test.js`
+Preferred approach:
 
-This test should fail on the current ap_transfer_possession issue until the marking bug is fixed.
+- Accept both `Mia asked, "Can we start now?"` and `"Can we start now?" asked Mia.`
 
-### U2 — Build a complete learner-facing question catalogue
+Alternative approach:
 
-Create a canonical catalogue that reviewers can inspect without reading source code.
+- Change the prompt to require a reporting-before structure.
 
-The catalogue must include all:
+Do not leave the current prompt broad while rejecting a valid reporting-after answer.
 
-- 92 fixed items;
-- 100 production generated items at depth 4;
-- 150 generated items at depth 6;
-- 200 generated items at depth 8, marked as capacity-only.
+### 6.3 Block generic generated explanations
 
-For each item include:
+Add a failing test that searches every generated item at depth 4, 6, and 8 for the generic fallback explanation.
 
-- `id`
-- `source` (fixed | generated)
-- `family id`, if generated
-- `template id`, if generated
-- `variant signature`, if generated
-- `primary skill ids`
-- `reward unit id`
-- `cluster id`
-- `mode`
-- `readiness tags`
-- `misconception tags`
-- `prompt`
-- `stem`
-- `options`, if choose mode
-- `correct option`, if choose mode
-- `model answer`
-- `accepted answers`
-- `validator or rubric summary`
-- `explanation`
-- `learner-facing notes`
-- `review status`
-- `reviewer decision`
-- `reviewer comments`
+## 7. Do not do in P6
 
-Output formats:
-
-- `docs/plans/james/punctuation/questions-generator/punctuation-qg-p6-question-catalogue.md`
-- `artifacts/punctuation-question-catalogue-depth4.json`
-- `artifacts/punctuation-question-catalogue-depth6.json`
-- `artifacts/punctuation-question-catalogue-depth8.json`
-
-The markdown catalogue should be readable by a teacher or product reviewer. The JSON artefacts should be stable enough for CI comparison.
-
-### U3 — Add a content-quality rubric and reviewer decisions
-
-Every learner-facing question should be scored against a simple quality rubric.
-
-Rubric fields:
-
-- `logical`: pass | fix | reject
-- `ks2Appropriate`: pass | fix | reject
-- `promptClear`: pass | fix | reject
-- `modelGrammatical`: pass | fix | reject
-- `validatorFair`: pass | fix | reject
-- `explanationAccurate`: pass | fix | reject
-- `misconceptionTagsPrecise`: pass | fix | reject
-- `uiSafe`: pass | fix | reject
-- `duplicateAcceptable`: pass | fix | reject
-
-Reviewer decision values:
-
-- `approved`
-- `approved_with_note`
-- `needs_copy_fix`
-- `needs_validator_fix`
-- `needs_template_fix`
-- `needs_ui_support`
-- `reject`
-
-Store decisions in a versioned fixture:
-
-- `tests/fixtures/punctuation-question-quality-decisions.json`
-
-CI should fail when:
-
-- a production item is missing a reviewer decision;
-- a production item has `reject` or unresolved `needs_*` status;
-- a depth-6 item is activated without approval;
-- a reviewer decision references an item that no longer exists;
-- an item changes its learner-facing surface without requiring re-review.
-
-### U4 — Deep edge-case marking suite
-
-Add a marking edge-case suite that goes beyond the golden template accept/reject tests.
-
-The suite should test realistic learner inputs and valid alternatives.
-
-Coverage required by skill:
-
-#### Sentence endings
-
-- question mark for direct questions;
-- full stop for commands/statements;
-- exclamation mark for What a... / How... exclamations;
-- capitalisation at sentence start;
-- rejection of multiple sentences where a single sentence is requested.
-
-#### List commas
-
-- no Oxford comma accepted by default;
-- Oxford comma accepted where policy allows it;
-- Oxford comma rejected only when the prompt explicitly says not to use one;
-- comma after verb rejected;
-- item words preserved.
-
-#### Apostrophe contractions
-
-- straight and curly apostrophes accepted;
-- missing apostrophes rejected;
-- wrong word forms rejected;
-- common forms: can't, won't, don't, they're, we'd, it's, isn't.
-
-#### Apostrophe possession
-
-- singular possession accepted;
-- plural possession ending in `s'` accepted;
-- irregular plural possession such as `children's` and `men's` accepted;
-- plural possessive followed by a noun must not be broken by quote-normalisation;
-- contraction/possession confusion rejected.
-
-#### Speech
-
-- straight double quotes accepted;
-- curly double quotes accepted;
-- reporting comma before speech accepted;
-- terminal punctuation inside inverted commas accepted;
-- question/exclamation inside speech accepted;
-- missing quote, missing reporting comma, and punctuation outside quote rejected.
-
-#### Fronted adverbials and comma clarity
-
-- comma after fronted phrase accepted;
-- no comma rejected;
-- comma after subject rejected;
-- phrase words preserved;
-- adverbial phrase case-insensitive but sentence start capitalised.
-
-#### Parenthesis
-
-- paired commas accepted;
-- brackets accepted where the prompt allows parenthesis broadly;
-- paired dashes accepted where the prompt allows parenthesis broadly;
-- unbalanced punctuation rejected;
-- extra detail preserved.
-
-#### Colon lists
-
-- complete opening clause before colon accepted;
-- colon after incomplete clause rejected;
-- list words preserved;
-- list commas policy consistent with list-comma rules.
-
-#### Semicolons
-
-- semi-colon between two related independent clauses accepted;
-- comma splice rejected;
-- semi-colon plus conjunction rejected where the task is to replace the boundary;
-- lower-case second clause accepted where appropriate.
-
-#### Dash clauses
-
-- spaced hyphen, en dash, and em dash accepted consistently;
-- missing dash rejected;
-- comma splice rejected;
-- no over-reliance on ASCII hyphen only.
-
-#### Semicolon lists
-
-- semi-colons between complex list items accepted;
-- internal commas retained;
-- optional and before final item handled consistently;
-- misplaced semi-colons rejected.
-
-#### Bullet points
-
-- colon after stem accepted;
-- consistent no-terminal-punctuation bullets accepted for fragments;
-- consistent full-stop bullets accepted where each bullet is a full sentence;
-- mixed bullet punctuation rejected;
-- line breaks and bullet markers preserved in UI and marking.
-
-#### Hyphens
-
-- compound modifier before noun accepted;
-- no hyphen rejected where ambiguity remains;
-- wrong hyphen position rejected;
-- avoid cases where the unhyphenated form is also standard without ambiguity.
-
-Acceptance criteria:
-
-- All model answers pass.
-- All accepted alternatives pass.
-- All targeted misconceptions fail.
-- All edge-case tests are deterministic.
-- No validator relies on one exact surface when the prompt permits reasonable alternatives.
-
-### U5 — Manual content review of the actual question pool
-
-Run a manual review of every production item, plus a sample of depth-6 and depth-8 capacity items.
-
-The review should look for:
-
-- unnatural sentences;
-- confusing stems;
-- prompts that do not say exactly what the child must do;
-- model answers that are technically correct but not child-natural;
-- examples with more than one reasonable answer where the validator accepts only one;
-- style-policy traps, especially Oxford commas and bullet punctuation;
-- speech punctuation variants;
-- dashes versus hyphens;
-- plural possessives ending in apostrophe;
-- paragraph items that accidentally assess too many skills at once;
-- multi-skill items over-crediting mastery evidence;
-- examples that feel too repetitive across modes.
-
-Minimum review expectation:
-
-- Depth 4 production runtime: 100% reviewed
-- Depth 6 candidate runtime: 100% reviewed before activation
-- Depth 8 capacity runtime: at least 50% reviewed, with all families sampled
-- Fixed bank: 100% reviewed
-- No production item should be live without either `approved` or `approved_with_note` status.
-
-### U6 — Duplicate and near-duplicate learner experience review
-
-P5 introduced mode-scoped duplicate detection and found zero mode-scoped duplicate clusters. That is useful but not the whole story.
-
-P6 should add a learner-experience duplicate review that detects:
-
-- same underlying sentence across different modes;
-- same model answer across different modes;
-- same misconception in near-identical context;
-- same family using the same nouns/verbs too often;
-- generated items that feel like replays even with different ids/signatures.
-
-Cross-mode overlap is not automatically wrong. It can be pedagogically useful when a child first fixes a sentence and later combines a related sentence. But each overlap should be intentional.
-
-Add reviewer decisions:
-
-- `intentional_bridge`
-- `acceptable_cross_mode`
-- `rewrite_for_variety`
-- `block_depth_raise`
-
-Acceptance criteria:
-
-- all cross-mode duplicate stems/models are listed;
-- all are reviewed;
-- none block production depth 4;
-- none block depth 6 activation;
-- depth 8 remains capacity-only unless reviewed.
-
-### U7 — UX/UI alignment for question quality
-
-P6 should improve the learner experience only where it directly protects question quality. Avoid cosmetic redesign.
-
-Required UI checks:
-
-#### Mode-specific instruction clarity
-
-- `choose`: options are visually clear and selectable.
-- `insert` / `fix`: input is large enough and preserves punctuation.
-- `combine`: source lines are visually separated.
-- `paragraph`: multi-sentence input is comfortable.
-- `bullet_points`: line breaks and bullet markers are preserved.
-- `speech`: quotes are easy to type or paste.
-
-#### Feedback quality
-
-- Show the expected punctuation principle, not just “wrong”.
-- Avoid revealing internal validator names, signatures, template ids, or raw misconception tags to the child.
-- For style-sensitive cases, say whether the task has a house-style requirement.
-- For valid alternatives, do not imply the child was wrong because their answer differs from the model.
-
-#### Review screen clarity
-
-- After a session, show which skill was practised and what to repair next.
-- Do not expose generated metadata.
-- Keep one clear next action.
-
-#### Accessibility and mobile safety
-
-- Bullet-list stems must not collapse line breaks.
-- Speech marks must display correctly.
-- Long paragraph prompts must not push the input off-screen.
-- Error state must be screen-reader accessible.
-
-Suggested tests:
-
-- `tests/react-punctuation-question-quality-ui.test.js`
-- `tests/playwright/punctuation-question-quality.playwright.test.mjs`
-
-These tests should focus on task comprehension, not visual polish.
-
-### U8 — Production depth decision gate
-
-P6 should end with an explicit decision:
-
-- keep depth 4
-- raise selected families to depth 6
-- raise all families to depth 6
-- keep depth 8 as capacity only
-
-Depth 6 can be activated only if:
-
-- fixed-bank self-check is clean;
-- generated depth-6 model marking is clean;
-- question-quality decisions approve all depth-6 items;
-- duplicate/near-duplicate review has no blockers;
-- UX supports all learner-facing modes;
-- production smoke expected runtime is updated;
-- release id is bumped.
-
-If activated, use a new release id, for example:
-
-- `punctuation-r5-qg-capacity-6`
-
-Do not keep the old release id if runtime shape changes from 192 to 242.
-
-### U9 — Production-quality verification command
-
-Add a P6 verification command:
-
-```json
-
-"verify:punctuation-qg:p6": "node scripts/verify-punctuation-qg-p6.mjs"
-
-```
-
-The command should run:
-
-- P5 verification gates that are still relevant.
-- Fixed-bank model/accepted-answer audit.
-- Generated model audit at depths 4, 6, and 8.
-- Full question catalogue build.
-- Question-quality reviewer decision validation.
-- Edge-case marking suite.
-- Duplicate/near-duplicate learner-experience review.
-- UI alignment smoke tests.
-- Telemetry non-vacuous command-path checks.
-- Production smoke attestation for the currently active runtime shape.
-
-Output should include:
-
-- runtime item count
-- fixed model failures
-- generated model failures by depth
-- unreviewed items
-- rejected items
-- style-policy warnings
-- duplicate learner-experience warnings
-- UI blockers
-- production depth recommendation
-
-CI should fail on any blocker.
-
-### U10 — Completion report and release certificate
-
-P6 completion should produce two documents:
-
-- `docs/plans/james/punctuation/questions-generator/punctuation-qg-p6-completion-report.md`
-- `docs/plans/james/punctuation/questions-generator/punctuation-question-pool-release-certificate.md`
-
-The completion report should say what was changed.
-
-The release certificate should say whether the question pool is production-certified, and at which depth.
-
-The release certificate must include:
-
-- `release id`
-- `commit sha`
-- `production depth`
-- `runtime count`
-- `fixed item count`
-- `generated item count`
-- `reviewed item count`
-- `approved item count`
-- `blocked item count`
-- `known residual risks`
-- whether depth 6 is activated or deferred
-- whether depth 8 remains capacity-only
-
-## 6. Required test additions
-
-Add or update these tests:
-
-- `tests/punctuation-fixed-answer-contract.test.js`
-- `tests/punctuation-question-quality-audit.test.js`
-- `tests/punctuation-edge-case-marking.test.js`
-- `tests/punctuation-depth6-quality-gate.test.js`
-- `tests/punctuation-learner-duplicate-review.test.js`
-- `tests/punctuation-telemetry-non-vacuous.test.js`
-- `tests/react-punctuation-question-quality-ui.test.js`
-
-At minimum, the first five should be implemented in P6. The UI test may be a lightweight React or Playwright smoke if full visual coverage is too heavy.
-
-## 7. Suggested implementation order
-
-- Add fixed-bank answer-contract audit and reproduce the `ap_transfer_possession` failure.
-- Fix possessive apostrophe token matching.
-- Add fixed-bank and generated-depth model validation to CI.
-- Build the full question catalogue generator.
-- Add reviewer decision fixture and fail-on-unreviewed gate.
-- Add edge-case marking tests by skill.
-- Run manual content review against production depth 4.
-- Review depth 6 candidate items.
-- Add learner-experience duplicate review.
-- Add targeted UX/UI task-comprehension tests.
-- Decide whether to keep depth 4 or activate depth 6.
-- Produce the completion report and release certificate.
+- Do not add runtime AI question generation.
+- Do not raise production generated depth merely because the capacity audit passes.
+- Do not treat model-answer marking as enough for open transfer questions.
+- Do not accept generic generated explanations.
+- Do not do cosmetic UI redesign unless it directly supports feedback clarity or reviewer QA.
+- Do not expose template ids, variant signatures, validator names, or misconception tags to children.
+- Do not mark telemetry as proven if the test can pass without the event being emitted.
 
 ## 8. Definition of Done
 
 P6 is complete only when all of the following are true:
 
-- No fixed model answer fails production marking.
-- No fixed accepted answer fails production marking.
-- No generated model answer fails production marking at depth 4, 6, or 8.
-- Every production item has a reviewer decision.
-- Every production item is `approved` or `approved_with_note`.
-- Every depth-6 candidate item is approved before activation.
-- Every choice item has exactly one intended correct option unless explicitly reviewed as style-based best-answer.
-- Every style-sensitive item has clear prompt/explanation wording.
-- Every validator-backed item has edge-case accept/reject coverage.
-- All known plural possessive apostrophe cases pass.
-- All cross-mode duplicate surfaces are reviewed.
-- No child-facing read model exposes template ids, validator internals, or raw signatures beyond allowed opaque metadata.
-- UI preserves line breaks, speech marks, bullets, and paragraph input.
+- Every fixed model answer marks correct through production marking.
+- Every fixed accepted alternative marks correct through production marking.
+- The `ap_transfer_possession` bug is fixed and regression-tested.
+- Speech transfer fairness is fixed or prompts are tightened.
+- Every generated item at depth 4, 6, and 8 has a rule-specific explanation.
+- All 14 skills have an edge-case accept/reject matrix.
+- All production items have been included in a human QA pack.
+- All depth-6 candidate items have been included in a human QA pack if depth 6 activation is proposed.
+- Perceived-variety duplicate clusters are rewritten or explicitly approved.
+- Telemetry proof-level tests are deterministic, or honestly labelled as smoke-level.
 - P6 verification command passes.
-- Release certificate is produced.
+- The completion report states whether production remains at depth 4 or moves to depth 6, with evidence.
 
-## 9. Final production judgement target
+## 9. Recommended final decision posture
 
-After P6, the desired outcome is not simply “more questions”. The desired outcome is:
+The safest P6 outcome is not necessarily a depth raise. A successful P6 may conclude:
 
-The Punctuation question pool is proven safe, fair, logically sound, wide enough for practice, deep enough for spaced retrieval, and supported by UI that helps children understand exactly what they are being asked to do.
+- Keep production at depth 4 because quality review found issues that need rewrite.
+- Raise only selected families to depth 6 because those families passed manual QA.
+- Raise all families to depth 6 because every candidate passed marking, explanation, edge-case, and reviewer gates.
 
-If P6 passes but depth remains 4, that is acceptable. A conservative, certified 192-item pool is better than a larger pool with hidden marking edge cases.
-
-If P6 passes and depth 6 is activated, the production pool becomes:
-
-- `92 fixed items + 25 families × 6 generated variants = 242 runtime items`
-
-Depth 8 should remain capacity-only unless reviewed to the same standard.
+The target is not volume. The target is trustworthy learning evidence.
