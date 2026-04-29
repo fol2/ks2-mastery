@@ -373,10 +373,10 @@ describe('hero-monster-assets — no shared/worker imports', () => {
     const result = getHeroMonsterAssetSrc('bracehart', 2, 'b1');
 
     assert.equal(result.key, 'bracehart-b1-2');
-    assert.equal(result.src, './assets/monsters/bracehart-b1-2/640.webp');
-    assert.equal(result.fallback, './assets/monsters/bracehart-b1-0/640.webp');
-    assert.ok(result.srcSet.includes('bracehart-b1-2/320.webp 320w'));
-    assert.ok(result.srcSet.includes('bracehart-b1-2/1280.webp 1280w'));
+    assert.equal(result.src, './assets/monsters/bracehart/b1/bracehart-b1-2.640.webp');
+    assert.equal(result.fallback, './assets/monsters/bracehart/b1/bracehart-b1-0.640.webp');
+    assert.ok(result.srcSet.includes('bracehart/b1/bracehart-b1-2.320.webp 320w'));
+    assert.ok(result.srcSet.includes('bracehart/b1/bracehart-b1-2.1280.webp 1280w'));
   });
 
   it('hasHeroMonsterAsset returns true for valid monsterId', () => {

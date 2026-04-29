@@ -22,7 +22,7 @@ function migration0013Sql() {
 function pre0013MigrationSql() {
   const migrationsDir = path.join(rootDir(), 'worker', 'migrations');
   return fs.readdirSync(migrationsDir)
-    .filter((name) => name.endsWith('.sql') && name !== MIGRATION_0013_FILENAME)
+    .filter((name) => name.endsWith('.sql') && name < MIGRATION_0013_FILENAME)
     .sort()
     .map((name) => fs.readFileSync(path.join(migrationsDir, name), 'utf8'));
 }
@@ -163,6 +163,7 @@ test('migration 0013 creates admin_marketing_messages with expected columns, def
     assert.equal(tableExists(db, 'admin_marketing_messages'), true);
     const columns = columnMap(db.db.prepare('PRAGMA table_info(admin_marketing_messages)').all());
     assert.deepEqual(Object.keys(columns).sort(), [
+      'archived_at',
       'audience',
       'body_text',
       'created_at',
@@ -170,6 +171,7 @@ test('migration 0013 creates admin_marketing_messages with expected columns, def
       'ends_at',
       'id',
       'message_type',
+      'paused_at',
       'published_at',
       'published_by',
       'row_version',

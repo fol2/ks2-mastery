@@ -48,10 +48,14 @@ test('migration 0010 creates account_ops_metadata with PK, FKs, and ops_status C
     assert.equal(tableExists(db, 'account_ops_metadata'), true);
     const columns = columnMap(db.db.prepare('PRAGMA table_info(account_ops_metadata)').all());
     // 0010 base columns plus migration 0011 additives (row_version,
-    // status_revision). Phase C adds CAS + revision tracking; the 0010
-    // shape assertions below cover the fields 0010 itself established.
+    // status_revision) and migration 0015 lifecycle columns
+    // (cancellation_reason, cancelled_at, conversion_source). The shape
+    // assertions below cover the cumulative schema after all migrations.
     assert.deepEqual(Object.keys(columns).sort(), [
       'account_id',
+      'cancellation_reason',
+      'cancelled_at',
+      'conversion_source',
       'internal_notes',
       'ops_status',
       'plan_label',
