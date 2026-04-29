@@ -209,6 +209,53 @@ export function validateReleaseFrontmatter(reportContent) {
     errors.push({ field: 'final_report_commit', message: `Contains placeholder value: "${fm.final_report_commit}"` });
   }
 
+  // --- P9-specific frontmatter fields (optional — only validated when present) ---
+
+  // evidence_manifest — must point to an existing file relative to ROOT_DIR
+  if (fm.evidence_manifest != null && fm.evidence_manifest !== '') {
+    const manifestRelPath = String(fm.evidence_manifest).trim();
+    if (isPlaceholderValue(manifestRelPath)) {
+      errors.push({ field: 'evidence_manifest', message: `Contains placeholder value: "${manifestRelPath}"` });
+    } else {
+      const manifestAbsPath = path.resolve(ROOT_DIR, manifestRelPath);
+      if (!existsSync(manifestAbsPath)) {
+        errors.push({ field: 'evidence_manifest', message: `File not found: ${manifestRelPath}` });
+      }
+    }
+  }
+
+  // post_deploy_smoke_evidence — must be "not-run" or a valid file path
+  if (fm.post_deploy_smoke_evidence != null && fm.post_deploy_smoke_evidence !== '') {
+    const smokeVal = String(fm.post_deploy_smoke_evidence).trim();
+    if (isPlaceholderValue(smokeVal)) {
+      errors.push({ field: 'post_deploy_smoke_evidence', message: `Contains placeholder value: "${smokeVal}"` });
+    } else if (smokeVal !== 'not-run') {
+      const smokeAbsPath = path.resolve(ROOT_DIR, smokeVal);
+      if (!existsSync(smokeAbsPath)) {
+        errors.push({ field: 'post_deploy_smoke_evidence', message: `File not found: ${smokeVal} (use "not-run" if smoke not yet executed)` });
+      }
+    }
+  }
+
+  // certification_decision — must be one of the 4 valid values
+  const VALID_CERTIFICATION_DECISIONS = [
+    'CERTIFIED_PRE_DEPLOY',
+    'CERTIFIED_POST_DEPLOY',
+    'CERTIFIED_WITH_LIMITATIONS',
+    'NOT_CERTIFIED',
+  ];
+  if (fm.certification_decision != null && fm.certification_decision !== '') {
+    const decisionVal = String(fm.certification_decision).trim();
+    if (isPlaceholderValue(decisionVal)) {
+      errors.push({ field: 'certification_decision', message: `Contains placeholder value: "${decisionVal}"` });
+    } else if (!VALID_CERTIFICATION_DECISIONS.includes(decisionVal)) {
+      errors.push({
+        field: 'certification_decision',
+        message: `Invalid value "${decisionVal}". Must be one of: ${VALID_CERTIFICATION_DECISIONS.join(', ')}`,
+      });
+    }
+  }
+
   return { valid: errors.length === 0, errors, frontmatter: fm };
 }
 
