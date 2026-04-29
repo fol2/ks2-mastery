@@ -2664,6 +2664,21 @@ export function createWorkerApp({
         if (url.pathname === '/api/admin/hero/telemetry-probe' && request.method === 'GET') {
           requireSameOrigin(request, env);
           await repository.assertAdminHubActorForBundle(session.accountId);
+          const heroProbeRateLimit = await consumeRateLimit(env, {
+            bucket: 'admin-ops-mutation',
+            identifier: session.accountId,
+            limit: 60,
+            windowMs: 60_000,
+          });
+          if (!heroProbeRateLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_ops_mutation_rate_limited',
+              retryAfterSeconds: heroProbeRateLimit.retryAfterSeconds,
+              extra: {
+                message: 'Admin-ops reads are rate-limited at 60 per minute per session.',
+              },
+            });
+          }
           const probeLimit = Number(url.searchParams.get('limit')) || 20;
           const db = requireDatabase(env);
           const probeResult = await probeHeroTelemetry({ db, limit: probeLimit });

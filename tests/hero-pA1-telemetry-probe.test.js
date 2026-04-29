@@ -163,10 +163,8 @@ describe('probeHeroTelemetry', () => {
   });
 
   it('caps limit at 100', async () => {
-    // Verify that an absurd limit is capped — we test via the function's
-    // internal safeLimit logic by checking it does not throw or return more
-    // than the cap. With our mock, the DB returns whatever it has regardless,
-    // but the function should pass a capped limit to the query.
+    // Verify that an absurd limit is capped — the DB must receive 100 as
+    // the bound parameter, not the raw 9999 input.
     const mockRows = [
       {
         id: 'hero-evt-single',
@@ -178,12 +176,28 @@ describe('probeHeroTelemetry', () => {
         created_at: 1714400000000,
       },
     ];
-    const db = createMockDb(mockRows);
+    let capturedBindArg;
+    const db = {
+      prepare() {
+        return {
+          bind(...args) {
+            capturedBindArg = args[0];
+            return {
+              async all() {
+                return { results: mockRows };
+              },
+            };
+          },
+        };
+      },
+    };
     const result = await probeHeroTelemetry({ db, limit: 9999 });
 
     // Function still works — does not blow up with high limit
     assert.equal(result.count, 1);
     assert.equal(typeof result.probedAt, 'string');
+    // The bound parameter must be capped at 100, not the raw 9999
+    assert.equal(capturedBindArg, 100, 'bind() must receive capped limit of 100');
   });
 
   it('defaults limit to 20 when not provided', async () => {
