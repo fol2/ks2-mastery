@@ -88,12 +88,31 @@ Default PR gates are therefore:
 
 - `npm test + npm run check`
 - `npm run audit:client`
+- `npm run audit:punctuation-content`
 
 Browser evidence remains expected for browser-facing changes, but the
 owner of that slice should run the targeted local Playwright command and
 include the command/result in the PR body. Use the `run-playwright` label
 when a reviewer wants GitHub-hosted confirmation before merge. The full
 matrix remains covered by `playwright-nightly.yml`.
+
+## Documentation-only pull requests
+
+PR workflows classify the pull request diff before running heavy CI. If every
+changed path is under `docs/` or ends in `.md`, the PR is treated as
+documentation-only and these heavy jobs are skipped at job level:
+
+- `npm test + npm run check`
+- `npm run audit:client`
+- `npm run audit:punctuation-content`
+- `Chromium + mobile-390 golden paths`
+
+The classifier lives in `scripts/ci-docs-only.mjs`, is wrapped by
+`.github/actions/classify-docs-only/action.yml`, and is covered by
+`tests/ci-docs-only.test.js`. Keep this as a job-level condition rather than
+an `on.pull_request.paths-ignore` filter: GitHub reports conditionally skipped
+jobs as successful for required-check purposes, while a skipped workflow can
+leave a required check pending.
 
 ## Current workflows
 
@@ -103,6 +122,7 @@ matrix remains covered by `playwright-nightly.yml`.
 | `playwright-nightly.yml` | `schedule` (03:07 UTC) | Full 5-viewport Playwright matrix. |
 | `node-test.yml` | `pull_request` | `npm test` + `npm run check` (schema-drift canary). |
 | `audit.yml` | `pull_request` | `npm run audit:client`. |
+| `punctuation-content-audit.yml` | `pull_request` | `npm run audit:punctuation-content`. |
 | `mega-invariant-nightly.yml` | `schedule` (02:37 UTC) | Variable-seed Mega invariant probe. |
 
 ## Temporary non-blocking status: `audit.yml` (SH2-U11)
