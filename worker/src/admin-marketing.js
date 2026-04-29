@@ -384,7 +384,14 @@ function adminMessageFields(row) {
     created_at: Number(row.created_at),
     updated_at: Number(row.updated_at),
     published_at: row.published_at != null ? Number(row.published_at) : null,
+    paused_at: row.paused_at != null ? Number(row.paused_at) : null,
+    archived_at: row.archived_at != null ? Number(row.archived_at) : null,
     row_version: Number(row.row_version),
+    // U9: Detailed lifecycle history tracking is deferred — would require a
+    // separate audit_log / status_changes table. For now, timestamps for key
+    // transitions (published_at, paused_at, archived_at) are derived from the
+    // message row itself.
+    lifecycleHistory: null,
   };
 }
 
@@ -659,6 +666,8 @@ export async function transitionMarketingMessage(db, {
 
   // Build the transition
   const isPublish = action === 'published' && currentStatus !== 'published';
+  const isPause = action === 'paused';
+  const isArchive = action === 'archived';
   const updateStmt = bindStatement(db, `
     UPDATE admin_marketing_messages
     SET status = ?,
@@ -666,6 +675,8 @@ export async function transitionMarketingMessage(db, {
         updated_at = ?,
         published_by = CASE WHEN ? THEN ? ELSE published_by END,
         published_at = CASE WHEN ? THEN ? ELSE published_at END,
+        paused_at = CASE WHEN ? THEN ? ELSE paused_at END,
+        archived_at = CASE WHEN ? THEN ? ELSE archived_at END,
         row_version = row_version + 1
     WHERE id = ? AND row_version = ?
   `, [
@@ -676,6 +687,10 @@ export async function transitionMarketingMessage(db, {
     isPublish ? actorAccountId : null,
     isPublish ? 1 : 0,
     isPublish ? ts : null,
+    isPause ? 1 : 0,
+    isPause ? ts : null,
+    isArchive ? 1 : 0,
+    isArchive ? ts : null,
     messageId,
     normalisedRowVersion,
   ]);

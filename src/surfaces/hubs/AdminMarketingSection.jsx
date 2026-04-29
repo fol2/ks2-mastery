@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderRestrictedMarkdown } from '../../platform/ops/active-messages.js';
 import { normaliseMarketingMessage } from '../../platform/hubs/admin-marketing-message.js';
-import { createAdminMarketingApi } from '../../platform/hubs/admin-marketing-api.js';
+import { createAdminMarketingApi, buildMarketingLifecycleModel, formatLifecycleTimestamp } from '../../platform/hubs/admin-marketing-api.js';
 import { uid } from '../../platform/core/utils.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 import { formatTimestamp } from './hub-utils.js';
@@ -584,6 +584,18 @@ function MessageDetail({ message, isAdmin, onTransition, onBack, onEdit, editErr
             <span>{formatTimestamp(message.published_at)}</span>
           </div>
         ) : null}
+        {message.paused_at ? (
+          <div data-testid="lifecycle-paused-at">
+            <div className="small muted">Paused</div>
+            <span>{formatTimestamp(message.paused_at)}</span>
+          </div>
+        ) : null}
+        {message.archived_at ? (
+          <div data-testid="lifecycle-archived-at">
+            <div className="small muted">Archived</div>
+            <span>{formatTimestamp(message.archived_at)}</span>
+          </div>
+        ) : null}
         <div>
           <div className="small muted">Row version (CAS)</div>
           <span>{message.row_version}</span>
@@ -633,6 +645,51 @@ function MessageListRow({ message, onSelect }) {
       <div><StatusBadge status={message.status} /></div>
       <div className="small muted">{message.severity_token}</div>
       <div className="small muted">Updated {formatTimestamp(message.updated_at)}</div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// U9: Active messages summary and analytics counters
+// ---------------------------------------------------------------------------
+
+function ActiveMessagesSummary({ messages }) {
+  const { activeCount } = buildMarketingLifecycleModel(messages);
+  if (activeCount === 0) return null;
+  return (
+    <div
+      className="callout info"
+      data-testid="active-messages-count"
+      style={{ marginBottom: '0.75rem' }}
+    >
+      <strong>{activeCount}</strong> {activeCount === 1 ? 'message' : 'messages'} currently visible to signed-in users
+    </div>
+  );
+}
+
+function AnalyticsCountersSection({ messages }) {
+  const { analyticsCounters } = buildMarketingLifecycleModel(messages);
+  return (
+    <div
+      className="admin-marketing-analytics-counters"
+      data-testid="analytics-counters"
+      style={{ marginBottom: '0.75rem', padding: '0.5rem 0' }}
+    >
+      <div className="eyebrow" style={{ marginBottom: '0.25rem' }}>Analytics</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.5rem' }}>
+        <div className="small muted" data-testid="counter-impressions">
+          Impressions: {analyticsCounters.impressions.label}
+        </div>
+        <div className="small muted" data-testid="counter-dismissals">
+          Dismissals: {analyticsCounters.dismissals.label}
+        </div>
+        <div className="small muted" data-testid="counter-active-window-hits">
+          Active-window hits: {analyticsCounters.activeWindowHits.label}
+        </div>
+        <div className="small muted" data-testid="counter-fetch-failures">
+          Fetch failures: {analyticsCounters.fetchFailures.label}
+        </div>
+      </div>
     </div>
   );
 }
@@ -936,6 +993,9 @@ export function AdminMarketingSection({ accessContext }) {
       {isAdmin && showCreateForm && (
         <MarketingCreateForm onSubmit={handleCreate} submitting={createLock.locked} />
       )}
+
+      <ActiveMessagesSummary messages={messages} />
+      <AnalyticsCountersSection messages={messages} />
 
       {messages.map((msg) => (
         <MessageListRow key={msg.id} message={msg} onSelect={handleSelect} />
