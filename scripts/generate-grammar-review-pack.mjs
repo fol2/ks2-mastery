@@ -285,8 +285,8 @@ function renderSummaryTable(families, familyDataMap) {
   const lines = [];
   lines.push('## Summary');
   lines.push('');
-  lines.push('| Family | Template(s) | Concept(s) | AnswerSpec Kind | Unique Variants | Advisory Count |');
-  lines.push('|---|---|---|---|---|---|');
+  lines.push('| Family | Template(s) | Concept(s) | AnswerSpec Kind | Unique Variants |');
+  lines.push('|---|---|---|---|---|');
   for (const family of families) {
     const data = familyDataMap.get(family.familyId);
     if (!data) continue;
@@ -294,8 +294,7 @@ function renderSummaryTable(families, familyDataMap) {
     const concepts = family.skillIds.join(', ');
     const kind = family.answerSpecKind || 'inline';
     const variants = data.uniqueVariants;
-    const advisoryCount = data.advisoryCount || 0;
-    lines.push(`| ${escapeMarkdown(family.familyId)} | ${escapeMarkdown(templates)} | ${escapeMarkdown(concepts)} | ${kind} | ${variants} | ${advisoryCount} |`);
+    lines.push(`| ${escapeMarkdown(family.familyId)} | ${escapeMarkdown(templates)} | ${escapeMarkdown(concepts)} | ${kind} | ${variants} |`);
   }
   lines.push('');
   return lines.join('\n');

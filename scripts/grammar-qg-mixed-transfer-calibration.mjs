@@ -112,14 +112,16 @@ export function buildMixedTransferCalibration(events, options = {}) {
       for (const cid of event.conceptIds) ta.conceptIds.add(cid);
     }
 
-    // Check prerequisites met
-    const conceptStatusBefore = event.conceptStatusBefore || '';
+    // Check prerequisites met — conceptStatusBefore may be Object or string
+    const csb = event.conceptStatusBefore;
     const allConceptStatuses = event.allConceptStatusesBefore || {};
     let prereqsMet = true;
     if (typeof allConceptStatuses === 'object' && Object.keys(allConceptStatuses).length > 0) {
       prereqsMet = Object.values(allConceptStatuses).every((s) => s === 'secured');
+    } else if (typeof csb === 'object' && csb !== null) {
+      prereqsMet = Object.values(csb).length > 0 && Object.values(csb).every((s) => s === 'secured');
     } else {
-      prereqsMet = conceptStatusBefore === 'secured';
+      prereqsMet = csb === 'secured';
     }
     if (prereqsMet) ta.prerequisitesMetCount++;
   }
@@ -148,6 +150,7 @@ export function buildMixedTransferCalibration(events, options = {}) {
       wrong: safeRate(acc.wrongAttempts, acc.attempts),
     };
 
+    const weight = acc.attempts < minSamples ? 'insufficient_data' : suggestEvidenceWeight({ successRate, independentRate, localPrerequisitesMetRate });
     const metrics = {
       attemptCount: acc.attempts,
       successRate,
@@ -156,8 +159,8 @@ export function buildMixedTransferCalibration(events, options = {}) {
       supportDistribution,
       conceptPropagationCount: acc.conceptIds.size,
       localPrerequisitesMetRate,
-      suggestedEvidenceWeight: acc.attempts < minSamples ? 'insufficient_data' : suggestEvidenceWeight({ successRate, independentRate, localPrerequisitesMetRate }),
-      recommendation: acc.attempts < minSamples ? 'insufficient_data' : deriveRecommendation(suggestEvidenceWeight({ successRate, independentRate, localPrerequisitesMetRate })),
+      suggestedEvidenceWeight: weight,
+      recommendation: weight === 'insufficient_data' ? 'insufficient_data' : deriveRecommendation(weight),
     };
 
     templates[tid] = metrics;

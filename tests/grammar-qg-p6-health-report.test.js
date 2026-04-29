@@ -20,7 +20,7 @@ function makeEvent(overrides = {}) {
     tags: [],
     mode: 'local',
     questionType: 'select',
-    conceptStatusBefore: 'emerging',
+    conceptStatusBefore: { 'concept-adjectives': 'emerging' },
     ...overrides,
   };
 }
@@ -145,8 +145,8 @@ test('concept metrics aggregate correctly', () => {
     ...generateEvents(5, { conceptId: 'c1', correct: false, tags: ['mixed-transfer'], mode: 'mixed' }),
     ...generateEvents(3, { conceptId: 'c1', correct: true, questionType: 'explain' }),
     ...generateEvents(2, { conceptId: 'c1', correct: true, mode: 'surgery' }),
-    ...generateEvents(4, { conceptId: 'c1', correct: true, conceptStatusBefore: 'secured' }),
-    ...generateEvents(1, { conceptId: 'c1', correct: false, conceptStatusBefore: 'secured' }),
+    ...generateEvents(4, { conceptId: 'c1', correct: true, conceptStatusBefore: { c1: 'secured' } }),
+    ...generateEvents(1, { conceptId: 'c1', correct: false, conceptStatusBefore: { c1: 'secured' } }),
   ];
 
   const report = buildTemplateHealthReport(events, { minSamples: 10 });
@@ -189,4 +189,131 @@ test('too_hard classification when <40% independent success', () => {
 
   assert.equal(tpl.independentFirstAttemptSuccessRate, 0.3);
   assert.equal(tpl.classification, 'too_hard');
+});
+
+test('ambiguous classification when wrongAfterSupportRate > 0.4', () => {
+  // Need: independentSuccess >= 0.4 (to avoid too_hard), wrongAfterSupportRate > 0.4
+  // 25 independent (50% success) + 30 support-used (>40% wrong after support)
+  const events = [
+    ...generateEvents(25, {
+      templateId: 'tpl-ambig-01',
+      correct: true,
+      firstAttemptIndependent: true,
+      supportUsed: false,
+    }),
+    ...generateEvents(25, {
+      templateId: 'tpl-ambig-01',
+      correct: false,
+      firstAttemptIndependent: true,
+      supportUsed: false,
+    }),
+    // 13 wrong-after-support out of 30 support-used = 43%
+    ...generateEvents(13, {
+      templateId: 'tpl-ambig-01',
+      correct: false,
+      firstAttemptIndependent: false,
+      supportUsed: true,
+    }),
+    ...generateEvents(17, {
+      templateId: 'tpl-ambig-01',
+      correct: true,
+      firstAttemptIndependent: false,
+      supportUsed: true,
+    }),
+  ];
+
+  const report = buildTemplateHealthReport(events, { minSamples: 10 });
+  const tpl = report.templates['tpl-ambig-01'];
+
+  assert.ok(tpl);
+  assert.ok(tpl.wrongAfterSupportRate > 0.4);
+  assert.equal(tpl.classification, 'ambiguous');
+});
+
+test('retry_effective classification when wasRetry true and retrySuccessRate > 0.7', () => {
+  // Need: independentSuccess >= 0.4, <= 0.95, wrongAfterSupportRate <= 0.4,
+  //       supportedSuccess <= 0.8 OR independentSuccess >= 0.5,
+  //       retryAttempts > 0, retrySuccessRate > 0.7
+  const events = [
+    ...generateEvents(30, {
+      templateId: 'tpl-retry-eff',
+      correct: true,
+      firstAttemptIndependent: true,
+      supportUsed: false,
+      wasRetry: false,
+    }),
+    ...generateEvents(20, {
+      templateId: 'tpl-retry-eff',
+      correct: false,
+      firstAttemptIndependent: true,
+      supportUsed: false,
+      wasRetry: false,
+    }),
+    // Retry events: 8/10 correct = 80% retry success
+    ...generateEvents(8, {
+      templateId: 'tpl-retry-eff',
+      correct: true,
+      firstAttemptIndependent: false,
+      supportUsed: false,
+      wasRetry: true,
+    }),
+    ...generateEvents(2, {
+      templateId: 'tpl-retry-eff',
+      correct: false,
+      firstAttemptIndependent: false,
+      supportUsed: false,
+      wasRetry: true,
+    }),
+  ];
+
+  const report = buildTemplateHealthReport(events, { minSamples: 10 });
+  const tpl = report.templates['tpl-retry-eff'];
+
+  assert.ok(tpl);
+  assert.ok(tpl.retrySuccessRate > 0.7);
+  assert.equal(tpl.classification, 'retry_effective');
+});
+
+test('retry_ineffective classification when wasRetry true and retrySuccessRate < 0.3', () => {
+  // Need: independentSuccess >= 0.4, <= 0.95, wrongAfterSupportRate <= 0.4,
+  //       supportedSuccess <= 0.8 OR independentSuccess >= 0.5,
+  //       retryAttempts > 0, retrySuccessRate < 0.3, attemptCount > minSamples
+  const events = [
+    ...generateEvents(30, {
+      templateId: 'tpl-retry-ineff',
+      correct: true,
+      firstAttemptIndependent: true,
+      supportUsed: false,
+      wasRetry: false,
+    }),
+    ...generateEvents(20, {
+      templateId: 'tpl-retry-ineff',
+      correct: false,
+      firstAttemptIndependent: true,
+      supportUsed: false,
+      wasRetry: false,
+    }),
+    // Retry events: 2/10 correct = 20% retry success
+    ...generateEvents(2, {
+      templateId: 'tpl-retry-ineff',
+      correct: true,
+      firstAttemptIndependent: false,
+      supportUsed: false,
+      wasRetry: true,
+    }),
+    ...generateEvents(8, {
+      templateId: 'tpl-retry-ineff',
+      correct: false,
+      firstAttemptIndependent: false,
+      supportUsed: false,
+      wasRetry: true,
+    }),
+  ];
+
+  const report = buildTemplateHealthReport(events, { minSamples: 10 });
+  const tpl = report.templates['tpl-retry-ineff'];
+
+  assert.ok(tpl);
+  assert.ok(tpl.retrySuccessRate < 0.3);
+  assert.equal(tpl.classification, 'retry_ineffective');
 });

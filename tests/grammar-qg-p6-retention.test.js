@@ -19,7 +19,7 @@ function makeEvent(overrides = {}) {
     correct: true,
     firstAttemptIndependent: true,
     supportUsed: false,
-    conceptStatusBefore: 'secured',
+    conceptStatusBefore: { 'concept-nouns': 'secured' },
     tags: [],
     mode: 'local',
     ...overrides,
@@ -35,7 +35,7 @@ function generateEvents(count, overrides = {}) {
 // ─── Tests ──────────────────────────────────────────────────────────────────
 
 test('concept with 5/5 passes → retentionRate 1.0, lapsed false', () => {
-  const events = generateEvents(5, { correct: true, conceptStatusBefore: 'secured' });
+  const events = generateEvents(5, { correct: true, conceptStatusBefore: { 'concept-nouns': 'secured' } });
 
   const report = buildRetentionReport(events, { minSamples: 3 });
   const concept = report.concepts['concept-nouns'];
@@ -67,7 +67,7 @@ test('concept with 1/4 passes → retentionRate 0.25, lapsed true', () => {
 
 test('concept with 0 post-secure attempts → insufficient_data', () => {
   // Only 2 events — below minSamples=3
-  const events = generateEvents(2, { correct: true, conceptStatusBefore: 'secured' });
+  const events = generateEvents(2, { correct: true, conceptStatusBefore: { 'concept-nouns': 'secured' } });
 
   const report = buildRetentionReport(events, { minSamples: 3 });
   const concept = report.concepts['concept-nouns'];
@@ -129,9 +129,9 @@ test('mixed review protection rates computed', () => {
 
 test('events without secured status are not counted', () => {
   const events = [
-    ...generateEvents(5, { conceptStatusBefore: 'emerging', conceptId: 'concept-emerging' }),
-    ...generateEvents(5, { conceptStatusBefore: 'weak', conceptId: 'concept-weak' }),
-    ...generateEvents(5, { conceptStatusBefore: 'secured', conceptId: 'concept-secured', correct: true }),
+    ...generateEvents(5, { conceptStatusBefore: { 'concept-emerging': 'emerging' }, conceptId: 'concept-emerging' }),
+    ...generateEvents(5, { conceptStatusBefore: { 'concept-weak': 'weak' }, conceptId: 'concept-weak' }),
+    ...generateEvents(5, { conceptStatusBefore: { 'concept-secured': 'secured' }, conceptId: 'concept-secured', correct: true }),
   ];
 
   const report = buildRetentionReport(events, { minSamples: 3 });
@@ -144,9 +144,9 @@ test('events without secured status are not counted', () => {
 
 test('meta summary counts are correct', () => {
   const events = [
-    ...generateEvents(5, { conceptId: 'c-retained', correct: true }),
-    ...generateEvents(4, { conceptId: 'c-risk', correct: false }),
-    ...generateEvents(2, { conceptId: 'c-insufficient', correct: true }),
+    ...generateEvents(5, { conceptId: 'c-retained', conceptStatusBefore: { 'c-retained': 'secured' }, correct: true }),
+    ...generateEvents(4, { conceptId: 'c-risk', conceptStatusBefore: { 'c-risk': 'secured' }, correct: false }),
+    ...generateEvents(2, { conceptId: 'c-insufficient', conceptStatusBefore: { 'c-insufficient': 'secured' }, correct: true }),
   ];
 
   const report = buildRetentionReport(events, { minSamples: 3 });
@@ -155,4 +155,23 @@ test('meta summary counts are correct', () => {
   assert.equal(report.meta.retained, 1);
   assert.equal(report.meta.retentionRisk, 1);
   assert.equal(report.meta.insufficientData, 1);
+});
+
+test('lapseRate between 0 and 0.5 → minor_lapse classification', () => {
+  // 3/5 correct, 2/5 wrong → lapseRate = 0.4, which is > 0 and <= 0.5
+  const events = [
+    makeEvent({ correct: true, timestamp: '2026-04-20T10:00:00Z' }),
+    makeEvent({ correct: true, timestamp: '2026-04-21T10:00:00Z' }),
+    makeEvent({ correct: true, timestamp: '2026-04-22T10:00:00Z' }),
+    makeEvent({ correct: false, timestamp: '2026-04-23T10:00:00Z' }),
+    makeEvent({ correct: false, timestamp: '2026-04-24T10:00:00Z' }),
+  ];
+
+  const report = buildRetentionReport(events, { minSamples: 3 });
+  const concept = report.concepts['concept-nouns'];
+
+  assert.ok(concept);
+  assert.equal(concept.lapseRate, 0.4);
+  assert.equal(concept.lapsed, true);
+  assert.equal(concept.classification, 'minor_lapse');
 });

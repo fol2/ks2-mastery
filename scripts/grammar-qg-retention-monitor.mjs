@@ -17,8 +17,14 @@ function isValidEvent(event) {
     typeof event === 'object' &&
     typeof event.conceptId === 'string' &&
     typeof event.timestamp === 'string' &&
-    typeof event.conceptStatusBefore === 'string'
+    (typeof event.conceptStatusBefore === 'string' || (typeof event.conceptStatusBefore === 'object' && event.conceptStatusBefore !== null))
   );
+}
+
+function getConceptStatus(csb, conceptId) {
+  if (typeof csb === 'string') return csb;
+  if (typeof csb === 'object' && csb !== null) return csb[conceptId] || 'new';
+  return 'new';
 }
 
 function daysBetween(ts1, ts2) {
@@ -49,7 +55,7 @@ export function buildRetentionReport(events, options = {}) {
   const conceptSecuredTimestamps = {};
   for (const event of events) {
     if (!isValidEvent(event)) continue;
-    if (event.conceptStatusBefore !== 'secured') continue;
+    if (getConceptStatus(event.conceptStatusBefore, event.conceptId) !== 'secured') continue;
     const cid = event.conceptId;
     if (!conceptSecuredTimestamps[cid]) {
       conceptSecuredTimestamps[cid] = event.timestamp;
@@ -64,7 +70,7 @@ export function buildRetentionReport(events, options = {}) {
       skippedCount++;
       continue;
     }
-    if (event.conceptStatusBefore !== 'secured') continue;
+    if (getConceptStatus(event.conceptStatusBefore, event.conceptId) !== 'secured') continue;
 
     const cid = event.conceptId;
     if (!conceptAccumulators[cid]) {

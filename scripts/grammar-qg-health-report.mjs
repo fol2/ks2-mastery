@@ -15,10 +15,12 @@ function median(arr) {
 }
 
 function elapsedBucket(ms) {
+  if (ms == null || ms < 0) return null;
   if (ms < 2000) return '<2s';
   if (ms < 5000) return '2-5s';
   if (ms < 10000) return '5-10s';
-  return '>10s';
+  if (ms < 20000) return '10-20s';
+  return '>20s';
 }
 
 function confidenceLevel(count) {
@@ -40,6 +42,12 @@ function isValidEvent(event) {
     typeof event.conceptId === 'string' &&
     typeof event.timestamp === 'string'
   );
+}
+
+function getConceptStatus(csb, conceptId) {
+  if (typeof csb === 'string') return csb;
+  if (typeof csb === 'object' && csb !== null) return csb[conceptId] || 'new';
+  return 'new';
 }
 
 function withinWindow(event, windowDays, now) {
@@ -177,7 +185,7 @@ export function buildTemplateHealthReport(events, options = {}) {
     const tags = Array.isArray(event.tags) ? event.tags : [];
     const mode = event.mode || '';
     const questionType = event.questionType || '';
-    const conceptStatusBefore = event.conceptStatusBefore || '';
+    const conceptStatus = getConceptStatus(event.conceptStatusBefore, cid);
 
     const isMixed = tags.includes('mixed-transfer');
     const isExplain = questionType === 'explain';
@@ -200,13 +208,13 @@ export function buildTemplateHealthReport(events, options = {}) {
       if (correct) ca.surgeryCorrect++;
     }
 
-    if (conceptStatusBefore === 'secured') {
+    if (conceptStatus === 'secured') {
       ca.securedAttempts++;
       if (correct) ca.retainedPasses++;
       else ca.lapseCount++;
     }
 
-    if (conceptStatusBefore === 'weak') {
+    if (conceptStatus === 'weak') {
       ca.weakAttempts++;
       if (correct) ca.weakRecoveries++;
     }

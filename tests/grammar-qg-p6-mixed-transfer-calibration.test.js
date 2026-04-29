@@ -22,7 +22,7 @@ function makeEvent(overrides = {}) {
     wasRetry: false,
     tags: ['mixed-transfer'],
     mode: 'mixed',
-    conceptStatusBefore: 'secured',
+    conceptStatusBefore: { 'concept-main': 'secured', 'concept-secondary': 'secured' },
     allConceptStatusesBefore: { 'concept-main': 'secured', 'concept-secondary': 'secured' },
     conceptIds: ['concept-main', 'concept-secondary'],
     ...overrides,
@@ -143,5 +143,32 @@ test('normal weight when success between 50-80%', () => {
 
   assert.equal(tpl.successRate, 0.65);
   assert.equal(tpl.suggestedEvidenceWeight, 'normal');
+  assert.equal(tpl.recommendation, 'keep');
+});
+
+test('all concepts secured (Object form) but successRate < 0.5 → weight light', () => {
+  // All concepts secured in conceptStatusBefore Object, but low success
+  const events = [
+    ...generateEvents(4, {
+      correct: true,
+      firstAttemptIndependent: true,
+      conceptStatusBefore: { 'concept-main': 'secured', 'concept-secondary': 'secured' },
+      allConceptStatusesBefore: { 'concept-main': 'secured', 'concept-secondary': 'secured' },
+    }),
+    ...generateEvents(6, {
+      correct: false,
+      firstAttemptIndependent: true,
+      conceptStatusBefore: { 'concept-main': 'secured', 'concept-secondary': 'secured' },
+      allConceptStatusesBefore: { 'concept-main': 'secured', 'concept-secondary': 'secured' },
+    }),
+  ];
+
+  const report = buildMixedTransferCalibration(events, { minSamples: 5 });
+  const tpl = report.templates['tpl-mixed-01'];
+
+  assert.ok(tpl);
+  assert.equal(tpl.successRate, 0.4);
+  assert.equal(tpl.localPrerequisitesMetRate, 1.0);
+  assert.equal(tpl.suggestedEvidenceWeight, 'light');
   assert.equal(tpl.recommendation, 'keep');
 });

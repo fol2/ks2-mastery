@@ -1709,7 +1709,6 @@ export function applyGrammarAttemptToState(state, {
     // P6 calibration telemetry (event-only — never exposed in read models).
     tags: (template?.tags || []).slice(),
     answerSpecKind: template?.answerSpecKind || null,
-    sessionKind: typeof mode === 'string' ? mode : '',
     elapsedMsBucket: bucketElapsedMs(null), // no client timing available yet
     wasRetry: attempts > 1,
     conceptStatusBefore: Object.fromEntries([...conceptIds].map(id => [id, statusesBefore.get(id) || 'new'])),

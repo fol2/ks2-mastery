@@ -75,9 +75,6 @@ test('Grammar answer-submitted event includes P6 calibration telemetry fields', 
   // answerSpecKind — string or null
   assert.equal(event.answerSpecKind, template.answerSpecKind || null);
 
-  // sessionKind — alias for mode
-  assert.equal(event.sessionKind, 'learn');
-
   // elapsedMsBucket — null because no client timing exists yet
   assert.equal(event.elapsedMsBucket, null);
 
@@ -118,7 +115,7 @@ test('Grammar answer-submitted event wasRetry is true when attempts > 1', () => 
 
   const event = applied.events.find(e => e.type === 'grammar.answer-submitted');
   assert.equal(event.wasRetry, true);
-  assert.equal(event.sessionKind, 'smart');
+  assert.equal(event.mode, 'smart');
 });
 
 // ---------------------------------------------------------------------------
@@ -195,7 +192,6 @@ test('Grammar read model does NOT contain P6 telemetry fields', () => {
     'conceptStatusBefore',
     'conceptStatusAfter',
     'answerSpecKind',
-    'sessionKind',
   ];
 
   for (const field of forbiddenFields) {
