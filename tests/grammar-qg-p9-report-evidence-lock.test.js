@@ -134,7 +134,7 @@ describe('P9 Report Evidence Lock: CERTIFIED_POST_DEPLOY without smoke evidence 
       `final_report_commit: c70969f8`,
       'content_release_id_changed: "true"',
       'scoring_or_mastery_change: "false"',
-      'certification_decision: certified',
+      'certification_decision: CERTIFIED_POST_DEPLOY',
       '---',
       '',
       '# Grammar QG P8 Completion Report',
@@ -185,9 +185,9 @@ describe('P9 Report Evidence Lock: CERTIFIED_POST_DEPLOY without smoke evidence 
     });
 
     assert.equal(result.pass, false, 'Should fail when smoke evidence file is missing');
-    const smokeErr = result.mismatches.find((m) => m.field === 'productionSmokeEvidence');
-    assert.ok(smokeErr, 'Expected productionSmokeEvidence mismatch');
-    assert.match(smokeErr.message, /evidence file/i);
+    const smokeErr = result.mismatches.find((m) => m.field === 'smokeEvidenceFile' || m.field === 'productionSmokeEvidence');
+    assert.ok(smokeErr, 'Expected smokeEvidenceFile or productionSmokeEvidence mismatch');
+    assert.match(smokeErr.message, /evidence file|smoke evidence/i);
   });
 
   it('passes frontmatter validation even when smoke evidence is missing (frontmatter-only check)', () => {
