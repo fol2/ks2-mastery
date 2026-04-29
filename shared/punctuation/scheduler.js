@@ -563,6 +563,101 @@ function weakRows(indexes, progress, session, now, maxWindow) {
   return avoidRecentSignatureRows(sortedRows, recentSignatures);
 }
 
+// --- Reason tag classification helpers ---
+
+/**
+ * Classify reason tag for weak-mode selection based on the weakFocus source and memory state.
+ */
+function classifyWeakReason(weakFocus, progress, item, session, now) {
+  if (!weakFocus || !item) return REASON_TAGS.FALLBACK;
+
+  const source = weakFocus.source;
+  if (source === 'weak_facet' || source === 'weak_item') return REASON_TAGS.WEAK_SKILL_REPAIR;
+  if (source === 'recent_miss') return REASON_TAGS.WEAK_SKILL_REPAIR;
+  if (source === 'due_facet' || source === 'due_item') {
+    // Check if this is a spaced return (lastCorrectAt exceeds threshold)
+    const itemState = normaliseMemoryState(progress?.items?.[item.id]);
+    if (itemState.lastCorrectAt) {
+      const nowMs = timestamp(now);
+      const daysSinceCorrect = (nowMs - itemState.lastCorrectAt) / DAY_MS;
+      if (daysSinceCorrect >= SPACED_RETURN_MIN_DAYS) return REASON_TAGS.SPACED_RETURN;
+    }
+    return REASON_TAGS.DUE_REVIEW;
+  }
+
+  // Secure bucket → retention-after-secure
+  if (weakFocus.bucket === 'secure') {
+    const itemState = normaliseMemoryState(progress?.items?.[item.id]);
+    if (itemState.lastCorrectAt) {
+      const nowMs = timestamp(now);
+      const daysSinceCorrect = (nowMs - itemState.lastCorrectAt) / DAY_MS;
+      if (daysSinceCorrect >= RETENTION_AFTER_SECURE_MIN_DAYS) return REASON_TAGS.RETENTION_AFTER_SECURE;
+    }
+  }
+
+  // Mixed review: item's mode differs from last 3 modes in session
+  if (isMixedReview(item, session)) return REASON_TAGS.MIXED_REVIEW;
+
+  return REASON_TAGS.FALLBACK;
+}
+
+/**
+ * Classify reason tag for smart/GPS/cluster-mode selection based on memory state and session context.
+ */
+function classifySmartReason(indexes, progress, item, session, now) {
+  if (!item) return REASON_TAGS.FALLBACK;
+
+  const itemState = normaliseMemoryState(progress?.items?.[item.id]);
+  const snap = memorySnapshot(itemState, now);
+  const nowMs = timestamp(now);
+
+  // Due review: item bucket is due
+  if (snap.bucket === 'due') {
+    // Spaced return: lastCorrectAt exceeds threshold
+    if (itemState.lastCorrectAt) {
+      const daysSinceCorrect = (nowMs - itemState.lastCorrectAt) / DAY_MS;
+      if (daysSinceCorrect >= SPACED_RETURN_MIN_DAYS) return REASON_TAGS.SPACED_RETURN;
+    }
+    return REASON_TAGS.DUE_REVIEW;
+  }
+
+  // Weak bucket: weak skill repair
+  if (snap.bucket === 'weak') return REASON_TAGS.WEAK_SKILL_REPAIR;
+
+  // Secure bucket: retention after secure
+  if (snap.bucket === 'secure') {
+    if (itemState.lastCorrectAt) {
+      const daysSinceCorrect = (nowMs - itemState.lastCorrectAt) / DAY_MS;
+      if (daysSinceCorrect >= RETENTION_AFTER_SECURE_MIN_DAYS) return REASON_TAGS.RETENTION_AFTER_SECURE;
+    }
+  }
+
+  // Mixed review: item's mode differs from last 3 modes in session
+  if (isMixedReview(item, session)) return REASON_TAGS.MIXED_REVIEW;
+
+  return REASON_TAGS.FALLBACK;
+}
+
+/**
+ * Check whether the selected item's mode differs from the last 3 modes in session.
+ */
+function isMixedReview(item, session) {
+  if (!item || !item.mode) return false;
+  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds : [];
+  if (recentIds.length < 3) return false;
+  const last3Modes = recentIds.slice(-3).map((id) => {
+    // We cannot look up items by id here without indexes — use recentModes if available
+    return null;
+  });
+  // Use session.recentModes if provided (an array of modes for recently shown items)
+  const recentModes = Array.isArray(session?.recentModes) ? session.recentModes : [];
+  if (recentModes.length < 3) return false;
+  const lastThree = recentModes.slice(-3);
+  return lastThree.every((m) => m !== item.mode);
+}
+
+// --- End reason tag classification helpers ---
+
 export function selectPunctuationItem({
   indexes = PUNCTUATION_CONTENT_INDEXES,
   progress = {},
@@ -599,9 +694,10 @@ export function selectPunctuationItem({
     const rows = weakRows(indexes, progress, session, now, maxWindow);
     const picked = weightedPick(rows, random) || rows[0]?.item || null;
     const pickedRow = rows.find((row) => row.item.id === picked?.id) || null;
+    const weakReason = classifyWeakReason(pickedRow?.weakFocus, progress, picked, session, now);
     return {
       item: picked ? clone(picked) : null,
-      reason: REASON_TAGS.FALLBACK,
+      reason: weakReason,
       targetMode: picked?.mode || null,
       targetClusterId: picked?.clusterId || null,
       weakFocus: pickedRow ? clone(pickedRow.weakFocus) : null,
@@ -654,9 +750,10 @@ export function selectPunctuationItem({
   }).filter((row) => row.weight > 0);
 
   const item = weightedPick(rows, random) || windowed[0] || null;
+  const smartReason = classifySmartReason(indexes, progress, item, session, now);
   return {
     item: item ? clone(item) : null,
-    reason: REASON_TAGS.FALLBACK,
+    reason: smartReason,
     targetMode: selectedMode.mode,
     targetClusterId: clusterId,
     weakFocus: null,

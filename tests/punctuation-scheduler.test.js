@@ -13,6 +13,8 @@ import {
   REASON_TAGS,
   MAX_SAME_SIGNATURE_ACROSS_ATTEMPTS,
   MAX_SAME_SIGNATURE_DAYS,
+  SPACED_RETURN_MIN_DAYS,
+  RETENTION_AFTER_SECURE_MIN_DAYS,
   EXPOSURE_WEIGHT_BLOCKED,
   EXPOSURE_WEIGHT_PENALISED,
   EXPOSURE_WEIGHT_DAY_AVOIDED,
@@ -790,5 +792,225 @@ describe('per-signature exposure limits', () => {
     // Even though weak_item has higher weak-facet priority, the exposure block
     // should penalise it enough to prefer fresh_item
     assert.equal(result.item.id, 'fresh_item', 'Exposure penalty should override weak-priority when alternative exists');
+  });
+});
+
+// --- Reason tag classification tests (U6) ---
+
+describe('reason tags', () => {
+  test('due item returns reason: due-review', () => {
+    // Answer correctly at day 1, then check at day 2.5 — due (interval=1 day expired)
+    // but lastCorrectAt is only 1.5 days ago (< SPACED_RETURN_MIN_DAYS) → pure due-review
+    const correctAt = 1 * DAY_MS;
+    const nowMs = correctAt + 1.5 * DAY_MS; // 1.5 days since correct (below 3-day threshold)
+    let state = createMemoryState();
+    state = updateMemoryState(state, true, correctAt);
+
+    // Verify item is due
+    const snap = memorySnapshot(state, nowMs);
+    assert.equal(snap.bucket, 'due');
+
+    const itemA = makeSignatureItem('item_due', 'sig_due');
+    const indexes = makeExposureIndexes([itemA]);
+
+    const result = selectPunctuationItem({
+      indexes,
+      progress: {
+        items: { item_due: state },
+        facets: {},
+        rewardUnits: {},
+        attempts: [],
+        sessionsCompleted: 0,
+      },
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: nowMs,
+      random: () => 0,
+    });
+
+    assert.equal(result.item.id, 'item_due');
+    assert.equal(result.reason, REASON_TAGS.DUE_REVIEW);
+  });
+
+  test('weak facet returns reason: weak-skill-repair', () => {
+    const weakFacet = updateMemoryState(createMemoryState(), false, 0);
+    const result = selectPunctuationItem({
+      progress: {
+        items: {},
+        facets: { 'speech::insert': weakFacet },
+        rewardUnits: {},
+        attempts: [],
+        sessionsCompleted: 0,
+      },
+      session: { mode: 'weak', answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'weak' },
+      now: 0,
+      random: () => 0,
+    });
+
+    assert.equal(result.reason, REASON_TAGS.WEAK_SKILL_REPAIR);
+    assert.equal(result.weakFocus.source, 'weak_facet');
+  });
+
+  test('item with different mode from last 3 returns reason: mixed-review', () => {
+    // All items are mode=choose; session recentModes are all 'insert'
+    const itemA = makeSignatureItem('item_mixed', 'sig_mixed');
+    const indexes = makeExposureIndexes([itemA]);
+
+    const result = selectPunctuationItem({
+      indexes,
+      progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },
+      session: {
+        answeredCount: 3,
+        recentItemIds: ['x1', 'x2', 'x3'],
+        recentModes: ['insert', 'insert', 'insert'],
+      },
+      prefs: { mode: 'smart' },
+      now: 0,
+      random: () => 0,
+    });
+
+    assert.equal(result.item.id, 'item_mixed');
+    assert.equal(result.reason, REASON_TAGS.MIXED_REVIEW);
+  });
+
+  test('spaced-return classified when lastCorrectAt exceeds threshold', () => {
+    const nowMs = 10 * DAY_MS;
+    // Item was answered correctly long ago, is now due, and lastCorrectAt > SPACED_RETURN_MIN_DAYS
+    let state = createMemoryState();
+    state = updateMemoryState(state, true, 1 * DAY_MS); // correct at day 1, due ~day 2
+
+    // Verify state has lastCorrectAt set
+    assert.ok(state.lastCorrectAt > 0);
+
+    const itemA = makeSignatureItem('item_spaced', 'sig_spaced');
+    const indexes = makeExposureIndexes([itemA]);
+
+    const result = selectPunctuationItem({
+      indexes,
+      progress: {
+        items: { item_spaced: state },
+        facets: {},
+        rewardUnits: {},
+        attempts: [],
+        sessionsCompleted: 0,
+      },
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: nowMs,
+      random: () => 0,
+    });
+
+    // nowMs (10 days) - lastCorrectAt (1 day) = 9 days > SPACED_RETURN_MIN_DAYS (3)
+    assert.equal(result.item.id, 'item_spaced');
+    assert.equal(result.reason, REASON_TAGS.SPACED_RETURN);
+  });
+
+  test('retention-after-secure classified for secure items past threshold', () => {
+    const nowMs = 30 * DAY_MS;
+    // Build a secure state: streak >= 3, accuracy >= 0.8, correctSpanDays >= 7
+    let state = createMemoryState();
+    state = updateMemoryState(state, true, 1 * DAY_MS);
+    state = updateMemoryState(state, true, 5 * DAY_MS);
+    state = updateMemoryState(state, true, 9 * DAY_MS);
+
+    // Verify bucket is secure
+    const snap = memorySnapshot(state, nowMs);
+    assert.equal(snap.bucket, 'secure');
+
+    const itemA = makeSignatureItem('item_retain', 'sig_retain');
+    const indexes = makeExposureIndexes([itemA]);
+
+    const result = selectPunctuationItem({
+      indexes,
+      progress: {
+        items: { item_retain: state },
+        facets: {},
+        rewardUnits: {},
+        attempts: [],
+        sessionsCompleted: 0,
+      },
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: nowMs,
+      random: () => 0,
+    });
+
+    // nowMs (30 days) - lastCorrectAt (9 days) = 21 days > RETENTION_AFTER_SECURE_MIN_DAYS (7)
+    assert.equal(result.item.id, 'item_retain');
+    assert.equal(result.reason, REASON_TAGS.RETENTION_AFTER_SECURE);
+  });
+
+  test('fallback reason when no specific policy matches', () => {
+    // Fresh item with no memory state — bucket is 'new', no modes history
+    const itemA = makeSignatureItem('item_new', 'sig_new');
+    const indexes = makeExposureIndexes([itemA]);
+
+    const result = selectPunctuationItem({
+      indexes,
+      progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: 0,
+      random: () => 0,
+    });
+
+    assert.equal(result.item.id, 'item_new');
+    assert.equal(result.reason, REASON_TAGS.FALLBACK);
+  });
+
+  test('weak mode due_facet source classified as due-review when within spaced threshold', () => {
+    // Item answered correctly recently (< SPACED_RETURN_MIN_DAYS ago), now due
+    const nowMs = 2 * DAY_MS;
+    let dueFacet = createMemoryState();
+    dueFacet = updateMemoryState(dueFacet, true, 1 * DAY_MS);
+
+    const result = selectPunctuationItem({
+      progress: {
+        items: { sp_fix_question: dueFacet },
+        facets: { 'speech::fix': dueFacet },
+        rewardUnits: {},
+        attempts: [],
+        sessionsCompleted: 0,
+      },
+      session: { mode: 'weak', answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'weak' },
+      now: nowMs,
+      random: () => 0,
+    });
+
+    // 2 days - 1 day = 1 day < SPACED_RETURN_MIN_DAYS (3) → due-review, not spaced-return
+    assert.equal(result.reason, REASON_TAGS.DUE_REVIEW);
+  });
+
+  test('smart mode weak bucket item returns weak-skill-repair', () => {
+    // Create a weak item state: low accuracy, lapses
+    let state = createMemoryState();
+    state = updateMemoryState(state, false, 0);
+    state = updateMemoryState(state, false, DAY_MS);
+
+    const snap = memorySnapshot(state, 2 * DAY_MS);
+    assert.equal(snap.bucket, 'weak');
+
+    const itemA = makeSignatureItem('item_weak_smart', 'sig_weak_smart');
+    const indexes = makeExposureIndexes([itemA]);
+
+    const result = selectPunctuationItem({
+      indexes,
+      progress: {
+        items: { item_weak_smart: state },
+        facets: {},
+        rewardUnits: {},
+        attempts: [],
+        sessionsCompleted: 0,
+      },
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: 2 * DAY_MS,
+      random: () => 0,
+    });
+
+    assert.equal(result.item.id, 'item_weak_smart');
+    assert.equal(result.reason, REASON_TAGS.WEAK_SKILL_REPAIR);
   });
 });
