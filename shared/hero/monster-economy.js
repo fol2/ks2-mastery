@@ -23,6 +23,15 @@ function buildIdempotencyKey(prefix, learnerId, monsterId, discriminator) {
   return `${prefix}:v1:${learnerId}:${monsterId}:${discriminator}`;
 }
 
+function buildSpendEconomyDelta({ cost, balanceAfter }) {
+  return {
+    balanceDelta: -cost,
+    balanceAfter,
+    lifetimeSpentDelta: cost,
+    lifetimeEarnedDelta: 0,
+  };
+}
+
 // ── computeMonsterInviteIntent ──────────────────────────────────────
 
 export function computeMonsterInviteIntent({
@@ -52,7 +61,7 @@ export function computeMonsterInviteIntent({
     ? heroPoolState.monsters[monsterId]
     : undefined;
   if (existingMonster && existingMonster.owned) {
-    return { ok: true, status: 'already-owned', cost: 0, coinsUsed: 0 };
+    return { ok: true, status: 'already-owned', cost: 0, coinsUsed: 0, ledgerEntryId: null };
   }
 
   // Cost and affordability
@@ -109,15 +118,21 @@ export function computeMonsterInviteIntent({
   };
 
   const newLifetimeSpent = economyState.lifetimeSpent + cost;
+  const economyDelta = buildSpendEconomyDelta({ cost, balanceAfter });
 
   return {
     ok: true,
     status: 'invited',
+    cost,
+    coinsUsed: cost,
+    ledgerEntryId: entryId,
     intent: {
       newBalance: balanceAfter,
       newLifetimeSpent,
+      economyDelta,
       ledgerEntry,
       newMonsterState,
+      monsterState: newMonsterState,
       actionRecord,
     },
   };
@@ -165,7 +180,7 @@ export function computeMonsterGrowIntent({
 
   // Already at or past target
   if (currentStage >= targetStage) {
-    return { ok: true, status: 'already-stage', cost: 0, coinsUsed: 0 };
+    return { ok: true, status: 'already-stage', cost: 0, coinsUsed: 0, ledgerEntryId: null };
   }
 
   // Must be next sequential stage
@@ -224,15 +239,21 @@ export function computeMonsterGrowIntent({
   };
 
   const newLifetimeSpent = economyState.lifetimeSpent + cost;
+  const economyDelta = buildSpendEconomyDelta({ cost, balanceAfter });
 
   return {
     ok: true,
     status: 'grown',
+    cost,
+    coinsUsed: cost,
+    ledgerEntryId: entryId,
     intent: {
       newBalance: balanceAfter,
       newLifetimeSpent,
+      economyDelta,
       ledgerEntry,
       newMonsterState,
+      monsterState: newMonsterState,
       actionRecord,
     },
   };

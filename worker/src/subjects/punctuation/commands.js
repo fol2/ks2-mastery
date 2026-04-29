@@ -148,6 +148,9 @@ function deriveTelemetryEvents({ state, command, previousState, starEvidenceEven
   const clusterId = currentItem?.clusterId || '';
   const rewardUnitId = currentItem?.rewardUnitId || '';
   const mode = currentItem?.mode || '';
+  const submitFeedback = command.command === 'submit-answer' && state.phase === 'feedback'
+    ? state.feedback
+    : null;
 
   // After item selection: emit SCHEDULER_REASON_SELECTED
   if (
@@ -203,11 +206,10 @@ function deriveTelemetryEvents({ state, command, previousState, starEvidenceEven
   }
 
   // After correct answer on misconception-retry: emit MISCONCEPTION_RETRY_PASSED
-  if (command.command === 'submit-answer' && state.phase === 'feedback') {
-    const feedback = state.feedback;
+  if (submitFeedback) {
     const prevSession = previousState?.session;
     const prevReason = prevSession?.selectionReason;
-    if (feedback?.kind === 'success' && prevReason === 'misconception-retry') {
+    if (submitFeedback?.kind === 'success' && prevReason === 'misconception-retry') {
       events.push({
         type: PUNCTUATION_TELEMETRY_EVENTS.MISCONCEPTION_RETRY_PASSED,
         skillId: prevSession?.currentItem?.skillIds?.[0] || '',
@@ -215,14 +217,14 @@ function deriveTelemetryEvents({ state, command, previousState, starEvidenceEven
         variantSignature: prevSession?.currentItem?.variantSignature || '',
       });
     }
-    if (feedback?.kind === 'success' && prevReason === 'spaced-return') {
+    if (submitFeedback?.kind === 'success' && prevReason === 'spaced-return') {
       events.push({
         type: PUNCTUATION_TELEMETRY_EVENTS.SPACED_RETURN_PASSED,
         skillId: prevSession?.currentItem?.skillIds?.[0] || '',
         clusterId: prevSession?.currentItem?.clusterId || '',
       });
     }
-    if (feedback?.kind === 'success' && prevReason === 'retention-after-secure') {
+    if (submitFeedback?.kind === 'success' && prevReason === 'retention-after-secure') {
       events.push({
         type: PUNCTUATION_TELEMETRY_EVENTS.RETENTION_AFTER_SECURE_PASSED,
         skillId: prevSession?.currentItem?.skillIds?.[0] || '',
@@ -235,7 +237,7 @@ function deriveTelemetryEvents({ state, command, previousState, starEvidenceEven
   // variantSignature was already used for a correct attempt earlier in
   // this session, the star projection will dedup it. Emit a telemetry
   // event so dashboards can track dedup frequency.
-  if (command.command === 'submit-answer' && feedback?.kind === 'success' && itemSignature) {
+  if (submitFeedback?.kind === 'success' && itemSignature) {
     const signatures = Array.isArray(session.selectedSignatures) ? session.selectedSignatures : [];
     const priorCorrectSameSignature = signatures.filter((s) => s === itemSignature).length > 1;
     if (priorCorrectSameSignature) {

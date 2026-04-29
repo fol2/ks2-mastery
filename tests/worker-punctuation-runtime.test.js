@@ -118,6 +118,25 @@ function wrongAnswerFor(readItem) {
   return readItem.inputKind === 'choice' ? { choiceIndex: 99 } : { typed: 'not sure' };
 }
 
+function clearPunctuationAttemptHistory(harness) {
+  const row = harness.DB.db.prepare(`
+    SELECT data_json
+    FROM child_subject_state
+    WHERE learner_id = 'learner-a' AND subject_id = 'punctuation'
+  `).get();
+  assert.ok(row, 'Expected persisted Punctuation subject state');
+  const data = JSON.parse(row.data_json || '{}');
+  data.progress = data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)
+    ? data.progress
+    : {};
+  data.progress.attempts = [];
+  harness.DB.db.prepare(`
+    UPDATE child_subject_state
+    SET data_json = ?
+    WHERE learner_id = 'learner-a' AND subject_id = 'punctuation'
+  `).run(JSON.stringify(data));
+}
+
 function expectedContextForSession(session) {
   return {
     expectedSessionId: session.id,
@@ -261,6 +280,7 @@ test('punctuation command route starts weak spots with safe focus metadata', asy
     const insert = await harness.command('skip-item');
     assert.equal(insert.body.subjectReadModel.session.currentItem.id, 'sp_insert_question');
     await harness.command('submit-answer', { typed: 'Ella asked can we start now' });
+    clearPunctuationAttemptHistory(harness);
 
     const weak = await harness.command('start-session', { mode: 'weak', roundLength: '1' });
 
@@ -683,9 +703,7 @@ test('punctuation command route redacts generated live items', async () => {
   const harness = createHarness({ random: () => 0.99 });
   try {
     const start = await harness.command('start-session', { mode: 'endmarks', roundLength: '2' });
-    const choiceIndex = start.body.subjectReadModel.session.currentItem.options
-      .find((option) => option.text === start.body.subjectReadModel.session.currentItem.model)?.index ?? 0;
-    await harness.command('submit-answer', { choiceIndex });
+    await harness.command('submit-answer', correctAnswerFor(start.body.subjectReadModel.session.currentItem));
 
     const generated = await harness.command('continue-session');
     assert.equal(generated.body.subjectReadModel.phase, 'active-item');
