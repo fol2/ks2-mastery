@@ -489,3 +489,184 @@ test('SubjectRuntimeFallback renders ErrorCard inside the Card wrapper without c
   // Diagnostic footer remains visible to operators.
   assert.match(html, /Failure point: renderPractice/);
 });
+
+// ---------- P2 U3: ProgressMeter + StatCard ---------- //
+
+test('ProgressMeter renders the full ARIA progressbar contract with --progress-value as a numeric variable', async () => {
+  // Plan U3 happy path: value=37 → role=progressbar plus aria-valuenow,
+  // aria-valuemin, aria-valuemax, aria-label, AND the numeric
+  // `--progress-value: 37` inline style on the fill. All five assertions
+  // are required for WCAG 4.1.2 compliance + the CSP inline-style
+  // sanitisation pattern (numeric clamp at the helper boundary, not a
+  // width string interpolation).
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { ProgressMeter } from ${absoluteSpecifier('src/platform/ui/ProgressMeter.jsx')};
+    const html = renderToStaticMarkup(
+      <ProgressMeter value={37} label="Spelling progress: 37 of 100" />
+    );
+    console.log(html);
+  `);
+  assert.match(html, /role="progressbar"/, 'role="progressbar" is required');
+  assert.match(html, /aria-valuenow="37"/, 'aria-valuenow reflects the clamped value');
+  assert.match(html, /aria-valuemin="0"/, 'aria-valuemin defaults to 0');
+  assert.match(html, /aria-valuemax="100"/, 'aria-valuemax defaults to 100');
+  assert.match(html, /aria-label="Spelling progress: 37 of 100"/, 'aria-label flows through from the label prop');
+  assert.match(
+    html,
+    /class="progress-meter-fill"[^>]*style="--progress-value:\s*37/,
+    'fill must carry --progress-value as a numeric CSS variable, not an interpolated width string',
+  );
+});
+
+test('ProgressMeter clamps value > max to max (saturated fill, aria-valuenow === aria-valuemax)', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { ProgressMeter } from ${absoluteSpecifier('src/platform/ui/ProgressMeter.jsx')};
+    const html = renderToStaticMarkup(
+      <ProgressMeter value={150} label="overflow" />
+    );
+    console.log(html);
+  `);
+  assert.match(html, /aria-valuenow="100"/, 'value=150 must clamp to aria-valuemax=100');
+  assert.match(html, /--progress-value:\s*100/, 'fill must saturate at 100 without overflow');
+});
+
+test('ProgressMeter clamps value < min to min', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { ProgressMeter } from ${absoluteSpecifier('src/platform/ui/ProgressMeter.jsx')};
+    const html = renderToStaticMarkup(
+      <ProgressMeter value={-10} label="under" />
+    );
+    console.log(html);
+  `);
+  assert.match(html, /aria-valuenow="0"/, 'value=-10 must clamp to aria-valuemin=0');
+  assert.match(html, /--progress-value:\s*0/, 'fill must collapse to 0%');
+});
+
+test('ProgressMeter falls back to min for non-numeric value without throwing', async () => {
+  // Edge case: a learner-data path that drops a `null` / `'NaN'` into
+  // `value` should never crash the primitive — the meter renders empty
+  // and the parent surface keeps painting. The fixture also exercises
+  // the `aria-labelledby` alternative (no `label` prop — the wrapper
+  // forwards `aria-labelledby` from rest).
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { ProgressMeter } from ${absoluteSpecifier('src/platform/ui/ProgressMeter.jsx')};
+    const html = renderToStaticMarkup(
+      <ProgressMeter value="not-a-number" aria-labelledby="meter-label" />
+    );
+    console.log(html);
+  `);
+  assert.match(html, /aria-valuenow="0"/, 'non-numeric falls back to min=0');
+  assert.match(html, /aria-labelledby="meter-label"/, 'aria-labelledby flows through rest props');
+});
+
+test('ProgressMeter forwards data-* attributes for locator preservation', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { ProgressMeter } from ${absoluteSpecifier('src/platform/ui/ProgressMeter.jsx')};
+    const html = renderToStaticMarkup(
+      <ProgressMeter value={50} label="t" data-meter-id="x" className="punctuation-monster-meter-bar" />
+    );
+    console.log(html);
+  `);
+  assert.match(html, /data-meter-id="x"/);
+  assert.match(html, /class="progress-meter punctuation-monster-meter-bar"/, 'className composes with the primitive class');
+});
+
+test('ProgressMeter reduced-motion carve-out: app.css cancels the fill width transition', () => {
+  const css = readFileSync(CSS_PATH, 'utf8');
+  // The fill class transitions `width` by default; under
+  // `prefers-reduced-motion: reduce` the transition must drop to none so
+  // a learner with motion sensitivity does not see the bar slide on
+  // every state change. The carve-out lives next to the
+  // `.progress-meter-fill` rule (P2 U3 addition); we walk every
+  // reduced-motion media block and look for the one that overrides the
+  // fill class's transition.
+  const reducedMotionBlocks = css.match(/@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g) || [];
+  const meterOverride = reducedMotionBlocks.find((block) => /\.progress-meter-fill\b[^{]*\{[^}]*transition\s*:\s*none/.test(block));
+  assert.ok(
+    meterOverride,
+    'styles/app.css must carve `.progress-meter-fill { transition: none }` out under prefers-reduced-motion: reduce',
+  );
+});
+
+test('ProgressMeter CSS rule uses width: calc(var(--progress-value) * 1%) — the CSP-friendly width source', () => {
+  const css = readFileSync(CSS_PATH, 'utf8');
+  const block = extractRuleBlock(css, '.progress-meter-fill');
+  assert.ok(block !== null, '.progress-meter-fill rule must exist in app.css');
+  assert.match(
+    block,
+    /width\s*:\s*calc\(\s*var\(\s*--progress-value\s*,\s*0\s*\)\s*\*\s*1%\s*\)/,
+    'fill width must read --progress-value via calc(); the variable carries the numeric value, NOT a width string',
+  );
+});
+
+test('StatCard renders <dl><dt>label</dt><dd>value caption</dd></dl> shape', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { StatCard } from ${absoluteSpecifier('src/platform/ui/StatCard.jsx')};
+    const html = renderToStaticMarkup(
+      <StatCard label="Due today" value={4} />
+    );
+    console.log(html);
+  `);
+  assert.match(html, /^<dl class="stat-card"/, 'default rendering is <dl class="stat-card">');
+  assert.match(html, /<dt>Due today<\/dt>/, 'label renders inside <dt>');
+  assert.match(html, /<dd>4<\/dd>/, 'value renders inside <dd>');
+});
+
+test('StatCard appends caption inside <dd> after the value', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { StatCard } from ${absoluteSpecifier('src/platform/ui/StatCard.jsx')};
+    const html = renderToStaticMarkup(
+      <StatCard label="Stars" value={37} caption="of 100" />
+    );
+    console.log(html);
+  `);
+  assert.match(html, /<dd>37<span class="stat-card-caption">of 100<\/span><\/dd>/);
+});
+
+test('StatCard preserves caller className + data-* attributes', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { StatCard } from ${absoluteSpecifier('src/platform/ui/StatCard.jsx')};
+    const html = renderToStaticMarkup(
+      <StatCard label="L" value="V" className="punctuation-progress-item" data-metric="grand-stars" />
+    );
+    console.log(html);
+  `);
+  assert.match(html, /class="stat-card punctuation-progress-item"/, 'className composes with the primitive class');
+  assert.match(html, /data-metric="grand-stars"/, 'data-metric flows through');
+});
+
+test('PunctuationSetupScene monster-meter migration preserves the visible width across [0, 100]', async () => {
+  // Plan U3 integration assertion: the migration of the bespoke
+  // `style={{ width: `${pct}%` }}` site to `<ProgressMeter>` must not
+  // change the rendered fill width for any value in `[0, 100]`. We
+  // exercise four representative percentages (0 / 25 / 75 / 100) and
+  // assert the resulting `--progress-value` numeric variable matches.
+  for (const pct of [0, 25, 75, 100]) {
+    const html = await renderFixture(`
+      import { renderToStaticMarkup } from 'react-dom/server';
+      import { ProgressMeter } from ${absoluteSpecifier('src/platform/ui/ProgressMeter.jsx')};
+      const html = renderToStaticMarkup(
+        <ProgressMeter value={${pct}} label="Pealark progress" className="punctuation-monster-meter-bar" />
+      );
+      console.log(html);
+    `);
+    assert.match(
+      html,
+      new RegExp(`--progress-value:\\s*${pct}\\b`),
+      `monster meter at ${pct}% must emit --progress-value: ${pct}`,
+    );
+    assert.match(
+      html,
+      new RegExp(`aria-valuenow="${pct}"`),
+      `monster meter at ${pct}% must expose aria-valuenow="${pct}"`,
+    );
+  }
+});

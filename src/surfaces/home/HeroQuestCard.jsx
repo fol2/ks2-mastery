@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   HERO_CTA_TEXT,
   HERO_PROGRESS_COPY,

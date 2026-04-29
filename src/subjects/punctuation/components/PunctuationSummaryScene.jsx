@@ -57,7 +57,7 @@
 // behavioural guarantee comes with a paired state-level or DOM-match
 // assertion (learning #7).
 
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {

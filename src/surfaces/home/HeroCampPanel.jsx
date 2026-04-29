@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { HeroCampMonsterCard } from './HeroCampMonsterCard.jsx';
 import { HeroCampConfirmation } from './HeroCampConfirmation.jsx';
 import {

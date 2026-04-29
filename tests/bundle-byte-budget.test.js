@@ -75,13 +75,16 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 // setup-aligned refactor (shared hero-bg / HeroBackdrop /
 // useSetupHeroContrast platform engines + slide-button RoundLengthPicker
 // + grammar-hero-bg view-model) keep Node 22/24 gzip output near
-// 226.3 KB, so the committed ceiling is 227,000 (matches
-// `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES` in
-// `scripts/audit-client-bundle.mjs`). The narrow headroom lets the team
-// land small copy / utility growth without an audit bump, but trips the
-// gate when ~50 KB of adult-only JS sneaks back into the critical path.
+// 226.3 KB. P2 U3 (refactor-ui shared primitives) adds the
+// `ProgressMeter` + `StatCard` utility components to the main bundle,
+// which lands ~120 bytes of new gzip surface after trim. The committed
+// ceiling rises to 227,200 (matches `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES`
+// in `scripts/audit-client-bundle.mjs`). The upper guard at
+// `BASELINE_GZIP_BYTES * 1.105 = 227,630` still holds 430 bytes of
+// headroom — the gate continues to trip when ~50 KB of adult-only JS
+// sneaks back into the critical path.
 const BASELINE_GZIP_BYTES = 206_000;
-const BUDGET_GZIP_BYTES = 227_000;
+const BUDGET_GZIP_BYTES = 227_200;
 const TEST_MODE_BUNDLE_MARKER = '__ks2_capacityMeta__';
 
 function isPlaywrightTestModeBundle(bundleBytes) {

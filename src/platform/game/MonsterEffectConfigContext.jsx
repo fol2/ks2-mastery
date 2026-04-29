@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 
 // Mirrors MonsterVisualConfigContext: a single value prop that the caller
 // has already resolved (with bundled fallback applied). Consumers like

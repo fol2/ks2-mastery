@@ -1,4 +1,4 @@
-import React from 'react';
+import { ProgressMeter } from '../../platform/ui/ProgressMeter.jsx';
 
 const STATUS_LABEL = { live: 'Live', ready: 'Ready', soon: 'Soon' };
 
@@ -7,6 +7,13 @@ export function SubjectCard({ subject, onOpen }) {
   const pct = Math.round((subject.progress || 0) * 100);
   const hasRegion = Boolean(subject.regionBase);
   const statusLabel = STATUS_LABEL[subject.status] || 'Soon';
+  // U3: shared ProgressMeter retires the bespoke `.progress > span`
+  // inline-style width site. The legacy `.progress` className stays on
+  // the primitive wrapper, and `styles/app.css` extends both the
+  // `.subject-grid .progress > span` width-transition rule and the
+  // `polish-progress-mount` keyframe selector to also match
+  // `> .progress-meter-fill`, so the home subject-card mount fill keeps
+  // animating after the migration.
   return (
     <button
       className={'subject-card' + (isPlaceholder ? ' placeholder' : '')}
@@ -35,7 +42,7 @@ export function SubjectCard({ subject, onOpen }) {
         </div>
       )}
       <div className="sc-body">
-        <div className="sc-eyebrow">{subject.eyebrow || '\u00A0'}</div>
+        <div className="sc-eyebrow">{subject.eyebrow || ' '}</div>
         <h3>{subject.name}</h3>
         <p>{subject.blurb}</p>
         <div className="sc-meter">
@@ -43,9 +50,11 @@ export function SubjectCard({ subject, onOpen }) {
             <span className="sc-pct">{isPlaceholder ? '—' : `${pct}%`}</span>
             <span className="sc-meta">{subject.progressLabel}</span>
           </div>
-          <div className="progress">
-            <span style={{ width: `${pct}%`, background: 'var(--brand)' }} />
-          </div>
+          <ProgressMeter
+            value={pct}
+            label={subject.progressLabel || `${subject.name} progress`}
+            className="progress"
+          />
         </div>
       </div>
     </button>

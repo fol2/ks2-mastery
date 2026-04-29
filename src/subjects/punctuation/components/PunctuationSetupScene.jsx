@@ -30,7 +30,7 @@
 // `data-punctuation-*` attribute is preserved in its original node; only
 // the surrounding chrome moves.
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
@@ -50,6 +50,8 @@ import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.
 import { HeroWelcome } from '../../../platform/ui/HeroWelcome.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import { Button } from '../../../platform/ui/Button.jsx';
+import { ProgressMeter } from '../../../platform/ui/ProgressMeter.jsx';
+import { StatCard } from '../../../platform/ui/StatCard.jsx';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
 // one-shot stored-prefs migration. Local to this scene because the
@@ -140,7 +142,7 @@ export function PrimaryModeCard({ card, selected, disabled: isDisabled, roundLen
 // --- Sub-components --------------------------------------------------------
 
 function MonsterStarMeter({ monster }) {
-  const cap = monster.id === 'quoral' ? 100 : 100;
+  const cap = 100;
   const starsLabel = monster.id === 'quoral' ? 'Grand Stars' : 'Stars';
   // U3 (Phase 6): use monotonic displayStars / displayStage so a monster
   // never appears to de-evolve after evidence lapse.
@@ -150,16 +152,22 @@ function MonsterStarMeter({ monster }) {
   const pct = Math.min(100, Math.max(0, Math.round((stars / cap) * 100)));
   const stageText = punctuationStageLabel(stage, stars);
 
+  // U3 (P2 refactor-ui): the bespoke `.punctuation-monster-meter-bar`
+  // wrapper kept the old class name for the `data-display-state="not-found"`
+  // greyscale rule (`styles/app.css:10600`) which selects the descendant
+  // fill. The shared `ProgressMeter` primitive now renders the bar; the
+  // accent token defaults to `var(--subject-accent)` (with `--brand`
+  // fallback in the primitive's CSS rule) — the dedicated
+  // `--punctuation-accent` token lands in U6.
   return (
     <div className="punctuation-monster-meter" data-monster-id={monster.id} data-display-state={displayState}>
       <div className="punctuation-monster-meter-name">{monster.name}</div>
       <div className="punctuation-monster-meter-stage">{stageText}</div>
-      <div className="punctuation-monster-meter-bar" aria-hidden="true">
-        <div
-          className="punctuation-monster-meter-fill"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      <ProgressMeter
+        value={pct}
+        label={`${monster.name} progress`}
+        className="punctuation-monster-meter-bar"
+      />
       <div className="punctuation-monster-meter-count">
         {`${stars} / ${cap} ${starsLabel}`}
       </div>
@@ -340,22 +348,33 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
               </Button>
             </div>
 
-            {/* Progress row — compact stats strip */}
+            {/* Progress row — compact stats strip. Each metric renders as a
+             * shared StatCard primitive so the dt/dd label-value pairing
+             * announces consistently. The legacy
+             * `.punctuation-progress-strip` / `.punctuation-progress-item`
+             * classes stay on the wrapper + each card so the existing
+             * spacing rules (`styles/app.css:10554`) survive byte-identical;
+             * the StatCard primitive's own `.stat-card` rule is a thin
+             * baseline-aligned row that inherits these. */}
             <section className="punctuation-progress-row" data-section="progress-row" aria-label="Today at a glance">
-              <dl className="punctuation-progress-strip">
-                <div className="punctuation-progress-item">
-                  <dt>Due today</dt>
-                  <dd>{dueCount}</dd>
-                </div>
-                <div className="punctuation-progress-item">
-                  <dt>Wobbly</dt>
-                  <dd>{weakCount}</dd>
-                </div>
-                <div className="punctuation-progress-item" data-metric="grand-stars">
-                  <dt>Grand Stars</dt>
-                  <dd>{grandStars}</dd>
-                </div>
-              </dl>
+              <div className="punctuation-progress-strip">
+                <StatCard
+                  label="Due today"
+                  value={dueCount}
+                  className="punctuation-progress-item"
+                />
+                <StatCard
+                  label="Wobbly"
+                  value={weakCount}
+                  className="punctuation-progress-item"
+                />
+                <StatCard
+                  label="Grand Stars"
+                  value={grandStars}
+                  className="punctuation-progress-item"
+                  data-metric="grand-stars"
+                />
+              </div>
             </section>
 
             {/* Monster row — 4 active monsters with star meters */}

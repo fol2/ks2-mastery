@@ -40,7 +40,7 @@
 // state delta; U6 follows up with the modal component that consumes
 // `mapUi.detailOpenSkillId` + `mapUi.detailTab`. Documented in the PR body.
 
-import React from 'react';
+import { useEffect } from 'react';
 
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
@@ -310,7 +310,7 @@ export function PunctuationMapScene({ ui, actions }) {
     && typeof ui.analytics === 'object' && !Array.isArray(ui.analytics)
     ? ui.analytics.available
     : undefined;
-  React.useEffect(() => {
+  useEffect(() => {
     if (analyticsAvailable === false && !analyticsUnavailableWarned) {
       analyticsUnavailableWarned = true;
       // eslint-disable-next-line no-console

@@ -44,6 +44,20 @@ const CARD_CONSUMERS = [
 // third-consumer falsifier pass.
 const SECTION_HEADER_CONSUMERS = [];
 
+// P2 U3: ProgressMeter migration sites — Punctuation monster meter
+// (`PunctuationSetupScene` line ~159 was bespoke `style={{ width: pct }}`
+// before this unit) and the Home subject-card progress span.
+const PROGRESS_METER_CONSUMERS = [
+  'src/subjects/punctuation/components/PunctuationSetupScene.jsx',
+  'src/surfaces/home/SubjectCard.jsx',
+];
+
+// P2 U3: StatCard migration sites — the Punctuation Setup progress row
+// renders three StatCards ("Due today" / "Wobbly" / "Grand Stars").
+const STAT_CARD_CONSUMERS = [
+  'src/subjects/punctuation/components/PunctuationSetupScene.jsx',
+];
+
 function readFile(relative) {
   return readFileSync(path.join(rootDir, relative), 'utf8');
 }
@@ -122,4 +136,55 @@ test('SectionHeader allowlist consumers (if any) import + render the primitive',
       `${file} imports SectionHeader but never renders it — tree-shake would remove the import.`,
     );
   }
+});
+
+test('every U3 surface imports the shared ProgressMeter primitive', () => {
+  for (const file of PROGRESS_METER_CONSUMERS) {
+    const source = readFile(file);
+    assert.match(
+      source,
+      /import\s*\{[^}]*\bProgressMeter\b[^}]*\}\s*from\s*['"][^'"]*platform\/ui\/ProgressMeter(\.jsx)?['"]/,
+      `${file} must import ProgressMeter from src/platform/ui/ProgressMeter.jsx. ` +
+      'If this surface no longer needs the primitive, update PROGRESS_METER_CONSUMERS deliberately.',
+    );
+    assert.match(
+      source,
+      /<ProgressMeter\b/,
+      `${file} imports ProgressMeter but never renders it — tree-shake would remove the import.`,
+    );
+  }
+});
+
+test('ProgressMeter has >= 2 unique production import sites at U3 close', () => {
+  // Plan U3 lists 2 load-bearing migrations: Punctuation monster meter +
+  // Home subject-card meter. Two is the proof of pioneer-then-pattern.
+  assert.ok(
+    PROGRESS_METER_CONSUMERS.length >= 2,
+    `U3 minimum is 2 ProgressMeter consumers; got ${PROGRESS_METER_CONSUMERS.length}.`,
+  );
+});
+
+test('every U3 surface imports the shared StatCard primitive', () => {
+  for (const file of STAT_CARD_CONSUMERS) {
+    const source = readFile(file);
+    assert.match(
+      source,
+      /import\s*\{[^}]*\bStatCard\b[^}]*\}\s*from\s*['"][^'"]*platform\/ui\/StatCard(\.jsx)?['"]/,
+      `${file} must import StatCard from src/platform/ui/StatCard.jsx.`,
+    );
+    assert.match(
+      source,
+      /<StatCard\b/,
+      `${file} imports StatCard but never renders it — tree-shake would remove the import.`,
+    );
+  }
+});
+
+test('StatCard has >= 1 unique production import site at U3 close', () => {
+  // Plan U3 lists the 3-up Punctuation progress row as the load-bearing
+  // adoption site. The third-consumer falsifier sweep lands later.
+  assert.ok(
+    STAT_CARD_CONSUMERS.length >= 1,
+    `U3 minimum is 1 StatCard consumer; got ${STAT_CARD_CONSUMERS.length}.`,
+  );
 });

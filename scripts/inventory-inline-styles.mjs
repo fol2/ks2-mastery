@@ -189,6 +189,13 @@ export const CLASSIFICATION = Object.freeze({
   // / future `var(--punctuation-accent)`). Pure CSS-variable passthrough
   // — no server data enters the style bag.
   'src/platform/ui/Card.jsx': 'css-var-ready',
+  // P2 U3: ProgressMeter emits style={{ '--progress-value': N }} on the
+  // inner fill — N is numeric-clamped to [min, max] inside the primitive
+  // so the CSS variable carries an integer (0–100) only. The wrapper's
+  // `--progress-accent` token flows through `wrapperProps.style`
+  // (assignment, not a literal `style={`) and so does not register as a
+  // separate inline-style site.
+  'src/platform/ui/ProgressMeter.jsx': 'css-var-ready',
 
   // Platform game / render
   'src/platform/game/render/BaseSprite.jsx': 'dynamic-content-driven',
@@ -217,6 +224,12 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
   'src/surfaces/hubs/AdminContentSection.jsx',
   'src/surfaces/hubs/AdminDebuggingSection.jsx',
   'src/surfaces/hubs/AdminAccountsSection.jsx',
+  // P2-U3 (refactor-ui shared primitives): monster meter inline width
+  // moved into the shared ProgressMeter primitive (-1 site).
+  'src/subjects/punctuation/components/PunctuationSetupScene.jsx',
+  // P2-U3 (refactor-ui shared primitives): subject-card progress span
+  // inline width moved into the shared ProgressMeter primitive (-1 site).
+  'src/surfaces/home/SubjectCard.jsx',
 ]));
 
 // Per-PR delta snapshot: previous total (PR base) minus the number of sites
@@ -250,9 +263,16 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 //
 // P5-U11: Migrated 34 inline styles (21 AdminMarketingSection + 13 AdminDebugBundlePanel)
 // to CSS classes. Only dynamic-content-driven styles remain (1 each).
+//
+// P2-U3 (refactor-ui shared primitives): migrated 2 inline-style sites to
+// the new shared `ProgressMeter` primitive (PunctuationSetupScene monster
+// meter `width: ${pct}%` site + SubjectCard `width: ${pct}%, background:
+// var(--brand)` site). The primitive itself adds 1 inline-style site for
+// `--progress-value` per render (numeric-clamped, css-var-ready), so the
+// global net delta is -1. Constants bumped from 250 → 247.
 export const PRE_MIGRATION_TOTAL = 439;
-export const SITES_MIGRATED_THIS_PR = 189;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 250
+export const SITES_MIGRATED_THIS_PR = 192;
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 247
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';

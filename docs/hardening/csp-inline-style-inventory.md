@@ -49,42 +49,43 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `shared-pattern-available` | 135 |
-| `dynamic-content-driven` | 110 |
-| `css-var-ready` | 3 |
+| `dynamic-content-driven` | 142 |
+| `shared-pattern-available` | 98 |
+| `css-var-ready` | 5 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **250** |
+| **TOTAL** | **247** |
 
 ## Per-file inventory
 
 | File | `style={` count | Category | Migrated in SH2-U8 |
 | --- | --- | --- | --- |
 | `src/subjects/punctuation/components/PunctuationSessionScene.jsx` | 27 | `dynamic-content-driven` | no |
-| `src/surfaces/hubs/AdminErrorTimelinePanel.jsx` | 23 | `shared-pattern-available` | no |
-| `src/surfaces/hubs/AdminMarketingSection.jsx` | 1 | `shared-pattern-available` | yes |
+| `src/surfaces/hubs/AdminIncidentPanel.jsx` | 21 | `dynamic-content-driven` | no |
 | `src/subjects/punctuation/components/PunctuationSummaryScene.jsx` | 20 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/MonsterEffectCatalogPanel.jsx` | 19 | `shared-pattern-available` | no |
-| `src/surfaces/hubs/AdminDebugBundlePanel.jsx` | 1 | `shared-pattern-available` | yes |
-| `src/surfaces/hubs/AdminLearnerSupportPanel.jsx` | 12 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminProductionEvidencePanel.jsx` | 13 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/MonsterEffectBindingsPanel.jsx` | 12 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterVisualConfigPanel.jsx` | 10 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/ParentHubSurface.jsx` | 10 | `shared-pattern-available` | no |
-| `src/subjects/spelling/components/SpellingSetupScene.jsx` | 7 | `dynamic-content-driven` | no |
+| `src/surfaces/hubs/AdminErrorTimelinePanel.jsx` | 9 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/AdminHubSurface.jsx` | 7 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterEffectCelebrationPanel.jsx` | 7 | `shared-pattern-available` | no |
-| `src/surfaces/hubs/AdminOverviewSection.jsx` | 5 | `shared-pattern-available` | no |
+| `src/subjects/spelling/components/SpellingSetupScene.jsx` | 5 | `dynamic-content-driven` | no |
+| `src/surfaces/hubs/AdminAccountsSection.jsx` | 5 | `shared-pattern-available` | yes |
+| `src/surfaces/hubs/AdminMarketingSection.jsx` | 5 | `shared-pattern-available` | no |
 | `src/surfaces/profile/ProfileSettingsSurface.jsx` | 5 | `shared-pattern-available` | yes |
 | `src/surfaces/subject/SubjectRoute.jsx` | 5 | `dynamic-content-driven` | no |
 | `src/subjects/spelling/components/PatternQuestScene.jsx` | 4 | `dynamic-content-driven` | no |
 | `src/subjects/spelling/components/SpellingSessionScene.jsx` | 4 | `dynamic-content-driven` | no |
-| `src/subjects/punctuation/components/PunctuationSetupScene.jsx` | 3 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminBusinessSection.jsx` | 4 | `dynamic-content-driven` | no |
+| `src/surfaces/hubs/AdminContentSection.jsx` | 4 | `shared-pattern-available` | yes |
+| `src/surfaces/hubs/AdminDebugBundlePanel.jsx` | 4 | `shared-pattern-available` | no |
 | `src/subjects/spelling/components/SpellingSummaryScene.jsx` | 3 | `dynamic-content-driven` | no |
-| `src/surfaces/home/SubjectCard.jsx` | 3 | `dynamic-content-driven` | no |
-| `src/surfaces/hubs/AdminRequestDenialsPanel.jsx` | 3 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/AdminSectionTabs.jsx` | 3 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterVisualPreviewGrid.jsx` | 3 | `dynamic-content-driven` | no |
 | `src/platform/game/render/effects/celebration-shell.js` | 2 | `third-party-boundary` | no |
 | `src/subjects/grammar/components/GrammarSetupScene.jsx` | 2 | `shared-pattern-available` | no |
+| `src/subjects/punctuation/components/PunctuationSetupScene.jsx` | 2 | `shared-pattern-available` | yes |
 | `src/subjects/spelling/components/SpellingCommon.jsx` | 2 | `css-var-ready` | no |
 | `src/subjects/spelling/components/SpellingWordDetailModal.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCard.jsx` | 2 | `dynamic-content-driven` | no |
@@ -95,13 +96,17 @@ Future migration PRs should:
 | `src/surfaces/shell/MonsterCelebrationOverlay.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/platform/game/render/BaseSprite.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/platform/game/render/MonsterRender.jsx` | 1 | `dynamic-content-driven` | no |
+| `src/platform/ui/Card.jsx` | 1 | `css-var-ready` | no |
+| `src/platform/ui/HeroBackdrop.jsx` | 1 | `dynamic-content-driven` | no |
+| `src/platform/ui/LengthPicker.jsx` | 1 | `shared-pattern-available` | no |
 | `src/platform/ui/LoadingSkeleton.jsx` | 1 | `css-var-ready` | no |
+| `src/platform/ui/ProgressMeter.jsx` | 1 | `css-var-ready` | no |
 | `src/subjects/punctuation/components/PunctuationMapScene.jsx` | 1 | `dynamic-content-driven` | no |
-| `src/subjects/spelling/components/SpellingHeroBackdrop.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/subjects/spelling/components/SpellingWordBankScene.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCreature.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCreatureLightbox.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/surfaces/home/HomeSurface.jsx` | 1 | `dynamic-content-driven` | no |
+| `src/surfaces/home/SubjectCard.jsx` | 1 | `dynamic-content-driven` | yes |
 | `src/surfaces/hubs/AdultLearnerSelect.jsx` | 1 | `shared-pattern-available` | no |
 | `src/surfaces/shell/ToastShelf.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/surfaces/subject/SubjectRuntimeFallback.jsx` | 1 | `dynamic-content-driven` | yes |

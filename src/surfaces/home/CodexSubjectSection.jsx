@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CodexCard } from './CodexCard.jsx';
 
 export function CodexSubjectSection({ group, onPractice, onPreview, defaultOpen = true }) {

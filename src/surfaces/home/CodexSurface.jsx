@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TopNav } from '../shell/TopNav.jsx';
 import { CodexCreatureLightbox } from './CodexCreatureLightbox.jsx';
 import { CodexHero } from './CodexHero.jsx';

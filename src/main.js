@@ -3,7 +3,6 @@ import {
   createRepositoriesForBrowserRuntime,
 } from './platform/app/bootstrap.js';
 import { createAppController } from './platform/app/create-app-controller.js';
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App.jsx';
 import { AuthSurface } from './surfaces/auth/AuthSurface.jsx';
