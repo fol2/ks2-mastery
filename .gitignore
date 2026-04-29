@@ -45,3 +45,4 @@ tests/journeys/artefacts/
 tests/journeys/artifacts/
 tests/journeys/*.log
 docs/export-chats/
+tests/playwright/__screenshots__/
