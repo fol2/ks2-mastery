@@ -6,6 +6,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'Every sentence needs a capital letter at the start and the correct end mark to show whether it is a statement, question, or exclamation.';
+const EXPLANATION_RULE_ID = 'sentence-ending.terminal-mark';
 
 const TEMPLATES = [
   {
@@ -90,6 +91,7 @@ export const sentenceEndingsInsertDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

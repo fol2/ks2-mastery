@@ -7,6 +7,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'A colon introduces the list after a complete opening, and each bullet follows a consistent punctuation pattern.';
+const EXPLANATION_RULE_ID = 'bullet.colon-and-consistency';
 
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
@@ -241,6 +242,7 @@ export const bulletPointsParagraphDsl = TEMPLATES.map((t, i) =>
       clusterId: t.clusterId,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

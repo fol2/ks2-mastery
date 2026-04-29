@@ -7,6 +7,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'Commas separate each item in a list so they are easy to read one by one.';
+const EXPLANATION_RULE_ID = 'list.comma-separation';
 
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
@@ -142,6 +143,7 @@ export const listCommasCombineDsl = TEMPLATES.map((t, i) =>
       model: t.model,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

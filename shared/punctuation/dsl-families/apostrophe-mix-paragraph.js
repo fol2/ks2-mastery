@@ -7,6 +7,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'The apostrophe marks contractions where letters are missing and possession where something belongs to a noun.';
+const EXPLANATION_RULE_ID = 'apostrophe.possession-mixed';
 
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
@@ -216,6 +217,7 @@ export const apostropheMixParagraphDsl = TEMPLATES.map((t, i) =>
       clusterId: t.clusterId,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

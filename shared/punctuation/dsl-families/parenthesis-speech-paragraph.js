@@ -7,6 +7,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'Parenthetical commas set off removable extra detail, and inverted commas wrap spoken words with their punctuation inside.';
+const EXPLANATION_RULE_ID = 'mixed.parenthesis-speech';
 
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
@@ -280,6 +281,7 @@ export const parenthesisSpeechParagraphDsl = TEMPLATES.map((t, i) =>
       clusterId: t.clusterId,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

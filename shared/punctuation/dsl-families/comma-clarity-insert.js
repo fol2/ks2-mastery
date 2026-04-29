@@ -5,6 +5,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'A comma after the opening phrase prevents the reader from misreading the start of the main clause.';
+const EXPLANATION_RULE_ID = 'comma.clarity';
 
 const TEMPLATES = [
   {
@@ -106,6 +107,7 @@ export const commaClarityInsertDsl = TEMPLATES.map((t, i) =>
       model: t.model,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

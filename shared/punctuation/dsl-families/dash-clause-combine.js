@@ -5,6 +5,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'A dash separates two independent but related ideas, often adding surprise or contrast.';
+const EXPLANATION_RULE_ID = 'dash.clause-separation';
 
 const TEMPLATES = [
   {
@@ -106,6 +107,7 @@ export const dashClauseCombineDsl = TEMPLATES.map((t, i) =>
       model: t.model,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

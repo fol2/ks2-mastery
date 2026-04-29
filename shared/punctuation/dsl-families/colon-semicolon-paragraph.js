@@ -7,6 +7,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'A colon introduces a list after a complete sentence, and a semicolon joins two closely related main clauses.';
+const EXPLANATION_RULE_ID = 'mixed.colon-semicolon';
 
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
@@ -288,6 +289,7 @@ export const colonSemicolonParagraphDsl = TEMPLATES.map((t, i) =>
       clusterId: t.clusterId,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

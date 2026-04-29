@@ -69,15 +69,15 @@ function stableJson(value) {
 }
 
 /**
- * Strip `explanation` keys from a validator structure before hashing.
- * Explanation is a P6 learner-feedback addition that must not alter template identity.
+ * Strip `explanation` and `explanationRuleId` keys from a validator structure before hashing.
+ * These are P6/P7 learner-feedback additions that must not alter template identity.
  */
 function stripExplanationForHash(value) {
   if (Array.isArray(value)) return value.map(stripExplanationForHash);
   if (!isPlainObject(value)) return value;
   return Object.fromEntries(
     Object.entries(value)
-      .filter(([key]) => key !== 'explanation')
+      .filter(([key]) => key !== 'explanation' && key !== 'explanationRuleId')
       .map(([key, v]) => [key, stripExplanationForHash(v)]),
   );
 }
@@ -201,6 +201,7 @@ function buildGeneratedItem({ family, skill, template, templateIndex, seed, vari
     stem: template.stem || '',
     accepted: uniqueStrings([model, ...(Array.isArray(template.accepted) ? template.accepted : [])]),
     explanation: template.explanation || 'This generated item practises the same published punctuation skill.',
+    ...(typeof template.explanationRuleId === 'string' ? { explanationRuleId: template.explanationRuleId } : {}),
     model,
     ...(isPlainObject(template.validator) ? { validator: template.validator } : {}),
     ...(isPlainObject(template.rubric) ? { rubric: template.rubric } : {}),
