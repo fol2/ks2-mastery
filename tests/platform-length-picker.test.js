@@ -265,10 +265,10 @@ test('LengthPicker: actionName + prefKey emit data-action and data-pref on every
 });
 
 // ---------------------------------------------------------------
-// valueAttr=true emits data-value per option (Punctuation parity).
+// includeDataValue=true emits data-value per option (Punctuation parity).
 // ---------------------------------------------------------------
 
-test('LengthPicker: valueAttr=true emits data-value on every option (Punctuation parity)', async () => {
+test('LengthPicker: includeDataValue=true emits data-value on every option (Punctuation parity)', async () => {
   const html = await runFixture(`
     ${renderHeader(componentSpec)}
     const tree = React.createElement(LengthPicker, {
@@ -276,7 +276,7 @@ test('LengthPicker: valueAttr=true emits data-value on every option (Punctuation
       selectedValue: '10',
       onChange: () => {},
       actionName: 'punctuation-set-round-length',
-      valueAttr: true,
+      includeDataValue: true,
     });
     console.log(renderToStaticMarkup(tree));
   `);
@@ -291,7 +291,7 @@ test('LengthPicker: valueAttr=true emits data-value on every option (Punctuation
 // Omitting all three opt-in props emits none of them.
 // ---------------------------------------------------------------
 
-test('LengthPicker: omitting actionName/prefKey/valueAttr emits no data-* attributes on options', async () => {
+test('LengthPicker: omitting actionName/prefKey/includeDataValue emits no data-* attributes on options', async () => {
   const html = await runFixture(`
     ${renderHeader(componentSpec)}
     const tree = React.createElement(LengthPicker, {
@@ -464,4 +464,88 @@ test('LengthPicker: disabled=true renders disabled="" on every option button (SS
   `);
   const disabledMatches = html.match(/<button[^>]*disabled=""[^>]*>/g) || [];
   assert.equal(disabledMatches.length, 3, 'every option button should carry disabled=""');
+});
+
+// ---------------------------------------------------------------
+// className prop branch: concatenates into `length-picker <extra>`.
+// ---------------------------------------------------------------
+//
+// Addresses a review gap (Testing test-003): the `className` prop has a
+// conditional branch that renders `length-picker ${className}` when the
+// prop is present. No test previously pinned this output, which left
+// regressions (missing separator, wrong attribute shape) undetected.
+
+test('LengthPicker: className prop concatenates into the radiogroup class with a single space separator', async () => {
+  const html = await runFixture(`
+    ${renderHeader(componentSpec)}
+    const tree = React.createElement(LengthPicker, {
+      options: ['3', '5'],
+      selectedValue: '3',
+      onChange: () => {},
+      className: 'extra',
+    });
+    console.log(renderToStaticMarkup(tree));
+  `);
+  // Exact class shape: "length-picker extra" (single space, no trailing
+  // whitespace, no doubled class attribute).
+  assert.match(html, /class="length-picker extra"/);
+  // Negative: no accidental "length-pickerextra" (missing space) and no
+  // double space ("length-picker  extra").
+  assert.doesNotMatch(html, /class="length-pickerextra/);
+  assert.doesNotMatch(html, /class="length-picker {2,}extra/);
+});
+
+// ---------------------------------------------------------------
+// {value,label} `label` fallback semantics.
+// ---------------------------------------------------------------
+//
+// Addresses a review gap (Testing test-002): the component uses
+// `String(entry.label ?? entry.value)` to normalise object-shaped
+// options. That means (a) a MISSING `label` field falls back to `value`
+// as the visible text, and (b) an EMPTY STRING `label` is preserved
+// verbatim (since `??` only triggers on null/undefined, unlike `||`).
+// Neither branch was previously pinned, so a refactor to `||` would
+// silently regress Spelling's YearPicker ("Y3-4" visible / "y3-4"
+// serialised) if an intermediate normaliser ever emitted `label: ''`
+// on purpose.
+
+test('LengthPicker: {value} object without label falls back to value as visible text', async () => {
+  const html = await runFixture(`
+    ${renderHeader(componentSpec)}
+    const tree = React.createElement(LengthPicker, {
+      options: [{ value: 'core' }],
+      selectedValue: 'core',
+      onChange: () => {},
+    });
+    console.log(renderToStaticMarkup(tree));
+  `);
+  // `label` absent → `value` used as visible text.
+  assert.match(html, /<span>core<\/span>/);
+  // Button value attribute still uses `value`.
+  assert.match(html, /value="core"/);
+});
+
+test('LengthPicker: {value, label: ""} preserves the empty label verbatim (?? not ||)', async () => {
+  // If the component used `||` instead of `??`, an empty-string label
+  // would silently fall back to `value` — changing the observable DOM.
+  // `??` preserves "" because "" is neither null nor undefined. This
+  // test fails loudly if someone "simplifies" the operator.
+  const html = await runFixture(`
+    ${renderHeader(componentSpec)}
+    const tree = React.createElement(LengthPicker, {
+      options: [{ value: 'core', label: '' }],
+      selectedValue: 'core',
+      onChange: () => {},
+    });
+    console.log(renderToStaticMarkup(tree));
+  `);
+  // Empty <span></span> — not <span>core</span>. renderToStaticMarkup
+  // serialises an empty child as `<span></span>` rather than the
+  // self-closing `<span/>` form.
+  assert.match(html, /<span><\/span>/);
+  // Crucially: NO <span>core</span> — that would indicate a `||`
+  // regression where "" was treated as falsy and replaced with value.
+  assert.doesNotMatch(html, /<span>core<\/span>/);
+  // value attribute still carries the correct value.
+  assert.match(html, /value="core"/);
 });

@@ -8,7 +8,7 @@ import React from 'react';
  *   - Grammar (`GrammarSetupScene`) for round length — `unit="questions"`.
  *   - Spelling round length (`SpellingSetupScene`) — `unit="words"`.
  *   - Spelling year filter (`SpellingSetupScene`) — no `unit`, bare picker.
- *   - Later: Punctuation round length (valueAttr variant).
+ *   - Later: Punctuation round length (includeDataValue variant).
  *
  * DOM rhythm:
  *   - `.length-control` wrapper is rendered ONLY when `unit` is supplied.
@@ -20,9 +20,13 @@ import React from 'react';
  *     by `.length-slider { transition: transform 260ms }` in app.css.
  *   - Per-option `.length-option` buttons carry optional data-attributes
  *     (`data-action`, `data-pref`, `data-value`) driven by
- *     `actionName` / `prefKey` / `valueAttr` props. Each subject passes
- *     the combination that matches its current attribute footprint so
- *     existing Playwright + Admin Debug Bundle locators do not move.
+ *     `actionName` / `prefKey` / `includeDataValue` props. Each subject
+ *     passes the combination that matches its current attribute
+ *     footprint so existing Playwright + Admin Debug Bundle locators do
+ *     not move. `includeDataValue` gates emission of the `data-value`
+ *     attribute specifically (distinct from the always-emitted `value`
+ *     attribute on the <button>); name is explicit so future readers do
+ *     not confuse it with the `value` prop.
  *
  * `options` accepts two shapes:
  *   - `string[]` — plain values, visible text === serialised value.
@@ -46,7 +50,7 @@ export function LengthPicker({
   className,
   actionName,
   prefKey,
-  valueAttr = false,
+  includeDataValue = false,
 }) {
   const optionList = Array.isArray(options) ? options : [];
   const normalised = optionList.map((entry) => {
@@ -58,6 +62,14 @@ export function LengthPicker({
   });
   const compareValue = selectedValue == null ? '' : String(selectedValue);
   const selectedIndexRaw = normalised.findIndex((entry) => entry.value === compareValue);
+  // Legacy-parity clamp: when `selectedValue` is not in `options` the
+  // slider pins to index 0 (NOT -1). Grammar's `RoundLengthPicker` and
+  // Spelling's inline `LengthPicker` / `YearPicker` all used
+  // `Math.max(0, indexOf(...))` for the `--selected-index` CSS var.
+  // Every characterisation regex in tests/platform-length-picker.test.js
+  // and the Grammar + Spelling surface tests pins `--selected-index:0`
+  // in this edge case; changing to -1 would break every such assertion
+  // and shift the slider visually. Do NOT change to -1.
   const selectedIndex = selectedIndexRaw >= 0 ? selectedIndexRaw : 0;
 
   const pickerClassName = className ? `length-picker ${className}` : 'length-picker';
@@ -89,7 +101,7 @@ export function LengthPicker({
         };
         if (actionName) buttonProps['data-action'] = actionName;
         if (prefKey) buttonProps['data-pref'] = prefKey;
-        if (valueAttr) buttonProps['data-value'] = entry.value;
+        if (includeDataValue) buttonProps['data-value'] = entry.value;
         buttonProps.value = entry.value;
         buttonProps.disabled = disabled;
         buttonProps.key = entry.value;
