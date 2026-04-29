@@ -197,13 +197,21 @@ function buildGeneratedItem({ family, skill, template, templateIndex, seed, vari
   };
 }
 
+/** Current production depth — raise after all P5 gates pass at depth 6. */
+export const PRODUCTION_DEPTH = 4;
+
+/** Maximum audited depth — used for capacity verification only. */
+export const CAPACITY_DEPTH = 8;
+
 export function createPunctuationGeneratedItems({
   manifest = PUNCTUATION_CONTENT_MANIFEST,
   seed = manifest.releaseId || 'punctuation',
   perFamily = 1,
+  depth,
   contextPack = null,
 } = {}) {
-  const limit = Math.max(0, Math.floor(Number(perFamily) || 0));
+  const effectiveDepth = depth != null ? depth : perFamily;
+  const limit = Math.max(0, Math.floor(Number(effectiveDepth) || 0));
   if (limit === 0) return [];
   const skills = new Map((Array.isArray(manifest.skills) ? manifest.skills : []).map((skill) => [skill.id, skill]));
   const items = [];
@@ -238,6 +246,7 @@ export function createPunctuationRuntimeManifest({
   manifest = PUNCTUATION_CONTENT_MANIFEST,
   seed = manifest.releaseId || 'punctuation',
   generatedPerFamily = 1,
+  depth,
   contextPack = null,
   allowContextPacks = false,
 } = {}) {
@@ -250,6 +259,7 @@ export function createPunctuationRuntimeManifest({
     manifest,
     seed,
     perFamily: generatedPerFamily,
+    depth,
     contextPack,
   });
   if (!generatedItems.length) return manifest;
