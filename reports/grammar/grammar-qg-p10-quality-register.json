@@ -1,0 +1,4535 @@
+{
+  "metadata": {
+    "contentReleaseId": "grammar-qg-p10-2026-04-29",
+    "generatedAt": "2026-04-29T23:40:48.410Z",
+    "templateCount": 78,
+    "approved": 78,
+    "blocked": 0
+  },
+  "entries": [
+    {
+      "templateId": "sentence_type_table",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        }
+      ]
+    },
+    {
+      "templateId": "question_mark_select",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        }
+      ]
+    },
+    {
+      "templateId": "word_class_underlined_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "identify_words_in_sentence",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        }
+      ]
+    },
+    {
+      "templateId": "expanded_noun_phrase_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "build_noun_phrase",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        }
+      ]
+    },
+    {
+      "templateId": "fronted_adverbial_choose",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "subordinate_clause_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "relative_clause_identify",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "relative_clause_complete",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "tense_form_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "tense_rewrite",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "standard_english_pairs",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        }
+      ]
+    },
+    {
+      "templateId": "pronoun_cohesion_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "formality_pairs",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        }
+      ]
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "subject_object_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "modal_verb_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "parenthesis_replace_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "apostrophe_possession_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "explain_reason_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        }
+      ]
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc_semicolon_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc_hyphen_ambiguity_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc_apostrophe_possession_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_standard_english_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_tense_aspect_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_modal_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_formality_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_subject_object_identify",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        }
+      ]
+    },
+    {
+      "templateId": "proc2_boundary_punctuation_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc3_sentence_function_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc3_word_class_contrast_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "structural check only (no golden derivable)"
+        }
+      ]
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_pronoun_referent_identify",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_modal_verb_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_hyphen_ambiguity_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_sentence_functions_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_word_classes_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_noun_phrases_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_clauses_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_relative_clauses_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_tense_aspect_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_pronouns_cohesion_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_formality_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_active_passive_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_subject_object_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_parenthesis_commas_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_speech_punctuation_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p3_apostrophe_possession_explain",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "constructed golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p4_sentence_speech_transfer",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p4_word_class_noun_phrase_transfer",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p4_relative_parenthesis_transfer",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p4_verb_form_register_transfer",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p4_cohesion_formality_transfer",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p4_voice_roles_transfer",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "table structure valid"
+        }
+      ]
+    },
+    {
+      "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+      "decision": "approved",
+      "reviewMethod": "automated-oracle",
+      "seedWindow": "1..10",
+      "evidence": [
+        {
+          "seed": 1,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 2,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 3,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 4,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 5,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 6,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 7,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 8,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 9,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        },
+        {
+          "seed": 10,
+          "outcome": "pass",
+          "detail": "golden marks correct"
+        }
+      ]
+    }
+  ]
+}
