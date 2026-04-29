@@ -38,10 +38,10 @@ function daysAgoIso(days) {
 
 async function queryAccounts(db) {
   const realResult = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts WHERE COALESCE(account_type, 'real') <> 'demo'`
+    `SELECT COUNT(*) as cnt FROM adult_accounts WHERE COALESCE(account_type, 'real') <> 'demo'`
   ).first();
   const demoResult = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts WHERE account_type = 'demo'`
+    `SELECT COUNT(*) as cnt FROM adult_accounts WHERE account_type = 'demo'`
   ).first();
   const real = realResult?.cnt ?? 0;
   const demo = demoResult?.cnt ?? 0;
@@ -50,22 +50,22 @@ async function queryAccounts(db) {
 
 async function queryActivation(db) {
   const day1 = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts
+    `SELECT COUNT(*) as cnt FROM adult_accounts
      WHERE COALESCE(account_type, 'real') <> 'demo'
        AND updated_at >= ?`
-  ).bind(daysAgoIso(1)).first();
+  ).bind(daysAgoMs(1)).first();
 
   const day7 = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts
+    `SELECT COUNT(*) as cnt FROM adult_accounts
      WHERE COALESCE(account_type, 'real') <> 'demo'
        AND updated_at >= ?`
-  ).bind(daysAgoIso(7)).first();
+  ).bind(daysAgoMs(7)).first();
 
   const day30 = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts
+    `SELECT COUNT(*) as cnt FROM adult_accounts
      WHERE COALESCE(account_type, 'real') <> 'demo'
        AND updated_at >= ?`
-  ).bind(daysAgoIso(30)).first();
+  ).bind(daysAgoMs(30)).first();
 
   return {
     day1: day1?.cnt ?? 0,
@@ -76,24 +76,24 @@ async function queryActivation(db) {
 
 async function queryRetention(db) {
   const newThisWeek = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts
+    `SELECT COUNT(*) as cnt FROM adult_accounts
      WHERE COALESCE(account_type, 'real') <> 'demo'
        AND created_at >= ?`
-  ).bind(daysAgoIso(7)).first();
+  ).bind(daysAgoMs(7)).first();
 
   const returnedIn7d = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts
+    `SELECT COUNT(*) as cnt FROM adult_accounts
      WHERE COALESCE(account_type, 'real') <> 'demo'
        AND updated_at >= ?
        AND created_at < ?`
-  ).bind(daysAgoIso(7), daysAgoIso(7)).first();
+  ).bind(daysAgoMs(7), daysAgoMs(7)).first();
 
   const returnedIn30d = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts
+    `SELECT COUNT(*) as cnt FROM adult_accounts
      WHERE COALESCE(account_type, 'real') <> 'demo'
        AND updated_at >= ?
        AND created_at < ?`
-  ).bind(daysAgoIso(30), daysAgoIso(30)).first();
+  ).bind(daysAgoMs(30), daysAgoMs(30)).first();
 
   return {
     newThisWeek: newThisWeek?.cnt ?? 0,
@@ -104,17 +104,17 @@ async function queryRetention(db) {
 
 async function queryConversion(db) {
   const demoStarts = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts
+    `SELECT COUNT(*) as cnt FROM adult_accounts
      WHERE account_type = 'demo'
        AND created_at >= ?`
-  ).bind(daysAgoIso(30)).first();
+  ).bind(daysAgoMs(30)).first();
 
   const resets = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM accounts
+    `SELECT COUNT(*) as cnt FROM adult_accounts
      WHERE account_type = 'demo'
        AND updated_at >= ?
        AND created_at < updated_at`
-  ).bind(daysAgoIso(30)).first();
+  ).bind(daysAgoMs(30)).first();
 
   // Conversions: real accounts created in last 30d that originated from demo
   // (heuristic: accounts with a demo_converted_at or similar marker).
@@ -123,22 +123,22 @@ async function queryConversion(db) {
   let rate7d = 0;
   let rate30d = 0;
   const metricsRow = await db.prepare(
-    `SELECT value FROM admin_kpi_metrics WHERE metric_key = 'conversion_count_30d'`
+    `SELECT metric_count FROM admin_kpi_metrics WHERE metric_key = 'conversion_count_30d'`
   ).first().catch(() => null);
-  if (metricsRow?.value != null) {
-    conversions = Number(metricsRow.value) || 0;
+  if (metricsRow?.metric_count != null) {
+    conversions = Number(metricsRow.metric_count) || 0;
   }
   const rate7dRow = await db.prepare(
-    `SELECT value FROM admin_kpi_metrics WHERE metric_key = 'conversion_rate_7d'`
+    `SELECT metric_count FROM admin_kpi_metrics WHERE metric_key = 'conversion_rate_7d'`
   ).first().catch(() => null);
-  if (rate7dRow?.value != null) {
-    rate7d = Number(rate7dRow.value) || 0;
+  if (rate7dRow?.metric_count != null) {
+    rate7d = Number(rate7dRow.metric_count) || 0;
   }
   const rate30dRow = await db.prepare(
-    `SELECT value FROM admin_kpi_metrics WHERE metric_key = 'conversion_rate_30d'`
+    `SELECT metric_count FROM admin_kpi_metrics WHERE metric_key = 'conversion_rate_30d'`
   ).first().catch(() => null);
-  if (rate30dRow?.value != null) {
-    rate30d = Number(rate30dRow.value) || 0;
+  if (rate30dRow?.metric_count != null) {
+    rate30d = Number(rate30dRow.metric_count) || 0;
   }
 
   return {
@@ -151,15 +151,12 @@ async function queryConversion(db) {
 }
 
 async function querySubjectEngagement(db) {
-  // Practice sessions per subject in last 7 days (real accounts only).
+  // Practice sessions per subject in last 7 days.
   // Uses practice_sessions table if available.
-  const since = daysAgoIso(7);
+  const since = daysAgoMs(7);
   const results = await db.prepare(
     `SELECT subject_id, COUNT(*) as cnt FROM practice_sessions
-     WHERE created_at >= ?
-       AND account_id IN (
-         SELECT id FROM accounts WHERE COALESCE(account_type, 'real') <> 'demo'
-       )
+     WHERE updated_at >= ?
      GROUP BY subject_id`
   ).bind(since).all().catch(() => ({ results: [] }));
 
@@ -171,13 +168,13 @@ async function querySubjectEngagement(db) {
 }
 
 async function querySupportFriction(db) {
-  const since7d = daysAgoIso(7);
+  const since7d = daysAgoMs(7);
 
   // Accounts with 3+ errors in 7 days
   const repeatedErrors = await db.prepare(
     `SELECT COUNT(*) as cnt FROM (
        SELECT account_id FROM ops_error_events
-       WHERE created_at >= ?
+       WHERE last_seen >= ?
        GROUP BY account_id
        HAVING COUNT(*) >= 3
      )`
@@ -187,7 +184,7 @@ async function querySupportFriction(db) {
   const denials = await db.prepare(
     `SELECT COUNT(*) as cnt FROM (
        SELECT account_id FROM admin_request_denials
-       WHERE created_at >= ?
+       WHERE denied_at >= ?
        GROUP BY account_id
        HAVING COUNT(*) >= 3
      )`

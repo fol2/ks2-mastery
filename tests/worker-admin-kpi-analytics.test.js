@@ -28,9 +28,9 @@ function createMockDb(overrides = {}) {
     // conversion
     'demo_starts': { cnt: 15 },
     'demo_resets': { cnt: 3 },
-    'conversion_count_30d': { value: '8' },
-    'conversion_rate_7d': { value: '12.5' },
-    'conversion_rate_30d': { value: '10.2' },
+    'conversion_count_30d': { metric_count: '8' },
+    'conversion_rate_7d': { metric_count: '12.5' },
+    'conversion_rate_30d': { metric_count: '10.2' },
     // subject engagement
     'subject_engagement': [
       { subject_id: 'spelling', cnt: 120 },
@@ -97,13 +97,13 @@ function createMockDb(overrides = {}) {
     }
     // Admin KPI metrics
     if (sql.includes('admin_kpi_metrics') && sql.includes('conversion_count_30d')) {
-      return defaultResults.conversion_count_30d;
+      return defaultResults['conversion_count_30d'];
     }
     if (sql.includes('admin_kpi_metrics') && sql.includes('conversion_rate_7d')) {
-      return defaultResults.conversion_rate_7d;
+      return defaultResults['conversion_rate_7d'];
     }
     if (sql.includes('admin_kpi_metrics') && sql.includes('conversion_rate_30d')) {
-      return defaultResults.conversion_rate_30d;
+      return defaultResults['conversion_rate_30d'];
     }
     // Support friction
     if (sql.includes('ops_error_events')) {
@@ -310,7 +310,7 @@ describe('getBusinessKpis real/demo split', () => {
         queries.push(sql);
         return {
           bind() { return this; },
-          async first() { return { cnt: 0, value: '0' }; },
+          async first() { return { cnt: 0, metric_count: '0' }; },
           async all() { return { results: [] }; },
         };
       },
