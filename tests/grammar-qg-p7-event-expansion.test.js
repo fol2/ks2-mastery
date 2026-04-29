@@ -117,6 +117,41 @@ describe('P7 U2: Event Expansion — expandEvent', () => {
   });
 });
 
+describe('P7 U2: Event Expansion — expanded row shape (health-report consumer contract)', () => {
+  it('expanded row includes all fields the health-report consumer needs', () => {
+    const event = buildEvent({
+      conceptIds: ['concept_modal_verb'],
+      tags: ['mixed-transfer'],
+      mode: 'smart',
+      correct: true,
+      score: 1,
+      maxScore: 1,
+      wasRetry: false,
+      firstAttemptIndependent: true,
+      supportUsed: null,
+    });
+    const rows = expandEvent(event);
+    assert.equal(rows.length, 1);
+    const row = rows[0];
+
+    // Required fields and their types
+    assert.equal(typeof row.templateId, 'string', 'templateId must be a string');
+    assert.equal(typeof row.conceptId, 'string', 'conceptId must be a string');
+    assert.ok(
+      typeof row.timestamp === 'string' || typeof row.createdAt === 'number',
+      'Must have timestamp (string) or createdAt (number)',
+    );
+    assert.equal(typeof row.correct, 'boolean', 'correct must be a boolean');
+    assert.ok(Array.isArray(row.tags), 'tags must be an array');
+    assert.equal(typeof row.mode, 'string', 'mode must be a string');
+    assert.equal(typeof row.score, 'number', 'score must be a number');
+    assert.equal(typeof row.maxScore, 'number', 'maxScore must be a number');
+    assert.equal(typeof row.wasRetry, 'boolean', 'wasRetry must be a boolean');
+    assert.equal(typeof row.firstAttemptIndependent, 'boolean', 'firstAttemptIndependent must be a boolean');
+    assert.ok(row.supportUsed === null || typeof row.supportUsed === 'string', 'supportUsed must be null or string');
+  });
+});
+
 describe('P7 U2: Event Expansion — expandEvents (batch)', () => {
   it('malformed (no templateId) -> skipped', () => {
     const events = [

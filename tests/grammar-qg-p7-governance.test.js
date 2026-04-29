@@ -88,6 +88,24 @@ describe('P7 Governance: validateReleaseFrontmatter placeholder rejection', () =
     const result = validateReleaseFrontmatter(report);
     assert.equal(result.valid, true, `Expected valid but got errors: ${JSON.stringify(result.errors)}`);
   });
+
+  it('rejects placeholder "pending" inside implementation_prs array', () => {
+    const report = buildReport({ implementation_prs: ['pending'] });
+    const result = validateReleaseFrontmatter(report);
+    assert.equal(result.valid, false);
+    const err = result.errors.find((e) => e.field === 'implementation_prs');
+    assert.ok(err, 'Should have error for implementation_prs placeholder item');
+    assert.match(err.message, /placeholder/i);
+  });
+
+  it('rejects placeholder "tbd" inside post_merge_fix_commits array', () => {
+    const report = buildReport({ post_merge_fix_commits: ['tbd'] });
+    const result = validateReleaseFrontmatter(report);
+    assert.equal(result.valid, false);
+    const err = result.errors.find((e) => e.field === 'post_merge_fix_commits');
+    assert.ok(err, 'Should have error for post_merge_fix_commits placeholder item');
+    assert.match(err.message, /placeholder/i);
+  });
 });
 
 describe('P7 Governance: smoke evidence path canonical format', () => {

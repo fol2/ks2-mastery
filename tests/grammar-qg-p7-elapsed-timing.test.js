@@ -194,4 +194,7 @@ describe('P7 U1: bucketElapsedMs unit tests', () => {
   it('19999 -> "10-20s"', () => assert.equal(bucketElapsedMs(19999), '10-20s'));
   it('20000 -> ">20s"', () => assert.equal(bucketElapsedMs(20000), '>20s'));
   it('100000 -> ">20s"', () => assert.equal(bucketElapsedMs(100000), '>20s'));
+  it('180000 -> ">20s" (boundary valid side)', () => assert.equal(bucketElapsedMs(180000), '>20s'));
+  it('NaN -> null (direct caller guard)', () => assert.equal(bucketElapsedMs(NaN), null));
+  it('Infinity -> null (direct caller guard)', () => assert.equal(bucketElapsedMs(Infinity), null));
 });

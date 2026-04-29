@@ -62,6 +62,7 @@ const GOAL_TYPES = new Set(['questions', 'timed', 'due']);
 // P6 calibration telemetry — bucket raw elapsed time into coarse bands.
 export function bucketElapsedMs(ms) {
   if (ms == null || ms < 0) return null;
+  if (!Number.isFinite(ms)) return null;
   if (ms < 2000) return '<2s';
   if (ms < 5000) return '2-5s';
   if (ms < 10000) return '5-10s';
