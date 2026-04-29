@@ -101,7 +101,7 @@ function ErrorEventDetailsDrawer({ entry, canViewAccount, onLoadOccurrences }) {
         <dd style={{ wordBreak: 'break-all' }}>{entry.userAgent || '—'}</dd>
 
         <dt className="muted">Occurrences</dt>
-        <dd>×{Number(entry.occurrenceCount) || 1} (timeline aggregated — per-event history deferred)</dd>
+        <dd>×{Number(entry.occurrenceCount) || 1} (per-event occurrence timeline available below)</dd>
 
         <dt className="muted">First seen</dt>
         <dd>{formatTimestamp(entry.firstSeen)}</dd>

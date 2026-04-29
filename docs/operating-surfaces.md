@@ -200,9 +200,45 @@ Auth/role/rate-limit denials are logged via `ctx.waitUntil()` so the log write h
 
 Each error fingerprint carries occurrence-level history in `ops_error_event_occurrences`. Occurrences are bounded per fingerprint and pruned on capture. The timeline shows release/build context, route, auth state, and auto-reopen evidence.
 
+### Evidence schema (P6 — schema version 3)
+
+Capacity evidence payloads follow a versioned schema. Version 3 (P6) introduced:
+
+- **Multi-source aggregation.** Evidence rows from different CI shapes (certification-tier, preflight, dense-history smoke) are aggregated into `reports/capacity/latest-evidence-summary.json` by `scripts/generate-evidence-summary.mjs`. The summary distinguishes certification rows from non-certifying preflights so stale or failing evidence is never laundered.
+- **Provenance fields.** Every evidence JSON carries `reportMeta.commit` (pinned git SHA), `reportMeta.dirtyTreeFlag`, and `reportMeta.thresholdConfigHash` so `verify-capacity-evidence.mjs` can cross-check the evidence against the threshold config that produced it.
+- **Session-manifest metadata.** 60-learner preflight rows include `reportMeta.sessionManifest: true` to denote they used the session-manifest utility (batched demo-session creation) rather than inline demo creation.
+- **Admin Production Evidence panel.** The Admin Overview section reads `latest-evidence-summary.json` and surfaces the most recent per-tier decision, including failed and setup-blocked entries, with no optimistic interpretation.
+
+### Content Quality Signals panel (P6)
+
+`GET /api/admin/ops/content-quality-signals` returns per-subject quality indicators surfaced in the Content section as the "Learning Quality Signals" panel (`ContentQualitySignalsPanel`). Each subject card shows:
+
+- **Skill coverage** — percentage of curriculum skills with at least one active template.
+- **Template coverage** — total distinct templates deployed versus registered skills.
+- **High-wrong-rate detection** — items exceeding the wrong-rate threshold, with a drilldown list when the subject engine provides durable evidence.
+- **Availability status** — per-signal availability (`all`, `some`, `none`) so the operator sees exactly which signals have backing data.
+
+The panel is read-only. Signals are computed server-side from durable content state — no client-side heuristics or approximations. A per-section error boundary ensures that a failure in the quality-signals endpoint does not collapse other Content panels.
+
+### Generic asset routes (P6)
+
+P6 introduced generic CAS (compare-and-swap) asset routes that replace asset-specific endpoints with a uniform pattern:
+
+- `PUT /api/admin/assets/:assetId/draft` — save a draft with `expectedDraftRevision` for conflict detection.
+- `POST /api/admin/assets/:assetId/publish` — publish the current draft (requires matching draft revision).
+- `POST /api/admin/assets/:assetId/restore` — restore a previous published version into draft (requires matching published version).
+
+Currently registered asset handlers: `monster-visual-config`. Additional asset types register by adding entries to the `ASSET_HANDLERS` map in the Worker router. The legacy `/api/admin/monster-visual-config/draft|publish|restore` routes are retained as backward-compatible aliases delegating to the same repository methods.
+
+All generic asset routes require:
+
+- Platform role `admin` (ops cannot mutate assets).
+- Same-origin verification (CSRF protection).
+- Mutation capability (not `payment_hold` or `suspended`).
+
 ### Permission rules
 
-- KPI / activity / error-log / denial-log / occurrence / content-overview read: admin + ops.
+- KPI / activity / error-log / denial-log / occurrence / content-overview / content-quality-signals / production-evidence read: admin + ops.
 - Debug Bundle generation: admin + ops (with role-based redaction).
 - Account search: admin + ops (ops sees masked email/ID).
 - Account detail: admin + ops (ops sees masked email, no internal notes, no denial account linkage).
@@ -211,6 +247,8 @@ Each error fingerprint carries occurrence-level history in `ops_error_event_occu
 - Error-event status transition: admin only.
 - Marketing message mutations: admin only.
 - Marketing message view: admin + ops.
+- Generic asset mutations (draft/publish/restore): admin only.
+- KPI reconciliation: admin only.
 
 ## Local reference build versus Worker API
 
@@ -242,10 +280,29 @@ The Worker now exposes:
 - `GET /api/hubs/parent?learnerId=...`
 - `GET /api/hubs/admin?learnerId=...&requestId=...&auditLimit=...`
 - `GET /api/admin/accounts`
+- `GET /api/admin/accounts/search`
 - `PUT /api/admin/accounts/role`
-- `PUT /api/admin/monster-visual-config/draft`
-- `POST /api/admin/monster-visual-config/publish`
-- `POST /api/admin/monster-visual-config/restore`
+- `PUT /api/admin/monster-visual-config/draft` (legacy alias)
+- `POST /api/admin/monster-visual-config/publish` (legacy alias)
+- `POST /api/admin/monster-visual-config/restore` (legacy alias)
+- `PUT /api/admin/assets/:assetId/draft` (generic asset CAS draft)
+- `POST /api/admin/assets/:assetId/publish` (generic asset CAS publish)
+- `POST /api/admin/assets/:assetId/restore` (generic asset CAS restore)
+- `GET /api/admin/ops/kpi`
+- `GET /api/admin/ops/activity`
+- `GET /api/admin/ops/error-events`
+- `GET /api/admin/ops/request-denials`
+- `GET /api/admin/ops/accounts-metadata`
+- `GET /api/admin/ops/content-overview`
+- `GET /api/admin/ops/content-quality-signals`
+- `GET /api/admin/ops/production-evidence`
+- `POST /api/admin/ops/reconcile-kpis`
+- `GET /api/admin/debug-bundle`
+- `POST /api/admin/spelling/seed-post-mega`
+- `GET /api/admin/marketing/messages`
+- `POST /api/admin/marketing/messages`
+- `POST /api/ops/error-event` (public, unauthenticated)
+- `GET /api/ops/active-messages` (authenticated, any role)
 
 What is real there:
 
