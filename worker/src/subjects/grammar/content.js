@@ -7643,8 +7643,10 @@ function buildPromptParts(plainPrompt, cueType, targetWord, targetSentence) {
   // P10 U2: Determine instruction-only text. If the plainPrompt already contains
   // the target sentence inline (from stripped HTML), extract just the instruction
   // portion to avoid duplicating the sentence content in promptParts.
+  // Guard: only strip if targetSentence is long enough to be a real sentence
+  // (short values like "object" from a wrong <strong> pick must not trigger dedup).
   let instructionText = plainPrompt;
-  if (targetSentence && plainPrompt.includes(targetSentence)) {
+  if (targetSentence && targetSentence.length > 15 && plainPrompt.includes(targetSentence)) {
     // Remove the sentence content from the instruction text
     const idx = plainPrompt.indexOf(targetSentence);
     instructionText = cleanSpaces(plainPrompt.slice(0, idx));
@@ -7678,7 +7680,8 @@ function buildPromptParts(plainPrompt, cueType, targetWord, targetSentence) {
     }
   } else if (cueType === 'target-sentence' && targetSentence) {
     parts.push({ kind: 'text', text: instructionText });
-    if (!plainPrompt.includes(targetSentence)) {
+    if (instructionText !== plainPrompt) {
+      // We DID strip the sentence from instructionText — add it back as structured part
       parts.push({ kind: 'lineBreak', text: '' });
       parts.push({ kind: 'sentence', text: targetSentence });
     }
@@ -7700,7 +7703,11 @@ function enrichPromptCue(question) {
 
   const plainPrompt = stripLegacyHtml(question.stemHtml);
   const cueType = detectCueType(plainPrompt);
-  if (!cueType) return question;
+  if (!cueType) {
+    // Clean up internal-only field even on early return — do not leak to serialised output
+    delete question.focusTarget;
+    return question;
+  }
 
   const underlinedWord = extractUnderlinedWord(question.stemHtml);
   const boldSentence = extractBoldSentence(question.stemHtml);

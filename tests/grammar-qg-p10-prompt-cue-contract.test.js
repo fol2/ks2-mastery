@@ -204,3 +204,55 @@ describe('P10 U2: focusCue.text is not a whole sentence', () => {
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// 8. REGRESSION: target-sentence templates must include sentence in promptParts
+// ---------------------------------------------------------------------------
+
+describe('P10 U2 REGRESSION: target-sentence cue produces visible sentence part', () => {
+  it('subordinate_clause_choice seed 1: promptParts contains a sentence part with actual text', () => {
+    const q = generateQuestion('subordinate_clause_choice', 1);
+    assert.ok(q, 'question must be generated');
+    assert.ok(q.promptParts, 'promptParts must be present');
+    const sentencePart = q.promptParts.find(p => p.kind === 'sentence');
+    assert.ok(
+      sentencePart,
+      `promptParts must contain a {kind:'sentence'} part — sentence must be VISIBLE to learner. Got kinds: ${q.promptParts.map(p => p.kind).join(', ')}`
+    );
+    assert.ok(
+      sentencePart.text && sentencePart.text.length > 10,
+      `sentence part text must be substantial (got "${sentencePart.text}")`
+    );
+  });
+
+  it('subject_object_choice seed 1: promptParts text contains the full instruction (not mangled)', () => {
+    const q = generateQuestion('subject_object_choice', 1);
+    assert.ok(q, 'question must be generated');
+    assert.ok(q.promptParts, 'promptParts must be present');
+    const textPart = q.promptParts.find(p => p.kind === 'text');
+    assert.ok(textPart, 'promptParts must contain a text part with instruction');
+    // The instruction must not be empty or trivially short (indicating wrong dedup)
+    assert.ok(
+      textPart.text.length > 5,
+      `instruction text part must not be mangled/empty (got "${textPart.text}")`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9. REGRESSION: focusTarget must NOT leak to serialised output (any template)
+// ---------------------------------------------------------------------------
+
+describe('P10 U2 REGRESSION: focusTarget never present on serialised output', () => {
+  for (const template of GRAMMAR_TEMPLATE_METADATA) {
+    it(`${template.id}: focusTarget must not be present`, () => {
+      const q = createGrammarQuestion({ templateId: template.id, seed: 1 });
+      if (!q) return; // Some templates may not generate for certain seeds
+      assert.strictEqual(
+        q.focusTarget,
+        undefined,
+        `focusTarget must be deleted before returning — found "${q.focusTarget}" on ${template.id}`
+      );
+    });
+  }
+});
