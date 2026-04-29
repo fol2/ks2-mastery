@@ -183,7 +183,7 @@ const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
 
 // Patterns for PARENT_SAFE and below:
 const RE_LRN_ID = /lrn_[A-Za-z0-9_-]{3,}/g;
-const RE_STACK_TRACE = /^[^\n]*\n?\s+at\s.+$/gm;
+const RE_STACK_TRACE = /^\s+at\s+\S+.*[()]/gm;
 const RE_INTERNAL_ROUTE = /\/api\/(?:admin|internal)\/[^\s'")]+/g;
 const RE_INTERNAL_TABLE = /d1\.[a-z_]+/g;
 

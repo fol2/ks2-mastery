@@ -3135,6 +3135,20 @@ function handleGlobalAction(action, data) {
     return true;
   }
 
+  if (action === 'asset-publish') {
+    if (data?.assetId === 'monster-visual-config') {
+      publishMonsterVisualConfig(data);
+    }
+    return true;
+  }
+
+  if (action === 'asset-restore') {
+    if (data?.assetId === 'monster-visual-config') {
+      restoreMonsterVisualConfigVersion(data);
+    }
+    return true;
+  }
+
   // PR #188 H1: each per-panel Refresh button now issues a narrow GET and
   // patches only its sibling field on the local adminHub model. This honours
   // R18 (dedicated per-panel GETs) and fixes the visible bug where clicking
