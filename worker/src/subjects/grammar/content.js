@@ -1193,14 +1193,14 @@ const SPEECH_FIX_ITEMS = [
   },
   {
     prompt: "Punctuate the direct speech correctly.",
-    raw: "“Sit down!” said the coach.",
+    raw: "“Sit down” said the coach.",
     accepted: [
       "“Sit down!” said the coach.",
       "\"Sit down!\" said the coach."
     ],
     solution: [
-      "The spoken words already end with an exclamation mark.",
-      "That punctuation stays inside the speech marks.",
+      "An exclamation mark is needed inside the speech marks to show the command.",
+      "No comma is needed after the speech marks because the speech ends with an exclamation mark.",
       "A correct answer is: “Sit down!” said the coach."
     ]
   }
@@ -7960,7 +7960,7 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p6-2026-04-29';
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p8-2026-04-29';
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);

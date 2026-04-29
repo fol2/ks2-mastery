@@ -15,8 +15,8 @@ test('content-quality audit returns expected structure', () => {
   assert.ok(audit.summary.totalTemplatesChecked > 0, 'at least one template was checked');
 });
 
-test('current grammar content produces zero hard failures (seeds 1-10)', () => {
-  const seeds = Array.from({ length: 10 }, (_, i) => i + 1);
+test('current grammar content produces zero hard failures (seeds 1-30)', () => {
+  const seeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarContentQualityAudit(seeds);
   assert.equal(
     audit.summary.hardFailCount,
