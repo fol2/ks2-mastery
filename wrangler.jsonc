@@ -48,6 +48,11 @@
     "HERO_MODE_PROGRESS_ENABLED": "false",
     "HERO_MODE_ECONOMY_ENABLED": "false",
     "HERO_MODE_CAMP_ENABLED": "false"
+    // Secret: HERO_INTERNAL_ACCOUNTS — JSON array of account IDs for Ring 4
+    // internal production override. Listed accounts get all 6 Hero flags
+    // force-enabled regardless of the vars above. Set via:
+    //   npx wrangler secret put HERO_INTERNAL_ACCOUNTS
+    // Value: '["account-id-1","account-id-2"]'
   },
   "d1_databases": [
     {
