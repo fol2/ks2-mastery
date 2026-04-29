@@ -44,3 +44,4 @@ reports/capacity/*
 tests/journeys/artefacts/
 tests/journeys/artifacts/
 tests/journeys/*.log
+docs/export-chats/
