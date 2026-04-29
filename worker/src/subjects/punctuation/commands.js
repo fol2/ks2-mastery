@@ -207,7 +207,7 @@ function deriveTelemetryEvents({ state, command, previousState, starEvidenceEven
     const feedback = state.feedback;
     const prevSession = previousState?.session;
     const prevReason = prevSession?.selectionReason;
-    if (feedback?.correct === true && prevReason === 'misconception-retry') {
+    if (feedback?.kind === 'success' && prevReason === 'misconception-retry') {
       events.push({
         type: PUNCTUATION_TELEMETRY_EVENTS.MISCONCEPTION_RETRY_PASSED,
         skillId: prevSession?.currentItem?.skillIds?.[0] || '',
@@ -215,14 +215,14 @@ function deriveTelemetryEvents({ state, command, previousState, starEvidenceEven
         variantSignature: prevSession?.currentItem?.variantSignature || '',
       });
     }
-    if (feedback?.correct === true && prevReason === 'spaced-return') {
+    if (feedback?.kind === 'success' && prevReason === 'spaced-return') {
       events.push({
         type: PUNCTUATION_TELEMETRY_EVENTS.SPACED_RETURN_PASSED,
         skillId: prevSession?.currentItem?.skillIds?.[0] || '',
         clusterId: prevSession?.currentItem?.clusterId || '',
       });
     }
-    if (feedback?.correct === true && prevReason === 'retention-after-secure') {
+    if (feedback?.kind === 'success' && prevReason === 'retention-after-secure') {
       events.push({
         type: PUNCTUATION_TELEMETRY_EVENTS.RETENTION_AFTER_SECURE_PASSED,
         skillId: prevSession?.currentItem?.skillIds?.[0] || '',
@@ -231,14 +231,14 @@ function deriveTelemetryEvents({ state, command, previousState, starEvidenceEven
     }
   }
 
-  // Star evidence dedup: if star evidence events were suppressed due to
-  // signature dedup (same signature already recorded a star bump).
-  // We detect this by checking if the item's signature already appears in
-  // a previous star evidence event for the same monster.
-  if (starEvidenceEvents && starEvidenceEvents.length === 0 && session.phase === 'active-item') {
-    // If we expected star evidence but got none due to dedup, the signature was reused
+  // Star evidence dedup: after a correct submit-answer, if the same
+  // variantSignature was already used for a correct attempt earlier in
+  // this session, the star projection will dedup it. Emit a telemetry
+  // event so dashboards can track dedup frequency.
+  if (command.command === 'submit-answer' && feedback?.kind === 'success' && itemSignature) {
     const signatures = Array.isArray(session.selectedSignatures) ? session.selectedSignatures : [];
-    if (itemSignature && signatures.filter((s) => s === itemSignature).length > 1) {
+    const priorCorrectSameSignature = signatures.filter((s) => s === itemSignature).length > 1;
+    if (priorCorrectSameSignature) {
       events.push({
         type: PUNCTUATION_TELEMETRY_EVENTS.STAR_EVIDENCE_DEDUPED_BY_SIGNATURE,
         variantSignature: itemSignature,

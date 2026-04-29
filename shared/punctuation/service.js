@@ -366,6 +366,8 @@ function normaliseSession(value) {
     gps: mode === 'gps' ? normaliseGpsSession(value.gps) : null,
     heroContext: isPlainObject(value.heroContext) ? cloneSerialisable(value.heroContext) : null,
     serverAuthority: value.serverAuthority === SERVER_AUTHORITY ? SERVER_AUTHORITY : null,
+    selectionReason: typeof value.selectionReason === 'string' ? value.selectionReason : '',
+    selectedSignatures: normaliseStringArray(value.selectedSignatures).slice(-20),
   };
 }
 
