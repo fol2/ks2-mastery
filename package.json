@@ -71,6 +71,7 @@
     "verify:punctuation-qg": "node scripts/verify-punctuation-qg.mjs",
     "verify:punctuation-qg:p5": "node scripts/verify-punctuation-qg-p5.mjs",
     "verify:punctuation-qg:p6": "node scripts/verify-punctuation-qg-p6.mjs",
+    "verify:punctuation-qg:p7": "node scripts/verify-punctuation-qg-p7.mjs",
     "review:punctuation-questions": "node scripts/review-punctuation-questions.mjs"
   },
   "devDependencies": {
