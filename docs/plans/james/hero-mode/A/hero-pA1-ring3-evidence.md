@@ -1,42 +1,18 @@
-# Hero Mode pA1 — Ring 3 Evidence (Staging Multi-Day)
+# Hero Mode pA1 — Ring 3 Evidence
 
-**Date range:** [Day 1 date] to [Day N date]
-**Status:** PENDING
+**Status:** SUPERSEDED BY A2
+**Date:** 2026-04-30
 
-## Daily Observations
+## Summary
 
-### Day 1: [date]
+Ring 3 (staging multi-day observation) is superseded by A2's internal cohort measurement.
 
-| Check | Result | Notes |
-|-------|--------|-------|
-| Quest generated (new dateKey) | — | |
-| Task launched successfully | — | |
-| Claim completed | — | |
-| Daily award (+100 coins) | — | |
-| Balance correct | — | |
-| No duplicate awards | — | |
+**Original scope:** Run staging for 2+ calendar days, verify date key rollover, daily award idempotency, and balance monotonicity across days.
 
-### Day 2: [date]
+**Why superseded:** A2 Ring A2-3 (multi-day observation) provides the same evidence under production conditions with real accounts. The A2 cohort runs for 5+ calendar days with 2+ date key rollovers, which exceeds the original Ring 3 scope. Production conditions expose issues that staging alone cannot surface (real D1 latency, real Worker CPU time, real concurrent access patterns).
 
-| Check | Result | Notes |
-|-------|--------|-------|
-| New dateKey generated | — | |
-| Previous day stable | — | |
-| New quest independent | — | |
-| Award idempotent (Day 1 refresh) | — | |
-| CAS revision incremented | — | |
-| Camp monster still owned | — | |
-
-## Multi-Day Invariants
-
-- [ ] Balance monotonically non-decreasing across days
-- [ ] Zero duplicate awards across all days
-- [ ] Date keys are distinct per calendar day
-- [ ] Europe/London timezone rollover correct
-- [ ] Camp spend idempotent (repeated invite = safe replay)
-- [ ] Scheduler output explainable for each day
-
-## Ring 3 Verdict
-
-**Verdict:** [PASS / FAIL / HOLD]
-**Assessed by:** [name]
+**A2 equivalents:**
+- Internal cohort observation: Ring A2-3 (5+ days)
+- Date key rollover verification: cohort smoke script (PR #674)
+- Economy integrity: certification manifest (PR #672) tracks balance monotonicity
+- Idempotency verification: ops probe (PR #662) detects reconciliation gaps

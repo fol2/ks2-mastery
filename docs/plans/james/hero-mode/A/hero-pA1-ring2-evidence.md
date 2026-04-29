@@ -1,53 +1,17 @@
-# Hero Mode pA1 — Ring 2 Evidence (Staging Seeded)
+# Hero Mode pA1 — Ring 2 Evidence
 
-**Date:** [TBD — fill when staging run completes]
-**Status:** PENDING
+**Status:** SUPERSEDED BY A2
+**Date:** 2026-04-30
 
-## Deployment
+## Summary
 
-- Staging URL: [fill]
-- Branch deployed: [fill]
-- Flags enabled: all 6
+Ring 2 (staging seeded validation) is superseded by A2's expanded operational evidence.
 
-## Smoke Script Results
+**Original scope:** Deploy to staging, run `scripts/hero-pA1-staging-smoke.mjs`, verify telemetry probe returns events.
 
-| Step | Result | Notes |
-|------|--------|-------|
-| Read model health | — | |
-| Flag state verification | — | |
-| Telemetry probe | — | |
-| Command route reachability | — | |
+**Why superseded:** A2 PR #662 expanded the telemetry probe with readiness checks, health indicators, reconciliation gap detection, and override status. This provides richer operational evidence than the original Ring 2 smoke script alone. A2's internal cohort (Ring A2-2 + A2-3) exercises the same infrastructure under real production conditions.
 
-## Playwright Journey Results
-
-| Journey | Result | Screenshots |
-|---------|--------|-------------|
-| hero-pA1-full-path | — | |
-| hero-pA1-rollback-safety | — | |
-
-## Telemetry Verification
-
-| Metric family | Events observed | Privacy check |
-|---------------|----------------|---------------|
-| Learning health | — | Pass/Fail |
-| Engagement | — | Pass/Fail |
-| Economy/Camp | — | Pass/Fail |
-| Technical safety | — | Pass/Fail |
-
-## Observation Window (30 minutes)
-
-- Start time: [fill]
-- End time: [fill]
-- 500 errors observed: [fill]
-- Worker log anomalies: [fill]
-
-## Ring 2 Verdict
-
-- [ ] All smoke steps pass
-- [ ] Playwright journeys pass (or SKIP with documented reason)
-- [ ] Telemetry probe returns events for all 4 families
-- [ ] No privacy fields in telemetry
-- [ ] Zero 500s in observation window
-
-**Verdict:** [PASS / FAIL / HOLD]
-**Assessed by:** [name]
+**A2 equivalents:**
+- Ops probe expansion: PR #662
+- Recursive privacy: PR #660
+- Cohort smoke script: PR #674
