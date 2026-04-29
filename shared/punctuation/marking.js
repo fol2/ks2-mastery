@@ -187,8 +187,35 @@ function quotedWordsStartWithCapital(text) {
   return /^[A-Z]/.test(normaliseAnswerText(text));
 }
 
-function reportingCommaOk(text, pair, rubric) {
-  if (rubric?.reportingPosition === 'after' || rubric?.reportingPosition === 'any') return true;
+/**
+ * Detect whether the answer has reporting-before or reporting-after shape.
+ * - 'reporting-before': meaningful words appear before the opening quote
+ * - 'reporting-after': no words before quote, meaningful words after closing quote
+ * - 'speech-only': no reporting clause detected on either side
+ */
+function detectReportingShape(text, pair) {
+  const before = beforeOpeningQuote(text, pair);
+  const after = afterClosingQuote(text, pair);
+  const hasWordsBefore = /[a-zA-Z]{2,}/.test(before);
+  const hasWordsAfter = /[a-zA-Z]{2,}/.test(after);
+  if (hasWordsBefore) return 'reporting-before';
+  if (hasWordsAfter) return 'reporting-after';
+  return 'speech-only';
+}
+
+function reportingCommaOk(text, pair, rubric, detectedShape) {
+  const shape = detectedShape || detectReportingShape(text, pair);
+  // Reporting-after: comma before opening quote is not required
+  if (shape === 'reporting-after') return true;
+  // Speech-only: no reporting clause, comma not applicable
+  if (shape === 'speech-only') return true;
+  // Reporting-before: always require a comma before the opening quote
+  if (shape === 'reporting-before') {
+    const before = beforeOpeningQuote(text, pair);
+    return /,\s*$/.test(before);
+  }
+  // Explicit position 'after' with no shape detection fallback
+  if (rubric?.reportingPosition === 'after') return true;
   const before = beforeOpeningQuote(text, pair);
   if (!before) return true;
   return /,\s*$/.test(before);
@@ -623,14 +650,22 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
   const quoteOk = true;
   const requiredTerminal = typeof rubric.requiredTerminal === 'string' ? rubric.requiredTerminal : null;
   const speechOk = speechPunctuationOk(quoted, requiredTerminal);
-  const reportingOk = reportingCommaOk(text, quote.pair, rubric);
+  const shape = detectReportingShape(text, quote.pair);
+  const reportingOk = reportingCommaOk(text, quote.pair, rubric, shape);
   const positionAllowsAfter = rubric?.reportingPosition === 'after' || rubric?.reportingPosition === 'any';
-  const sentenceCapitalOk = positionAllowsAfter
+  const sentenceCapitalOk = (positionAllowsAfter && shape === 'reporting-after')
     ? sentenceStartsWithCapital(text) || /^["'"'“‘]/.test(text)
     : sentenceStartsWithCapital(text);
   const capitalOk = sentenceCapitalOk && quotedWordsStartWithCapital(quoted);
   const wordsOk = includesWords(quoted, rubric.spokenWords || rubric.words);
   const unwantedOk = !hasDuplicatedOutsidePunctuation(text, quote.pair);
+
+  // Position constraint: reject shape that contradicts explicit rubric position
+  const positionOk = rubric?.reportingPosition === 'any'
+    || rubric?.reportingPosition == null
+    || shape === 'speech-only'
+    || (rubric.reportingPosition === 'before' && shape === 'reporting-before')
+    || (rubric.reportingPosition === 'after' && shape === 'reporting-after');
 
   facets.push(facet('quote_variant', quoteOk));
   facets.push(facet('speech_punctuation', speechOk));
@@ -638,12 +673,14 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
   facets.push(facet('capitalisation', capitalOk));
   facets.push(facet('preservation', wordsOk));
   facets.push(facet('unwanted_punctuation', unwantedOk));
+  facets.push(facet('reporting_position', positionOk));
 
   if (!speechOk) {
     const outside = afterClosingQuote(text, quote.pair);
     tags.push(/^[.?!]/.test(outside) ? 'speech.punctuation_outside_quote' : 'speech.punctuation_missing');
   }
   if (!reportingOk) tags.push('speech.reporting_comma_missing');
+  if (!positionOk) tags.push('speech.wrong_reporting_position');
   if (!capitalOk) tags.push('speech.capitalisation_missing');
   if (!wordsOk) tags.push('speech.words_changed');
   if (!unwantedOk) tags.push('speech.unwanted_punctuation');
