@@ -48,6 +48,7 @@ import { handleHeroReadModel } from './hero/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
+import { probeHeroTelemetry } from './hero/telemetry-probe.js';
 import {
   initialiseDailyProgress,
   markTaskStarted,
@@ -2655,6 +2656,33 @@ export function createWorkerApp({
           const db = requireDatabase(env);
           const kpiResult = await getBusinessKpis(db);
           return json({ ok: true, ...kpiResult });
+        }
+
+        // pA1 U2: Hero telemetry probe — read-only operational verification
+        // for Ring 2–4 operators. Returns last-N hero events from event_log
+        // with privacy re-validation. Admin/ops gated via assertAdminHubActorForBundle.
+        if (url.pathname === '/api/admin/hero/telemetry-probe' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          await repository.assertAdminHubActorForBundle(session.accountId);
+          const heroProbeRateLimit = await consumeRateLimit(env, {
+            bucket: 'admin-ops-mutation',
+            identifier: session.accountId,
+            limit: 60,
+            windowMs: 60_000,
+          });
+          if (!heroProbeRateLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_ops_mutation_rate_limited',
+              retryAfterSeconds: heroProbeRateLimit.retryAfterSeconds,
+              extra: {
+                message: 'Admin-ops reads are rate-limited at 60 per minute per session.',
+              },
+            });
+          }
+          const probeLimit = Number(url.searchParams.get('limit')) || 20;
+          const db = requireDatabase(env);
+          const probeResult = await probeHeroTelemetry({ db, limit: probeLimit });
+          return json({ ok: true, ...probeResult });
         }
 
         // R31: regex dispatch for parameterised admin ops mutations. Placed
