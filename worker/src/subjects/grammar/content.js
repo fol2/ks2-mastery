@@ -7526,7 +7526,7 @@ function markStringAnswer(respText, acceptedList, opts = {}) {
 }
 
 function makeBaseQuestion(template, seed, data) {
-  return Object.assign({
+  const question = Object.assign({
     templateId: template.id,
     templateLabel: template.label,
     domain: template.domain,
@@ -7540,6 +7540,134 @@ function makeBaseQuestion(template, seed, data) {
     checkLine: "",
     contrastHtml: ""
   }, data || {});
+  return enrichPromptCue(question);
+}
+
+// ---------------------------------------------------------------------------
+// Prompt-cue enrichment — P9 U3
+// Adds structured `promptParts`, `focusCue`, `screenReaderPromptText`, and
+// `readAloudText` when the stemHtml contains visual-cue language. The React
+// renderer uses these to show underlines/bold safely without dangerouslySetInnerHTML.
+// ---------------------------------------------------------------------------
+
+const CUE_PATTERNS = [
+  { regex: /\bunderlined\s+word/i, type: 'underline' },
+  { regex: /\bunderlined\s+pair/i, type: 'underline' },
+  { regex: /\bunderlined\s+group/i, type: 'underline' },
+  { regex: /\bunderlined\s+noun\s+phrase/i, type: 'underline' },
+  { regex: /\bin\s+bold\b/i, type: 'bold' },
+  { regex: /\bshown\s+in\s+brackets/i, type: 'quoted-word' },
+  { regex: /\bsentence\s+below/i, type: 'target-sentence' },
+];
+
+function detectCueType(plainPrompt) {
+  for (const { regex, type } of CUE_PATTERNS) {
+    if (regex.test(plainPrompt)) return type;
+  }
+  return null;
+}
+
+function extractUnderlinedWord(stemHtml) {
+  const match = stemHtml.match(/<u>([^<]+)<\/u>/);
+  return match ? match[1] : null;
+}
+
+function extractBoldSentence(stemHtml) {
+  const match = stemHtml.match(/<strong>(.*?)<\/strong>/);
+  if (!match) return null;
+  // Strip inner HTML tags to get the plain sentence
+  return match[1].replace(/<[^>]*>/g, '').trim();
+}
+
+function buildPromptParts(plainPrompt, cueType, targetWord, targetSentence) {
+  const parts = [];
+
+  if (cueType === 'underline' && targetWord) {
+    // Split prompt into text + cue reference, then append sentence
+    parts.push({ kind: 'text', text: plainPrompt });
+    if (targetSentence) {
+      parts.push({ kind: 'lineBreak', text: '' });
+      const sentenceBeforeTarget = targetSentence.split(targetWord);
+      if (sentenceBeforeTarget.length >= 2) {
+        parts.push({ kind: 'sentence', text: sentenceBeforeTarget[0] });
+        parts.push({ kind: 'underline', text: targetWord });
+        parts.push({ kind: 'sentence', text: sentenceBeforeTarget.slice(1).join(targetWord) });
+      } else {
+        parts.push({ kind: 'sentence', text: targetSentence });
+      }
+    }
+  } else if (cueType === 'target-sentence' && targetSentence) {
+    parts.push({ kind: 'text', text: plainPrompt });
+    if (!plainPrompt.includes(targetSentence)) {
+      parts.push({ kind: 'lineBreak', text: '' });
+      parts.push({ kind: 'sentence', text: targetSentence });
+    }
+  } else if (cueType === 'bold' && targetWord) {
+    parts.push({ kind: 'text', text: plainPrompt });
+    if (targetSentence) {
+      parts.push({ kind: 'lineBreak', text: '' });
+      parts.push({ kind: 'emphasis', text: targetSentence });
+    }
+  } else {
+    parts.push({ kind: 'text', text: plainPrompt });
+  }
+
+  return parts;
+}
+
+function enrichPromptCue(question) {
+  if (!question || !question.stemHtml) return question;
+
+  const plainPrompt = stripLegacyHtml(question.stemHtml);
+  const cueType = detectCueType(plainPrompt);
+  if (!cueType) return question;
+
+  const underlinedWord = extractUnderlinedWord(question.stemHtml);
+  const boldSentence = extractBoldSentence(question.stemHtml);
+  const targetWord = underlinedWord || boldSentence || null;
+  const targetSentence = boldSentence || null;
+
+  // Build focusCue
+  if (cueType === 'underline' && underlinedWord) {
+    question.focusCue = { type: 'underline', text: underlinedWord };
+  } else if (cueType === 'bold' && boldSentence) {
+    question.focusCue = { type: 'bold', text: boldSentence };
+  } else if (cueType === 'quoted-word' && targetWord) {
+    question.focusCue = { type: 'quoted-word', text: targetWord };
+  } else if (cueType === 'target-sentence' && targetSentence) {
+    question.focusCue = { type: 'target-sentence', text: targetSentence };
+  }
+
+  // Build promptParts
+  question.promptParts = buildPromptParts(plainPrompt, cueType, targetWord, targetSentence);
+
+  // screenReaderPromptText — mentions the target word clearly
+  if (question.focusCue) {
+    const word = question.focusCue.text;
+    if (cueType === 'underline') {
+      question.screenReaderPromptText = `${plainPrompt} Target word: ${word}`;
+    } else if (cueType === 'bold') {
+      question.screenReaderPromptText = `${plainPrompt} Focus: ${word}`;
+    } else if (cueType === 'target-sentence') {
+      question.screenReaderPromptText = `${plainPrompt} Sentence: ${word}`;
+    } else {
+      question.screenReaderPromptText = `${plainPrompt} Target: ${word}`;
+    }
+  }
+
+  // readAloudText — full spoken form including cue
+  if (question.focusCue) {
+    const word = question.focusCue.text;
+    if (cueType === 'underline') {
+      question.readAloudText = `${plainPrompt} The underlined word is: ${word}.`;
+    } else if (cueType === 'target-sentence') {
+      question.readAloudText = `${plainPrompt} The sentence is: ${word}.`;
+    } else {
+      question.readAloudText = `${plainPrompt} Focus on: ${word}.`;
+    }
+  }
+
+  return question;
 }
 
 function capFirst(text) {
@@ -7960,7 +8088,7 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p8-2026-04-29';
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p9-2026-04-29';
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);
@@ -8019,7 +8147,7 @@ export function evaluateGrammarQuestion(question, response = {}) {
 
 export function serialiseGrammarQuestion(question) {
   if (!question || typeof question !== 'object' || Array.isArray(question)) return null;
-  return {
+  const serialised = {
     contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
     templateId: question.templateId,
     templateLabel: question.templateLabel,
@@ -8043,4 +8171,12 @@ export function serialiseGrammarQuestion(question) {
       questionType: question.questionType,
     },
   };
+
+  // P9 U3: structured prompt cue fields (prompt-level, no answer leaks)
+  if (question.promptParts) serialised.promptParts = question.promptParts;
+  if (question.focusCue) serialised.focusCue = question.focusCue;
+  if (question.screenReaderPromptText) serialised.screenReaderPromptText = question.screenReaderPromptText;
+  if (question.readAloudText) serialised.readAloudText = question.readAloudText;
+
+  return serialised;
 }

@@ -7928,6 +7928,16 @@ textarea:focus-visible {
   letter-spacing: 0;
 }
 
+.grammar-prompt .prompt-underline {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.grammar-prompt .prompt-sentence {
+  font-weight: 600;
+}
+
 .grammar-check-line {
   margin: -4px 0 0;
   color: var(--ink-2);
