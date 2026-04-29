@@ -1,55 +1,58 @@
-// Hero Camp — pure command resolver (P5).
-// Returns mutation intent or typed error. No DB access.
+'use strict';
+
+// ── Hero Camp — pure command resolver (P5) ─────────────────────────
+// Returns mutation intent or typed error. No database access, no React.
+// Imports ONLY from shared/hero/ siblings.
 
 import { computeMonsterInviteIntent, computeMonsterGrowIntent } from '../../../shared/hero/monster-economy.js';
 import { isValidHeroMonsterId, isValidHeroMonsterBranch } from '../../../shared/hero/hero-pool.js';
-import { HERO_POOL_ROSTER_VERSION } from '../../../shared/hero/progress-state.js';
 
-// ── Forbidden fields ────────────────────────────────────────────────
+// ── Forbidden fields — client must NEVER send these ────────────────
 
 export const FORBIDDEN_CAMP_FIELDS = Object.freeze([
   'cost', 'amount', 'balance', 'ledgerEntryId', 'stage', 'owned',
   'payload', 'subjectId', 'shop', 'reward', 'coins', 'economy',
-  'ledger', 'lifetimeSpent', 'lifetimeEarned', 'stageAfter', 'stageBefore',
+  'entryId', 'ledger',
 ]);
 
-// ── Supported commands ──────────────────────────────────────────────
+// ── Supported commands ─────────────────────────────────────────────
 
 const CAMP_COMMANDS = new Set(['unlock-monster', 'evolve-monster']);
 
-// ── Main resolver ───────────────────────────────────────────────────
+// ── Main resolver ──────────────────────────────────────────────────
 
-export function resolveHeroCampCommand({ command, body, heroState, learnerId, nowTs }) {
+/**
+ * Pure camp command resolver — receives pre-loaded state, returns intent.
+ * Does NOT perform DB reads or writes.
+ */
+export function resolveHeroCampCommand({ command, body, heroState, learnerId, rosterVersion, nowTs }) {
   // 1. Validate command
   if (!CAMP_COMMANDS.has(command)) {
-    return { ok: false, code: 'hero_command_unknown', httpStatus: 400 };
+    return { ok: false, code: 'hero_camp_disabled', httpStatus: 400, reason: `Unknown camp command: ${command}` };
   }
 
   // 2. Check for forbidden client fields
   const rejectedFields = FORBIDDEN_CAMP_FIELDS.filter(f => body[f] !== undefined);
   if (rejectedFields.length > 0) {
-    return { ok: false, code: 'hero_client_field_rejected', httpStatus: 400, rejectedFields };
+    return {
+      ok: false,
+      code: 'hero_client_field_rejected',
+      httpStatus: 400,
+      reason: `Client must not send: ${rejectedFields.join(', ')}`,
+    };
   }
 
   // 3. Dispatch to command handler
   if (command === 'unlock-monster') {
-    return resolveUnlockMonster(body, heroState, learnerId, nowTs);
+    return resolveUnlockMonster(body, heroState, learnerId, rosterVersion, nowTs);
   }
-  return resolveEvolveMonster(body, heroState, learnerId, nowTs);
+  return resolveEvolveMonster(body, heroState, learnerId, rosterVersion, nowTs);
 }
 
-// ── unlock-monster ──────────────────────────────────────────────────
+// ── unlock-monster ─────────────────────────────────────────────────
 
-function resolveUnlockMonster(body, heroState, learnerId, nowTs) {
+function resolveUnlockMonster(body, heroState, learnerId, rosterVersion, nowTs) {
   const { monsterId, branch } = body;
-
-  if (!monsterId || !isValidHeroMonsterId(monsterId)) {
-    return { ok: false, code: 'hero_monster_unknown', httpStatus: 400 };
-  }
-
-  if (!branch || !isValidHeroMonsterBranch(branch)) {
-    return { ok: false, code: 'hero_monster_branch_invalid', httpStatus: 400 };
-  }
 
   const result = computeMonsterInviteIntent({
     economyState: heroState.economy,
@@ -57,7 +60,7 @@ function resolveUnlockMonster(body, heroState, learnerId, nowTs) {
     monsterId,
     branch,
     learnerId,
-    rosterVersion: HERO_POOL_ROSTER_VERSION,
+    rosterVersion,
     nowTs,
   });
 
@@ -66,36 +69,50 @@ function resolveUnlockMonster(body, heroState, learnerId, nowTs) {
       ok: false,
       code: result.code,
       httpStatus: result.code === 'hero_insufficient_coins' ? 409 : 400,
+      reason: result.reason,
     };
   }
 
   if (result.status === 'already-owned') {
     return {
       ok: true,
-      status: 'already-owned',
-      httpStatus: 200,
-      response: buildAlreadyOwnedResponse(learnerId, monsterId, heroState.heroPool),
+      heroCampAction: {
+        version: 1,
+        status: 'already-owned',
+        learnerId,
+        monsterId,
+        branch: heroState.heroPool.monsters[monsterId]?.branch || null,
+        cost: 0,
+        coinsUsed: 0,
+        coinBalance: null,
+        ledgerEntryId: null,
+      },
     };
   }
 
   // status === 'invited'
+  const intent = result.intent;
   return {
     ok: true,
-    status: 'invited',
-    httpStatus: 200,
-    intent: result.intent,
-    response: buildInviteResponse(result, learnerId, monsterId, branch),
+    intent,
+    heroCampAction: {
+      version: 1,
+      status: 'invited',
+      learnerId,
+      monsterId,
+      branch,
+      cost: intent.ledgerEntry.amount * -1,
+      coinsUsed: intent.ledgerEntry.amount * -1,
+      coinBalance: intent.newBalance,
+      ledgerEntryId: intent.ledgerEntry.entryId,
+    },
   };
 }
 
-// ── evolve-monster ──────────────────────────────────────────────────
+// ── evolve-monster ─────────────────────────────────────────────────
 
-function resolveEvolveMonster(body, heroState, learnerId, nowTs) {
+function resolveEvolveMonster(body, heroState, learnerId, rosterVersion, nowTs) {
   const { monsterId, targetStage } = body;
-
-  if (!monsterId || !isValidHeroMonsterId(monsterId)) {
-    return { ok: false, code: 'hero_monster_unknown', httpStatus: 400 };
-  }
 
   const result = computeMonsterGrowIntent({
     economyState: heroState.economy,
@@ -103,7 +120,7 @@ function resolveEvolveMonster(body, heroState, learnerId, nowTs) {
     monsterId,
     targetStage,
     learnerId,
-    rosterVersion: HERO_POOL_ROSTER_VERSION,
+    rosterVersion,
     nowTs,
   });
 
@@ -112,101 +129,44 @@ function resolveEvolveMonster(body, heroState, learnerId, nowTs) {
       ok: false,
       code: result.code,
       httpStatus: result.code === 'hero_insufficient_coins' ? 409 : 400,
+      reason: result.reason,
     };
   }
 
   if (result.status === 'already-stage') {
     return {
       ok: true,
-      status: 'already-stage',
-      httpStatus: 200,
-      response: buildAlreadyStageResponse(learnerId, monsterId, heroState.heroPool),
+      heroCampAction: {
+        version: 1,
+        status: 'already-stage',
+        learnerId,
+        monsterId,
+        stageBefore: heroState.heroPool.monsters[monsterId]?.stage ?? 0,
+        stageAfter: heroState.heroPool.monsters[monsterId]?.stage ?? 0,
+        cost: 0,
+        coinsUsed: 0,
+        coinBalance: null,
+        ledgerEntryId: null,
+      },
     };
   }
 
   // status === 'grown'
+  const intent = result.intent;
   return {
     ok: true,
-    status: 'grown',
-    httpStatus: 200,
-    intent: result.intent,
-    response: buildGrowResponse(result, learnerId, monsterId),
-  };
-}
-
-// ── Response builders ───────────────────────────────────────────────
-
-function buildInviteResponse(result, learnerId, monsterId, branch) {
-  return {
-    ok: true,
-    heroCampAction: {
-      version: 1,
-      status: 'invited',
-      learnerId,
-      monsterId,
-      branch,
-      stageAfter: 0,
-      cost: result.intent.ledgerEntry.amount * -1,
-      coinsUsed: result.intent.ledgerEntry.amount * -1,
-      coinBalance: result.intent.newBalance,
-      ledgerEntryId: result.intent.ledgerEntry.entryId,
-    },
-  };
-}
-
-function buildAlreadyOwnedResponse(learnerId, monsterId, heroPoolState) {
-  const monster = heroPoolState.monsters[monsterId];
-  return {
-    ok: true,
-    heroCampAction: {
-      version: 1,
-      status: 'already-owned',
-      learnerId,
-      monsterId,
-      branch: monster?.branch || null,
-      stageAfter: monster?.stage ?? 0,
-      cost: 0,
-      coinsUsed: 0,
-      coinBalance: null,
-      ledgerEntryId: null,
-    },
-  };
-}
-
-function buildGrowResponse(result, learnerId, monsterId) {
-  return {
-    ok: true,
+    intent,
     heroCampAction: {
       version: 1,
       status: 'grown',
       learnerId,
       monsterId,
-      branch: result.intent.newMonsterState.branch || null,
-      stageBefore: result.intent.ledgerEntry.stageBefore,
-      stageAfter: result.intent.ledgerEntry.stageAfter,
-      cost: result.intent.ledgerEntry.amount * -1,
-      coinsUsed: result.intent.ledgerEntry.amount * -1,
-      coinBalance: result.intent.newBalance,
-      ledgerEntryId: result.intent.ledgerEntry.entryId,
-    },
-  };
-}
-
-function buildAlreadyStageResponse(learnerId, monsterId, heroPoolState) {
-  const monster = heroPoolState.monsters[monsterId];
-  return {
-    ok: true,
-    heroCampAction: {
-      version: 1,
-      status: 'already-stage',
-      learnerId,
-      monsterId,
-      branch: monster?.branch || null,
-      stageAfter: monster?.stage ?? 0,
-      cost: 0,
-      coinsUsed: 0,
-      coinBalance: null,
-      ledgerEntryId: null,
+      stageBefore: intent.ledgerEntry.stageBefore,
+      stageAfter: intent.ledgerEntry.stageAfter,
+      cost: intent.ledgerEntry.amount * -1,
+      coinsUsed: intent.ledgerEntry.amount * -1,
+      coinBalance: intent.newBalance,
+      ledgerEntryId: intent.ledgerEntry.entryId,
     },
   };
 }
