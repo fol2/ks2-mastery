@@ -74,6 +74,9 @@ test('reward.presentation celebration intents can enter the legacy monster celeb
   const normalised = normaliseMonsterCelebrationEvent(event);
   assert.equal(normalised.type, 'reward.presentation');
   assert.equal(normalised.kind, 'evolve');
+  assert.equal(normalised.subjectId, 'grammar');
+  assert.equal(normalised.producerType, 'subject');
+  assert.equal(normalised.producerId, 'grammar');
   assert.equal(normalised.monsterId, 'bracehart');
   assert.equal(normalised.monster.name, 'Bracehart');
   assert.equal(normalised.next.stage, 1);
@@ -81,6 +84,32 @@ test('reward.presentation celebration intents can enter the legacy monster celeb
     normalised.presentationAckKey,
     'reward:reward.presentation:subject:grammar:reward.monster:evolve:bracehart:hatch:celebration:hatch',
   );
+});
+
+test('monster celebration normalisation preserves Star display fields for Egg Found overlays', () => {
+  const event = {
+    id: 'reward.monster:learner-a:punctuation:first-star:pealark:caught',
+    type: 'reward.monster',
+    kind: 'caught',
+    subjectId: 'punctuation',
+    learnerId: 'learner-a',
+    monsterId: 'pealark',
+    monster: { id: 'pealark', name: 'Pealark' },
+    previous: { stage: 0, displayState: 'not-found', displayStars: 0, branch: 'b1' },
+    next: { stage: 1, displayState: 'egg-found', displayStars: 1, displayStage: 1, branch: 'b2' },
+    createdAt: 1777399200000,
+  };
+
+  const normalised = normaliseMonsterCelebrationEvent(event);
+
+  assert.equal(normalised.next.displayState, 'egg-found');
+  assert.equal(normalised.next.displayStars, 1);
+  assert.equal(normalised.next.displayStage, 1);
+  assert.equal(normalised.next.stage, 1);
+  assert.equal(normalised.next.branch, 'b2');
+  assert.equal(normalised.subjectId, 'punctuation');
+  assert.equal(normalised.previous.displayState, 'not-found');
+  assert.equal(normalised.previous.displayStars, 0);
 });
 
 test('monster celebration acknowledgement writes legacy id and presentation intent key', () => {

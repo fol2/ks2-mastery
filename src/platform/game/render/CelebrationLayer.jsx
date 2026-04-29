@@ -16,15 +16,20 @@ import { lookupEffect } from './registry.js';
 import { warnOnce } from './composition.js';
 import { acknowledgeMonsterCelebrationEvents } from '../monster-celebration-acks.js';
 import { useMonsterEffectConfig } from '../MonsterEffectConfigContext.jsx';
+import { MONSTERS_BY_SUBJECT } from '../monsters.js';
+
+const ACTIVE_SUBJECT_IDS = Object.freeze(['spelling', 'punctuation', 'grammar']);
 
 function resolveCelebrationTunables(effectConfig, event) {
-  // Per the plan: assetKey = monsterId + (next.branch ?? previous.branch) + next.stage.
+  // Per the plan: assetKey = monsterId + (next.branch ?? previous.branch) + visual stage.
   // Returns the tunables row for the (asset, kind) pair, or null when any
   // step is missing — callers omit `tunables` when this returns null.
   if (!effectConfig || !effectConfig.celebrationTunables) return null;
   const monsterId = event?.monster?.id;
   const branch = event?.next?.branch || event?.previous?.branch;
-  const stage = event?.next?.stage;
+  const stage = event?.kind === 'caught' && event?.next?.displayState === 'egg-found'
+    ? 0
+    : event?.next?.stage;
   if (!monsterId || !branch || stage == null) return null;
   const assetKey = `${monsterId}-${branch}-${stage}`;
   const row = effectConfig.celebrationTunables[assetKey];
@@ -37,6 +42,26 @@ function getQueue(store) {
   const state = store?.getState?.();
   const queue = state?.monsterCelebrations?.queue;
   return Array.isArray(queue) ? queue : [];
+}
+
+function subjectIdForEvent(event) {
+  if (typeof event?.subjectId === 'string' && event.subjectId) return event.subjectId;
+  if (event?.producerType === 'subject' && typeof event?.producerId === 'string') return event.producerId;
+  const monsterId = typeof event?.monster?.id === 'string' && event.monster.id
+    ? event.monster.id
+    : (typeof event?.monsterId === 'string' && event.monsterId ? event.monsterId : '');
+  if (monsterId) {
+    for (const subjectId of ACTIVE_SUBJECT_IDS) {
+      if ((MONSTERS_BY_SUBJECT[subjectId] || []).includes(monsterId)) return subjectId;
+    }
+  }
+  return '';
+}
+
+function shouldRenderForActiveSubject(event, activeSubjectId) {
+  if (!activeSubjectId) return true;
+  const eventSubjectId = subjectIdForEvent(event);
+  return !eventSubjectId || eventSubjectId === activeSubjectId;
 }
 
 function buildOnComplete(store, controller, event) {
@@ -65,7 +90,7 @@ function buildOnComplete(store, controller, event) {
   };
 }
 
-export function CelebrationLayer({ store, controller, context = 'lesson' }) {
+export function CelebrationLayer({ store, controller, context = 'lesson', activeSubjectId = '' }) {
   // useSyncExternalStore needs stable subscribe / getSnapshot references
   // across renders. We can't call hooks conditionally, so guard via a
   // null-safe subscribe + snapshot when the caller forgets the store.
@@ -80,6 +105,7 @@ export function CelebrationLayer({ store, controller, context = 'lesson' }) {
   const queue = getQueue(store);
   const event = queue[0];
   if (!event) return null;
+  if (!shouldRenderForActiveSubject(event, activeSubjectId)) return null;
 
   const effect = lookupEffect(event.kind);
 

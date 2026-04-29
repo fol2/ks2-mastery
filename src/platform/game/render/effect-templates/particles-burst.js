@@ -18,16 +18,21 @@ function eyebrowForEvolve(fromStage, toStage) {
   return 'Evolved';
 }
 
+function isEggFoundCaught(event) {
+  return event?.next?.displayState === 'egg-found';
+}
+
 function renderCaught({ event, onComplete, tunables }) {
+  const isEggFound = isEggFoundCaught(event);
   return (
     <CelebrationShell
       kind="caught"
       monster={event.monster}
-      toStage={clampStage(event.next?.stage)}
-      branch={event.previous?.branch || event.next?.branch}
+      toStage={isEggFound ? 0 : clampStage(event.next?.stage)}
+      branch={event.next?.branch || event.previous?.branch}
       showParticles
-      eyebrow="New friend"
-      body="You caught a new friend!"
+      eyebrow={isEggFound ? 'Egg found' : 'New friend'}
+      body={isEggFound ? 'You found a new egg!' : 'You caught a new friend!'}
       onComplete={onComplete}
       tunables={tunables}
     />

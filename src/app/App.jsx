@@ -72,11 +72,11 @@ function prefersReducedMotion() {
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function SharedOverlays({ appState, actions, controller }) {
+function SharedOverlays({ appState, actions, controller, activeSubjectId = '' }) {
   return (
     <div className="home-overlays">
       <ToastShelf toasts={appState.toasts || []} onDismiss={(index) => actions.dispatch('toast-dismiss', { index })} />
-      <CelebrationLayer store={controller?.store} controller={controller} />
+      <CelebrationLayer store={controller?.store} controller={controller} activeSubjectId={activeSubjectId} />
     </div>
   );
 }
@@ -245,7 +245,7 @@ export function App({ controller, runtime }) {
             <SubjectTopNav chrome={runtime.buildSurfaceChromeModel(appState)} actions={actions} currentScreen={screen} />
             <PersistenceBanner snapshot={appState.persistence} onRetry={actions.retryPersistence} />
             <SubjectRoute key={routedSubjectId} appState={appState} context={context} actions={actions} heroLastLaunch={matchingLastLaunch} />
-            <SharedOverlays appState={appState} actions={actions} controller={controller} />
+            <SharedOverlays appState={appState} actions={actions} controller={controller} activeSubjectId={routedSubjectId} />
           </div>
         );
       })()}

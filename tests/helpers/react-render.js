@@ -186,6 +186,7 @@ export function renderCelebrationLayerFixture({
   registrations = '',
   setup = '',
   context = 'lesson',
+  activeSubjectId = '',
   effectConfigValue = undefined,
 } = {}) {
   // Run the full integration in-process so we can drive the store via the
@@ -238,7 +239,11 @@ export function renderCelebrationLayerFixture({
     }
 
     const __before = snapshot();
-    const __layerNode = React.createElement(CelebrationLayer, { store, context: ${JSON.stringify(context)} });
+    const __layerNode = React.createElement(CelebrationLayer, {
+      store,
+      context: ${JSON.stringify(context)},
+      activeSubjectId: ${JSON.stringify(activeSubjectId)},
+    });
     ${useProvider
       ? `const __layerWrapped = React.createElement(MonsterEffectConfigProvider, { value: ${JSON.stringify(effectConfigValue)} }, __layerNode);`
       : 'const __layerWrapped = __layerNode;'}
