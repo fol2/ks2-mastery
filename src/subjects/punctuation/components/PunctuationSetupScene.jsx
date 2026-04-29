@@ -19,20 +19,36 @@
 //
 // Every major section carries a `data-section` landmark for journey spec
 // testing (U9). The primary CTA carries `data-punctuation-cta`.
+//
+// U4 (refactor ui-consolidation): the mission dashboard is wrapped in the
+// shared `.setup-grid` / `.setup-main` / `.setup-content` rhythm (single-
+// column — no sidebar; see R3). The Bellstorm backdrop now paints via the
+// platform `HeroBackdrop` (cross-fade + pan) instead of a static `<img
+// srcSet>`, the round-length toggle is the platform `LengthPicker`, and
+// contrast tokens flow through `useSetupHeroContrast` so future darker
+// Bellstorm variants auto-tone. Every pre-existing `data-section` /
+// `data-punctuation-*` attribute is preserved in its original node; only
+// the surrounding chrome moves.
 
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
   PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS,
-  bellstormSceneForPhase,
   buildPunctuationDashboardModel,
   composeIsDisabled,
   punctuationMonsterDisplayName,
   punctuationStageLabel,
 } from './punctuation-view-model.js';
+import {
+  bellstormSceneForPhase,
+  heroContrastProfileForPunctuationBg,
+} from './punctuation-hero-bg.js';
 import { emitPunctuationEvent } from '../telemetry.js';
+import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
+import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.js';
 import { HeroWelcome } from '../../../platform/ui/HeroWelcome.jsx';
+import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
 // one-shot stored-prefs migration. Local to this scene because the
@@ -122,38 +138,6 @@ export function PrimaryModeCard({ card, selected, disabled: isDisabled, roundLen
 
 // --- Sub-components --------------------------------------------------------
 
-function RoundLengthToggle({ selectedValue, disabled, actions }) {
-  return (
-    <div
-      className="punctuation-length-toggle"
-      role="radiogroup"
-      aria-label="Round length"
-    >
-      {PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS.map((value) => {
-        const selected = selectedValue === value;
-        return (
-          <button
-            type="button"
-            role="radio"
-            aria-checked={selected ? 'true' : 'false'}
-            className={`punctuation-length-option${selected ? ' selected' : ''}`}
-            data-action="punctuation-set-round-length"
-            data-value={value}
-            disabled={disabled}
-            key={value}
-            onClick={() => {
-              if (disabled) return;
-              actions.dispatch('punctuation-set-round-length', { value });
-            }}
-          >
-            <span>{value}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function MonsterStarMeter({ monster }) {
   const cap = monster.id === 'quoral' ? 100 : 100;
   const starsLabel = monster.id === 'quoral' ? 'Grand Stars' : 'Stars';
@@ -221,6 +205,25 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
     [stats, prefs, rewardState, starView],
   );
 
+  // U4 (refactor ui-consolidation): hero backdrop contrast probe. Mode
+  // argument is the constant string `'setup'` because Punctuation has no
+  // tone / mode axis affecting the backdrop palette — the hook's mode-keyed
+  // memo reduces to a no-op by design. We pass it as a literal so the
+  // dependency array stays stable across renders. Card selector is the
+  // single primary CTA button (there is no mode-card row in the Punctuation
+  // dashboard); control selectors cover the round-length label and the
+  // secondary mode buttons so their tone adapts alongside the CTA.
+  const heroContrast = useSetupHeroContrast(scene.src, 'setup', {
+    staticContrastForBg: heroContrastProfileForPunctuationBg,
+    cardSelector: '.punctuation-dashboard-cta-row .btn',
+    controlSelectors: ['.punctuation-round-label', '.punctuation-secondary-action'],
+    observeSelectors: [
+      '.punctuation-round-label',
+      '.punctuation-secondary-action',
+      '.punctuation-monster-meter-name',
+    ],
+  });
+
   // One-shot stale-prefs migration (unchanged from Phase 3 U2).
   // P7-U2: moved from render body to useEffect for concurrent-mode safety.
   const migratedRef = useRef(false);
@@ -285,109 +288,128 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
     actions.dispatch('punctuation-start', { mode: ctaMode, roundLength: selectedLengthValue });
   }
 
+  // U4: `.setup-main` needs a `.hero-dark` class when the shell probe
+  // reports a light tone, mirroring Grammar/Spelling. Tone is always the
+  // empty string for Punctuation (no tone axis — see punctuation-hero-bg.js
+  // comment) but the shell/controls keys still flow through the hook.
+  const setupClasses = ['setup-main', 'punctuation-setup-main'];
+  if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
+
   return (
     <section
       className="card border-top punctuation-surface punctuation-setup-scene punctuation-mission-dashboard"
       data-punctuation-phase="setup"
       style={{ borderTopColor: '#B8873F' }}
     >
-      {/* Hero area — Bellstorm Coast backdrop + headline + primary CTA */}
-      <div className="punctuation-dashboard-hero" data-section="hero">
-        <img
-          src={scene.src}
-          srcSet={scene.srcSet}
-          sizes="(max-width: 980px) 100vw, 960px"
-          alt=""
-          aria-hidden="true"
-        />
-        <div className="punctuation-dashboard-hero-content">
-          <div className="eyebrow">Bellstorm Coast</div>
-          <h2 className="section-title">Today's punctuation mission</h2>
-          <HeroWelcome name={learnerName} className="punctuation-hero-welcome" />
-          <div className="punctuation-dashboard-cta-row">
-            <button
-              type="button"
-              className="btn primary xl"
-              style={{ '--btn-accent': '#B8873F' }}
-              data-punctuation-cta
-              data-action={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
-              disabled={disabled}
-              onClick={handlePrimaryCta}
-            >
-              {ctaLabel}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Progress row — compact stats strip */}
-      <section className="punctuation-progress-row" data-section="progress-row" aria-label="Today at a glance">
-        <dl className="punctuation-progress-strip">
-          <div className="punctuation-progress-item">
-            <dt>Due today</dt>
-            <dd>{dueCount}</dd>
-          </div>
-          <div className="punctuation-progress-item">
-            <dt>Wobbly</dt>
-            <dd>{weakCount}</dd>
-          </div>
-          <div className="punctuation-progress-item" data-metric="grand-stars">
-            <dt>Grand Stars</dt>
-            <dd>{grandStars}</dd>
-          </div>
-        </dl>
-      </section>
-
-      {/* Monster row — 4 active monsters with star meters */}
-      <section className="punctuation-monster-row" data-section="monster-row" aria-label="Your monsters">
-        {dashboard.activeMonsters.map((monster) => (
-          <MonsterStarMeter monster={monster} key={monster.id} />
-        ))}
-      </section>
-
-      {/* Map link */}
-      <div data-section="map-link">
-        <button
-          type="button"
-          className="punctuation-map-link"
-          data-action="punctuation-open-map"
-          disabled={disabled}
-          onClick={() => {
-            if (disabled) return;
-            actions.dispatch('punctuation-open-map');
-          }}
+      <div className="setup-grid">
+        <section
+          className={setupClasses.join(' ')}
+          data-hero-tone={heroContrast.contrast.tone || undefined}
+          data-controls-tone={heroContrast.contrast.controls}
+          ref={heroContrast.ref}
+          aria-label="Today's punctuation mission"
         >
-          Open Punctuation Map
-        </button>
-      </div>
+          <HeroBackdrop url={scene.src} extraBackdropClassName="punctuation-hero-backdrop" />
 
-      {/* Secondary practice drawer */}
-      <section className="punctuation-secondary-drawer" data-section="secondary" aria-label="More practice options">
-        <div className="punctuation-secondary-modes">
-          <SecondaryModeButton
-            label="Wobbly Spots"
-            mode="weak"
-            roundLength={selectedLengthValue}
-            disabled={disabled}
-            actions={actions}
-          />
-          <SecondaryModeButton
-            label="GPS Check"
-            mode="gps"
-            roundLength={selectedLengthValue}
-            disabled={disabled}
-            actions={actions}
-          />
-        </div>
-        <div className="punctuation-round-controls">
-          <span className="punctuation-round-label">Round length</span>
-          <RoundLengthToggle
-            selectedValue={selectedLengthValue}
-            disabled={disabled}
-            actions={actions}
-          />
-        </div>
-      </section>
+          {/* Content stacks vertically inside the setup-main shell. The
+           * `data-section="hero"` landmark moves ONTO the content wrapper
+           * because `HeroBackdrop` now paints the background and carries
+           * no semantics of its own. The rest of the dashboard (progress
+           * row, monster row, map link, secondary drawer) stays in the
+           * same stacked order inside `.setup-content`. */}
+          <div className="setup-content" data-section="hero">
+            <div className="eyebrow">Bellstorm Coast</div>
+            <h2 className="section-title">Today's punctuation mission</h2>
+            <HeroWelcome name={learnerName} className="punctuation-hero-welcome" />
+            <div className="punctuation-dashboard-cta-row">
+              <button
+                type="button"
+                className="btn primary xl"
+                style={{ '--btn-accent': '#B8873F' }}
+                data-punctuation-cta
+                data-action={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
+                disabled={disabled}
+                onClick={handlePrimaryCta}
+              >
+                {ctaLabel}
+              </button>
+            </div>
+
+            {/* Progress row — compact stats strip */}
+            <section className="punctuation-progress-row" data-section="progress-row" aria-label="Today at a glance">
+              <dl className="punctuation-progress-strip">
+                <div className="punctuation-progress-item">
+                  <dt>Due today</dt>
+                  <dd>{dueCount}</dd>
+                </div>
+                <div className="punctuation-progress-item">
+                  <dt>Wobbly</dt>
+                  <dd>{weakCount}</dd>
+                </div>
+                <div className="punctuation-progress-item" data-metric="grand-stars">
+                  <dt>Grand Stars</dt>
+                  <dd>{grandStars}</dd>
+                </div>
+              </dl>
+            </section>
+
+            {/* Monster row — 4 active monsters with star meters */}
+            <section className="punctuation-monster-row" data-section="monster-row" aria-label="Your monsters">
+              {dashboard.activeMonsters.map((monster) => (
+                <MonsterStarMeter monster={monster} key={monster.id} />
+              ))}
+            </section>
+
+            {/* Map link */}
+            <div data-section="map-link">
+              <button
+                type="button"
+                className="punctuation-map-link"
+                data-action="punctuation-open-map"
+                disabled={disabled}
+                onClick={() => {
+                  if (disabled) return;
+                  actions.dispatch('punctuation-open-map');
+                }}
+              >
+                Open Punctuation Map
+              </button>
+            </div>
+
+            {/* Secondary practice drawer */}
+            <section className="punctuation-secondary-drawer" data-section="secondary" aria-label="More practice options">
+              <div className="punctuation-secondary-modes">
+                <SecondaryModeButton
+                  label="Wobbly Spots"
+                  mode="weak"
+                  roundLength={selectedLengthValue}
+                  disabled={disabled}
+                  actions={actions}
+                />
+                <SecondaryModeButton
+                  label="GPS Check"
+                  mode="gps"
+                  roundLength={selectedLengthValue}
+                  disabled={disabled}
+                  actions={actions}
+                />
+              </div>
+              <div className="punctuation-round-controls">
+                <span className="punctuation-round-label">Round length</span>
+                <LengthPicker
+                  options={PUNCTUATION_SETUP_ROUND_LENGTH_OPTIONS}
+                  selectedValue={selectedLengthValue}
+                  onChange={(value) => actions.dispatch('punctuation-set-round-length', { value })}
+                  disabled={disabled}
+                  ariaLabel="Round length"
+                  actionName="punctuation-set-round-length"
+                  includeDataValue={true}
+                />
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
     </section>
   );
 }
