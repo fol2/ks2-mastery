@@ -1955,6 +1955,81 @@ export function createWorkerApp({
           return json({ ok: true, ...result });
         }
 
+        // P6 U8: Generic asset CAS routes — delegate to asset-specific handlers
+        // keyed by assetId. Currently supports 'monster-visual-config'; additional
+        // asset handlers register here as they are added.
+        const ASSET_HANDLERS = {
+          'monster-visual-config': {
+            saveDraft: (repo, accountId, body) =>
+              repo.saveMonsterVisualConfigDraft(accountId, {
+                draft: body.data || body.draft || body.config,
+                expectedDraftRevision: body.expectedDraftRevision,
+                mutation: mutationFromRequest(body, body._request),
+              }),
+            publish: (repo, accountId, body) =>
+              repo.publishMonsterVisualConfig(accountId, {
+                expectedDraftRevision: body.expectedDraftRevision,
+                mutation: mutationFromRequest(body, body._request),
+              }),
+            restore: (repo, accountId, body) =>
+              repo.restoreMonsterVisualConfigVersion(accountId, {
+                version: body.version,
+                expectedPublishedVersion: body.expectedPublishedVersion,
+                mutation: mutationFromRequest(body, body._request),
+              }),
+          },
+        };
+
+        // Generic asset draft save
+        {
+          const assetDraftMatch = url.pathname.match(/^\/api\/admin\/assets\/([^/]+)\/draft$/);
+          if (assetDraftMatch && request.method === 'PUT') {
+            requireSameOrigin(request, env);
+            requireMutationCapability(session);
+            const assetId = decodeURIComponent(assetDraftMatch[1]);
+            const handler = ASSET_HANDLERS[assetId];
+            if (!handler) return json({ ok: false, code: 'unknown_asset', message: `Unknown asset: ${assetId}` }, 404);
+            const body = await readJson(request);
+            body._request = request;
+            const result = await handler.saveDraft(repository, session.accountId, body);
+            return json({ ok: true, ...result });
+          }
+        }
+
+        // Generic asset publish
+        {
+          const assetPublishMatch = url.pathname.match(/^\/api\/admin\/assets\/([^/]+)\/publish$/);
+          if (assetPublishMatch && request.method === 'POST') {
+            requireSameOrigin(request, env);
+            requireMutationCapability(session);
+            const assetId = decodeURIComponent(assetPublishMatch[1]);
+            const handler = ASSET_HANDLERS[assetId];
+            if (!handler) return json({ ok: false, code: 'unknown_asset', message: `Unknown asset: ${assetId}` }, 404);
+            const body = await readJson(request);
+            body._request = request;
+            const result = await handler.publish(repository, session.accountId, body);
+            return json({ ok: true, ...result });
+          }
+        }
+
+        // Generic asset restore
+        {
+          const assetRestoreMatch = url.pathname.match(/^\/api\/admin\/assets\/([^/]+)\/restore$/);
+          if (assetRestoreMatch && request.method === 'POST') {
+            requireSameOrigin(request, env);
+            requireMutationCapability(session);
+            const assetId = decodeURIComponent(assetRestoreMatch[1]);
+            const handler = ASSET_HANDLERS[assetId];
+            if (!handler) return json({ ok: false, code: 'unknown_asset', message: `Unknown asset: ${assetId}` }, 404);
+            const body = await readJson(request);
+            body._request = request;
+            const result = await handler.restore(repository, session.accountId, body);
+            return json({ ok: true, ...result });
+          }
+        }
+
+        // Legacy monster-visual-config routes — kept as aliases for backward compat.
+        // They delegate to the same repository methods as the generic asset routes.
         if (url.pathname === '/api/admin/monster-visual-config/draft' && request.method === 'PUT') {
           requireSameOrigin(request, env);
           requireMutationCapability(session);
@@ -1990,14 +2065,14 @@ export function createWorkerApp({
         if (url.pathname === '/api/admin/ops/kpi' && request.method === 'GET') {
           requireSameOrigin(request, env);
           const result = await repository.readAdminOpsKpi(session.accountId);
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         if (url.pathname === '/api/admin/ops/activity' && request.method === 'GET') {
           requireSameOrigin(request, env);
           const limit = Number(url.searchParams.get('limit')) || undefined;
           const result = await repository.listAdminOpsActivity(session.accountId, { limit });
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         if (url.pathname === '/api/admin/ops/error-events' && request.method === 'GET') {
@@ -2025,7 +2100,7 @@ export function createWorkerApp({
             reopenedAfterResolved: reopenedAfterResolved === 'true' || reopenedAfterResolved === '1',
           };
           const result = await repository.readAdminOpsErrorEvents(session.accountId, { status, limit, filter });
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         // U5 (P3): per-fingerprint occurrence timeline. Lazy-loaded on drawer
@@ -2075,7 +2150,7 @@ export function createWorkerApp({
             to: to !== null && Number.isFinite(Number(to)) ? Number(to) : null,
             limit,
           });
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         // U6 (P3): Debug Bundle — Worker-authoritative evidence packet.
@@ -2131,7 +2206,7 @@ export function createWorkerApp({
         if (url.pathname === '/api/admin/ops/accounts-metadata' && request.method === 'GET') {
           requireSameOrigin(request, env);
           const result = await repository.readAdminOpsAccountsMetadata(session.accountId);
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         // U7 (P3): account search. GET with query-string filters.
@@ -2176,7 +2251,18 @@ export function createWorkerApp({
         if (url.pathname === '/api/admin/ops/content-overview' && request.method === 'GET') {
           requireSameOrigin(request, env);
           const result = await repository.readSubjectContentOverview(session.accountId);
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
+        }
+
+        // U7 (P6): Content quality signals. Read-only GET returning per-subject
+        // learning-quality signals (skill coverage, high-wrong-rate, misconceptions).
+        // Uses safeSection pattern so that individual subject failures degrade
+        // gracefully — a broken grammar query does not prevent spelling signals
+        // from loading.
+        if (url.pathname === '/api/admin/ops/content-quality-signals' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const result = await repository.readContentQualitySignals(session.accountId);
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         // P5 U4: Production evidence summary. Lazy-loaded GET returning the
@@ -2207,7 +2293,7 @@ export function createWorkerApp({
           } catch {
             evidenceSummary = { schema: 2, metrics: {}, generatedAt: null };
           }
-          return json({ ok: true, ...evidenceSummary });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...evidenceSummary });
         }
 
         // R31: regex dispatch for parameterised admin ops mutations. Placed
@@ -2462,7 +2548,7 @@ export function createWorkerApp({
           requireSameOrigin(request, env);
           const db = requireDatabase(env);
           const result = await listMarketingMessages(db, { actorAccountId: session.accountId });
-          return json({ ok: true, ...result });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
         }
 
         if (url.pathname === '/api/admin/marketing/messages' && request.method === 'POST') {

@@ -1,4 +1,6 @@
 // U9 (Admin Console P3): Content Management cross-subject overview.
+// U6 (Admin Console P6): Extended with release readiness classification,
+// validation blocker/warning signals, and truthful drilldown clickability.
 //
 // Subject status provider contract + cross-subject normaliser. Inspired
 // by the Hero P0 read-only shadow subsystem pattern: each subject
@@ -15,6 +17,8 @@
 // worker endpoint and returns a rendering-ready array. No side effects,
 // no storage, no fetch.
 
+import { classifyReleaseReadiness, readinessBadge } from './admin-content-release-readiness.js';
+
 /**
  * @typedef {object} SubjectStatusEnvelope
  * @property {string}  subjectKey        — canonical subject identifier
@@ -24,6 +28,11 @@
  * @property {number}  validationErrors  — count of unresolved validation errors
  * @property {number}  errorCount7d      — ops error events in the last 7 days
  * @property {'low'|'medium'|'high'|'none'} supportLoadSignal — relative support load
+ * @property {string[]} validationBlockers — active release blockers (U6 P6)
+ * @property {string[]} validationWarnings — active warnings (U6 P6)
+ * @property {boolean}  hasRealDiagnostics — whether subject has diagnostic panels (U6 P6)
+ * @property {string}   releaseReadiness   — classified readiness state (U6 P6)
+ * @property {boolean}  isClickable        — whether drilldown is actionable (U6 P6)
  */
 
 function isPlainObject(value) {
@@ -109,6 +118,9 @@ export function normaliseSubjectStatus(raw) {
   const entry = isPlainObject(raw) ? raw : {};
   const status = VALID_STATUSES.includes(entry.status) ? entry.status : 'placeholder';
   const signal = VALID_SIGNALS.includes(entry.supportLoadSignal) ? entry.supportLoadSignal : 'none';
+  const validationBlockers = Array.isArray(entry.validationBlockers) ? entry.validationBlockers : [];
+  const validationWarnings = Array.isArray(entry.validationWarnings) ? entry.validationWarnings : [];
+  const hasRealDiagnostics = typeof entry.hasRealDiagnostics === 'boolean' ? entry.hasRealDiagnostics : false;
   return {
     subjectKey: safeString(entry.subjectKey, 'unknown'),
     displayName: safeString(entry.displayName, entry.subjectKey || 'Unknown'),
@@ -121,6 +133,10 @@ export function normaliseSubjectStatus(raw) {
     validationErrors: safeNonNegativeInt(entry.validationErrors),
     errorCount7d: safeNonNegativeInt(entry.errorCount7d),
     supportLoadSignal: signal,
+    // U6 (P6): release readiness signals
+    validationBlockers,
+    validationWarnings,
+    hasRealDiagnostics,
   };
 }
 
@@ -139,6 +155,14 @@ export function buildSubjectContentOverview(payload) {
   const normalised = subjects.map((raw) => {
     const entry = normaliseSubjectStatus(raw);
     entry.drilldownAction = deriveDrilldownAction(entry);
+    // U6 (P6): release readiness classification
+    entry.releaseReadiness = classifyReleaseReadiness(entry);
+    entry.releaseReadinessBadge = readinessBadge(entry.releaseReadiness);
+    // U6 (P6): truthful clickability — only clickable when both
+    // hasRealDiagnostics is true AND the drilldown action maps to a panel.
+    entry.isClickable = entry.hasRealDiagnostics &&
+      entry.drilldownAction !== 'none' &&
+      entry.drilldownAction !== 'placeholder';
     return entry;
   });
 

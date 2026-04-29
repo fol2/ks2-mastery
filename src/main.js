@@ -30,6 +30,7 @@ import {
 import { routeAdminRefreshError } from './platform/hubs/admin-refresh-error-text.js';
 import { createAccountOpsMetadataDirtyRegistry } from './platform/hubs/admin-metadata-dirty-registry.js';
 import { runAdminOpsRefreshCascade } from './platform/hubs/admin-refresh-cascade.js';
+import { buildRefreshErrorEnvelope } from './platform/hubs/admin-refresh-envelope.js';
 import {
   buildAdminHubAccessContext,
   buildParentHubAccessContext,
@@ -1163,17 +1164,7 @@ function isAdminOpsRefreshTokenLatest(panelKey, token) {
 // consumes from a thrown hub-api error (see platform/hubs/api.js). `code` is
 // taken verbatim from the Worker payload when present; `network` is the
 // fallback for fetch rejections / malformed envelopes.
-function buildRefreshErrorEnvelope(error) {
-  const code = typeof error?.code === 'string' && error.code ? error.code : 'network';
-  const message = typeof error?.message === 'string' ? error.message : '';
-  const correlationId = error?.payload?.correlationId || error?.correlationId || null;
-  return {
-    code,
-    message,
-    correlationId,
-    at: Date.now(),
-  };
-}
+// Implementation extracted to platform/hubs/admin-refresh-envelope.js (P6 U10).
 
 // P1.5 Phase A (U1): when the router hands off to a global handler (session
 // invalidated, account suspended), the panel-level banner is skipped — we
@@ -3141,6 +3132,20 @@ function handleGlobalAction(action, data) {
 
   if (action === 'monster-visual-config-restore') {
     restoreMonsterVisualConfigVersion(data);
+    return true;
+  }
+
+  if (action === 'asset-publish') {
+    if (data?.assetId === 'monster-visual-config') {
+      publishMonsterVisualConfig(data);
+    }
+    return true;
+  }
+
+  if (action === 'asset-restore') {
+    if (data?.assetId === 'monster-visual-config') {
+      restoreMonsterVisualConfigVersion(data);
+    }
     return true;
   }
 

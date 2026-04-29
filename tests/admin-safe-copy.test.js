@@ -276,7 +276,7 @@ test('unknown audience returns ok: false', () => {
 // 10. String input handling
 // ---------------------------------------------------------------------------
 
-test('string input passes through for admin_only', () => {
+test('string input without sensitive content passes through for admin_only', () => {
   const result = prepareSafeCopy('Some summary text', COPY_AUDIENCE.ADMIN_ONLY);
   assert.equal(result.ok, true);
   assert.equal(result.text, 'Some summary text');

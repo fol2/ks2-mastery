@@ -167,6 +167,134 @@ function stripChildIds(obj) {
 }
 
 // ---------------------------------------------------------------------------
+// String-level redaction (closes the string-passthrough gap)
+// ---------------------------------------------------------------------------
+
+// Patterns for ALL audiences (including ADMIN_ONLY):
+const RE_BEARER_TOKEN = /Bearer\s+eyJ[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){0,2}/g;
+const RE_BASIC_AUTH = /Basic\s+[A-Za-z0-9+/=]{8,}/g;
+const RE_COOKIE_VALUE = /(?:session|sess_id|token|auth)=[^\s;]{6,}(?:;|$|\s)/gi;
+
+// Patterns for OPS_SAFE and below:
+const RE_EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+const RE_ACC_ID = /acc_[A-Za-z0-9_-]{6,}/g;
+const RE_SESS_ID = /sess_[A-Za-z0-9_-]{6,}/g;
+const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+// Patterns for PARENT_SAFE and below:
+const RE_LRN_ID = /lrn_[A-Za-z0-9_-]{3,}/g;
+const RE_STACK_TRACE = /^\s+at\s+\S+.*[()]/gm;
+const RE_INTERNAL_ROUTE = /\/api\/(?:admin|internal)\/[^\s'")]+/g;
+const RE_INTERNAL_TABLE = /d1\.[a-z_]+/g;
+
+/**
+ * Apply regex-based scanning to detect and mask/strip sensitive tokens
+ * from a plain string, according to audience level.
+ *
+ * @param {string} text — the raw string to scan.
+ * @param {string} audience — one of COPY_AUDIENCE values.
+ * @returns {{ text: string, appliedRedactions: string[] }}
+ */
+export function redactString(text, audience) {
+  if (!text || typeof text !== 'string') {
+    return { text: '', appliedRedactions: [] };
+  }
+
+  const appliedRedactions = [];
+  let result = text;
+
+  // === ALL audiences: strip auth tokens and cookies ===
+  if (RE_BEARER_TOKEN.test(result)) {
+    appliedRedactions.push('auth_tokens');
+    result = result.replace(RE_BEARER_TOKEN, '[auth redacted]');
+  }
+  // Reset lastIndex for global regexes (test advances lastIndex)
+  RE_BEARER_TOKEN.lastIndex = 0;
+
+  if (RE_BASIC_AUTH.test(result)) {
+    if (!appliedRedactions.includes('auth_tokens')) appliedRedactions.push('auth_tokens');
+    result = result.replace(RE_BASIC_AUTH, '[auth redacted]');
+  }
+  RE_BASIC_AUTH.lastIndex = 0;
+
+  if (RE_COOKIE_VALUE.test(result)) {
+    appliedRedactions.push('cookie_values');
+    result = result.replace(RE_COOKIE_VALUE, '[cookie redacted]');
+  }
+  RE_COOKIE_VALUE.lastIndex = 0;
+
+  if (audience === COPY_AUDIENCE.ADMIN_ONLY) {
+    return { text: result, appliedRedactions };
+  }
+
+  // === OPS_SAFE: mask emails, account IDs, session IDs ===
+  const emailMatches = result.match(RE_EMAIL);
+  if (emailMatches) {
+    appliedRedactions.push('emails_masked');
+    for (const email of emailMatches) {
+      result = result.replace(email, maskEmail(email));
+    }
+  }
+
+  const accMatches = result.match(RE_ACC_ID);
+  if (accMatches) {
+    appliedRedactions.push('account_ids_masked');
+    for (const id of accMatches) {
+      result = result.replace(id, maskId(id));
+    }
+  }
+
+  const sessMatches = result.match(RE_SESS_ID);
+  if (sessMatches) {
+    appliedRedactions.push('session_ids_masked');
+    for (const id of sessMatches) {
+      result = result.replace(id, maskId(id));
+    }
+  }
+
+  const uuidMatches = result.match(RE_UUID);
+  if (uuidMatches) {
+    if (!appliedRedactions.includes('session_ids_masked')) {
+      appliedRedactions.push('session_ids_masked');
+    }
+    for (const id of uuidMatches) {
+      result = result.replace(id, maskId(id));
+    }
+  }
+
+  if (audience === COPY_AUDIENCE.OPS_SAFE) {
+    return { text: result, appliedRedactions };
+  }
+
+  // === PARENT_SAFE (and PUBLIC_PREVIEW): strip learner IDs, stack traces, routes, tables ===
+  if (RE_LRN_ID.test(result)) {
+    appliedRedactions.push('learner_ids');
+    result = result.replace(RE_LRN_ID, '[redacted]');
+  }
+  RE_LRN_ID.lastIndex = 0;
+
+  if (RE_STACK_TRACE.test(result)) {
+    appliedRedactions.push('stack_traces');
+    result = result.replace(RE_STACK_TRACE, '[stack trace redacted]');
+  }
+  RE_STACK_TRACE.lastIndex = 0;
+
+  if (RE_INTERNAL_ROUTE.test(result)) {
+    appliedRedactions.push('internal_routes');
+    result = result.replace(RE_INTERNAL_ROUTE, '[internal route redacted]');
+  }
+  RE_INTERNAL_ROUTE.lastIndex = 0;
+
+  if (RE_INTERNAL_TABLE.test(result)) {
+    appliedRedactions.push('internal_references');
+    result = result.replace(RE_INTERNAL_TABLE, '[internal reference redacted]');
+  }
+  RE_INTERNAL_TABLE.lastIndex = 0;
+
+  return { text: result, appliedRedactions };
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -189,6 +317,18 @@ export function prepareSafeCopy(data, audience) {
 
   // Deep clone so we never mutate the source.
   let working = typeof data === 'string' ? data : JSON.parse(JSON.stringify(data));
+
+  // String-specific path: apply regex-based redaction per audience.
+  if (typeof working === 'string') {
+    const { text: redacted, appliedRedactions } = redactString(working, audience);
+    if (!redacted || redacted.trim() === '') {
+      return { ok: false, text: '', redactedFields: [] };
+    }
+    const fields = appliedRedactions.length > 0
+      ? appliedRedactions
+      : [];
+    return { ok: true, text: redacted, redactedFields: fields };
+  }
 
   // All audiences: strip cookies, auth tokens, raw request bodies.
   if (typeof working === 'object') {
@@ -217,7 +357,15 @@ export function prepareSafeCopy(data, audience) {
       stripInternalNotes(working);
       redactedFields.push('internal_notes');
     }
-    const text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
+    let text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
+    // Defence-in-depth: scan serialised output for PII in non-canonical keys.
+    // Use OPS_SAFE-level patterns only (emails, IDs) — not stack-trace/route
+    // patterns which false-positive on JSON-serialised object content.
+    const { text: finalText, appliedRedactions } = redactString(text, COPY_AUDIENCE.OPS_SAFE);
+    text = finalText;
+    for (const r of appliedRedactions) {
+      if (!redactedFields.includes(r)) redactedFields.push(r);
+    }
     return { ok: true, text, redactedFields };
   }
 
@@ -236,7 +384,16 @@ export function prepareSafeCopy(data, audience) {
       maskAllEmails(working);
       redactedFields.push('emails_masked');
     }
-    const text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
+    let text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
+    // Defence-in-depth: scan serialised output for PII in non-canonical keys.
+    // Cap at OPS_SAFE level (emails, IDs, auth) — stack-trace and route patterns
+    // false-positive on JSON content (e.g. "at this" in values). The object-level
+    // walkers already handle stack traces and internal notes by key name.
+    const { text: finalText, appliedRedactions } = redactString(text, COPY_AUDIENCE.OPS_SAFE);
+    text = finalText;
+    for (const r of appliedRedactions) {
+      if (!redactedFields.includes(r)) redactedFields.push(r);
+    }
     return { ok: true, text, redactedFields };
   }
 

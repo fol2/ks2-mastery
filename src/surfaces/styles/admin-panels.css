@@ -1,0 +1,48 @@
+/* admin-panels.css — extracted inline styles for Admin Console panels.
+ * CSP cleanup slice: static patterns only; dynamic/computed styles remain inline.
+ * Visual equivalence: each class must reproduce the exact property values
+ * that were previously inline in the JSX. */
+
+/* Card spacing — marginBottom: 20 on section.card wrappers */
+.admin-card-mb { margin-bottom: 20px; }
+
+/* Stack spacing — marginTop: 8 on diagnostic detail lines */
+.admin-mt-8 { margin-top: 8px; }
+
+/* Stack spacing — marginTop: 16 on callouts and action rows */
+.admin-mt-16 { margin-top: 16px; }
+
+/* Stack spacing — marginTop: 12 on occurrence timelines */
+.admin-mt-12 { margin-top: 12px; }
+
+/* Stack spacing — marginBottom: 12 on cron-failure banners */
+.admin-mb-12 { margin-bottom: 12px; }
+
+/* Flex row — display:flex, alignItems:center, gap:8 */
+.admin-flex-row { display: flex; align-items: center; gap: 8px; }
+
+/* Table cell padding — padding: 2px 6px (th and td in occurrence/error tables) */
+.admin-cell-pad { padding: 2px 6px; }
+
+/* Table header alignment — textAlign: left + padding: 2px 6px */
+.admin-th-left { text-align: left; padding: 2px 6px; }
+
+/* Filter grid — the autofit responsive grid used by error centre and denial panels */
+.admin-filter-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+/* Section title sizing — fontSize: 1.2rem on h3 section-title elements */
+.admin-section-title-lg { font-size: 1.2rem; }
+
+/* Status badge base — shared across marketing status badges */
+.admin-status-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: capitalize;
+}

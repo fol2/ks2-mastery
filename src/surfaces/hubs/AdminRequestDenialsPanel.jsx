@@ -2,6 +2,7 @@ import React from 'react';
 import { formatTimestamp } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
 import { normaliseDenialEntry } from '../../platform/hubs/admin-denial-panel.js';
+import '../styles/admin-panels.css';
 
 // U8 (P4): Denial log panel — extracted from AdminDebuggingSection.jsx.
 // Contains DenialLogPanel + DENIAL_REASON_OPTIONS + DENIAL_REASON_LABEL_MAP.
@@ -62,8 +63,7 @@ export function DenialLogPanel({ model, actions }) {
   const headerExtras = (
     <>
       <div
-        className="filters"
-        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        className="filters admin-filter-grid"
         data-testid="denial-panel-filters"
       >
         <label className="field">
@@ -117,7 +117,7 @@ export function DenialLogPanel({ model, actions }) {
           />
         </label>
       </div>
-      <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="chip-row admin-mt-8">
         <button
           className="btn"
           type="button"
@@ -147,7 +147,7 @@ export function DenialLogPanel({ model, actions }) {
   );
 
   return (
-    <section className="card" style={{ marginBottom: 20 }} data-testid="denial-log-panel">
+    <section className="card admin-card-mb" data-testid="denial-log-panel">
       <PanelHeader
         eyebrow="Request denials"
         title="Denial log"

@@ -66,8 +66,11 @@ export function classifyEvidenceMetric(metricKey, metricValue, generatedAt, now)
   }
 
   // Map tier key to state. Only known tiers can produce certified states.
+  // Schema 3 adds admin_smoke and bootstrap_smoke as SMOKE_PASS-tier sources.
   const tierMap = {
     smoke_pass: EVIDENCE_STATES.SMOKE_PASS,
+    admin_smoke: EVIDENCE_STATES.SMOKE_PASS,
+    bootstrap_smoke: EVIDENCE_STATES.SMOKE_PASS,
     small_pilot_provisional: EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL,
     certified_30_learner_beta: EVIDENCE_STATES.CERTIFIED_30,
     certified_60_learner_stretch: EVIDENCE_STATES.CERTIFIED_60,
@@ -88,6 +91,8 @@ export function buildEvidencePanelModel(summaryJson, now) {
   const summary = summaryJson && typeof summaryJson === 'object' ? summaryJson : {};
   const rawMetrics = summary.metrics && typeof summary.metrics === 'object' ? summary.metrics : {};
   const generatedAt = summary.generatedAt || null;
+  // Schema 3 adds a sources manifest; schema 2 omits it — default to null.
+  const sources = summary.sources && typeof summary.sources === 'object' ? summary.sources : null;
 
   // Determine freshness.
   const generatedAtMs = generatedAt ? new Date(generatedAt).getTime() : 0;
@@ -113,7 +118,7 @@ export function buildEvidencePanelModel(summaryJson, now) {
   // Overall state: highest-tier passing state, or the most severe problem.
   const overallState = deriveOverallState(metrics, isFresh);
 
-  return { metrics, generatedAt, isFresh, overallState };
+  return { metrics, generatedAt, isFresh, overallState, sources };
 }
 
 /**

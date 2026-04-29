@@ -6,6 +6,8 @@
 // against missing / null fields so the drawer renders cleanly on partial
 // data (e.g. anonymous errors, pre-migration events, NULL releases).
 
+import { formatAdminTimestamp } from './admin-refresh-envelope.js';
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -35,11 +37,5 @@ export function normaliseOccurrenceTimeline(rawValue) {
 // string suitable for the drawer detail list. Null / zero timestamps
 // return the stable fallback so the drawer never renders blank cells.
 export function formatOccurrenceTimestamp(ts) {
-  const numeric = Number(ts);
-  if (!Number.isFinite(numeric) || numeric <= 0) return '—';
-  try {
-    return new Date(numeric).toISOString().replace('T', ' ').replace(/\.000Z$/, ' UTC');
-  } catch {
-    return '—';
-  }
+  return formatAdminTimestamp(ts);
 }

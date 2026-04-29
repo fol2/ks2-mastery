@@ -42,6 +42,11 @@ const REGISTRY = new Map([
   ['monster-visual-config-publish', { level: LEVELS.high }],
   ['monster-visual-config-restore', { level: LEVELS.high }],
   ['grammar-transfer-admin-archive', { level: LEVELS.high }],
+  ['asset-publish', { level: LEVELS.high }],
+  ['asset-restore', { level: LEVELS.high }],
+
+  // medium: asset draft deletion (recoverable via restore)
+  ['asset-delete-draft', { level: LEVELS.medium }],
 
   // critical: broad-audience mutations, irreversible deletes, seed operations
   ['post-mega-seed-apply', { level: LEVELS.critical }],

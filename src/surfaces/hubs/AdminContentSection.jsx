@@ -7,12 +7,21 @@ import { GRAMMAR_RECENT_ATTEMPT_HORIZON } from '../../../shared/grammar/confiden
 import { buildAssetRegistry } from '../../platform/hubs/admin-asset-registry.js';
 import { classifyAction } from '../../platform/hubs/admin-action-classification.js';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
+import { DEFAULT_STALE_THRESHOLD_MS } from '../../platform/hubs/admin-panel-frame.js';
 import {
   buildSubjectContentOverview,
   statusBadgeClass,
   statusLabel,
   drilldownPanelSelector,
 } from '../../platform/hubs/admin-content-overview.js';
+import {
+  buildContentQualitySignals,
+  summariseAvailability,
+  formatCoverageLabel,
+  coverageChipClass,
+  SIGNAL_STATUS,
+} from '../../platform/hubs/admin-content-quality-signals.js';
+import { RELEASE_READINESS } from '../../platform/hubs/admin-content-release-readiness.js';
 
 // U4+U5: Content section — content release, import validation, post-mega
 // spelling debug, seed harness, grammar confidence, grammar writing try,
@@ -29,6 +38,10 @@ import {
 // U9 (P5): Honest drilldown actions. Each row now surfaces a truthful
 // action label indicating whether clicking does anything. Rows are only
 // clickable when drilldownAction maps to a real panel.
+//
+// U6 (P6): Content operations v2. Release readiness classification,
+// validation blocker/warning badges, and truthful isClickable flag
+// (placeholder subjects are explicitly non-clickable).
 
 /**
  * Human-readable action label for the drilldown column.
@@ -69,11 +82,21 @@ function SubjectOverviewPanel({ model, actions }) {
     return null;
   }
 
-  const isClickable = (subject) =>
-    subject.drilldownAction !== 'none' && subject.drilldownAction !== 'placeholder';
+  // P6 U4: freshness state for the content overview panel (not wrapped in
+  // AdminPanelFrame due to custom table layout). Uses generatedAt from the
+  // worker response as the freshness source.
+  const overviewGeneratedAt = Number(model?.contentOverview?.generatedAt) || null;
+  const overviewRefreshedAtIso = model?.contentOverview?.refreshedAt;
+  const overviewRefreshedAtMs = overviewRefreshedAtIso
+    ? new Date(overviewRefreshedAtIso).getTime() || overviewGeneratedAt
+    : overviewGeneratedAt;
+  const isOverviewStale = overviewRefreshedAtMs
+    ? (Date.now() - overviewRefreshedAtMs > DEFAULT_STALE_THRESHOLD_MS)
+    : false;
 
+  // U6 (P6): use model-computed isClickable flag (truthful drilldowns)
   const handleRowClick = (subject) => {
-    if (!isClickable(subject)) return;
+    if (!subject.isClickable) return;
     const selector = drilldownPanelSelector(subject);
     if (!selector) return;
     const target = document.querySelector(selector);
@@ -88,11 +111,23 @@ function SubjectOverviewPanel({ model, actions }) {
         Cross-subject operating surface. Live subjects have production data; placeholders
         are planned but not yet active.
       </p>
+      {isOverviewStale ? (
+        <div className="feedback warn admin-panel-frame-feedback" data-panel-frame-stale="true">
+          <strong>Data may be stale.</strong>
+          {' '}Last refreshed {formatTimestamp(overviewRefreshedAtMs)}.
+        </div>
+      ) : overviewRefreshedAtMs ? (
+        <span className="chip small muted" data-freshness="content-overview">
+          Refreshed {formatTimestamp(overviewRefreshedAtMs)}
+        </span>
+      ) : null}
       <table className="admin-subject-overview-table admin-overview-table" aria-label="Subject content overview">
         <thead>
           <tr className="admin-overview-thead-row">
             <th className="small admin-overview-th-first">Subject</th>
             <th className="small admin-overview-th">Status</th>
+            <th className="small admin-overview-th">Readiness</th>
+            <th className="small admin-overview-th">Signals</th>
             <th className="small admin-overview-th">Release</th>
             <th className="small admin-overview-th-right">Errors (7d)</th>
             <th className="small admin-overview-th-right">Validation</th>
@@ -108,14 +143,18 @@ function SubjectOverviewPanel({ model, actions }) {
               data-subject-key={subject.subjectKey}
               data-subject-status={subject.status}
               data-drilldown-action={subject.drilldownAction}
-              data-clickable={isClickable(subject) ? 'true' : undefined}
-              onClick={isClickable(subject) ? () => handleRowClick(subject) : undefined}
-              role={isClickable(subject) ? 'button' : undefined}
-              tabIndex={isClickable(subject) ? 0 : undefined}
-              aria-label={isClickable(subject) ? `Scroll to ${subject.displayName} diagnostics` : undefined}
+              data-release-readiness={subject.releaseReadiness}
+              data-clickable={subject.isClickable ? 'true' : undefined}
+              onClick={subject.isClickable ? () => handleRowClick(subject) : undefined}
+              role={subject.isClickable ? 'button' : undefined}
+              tabIndex={subject.isClickable ? 0 : undefined}
+              aria-label={subject.isClickable ? `Scroll to ${subject.displayName} diagnostics` : undefined}
             >
               <td className="admin-overview-td-first">
                 {subject.displayName}
+                {!subject.isClickable && subject.status !== 'placeholder' ? (
+                  <span className="small muted admin-no-drilldown-label"> (No drilldown available)</span>
+                ) : null}
               </td>
               <td className="admin-overview-td">
                 <span
@@ -124,6 +163,43 @@ function SubjectOverviewPanel({ model, actions }) {
                 >
                   {statusLabel(subject.status)}
                 </span>
+              </td>
+              <td className="admin-overview-td">
+                {subject.releaseReadinessBadge ? (
+                  <span
+                    className={`chip ${subject.releaseReadinessBadge.chipClass}`}
+                    data-testid={`readiness-${subject.subjectKey}`}
+                  >
+                    {subject.releaseReadinessBadge.label}
+                  </span>
+                ) : (
+                  <span className="small muted" data-testid={`readiness-${subject.subjectKey}`}>—</span>
+                )}
+              </td>
+              <td className="admin-overview-td">
+                {subject.validationBlockers.length > 0 ? (
+                  <span
+                    className="chip bad"
+                    data-testid={`blocker-badge-${subject.subjectKey}`}
+                    title={subject.validationBlockers.join('; ')}
+                  >
+                    {String(subject.validationBlockers.length)} blocker{subject.validationBlockers.length === 1 ? '' : 's'}
+                  </span>
+                ) : null}
+                {subject.validationWarnings.length > 0 ? (
+                  <span
+                    className="chip warn"
+                    data-testid={`warning-badge-${subject.subjectKey}`}
+                    title={subject.validationWarnings.join('; ')}
+                  >
+                    {String(subject.validationWarnings.length)} warning{subject.validationWarnings.length === 1 ? '' : 's'}
+                  </span>
+                ) : null}
+                {subject.validationBlockers.length === 0 && subject.validationWarnings.length === 0 ? (
+                  <span className="small muted" data-testid={`signals-${subject.subjectKey}`}>
+                    {subject.status === 'placeholder' ? '—' : 'Clear'}
+                  </span>
+                ) : null}
               </td>
               <td className="small admin-overview-td">
                 {subject.releaseVersion
@@ -158,7 +234,7 @@ function SubjectOverviewPanel({ model, actions }) {
               </td>
               <td className="small admin-overview-td">
                 <span
-                  className={isClickable(subject) ? '' : 'muted'}
+                  className={subject.isClickable ? '' : 'muted'}
                   data-testid={`action-${subject.subjectKey}`}
                 >
                   {drilldownActionLabel(subject.drilldownAction)}
@@ -618,6 +694,10 @@ function AssetRegistryCard({ entry, model, actions }) {
   const visual = model?.monsterVisualConfig || {};
   const status = visual?.status || {};
 
+  // P6 U8: Publish is disabled when blockers exist or no draft is present.
+  const hasPublishBlockers = Array.isArray(entry.publishBlockers) && entry.publishBlockers.length > 0;
+  const publishDisabled = !entry.canManage || hasPublishBlockers || !entry.hasDraft || publishLocked;
+
   return (
     <article
       className="card admin-card-spaced"
@@ -644,29 +724,55 @@ function AssetRegistryCard({ entry, model, actions }) {
           </div>
         </div>
         <div className="actions admin-registry-actions-end">
+          {entry.previewUrl ? (
+            <a
+              className="btn ghost"
+              href={entry.previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-action="registry-preview"
+              data-testid="registry-preview-link"
+            >
+              Preview
+            </a>
+          ) : null}
+          {!entry.hasDraft && entry.hasPublished ? (
+            <span className="chip muted" data-testid="registry-no-pending">No pending changes</span>
+          ) : null}
           {showPublishConfirm ? (
             <AdminConfirmAction
               level="high"
               dangerCopy="This will publish the current draft to all users."
-              targetDisplay={`Monster Visual Config rev ${String(status.draftRevision)}`}
+              targetDisplay={`${entry.displayName} rev ${String(entry.draftVersion)}`}
               onConfirm={() => runPublish(async () => {
-                actions.dispatch('monster-visual-config-publish', {
-                  expectedDraftRevision: status.draftRevision,
+                actions.dispatch('asset-publish', {
+                  assetId: entry.assetId,
+                  expectedDraftRevision: entry.draftVersion,
                 });
                 setShowPublishConfirm(false);
               })}
               onCancel={() => setShowPublishConfirm(false)}
             />
           ) : (
-            <button
-              className="btn good"
-              type="button"
-              disabled={!entry.canManage || !entry.validationState.ok || !entry.hasDraft || publishLocked}
-              data-action="registry-publish"
-              onClick={() => setShowPublishConfirm(true)}
-            >
-              Publish
-            </button>
+            <div className="admin-registry-publish-wrapper">
+              <button
+                className="btn good"
+                type="button"
+                disabled={publishDisabled}
+                data-action="registry-publish"
+                title={hasPublishBlockers ? entry.publishBlockers.join(' ') : undefined}
+                onClick={() => setShowPublishConfirm(true)}
+              >
+                Publish
+              </button>
+              {hasPublishBlockers ? (
+                <ul className="small muted admin-registry-blockers-list" data-testid="registry-publish-blockers">
+                  {entry.publishBlockers.map((blocker, idx) => (
+                    <li key={idx}>{blocker}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
           )}
           <div className="admin-registry-restore-flow">
             <select
@@ -703,11 +809,12 @@ function AssetRegistryCard({ entry, model, actions }) {
               <AdminConfirmAction
                 level="high"
                 dangerCopy="This will overwrite the current draft with a previous version."
-                targetDisplay={`Restore to v${selectedRestoreVersion}`}
+                targetDisplay={`Restore ${entry.displayName} to v${selectedRestoreVersion}`}
                 onConfirm={() => runRestore(async () => {
-                  actions.dispatch('monster-visual-config-restore', {
+                  actions.dispatch('asset-restore', {
+                    assetId: entry.assetId,
                     version: selectedRestoreVersion,
-                    expectedDraftRevision: status.draftRevision,
+                    expectedPublishedVersion: entry.publishedVersion,
                   });
                   setSelectedRestoreVersion(null);
                   setShowRestoreConfirm(false);
@@ -811,6 +918,139 @@ function AssetRegistrySection({ model, actions }) {
   );
 }
 
+// U7 (P6): Learning Quality Signals panel. Surfaces per-subject skill
+// coverage, high-wrong-rate content, and common misconceptions where
+// durable evidence exists. Read-only — no editing capabilities.
+function ContentQualitySignalsPanel({ model }) {
+  const qualitySignals = React.useMemo(
+    () => buildContentQualitySignals(model?.contentQualitySignals?.subjectSignals),
+    [model?.contentQualitySignals?.subjectSignals],
+  );
+
+  // Error state: signals endpoint failed to load entirely
+  if (model?.contentQualitySignalsError) {
+    return (
+      <section className="card admin-card-spaced" data-panel="content-quality-signals">
+        <div className="eyebrow">Content Management</div>
+        <h3 className="section-title admin-section-title">Learning Quality Signals</h3>
+        <div className="feedback bad">
+          <strong>Unable to load quality signals</strong>
+          <div className="small muted admin-note-spaced">
+            {typeof model.contentQualitySignalsError === 'string'
+              ? model.contentQualitySignalsError
+              : 'The content quality signals endpoint returned an error. Other panels still work.'}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!qualitySignals.length) {
+    return null;
+  }
+
+  return (
+    <section className="card admin-card-spaced" data-panel="content-quality-signals">
+      <div className="eyebrow">Content Management</div>
+      <h3 className="section-title admin-section-title">Learning Quality Signals</h3>
+      <p className="small muted admin-overview-desc">
+        Per-subject learning quality indicators. Shows skill coverage, template coverage, and
+        high-wrong-rate detection where durable evidence exists.
+      </p>
+      <div className="admin-quality-signals-grid">
+        {qualitySignals.map((subject) => {
+          const availability = summariseAvailability(subject.signals);
+          return (
+            <article
+              key={subject.subjectKey}
+              className="card soft admin-quality-signal-card"
+              data-subject-key={subject.subjectKey}
+              data-availability={availability}
+            >
+              <h4 className="admin-quality-signal-subject-name">{subject.subjectName}</h4>
+              <div className="chip-row admin-chip-row-spaced">
+                <span className={`chip ${availability === 'all' ? 'good' : availability === 'some' ? 'warn' : ''}`}>
+                  {availability === 'all' ? 'All signals available' : availability === 'some' ? 'Partial data' : 'No data yet'}
+                </span>
+              </div>
+              <dl className="admin-quality-signal-dl">
+                {/* Skill coverage */}
+                <div className="admin-quality-signal-row">
+                  <dt className="small muted">Skill coverage</dt>
+                  <dd>
+                    {subject.signals.skillCoverage.status !== SIGNAL_STATUS.NOT_AVAILABLE ? (
+                      <span className={`chip ${coverageChipClass(subject.signals.skillCoverage)}`}>
+                        {formatCoverageLabel(subject.signals.skillCoverage, 'skills')}
+                      </span>
+                    ) : (
+                      <span className="small muted">Not available yet</span>
+                    )}
+                  </dd>
+                </div>
+                {/* Template coverage */}
+                <div className="admin-quality-signal-row">
+                  <dt className="small muted">Template coverage</dt>
+                  <dd>
+                    {subject.signals.templateCoverage.status !== SIGNAL_STATUS.NOT_AVAILABLE ? (
+                      <span className={`chip ${coverageChipClass(subject.signals.templateCoverage)}`}>
+                        {subject.signals.templateCoverage.total > 0
+                          ? formatCoverageLabel(subject.signals.templateCoverage, 'templates')
+                          : `${subject.signals.templateCoverage.value} distinct templates`}
+                      </span>
+                    ) : (
+                      <span className="small muted">Not available yet</span>
+                    )}
+                  </dd>
+                </div>
+                {/* Item coverage */}
+                <div className="admin-quality-signal-row">
+                  <dt className="small muted">Item coverage</dt>
+                  <dd>
+                    {subject.signals.itemCoverage.status !== SIGNAL_STATUS.NOT_AVAILABLE ? (
+                      <span className={`chip ${coverageChipClass(subject.signals.itemCoverage)}`}>
+                        {formatCoverageLabel(subject.signals.itemCoverage, 'items')}
+                      </span>
+                    ) : (
+                      <span className="small muted">Not available yet</span>
+                    )}
+                  </dd>
+                </div>
+                {/* High wrong-rate */}
+                <div className="admin-quality-signal-row">
+                  <dt className="small muted">High wrong-rate</dt>
+                  <dd>
+                    {subject.signals.highWrongRate.status !== SIGNAL_STATUS.NOT_AVAILABLE ? (
+                      subject.signals.highWrongRate.items.length > 0 ? (
+                        <details className="admin-quality-signal-details">
+                          <summary className="small">
+                            {subject.signals.highWrongRate.items.length} concept{subject.signals.highWrongRate.items.length === 1 ? '' : 's'} above 40% wrong
+                          </summary>
+                          <ul className="small muted admin-quality-signal-list">
+                            {subject.signals.highWrongRate.items.map((item) => (
+                              <li key={item.id}>
+                                <code>{item.label}</code>
+                                {item.detail ? <span className="muted"> — {item.detail}</span> : null}
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      ) : (
+                        <span className="chip good">No high wrong-rate concepts</span>
+                      )
+                    ) : (
+                      <span className="small muted">Not available yet</span>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function AdminContentSection({ model, appState, accessContext, actions }) {
   const selectedDiagnostics = model.learnerSupport?.selectedDiagnostics || null;
   const selectedLearnerId = model.learnerSupport?.selectedLearnerId || selectedDiagnostics?.learnerId || '';
@@ -819,6 +1059,7 @@ export function AdminContentSection({ model, appState, accessContext, actions })
   return (
     <>
       <SubjectOverviewPanel model={model} actions={actions} />
+      <ContentQualitySignalsPanel model={model} />
       <ContentReleaseAndImport model={model} accessContext={accessContext} actions={actions} />
       <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
       <PostMegaSeedHarnessPanel model={model} actions={actions} />

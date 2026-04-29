@@ -2,6 +2,7 @@ import React from 'react';
 import { formatTimestamp } from './hub-utils.js';
 import { PanelHeader } from './admin-panel-header.jsx';
 import { formatOccurrenceTimestamp } from '../../platform/hubs/admin-occurrence-timeline.js';
+import '../styles/admin-panels.css';
 
 // U8 (P4): Error log centre panel — extracted from AdminDebuggingSection.jsx.
 // Contains ErrorLogCentrePanel + OccurrenceTimeline + ErrorEventDetailsDrawer.
@@ -15,8 +16,8 @@ function OccurrenceTimeline({ eventId, occurrences, loading, onLoad, canViewAcco
   const rows = Array.isArray(occurrences) ? occurrences : [];
   const loaded = rows.length > 0 || loading === false;
   return (
-    <div data-testid={`occurrence-timeline-${eventId}`} style={{ marginTop: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div data-testid={`occurrence-timeline-${eventId}`} className="admin-mt-12">
+      <div className="admin-flex-row">
         <strong className="small">Occurrence timeline</strong>
         {!loaded && typeof onLoad === 'function' ? (
           <button
@@ -34,19 +35,19 @@ function OccurrenceTimeline({ eventId, occurrences, loading, onLoad, canViewAcco
         <table className="small" style={{ marginTop: 6, width: '100%', borderCollapse: 'collapse' }} data-testid={`occurrence-table-${eventId}`}>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', padding: '2px 6px' }}>When</th>
-              <th style={{ textAlign: 'left', padding: '2px 6px' }}>Release</th>
-              <th style={{ textAlign: 'left', padding: '2px 6px' }}>Route</th>
-              {canViewAccount ? <th style={{ textAlign: 'left', padding: '2px 6px' }}>Account</th> : null}
+              <th className="admin-th-left">When</th>
+              <th className="admin-th-left">Release</th>
+              <th className="admin-th-left">Route</th>
+              {canViewAccount ? <th className="admin-th-left">Account</th> : null}
             </tr>
           </thead>
           <tbody>
             {rows.map((occ) => (
               <tr key={occ.id || occ.occurredAt} data-testid={`occurrence-row-${occ.id}`}>
-                <td className="muted" style={{ padding: '2px 6px' }}>{formatOccurrenceTimestamp(occ.occurredAt)}</td>
-                <td style={{ padding: '2px 6px', fontFamily: 'monospace' }}>{occ.release ? String(occ.release).slice(0, 7) : '—'}</td>
-                <td className="muted" style={{ padding: '2px 6px' }}>{occ.routeName || '—'}</td>
-                {canViewAccount ? <td className="muted" style={{ padding: '2px 6px' }}>{occ.accountId || 'anon'}</td> : null}
+                <td className="muted admin-cell-pad">{formatOccurrenceTimestamp(occ.occurredAt)}</td>
+                <td className="admin-cell-pad" style={{ fontFamily: 'monospace' }}>{occ.release ? String(occ.release).slice(0, 7) : '—'}</td>
+                <td className="muted admin-cell-pad">{occ.routeName || '—'}</td>
+                {canViewAccount ? <td className="muted admin-cell-pad">{occ.accountId || 'anon'}</td> : null}
               </tr>
             ))}
           </tbody>
@@ -195,13 +196,13 @@ export function ErrorLogCentrePanel({ model, actions }) {
 
   const headerExtras = (
     <>
-      <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="chip-row admin-mt-8">
         <span className="chip">{String(Number(totals.open) || 0)} open</span>
         <span className="chip">{String(Number(totals.investigating) || 0)} investigating</span>
         <span className="chip">{String(Number(totals.resolved) || 0)} resolved</span>
         <span className="chip">{String(Number(totals.ignored) || 0)} ignored</span>
       </div>
-      <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="chip-row admin-mt-8">
         {statusFilters.map((status) => (
           <button
             className="btn ghost"
@@ -214,8 +215,7 @@ export function ErrorLogCentrePanel({ model, actions }) {
         ))}
       </div>
       <div
-        className="filters"
-        style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}
+        className="filters admin-filter-grid"
         data-testid="error-centre-filters"
       >
         <label className="field">
@@ -296,7 +296,7 @@ export function ErrorLogCentrePanel({ model, actions }) {
           />
         </label>
       </div>
-      <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="chip-row admin-mt-8">
         <button
           className="btn"
           type="button"
@@ -325,7 +325,7 @@ export function ErrorLogCentrePanel({ model, actions }) {
     </>
   );
   return (
-    <section className="card" style={{ marginBottom: 20 }}>
+    <section className="card admin-card-mb">
       <PanelHeader
         eyebrow="Error log"
         title="Error log centre"
