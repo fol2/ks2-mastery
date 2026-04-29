@@ -24,6 +24,9 @@ export function normaliseMarketingMessage(rawValue) {
     created_at: asTs(raw.created_at, 0),
     updated_at: asTs(raw.updated_at, 0),
     published_at: raw.published_at != null ? asTs(raw.published_at, 0) : null,
+    paused_at: raw.paused_at != null ? asTs(raw.paused_at, 0) : null,
+    archived_at: raw.archived_at != null ? asTs(raw.archived_at, 0) : null,
+    lifecycleHistory: raw.lifecycleHistory || null,
     row_version: Math.max(0, Number(raw.row_version) || 0),
   };
 }
