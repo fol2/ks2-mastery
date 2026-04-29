@@ -52,6 +52,13 @@ describe('Heterogeneous table_choice: row-specific options', () => {
   for (const templateId of MIXED_TRANSFER_IDS) {
     const questions = generateTableChoiceQuestions(templateId);
 
+    it(`${templateId}: generates >0 questions (empty-fails invariant)`, () => {
+      assert.ok(
+        questions.length > 0,
+        `generateTableChoiceQuestions("${templateId}") returned 0 items — test would vacuously pass`,
+      );
+    });
+
     for (const { seed, question } of questions) {
       it(`${templateId} seed=${seed}: rows include per-row options`, () => {
         const rows = question.inputSpec.rows;
@@ -93,9 +100,16 @@ describe('Heterogeneous table_choice: row-specific options', () => {
 // ---------------------------------------------------------------------------
 
 describe('Homogeneous table_choice: global columns preserved', () => {
-  // sentence_function is a homogeneous table_choice (all rows share same columns)
-  const HOMOGENEOUS_ID = 'sentence_function_classify';
+  // sentence_type_table is a homogeneous table_choice (all rows share same columns)
+  const HOMOGENEOUS_ID = 'sentence_type_table';
   const questions = generateTableChoiceQuestions(HOMOGENEOUS_ID);
+
+  it(`${HOMOGENEOUS_ID}: generates >0 questions (empty-fails invariant)`, () => {
+    assert.ok(
+      questions.length > 0,
+      `generateTableChoiceQuestions("${HOMOGENEOUS_ID}") returned 0 items — test would vacuously pass`,
+    );
+  });
 
   for (const { seed, question } of questions) {
     it(`${HOMOGENEOUS_ID} seed=${seed}: no row.options present (uses global columns)`, () => {
@@ -123,6 +137,13 @@ describe('Homogeneous table_choice: global columns preserved', () => {
 describe('Valid row-specific submission: accepted', () => {
   const templateId = 'qg_p4_voice_roles_transfer';
   const questions = generateTableChoiceQuestions(templateId);
+
+  it(`${templateId}: generates >0 questions (empty-fails invariant)`, () => {
+    assert.ok(
+      questions.length > 0,
+      `generateTableChoiceQuestions("${templateId}") returned 0 items — test would vacuously pass`,
+    );
+  });
 
   for (const { seed, question } of questions) {
     it(`${templateId} seed=${seed}: correct answer per row-specific options evaluates`, () => {
@@ -157,6 +178,13 @@ describe('Valid row-specific submission: accepted', () => {
 describe('Invalid row-specific submission: value NOT in row.options but in global columns', () => {
   const templateId = 'qg_p4_word_class_noun_phrase_transfer';
   const questions = generateTableChoiceQuestions(templateId);
+
+  it(`${templateId}: generates >0 questions (empty-fails invariant)`, () => {
+    assert.ok(
+      questions.length > 0,
+      `generateTableChoiceQuestions("${templateId}") returned 0 items — test would vacuously pass`,
+    );
+  });
 
   for (const { seed, question } of questions) {
     it(`${templateId} seed=${seed}: answer from wrong row's options is invalid`, () => {
