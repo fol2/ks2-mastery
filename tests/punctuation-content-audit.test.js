@@ -921,6 +921,11 @@ test('punctuation content audit reviewer report all-green content produces 0 Fai
   assert.equal(failFindings.length, 0, `Expected 0 Fail findings, got: ${failFindings.map((f) => f.code).join(', ')}`);
 });
 
+test('verify:punctuation-qg script exists', async () => {
+  const { access } = await import('node:fs/promises');
+  await access(new URL('../scripts/verify-punctuation-qg.mjs', import.meta.url));
+});
+
 test('punctuation content audit reviewer report text output includes severity markers', () => {
   const audit = runPunctuationContentAudit({
     seed: 'reviewer-text-markers',
