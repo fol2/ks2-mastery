@@ -47,13 +47,13 @@ Stage thresholds are fixed at: 0 = Not found, 1 = Egg found, 15 = Hatched, 35 = 
 
 ---
 
-### 4. 1 Star catches the Egg
+### 4. 1 Star catches the Egg for direct monsters
 
-The first valid learning evidence on any Grammar monster triggers Egg found (`caught = true`). No concept-secured requirement for Egg. A single independent correct answer on any concept assigned to a monster is sufficient.
+The first valid learning evidence on a direct Grammar monster triggers Egg found (`caught = true`). No concept-secured requirement for direct-monster Egg. A single independent correct answer on any concept assigned to a direct monster is sufficient. Concordium is the Grand exception and follows invariant 13.
 
 **Why:** R4 (immediate encouragement). Children must see their monster hatch quickly to sustain engagement. Requiring concept-secured status for Egg would delay the first reward by days or weeks.
 
-**Enforced by:** U2 `tests/grammar-stars.test.js` (1-Star Egg test), U6 `tests/grammar-star-events.test.js` (caught event fires at 1 Star).
+**Enforced by:** U2 `tests/grammar-stars.test.js` (direct-monster 1-Star Egg test), U6 `tests/grammar-star-events.test.js` (direct-monster caught event fires at 1 Star).
 
 ---
 
@@ -137,13 +137,21 @@ Adult confidence labels (emerging/building/consolidating/secure/needs-repair) re
 
 ---
 
-### 13. Concordium follows 1-Star Egg like direct monsters
+### 13. Concordium uses a Grand Star tier model
 
-Concordium Egg is triggered by 1 Star, the same rule as all direct monsters. No broad-coverage gate (6+ secure concepts across 2+ clusters) is required for Concordium Egg in Phase 5. The 18-concept denominator naturally slows Concordium progression; consistency across all monsters reduces cognitive load.
+Concordium still has a 0--100 Star scale, but it is the Grammar Grand monster and does not use the direct-monster first-evidence floor. Its child-facing Stars are versioned (`GRAMMAR_GRAND_STAR_MODEL_VERSION = 2`) and tiered by breadth/depth across direct Grammar monsters:
 
-**Why:** R13 (origin revision). The origin document initially proposed a broad-coverage gate for Concordium Egg. James revised this in the same conversation: "Concordium 也可以 1 Star = Egg found." The simpler rule was adopted because (a) Concordium's 18-concept denominator naturally slows it, (b) consistency across all monsters reduces cognitive load, and (c) a broad-coverage gate adds complexity without proportional value. If U3 simulation reveals Concordium Egg arrives too quickly, the gate can be reintroduced in a future phase.
+- 1 Star: at least 2 secure concepts across at least 2 direct monster families.
+- 15 Stars: at least 3 secure concepts across at least 2 direct monster families.
+- 35 Stars: at least 6 secure concepts across all 3 direct monster families.
+- 65 Stars: at least 10 secure concepts and 5 retained concepts across all 3 families.
+- 100 Stars: all 18 concepts retained, with varied-practice evidence across all 3 families.
 
-**Enforced by:** U6 `tests/grammar-star-events.test.js` (Concordium caught at 1 Star), U9 `tests/grammar-concordium-invariant.test.js` (Concordium ratchet).
+Old unversioned Concordium `starHighWater` from the previous straight aggregate model is ignored for child-facing display. This is an intentional exception to the legacy visual-floor rule for direct monsters: a Grand egg produced only by aggregate bridge evidence can be taken back and replaced by the corresponding direct monster egg.
+
+**Why:** Eugenia's test profile showed the aggregate model could surface Concordium before any normal monster egg. The Grand model aligns Grammar with Punctuation Quoral: grand progress should represent cross-family breadth and retained depth, not a single bridge concept.
+
+**Enforced by:** U6 `tests/grammar-star-events.test.js` (Concordium caught after versioned Grand 1-Star evidence), U9 `tests/grammar-concordium-invariant.test.js` (old Concordium aggregate Stars reset), and `tests/grammar-stars.test.js` (Grand tier boundaries).
 
 ---
 

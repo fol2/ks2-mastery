@@ -26,6 +26,7 @@ import {
 
 import {
   GRAMMAR_MONSTER_STAR_MAX,
+  GRAMMAR_GRAND_STAR_MODEL_VERSION,
   GRAMMAR_STAR_STAGE_THRESHOLDS,
   applyStarHighWaterLatch,
   grammarStarStageFor,
@@ -312,7 +313,7 @@ test('U4 legacy: pre-P5 Couronnail Mega (3/3 mastered, no starHighWater) -> Mega
   assert.equal(progress.displayStage, 5);
 });
 
-test('U4 legacy: pre-P5 Concordium stage 3 keeps high-water floor but stays visually gated without direct breadth', () => {
+test('U4 legacy: pre-P5 Concordium stage 3 no longer seeds child-facing Grand Stars', () => {
   const keys = GRAMMAR_AGGREGATE_CONCEPTS.slice(0, 14).map((c) => grammarMasteryKey(c));
   const state = {
     concordium: {
@@ -325,11 +326,11 @@ test('U4 legacy: pre-P5 Concordium stage 3 keeps high-water floor but stays visu
   const progress = progressForGrammarMonster(state, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
-  // Legacy stage: 14/18 = 0.778 -> stage 3 -> floor = 35 Star high-water.
-  // Display remains gated until enough direct monsters have been found.
-  assert.ok(progress.starHighWater >= 35, 'high-water floor preserved');
-  assert.equal(progress.stars, 0, 'display Stars are gated');
-  assert.equal(progress.displayState, 'not-found', 'Concordium remains hidden without direct breadth');
+  // Legacy ratio still preserves the internal stage for compatibility, but
+  // the new Grand Star model ignores unversioned Concordium high-water.
+  assert.equal(progress.starHighWater, 0, 'unversioned Concordium high-water is ignored');
+  assert.equal(progress.stars, 0, 'display Stars are reset to the Grand model');
+  assert.equal(progress.displayState, 'not-found', 'Concordium remains hidden without Grand breadth/depth');
 });
 
 test('U4 legacy: pre-P5 learner with no Grammar state -> 0 Stars, no migration needed', () => {
@@ -390,6 +391,7 @@ test('U4 record: recordGrammarConceptMastery preserves existing starHighWater on
       mastered: [],
       caught: false,
       starHighWater: 25,
+      starModelVersion: GRAMMAR_GRAND_STAR_MODEL_VERSION,
     },
   });
   recordGrammarConceptMastery({
@@ -573,7 +575,7 @@ test('U4 progress with conceptNodes: Bracehart with full evidence on all owned c
   assert.equal(progress.stageName, 'Mega');
 });
 
-test('U4 progress with conceptNodes: single firstIndependentWin on Concordium is gated without direct breadth', () => {
+test('U4 progress with conceptNodes: single firstIndependentWin on Concordium is gated without secure breadth', () => {
   const conceptId = 'sentence_functions';
   const conceptNodes = {
     [conceptId]: { attempts: 1, correct: 1, wrong: 0, strength: 0.3, intervalDays: 0, correctStreak: 1 },
@@ -587,30 +589,28 @@ test('U4 progress with conceptNodes: single firstIndependentWin on Concordium is
     conceptNodes,
     recentAttempts,
   });
-  assert.equal(progress.starHighWater, 1, 'raw high-water still records the evidence');
+  assert.equal(progress.starHighWater, 0, 'Grand high-water stays zero without secure breadth');
   assert.equal(progress.stars, 0, 'display Stars are gated');
-  assert.equal(progress.caught, false, 'Concordium is not caught before direct breadth');
+  assert.equal(progress.caught, false, 'Concordium is not caught before secure breadth');
 });
 
-test('U4 progress with conceptNodes: Concordium first evidence displays once two direct monsters are found', () => {
-  const conceptId = 'sentence_functions';
+test('U4 progress with conceptNodes: Concordium first evidence displays after two secure concepts across two direct monsters', () => {
   const conceptNodes = {
-    [conceptId]: { attempts: 1, correct: 1, wrong: 0, strength: 0.3, intervalDays: 0, correctStreak: 1 },
+    sentence_functions: { attempts: 4, correct: 4, wrong: 0, strength: 0.9, intervalDays: 8, correctStreak: 4 },
+    word_classes: { attempts: 4, correct: 4, wrong: 0, strength: 0.9, intervalDays: 8, correctStreak: 4 },
   };
   const recentAttempts = [
-    { conceptId, templateId: 'tmpl-1', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'sentence_functions', templateId: 'tmpl-1', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+    { conceptId: 'word_classes', templateId: 'tmpl-2', correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
   ];
-  const state = {
-    bracehart: { starHighWater: 1, caught: true },
-    couronnail: { starHighWater: 1, caught: true },
-  };
+  const state = {};
   const progress = progressForGrammarMonster(state, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
     conceptNodes,
     recentAttempts,
   });
-  assert.equal(progress.stars, 1, 'floor guarantee displays after direct breadth gate');
-  assert.equal(progress.caught, true, 'Concordium is caught after direct breadth gate');
+  assert.equal(progress.stars, 1, 'Grand first-found displays after secure breadth');
+  assert.equal(progress.caught, true, 'Concordium is caught after secure breadth');
 });
 
 test('U4 progress without conceptNodes: falls back to 0 computed Stars + legacy floor', () => {
@@ -766,10 +766,10 @@ test('U4 integration: starHighWater survives across multiple recordGrammarConcep
 });
 
 // =============================================================================
-// 12. HIGH fix: pre-P5 Concordium round-trip — starHighWater seeded from legacy floor
+// 12. Grand model migration: pre-P5 Concordium round-trip resets child-facing Stars
 // =============================================================================
 
-test('U4 review fix: pre-P5 Concordium 14/18 mastered preserves stored floor while display gate can hide it', () => {
+test('U4 review fix: pre-P5 Concordium 14/18 mastered does not preserve old aggregate Star floor', () => {
   // Pre-P5 learner with 14 of 18 Concordium concepts mastered.
   // Legacy stage: 14/18 = 0.778 -> stage 3 -> floor = 35 Stars.
   const keys = GRAMMAR_AGGREGATE_CONCEPTS.slice(0, 14).map((c) => grammarMasteryKey(c));
@@ -782,15 +782,15 @@ test('U4 review fix: pre-P5 Concordium 14/18 mastered preserves stored floor whi
     },
   });
 
-  // Step 1: read progress — floor is preserved in starHighWater, while
-  // display Stars stay hidden until the direct-monster breadth gate passes.
+  // Step 1: read progress — legacy stage is retained, but child-facing Grand
+  // Stars require the new versioned tier projection.
   const state1 = repository.state();
   const progress1 = progressForGrammarMonster(state1, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
-  assert.ok(progress1.starHighWater >= 35,
-    `Before record: starHighWater=${progress1.starHighWater} should be >= 35 from legacy floor`);
-  assert.equal(progress1.stars, 0, 'Before record: display Stars are gated');
+  assert.equal(progress1.starHighWater, 0,
+    'Before record: unversioned Concordium high-water is ignored by the Grand model');
+  assert.equal(progress1.stars, 0, 'Before record: display Stars are reset');
 
   // Step 2: record concept 15 via recordGrammarConceptMastery.
   const concept15 = GRAMMAR_AGGREGATE_CONCEPTS[14];
@@ -801,17 +801,17 @@ test('U4 review fix: pre-P5 Concordium 14/18 mastered preserves stored floor whi
     random: () => 0,
   });
 
-  // Step 3: read progress again — stored high-water must still be >= 35.
+  // Step 3: read progress again — secure writes must not recreate the old
+  // aggregate Star floor.
   const state2 = repository.state();
   const progress2 = progressForGrammarMonster(state2, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
-  assert.ok(progress2.starHighWater >= 35,
-    `After record: starHighWater=${progress2.starHighWater} should be >= 35 — legacy floor must not be erased by write`);
-  assert.equal(progress2.stars, 0, 'After record: display Stars remain gated');
-  // The written starHighWater must be at least the legacy floor.
-  assert.ok(state2.concordium.starHighWater >= 35,
-    `Persisted starHighWater=${state2.concordium.starHighWater} should be >= 35`);
+  assert.equal(progress2.starHighWater, 0,
+    'After record: Concordium high-water remains zero until tier projection writes it');
+  assert.equal(progress2.stars, 0, 'After record: display Stars remain reset');
+  assert.equal(state2.concordium.starHighWater, 0,
+    'Persisted starHighWater remains zero for the new Grand model');
 });
 
 // =============================================================================
@@ -868,6 +868,7 @@ test('U4 review: string-typed starHighWater ("42") preserved through recordGramm
       mastered: [grammarMasteryKey('sentence_functions')],
       caught: true,
       starHighWater: '42',
+      starModelVersion: GRAMMAR_GRAND_STAR_MODEL_VERSION,
     },
     bracehart: {
       mastered: [grammarMasteryKey('sentence_functions')],
@@ -893,6 +894,7 @@ test('U4 review: string-typed starHighWater ("42") preserved through recordGramm
 // =============================================================================
 
 test('U4 review: Concordium with full conceptNodes evidence for all 18 concepts -> 100 Stars', () => {
+  const now = Date.now();
   const state = {
     concordium: {
       mastered: GRAMMAR_AGGREGATE_CONCEPTS.map((c) => grammarMasteryKey(c)),
@@ -913,8 +915,8 @@ test('U4 review: Concordium with full conceptNodes evidence for all 18 concepts 
     };
     // Two independent corrects with different templates.
     recentAttempts.push(
-      { conceptId, templateId: `${conceptId}-tmpl-1`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
-      { conceptId, templateId: `${conceptId}-tmpl-2`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0 },
+      { conceptId, templateId: `${conceptId}-tmpl-1`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: now - 86_400_000 },
+      { conceptId, templateId: `${conceptId}-tmpl-2`, correct: true, firstAttemptIndependent: true, supportLevelAtScoring: 0, createdAt: now - 43_200_000 },
     );
   }
   const progress = progressForGrammarMonster(state, 'concordium', {

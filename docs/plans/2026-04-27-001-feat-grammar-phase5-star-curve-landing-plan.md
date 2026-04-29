@@ -43,7 +43,7 @@ Phase 4 proved the learning system is correct and production-safe (14 PRs, 12 in
 - R1. **100-Star scale for all active Grammar monsters.** Every active Grammar monster (Bracehart, Chronalyx, Couronnail, Concordium) displays progress on a 0–100 Star scale. `starMax: 100` is universal.
 - R2. **Stars are learning-evidence milestones, not per-question XP.** Stars accrue from five evidence tiers (first independent win, repeat independent win, varied practice, secure confidence, retained after secure). Answering more questions at the same difficulty does not accelerate Stars.
 - R3. **Non-linear stage thresholds.** 0 = Not found, 1 = Egg found, 15 = Hatched, 35 = Growing, 65 = Nearly Mega, 100 = Mega.
-- R4. **1 Star catches the Egg.** The first valid learning evidence on any Grammar monster triggers Egg found. No concept-secured requirement for Egg.
+- R4. **1 Star catches the Egg for direct monsters.** The first valid learning evidence on a direct Grammar monster triggers Egg found. Concordium is the Grand exception and follows R13. No concept-secured requirement for direct-monster Egg.
 - R5. **Mega requires retention evidence.** 100 Stars is only reachable when every assigned concept has earned the `retainedAfterSecure` tier (60% of each concept's budget). Secure alone caps at approximately 40% of the budget.
 - R6. **Stars are monotonically non-decreasing.** Once a Star is earned it is never lost. Evidence tiers are latched per concept — once unlocked, permanently counted.
 - R7. **No stage downgrade.** No existing learner ever sees a lower stage than they previously achieved. Read-time normalisation computes `max(legacyStage, newStarDerivedStage)`.
@@ -52,7 +52,7 @@ Phase 4 proved the learning system is correct and production-safe (14 PRs, 12 in
 - R10. **Landing page: one primary CTA.** Smart Practice becomes the sole primary button. Grammar Bank, Mini Test, and Fix Trouble Spots become secondary links.
 - R11. **Compact monster strip on dashboard.** All four active monsters shown with `name — stage label — X/100 Stars` format.
 - R12. **Adult/child display separation preserved.** Adult confidence labels (emerging/building/consolidating/secure/needs-repair) remain live-state. Child Stars are latched. "Needs repair" in adult view coexists with non-decreasing Stars in child view.
-- R13. **Concordium follows 1-Star Egg like direct monsters (origin revision).** The origin document proposed a broad-coverage gate (6+ secure concepts across 2+ clusters) for Concordium Egg. James subsequently revised this in the same conversation (origin line 734): "Concordium 也可以 1 Star = Egg found." The simpler rule was adopted because (a) Concordium's 18-concept denominator naturally slows it, (b) consistency across all monsters reduces cognitive load, and (c) a broad-coverage gate adds complexity without proportional value given the slow aggregate curve. Multi-concept Concordium Egg gate deferred to future phase if simulation (U3) reveals early Concordium progression is too fast. Concordium Mega still requires all 18 concepts fully evidenced.
+- R13. **Concordium uses a Grand Star tier model.** Supersedes the earlier Phase 5 "Concordium follows 1-Star Egg like direct monsters" decision. Eugenia's test profile proved the straight aggregate model could surface Concordium before any normal monster egg. Concordium now reaches 1/15/35/65/100 Stars through breadth/depth gates across direct Grammar families, while direct monsters keep the 1-Star Egg rule.
 - R14. **No contentReleaseId bump.** Phase 5 changes reward display, not marking behaviour.
 - R15. **Phase 4 invariants 1–12 preserved.** All Phase 4 invariants (`docs/plans/james/grammar/grammar-phase4-invariants.md`) remain enforced. Phase 5 extends but never weakens them.
 
@@ -121,13 +121,13 @@ Phase 4 proved the learning system is correct and production-safe (14 PRs, 12 in
 
 - **`retainedAfterSecure` definition: concept was previously secured (strength ≥ 0.82, interval ≥ 7d, streak ≥ 3) at any historical point, AND the learner later answers independently correct (support level 0) on that concept in a different session.** The "previously secured" fact is detected from the concept node's `intervalDays ≥ 7` (which is only reachable after the spaced-review cycle that secures a concept). A single correct independent answer after this point unlocks the tier. Once latched, permanent. **Rationale:** 60% of the concept budget must require real retention evidence but must also be achievable. Requiring mixed-review-only would gate retention on mode choice, which is unfair if the child uses Smart Practice (which already mixes concepts).
 
-- **Floor guarantee is per-monster, not per-concept.** The first evidence event on any concept for a monster guarantees `stars >= 1` for that monster. Subsequent concepts accrue via normal budget math (which may round to 0 individually for Concordium's 5.56/concept). **Rationale:** Per-concept floor with Concordium's 18 concepts would award 18 Stars from just first-wins, overshooting the Hatch threshold.
+- **Floor guarantee is direct-monster only.** The first evidence event on any concept for a direct monster guarantees `stars >= 1` for that monster. Concordium is exempt: as the Grand monster, it does not use the first-evidence floor and only displays Stars once the Grand tier model qualifies. **Rationale:** Concordium should never be the first egg from one bridge concept or one direct family.
 
 - **Event double-fire prevention uses "fire lowest, defer higher" via threshold re-check.** When a single evidence update crosses both the Egg (1 Star) and Hatch (15 Stars) thresholds simultaneously, emit only the `caught` event. The `hatch` event fires on the next transition where Stars still exceed the threshold. Since Stars are monotonic, the next evidence event will re-check and emit the deferred event. No queuing mechanism needed. **Rationale:** The current `grammarEventFromTransition` already picks one event per transition via priority cascade. P5 extends this: caught always wins when both caught and evolve/hatch are new.
 
 - **Star computation lives in `shared/grammar/grammar-stars.js`.** Constants (`GRAMMAR_MONSTER_STAR_MAX`, `GRAMMAR_STAR_STAGE_THRESHOLDS`, `GRAMMAR_CONCEPT_STAR_WEIGHTS`), evidence-tier derivation, and staging functions all in one file. Both Worker and client import from here via relative paths, matching the `shared/grammar/confidence.js` pattern. A thin re-export from `src/platform/game/mastery/grammar-stars.js` provides backward-compatible imports for the existing mastery module tree. Drift-guard grep test pins that no other file defines duplicate Star constants. **Rationale:** Mirrors the `shared/grammar/confidence.js` pattern from Phase 4 U8 — shared modules live in `shared/`, free of Worker- or client-specific dependencies.
 
-- **Rounding: per-concept contributions are NOT floored before summing.** `monsterStars = floor(sum(conceptBudget * sum(unlockedWeights)))` where `conceptBudget = 100 / conceptCount`. The floor applies only to the final total. **Rationale:** Flooring per-concept before summing causes Concordium (18 concepts × floor(5.56 × 0.05) = 18 × 0 = 0 Stars) to show 0 Stars when it should show 5.
+- **Rounding: direct-monster per-concept contributions are NOT floored before summing.** `monsterStars = floor(sum(conceptBudget * sum(unlockedWeights)))` where `conceptBudget = 100 / conceptCount`. The floor applies only to the final total. Concordium no longer uses this straight aggregate formula for child-facing Stars; it uses Grand tier gates.
 
 - **Simulation (U9) runs after U2-U3 but before U4 finalises weights.** If the simulation reveals the 5/10/10/15/60 split produces unreasonable timelines, weights adjust before any JSX unit ships. **Rationale:** Implementing 8 units then discovering the curve is wrong means rework.
 
@@ -139,8 +139,8 @@ Phase 4 proved the learning system is correct and production-safe (14 PRs, 12 in
 
 - **How do Stars accrue from sub-secured evidence when the current pipeline only fires on `grammar.concept-secured`?** Resolution: Stars are derived at read time from mastery node data, not from events. No new event types needed.
 - **What happens when a concept loses secure status?** Resolution: Stars use a per-monster `starHighWater` latch. Adult confidence labels are live-state (can show `needs-repair`). The two systems intentionally diverge after confidence regression.
-- **Does Concordium need a broad-coverage gate for Egg?** Resolution: No — revised from origin's initial proposal of 6+ secure concepts across 2+ clusters. James revised this in the same origin conversation (line 734) to 1-Star Egg for consistency. The 18-concept denominator naturally throttles Concordium progression. If U3 simulation reveals Concordium Egg arrives too quickly, the broad-coverage gate can be reintroduced as a future-phase constraint.
-- **How do punctuation-for-grammar concepts earn Stars?** Resolution: These 5 concepts contribute to Concordium only. They earn Stars through whichever engine secures them first (Grammar or Punctuation), via the existing cross-subject `grammar.concept-secured` event pipeline.
+- **Does Concordium need a broad-coverage gate for Egg?** Superseded after Eugenia's test-profile audit. Resolution: Yes — Concordium is now a Grand tier projection. 1 Star requires at least 2 secure concepts across at least 2 direct monster families; higher tiers require broader secure/retained evidence.
+- **How do punctuation-for-grammar concepts earn Stars?** Superseded after the bridge-ownership fix. These 5 concepts contribute to Concordium aggregate mastery and also have direct owners: `parenthesis_commas`, `speech_punctuation`, and `boundary_punctuation` → Bracehart; `apostrophes_possession` and `hyphen_ambiguity` → Couronnail.
 - **Stage names: generic or monster-specific?** Resolution: Generic child-facing labels ("Not found yet", "Egg found", "Hatched", "Growing", "Nearly Mega", "Mega") for the dashboard strip. Monster-specific `nameByStage` values in `MONSTERS` remain for asset-facing contexts.
 
 ### Deferred to Implementation
@@ -272,8 +272,12 @@ flowchart LR
 - Happy path: Concordium 18 concepts, all fully evidenced → Stars = 100
 - Edge case: concept with only worked/faded support answers → firstIndependentWin = false → 0 Stars
 - Edge case: concept with 1 template only → variedPractice uses distinct-items fallback → still achievable
-- Edge case: Concordium 1 concept with firstIndependentWin → floor(5.56 × 0.05) = 0, but per-monster floor guarantee → 1 Star
-- Edge case: Concordium 18 concepts each at firstIndependentWin only → floor(18 × 5.56 × 0.05) = floor(5.0) = 5 Stars (no per-concept floor inflation)
+- Edge case: Concordium 1 concept with firstIndependentWin → 0 Stars because Grand Stars require secure breadth
+- Edge case: Concordium 18 concepts each at firstIndependentWin only → 0 Stars because try-only breadth is not Grand evidence
+- Edge case: Concordium 2 secure concepts across 2 direct families → 1 Star
+- Edge case: Concordium 3 secure concepts across 2 direct families → 15 Stars
+- Edge case: Concordium 6 secure concepts across all 3 direct families → 35 Stars
+- Edge case: Concordium 10 secure + 5 retained concepts across all 3 direct families → 65 Stars
 - Error path: null/undefined concept node → 0 evidence, 0 Stars
 - Error path: concept node with NaN strength/attempts → defensive normalisation, 0 evidence
 - Integration: `grammarStarStageFor(0)` = 0, `grammarStarStageFor(1)` = 1, `grammarStarStageFor(14)` = 1, `grammarStarStageFor(15)` = 2, `grammarStarStageFor(99)` = 3, `grammarStarStageFor(100)` = 4
@@ -370,7 +374,7 @@ flowchart LR
 - **Legacy migration scenarios:**
 - Happy path: pre-P5 learner with Bracehart caught (1/6 mastered) → legacy stage 1 → floor Stars = 1 → Egg found preserved
 - Happy path: pre-P5 learner with Couronnail Mega (3/3 mastered) → legacy stage 4 → floor Stars = 100 → Mega preserved
-- Happy path: pre-P5 Concordium stage 3 (14/18 mastered) → legacy stage 3 → floor Stars = 35 → Growing preserved
+- Happy path: pre-P5 Concordium stage 3 (14/18 mastered) → legacy stage remains readable, but unversioned aggregate Stars reset to 0 until the Grand model writes versioned evidence
 - Edge case: pre-P5 learner with no Grammar state → 0 Stars, no migration needed
 - Edge case: post-P5 learner with `starHighWater` present → migration path skipped
 - Edge case: migration path never emits events (asserted by event subscriber returning empty array)
@@ -414,7 +418,7 @@ flowchart LR
 - Edge case: single evidence event crosses Egg (1) + Hatch (15) simultaneously → only `caught` fires
 - Edge case: next evidence after above → Stars still ≥ 15 → `evolve` fires for hatch
 - Edge case: single evidence event crosses Egg (1) + Hatch (15) + Evolve2 (35) → only `caught` fires; subsequent events emit evolve for each crossed threshold one at a time
-- Edge case: Concordium caught at 1 Star → caught event fires with Concordium monster
+- Edge case: Concordium caught at versioned Grand 1 Star → caught event fires with Concordium monster
 - Integration: full 0→100 Star progression emits events in order: caught, evolve (hatch), evolve (evolve2), evolve (evolve3), mega — never double in one call
 
 **Verification:**
@@ -439,7 +443,7 @@ flowchart LR
 **Approach:**
 - `buildGrammarMonsterStripModel(rewardState, masteryConceptNodes)` returns an array of `{ monsterId, name, stageName, stars, starMax: 100, stageIndex }` for the 4 active monsters
 - Stage names: "Not found yet" / "Egg found" / "Hatched" / "Growing" / "Nearly Mega" / "Mega"
-- Child-facing copy: `"Get 1 Star to find the Egg. Reach 100 Stars for Mega."`
+- Child-facing copy: `"Get Stars to find the Egg. Reach 100 Stars for Mega."` for Grand-aware surfaces, while direct-monster copy may still use `"Get 1 Star to find the Egg."`
 - No raw evidence labels, no confidence taxonomy, no denominator, no concept counts in child view
 - Monster strip renders below the hero, above the mode selection area
 - Each monster entry shows: monster image (stage-appropriate via `monsterAsset`), name, stage label, `X/100 Stars` progress bar
@@ -521,7 +525,7 @@ flowchart LR
 **Approach:**
 - Add at least two new named regression shapes:
   - Pre-P5 Couronnail at Mega (3/3 secure, no retention evidence) → under new curve, derived Stars < 100 → legacy floor must hold at Mega
-  - Pre-P5 Concordium at stage 3 (14/18 secure) → under new curve, derived Stars may be lower → legacy floor must hold at stage 3
+  - Pre-P5 Concordium at stage 3 (14/18 secure) → old aggregate Star floor is intentionally ignored; child-facing Stars reset to 0 until versioned Grand evidence writes
 - Extend the 200-random ratchet assertion to check `stars >= maxPriorStars` (not just `stage >= maxPriorStage`)
 - Denominator-freeze gate (=== 18) remains unchanged
 - The `caught` sticky ratchet assertion remains unchanged
@@ -534,7 +538,7 @@ flowchart LR
 **Test scenarios:**
 - Covers R6: Stars ratchet — `stars >= maxPriorStars` after every step in 200 random sequences
 - Covers R7: pre-P5 Couronnail Mega shape → Stars display ≥ 100, stage = 4
-- Covers R7: pre-P5 Concordium stage 3 shape → Stars display ≥ 35, stage ≥ 3
+- Covers R7 exception: pre-P5 Concordium stage 3 shape → legacy stage remains ≥ 3, but child-facing Stars reset under the versioned Grand model
 - Edge case: pre-P5 learner with reserved monster evidence → normaliser unions into Concordium → Stars ratchet holds
 - Integration: full F2 end-to-end flow (concept-secured event → reward recording → Star check → ratchet assertion)
 

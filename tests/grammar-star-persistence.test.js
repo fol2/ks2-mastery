@@ -13,6 +13,9 @@ import {
   recordGrammarConceptMastery,
   updateGrammarStarHighWater,
 } from '../src/platform/game/monster-system.js';
+import {
+  GRAMMAR_GRAND_STAR_MODEL_VERSION,
+} from '../shared/grammar/grammar-stars.js';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -125,7 +128,12 @@ test('star-evidence-updated with computedStars=1 sets starHighWater=1 and marks 
 test('subsequent star-evidence-updated raises starHighWater without re-emitting caught', () => {
   const repository = makeRepository({
     bracehart: { caught: true, starHighWater: 1, mastered: [] },
-    concordium: { caught: true, starHighWater: 1, mastered: [] },
+    concordium: {
+      caught: true,
+      starHighWater: 1,
+      mastered: [],
+      starModelVersion: GRAMMAR_GRAND_STAR_MODEL_VERSION,
+    },
   });
 
   const events = rewardEventsFromGrammarEvents([
@@ -157,7 +165,12 @@ test('subsequent star-evidence-updated raises starHighWater without re-emitting 
 test('concept-secured after star-evidence-updated updates mastered[] and preserves starHighWater', () => {
   const repository = makeRepository({
     bracehart: { caught: true, starHighWater: 5, mastered: [] },
-    concordium: { caught: true, starHighWater: 5, mastered: [] },
+    concordium: {
+      caught: true,
+      starHighWater: 5,
+      mastered: [],
+      starModelVersion: GRAMMAR_GRAND_STAR_MODEL_VERSION,
+    },
   });
 
   const events = rewardEventsFromGrammarEvents([
@@ -416,12 +429,12 @@ test('updateGrammarStarHighWater returns empty when computedStars < 1', () => {
 // Punctuation-for-grammar concepts now have direct Grammar owners.
 // ---------------------------------------------------------------------------
 
-test('star-evidence-updated for punctuation-for-grammar concept updates direct owner and gates Concordium', () => {
+test('star-evidence-updated for punctuation-for-grammar concept updates direct owner without latching Concordium below the Grand tier', () => {
   const repository = makeRepository();
 
   const events = rewardEventsFromGrammarEvents([
     starEvidenceEvent('speech_punctuation', 2, { monsterId: 'bracehart' }),
-    starEvidenceEvent('speech_punctuation', 2, { monsterId: 'concordium' }),
+    starEvidenceEvent('speech_punctuation', 0, { monsterId: 'concordium' }),
   ], {
     gameStateRepository: repository,
     random: () => 0,
@@ -433,10 +446,10 @@ test('star-evidence-updated for punctuation-for-grammar concept updates direct o
   assert.equal(state.bracehart.caught, true, 'Bracehart caught');
   assert.equal(state.bracehart.starHighWater, 2, 'Bracehart starHighWater=2');
 
-  // Concordium raw latch is updated, but its visible caught event is gated.
-  assert.ok(state.concordium, 'Concordium entry exists');
-  assert.equal(state.concordium.caught, true, 'Concordium raw caught latch stored');
-  assert.equal(state.concordium.starHighWater, 2, 'Concordium starHighWater=2');
+  // Concordium is now driven by the Grand tier model. Bridge-only sub-secure
+  // evidence is not enough to create a Grand Star latch.
+  assert.equal(state.concordium?.starHighWater || 0, 0, 'Concordium not latched below first Grand tier');
+  assert.notEqual(state.concordium?.caught, true, 'Concordium not caught below first Grand tier');
 
   // No Quoral or other punctuation monster touched.
   assert.equal(state.quoral, undefined, 'Quoral not created');
@@ -450,7 +463,7 @@ test('star-evidence-updated for punctuation-for-grammar concept updates direct o
   assert.equal(
     events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
     false,
-    'Concordium caught event gated',
+    'Concordium caught event not emitted below first Grand tier',
   );
 });
 
@@ -505,11 +518,10 @@ test('different computedStars per monster do not cross-inflate starHighWater', (
   });
 
   // The command handler emits two star-evidence-updated events for the same
-  // concept but with different computedStars per monster. Concordium (18
-  // concepts) earns fewer Stars than Bracehart (6 concepts) because the
-  // per-concept budget is spread across more concepts.
+  // concept but with different computedStars per monster. Under the Grand
+  // model, Concordium stays at 0 until the breadth/depth tier is reached.
   const events = rewardEventsFromGrammarEvents([
-    starEvidenceEvent('sentence_functions', 1, { monsterId: 'concordium' }),
+    starEvidenceEvent('sentence_functions', 0, { monsterId: 'concordium' }),
     starEvidenceEvent('sentence_functions', 4, { monsterId: 'bracehart' }),
   ], {
     gameStateRepository: repository,
@@ -518,20 +530,19 @@ test('different computedStars per monster do not cross-inflate starHighWater', (
 
   const state = repository.state();
 
-  // Concordium must have starHighWater=1, NOT 4.
-  assert.equal(state.concordium.starHighWater, 1, 'Concordium starHighWater is 1 (not inflated to 4)');
-  assert.equal(state.concordium.caught, true, 'Concordium caught');
+  // Concordium must not inherit Bracehart's higher direct-monster Stars.
+  assert.equal(state.concordium?.starHighWater || 0, 0, 'Concordium starHighWater is 0 (not inflated to 4)');
+  assert.notEqual(state.concordium?.caught, true, 'Concordium not caught below first Grand tier');
 
   // Bracehart must have starHighWater=4.
   assert.equal(state.bracehart.starHighWater, 4, 'Bracehart starHighWater is 4');
   assert.equal(state.bracehart.caught, true, 'Bracehart caught');
 
-  // Bracehart catches; Concordium stores its raw latch but remains visually
-  // gated because the aggregate event arrived before the second direct egg.
+  // Bracehart catches; Concordium remains below the first Grand tier.
   assert.equal(
     events.some((e) => e.monsterId === 'concordium' && e.kind === 'caught'),
     false,
-    'Concordium caught event gated',
+    'Concordium caught event not emitted below first Grand tier',
   );
   assert.equal(
     events.some((e) => e.monsterId === 'bracehart' && e.kind === 'caught'),
@@ -680,32 +691,29 @@ test('U5 persistence: Egg fires independently per monster — catching one does 
 });
 
 // ---------------------------------------------------------------------------
-// U5-P4. Concordium raw latch from punctuation-for-grammar concept persists,
-// but display remains gated until direct-monster breadth is present.
+// U5-P4. Concordium remains unlatched below the first Grand tier.
 // ---------------------------------------------------------------------------
 
-test('U5 persistence: Concordium latch from punctuation-for-grammar concept persists but display is gated', () => {
+test('U5 persistence: Concordium stays unlatched for punctuation-for-grammar evidence below the first Grand tier', () => {
   const repository = makeRepository();
 
   const events = updateGrammarStarHighWater({
     learnerId: 'learner-u5-p4',
     monsterId: 'concordium',
     conceptId: 'speech_punctuation',
-    computedStars: 1,
+    computedStars: 0,
     gameStateRepository: repository,
     random: () => 0,
   });
 
-  assert.equal(events.length, 0, 'Concordium caught event is gated without direct breadth');
+  assert.equal(events.length, 0, 'Concordium caught event is not emitted below the first Grand tier');
 
-  // Persists
   const state = repository.state();
-  assert.equal(state.concordium.caught, true, 'Concordium raw caught latch persisted');
-  assert.equal(state.concordium.starHighWater, 1, 'Concordium starHighWater=1');
+  assert.equal(state.concordium, undefined, 'Concordium entry not created below first Grand tier');
   const progress = progressForGrammarMonster(state, 'concordium', {
     conceptTotal: GRAMMAR_AGGREGATE_CONCEPTS.length,
   });
-  assert.equal(progress.displayState, 'not-found', 'Concordium display remains gated');
+  assert.equal(progress.displayState, 'not-found', 'Concordium display remains not-found');
 
   assert.equal(state.quoral, undefined, 'Quoral not created');
 });

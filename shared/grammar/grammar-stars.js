@@ -14,7 +14,12 @@
 //
 // Plan: docs/plans/2026-04-27-001-feat-grammar-phase5-star-curve-landing-plan.md (U2).
 
-import { conceptIdsForGrammarMonster } from './grammar-concept-roster.js';
+import {
+  GRAMMAR_AGGREGATE_CONCEPTS,
+  GRAMMAR_CONCEPT_TO_MONSTER,
+  GRAMMAR_MONSTER_CONCEPTS,
+  conceptIdsForGrammarMonster,
+} from './grammar-concept-roster.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -22,6 +27,8 @@ import { conceptIdsForGrammarMonster } from './grammar-concept-roster.js';
 
 /** Universal Star cap for all Grammar monsters. */
 export const GRAMMAR_MONSTER_STAR_MAX = 100;
+
+export const GRAMMAR_GRAND_STAR_MODEL_VERSION = 2;
 
 /**
  * Named stage thresholds. Internal stage 0-4 uses egg/hatch/evolve3/mega.
@@ -57,6 +64,24 @@ export const GRAMMAR_CONCEPT_STAR_WEIGHTS = Object.freeze({
   secureConfidence: 0.15,
   retainedAfterSecure: 0.60,
 });
+
+const DIRECT_GRAMMAR_MONSTER_IDS = Object.freeze(Object.keys(GRAMMAR_MONSTER_CONCEPTS));
+
+/**
+ * Concordium is the Grammar Grand monster. Unlike direct monsters, its Stars
+ * are not a straight aggregate sum across all 18 concepts. They measure
+ * breadth and depth across the direct monster families, mirroring Quoral's
+ * Grand-Star contract in Punctuation.
+ */
+export const GRAMMAR_GRAND_STAR_TIERS = Object.freeze([
+  // { threshold, minMonsters, minSecure, minDeep, minVaried, minVariedMonsters }
+  { threshold: 0,   minMonsters: 0, minSecure: 0,  minDeep: 0,  minVaried: 0, minVariedMonsters: 0 },
+  { threshold: 1,   minMonsters: 2, minSecure: 2,  minDeep: 0,  minVaried: 0, minVariedMonsters: 0 },
+  { threshold: 15,  minMonsters: 2, minSecure: 3,  minDeep: 0,  minVaried: 0, minVariedMonsters: 0 },
+  { threshold: 35,  minMonsters: 3, minSecure: 6,  minDeep: 0,  minVaried: 0, minVariedMonsters: 0 },
+  { threshold: 65,  minMonsters: 3, minSecure: 10, minDeep: 5,  minVaried: 0, minVariedMonsters: 0 },
+  { threshold: 100, minMonsters: 3, minSecure: 18, minDeep: 18, minVaried: 6, minVariedMonsters: 3 },
+]);
 
 // ---------------------------------------------------------------------------
 // Display stage names — child-facing labels (6 named stages: 0-5)
@@ -233,6 +258,10 @@ export function deriveGrammarConceptStarEvidence({ conceptId, conceptNode, recen
  *   nextMilestoneLabel: string|null }}
  */
 export function computeGrammarMonsterStars(monsterId, conceptEvidenceMap = {}) {
+  if (monsterId === 'concordium') {
+    return computeGrammarGrandMonsterStars(conceptEvidenceMap);
+  }
+
   const conceptIds = conceptIdsForGrammarMonster(monsterId);
   const conceptCount = conceptIds.length;
 
@@ -282,6 +311,83 @@ export function computeGrammarMonsterStars(monsterId, conceptEvidenceMap = {}) {
   stars = Math.min(GRAMMAR_MONSTER_STAR_MAX, stars);
 
   return _buildStarResult(stars);
+}
+
+export function computeGrammarGrandMonsterStars(conceptEvidenceMap = {}) {
+  let secureConcepts = 0;
+  let deepConcepts = 0;
+  let variedConcepts = 0;
+  const monstersWithSecure = new Set();
+  const monstersWithVaried = new Set();
+
+  for (const conceptId of GRAMMAR_AGGREGATE_CONCEPTS) {
+    const evidence = isPlainObject(conceptEvidenceMap[conceptId])
+      ? conceptEvidenceMap[conceptId]
+      : {};
+    const monsterId = GRAMMAR_CONCEPT_TO_MONSTER[conceptId];
+    if (!monsterId || !DIRECT_GRAMMAR_MONSTER_IDS.includes(monsterId)) continue;
+
+    if (evidence.secureConfidence === true) {
+      secureConcepts += 1;
+      monstersWithSecure.add(monsterId);
+    }
+    if (evidence.retainedAfterSecure === true) {
+      deepConcepts += 1;
+    }
+    if (evidence.variedPractice === true) {
+      variedConcepts += 1;
+      monstersWithVaried.add(monsterId);
+    }
+  }
+
+  const metrics = {
+    monsters: monstersWithSecure.size,
+    secure: secureConcepts,
+    deep: deepConcepts,
+    varied: variedConcepts,
+    variedMonsters: monstersWithVaried.size,
+  };
+
+  let qualifiedTierIndex = 0;
+  for (let i = 1; i < GRAMMAR_GRAND_STAR_TIERS.length; i += 1) {
+    const tier = GRAMMAR_GRAND_STAR_TIERS[i];
+    if (metrics.monsters < tier.minMonsters) break;
+    if (metrics.secure < tier.minSecure) break;
+    if (metrics.deep < tier.minDeep) break;
+    if (metrics.varied < tier.minVaried) break;
+    if (metrics.variedMonsters < tier.minVariedMonsters) break;
+    qualifiedTierIndex = i;
+  }
+
+  if (qualifiedTierIndex === GRAMMAR_GRAND_STAR_TIERS.length - 1) {
+    return _buildStarResult(GRAMMAR_MONSTER_STAR_MAX);
+  }
+
+  const currentTier = GRAMMAR_GRAND_STAR_TIERS[qualifiedTierIndex];
+  const nextTier = GRAMMAR_GRAND_STAR_TIERS[qualifiedTierIndex + 1];
+  const bandFloor = currentTier.threshold;
+  const bandCeiling = nextTier.threshold;
+  const bandWidth = bandCeiling - bandFloor;
+
+  const fractions = [];
+  function pushFraction(value, currentMin, nextMin) {
+    if (nextMin <= currentMin) return;
+    fractions.push(Math.min(1, Math.max(0, (value - currentMin) / (nextMin - currentMin))));
+  }
+
+  pushFraction(metrics.monsters, currentTier.minMonsters, nextTier.minMonsters);
+  pushFraction(metrics.secure, currentTier.minSecure, nextTier.minSecure);
+  pushFraction(metrics.deep, currentTier.minDeep, nextTier.minDeep);
+  pushFraction(metrics.varied, currentTier.minVaried, nextTier.minVaried);
+  pushFraction(metrics.variedMonsters, currentTier.minVariedMonsters, nextTier.minVariedMonsters);
+
+  const progressFrac = fractions.length ? Math.min(...fractions) : 1;
+  const stars = Math.min(
+    bandFloor + Math.floor(progressFrac * bandWidth),
+    bandCeiling - 1,
+  );
+
+  return _buildStarResult(Math.max(0, stars));
 }
 
 function _buildStarResult(stars) {

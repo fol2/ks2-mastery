@@ -5,6 +5,8 @@
 // Plan: docs/plans/2026-04-27-001-feat-grammar-phase5-star-curve-landing-plan.md (U2).
 export {
   GRAMMAR_MONSTER_STAR_MAX,
+  GRAMMAR_GRAND_STAR_MODEL_VERSION,
+  GRAMMAR_GRAND_STAR_TIERS,
   GRAMMAR_STAR_STAGE_THRESHOLDS,
   GRAMMAR_CONCEPT_STAR_WEIGHTS,
   deriveGrammarConceptStarEvidence,

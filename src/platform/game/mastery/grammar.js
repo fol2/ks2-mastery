@@ -13,6 +13,7 @@ import {
 } from './shared.js';
 import {
   GRAMMAR_MONSTER_STAR_MAX,
+  GRAMMAR_GRAND_STAR_MODEL_VERSION,
   applyStarHighWaterLatch,
   computeGrammarMonsterStars,
   deriveGrammarConceptStarEvidence,
@@ -30,10 +31,6 @@ import {
 export { GRAMMAR_MONSTER_CONCEPTS, GRAMMAR_AGGREGATE_CONCEPTS, GRAMMAR_CONCEPT_TO_MONSTER };
 
 export const GRAMMAR_REWARD_RELEASE_ID = 'grammar-legacy-reviewed-2026-04-24';
-
-const DIRECT_GRAMMAR_MONSTER_IDS = Object.freeze(
-  GRAMMAR_MONSTER_IDS.filter((id) => id !== GRAMMAR_GRAND_MONSTER_ID),
-);
 
 function grammarTotal(entry, fallback = 1) {
   const count = Number(entry?.conceptTotal);
@@ -55,6 +52,14 @@ function safeStarHighWater(value) {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
+function grammarStarHighWater(entry, monsterId) {
+  if (monsterId === GRAMMAR_GRAND_MONSTER_ID
+    && Number(entry?.starModelVersion) !== GRAMMAR_GRAND_STAR_MODEL_VERSION) {
+    return 0;
+  }
+  return safeStarHighWater(entry?.starHighWater);
+}
+
 /**
  * Seed the starHighWater value for a monster entry during writes.
  *
@@ -65,7 +70,11 @@ function safeStarHighWater(value) {
  * would return 0 for undefined, permanently disabling the legacy floor on
  * subsequent reads.
  */
-function seedStarHighWater(entry, total, releaseId = GRAMMAR_REWARD_RELEASE_ID) {
+function seedStarHighWater(entry, monsterId, total, releaseId = GRAMMAR_REWARD_RELEASE_ID) {
+  if (monsterId === GRAMMAR_GRAND_MONSTER_ID
+    && Number(entry?.starModelVersion) !== GRAMMAR_GRAND_STAR_MODEL_VERSION) {
+    return 0;
+  }
   if (entry.starHighWater !== undefined && entry.starHighWater !== null) {
     return safeStarHighWater(entry.starHighWater);
   }
@@ -78,26 +87,6 @@ function seedStarHighWater(entry, total, releaseId = GRAMMAR_REWARD_RELEASE_ID) 
 function grammarMonsterConceptTotal(monsterId) {
   if (monsterId === GRAMMAR_GRAND_MONSTER_ID) return GRAMMAR_AGGREGATE_CONCEPTS.length;
   return GRAMMAR_MONSTER_CONCEPTS[monsterId]?.length || MONSTERS[monsterId]?.masteredMax || 1;
-}
-
-function grammarGrandDisplayGateMet(state, {
-  releaseId = GRAMMAR_REWARD_RELEASE_ID,
-  conceptNodes = null,
-  recentAttempts = null,
-} = {}) {
-  let foundDirects = 0;
-  for (const directMonsterId of DIRECT_GRAMMAR_MONSTER_IDS) {
-    const progress = progressForGrammarMonster(state, directMonsterId, {
-      releaseId,
-      conceptTotal: grammarMonsterConceptTotal(directMonsterId),
-      conceptNodes,
-      recentAttempts,
-    });
-    if (progress.displayState !== 'not-found' || progress.displayStars >= 1) {
-      foundDirects += 1;
-    }
-  }
-  return foundDirects >= 2;
 }
 
 export function monsterIdForGrammarConcept(conceptId) {
@@ -223,13 +212,12 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
   }
 
   // Persisted high-water mark. Corrupted values (NaN, negative) → 0.
-  const rawHW = Number(entry.starHighWater);
-  const persistedHW = Number.isFinite(rawHW) && rawHW > 0 ? Math.floor(rawHW) : 0;
+  const persistedHW = grammarStarHighWater(entry, monsterId);
 
   // Determine legacy floor for pre-P5 learners (no starHighWater field).
   // Post-P5 learners with starHighWater present skip the legacy floor.
   const hasStarHighWater = entry.starHighWater !== undefined && entry.starHighWater !== null;
-  const legacyFloor = hasStarHighWater ? 0 : legacyStage;
+  const legacyFloor = hasStarHighWater || monsterId === GRAMMAR_GRAND_MONSTER_ID ? 0 : legacyStage;
 
   const { displayStars, updatedHighWater } = applyStarHighWaterLatch({
     computedStars,
@@ -237,22 +225,9 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
     legacyStage: legacyFloor,
   });
 
-  let visibleDisplayStars = displayStars;
-  let displayStage = grammarStarDisplayStage(displayStars);
-  let displayState = grammarDisplayStateForStars(displayStars);
-  let grandDisplayGateMet = true;
-  if (monsterId === GRAMMAR_GRAND_MONSTER_ID && displayStars >= 1) {
-    grandDisplayGateMet = grammarGrandDisplayGateMet(state, {
-      releaseId,
-      conceptNodes,
-      recentAttempts,
-    });
-    if (!grandDisplayGateMet) {
-      visibleDisplayStars = 0;
-      displayStage = 0;
-      displayState = 'not-found';
-    }
-  }
+  const visibleDisplayStars = displayStars;
+  const displayStage = grammarStarDisplayStage(displayStars);
+  const displayState = grammarDisplayStateForStars(displayStars);
 
   // Star-derived stage for backward compat: max(legacyStage, starDerivedStage).
   const starDerivedStage = grammarStarStageFor(visibleDisplayStars);
@@ -282,7 +257,9 @@ export function progressForGrammarMonster(state, monsterId, { conceptTotal = nul
     stageName: grammarStarStageName(visibleDisplayStars),
     starHighWater: updatedHighWater,
     starStage: starDerivedStage,
-    grandDisplayGateMet,
+    grandStarModelVersion: monsterId === GRAMMAR_GRAND_MONSTER_ID
+      ? GRAMMAR_GRAND_STAR_MODEL_VERSION
+      : null,
   };
 }
 
@@ -384,7 +361,12 @@ export function recordGrammarConceptMastery({
   // happens on the client read path (which has access to concept nodes);
   // the reward layer only preserves the latch field so it survives
   // round-trips.
-  const aggregateHW = seedStarHighWater(aggregateEntry, GRAMMAR_AGGREGATE_CONCEPTS.length, releaseId);
+  const aggregateHW = seedStarHighWater(
+    aggregateEntry,
+    GRAMMAR_GRAND_MONSTER_ID,
+    GRAMMAR_AGGREGATE_CONCEPTS.length,
+    releaseId,
+  );
 
   const after = {
     ...before,
@@ -401,7 +383,12 @@ export function recordGrammarConceptMastery({
   };
 
   if (directMonsterId) {
-    const directHW = seedStarHighWater(directEntry, grammarMonsterConceptTotal(directMonsterId), releaseId);
+    const directHW = seedStarHighWater(
+      directEntry,
+      directMonsterId,
+      grammarMonsterConceptTotal(directMonsterId),
+      releaseId,
+    );
     after[directMonsterId] = {
       ...directEntry,
       caught: true,
@@ -461,7 +448,7 @@ export function updateGrammarStarHighWater({
   const entry = isPlainObject(before[targetMonsterId])
     ? before[targetMonsterId]
     : { mastered: [], caught: false };
-  const existingHW = safeStarHighWater(entry.starHighWater);
+  const existingHW = grammarStarHighWater(entry, targetMonsterId);
   if (stars <= existingHW) {
     // No change needed — existing high-water already covers this update.
     return [];
@@ -478,6 +465,9 @@ export function updateGrammarStarHighWater({
       caught: entry.caught === true || stars >= 1,
       conceptTotal: total,
       starHighWater: Math.min(GRAMMAR_MONSTER_STAR_MAX, stars),
+      ...(targetMonsterId === GRAMMAR_GRAND_MONSTER_ID
+        ? { starModelVersion: GRAMMAR_GRAND_STAR_MODEL_VERSION }
+        : null),
     },
   };
   const afterProgress = progressForGrammarMonster(after, targetMonsterId, {
