@@ -6,6 +6,7 @@ import {
   HERO_SUBJECT_LABELS,
   HERO_UI_REASON_LABELS,
 } from '../../../shared/hero/hero-copy.js';
+import { Button } from '../../platform/ui/Button.jsx';
 
 /**
  * HeroQuestCard — child-facing Hero Quest card for the dashboard.
@@ -63,9 +64,9 @@ export function HeroQuestCard({ hero, actions }) {
           {HERO_PROGRESS_COPY.claiming}
         </p>
         <div className="hero-quest-card__cta-row">
-          <button type="button" className="btn primary xl" disabled aria-busy="true">
+          <Button variant="primary" size="xl" busy>
             {HERO_PROGRESS_COPY.claiming}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -92,13 +93,13 @@ export function HeroQuestCard({ hero, actions }) {
         )}
         {hasMore && hero.canStart && (
           <div className="hero-quest-card__cta-row">
-            <button
-              type="button"
-              className="btn primary xl"
+            <Button
+              variant="primary"
+              size="xl"
               onClick={() => actions.startHeroQuestTask(hero.nextTask?.taskId)}
             >
               {HERO_CTA_TEXT.start}
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -116,13 +117,13 @@ export function HeroQuestCard({ hero, actions }) {
             : 'Your Hero Quest refreshed. Try the next task now.'}</p>
         </div>
         <div className="hero-quest-card__cta-row">
-          <button
-            type="button"
-            className="btn primary xl"
+          <Button
+            variant="primary"
+            size="xl"
             onClick={() => actions.refreshHeroQuest()}
           >
             {HERO_CTA_TEXT.refresh}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -147,13 +148,13 @@ export function HeroQuestCard({ hero, actions }) {
           </p>
         )}
         <div className="hero-quest-card__cta-row">
-          <button
-            type="button"
-            className="btn primary xl"
+          <Button
+            variant="primary"
+            size="xl"
             onClick={() => actions.continueHeroTask(session.subjectId)}
           >
             {HERO_CTA_TEXT.continue}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -222,15 +223,14 @@ export function HeroQuestCard({ hero, actions }) {
         )}
 
         <div className="hero-quest-card__cta-row">
-          <button
-            type="button"
-            className="btn primary xl"
-            disabled={isLaunching}
-            aria-busy={isLaunching ? 'true' : undefined}
+          <Button
+            variant="primary"
+            size="xl"
+            busy={isLaunching}
             onClick={() => actions.startHeroQuestTask(task.taskId)}
           >
             {isLaunching ? HERO_CTA_TEXT.starting : HERO_CTA_TEXT.start}
-          </button>
+          </Button>
         </div>
       </div>
     );

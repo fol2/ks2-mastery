@@ -22,6 +22,7 @@ import {
   buildGrammarDashboardModel,
 } from './grammar-view-model.js';
 import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
+import { Button } from '../../../platform/ui/Button.jsx';
 
 /* Aligned Grammar setup scene.
  *
@@ -275,9 +276,9 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
             ) : null}
 
             <div className="setup-begin-row grammar-start-row">
-              <button
-                className="btn primary xl"
-                type="button"
+              <Button
+                variant="primary"
+                size="xl"
                 data-featured="true"
                 disabled={setupDisabled}
                 onClick={() => actions.dispatch('grammar-start')}
@@ -285,7 +286,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
                 {grammar.pendingCommand === 'start-session'
                   ? 'Starting...'
                   : selectedModeStartLabel}
-              </button>
+              </Button>
             </div>
           </div>
         </section>

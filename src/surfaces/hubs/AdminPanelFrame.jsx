@@ -2,6 +2,7 @@ import React from 'react';
 import { PanelHeader } from './admin-panel-header.jsx';
 import { formatTimestamp } from './hub-utils.js';
 import { decidePanelFrameState, DEFAULT_STALE_THRESHOLD_MS } from '../../platform/hubs/admin-panel-frame.js';
+import { Button } from '../../platform/ui/Button.jsx';
 
 // P5 Unit 1: AdminPanelFrame — unified freshness/failure/empty-state wrapper.
 //
@@ -77,7 +78,7 @@ export function AdminPanelFrame({
           {' '}Last refreshed {formatTimestamp(frameState.lastSuccessAt)}.
           {onRefresh ? (
             <span>
-              {' '}<button className="btn ghost" type="button" onClick={onRefresh}>Refresh now</button>
+              {' '}<Button variant="ghost" onClick={onRefresh}>Refresh now</Button>
             </span>
           ) : null}
         </div>

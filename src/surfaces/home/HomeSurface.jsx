@@ -5,6 +5,7 @@ import { SubjectCard } from './SubjectCard.jsx';
 import { HeroQuestCard } from './HeroQuestCard.jsx';
 import { HeroCampPanel } from './HeroCampPanel.jsx';
 import { IconArrowRight } from './icons.jsx';
+import { Button } from '../../platform/ui/Button.jsx';
 import {
   buildMeadowMonsters,
   buildSubjectCards,
@@ -123,22 +124,22 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
                 </h1>
               )}
               <div className="hero-cta-row">
-                <button
-                  type="button"
-                  className="btn primary xl"
-                  data-action="open-subject"
+                <Button
+                  variant="primary"
+                  size="xl"
+                  dataAction="open-subject"
                   data-subject-id={ctaSubjectId}
                   onClick={() => actions.openSubject(ctaSubjectId)}
                 >
                   {ctaLabel} <IconArrowRight />
-                </button>
-                <button
-                  type="button"
-                  className="btn ghost xl"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="xl"
                   onClick={actions.openCodex}
                 >
                   Open codex
-                </button>
+                </Button>
               </div>
             </>
           )}
