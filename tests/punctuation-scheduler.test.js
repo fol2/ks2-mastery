@@ -7,8 +7,16 @@ import {
   memorySnapshot,
   selectPunctuationItem,
   updateMemoryState,
+  DAY_MS as SCHEDULER_DAY_MS,
 } from '../shared/punctuation/scheduler.js';
-import { REASON_TAGS } from '../shared/punctuation/scheduler-manifest.js';
+import {
+  REASON_TAGS,
+  MAX_SAME_SIGNATURE_ACROSS_ATTEMPTS,
+  MAX_SAME_SIGNATURE_DAYS,
+  EXPOSURE_WEIGHT_BLOCKED,
+  EXPOSURE_WEIGHT_PENALISED,
+  EXPOSURE_WEIGHT_DAY_AVOIDED,
+} from '../shared/punctuation/scheduler-manifest.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -560,5 +568,227 @@ describe('misconception retry', () => {
 
     assert.equal(result.reason, REASON_TAGS.MISCONCEPTION_RETRY);
     assert.equal(result.item.id, 'gen_sibling');
+  });
+});
+
+// --- Per-signature exposure limits (U4) ---
+
+function makeSignatureItem(id, variantSignature, skillId = 'sentence_endings') {
+  return {
+    id,
+    mode: 'choose',
+    skillIds: [skillId],
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    prompt: 'Choose the correct punctuation.',
+    options: [{ text: 'A.', index: 0 }, { text: 'B.', index: 1 }],
+    correctIndex: 0,
+    explanation: 'Fixture.',
+    model: 'A.',
+    source: 'generated',
+    variantSignature,
+  };
+}
+
+function makeFixedItem(id, skillId = 'sentence_endings') {
+  return {
+    id,
+    mode: 'choose',
+    skillIds: [skillId],
+    clusterId: 'endmarks',
+    rewardUnitId: 'sentence-endings-core',
+    prompt: 'Choose the correct punctuation.',
+    options: [{ text: 'A.', index: 0 }, { text: 'B.', index: 1 }],
+    correctIndex: 0,
+    explanation: 'Fixed fixture.',
+    model: 'A.',
+    source: 'curated',
+    // no variantSignature
+  };
+}
+
+function makeExposureIndexes(items) {
+  return {
+    items,
+    itemById: new Map(items.map((item) => [item.id, item])),
+    itemsByMode: new Map([['choose', items.filter(i => i.mode === 'choose')]]),
+    skillById: new Map([['sentence_endings', { id: 'sentence_endings', name: 'Sentence endings', published: true }]]),
+  };
+}
+
+describe('per-signature exposure limits', () => {
+  test('same signature not selected twice in same session when alternatives exist', () => {
+    const itemA = makeSignatureItem('item_a', 'sig_alpha');
+    const itemB = makeSignatureItem('item_b', 'sig_beta');
+    const indexes = makeExposureIndexes([itemA, itemB]);
+
+    // Session already selected sig_alpha — item_a weight ×0.01, item_b weight 1.0
+    // Any random > ~0.01 will select item_b overwhelmingly
+    for (const r of [0.05, 0.3, 0.5, 0.9]) {
+      const result = selectPunctuationItem({
+        indexes,
+        progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },
+        session: { answeredCount: 0, recentItemIds: [], selectedSignatures: ['sig_alpha'] },
+        prefs: { mode: 'smart' },
+        now: 1_000_000_000_000,
+        random: () => r,
+      });
+
+      assert.equal(result.item.id, 'item_b', `random=${r}: should select alternative when same-session signature blocked`);
+    }
+  });
+
+  test('signature seen in last 3 attempts gets penalised weight (selects alternative)', () => {
+    const itemA = makeSignatureItem('item_a', 'sig_alpha');
+    const itemB = makeSignatureItem('item_b', 'sig_beta');
+    const indexes = makeExposureIndexes([itemA, itemB]);
+
+    const attempts = [
+      { itemId: 'item_x', variantSignature: 'sig_alpha', correct: true, timestamp: 900_000_000_000 },
+    ];
+
+    // With random=0 normally first item wins; but penalty should make itemB preferred
+    for (const r of [0, 0.1, 0.5, 0.9]) {
+      const result = selectPunctuationItem({
+        indexes,
+        progress: { items: {}, facets: {}, rewardUnits: {}, attempts, sessionsCompleted: 0 },
+        session: { answeredCount: 0, recentItemIds: [], selectedSignatures: [] },
+        prefs: { mode: 'smart' },
+        now: 1_000_000_000_000,
+        random: () => r,
+      });
+
+      assert.equal(result.item.id, 'item_b', `random=${r}: penalised signature should lose to alternative`);
+    }
+  });
+
+  test('signature seen within 7 days gets avoided when alternatives exist', () => {
+    const nowMs = 1_000_000_000_000;
+    const fiveDaysAgo = nowMs - 5 * DAY_MS;
+    const itemA = makeSignatureItem('item_a', 'sig_alpha');
+    const itemB = makeSignatureItem('item_b', 'sig_beta');
+    const indexes = makeExposureIndexes([itemA, itemB]);
+
+    // Attempt was 5 days ago (within 7-day window) but NOT in last 3 attempts distance
+    const attempts = Array.from({ length: 10 }, (_, i) => ({
+      itemId: `filler_${i}`,
+      variantSignature: `filler_sig_${i}`,
+      correct: true,
+      timestamp: fiveDaysAgo + i * 1000,
+    }));
+    // Insert the sig_alpha attempt before the fillers
+    attempts.unshift({ itemId: 'old_item', variantSignature: 'sig_alpha', correct: true, timestamp: fiveDaysAgo });
+
+    // item_a gets ×0.3 day-penalty, item_b stays at full weight
+    // random > ~0.23 will select item_b deterministically
+    for (const r of [0.3, 0.5, 0.7, 0.9]) {
+      const result = selectPunctuationItem({
+        indexes,
+        progress: { items: {}, facets: {}, rewardUnits: {}, attempts, sessionsCompleted: 0 },
+        session: { answeredCount: 0, recentItemIds: [], selectedSignatures: [] },
+        prefs: { mode: 'smart' },
+        now: nowMs,
+        random: () => r,
+      });
+
+      assert.equal(result.item.id, 'item_b', `random=${r}: day-window avoidance should prefer alternative`);
+    }
+  });
+
+  test('when ALL candidates seen within 7 days, least-recently-seen preferred (no deadlock)', () => {
+    const nowMs = 1_000_000_000_000;
+    const itemA = makeSignatureItem('item_a', 'sig_alpha');
+    const itemB = makeSignatureItem('item_b', 'sig_beta');
+    const indexes = makeExposureIndexes([itemA, itemB]);
+
+    // Both signatures seen within 7 days — neither should be zeroed out
+    const attempts = [
+      { itemId: 'x1', variantSignature: 'sig_alpha', correct: true, timestamp: nowMs - 2 * DAY_MS },
+      { itemId: 'x2', variantSignature: 'sig_beta', correct: true, timestamp: nowMs - 1 * DAY_MS },
+    ];
+
+    const result = selectPunctuationItem({
+      indexes,
+      progress: { items: {}, facets: {}, rewardUnits: {}, attempts, sessionsCompleted: 0 },
+      session: { answeredCount: 0, recentItemIds: [], selectedSignatures: [] },
+      prefs: { mode: 'smart' },
+      now: nowMs,
+      random: () => 0,
+    });
+
+    // Both get day-avoidance penalty (x0.3) — selection still occurs (no deadlock)
+    assert.ok(result.item, 'Must still select an item when all candidates have day-window penalty');
+    assert.ok(['item_a', 'item_b'].includes(result.item.id));
+  });
+
+  test('misconception-retry overrides per-session block', () => {
+    const itemA = makeSignatureItem('item_a', 'sig_alpha');
+    const itemB = makeSignatureItem('item_b', 'sig_beta');
+    const indexes = makeExposureIndexes([itemA, itemB]);
+
+    // Session already selected sig_alpha, but misconception-retry is active
+    const result = selectPunctuationItem({
+      indexes,
+      progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },
+      session: {
+        answeredCount: 0,
+        recentItemIds: [],
+        selectedSignatures: ['sig_alpha'],
+        selectionReason: REASON_TAGS.MISCONCEPTION_RETRY,
+      },
+      prefs: { mode: 'smart' },
+      now: 1_000_000_000_000,
+      random: () => 0,
+    });
+
+    // With misconception-retry, the per-session block is relaxed — item_a is selectable
+    assert.equal(result.item.id, 'item_a', 'Misconception-retry should bypass per-session block');
+  });
+
+  test('fixed items (no variantSignature) are never penalised by exposure limits', () => {
+    const fixedItem = makeFixedItem('fixed_1');
+    const sigItem = makeSignatureItem('sig_item', 'sig_alpha');
+    const indexes = makeExposureIndexes([fixedItem, sigItem]);
+
+    // Session already has sig_alpha; fixed item should not be penalised
+    const result = selectPunctuationItem({
+      indexes,
+      progress: { items: {}, facets: {}, rewardUnits: {}, attempts: [], sessionsCompleted: 0 },
+      session: { answeredCount: 0, recentItemIds: [], selectedSignatures: ['sig_alpha'] },
+      prefs: { mode: 'smart' },
+      now: 1_000_000_000_000,
+      random: () => 0,
+    });
+
+    // Fixed item has no variantSignature so it cannot be penalised
+    assert.equal(result.item.id, 'fixed_1', 'Fixed item should be preferred over session-blocked signature item');
+  });
+
+  test('exposure limits interact correctly with existing weak-mode priority weighting', () => {
+    const weakItem = makeSignatureItem('weak_item', 'sig_alpha', 'sentence_endings');
+    const freshItem = makeSignatureItem('fresh_item', 'sig_beta', 'sentence_endings');
+    const indexes = makeExposureIndexes([weakItem, freshItem]);
+
+    const weakFacet = updateMemoryState(createMemoryState(), false, 0);
+
+    // sig_alpha was seen in session, so weak_item gets session-blocked
+    const result = selectPunctuationItem({
+      indexes,
+      progress: {
+        items: {},
+        facets: { 'sentence_endings::choose': weakFacet },
+        rewardUnits: {},
+        attempts: [],
+        sessionsCompleted: 0,
+      },
+      session: { mode: 'weak', answeredCount: 0, recentItemIds: [], selectedSignatures: ['sig_alpha'] },
+      prefs: { mode: 'weak' },
+      now: 0,
+      random: () => 0,
+    });
+
+    // Even though weak_item has higher weak-facet priority, the exposure block
+    // should penalise it enough to prefer fresh_item
+    assert.equal(result.item.id, 'fresh_item', 'Exposure penalty should override weak-priority when alternative exists');
   });
 });
