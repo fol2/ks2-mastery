@@ -1,5 +1,6 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../platform/game/monster-system.js';
 import { dropSessionEphemeralFields } from '../../platform/core/subject-contract.js';
+import { monsterBranchOverrideForLearner } from '../../platform/game/learner-monster-branch-overrides.js';
 import { createInitialSpellingState, isMegaSafeMode, isPostMasteryMode } from './service-contract.js';
 import {
   WORD_BANK_FILTER_IDS,
@@ -175,8 +176,9 @@ export const spellingModule = {
         ?? postMastery?.allWordsMega,
       );
       if (postMega) {
+        const branchOverride = monsterBranchOverrideForLearner(learner.id);
         const monsterState = repositories?.gameState?.read?.(learner.id, 'monster-codex');
-        const rawBranch = String(monsterState?.phaeton?.branch || '').trim();
+        const rawBranch = branchOverride || String(monsterState?.phaeton?.branch || '').trim();
         postMegaBranch = rawBranch === 'b2' ? 'b2' : 'b1';
       }
     }

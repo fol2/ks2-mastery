@@ -376,8 +376,8 @@ async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameSta
     const progress = spellingProgressFromSubjectRow(row);
     if (!progress) continue;
     const key = gameStateKey(row.learner_id, PUBLIC_MONSTER_CODEX_SYSTEM_ID);
-    const existingState = publicMonsterCodexState(gameState[key] || {});
-    const derived = publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState);
+    const existingState = publicMonsterCodexState(gameState[key] || {}, { learnerId: row.learner_id });
+    const derived = publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState, { learnerId: row.learner_id });
     if (!derived) continue;
     if (derived.knownWordCount > 0 || !publicMonsterCodexHasMastery(existingState)) {
       gameState[key] = derived.state;
