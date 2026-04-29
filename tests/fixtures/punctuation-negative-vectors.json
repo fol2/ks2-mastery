@@ -1,0 +1,975 @@
+{
+  "_meta": {
+    "generated": "2026-04-30",
+    "schema_version": 1,
+    "description": "Negative vectors for fixed punctuation items — answers that MUST mark incorrect"
+  },
+  "vectors": [
+    {
+      "itemId": "se_insert_question",
+      "answer": "why was the hall still locked",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "se_insert_question",
+      "answer": "Why was the hall still locked.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "se_fix_statement",
+      "answer": "do not forget your reading journal?",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "se_fix_statement",
+      "answer": "Do not forget your reading journal?",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "se_transfer_why",
+      "answer": "why was the gate still open?",
+      "expectedResult": "fail",
+      "failureType": "missing_capitalisation"
+    },
+    {
+      "itemId": "se_transfer_why",
+      "answer": "Why.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "se_insert_quiet_command",
+      "answer": "please close the classroom door.",
+      "expectedResult": "fail",
+      "failureType": "missing_capitalisation"
+    },
+    {
+      "itemId": "se_insert_quiet_command",
+      "answer": "Please close the classroom door",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "se_fix_excited_statement",
+      "answer": "what a clever idea.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "se_fix_excited_statement",
+      "answer": "What a clever idea.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "se_transfer_where",
+      "answer": "where did the trail begin?",
+      "expectedResult": "fail",
+      "failureType": "missing_capitalisation"
+    },
+    {
+      "itemId": "se_transfer_where",
+      "answer": "Where.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "lc_insert_supplies",
+      "answer": "We needed pencils rulers and glue.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "lc_insert_supplies",
+      "answer": "We needed pencils, rulers and glue. And more stuff.",
+      "expectedResult": "fail",
+      "failureType": "extra_words"
+    },
+    {
+      "itemId": "lc_fix_display",
+      "answer": "The display showed shells pebbles and fossils.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "lc_fix_display",
+      "answer": "The display showed shells, pebbles and fossils. They looked old.",
+      "expectedResult": "fail",
+      "failureType": "extra_words"
+    },
+    {
+      "itemId": "lc_transfer_trip",
+      "answer": "For the trip we packed torches maps and water.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "lc_transfer_trip",
+      "answer": "torches, maps and water.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "lc_transfer_bake_sale",
+      "answer": "For the bake sale we needed eggs, flour, butter, and sugar.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "lc_transfer_bake_sale",
+      "answer": "For the bake sale we needed eggs flour butter and sugar.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "lc_combine_trip_list",
+      "answer": "We packed torches maps and water.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "lc_combine_trip_list",
+      "answer": "We packed torches, maps and water. Plus some snacks.",
+      "expectedResult": "fail",
+      "failureType": "extra_words"
+    },
+    {
+      "itemId": "ac_insert_contractions",
+      "answer": "Youll see that Im ready because Ive packed already.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "ac_insert_contractions",
+      "answer": "You'll see that Im ready because Ive packed already.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "ac_fix_contractions",
+      "answer": "I cant believe were nearly there.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "ac_fix_contractions",
+      "answer": "I can't believe were nearly there.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "ac_transfer_contractions",
+      "answer": "cant were.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "ac_transfer_contractions",
+      "answer": "Can't we're.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "ac_insert_well_youre",
+      "answer": "Well check that youre ready before we leave.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "ac_insert_well_youre",
+      "answer": "We'll check that youre ready before we leave.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "ac_transfer_dont_theyre",
+      "answer": "dont theyre.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "ac_transfer_dont_theyre",
+      "answer": "Don't they're.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "ap_insert_singular",
+      "answer": "The girls coat was hanging on the peg.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "ap_insert_singular",
+      "answer": "The girls' coat was hanging on the peg.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "ap_fix_irregular",
+      "answer": "The childrens boots were lined up by the door.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "ap_fix_irregular",
+      "answer": "The childrens' boots were lined up by the door.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "ap_transfer_possession",
+      "answer": "childrens teachers.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "ap_transfer_possession",
+      "answer": "The children's paintings.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "sp_insert_question",
+      "answer": "Ella asked Can we start now?",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sp_insert_question",
+      "answer": "Ella asked, \"Can we start now\".",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "sp_fix_question",
+      "answer": "\"Where are we meeting\"? asked Zara.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "sp_fix_question",
+      "answer": "Where are we meeting? asked Zara.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sp_transfer_question",
+      "answer": "Can we start now?",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sp_transfer_question",
+      "answer": "Mia asked Can we start now",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sp_fa_transfer_at_last_speech",
+      "answer": "At last Noah shouted We made it!",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sp_fa_transfer_at_last_speech",
+      "answer": "At last, Noah shouted \"We made it\"",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "fa_insert_without_warning",
+      "answer": "Without warning the bell began to ring.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "fa_insert_without_warning",
+      "answer": "Without warning the, bell began to ring.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "fa_fix_at_last",
+      "answer": "At last we reached the harbour.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "fa_fix_at_last",
+      "answer": "At, last we reached the harbour.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "fa_transfer_after_lunch",
+      "answer": "After lunch we went outside.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "fa_transfer_after_lunch",
+      "answer": "after lunch, we went outside.",
+      "expectedResult": "fail",
+      "failureType": "missing_capitalisation"
+    },
+    {
+      "itemId": "fa_combine_after_storm",
+      "answer": "After the storm the playground gleamed.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "fa_combine_after_storm",
+      "answer": "After, the storm the playground gleamed.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "cc_insert_time_travellers",
+      "answer": "Most of the time travellers worry about delays.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cc_insert_time_travellers",
+      "answer": "Most of, the time travellers worry about delays.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "cc_fix_when_rain_stopped",
+      "answer": "When the rain stopped the children cheered.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cc_fix_when_rain_stopped",
+      "answer": "When, the rain stopped the children cheered.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "cc_transfer_morning",
+      "answer": "In the morning the path was quiet.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cc_transfer_morning",
+      "answer": "in the morning, the path was quiet.",
+      "expectedResult": "fail",
+      "failureType": "missing_capitalisation"
+    },
+    {
+      "itemId": "cc_insert_after_supper",
+      "answer": "After supper we read quietly.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cc_insert_after_supper",
+      "answer": "After, supper we read quietly.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "cc_fix_if_lost",
+      "answer": "If you get lost ask a helper.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cc_fix_if_lost",
+      "answer": "If, you get lost ask a helper.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "cc_transfer_after_the_match",
+      "answer": "After the match the team shook hands.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cc_transfer_after_the_match",
+      "answer": "after the match, the team shook hands.",
+      "expectedResult": "fail",
+      "failureType": "missing_capitalisation"
+    },
+    {
+      "itemId": "sc_insert_lights_audience",
+      "answer": "The lights dimmed the audience fell silent.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sc_insert_lights_audience",
+      "answer": "The lights dimmed, the audience fell silent.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sc_fix_path_map",
+      "answer": "The path was narrow, the map showed a safer route.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sc_fix_path_map",
+      "answer": "The path was narrow the map showed a safer route.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sc_transfer_rain_pitch",
+      "answer": "The rain had stopped, the pitch was still slippery.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sc_transfer_rain_pitch",
+      "answer": "The rain had stopped the pitch was still slippery.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sc_combine_rain_pitch",
+      "answer": "The rain had stopped, the pitch was still slippery.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sc_combine_rain_pitch",
+      "answer": "The rain had stopped. The pitch was still slippery.",
+      "expectedResult": "fail",
+      "failureType": "extra_sentence"
+    },
+    {
+      "itemId": "dc_insert_door_froze",
+      "answer": "The door creaked open we froze.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "dc_insert_door_froze",
+      "answer": "The door creaked open, we froze.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "dc_fix_signal_team",
+      "answer": "The signal failed, the team waited.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "dc_fix_signal_team",
+      "answer": "The signal failed the team waited.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "dc_transfer_flooded_route",
+      "answer": "The path was flooded, we took the longer route.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "dc_transfer_flooded_route",
+      "answer": "The path was flooded we took the longer route.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "dc_combine_flooded_route",
+      "answer": "The path was flooded, we took the longer route.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "dc_combine_flooded_route",
+      "answer": "The path was flooded. We took the longer route.",
+      "expectedResult": "fail",
+      "failureType": "extra_sentence"
+    },
+    {
+      "itemId": "dc_insert_alarm_rang",
+      "answer": "The alarm rang everyone lined up.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "dc_insert_alarm_rang",
+      "answer": "The alarm rang, everyone lined up.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "dc_transfer_curtain_rose",
+      "answer": "The curtain rose, the hall fell silent.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "dc_transfer_curtain_rose",
+      "answer": "The curtain rose the hall fell silent.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "hy_insert_little_used",
+      "answer": "The little used room was locked.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "hy_insert_little_used",
+      "answer": "The little used-room was locked.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "hy_fix_fast_moving",
+      "answer": "We watched a fast moving train.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "hy_fix_fast_moving",
+      "answer": "We watched a fast moving-train.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "hy_transfer_well_known",
+      "answer": "The well known author visited our class.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "hy_transfer_well_known",
+      "answer": "well-known author.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "hy_transfer_man_eating_shark",
+      "answer": "The divers spotted a man eating shark near the reef.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "hy_transfer_man_eating_shark",
+      "answer": "man-eating shark.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "hy_insert_well_behaved",
+      "answer": "The well behaved puppy waited by the gate.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "hy_insert_well_behaved",
+      "answer": "The well behaved-puppy waited by the gate.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "hy_transfer_part_time_job",
+      "answer": "My sister found a part time job at the library.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "hy_transfer_part_time_job",
+      "answer": "part-time job.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "pa_insert_museum",
+      "answer": "The museum a former station was busy.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pa_insert_museum",
+      "answer": "The museum, a former station was busy.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "pa_fix_author",
+      "answer": "The author who won the prize smiled.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pa_fix_author",
+      "answer": "The author, who won the prize smiled.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "pa_transfer_library",
+      "answer": "The library which opened last year is busy.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pa_transfer_library",
+      "answer": "The library, which opened last year is busy.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "pa_combine_lighthouse",
+      "answer": "The lighthouse a useful lookout guided the boats.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pa_combine_lighthouse",
+      "answer": "The lighthouse, a useful lookout guided the boats.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "cl_insert_awards",
+      "answer": "The team won three awards player of the match, best defence and fair play.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cl_insert_awards",
+      "answer": "The team won three awards, player of the match, best defence and fair play.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "cl_fix_camp",
+      "answer": "We packed three things, tents, food and torches.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "cl_fix_camp",
+      "answer": "We packed three things tents food and torches.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cl_transfer_trip",
+      "answer": "We needed three things a torch a map and a whistle.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cl_transfer_trip",
+      "answer": "We needed three things, a torch, a map and a whistle.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "cl_lc_transfer_toolkit",
+      "answer": "Our toolkit contained three items glue card and scissors.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cl_lc_transfer_toolkit",
+      "answer": "Our toolkit contained three items, glue, card and scissors.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "cl_combine_awards",
+      "answer": "The team won three awards player of the match best defence and fair play.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "cl_combine_awards",
+      "answer": "The team won three awards, player of the match, best defence and fair play.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sl_insert_cities",
+      "answer": "We visited York, England, Cardiff, Wales, and Belfast, Northern Ireland.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sl_insert_cities",
+      "answer": "We visited York England Cardiff Wales and Belfast Northern Ireland.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sl_fix_captains",
+      "answer": "Our captains were Sam, Year 5, Aisha, Year 6, and Noor, Year 6.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sl_fix_captains",
+      "answer": "Our captains were Sam Year 5 Aisha Year 6 and Noor Year 6.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sl_transfer_places",
+      "answer": "We visited York, England, Cardiff, Wales, and Belfast, Northern Ireland.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sl_transfer_places",
+      "answer": "York, England Cardiff, Wales Belfast, Northern Ireland.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "sl_insert_helper_roles",
+      "answer": "The helpers were Maya, register monitor, Leo, equipment monitor, and Aisha, line leader.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sl_insert_helper_roles",
+      "answer": "The helpers were Maya register monitor Leo equipment monitor and Aisha line leader.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sl_fix_stalls",
+      "answer": "The stalls were crafts, table one, games, table two, and snacks, table three.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sl_fix_stalls",
+      "answer": "The stalls were crafts table one games table two and snacks table three.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "sl_transfer_event_stalls",
+      "answer": "The stalls were crafts, table one, games, table two, and snacks, table three.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "sl_transfer_event_stalls",
+      "answer": "crafts, table one games, table two snacks, table three.",
+      "expectedResult": "fail",
+      "failureType": "token_fragment"
+    },
+    {
+      "itemId": "bp_insert_kit",
+      "answer": "Bring\n- a drink\n- a hat\n- a sketchbook",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "bp_insert_kit",
+      "answer": "Bring:\n- a drink.\n- a hat\n- a sketchbook.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "bp_fix_consistency",
+      "answer": "Bring:\n- a drink.\n- a hat\n- a sketchbook.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "bp_fix_consistency",
+      "answer": "Bring\n- a drink\n- a hat\n- a sketchbook",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "bp_transfer_class",
+      "answer": "Bring\n- a drink\n- a hat\n- a sketchbook",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "bp_transfer_class",
+      "answer": "Bring: a drink, a hat, a sketchbook.",
+      "expectedResult": "fail",
+      "failureType": "wrong_format"
+    },
+    {
+      "itemId": "pg_fronted_speech",
+      "answer": "After lunch Mia asked can we start now",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pg_fronted_speech",
+      "answer": "After lunch, Mia asked can we start now?",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pg_parenthesis_speech",
+      "answer": "The museum a former station was busy. Noor said the queue is moving",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pg_parenthesis_speech",
+      "answer": "The museum, a former station, was busy. Noor said the queue is moving.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pg_colon_semicolon",
+      "answer": "The kit included three tools, a torch, a rope and a map. The weather changed, the team packed quickly.",
+      "expectedResult": "fail",
+      "failureType": "wrong_mark"
+    },
+    {
+      "itemId": "pg_colon_semicolon",
+      "answer": "The kit included three tools a torch a rope and a map. The weather changed the team packed quickly.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pg_bullet_consistency",
+      "answer": "Bring\n- a drink.\n- a hat\n- a sketchbook.",
+      "expectedResult": "fail",
+      "failureType": "wrong_position"
+    },
+    {
+      "itemId": "pg_bullet_consistency",
+      "answer": "Bring\n- a drink\n- a hat\n- a sketchbook",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pg_apostrophe_mix",
+      "answer": "We cant find the childrens coats. The girls bags are in the hall.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    },
+    {
+      "itemId": "pg_apostrophe_mix",
+      "answer": "We can't find the childrens coats. The girls bags are in the hall.",
+      "expectedResult": "fail",
+      "failureType": "missing_punctuation"
+    }
+  ],
+  "choiceValidation": [
+    {
+      "itemId": "se_choose_exclaim",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "se_choose_direct_question",
+      "correctIndex": 2,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "lc_choose_picnic",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "ac_choose_contractions",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "ac_choose_theyre_dont",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "ap_choose_possession",
+      "correctIndex": 0,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "sp_choose_reporting_comma",
+      "correctIndex": 0,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "fa_choose_before_lunch",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "cc_choose_grandma",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "cc_choose_before_cooking",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "sc_choose_rain_pitch",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "dc_choose_flooded_route",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "dc_choose_lights_out",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "hy_choose_shark",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "hy_choose_small_business",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "pa_choose_coach",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "cl_choose_supplies",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "sl_choose_cities",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "sl_choose_clubs",
+      "correctIndex": 1,
+      "totalOptions": 4
+    },
+    {
+      "itemId": "bp_choose_bring",
+      "correctIndex": 0,
+      "totalOptions": 4
+    }
+  ]
+}
