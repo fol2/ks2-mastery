@@ -122,6 +122,65 @@ describe('P7 Governance: smoke evidence path canonical format', () => {
   });
 });
 
+describe('P7 Governance: P7 completion report structure validation', () => {
+  it('P7 report with analytics_schema_version validates correctly', () => {
+    const report = buildReport({
+      implementation_prs: ['#570', '#571'],
+      final_content_release_commit: 'abcdef1234567',
+      post_merge_fix_commits: [],
+      final_report_commit: '7654321fedcba',
+      analytics_schema_version: 'grammar-qg-p7-calibration-v1',
+      content_release_id_changed: 'false',
+      scoring_or_mastery_change: 'false',
+    });
+    const result = validateReleaseFrontmatter(report);
+    assert.equal(result.valid, true, `Expected valid but got errors: ${JSON.stringify(result.errors)}`);
+    // Confirm the P7 fields are captured in frontmatter
+    assert.equal(result.frontmatter.analytics_schema_version, 'grammar-qg-p7-calibration-v1');
+    assert.equal(result.frontmatter.content_release_id_changed, 'false');
+    assert.equal(result.frontmatter.scoring_or_mastery_change, 'false');
+  });
+
+  it('P7 report must have analytics_schema_version matching grammar-qg-p7-calibration-v1', () => {
+    const report = buildReport({
+      implementation_prs: ['#570'],
+      final_content_release_commit: 'abcdef1234567',
+      post_merge_fix_commits: [],
+      final_report_commit: '7654321fedcba',
+      analytics_schema_version: 'grammar-qg-p7-calibration-v1',
+    });
+    const result = validateReleaseFrontmatter(report);
+    assert.equal(result.valid, true);
+    assert.equal(result.frontmatter.analytics_schema_version, 'grammar-qg-p7-calibration-v1');
+  });
+
+  it('P7 report with content_release_id_changed: false passes', () => {
+    const report = buildReport({
+      implementation_prs: ['#570'],
+      final_content_release_commit: 'abcdef1234567',
+      post_merge_fix_commits: [],
+      final_report_commit: '7654321fedcba',
+      content_release_id_changed: 'false',
+    });
+    const result = validateReleaseFrontmatter(report);
+    assert.equal(result.valid, true);
+    assert.equal(result.frontmatter.content_release_id_changed, 'false');
+  });
+
+  it('P7 report with scoring_or_mastery_change: false passes', () => {
+    const report = buildReport({
+      implementation_prs: ['#570'],
+      final_content_release_commit: 'abcdef1234567',
+      post_merge_fix_commits: [],
+      final_report_commit: '7654321fedcba',
+      scoring_or_mastery_change: 'false',
+    });
+    const result = validateReleaseFrontmatter(report);
+    assert.equal(result.valid, true);
+    assert.equal(result.frontmatter.scoring_or_mastery_change, 'false');
+  });
+});
+
 describe('P7 Governance: report validator fails if smoke evidence missing', () => {
   it('fails when post-deploy smoke claimed but evidence file missing', async () => {
     const { validateGrammarCompletionReport } = await import('../scripts/validate-grammar-qg-completion-report.mjs');
