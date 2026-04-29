@@ -18,9 +18,9 @@ import {
 // isValidEvidenceState
 // ---------------------------------------------------------------------------
 
-test('isValidEvidenceState accepts all 10 enum values', () => {
+test('isValidEvidenceState accepts all 11 enum values', () => {
   const values = Object.values(EVIDENCE_STATES);
-  assert.equal(values.length, 10, 'enum has exactly 10 values');
+  assert.equal(values.length, 11, 'enum has exactly 11 values (P7: +PREFLIGHT_ONLY)');
   for (const v of values) {
     assert.equal(isValidEvidenceState(v), true, `${v} is valid`);
   }

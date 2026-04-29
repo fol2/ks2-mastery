@@ -39,6 +39,8 @@
 
 import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 
 export const EXIT_OK = 0;
 export const EXIT_FAILURE = 1;
@@ -227,9 +229,55 @@ function findSmokeAccountRow(payload, targetEmail) {
   return rows.find((row) => String(row.email || '').toLowerCase() === normalisedTarget) || null;
 }
 
+// U3 (P7): Persist the smoke result to reports/admin-smoke/latest.json
+// so the evidence generator can ingest it as a source.
+function resolveRepoRoot() {
+  const url = import.meta.url;
+  if (url.startsWith('file://')) {
+    const scriptDir = new URL('.', url).pathname.replace(/^\/([A-Z]:)/i, '$1');
+    return resolve(scriptDir, '..');
+  }
+  return process.cwd();
+}
+
+async function resolveSmokeCommit() {
+  const envSha = process.env.GITHUB_SHA || process.env.KS2_CAPACITY_COMMIT_SHA;
+  if (envSha && /^[0-9a-f]{7,40}$/i.test(envSha)) return envSha;
+  try {
+    const { execSync } = await import('node:child_process');
+    return execSync('git rev-parse --short HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 2000,
+    }).toString().trim() || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+function persistSmokeResult({ ok, failures, steps, rootDir }) {
+  const reportsDir = resolve(rootDir || resolveRepoRoot(), 'reports', 'admin-smoke');
+  const outputPath = resolve(reportsDir, 'latest.json');
+  if (!existsSync(reportsDir)) {
+    mkdirSync(reportsDir, { recursive: true });
+  }
+  const commit = process.env.GITHUB_SHA
+    || process.env.KS2_CAPACITY_COMMIT_SHA
+    || 'unknown';
+  const payload = {
+    ok: Boolean(ok),
+    finishedAt: new Date().toISOString(),
+    smokeType: 'admin',
+    failures: Array.isArray(failures) ? failures.map(String) : [],
+    commit,
+  };
+  writeFileSync(outputPath, JSON.stringify(payload, null, 2) + '\n');
+  return outputPath;
+}
+
 export async function runSmoke({
   env = process.env,
   emit = (envelope) => console.log(JSON.stringify(envelope, null, 2)),
+  rootDir = null,
 } = {}) {
   const steps = [];
   let sequence = 0;
@@ -805,6 +853,7 @@ export async function runSmoke({
     // ---------------------------------------------------------------
     if (exitCode !== EXIT_OK) {
       const first = failedSteps[0];
+      const failureNames = failedSteps.map((f) => f?.step || 'unknown');
       emit({
         ok: false,
         exit_code: exitCode,
@@ -816,6 +865,7 @@ export async function runSmoke({
         failed_step_count: failedSteps.length,
         steps,
       });
+      try { persistSmokeResult({ ok: false, failures: failureNames, steps, rootDir }); } catch { /* best-effort */ }
       return exitCode;
     }
   } catch (error) {
@@ -830,6 +880,7 @@ export async function runSmoke({
         payload: error.payload,
         steps,
       });
+      try { persistSmokeResult({ ok: false, failures: [error.step], steps, rootDir }); } catch { /* best-effort */ }
       return EXIT_FAILURE;
     }
     emit({
@@ -839,10 +890,19 @@ export async function runSmoke({
       error: error?.message || String(error),
       steps,
     });
+    try { persistSmokeResult({ ok: false, failures: [error?.message || 'unknown'], steps, rootDir }); } catch { /* best-effort */ }
     return EXIT_FAILURE;
   }
 
   emit({ ok: true, exit_code: EXIT_OK, base_url: baseUrl, steps });
+
+  // U3 (P7): Persist result for evidence generator ingestion.
+  try {
+    persistSmokeResult({ ok: true, failures: [], steps, rootDir });
+  } catch {
+    // Non-fatal — the smoke run itself passed; file write is best-effort.
+  }
+
   return EXIT_OK;
 }
 

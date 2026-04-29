@@ -25,12 +25,13 @@ const OUTPUT_PATH = join(ROOT, 'reports', 'capacity', 'latest-evidence-summary.j
 
 const verbose = process.argv.includes('--verbose');
 
-const TIER_KEYS = Object.freeze({
+export const TIER_KEYS = Object.freeze({
   SMOKE: 'smoke_pass',
   SMALL_PILOT: 'small_pilot_provisional',
   CERTIFIED_30: 'certified_30_learner_beta',
   CERTIFIED_60: 'certified_60_learner_stretch',
   CERTIFIED_100: 'certified_100_plus',
+  PREFLIGHT: 'preflight_only',
   UNKNOWN: 'unknown',
 });
 
@@ -73,6 +74,16 @@ export function readEvidenceFiles(rootDir = ROOT) {
 }
 
 export function classifyTier(fileName, data = {}) {
+  // U1 (P7): Preflight files must never displace a real certification tier.
+  // Early return BEFORE the regex cascade so filenames like
+  // '60-learner-stretch-preflight-*.json' do not match CERTIFIED_60.
+  // Filename-based detection fires for real evidence files loaded from disk
+  // (which lack an evidenceKind field until classifyEvidenceKind enriches them).
+  if (/preflight/i.test(fileName)) return TIER_KEYS.PREFLIGHT;
+  if (data?.evidenceKind === 'preflight') {
+    return TIER_KEYS.PREFLIGHT;
+  }
+
   const candidates = [
     data?.tier?.tier,
     data?.tier,
