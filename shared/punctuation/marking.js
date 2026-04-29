@@ -188,7 +188,7 @@ function quotedWordsStartWithCapital(text) {
 }
 
 function reportingCommaOk(text, pair, rubric) {
-  if (rubric?.reportingPosition === 'after') return true;
+  if (rubric?.reportingPosition === 'after' || rubric?.reportingPosition === 'any') return true;
   const before = beforeOpeningQuote(text, pair);
   if (!before) return true;
   return /,\s*$/.test(before);
@@ -263,6 +263,14 @@ function singleSentenceOk(text, requiredTerminal = null) {
   if (!sentenceEnds(clean, requiredTerminal)) return false;
   const body = clean.replace(/[.?!]["']?$/, '').trim();
   return !/[.?!]/.test(body);
+}
+
+function singleSpeechSentenceOk(text, requiredTerminal = null) {
+  const clean = canonicalPunctuationText(text);
+  if (!sentenceEnds(clean, requiredTerminal)) return false;
+  const body = clean.replace(/[.?!]["']?$/, '').trim();
+  const bodyNoQuoted = body.replace(/["'"'"'][^"'"'"']*["'"'"']/g, '');
+  return !/[.?!]/.test(bodyNoQuoted);
 }
 
 function transferSentenceOk(item, text, requiredTerminal = null) {
@@ -616,7 +624,11 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
   const requiredTerminal = typeof rubric.requiredTerminal === 'string' ? rubric.requiredTerminal : null;
   const speechOk = speechPunctuationOk(quoted, requiredTerminal);
   const reportingOk = reportingCommaOk(text, quote.pair, rubric);
-  const capitalOk = sentenceStartsWithCapital(text) && quotedWordsStartWithCapital(quoted);
+  const positionAllowsAfter = rubric?.reportingPosition === 'after' || rubric?.reportingPosition === 'any';
+  const sentenceCapitalOk = positionAllowsAfter
+    ? sentenceStartsWithCapital(text) || /^["'"'“‘]/.test(text)
+    : sentenceStartsWithCapital(text);
+  const capitalOk = sentenceCapitalOk && quotedWordsStartWithCapital(quoted);
   const wordsOk = includesWords(quoted, rubric.spokenWords || rubric.words);
   const unwantedOk = !hasDuplicatedOutsidePunctuation(text, quote.pair);
 
@@ -777,12 +789,19 @@ function markTransfer(item, answer) {
 
   if (validator.type === 'speechWithWords') {
     const requiredTerminal = validator.requiredTerminal || '?';
+    const reportingPosition = item.rubric?.reportingPosition || undefined;
     const rubric = evaluateSpeechRubric(text, {
       type: 'speech',
       spokenWords: validator.words,
       requiredTerminal,
+      ...(reportingPosition ? { reportingPosition } : {}),
     });
-    const sentenceOk = transferSentenceOk(item, text, requiredTerminal);
+    const posAllowsAfter = reportingPosition === 'any' || reportingPosition === 'after';
+    const looksReportingAfter = posAllowsAfter && /^["'“”‘’]/.test(text);
+    const sentenceTerminal = looksReportingAfter ? null : requiredTerminal;
+    const sentenceOk = looksReportingAfter
+      ? singleSpeechSentenceOk(text, sentenceTerminal)
+      : transferSentenceOk(item, text, sentenceTerminal);
     const correct = rubric.correct && sentenceOk;
     return {
       correct,
