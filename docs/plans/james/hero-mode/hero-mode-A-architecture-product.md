@@ -406,9 +406,9 @@ Do not claim child choice of branch until the UI actually exposes it.
 
 ## 8. Child journey after P6
 
-### 8.1 Dashboard
+### 8.1 Home surface
 
-When enabled, the dashboard shows the Hero Quest card as the primary action.
+When enabled, the home surface (HomeSurface) shows the Hero Quest card as the primary action.
 
 The Hero Quest card may show:
 
@@ -644,7 +644,7 @@ Do not claim:
 - Six subjects are supported.
 - Arithmetic, Reasoning, or Reading are production Hero providers.
 - Hero Mode improves learning yet; P6 prepares measurement but does not provide real cohort data.
-- P6 metrics are already wired into a full admin dashboard.
+- P6 metrics are already wired into a full admin dashboard (they are readiness derivation utilities only, not a live dashboard).
 - Per-account production cohort bucketing is implemented unless the code is separately verified.
 - Hero Camp has manual QA sign-off unless staging QA has been completed.
 - Branch choice exists for children.
@@ -660,15 +660,13 @@ First, run the P6 rollout playbook through staging and internal production. Coll
 
 P7 should be chosen by evidence, not by roadmap momentum.
 
-Possible P7 directions only after metrics:
+Possible P7 directions only after metrics (none approved for pA1):
 
-- add admin Hero readiness dashboard;
+- admin Hero readiness route;
 - parent-facing Hero explanation/reporting;
 - six-subject expansion when more subjects are Worker-backed;
 - long-term ledger archival;
 - Camp placement A/B test;
-- more Hero Pool monsters if engagement justifies it;
-- undo/refund policy if confirmed spending causes real child distress;
 - bake-in/removal of some feature-flag checks after stable default-on.
 
 Avoid P7 directions such as:

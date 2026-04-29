@@ -483,7 +483,7 @@ This is still the correct architecture. Do not “optimise” P7 by moving subje
 
 ## 7. UI reality
 
-### 7.1 Dashboard
+### 7.1 Home surface
 
 `HomeSurface` renders HeroQuestCard when Hero is active and renders HeroCampPanel under it when the Camp read model is enabled.
 
@@ -583,39 +583,25 @@ These are currently foundation utilities. Do not assume a full admin metrics rou
 
 `worker/src/hero/readiness.js` derives readiness checks from state and flags. It is pure and side-effect-free.
 
-Again, this is a derivation module, not by itself a production dashboard.
+Again, this is a pure derivation module, not a production dashboard or admin route.
 
 ---
 
 ## 10. Test and validation reality
 
-P6 completion report claims:
+P6 test counts have been reconciled (pA1-U1):
 
 ```txt
-283 new P6 tests, 0 regressions
-READY FOR STAGING
+268 pure-logic P6 tests (run without esbuild)
+ 16 UI render P6 tests (require esbuild in devDependencies)
+---
+284 total P6 tests
+117 P5 regression tests
+---
+401 total verified tests
 ```
 
-P6 readiness report says:
-
-```txt
-265 P6 unit/integration tests + 117 regression = 382
-```
-
-PR #585 says:
-
-```txt
-282 P6 tests + 117 P5 regression = 399
-```
-
-This inconsistency is not necessarily a product bug, but it is documentation drift. Before any formal production sign-off, reconcile the test counts in the reports.
-
-The important engineering reality is:
-
-- many P6 tests exist;
-- the reports consistently claim zero failures;
-- the PR was merged;
-- I did not independently run the full test suite in this review.
+The earlier discrepancy (283/265/282 across different documents) was caused by differing inclusion of the branch-policy UI render tests, which require `esbuild`. All 284 P6 tests pass with zero failures when esbuild is available.
 
 ---
 
@@ -642,22 +628,22 @@ The following claims align with code/reports:
 
 Some report/playbook wording is stale or imprecise:
 
-1. The readiness/playbook mentions checking a `hero_progress` table or `hero_pool` column. Current architecture stores Hero state in `child_game_state` JSON under `system_id='hero-mode'`.
+1. The readiness/playbook previously mentioned checking a `hero_progress` table or `hero_pool` column. Current architecture stores Hero state in `child_game_state` JSON under `system_id='hero-mode'`. Corrected in pA1-U1.
 
-2. The readiness report says monster assets are small PNGs. The actual assets and adapter use `.webp` paths.
+2. The readiness report previously said monster assets are small PNGs. The actual assets and adapter use `.webp` paths. Corrected in pA1-U1.
 
 3. The readiness report describes U4 as “event IDs derived from learnerId + dateKey + taskIndex”, while P6 app patch uses deterministic event IDs from requestId suffixes for claim events and ledgerEntryId for Camp events. The latter is the code truth.
 
-4. Test counts differ across completion report, readiness report, and PR body.
+4. Test counts previously differed across completion report, readiness report, and PR body. Reconciled to 284 P6 + 117 regression in pA1-U1.
 
-5. P7 recommendations in readiness mention “advanced camp mechanics (monster evolution, trading)”. Monster growth already exists; trading should not be assumed desirable.
+5. P7 recommendations in readiness previously mentioned “advanced camp mechanics (monster evolution, trading)”. Monster growth already exists; trading suggestion removed as not approved for pA1 (resolved pA1-U1).
 
 ### 11.3 Remaining gaps before production default-on
 
 Not blockers for staging, but must be resolved before wider rollout:
 
 - run manual browser QA with all six flags enabled;
-- verify dashboard wiring in a real deployed environment;
+- verify home surface read-model wiring in a real deployed environment;
 - reconcile report/test-count drift;
 - verify analytics events reach the intended production sink, not only console logs;
 - confirm whether per-account bucketing/flag overrides in rollout playbook are implemented or aspirational;
@@ -716,7 +702,7 @@ Not yet completed or not proven by code reviewed here:
 
 - general availability rollout;
 - production cohort bucketing implementation, unless separately verified;
-- live admin dashboard for Hero metrics;
+- live admin route for Hero readiness/metrics derivation;
 - parent-facing Hero reporting;
 - long-term ledger archival;
 - six-subject expansion;
@@ -749,13 +735,13 @@ The next agent should treat P6 as a staging-readiness checkpoint, not a mandate 
 
 | Risk | Severity | Status | Recommended action |
 |---|---:|---|---|
-| Report test count mismatch | Low | Open documentation drift | Reconcile completion/readiness/PR numbers |
-| Stale rollout wording (`hero_progress`, `hero_pool column`) | Medium | Open docs drift | Correct rollout playbook wording |
-| Assets use `.webp`, readiness says PNG | Low | Open docs drift | Correct readiness report or future A/B docs |
+| Report test count mismatch | Low | Resolved (pA1-U1) | Reconciled to 284 P6 + 117 regression = 401 |
+| Stale rollout wording (`hero_progress`, `hero_pool column`) | Medium | Resolved (pA1-U1) | Corrected to `child_game_state WHERE system_id = 'hero-mode'` |
+| Assets use `.webp`, readiness says PNG | Low | Resolved (pA1-U1) | Corrected to WebP in readiness report |
 | Analytics modules have no visible production route | Medium | Accepted foundation | Add admin route only after rollout need is clear |
 | Per-account bucketing may be aspirational | Medium | Needs verification | Confirm flag infrastructure before cohort rollout |
 | Real browser QA not proven in reports | Medium | Open | Run manual QA with flags enabled |
-| P7 trading suggestion conflicts with calm economy | Medium | Product risk | Do not pursue without separate product review |
+| P7 trading suggestion conflicts with calm economy | Medium | Resolved (pA1-U1) | Trading suggestion removed from readiness report; not approved for pA1 |
 | Child learning impact unproven | High but expected | Requires data | 2–4 weeks observation before P7/default-on |
 
 ---

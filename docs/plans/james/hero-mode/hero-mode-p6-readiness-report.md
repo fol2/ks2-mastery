@@ -27,11 +27,12 @@ Hierarchy enforcement verified: enabling a child flag without its parent returns
 
 | Category | Count | Failures |
 |----------|-------|----------|
-| P6 unit/integration tests | 265 | 0 |
+| P6 unit/integration tests (pure logic) | 268 | 0 |
+| P6 UI render tests (requires esbuild) | 16 | 0 |
 | Regression tests (P0-P5) | 117 | 0 |
-| **Total** | **382** | **0** |
+| **Total** | **401** | **0** |
 
-All tests pass under `node --test` on Node 20+ with zero flaky results across 3 consecutive runs.
+All tests pass under `node --test` on Node 20+ with zero flaky results across 3 consecutive runs. The 16 UI render tests require `esbuild` in devDependencies; they are skipped in environments without it.
 
 ---
 
@@ -45,9 +46,9 @@ Hero monster asset references now match the real filesystem layout. Path resolut
 
 The claim-task idempotency hash incorporates `learnerId + dateKey + taskId + command` to prevent cross-command collisions. Camp invite commands include `monsterId` in the hash.
 
-### U3: Dashboard Wiring Verified
+### U3: Home Surface Read-Model Wiring Verified
 
-45 integration tests confirm the Hero dashboard correctly wires read-model output to UI components. Flag-gated rendering verified for all 6 flag combinations.
+45 integration tests confirm the Hero home surface correctly wires read-model output to UI components (HeroQuestCard, HeroCampPanel). Flag-gated rendering verified for all 6 flag combinations.
 
 ### U4: Branch Policy = Option A (No Branch Choice)
 
@@ -135,7 +136,7 @@ None blocking.
 |------|-----------|--------|------------|
 | D1 write latency spikes under burst load | Low | Medium | Circuit breaker on claim-task path; retry-after-stale-write pattern with exponential backoff |
 | Multi-tab race on coin award | Low | Low | CAS revision guard prevents double-award; worst case is a single retry prompt |
-| Monster asset loading delay on slow connections | Medium | Low | Assets are small PNGs (<20KB each); placeholder skeleton shown during load |
+| Monster asset loading delay on slow connections | Medium | Low | Assets are small WebP images (<20KB each); placeholder skeleton shown during load |
 | Economy inflation if daily cap bypassed via clock manipulation | Very Low | Medium | Server-side date derivation from `Europe/London` timezone; client clock ignored for cap enforcement |
 
 ---
@@ -166,10 +167,9 @@ Key principle: rollback preserves state dormant, never deletes balances/ledger/o
 
 Recommended observation period: 2-4 weeks of staging + internal production data.
 
-P7 scope (tentative):
+P7 scope (tentative, not approved for pA1):
 - Remove feature-flag conditionals from hot paths (bake-in)
-- Add remaining 3 subjects (arithmetic, reasoning, reading)
-- Advanced camp mechanics (monster evolution, trading)
+- Add remaining 3 subjects (arithmetic, reasoning, reading) when Worker-backed
 - Parent-visible progress reports
 
 P7 entry criteria:

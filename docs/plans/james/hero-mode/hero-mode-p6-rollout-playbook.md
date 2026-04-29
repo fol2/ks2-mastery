@@ -30,9 +30,9 @@ A child flag MUST NOT be enabled unless its parent is already enabled. The syste
 
 | | |
 |---|---|
-| **Entry criteria** | All P6 tests pass (382 total, 0 failures). Readiness report status is READY. |
+| **Entry criteria** | All P6 tests pass (284 P6 + 117 regression = 401 total, 0 failures). Readiness report status is READY. |
 | **Actions** | Enable all 6 flags in `.dev.vars`. Run full flow: shadow build, launch, child UI render, claim-task, coin award, camp invite. |
-| **Verification** | - Read model builds without error<br>- Dashboard renders 3 eligible subjects<br>- Claim-task returns `ok: true` with coin award<br>- Camp invite deducts balance correctly<br>- Metrics emit to structured log |
+| **Verification** | - Read model builds without error<br>- Home surface renders 3 eligible subjects via HeroQuestCard<br>- Claim-task returns `ok: true` with coin award<br>- Camp invite deducts balance correctly<br>- Metrics emit to structured log |
 | **Exit criteria** | Manual sign-off from developer after exercising all flows. |
 
 ### Ring 2 — Staging Seeded (single learner)
@@ -41,7 +41,7 @@ A child flag MUST NOT be enabled unless its parent is already enabled. The syste
 |---|---|
 | **Entry criteria** | Ring 1 signed off. Deploy to staging environment. |
 | **Actions** | Enable all 6 flags in staging environment variables. Create one seeded test learner. Run automated smoke suite. |
-| **Verification** | - No 500s in Worker logs<br>- D1 writes succeed (check `hero_progress` table)<br>- Analytics events appear in KV telemetry sink<br>- No forbidden vocabulary in rendered HTML (spot check) |
+| **Verification** | - No 500s in Worker logs<br>- D1 writes succeed (check `child_game_state` row where `system_id = 'hero-mode'`)<br>- Analytics events appear in KV telemetry sink<br>- No forbidden vocabulary in rendered HTML (spot check) |
 | **Exit criteria** | Automated smoke passes. No errors in 30-minute observation window. |
 
 ### Ring 3 — Staging Multi-Day (2-3 days)
@@ -60,7 +60,7 @@ A child flag MUST NOT be enabled unless its parent is already enabled. The syste
 | **Entry criteria** | Ring 3 passed. Production deploy complete. |
 | **Actions** | Enable all 6 flags for team-internal account IDs only (via per-account flag override). Team uses Hero Mode in production for 3-5 days. |
 | **Verification** | - Production D1 read/write latencies within budget (p95 < 200ms)<br>- No KV quota exhaustion<br>- Analytics pipeline receives events end-to-end<br>- Multi-device/multi-tab conflict resolution works<br>- Learning health metrics emit baseline values |
-| **Exit criteria** | Team sign-off. No P0/P1 defects found. Metrics dashboard populated. |
+| **Exit criteria** | Team sign-off. No P0/P1 defects found. Readiness derivation utilities producing expected values. |
 
 ### Ring 5 — Limited Cohort (5-10% of learners)
 
@@ -171,7 +171,7 @@ When a flag is disabled, the system stops writing new data and hides UI surfaces
 
 | Effect | Detail |
 |--------|--------|
-| Read model | Unavailable. Dashboard falls back to existing subject-only pattern. |
+| Read model | Unavailable. Home surface falls back to existing subject-only pattern. |
 | All Hero surfaces | Disabled (everything depends on Shadow). |
 | Existing practice | Zero impact. All subject routes function normally. |
 | Re-enable | Shadow read model rebuilds on next request. Full Hero stack available. |
