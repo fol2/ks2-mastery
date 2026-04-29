@@ -172,9 +172,11 @@ function normaliseAttempts(rawAttempts) {
       ts: Math.max(0, Number(a.ts) || 0),
       itemId: typeof a.itemId === 'string' ? a.itemId : '',
       variantSignature: typeof a.variantSignature === 'string' ? a.variantSignature : '',
+      templateId: typeof a.templateId === 'string' ? a.templateId : '',
       skillIds: Array.isArray(a.skillIds) ? a.skillIds.filter((s) => typeof s === 'string') : [],
       rewardUnitId: typeof a.rewardUnitId === 'string' ? a.rewardUnitId : '',
       correct: a.correct === true,
+      supported: a.supported === true,
       supportLevel: Math.max(0, Number(a.supportLevel) || 0),
       supportKind: typeof a.supportKind === 'string' ? a.supportKind : null,
       itemMode: typeof a.itemMode === 'string' ? a.itemMode : '',
@@ -441,16 +443,97 @@ function computePracticeStars(monsterAttempts) {
   return Math.min(PRACTICE_CAP, Math.floor(rawScore));
 }
 
-function computeSecureStars(monsterClusterIds, items, rewardUnitEntries, monsterId, itemSignatureAliases) {
-  // Count items that have reached the secure bucket.
+function computeSecureStars(monsterClusterIds, items, rewardUnitEntries, monsterId, itemSignatureAliases, monsterAttempts) {
+  // Count items that have reached the secure bucket, deduped by variant
+  // signature per skill+mode facet (QG-P4-U5).
+  //
+  // Dedup rules:
+  //   1. Supported attempts (attempt.supported === true) are excluded.
+  //   2. Generated items with the same variantSignature count as 1 evidence
+  //      event per facet.
+  //   3. Fixed items (no variantSignature) always count independently.
   const secureEvidenceKeys = new Set();
   const itemEntries = isPlainObject(items) ? items : {};
+
+  // Build the set of secure item IDs so we only dedup items that actually
+  // reached the secure bucket.
+  const secureItemIds = new Set();
   for (const [itemId, itemState] of Object.entries(itemEntries)) {
     const snap = memorySnapshot(itemState);
-    if (snap.secure) {
+    if (snap.secure) secureItemIds.add(itemId);
+  }
+
+  // Per-facet signature tracking for dedup.
+  // facetKey (skillId::mode) -> Set<variantSignature>
+  const countedSignaturesPerFacet = new Map();
+
+  // Walk attempts to determine which secure items pass the dedup gate.
+  const secureItemPassedDedup = new Set();
+  // Track items that have ANY attempt (including filtered supported ones).
+  // Only items with truly no attempts fall through to legacy alias dedup.
+  const secureItemsWithAttempts = new Set();
+
+  for (const attempt of monsterAttempts) {
+    const itemId = attempt.itemId;
+    if (!itemId) continue;
+    if (secureItemIds.has(itemId)) secureItemsWithAttempts.add(itemId);
+
+    if (!attempt.correct) continue;
+    if (attempt.supported) continue; // Rule: supported attempts excluded
+
+    if (!secureItemIds.has(itemId)) continue;
+
+    const signature = attempt.variantSignature;
+
+    // Fixed items (no variantSignature): always count independently.
+    if (!signature) {
+      secureItemPassedDedup.add(itemId);
+      continue;
+    }
+
+    // Generated items: dedup per facet (skillId::itemMode).
+    for (const skillId of attempt.skillIds) {
+      const facetKey = `${skillId}::${attempt.itemMode || ''}`;
+      if (!countedSignaturesPerFacet.has(facetKey)) {
+        countedSignaturesPerFacet.set(facetKey, new Set());
+      }
+      const seen = countedSignaturesPerFacet.get(facetKey);
+      if (!seen.has(signature)) {
+        seen.add(signature);
+        secureItemPassedDedup.add(itemId);
+      }
+    }
+    // Fallback: if no skillIds, apply globally (no facet scoping).
+    if (attempt.skillIds.length === 0) {
+      const facetKey = '__global__';
+      if (!countedSignaturesPerFacet.has(facetKey)) {
+        countedSignaturesPerFacet.set(facetKey, new Set());
+      }
+      const seen = countedSignaturesPerFacet.get(facetKey);
+      if (!seen.has(signature)) {
+        seen.add(signature);
+        secureItemPassedDedup.add(itemId);
+      }
+    }
+  }
+
+  // For secure items that have NO associated attempt in monsterAttempts
+  // (edge case: item state imported without attempts), count them as
+  // passed-dedup using the existing signature alias collapse.
+  // Items that DO have attempts but failed the dedup gate (e.g. all supported,
+  // or all duplicate signatures) are intentionally excluded.
+  for (const itemId of secureItemIds) {
+    if (!secureItemsWithAttempts.has(itemId)) {
+      // Fall back to legacy alias-based dedup (pre-U5 behaviour).
       secureEvidenceKeys.add(itemSignatureAliases.get(itemId) || itemId);
     }
   }
+
+  // Items that passed the per-facet dedup gate.
+  for (const itemId of secureItemPassedDedup) {
+    secureEvidenceKeys.add(itemSignatureAliases.get(itemId) || itemId);
+  }
+
   const secureItemCount = secureEvidenceKeys.size;
 
   // Count secured reward units for this monster's clusters.
@@ -473,12 +556,67 @@ function computeSecureStars(monsterClusterIds, items, rewardUnitEntries, monster
   return Math.min(SECURE_CAP, Math.round(rawScore));
 }
 
-function computeMasteryStars(monsterClusterIds, facets, rewardUnitEntries, monsterId) {
+function computeMasteryStars(monsterClusterIds, facets, rewardUnitEntries, monsterId, monsterAttempts) {
   // Mastery requires deep-secure evidence:
   //   - Secured reward units with facet coverage across multiple item modes
   //   - No recent lapse in any facet for this cluster
+  //
+  // QG-P4-U5 dedup rules for Mastery evidence:
+  //   1. Supported attempts (attempt.supported === true) are excluded from
+  //      qualifying evidence.
+  //   2. Same variantSignature counts as 1 evidence event per facet.
+  //   3. Same templateId counts at most 1 towards deep/Mastery evidence
+  //      per facet.
+  //   4. Fixed items (no variantSignature) always count independently.
 
   const facetEntries = isPlainObject(facets) ? facets : {};
+
+  // ---------------------------------------------------------------------------
+  // QG-P4-U5: Build per-facet deduped evidence count from attempts.
+  // A facet is considered to have qualifying evidence if it has at least one
+  // non-supported, non-duplicate attempt (by variantSignature AND templateId).
+  // ---------------------------------------------------------------------------
+  const facetQualifyingEvidence = new Map(); // facetKey -> count of deduped evidences
+
+  // Per-facet dedup tracking.
+  const signaturePerFacet = new Map(); // facetKey -> Set<signature>
+  const templatePerFacet = new Map();  // facetKey -> Set<templateId>
+
+  for (const attempt of (monsterAttempts || [])) {
+    if (!attempt.correct) continue;
+    if (attempt.supported) continue; // Rule 1: supported excluded
+
+    for (const skillId of attempt.skillIds) {
+      const skillCluster = SKILL_TO_CLUSTER.get(skillId);
+      if (!skillCluster || !monsterClusterIds.has(skillCluster)) continue;
+
+      const facetKey = `${skillId}::${attempt.itemMode || ''}`;
+      const signature = attempt.variantSignature;
+      const templateId = attempt.templateId;
+
+      // Fixed items (no signature): always count independently.
+      if (!signature) {
+        facetQualifyingEvidence.set(facetKey, (facetQualifyingEvidence.get(facetKey) || 0) + 1);
+        continue;
+      }
+
+      // Rule 2: dedup by variantSignature per facet.
+      if (!signaturePerFacet.has(facetKey)) signaturePerFacet.set(facetKey, new Set());
+      const seenSigs = signaturePerFacet.get(facetKey);
+      if (seenSigs.has(signature)) continue; // Already counted this signature for this facet.
+      seenSigs.add(signature);
+
+      // Rule 3: dedup by templateId per facet (at most 1 per templateId).
+      if (templateId) {
+        if (!templatePerFacet.has(facetKey)) templatePerFacet.set(facetKey, new Set());
+        const seenTemplates = templatePerFacet.get(facetKey);
+        if (seenTemplates.has(templateId)) continue; // Same template already counted.
+        seenTemplates.add(templateId);
+      }
+
+      facetQualifyingEvidence.set(facetKey, (facetQualifyingEvidence.get(facetKey) || 0) + 1);
+    }
+  }
 
   // Check for recent lapse in any facet belonging to this monster's clusters.
   let hasRecentLapse = false;
@@ -498,9 +636,20 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnitEntries, monst
       hasRecentLapse = true;
     }
     if (snap.secure) {
-      facetSecureCount += 1;
-      if (snap.lapses === 0) {
-        skillsWithDeepSecure.add(skillId);
+      // QG-P4-U5: Only count facet as secure evidence if it has qualifying
+      // (deduped, non-supported) attempt evidence. Facets with no attempts
+      // in the current attempt set still count (backwards compatibility for
+      // imported/migrated state).
+      const facetKey = `${skillId}::${itemMode}`;
+      const hasAttemptEvidence = facetQualifyingEvidence.has(facetKey);
+      const evidenceCount = facetQualifyingEvidence.get(facetKey) || 0;
+      if (hasAttemptEvidence && evidenceCount === 0) {
+        // Facet has attempts but all are duplicated/supported — skip.
+      } else {
+        facetSecureCount += 1;
+        if (snap.lapses === 0) {
+          skillsWithDeepSecure.add(skillId);
+        }
       }
     }
     if (snap.attempts > 0) {
@@ -805,8 +954,8 @@ export function projectPunctuationStars(progress, releaseId, options) {
 
     const tryStars = computeTryStars(mAttempts);
     const practiceStars = computePracticeStars(mAttempts);
-    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnitEntries, monsterId, itemSignatureAliases);
-    const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnitEntries, monsterId);
+    const secureStars = computeSecureStars(clusterIds, mItems, rewardUnitEntries, monsterId, itemSignatureAliases, mAttempts);
+    const masteryStars = computeMasteryStars(clusterIds, facets, rewardUnitEntries, monsterId, mAttempts);
     const total = tryStars + practiceStars + secureStars + masteryStars;
 
     perMonster[monsterId] = {
