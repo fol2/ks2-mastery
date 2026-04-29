@@ -168,6 +168,14 @@ function deriveTelemetryEvents({ state, command, previousState, starEvidenceEven
       mode,
     });
 
+    // P5-U2: emit GENERATED_SIGNATURE_EXPOSED when the active item is generated.
+    if (itemSignature) {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.GENERATED_SIGNATURE_EXPOSED,
+        variantSignature: itemSignature,
+      });
+    }
+
     // Check if the selected signature was already exposed in this session
     const selectedSignatures = Array.isArray(session.selectedSignatures) ? session.selectedSignatures : [];
     if (itemSignature && selectedSignatures.filter((s) => s === itemSignature).length > 1) {
