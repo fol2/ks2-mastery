@@ -129,6 +129,15 @@ export function applyAdminHubAccountOpsMetadataPatch(adminHub, rawDirectory) {
   };
 }
 
+export function applyAdminHubProductionEvidencePatch(adminHub, rawSummary) {
+  const hub = coerceAdminHub(adminHub);
+  if (!hub) return adminHub;
+  const next = stripOkEnvelope(rawSummary);
+  if (!isPlainObject(next)) return hub;
+  const previous = isPlainObject(hub.productionEvidence) ? hub.productionEvidence : null;
+  return { ...hub, productionEvidence: composeSuccess(previous, next) };
+}
+
 // U8 (P3): narrow-refresh patch for the denial log panel. Mirrors the
 // four existing sibling patch helpers above. The denial panel has no
 // in-flight saving scalars, so no `preserveKeys` are needed.
@@ -151,6 +160,7 @@ const PANEL_KEYS = Object.freeze({
   opsActivityStream: 'opsActivityStream',
   errorLogSummary: 'errorLogSummary',
   accountOpsMetadata: 'accountOpsMetadata',
+  productionEvidence: 'productionEvidence',
   denialLog: 'denialLog',
 });
 

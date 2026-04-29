@@ -69,12 +69,11 @@ const BUDGET_ADMIN_OPS_KPI = 21;
 // with LIKE filter). Headroom +1.
 const BUDGET_ADMIN_ACCOUNTS_SEARCH = 5;
 
-// Measured: 3 queries via capacity collector for Admin debug-bundle
-// (ops_status JOIN + ensureAccount upsert + assertAdminHubActorForBundle
-// SELECT). The bundle aggregation itself uses a raw DB reference that
-// bypasses the capacity collector — the budget covers only the
-// repository-tracked auth preamble. Headroom +1.
-const BUDGET_ADMIN_DEBUG_BUNDLE = 4;
+// Measured: 10 queries for Admin debug-bundle (ops_status JOIN +
+// ensureAccount upsert + assertAdminHubActorForBundle SELECT + seven
+// bundle-section aggregation queries). Headroom +1.
+const BUDGET_ADMIN_DEBUG_BUNDLE = 11;
+const MIN_ADMIN_DEBUG_BUNDLE_TRACKED_QUERIES = 10;
 
 // Measured: 19 queries for Hero command POST start-task (ops_status JOIN +
 // ensureAccount upsert + requireLearnerReadAccess + readHeroSubjectReadModels
@@ -746,6 +745,10 @@ test('U3 query budget: Admin debug-bundle GET ≤ BUDGET_ADMIN_DEBUG_BUNDLE', as
     const capacity = payload.meta?.capacity;
     assert.ok(capacity, 'Admin debug-bundle must expose meta.capacity');
     assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+    assert.ok(
+      capacity.queryCount >= MIN_ADMIN_DEBUG_BUNDLE_TRACKED_QUERIES,
+      `Admin debug-bundle queryCount must include bundle aggregation; measured ${capacity.queryCount}`,
+    );
 
     assert.ok(
       capacity.queryCount <= BUDGET_ADMIN_DEBUG_BUNDLE,

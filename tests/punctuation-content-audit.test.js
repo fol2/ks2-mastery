@@ -123,6 +123,10 @@ const P2_U6_EXPECTED_CAPACITY_DUPLICATE_RESIDUALS = Object.freeze({
   },
 });
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
 function fixedThresholdArg(thresholds = P2_U3_FIXED_THRESHOLDS) {
   return Object.entries(thresholds)
     .map(([skillId, count]) => `${skillId}=${count}`)
@@ -617,17 +621,18 @@ test('punctuation content audit --reviewer-report passes strict gate AND produce
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /REVIEWER REPORT/);
+  assert.match(result.stdout, /Runtime summary/);
+  assert.match(result.stdout, /DSL coverage ratio/);
   assert.match(result.stdout, /Top duplicate generated stems/);
   assert.match(result.stdout, /Top duplicate generated models/);
   assert.match(result.stdout, /Per-family spare capacity/);
   assert.match(result.stdout, /Per-skill mode coverage/);
   assert.match(result.stdout, /Per-skill validator\/rubric coverage/);
-  assert.match(result.stdout, /Per-family template count/);
-  assert.match(result.stdout, /Per-family signature count/);
+  assert.match(result.stdout, /Golden test coverage per DSL family/);
   assert.match(result.stdout, /Generated model-answer marking failures/);
-  assert.match(result.stdout, /Templates missing accept\/reject tests/);
-  assert.match(result.stdout, /Templates with no alternate-answer test/);
-  assert.match(result.stdout, /Families using legacy non-DSL templates/);
+  assert.match(result.stdout, /Metadata\/redaction risk checks/);
+  assert.match(result.stdout, /Recommended reviewer actions/);
+  assert.match(result.stdout, /Findings/);
 });
 
 test('punctuation content audit reviewer report shows capacity at depth 8 for converted families', () => {
@@ -713,6 +718,11 @@ test('punctuation content audit reviewer report does not crash with empty genera
   assert.ok(Array.isArray(report.templatesMissingTests));
   assert.ok(Array.isArray(report.templatesNoAlternateTest));
   assert.ok(Array.isArray(report.legacyFamilies));
+  assert.ok(Array.isArray(report.findings));
+  assert.ok(Array.isArray(report.goldenTestCoverage));
+  assert.ok(Array.isArray(report.redactionRisks));
+  assert.ok(Array.isArray(report.recommendedActions));
+  assert.ok(isPlainObject(report.summary));
 
   // Formatting does not throw
   const text = formatReviewerReport(report);
@@ -737,4 +747,222 @@ test('punctuation content audit --min-signatures-by-family passes for converted 
     const row = audit.generatorFamilies.find((entry) => entry.id === familyId);
     assert.ok(row.variantSignatures.length >= 8, `${familyId} signatures must be >= 8, got ${row.variantSignatures.length}`);
   }
+});
+
+// ─── P4-U1: Reviewer report severity classification tests ─────────────────────
+
+test('punctuation content audit reviewer report JSON schema valid (has summary.severityCounts, findings array)', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-json-schema',
+    generatedPerFamily: 1,
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-json-schema',
+    perFamily: 1,
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+  });
+
+  // summary structure
+  assert.ok(isPlainObject(report.summary), 'report.summary must be an object');
+  assert.equal(typeof report.summary.fixedItems, 'number');
+  assert.equal(typeof report.summary.generatedItems, 'number');
+  assert.equal(typeof report.summary.totalItems, 'number');
+  assert.ok('releaseId' in report.summary);
+  assert.equal(typeof report.summary.dslCoverage, 'number');
+  assert.ok(isPlainObject(report.summary.severityCounts));
+  assert.equal(typeof report.summary.severityCounts.fail, 'number');
+  assert.equal(typeof report.summary.severityCounts.warning, 'number');
+  assert.equal(typeof report.summary.severityCounts.info, 'number');
+
+  // findings array
+  assert.ok(Array.isArray(report.findings), 'report.findings must be an array');
+  for (const f of report.findings) {
+    assert.ok(['Fail', 'Warning', 'Info'].includes(f.severity), `Invalid severity: ${f.severity}`);
+    assert.equal(typeof f.code, 'string');
+    assert.equal(typeof f.message, 'string');
+  }
+
+  // severity counts match findings
+  const failCount = report.findings.filter((f) => f.severity === 'Fail').length;
+  const warningCount = report.findings.filter((f) => f.severity === 'Warning').length;
+  const infoCount = report.findings.filter((f) => f.severity === 'Info').length;
+  assert.equal(report.summary.severityCounts.fail, failCount);
+  assert.equal(report.summary.severityCounts.warning, warningCount);
+  assert.equal(report.summary.severityCounts.info, infoCount);
+});
+
+test('punctuation content audit reviewer report classifies duplicate variant signature as Fail', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-dup-sig-severity',
+    generatedPerFamily: 2,
+    contextPack: {
+      stems: ['the crew checked the ropes', 'we found another path'],
+    },
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-dup-sig-severity',
+    perFamily: 2,
+    contextPack: {
+      stems: ['the crew checked the ropes', 'we found another path'],
+    },
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+  });
+
+  const dupSigFindings = report.findings.filter((f) => f.code === 'duplicate_variant_signature');
+  assert.ok(dupSigFindings.length > 0, 'Must detect duplicate variant signatures');
+  for (const f of dupSigFindings) {
+    assert.equal(f.severity, 'Fail');
+  }
+});
+
+test('punctuation content audit reviewer report classifies model answer failure as Fail', () => {
+  const manifest = {
+    ...PUNCTUATION_CONTENT_MANIFEST,
+    generatorFamilies: PUNCTUATION_CONTENT_MANIFEST.generatorFamilies.map((family) => (
+      family.id === 'gen_sentence_endings_insert'
+        ? { ...family, mode: 'choose' }
+        : family
+    )),
+  };
+  const audit = runPunctuationContentAudit({
+    manifest,
+    seed: 'reviewer-model-fail-severity',
+    generatedPerFamily: 1,
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    manifest,
+    seed: 'reviewer-model-fail-severity',
+    perFamily: 1,
+  });
+  const report = buildReviewerReport({
+    audit,
+    manifest,
+    generatedItems,
+    capacityDepth: 8,
+  });
+
+  const modelFailFindings = report.findings.filter((f) => f.code === 'model_answer_fails_marking');
+  assert.ok(modelFailFindings.length > 0, 'Must detect model answer failures');
+  for (const f of modelFailFindings) {
+    assert.equal(f.severity, 'Fail');
+  }
+});
+
+test('punctuation content audit reviewer report classifies duplicate stem as Warning', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-dup-stem-severity',
+    generatedPerFamily: 5,
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-dup-stem-severity',
+    perFamily: 5,
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+  });
+
+  const dupStemFindings = report.findings.filter((f) => f.code === 'duplicate_stem');
+  assert.ok(dupStemFindings.length > 0, 'Must detect duplicate stems at perFamily=5');
+  for (const f of dupStemFindings) {
+    assert.equal(f.severity, 'Warning');
+  }
+});
+
+test('punctuation content audit reviewer report classifies legacy family as Warning (without --require-all-dsl)', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-legacy-warning',
+    generatedPerFamily: 1,
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-legacy-warning',
+    perFamily: 1,
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+    requireAllDsl: false,
+  });
+
+  const legacyFindings = report.findings.filter((f) => f.code === 'legacy_non_dsl_family');
+  assert.ok(legacyFindings.length > 0, 'Must detect legacy families');
+  for (const f of legacyFindings) {
+    assert.equal(f.severity, 'Warning');
+  }
+});
+
+test('punctuation content audit reviewer report classifies legacy family as Fail (with --require-all-dsl)', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-legacy-fail',
+    generatedPerFamily: 1,
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-legacy-fail',
+    perFamily: 1,
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+    requireAllDsl: true,
+  });
+
+  const legacyFindings = report.findings.filter((f) => f.code === 'legacy_non_dsl_family');
+  assert.ok(legacyFindings.length > 0, 'Must detect legacy families');
+  for (const f of legacyFindings) {
+    assert.equal(f.severity, 'Fail');
+  }
+});
+
+test('punctuation content audit reviewer report all-green content produces 0 Fail findings', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-all-green',
+    generatedPerFamily: 1,
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-all-green',
+    perFamily: 1,
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+  });
+
+  // At perFamily=1 there are no duplicate signatures, model failures pass in healthy state
+  const failFindings = report.findings.filter((f) => f.severity === 'Fail');
+  assert.equal(failFindings.length, 0, `Expected 0 Fail findings, got: ${failFindings.map((f) => f.code).join(', ')}`);
+});
+
+test('punctuation content audit reviewer report text output includes severity markers', () => {
+  const audit = runPunctuationContentAudit({
+    seed: 'reviewer-text-markers',
+    generatedPerFamily: 5,
+  });
+  const generatedItems = createPunctuationGeneratedItems({
+    seed: 'reviewer-text-markers',
+    perFamily: 5,
+  });
+  const report = buildReviewerReport({
+    audit,
+    generatedItems,
+    capacityDepth: 8,
+  });
+  const text = formatReviewerReport(report);
+
+  // Must include at least one severity marker in the output
+  const hasAnyMarker = text.includes('✗ Fail') || text.includes('⚠ Warning') || text.includes('ℹ Info');
+  assert.ok(hasAnyMarker, 'Text output must include severity markers');
+  // The findings section header must be present
+  assert.match(text, /Findings/);
 });

@@ -339,6 +339,14 @@ function mutationFromRequest(body, request) {
   };
 }
 
+async function readBundledProductionEvidenceSummary() {
+  try {
+    return (await import('../../reports/capacity/latest-evidence-summary.json', { with: { type: 'json' } })).default;
+  } catch {
+    return { schema: 3, metrics: {}, generatedAt: null };
+  }
+}
+
 async function sessionPayload({ session, auth, env, now, capacity = null }) {
   if (!session) {
     return {
@@ -2028,7 +2036,15 @@ export function createWorkerApp({
             requestId: url.searchParams.get('requestId') || null,
             auditLimit: url.searchParams.get('auditLimit') || 20,
           });
-          return json({ ok: true, ...result });
+          const productionEvidence = await readBundledProductionEvidenceSummary();
+          return json({
+            ok: true,
+            ...result,
+            adminHub: {
+              ...(result.adminHub || {}),
+              productionEvidence,
+            },
+          });
         }
 
         if (url.pathname === '/api/admin/accounts' && request.method === 'GET') {
@@ -2278,7 +2294,7 @@ export function createWorkerApp({
           }
           // Auth: assertAdminHubActor (admin or ops role required).
           const actor = await repository.assertAdminHubActorForBundle(session.accountId);
-          const db = requireDatabase(env);
+          const db = requireDatabaseWithCapacity(env, capacity);
           const rawBundle = await aggregateDebugBundle(db, {
             accountId: url.searchParams.get('account_id') || null,
             learnerId: url.searchParams.get('learner_id') || null,
@@ -2372,7 +2388,7 @@ export function createWorkerApp({
         // roles see the same data — evidence is non-sensitive operational state.
         if (url.pathname === '/api/admin/ops/production-evidence' && request.method === 'GET') {
           requireSameOrigin(request, env);
-          await repository.assertAdminHubActor(session.accountId);
+          await repository.assertAdminHubActorForBundle(session.accountId);
           const evidenceLimit = await consumeRateLimit(env, {
             bucket: 'admin-ops-mutation',
             identifier: session.accountId,
@@ -2388,12 +2404,7 @@ export function createWorkerApp({
               },
             });
           }
-          let evidenceSummary;
-          try {
-            evidenceSummary = (await import('../../../reports/capacity/latest-evidence-summary.json', { with: { type: 'json' } })).default;
-          } catch {
-            evidenceSummary = { schema: 2, metrics: {}, generatedAt: null };
-          }
+          const evidenceSummary = await readBundledProductionEvidenceSummary();
           return json({ ok: true, refreshedAt: new Date().toISOString(), ...evidenceSummary });
         }
 

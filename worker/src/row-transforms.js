@@ -21,6 +21,7 @@ import {
   normalisePunctuationSummary,
 } from '../../src/subjects/punctuation/service-contract.js';
 import { MONSTERS_BY_SUBJECT } from '../../src/platform/game/monsters.js';
+import { monsterBranchOverrideForLearner } from '../../src/platform/game/learner-monster-branch-overrides.js';
 import { monsterIdForSpellingWord } from '../../src/platform/game/monster-system.js';
 import {
   asTs,
@@ -153,7 +154,7 @@ function safePublicNonNegativeInt(value, { max = null } = {}) {
   return max == null ? clamped : Math.min(max, clamped);
 }
 
-export function publicMonsterCodexEntry(entry) {
+export function publicMonsterCodexEntry(entry, branchOverride = null) {
   if (!isPlainObject(entry)) return null;
   const masteredCount = Number(entry.masteredCount);
   const mastered = Array.isArray(entry.mastered)
@@ -165,7 +166,8 @@ export function publicMonsterCodexEntry(entry) {
     masteredCount: mastered,
     caught: Boolean(entry.caught) || mastered > 0,
   };
-  if (PUBLIC_MONSTER_BRANCHES.has(entry.branch)) output.branch = entry.branch;
+  if (PUBLIC_MONSTER_BRANCHES.has(branchOverride)) output.branch = branchOverride;
+  else if (PUBLIC_MONSTER_BRANCHES.has(entry.branch)) output.branch = entry.branch;
   const starHighWater = safePublicNonNegativeInt(entry.starHighWater);
   if (starHighWater != null) output.starHighWater = starHighWater;
   const starModelVersion = safePublicNonNegativeInt(entry.starModelVersion);
@@ -175,11 +177,12 @@ export function publicMonsterCodexEntry(entry) {
   return output;
 }
 
-export function publicMonsterCodexState(rawState) {
+export function publicMonsterCodexState(rawState, { learnerId = '' } = {}) {
   const state = isPlainObject(rawState) ? rawState : {};
   const output = {};
+  const branchOverride = monsterBranchOverrideForLearner(learnerId);
   for (const monsterId of PUBLIC_MONSTER_IDS) {
-    const entry = publicMonsterCodexEntry(state[monsterId]);
+    const entry = publicMonsterCodexEntry(state[monsterId], branchOverride);
     if (entry) output[monsterId] = entry;
   }
   return output;
@@ -187,7 +190,7 @@ export function publicMonsterCodexState(rawState) {
 
 export function publicGameStateRowToRecord(row) {
   if (row.system_id !== PUBLIC_MONSTER_CODEX_SYSTEM_ID) return null;
-  return publicMonsterCodexState(gameStateRowToRecord(row));
+  return publicMonsterCodexState(gameStateRowToRecord(row), { learnerId: row.learner_id });
 }
 
 // ─── Spelling progress / codex derivation ───────────────────────────────────
@@ -202,8 +205,14 @@ export function spellingProgressFromSubjectRow(row) {
   return isPlainObject(data?.progress) ? data.progress : null;
 }
 
-export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState = {}) {
+export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState = {}, { learnerId = '' } = {}) {
   if (!isPlainObject(progress)) return null;
+  const branchOverride = monsterBranchOverrideForLearner(learnerId);
+  const branchForOutput = (existing) => (
+    PUBLIC_MONSTER_BRANCHES.has(branchOverride)
+      ? { branch: branchOverride }
+      : (PUBLIC_MONSTER_BRANCHES.has(existing.branch) ? { branch: existing.branch } : {})
+  );
   const counts = Object.fromEntries(PUBLIC_DIRECT_SPELLING_MONSTER_IDS.map((monsterId) => [monsterId, 0]));
   const words = Array.isArray(snapshot?.words) ? snapshot.words : [];
   let knownWordCount = 0;
@@ -222,7 +231,7 @@ export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, 
     nextState[monsterId] = {
       masteredCount: counts[monsterId],
       caught: counts[monsterId] > 0,
-      ...(PUBLIC_MONSTER_BRANCHES.has(existing.branch) ? { branch: existing.branch } : {}),
+      ...branchForOutput(existing),
     };
   }
 
@@ -231,11 +240,11 @@ export function publicMonsterCodexStateFromSpellingProgress(progress, snapshot, 
   nextState.phaeton = {
     masteredCount: phaetonCount,
     caught: phaetonCount >= 3,
-    ...(PUBLIC_MONSTER_BRANCHES.has(existingPhaeton.branch) ? { branch: existingPhaeton.branch } : {}),
+    ...branchForOutput(existingPhaeton),
   };
 
   return {
-    state: publicMonsterCodexState(nextState),
+    state: publicMonsterCodexState(nextState, { learnerId }),
     knownWordCount,
   };
 }

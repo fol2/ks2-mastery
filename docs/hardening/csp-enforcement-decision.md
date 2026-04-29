@@ -125,3 +125,16 @@ The 7-day window gives us:
 Added mechanical test in `tests/security-headers.test.js` that enforces agreement between `CSP_ENFORCEMENT_MODE` and the header key in `SECURITY_HEADERS`. The mode constant is no longer dead — if the flip PR changes the mode without updating the header key (or vice versa), tests fail.
 
 **Observation window status:** Open (2026-04-27 to 2026-05-04). Daily log remains unpopulated. The enforcement flip or dated deferral will be executed after the window closes.
+
+## P6 Status Update (2026-04-28)
+
+**Decision:** Continue deferral. P6 cannot honestly flip CSP enforcement on 2026-04-28 because the active observation window does not close until 2026-05-04T00:00:00Z and the Daily log table above still contains placeholder rows.
+
+The current gate remains:
+
+1. Keep `CSP_ENFORCEMENT_MODE` in `report-only` mode.
+2. Populate the 7 dated Daily log rows after the observation window closes.
+3. Confirm zero unexpected first-party violations, or document an allowlist/deferral with reviewer sign-off.
+4. Keep `tests/security-headers.test.js` and `tests/csp-inline-style-budget.test.js` passing in the flip or deferral PR.
+
+P6 therefore records a dated deferral only. Any enforced-mode change before 2026-05-04 would bypass the owner-approved observation contract.

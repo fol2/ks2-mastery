@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { correctResponseFor } from './grammar-production-smoke.mjs';
 import {
   autoNameEvidencePath,
+  buildCapacityDiagnostics,
   buildEvidencePayload,
   persistEvidenceFile,
   validateThresholdConfigKeys,
@@ -16,6 +17,7 @@ import { loadSessionManifest } from './lib/session-manifest.mjs';
 
 const DEFAULT_PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
 const DEFAULT_TIMEOUT_MS = 15_000;
+const ENDPOINT_TAIL_SAMPLE_LIMIT = 5;
 const GRAMMAR_LOAD_ITEM = Object.freeze({
   templateId: 'fronted_adverbial_choose',
   seed: 1,
@@ -161,6 +163,45 @@ function generateClientRequestId() {
   return `ks2_req_${randomUuid}`;
 }
 
+function finiteOrNull(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normaliseBootstrapCapacity(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const output = {};
+  for (const key of [
+    'version',
+    'mode',
+    'limits',
+    'learners',
+    'practiceSessions',
+    'eventLog',
+    'subjectStatesBounded',
+    'subjectStatesFallbackMode',
+  ]) {
+    if (Object.prototype.hasOwnProperty.call(value, key)) output[key] = value[key];
+  }
+  return Object.keys(output).length ? output : null;
+}
+
+function normaliseResponseCapacity(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return {
+    requestId: typeof value.requestId === 'string' ? value.requestId : null,
+    queryCount: finiteOrNull(value.queryCount),
+    d1RowsRead: finiteOrNull(value.d1RowsRead),
+    d1RowsWritten: finiteOrNull(value.d1RowsWritten),
+    serverWallMs: finiteOrNull(value.wallMs),
+    responseBytes: finiteOrNull(value.responseBytes),
+    signals: Array.isArray(value.signals) ? value.signals.filter((entry) => typeof entry === 'string') : [],
+    bootstrapMode: typeof value.bootstrapMode === 'string' ? value.bootstrapMode : null,
+    bootstrapCapacity: normaliseBootstrapCapacity(value.bootstrapCapacity),
+    projectionFallback: typeof value.projectionFallback === 'string' ? value.projectionFallback : null,
+  };
+}
+
 async function timedJsonRequest({
   origin,
   path,
@@ -211,9 +252,7 @@ async function timedJsonRequest({
     : '';
   const ok = Boolean(response?.ok) && payload?.ok !== false && !parseError && !networkError;
   const echoedRequestId = response?.headers?.get?.('x-ks2-request-id') || null;
-  const responseCapacity = payload?.meta?.capacity && typeof payload.meta.capacity === 'object'
-    ? payload.meta.capacity
-    : null;
+  const responseCapacity = normaliseResponseCapacity(payload?.meta?.capacity);
 
   const measurement = {
     scenario,
@@ -229,15 +268,7 @@ async function timedJsonRequest({
     requestId: body?.requestId || null,
     clientRequestId,
     serverRequestId: echoedRequestId,
-    capacity: responseCapacity
-      ? {
-        queryCount: responseCapacity.queryCount ?? null,
-        d1RowsRead: responseCapacity.d1RowsRead ?? null,
-        d1RowsWritten: responseCapacity.d1RowsWritten ?? null,
-        serverWallMs: responseCapacity.wallMs ?? null,
-        responseBytes: responseCapacity.responseBytes ?? null,
-      }
-      : null,
+    capacity: responseCapacity,
   };
   Object.defineProperty(measurement, 'payload', {
     value: payload,
@@ -520,6 +551,150 @@ function percentile(values, percentileValue) {
   return sorted[index];
 }
 
+function phaseForMeasurement(entry = {}) {
+  if (entry.scenario === 'demo-session-setup') return 'setup';
+  if (entry.endpoint && entry.endpoint.includes('/api/bootstrap')) return 'bootstrap';
+  if (entry.endpoint && entry.endpoint.includes('/command')) return 'command';
+  return 'other';
+}
+
+function createMetricsBucket(phase = null) {
+  return {
+    phase,
+    count: 0,
+    wallMs: [],
+    responseBytes: [],
+    queryCount: [],
+    d1RowsRead: [],
+    d1RowsWritten: [],
+    serverWallMs: [],
+    serverResponseBytes: [],
+    samples: [],
+    bootstrapModes: {},
+    bootstrapCapacityModes: {},
+    bootstrapCapacityVersions: {},
+    subjectStatesBounded: {},
+    capacitySignals: {},
+  };
+}
+
+function pushFinite(target, value) {
+  const n = finiteOrNull(value);
+  if (n !== null) target.push(n);
+}
+
+function incrementCounter(target, key) {
+  if (key == null || key === '') return;
+  const normalised = String(key);
+  target[normalised] = (target[normalised] || 0) + 1;
+}
+
+function addMeasurementMetrics(bucket, entry) {
+  bucket.count += 1;
+  pushFinite(bucket.wallMs, entry.wallMs);
+  pushFinite(bucket.responseBytes, entry.responseBytes);
+
+  const capacity = entry.capacity && typeof entry.capacity === 'object' ? entry.capacity : null;
+  if (capacity) {
+    pushFinite(bucket.queryCount, capacity.queryCount);
+    pushFinite(bucket.d1RowsRead, capacity.d1RowsRead);
+    pushFinite(bucket.d1RowsWritten, capacity.d1RowsWritten);
+    pushFinite(bucket.serverWallMs, capacity.serverWallMs);
+    pushFinite(bucket.serverResponseBytes, capacity.responseBytes);
+    incrementCounter(bucket.bootstrapModes, capacity.bootstrapMode);
+    incrementCounter(bucket.bootstrapCapacityModes, capacity.bootstrapCapacity?.mode);
+    incrementCounter(bucket.bootstrapCapacityVersions, capacity.bootstrapCapacity?.version);
+    if (typeof capacity.bootstrapCapacity?.subjectStatesBounded === 'boolean') {
+      incrementCounter(bucket.subjectStatesBounded, capacity.bootstrapCapacity.subjectStatesBounded);
+    }
+    for (const signal of capacity.signals || []) incrementCounter(bucket.capacitySignals, signal);
+  }
+
+  bucket.samples.push(buildTailSample(entry));
+}
+
+function buildTailSample(entry = {}) {
+  const capacity = entry.capacity && typeof entry.capacity === 'object' ? entry.capacity : {};
+  const sample = {
+    scenario: entry.scenario || null,
+    virtualLearner: entry.virtualLearner || null,
+    status: entry.status ?? 0,
+    ok: Boolean(entry.ok),
+    wallMs: finiteOrNull(entry.wallMs) ?? 0,
+    responseBytes: finiteOrNull(entry.responseBytes) ?? 0,
+    clientRequestId: entry.clientRequestId || null,
+    serverRequestId: entry.serverRequestId || capacity.requestId || null,
+    queryCount: finiteOrNull(capacity.queryCount),
+    d1RowsRead: finiteOrNull(capacity.d1RowsRead),
+    d1RowsWritten: finiteOrNull(capacity.d1RowsWritten),
+    serverWallMs: finiteOrNull(capacity.serverWallMs),
+    serverResponseBytes: finiteOrNull(capacity.responseBytes),
+    bootstrapMode: capacity.bootstrapMode || null,
+    bootstrapCapacityMode: capacity.bootstrapCapacity?.mode || null,
+    bootstrapCapacityVersion: capacity.bootstrapCapacity?.version ?? null,
+    signals: Array.isArray(capacity.signals) ? [...capacity.signals] : [],
+  };
+  return Object.fromEntries(Object.entries(sample).filter(([, value]) => {
+    if (value == null) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
+  }));
+}
+
+function topTailSamples(samples = [], limit = ENDPOINT_TAIL_SAMPLE_LIMIT) {
+  return [...samples]
+    .sort((left, right) => (Number(right.wallMs) || 0) - (Number(left.wallMs) || 0))
+    .slice(0, limit);
+}
+
+function maxMetric(values) {
+  return values.length ? Math.max(...values) : undefined;
+}
+
+function addDistribution(output, keyPrefix, values) {
+  if (!values.length) return;
+  output[`${keyPrefix}P50`] = percentile(values, 50);
+  output[`${keyPrefix}P95`] = percentile(values, 95);
+  output[`${keyPrefix}Max`] = Math.max(...values);
+}
+
+function metricsToSummary(bucket, { includeTailSamples = false } = {}) {
+  const entry = {
+    phase: bucket.phase || 'mixed',
+    count: bucket.count,
+    p50WallMs: percentile(bucket.wallMs, 50),
+    p95WallMs: percentile(bucket.wallMs, 95),
+    maxWallMs: maxMetric(bucket.wallMs) ?? 0,
+    p50ResponseBytes: percentile(bucket.responseBytes, 50),
+    p95ResponseBytes: percentile(bucket.responseBytes, 95),
+    maxResponseBytes: maxMetric(bucket.responseBytes) ?? 0,
+  };
+
+  if (bucket.queryCount.length > 0) {
+    entry.queryCount = Math.max(...bucket.queryCount);
+    addDistribution(entry, 'queryCount', bucket.queryCount);
+  }
+  if (bucket.d1RowsRead.length > 0) {
+    entry.d1RowsRead = Math.max(...bucket.d1RowsRead);
+    addDistribution(entry, 'd1RowsRead', bucket.d1RowsRead);
+  }
+  if (bucket.d1RowsWritten.length > 0) {
+    entry.d1RowsWritten = Math.max(...bucket.d1RowsWritten);
+    addDistribution(entry, 'd1RowsWritten', bucket.d1RowsWritten);
+  }
+  addDistribution(entry, 'serverWallMs', bucket.serverWallMs);
+  addDistribution(entry, 'serverResponseBytes', bucket.serverResponseBytes);
+
+  if (Object.keys(bucket.bootstrapModes).length) entry.bootstrapModes = { ...bucket.bootstrapModes };
+  if (Object.keys(bucket.bootstrapCapacityModes).length) entry.bootstrapCapacityModes = { ...bucket.bootstrapCapacityModes };
+  if (Object.keys(bucket.bootstrapCapacityVersions).length) entry.bootstrapCapacityVersions = { ...bucket.bootstrapCapacityVersions };
+  if (Object.keys(bucket.subjectStatesBounded).length) entry.subjectStatesBounded = { ...bucket.subjectStatesBounded };
+  if (Object.keys(bucket.capacitySignals).length) entry.capacitySignals = { ...bucket.capacitySignals };
+  if (includeTailSamples) entry.topTailSamples = topTailSamples(bucket.samples);
+
+  return entry;
+}
+
 function signalFor(entry) {
   const text = `${entry.code || ''} ${entry.message || ''} ${entry.failureText || ''}`.toLowerCase();
   if (entry.status === 1102 || /exceeded[_\s-]?cpu|cpu limit|worker cpu/.test(text)) return 'exceededCpu';
@@ -558,6 +733,12 @@ function collectObservedSignals(signals = {}) {
   return observed;
 }
 
+function operationalCapacitySignals(entry = {}) {
+  const capacity = entry.capacity && typeof entry.capacity === 'object' ? entry.capacity : null;
+  if (!capacity || !Array.isArray(capacity.signals)) return [];
+  return capacity.signals.filter((signal) => OPERATIONAL_SIGNAL_KEYS.includes(signal));
+}
+
 function highestP95(summary, endpointList) {
   let peak = 0;
   for (const key of endpointList) {
@@ -593,19 +774,22 @@ function maxResponseBytesAcross(summary) {
  */
 function normaliseThresholdView(options = {}) {
   const nested = options.thresholds || {};
-  const flatKeys = [
+  const numericFlatKeys = [
     'max5xx',
     'maxNetworkFailures',
     'maxBootstrapP95Ms',
     'maxCommandP95Ms',
     'maxResponseBytes',
-    'requireZeroSignals',
-    'requireBootstrapCapacity',
   ];
   const view = { ...nested };
-  for (const key of flatKeys) {
+  for (const key of numericFlatKeys) {
     if (options[key] != null) view[key] = options[key];
   }
+  // Boolean gates default to false on the flat compatibility shape. Treat
+  // false as "not explicitly supplied" so a config file's true value is not
+  // silently disabled by parser defaults.
+  if (options.requireZeroSignals === true) view.requireZeroSignals = true;
+  if (options.requireBootstrapCapacity === true) view.requireBootstrapCapacity = true;
   return view;
 }
 
@@ -754,6 +938,8 @@ export function summariseCapacityResults(measurements = [], plan = {}) {
   const endpointStatus = {};
   const signals = {};
   const endpointMetrics = {};
+  const phaseMetrics = {};
+  const scenarioMetrics = {};
   const failures = [];
 
   for (const entry of measurements) {
@@ -763,56 +949,55 @@ export function summariseCapacityResults(measurements = [], plan = {}) {
     endpointStatus[key] = (endpointStatus[key] || 0) + 1;
 
     const endpointKey = `${entry.method} ${entry.endpoint}`;
-    const metrics = endpointMetrics[endpointKey] || {
-      count: 0,
-      wallMs: [],
-      responseBytes: [],
-      maxResponseBytes: 0,
-      queryCount: [],
-      d1RowsRead: [],
-    };
-    metrics.count += 1;
-    metrics.wallMs.push(Number(entry.wallMs) || 0);
-    metrics.responseBytes.push(Number(entry.responseBytes) || 0);
-    metrics.maxResponseBytes = Math.max(metrics.maxResponseBytes, Number(entry.responseBytes) || 0);
-    if (entry.capacity && typeof entry.capacity === 'object') {
-      const qc = entry.capacity.queryCount;
-      const rows = entry.capacity.d1RowsRead;
-      if (typeof qc === 'number' && Number.isFinite(qc)) metrics.queryCount.push(qc);
-      if (typeof rows === 'number' && Number.isFinite(rows)) metrics.d1RowsRead.push(rows);
-    }
-    endpointMetrics[endpointKey] = metrics;
+    const phase = phaseForMeasurement(entry);
+    const endpointBucket = endpointMetrics[endpointKey] || createMetricsBucket(phase);
+    if (endpointBucket.phase !== phase) endpointBucket.phase = 'mixed';
+    addMeasurementMetrics(endpointBucket, entry);
+    endpointMetrics[endpointKey] = endpointBucket;
 
-    const signal = signalFor(entry);
-    if (signal) signals[signal] = (signals[signal] || 0) + 1;
-    if (!entry.ok || signal) {
+    const phaseBucket = phaseMetrics[phase] || createMetricsBucket(phase);
+    addMeasurementMetrics(phaseBucket, entry);
+    phaseMetrics[phase] = phaseBucket;
+
+    const scenarioKey = entry.scenario || 'unknown';
+    const scenarioBucket = scenarioMetrics[scenarioKey] || createMetricsBucket(phase);
+    if (scenarioBucket.phase !== phase) scenarioBucket.phase = 'mixed';
+    addMeasurementMetrics(scenarioBucket, entry);
+    scenarioMetrics[scenarioKey] = scenarioBucket;
+
+    const detectedSignals = new Set(operationalCapacitySignals(entry));
+    const inferredSignal = signalFor(entry);
+    if (inferredSignal) detectedSignals.add(inferredSignal);
+    for (const signal of detectedSignals) {
+      signals[signal] = (signals[signal] || 0) + 1;
+    }
+    if (!entry.ok || detectedSignals.size > 0) {
+      const detectedSignalList = [...detectedSignals];
       failures.push({
         scenario: entry.scenario,
         endpoint: endpointKey,
         status: entry.status,
         code: entry.code,
         message: entry.message,
-        signal,
+        signal: detectedSignalList[0] || null,
+        signals: detectedSignalList,
         failureClass: classifyFailure(entry),
       });
     }
   }
 
-  const endpoints = Object.fromEntries(Object.entries(endpointMetrics).map(([key, metrics]) => {
-    const entry = {
-      count: metrics.count,
-      p50WallMs: percentile(metrics.wallMs, 50),
-      p95WallMs: percentile(metrics.wallMs, 95),
-      maxResponseBytes: metrics.maxResponseBytes,
-    };
-    if (metrics.queryCount.length > 0) {
-      entry.queryCount = Math.max(...metrics.queryCount);
-    }
-    if (metrics.d1RowsRead.length > 0) {
-      entry.d1RowsRead = Math.max(...metrics.d1RowsRead);
-    }
-    return [key, entry];
-  }));
+  const endpoints = Object.fromEntries(Object.entries(endpointMetrics).map(([key, metrics]) => [
+    key,
+    metricsToSummary(metrics, { includeTailSamples: true }),
+  ]));
+  const phases = Object.fromEntries(Object.entries(phaseMetrics).map(([key, metrics]) => [
+    key,
+    metricsToSummary(metrics),
+  ]));
+  const scenarios = Object.fromEntries(Object.entries(scenarioMetrics).map(([key, metrics]) => [
+    key,
+    metricsToSummary(metrics),
+  ]));
 
   return {
     ok: failures.length === 0,
@@ -821,6 +1006,8 @@ export function summariseCapacityResults(measurements = [], plan = {}) {
     statusCounts,
     endpointStatus,
     endpoints,
+    phases,
+    scenarios,
     signals,
     failures,
   };
@@ -1062,6 +1249,7 @@ function buildThresholdsBlock(options, summary) {
       maxCommandP95Ms: thresholds.maxCommandP95Ms ?? null,
       maxResponseBytes: thresholds.maxResponseBytes ?? null,
       requireZeroSignals: thresholds.requireZeroSignals === true,
+      requireBootstrapCapacity: thresholds.requireBootstrapCapacity === true,
     },
     violations,
   };
@@ -1131,6 +1319,13 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
       configPath: options.configPath || null,
     }
     : null;
+  const diagnostics = buildCapacityDiagnostics({
+    options: optionsWithMergedThresholds,
+    tier: evidenceTier,
+    summary,
+    thresholdViolations: thresholdsBlock.violations,
+    thresholdConfigHash: evidence.reportMeta?.provenance?.thresholdConfigHash || null,
+  });
   // Merge per-key evidence thresholds (U1) with PR #177 threshold block shape
   // ({configured, violations, limits}). Both test harnesses probe distinct
   // keys: U1 reads `report.thresholds.max5xx.passed`, PR #177 reads
@@ -1146,7 +1341,9 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
     ? 'manifest'
     : options.demoSessions
       ? 'demo-sessions'
-      : 'shared-auth';
+      : options.mode === 'dry-run'
+        ? 'none'
+        : 'shared-auth';
 
   const finalReport = {
     ...report,
@@ -1156,6 +1353,7 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
     thresholds: mergedThresholdsReport,
     failures: evidence.failures,
     safety: evidence.safety,
+    diagnostics,
     reportMeta: evidence.reportMeta,
     ...(evidenceTier ? { tier: evidenceTier } : {}),
     ok: evidence.ok && thresholdsBlock.violations.length === 0,

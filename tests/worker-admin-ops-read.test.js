@@ -391,7 +391,7 @@ test('GET /api/admin/ops/error-events filters by status', async () => {
   }
 });
 
-test('GET /api/hubs/admin extends payload with all four new sibling fields while preserving existing ones', async () => {
+test('GET /api/hubs/admin extends payload with admin ops siblings while preserving existing ones', async () => {
   const server = createWorkerRepositoryServer();
   try {
     const now = Date.now();
@@ -415,17 +415,40 @@ test('GET /api/hubs/admin extends payload with all four new sibling fields while
     assert.ok(hub.auditLogLookup);
     assert.ok(hub.monsterVisualConfig);
 
-    // Four new sibling fields present.
+    // Admin ops sibling fields present.
     assert.ok(hub.dashboardKpis);
     assert.ok(hub.opsActivityStream);
     assert.ok(hub.accountOpsMetadata);
     assert.ok(hub.errorLogSummary);
+    assert.ok(hub.productionEvidence);
 
     assert.equal(typeof hub.dashboardKpis.generatedAt, 'number');
     assert.equal(typeof hub.dashboardKpis.accounts.total, 'number');
     assert.ok(Array.isArray(hub.opsActivityStream.entries));
     assert.ok(Array.isArray(hub.accountOpsMetadata.accounts));
     assert.ok(Array.isArray(hub.errorLogSummary.entries));
+    assert.equal(hub.productionEvidence.schema, 3);
+    assert.ok(hub.productionEvidence.metrics && typeof hub.productionEvidence.metrics === 'object');
+  } finally {
+    server.close();
+  }
+});
+
+test('GET /api/admin/ops/production-evidence returns the bundled summary to admin roles', async () => {
+  const server = createWorkerRepositoryServer();
+  try {
+    const now = Date.now();
+    seedAdminAndOps(server, now);
+
+    const response = await server.fetchAs('adult-admin', 'https://repo.test/api/admin/ops/production-evidence', {}, {
+      'x-ks2-dev-platform-role': 'admin',
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.schema, 3);
+    assert.ok(payload.metrics && typeof payload.metrics === 'object');
   } finally {
     server.close();
   }
@@ -736,4 +759,3 @@ test('P3 U1: readAdminHub dedup — assertAdminHubActor SELECT appears once in c
     server.close();
   }
 });
-

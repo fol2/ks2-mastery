@@ -4,6 +4,7 @@ import {
   MONSTERS_BY_SUBJECT,
   normaliseMonsterBranch,
 } from '../monsters.js';
+import { monsterBranchOverrideForLearner } from '../learner-monster-branch-overrides.js';
 
 export const DEFAULT_SYSTEM_ID = 'monster-codex';
 export const MONSTER_IDS = Object.freeze(Object.keys(MONSTERS));
@@ -90,13 +91,23 @@ export function normaliseMonsterIdScope(monsterIds = MONSTER_IDS) {
   return requested.filter((monsterId) => MONSTERS[monsterId]);
 }
 
-export function withMonsterBranches(rawState, { random = Math.random, monsterIds = MONSTER_IDS } = {}) {
+export function withMonsterBranches(rawState, { random = Math.random, monsterIds = MONSTER_IDS, learnerId = '' } = {}) {
   const state = isPlainObject(rawState) ? { ...rawState } : {};
   let changed = false;
+  const branchOverride = monsterBranchOverrideForLearner(learnerId);
 
   for (const monsterId of normaliseMonsterIdScope(monsterIds)) {
     const current = isPlainObject(state[monsterId]) ? state[monsterId] : {};
     const branch = normaliseMonsterBranch(current.branch, null);
+    if (branchOverride) {
+      if (branch === branchOverride) continue;
+      state[monsterId] = {
+        ...current,
+        branch: branchOverride,
+      };
+      changed = true;
+      continue;
+    }
     if (branch) continue;
     state[monsterId] = {
       ...current,
@@ -118,8 +129,9 @@ export function saveMonsterState(learnerId, state, gameStateRepository) {
 
 export function ensureMonsterBranches(learnerId, gameStateRepository, options = {}) {
   const before = loadMonsterState(learnerId, gameStateRepository);
-  if (!gameStateRepository) return withMonsterBranches(before, { ...options, random: () => 0 }).state;
-  const { state, changed } = withMonsterBranches(before, options);
+  const branchOptions = { ...options, learnerId };
+  if (!gameStateRepository) return withMonsterBranches(before, { ...branchOptions, random: () => 0 }).state;
+  const { state, changed } = withMonsterBranches(before, branchOptions);
   return changed ? saveMonsterState(learnerId, state, gameStateRepository) : state;
 }
 

@@ -14,6 +14,7 @@ import {
   applyAdminHubDashboardKpisPatch,
   applyAdminHubErrorLogSummaryPatch,
   applyAdminHubOpsActivityPatch,
+  applyAdminHubProductionEvidencePatch,
 } from '../src/platform/hubs/admin-panel-patches.js';
 import { SEEDED_SPELLING_CONTENT_BUNDLE } from '../src/subjects/spelling/data/content-data.js';
 import { createPunctuationMasteryKey, PUNCTUATION_RELEASE_ID } from '../shared/punctuation/content.js';
@@ -985,6 +986,7 @@ function makeAdminHubFixture() {
       entries: [{ id: 'e1', status: 'open' }],
       savingEventId: 'e1',
     },
+    productionEvidence: { schema: 2, generatedAt: '2026-04-28T00:00:00Z', metrics: {} },
     monsterVisualConfig: { status: { schemaVersion: 2 } },
   };
 }
@@ -1067,6 +1069,24 @@ test('applyAdminHubAccountOpsMetadataPatch preserves savingAccountId across a na
   assert.equal(next.errorLogSummary, hub.errorLogSummary);
 });
 
+test('applyAdminHubProductionEvidencePatch replaces only the evidence summary', () => {
+  const hub = makeAdminHubFixture();
+  const next = applyAdminHubProductionEvidencePatch(hub, {
+    ok: true,
+    schema: 2,
+    generatedAt: '2026-04-29T00:00:00Z',
+    metrics: { certified_30_learner_beta: { status: 'failed' } },
+  });
+
+  assert.equal(next.productionEvidence.generatedAt, '2026-04-29T00:00:00Z');
+  assert.equal(next.productionEvidence.metrics.certified_30_learner_beta.status, 'failed');
+  assert.equal(Object.prototype.hasOwnProperty.call(next.productionEvidence, 'ok'), false);
+  assert.equal(next.dashboardKpis, hub.dashboardKpis);
+  assert.equal(next.opsActivityStream, hub.opsActivityStream);
+  assert.equal(next.accountOpsMetadata, hub.accountOpsMetadata);
+  assert.equal(next.errorLogSummary, hub.errorLogSummary);
+});
+
 test('narrow-patch helpers drop the saving scalar when it was empty in the previous hub', () => {
   const hub = makeAdminHubFixture();
   hub.accountOpsMetadata = { ...hub.accountOpsMetadata, savingAccountId: '' };
@@ -1085,6 +1105,7 @@ test('narrow-patch helpers no-op when adminHub is not a plain object', () => {
     applyAdminHubOpsActivityPatch,
     applyAdminHubErrorLogSummaryPatch,
     applyAdminHubAccountOpsMetadataPatch,
+    applyAdminHubProductionEvidencePatch,
   ]) {
     assert.equal(patch(null, { accounts: [] }), null);
     assert.equal(patch(undefined, {}), undefined);
@@ -1105,6 +1126,7 @@ test('narrow-patch helpers reject malformed (non-object) responses without mutat
   assert.equal(applyAdminHubOpsActivityPatch(hub, 'oops').opsActivityStream, hub.opsActivityStream);
   assert.equal(applyAdminHubErrorLogSummaryPatch(hub, 42).errorLogSummary, hub.errorLogSummary);
   assert.equal(applyAdminHubAccountOpsMetadataPatch(hub, [1, 2]).accountOpsMetadata, hub.accountOpsMetadata);
+  assert.equal(applyAdminHubProductionEvidencePatch(hub, null).productionEvidence, hub.productionEvidence);
 });
 
 test('hub coverage diagnostics include P4 template count', () => {

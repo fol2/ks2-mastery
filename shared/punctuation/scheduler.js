@@ -1,3 +1,16 @@
+import {
+  REASON_TAGS,
+  MAX_SAME_SIGNATURE_PER_SESSION,
+  MAX_SAME_SIGNATURE_ACROSS_ATTEMPTS,
+  MAX_SAME_SIGNATURE_DAYS,
+  MISCONCEPTION_RETRY_WINDOW,
+  MISCONCEPTION_RETRY_PREFER_DIFFERENT_TEMPLATE,
+  SPACED_RETURN_MIN_DAYS,
+  RETENTION_AFTER_SECURE_MIN_DAYS,
+  EXPOSURE_WEIGHT_BLOCKED,
+  EXPOSURE_WEIGHT_PENALISED,
+  EXPOSURE_WEIGHT_DAY_AVOIDED,
+} from './scheduler-manifest.js';
 import { PUNCTUATION_CONTENT_INDEXES } from './content.js';
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -213,6 +226,41 @@ function weightedPick(rows, random = Math.random) {
   return rows[rows.length - 1].item;
 }
 
+/**
+ * Compute exposure penalty multiplier for a candidate item based on signature history.
+ *
+ * Three tiers (applied in priority order):
+ *   1. Per-session block:   signature already selected this session → ×0.01
+ *   2. Recent-attempts:     signature in last N attempts              → ×0.1
+ *   3. Day-window avoidance: signature seen within last 7 days        → ×0.3
+ *
+ * Returns 1.0 when no penalty applies.
+ * Fixed items (no variantSignature) are never penalised.
+ */
+function signatureExposurePenalty(item, progress, sessionSignatures, now, { isMisconceptionRetry = false } = {}) {
+  if (!item.variantSignature) return 1.0;
+
+  const sig = item.variantSignature;
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+
+  // Per-session block (relaxed for misconception-retry)
+  if (!isMisconceptionRetry && sessionSignatures.has(sig)) return EXPOSURE_WEIGHT_BLOCKED;
+
+  // Recent-attempts lookback
+  const recentAttempts = attempts.slice(-MAX_SAME_SIGNATURE_ACROSS_ATTEMPTS);
+  const recentHit = recentAttempts.some(a => a?.variantSignature === sig);
+  if (recentHit) return EXPOSURE_WEIGHT_PENALISED;
+
+  // Day-window avoidance
+  const dayMs = MAX_SAME_SIGNATURE_DAYS * DAY_MS;
+  const nowMs = typeof now === 'function' ? now() : now;
+  const cutoff = (Number.isFinite(nowMs) ? nowMs : 0) - dayMs;
+  const dayHit = attempts.some(a => a?.variantSignature === sig && (a.timestamp || 0) > cutoff);
+  if (dayHit) return EXPOSURE_WEIGHT_DAY_AVOIDED;
+
+  return 1.0;
+}
+
 function recentMissForItem(progress, item) {
   const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
   return attempts.slice(-12).reverse().find((attempt) => {
@@ -243,7 +291,7 @@ function strongestFacet(indexes, progress, item, now) {
     .sort((a, b) => b.rank - a.rank || a.mastery - b.mastery || a.skillId.localeCompare(b.skillId))[0] || null;
 }
 
-function weakCandidateRow(indexes, progress, item, now, order, recent, recentSignatures) {
+function weakCandidateRow(indexes, progress, item, now, order, recent, recentSignatures, sessionSignatures) {
   const itemSnap = memorySnapshot(progressForItem(progress, item.id), now);
   const facet = strongestFacet(indexes, progress, item, now);
   const recentMiss = recentMissForItem(progress, item);
@@ -284,12 +332,16 @@ function weakCandidateRow(indexes, progress, item, now, order, recent, recentSig
   if (recent.has(item.id)) priority *= 0.08;
   else if (item.variantSignature && recentSignatures.has(item.variantSignature)) priority *= 0.18;
 
+  // Per-signature exposure limit penalty (3-tier)
+  const exposureMul = signatureExposurePenalty(item, progress, sessionSignatures || new Set(), now);
+  priority *= exposureMul;
+
   const focusSkillId = facet?.skillId || item.skillIds?.[0] || '';
   return {
     item,
     order,
     priority,
-    weight: Math.max(0.1, priority),
+    weight: Math.max(EXPOSURE_WEIGHT_BLOCKED, priority),
     weakFocus: {
       skillId: focusSkillId,
       skillName: skillName(indexes, focusSkillId),
@@ -362,16 +414,131 @@ function avoidRecentSignatureItems(items, recentSignatures) {
   return freshItems.length ? freshItems : items;
 }
 
+// --- Misconception retry helpers ---
+
+function recentMisconceptionAttempt(progress, window) {
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+  const lookback = attempts.slice(-window);
+  for (let i = lookback.length - 1; i >= 0; i--) {
+    const attempt = lookback[i];
+    if (!attempt || attempt.correct === true) continue;
+    const tags = Array.isArray(attempt.misconceptionTags) ? attempt.misconceptionTags : [];
+    if (tags.length > 0) return attempt;
+  }
+  return null;
+}
+
+function misconceptionSiblingCandidates(indexes, missedAttempt, recentSignatures, retriedMisconceptions) {
+  const missedTags = Array.isArray(missedAttempt.misconceptionTags) ? missedAttempt.misconceptionTags : [];
+  const missedSignature = missedAttempt.variantSignature || '';
+  const missedItemId = missedAttempt.itemId || '';
+
+  // Collect all items sharing at least one misconception tag
+  const candidateMap = new Map();
+  const missedSkills = Array.isArray(missedAttempt.skillIds) ? missedAttempt.skillIds : [];
+
+  for (const skillId of missedSkills) {
+    const skillItems = indexes.itemsBySkill?.get(skillId) || [];
+    for (const item of skillItems) {
+      if (candidateMap.has(item.id)) continue;
+      if (item.id === missedItemId) continue;
+      const skill = indexes.skillById.get(item.skillIds?.[0]);
+      if (!skill?.published) continue;
+      const itemTags = Array.isArray(item.misconceptionTags) ? item.misconceptionTags : [];
+      const sharedTag = missedTags.find((tag) => itemTags.includes(tag));
+      if (!sharedTag) continue;
+      // Must have different variant signature
+      if (item.variantSignature && item.variantSignature === missedSignature) continue;
+      // Must not be recently seen
+      if (item.variantSignature && recentSignatures.has(item.variantSignature)) continue;
+      // Must not already have been retried for this misconception in this session
+      if (retriedMisconceptions.has(sharedTag)) continue;
+      candidateMap.set(item.id, { item, sharedTag });
+    }
+  }
+
+  // Also search by rewardUnitId for broader sibling coverage
+  if (missedAttempt.rewardUnitId) {
+    const unitItems = indexes.itemsByRewardUnit?.get(missedAttempt.rewardUnitId) || [];
+    for (const item of unitItems) {
+      if (candidateMap.has(item.id)) continue;
+      if (item.id === missedItemId) continue;
+      const skill = indexes.skillById.get(item.skillIds?.[0]);
+      if (!skill?.published) continue;
+      const itemTags = Array.isArray(item.misconceptionTags) ? item.misconceptionTags : [];
+      const sharedTag = missedTags.find((tag) => itemTags.includes(tag));
+      if (!sharedTag) continue;
+      if (item.variantSignature && item.variantSignature === missedSignature) continue;
+      if (item.variantSignature && recentSignatures.has(item.variantSignature)) continue;
+      if (retriedMisconceptions.has(sharedTag)) continue;
+      candidateMap.set(item.id, { item, sharedTag });
+    }
+  }
+
+  return [...candidateMap.values()];
+}
+
+function rankMisconceptionCandidates(candidates, missedAttempt) {
+  const missedTemplateId = missedAttempt.templateId || '';
+  const missedStem = missedAttempt.stem || '';
+
+  return candidates
+    .map(({ item, sharedTag }) => {
+      const itemTemplateId = item.templateId || '';
+      const itemStem = item.stem || '';
+      let rank;
+      if (MISCONCEPTION_RETRY_PREFER_DIFFERENT_TEMPLATE && itemTemplateId && missedTemplateId && itemTemplateId !== missedTemplateId) {
+        // Different template
+        if (itemStem && missedStem && itemStem !== missedStem) {
+          rank = 4; // Best: different template AND different stem
+        } else {
+          rank = 3; // Good: different template, same/no stem
+        }
+      } else {
+        // Same template or no template info — different signature is the minimum
+        rank = 1; // Lowest viable: same templateId, different signature
+      }
+      return { item, sharedTag, rank };
+    })
+    .sort((a, b) => b.rank - a.rank);
+}
+
+function selectMisconceptionRetry(indexes, progress, session, recentSignatures) {
+  const retriedMisconceptions = new Set(
+    Array.isArray(session?.retriedMisconceptions) ? session.retriedMisconceptions : []
+  );
+  const missedAttempt = recentMisconceptionAttempt(progress, MISCONCEPTION_RETRY_WINDOW);
+  if (!missedAttempt) return null;
+
+  const candidates = misconceptionSiblingCandidates(indexes, missedAttempt, recentSignatures, retriedMisconceptions);
+  if (!candidates.length) return null;
+
+  const ranked = rankMisconceptionCandidates(candidates, missedAttempt);
+  if (!ranked.length) return null;
+
+  const best = ranked[0];
+  return {
+    item: clone(best.item),
+    reason: REASON_TAGS.MISCONCEPTION_RETRY,
+    misconceptionTag: best.sharedTag,
+  };
+}
+
+// --- End misconception retry helpers ---
+
 function weakRows(indexes, progress, session, now, maxWindow) {
   const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
   const recentSignatures = recentSignatureSet(indexes, session, progress);
+  const sessionSignatures = new Set(
+    Array.isArray(session?.selectedSignatures) ? session.selectedSignatures : []
+  );
   const rows = [];
   const seen = new Set();
   const limit = Math.max(1, maxWindow);
   const addItem = (item) => {
     if (rows.length >= limit || !publishedItem(indexes, item) || seen.has(item.id)) return;
     seen.add(item.id);
-    rows.push(weakCandidateRow(indexes, progress, item, now, rows.length, recent, recentSignatures));
+    rows.push(weakCandidateRow(indexes, progress, item, now, rows.length, recent, recentSignatures, sessionSignatures));
   };
   const addFacet = ({ skillId, mode }) => {
     for (const item of indexes.itemsByMode.get(mode) || []) {
@@ -396,6 +563,101 @@ function weakRows(indexes, progress, session, now, maxWindow) {
   return avoidRecentSignatureRows(sortedRows, recentSignatures);
 }
 
+// --- Reason tag classification helpers ---
+
+/**
+ * Classify reason tag for weak-mode selection based on the weakFocus source and memory state.
+ */
+function classifyWeakReason(weakFocus, progress, item, session, now) {
+  if (!weakFocus || !item) return REASON_TAGS.FALLBACK;
+
+  const source = weakFocus.source;
+  if (source === 'weak_facet' || source === 'weak_item') return REASON_TAGS.WEAK_SKILL_REPAIR;
+  if (source === 'recent_miss') return REASON_TAGS.WEAK_SKILL_REPAIR;
+  if (source === 'due_facet' || source === 'due_item') {
+    // Check if this is a spaced return (lastCorrectAt exceeds threshold)
+    const itemState = normaliseMemoryState(progress?.items?.[item.id]);
+    if (itemState.lastCorrectAt) {
+      const nowMs = timestamp(now);
+      const daysSinceCorrect = (nowMs - itemState.lastCorrectAt) / DAY_MS;
+      if (daysSinceCorrect >= SPACED_RETURN_MIN_DAYS) return REASON_TAGS.SPACED_RETURN;
+    }
+    return REASON_TAGS.DUE_REVIEW;
+  }
+
+  // Secure bucket → retention-after-secure
+  if (weakFocus.bucket === 'secure') {
+    const itemState = normaliseMemoryState(progress?.items?.[item.id]);
+    if (itemState.lastCorrectAt) {
+      const nowMs = timestamp(now);
+      const daysSinceCorrect = (nowMs - itemState.lastCorrectAt) / DAY_MS;
+      if (daysSinceCorrect >= RETENTION_AFTER_SECURE_MIN_DAYS) return REASON_TAGS.RETENTION_AFTER_SECURE;
+    }
+  }
+
+  // Mixed review: item's mode differs from last 3 modes in session
+  if (isMixedReview(item, session)) return REASON_TAGS.MIXED_REVIEW;
+
+  return REASON_TAGS.FALLBACK;
+}
+
+/**
+ * Classify reason tag for smart/GPS/cluster-mode selection based on memory state and session context.
+ */
+function classifySmartReason(indexes, progress, item, session, now) {
+  if (!item) return REASON_TAGS.FALLBACK;
+
+  const itemState = normaliseMemoryState(progress?.items?.[item.id]);
+  const snap = memorySnapshot(itemState, now);
+  const nowMs = timestamp(now);
+
+  // Due review: item bucket is due
+  if (snap.bucket === 'due') {
+    // Spaced return: lastCorrectAt exceeds threshold
+    if (itemState.lastCorrectAt) {
+      const daysSinceCorrect = (nowMs - itemState.lastCorrectAt) / DAY_MS;
+      if (daysSinceCorrect >= SPACED_RETURN_MIN_DAYS) return REASON_TAGS.SPACED_RETURN;
+    }
+    return REASON_TAGS.DUE_REVIEW;
+  }
+
+  // Weak bucket: weak skill repair
+  if (snap.bucket === 'weak') return REASON_TAGS.WEAK_SKILL_REPAIR;
+
+  // Secure bucket: retention after secure
+  if (snap.bucket === 'secure') {
+    if (itemState.lastCorrectAt) {
+      const daysSinceCorrect = (nowMs - itemState.lastCorrectAt) / DAY_MS;
+      if (daysSinceCorrect >= RETENTION_AFTER_SECURE_MIN_DAYS) return REASON_TAGS.RETENTION_AFTER_SECURE;
+    }
+  }
+
+  // Mixed review: item's mode differs from last 3 modes in session
+  if (isMixedReview(item, session)) return REASON_TAGS.MIXED_REVIEW;
+
+  return REASON_TAGS.FALLBACK;
+}
+
+/**
+ * Check whether the selected item's mode differs from the last 3 modes in session.
+ */
+function isMixedReview(item, session) {
+  if (!item || !item.mode) return false;
+  const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds : [];
+  if (recentIds.length < 3) return false;
+  const last3Modes = recentIds.slice(-3).map((id) => {
+    // We cannot look up items by id here without indexes — use recentModes if available
+    return null;
+  });
+  // Use session.recentModes if provided (an array of modes for recently shown items)
+  const recentModes = Array.isArray(session?.recentModes) ? session.recentModes : [];
+  if (recentModes.length < 3) return false;
+  const lastThree = recentModes.slice(-3);
+  return lastThree.every((m) => m !== item.mode);
+}
+
+// --- End reason tag classification helpers ---
+
 export function selectPunctuationItem({
   indexes = PUNCTUATION_CONTENT_INDEXES,
   progress = {},
@@ -412,12 +674,30 @@ export function selectPunctuationItem({
     ? (session?.guidedSkillId || prefs.guidedSkillId || null)
     : null;
   const maxWindow = Math.max(1, candidateWindow);
+
+  // --- Misconception retry (applies to all modes) ---
+  const recentSignaturesForRetry = recentSignatureSet(indexes, session, progress);
+  const misconceptionResult = selectMisconceptionRetry(indexes, progress, session, recentSignaturesForRetry);
+  if (misconceptionResult) {
+    return {
+      item: misconceptionResult.item,
+      reason: misconceptionResult.reason,
+      targetMode: misconceptionResult.item?.mode || null,
+      targetClusterId: misconceptionResult.item?.clusterId || null,
+      weakFocus: null,
+      inspectedCount: 1,
+      candidateCount: 1,
+    };
+  }
+
   if (sessionMode === 'weak') {
     const rows = weakRows(indexes, progress, session, now, maxWindow);
     const picked = weightedPick(rows, random) || rows[0]?.item || null;
     const pickedRow = rows.find((row) => row.item.id === picked?.id) || null;
+    const weakReason = classifyWeakReason(pickedRow?.weakFocus, progress, picked, session, now);
     return {
       item: picked ? clone(picked) : null,
+      reason: weakReason,
       targetMode: picked?.mode || null,
       targetClusterId: picked?.clusterId || null,
       weakFocus: pickedRow ? clone(pickedRow.weakFocus) : null,
@@ -428,7 +708,11 @@ export function selectPunctuationItem({
 
   const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : [];
   const recent = new Set(recentIds);
-  const recentSignatures = recentSignatureSet(indexes, session, progress);
+  const recentSignatures = recentSignaturesForRetry;
+  const sessionSignatures = new Set(
+    Array.isArray(session?.selectedSignatures) ? session.selectedSignatures : []
+  );
+  const isMisconceptionRetry = session?.selectionReason === REASON_TAGS.MISCONCEPTION_RETRY;
   const previousItemId = typeof session?.currentItemId === 'string' && session.currentItemId
     ? session.currentItemId
     : recentIds.at(-1) || null;
@@ -460,12 +744,16 @@ export function selectPunctuationItem({
     if (snap.bucket === 'secure') weight *= 0.25;
     if (recent.has(item.id)) weight *= 0.12;
     else if (item.variantSignature && recentSignatures.has(item.variantSignature)) weight *= 0.2;
-    return { item, weight };
+    // Per-signature exposure limit penalty (3-tier)
+    weight *= signatureExposurePenalty(item, progress, sessionSignatures, now, { isMisconceptionRetry });
+    return { item, weight: Math.max(EXPOSURE_WEIGHT_BLOCKED, weight) };
   }).filter((row) => row.weight > 0);
 
   const item = weightedPick(rows, random) || windowed[0] || null;
+  const smartReason = classifySmartReason(indexes, progress, item, session, now);
   return {
     item: item ? clone(item) : null,
+    reason: smartReason,
     targetMode: selectedMode.mode,
     targetClusterId: clusterId,
     weakFocus: null,

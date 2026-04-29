@@ -24,6 +24,7 @@ import {
   redactLogChunk,
   redactLogLine,
 } from '../scripts/lib/log-redaction.mjs';
+import { EVIDENCE_SCHEMA_VERSION } from '../scripts/lib/capacity-evidence.mjs';
 
 function jsonResponse(payload, init = {}) {
   const status = Number(init.status) || 200;
@@ -75,6 +76,7 @@ test('classroom load script dry-run reports the planned scenarios without networ
     assert.equal(report.plan.scenarios[1].rounds, 2);
     assert.equal(report.plan.expectedRequests, 36);
     assert.equal(report.summary.totalRequests, 0);
+    assert.equal(report.sessionSourceMode, 'none');
     // Back-compat: absent threshold flags do not change the exit contract;
     // the block is reported but has zero configured limits and zero
     // violations so a script running with the old invocation keeps exiting 0.
@@ -521,7 +523,23 @@ test('classroom load happy-path test with all network-failure-paired thresholds 
       return okBootstrap({ cookie: 'ks2_session=fake; Path=/', payload: { session: { learnerId: 'l1', accountId: 'a1' } } });
     }
     if (parsed.pathname === '/api/bootstrap') {
-      return okBootstrap({ payload: { learners: { selectedId: 'l1', byId: { l1: { stateRevision: 0 } } } } });
+      return okBootstrap({
+        payload: {
+          learners: { selectedId: 'l1', byId: { l1: { stateRevision: 0 } } },
+          meta: {
+            capacity: {
+              requestId: 'ks2_req_00000000-0000-4000-8000-0000000000aa',
+              queryCount: 2,
+              d1RowsRead: 3,
+              d1RowsWritten: 0,
+              wallMs: 12,
+              responseBytes: 4096,
+              bootstrapMode: 'selected-learner-bounded',
+              bootstrapCapacity: { version: 2, mode: 'selected-learner-bounded' },
+            },
+          },
+        },
+      });
     }
     if (parsed.pathname === '/api/subjects/grammar/command') {
       return okBootstrap({ payload: { mutation: { appliedRevision: 1 }, subjectReadModel: { session: { currentItem: null } } } });
@@ -545,13 +563,21 @@ test('classroom load happy-path test with all network-failure-paired thresholds 
     assert.equal(report.failures.length, 0);
     assert.equal(report.thresholds.max5xx.passed, true);
     assert.equal(report.thresholds.maxBootstrapP95Ms.configured, 10000);
-    assert.equal(report.reportMeta.evidenceSchemaVersion, 2);
+    assert.equal(report.reportMeta.evidenceSchemaVersion, EVIDENCE_SCHEMA_VERSION);
     assert.equal(report.evidencePath, outputPath);
+    assert.equal(report.diagnostics.classification.kind, 'diagnostic');
+    assert.ok(report.diagnostics.classification.reasons.includes('not-production-mode'));
+    assert.equal(report.summary.endpoints['GET /api/bootstrap'].queryCount, 2);
+    assert.equal(
+      report.summary.endpoints['GET /api/bootstrap'].topTailSamples[0].serverRequestId,
+      'ks2_req_00000000-0000-4000-8000-0000000000aa',
+    );
 
     const written = JSON.parse(readFileSync(outputPath, 'utf8'));
     assert.equal(written.ok, true);
     // Evidence library normalises 'local-fixture' to 'local' for environment.
     assert.equal(written.reportMeta.environment, 'local');
+    assert.equal(written.diagnostics.classification.kind, 'diagnostic');
     assert.equal(written.thresholds.max5xx.configured, 0);
     assert.equal(written.thresholds.max5xx.observed, 0);
     assert.equal(written.thresholds.max5xx.passed, true);
@@ -622,9 +648,11 @@ test('classroom load threshold-failing run exits ok=false and lists failing thre
     assert.equal(report.ok, false);
     assert.ok(report.failures.includes('max5xx'));
     assert.equal(report.thresholds.max5xx.passed, false);
+    assert.deepEqual(report.diagnostics.thresholdViolations.map((entry) => entry.threshold), ['max-5xx']);
     const written = JSON.parse(readFileSync(outputPath, 'utf8'));
     assert.equal(written.ok, false);
     assert.ok(written.failures.includes('max5xx'));
+    assert.deepEqual(written.diagnostics.thresholdViolations.map((entry) => entry.threshold), ['max-5xx']);
   } finally {
     globalThis.fetch = previousFetch;
     rmSync(tempDir, { recursive: true, force: true });
@@ -671,6 +699,7 @@ test('classroom load loads pinned threshold config via --config', async () => {
       max5xx: 0,
       maxNetworkFailures: 0,
       maxBootstrapP95Ms: 10000,
+      requireZeroSignals: true,
     },
   }));
 
@@ -688,6 +717,8 @@ test('classroom load loads pinned threshold config via --config', async () => {
     assert.equal(report.ok, true);
     assert.equal(report.thresholds.max5xx.configured, 0);
     assert.equal(report.thresholds.maxBootstrapP95Ms.configured, 10000);
+    assert.equal(report.thresholds.requireZeroSignals.configured, true);
+    assert.equal(report.thresholds.limits.requireZeroSignals, true);
     assert.equal(report.tier.tier, 'small-pilot-provisional');
     assert.equal(report.tier.minEvidenceSchemaVersion, 1);
   } finally {

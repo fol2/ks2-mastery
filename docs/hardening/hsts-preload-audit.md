@@ -218,6 +218,19 @@ _To be completed by the operator at the time of flipping `HSTS_PRELOAD_ENABLED` 
 ## P5 Status Update (2026-04-28)
 
 No new operator DNS audit information available. All `TBD-operator` cells remain unfilled.
+
+## P6 Status Update (2026-04-28)
+
+**Decision:** Continue deferral. P6 has no new operator DNS enumeration, apex-domain HTTPS proof, `dev-ks2.eugnel.uk` proof, third-party subdomain inventory, or signed preload acceptance.
+
+The current gate remains:
+
+1. Keep `HSTS_PRELOAD_ENABLED = false`.
+2. Keep the shipped HSTS value at `max-age=63072000; includeSubDomains`.
+3. Do not add `; preload` to `worker/src/security-headers.js` or `_headers`.
+4. Complete every operator checklist item above before opening a preload activation PR.
+
+P6 therefore records a dated deferral only. This is not an engineering blocker for 30-learner certification; it is an operator-owned DNS and rollback-risk decision.
 `HSTS_PRELOAD_ENABLED` remains `false` in `worker/src/security-headers.js`.
 
 **Decision:** Deferred; operator DNS audit incomplete. HSTS preload activation is not blocked by engineering — it is blocked by the DNS zone enumeration and operator sign-off checklist.
