@@ -10,7 +10,20 @@ export const HERO_LEDGER_RECENT_LIMIT = 180;
 
 export const HERO_ECONOMY_ENTRY_TYPES = Object.freeze([
   'daily-completion-award',
-  'admin-adjustment', // reserved, not enabled in P4 child flow
+  'monster-invite',    // P5: negative amount (spending)
+  'monster-grow',      // P5: negative amount (spending)
+  'admin-adjustment',  // reserved, can be positive or negative
+]);
+
+/** Entry types that MUST have a positive amount (earning). */
+export const HERO_EARNING_ENTRY_TYPES = Object.freeze([
+  'daily-completion-award',
+]);
+
+/** Entry types that MUST have a negative amount (spending). */
+export const HERO_SPENDING_ENTRY_TYPES = Object.freeze([
+  'monster-invite',
+  'monster-grow',
 ]);
 
 // ── Deterministic hashing ────────────────────────────────────────
@@ -188,13 +201,38 @@ function buildChildSafeLedgerEntries(ledger) {
 
 export function normaliseHeroEconomyState(raw) {
   if (!raw || typeof raw !== 'object') return emptyEconomyState();
+  if (Array.isArray(raw)) return emptyEconomyState();
   if (raw.version !== HERO_ECONOMY_VERSION) return emptyEconomyState();
 
-  const balance = typeof raw.balance === 'number' && Number.isFinite(raw.balance) ? raw.balance : 0;
-  const lifetimeEarned = typeof raw.lifetimeEarned === 'number' && Number.isFinite(raw.lifetimeEarned) ? raw.lifetimeEarned : 0;
-  const lifetimeSpent = typeof raw.lifetimeSpent === 'number' && Number.isFinite(raw.lifetimeSpent) ? raw.lifetimeSpent : 0;
-  const ledger = Array.isArray(raw.ledger) ? raw.ledger : [];
+  const safeNonNeg = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0) ? v : 0;
+
+  const balance = safeNonNeg(raw.balance);
+  const lifetimeEarned = safeNonNeg(raw.lifetimeEarned);
+  const lifetimeSpent = safeNonNeg(raw.lifetimeSpent);
+  const rawLedger = Array.isArray(raw.ledger) ? raw.ledger : [];
   const lastUpdatedAt = raw.lastUpdatedAt || null;
+
+  // Validate each ledger entry — drop entries that violate polarity or have
+  // known-bad scalars. Fields that are absent are NOT enforced (backward compat
+  // with P4 entries that predate the spending schema).
+  const ledger = [];
+  for (let i = 0; i < rawLedger.length; i++) {
+    const entry = rawLedger[i];
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    // type: if explicitly provided it must be recognised; undefined/absent passes
+    const t = entry.type;
+    if (t !== undefined && !HERO_ECONOMY_ENTRY_TYPES.includes(t)) continue;
+    // amount: if explicitly provided it must be finite; undefined/absent passes
+    const a = entry.amount;
+    if (a !== undefined && (typeof a !== 'number' || !Number.isFinite(a))) continue;
+    // balanceAfter: if explicitly provided as a number, must be finite >= 0
+    const ba = entry.balanceAfter;
+    if (typeof ba === 'number' && (!Number.isFinite(ba) || ba < 0)) continue;
+    // Polarity checks (only when both type and amount are present)
+    if (HERO_EARNING_ENTRY_TYPES.includes(t) && typeof a === 'number' && a <= 0) continue;
+    if (HERO_SPENDING_ENTRY_TYPES.includes(t) && typeof a === 'number' && a >= 0) continue;
+    ledger.push(entry);
+  }
 
   return {
     version: HERO_ECONOMY_VERSION,
