@@ -141,11 +141,14 @@ function applyMapFilters(harness, { statusFilter, monsterFilter }) {
 const CAMELCASE_KEYS = Object.freeze([
   'acceptedAnswers',
   'correctIndex',
+  'familyId',
   'generatorFamilyId',
   'hiddenQueue',
+  'queueItemIds',
   'rawGenerator',
   'rawResponse',
-  'queueItemIds',
+  'selectedSignatures',
+  'selectionReason',
   'templateId',
   'unpublished',
   'variantSignature',
@@ -155,6 +158,12 @@ const CAMELCASE_KEYS = Object.freeze([
 // or a child-facing "answers" chip label cannot false-positive. Mirrors
 // the pattern used by `tests/react-punctuation-scene.test.js:1022` on the
 // Modal scan.
+// `reason` and `tests` are forbidden at the JSON read-model level (recursive
+// scan in `worker/src/subjects/punctuation/read-models.js`) but are legitimate
+// English words appearing in child-facing Map copy (e.g. "GPS tests",
+// diagnostic reason strings). They are NOT probed in the HTML scan to avoid
+// false-positives. The read-model-redaction test (`punctuation-read-model-
+// redaction.test.js`) proves they cannot reach the learner payload.
 const WORDBOUNDARY_KEYS = Object.freeze([
   'accepted',
   'answers',
@@ -287,7 +296,7 @@ test('U4: FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS pins generated metadata redactio
   // adult evidence cannot expose generated metadata or raw response fields.
   // A future unit introducing a new Worker projection must extend
   // `tests/helpers/forbidden-keys.mjs` first (the single source of truth).
-  assert.equal(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.length, 18);
+  assert.equal(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS.length, 23);
   assert.equal(Object.isFrozen(FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS), true);
 
   // Content-lock — a rename like `rubric` → `rubricSpec` keeps the length
@@ -301,16 +310,21 @@ test('U4: FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS pins generated metadata redactio
       'acceptedAnswers',
       'answers',
       'correctIndex',
+      'familyId',
       'generator',
       'generatorFamilyId',
       'hiddenQueue',
       'queueItemIds',
       'rawGenerator',
       'rawResponse',
+      'reason',
       'responses',
       'rubric',
       'seed',
+      'selectedSignatures',
+      'selectionReason',
       'templateId',
+      'tests',
       'unpublished',
       'validator',
       'validators',
@@ -319,14 +333,19 @@ test('U4: FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS pins generated metadata redactio
     'FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS sorted contents must not drift silently',
   );
 
-  // Discipline check: the sum of `CAMELCASE_KEYS` + `WORDBOUNDARY_KEYS`
-  // must equal the full forbidden set. A new key landing in the oracle
-  // without a matching entry in one of the two probe lists would otherwise
-  // be silently skipped by `findForbiddenHits`.
-  const probedKeys = [...CAMELCASE_KEYS, ...WORDBOUNDARY_KEYS].sort();
+  // Keys that are legitimate English words appearing in child-facing Map
+  // copy (e.g. "GPS tests", diagnostic reason strings). These are enforced
+  // at the JSON read-model level only, not in the HTML scan.
+  const JSON_ONLY_KEYS = Object.freeze(['reason', 'tests']);
+
+  // Discipline check: the sum of `CAMELCASE_KEYS` + `WORDBOUNDARY_KEYS` +
+  // `JSON_ONLY_KEYS` must equal the full forbidden set. A new key landing
+  // in the oracle without a matching entry in one of the three lists would
+  // otherwise be silently skipped by `findForbiddenHits`.
+  const probedKeys = [...CAMELCASE_KEYS, ...WORDBOUNDARY_KEYS, ...JSON_ONLY_KEYS].sort();
   assert.deepEqual(
     probedKeys,
     [...FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS].sort(),
-    'every forbidden key must be probed by exactly one of CAMELCASE_KEYS / WORDBOUNDARY_KEYS',
+    'every forbidden key must be probed by exactly one of CAMELCASE_KEYS / WORDBOUNDARY_KEYS / JSON_ONLY_KEYS',
   );
 });
