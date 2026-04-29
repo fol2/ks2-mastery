@@ -2,39 +2,16 @@
 // Returns last-N events from the event_log D1 table (system_id='hero-mode')
 // with privacy re-validation. No writes, no state mutations.
 
-/**
- * Privacy-sensitive fields that must be stripped before returning event data
- * to Ring 2–4 operators. Superset of the metrics-contract FORBIDDEN_FIELDS
- * plus additional child-content fields that may appear in event_json.
- */
-const PRIVACY_STRIP_FIELDS = Object.freeze([
-  'rawAnswer',
-  'rawPrompt',
-  'childFreeText',
-  'childInput',
-  'answerText',
-  'rawText',
-  'childContent',
-]);
+import {
+  PRIVACY_FORBIDDEN_FIELDS,
+  stripPrivacyFields,
+} from '../../../shared/hero/metrics-privacy.js';
 
 /**
- * Recursively strip privacy-sensitive fields from an object.
- * Returns a new object — never mutates the input.
- * @param {unknown} obj
- * @returns {unknown}
+ * Re-export for backwards compatibility.
+ * @deprecated Use PRIVACY_FORBIDDEN_FIELDS from shared/hero/metrics-privacy.js
  */
-function stripPrivacyFields(obj) {
-  if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(stripPrivacyFields);
-  if (typeof obj !== 'object') return obj;
-
-  const result = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (PRIVACY_STRIP_FIELDS.includes(key)) continue;
-    result[key] = stripPrivacyFields(value);
-  }
-  return result;
-}
+const PRIVACY_STRIP_FIELDS = PRIVACY_FORBIDDEN_FIELDS;
 
 /**
  * Probe hero telemetry events from the D1 event_log table.
