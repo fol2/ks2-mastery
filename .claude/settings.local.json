@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Read(//Users/jamesto/.claude/**)"
+      "Read(//Users/jamesto/.claude/**)",
+      "Bash(rm -f /Users/jamesto/Coding/ks2-mastery/.git/worktrees/ui-p2-u3-progress-meter-stat-card/index.lock)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
