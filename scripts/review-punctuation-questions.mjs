@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Reviewer QA pack for punctuation questions.
+ * Reviewer QA pack for punctuation questions (v3).
  *
  * Produces a comprehensive human-readable markdown report (stdout) and/or
- * a JSON file for programmatic consumption.
+ * a JSON file for programmatic consumption. Now includes choice options,
+ * negative vector display, preservation contract, explanation lint, stable
+ * cluster IDs, v2 decision schema, and new filter/summary flags.
  *
  * Usage:
  *   node scripts/review-punctuation-questions.mjs                        # markdown to stdout (192 items, production pool)
@@ -13,9 +15,13 @@
  *   node scripts/review-punctuation-questions.mjs --depth 6              # depth-6 generated items only (150 items)
  *   node scripts/review-punctuation-questions.mjs --include-depth-6      # inclusive pool: fixed + depth-6 (242 items)
  *   node scripts/review-punctuation-questions.mjs --candidate-depth 6 --out review.json  # delta only (50 items beyond production)
+ *   node scripts/review-punctuation-questions.mjs --summary              # decision state counts (fast, no per-item detail)
+ *   node scripts/review-punctuation-questions.mjs --only-blocked         # show only items/clusters with blocking decisions
+ *   node scripts/review-punctuation-questions.mjs --only-candidates      # show only depth-6 candidate items
+ *   node scripts/review-punctuation-questions.mjs --only-unreviewed      # show only items without decisions
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -28,16 +34,23 @@ import {
   GENERATED_TEMPLATE_BANK,
   PRODUCTION_DEPTH,
 } from '../shared/punctuation/generators.js';
-import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
+import { markPunctuationAnswer, derivePreserveTokens } from '../shared/punctuation/marking.js';
+import { lintExplanation } from '../shared/punctuation/explanation-lint.js';
+import {
+  BLOCKING_DECISIONS,
+  generateStableClusterId,
+  loadReviewerDecisions as loadReviewerDecisionsV2,
+} from '../shared/punctuation/reviewer-decisions.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DECISIONS_PATH = join(__dirname, '..', 'tests', 'fixtures', 'punctuation-reviewer-decisions.json');
+const NEGATIVE_VECTORS_PATH = join(__dirname, '..', 'tests', 'fixtures', 'punctuation-negative-vectors.json');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function normaliseForVariety(value) {
   return String(value ?? '')
-    .replace(/ /g, ' ')
+    .replace(/ /g, ' ')
     .replace(/[""]/g, '"')
     .replace(/['']/g, "'")
     .replace(/[–—-]/g, ' ')   // Treat ALL dashes (en, em, hyphen) as word boundaries
@@ -78,15 +91,57 @@ function markingResultSummary(result) {
   return parts.join(' | ');
 }
 
-// ─── Reviewer decisions loader ───────────────────────────────────────────────
+// ─── Reviewer decisions loader (v2 schema-aware) ────────────────────────────
 
-function loadReviewerDecisions() {
+function loadDecisionsFile() {
   try {
     const raw = readFileSync(DECISIONS_PATH, 'utf8');
     const parsed = JSON.parse(raw);
-    return parsed.decisions || {};
+
+    // Build item decision map from v2 schema (itemDecisions array)
+    const itemDecisionMap = new Map();
+    if (Array.isArray(parsed.itemDecisions)) {
+      for (const d of parsed.itemDecisions) {
+        if (d && d.itemId) itemDecisionMap.set(d.itemId, d);
+      }
+    }
+
+    // Build cluster decision map from v2 schema (clusterDecisions array)
+    const clusterDecisionMap = new Map();
+    if (Array.isArray(parsed.clusterDecisions)) {
+      for (const d of parsed.clusterDecisions) {
+        if (d && d.clusterId) clusterDecisionMap.set(d.clusterId, d);
+      }
+    }
+
+    // Backward compat: if legacy 'decisions' object exists and itemDecisions is empty,
+    // populate the item map from legacy for rendering (loader still prefers v2)
+    if (itemDecisionMap.size === 0 && parsed.decisions && typeof parsed.decisions === 'object') {
+      for (const [itemId, decision] of Object.entries(parsed.decisions)) {
+        if (decision && typeof decision === 'string') {
+          itemDecisionMap.set(itemId, { itemId, decision, reviewer: 'legacy', reviewedAt: 'unknown' });
+        } else if (decision && typeof decision === 'object') {
+          itemDecisionMap.set(itemId, { itemId, ...decision });
+        }
+      }
+    }
+
+    return { itemDecisionMap, clusterDecisionMap, raw: parsed };
   } catch {
-    return {};
+    return { itemDecisionMap: new Map(), clusterDecisionMap: new Map(), raw: { itemDecisions: [], clusterDecisions: [] } };
+  }
+}
+
+// ─── Negative vectors loader ────────────────────────────────────────────────
+
+function loadNegativeVectors() {
+  try {
+    if (!existsSync(NEGATIVE_VECTORS_PATH)) return [];
+    const raw = readFileSync(NEGATIVE_VECTORS_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed.vectors) ? parsed.vectors : (Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return [];
   }
 }
 
@@ -189,7 +244,7 @@ function buildPool({ depth = null, includeDepth6 = false, candidateDepth = null 
 
 // ─── Per-item QA entry ────────────────────────────────────────────────────────
 
-function buildItemEntry(item, { productionIds = null, clusterMap = null, reviewerDecisions = null } = {}) {
+function buildItemEntry(item, { productionIds = null, clusterMap = null, itemDecisionMap = null, negativeVectorMap = null } = {}) {
   const answer = item.mode === 'choose'
     ? { choiceIndex: item.correctIndex }
     : { typed: item.model || '' };
@@ -228,16 +283,56 @@ function buildItemEntry(item, { productionIds = null, clusterMap = null, reviewe
     }
   }
 
+  // Fixed negative vectors from fixture file
+  const fixedNegativeVectors = [];
+  if (negativeVectorMap && negativeVectorMap.has(item.id)) {
+    const vectors = negativeVectorMap.get(item.id);
+    for (const vec of vectors) {
+      const vecAnswer = item.mode === 'choose' ? { choiceIndex: -1 } : { typed: vec.input };
+      let vecResult;
+      try {
+        vecResult = markPunctuationAnswer({ item, answer: vecAnswer });
+      } catch {
+        vecResult = { correct: false, error: 'marking threw' };
+      }
+      fixedNegativeVectors.push({ input: vec.input, expectedCorrect: vec.expectedCorrect ?? false, result: vecResult });
+    }
+  }
+
   // Production status
   const productionStatus = productionIds && !productionIds.has(item.id)
     ? 'candidate-only'
     : 'production';
 
-  // Cluster IDs
+  // Cluster IDs (now stable content-hashed)
   const clusterIds = clusterMap ? (clusterMap.get(item.id) || []) : [];
 
-  // Reviewer decision
-  const reviewerDecision = reviewerDecisions ? (reviewerDecisions[item.id] || null) : null;
+  // Reviewer decision from v2 schema (itemDecisions)
+  const reviewerDecision = itemDecisionMap ? (itemDecisionMap.get(item.id) || null) : null;
+
+  // Choice options display
+  const choiceOptions = item.mode === 'choose' && Array.isArray(item.options)
+    ? { options: item.options, correctIndex: item.correctIndex }
+    : null;
+
+  // Preservation contract: derive tokens for closed items with stems
+  const closedModes = ['insert', 'fix', 'combine', 'transfer'];
+  let preservationTokens = null;
+  if (closedModes.includes(item.mode)) {
+    if (Array.isArray(item.preserveTokens) && item.preserveTokens.length > 0) {
+      preservationTokens = item.preserveTokens;
+    } else if (item.stem) {
+      const derived = derivePreserveTokens(item.stem);
+      preservationTokens = derived.length > 0 ? derived : null;
+    }
+  }
+
+  // Explanation lint result
+  const explanationLint = lintExplanation(
+    item.explanation || '',
+    item.explanationRuleId || '',
+    { id: item.id, familyId: item.generatorFamilyId },
+  );
 
   return {
     id: item.id,
@@ -257,9 +352,13 @@ function buildItemEntry(item, { productionIds = null, clusterMap = null, reviewe
     markingResultSummary: markingResultSummary(markingResult),
     alternativeMarkingResults,
     negativeExamples,
+    fixedNegativeVectors,
     productionStatus,
     clusterIds,
     reviewerDecision,
+    choiceOptions,
+    preservationTokens,
+    explanationLint,
     templateId: item.templateId || '',
     variantSignature: item.variantSignature || '',
     generatorFamilyId: item.generatorFamilyId || '',
@@ -327,7 +426,6 @@ function buildVarietyClusters(pool) {
     if (items.length < 2) continue;
     const modes = [...new Set(items.map((i) => i.mode))].sort();
     const isSameMode = modes.length === 1 && items.length > 1;
-    const isCrossMode = modes.length > 1;
     clusters.push({
       type: 'stem',
       normalisedText: normText,
@@ -411,19 +509,83 @@ function buildVarietyClusters(pool) {
   return clusters;
 }
 
-// ─── Cluster map builder ─────────────────────────────────────────────────────
+// ─── Cluster map builder (stable content-hashed IDs) ────────────────────────
 
 function buildClusterMap(clusters) {
   const map = new Map();
-  for (let idx = 0; idx < clusters.length; idx++) {
-    const cluster = clusters[idx];
-    const clusterId = `cluster_${idx}_${cluster.type}_${cluster.classification}`;
+  for (const cluster of clusters) {
+    const clusterId = generateStableClusterId(cluster.itemIds, cluster.type);
+    cluster.stableId = clusterId;
     for (const itemId of cluster.itemIds) {
       if (!map.has(itemId)) map.set(itemId, []);
       map.get(itemId).push(clusterId);
     }
   }
   return map;
+}
+
+// ─── Negative vector map builder ────────────────────────────────────────────
+
+function buildNegativeVectorMap(vectors) {
+  const map = new Map();
+  for (const vec of vectors) {
+    const itemId = vec.itemId;
+    if (!itemId) continue;
+    if (!map.has(itemId)) map.set(itemId, []);
+    map.get(itemId).push(vec);
+  }
+  return map;
+}
+
+// ─── Summary output (fast, no per-item rendering) ───────────────────────────
+
+function buildSummaryOutput(pool, { productionIds, itemDecisionMap, clusterDecisionMap, clusters }) {
+  const states = { approved: 0, pending: 0, blocked: 0, unreviewed: 0 };
+  const productionStates = { approved: 0, pending: 0, blocked: 0, unreviewed: 0 };
+  const candidateStates = { approved: 0, pending: 0, blocked: 0, unreviewed: 0 };
+
+  for (const item of pool) {
+    const decision = itemDecisionMap.get(item.id);
+    const isProduction = productionIds.has(item.id);
+    const target = isProduction ? productionStates : candidateStates;
+
+    if (!decision) {
+      states.unreviewed++;
+      target.unreviewed++;
+    } else if (BLOCKING_DECISIONS.includes(decision.decision)) {
+      states.blocked++;
+      target.blocked++;
+    } else if (decision.decision === 'pending') {
+      states.pending++;
+      target.pending++;
+    } else {
+      states.approved++;
+      target.approved++;
+    }
+  }
+
+  const clusterStates = { approved: 0, blocked: 0, unreviewed: 0 };
+  for (const cluster of clusters) {
+    const decision = clusterDecisionMap.get(cluster.stableId);
+    if (!decision) {
+      clusterStates.unreviewed++;
+    } else if (BLOCKING_DECISIONS.includes(decision.decision)) {
+      clusterStates.blocked++;
+    } else {
+      clusterStates.approved++;
+    }
+  }
+
+  return {
+    totalItems: pool.length,
+    productionCount: pool.filter((i) => productionIds.has(i.id)).length,
+    candidateCount: pool.filter((i) => !productionIds.has(i.id)).length,
+    itemStates: states,
+    productionStates,
+    candidateStates,
+    totalClusters: clusters.length,
+    clusterStates,
+  };
 }
 
 // ─── Markdown formatting ──────────────────────────────────────────────────────
@@ -455,10 +617,29 @@ function formatMarkdown(entries, clusters, meta) {
     lines.push(`- **Prompt:** ${entry.prompt}`);
     if (entry.stem) lines.push(`- **Stem:** ${entry.stem}`);
     lines.push(`- **Model answer:** ${entry.model}`);
+
+    // Choice options display
+    if (entry.choiceOptions) {
+      lines.push(`- **Choice options:**`);
+      for (let i = 0; i < entry.choiceOptions.options.length; i++) {
+        const marker = i === entry.choiceOptions.correctIndex ? ' [CORRECT]' : '';
+        lines.push(`  - [${i}] ${entry.choiceOptions.options[i]}${marker}`);
+      }
+    }
+
     if (entry.accepted.length > 1) {
       lines.push(`- **Accepted alternatives:** ${entry.accepted.filter((a) => a !== entry.model).join(' | ')}`);
     }
     lines.push(`- **Explanation:** ${entry.explanation}`);
+
+    // Explanation lint result
+    lines.push(`- **Explanation lint:** ${entry.explanationLint.pass ? 'PASS' : 'FAIL'}`);
+    if (!entry.explanationLint.pass && entry.explanationLint.violations.length) {
+      for (const v of entry.explanationLint.violations) {
+        lines.push(`  - ${v}`);
+      }
+    }
+
     lines.push(`- **Validator/rubric:** ${entry.validatorSummary}`);
     if (entry.misconceptionTags.length) {
       lines.push(`- **Misconception tags:** ${entry.misconceptionTags.join(', ')}`);
@@ -466,6 +647,12 @@ function formatMarkdown(entries, clusters, meta) {
     if (entry.readiness.length) {
       lines.push(`- **Readiness tags:** ${entry.readiness.join(', ')}`);
     }
+
+    // Preservation contract
+    if (entry.preservationTokens) {
+      lines.push(`- **Preservation tokens:** ${entry.preservationTokens.join(' | ')}`);
+    }
+
     lines.push(`- **Marking result:** ${entry.markingResultSummary}`);
     if (entry.alternativeMarkingResults.length) {
       lines.push(`- **Alternative marking:**`);
@@ -479,6 +666,13 @@ function formatMarkdown(entries, clusters, meta) {
         lines.push(`  - "${neg.answer}": ${markingResultSummary(neg.result)}`);
       }
     }
+    if (entry.fixedNegativeVectors.length) {
+      lines.push(`- **Fixed negative vectors:**`);
+      for (const vec of entry.fixedNegativeVectors) {
+        const status = vec.result.correct === vec.expectedCorrect ? 'OK' : 'MISMATCH';
+        lines.push(`  - [${status}] "${vec.input}": ${markingResultSummary(vec.result)} (expected correct=${vec.expectedCorrect})`);
+      }
+    }
     if (entry.templateId) {
       lines.push(`- **Template ID:** ${entry.templateId}`);
       lines.push(`- **Variant signature:** ${entry.variantSignature}`);
@@ -487,9 +681,18 @@ function formatMarkdown(entries, clusters, meta) {
     if (entry.clusterIds.length) {
       lines.push(`- **Cluster IDs:** ${entry.clusterIds.join(', ')}`);
     }
+
+    // Review status display
     if (entry.reviewerDecision) {
-      lines.push(`- **Reviewer decision:** ${entry.reviewerDecision}`);
+      const d = entry.reviewerDecision;
+      lines.push(`- **Review status:** ${d.decision || 'unknown'}`);
+      if (d.reviewer) lines.push(`  - Reviewer: ${d.reviewer}`);
+      if (d.reviewedAt) lines.push(`  - Reviewed at: ${d.reviewedAt}`);
+      if (d.rationale) lines.push(`  - Rationale: ${d.rationale}`);
+    } else {
+      lines.push(`- **Review status:** unreviewed`);
     }
+
     lines.push('');
   }
 
@@ -509,7 +712,7 @@ function formatMarkdown(entries, clusters, meta) {
     lines.push('');
     for (const cluster of sameModeClusters) {
       const sample = cluster.sampleStem || cluster.sampleModel || cluster.normalisedText;
-      lines.push(`- **[${cluster.type}]** "${sample}" (mode=${cluster.modes[0]}, ${cluster.count} items)`);
+      lines.push(`- **[${cluster.type}]** "${sample}" (mode=${cluster.modes[0]}, ${cluster.count} items) ID: ${cluster.stableId}`);
       lines.push(`  Items: ${cluster.itemIds.join(', ')}`);
     }
     lines.push('');
@@ -520,7 +723,7 @@ function formatMarkdown(entries, clusters, meta) {
     lines.push('');
     for (const cluster of crossModeClusters) {
       const sample = cluster.sampleStem || cluster.sampleModel || cluster.normalisedText;
-      lines.push(`- **[${cluster.type}]** "${sample}" (modes=${cluster.modes.join(',')}, ${cluster.count} items)`);
+      lines.push(`- **[${cluster.type}]** "${sample}" (modes=${cluster.modes.join(',')}, ${cluster.count} items) ID: ${cluster.stableId}`);
       lines.push(`  Items: ${cluster.itemIds.join(', ')}`);
     }
     lines.push('');
@@ -572,6 +775,10 @@ function parseArgs(argv) {
     depth: depth != null && Number.isFinite(depth) ? depth : null,
     includeDepth6: args.has('--include-depth-6'),
     candidateDepth: candidateDepth != null && Number.isFinite(candidateDepth) ? candidateDepth : null,
+    summary: args.has('--summary'),
+    onlyBlocked: args.has('--only-blocked'),
+    onlyCandidates: args.has('--only-candidates'),
+    onlyUnreviewed: args.has('--only-unreviewed'),
   };
 }
 
@@ -586,13 +793,99 @@ function main() {
 
   const clusters = buildVarietyClusters(pool);
   const clusterMap = buildClusterMap(clusters);
-  const reviewerDecisions = loadReviewerDecisions();
+  const { itemDecisionMap, clusterDecisionMap } = loadDecisionsFile();
+  const negativeVectors = loadNegativeVectors();
+  const negativeVectorMap = buildNegativeVectorMap(negativeVectors);
 
-  const entries = pool.map((item) => buildItemEntry(item, {
+  // ─── Summary mode (fast, no per-item rendering) ─────────────────────────────
+  if (args.summary) {
+    const summary = buildSummaryOutput(pool, { productionIds, itemDecisionMap, clusterDecisionMap, clusters });
+    const effectiveDepth = args.depth ?? args.candidateDepth ?? (args.includeDepth6 ? 6 : PRODUCTION_DEPTH);
+    const mode = args.depth != null
+      ? `depth-${args.depth}-only`
+      : args.candidateDepth != null
+        ? `candidate-delta-${args.candidateDepth}`
+        : args.includeDepth6
+          ? 'inclusive-depth-6'
+          : 'production';
+    const output = {
+      mode,
+      depth: effectiveDepth,
+      productionDepth: PRODUCTION_DEPTH,
+      ...summary,
+    };
+    if (args.json || args.outPath) {
+      const json = JSON.stringify(output, null, 2);
+      if (args.outPath) {
+        writeFileSync(args.outPath, json + '\n', 'utf8');
+        process.stderr.write(`Summary written to ${args.outPath}\n`);
+      } else {
+        process.stdout.write(json + '\n');
+      }
+    } else {
+      // Human-readable summary
+      const lines = [
+        '# Punctuation Reviewer Pack — Summary',
+        '',
+        `Mode: ${mode}`,
+        `Production depth: ${PRODUCTION_DEPTH}`,
+        '',
+        `## Item counts`,
+        `Total: ${summary.totalItems}`,
+        `Production: ${summary.productionCount} | Candidates: ${summary.candidateCount}`,
+        '',
+        `## Decision states (all items)`,
+        `Approved: ${summary.itemStates.approved}`,
+        `Blocked: ${summary.itemStates.blocked}`,
+        `Pending: ${summary.itemStates.pending}`,
+        `Unreviewed: ${summary.itemStates.unreviewed}`,
+        '',
+        `## Production items`,
+        `Approved: ${summary.productionStates.approved}`,
+        `Blocked: ${summary.productionStates.blocked}`,
+        `Pending: ${summary.productionStates.pending}`,
+        `Unreviewed: ${summary.productionStates.unreviewed}`,
+        '',
+        `## Candidate items`,
+        `Approved: ${summary.candidateStates.approved}`,
+        `Blocked: ${summary.candidateStates.blocked}`,
+        `Pending: ${summary.candidateStates.pending}`,
+        `Unreviewed: ${summary.candidateStates.unreviewed}`,
+        '',
+        `## Cluster states`,
+        `Total: ${summary.totalClusters}`,
+        `Approved: ${summary.clusterStates.approved}`,
+        `Blocked: ${summary.clusterStates.blocked}`,
+        `Unreviewed: ${summary.clusterStates.unreviewed}`,
+        '',
+      ];
+      process.stdout.write(lines.join('\n'));
+    }
+    return;
+  }
+
+  // ─── Full mode: build entries ─────────────────────────────────────────────────
+  let entries = pool.map((item) => buildItemEntry(item, {
     productionIds,
     clusterMap,
-    reviewerDecisions,
+    itemDecisionMap,
+    negativeVectorMap,
   }));
+
+  // ─── Apply filters ──────────────────────────────────────────────────────────
+  if (args.onlyBlocked) {
+    entries = entries.filter((e) =>
+      e.reviewerDecision && BLOCKING_DECISIONS.includes(e.reviewerDecision.decision),
+    );
+  }
+
+  if (args.onlyCandidates) {
+    entries = entries.filter((e) => e.productionStatus === 'candidate-only');
+  }
+
+  if (args.onlyUnreviewed) {
+    entries = entries.filter((e) => !e.reviewerDecision);
+  }
 
   const effectiveDepth = args.depth ?? args.candidateDepth ?? (args.includeDepth6 ? 6 : PRODUCTION_DEPTH);
   const mode = args.depth != null
@@ -615,6 +908,7 @@ function main() {
     productionCount: entries.filter((e) => e.productionStatus === 'production').length,
     candidateCount: entries.filter((e) => e.productionStatus === 'candidate-only').length,
     items_reviewed: pool.length,
+    filteredCount: entries.length,
   };
 
   if (args.json || args.outPath) {
@@ -634,4 +928,4 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   main();
 }
 
-export { buildProductionPool, buildPool, buildItemEntry, buildVarietyClusters, buildClusterMap, normaliseForVariety };
+export { buildProductionPool, buildPool, buildItemEntry, buildVarietyClusters, buildClusterMap, buildNegativeVectorMap, buildSummaryOutput, normaliseForVariety };
