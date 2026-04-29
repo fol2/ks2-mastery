@@ -448,9 +448,16 @@ test('D2: Enable all, start quest, claim task -> disable -> re-enable -> complet
 
   assert.equal(modelBack.version, 4);
   assert.equal(modelBack.mode, 'progress');
-  // The state itself is preserved (recentClaims intact)
-  assert.equal(stateWithClaim.recentClaims.length, 1);
-  assert.equal(stateWithClaim.recentClaims[0].claimId, 'req-already-processed');
+  // The re-enabled output model exposes the completed task data
+  assert.equal(modelBack.progress.enabled, true);
+  assert.equal(modelBack.progress.effortCompleted, 6);
+  assert.ok(modelBack.progress.completedTaskIds.length > 0,
+    'Re-enabled model must expose completed task IDs');
+  // Verify dailyQuest tasks reflect the completed task with correct status
+  const completedTask = modelBack.dailyQuest.tasks.find(
+    t => t.completionStatus === 'completed');
+  assert.ok(completedTask, 'Re-enabled model must contain a completed task');
+  assert.equal(completedTask.effortCompleted, 6);
 });
 
 test('D3: CAS revision preserved across rollback', () => {
