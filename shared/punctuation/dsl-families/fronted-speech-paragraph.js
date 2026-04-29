@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U8).
  */
 
+const EXPLANATION = 'A comma follows the fronted adverbial, and inverted commas wrap the spoken words with their punctuation inside.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -19,17 +21,21 @@ const TEMPLATES = [
       checks: [
         {
           type: 'startsWithPhraseComma',
-          phrase: 'Before lunch',
+          phrase: 'Before lunch',    explanation: EXPLANATION,
+
           misconceptionTags: ['comma.fronted_adverbial_missing'],
         },
         {
           type: 'speechWithWords',
           words: 'can we start now',
-          requiredTerminal: '?',
+          requiredTerminal: '?',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -44,17 +50,21 @@ const TEMPLATES = [
       checks: [
         {
           type: 'startsWithPhraseComma',
-          phrase: 'After rehearsal',
+          phrase: 'After rehearsal',    explanation: EXPLANATION,
+
           misconceptionTags: ['comma.fronted_adverbial_missing'],
         },
         {
           type: 'speechWithWords',
           words: 'the props are packed',
-          requiredTerminal: '.',
+          requiredTerminal: '.',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -69,17 +79,21 @@ const TEMPLATES = [
       checks: [
         {
           type: 'startsWithPhraseComma',
-          phrase: 'During assembly',
+          phrase: 'During assembly',    explanation: EXPLANATION,
+
           misconceptionTags: ['comma.fronted_adverbial_missing'],
         },
         {
           type: 'speechWithWords',
           words: 'please sit down',
-          requiredTerminal: '.',
+          requiredTerminal: '.',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -94,17 +108,21 @@ const TEMPLATES = [
       checks: [
         {
           type: 'startsWithPhraseComma',
-          phrase: 'At the gate',
+          phrase: 'At the gate',    explanation: EXPLANATION,
+
           misconceptionTags: ['comma.fronted_adverbial_missing'],
         },
         {
           type: 'speechWithWords',
           words: 'are we late',
-          requiredTerminal: '?',
+          requiredTerminal: '?',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -120,17 +138,21 @@ const TEMPLATES = [
       checks: [
         {
           type: 'startsWithPhraseComma',
-          phrase: 'In the corridor',
+          phrase: 'In the corridor',    explanation: EXPLANATION,
+
           misconceptionTags: ['comma.fronted_adverbial_missing'],
         },
         {
           type: 'speechWithWords',
           words: 'wait for me',
-          requiredTerminal: '!',
+          requiredTerminal: '!',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -145,17 +167,21 @@ const TEMPLATES = [
       checks: [
         {
           type: 'startsWithPhraseComma',
-          phrase: 'Near the pond',
+          phrase: 'Near the pond',    explanation: EXPLANATION,
+
           misconceptionTags: ['comma.fronted_adverbial_missing'],
         },
         {
           type: 'speechWithWords',
           words: 'look at the heron',
-          requiredTerminal: '.',
+          requiredTerminal: '.',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -170,17 +196,21 @@ const TEMPLATES = [
       checks: [
         {
           type: 'startsWithPhraseComma',
-          phrase: 'Behind the stage',
+          phrase: 'Behind the stage',    explanation: EXPLANATION,
+
           misconceptionTags: ['comma.fronted_adverbial_missing'],
         },
         {
           type: 'speechWithWords',
           words: 'where is my costume',
-          requiredTerminal: '?',
+          requiredTerminal: '?',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -195,17 +225,21 @@ const TEMPLATES = [
       checks: [
         {
           type: 'startsWithPhraseComma',
-          phrase: 'Across the field',
+          phrase: 'Across the field',    explanation: EXPLANATION,
+
           misconceptionTags: ['comma.fronted_adverbial_missing'],
         },
         {
           type: 'speechWithWords',
           words: 'come back here',
-          requiredTerminal: '!',
+          requiredTerminal: '!',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -229,6 +263,7 @@ export const frontedSpeechParagraphDsl = TEMPLATES.map((t, i) =>
       skillIds: t.skillIds,
       clusterId: t.clusterId,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

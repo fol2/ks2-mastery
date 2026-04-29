@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U10).
  */
 
+const EXPLANATION = 'A colon introduces the list after a complete sentence that sets it up.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -17,6 +19,8 @@ const TEMPLATES = [
       opening: 'We needed three tools',
       items: ['a torch', 'a rope', 'a map'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -29,6 +33,8 @@ const TEMPLATES = [
       opening: 'The kit included three things',
       items: ['a lantern', 'a compass', 'a notebook'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -41,6 +47,8 @@ const TEMPLATES = [
       opening: 'The drawer held three supplies',
       items: ['pens', 'rulers', 'tape'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -53,6 +61,8 @@ const TEMPLATES = [
       opening: 'We chose three activities',
       items: ['swimming', 'cycling', 'climbing'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -66,6 +76,8 @@ const TEMPLATES = [
       opening: 'The garden had three features',
       items: ['a pond', 'a bench', 'a hedge'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -78,6 +90,8 @@ const TEMPLATES = [
       opening: 'She packed three essentials',
       items: ['water', 'sunscreen', 'a hat'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -90,6 +104,8 @@ const TEMPLATES = [
       opening: 'The recipe required three spices',
       items: ['cumin', 'paprika', 'turmeric'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -102,6 +118,8 @@ const TEMPLATES = [
       opening: 'The team trained in three sports',
       items: ['running', 'rowing', 'tennis'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -123,6 +141,7 @@ export const colonListCombineDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

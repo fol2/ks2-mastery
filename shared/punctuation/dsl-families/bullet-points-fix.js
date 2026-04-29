@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U10).
  */
 
+const EXPLANATION = 'Every bullet in a list must follow the same punctuation pattern so the reader knows the list is consistent.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -17,6 +19,8 @@ const TEMPLATES = [
       stem: 'Bring',
       items: ['a coat', 'a torch', 'a notebook'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -29,6 +33,8 @@ const TEMPLATES = [
       stem: 'Pack',
       items: ['pencils', 'rulers', 'glue sticks'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -41,6 +47,8 @@ const TEMPLATES = [
       stem: 'Take',
       items: ['water', 'snacks', 'a hat'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -53,6 +61,8 @@ const TEMPLATES = [
       stem: 'Check',
       items: ['doors', 'windows', 'lights'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -66,6 +76,8 @@ const TEMPLATES = [
       stem: 'Collect',
       items: ['shells', 'feathers', 'pebbles'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -78,6 +90,8 @@ const TEMPLATES = [
       stem: 'Prepare',
       items: ['flour', 'butter', 'sugar'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -90,6 +104,8 @@ const TEMPLATES = [
       stem: 'Remember',
       items: ['keys', 'phone', 'wallet'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
   },
@@ -102,6 +118,8 @@ const TEMPLATES = [
       stem: 'Buy',
       items: ['milk', 'bread', 'eggs'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
   },
@@ -123,6 +141,7 @@ export const bulletPointsFixDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

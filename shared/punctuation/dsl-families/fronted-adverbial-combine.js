@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U9).
  */
 
+const EXPLANATION = 'A comma separates the opening adverbial phrase from the main clause so the reader knows where the main idea begins.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -17,6 +19,8 @@ const TEMPLATES = [
       phrase: 'Before sunrise',
       mainClause: 'the crew checked the ropes',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -29,6 +33,8 @@ const TEMPLATES = [
       phrase: 'After the rehearsal',
       mainClause: 'the cast packed away the props',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -41,6 +47,8 @@ const TEMPLATES = [
       phrase: 'During the concert',
       mainClause: 'the hall became silent',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -53,6 +61,8 @@ const TEMPLATES = [
       phrase: 'At the edge of the field',
       mainClause: 'the coach waited',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -66,6 +76,8 @@ const TEMPLATES = [
       phrase: 'Without warning',
       mainClause: 'the fox darted across the lane',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -78,6 +90,8 @@ const TEMPLATES = [
       phrase: 'Behind the shed',
       mainClause: 'the cat hid from the rain',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -90,6 +104,8 @@ const TEMPLATES = [
       phrase: 'Throughout the afternoon',
       mainClause: 'the children played outside',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -102,6 +118,8 @@ const TEMPLATES = [
       phrase: 'Near the old bridge',
       mainClause: 'the heron stood perfectly still',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -123,6 +141,7 @@ export const frontedAdverbialCombineDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

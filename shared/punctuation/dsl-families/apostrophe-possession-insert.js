@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U8).
  */
 
+const EXPLANATION = 'The apostrophe before the s shows that the item belongs to the noun.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -16,6 +18,8 @@ const TEMPLATES = [
       type: 'requiresTokens',
       tokens: ["captain's", "team's"],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.possession_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -27,6 +31,8 @@ const TEMPLATES = [
       type: 'requiresTokens',
       tokens: ["children's", "teacher's"],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.possession_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -38,6 +44,8 @@ const TEMPLATES = [
       type: 'requiresTokens',
       tokens: ["artist's", "museum's"],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.possession_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -49,6 +57,8 @@ const TEMPLATES = [
       type: 'requiresTokens',
       tokens: ["sailor's", "harbour's"],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.possession_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -61,6 +71,8 @@ const TEMPLATES = [
       type: 'requiresTokens',
       tokens: ["gardener's", "school's"],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.possession_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -72,6 +84,8 @@ const TEMPLATES = [
       type: 'requiresTokens',
       tokens: ["dog's", "owner's"],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.possession_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -83,6 +97,8 @@ const TEMPLATES = [
       type: 'requiresTokens',
       tokens: ["pilot's", "passenger's"],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.possession_missing'],
     readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
   },
@@ -94,6 +110,8 @@ const TEMPLATES = [
       type: 'requiresTokens',
       tokens: ["knight's", "castle's"],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.possession_missing'],
     readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
   },
@@ -115,6 +133,7 @@ export const apostrophePossessionInsertDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),
