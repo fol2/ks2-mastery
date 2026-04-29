@@ -2444,17 +2444,17 @@
       {
         "id": "gen_apostrophe_possession_insert_1hrd80f_5",
         "generatorFamilyId": "gen_apostrophe_possession_insert",
-        "variantSignature": "puncsig_1dsmbxy",
-        "templateId": "gen_apostrophe_possession_insert_template_16nnw5j",
+        "variantSignature": "puncsig_3w2fah",
+        "templateId": "gen_apostrophe_possession_insert_template_uwhz2l",
         "prompt": "Add apostrophes to show possession.",
-        "stem": "The sailors flag was near the harbours gate.",
-        "model": "The sailor's flag was near the harbour's gate.",
+        "stem": "The dogs lead hung on the owners hook.",
+        "model": "The dog's lead hung on the owner's hook.",
         "validatorType": "requiresTokens",
         "validator": {
           "type": "requiresTokens",
           "tokens": [
-            "sailor's",
-            "harbour's"
+            "dog's",
+            "owner's"
           ]
         },
         "rubric": null,
@@ -2470,17 +2470,17 @@
       {
         "id": "gen_apostrophe_possession_insert_1hhdmbg_6",
         "generatorFamilyId": "gen_apostrophe_possession_insert",
-        "variantSignature": "puncsig_xkduxs",
-        "templateId": "gen_apostrophe_possession_insert_template_ffg657",
+        "variantSignature": "puncsig_14hls5o",
+        "templateId": "gen_apostrophe_possession_insert_template_1585two",
         "prompt": "Add apostrophes to show possession.",
-        "stem": "The artists brush was near the museums door.",
-        "model": "The artist's brush was near the museum's door.",
+        "stem": "The pilots map was under the passengers seat.",
+        "model": "The pilot's map was under the passenger's seat.",
         "validatorType": "requiresTokens",
         "validator": {
           "type": "requiresTokens",
           "tokens": [
-            "artist's",
-            "museum's"
+            "pilot's",
+            "passenger's"
           ]
         },
         "rubric": null,
@@ -2489,6 +2489,7 @@
         ],
         "readiness": [
           "insertion",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -2496,17 +2497,17 @@
       {
         "id": "gen_apostrophe_possession_insert_1ibcfed_7",
         "generatorFamilyId": "gen_apostrophe_possession_insert",
-        "variantSignature": "puncsig_1dsmbxy",
-        "templateId": "gen_apostrophe_possession_insert_template_16nnw5j",
+        "variantSignature": "puncsig_dycddr",
+        "templateId": "gen_apostrophe_possession_insert_template_nrim2n",
         "prompt": "Add apostrophes to show possession.",
-        "stem": "The sailors flag was near the harbours gate.",
-        "model": "The sailor's flag was near the harbour's gate.",
+        "stem": "The knights shield rested against the castles wall.",
+        "model": "The knight's shield rested against the castle's wall.",
         "validatorType": "requiresTokens",
         "validator": {
           "type": "requiresTokens",
           "tokens": [
-            "sailor's",
-            "harbour's"
+            "knight's",
+            "castle's"
           ]
         },
         "rubric": null,
@@ -2515,6 +2516,7 @@
         ],
         "readiness": [
           "insertion",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -2522,17 +2524,17 @@
       {
         "id": "gen_apostrophe_possession_insert_1i1ctpe_8",
         "generatorFamilyId": "gen_apostrophe_possession_insert",
-        "variantSignature": "puncsig_xkduxs",
-        "templateId": "gen_apostrophe_possession_insert_template_ffg657",
+        "variantSignature": "puncsig_1idyb1e",
+        "templateId": "gen_apostrophe_possession_insert_template_wmwzb8",
         "prompt": "Add apostrophes to show possession.",
-        "stem": "The artists brush was near the museums door.",
-        "model": "The artist's brush was near the museum's door.",
+        "stem": "The gardeners shed was next to the schools fence.",
+        "model": "The gardener's shed was next to the school's fence.",
         "validatorType": "requiresTokens",
         "validator": {
           "type": "requiresTokens",
           "tokens": [
-            "artist's",
-            "museum's"
+            "gardener's",
+            "school's"
           ]
         },
         "rubric": null,
@@ -2726,11 +2728,11 @@
       {
         "id": "gen_apostrophe_mix_paragraph_zekfbi_5",
         "generatorFamilyId": "gen_apostrophe_mix_paragraph",
-        "variantSignature": "puncsig_1d7fd2j",
-        "templateId": "gen_apostrophe_mix_paragraph_template_b84fkf",
+        "variantSignature": "puncsig_1pv04xr",
+        "templateId": "gen_apostrophe_mix_paragraph_template_16skyc5",
         "prompt": "Repair the apostrophes in the short passage.",
-        "stem": "Theyre checking the captains map. We dont know the teams plan.",
-        "model": "They're checking the captain's map. We don't know the team's plan.",
+        "stem": "He doesnt need the drivers gloves. The passengers bags are packed.",
+        "model": "He doesn't need the driver's gloves. The passengers' bags are packed.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
@@ -2738,20 +2740,19 @@
             {
               "type": "requiresApostropheForms",
               "tokens": [
-                "they're",
-                "captain's",
-                "don't",
-                "team's"
+                "doesn't",
+                "driver's",
+                "passengers' bags"
               ],
               "forbidden": [
-                "theyre",
-                "captains",
-                "dont",
-                "teams plan"
+                "doesnt",
+                "drivers",
+                "passengers bags"
               ],
               "misconceptionTags": [
                 "apostrophe.contraction_missing",
-                "apostrophe.possession_missing"
+                "apostrophe.possession_missing",
+                "apostrophe.possession_number"
               ]
             }
           ]
@@ -2759,7 +2760,8 @@
         "rubric": null,
         "misconceptionTags": [
           "apostrophe.contraction_missing",
-          "apostrophe.possession_missing"
+          "apostrophe.possession_missing",
+          "apostrophe.possession_number"
         ],
         "readiness": [
           "constrained_transfer",
@@ -2770,11 +2772,11 @@
       {
         "id": "gen_apostrophe_mix_paragraph_zok10h_6",
         "generatorFamilyId": "gen_apostrophe_mix_paragraph",
-        "variantSignature": "puncsig_60dsl5",
-        "templateId": "gen_apostrophe_mix_paragraph_template_1ds8nud",
+        "variantSignature": "puncsig_cvb4og",
+        "templateId": "gen_apostrophe_mix_paragraph_template_7w7pq3",
         "prompt": "Repair the apostrophes in the short passage.",
-        "stem": "She wont borrow the girls pencil. Its on the teachers shelf.",
-        "model": "She won't borrow the girl's pencil. It's on the teacher's shelf.",
+        "stem": "They havent opened the nurses bag. The doctors notes are lost.",
+        "model": "They haven't opened the nurse's bag. The doctors' notes are lost.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
@@ -2782,20 +2784,19 @@
             {
               "type": "requiresApostropheForms",
               "tokens": [
-                "won't",
-                "girl's",
-                "it's",
-                "teacher's"
+                "haven't",
+                "nurse's",
+                "doctors' notes"
               ],
               "forbidden": [
-                "wont",
-                "girls pencil",
-                "its",
-                "teachers shelf"
+                "havent",
+                "nurses",
+                "doctors notes"
               ],
               "misconceptionTags": [
                 "apostrophe.contraction_missing",
-                "apostrophe.possession_missing"
+                "apostrophe.possession_missing",
+                "apostrophe.possession_number"
               ]
             }
           ]
@@ -2803,7 +2804,8 @@
         "rubric": null,
         "misconceptionTags": [
           "apostrophe.contraction_missing",
-          "apostrophe.possession_missing"
+          "apostrophe.possession_missing",
+          "apostrophe.possession_number"
         ],
         "readiness": [
           "constrained_transfer",
@@ -2814,11 +2816,11 @@
       {
         "id": "gen_apostrophe_mix_paragraph_yul7xk_7",
         "generatorFamilyId": "gen_apostrophe_mix_paragraph",
-        "variantSignature": "puncsig_1d7fd2j",
-        "templateId": "gen_apostrophe_mix_paragraph_template_b84fkf",
+        "variantSignature": "puncsig_1oc4tn2",
+        "templateId": "gen_apostrophe_mix_paragraph_template_nqacd8",
         "prompt": "Repair the apostrophes in the short passage.",
-        "stem": "Theyre checking the captains map. We dont know the teams plan.",
-        "model": "They're checking the captain's map. We don't know the team's plan.",
+        "stem": "We shouldnt move the builders tools. The plumbers van is outside.",
+        "model": "We shouldn't move the builder's tools. The plumber's van is outside.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
@@ -2826,16 +2828,14 @@
             {
               "type": "requiresApostropheForms",
               "tokens": [
-                "they're",
-                "captain's",
-                "don't",
-                "team's"
+                "shouldn't",
+                "builder's",
+                "plumber's"
               ],
               "forbidden": [
-                "theyre",
-                "captains",
-                "dont",
-                "teams plan"
+                "shouldnt",
+                "builders tools",
+                "plumbers van"
               ],
               "misconceptionTags": [
                 "apostrophe.contraction_missing",
@@ -2851,6 +2851,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -2858,11 +2859,11 @@
       {
         "id": "gen_apostrophe_mix_paragraph_z4ktmj_8",
         "generatorFamilyId": "gen_apostrophe_mix_paragraph",
-        "variantSignature": "puncsig_60dsl5",
-        "templateId": "gen_apostrophe_mix_paragraph_template_1ds8nud",
+        "variantSignature": "puncsig_om6wln",
+        "templateId": "gen_apostrophe_mix_paragraph_template_3f1tcj",
         "prompt": "Repair the apostrophes in the short passage.",
-        "stem": "She wont borrow the girls pencil. Its on the teachers shelf.",
-        "model": "She won't borrow the girl's pencil. It's on the teacher's shelf.",
+        "stem": "Youre holding the cats bowl. The kittens bed isnt dry.",
+        "model": "You're holding the cat's bowl. The kitten's bed isn't dry.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
@@ -2870,16 +2871,16 @@
             {
               "type": "requiresApostropheForms",
               "tokens": [
-                "won't",
-                "girl's",
-                "it's",
-                "teacher's"
+                "you're",
+                "cat's",
+                "kitten's",
+                "isn't"
               ],
               "forbidden": [
-                "wont",
-                "girls pencil",
-                "its",
-                "teachers shelf"
+                "youre",
+                "cats bowl",
+                "kittens bed",
+                "isnt"
               ],
               "misconceptionTags": [
                 "apostrophe.contraction_missing",
@@ -2895,6 +2896,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -3012,18 +3014,18 @@
       {
         "id": "gen_speech_insert_1tbulfz_5",
         "generatorFamilyId": "gen_speech_insert",
-        "variantSignature": "puncsig_nclq3v",
-        "templateId": "gen_speech_insert_template_1lt7eo1",
+        "variantSignature": "puncsig_rahsvi",
+        "templateId": "gen_speech_insert_template_38sht2",
         "prompt": "Add the direct-speech punctuation.",
-        "stem": "Tom asked, where did the map go?",
-        "model": "Tom asked, \"Where did the map go?\"",
+        "stem": "Sam replied, the path is clear.",
+        "model": "Sam replied, \"The path is clear.\"",
         "validatorType": null,
         "validator": null,
         "rubric": {
           "type": "speech",
           "reportingPosition": "before",
-          "spokenWords": "where did the map go",
-          "requiredTerminal": "?"
+          "spokenWords": "the path is clear",
+          "requiredTerminal": "."
         },
         "misconceptionTags": [
           "speech.quote_missing",
@@ -3039,44 +3041,17 @@
       {
         "id": "gen_speech_insert_1t1uzr0_6",
         "generatorFamilyId": "gen_speech_insert",
-        "variantSignature": "puncsig_rd8g70",
-        "templateId": "gen_speech_insert_template_1oh4tes",
+        "variantSignature": "puncsig_j13m26",
+        "templateId": "gen_speech_insert_template_1x2h0p7",
         "prompt": "Add the direct-speech punctuation.",
-        "stem": "Lena whispered, keep the gate closed.",
-        "model": "Lena whispered, \"Keep the gate closed.\"",
+        "stem": "Mia asked, is the door locked?",
+        "model": "Mia asked, \"Is the door locked?\"",
         "validatorType": null,
         "validator": null,
         "rubric": {
           "type": "speech",
           "reportingPosition": "before",
-          "spokenWords": "keep the gate closed",
-          "requiredTerminal": "."
-        },
-        "misconceptionTags": [
-          "speech.quote_missing",
-          "speech.reporting_comma_missing",
-          "speech.punctuation_missing"
-        ],
-        "readiness": [
-          "insertion",
-          "misconception",
-          "negative_test"
-        ]
-      },
-      {
-        "id": "gen_speech_insert_1tvtstx_7",
-        "generatorFamilyId": "gen_speech_insert",
-        "variantSignature": "puncsig_nclq3v",
-        "templateId": "gen_speech_insert_template_1lt7eo1",
-        "prompt": "Add the direct-speech punctuation.",
-        "stem": "Tom asked, where did the map go?",
-        "model": "Tom asked, \"Where did the map go?\"",
-        "validatorType": null,
-        "validator": null,
-        "rubric": {
-          "type": "speech",
-          "reportingPosition": "before",
-          "spokenWords": "where did the map go",
+          "spokenWords": "is the door locked",
           "requiredTerminal": "?"
         },
         "misconceptionTags": [
@@ -3086,6 +3061,35 @@
         ],
         "readiness": [
           "insertion",
+          "transfer",
+          "misconception",
+          "negative_test"
+        ]
+      },
+      {
+        "id": "gen_speech_insert_1tvtstx_7",
+        "generatorFamilyId": "gen_speech_insert",
+        "variantSignature": "puncsig_tknbgo",
+        "templateId": "gen_speech_insert_template_m7pwr5",
+        "prompt": "Add the direct-speech punctuation.",
+        "stem": "Jake warned, stay behind the line.",
+        "model": "Jake warned, \"Stay behind the line.\"",
+        "validatorType": null,
+        "validator": null,
+        "rubric": {
+          "type": "speech",
+          "reportingPosition": "before",
+          "spokenWords": "stay behind the line",
+          "requiredTerminal": "."
+        },
+        "misconceptionTags": [
+          "speech.quote_missing",
+          "speech.reporting_comma_missing",
+          "speech.punctuation_missing"
+        ],
+        "readiness": [
+          "insertion",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -3093,18 +3097,18 @@
       {
         "id": "gen_speech_insert_1tlu74y_8",
         "generatorFamilyId": "gen_speech_insert",
-        "variantSignature": "puncsig_rd8g70",
-        "templateId": "gen_speech_insert_template_1oh4tes",
+        "variantSignature": "puncsig_bg7hk8",
+        "templateId": "gen_speech_insert_template_oo06wy",
         "prompt": "Add the direct-speech punctuation.",
-        "stem": "Lena whispered, keep the gate closed.",
-        "model": "Lena whispered, \"Keep the gate closed.\"",
+        "stem": "Ella shouted, watch out for the wave!",
+        "model": "Ella shouted, \"Watch out for the wave!\"",
         "validatorType": null,
         "validator": null,
         "rubric": {
           "type": "speech",
           "reportingPosition": "before",
-          "spokenWords": "keep the gate closed",
-          "requiredTerminal": "."
+          "spokenWords": "watch out for the wave",
+          "requiredTerminal": "!"
         },
         "misconceptionTags": [
           "speech.quote_missing",
@@ -3298,26 +3302,26 @@
       {
         "id": "gen_fronted_speech_paragraph_1m4nv0z_5",
         "generatorFamilyId": "gen_fronted_speech_paragraph",
-        "variantSignature": "puncsig_15vl1z5",
-        "templateId": "gen_fronted_speech_paragraph_template_q48vyy",
+        "variantSignature": "puncsig_8772dp",
+        "templateId": "gen_fronted_speech_paragraph_template_pafdvg",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "At the gate Ben asked are we late",
-        "model": "At the gate, Ben asked, \"Are we late?\"",
+        "stem": "Near the pond Sam whispered look at the heron",
+        "model": "Near the pond, Sam whispered, \"Look at the heron.\"",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "startsWithPhraseComma",
-              "phrase": "At the gate",
+              "phrase": "Near the pond",
               "misconceptionTags": [
                 "comma.fronted_adverbial_missing"
               ]
             },
             {
               "type": "speechWithWords",
-              "words": "are we late",
-              "requiredTerminal": "?",
+              "words": "look at the heron",
+              "requiredTerminal": ".",
               "misconceptionTags": [
                 "speech.quote_missing",
                 "speech.reporting_comma_missing",
@@ -3342,69 +3346,25 @@
       {
         "id": "gen_fronted_speech_paragraph_1luo9c0_6",
         "generatorFamilyId": "gen_fronted_speech_paragraph",
-        "variantSignature": "puncsig_w1btfv",
-        "templateId": "gen_fronted_speech_paragraph_template_1vge4by",
+        "variantSignature": "puncsig_esiir3",
+        "templateId": "gen_fronted_speech_paragraph_template_1yz1ds7",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "During assembly Lina whispered please sit down",
-        "model": "During assembly, Lina whispered, \"Please sit down.\"",
+        "stem": "Behind the stage Kai asked where is my costume",
+        "model": "Behind the stage, Kai asked, \"Where is my costume?\"",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "startsWithPhraseComma",
-              "phrase": "During assembly",
+              "phrase": "Behind the stage",
               "misconceptionTags": [
                 "comma.fronted_adverbial_missing"
               ]
             },
             {
               "type": "speechWithWords",
-              "words": "please sit down",
-              "requiredTerminal": ".",
-              "misconceptionTags": [
-                "speech.quote_missing",
-                "speech.reporting_comma_missing",
-                "speech.punctuation_missing"
-              ]
-            }
-          ]
-        },
-        "rubric": null,
-        "misconceptionTags": [
-          "comma.fronted_adverbial_missing",
-          "speech.quote_missing",
-          "speech.reporting_comma_missing",
-          "speech.punctuation_missing"
-        ],
-        "readiness": [
-          "constrained_transfer",
-          "misconception",
-          "negative_test"
-        ]
-      },
-      {
-        "id": "gen_fronted_speech_paragraph_1mon2ex_7",
-        "generatorFamilyId": "gen_fronted_speech_paragraph",
-        "variantSignature": "puncsig_15vl1z5",
-        "templateId": "gen_fronted_speech_paragraph_template_q48vyy",
-        "prompt": "Repair the punctuation in the short passage.",
-        "stem": "At the gate Ben asked are we late",
-        "model": "At the gate, Ben asked, \"Are we late?\"",
-        "validatorType": "paragraphRepair",
-        "validator": {
-          "type": "paragraphRepair",
-          "checks": [
-            {
-              "type": "startsWithPhraseComma",
-              "phrase": "At the gate",
-              "misconceptionTags": [
-                "comma.fronted_adverbial_missing"
-              ]
-            },
-            {
-              "type": "speechWithWords",
-              "words": "are we late",
+              "words": "where is my costume",
               "requiredTerminal": "?",
               "misconceptionTags": [
                 "speech.quote_missing",
@@ -3423,6 +3383,52 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
+          "misconception",
+          "negative_test"
+        ]
+      },
+      {
+        "id": "gen_fronted_speech_paragraph_1mon2ex_7",
+        "generatorFamilyId": "gen_fronted_speech_paragraph",
+        "variantSignature": "puncsig_1mvp6br",
+        "templateId": "gen_fronted_speech_paragraph_template_9y4k3i",
+        "prompt": "Repair the punctuation in the short passage.",
+        "stem": "Across the field Ava shouted come back here",
+        "model": "Across the field, Ava shouted, \"Come back here!\"",
+        "validatorType": "paragraphRepair",
+        "validator": {
+          "type": "paragraphRepair",
+          "checks": [
+            {
+              "type": "startsWithPhraseComma",
+              "phrase": "Across the field",
+              "misconceptionTags": [
+                "comma.fronted_adverbial_missing"
+              ]
+            },
+            {
+              "type": "speechWithWords",
+              "words": "come back here",
+              "requiredTerminal": "!",
+              "misconceptionTags": [
+                "speech.quote_missing",
+                "speech.reporting_comma_missing",
+                "speech.punctuation_missing"
+              ]
+            }
+          ]
+        },
+        "rubric": null,
+        "misconceptionTags": [
+          "comma.fronted_adverbial_missing",
+          "speech.quote_missing",
+          "speech.reporting_comma_missing",
+          "speech.punctuation_missing"
+        ],
+        "readiness": [
+          "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -3430,26 +3436,26 @@
       {
         "id": "gen_fronted_speech_paragraph_1mengpy_8",
         "generatorFamilyId": "gen_fronted_speech_paragraph",
-        "variantSignature": "puncsig_w1btfv",
-        "templateId": "gen_fronted_speech_paragraph_template_1vge4by",
+        "variantSignature": "puncsig_1b39muw",
+        "templateId": "gen_fronted_speech_paragraph_template_99ajez",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "During assembly Lina whispered please sit down",
-        "model": "During assembly, Lina whispered, \"Please sit down.\"",
+        "stem": "In the corridor Mia called wait for me",
+        "model": "In the corridor, Mia called, \"Wait for me!\"",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "startsWithPhraseComma",
-              "phrase": "During assembly",
+              "phrase": "In the corridor",
               "misconceptionTags": [
                 "comma.fronted_adverbial_missing"
               ]
             },
             {
               "type": "speechWithWords",
-              "words": "please sit down",
-              "requiredTerminal": ".",
+              "words": "wait for me",
+              "requiredTerminal": "!",
               "misconceptionTags": [
                 "speech.quote_missing",
                 "speech.reporting_comma_missing",
@@ -3588,18 +3594,18 @@
       {
         "id": "gen_list_commas_insert_1fwqj7k_5",
         "generatorFamilyId": "gen_list_commas_insert",
-        "variantSignature": "puncsig_jl4vs2",
-        "templateId": "gen_list_commas_insert_template_1myck8w",
+        "variantSignature": "puncsig_wzkhif",
+        "templateId": "gen_list_commas_insert_template_11reolo",
         "prompt": "Add commas to separate the list items.",
-        "stem": "The shelf held paints brushes and paper.",
-        "model": "The shelf held paints, brushes and paper.",
+        "stem": "The garden had roses daisies and tulips.",
+        "model": "The garden had roses, daisies and tulips.",
         "validatorType": "requiresListCommas",
         "validator": {
           "type": "requiresListCommas",
           "items": [
-            "paints",
-            "brushes",
-            "paper"
+            "roses",
+            "daisies",
+            "tulips"
           ]
         },
         "rubric": null,
@@ -3609,6 +3615,7 @@
         ],
         "readiness": [
           "insertion",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -3616,18 +3623,18 @@
       {
         "id": "gen_list_commas_insert_1g6q4wj_6",
         "generatorFamilyId": "gen_list_commas_insert",
-        "variantSignature": "puncsig_1e1g3rp",
-        "templateId": "gen_list_commas_insert_template_62b991",
+        "variantSignature": "puncsig_14cnb32",
+        "templateId": "gen_list_commas_insert_template_1hd4go7",
         "prompt": "Add commas to separate the list items.",
-        "stem": "We saw gulls seals and dolphins.",
-        "model": "We saw gulls, seals and dolphins.",
+        "stem": "He found coins stamps and keys.",
+        "model": "He found coins, stamps and keys.",
         "validatorType": "requiresListCommas",
         "validator": {
           "type": "requiresListCommas",
           "items": [
-            "gulls",
-            "seals",
-            "dolphins"
+            "coins",
+            "stamps",
+            "keys"
           ]
         },
         "rubric": null,
@@ -3637,6 +3644,7 @@
         ],
         "readiness": [
           "insertion",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -3644,18 +3652,18 @@
       {
         "id": "gen_list_commas_insert_1ggpqli_7",
         "generatorFamilyId": "gen_list_commas_insert",
-        "variantSignature": "puncsig_jl4vs2",
-        "templateId": "gen_list_commas_insert_template_1myck8w",
+        "variantSignature": "puncsig_1pq14ip",
+        "templateId": "gen_list_commas_insert_template_itup0c",
         "prompt": "Add commas to separate the list items.",
-        "stem": "The shelf held paints brushes and paper.",
-        "model": "The shelf held paints, brushes and paper.",
+        "stem": "She bought pens rulers and notebooks.",
+        "model": "She bought pens, rulers and notebooks.",
         "validatorType": "requiresListCommas",
         "validator": {
           "type": "requiresListCommas",
           "items": [
-            "paints",
-            "brushes",
-            "paper"
+            "pens",
+            "rulers",
+            "notebooks"
           ]
         },
         "rubric": null,
@@ -3672,18 +3680,18 @@
       {
         "id": "gen_list_commas_insert_1gqpcah_8",
         "generatorFamilyId": "gen_list_commas_insert",
-        "variantSignature": "puncsig_1e1g3rp",
-        "templateId": "gen_list_commas_insert_template_62b991",
+        "variantSignature": "puncsig_gaw9gg",
+        "templateId": "gen_list_commas_insert_template_1lr8h6c",
         "prompt": "Add commas to separate the list items.",
-        "stem": "We saw gulls seals and dolphins.",
-        "model": "We saw gulls, seals and dolphins.",
+        "stem": "They carried buckets spades and nets.",
+        "model": "They carried buckets, spades and nets.",
         "validatorType": "requiresListCommas",
         "validator": {
           "type": "requiresListCommas",
           "items": [
-            "gulls",
-            "seals",
-            "dolphins"
+            "buckets",
+            "spades",
+            "nets"
           ]
         },
         "rubric": null,
@@ -3818,19 +3826,19 @@
       {
         "id": "gen_list_commas_combine_oam6za_5",
         "generatorFamilyId": "gen_list_commas_combine",
-        "variantSignature": "puncsig_cbesme",
-        "templateId": "gen_list_commas_combine_template_1d8dwo5",
+        "variantSignature": "puncsig_15crl52",
+        "templateId": "gen_list_commas_combine_template_7npkz8",
         "prompt": "Combine the notes into one correctly punctuated sentence.",
-        "stem": "The bag contained\n- chalk\n- string\n- tape",
-        "model": "The bag contained chalk, string and tape.",
+        "stem": "The toolkit included\n- pliers\n- spanners\n- screws",
+        "model": "The toolkit included pliers, spanners and screws.",
         "validatorType": "combineListSentence",
         "validator": {
           "type": "combineListSentence",
-          "opening": "The bag contained",
+          "opening": "The toolkit included",
           "items": [
-            "chalk",
-            "string",
-            "tape"
+            "pliers",
+            "spanners",
+            "screws"
           ]
         },
         "rubric": null,
@@ -3847,19 +3855,19 @@
       {
         "id": "gen_list_commas_combine_oklso9_6",
         "generatorFamilyId": "gen_list_commas_combine",
-        "variantSignature": "puncsig_08ojzv",
-        "templateId": "gen_list_commas_combine_template_14arcfx",
+        "variantSignature": "puncsig_he9oq3",
+        "templateId": "gen_list_commas_combine_template_5xz2v6",
         "prompt": "Combine the notes into one correctly punctuated sentence.",
-        "stem": "Our lunch included\n- apples\n- sandwiches\n- juice",
-        "model": "Our lunch included apples, sandwiches and juice.",
+        "stem": "We spotted\n- foxes\n- rabbits\n- deer",
+        "model": "We spotted foxes, rabbits and deer.",
         "validatorType": "combineListSentence",
         "validator": {
           "type": "combineListSentence",
-          "opening": "Our lunch included",
+          "opening": "We spotted",
           "items": [
-            "apples",
-            "sandwiches",
-            "juice"
+            "foxes",
+            "rabbits",
+            "deer"
           ]
         },
         "rubric": null,
@@ -3876,19 +3884,19 @@
       {
         "id": "gen_list_commas_combine_nqmzlc_7",
         "generatorFamilyId": "gen_list_commas_combine",
-        "variantSignature": "puncsig_cbesme",
-        "templateId": "gen_list_commas_combine_template_1d8dwo5",
+        "variantSignature": "puncsig_hwgfb9",
+        "templateId": "gen_list_commas_combine_template_12nx0ac",
         "prompt": "Combine the notes into one correctly punctuated sentence.",
-        "stem": "The bag contained\n- chalk\n- string\n- tape",
-        "model": "The bag contained chalk, string and tape.",
+        "stem": "The menu offered\n- soup\n- salad\n- bread",
+        "model": "The menu offered soup, salad and bread.",
         "validatorType": "combineListSentence",
         "validator": {
           "type": "combineListSentence",
-          "opening": "The bag contained",
+          "opening": "The menu offered",
           "items": [
-            "chalk",
-            "string",
-            "tape"
+            "soup",
+            "salad",
+            "bread"
           ]
         },
         "rubric": null,
@@ -3898,6 +3906,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -3905,19 +3914,19 @@
       {
         "id": "gen_list_commas_combine_o0mlab_8",
         "generatorFamilyId": "gen_list_commas_combine",
-        "variantSignature": "puncsig_08ojzv",
-        "templateId": "gen_list_commas_combine_template_14arcfx",
+        "variantSignature": "puncsig_161od5s",
+        "templateId": "gen_list_commas_combine_template_1va4v5w",
         "prompt": "Combine the notes into one correctly punctuated sentence.",
-        "stem": "Our lunch included\n- apples\n- sandwiches\n- juice",
-        "model": "Our lunch included apples, sandwiches and juice.",
+        "stem": "They planted\n- oaks\n- elms\n- birches",
+        "model": "They planted oaks, elms and birches.",
         "validatorType": "combineListSentence",
         "validator": {
           "type": "combineListSentence",
-          "opening": "Our lunch included",
+          "opening": "They planted",
           "items": [
-            "apples",
-            "sandwiches",
-            "juice"
+            "oaks",
+            "elms",
+            "birches"
           ]
         },
         "rubric": null,
@@ -3927,6 +3936,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4028,15 +4038,15 @@
       {
         "id": "gen_fronted_adverbial_fix_1v8zaoq_5",
         "generatorFamilyId": "gen_fronted_adverbial_fix",
-        "variantSignature": "puncsig_8l2wtt",
-        "templateId": "gen_fronted_adverbial_fix_template_1wney8c",
+        "variantSignature": "puncsig_rgclhf",
+        "templateId": "gen_fronted_adverbial_fix_template_ply45m",
         "prompt": "Correct the comma after the fronted adverbial.",
-        "stem": "During the concert the hall became silent.",
-        "model": "During the concert, the hall became silent.",
+        "stem": "Without warning the fox darted across the lane.",
+        "model": "Without warning, the fox darted across the lane.",
         "validatorType": "startsWithPhraseComma",
         "validator": {
           "type": "startsWithPhraseComma",
-          "phrase": "During the concert"
+          "phrase": "Without warning"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4051,15 +4061,15 @@
       {
         "id": "gen_fronted_adverbial_fix_1viywdp_6",
         "generatorFamilyId": "gen_fronted_adverbial_fix",
-        "variantSignature": "puncsig_atzp2i",
-        "templateId": "gen_fronted_adverbial_fix_template_da25i5",
+        "variantSignature": "puncsig_1qlnr3o",
+        "templateId": "gen_fronted_adverbial_fix_template_1kzlzs7",
         "prompt": "Correct the comma after the fronted adverbial.",
-        "stem": "At the edge of the field the coach waited.",
-        "model": "At the edge of the field, the coach waited.",
+        "stem": "Behind the shed the cat hid from the rain.",
+        "model": "Behind the shed, the cat hid from the rain.",
         "validatorType": "startsWithPhraseComma",
         "validator": {
           "type": "startsWithPhraseComma",
-          "phrase": "At the edge of the field"
+          "phrase": "Behind the shed"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4074,15 +4084,15 @@
       {
         "id": "gen_fronted_adverbial_fix_1up03as_7",
         "generatorFamilyId": "gen_fronted_adverbial_fix",
-        "variantSignature": "puncsig_8l2wtt",
-        "templateId": "gen_fronted_adverbial_fix_template_1wney8c",
+        "variantSignature": "puncsig_1k2617x",
+        "templateId": "gen_fronted_adverbial_fix_template_1psvti4",
         "prompt": "Correct the comma after the fronted adverbial.",
-        "stem": "During the concert the hall became silent.",
-        "model": "During the concert, the hall became silent.",
+        "stem": "Throughout the afternoon the children played outside.",
+        "model": "Throughout the afternoon, the children played outside.",
         "validatorType": "startsWithPhraseComma",
         "validator": {
           "type": "startsWithPhraseComma",
-          "phrase": "During the concert"
+          "phrase": "Throughout the afternoon"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4090,6 +4100,7 @@
         ],
         "readiness": [
           "proofreading",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4097,15 +4108,15 @@
       {
         "id": "gen_fronted_adverbial_fix_1uyzozr_8",
         "generatorFamilyId": "gen_fronted_adverbial_fix",
-        "variantSignature": "puncsig_atzp2i",
-        "templateId": "gen_fronted_adverbial_fix_template_da25i5",
+        "variantSignature": "puncsig_1v5a6q9",
+        "templateId": "gen_fronted_adverbial_fix_template_pyt9oh",
         "prompt": "Correct the comma after the fronted adverbial.",
-        "stem": "At the edge of the field the coach waited.",
-        "model": "At the edge of the field, the coach waited.",
+        "stem": "Near the old bridge the heron stood perfectly still.",
+        "model": "Near the old bridge, the heron stood perfectly still.",
         "validatorType": "startsWithPhraseComma",
         "validator": {
           "type": "startsWithPhraseComma",
-          "phrase": "At the edge of the field"
+          "phrase": "Near the old bridge"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4113,6 +4124,7 @@
         ],
         "readiness": [
           "proofreading",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4218,16 +4230,16 @@
       {
         "id": "gen_fronted_adverbial_combine_t6f10o_5",
         "generatorFamilyId": "gen_fronted_adverbial_combine",
-        "variantSignature": "puncsig_1s62czm",
-        "templateId": "gen_fronted_adverbial_combine_template_116hnmp",
+        "variantSignature": "puncsig_9ev3dh",
+        "templateId": "gen_fronted_adverbial_combine_template_1gj5hid",
         "prompt": "Combine the adverbial and main clause into one sentence.",
-        "stem": "During the concert\nThe hall became silent.",
-        "model": "During the concert, the hall became silent.",
+        "stem": "Throughout the afternoon\nThe children played outside.",
+        "model": "Throughout the afternoon, the children played outside.",
         "validatorType": "combineFrontedAdverbial",
         "validator": {
           "type": "combineFrontedAdverbial",
-          "phrase": "During the concert",
-          "mainClause": "the hall became silent"
+          "phrase": "Throughout the afternoon",
+          "mainClause": "the children played outside"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4235,6 +4247,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4242,16 +4255,16 @@
       {
         "id": "gen_fronted_adverbial_combine_tgempn_6",
         "generatorFamilyId": "gen_fronted_adverbial_combine",
-        "variantSignature": "puncsig_36di7r",
-        "templateId": "gen_fronted_adverbial_combine_template_1plxa4t",
+        "variantSignature": "puncsig_fjon9t",
+        "templateId": "gen_fronted_adverbial_combine_template_a7fb9k",
         "prompt": "Combine the adverbial and main clause into one sentence.",
-        "stem": "At the edge of the field\nThe coach waited.",
-        "model": "At the edge of the field, the coach waited.",
+        "stem": "Near the old bridge\nThe heron stood perfectly still.",
+        "model": "Near the old bridge, the heron stood perfectly still.",
         "validatorType": "combineFrontedAdverbial",
         "validator": {
           "type": "combineFrontedAdverbial",
-          "phrase": "At the edge of the field",
-          "mainClause": "the coach waited"
+          "phrase": "Near the old bridge",
+          "mainClause": "the heron stood perfectly still"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4259,6 +4272,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4266,16 +4280,16 @@
       {
         "id": "gen_fronted_adverbial_combine_tqe8em_7",
         "generatorFamilyId": "gen_fronted_adverbial_combine",
-        "variantSignature": "puncsig_1s62czm",
-        "templateId": "gen_fronted_adverbial_combine_template_116hnmp",
+        "variantSignature": "puncsig_kjy5g8",
+        "templateId": "gen_fronted_adverbial_combine_template_1hcft7",
         "prompt": "Combine the adverbial and main clause into one sentence.",
-        "stem": "During the concert\nThe hall became silent.",
-        "model": "During the concert, the hall became silent.",
+        "stem": "Without warning\nThe fox darted across the lane.",
+        "model": "Without warning, the fox darted across the lane.",
         "validatorType": "combineFrontedAdverbial",
         "validator": {
           "type": "combineFrontedAdverbial",
-          "phrase": "During the concert",
-          "mainClause": "the hall became silent"
+          "phrase": "Without warning",
+          "mainClause": "the fox darted across the lane"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4290,16 +4304,16 @@
       {
         "id": "gen_fronted_adverbial_combine_u0du3l_8",
         "generatorFamilyId": "gen_fronted_adverbial_combine",
-        "variantSignature": "puncsig_36di7r",
-        "templateId": "gen_fronted_adverbial_combine_template_1plxa4t",
+        "variantSignature": "puncsig_1xjfmkr",
+        "templateId": "gen_fronted_adverbial_combine_template_06i2qv",
         "prompt": "Combine the adverbial and main clause into one sentence.",
-        "stem": "At the edge of the field\nThe coach waited.",
-        "model": "At the edge of the field, the coach waited.",
+        "stem": "Behind the shed\nThe cat hid from the rain.",
+        "model": "Behind the shed, the cat hid from the rain.",
         "validatorType": "combineFrontedAdverbial",
         "validator": {
           "type": "combineFrontedAdverbial",
-          "phrase": "At the edge of the field",
-          "mainClause": "the coach waited"
+          "phrase": "Behind the shed",
+          "mainClause": "the cat hid from the rain"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4420,17 +4434,17 @@
       {
         "id": "gen_parenthesis_fix_b6mmsl_5",
         "generatorFamilyId": "gen_parenthesis_fix",
-        "variantSignature": "puncsig_1hjjs2m",
-        "templateId": "gen_parenthesis_fix_template_1hxyt9u",
+        "variantSignature": "puncsig_65lu26",
+        "templateId": "gen_parenthesis_fix_template_igl9mt",
         "prompt": "Correct the parenthesis punctuation.",
-        "stem": "Mr Patel our maths teacher smiled proudly.",
-        "model": "Mr Patel, our maths teacher, smiled proudly.",
+        "stem": "The clock an ancient relic chimed at noon.",
+        "model": "The clock, an ancient relic, chimed at noon.",
         "validatorType": "requiresParentheticalPhrase",
         "validator": {
           "type": "requiresParentheticalPhrase",
-          "before": "Mr Patel",
-          "phrase": "our maths teacher",
-          "after": "smiled proudly"
+          "before": "The clock",
+          "phrase": "an ancient relic",
+          "after": "chimed at noon"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4439,6 +4453,7 @@
         ],
         "readiness": [
           "proofreading",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4446,17 +4461,17 @@
       {
         "id": "gen_parenthesis_fix_awn13m_6",
         "generatorFamilyId": "gen_parenthesis_fix",
-        "variantSignature": "puncsig_673mgn",
-        "templateId": "gen_parenthesis_fix_template_11xdcus",
+        "variantSignature": "puncsig_st4mgk",
+        "templateId": "gen_parenthesis_fix_template_l02hoi",
         "prompt": "Correct the parenthesis punctuation.",
-        "stem": "The library a quiet room closed early.",
-        "model": "The library, a quiet room, closed early.",
+        "stem": "The bridge a stone crossing swayed in the wind.",
+        "model": "The bridge, a stone crossing, swayed in the wind.",
         "validatorType": "requiresParentheticalPhrase",
         "validator": {
           "type": "requiresParentheticalPhrase",
-          "before": "The library",
-          "phrase": "a quiet room",
-          "after": "closed early"
+          "before": "The bridge",
+          "phrase": "a stone crossing",
+          "after": "swayed in the wind"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4472,17 +4487,17 @@
       {
         "id": "gen_parenthesis_fix_amnfen_7",
         "generatorFamilyId": "gen_parenthesis_fix",
-        "variantSignature": "puncsig_1hjjs2m",
-        "templateId": "gen_parenthesis_fix_template_1hxyt9u",
+        "variantSignature": "puncsig_16a1pbx",
+        "templateId": "gen_parenthesis_fix_template_1b1lkvd",
         "prompt": "Correct the parenthesis punctuation.",
-        "stem": "Mr Patel our maths teacher smiled proudly.",
-        "model": "Mr Patel, our maths teacher, smiled proudly.",
+        "stem": "The canal a narrow waterway ran beside the park.",
+        "model": "The canal, a narrow waterway, ran beside the park.",
         "validatorType": "requiresParentheticalPhrase",
         "validator": {
           "type": "requiresParentheticalPhrase",
-          "before": "Mr Patel",
-          "phrase": "our maths teacher",
-          "after": "smiled proudly"
+          "before": "The canal",
+          "phrase": "a narrow waterway",
+          "after": "ran beside the park"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4498,17 +4513,17 @@
       {
         "id": "gen_parenthesis_fix_acntpo_8",
         "generatorFamilyId": "gen_parenthesis_fix",
-        "variantSignature": "puncsig_673mgn",
-        "templateId": "gen_parenthesis_fix_template_11xdcus",
+        "variantSignature": "puncsig_106omla",
+        "templateId": "gen_parenthesis_fix_template_1v5jmsr",
         "prompt": "Correct the parenthesis punctuation.",
-        "stem": "The library a quiet room closed early.",
-        "model": "The library, a quiet room, closed early.",
+        "stem": "Mrs Khan our head teacher opened the fete.",
+        "model": "Mrs Khan, our head teacher, opened the fete.",
         "validatorType": "requiresParentheticalPhrase",
         "validator": {
           "type": "requiresParentheticalPhrase",
-          "before": "The library",
-          "phrase": "a quiet room",
-          "after": "closed early"
+          "before": "Mrs Khan",
+          "phrase": "our head teacher",
+          "after": "opened the fete"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4517,6 +4532,7 @@
         ],
         "readiness": [
           "proofreading",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4630,17 +4646,17 @@
       {
         "id": "gen_parenthesis_combine_u681xz_5",
         "generatorFamilyId": "gen_parenthesis_combine",
-        "variantSignature": "puncsig_1199s4h",
-        "templateId": "gen_parenthesis_combine_template_xpov82",
+        "variantSignature": "puncsig_1v5ayep",
+        "templateId": "gen_parenthesis_combine_template_2fllcz",
         "prompt": "Combine the sentence and extra detail using parenthesis.",
-        "stem": "Mr Patel smiled proudly.\nExtra detail: our maths teacher",
-        "model": "Mr Patel, our maths teacher, smiled proudly.",
+        "stem": "The canal ran beside the park.\nExtra detail: a narrow waterway",
+        "model": "The canal, a narrow waterway, ran beside the park.",
         "validatorType": "combineParentheticalPhrase",
         "validator": {
           "type": "combineParentheticalPhrase",
-          "before": "Mr Patel",
-          "phrase": "our maths teacher",
-          "after": "smiled proudly"
+          "before": "The canal",
+          "phrase": "a narrow waterway",
+          "after": "ran beside the park"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4656,17 +4672,17 @@
       {
         "id": "gen_parenthesis_combine_tw8g90_6",
         "generatorFamilyId": "gen_parenthesis_combine",
-        "variantSignature": "puncsig_hz9s99",
-        "templateId": "gen_parenthesis_combine_template_zwj4d4",
+        "variantSignature": "puncsig_dj05in",
+        "templateId": "gen_parenthesis_combine_template_x9zer3",
         "prompt": "Combine the sentence and extra detail using parenthesis.",
-        "stem": "The library closed early.\nExtra detail: a quiet room",
-        "model": "The library, a quiet room, closed early.",
+        "stem": "Mrs Khan opened the fete.\nExtra detail: our head teacher",
+        "model": "Mrs Khan, our head teacher, opened the fete.",
         "validatorType": "combineParentheticalPhrase",
         "validator": {
           "type": "combineParentheticalPhrase",
-          "before": "The library",
-          "phrase": "a quiet room",
-          "after": "closed early"
+          "before": "Mrs Khan",
+          "phrase": "our head teacher",
+          "after": "opened the fete"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4675,6 +4691,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4682,17 +4699,17 @@
       {
         "id": "gen_parenthesis_combine_uq79bx_7",
         "generatorFamilyId": "gen_parenthesis_combine",
-        "variantSignature": "puncsig_1199s4h",
-        "templateId": "gen_parenthesis_combine_template_xpov82",
+        "variantSignature": "puncsig_tf4h2z",
+        "templateId": "gen_parenthesis_combine_template_9vxfdf",
         "prompt": "Combine the sentence and extra detail using parenthesis.",
-        "stem": "Mr Patel smiled proudly.\nExtra detail: our maths teacher",
-        "model": "Mr Patel, our maths teacher, smiled proudly.",
+        "stem": "The clock chimed at noon.\nExtra detail: an ancient relic",
+        "model": "The clock, an ancient relic, chimed at noon.",
         "validatorType": "combineParentheticalPhrase",
         "validator": {
           "type": "combineParentheticalPhrase",
-          "before": "Mr Patel",
-          "phrase": "our maths teacher",
-          "after": "smiled proudly"
+          "before": "The clock",
+          "phrase": "an ancient relic",
+          "after": "chimed at noon"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4701,6 +4718,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4708,17 +4726,17 @@
       {
         "id": "gen_parenthesis_combine_ug7nmy_8",
         "generatorFamilyId": "gen_parenthesis_combine",
-        "variantSignature": "puncsig_hz9s99",
-        "templateId": "gen_parenthesis_combine_template_zwj4d4",
+        "variantSignature": "puncsig_clgwqs",
+        "templateId": "gen_parenthesis_combine_template_1qql2dc",
         "prompt": "Combine the sentence and extra detail using parenthesis.",
-        "stem": "The library closed early.\nExtra detail: a quiet room",
-        "model": "The library, a quiet room, closed early.",
+        "stem": "The bridge swayed in the wind.\nExtra detail: a stone crossing",
+        "model": "The bridge, a stone crossing, swayed in the wind.",
         "validatorType": "combineParentheticalPhrase",
         "validator": {
           "type": "combineParentheticalPhrase",
-          "before": "The library",
-          "phrase": "a quiet room",
-          "after": "closed early"
+          "before": "The bridge",
+          "phrase": "a stone crossing",
+          "after": "swayed in the wind"
         },
         "rubric": null,
         "misconceptionTags": [
@@ -4924,20 +4942,20 @@
       {
         "id": "gen_parenthesis_speech_paragraph_ulyb7t_5",
         "generatorFamilyId": "gen_parenthesis_speech_paragraph",
-        "variantSignature": "puncsig_e5nb1w",
-        "templateId": "gen_parenthesis_speech_paragraph_template_l7g61c",
+        "variantSignature": "puncsig_2ukd3q",
+        "templateId": "gen_parenthesis_speech_paragraph_template_64ggmt",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "Mr Patel our maths teacher smiled proudly. Leo asked did we win",
-        "model": "Mr Patel, our maths teacher, smiled proudly. Leo asked, \"Did we win?\"",
+        "stem": "The clock an ancient relic chimed at noon. Ava whispered it still works",
+        "model": "The clock, an ancient relic, chimed at noon. Ava whispered, \"It still works.\"",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresParentheticalPhrase",
-              "before": "Mr Patel",
-              "phrase": "our maths teacher",
-              "after": "smiled proudly",
+              "before": "The clock",
+              "phrase": "an ancient relic",
+              "after": "chimed at noon",
               "misconceptionTags": [
                 "structure.parenthesis_missing",
                 "structure.parenthesis_unbalanced"
@@ -4945,8 +4963,8 @@
             },
             {
               "type": "speechWithWords",
-              "words": "did we win",
-              "requiredTerminal": "?",
+              "words": "it still works",
+              "requiredTerminal": ".",
               "misconceptionTags": [
                 "speech.quote_missing",
                 "speech.reporting_comma_missing",
@@ -4964,6 +4982,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -4971,20 +4990,20 @@
       {
         "id": "gen_parenthesis_speech_paragraph_ubypiu_6",
         "generatorFamilyId": "gen_parenthesis_speech_paragraph",
-        "variantSignature": "puncsig_paw9dv",
-        "templateId": "gen_parenthesis_speech_paragraph_template_f5rlwh",
+        "variantSignature": "puncsig_17td0lr",
+        "templateId": "gen_parenthesis_speech_paragraph_template_1xmrdb7",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "The library a quiet room closed early. Nina said we can come back tomorrow",
-        "model": "The library, a quiet room, closed early. Nina said, \"We can come back tomorrow.\"",
+        "stem": "The bridge a stone crossing swayed in the wind. Kai shouted hold on tight",
+        "model": "The bridge, a stone crossing, swayed in the wind. Kai shouted, \"Hold on tight!\"",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresParentheticalPhrase",
-              "before": "The library",
-              "phrase": "a quiet room",
-              "after": "closed early",
+              "before": "The bridge",
+              "phrase": "a stone crossing",
+              "after": "swayed in the wind",
               "misconceptionTags": [
                 "structure.parenthesis_missing",
                 "structure.parenthesis_unbalanced"
@@ -4992,8 +5011,8 @@
             },
             {
               "type": "speechWithWords",
-              "words": "we can come back tomorrow",
-              "requiredTerminal": ".",
+              "words": "hold on tight",
+              "requiredTerminal": "!",
               "misconceptionTags": [
                 "speech.quote_missing",
                 "speech.reporting_comma_missing",
@@ -5018,20 +5037,20 @@
       {
         "id": "gen_parenthesis_speech_paragraph_u1z3tv_7",
         "generatorFamilyId": "gen_parenthesis_speech_paragraph",
-        "variantSignature": "puncsig_e5nb1w",
-        "templateId": "gen_parenthesis_speech_paragraph_template_l7g61c",
+        "variantSignature": "puncsig_0bd5qt",
+        "templateId": "gen_parenthesis_speech_paragraph_template_1ycr3tf",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "Mr Patel our maths teacher smiled proudly. Leo asked did we win",
-        "model": "Mr Patel, our maths teacher, smiled proudly. Leo asked, \"Did we win?\"",
+        "stem": "The canal a narrow waterway ran beside the park. Zara said the ducks are nesting",
+        "model": "The canal, a narrow waterway, ran beside the park. Zara said, \"The ducks are nesting.\"",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresParentheticalPhrase",
-              "before": "Mr Patel",
-              "phrase": "our maths teacher",
-              "after": "smiled proudly",
+              "before": "The canal",
+              "phrase": "a narrow waterway",
+              "after": "ran beside the park",
               "misconceptionTags": [
                 "structure.parenthesis_missing",
                 "structure.parenthesis_unbalanced"
@@ -5039,8 +5058,8 @@
             },
             {
               "type": "speechWithWords",
-              "words": "did we win",
-              "requiredTerminal": "?",
+              "words": "the ducks are nesting",
+              "requiredTerminal": ".",
               "misconceptionTags": [
                 "speech.quote_missing",
                 "speech.reporting_comma_missing",
@@ -5065,20 +5084,20 @@
       {
         "id": "gen_parenthesis_speech_paragraph_trzi4w_8",
         "generatorFamilyId": "gen_parenthesis_speech_paragraph",
-        "variantSignature": "puncsig_paw9dv",
-        "templateId": "gen_parenthesis_speech_paragraph_template_f5rlwh",
+        "variantSignature": "puncsig_r9umdx",
+        "templateId": "gen_parenthesis_speech_paragraph_template_l11ydj",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "The library a quiet room closed early. Nina said we can come back tomorrow",
-        "model": "The library, a quiet room, closed early. Nina said, \"We can come back tomorrow.\"",
+        "stem": "Mrs Khan our head teacher opened the fete. Sam asked can we have another go",
+        "model": "Mrs Khan, our head teacher, opened the fete. Sam asked, \"Can we have another go?\"",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresParentheticalPhrase",
-              "before": "The library",
-              "phrase": "a quiet room",
-              "after": "closed early",
+              "before": "Mrs Khan",
+              "phrase": "our head teacher",
+              "after": "opened the fete",
               "misconceptionTags": [
                 "structure.parenthesis_missing",
                 "structure.parenthesis_unbalanced"
@@ -5086,8 +5105,8 @@
             },
             {
               "type": "speechWithWords",
-              "words": "we can come back tomorrow",
-              "requiredTerminal": ".",
+              "words": "can we have another go",
+              "requiredTerminal": "?",
               "misconceptionTags": [
                 "speech.quote_missing",
                 "speech.reporting_comma_missing",
@@ -5105,6 +5124,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -5230,19 +5250,19 @@
       {
         "id": "gen_colon_list_insert_kq7bmd_5",
         "generatorFamilyId": "gen_colon_list_insert",
-        "variantSignature": "puncsig_1b6mqjs",
-        "templateId": "gen_colon_list_insert_template_1yfkdms",
+        "variantSignature": "puncsig_1nseakl",
+        "templateId": "gen_colon_list_insert_template_4r8543",
         "prompt": "Add the colon before the list.",
-        "stem": "We chose three activities swimming, cycling and climbing.",
-        "model": "We chose three activities: swimming, cycling and climbing.",
+        "stem": "The team trained in three sports running, rowing and tennis.",
+        "model": "The team trained in three sports: running, rowing and tennis.",
         "validatorType": "requiresColonBeforeList",
         "validator": {
           "type": "requiresColonBeforeList",
-          "opening": "We chose three activities",
+          "opening": "The team trained in three sports",
           "items": [
-            "swimming",
-            "cycling",
-            "climbing"
+            "running",
+            "rowing",
+            "tennis"
           ]
         },
         "rubric": null,
@@ -5252,6 +5272,7 @@
         ],
         "readiness": [
           "insertion",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -5259,19 +5280,19 @@
       {
         "id": "gen_colon_list_insert_kg7pxe_6",
         "generatorFamilyId": "gen_colon_list_insert",
-        "variantSignature": "puncsig_gnacaa",
-        "templateId": "gen_colon_list_insert_template_1ojbkvf",
+        "variantSignature": "puncsig_8rfdu6",
+        "templateId": "gen_colon_list_insert_template_18luwbt",
         "prompt": "Add the colon before the list.",
-        "stem": "The drawer held three supplies pens, rulers and tape.",
-        "model": "The drawer held three supplies: pens, rulers and tape.",
+        "stem": "The garden had three features a pond, a bench and a hedge.",
+        "model": "The garden had three features: a pond, a bench and a hedge.",
         "validatorType": "requiresColonBeforeList",
         "validator": {
           "type": "requiresColonBeforeList",
-          "opening": "The drawer held three supplies",
+          "opening": "The garden had three features",
           "items": [
-            "pens",
-            "rulers",
-            "tape"
+            "a pond",
+            "a bench",
+            "a hedge"
           ]
         },
         "rubric": null,
@@ -5288,19 +5309,19 @@
       {
         "id": "gen_colon_list_insert_k6848f_7",
         "generatorFamilyId": "gen_colon_list_insert",
-        "variantSignature": "puncsig_1b6mqjs",
-        "templateId": "gen_colon_list_insert_template_1yfkdms",
+        "variantSignature": "puncsig_1labfh6",
+        "templateId": "gen_colon_list_insert_template_1nuydx6",
         "prompt": "Add the colon before the list.",
-        "stem": "We chose three activities swimming, cycling and climbing.",
-        "model": "We chose three activities: swimming, cycling and climbing.",
+        "stem": "She packed three essentials water, sunscreen and a hat.",
+        "model": "She packed three essentials: water, sunscreen and a hat.",
         "validatorType": "requiresColonBeforeList",
         "validator": {
           "type": "requiresColonBeforeList",
-          "opening": "We chose three activities",
+          "opening": "She packed three essentials",
           "items": [
-            "swimming",
-            "cycling",
-            "climbing"
+            "water",
+            "sunscreen",
+            "a hat"
           ]
         },
         "rubric": null,
@@ -5317,19 +5338,19 @@
       {
         "id": "gen_colon_list_insert_jw8ijg_8",
         "generatorFamilyId": "gen_colon_list_insert",
-        "variantSignature": "puncsig_gnacaa",
-        "templateId": "gen_colon_list_insert_template_1ojbkvf",
+        "variantSignature": "puncsig_1acblt9",
+        "templateId": "gen_colon_list_insert_template_1ku4w9k",
         "prompt": "Add the colon before the list.",
-        "stem": "The drawer held three supplies pens, rulers and tape.",
-        "model": "The drawer held three supplies: pens, rulers and tape.",
+        "stem": "The recipe required three spices cumin, paprika and turmeric.",
+        "model": "The recipe required three spices: cumin, paprika and turmeric.",
         "validatorType": "requiresColonBeforeList",
         "validator": {
           "type": "requiresColonBeforeList",
-          "opening": "The drawer held three supplies",
+          "opening": "The recipe required three spices",
           "items": [
-            "pens",
-            "rulers",
-            "tape"
+            "cumin",
+            "paprika",
+            "turmeric"
           ]
         },
         "rubric": null,
@@ -5339,6 +5360,7 @@
         ],
         "readiness": [
           "insertion",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -5464,19 +5486,19 @@
       {
         "id": "gen_colon_list_combine_abpzyh_5",
         "generatorFamilyId": "gen_colon_list_combine",
-        "variantSignature": "puncsig_ynal65",
-        "templateId": "gen_colon_list_combine_template_19wsb66",
+        "variantSignature": "puncsig_stemyv",
+        "templateId": "gen_colon_list_combine_template_1gp6wl1",
         "prompt": "Combine the opening clause and list using a colon.",
-        "stem": "We chose three activities\nswimming / cycling / climbing",
-        "model": "We chose three activities: swimming, cycling and climbing.",
+        "stem": "The team trained in three sports\nrunning / rowing / tennis",
+        "model": "The team trained in three sports: running, rowing and tennis.",
         "validatorType": "combineColonList",
         "validator": {
           "type": "combineColonList",
-          "opening": "We chose three activities",
+          "opening": "The team trained in three sports",
           "items": [
-            "swimming",
-            "cycling",
-            "climbing"
+            "running",
+            "rowing",
+            "tennis"
           ]
         },
         "rubric": null,
@@ -5486,6 +5508,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -5493,19 +5516,19 @@
       {
         "id": "gen_colon_list_combine_a1qe9i_6",
         "generatorFamilyId": "gen_colon_list_combine",
-        "variantSignature": "puncsig_qt2pkv",
-        "templateId": "gen_colon_list_combine_template_50y9if",
+        "variantSignature": "puncsig_19tzeeu",
+        "templateId": "gen_colon_list_combine_template_bq5e0v",
         "prompt": "Combine the opening clause and list using a colon.",
-        "stem": "The drawer held three supplies\npens / rulers / tape",
-        "model": "The drawer held three supplies: pens, rulers and tape.",
+        "stem": "The garden had three features\na pond / a bench / a hedge",
+        "model": "The garden had three features: a pond, a bench and a hedge.",
         "validatorType": "combineColonList",
         "validator": {
           "type": "combineColonList",
-          "opening": "The drawer held three supplies",
+          "opening": "The garden had three features",
           "items": [
-            "pens",
-            "rulers",
-            "tape"
+            "a pond",
+            "a bench",
+            "a hedge"
           ]
         },
         "rubric": null,
@@ -5522,19 +5545,19 @@
       {
         "id": "gen_colon_list_combine_9rqskj_7",
         "generatorFamilyId": "gen_colon_list_combine",
-        "variantSignature": "puncsig_ynal65",
-        "templateId": "gen_colon_list_combine_template_19wsb66",
+        "variantSignature": "puncsig_19oug1w",
+        "templateId": "gen_colon_list_combine_template_5xpcy6",
         "prompt": "Combine the opening clause and list using a colon.",
-        "stem": "We chose three activities\nswimming / cycling / climbing",
-        "model": "We chose three activities: swimming, cycling and climbing.",
+        "stem": "She packed three essentials\nwater / sunscreen / a hat",
+        "model": "She packed three essentials: water, sunscreen and a hat.",
         "validatorType": "combineColonList",
         "validator": {
           "type": "combineColonList",
-          "opening": "We chose three activities",
+          "opening": "She packed three essentials",
           "items": [
-            "swimming",
-            "cycling",
-            "climbing"
+            "water",
+            "sunscreen",
+            "a hat"
           ]
         },
         "rubric": null,
@@ -5551,19 +5574,19 @@
       {
         "id": "gen_colon_list_combine_9hr6vk_8",
         "generatorFamilyId": "gen_colon_list_combine",
-        "variantSignature": "puncsig_qt2pkv",
-        "templateId": "gen_colon_list_combine_template_50y9if",
+        "variantSignature": "puncsig_flti3m",
+        "templateId": "gen_colon_list_combine_template_17c6tks",
         "prompt": "Combine the opening clause and list using a colon.",
-        "stem": "The drawer held three supplies\npens / rulers / tape",
-        "model": "The drawer held three supplies: pens, rulers and tape.",
+        "stem": "The recipe required three spices\ncumin / paprika / turmeric",
+        "model": "The recipe required three spices: cumin, paprika and turmeric.",
         "validatorType": "combineColonList",
         "validator": {
           "type": "combineColonList",
-          "opening": "The drawer held three supplies",
+          "opening": "The recipe required three spices",
           "items": [
-            "pens",
-            "rulers",
-            "tape"
+            "cumin",
+            "paprika",
+            "turmeric"
           ]
         },
         "rubric": null,
@@ -5573,6 +5596,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -5686,16 +5710,16 @@
       {
         "id": "gen_semicolon_fix_e62v2c_5",
         "generatorFamilyId": "gen_semicolon_fix",
-        "variantSignature": "puncsig_1x27sj4",
-        "templateId": "gen_semicolon_fix_template_vwch5i",
-        "prompt": "Replace the comma splice with a semi-colon.",
-        "stem": "The clock stopped, the class kept working.",
-        "model": "The clock stopped; the class kept working.",
+        "variantSignature": "puncsig_yacq1o",
+        "templateId": "gen_semicolon_fix_template_3aoimq",
+        "prompt": "Fix the comma splice by using a semi-colon.",
+        "stem": "The river rose, the villagers moved to higher ground.",
+        "model": "The river rose; the villagers moved to higher ground.",
         "validatorType": "requiresBoundaryBetweenClauses",
         "validator": {
           "type": "requiresBoundaryBetweenClauses",
-          "left": "The clock stopped",
-          "right": "the class kept working",
+          "left": "The river rose",
+          "right": "the villagers moved to higher ground",
           "mark": ";"
         },
         "rubric": null,
@@ -5705,6 +5729,7 @@
         ],
         "readiness": [
           "proofreading",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -5712,16 +5737,16 @@
       {
         "id": "gen_semicolon_fix_eg2grb_6",
         "generatorFamilyId": "gen_semicolon_fix",
-        "variantSignature": "puncsig_fu4o3l",
-        "templateId": "gen_semicolon_fix_template_r1d5mx",
+        "variantSignature": "puncsig_1gdhojz",
+        "templateId": "gen_semicolon_fix_template_u8r8ga",
         "prompt": "Replace the comma splice with a semi-colon.",
-        "stem": "The path was narrow, the hikers walked slowly.",
-        "model": "The path was narrow; the hikers walked slowly.",
+        "stem": "The bell chimed, the children lined up quietly.",
+        "model": "The bell chimed; the children lined up quietly.",
         "validatorType": "requiresBoundaryBetweenClauses",
         "validator": {
           "type": "requiresBoundaryBetweenClauses",
-          "left": "The path was narrow",
-          "right": "the hikers walked slowly",
+          "left": "The bell chimed",
+          "right": "the children lined up quietly",
           "mark": ";"
         },
         "rubric": null,
@@ -5731,6 +5756,7 @@
         ],
         "readiness": [
           "proofreading",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -5738,16 +5764,16 @@
       {
         "id": "gen_semicolon_fix_eq22ga_7",
         "generatorFamilyId": "gen_semicolon_fix",
-        "variantSignature": "puncsig_1x27sj4",
-        "templateId": "gen_semicolon_fix_template_vwch5i",
+        "variantSignature": "puncsig_1976pmx",
+        "templateId": "gen_semicolon_fix_template_1ng5ec2",
         "prompt": "Replace the comma splice with a semi-colon.",
-        "stem": "The clock stopped, the class kept working.",
-        "model": "The clock stopped; the class kept working.",
+        "stem": "The wind howled, the shutters rattled loudly.",
+        "model": "The wind howled; the shutters rattled loudly.",
         "validatorType": "requiresBoundaryBetweenClauses",
         "validator": {
           "type": "requiresBoundaryBetweenClauses",
-          "left": "The clock stopped",
-          "right": "the class kept working",
+          "left": "The wind howled",
+          "right": "the shutters rattled loudly",
           "mark": ";"
         },
         "rubric": null,
@@ -5764,16 +5790,16 @@
       {
         "id": "gen_semicolon_fix_f01o59_8",
         "generatorFamilyId": "gen_semicolon_fix",
-        "variantSignature": "puncsig_fu4o3l",
-        "templateId": "gen_semicolon_fix_template_r1d5mx",
+        "variantSignature": "puncsig_m90oh8",
+        "templateId": "gen_semicolon_fix_template_zid9lf",
         "prompt": "Replace the comma splice with a semi-colon.",
-        "stem": "The path was narrow, the hikers walked slowly.",
-        "model": "The path was narrow; the hikers walked slowly.",
+        "stem": "The sun set, the bats emerged from the cave.",
+        "model": "The sun set; the bats emerged from the cave.",
         "validatorType": "requiresBoundaryBetweenClauses",
         "validator": {
           "type": "requiresBoundaryBetweenClauses",
-          "left": "The path was narrow",
-          "right": "the hikers walked slowly",
+          "left": "The sun set",
+          "right": "the bats emerged from the cave",
           "mark": ";"
         },
         "rubric": null,
@@ -5896,16 +5922,16 @@
       {
         "id": "gen_semicolon_combine_4u80ym_5",
         "generatorFamilyId": "gen_semicolon_combine",
-        "variantSignature": "puncsig_0ts7nt",
-        "templateId": "gen_semicolon_combine_template_iorsah",
+        "variantSignature": "puncsig_wsyd70",
+        "templateId": "gen_semicolon_combine_template_cihsnt",
         "prompt": "Combine the two related clauses into one sentence with a semi-colon.",
-        "stem": "The clock stopped.\nThe class kept working.",
-        "model": "The clock stopped; the class kept working.",
+        "stem": "The wind howled.\nThe shutters rattled loudly.",
+        "model": "The wind howled; the shutters rattled loudly.",
         "validatorType": "combineBoundaryBetweenClauses",
         "validator": {
           "type": "combineBoundaryBetweenClauses",
-          "left": "The clock stopped",
-          "right": "the class kept working",
+          "left": "The wind howled",
+          "right": "the shutters rattled loudly",
           "mark": ";"
         },
         "rubric": null,
@@ -5922,16 +5948,16 @@
       {
         "id": "gen_semicolon_combine_547mnl_6",
         "generatorFamilyId": "gen_semicolon_combine",
-        "variantSignature": "puncsig_4jp8xz",
-        "templateId": "gen_semicolon_combine_template_b0qttm",
+        "variantSignature": "puncsig_1qmvb7x",
+        "templateId": "gen_semicolon_combine_template_m10daw",
         "prompt": "Combine the two related clauses into one sentence with a semi-colon.",
-        "stem": "The path was narrow.\nThe hikers walked slowly.",
-        "model": "The path was narrow; the hikers walked slowly.",
+        "stem": "The sun set.\nThe bats emerged from the cave.",
+        "model": "The sun set; the bats emerged from the cave.",
         "validatorType": "combineBoundaryBetweenClauses",
         "validator": {
           "type": "combineBoundaryBetweenClauses",
-          "left": "The path was narrow",
-          "right": "the hikers walked slowly",
+          "left": "The sun set",
+          "right": "the bats emerged from the cave",
           "mark": ";"
         },
         "rubric": null,
@@ -5948,16 +5974,16 @@
       {
         "id": "gen_semicolon_combine_4a8tko_7",
         "generatorFamilyId": "gen_semicolon_combine",
-        "variantSignature": "puncsig_0ts7nt",
-        "templateId": "gen_semicolon_combine_template_iorsah",
-        "prompt": "Combine the two related clauses into one sentence with a semi-colon.",
-        "stem": "The clock stopped.\nThe class kept working.",
-        "model": "The clock stopped; the class kept working.",
+        "variantSignature": "puncsig_vpp5tp",
+        "templateId": "gen_semicolon_combine_template_ncc6xp",
+        "prompt": "Join the two related sentences with a semi-colon.",
+        "stem": "The river rose.\nThe villagers moved to higher ground.",
+        "model": "The river rose; the villagers moved to higher ground.",
         "validatorType": "combineBoundaryBetweenClauses",
         "validator": {
           "type": "combineBoundaryBetweenClauses",
-          "left": "The clock stopped",
-          "right": "the class kept working",
+          "left": "The river rose",
+          "right": "the villagers moved to higher ground",
           "mark": ";"
         },
         "rubric": null,
@@ -5967,6 +5993,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -5974,16 +6001,16 @@
       {
         "id": "gen_semicolon_combine_4k8f9n_8",
         "generatorFamilyId": "gen_semicolon_combine",
-        "variantSignature": "puncsig_4jp8xz",
-        "templateId": "gen_semicolon_combine_template_b0qttm",
+        "variantSignature": "puncsig_gtj983",
+        "templateId": "gen_semicolon_combine_template_cjhqfp",
         "prompt": "Combine the two related clauses into one sentence with a semi-colon.",
-        "stem": "The path was narrow.\nThe hikers walked slowly.",
-        "model": "The path was narrow; the hikers walked slowly.",
+        "stem": "The bell chimed.\nThe children lined up quietly.",
+        "model": "The bell chimed; the children lined up quietly.",
         "validatorType": "combineBoundaryBetweenClauses",
         "validator": {
           "type": "combineBoundaryBetweenClauses",
-          "left": "The path was narrow",
-          "right": "the hikers walked slowly",
+          "left": "The bell chimed",
+          "right": "the children lined up quietly",
           "mark": ";"
         },
         "rubric": null,
@@ -5993,6 +6020,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -6206,22 +6234,22 @@
       {
         "id": "gen_colon_semicolon_paragraph_1p0dao9_5",
         "generatorFamilyId": "gen_colon_semicolon_paragraph",
-        "variantSignature": "puncsig_1kyykb2",
-        "templateId": "gen_colon_semicolon_paragraph_template_08cn05",
+        "variantSignature": "puncsig_lzx86k",
+        "templateId": "gen_colon_semicolon_paragraph_template_s35auo",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "Our display needed three labels, rivers, mountains and coasts. The lights dimmed, the film began.",
-        "model": "Our display needed three labels: rivers, mountains and coasts. The lights dimmed; the film began.",
+        "stem": "The basket held three fruits, apples, pears and plums. The whistle blew, the players stopped.",
+        "model": "The basket held three fruits: apples, pears and plums. The whistle blew; the players stopped.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresColonBeforeList",
-              "opening": "Our display needed three labels",
+              "opening": "The basket held three fruits",
               "items": [
-                "rivers",
-                "mountains",
-                "coasts"
+                "apples",
+                "pears",
+                "plums"
               ],
               "allowTrailingText": true,
               "misconceptionTags": [
@@ -6232,8 +6260,8 @@
             {
               "type": "requiresBoundaryBetweenClauses",
               "mark": ";",
-              "left": "The lights dimmed",
-              "right": "the film began",
+              "left": "The whistle blew",
+              "right": "the players stopped",
               "misconceptionTags": [
                 "boundary.comma_splice",
                 "boundary.semicolon_missing"
@@ -6250,6 +6278,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -6257,22 +6286,22 @@
       {
         "id": "gen_colon_semicolon_paragraph_1oqdoza_6",
         "generatorFamilyId": "gen_colon_semicolon_paragraph",
-        "variantSignature": "puncsig_nfzjh8",
-        "templateId": "gen_colon_semicolon_paragraph_template_14w5vlm",
+        "variantSignature": "puncsig_1oxj026",
+        "templateId": "gen_colon_semicolon_paragraph_template_q8h1fn",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "The box contained three items, a scarf, a medal and a badge. The door opened, the crowd cheered.",
-        "model": "The box contained three items: a scarf, a medal and a badge. The door opened; the crowd cheered.",
+        "stem": "The shed stored three items, a mower, a rake and a hose. The gate creaked, the dog barked.",
+        "model": "The shed stored three items: a mower, a rake and a hose. The gate creaked; the dog barked.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresColonBeforeList",
-              "opening": "The box contained three items",
+              "opening": "The shed stored three items",
               "items": [
-                "a scarf",
-                "a medal",
-                "a badge"
+                "a mower",
+                "a rake",
+                "a hose"
               ],
               "allowTrailingText": true,
               "misconceptionTags": [
@@ -6283,8 +6312,8 @@
             {
               "type": "requiresBoundaryBetweenClauses",
               "mark": ";",
-              "left": "The door opened",
-              "right": "the crowd cheered",
+              "left": "The gate creaked",
+              "right": "the dog barked",
               "misconceptionTags": [
                 "boundary.comma_splice",
                 "boundary.semicolon_missing"
@@ -6308,22 +6337,22 @@
       {
         "id": "gen_colon_semicolon_paragraph_1oge3ab_7",
         "generatorFamilyId": "gen_colon_semicolon_paragraph",
-        "variantSignature": "puncsig_1kyykb2",
-        "templateId": "gen_colon_semicolon_paragraph_template_08cn05",
+        "variantSignature": "puncsig_rnss5v",
+        "templateId": "gen_colon_semicolon_paragraph_template_8igxxy",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "Our display needed three labels, rivers, mountains and coasts. The lights dimmed, the film began.",
-        "model": "Our display needed three labels: rivers, mountains and coasts. The lights dimmed; the film began.",
+        "stem": "We tried three flavours, mint, lemon and ginger. The queue grew, the server worked faster.",
+        "model": "We tried three flavours: mint, lemon and ginger. The queue grew; the server worked faster.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresColonBeforeList",
-              "opening": "Our display needed three labels",
+              "opening": "We tried three flavours",
               "items": [
-                "rivers",
-                "mountains",
-                "coasts"
+                "mint",
+                "lemon",
+                "ginger"
               ],
               "allowTrailingText": true,
               "misconceptionTags": [
@@ -6334,8 +6363,8 @@
             {
               "type": "requiresBoundaryBetweenClauses",
               "mark": ";",
-              "left": "The lights dimmed",
-              "right": "the film began",
+              "left": "The queue grew",
+              "right": "the server worked faster",
               "misconceptionTags": [
                 "boundary.comma_splice",
                 "boundary.semicolon_missing"
@@ -6352,6 +6381,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -6359,22 +6389,22 @@
       {
         "id": "gen_colon_semicolon_paragraph_1o6ehlc_8",
         "generatorFamilyId": "gen_colon_semicolon_paragraph",
-        "variantSignature": "puncsig_nfzjh8",
-        "templateId": "gen_colon_semicolon_paragraph_template_14w5vlm",
+        "variantSignature": "puncsig_14ip491",
+        "templateId": "gen_colon_semicolon_paragraph_template_1ygipf1",
         "prompt": "Repair the punctuation in the short passage.",
-        "stem": "The box contained three items, a scarf, a medal and a badge. The door opened, the crowd cheered.",
-        "model": "The box contained three items: a scarf, a medal and a badge. The door opened; the crowd cheered.",
+        "stem": "The park offered three trails, woodland, riverside and hilltop. The fog lifted, the runners set off.",
+        "model": "The park offered three trails: woodland, riverside and hilltop. The fog lifted; the runners set off.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresColonBeforeList",
-              "opening": "The box contained three items",
+              "opening": "The park offered three trails",
               "items": [
-                "a scarf",
-                "a medal",
-                "a badge"
+                "woodland",
+                "riverside",
+                "hilltop"
               ],
               "allowTrailingText": true,
               "misconceptionTags": [
@@ -6385,8 +6415,8 @@
             {
               "type": "requiresBoundaryBetweenClauses",
               "mark": ";",
-              "left": "The door opened",
-              "right": "the crowd cheered",
+              "left": "The fog lifted",
+              "right": "the runners set off",
               "misconceptionTags": [
                 "boundary.comma_splice",
                 "boundary.semicolon_missing"
@@ -6403,6 +6433,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -6524,19 +6555,19 @@
       {
         "id": "gen_bullet_points_fix_cox9dv_5",
         "generatorFamilyId": "gen_bullet_points_fix",
-        "variantSignature": "puncsig_s8slbt",
-        "templateId": "gen_bullet_points_fix_template_ddav2o",
+        "variantSignature": "puncsig_ffw0fx",
+        "templateId": "gen_bullet_points_fix_template_1nyj2h8",
         "prompt": "Make the bullet punctuation consistent.",
-        "stem": "Check:\n- doors.\n- windows\n- lights.",
-        "model": "Check:\n- doors.\n- windows.\n- lights.",
+        "stem": "Prepare:\n- flour\n- butter.\n- sugar",
+        "model": "Prepare:\n- flour\n- butter\n- sugar",
         "validatorType": "requiresBulletStemAndItems",
         "validator": {
           "type": "requiresBulletStemAndItems",
-          "stem": "Check",
+          "stem": "Prepare",
           "items": [
-            "doors",
-            "windows",
-            "lights"
+            "flour",
+            "butter",
+            "sugar"
           ]
         },
         "rubric": null,
@@ -6552,19 +6583,19 @@
       {
         "id": "gen_bullet_points_fix_cexnow_6",
         "generatorFamilyId": "gen_bullet_points_fix",
-        "variantSignature": "puncsig_1n4aanx",
-        "templateId": "gen_bullet_points_fix_template_zg5zmq",
-        "prompt": "Make the bullet punctuation consistent.",
-        "stem": "Take:\n- water\n- snacks.\n- a hat",
-        "model": "Take:\n- water\n- snacks\n- a hat",
+        "variantSignature": "puncsig_9e931p",
+        "templateId": "gen_bullet_points_fix_template_cku221",
+        "prompt": "Fix the inconsistent bullet punctuation.",
+        "stem": "Remember:\n- keys.\n- phone\n- wallet.",
+        "model": "Remember:\n- keys.\n- phone.\n- wallet.",
         "validatorType": "requiresBulletStemAndItems",
         "validator": {
           "type": "requiresBulletStemAndItems",
-          "stem": "Take",
+          "stem": "Remember",
           "items": [
-            "water",
-            "snacks",
-            "a hat"
+            "keys",
+            "phone",
+            "wallet"
           ]
         },
         "rubric": null,
@@ -6573,6 +6604,7 @@
         ],
         "readiness": [
           "proofreading",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -6580,19 +6612,19 @@
       {
         "id": "gen_bullet_points_fix_d8wgrt_7",
         "generatorFamilyId": "gen_bullet_points_fix",
-        "variantSignature": "puncsig_s8slbt",
-        "templateId": "gen_bullet_points_fix_template_ddav2o",
+        "variantSignature": "puncsig_11uo1u7",
+        "templateId": "gen_bullet_points_fix_template_xlrow4",
         "prompt": "Make the bullet punctuation consistent.",
-        "stem": "Check:\n- doors.\n- windows\n- lights.",
-        "model": "Check:\n- doors.\n- windows.\n- lights.",
+        "stem": "Buy:\n- milk\n- bread.\n- eggs",
+        "model": "Buy:\n- milk\n- bread\n- eggs",
         "validatorType": "requiresBulletStemAndItems",
         "validator": {
           "type": "requiresBulletStemAndItems",
-          "stem": "Check",
+          "stem": "Buy",
           "items": [
-            "doors",
-            "windows",
-            "lights"
+            "milk",
+            "bread",
+            "eggs"
           ]
         },
         "rubric": null,
@@ -6601,6 +6633,7 @@
         ],
         "readiness": [
           "proofreading",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -6608,19 +6641,19 @@
       {
         "id": "gen_bullet_points_fix_cywv2u_8",
         "generatorFamilyId": "gen_bullet_points_fix",
-        "variantSignature": "puncsig_1n4aanx",
-        "templateId": "gen_bullet_points_fix_template_zg5zmq",
+        "variantSignature": "puncsig_ereao4",
+        "templateId": "gen_bullet_points_fix_template_14xwt1z",
         "prompt": "Make the bullet punctuation consistent.",
-        "stem": "Take:\n- water\n- snacks.\n- a hat",
-        "model": "Take:\n- water\n- snacks\n- a hat",
+        "stem": "Collect:\n- shells.\n- feathers\n- pebbles.",
+        "model": "Collect:\n- shells.\n- feathers.\n- pebbles.",
         "validatorType": "requiresBulletStemAndItems",
         "validator": {
           "type": "requiresBulletStemAndItems",
-          "stem": "Take",
+          "stem": "Collect",
           "items": [
-            "water",
-            "snacks",
-            "a hat"
+            "shells",
+            "feathers",
+            "pebbles"
           ]
         },
         "rubric": null,
@@ -6798,22 +6831,22 @@
       {
         "id": "gen_bullet_points_paragraph_1jsnrie_5",
         "generatorFamilyId": "gen_bullet_points_paragraph",
-        "variantSignature": "puncsig_1kngi8r",
-        "templateId": "gen_bullet_points_paragraph_template_1vsy1fq",
+        "variantSignature": "puncsig_1sdwg3m",
+        "templateId": "gen_bullet_points_paragraph_template_14i8gfc",
         "prompt": "Repair the bullet-list punctuation.",
-        "stem": "Take\n- water\n- snacks.\n- a hat",
-        "model": "Take:\n- water\n- snacks\n- a hat",
+        "stem": "Collect\n- shells.\n- feathers\n- pebbles.",
+        "model": "Collect:\n- shells.\n- feathers.\n- pebbles.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresBulletStemAndItems",
-              "stem": "Take",
+              "stem": "Collect",
               "items": [
-                "water",
-                "snacks",
-                "a hat"
+                "shells",
+                "feathers",
+                "pebbles"
               ],
               "misconceptionTags": [
                 "structure.bullet_colon_missing",
@@ -6838,22 +6871,22 @@
       {
         "id": "gen_bullet_points_paragraph_1k2nd7d_6",
         "generatorFamilyId": "gen_bullet_points_paragraph",
-        "variantSignature": "puncsig_1soye56",
-        "templateId": "gen_bullet_points_paragraph_template_2yowe8",
+        "variantSignature": "puncsig_onchxc",
+        "templateId": "gen_bullet_points_paragraph_template_1ceatow",
         "prompt": "Repair the bullet-list punctuation.",
-        "stem": "Check\n- doors.\n- windows\n- lights.",
-        "model": "Check:\n- doors.\n- windows.\n- lights.",
+        "stem": "Prepare\n- flour\n- butter.\n- sugar",
+        "model": "Prepare:\n- flour\n- butter\n- sugar",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresBulletStemAndItems",
-              "stem": "Check",
+              "stem": "Prepare",
               "items": [
-                "doors",
-                "windows",
-                "lights"
+                "flour",
+                "butter",
+                "sugar"
               ],
               "misconceptionTags": [
                 "structure.bullet_colon_missing",
@@ -6878,22 +6911,22 @@
       {
         "id": "gen_bullet_points_paragraph_1j8ok4g_7",
         "generatorFamilyId": "gen_bullet_points_paragraph",
-        "variantSignature": "puncsig_1kngi8r",
-        "templateId": "gen_bullet_points_paragraph_template_1vsy1fq",
+        "variantSignature": "puncsig_f4a8vc",
+        "templateId": "gen_bullet_points_paragraph_template_1sbpy2q",
         "prompt": "Repair the bullet-list punctuation.",
-        "stem": "Take\n- water\n- snacks.\n- a hat",
-        "model": "Take:\n- water\n- snacks\n- a hat",
+        "stem": "Remember\n- keys.\n- phone\n- wallet.",
+        "model": "Remember:\n- keys.\n- phone.\n- wallet.",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresBulletStemAndItems",
-              "stem": "Take",
+              "stem": "Remember",
               "items": [
-                "water",
-                "snacks",
-                "a hat"
+                "keys",
+                "phone",
+                "wallet"
               ],
               "misconceptionTags": [
                 "structure.bullet_colon_missing",
@@ -6911,6 +6944,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]
@@ -6918,22 +6952,22 @@
       {
         "id": "gen_bullet_points_paragraph_1jio5tf_8",
         "generatorFamilyId": "gen_bullet_points_paragraph",
-        "variantSignature": "puncsig_1soye56",
-        "templateId": "gen_bullet_points_paragraph_template_2yowe8",
+        "variantSignature": "puncsig_1ohv07y",
+        "templateId": "gen_bullet_points_paragraph_template_q5jq4u",
         "prompt": "Repair the bullet-list punctuation.",
-        "stem": "Check\n- doors.\n- windows\n- lights.",
-        "model": "Check:\n- doors.\n- windows.\n- lights.",
+        "stem": "Buy\n- milk\n- bread.\n- eggs",
+        "model": "Buy:\n- milk\n- bread\n- eggs",
         "validatorType": "paragraphRepair",
         "validator": {
           "type": "paragraphRepair",
           "checks": [
             {
               "type": "requiresBulletStemAndItems",
-              "stem": "Check",
+              "stem": "Buy",
               "items": [
-                "doors",
-                "windows",
-                "lights"
+                "milk",
+                "bread",
+                "eggs"
               ],
               "misconceptionTags": [
                 "structure.bullet_colon_missing",
@@ -6951,6 +6985,7 @@
         ],
         "readiness": [
           "constrained_transfer",
+          "transfer",
           "misconception",
           "negative_test"
         ]

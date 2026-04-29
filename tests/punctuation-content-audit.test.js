@@ -50,53 +50,39 @@ const P2_U6_PRIORITY_CAPACITY_FAMILY_IDS = new Set(P2_U6_PRIORITY_CAPACITY_FAMIL
 
 const P2_U6_EXPECTED_CAPACITY_DUPLICATE_RESIDUALS = Object.freeze({
   stems: {
-    groupCount: 19,
+    groupCount: 7,
     priorityGroupCount: 0,
     priorityFamilies: [],
     familyGroupCounts: {
-      gen_bullet_points_fix: 2,
-      gen_bullet_points_paragraph: 2,
-      gen_colon_list_combine: 2,
-      gen_colon_semicolon_paragraph: 2,
       gen_fronted_adverbial_combine: 7,
       gen_fronted_adverbial_fix: 7,
-      gen_semicolon_combine: 2,
-      gen_semicolon_fix: 2,
     },
   },
   models: {
-    groupCount: 28,
+    groupCount: 38,
     priorityGroupCount: 8,
     priorityFamilies: [
       'gen_dash_clause_combine',
       'gen_dash_clause_fix',
     ],
     familyGroupCounts: {
-      gen_bullet_points_fix: 3,
-      gen_bullet_points_paragraph: 3,
-      gen_colon_list_combine: 4,
-      gen_colon_list_insert: 4,
-      gen_colon_semicolon_paragraph: 2,
+      gen_bullet_points_fix: 7,
+      gen_bullet_points_paragraph: 7,
+      gen_colon_list_combine: 8,
+      gen_colon_list_insert: 8,
       gen_fronted_adverbial_combine: 7,
       gen_fronted_adverbial_fix: 7,
       gen_parenthesis_combine: 8,
       gen_parenthesis_fix: 8,
-      gen_semicolon_combine: 4,
-      gen_semicolon_fix: 4,
+      gen_semicolon_combine: 8,
+      gen_semicolon_fix: 8,
     },
   },
   signatures: {
-    groupCount: 12,
+    groupCount: 0,
     priorityGroupCount: 0,
     priorityFamilies: [],
-    familyGroupCounts: {
-      gen_bullet_points_fix: 2,
-      gen_bullet_points_paragraph: 2,
-      gen_colon_list_combine: 2,
-      gen_colon_semicolon_paragraph: 2,
-      gen_semicolon_combine: 2,
-      gen_semicolon_fix: 2,
-    },
+    familyGroupCounts: {},
   },
 });
 
@@ -460,7 +446,7 @@ test('punctuation content audit threshold failures are machine-readable', () => 
 test('punctuation content audit leaves duplicate generated stems and models review-visible by default', () => {
   const audit = runPunctuationContentAudit({
     seed: 'audit-review-visible-duplicates',
-    generatedPerFamily: 5,
+    generatedPerFamily: 9,
     thresholds: {
       failOnDuplicateGeneratedSignatures: false,
     },
@@ -643,7 +629,7 @@ test('punctuation content audit reviewer report shows capacity at depth 8 for co
   }
 });
 
-test('punctuation content audit reviewer report lists non-converted families as legacy', () => {
+test('punctuation content audit reviewer report shows 0 legacy families (25/25 DSL coverage)', () => {
   const audit = runPunctuationContentAudit({
     seed: 'reviewer-legacy-detect',
     generatedPerFamily: 1,
@@ -658,14 +644,11 @@ test('punctuation content audit reviewer report lists non-converted families as 
     capacityDepth: 8,
   });
 
-  // Legacy families exist (not all families are DSL-backed)
-  assert.ok(report.legacyFamilies.length > 0, 'There must be legacy families');
-  // Verify legacy families are NOT DSL-backed
-  for (const familyId of report.legacyFamilies) {
-    const capacityRow = report.perFamilyCapacity.find((entry) => entry.familyId === familyId);
-    if (capacityRow) {
-      assert.equal(capacityRow.isDsl, false, `${familyId} must be flagged as non-DSL`);
-    }
+  // All 25 families are now DSL-backed — 0 legacy families remain
+  assert.equal(report.legacyFamilies.length, 0, 'All families are DSL-backed');
+  // Every family has isDsl = true
+  for (const row of report.perFamilyCapacity) {
+    assert.equal(row.isDsl, true, `${row.familyId} must be flagged as DSL`);
   }
 });
 
@@ -855,7 +838,7 @@ test('punctuation content audit reviewer report classifies duplicate stem as War
   }
 });
 
-test('punctuation content audit reviewer report classifies legacy family as Warning (without --require-all-dsl)', () => {
+test('punctuation content audit reviewer report produces 0 legacy Warning findings (25/25 DSL coverage)', () => {
   const audit = runPunctuationContentAudit({
     seed: 'reviewer-legacy-warning',
     generatedPerFamily: 1,
@@ -872,13 +855,10 @@ test('punctuation content audit reviewer report classifies legacy family as Warn
   });
 
   const legacyFindings = report.findings.filter((f) => f.code === 'legacy_non_dsl_family');
-  assert.ok(legacyFindings.length > 0, 'Must detect legacy families');
-  for (const f of legacyFindings) {
-    assert.equal(f.severity, 'Warning');
-  }
+  assert.equal(legacyFindings.length, 0, 'All 25 families are DSL-backed — no legacy families remain');
 });
 
-test('punctuation content audit reviewer report classifies legacy family as Fail (with --require-all-dsl)', () => {
+test('punctuation content audit reviewer report --require-all-dsl produces 0 legacy Fail findings (25/25 DSL coverage)', () => {
   const audit = runPunctuationContentAudit({
     seed: 'reviewer-legacy-fail',
     generatedPerFamily: 1,
@@ -895,10 +875,7 @@ test('punctuation content audit reviewer report classifies legacy family as Fail
   });
 
   const legacyFindings = report.findings.filter((f) => f.code === 'legacy_non_dsl_family');
-  assert.ok(legacyFindings.length > 0, 'Must detect legacy families');
-  for (const f of legacyFindings) {
-    assert.equal(f.severity, 'Fail');
-  }
+  assert.equal(legacyFindings.length, 0, 'All 25 families are DSL-backed — no legacy families remain');
 });
 
 test('punctuation content audit reviewer report all-green content produces 0 Fail findings', () => {

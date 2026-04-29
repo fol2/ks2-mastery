@@ -47,15 +47,16 @@ const P4_DSL_CONVERTED_FAMILIES = [
   'gen_parenthesis_combine',
   'gen_parenthesis_speech_paragraph',
   'gen_colon_list_insert',
-];
-
-const P4_LEGACY_FAMILIES = [
   'gen_colon_list_combine',
   'gen_semicolon_fix',
   'gen_semicolon_combine',
   'gen_colon_semicolon_paragraph',
   'gen_bullet_points_fix',
   'gen_bullet_points_paragraph',
+];
+
+const P4_LEGACY_FAMILIES = [
+  // All families now DSL-converted (U10 batch 3 completed 25/25 coverage)
 ];
 
 // ─── Parity: perFamily = 4 ───────────────────────────────────────────────────
@@ -216,7 +217,7 @@ test('content audit logic passes for DSL-converted families at perFamily=4', () 
 
 // ─── P4 Legacy Family Characterisation Baseline ──────────────────────────────
 
-test('P4 fixture covers exactly 18 families (6 legacy + 12 DSL-converted) and no P3-converted families', () => {
+test('P4 fixture covers exactly 18 families (all DSL-converted) and no P3-converted families', () => {
   assert.equal(P4_BASELINE.meta.familyCount, 18);
 
   const fixtureDepth4Families = Object.keys(P4_BASELINE.depth4);
@@ -258,7 +259,7 @@ test('P4 fixture covers exactly 18 families (6 legacy + 12 DSL-converted) and no
   }
 });
 
-test('depth 4 output matches P4 baseline for 6 legacy families', () => {
+test('depth 4 output matches P4 baseline for legacy families (none remaining)', () => {
   const items = createPunctuationGeneratedItems({
     seed: P4_BASELINE.meta.seed,
     perFamily: 4,
@@ -293,7 +294,7 @@ test('depth 4 output matches P4 baseline for 6 legacy families', () => {
   }
 });
 
-test('depth 4 output matches P4 baseline for 12 DSL-converted families', () => {
+test('depth 4 output matches P4 baseline for 18 DSL-converted families', () => {
   const items = createPunctuationGeneratedItems({
     seed: P4_BASELINE.meta.seed,
     perFamily: 4,
@@ -328,7 +329,7 @@ test('depth 4 output matches P4 baseline for 12 DSL-converted families', () => {
   }
 });
 
-test('depth 8 output matches P4 baseline for 6 legacy families', () => {
+test('depth 8 output matches P4 baseline for legacy families (none remaining)', () => {
   const items = createPunctuationGeneratedItems({
     seed: P4_BASELINE.meta.seed,
     perFamily: 8,
@@ -363,7 +364,7 @@ test('depth 8 output matches P4 baseline for 6 legacy families', () => {
   }
 });
 
-test('depth 8 produces 8 unique signatures for 12 DSL-converted families', () => {
+test('depth 8 produces 8 unique signatures for 18 DSL-converted families', () => {
   const items = createPunctuationGeneratedItems({
     seed: P4_BASELINE.meta.seed,
     perFamily: 8,
@@ -391,7 +392,7 @@ test('all DSL-converted family model answers pass marking at depth 8', () => {
   });
 
   const converted = items.filter((i) => P4_DSL_CONVERTED_FAMILIES.includes(i.generatorFamilyId));
-  assert.equal(converted.length, 96); // 12 families * 8 items
+  assert.equal(converted.length, 144); // 18 families * 8 items
 
   for (const item of converted) {
     const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
