@@ -15,7 +15,7 @@ previous: docs/plans/james/hero-mode/hero-mode-p5-completion-report.md
 
 Hero Mode P6 transforms the P0–P5 feature stack into a production-ready system. No new features were added — P6 is entirely measurement, hardening, and operational readiness. The phase resolves 4 preflight blockers, introduces 52 structured metrics across 4 health domains, hardens the state normaliser against adversarial inputs, proves multi-tab safety, and delivers rollout/rollback playbooks with a go/no-go readiness report.
 
-**Verdict:** READY FOR STAGING. All acceptance criteria met. 283 new P6 tests, 0 regressions.
+**Verdict:** READY FOR STAGING. All acceptance criteria met. 284 new P6 tests (268 pure-logic + 16 UI render), 0 regressions.
 
 ---
 
@@ -57,7 +57,7 @@ Hero Mode P6 transforms the P0–P5 feature stack into a production-ready system
 |------|-------|-------|-------------|
 | U1 | Asset Path Fix | 17 | `hero-monster-assets.js` corrected: `./assets/monsters/<id>/<branch>/<id>-<branch>-<stage>.<size>.webp` |
 | U2 | Idempotency Hash Fix | 8 | Camp command payload (`monsterId`, `branch`, `targetStage`) included in receipt hash; claim-task also includes `questId`, `questFingerprint`, `taskId` |
-| U3 | Dashboard Wiring Test | 45 | Full data flow verified: read model → camp model → hero client → panel props |
+| U3 | Home Surface Read-Model Wiring Test | 45 | Full data flow verified: read model → camp model → hero client → panel props |
 | U4 | Branch Policy + Event IDs | 15 | Option A enforced (no branch choice, default b1); Camp event IDs deterministic via ledger entry |
 | U5 | Metrics Contract | 12 | 52 metrics across 4 categories; privacy validator; 9 dimensions defined |
 | U6 | Analytics + Readiness | 27 | `classifyBalanceBucket`, `deriveHeroHealthIndicators`, `deriveReadinessChecks` — pure derivation modules |
@@ -67,7 +67,7 @@ Hero Mode P6 transforms the P0–P5 feature stack into a production-ready system
 | U10 | Multi-Tab + DateTime + Perf | 41 | Concurrent spend conflict resolution; DST edge cases; read model payload bounds |
 | U11 | Rollout + Rollback + Readiness | 17 | 7-ring rollout plan; 6-layer rollback; forbidden vocabulary scan; go/no-go report |
 
-**Total: 282 new P6 tests + 1 boundary test (review fix) = 283 P6 tests**
+**Total: 268 pure-logic P6 tests + 16 UI render tests (requires esbuild) = 284 P6 tests**
 
 ---
 
@@ -97,9 +97,9 @@ Each batch was verified (P6 tests + P5 regression) before proceeding. Total exec
 
 **Proof:** 17 tests verify all 6 monsters × 5 stages match real filesystem layout. SrcSet uses dot-separated sizes (`.320.webp`, `.640.webp`, `.1280.webp`). Fallback always points to stage 0.
 
-### 4.2 Dashboard Wiring (Medium — U3)
+### 4.2 Home Surface Read-Model Wiring (Medium — U3)
 
-**Problem:** No integration test proved the runtime dashboard passes required props to HeroCampPanel.
+**Problem:** No integration test proved the home surface correctly passes read-model output as props to HeroCampPanel.
 
 **Fix:** 45 tests verify: v6 read model → camp model (enabled, balance, monsters, affordability), hero client (unlockMonster/evolveMonster methods), safe disabled states (missing client, missing camp block, Camp flag off).
 
@@ -119,7 +119,7 @@ Each batch was verified (P6 tests + P5 regression) before proceeding. Total exec
 
 ### 4.5 Test Count Reconciliation
 
-Addressed in readiness report: 283 P6-specific + 117 P5 regression = 400 verified in final test run.
+Reconciled: 284 P6-specific (268 pure-logic + 16 UI render requiring esbuild) + 117 P5 regression = 401 verified in final test run.
 
 ### 4.6 Camp Event Determinism (Medium — U4)
 
@@ -272,10 +272,10 @@ Structural scan confirms zero forbidden terms (pressure, gambling, shop, streak 
 
 | Scope | Tests |
 |-------|-------|
-| P6-specific | 283 |
+| P6-specific | 284 |
 | P5 regression | 117 |
 | P0–P4 regression (estimated from prior reports) | ~220 |
-| **Total Hero Mode tests** | **~620** |
+| **Total Hero Mode tests** | **~621** |
 
 ---
 
