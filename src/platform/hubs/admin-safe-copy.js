@@ -357,7 +357,15 @@ export function prepareSafeCopy(data, audience) {
       stripInternalNotes(working);
       redactedFields.push('internal_notes');
     }
-    const text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
+    let text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
+    // Defence-in-depth: scan serialised output for PII in non-canonical keys.
+    // Use OPS_SAFE-level patterns only (emails, IDs) — not stack-trace/route
+    // patterns which false-positive on JSON-serialised object content.
+    const { text: finalText, appliedRedactions } = redactString(text, COPY_AUDIENCE.OPS_SAFE);
+    text = finalText;
+    for (const r of appliedRedactions) {
+      if (!redactedFields.includes(r)) redactedFields.push(r);
+    }
     return { ok: true, text, redactedFields };
   }
 
@@ -376,7 +384,16 @@ export function prepareSafeCopy(data, audience) {
       maskAllEmails(working);
       redactedFields.push('emails_masked');
     }
-    const text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
+    let text = typeof working === 'string' ? working : JSON.stringify(working, null, 2);
+    // Defence-in-depth: scan serialised output for PII in non-canonical keys.
+    // Cap at OPS_SAFE level (emails, IDs, auth) — stack-trace and route patterns
+    // false-positive on JSON content (e.g. "at this" in values). The object-level
+    // walkers already handle stack traces and internal notes by key name.
+    const { text: finalText, appliedRedactions } = redactString(text, COPY_AUDIENCE.OPS_SAFE);
+    text = finalText;
+    for (const r of appliedRedactions) {
+      if (!redactedFields.includes(r)) redactedFields.push(r);
+    }
     return { ok: true, text, redactedFields };
   }
 
