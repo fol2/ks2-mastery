@@ -3449,7 +3449,8 @@ textarea:focus-visible {
 .subject-grid .progress {
   height: 10px; background: var(--line-soft); border-radius: 999px; overflow: hidden;
 }
-.subject-grid .progress > span {
+.subject-grid .progress > span,
+.subject-grid .progress > .progress-meter-fill {
   display: block; height: 100%; border-radius: 999px;
   transition: width var(--dur-slow) var(--ease-out);
 }
@@ -9873,12 +9874,14 @@ textarea:focus-visible {
   from { transform: scaleX(0); }
   to   { transform: scaleX(1); }
 }
-.subject-grid .progress > span {
+.subject-grid .progress > span,
+.subject-grid .progress > .progress-meter-fill {
   transform-origin: left center;
   animation: polish-progress-mount 760ms var(--ease-out) 520ms backwards;
 }
 @media (prefers-reduced-motion: reduce) {
-  .subject-grid .progress > span {
+  .subject-grid .progress > span,
+  .subject-grid .progress > .progress-meter-fill {
     animation: none !important;
     transform: none !important;
   }

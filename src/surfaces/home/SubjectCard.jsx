@@ -8,8 +8,12 @@ export function SubjectCard({ subject, onOpen }) {
   const hasRegion = Boolean(subject.regionBase);
   const statusLabel = STATUS_LABEL[subject.status] || 'Soon';
   // U3: shared ProgressMeter retires the bespoke `.progress > span`
-  // inline-style width site; legacy `.progress` className kept on the
-  // primitive's slot so the polish-progress-mount keyframe still applies.
+  // inline-style width site. The legacy `.progress` className stays on
+  // the primitive wrapper, and `styles/app.css` extends both the
+  // `.subject-grid .progress > span` width-transition rule and the
+  // `polish-progress-mount` keyframe selector to also match
+  // `> .progress-meter-fill`, so the home subject-card mount fill keeps
+  // animating after the migration.
   return (
     <button
       className={'subject-card' + (isPlaceholder ? ' placeholder' : '')}
