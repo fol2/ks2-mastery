@@ -1,5 +1,3 @@
-import React from 'react';
-
 /* Subject-agnostic "More practice" disclosure inside a Setup scene.
  *
  * Currently used only by Grammar (the only subject that splits its

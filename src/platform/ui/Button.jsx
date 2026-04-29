@@ -1,5 +1,3 @@
-import React from 'react';
-
 /* Platform Button primitive (P2 U1).
  *
  * Wraps the existing `.btn` class family (`styles/app.css:503-524`) so
