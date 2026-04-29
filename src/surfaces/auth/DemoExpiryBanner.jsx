@@ -1,4 +1,3 @@
-import React from 'react';
 
 // SH2-U3: dedicated surface rendered when `createRepositoriesForBrowserRuntime`
 // resolves with `session.code === 'demo_session_expired'`. The bespoke banner

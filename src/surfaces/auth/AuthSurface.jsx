@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSubmitLock } from '../../platform/react/use-submit-lock.js';
 import { DemoExpiryBanner } from './DemoExpiryBanner.jsx';
 

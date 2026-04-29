@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { HomeSurface } from '../surfaces/home/HomeSurface.jsx';
 import { CodexSurface } from '../surfaces/home/CodexSurface.jsx';
 import { TopNav } from '../surfaces/shell/TopNav.jsx';
@@ -17,7 +17,7 @@ import { CelebrationLayer } from '../platform/game/render/CelebrationLayer.jsx';
 import { runtimeRegistration } from '../platform/game/render/runtime-registration.js';
 import { __registerCelebrationTemplates } from '../platform/game/render/effect-templates/index.js';
 
-// SH2-U10: adult-only hub surfaces load lazily via `React.lazy()`. Esbuild
+// SH2-U10: adult-only hub surfaces load lazily via `lazy()`. Esbuild
 // emits these three entry graphs as separate `.js` chunks under
 // `src/bundles/` (via `splitting: true` in `scripts/build-client.mjs`), so a
 // learner-only practice flow never downloads admin/parent hub JS. The
@@ -26,12 +26,12 @@ import { __registerCelebrationTemplates } from '../platform/game/render/effect-t
 // — no second lazy entry-point needed, and the ParentHub/AdminHub chunks
 // stay disjoint. The imports below stay as side-effect-free dynamic
 // imports so the main bundle's static analysis sees no reference.
-const AdminHubSurface = React.lazy(() =>
+const AdminHubSurface = lazy(() =>
   import('../surfaces/hubs/AdminHubSurface.jsx').then((module) => ({
     default: module.AdminHubSurface,
   })),
 );
-const ParentHubSurface = React.lazy(() =>
+const ParentHubSurface = lazy(() =>
   import('../surfaces/hubs/ParentHubSurface.jsx').then((module) => ({
     default: module.ParentHubSurface,
   })),

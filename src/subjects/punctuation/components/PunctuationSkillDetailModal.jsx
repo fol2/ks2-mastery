@@ -51,7 +51,7 @@
 // - Esc + Close button + scrim click all dispatch
 //   `punctuation-skill-detail-close`.
 
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import {
   PUNCTUATION_MAP_DETAIL_TAB_IDS,

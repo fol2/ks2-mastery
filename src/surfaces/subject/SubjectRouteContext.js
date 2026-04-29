@@ -1,9 +1,9 @@
-import React from 'react';
+import { createContext, useContext } from 'react';
 
-export const SubjectRouteContext = React.createContext(null);
+export const SubjectRouteContext = createContext(null);
 
 export function useSubjectRouteContext() {
-  const value = React.useContext(SubjectRouteContext);
+  const value = useContext(SubjectRouteContext);
   if (!value) {
     throw new Error('useSubjectRouteContext must be used inside SubjectRouteContext.Provider.');
   }

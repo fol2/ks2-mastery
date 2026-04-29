@@ -42,7 +42,7 @@
 // feature that claims a behavioural guarantee comes with a paired
 // state-level or DOM-match assertion (learning #7).
 
-import React, { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
@@ -728,7 +728,7 @@ export function PunctuationSessionScene({ ui, actions }) {
   // `previousHeroUrl` is derived at render time — only non-empty when the
   // last recorded URL differs from the current one (first paint of a new
   // phase, e.g. active-item → feedback).
-  const previousHeroBgRef = React.useRef('');
+  const previousHeroBgRef = useRef('');
   const previousHeroUrl = previousHeroBgRef.current && previousHeroBgRef.current !== sceneUrl
     ? previousHeroBgRef.current
     : '';
@@ -736,7 +736,7 @@ export function PunctuationSessionScene({ ui, actions }) {
   // Update the ref AFTER paint so the next phase flip reads the
   // just-painted URL as its `previousUrl`. Mirrors
   // `SpellingPracticeSurface.jsx:156-158`.
-  React.useEffect(() => {
+  useEffect(() => {
     if (sceneUrl) previousHeroBgRef.current = sceneUrl;
   }, [sceneUrl]);
 

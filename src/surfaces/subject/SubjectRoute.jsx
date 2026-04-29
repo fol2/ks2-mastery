@@ -1,4 +1,4 @@
-import React from 'react';
+import { Component } from 'react';
 import { SubjectBreadcrumb } from '../shell/SubjectBreadcrumb.jsx';
 import { HeroTaskBanner } from './HeroTaskBanner.jsx';
 import { SubjectRouteContext } from './SubjectRouteContext.js';
@@ -67,7 +67,7 @@ function SubjectUnavailableCard({ subject, actions }) {
   );
 }
 
-class SubjectRenderBoundary extends React.Component {
+class SubjectRenderBoundary extends Component {
   constructor(props) {
     super(props);
     this.state = { runtimeEntry: null };

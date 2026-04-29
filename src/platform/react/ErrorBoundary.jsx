@@ -1,4 +1,4 @@
-import React from 'react';
+import { Component } from 'react';
 import { isChunkLoadError } from './chunk-load-detect.js';
 import { clearChunkReloadAttempt, scheduleChunkReloadOnce } from './chunk-load-recovery.js';
 
@@ -44,7 +44,7 @@ export function ChunkLoadErrorFallback() {
   );
 }
 
-export class ErrorBoundary extends React.Component {
+export class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
     clearChunkReloadAttempt();

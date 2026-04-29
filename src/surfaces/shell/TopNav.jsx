@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IconSun, IconMoon, IconChevronDown } from '../home/icons.jsx';
 
 function UserPill({ learners, selectedLearnerId, learnerLabel, signedInAs, onSelectLearner, onOpenProfileSettings, onLogout }) {

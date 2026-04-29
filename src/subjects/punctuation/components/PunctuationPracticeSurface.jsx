@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { PunctuationMapScene } from './PunctuationMapScene.jsx';
 import { PunctuationSessionScene } from './PunctuationSessionScene.jsx';
 import { PunctuationSetupScene } from './PunctuationSetupScene.jsx';

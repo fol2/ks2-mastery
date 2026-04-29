@@ -10597,7 +10597,8 @@ html { scroll-behavior: smooth; }
   opacity: 0.58;
   filter: grayscale(0.9);
 }
-.punctuation-monster-meter[data-display-state="not-found"] .punctuation-monster-meter-fill {
+.punctuation-monster-meter[data-display-state="not-found"] .punctuation-monster-meter-fill,
+.punctuation-monster-meter[data-display-state="not-found"] .progress-meter-fill {
   background: var(--muted);
 }
 .punctuation-monster-meter-name {
@@ -13266,4 +13267,89 @@ html { scroll-behavior: smooth; }
   margin-top: 4px;
   padding-top: 12px;
   border-top: 1px solid var(--line-soft);
+}
+
+/* --- P2 U3 · Shared ProgressMeter + StatCard primitives ----------------
+ * The `.progress-meter` wrapper carries the full `role="progressbar"` ARIA
+ * contract from the JSX side (see src/platform/ui/ProgressMeter.jsx); this
+ * stylesheet block only paints the rail + fill. The fill width is driven
+ * by the numeric `--progress-value` CSS variable (0–100, integer) emitted
+ * inline by the primitive, so CSP compliance only counts ONE site per
+ * rendered meter regardless of value. The retired bespoke
+ * `.punctuation-monster-meter-fill` and `.subject-grid .progress > span`
+ * width rules continue to paint legacy markup until the U7 dead-CSS
+ * sweep removes them. */
+.progress-meter {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+.progress-meter-fill {
+  display: block;
+  height: 100%;
+  width: calc(var(--progress-value, 0) * 1%);
+  border-radius: 4px;
+  background: var(--progress-accent, var(--subject-accent, var(--brand)));
+  transition: width var(--dur-slow) var(--ease-out);
+}
+.progress-meter-value {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-meter-fill {
+    transition: none;
+  }
+}
+
+/* StatCard primitive — display-only label/value/caption tile. Keeps the
+ * `<dl>/<dt>/<dd>` semantics readable for screen readers; the visual
+ * layout collapses to a baseline-aligned row on the existing Punctuation
+ * progress strip so byte-identical rendering survives the migration. */
+.stat-card {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+.stat-card-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.stat-card-value-wrap {
+  margin: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.stat-card-value {
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.stat-card-caption {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.stat-card-progress {
+  flex: 1 1 auto;
+  min-width: 80px;
+}
+
+/* Mobile-360 carve-out — collapse the 3-up Punctuation progress row to a
+ * stack so the labels never compete for horizontal room. Without this
+ * override the row wraps mid-baseline at 360 px wide. */
+@media (max-width: 380px) {
+  .punctuation-progress-strip {
+    gap: 8px 14px;
+  }
 }

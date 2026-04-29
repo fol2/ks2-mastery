@@ -1,4 +1,3 @@
-import React from 'react';
 
 function persistenceTone(snapshot) {
   if (snapshot?.mode === 'remote-sync') return 'good';

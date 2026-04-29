@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { TopNav } from '../shell/TopNav.jsx';
 import { PersistenceBanner } from '../shell/PersistenceBanner.jsx';
 import { randomHeroBackground } from '../home/data.js';

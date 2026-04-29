@@ -1,4 +1,3 @@
-import React from 'react';
 import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.js';
 import { heroBgStyle } from '../../../platform/ui/hero-bg.js';

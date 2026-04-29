@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { TopNav } from '../shell/TopNav.jsx';
 import { MonsterMeadow } from './MonsterMeadow.jsx';
 import { SubjectCard } from './SubjectCard.jsx';
