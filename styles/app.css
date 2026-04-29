@@ -1135,39 +1135,6 @@ textarea:focus-visible {
   overflow: hidden;
 }
 
-.punctuation-hero,
-.punctuation-strip {
-  display: grid;
-  align-items: center;
-  gap: 18px;
-}
-
-.punctuation-hero {
-  grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1.05fr);
-}
-
-.punctuation-strip {
-  grid-template-columns: 168px minmax(0, 1fr);
-}
-
-.punctuation-hero img,
-.punctuation-strip img {
-  display: block;
-  width: 100%;
-  object-fit: cover;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel-soft);
-}
-
-.punctuation-hero img {
-  aspect-ratio: 16 / 9;
-}
-
-.punctuation-strip img {
-  aspect-ratio: 4 / 3;
-}
-
 .choice-list {
   display: grid;
   gap: 10px;
@@ -1204,16 +1171,6 @@ textarea:focus-visible {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 760px) {
-  .punctuation-hero,
-  .punctuation-strip {
-    grid-template-columns: 1fr;
-  }
-
-  .punctuation-strip img {
-    aspect-ratio: 16 / 9;
-  }
-}
 .summary-grid { display: grid; gap: 16px; }
 .summary-hero {
   text-align: center;
@@ -10521,99 +10478,43 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
 }
 
-/* --- Legacy hero chrome (dead selectors — kept one release cycle) ------- */
-/* The pre-U4 Punctuation Setup painted its hero via a static `<img
-   srcSet>` inside `.punctuation-dashboard-hero`. U4 moves backdrop
-   painting to the platform `HeroBackdrop` (which uses
-   `background-image` on `.punctuation-hero-backdrop`). The rules below
-   are retained for one release cycle so any external stylesheet /
-   admin-tool selector that targeted the old class does not break
-   mid-rollout. Follow-up PR removes them once Playwright locators
-   and the Admin Debug Bundle have caught up. */
+/* --- U5/U6/U7 (refactor ui-consolidation): Punctuation scene hero chrome */
+/* The three Punctuation scene hero wrappers (`.punctuation-session-hero`,
+   `-summary-hero`, `-map-hero`) are positioning ancestors for the platform
+   `HeroBackdrop`, which paints via `position: absolute; inset: 0`. Without a
+   `position: relative` wrapper the backdrop would escape to the page root.
+   `overflow: hidden` clips the slow pan animation to the card frame;
+   `border-radius: inherit` keeps the painted region inside the rounded card
+   corners (matches `.setup-main` behaviour at app.css:4604-4607).
 
-/* Hero: Bellstorm backdrop + headline + primary CTA */
-.punctuation-dashboard-hero {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1.05fr);
-  align-items: center;
-  gap: 18px;
-}
-.punctuation-dashboard-hero img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel-soft);
-}
-.punctuation-dashboard-hero-content {
-  display: grid;
-  gap: 10px;
-}
-.punctuation-dashboard-cta-row {
-  margin-top: 8px;
-}
-@media (max-width: 760px) {
-  .punctuation-dashboard-hero {
-    grid-template-columns: 1fr;
-  }
-}
+   Their `-content` children sit above the absolute-positioned backdrop via
+   `z-index: 1` so the eyebrow / section-title / subtitle render on top, not
+   behind, the painted artwork. The explicit `position: relative` establishes
+   a stacking context that z-index can act on.
 
-/* --- U5 (refactor ui-consolidation): Session-scene hero chrome --------- */
-/* `.punctuation-session-hero` is the positioning ancestor for the
-   platform `HeroBackdrop` which paints via `position: absolute; inset: 0`
-   (app.css:5526-5532). Without a `position: relative` wrapper the backdrop
-   would escape to the page root. `overflow: hidden` clips the slow pan
-   animation to the card frame; `border-radius: inherit` keeps the painted
-   region inside the rounded card corners (matches `.setup-main` behaviour
-   at app.css:4604-4607).
-
-   `.punctuation-session-hero-content` sits above the absolute-positioned
-   backdrop via `z-index: 1` so the eyebrow / section-title / subtitle
-   render on top, not behind, the painted artwork. The explicit
-   `position: relative` establishes a stacking context that z-index can
-   act on. */
-.punctuation-session-hero {
-  position: relative;
-  overflow: hidden;
-  border-radius: inherit;
-  min-height: 160px;
-}
-.punctuation-session-hero-content {
-  position: relative;
-  z-index: 1;
-  padding: 18px 20px;
-  display: grid;
-  gap: 6px;
-}
-
-/* --- U6 (refactor ui-consolidation): Summary + Map scene hero chrome --- */
-/* `.punctuation-summary-hero` and `.punctuation-map-hero` are positioning
-   ancestors for the platform `HeroBackdrop` (paints via
-   `position: absolute; inset: 0`). `overflow: hidden` clips the slow pan
-   animation to the card frame; `border-radius: inherit` keeps the painted
-   region inside the rounded card corners. Their `-content` children sit
-   above the absolute-positioned backdrop via `z-index: 1`. Same idiom as
-   `.punctuation-session-hero` / `-content` above — duplication is
-   intentional for clarity; a U7 sweep may consolidate. */
-.punctuation-summary-hero {
-  position: relative;
-  overflow: hidden;
-  border-radius: inherit;
-}
-.punctuation-summary-hero-content {
-  position: relative;
-  z-index: 1;
-}
+   The Session hero additionally carries a `min-height: 160px` floor and
+   inner padding/grid on its content wrapper — those are applied as a
+   scene-specific extension below the shared rules. */
+.punctuation-session-hero,
+.punctuation-summary-hero,
 .punctuation-map-hero {
   position: relative;
   overflow: hidden;
   border-radius: inherit;
 }
+.punctuation-session-hero-content,
+.punctuation-summary-hero-content,
 .punctuation-map-hero-content {
   position: relative;
   z-index: 1;
+}
+.punctuation-session-hero {
+  min-height: 160px;
+}
+.punctuation-session-hero-content {
+  padding: 18px 20px;
+  display: grid;
+  gap: 6px;
 }
 
 /* Progress row — compact stats strip */
