@@ -2,6 +2,11 @@
 // Zero side-effects. No imports from worker/, src/, react, or node: built-ins.
 // Canonical metric names, dimensions, and privacy rules for Hero Mode P6.
 
+import {
+  PRIVACY_FORBIDDEN_FIELDS,
+  validateMetricPrivacyRecursive,
+} from './metrics-privacy.js';
+
 // ── Learning Health Metrics ──────────────────────────────────────
 
 export const HERO_LEARNING_HEALTH_METRICS = Object.freeze([
@@ -93,28 +98,15 @@ export const HERO_METRIC_DIMENSIONS = Object.freeze([
 
 // ── Privacy Rules ────────────────────────────────────────────────
 
-const FORBIDDEN_FIELDS = Object.freeze([
-  'rawAnswer',
-  'rawPrompt',
-  'childFreeText',
-  'childInput',
-  'answerText',
-]);
+/** @deprecated Use PRIVACY_FORBIDDEN_FIELDS from metrics-privacy.js directly */
+export const FORBIDDEN_FIELDS = PRIVACY_FORBIDDEN_FIELDS;
 
 /**
- * Validates that a metric event payload does not contain PII/child-content fields.
+ * Validates that a metric event payload does not contain PII/child-content fields
+ * at any nesting depth. Reports violations with dotted path notation.
  * @param {Record<string, unknown>} eventPayload
  * @returns {{ valid: boolean, violations: string[] }}
  */
 export function validateMetricPrivacy(eventPayload) {
-  const violations = [];
-  if (!eventPayload || typeof eventPayload !== 'object' || Array.isArray(eventPayload)) {
-    return { valid: true, violations };
-  }
-  for (const field of FORBIDDEN_FIELDS) {
-    if (field in eventPayload) {
-      violations.push(field);
-    }
-  }
-  return { valid: violations.length === 0, violations };
+  return validateMetricPrivacyRecursive(eventPayload);
 }
