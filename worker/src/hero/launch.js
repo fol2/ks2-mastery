@@ -9,6 +9,8 @@ import {
   HERO_READY_SUBJECT_IDS,
 } from '../../../shared/hero/constants.js';
 
+import { resolveHeroFlagsWithOverride } from '../../../shared/hero/account-override.js';
+
 function envFlagEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
 }
@@ -105,8 +107,9 @@ export async function resolveHeroStartTaskCommand({ body, repository, env, now, 
     });
   }
 
-  const safeEnv = env || {};
-  const childUiEnabled = envFlagEnabled(safeEnv.HERO_MODE_CHILD_UI_ENABLED);
+  // Per-account override: team accounts in HERO_INTERNAL_ACCOUNTS get all flags on
+  const resolvedEnv = resolveHeroFlagsWithOverride({ env, accountId: callerAccountId });
+  const childUiEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_CHILD_UI_ENABLED);
 
   // Quest fingerprint validation: required when child UI is enabled
   if (childUiEnabled) {

@@ -25,6 +25,8 @@ import {
   HERO_READY_SUBJECT_IDS,
 } from '../../../shared/hero/constants.js';
 
+import { resolveHeroFlagsWithOverride } from '../../../shared/hero/account-override.js';
+
 import { resolveEligibility } from '../../../shared/hero/eligibility.js';
 import { generateHeroSeed, deriveDateKey } from '../../../shared/hero/seed.js';
 import { scheduleShadowQuest } from '../../../shared/hero/scheduler.js';
@@ -142,12 +144,14 @@ export function buildHeroShadowReadModel({
   campEnabled = false,
 } = {}) {
   const dateKey = deriveDateKey(now, HERO_DEFAULT_TIMEZONE);
-  const safeEnv = env || {};
+
+  // Per-account override: team accounts in HERO_INTERNAL_ACCOUNTS get all flags on
+  const resolvedEnv = resolveHeroFlagsWithOverride({ env, accountId });
 
   // Feature flag hierarchy
-  const shadowEnabled = envFlagEnabled(safeEnv.HERO_MODE_SHADOW_ENABLED);
-  const launchEnabled = envFlagEnabled(safeEnv.HERO_MODE_LAUNCH_ENABLED);
-  const childUiEnabled = envFlagEnabled(safeEnv.HERO_MODE_CHILD_UI_ENABLED);
+  const shadowEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_SHADOW_ENABLED);
+  const launchEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_LAUNCH_ENABLED);
+  const childUiEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_CHILD_UI_ENABLED);
 
   // 1. Run each provider via the provider registry.
   //    subjectReadModels is keyed by subjectId. Each value is either:
