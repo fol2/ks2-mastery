@@ -1582,6 +1582,7 @@ export function applyGrammarAttemptToState(state, {
   mode = '',
   supportUsed = null,
   postMarkingEnrichment = false,
+  clientElapsedMs = null,
 } = {}) {
   if (!item || item.contentReleaseId !== GRAMMAR_CONTENT_RELEASE_ID) {
     throw new BadRequestError('Grammar content release does not match this attempt.', {
@@ -1709,7 +1710,11 @@ export function applyGrammarAttemptToState(state, {
     // P6 calibration telemetry (event-only — never exposed in read models).
     tags: (template?.tags || []).slice(),
     answerSpecKind: template?.answerSpecKind || null,
-    elapsedMsBucket: bucketElapsedMs(null), // no client timing available yet
+    elapsedMsBucket: bucketElapsedMs(
+      Number.isFinite(clientElapsedMs) && clientElapsedMs >= 0 && clientElapsedMs <= 180000
+        ? clientElapsedMs
+        : null,
+    ),
     wasRetry: attempts > 1,
     conceptStatusBefore: Object.fromEntries([...conceptIds].map(id => [id, statusesBefore.get(id) || 'new'])),
     conceptStatusAfter: nonScoredAttempt
@@ -1801,6 +1806,7 @@ function submitAnswer(state, payload, command, nowTs) {
     requestId: command.requestId,
     now: nowTs,
     mode: session.mode,
+    clientElapsedMs: payload.clientElapsedMs ?? null,
   });
   if (!retryingCurrent) {
     const nonScoredResult = isNonScoredGrammarResult(applied.result);
