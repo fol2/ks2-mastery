@@ -263,7 +263,7 @@ test('today.awardStatus = available before daily coin award', () => {
 
   const model = buildV5({ heroProgressState: progressState });
 
-  assert.equal(model.economy.today.awardStatus, 'available');
+  assert.equal(model.economy.today.awardStatus, 'in-progress');
   assert.equal(model.economy.today.coinsAwarded, 0);
   assert.equal(model.economy.today.ledgerEntryId, null);
   assert.equal(model.economy.today.awardedAt, null);

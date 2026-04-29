@@ -64,11 +64,8 @@ export function canAwardDailyCompletionCoins(heroState, economyEnabled) {
   }
   // Check ledger for duplicate idempotency key
   const { dateKey, questId, questFingerprint } = heroState.daily;
-  const learnerId = heroState.economy && heroState.economy.ledger && heroState.economy.ledger.length > 0
-    ? heroState.economy.ledger[0].learnerId
-    : null;
-  if (learnerId) {
-    const awardKey = deriveDailyAwardKey({ learnerId, dateKey, questId, questFingerprint, economyVersion: HERO_ECONOMY_VERSION });
+  if (heroState.economy && Array.isArray(heroState.economy.ledger) && heroState.economy.ledger.length > 0) {
+    const awardKey = deriveDailyAwardKey({ learnerId: heroState.economy.ledger[0].learnerId || '', dateKey, questId, questFingerprint, economyVersion: HERO_ECONOMY_VERSION });
     const existing = heroState.economy.ledger.find(e => e.idempotencyKey === awardKey);
     if (existing) {
       return { canAward: false, reason: 'ledger_duplicate' };
@@ -152,7 +149,7 @@ export function selectChildSafeEconomyReadModel(heroState, dateKey, questId) {
   if (todayMatch) {
     if (daily.economy?.dailyAwardStatus === 'awarded') awardStatus = 'awarded';
     else if (daily.status === 'completed') awardStatus = 'available';
-    else awardStatus = 'available';
+    else awardStatus = 'in-progress';
   }
 
   const safeNum = (v) => (typeof v === 'number' && Number.isFinite(v)) ? v : 0;
