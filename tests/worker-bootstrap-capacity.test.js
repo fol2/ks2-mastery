@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { analyseBootstrapPayload } from '../scripts/probe-production-bootstrap.mjs';
+import { BOOTSTRAP_PHASE_TIMING_NAMES } from '../worker/src/bootstrap-repository.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
 function captureLogs(fn) {
@@ -242,9 +243,9 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   seedHighHistoryLearner(server, accountId, 'learner-high-b');
 
   server.DB.clearQueryLog();
-  const response = await server.fetchRaw(`${BASE_URL}/api/bootstrap`, {
+  const { captured, value: response } = await captureLogs(() => server.fetchRaw(`${BASE_URL}/api/bootstrap`, {
     headers: { cookie },
-  });
+  }));
   const text = await response.text();
   const payload = JSON.parse(text);
   const responseBytes = Buffer.byteLength(text, 'utf8');
@@ -290,7 +291,18 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   });
   assert.deepEqual(analysis.failures, []);
 
-  const eventReads = server.DB.takeQueryLog()
+  const queryLog = server.DB.takeQueryLog();
+  const subjectStateReads = queryLog
+    .filter((entry) => entry.operation === 'all' && /\bFROM child_subject_state\b/i.test(entry.sql));
+  assert.equal(subjectStateReads.length, 1,
+    'bounded public bootstrap should not re-read child_subject_state for active-session discovery');
+  const activeSessionReads = queryLog
+    .filter((entry) => entry.operation === 'all' && /\bFROM practice_sessions\b/i.test(entry.sql) && /\bAND id IN\b/i.test(entry.sql));
+  assert.equal(activeSessionReads.length, 1, 'selected learner active session is fetched through the bounded session loader');
+  assert.deepEqual(activeSessionReads[0].params.filter((param) => param === 'learner-high-a-active'), ['learner-high-a-active'],
+    'active session id should be derived once from the preloaded selected learner subject state');
+
+  const eventReads = queryLog
     .filter((entry) => entry.operation === 'all' && /\bFROM event_log\b/i.test(entry.sql));
   // U7: bounded mode reads events for the selected learner only, so the
   // old `>= learnerCount` lower bound no longer applies. The important
@@ -323,6 +335,35 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   // subject_state writes now invalidate the notModified probe).
   assert.equal(payload.meta.capacity.bootstrapCapacity.version, 3);
   assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
+  assert.equal('bootstrapPhaseTimings' in payload.meta.capacity, false, 'phase timings stay out of child-facing meta.capacity.');
+
+  const capacityLog = captured
+    .filter((line) => line.startsWith('[ks2-worker] '))
+    .map((line) => {
+      try {
+        return JSON.parse(line.slice('[ks2-worker] '.length));
+      } catch {
+        return null;
+      }
+    })
+    .find((entry) => entry && entry.event === 'capacity.request' && entry.endpoint === '/api/bootstrap' && entry.status === 200);
+  assert.ok(capacityLog, `expected bootstrap capacity.request log, got ${JSON.stringify(captured)}`);
+  assert.ok(Array.isArray(capacityLog.bootstrapPhaseTimings), 'bootstrap capacity log must carry phase timings.');
+  const allowedPhases = new Set(BOOTSTRAP_PHASE_TIMING_NAMES);
+  const phaseNames = new Set();
+  for (const phase of capacityLog.bootstrapPhaseTimings) {
+    phaseNames.add(phase.name);
+    assert.ok(allowedPhases.has(phase.name), `phase name "${phase.name}" must be allowlisted.`);
+    assert.ok(Number.isFinite(phase.durationMs), `phase "${phase.name}" duration must be finite.`);
+    assert.ok(phase.durationMs >= 0 && phase.durationMs <= 60_000, `phase "${phase.name}" duration must be capped.`);
+    assert.deepEqual(Object.keys(phase).sort(), ['durationMs', 'name']);
+  }
+  for (const expected of ['membership', 'subjectState', 'gameState', 'sessions', 'events', 'readModel', 'revisionHash', 'responseConstruction']) {
+    assert.ok(phaseNames.has(expected), `expected bootstrap phase "${expected}" in structured log.`);
+  }
+  const phaseJson = JSON.stringify(capacityLog.bootstrapPhaseTimings);
+  assert.equal(phaseJson.includes('private-active-word'), false);
+  assert.equal(phaseJson.includes('top-secret-prompt-sentence'), false);
 
   server.close();
 });

@@ -1,0 +1,29 @@
+{
+  "kind": "p1-tail-correlation",
+  "samples": [
+    {
+      "serverRequestId": "ks2_req_00000000-0000-4000-8000-000000000010",
+      "route": "GET /api/bootstrap",
+      "phase": "bootstrap",
+      "queryCount": 5,
+      "wallMs": 1440.4,
+      "statementLogCoverage": "sampled-out"
+    },
+    {
+      "serverRequestId": "ks2_req_00000000-0000-4000-8000-000000000011",
+      "route": "GET /api/bootstrap",
+      "phase": "bootstrap",
+      "queryCount": 4,
+      "wallMs": 1398.2,
+      "statements": [
+        {
+          "name": "all:SELECT * FROM child_subject_state WHERE account_id = ? AND learner_id IN (?)",
+          "rowsRead": 32,
+          "rowsWritten": 0,
+          "durationMs": 61.9
+        }
+      ],
+      "statementsTruncated": true
+    }
+  ]
+}

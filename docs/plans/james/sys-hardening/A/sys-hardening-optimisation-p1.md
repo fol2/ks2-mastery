@@ -1,7 +1,7 @@
 ---
 title: "System Hardening Optimisation P1 — CPU/D1 Evidence Baseline and Bootstrap Tail Attribution"
 type: plan
-status: draft
+status: implementation-handoff
 date: 2026-04-29
 route: system-hardening-and-optimisation
 owner: james / engineering agent
@@ -543,9 +543,19 @@ Phase 1 should produce these artefacts:
 4. `reports/capacity/evidence/<date>-p1-strict-30-repeat-*.json` — repeated strict evidence.
 5. `reports/capacity/evidence/<date>-p1-tail-correlation.json` — joined top-tail CPU/D1 classification.
 6. `reports/capacity/evidence/<date>-p1-statement-map.json` — statement-level hot-path map.
-7. `reports/capacity/1000-learner-free-tier-budget.md` — measured budget worksheet.
+7. `docs/operations/capacity-1000-learner-free-tier-budget.md` and `reports/capacity/latest-1000-learner-budget.json` — measured budget worksheet and latest machine-readable modelling artefact.
 8. Optional PR: one-statement bootstrap reduction, if proven safe.
 9. Completion report: `docs/plans/james/sys-hardening/sys-hardening-optimisation-p1-completion-report.md`.
+
+Implementation handoff:
+
+- Dated implementation plan: `docs/plans/2026-04-29-010-feat-sys-hardening-optimisation-p1-evidence-attribution-plan.md`.
+- Worker CPU/D1 guide: `docs/operations/capacity-cpu-d1-evidence.md`.
+- P1 rerun matrix: `docs/operations/capacity-tail-latency.md#p1-evidence-attribution-matrix`.
+- Budget ledger: `docs/operations/capacity-1000-learner-free-tier-budget.md`.
+- Implementation handoff report: `docs/plans/james/sys-hardening/sys-hardening-optimisation-p1-completion-report.md`.
+
+Current status: implementation handoff only. Phase 1 acceptance remains open until post-change strict/repeated production evidence, joined top-tail Worker CPU/wall attribution, and complete statement-map artefacts exist.
 
 ---
 

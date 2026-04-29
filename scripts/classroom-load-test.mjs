@@ -17,7 +17,7 @@ import { loadSessionManifest } from './lib/session-manifest.mjs';
 
 const DEFAULT_PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
 const DEFAULT_TIMEOUT_MS = 15_000;
-const ENDPOINT_TAIL_SAMPLE_LIMIT = 5;
+const ENDPOINT_TAIL_SAMPLE_LIMIT = 10;
 const GRAMMAR_LOAD_ITEM = Object.freeze({
   templateId: 'fronted_adverbial_choose',
   seed: 1,

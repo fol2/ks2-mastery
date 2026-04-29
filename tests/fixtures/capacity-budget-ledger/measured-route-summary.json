@@ -1,0 +1,82 @@
+{
+  "schema": 3,
+  "evidenceKind": "capacity-run",
+  "certifying": false,
+  "finishedAt": "2026-04-29T09:15:00.000Z",
+  "summary": {
+    "endpoints": {
+      "POST /api/demo/session": {
+        "phase": "setup",
+        "count": 30,
+        "queryCountP50": 3,
+        "queryCountP95": 4,
+        "queryCountMax": 4,
+        "d1RowsReadP50": 4,
+        "d1RowsReadP95": 5,
+        "d1RowsReadMax": 6,
+        "d1RowsWrittenP50": 1,
+        "d1RowsWrittenP95": 1,
+        "d1RowsWrittenMax": 1,
+        "p50ResponseBytes": 150,
+        "p95ResponseBytes": 155,
+        "maxResponseBytes": 160,
+        "workerCpuMsP95": 1.6,
+        "workerCpuMsMax": 2.1
+      },
+      "GET /api/bootstrap": {
+        "phase": "bootstrap",
+        "count": 50,
+        "queryCountP50": 10,
+        "queryCountP95": 12,
+        "queryCountMax": 12,
+        "d1RowsReadP50": 35,
+        "d1RowsReadP95": 52,
+        "d1RowsReadMax": 61,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "p50ResponseBytes": 2200,
+        "p95ResponseBytes": 2500,
+        "maxResponseBytes": 2700,
+        "workerCpuMsP95": 4.4,
+        "workerCpuMsMax": 6.2
+      },
+      "POST /api/subjects/grammar/command": {
+        "phase": "command",
+        "count": 90,
+        "queryCountP50": 18,
+        "queryCountP95": 26,
+        "queryCountMax": 28,
+        "d1RowsReadP50": 230,
+        "d1RowsReadP95": 515,
+        "d1RowsReadMax": 620,
+        "d1RowsWrittenP50": 2,
+        "d1RowsWrittenP95": 3,
+        "d1RowsWrittenMax": 4,
+        "p50ResponseBytes": 26000,
+        "p95ResponseBytes": 36852,
+        "maxResponseBytes": 39000,
+        "workerCpuMsP95": 5.2,
+        "workerCpuMsMax": 7.4
+      },
+      "GET /api/admin/evidence": {
+        "phase": "parent-admin",
+        "count": 4,
+        "queryCountP50": 8,
+        "queryCountP95": 9,
+        "queryCountMax": 10,
+        "d1RowsReadP50": 120,
+        "d1RowsReadP95": 180,
+        "d1RowsReadMax": 220,
+        "d1RowsWrittenP50": 0,
+        "d1RowsWrittenP95": 0,
+        "d1RowsWrittenMax": 0,
+        "p50ResponseBytes": 12000,
+        "p95ResponseBytes": 14000,
+        "maxResponseBytes": 16000,
+        "workerCpuMsP95": 3.3,
+        "workerCpuMsMax": 4.1
+      }
+    }
+  }
+}

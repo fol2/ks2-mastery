@@ -6,7 +6,11 @@ import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { relative, resolve } from 'node:path';
 
-import { EVIDENCE_SCHEMA_VERSION, evaluateThresholds } from './lib/capacity-evidence.mjs';
+import {
+  EVIDENCE_SCHEMA_VERSION,
+  P1_UNCLASSIFIED_INSUFFICIENT_LOGS,
+  evaluateThresholds,
+} from './lib/capacity-evidence.mjs';
 
 const CAPACITY_DOC_PATH = 'docs/operations/capacity.md';
 
@@ -801,6 +805,47 @@ function checkProvenance(payload, rowDecision) {
   return messages;
 }
 
+function checkWorkerLogDiagnosticBoundaries(payload) {
+  const messages = [];
+  const join = payload.diagnostics?.workerLogJoin;
+  if (!join || typeof join !== 'object' || Array.isArray(join)) return messages;
+
+  const certification = join.certification || {};
+  if (
+    join.contributesToCertification === true
+    || certification.contributesToCertification === true
+    || certification.certifying === true
+    || certification.promotesCertification === true
+  ) {
+    messages.push(
+      'diagnostics.workerLogJoin is diagnostic-only; joined Cloudflare CPU/wall data must not contribute to certification.',
+    );
+  }
+
+  const samples = Array.isArray(join.samples) ? join.samples : [];
+  for (const [index, sample] of samples.entries()) {
+    const invocationStatus = sample?.join?.invocation?.status || 'missing';
+    const missingInvocation = invocationStatus !== 'matched'
+      || !isStrictFiniteDiagnosticNumber(sample?.cloudflare?.cpuTimeMs)
+      || !isStrictFiniteDiagnosticNumber(sample?.cloudflare?.wallTimeMs);
+    if (missingInvocation && sample?.classification !== P1_UNCLASSIFIED_INSUFFICIENT_LOGS) {
+      messages.push(
+        `diagnostics.workerLogJoin.samples[${index}] is missing invocation CPU/wall logs but classification is "${sample?.classification || 'missing'}"; expected "${P1_UNCLASSIFIED_INSUFFICIENT_LOGS}".`,
+      );
+    }
+  }
+
+  return messages;
+}
+
+function isStrictFiniteDiagnosticNumber(value) {
+  if (value === null || value === undefined || value === '' || typeof value === 'boolean') {
+    return false;
+  }
+  const n = Number(value);
+  return Number.isFinite(n);
+}
+
 /**
  * Verify a single evidence row against its persisted JSON file.
  * Returns `{ ok, messages: string[], warnings: string[] }` where `ok: false`
@@ -1062,6 +1107,11 @@ export function verifyEvidenceRow(row) {
   const provenanceMessages = checkProvenance(payload, row.decision);
   if (provenanceMessages.length) {
     messages.push(...provenanceMessages);
+  }
+
+  const diagnosticBoundaryMessages = checkWorkerLogDiagnosticBoundaries(payload);
+  if (diagnosticBoundaryMessages.length) {
+    messages.push(...diagnosticBoundaryMessages);
   }
 
   // Cross-check numeric cells in the capacity.md row against evidence

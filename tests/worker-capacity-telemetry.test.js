@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createWorkerApp } from '../worker/src/app.js';
+import { BOOTSTRAP_PHASE_TIMING_NAMES } from '../worker/src/bootstrap-repository.js';
 import { CapacityCollector, capacityRequest, validateRequestId } from '../worker/src/logger.js';
 import { createMigratedSqliteD1Database } from './helpers/sqlite-d1.js';
 
@@ -126,6 +127,53 @@ test('CapacityCollector.toPublicJSON emits only documented allowlist keys', () =
   assert.ok(!('statements' in publicJson), 'statements must NEVER appear in toPublicJSON().');
   assert.ok(!('endpoint' in publicJson), 'endpoint must NEVER appear in toPublicJSON().');
   assert.ok(!('method' in publicJson), 'method must NEVER appear in toPublicJSON().');
+});
+
+test('CapacityCollector keeps bootstrap phase timings structured-log-only and allowlisted', () => {
+  const collector = new CapacityCollector({
+    requestId: VALID_REQUEST_ID,
+    endpoint: '/api/bootstrap',
+    method: 'POST',
+    startedAt: 100,
+  });
+
+  collector.recordBootstrapPhaseTiming('membership', 1.23456);
+  collector.recordBootstrapPhaseTiming('sentinel-learner-name-DO-NOT-LEAK', 12);
+  collector.recordBootstrapPhaseTiming('subjectState', Number.POSITIVE_INFINITY);
+  collector.recordBootstrapPhaseTiming('events', -5);
+  collector.recordBootstrapPhaseTiming('readModel', 99_999);
+
+  const publicJson = collector.toPublicJSON();
+  assert.equal('bootstrapPhaseTimings' in publicJson, false, 'phase timings must never be public JSON.');
+
+  const structured = collector.toStructuredLog();
+  assert.ok(Array.isArray(structured.bootstrapPhaseTimings), 'structured log should include accepted phase timings.');
+  assert.deepEqual(structured.bootstrapPhaseTimings, [
+    { name: 'membership', durationMs: 1.235 },
+    { name: 'events', durationMs: 0 },
+    { name: 'readModel', durationMs: 60_000 },
+  ]);
+  const allowed = new Set(BOOTSTRAP_PHASE_TIMING_NAMES);
+  for (const phase of structured.bootstrapPhaseTimings) {
+    assert.ok(allowed.has(phase.name), `unexpected bootstrap phase "${phase.name}"`);
+    assert.ok(Number.isFinite(phase.durationMs), 'phase duration must be finite.');
+  }
+  assert.equal(JSON.stringify(structured).includes('sentinel-learner-name-DO-NOT-LEAK'), false);
+  assert.equal(collector.bootstrapPhaseTimingsRejected, 2);
+});
+
+test('CapacityCollector omits bootstrap phase timings when diagnostics are not recorded', () => {
+  const collector = new CapacityCollector({
+    requestId: VALID_REQUEST_ID,
+    endpoint: '/api/health',
+    method: 'GET',
+    startedAt: 0,
+  });
+  collector.recordStatement({ name: 'health', rowsRead: 0, rowsWritten: 0, durationMs: 1 });
+
+  const structured = collector.toStructuredLog();
+  assert.equal('bootstrapPhaseTimings' in structured, false);
+  assert.equal('bootstrapPhaseTimings' in collector.toPublicJSON(), false);
 });
 
 test('CapacityCollector hard-caps statements at 50 but keeps counting', () => {

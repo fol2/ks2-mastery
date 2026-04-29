@@ -1,0 +1,26 @@
+{
+  "schema": 3,
+  "evidenceKind": "preflight",
+  "certifying": true,
+  "finishedAt": "2026-04-28T23:38:26.815Z",
+  "summary": {
+    "endpoints": {
+      "GET /api/bootstrap": {
+        "phase": "bootstrap",
+        "count": 20,
+        "queryCount": 12,
+        "d1RowsRead": 52,
+        "d1RowsWritten": 0,
+        "maxResponseBytes": 2700
+      },
+      "POST /api/subjects/grammar/command": {
+        "phase": "command",
+        "count": 60,
+        "queryCount": 26,
+        "d1RowsRead": 515,
+        "d1RowsWritten": 3,
+        "maxResponseBytes": 39000
+      }
+    }
+  }
+}

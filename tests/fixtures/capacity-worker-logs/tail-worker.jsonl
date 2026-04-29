@@ -1,0 +1,3 @@
+{"eventTimestamp":"2026-04-29T09:05:00.000Z","cpuTimeMs":7.5,"wallTimeMs":500,"outcome":"ok","event":{"request":{"method":"GET","url":"https://ks2.eugnel.uk/api/bootstrap","headers":{"x-ks2-request-id":"ks2_req_33333333-3333-4333-8333-333333333333"}},"response":{"status":200}}}
+this is not json
+[ks2-worker] {"event":"capacity.request","requestId":"ks2_req_33333333-3333-4333-8333-333333333333","endpoint":"/api/bootstrap","method":"GET","status":200,"phase":"bootstrap","queryCount":7,"d1RowsRead":90,"d1RowsWritten":0,"d1DurationMs":120,"wallMs":470,"responseBytes":600000,"bootstrapMode":"selected-learner-bounded","statements":[],"statementsTruncated":false,"at":"2026-04-29T09:05:00.100Z"}

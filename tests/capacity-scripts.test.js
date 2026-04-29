@@ -407,6 +407,27 @@ test('classroom load summary groups operational failure signals', () => {
   });
 });
 
+test('classroom load summary retains the top 10 bootstrap tail request ids for P1 log joins', () => {
+  const measurements = Array.from({ length: 12 }, (_, index) => ({
+    scenario: 'cold-bootstrap-burst',
+    method: 'GET',
+    endpoint: '/api/bootstrap',
+    status: 200,
+    ok: true,
+    wallMs: 100 + index,
+    responseBytes: 5000,
+    clientRequestId: `ks2_req_00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+    serverRequestId: `ks2_req_00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+    capacity: { requestId: `ks2_req_00000000-0000-4000-8000-${String(index).padStart(12, '0')}` },
+  }));
+
+  const summary = summariseCapacityResults(measurements, { expectedRequests: 12 });
+  const samples = summary.endpoints['GET /api/bootstrap'].topTailSamples;
+  assert.equal(samples.length, 10);
+  assert.equal(samples[0].wallMs, 111);
+  assert.equal(samples[9].wallMs, 102);
+});
+
 test('classroom load summary detects Worker 1102 from non-json failure text without exposing the body', async () => {
   const previousFetch = globalThis.fetch;
 

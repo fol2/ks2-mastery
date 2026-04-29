@@ -24,12 +24,13 @@ import { createApiPlatformRepositories } from '../src/platform/core/repositories
 // Note: count-based budgets detect ADDED queries but not replaced-bounded-with-unbounded at the same count.
 // ---------------------------------------------------------------------------
 
-// Measured: 12 queries for a 3-learner bounded POST bootstrap (ops_status
+// Measured: 11 queries for a 3-learner bounded POST bootstrap (ops_status
 // JOIN + ensureAccount upsert + account lookup + monster_visual_config +
 // membership list + list_revision + child_subject_state unbounded +
-// game_state + selected-learner active-session scan + practice_sessions +
-// event_log + spelling content). Headroom +1.
-const BUDGET_BOOTSTRAP_MULTI_LEARNER = 13;
+// game_state + practice_sessions + event_log + spelling content).
+// Headroom +1.
+const MEASURED_BOOTSTRAP_MULTI_LEARNER = 11;
+const BUDGET_BOOTSTRAP_MULTI_LEARNER = MEASURED_BOOTSTRAP_MULTI_LEARNER + 1;
 
 // Measured: 5 queries for the notModified probe (ops_status JOIN +
 // ensureAccount upsert + account select + membership list +
@@ -48,10 +49,11 @@ const BUDGET_COMMAND_HOT_PATH = 13;
 // access check + practice_sessions query). Headroom +1.
 const BUDGET_PARENT_RECENT_SESSIONS = 7;
 
-// Measured: 12 queries for GET bootstrap full bundle (identical query
+// Measured: 11 queries for GET bootstrap full bundle (identical query
 // set to POST bounded — the GET path is upgraded to v2 bounded on the
 // public read-models path). Headroom +1.
-const BUDGET_BOOTSTRAP_GET_FULL = 13;
+const MEASURED_BOOTSTRAP_GET_FULL = 11;
+const BUDGET_BOOTSTRAP_GET_FULL = MEASURED_BOOTSTRAP_GET_FULL + 1;
 
 // Measured: 4 queries for Hero read-model GET (ops_status JOIN +
 // ensureAccount upsert + membership learner-access check +
@@ -357,14 +359,25 @@ test('U3 query budget: POST bootstrap multi-learner bounded ≤ BUDGET_BOOTSTRAP
     const capacity = payload.meta?.capacity;
     assert.ok(capacity, 'POST bootstrap must expose meta.capacity');
     assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+    assert.equal('bootstrapPhaseTimings' in capacity, false, 'phase timings must stay structured-log-only.');
 
     assert.ok(
       capacity.queryCount <= BUDGET_BOOTSTRAP_MULTI_LEARNER,
       `POST bootstrap multi-learner queryCount must be ≤ ${BUDGET_BOOTSTRAP_MULTI_LEARNER}; measured ${capacity.queryCount}`,
     );
+    assert.equal(
+      capacity.queryCount,
+      MEASURED_BOOTSTRAP_MULTI_LEARNER,
+      `POST bootstrap multi-learner queryCount should stay at the measured P1 count ${MEASURED_BOOTSTRAP_MULTI_LEARNER}; measured ${capacity.queryCount}`,
+    );
 
     // D1 rows read must be bounded — not scanning full history.
     assert.ok(typeof capacity.d1RowsRead === 'number', 'd1RowsRead must be numeric');
+
+    const subjectStateReads = server.DB.takeQueryLog()
+      .filter((entry) => entry.operation === 'all' && /\bFROM child_subject_state\b/i.test(entry.sql));
+    assert.equal(subjectStateReads.length, 1,
+      'POST bootstrap should reuse the already-loaded child_subject_state rows for active-session discovery.');
   } finally {
     server.close();
   }
@@ -395,6 +408,7 @@ test('U3 query budget: POST bootstrap notModified ≤ BUDGET_BOOTSTRAP_NOT_MODIF
 
     const capacity = payload.meta?.capacity;
     assert.ok(capacity, 'notModified response must expose meta.capacity');
+    assert.equal('bootstrapPhaseTimings' in capacity, false, 'phase timings must stay structured-log-only.');
 
     assert.ok(
       capacity.queryCount <= BUDGET_BOOTSTRAP_NOT_MODIFIED,
@@ -501,10 +515,16 @@ test('U3 query budget: GET bootstrap full bundle ≤ BUDGET_BOOTSTRAP_GET_FULL',
 
     const capacity = payload.meta?.capacity;
     assert.ok(capacity, 'GET bootstrap must expose meta.capacity');
+    assert.equal('bootstrapPhaseTimings' in capacity, false, 'phase timings must stay structured-log-only.');
 
     assert.ok(
       capacity.queryCount <= BUDGET_BOOTSTRAP_GET_FULL,
       `GET bootstrap full bundle queryCount must be ≤ ${BUDGET_BOOTSTRAP_GET_FULL}; measured ${capacity.queryCount}`,
+    );
+    assert.equal(
+      capacity.queryCount,
+      MEASURED_BOOTSTRAP_GET_FULL,
+      `GET bootstrap full bundle queryCount should stay at the measured P1 count ${MEASURED_BOOTSTRAP_GET_FULL}; measured ${capacity.queryCount}`,
     );
 
     // GET full must be at least as expensive as the notModified short-circuit.
@@ -512,6 +532,11 @@ test('U3 query budget: GET bootstrap full bundle ≤ BUDGET_BOOTSTRAP_GET_FULL',
       capacity.queryCount > BUDGET_BOOTSTRAP_NOT_MODIFIED,
       `GET bootstrap full (${capacity.queryCount}) must exceed notModified budget (${BUDGET_BOOTSTRAP_NOT_MODIFIED})`,
     );
+
+    const subjectStateReads = server.DB.takeQueryLog()
+      .filter((entry) => entry.operation === 'all' && /\bFROM child_subject_state\b/i.test(entry.sql));
+    assert.equal(subjectStateReads.length, 1,
+      'GET bootstrap should reuse the already-loaded child_subject_state rows for active-session discovery.');
   } finally {
     server.close();
   }

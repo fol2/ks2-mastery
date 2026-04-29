@@ -4,6 +4,12 @@
 
 This runbook records how capacity is certified for `/api/bootstrap`, subject commands, D1-backed read models, and client recovery paths. Capacity claims must be based on dated measurements from this repository, not planning estimates.
 
+## P1 Evidence Attribution Artefacts
+
+System Hardening Optimisation P1 adds diagnostic CPU/D1 attribution without changing the certification boundary. The canonical operator guide is `docs/operations/capacity-cpu-d1-evidence.md`; the non-certifying 1000-learner modelling worksheet is `docs/operations/capacity-1000-learner-free-tier-budget.md`; and its machine-readable latest artefact is `reports/capacity/latest-1000-learner-budget.json`.
+
+These artefacts can explain which Phase 2 path to take, but they cannot promote 30, 60, 100, 300, or 1000 learner capacity. Capacity support still requires a verifier-backed strict evidence run listed in this runbook.
+
 ## Current Certification Status
 
 | Target | Status | Evidence Required Before Claiming Support |

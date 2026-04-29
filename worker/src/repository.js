@@ -56,6 +56,7 @@ import {
   bootstrapCapacityMeta,
   BOOTSTRAP_CAPACITY_VERSION,
   BOOTSTRAP_MODES,
+  BOOTSTRAP_PHASE_TIMING,
   BOOTSTRAP_V2_ENVELOPE_SHAPE,
   compactLearnerListEntry,
   computeBootstrapRevisionHash,
@@ -6635,33 +6636,51 @@ function subjectStateActiveSessionId(row) {
   return typeof sessionId === 'string' && sessionId ? sessionId : null;
 }
 
-async function listPublicBootstrapActiveSessionIds(db, learnerIds) {
+function sortSubjectRowsForActiveSessionLookup(rows) {
+  return [...rows].sort((a, b) => {
+    const updatedDiff = (Number(b?.updated_at) || 0) - (Number(a?.updated_at) || 0);
+    if (updatedDiff !== 0) return updatedDiff;
+    return String(a?.subject_id || '').localeCompare(String(b?.subject_id || ''));
+  });
+}
+
+function listPublicBootstrapActiveSessionIds(subjectRows, learnerIds) {
   const ids = [];
+  const idsSeen = new Set();
+  const rowsByLearner = new Map();
+  const requestedLearners = new Set(learnerIds.map((learnerId) => String(learnerId)));
+
+  for (const row of subjectRows || []) {
+    const learnerId = String(row?.learner_id || '');
+    if (!requestedLearners.has(learnerId)) continue;
+    const rows = rowsByLearner.get(learnerId) || [];
+    rows.push(row);
+    rowsByLearner.set(learnerId, rows);
+  }
+
   for (const learnerId of learnerIds) {
-    const rows = await all(db, `
-      SELECT ui_json
-      FROM child_subject_state
-      WHERE learner_id = ?
-      ORDER BY updated_at DESC, subject_id ASC
-      LIMIT ?
-    `, [learnerId, PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER]);
     const sessionIdsForLearner = new Set();
+    const rows = sortSubjectRowsForActiveSessionLookup(rowsByLearner.get(String(learnerId)) || [])
+      .slice(0, PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LOOKUP_LIMIT_PER_LEARNER);
     for (const row of rows) {
       const sessionId = subjectStateActiveSessionId(row);
       if (!sessionId || sessionIdsForLearner.has(sessionId)) continue;
       sessionIdsForLearner.add(sessionId);
-      ids.push(sessionId);
+      if (!idsSeen.has(sessionId)) {
+        idsSeen.add(sessionId);
+        ids.push(sessionId);
+      }
       if (sessionIdsForLearner.size >= PUBLIC_BOOTSTRAP_ACTIVE_SESSION_LIMIT_PER_LEARNER) break;
     }
   }
   return ids;
 }
 
-async function listPublicBootstrapSessionRows(db, learnerIds) {
+async function listPublicBootstrapSessionRows(db, learnerIds, subjectRows = []) {
   if (!learnerIds.length) return [];
   const rowsById = new Map();
   const placeholders = sqlPlaceholders(learnerIds.length);
-  const activeSessionIds = await listPublicBootstrapActiveSessionIds(db, learnerIds);
+  const activeSessionIds = listPublicBootstrapActiveSessionIds(subjectRows, learnerIds);
   if (activeSessionIds.length) {
     const activeRows = await all(db, `
       SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
@@ -6775,6 +6794,34 @@ async function bumpAccountLearnerListRevision(db, accountId, nowTs) {
 
 // resolveBootstrapSelectedLearnerId → bootstrap-repository.js
 
+function bootstrapTimingNowMs() {
+  return typeof performance?.now === 'function' ? performance.now() : Date.now();
+}
+
+async function measureBootstrapPhase(capacity, name, fn) {
+  if (!capacity || typeof capacity.recordBootstrapPhaseTiming !== 'function') {
+    return fn();
+  }
+  const startedAt = bootstrapTimingNowMs();
+  try {
+    return await fn();
+  } finally {
+    capacity.recordBootstrapPhaseTiming(name, bootstrapTimingNowMs() - startedAt);
+  }
+}
+
+function measureBootstrapPhaseSync(capacity, name, fn) {
+  if (!capacity || typeof capacity.recordBootstrapPhaseTiming !== 'function') {
+    return fn();
+  }
+  const startedAt = bootstrapTimingNowMs();
+  try {
+    return fn();
+  } finally {
+    capacity.recordBootstrapPhaseTiming(name, bootstrapTimingNowMs() - startedAt);
+  }
+}
+
 async function bootstrapBundle(db, accountId, {
   publicReadModels = false,
   // U7: opt-in to the selected-learner-bounded shape. Defaults mirror the
@@ -6786,46 +6833,70 @@ async function bootstrapBundle(db, accountId, {
   // U7: include `revision` + `account.learnerList` only when the caller
   // is using the v2 envelope shape. Legacy callers get the legacy shape.
   revisionEnvelope = false,
+  capacity = null,
 } = {}) {
-  const account = await first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
+  const account = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.account, () => (
+    first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId])
+  ));
   // U7: on the bounded path we omit the ~450 KB `BUNDLED_MONSTER_VISUAL_CONFIG`
   // from the bootstrap response. Clients fetch the full config lazily via
   // the existing monster-visual-config read path; the bootstrap instead
   // ships a compact `{schemaVersion, manifestHash, publishedVersion}`
   // pointer so the client's schema check + cache invalidation still work.
-  const fullMonsterVisualConfig = selectedLearnerBounded
-    ? null
-    : await readBootstrapMonsterVisualRuntimeConfig(db, Date.now());
-  const monsterVisualConfigPointer = selectedLearnerBounded
-    ? await readMonsterVisualConfigPointer(db)
-    : null;
+  const { fullMonsterVisualConfig, monsterVisualConfigPointer } = await measureBootstrapPhase(
+    capacity,
+    BOOTSTRAP_PHASE_TIMING.monsterVisualConfig,
+    async () => ({
+      fullMonsterVisualConfig: selectedLearnerBounded
+        ? null
+        : await readBootstrapMonsterVisualRuntimeConfig(db, Date.now()),
+      monsterVisualConfigPointer: selectedLearnerBounded
+        ? await readMonsterVisualConfigPointer(db)
+        : null,
+    }),
+  );
   const monsterVisualConfig = fullMonsterVisualConfig || monsterVisualConfigPointer;
-  const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
-  const learnersById = {};
-  const learnerIds = [];
-  const learnerRevisions = {};
+  const membershipRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.membership, () => (
+    listMembershipRows(db, accountId, { writableOnly: true })
+  ));
+  const { learnersById, learnerIds, learnerRevisions, selectedId } = await measureBootstrapPhase(
+    capacity,
+    BOOTSTRAP_PHASE_TIMING.selectedLearner,
+    async () => {
+      const nextLearnersById = {};
+      const nextLearnerIds = [];
+      const nextLearnerRevisions = {};
 
-  for (const row of membershipRows) {
-    const learner = learnerRowToRecord(row);
-    if (!learner) continue;
-    learnersById[learner.id] = learner;
-    learnerIds.push(learner.id);
-    learnerRevisions[learner.id] = Number(row.state_revision) || 0;
-  }
+      for (const row of membershipRows) {
+        const learner = learnerRowToRecord(row);
+        if (!learner) continue;
+        nextLearnersById[learner.id] = learner;
+        nextLearnerIds.push(learner.id);
+        nextLearnerRevisions[learner.id] = Number(row.state_revision) || 0;
+      }
 
-  const selectedId = revisionEnvelope
-    ? resolveBootstrapSelectedLearnerId(
-      membershipRows,
-      account?.selected_learner_id,
-      preferredLearnerId,
-    )
-    : (learnerIds.includes(account?.selected_learner_id)
-      ? account.selected_learner_id
-      : (learnerIds[0] || null));
+      const resolvedSelectedId = revisionEnvelope
+        ? resolveBootstrapSelectedLearnerId(
+          membershipRows,
+          account?.selected_learner_id,
+          preferredLearnerId,
+        )
+        : (nextLearnerIds.includes(account?.selected_learner_id)
+          ? account.selected_learner_id
+          : (nextLearnerIds[0] || null));
 
-  if (selectedId !== (account?.selected_learner_id || null)) {
-    await run(db, 'UPDATE adult_accounts SET selected_learner_id = ?, updated_at = ? WHERE id = ?', [selectedId, Date.now(), accountId]);
-  }
+      if (resolvedSelectedId !== (account?.selected_learner_id || null)) {
+        await run(db, 'UPDATE adult_accounts SET selected_learner_id = ?, updated_at = ? WHERE id = ?', [resolvedSelectedId, Date.now(), accountId]);
+      }
+
+      return {
+        learnersById: nextLearnersById,
+        learnerIds: nextLearnerIds,
+        learnerRevisions: nextLearnerRevisions,
+        selectedId: resolvedSelectedId,
+      };
+    },
+  );
 
   // U7: the "bounded" mode restricts per-learner reads to the selected
   // learner only. If no selected learner exists (empty account, or
@@ -6846,36 +6917,51 @@ async function bootstrapBundle(db, accountId, {
   // empty and non-empty branches can stamp them consistently. These
   // queries are free when `revisionEnvelope=false` (we skip them).
   const accountRevisionValue = Number(account?.repo_revision) || 0;
-  const accountLearnerListRevision = revisionEnvelope
-    ? await readAccountLearnerListRevision(db, accountId)
-    : 0;
-  const selectedLearnerRevision = selectedId ? (learnerRevisions[selectedId] || 0) : 0;
-  // U1 follow-up 2026-04-26 (B1): pin every writable learner's
-  // state_revision into the hash input so sibling writes invalidate the
-  // `bootstrapNotModifiedProbe` short-circuit.
-  const writableLearnerStatesDigest = revisionEnvelope
-    ? await computeWritableLearnerStatesDigest(membershipRows)
-    : '';
-  const revisionHash = revisionEnvelope
-    ? await computeBootstrapRevisionHash({
-      accountId,
-      accountRevision: accountRevisionValue,
-      selectedLearnerRevision,
-      bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
-      accountLearnerListRevision,
-      writableLearnerStatesDigest,
-    })
-    : null;
+  const {
+    accountLearnerListRevision,
+    selectedLearnerRevision,
+    revisionHash,
+  } = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.revisionHash, async () => {
+    const nextAccountLearnerListRevision = revisionEnvelope
+      ? await readAccountLearnerListRevision(db, accountId)
+      : 0;
+    const nextSelectedLearnerRevision = selectedId ? (learnerRevisions[selectedId] || 0) : 0;
+    // U1 follow-up 2026-04-26 (B1): pin every writable learner's
+    // state_revision into the hash input so sibling writes invalidate the
+    // `bootstrapNotModifiedProbe` short-circuit.
+    const writableLearnerStatesDigest = revisionEnvelope
+      ? await computeWritableLearnerStatesDigest(membershipRows)
+      : '';
+    const nextRevisionHash = revisionEnvelope
+      ? await computeBootstrapRevisionHash({
+        accountId,
+        accountRevision: accountRevisionValue,
+        selectedLearnerRevision: nextSelectedLearnerRevision,
+        bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+        accountLearnerListRevision: nextAccountLearnerListRevision,
+        writableLearnerStatesDigest,
+      })
+      : null;
+    return {
+      accountLearnerListRevision: nextAccountLearnerListRevision,
+      selectedLearnerRevision: nextSelectedLearnerRevision,
+      revisionHash: nextRevisionHash,
+    };
+  });
 
   // U7: compact `account.learnerList` entries for unselected learners.
   // When `boundedToSelected` is false (legacy callers), this stays empty
   // so the legacy envelope is unchanged.
-  const learnerListEntries = boundedToSelected
-    ? membershipRows
-      .filter((row) => String(row.id) !== String(selectedId))
-      .map((row) => compactLearnerListEntry(row))
-      .filter(Boolean)
-    : [];
+  const learnerListEntries = measureBootstrapPhaseSync(
+    capacity,
+    BOOTSTRAP_PHASE_TIMING.learnerList,
+    () => (boundedToSelected
+      ? membershipRows
+        .filter((row) => String(row.id) !== String(selectedId))
+        .map((row) => compactLearnerListEntry(row))
+        .filter(Boolean)
+      : []),
+  );
 
   if (!learnerIds.length) {
     const emptyMode = boundedToSelected ? 'selected-learner-bounded' : null;
@@ -6890,7 +6976,7 @@ async function bootstrapBundle(db, accountId, {
       subjectStatesBounded: false,
     }) : null;
     if (capacityMeta && emptyMode) capacityMeta.bootstrapMode = emptyMode;
-    return {
+    return measureBootstrapPhaseSync(capacity, BOOTSTRAP_PHASE_TIMING.responseConstruction, () => ({
       ...normaliseRepositoryBundle({
         meta: currentRepositoryMeta(),
         learners: emptyLearnersSnapshot(),
@@ -6919,7 +7005,7 @@ async function bootstrapBundle(db, accountId, {
           hash: revisionHash,
         },
       } : {}),
-    };
+    }));
   }
 
   const placeholders = sqlPlaceholders(queryLearnerIds.length);
@@ -6940,16 +7026,20 @@ async function bootstrapBundle(db, accountId, {
   let gameRows;
   try {
     const subjectStatePlaceholders = sqlPlaceholders(subjectStateLearnerIds.length);
-    subjectRows = await all(db, `
-      SELECT learner_id, subject_id, ui_json, data_json, updated_at
-      FROM child_subject_state
-      WHERE learner_id IN (${subjectStatePlaceholders})
-    `, subjectStateLearnerIds);
-    gameRows = await all(db, `
-      SELECT learner_id, system_id, state_json, updated_at
-      FROM child_game_state
-      WHERE learner_id IN (${subjectStatePlaceholders})
-    `, subjectStateLearnerIds);
+    subjectRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.subjectState, () => (
+      all(db, `
+        SELECT learner_id, subject_id, ui_json, data_json, updated_at
+        FROM child_subject_state
+        WHERE learner_id IN (${subjectStatePlaceholders})
+      `, subjectStateLearnerIds)
+    ));
+    gameRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.gameState, () => (
+      all(db, `
+        SELECT learner_id, system_id, state_json, updated_at
+        FROM child_game_state
+        WHERE learner_id IN (${subjectStatePlaceholders})
+      `, subjectStateLearnerIds)
+    ));
   } catch (error) {
     // Only fall back when a selectedId exists — empty/no-learner paths
     // are handled by the earlier `!learnerIds.length` branch, and a
@@ -6966,59 +7056,73 @@ async function bootstrapBundle(db, accountId, {
     subjectStateIdsUsed = [selectedId];
     subjectStatesFallbackMode = 'degraded-to-selected';
     const fallbackPlaceholders = sqlPlaceholders(subjectStateIdsUsed.length);
-    subjectRows = await all(db, `
-      SELECT learner_id, subject_id, ui_json, data_json, updated_at
-      FROM child_subject_state
-      WHERE learner_id IN (${fallbackPlaceholders})
-    `, subjectStateIdsUsed);
-    gameRows = await all(db, `
-      SELECT learner_id, system_id, state_json, updated_at
-      FROM child_game_state
-      WHERE learner_id IN (${fallbackPlaceholders})
-    `, subjectStateIdsUsed);
+    subjectRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.subjectState, () => (
+      all(db, `
+        SELECT learner_id, subject_id, ui_json, data_json, updated_at
+        FROM child_subject_state
+        WHERE learner_id IN (${fallbackPlaceholders})
+      `, subjectStateIdsUsed)
+    ));
+    gameRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.gameState, () => (
+      all(db, `
+        SELECT learner_id, system_id, state_json, updated_at
+        FROM child_game_state
+        WHERE learner_id IN (${fallbackPlaceholders})
+      `, subjectStateIdsUsed)
+    ));
   }
-  const sessionRows = publicReadModels
-    ? await listPublicBootstrapSessionRows(db, queryLearnerIds)
-    : await all(db, `
-      SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
-      FROM practice_sessions
-      WHERE learner_id IN (${placeholders})
-      ORDER BY updated_at DESC, id DESC
-    `, queryLearnerIds);
-  const eventRows = publicReadModels
-    ? await listPublicBootstrapEventRows(db, queryLearnerIds)
-    : await all(db, `
-      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
-      FROM event_log
-      WHERE learner_id IN (${placeholders})
-      ORDER BY created_at ASC, id ASC
-    `, queryLearnerIds);
-  const publicSpellingContent = publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
-    ? await readSpellingRuntimeContentBundle(db, accountId, 'spelling')
-    : null;
+  const sessionRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.sessions, () => (
+    publicReadModels
+      ? listPublicBootstrapSessionRows(db, queryLearnerIds, subjectRows)
+      : all(db, `
+        SELECT id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at
+        FROM practice_sessions
+        WHERE learner_id IN (${placeholders})
+        ORDER BY updated_at DESC, id DESC
+      `, queryLearnerIds)
+  ));
+  const eventRows = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.events, () => (
+    publicReadModels
+      ? listPublicBootstrapEventRows(db, queryLearnerIds)
+      : all(db, `
+        SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+        FROM event_log
+        WHERE learner_id IN (${placeholders})
+        ORDER BY created_at ASC, id ASC
+      `, queryLearnerIds)
+  ));
+  const publicSpellingContent = await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, () => (
+    publicReadModels && subjectRows.some((row) => row.subject_id === 'spelling')
+      ? readSpellingRuntimeContentBundle(db, accountId, 'spelling')
+      : null
+  ));
   const publicReadModelNow = Date.now();
   const subjectStates = {};
-  for (const row of subjectRows) {
-    subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = publicReadModels
-      ? await publicSubjectStateRowToRecord(row, {
-        spellingContentSnapshot: publicSpellingContent?.snapshot || null,
-        now: publicReadModelNow,
-      })
-      : subjectStateRowToRecord(row);
-  }
+  await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, async () => {
+    for (const row of subjectRows) {
+      subjectStates[subjectStateKey(row.learner_id, row.subject_id)] = publicReadModels
+        ? await publicSubjectStateRowToRecord(row, {
+          spellingContentSnapshot: publicSpellingContent?.snapshot || null,
+          now: publicReadModelNow,
+        })
+        : subjectStateRowToRecord(row);
+    }
+  });
 
   const gameState = {};
-  gameRows.forEach((row) => {
-    const record = publicReadModels
-      ? publicGameStateRowToRecord(row)
-      : gameStateRowToRecord(row);
-    if (record) gameState[gameStateKey(row.learner_id, row.system_id)] = record;
-  });
-  if (publicReadModels) {
-    await mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, {
-      runtimeSnapshot: publicSpellingContent?.snapshot || null,
+  await measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.readModel, async () => {
+    gameRows.forEach((row) => {
+      const record = publicReadModels
+        ? publicGameStateRowToRecord(row)
+        : gameStateRowToRecord(row);
+      if (record) gameState[gameStateKey(row.learner_id, row.system_id)] = record;
     });
-  }
+    if (publicReadModels) {
+      await mergePublicSpellingCodexState(db, accountId, subjectRows, gameState, {
+        runtimeSnapshot: publicSpellingContent?.snapshot || null,
+      });
+    }
+  });
 
   const capacityMeta = publicReadModels ? bootstrapCapacityMeta({
     publicReadModels,
@@ -7036,7 +7140,7 @@ async function bootstrapBundle(db, accountId, {
   }) : null;
   if (capacityMeta && boundedToSelected) capacityMeta.bootstrapMode = 'selected-learner-bounded';
 
-  return {
+  return measureBootstrapPhaseSync(capacity, BOOTSTRAP_PHASE_TIMING.responseConstruction, () => ({
     ...normaliseRepositoryBundle({
       meta: currentRepositoryMeta(),
       learners: {
@@ -7073,7 +7177,7 @@ async function bootstrapBundle(db, accountId, {
         hash: revisionHash,
       },
     } : {}),
-  };
+  }));
 }
 
 // U7: short-circuit response when `lastKnownRevision` matches the current
@@ -7082,46 +7186,49 @@ async function bootstrapBundle(db, accountId, {
 async function bootstrapNotModifiedProbe(db, accountId, {
   lastKnownRevision,
   preferredLearnerId = null,
+  capacity = null,
 }) {
-  if (!lastKnownRevision || typeof lastKnownRevision !== 'string') return null;
-  const account = await first(db, 'SELECT id, selected_learner_id, repo_revision FROM adult_accounts WHERE id = ?', [accountId]);
-  if (!account) return null;
-  const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
-  const writableSelectedId = resolveBootstrapSelectedLearnerId(
-    membershipRows,
-    account.selected_learner_id,
-    preferredLearnerId,
-  );
-  const accountRevisionValue = Number(account.repo_revision) || 0;
-  const accountLearnerListRevision = await readAccountLearnerListRevision(db, accountId);
-  const selectedRow = writableSelectedId
-    ? membershipRows.find((row) => String(row.id) === String(writableSelectedId))
-    : null;
-  const selectedLearnerRevision = Number(selectedRow?.state_revision) || 0;
-  // U1 follow-up 2026-04-26 (B1): include every writable learner's
-  // state_revision in the hash input so sibling writes are visible to
-  // the probe. Must use the SAME `membershipRows` shape as
-  // `bootstrapBundle` (from `listMembershipRows(db, accountId,
-  // { writableOnly: true })`) for deterministic agreement between the
-  // probe and the full-bundle hash.
-  const writableLearnerStatesDigest = await computeWritableLearnerStatesDigest(membershipRows);
-  const serverHash = await computeBootstrapRevisionHash({
-    accountId,
-    accountRevision: accountRevisionValue,
-    selectedLearnerRevision,
-    bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
-    accountLearnerListRevision,
-    writableLearnerStatesDigest,
+  return measureBootstrapPhase(capacity, BOOTSTRAP_PHASE_TIMING.notModifiedProbe, async () => {
+    if (!lastKnownRevision || typeof lastKnownRevision !== 'string') return null;
+    const account = await first(db, 'SELECT id, selected_learner_id, repo_revision FROM adult_accounts WHERE id = ?', [accountId]);
+    if (!account) return null;
+    const membershipRows = await listMembershipRows(db, accountId, { writableOnly: true });
+    const writableSelectedId = resolveBootstrapSelectedLearnerId(
+      membershipRows,
+      account.selected_learner_id,
+      preferredLearnerId,
+    );
+    const accountRevisionValue = Number(account.repo_revision) || 0;
+    const accountLearnerListRevision = await readAccountLearnerListRevision(db, accountId);
+    const selectedRow = writableSelectedId
+      ? membershipRows.find((row) => String(row.id) === String(writableSelectedId))
+      : null;
+    const selectedLearnerRevision = Number(selectedRow?.state_revision) || 0;
+    // U1 follow-up 2026-04-26 (B1): include every writable learner's
+    // state_revision in the hash input so sibling writes are visible to
+    // the probe. Must use the SAME `membershipRows` shape as
+    // `bootstrapBundle` (from `listMembershipRows(db, accountId,
+    // { writableOnly: true })`) for deterministic agreement between the
+    // probe and the full-bundle hash.
+    const writableLearnerStatesDigest = await computeWritableLearnerStatesDigest(membershipRows);
+    const serverHash = await computeBootstrapRevisionHash({
+      accountId,
+      accountRevision: accountRevisionValue,
+      selectedLearnerRevision,
+      bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+      accountLearnerListRevision,
+      writableLearnerStatesDigest,
+    });
+    if (serverHash !== lastKnownRevision) return null;
+    return {
+      accountRevision: accountRevisionValue,
+      selectedLearnerId: writableSelectedId,
+      selectedLearnerRevision,
+      accountLearnerListRevision,
+      bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
+      hash: serverHash,
+    };
   });
-  if (serverHash !== lastKnownRevision) return null;
-  return {
-    accountRevision: accountRevisionValue,
-    selectedLearnerId: writableSelectedId,
-    selectedLearnerRevision,
-    accountLearnerListRevision,
-    bootstrapCapacityVersion: PUBLIC_BOOTSTRAP_CAPACITY_VERSION,
-    hash: serverHash,
-  };
 }
 
 async function readSubjectRuntimeBundle(db, accountId, learnerId, subjectId = 'spelling', {
@@ -8384,7 +8491,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
       return first(db, 'SELECT * FROM adult_accounts WHERE id = ?', [accountId]);
     },
     async bootstrap(accountId, options = {}) {
-      const bundle = await bootstrapBundle(db, accountId, options);
+      const bundle = await bootstrapBundle(db, accountId, { ...options, capacity });
       // U3: stamp `bootstrapCapacity` on the collector when the bundle
       // emitted one. The collector is mutated rather than returned —
       // keeps repository call signatures stable across all callers.
@@ -8409,6 +8516,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         const probe = await bootstrapNotModifiedProbe(db, accountId, {
           lastKnownRevision,
           preferredLearnerId,
+          capacity,
         });
         if (probe) {
           // Stamp the minimal capacity meta so U9's
@@ -8441,6 +8549,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         selectedLearnerBounded: true,
         preferredLearnerId,
         revisionEnvelope: true,
+        capacity,
       });
       if (capacity && bundle?.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {
         capacity.setBootstrapCapacity(bundle.bootstrapCapacity);
@@ -8462,6 +8571,7 @@ export function createWorkerRepository({ env = {}, now = Date.now, capacity = nu
         selectedLearnerBounded: true,
         preferredLearnerId,
         revisionEnvelope: true,
+        capacity,
       });
       if (capacity && bundle?.bootstrapCapacity != null && typeof capacity.setBootstrapCapacity === 'function') {
         capacity.setBootstrapCapacity(bundle.bootstrapCapacity);
