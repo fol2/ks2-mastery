@@ -12,9 +12,11 @@ import {
   loadMonsterState,
   masteredCount,
   masteredList,
+  MONSTER_IDS,
   saveMonsterState,
   SPELLING_MONSTER_IDS,
   DIRECT_SPELLING_MONSTER_IDS,
+  withMonsterBranches,
 } from './shared.js';
 import { derivePhaeton, PHAETON_SOURCE_MONSTER_IDS } from './phaeton.js';
 import { activePunctuationMonsterSummaryFromState } from './punctuation.js';
@@ -165,6 +167,13 @@ export function monsterSummaryFromSpellingAnalytics(analytics, {
     branchState = persistBranches
       ? ensureMonsterBranches(learnerId, gameStateRepository, { random, monsterIds: SPELLING_MONSTER_IDS })
       : loadMonsterState(learnerId, gameStateRepository);
+    if (!persistBranches) {
+      branchState = withMonsterBranches(branchState, {
+        learnerId,
+        random: () => 0,
+        monsterIds: MONSTER_IDS,
+      }).state;
+    }
   }
 
   if (!analyticsHasWordRows(analytics) && hasMonsterMasteryProgress(branchState)) {
