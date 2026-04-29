@@ -3,8 +3,11 @@ import assert from 'node:assert/strict';
 
 import {
   HERO_PROGRESS_VERSION,
+  HERO_POOL_STATE_VERSION,
+  HERO_POOL_ROSTER_VERSION,
   MAX_RECENT_CLAIMS_AGE_DAYS,
   emptyProgressState,
+  emptyHeroPoolState,
   normaliseHeroProgressState,
   initialiseDailyProgress,
   applyClaimToProgress,
@@ -16,25 +19,28 @@ import { HERO_ECONOMY_VERSION, emptyEconomyState } from '../shared/hero/economy.
 
 // ── normaliseHeroProgressState ────────────────────────────────────
 
-test('normaliseHeroProgressState with null returns empty v2 state', () => {
+test('normaliseHeroProgressState with null returns empty v3 state', () => {
   const result = normaliseHeroProgressState(null);
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.daily, null);
   assert.deepEqual(result.recentClaims, []);
   assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
   assert.equal(result.economy.balance, 0);
   assert.deepEqual(result.economy.ledger, []);
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
+  assert.deepEqual(result.heroPool.monsters, {});
 });
 
-test('normaliseHeroProgressState with undefined returns empty v2 state', () => {
+test('normaliseHeroProgressState with undefined returns empty v3 state', () => {
   const result = normaliseHeroProgressState(undefined);
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.daily, null);
   assert.deepEqual(result.recentClaims, []);
   assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
 });
 
-test('normaliseHeroProgressState v1 state migrates to v2 preserving daily and recentClaims', () => {
+test('normaliseHeroProgressState v1 state migrates to v3 preserving daily and recentClaims', () => {
   const input = {
     version: 1,
     daily: {
@@ -59,7 +65,7 @@ test('normaliseHeroProgressState v1 state migrates to v2 preserving daily and re
     recentClaims: [{ claimId: 'c1', createdAt: 999 }],
   };
   const result = normaliseHeroProgressState(input);
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.daily.dateKey, '2026-04-28');
   assert.equal(result.daily.questId, 'quest-abc');
   assert.equal(result.daily.tasks.t1.status, 'completed');
@@ -72,9 +78,12 @@ test('normaliseHeroProgressState v1 state migrates to v2 preserving daily and re
   assert.equal(result.economy.lifetimeSpent, 0);
   assert.deepEqual(result.economy.ledger, []);
   assert.equal(result.economy.lastUpdatedAt, null);
+  // heroPool must be empty (v1 had no heroPool)
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
+  assert.deepEqual(result.heroPool.monsters, {});
 });
 
-test('normaliseHeroProgressState v2 state with existing economy normalises correctly', () => {
+test('normaliseHeroProgressState v2 state with existing economy migrates to v3', () => {
   const input = {
     version: 2,
     daily: {
@@ -101,40 +110,46 @@ test('normaliseHeroProgressState v2 state with existing economy normalises corre
       balance: 100,
       lifetimeEarned: 200,
       lifetimeSpent: 100,
-      ledger: [{ id: 'entry-1', type: 'daily-completion-award', coins: 100 }],
+      ledger: [{ entryId: 'entry-1', type: 'daily-completion-award', amount: 100, balanceAfter: 100, createdAt: 5500 }],
       lastUpdatedAt: 5500,
     },
   };
   const result = normaliseHeroProgressState(input);
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.daily.questId, 'quest-xyz');
   assert.equal(result.economy.balance, 100);
   assert.equal(result.economy.lifetimeEarned, 200);
   assert.equal(result.economy.lifetimeSpent, 100);
   assert.equal(result.economy.ledger.length, 1);
   assert.equal(result.economy.lastUpdatedAt, 5500);
+  // heroPool must be empty (v2 had no heroPool)
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
+  assert.deepEqual(result.heroPool.monsters, {});
 });
 
-test('normaliseHeroProgressState with malformed version (99) returns empty v2 state', () => {
+test('normaliseHeroProgressState with malformed version (99) returns empty v3 state', () => {
   const result = normaliseHeroProgressState({ version: 99, daily: null, recentClaims: [] });
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.daily, null);
   assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
   assert.equal(result.economy.balance, 0);
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
 });
 
-test('normaliseHeroProgressState with missing version returns empty v2 state', () => {
+test('normaliseHeroProgressState with missing version returns empty v3 state', () => {
   const result = normaliseHeroProgressState({ daily: null, recentClaims: [] });
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.daily, null);
   assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
 });
 
-test('normaliseHeroProgressState with version as string returns empty v2 state', () => {
-  const result = normaliseHeroProgressState({ version: '2', daily: null, recentClaims: [] });
-  assert.equal(result.version, 2);
+test('normaliseHeroProgressState with version as string returns empty v3 state', () => {
+  const result = normaliseHeroProgressState({ version: '3', daily: null, recentClaims: [] });
+  assert.equal(result.version, 3);
   assert.equal(result.daily, null);
   assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
 });
 
 test('normaliseHeroProgressState v2 with partially corrupt economy normalises safely', () => {
@@ -169,6 +184,7 @@ test('normaliseHeroProgressState v2 with partially corrupt economy normalises sa
     },
   };
   const result = normaliseHeroProgressState(input);
+  assert.equal(result.version, 3);
   // Daily progress MUST survive
   assert.equal(result.daily.questId, 'quest-keep');
   assert.equal(result.daily.tasks.t1.status, 'planned');
@@ -178,6 +194,9 @@ test('normaliseHeroProgressState v2 with partially corrupt economy normalises sa
   assert.equal(result.economy.balance, 0); // 'corrupted' → 0
   assert.equal(result.economy.lifetimeEarned, 0); // Infinity → 0
   assert.deepEqual(result.economy.ledger, []); // 'not-an-array' → []
+  // heroPool must be empty (v2 migration)
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
+  assert.deepEqual(result.heroPool.monsters, {});
 });
 
 test('normaliseHeroProgressState v2 with null economy gets empty economy', () => {
@@ -188,18 +207,21 @@ test('normaliseHeroProgressState v2 with null economy gets empty economy', () =>
     economy: null,
   };
   const result = normaliseHeroProgressState(input);
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
   assert.equal(result.economy.balance, 0);
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
 });
 
 test('normaliseHeroProgressState with malformed daily repairs safely', () => {
   const result = normaliseHeroProgressState({
-    version: 2,
+    version: 3,
     daily: { dateKey: '2026-04-28', questId: 'q1', status: 'garbage', effortTarget: 'abc' },
     recentClaims: 'not-an-array',
     economy: emptyEconomyState(),
+    heroPool: emptyHeroPoolState(),
   });
+  assert.equal(result.version, 3);
   assert.equal(result.daily.status, 'active'); // unknown status defaults to 'active'
   assert.equal(result.daily.effortTarget, 0); // NaN coerces to 0
   assert.deepEqual(result.recentClaims, []);
@@ -207,11 +229,13 @@ test('normaliseHeroProgressState with malformed daily repairs safely', () => {
 
 test('normaliseHeroProgressState with daily missing dateKey returns null daily', () => {
   const result = normaliseHeroProgressState({
-    version: 2,
+    version: 3,
     daily: { questId: 'q1' }, // no dateKey
     recentClaims: [],
     economy: emptyEconomyState(),
+    heroPool: emptyHeroPoolState(),
   });
+  assert.equal(result.version, 3);
   assert.equal(result.daily, null);
 });
 
@@ -458,10 +482,10 @@ test('markTaskStarted preserves existing firstStartedAt', () => {
 
 // ── emptyProgressState ────────────────────────────────────────────
 
-test('emptyProgressState returns correct v2 shape with economy', () => {
+test('emptyProgressState returns correct v3 shape with economy + heroPool', () => {
   const result = emptyProgressState();
   assert.equal(result.version, HERO_PROGRESS_VERSION);
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.daily, null);
   assert.deepEqual(result.recentClaims, []);
   assert.equal(result.economy.version, HERO_ECONOMY_VERSION);
@@ -470,10 +494,16 @@ test('emptyProgressState returns correct v2 shape with economy', () => {
   assert.equal(result.economy.lifetimeSpent, 0);
   assert.deepEqual(result.economy.ledger, []);
   assert.equal(result.economy.lastUpdatedAt, null);
+  assert.equal(result.heroPool.version, HERO_POOL_STATE_VERSION);
+  assert.equal(result.heroPool.rosterVersion, HERO_POOL_ROSTER_VERSION);
+  assert.equal(result.heroPool.selectedMonsterId, null);
+  assert.deepEqual(result.heroPool.monsters, {});
+  assert.deepEqual(result.heroPool.recentActions, []);
+  assert.equal(result.heroPool.lastUpdatedAt, null);
 });
 
-// ── HERO_PROGRESS_VERSION is 2 ───────────────────────────────────
+// ── HERO_PROGRESS_VERSION is 3 ───────────────────────────────────
 
-test('HERO_PROGRESS_VERSION is 2', () => {
-  assert.equal(HERO_PROGRESS_VERSION, 2);
+test('HERO_PROGRESS_VERSION is 3', () => {
+  assert.equal(HERO_PROGRESS_VERSION, 3);
 });
