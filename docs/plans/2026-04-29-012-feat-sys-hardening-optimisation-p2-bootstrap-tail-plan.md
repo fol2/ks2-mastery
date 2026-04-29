@@ -20,6 +20,8 @@ source_docs:
 
 Plan P2 as an evidence-first `/api/bootstrap` tail-reduction phase: collect post-P1 strict evidence, join Cloudflare Worker CPU/wall logs, classify the slowest bootstrap samples, then choose one measured mitigation path. The plan may end with 30-learner certification only if the existing strict verifier-backed gate passes; otherwise it produces an honest blocker and next action.
 
+Status note: `completed` on this implementation plan means the P2 evidence-capture PR slice has been executed through its review and merge workflow. James requested the final comprehensive completion report as a post-merge action, so that report is intentionally delivered in a dedicated follow-up PR under `docs/plans/james/sys-hardening/A/` after this implementation PR lands.
+
 ---
 
 ## Problem Frame

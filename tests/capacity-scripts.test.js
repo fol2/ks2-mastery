@@ -324,7 +324,7 @@ test('classroom load demo sessions fail closed instead of falling back to operat
       return jsonResponse({
         ok: false,
         code: 'demo_unavailable',
-        message: 'Demo session unavailable.',
+        message: 'SELECT * FROM adult_accounts WHERE email = "operator@example.test"; ks2_req_00000000-0000-4000-8000-000000000001',
       }, { status: 503 });
     }
     return jsonResponse({
@@ -400,12 +400,15 @@ test('classroom load writes non-certifying evidence when demo-session setup fail
     const written = JSON.parse(readFileSync(outputPath, 'utf8'));
     assert.equal(written.ok, false);
     assert.equal(JSON.stringify(written).includes('ks2_req_'), false);
+    assert.equal(JSON.stringify(written).includes('adult_accounts'), false);
+    assert.equal(JSON.stringify(written).includes('operator@example.test'), false);
     assert.equal(written.dryRun, false);
     assert.equal(written.setupFailure.phase, 'setup');
     assert.equal(written.setupFailure.measurements, 1);
     assert.deepEqual(written.failures, ['setupFailure']);
     assert.equal(written.summary.totalRequests, 1);
     assert.equal(written.summary.statusCounts['503'], 1);
+    assert.equal(written.summary.failures[0].message, 'Request failed with code "demo_unavailable".');
     assert.equal(written.summary.failures[0].failureClass, 'setup');
     assert.equal(written.sessionSourceMode, 'demo-sessions');
     assert.equal(written.measurements, undefined);

@@ -18,6 +18,8 @@ source_docs:
 
 # System Hardening Optimisation P2 — Bootstrap Tail Reduction and 30/60 Evidence Attempt
 
+> Implementation note (2026-04-29): the evidence-capture implementation slice is tracked by the canonical implementation plan and PR #652. This source contract remains `draft` until the post-merge completion report PR records the final SDLC outcome under `docs/plans/james/sys-hardening/A/`.
+
 ## 0. One-sentence summary
 
 Phase 2 turns the Phase 1 attribution tooling into a targeted `/api/bootstrap` tail-reduction pass, with the narrow aim of making the 30-learner strict classroom gate pass if the evidence supports it, while keeping the 60-learner and 1000-learner goals diagnostic and non-certifying.

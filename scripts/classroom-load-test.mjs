@@ -121,8 +121,12 @@ function contextAuthHeaders(options, context) {
 }
 
 function safeFailureMessage({ payload, networkError, parseError }) {
-  if (payload?.message) return payload.message;
-  if (networkError) return networkError.message || 'Network request failed.';
+  if (payload?.code || payload?.error) {
+    const code = String(payload.code || payload.error).replace(/[^a-z0-9_.:-]/gi, '').slice(0, 80);
+    return code ? `Request failed with code "${code}".` : 'Request failed.';
+  }
+  if (payload?.message) return 'Request failed.';
+  if (networkError) return 'Network request failed.';
   if (parseError) return 'Response body was not valid JSON.';
   return '';
 }

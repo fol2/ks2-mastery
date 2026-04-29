@@ -303,6 +303,26 @@ function probeCommitExists(evidenceCommit) {
 }
 
 /**
+ * Probe whether a locally-present evidence commit is reachable from HEAD.
+ * `git cat-file -e` only proves object-database presence; dangling commits can
+ * survive locally for weeks and still disappear from a clean clone. Requiring
+ * HEAD reachability keeps evidence provenance reproducible from the PR branch
+ * and, after merge, from main history.
+ */
+function probeCommitReachableFromHead(evidenceCommit) {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', evidenceCommit, 'HEAD'], {
+      stdio: ['ignore', 'ignore', 'pipe'],
+      timeout: 2000,
+    });
+    return 'reachable';
+  } catch (error) {
+    if (error && error.status === 1) return 'unreachable';
+    return 'unknown';
+  }
+}
+
+/**
  * Round 7 Finding 2 (P1): probe whether the evidence commit exists in the
  * local git database. Previously the equivalent check lived INSIDE
  * `requireConfigAncestry`, which was only invoked when `tier.configPath` was
@@ -320,7 +340,35 @@ function probeCommitExists(evidenceCommit) {
 function probeEvidenceCommitPresence(evidenceCommit) {
   const existence = probeCommitExists(evidenceCommit);
   if (existence === 'present') {
-    return { failures: [], warnings: [] };
+    const reachability = probeCommitReachableFromHead(evidenceCommit);
+    if (reachability === 'reachable') {
+      return { failures: [], warnings: [] };
+    }
+    if (reachability === 'unreachable') {
+      if (isShallowClone()) {
+        return {
+          failures: [],
+          warnings: [
+            `evidence commit ${evidenceCommit.slice(0, 10)} exists locally but is not reachable from HEAD in this shallow clone. `
+            + 'Verify the commit in a full clone before accepting the evidence.',
+          ],
+        };
+      }
+      return {
+        failures: [
+          `evidence commit ${evidenceCommit.slice(0, 10)} exists locally but is not reachable from HEAD; possible dangling local provenance. `
+          + 'Evidence commits must be reachable from the PR branch or main history before they can be accepted.',
+        ],
+        warnings: [],
+      };
+    }
+    return {
+      failures: [],
+      warnings: [
+        `could not prove commit ${evidenceCommit.slice(0, 10)} is reachable from HEAD. `
+        + 'Set CAPACITY_VERIFY_SKIP_ANCESTRY=1 to silence this warning only in justified shallow CI shards.',
+      ],
+    };
   }
   if (existence === 'missing') {
     if (isShallowClone()) {
