@@ -83,7 +83,7 @@ export function buildInventory(seeds) {
         solutionLines: question.solutionLines || [],
         variantSignature: question.variantSignature || '',
         generatorFamilyId: template.generatorFamilyId || template.id,
-        reviewStatus: 'pending',
+        reviewStatus: 'draft_only',
       };
 
       items.push(item);
@@ -104,6 +104,7 @@ export function buildInventory(seeds) {
       totalItems: items.length,
       uniqueTemplates: templateIds.size,
       seeds: seeds.length,
+      seedRange: `${Math.min(...seeds)}..${Math.max(...seeds)}`,
       contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
     },
   };
@@ -132,24 +133,32 @@ function toMarkdownTable(items) {
   return [header, separator, ...rows].join('\n') + '\n';
 }
 
-async function writeReports(inventory) {
+async function writeReports(inventory, release = 'p8') {
   await fs.mkdir(REPORTS_DIR, { recursive: true });
 
-  const jsonPath = path.join(REPORTS_DIR, 'grammar-qg-p8-question-inventory.json');
-  const mdPath = path.join(REPORTS_DIR, 'grammar-qg-p8-question-inventory.md');
-  const redactedMdPath = path.join(REPORTS_DIR, 'grammar-qg-p8-question-inventory-redacted.md');
+  const prefix = `grammar-qg-${release}-question-inventory`;
+  const label = `Grammar QG ${release.toUpperCase()} Question Inventory`;
 
-  // Full JSON
-  await fs.writeFile(jsonPath, JSON.stringify(inventory.items, null, 2) + '\n', 'utf8');
+  const jsonPath = path.join(REPORTS_DIR, `${prefix}.json`);
+  const mdPath = path.join(REPORTS_DIR, `${prefix}.md`);
+  const redactedMdPath = path.join(REPORTS_DIR, `${prefix}-redacted.md`);
+
+  // Full JSON with summary header
+  const jsonOutput = {
+    summary: inventory.summary,
+    items: inventory.items,
+  };
+  await fs.writeFile(jsonPath, JSON.stringify(jsonOutput, null, 2) + '\n', 'utf8');
 
   // Full markdown
   const mdContent = [
-    `# Grammar QG P8 Question Inventory`,
+    `# ${label}`,
     '',
     `Content Release: ${inventory.summary.contentReleaseId}`,
     `Total Items: ${inventory.summary.totalItems}`,
     `Unique Templates: ${inventory.summary.uniqueTemplates}`,
     `Seeds: ${inventory.summary.seeds}`,
+    `Seed Range: ${inventory.summary.seedRange}`,
     '',
     toMarkdownTable(inventory.items),
   ].join('\n');
@@ -157,12 +166,13 @@ async function writeReports(inventory) {
 
   // Redacted markdown
   const redactedMdContent = [
-    `# Grammar QG P8 Question Inventory (Redacted)`,
+    `# ${label} (Redacted)`,
     '',
     `Content Release: ${inventory.summary.contentReleaseId}`,
     `Total Items: ${inventory.summary.totalItems}`,
     `Unique Templates: ${inventory.summary.uniqueTemplates}`,
     `Seeds: ${inventory.summary.seeds}`,
+    `Seed Range: ${inventory.summary.seedRange}`,
     '',
     `_Redacted fields: answerSpecKind, expectedAnswerSummary, variantSignature, generatorFamilyId, solutionLines_`,
     '',
@@ -174,21 +184,31 @@ async function writeReports(inventory) {
 }
 
 async function main(argv) {
-  const seedArg = argv.find((arg) => arg.startsWith('--seeds='));
+  const seedArg = argv.find((arg) => arg.startsWith('--seeds=') || arg.startsWith('--seeds '));
   const seeds = seedArg
     ? parseSeedRange(seedArg.slice('--seeds='.length))
     : Array.from({ length: 60 }, (_, i) => i + 1);
+
+  const releaseArg = argv.find((arg) => arg.startsWith('--release='));
+  const releaseIdx = argv.indexOf('--release');
+  const release = releaseArg
+    ? releaseArg.slice('--release='.length)
+    : releaseIdx !== -1 && argv[releaseIdx + 1]
+      ? argv[releaseIdx + 1]
+      : 'p8';
 
   const inventory = buildInventory(seeds);
 
   if (argv.includes('--json')) {
     console.log(JSON.stringify(inventory, null, 2));
   } else {
-    const paths = await writeReports(inventory);
-    console.log(`Grammar QG P8 Question Inventory generated:`);
+    const paths = await writeReports(inventory, release);
+    const label = release.toUpperCase();
+    console.log(`Grammar QG ${label} Question Inventory generated:`);
     console.log(`  Total items: ${inventory.summary.totalItems}`);
     console.log(`  Unique templates: ${inventory.summary.uniqueTemplates}`);
     console.log(`  Seeds: ${inventory.summary.seeds}`);
+    console.log(`  Seed range: ${inventory.summary.seedRange}`);
     console.log(`  JSON: ${paths.jsonPath}`);
     console.log(`  Markdown: ${paths.mdPath}`);
     console.log(`  Redacted: ${paths.redactedMdPath}`);
