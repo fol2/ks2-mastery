@@ -127,9 +127,26 @@ function extractFrontmatter(reportContent) {
 }
 
 /**
+ * Regex matching placeholder tokens that must never appear in release frontmatter values.
+ * Matches exact tokens only — "pending-abcdef1" will NOT match because it contains more than the placeholder.
+ */
+const PLACEHOLDER_TOKEN_RE = /^(pending|todo|tbc|unknown|n\/a|tbd)$/i;
+
+/**
+ * Returns true if the value is a placeholder token or empty string.
+ */
+function isPlaceholderValue(value) {
+  if (typeof value !== 'string') return false;
+  if (value.trim() === '') return true;
+  return PLACEHOLDER_TOKEN_RE.test(value.trim());
+}
+
+/**
  * Validate release-gate frontmatter fields.
  * Required fields: implementation_prs (array), final_content_release_commit (string),
  * post_merge_fix_commits (array — may be empty), final_report_commit (string).
+ *
+ * P7 hardening: rejects placeholder tokens (pending, todo, tbc, unknown, n/a, tbd, empty string).
  */
 export function validateReleaseFrontmatter(reportContent) {
   const fm = extractFrontmatter(reportContent);
@@ -138,11 +155,21 @@ export function validateReleaseFrontmatter(reportContent) {
   // implementation_prs — must be a non-empty array of strings
   if (!Array.isArray(fm.implementation_prs) || fm.implementation_prs.length === 0) {
     errors.push({ field: 'implementation_prs', message: 'Must be a non-empty list of PR references' });
+  } else {
+    // Check each PR reference for placeholder values
+    for (const pr of fm.implementation_prs) {
+      if (isPlaceholderValue(pr)) {
+        errors.push({ field: 'implementation_prs', message: `Contains placeholder value: "${pr}"` });
+        break;
+      }
+    }
   }
 
   // final_content_release_commit — must be a non-empty string (commit SHA or ref)
   if (typeof fm.final_content_release_commit !== 'string' || fm.final_content_release_commit.length < 7) {
     errors.push({ field: 'final_content_release_commit', message: 'Must be a commit SHA (at least 7 characters)' });
+  } else if (isPlaceholderValue(fm.final_content_release_commit)) {
+    errors.push({ field: 'final_content_release_commit', message: `Contains placeholder value: "${fm.final_content_release_commit}"` });
   }
 
   // post_merge_fix_commits — must be an array (may be empty)
@@ -151,11 +178,20 @@ export function validateReleaseFrontmatter(reportContent) {
     if (fm.post_merge_fix_commits && fm.post_merge_fix_commits !== 'none') {
       errors.push({ field: 'post_merge_fix_commits', message: 'Must be a list (use empty list [] if none)' });
     }
+  } else {
+    for (const commit of fm.post_merge_fix_commits) {
+      if (isPlaceholderValue(commit)) {
+        errors.push({ field: 'post_merge_fix_commits', message: `Contains placeholder value: "${commit}"` });
+        break;
+      }
+    }
   }
 
   // final_report_commit — must be a non-empty string
   if (typeof fm.final_report_commit !== 'string' || fm.final_report_commit.length < 7) {
     errors.push({ field: 'final_report_commit', message: 'Must be a commit SHA (at least 7 characters)' });
+  } else if (isPlaceholderValue(fm.final_report_commit)) {
+    errors.push({ field: 'final_report_commit', message: `Contains placeholder value: "${fm.final_report_commit}"` });
   }
 
   return { valid: errors.length === 0, errors, frontmatter: fm };
