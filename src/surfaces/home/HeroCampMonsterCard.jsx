@@ -71,11 +71,7 @@ export function HeroCampMonsterCard({ monster, balance, onInvite, onGrow }) {
 
       <div className="hero-camp-monster-card__header">
         <h3 className="hero-camp-monster-card__name">{monster.displayName}</h3>
-        {owned && monster.branch && (
-          <span className="hero-camp-monster-card__branch" aria-label={`Path ${monster.branch === 'b1' ? 'A' : 'B'}`}>
-            {monster.branch === 'b1' ? 'Path A' : 'Path B'}
-          </span>
-        )}
+        {/* Branch field retained in state for future expansion but never exposed to child */}
       </div>
 
       <p className="hero-camp-monster-card__blurb">{monster.childBlurb}</p>

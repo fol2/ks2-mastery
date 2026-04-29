@@ -1557,6 +1557,7 @@ export function createWorkerApp({
               requestId: body.requestId,
               correlationId: body.correlationId || null,
               expectedLearnerRevision: body.expectedLearnerRevision,
+              payload: { questId: body.questId, questFingerprint: body.questFingerprint, taskId: body.taskId },
             };
 
             const mutationResult = await repository.runHeroCommand(session.accountId, heroLearnerId, heroCommand, async () => {
@@ -1622,12 +1623,14 @@ export function createWorkerApp({
               }
 
               for (const evt of events) {
+                // Deterministic event ID: requestId + event type suffix (idempotent on replay)
+                const evtIdSuffix = evt.type.replace(/\./g, '-');
                 await run(db, `
                   INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                   ON CONFLICT(id) DO NOTHING
                 `, [
-                  `hero-evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                  `hero-evt-${body.requestId}-${evtIdSuffix}`,
                   heroLearnerId,
                   evt.subjectId || null,
                   evt.systemId,
@@ -1823,6 +1826,7 @@ export function createWorkerApp({
               requestId: body.requestId,
               correlationId: body.correlationId || null,
               expectedLearnerRevision: body.expectedLearnerRevision,
+              payload: { monsterId: body.monsterId, branch: body.branch || 'b1', targetStage: body.targetStage },
             };
 
             const mutationResult = await repository.runHeroCommand(session.accountId, heroLearnerId, heroCommand, async () => {
@@ -1861,7 +1865,7 @@ export function createWorkerApp({
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO NOTHING
               `, [
-                `hero-evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                `hero-evt-${campResult.intent.ledgerEntry.entryId}`,
                 heroLearnerId,
                 null,
                 'hero-mode',

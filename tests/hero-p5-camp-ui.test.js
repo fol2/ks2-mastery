@@ -293,12 +293,13 @@ describe('HeroCampMonsterCard', () => {
     assert.ok(html.includes('A boundary creature.'), 'blurb rendered');
   });
 
-  it('shows branch badge when owned', async () => {
+  it('does NOT show branch badge (P6 branch-choice policy: no child-facing branch UI)', async () => {
     const html = await renderHeroCampMonsterCardFixture({
       monster: ownedMonster('glossbloom', 1, { branch: 'b1' }),
       balance: 500,
     });
-    assert.ok(html.includes('Path A'), 'branch badge shown');
+    assert.ok(!html.includes('Path A'), 'branch badge must not be visible to child');
+    assert.ok(!html.includes('Path B'), 'branch badge must not be visible to child');
   });
 
   it('shows stage indicator when owned', async () => {
