@@ -33,6 +33,14 @@ node ./scripts/join-capacity-worker-logs.mjs \
 
 The join script matches `serverRequestId` first. It only falls back to the echoed `clientRequestId` when the evidence proves the Worker accepted that id by echoing the same value.
 
+Use package scripts for tail capture. `npm run ops:tail` is the human-readable pretty stream and is useful for watching sampled `capacity.request` lines, but it does not provide invocation CPU/wall telemetry in a machine-joinable shape. For CPU/wall attribution, start a JSON tail before the capacity run and stop it after the run finishes:
+
+```bash
+npm run ops:tail:json > /tmp/ks2-capacity-worker-logs.jsonl
+```
+
+Do not append `--format json` to `npm run ops:tail`; Wrangler receives duplicate `--format` values and rejects the command. If historical Cloudflare Logs or Trace export is used instead of live tail, keep the export bounded to the run window and join only by the retained request ids. Do not commit raw tail output when it may include unrelated live traffic; commit the bounded correlation and statement-map artefacts instead.
+
 ## Accepted Log Shapes
 
 The join script accepts:
@@ -42,7 +50,9 @@ The join script accepts:
 - JSONL records from Tail Workers or Workers Logs exports.
 - `[ks2-worker] {"event":"capacity.request", ...}` console lines.
 
-Unknown fields are ignored. Malformed JSONL lines are skipped with bounded warnings. The correlation output persists only bounded route, timing, D1, statement-name, and classification fields; it must not persist request bodies, cookies, learner names, raw SQL parameters, child answers, or free-form log messages.
+Pretty-tail console lines can prove sampled statement coverage, but they cannot fill `diagnostics.workerLogJoin.coverage.invocation`. Missing invocation CPU/wall coverage must remain `unclassified-insufficient-logs`.
+
+Unknown fields are ignored. Malformed JSONL lines are skipped with bounded warnings. The correlation output persists only bounded route, timing, D1, opaque statement IDs, and classification fields. Committed diagnostic artefacts hash retained request IDs and replace SQL/table/column statement names with stable opaque statement IDs; they must not persist request bodies, cookies, learner names, raw SQL parameters, child answers, or free-form log messages.
 
 ## Output Contract
 
@@ -52,7 +62,7 @@ Correlation output is written as a diagnostic artefact with:
 - `diagnostics.workerLogJoin.certification.contributesToCertification: false`
 - `diagnostics.workerLogJoin.coverage.invocation`: top-tail samples with matched Cloudflare CPU/wall invocation logs.
 - `diagnostics.workerLogJoin.coverage.statementLogs`: top-tail samples with matched sampled `capacity.request` statement breakdowns.
-- `diagnostics.workerLogJoin.samples[]`: per-request app wall time, response bytes, D1 counts, Cloudflare CPU/wall, outcome, capacity-request D1 duration, bounded statements, join status, and classification.
+- `diagnostics.workerLogJoin.samples[]`: per-request hashed request ID, app wall time, response bytes, D1 counts, Cloudflare CPU/wall, outcome, capacity-request D1 duration, bounded opaque statement IDs/counts, join status, and classification.
 
 Classification values are intentionally conservative:
 

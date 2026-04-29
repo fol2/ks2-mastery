@@ -7,6 +7,8 @@ export const EVIDENCE_SCHEMA_VERSION = 3;
 export const P1_WORKER_LOG_DIAGNOSTICS_VERSION = 1;
 export const P1_WORKER_LOG_DIAGNOSTIC_ONLY_REASON = 'worker-log-diagnostics-do-not-certify';
 export const P1_UNCLASSIFIED_INSUFFICIENT_LOGS = 'unclassified-insufficient-logs';
+export const CAPACITY_EVIDENCE_REDACTION_VERSION = 'capacity-diagnostics-redaction-v1';
+export const CAPACITY_EVIDENCE_OPAQUE_HASH_LENGTH = 24;
 export const P1_TAIL_CLASSIFICATIONS = Object.freeze([
   P1_UNCLASSIFIED_INSUFFICIENT_LOGS,
   'partial-invocation-only',
@@ -18,6 +20,9 @@ export const P1_TAIL_CLASSIFICATIONS = Object.freeze([
 ]);
 
 const P1_TAIL_CLASSIFICATION_SET = new Set(P1_TAIL_CLASSIFICATIONS);
+const RAW_CAPACITY_REQUEST_ID_RE = /ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+const OPAQUE_CAPACITY_REQUEST_ID_RE = /^req_[0-9a-f]{24}$/;
+const REQUEST_ID_FIELD_RE = /^(clientRequestId|serverRequestId|requestId)$/;
 
 // Request-sample cap per endpoint when --include-request-samples is enabled.
 // Plan says 100 + 100 (first N and last N); this preserves post-mortem utility
@@ -713,6 +718,52 @@ export function buildEvidencePayload({ report, thresholds, options, timings }) {
   };
 }
 
+export function redactCapacityEvidenceRequestId(value) {
+  if (typeof value !== 'string' || !value) return value ?? null;
+  if (OPAQUE_CAPACITY_REQUEST_ID_RE.test(value)) return value;
+  return `req_${createHash('sha256')
+    .update(`${CAPACITY_EVIDENCE_REDACTION_VERSION}:request-id:${value}`)
+    .digest('hex')
+    .slice(0, CAPACITY_EVIDENCE_OPAQUE_HASH_LENGTH)}`;
+}
+
+function redactCapacityEvidenceString(value) {
+  if (typeof value !== 'string') return value;
+  if (OPAQUE_CAPACITY_REQUEST_ID_RE.test(value)) return value;
+  return value.replace(RAW_CAPACITY_REQUEST_ID_RE, (match) => redactCapacityEvidenceRequestId(match));
+}
+
+export function redactPersistedEvidenceRequestIds(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => redactPersistedEvidenceRequestIds(entry));
+  }
+  if (!value || typeof value !== 'object') {
+    return typeof value === 'string' ? redactCapacityEvidenceString(value) : value;
+  }
+
+  const output = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (REQUEST_ID_FIELD_RE.test(key) && typeof entry === 'string') {
+      output[key] = redactCapacityEvidenceRequestId(entry);
+    } else {
+      output[key] = redactPersistedEvidenceRequestIds(entry);
+    }
+  }
+  return output;
+}
+
+function withCapacityEvidenceRedactionMetadata(payload = {}) {
+  return {
+    ...payload,
+    redaction: {
+      ...(payload.redaction && typeof payload.redaction === 'object' ? payload.redaction : {}),
+      version: CAPACITY_EVIDENCE_REDACTION_VERSION,
+      requestIds: `sha256:${CAPACITY_EVIDENCE_OPAQUE_HASH_LENGTH}`,
+      rawRequestIdsPersisted: false,
+    },
+  };
+}
+
 function buildSafetyBlock(options = {}) {
   return {
     mode: options.mode || 'dry-run',
@@ -755,10 +806,13 @@ export function persistEvidenceFile(outputPath, payload, { includeRequestSamples
   const scrubbed = includeRequestSamples
     ? { ...payload, measurements: capRequestSamples(payload.measurements) }
     : { ...payload, measurements: undefined };
+  const persistedPayload = withCapacityEvidenceRedactionMetadata(
+    redactPersistedEvidenceRequestIds(scrubbed),
+  );
 
   const tempPath = `${absolutePath}.tmp-${process.pid}-${Date.now()}`;
   try {
-    writeFileSync(tempPath, JSON.stringify(scrubbed, null, 2));
+    writeFileSync(tempPath, JSON.stringify(persistedPayload, null, 2));
     renameSync(tempPath, absolutePath);
   } catch (error) {
     try {

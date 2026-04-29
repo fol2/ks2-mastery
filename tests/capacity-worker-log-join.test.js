@@ -10,9 +10,14 @@ import {
   parseWorkerLogExport,
   runJoinCapacityWorkerLogs,
 } from '../scripts/join-capacity-worker-logs.mjs';
+import {
+  redactPersistedEvidenceRequestIds,
+} from '../scripts/lib/capacity-evidence.mjs';
 
 const TRACE_FIXTURE = 'tests/fixtures/capacity-worker-logs/workers-trace.json';
 const JSONL_FIXTURE = 'tests/fixtures/capacity-worker-logs/tail-worker.jsonl';
+const OPAQUE_REQUEST_ID_RE = /^req_[0-9a-f]{24}$/;
+const OPAQUE_STATEMENT_ID_RE = /^stmt_[0-9a-f]{24}$/;
 
 function evidenceWithSamples(samples) {
   return {
@@ -81,17 +86,25 @@ test('joinCapacityWorkerLogs joins JSON Workers Trace invocation and capacity.re
   const join = output.diagnostics.workerLogJoin;
 
   assert.equal(output.diagnosticOnly, true);
+  assert.equal(output.redaction.rawRequestIdsPersisted, false);
+  assert.equal(output.redaction.rawStatementNamesPersisted, false);
   assert.equal(join.certification.contributesToCertification, false);
   assert.equal(join.coverage.invocation.matched, 2);
   assert.equal(join.coverage.invocation.missing, 1);
   assert.equal(join.coverage.statementLogs.matched, 1);
   assert.equal(join.coverage.statementLogs.missing, 2);
+  assert.match(join.samples[0].requestId, OPAQUE_REQUEST_ID_RE);
+  assert.match(join.samples[0].clientRequestId, OPAQUE_REQUEST_ID_RE);
   assert.equal(join.samples[0].classification, 'd1-dominated');
   assert.equal(join.samples[0].cloudflare.cpuTimeMs, 4.2);
   assert.equal(join.samples[0].capacityRequest.d1DurationMs, 710);
+  assert.equal(join.samples[0].capacityRequest.statementCount, 1);
+  assert.match(join.samples[0].capacityRequest.statements[0].statementId, OPAQUE_STATEMENT_ID_RE);
   assert.ok(join.samples[0].join.notes.includes('duplicate-log-records:2'));
   assert.equal(join.samples[1].classification, 'partial-invocation-only');
   assert.equal(join.samples[2].classification, 'unclassified-insufficient-logs');
+  assert.doesNotMatch(JSON.stringify(output), /ks2_req_/);
+  assert.doesNotMatch(JSON.stringify(output), /SELECT|child_subject_state/);
 });
 
 test('parseWorkerLogExport supports JSONL Tail exports and skips malformed lines with bounded warnings', () => {
@@ -114,9 +127,42 @@ test('parseWorkerLogExport supports JSONL Tail exports and skips malformed lines
   });
   const sample = output.diagnostics.workerLogJoin.samples[0];
   assert.equal(output.warnings.length, 1);
+  assert.match(sample.requestId, OPAQUE_REQUEST_ID_RE);
   assert.equal(sample.join.invocation.status, 'matched');
   assert.equal(sample.join.capacityRequest.status, 'partial');
   assert.equal(sample.classification, 'partial-invocation-only');
+  assert.doesNotMatch(JSON.stringify(output), /ks2_req_/);
+});
+
+test('joinCapacityWorkerLogs matches raw logs against redacted persisted evidence ids', () => {
+  const parsed = parseWorkerLogExport(readFileSync(TRACE_FIXTURE, 'utf8'), { sourcePath: TRACE_FIXTURE });
+  const evidence = redactPersistedEvidenceRequestIds(evidenceWithSamples([{
+    scenario: 'cold-bootstrap-burst',
+    status: 200,
+    wallMs: 950,
+    responseBytes: 78000,
+    clientRequestId: 'ks2_req_11111111-1111-4111-8111-111111111111',
+    serverRequestId: 'ks2_req_11111111-1111-4111-8111-111111111111',
+    queryCount: 8,
+    d1RowsRead: 120,
+    d1RowsWritten: 0,
+    serverWallMs: 920,
+  }]));
+
+  assert.match(
+    evidence.summary.endpoints['GET /api/bootstrap'].topTailSamples[0].serverRequestId,
+    /^req_[0-9a-f]{24}$/,
+  );
+
+  const output = joinCapacityWorkerLogs({
+    evidence,
+    records: parsed.records,
+    generatedAt: '2026-04-29T09:10:00Z',
+  });
+  const sample = output.diagnostics.workerLogJoin.samples[0];
+  assert.equal(sample.join.invocation.status, 'matched');
+  assert.equal(sample.join.capacityRequest.status, 'matched');
+  assert.equal(sample.classification, 'd1-dominated');
 });
 
 test('runJoinCapacityWorkerLogs writes a deterministic diagnostic-only correlation file', () => {
@@ -143,6 +189,8 @@ test('runJoinCapacityWorkerLogs writes a deterministic diagnostic-only correlati
     assert.equal(written.kind, 'capacity-worker-log-correlation');
     assert.equal(written.diagnostics.workerLogJoin.coverage.topTailSamples, 1);
     assert.equal(written.diagnostics.workerLogJoin.samples[0].classification, 'd1-dominated');
+    assert.match(written.diagnostics.workerLogJoin.samples[0].requestId, OPAQUE_REQUEST_ID_RE);
+    assert.doesNotMatch(JSON.stringify(written), /ks2_req_|SELECT|child_subject_state/);
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }

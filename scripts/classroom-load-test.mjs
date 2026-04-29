@@ -121,8 +121,12 @@ function contextAuthHeaders(options, context) {
 }
 
 function safeFailureMessage({ payload, networkError, parseError }) {
-  if (payload?.message) return payload.message;
-  if (networkError) return networkError.message || 'Network request failed.';
+  if (payload?.code || payload?.error) {
+    const code = String(payload.code || payload.error).replace(/[^a-z0-9_.:-]/gi, '').slice(0, 80);
+    return code ? `Request failed with code "${code}".` : 'Request failed.';
+  }
+  if (payload?.message) return 'Request failed.';
+  if (networkError) return 'Network request failed.';
   if (parseError) return 'Response body was not valid JSON.';
   return '';
 }
@@ -1029,7 +1033,10 @@ async function createDemoContextWithResponse(origin, options, virtualLearner) {
     timeoutMs: options.timeoutMs,
   });
   if (!measurement.ok || !measurement.cookie || !measurement.payload?.session?.learnerId) {
-    throw new Error(`Demo session setup failed for ${virtualLearner.label}; refusing to reuse global auth for an isolated load context.`);
+    throw setupFailureError(
+      `Demo session setup failed for ${virtualLearner.label}; refusing to reuse global auth for an isolated load context.`,
+      measurement,
+    );
   }
   return {
     ...virtualLearner,
@@ -1255,56 +1262,34 @@ function buildThresholdsBlock(options, summary) {
   };
 }
 
+function setupFailureError(message, measurement) {
+  const error = new Error(message);
+  error.capacityFailurePhase = 'setup';
+  error.capacityMeasurements = measurement ? [measurement] : [];
+  return error;
+}
 
-export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
-  const options = parseClassroomLoadArgs(argv);
-  if (options.help) {
-    return { ok: true, help: true, usage: usage() };
-  }
-  // Load config first so validateClassroomLoadOptions can see the merged
-  // threshold set: a config-only `max5xx` must still trip the
-  // `--max-network-failures` pairing rule.
-  const config = loadThresholdConfig(options.configPath);
-  const mergedThresholds = mergeThresholds(config.thresholds, options.thresholds);
-  const optionsWithMergedThresholds = { ...options, thresholds: mergedThresholds };
-  validateClassroomLoadOptions(optionsWithMergedThresholds);
-  const plan = buildClassroomLoadPlan(options);
+function sessionSourceModeForOptions(options) {
+  if (options.sessionManifest) return 'manifest';
+  if (options.demoSessions) return 'demo-sessions';
+  if (options.mode === 'dry-run') return 'none';
+  return 'shared-auth';
+}
 
-  const startedAt = new Date().toISOString();
-  let report;
-  let summary;
-  if (options.mode === 'dry-run') {
-    summary = summariseCapacityResults([], plan);
-    report = {
-      ok: true,
-      dryRun: true,
-      plan,
-      summary,
-    };
-  } else {
-    const origin = options.origin;
-    const measurements = [];
-    const prepared = await prepareContexts(origin, options, plan);
-    measurements.push(...prepared.measurements);
-    measurements.push(...await runColdBootstrapBurst(origin, options, prepared.contexts, plan));
-    measurements.push(...await runHumanPacedRounds(origin, options, prepared.contexts, plan));
-    summary = summariseCapacityResults(measurements, { ...plan });
-    report = {
-      ok: summary.ok,
-      dryRun: false,
-      plan,
-      summary,
-      ...(options.includeMeasurements ? { measurements } : {}),
-    };
-  }
-
-  const finishedAt = new Date().toISOString();
-  const thresholdsBlock = buildThresholdsBlock(optionsWithMergedThresholds, summary);
+function buildFinalClassroomReport({
+  report,
+  summary,
+  options,
+  config,
+  timings,
+  extraFailures = [],
+}) {
+  const thresholdsBlock = buildThresholdsBlock(options, summary);
   const evidence = buildEvidencePayload({
     report,
-    thresholds: mergedThresholds,
-    options: optionsWithMergedThresholds,
-    timings: { startedAt, finishedAt },
+    thresholds: options.thresholds,
+    options,
+    timings,
   });
 
   // Record the config source path alongside tier metadata so verify can
@@ -1320,7 +1305,7 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
     }
     : null;
   const diagnostics = buildCapacityDiagnostics({
-    options: optionsWithMergedThresholds,
+    options,
     tier: evidenceTier,
     summary,
     thresholdViolations: thresholdsBlock.violations,
@@ -1337,44 +1322,148 @@ export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
     violations: thresholdsBlock.violations,
     limits: thresholdsBlock.limits,
   };
-  const sessionSourceMode = options.sessionManifest
-    ? 'manifest'
-    : options.demoSessions
-      ? 'demo-sessions'
-      : options.mode === 'dry-run'
-        ? 'none'
-        : 'shared-auth';
+  const failures = [...new Set([
+    ...(evidence.failures || []),
+    ...extraFailures,
+  ])];
 
-  const finalReport = {
+  return {
     ...report,
-    startedAt,
-    finishedAt,
-    sessionSourceMode,
+    startedAt: timings.startedAt,
+    finishedAt: timings.finishedAt,
+    sessionSourceMode: sessionSourceModeForOptions(options),
     thresholds: mergedThresholdsReport,
-    failures: evidence.failures,
+    failures,
     safety: evidence.safety,
     diagnostics,
     reportMeta: evidence.reportMeta,
     ...(evidenceTier ? { tier: evidenceTier } : {}),
-    ok: evidence.ok && thresholdsBlock.violations.length === 0,
+    ok: evidence.ok && thresholdsBlock.violations.length === 0 && extraFailures.length === 0,
   };
+}
+
+function persistClassroomReport(options, finalReport) {
+  if (!options.output) return finalReport;
+  try {
+    persistEvidenceFile(options.output, finalReport, {
+      includeRequestSamples: options.includeRequestSamples,
+    });
+    finalReport.evidencePath = options.output;
+    return finalReport;
+  } catch (error) {
+    throw new Error(`Failed to persist evidence to "${options.output}": ${error.message}`);
+  }
+}
+
+function persistSetupFailureEvidence({
+  error,
+  options,
+  config,
+  plan,
+  timings,
+}) {
+  if (!options.output) return null;
+  const measurements = Array.isArray(error.capacityMeasurements)
+    ? error.capacityMeasurements
+    : [];
+  const summary = summariseCapacityResults(measurements, { ...plan });
+  const finalReport = buildFinalClassroomReport({
+    report: {
+      ok: false,
+      dryRun: false,
+      plan,
+      summary,
+      setupFailure: {
+        phase: error.capacityFailurePhase || 'setup',
+        message: error.message,
+        measurements: measurements.length,
+      },
+      ...(options.includeMeasurements ? { measurements } : {}),
+    },
+    summary,
+    options,
+    config,
+    timings,
+    extraFailures: ['setupFailure'],
+  });
+  const persisted = persistClassroomReport(options, finalReport);
+  error.evidencePath = persisted.evidencePath;
+  error.report = persisted;
+  return persisted;
+}
+
+
+export async function runClassroomLoadTest(argv = process.argv.slice(2)) {
+  const options = parseClassroomLoadArgs(argv);
+  if (options.help) {
+    return { ok: true, help: true, usage: usage() };
+  }
+  // Load config first so validateClassroomLoadOptions can see the merged
+  // threshold set: a config-only `max5xx` must still trip the
+  // `--max-network-failures` pairing rule.
+  const config = loadThresholdConfig(options.configPath);
+  const mergedThresholds = mergeThresholds(config.thresholds, options.thresholds);
+  const optionsWithMergedThresholds = { ...options, thresholds: mergedThresholds };
+  validateClassroomLoadOptions(optionsWithMergedThresholds);
+  const plan = buildClassroomLoadPlan(options);
+
+  const startedAt = new Date().toISOString();
+  const timings = { startedAt, finishedAt: null };
+  let report;
+  let summary;
+  if (options.mode === 'dry-run') {
+    summary = summariseCapacityResults([], plan);
+    report = {
+      ok: true,
+      dryRun: true,
+      plan,
+      summary,
+    };
+  } else {
+    const origin = options.origin;
+    const measurements = [];
+    let prepared;
+    try {
+      prepared = await prepareContexts(origin, options, plan);
+    } catch (error) {
+      timings.finishedAt = new Date().toISOString();
+      persistSetupFailureEvidence({
+        error,
+        options: optionsWithMergedThresholds,
+        config,
+        plan,
+        timings,
+      });
+      throw error;
+    }
+    measurements.push(...prepared.measurements);
+    measurements.push(...await runColdBootstrapBurst(origin, options, prepared.contexts, plan));
+    measurements.push(...await runHumanPacedRounds(origin, options, prepared.contexts, plan));
+    summary = summariseCapacityResults(measurements, { ...plan });
+    report = {
+      ok: summary.ok,
+      dryRun: false,
+      plan,
+      summary,
+      ...(options.includeMeasurements ? { measurements } : {}),
+    };
+  }
+
+  const finishedAt = new Date().toISOString();
+  timings.finishedAt = finishedAt;
+  const finalReport = buildFinalClassroomReport({
+    report,
+    summary,
+    options: optionsWithMergedThresholds,
+    config,
+    timings,
+  });
 
   // Only persist when --output was explicitly passed. `parseClassroomLoadArgs`
   // sets `options.output` to `undefined` by default and `readOptionValue`
   // rejects an empty value, so truthiness correctly distinguishes "caller asked
   // for evidence" from "no --output flag present".
-  if (options.output) {
-    try {
-      persistEvidenceFile(options.output, finalReport, {
-        includeRequestSamples: options.includeRequestSamples,
-      });
-      finalReport.evidencePath = options.output;
-    } catch (error) {
-      throw new Error(`Failed to persist evidence to "${options.output}": ${error.message}`);
-    }
-  }
-
-  return finalReport;
+  return persistClassroomReport(optionsWithMergedThresholds, finalReport);
 }
 
 export function usage() {

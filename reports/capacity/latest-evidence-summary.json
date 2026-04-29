@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-04-29T13:43:32.020Z",
+  "generatedAt": "2026-04-29T19:58:39.879Z",
   "sources": {
     "capacity_evidence": {
       "file": "reports/capacity/evidence/",
@@ -42,7 +42,7 @@
       "evidenceKind": "capacity-run",
       "certificationEligible": false,
       "certificationReasons": [
-        "missing-certification-diagnostics",
+        "threshold-violations",
         "evidence-not-in-verified-capacity-table"
       ],
       "decision": "fail",
@@ -50,9 +50,9 @@
       "learners": 30,
       "bootstrapBurst": 20,
       "rounds": 1,
-      "finishedAt": "2026-04-28T21:33:08.171Z",
+      "finishedAt": "2026-04-29T19:38:25.019Z",
       "finishedAtPrecision": "timestamp",
-      "commit": "1c56e069c4bd95828328410bec3fef81564677ca",
+      "commit": "e5d03117bd7c46c269bf1d75cceca42b31452bc8",
       "failures": [
         "maxBootstrapP95Ms"
       ],
@@ -61,11 +61,11 @@
         {
           "threshold": "max-bootstrap-p95-ms",
           "limit": 1000,
-          "observed": 1167.4,
-          "message": "Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms."
+          "observed": 1354.5,
+          "message": "Bootstrap P95 wall time 1354.5 ms exceeds 1000 ms."
         }
       ],
-      "fileName": "30-learner-beta-v2-20260428-p5-warm.json",
+      "fileName": "2026-04-29-p2-t5-strict-repeat-1.json",
       "verifiedCapacityRowDecision": null
     },
     "preflight_only": {
@@ -106,7 +106,7 @@
       "ok": false,
       "dryRun": false,
       "mode": "report-only",
-      "finishedAt": "2026-04-29T13:43:32.017Z",
+      "finishedAt": "2026-04-29T19:58:39.878Z",
       "commit": null,
       "failures": [
         "csp_mode_is_report-only"
@@ -117,7 +117,7 @@
       "ok": true,
       "dryRun": false,
       "count": 16,
-      "finishedAt": "2026-04-29T13:43:32.018Z",
+      "finishedAt": "2026-04-29T19:58:39.878Z",
       "commit": null,
       "failures": []
     },
@@ -126,7 +126,7 @@
       "ok": true,
       "dryRun": false,
       "version": "0.1.0",
-      "finishedAt": "2026-04-29T13:43:32.019Z",
+      "finishedAt": "2026-04-29T19:58:39.879Z",
       "commit": null,
       "failures": []
     }

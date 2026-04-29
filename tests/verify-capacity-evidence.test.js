@@ -1717,6 +1717,65 @@ test('full clone + real ancestor commit + real ancestry still passes (r6-probe-e
   }
 });
 
+test('dangling evidence commit present in local object database fails closed (p2 provenance)', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-dangling-provenance-'));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    execSync('git init -q');
+    execSync('git config user.email test@example.com');
+    execSync('git config user.name Test');
+    mkdirSync(join(tempDir, 'reports', 'capacity', 'configs'), { recursive: true });
+    writeFileSync(
+      join(tempDir, 'reports', 'capacity', 'configs', 'small-pilot.json'),
+      JSON.stringify({
+        tier: 'small-pilot-provisional',
+        minEvidenceSchemaVersion: 1,
+        thresholds: { max5xx: 0, maxBootstrapP95Ms: 1000, maxCommandP95Ms: 750, maxResponseBytes: 600000 },
+      }, null, 2),
+    );
+    execSync('git add reports/capacity/configs/small-pilot.json');
+    execSync('git commit -q -m "initial config"');
+    const danglingSha = execSync('git commit-tree HEAD^{tree} -m "dangling evidence"', {
+      encoding: 'utf8',
+    }).trim();
+    const evidencePath = join(tempDir, 'reports', 'capacity', 'latest.json');
+    writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+      reportMeta: { commit: danglingSha, evidenceSchemaVersion: 1 },
+      tier: {
+        tier: 'small-pilot-provisional',
+        configPath: 'reports/capacity/configs/small-pilot.json',
+      },
+      thresholds: {
+        max5xx: { configured: 0, observed: 0, passed: true },
+        maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+        maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+        maxResponseBytes: { configured: 600000, observed: 81000, passed: true },
+      },
+    })));
+    const row = parseEvidenceTable(makeDoc([
+      ['2026-04-25', danglingSha.slice(0, 7), 'preview', 'small-pilot-provisional', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest.json'],
+    ]))[0];
+
+    const previousSkip = process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+    try {
+      const result = verifyEvidenceRow(row);
+      assert.equal(result.ok, false);
+      assert.ok(
+        result.messages.some((line) => line.includes('not reachable from HEAD')),
+        `expected dangling provenance failure; got:\n${result.messages.join('\n')}`,
+      );
+    } finally {
+      if (previousSkip === undefined) delete process.env.CAPACITY_VERIFY_SKIP_ANCESTRY;
+      else process.env.CAPACITY_VERIFY_SKIP_ANCESTRY = previousSkip;
+    }
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 // ===========================================================================
 // Round 7 adversarial findings
 // ---------------------------------------------------------------------------

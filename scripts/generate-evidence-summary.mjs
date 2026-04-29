@@ -177,10 +177,21 @@ function isNewerEvidence(next, existing) {
 }
 
 function classifyEvidenceKind(fileName, data = {}) {
+  if (
+    data?.kind === 'capacity-worker-log-correlation'
+    || data?.kind === 'capacity-statement-map'
+    || data?.diagnosticOnly === true
+  ) {
+    return 'diagnostic-artifact';
+  }
   if (/preflight/i.test(fileName)) return 'preflight';
   if (data?.setupFailure || data?.metrics === null) return 'preflight';
   if (data?.dryRun) return 'dry-run';
   return 'capacity-run';
+}
+
+function shouldSummariseEvidenceKind(evidenceKind) {
+  return evidenceKind !== 'diagnostic-artifact';
 }
 
 function normaliseFailures(data = {}, thresholdViolations = []) {
@@ -425,6 +436,7 @@ export function buildMetrics(files, options = {}) {
   const metrics = {};
   for (const { name, data } of files) {
     const metric = summariseEvidenceFile(name, data, options);
+    if (!shouldSummariseEvidenceKind(metric.evidenceKind)) continue;
     const existing = metrics[metric.tier];
     if (!isNewerEvidence(metric, existing)) continue;
     metrics[metric.tier] = metric;
@@ -650,19 +662,28 @@ export function buildEvidenceSummary(files, {
   return summary;
 }
 
-function run() {
-  const { sources, metrics } = aggregateSources(ROOT);
+export function writeEvidenceSummaryFile({
+  rootDir = ROOT,
+  outputPath = OUTPUT_PATH,
+  generatedAt = new Date().toISOString(),
+} = {}) {
+  const { sources, metrics } = aggregateSources(rootDir);
   const summary = {
     schema: EVIDENCE_SCHEMA_VERSION,
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     sources,
     metrics,
   };
 
-  writeFileSync(OUTPUT_PATH, JSON.stringify(summary, null, 2) + '\n');
-  log(`Written summary to ${OUTPUT_PATH}`);
+  writeFileSync(outputPath, JSON.stringify(summary, null, 2) + '\n');
+  log(`Written summary to ${outputPath}`);
+  return { outputPath, summary };
+}
+
+function run() {
+  const { outputPath } = writeEvidenceSummaryFile();
   if (!verbose) {
-    console.log(OUTPUT_PATH);
+    console.log(outputPath);
   }
 }
 

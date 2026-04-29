@@ -1,9 +1,15 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const DEFAULT_LIMIT = 10;
+const DIAGNOSTIC_REDACTION_VERSION = 'capacity-diagnostics-redaction-v1';
+const OPAQUE_HASH_LENGTH = 24;
+const OPAQUE_REQUEST_ID_RE = /^req_[0-9a-f]{24}$/;
+const OPAQUE_STATEMENT_ID_RE = /^stmt_[0-9a-f]{24}$/;
+const OPAQUE_QUERY_PLAN_NOTE_ID_RE = /^plan_[0-9a-f]{24}$/;
 const DEFAULT_OUTPUT_PATH = path.join(
   'reports',
   'capacity',
@@ -53,6 +59,50 @@ function normalisePhase(record = {}, route = '') {
 
 function requestIdFor(record = {}) {
   return record.requestId || record.serverRequestId || record.clientRequestId || null;
+}
+
+function diagnosticRedactionMetadata() {
+  return {
+    version: DIAGNOSTIC_REDACTION_VERSION,
+    requestIds: `sha256:${OPAQUE_HASH_LENGTH}`,
+    statementIds: `sha256:${OPAQUE_HASH_LENGTH}`,
+    queryPlanNoteIds: `sha256:${OPAQUE_HASH_LENGTH}`,
+    rawRequestIdsPersisted: false,
+    rawStatementNamesPersisted: false,
+    rawQueryPlanNotesPersisted: false,
+  };
+}
+
+function redactDiagnosticRequestId(value) {
+  if (typeof value !== 'string' || !value) return null;
+  if (OPAQUE_REQUEST_ID_RE.test(value)) return value;
+  return `req_${hashDiagnosticValue('request-id', value)}`;
+}
+
+function redactDiagnosticStatementId(value) {
+  if (typeof value !== 'string' || !value) return `stmt_${hashDiagnosticValue('statement-name', 'unknown')}`;
+  if (OPAQUE_STATEMENT_ID_RE.test(value)) return value;
+  return `stmt_${hashDiagnosticValue('statement-name', value)}`;
+}
+
+function redactDiagnosticQueryPlanNoteId(value) {
+  if (typeof value === 'string' && OPAQUE_QUERY_PLAN_NOTE_ID_RE.test(value)) return value;
+  return `plan_${hashDiagnosticValue('query-plan-note', stableDiagnosticStringify(value))}`;
+}
+
+function hashDiagnosticValue(kind, value) {
+  return createHash('sha256')
+    .update(`${DIAGNOSTIC_REDACTION_VERSION}:${kind}:${String(value)}`)
+    .digest('hex')
+    .slice(0, OPAQUE_HASH_LENGTH);
+}
+
+function stableDiagnosticStringify(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableDiagnosticStringify).join(',')}]`;
+  return `{${Object.keys(value).sort().map((key) => (
+    `${JSON.stringify(key)}:${stableDiagnosticStringify(value[key])}`
+  )).join(',')}}`;
 }
 
 function parseStructuredLine(line) {
@@ -136,7 +186,9 @@ export function readStatementMapInput(filePath) {
 function normaliseStatement(statement = {}) {
   const name = typeof statement.name === 'string' && statement.name.trim()
     ? statement.name.trim()
-    : 'unknown';
+    : typeof statement.statementId === 'string' && statement.statementId.trim()
+      ? statement.statementId.trim()
+      : 'unknown';
   return {
     name,
     rowsRead: finiteOrNull(statement.rowsRead),
@@ -254,6 +306,31 @@ function buildCoverage(records) {
   };
 }
 
+function redactCoverage(coverage = {}) {
+  const statementsTruncated = coverage.statementsTruncated && typeof coverage.statementsTruncated === 'object'
+    ? coverage.statementsTruncated
+    : {};
+  return {
+    ...coverage,
+    incompleteRequests: Array.isArray(coverage.incompleteRequests)
+      ? coverage.incompleteRequests.map(redactCoverageRequest)
+      : [],
+    statementsTruncated: {
+      ...statementsTruncated,
+      requestIds: Array.isArray(statementsTruncated.requestIds)
+        ? statementsTruncated.requestIds.map(redactDiagnosticRequestId).filter(Boolean)
+        : [],
+    },
+  };
+}
+
+function redactCoverageRequest(entry = {}) {
+  return {
+    ...entry,
+    requestId: redactDiagnosticRequestId(entry.requestId),
+  };
+}
+
 function aggregateStatements(records) {
   const groups = new Map();
 
@@ -348,10 +425,13 @@ function buildQueryPlanShortlist({ rankedStatements, coverage, queryPlan }) {
   for (const entry of entries) {
     const statement = entry.statement || entry.statementName || entry.name || null;
     const route = entry.route || entry.endpoint || null;
+    const statementId = redactDiagnosticStatementId(statement);
+    const queryPlanNoteId = redactDiagnosticQueryPlanNoteId(entry);
 
     if (!coverage.canRecommendQueryShape) {
       refused.push({
-        statement,
+        statementId,
+        queryPlanNoteId,
         route,
         reason: 'insufficient-statement-log-coverage',
       });
@@ -361,7 +441,8 @@ function buildQueryPlanShortlist({ rankedStatements, coverage, queryPlan }) {
     const missing = missingQueryPlanFields(entry);
     if (missing.length) {
       refused.push({
-        statement,
+        statementId,
+        queryPlanNoteId,
         route,
         reason: 'missing-query-plan-fields',
         missing,
@@ -372,7 +453,8 @@ function buildQueryPlanShortlist({ rankedStatements, coverage, queryPlan }) {
     const observed = findRankedStatement(rankedStatements, entry);
     if (!observed) {
       refused.push({
-        statement,
+        statementId,
+        queryPlanNoteId,
         route,
         reason: 'statement-not-observed',
       });
@@ -380,7 +462,8 @@ function buildQueryPlanShortlist({ rankedStatements, coverage, queryPlan }) {
     }
 
     accepted.push({
-      statement: observed.statement,
+      statementId: redactDiagnosticStatementId(observed.statement),
+      queryPlanNoteId,
       route: observed.route,
       phase: observed.phase,
       rank: observed.rank,
@@ -391,11 +474,9 @@ function buildQueryPlanShortlist({ rankedStatements, coverage, queryPlan }) {
         rowsWrittenTotal: observed.rowsWrittenTotal,
         durationMsTotal: observed.durationMsTotal,
       },
-      candidate: entry.candidate,
-      expectedReadReduction: entry.expectedReadReduction,
-      writeCostRisk: entry.writeCostRisk,
-      evidenceSource: entry.evidenceSource || null,
-      operatorNotes: entry.operatorNotes || null,
+      noteFieldPresence: queryPlanFieldPresence(entry),
+      evidenceSourcePresent: Boolean(entry.evidenceSource),
+      operatorNotesPresent: Boolean(entry.operatorNotes),
     });
   }
 
@@ -411,6 +492,77 @@ function buildQueryPlanShortlist({ rankedStatements, coverage, queryPlan }) {
   };
 }
 
+function queryPlanFieldPresence(entry = {}) {
+  return REQUIRED_QUERY_PLAN_FIELDS.reduce((fields, field) => ({
+    ...fields,
+    [field]: !missingQueryPlanFields(entry).includes(field),
+  }), {});
+}
+
+function redactRankedStatement(entry = {}) {
+  const requestIds = Array.isArray(entry.requestIds)
+    ? entry.requestIds.map(redactDiagnosticRequestId).filter(Boolean)
+    : [];
+  return {
+    rank: entry.rank,
+    statementId: redactDiagnosticStatementId(entry.statementId || entry.statement),
+    route: entry.route,
+    phase: entry.phase,
+    count: entry.count,
+    requestCount: entry.requestCount ?? requestIds.length,
+    requestIds,
+    rowsReadTotal: entry.rowsReadTotal,
+    rowsWrittenTotal: entry.rowsWrittenTotal,
+    durationMsTotal: entry.durationMsTotal,
+    rowsReadUnknown: entry.rowsReadUnknown,
+    rowsWrittenUnknown: entry.rowsWrittenUnknown,
+    durationMsUnknown: entry.durationMsUnknown,
+    durationMsMax: entry.durationMsMax,
+    durationMsAvg: entry.durationMsAvg,
+    statementsTruncated: entry.statementsTruncated === true,
+  };
+}
+
+function redactQueryPlanShortlist(shortlist = {}) {
+  const source = shortlist && typeof shortlist === 'object' ? shortlist : {};
+  return {
+    recommendationStatus: source.recommendationStatus || 'no-query-plan-recommendations',
+    requiredFields: Array.isArray(source.requiredFields)
+      ? source.requiredFields.filter((entry) => typeof entry === 'string')
+      : [...REQUIRED_QUERY_PLAN_FIELDS],
+    accepted: Array.isArray(source.accepted)
+      ? source.accepted.map(redactAcceptedQueryPlanEntry)
+      : [],
+    refused: Array.isArray(source.refused)
+      ? source.refused.map(redactRefusedQueryPlanEntry)
+      : [],
+  };
+}
+
+function redactAcceptedQueryPlanEntry(entry = {}) {
+  return {
+    statementId: redactDiagnosticStatementId(entry.statementId || entry.statement),
+    queryPlanNoteId: entry.queryPlanNoteId || redactDiagnosticQueryPlanNoteId(entry),
+    route: entry.route || null,
+    phase: entry.phase || null,
+    rank: entry.rank ?? null,
+    observed: entry.observed || null,
+    noteFieldPresence: entry.noteFieldPresence || queryPlanFieldPresence(entry),
+    evidenceSourcePresent: entry.evidenceSourcePresent === true || Boolean(entry.evidenceSource),
+    operatorNotesPresent: entry.operatorNotesPresent === true || Boolean(entry.operatorNotes),
+  };
+}
+
+function redactRefusedQueryPlanEntry(entry = {}) {
+  return {
+    statementId: redactDiagnosticStatementId(entry.statementId || entry.statement),
+    queryPlanNoteId: entry.queryPlanNoteId || redactDiagnosticQueryPlanNoteId(entry),
+    route: entry.route || null,
+    reason: entry.reason || 'unknown',
+    ...(Array.isArray(entry.missing) ? { missing: entry.missing } : {}),
+  };
+}
+
 export function buildCapacityStatementMap({
   records = [],
   queryPlan = null,
@@ -421,7 +573,9 @@ export function buildCapacityStatementMap({
   const normalisedRecords = records.map((record) => normaliseRecord(record, record.sourcePath || null));
   const coverage = buildCoverage(normalisedRecords);
   const rankedStatements = aggregateStatements(normalisedRecords);
-  const topStatements = rankedStatements.slice(0, Math.max(1, Number(limit) || DEFAULT_LIMIT));
+  const topStatements = rankedStatements
+    .slice(0, Math.max(1, Number(limit) || DEFAULT_LIMIT))
+    .map(redactRankedStatement);
   const queryPlanShortlist = buildQueryPlanShortlist({
     rankedStatements,
     coverage,
@@ -429,16 +583,31 @@ export function buildCapacityStatementMap({
   });
 
   return {
-    schema: 1,
+    schema: 2,
     kind: 'capacity-statement-map',
     generatedAt,
     modellingOnly: true,
     certifying: false,
+    redaction: diagnosticRedactionMetadata(),
     sourcePaths: [...sourcePaths],
-    coverage,
+    coverage: redactCoverage(coverage),
     topStatements,
     statementCount: rankedStatements.length,
     queryPlanShortlist,
+  };
+}
+
+export function redactCapacityStatementMapReport(report = {}) {
+  const source = report && typeof report === 'object' ? report : {};
+  return {
+    ...source,
+    schema: Math.max(2, Number(source.schema) || 2),
+    redaction: diagnosticRedactionMetadata(),
+    coverage: redactCoverage(source.coverage || {}),
+    topStatements: Array.isArray(source.topStatements)
+      ? source.topStatements.map(redactRankedStatement)
+      : [],
+    queryPlanShortlist: redactQueryPlanShortlist(source.queryPlanShortlist || {}),
   };
 }
 

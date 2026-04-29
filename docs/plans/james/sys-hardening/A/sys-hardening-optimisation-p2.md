@@ -18,11 +18,25 @@ source_docs:
 
 # System Hardening Optimisation P2 — Bootstrap Tail Reduction and 30/60 Evidence Attempt
 
+> Implementation note (2026-04-29): the evidence-capture implementation slice is tracked by the canonical implementation plan and PR #652. This source contract remains `draft` until the post-merge completion report PR records the final SDLC outcome under `docs/plans/james/sys-hardening/A/`.
+
 ## 0. One-sentence summary
 
 Phase 2 turns the Phase 1 attribution tooling into a targeted `/api/bootstrap` tail-reduction pass, with the narrow aim of making the 30-learner strict classroom gate pass if the evidence supports it, while keeping the 60-learner and 1000-learner goals diagnostic and non-certifying.
 
 Phase 2 must begin with evidence collection. It must not begin with another speculative code change.
+
+## 0.1 Implementation evidence lock, 2026-04-29
+
+The P2 evidence lock collected post-P1 strict evidence before changing bootstrap behaviour:
+
+- `reports/capacity/evidence/2026-04-29-p2-t1-strict-post-p1.json` passed the strict 30-learner shape: bootstrap P95 814.6 ms, max 818.2 ms, response bytes 2449, query count P95/max 11, D1 rows read P95/max 9, D1 rows written P95/max 0, and zero 5xx/network/signal failures.
+- `reports/capacity/evidence/2026-04-29-p2-t5-strict-repeat-1.json` failed the repeated strict shape: bootstrap P95 1354.5 ms against the 1000 ms gate, max 2062.2 ms, response bytes 2449, query count P95/max 11, D1 rows read P95/max 9, D1 rows written P95/max 0, and zero 5xx/network/signal failures.
+- `reports/capacity/evidence/2026-04-29-p2-t1-tail-correlation.json` and `reports/capacity/evidence/2026-04-29-p2-t5-tail-correlation.json` matched sampled statement logs for 10/10 top-tail bootstrap requests, but matched invocation CPU/wall logs for 0/10.
+- `reports/capacity/evidence/2026-04-29-p2-t1-statement-map.json` and `reports/capacity/evidence/2026-04-29-p2-t5-statement-map.json` have complete statement coverage and no query-plan recommendation.
+- The refreshed 1000-learner ledger remains modelling-only and non-certifying.
+
+Selected path: P2-U3 evidence-capture repair. No D1, Worker CPU, payload, launch-policy, or certification change is justified by the current evidence. Public capacity wording remains `small-pilot-provisional`.
 
 ---
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -12,6 +13,10 @@ import {
 const DEFAULT_SAMPLE_LIMIT = 10;
 const MAX_WARNINGS = 20;
 const REQUEST_ID_RE = /ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+const DIAGNOSTIC_REDACTION_VERSION = 'capacity-diagnostics-redaction-v1';
+const OPAQUE_HASH_LENGTH = 24;
+const OPAQUE_REQUEST_ID_RE = /^req_[0-9a-f]{24}$/;
+const OPAQUE_STATEMENT_ID_RE = /^stmt_[0-9a-f]{24}$/;
 
 function usage() {
   return [
@@ -299,6 +304,7 @@ export function joinCapacityWorkerLogs({
     kind: 'capacity-worker-log-correlation',
     diagnosticOnly: true,
     generatedAt,
+    redaction: diagnosticRedactionMetadata(),
     sourceEvidence: {
       path: evidencePath,
       commit: evidence?.reportMeta?.commit || null,
@@ -309,8 +315,93 @@ export function joinCapacityWorkerLogs({
       rounds: evidence?.reportMeta?.rounds ?? null,
     },
     warnings: warnings.slice(0, MAX_WARNINGS),
-    diagnostics: { workerLogJoin },
+    diagnostics: { workerLogJoin: redactWorkerLogJoinDiagnostics(workerLogJoin) },
   };
+}
+
+export function redactWorkerLogJoinReport(report = {}) {
+  const workerLogJoin = report?.diagnostics?.workerLogJoin;
+  return {
+    ...report,
+    redaction: diagnosticRedactionMetadata(),
+    diagnostics: workerLogJoin
+      ? {
+        ...report.diagnostics,
+        workerLogJoin: redactWorkerLogJoinDiagnostics(workerLogJoin),
+      }
+      : report.diagnostics,
+  };
+}
+
+function redactWorkerLogJoinDiagnostics(workerLogJoin = {}) {
+  const samples = Array.isArray(workerLogJoin.samples)
+    ? workerLogJoin.samples.map(redactWorkerLogJoinSample)
+    : [];
+  return {
+    ...workerLogJoin,
+    redaction: diagnosticRedactionMetadata(),
+    samples,
+  };
+}
+
+function redactWorkerLogJoinSample(sample = {}) {
+  return {
+    ...sample,
+    requestId: redactDiagnosticRequestId(sample.requestId),
+    clientRequestId: redactDiagnosticRequestId(sample.clientRequestId),
+    capacityRequest: redactCapacityRequestDiagnostic(sample.capacityRequest),
+  };
+}
+
+function redactCapacityRequestDiagnostic(capacityRequest = {}) {
+  const source = capacityRequest && typeof capacityRequest === 'object' ? capacityRequest : {};
+  const statements = Array.isArray(source.statements)
+    ? source.statements.map(redactStatementDiagnostic)
+    : [];
+  return {
+    ...source,
+    statementCount: statements.length,
+    statements,
+  };
+}
+
+function redactStatementDiagnostic(statement = {}) {
+  const source = statement && typeof statement === 'object' ? statement : {};
+  return {
+    statementId: redactDiagnosticStatementId(source.statementId || source.name),
+    rowsRead: source.rowsRead ?? null,
+    rowsWritten: source.rowsWritten ?? null,
+    durationMs: source.durationMs ?? null,
+  };
+}
+
+function diagnosticRedactionMetadata() {
+  return {
+    version: DIAGNOSTIC_REDACTION_VERSION,
+    requestIds: `sha256:${OPAQUE_HASH_LENGTH}`,
+    statementIds: `sha256:${OPAQUE_HASH_LENGTH}`,
+    rawRequestIdsPersisted: false,
+    rawStatementNamesPersisted: false,
+  };
+}
+
+function redactDiagnosticRequestId(value) {
+  if (typeof value !== 'string' || !value) return null;
+  if (OPAQUE_REQUEST_ID_RE.test(value)) return value;
+  return `req_${hashDiagnosticValue('request-id', value)}`;
+}
+
+function redactDiagnosticStatementId(value) {
+  if (typeof value !== 'string' || !value) return `stmt_${hashDiagnosticValue('statement-name', 'unknown')}`;
+  if (OPAQUE_STATEMENT_ID_RE.test(value)) return value;
+  return `stmt_${hashDiagnosticValue('statement-name', value)}`;
+}
+
+function hashDiagnosticValue(kind, value) {
+  return createHash('sha256')
+    .update(`${DIAGNOSTIC_REDACTION_VERSION}:${kind}:${value}`)
+    .digest('hex')
+    .slice(0, OPAQUE_HASH_LENGTH);
 }
 
 function extractBootstrapTopTailSamples(evidence, sampleLimit) {
@@ -337,8 +428,12 @@ function indexRecordsByRequestId(records) {
   const index = new Map();
   for (const record of records) {
     for (const requestId of record.requestIds || []) {
-      if (!index.has(requestId)) index.set(requestId, []);
-      index.get(requestId).push(record);
+      const keys = [requestId, redactDiagnosticRequestId(requestId)]
+        .filter((entry, index, values) => entry && values.indexOf(entry) === index);
+      for (const key of keys) {
+        if (!index.has(key)) index.set(key, []);
+        index.get(key).push(record);
+      }
     }
   }
   for (const entries of index.values()) {

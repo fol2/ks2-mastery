@@ -1,0 +1,1226 @@
+{
+  "ok": true,
+  "kind": "capacity-worker-log-correlation",
+  "diagnosticOnly": true,
+  "generatedAt": "2026-04-29T19:39:02.237Z",
+  "sourceEvidence": {
+    "path": "reports/capacity/evidence/2026-04-29-p2-t1-strict-post-p1.json",
+    "commit": "e5d03117bd7c46c269bf1d75cceca42b31452bc8",
+    "startedAt": "2026-04-29T19:25:18.835Z",
+    "finishedAt": "2026-04-29T19:25:56.716Z",
+    "learners": 30,
+    "bootstrapBurst": 20,
+    "rounds": 1
+  },
+  "warnings": [
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:1: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:3: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:4: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:6: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:7: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:9: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:10: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:11: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:12: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:13: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:16: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:19: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:21: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:24: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:27: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:29: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:31: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:33: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:35: skipped malformed log line",
+    "/tmp/ks2-p2-t1-worker-logs.pretty.log:37: skipped malformed log line"
+  ],
+  "diagnostics": {
+    "workerLogJoin": {
+      "schemaVersion": 1,
+      "diagnosticOnly": true,
+      "generatedAt": "2026-04-29T19:39:02.237Z",
+      "sourceEvidencePath": "reports/capacity/evidence/2026-04-29-p2-t1-strict-post-p1.json",
+      "logSourcePaths": [
+        "/tmp/ks2-p2-t1-worker-logs.pretty.log"
+      ],
+      "certification": {
+        "contributesToCertification": false,
+        "reason": "worker-log-diagnostics-do-not-certify"
+      },
+      "coverage": {
+        "topTailSamples": 10,
+        "invocation": {
+          "matched": 0,
+          "partial": 0,
+          "missing": 10,
+          "coverageRatio": 0
+        },
+        "statementLogs": {
+          "matched": 10,
+          "partial": 0,
+          "missing": 0,
+          "coverageRatio": 1
+        }
+      },
+      "classificationCounts": {
+        "unclassified-insufficient-logs": 10
+      },
+      "samples": [
+        {
+          "requestId": "req_f072a50d0907189ee16b3a0c",
+          "clientRequestId": "req_f072a50d0907189ee16b3a0c",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 818.2,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 473,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 473,
+            "d1DurationMs": 269.623,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 21
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 23
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 68
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 49
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 37
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.159
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 71
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0854
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0629
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1903
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1254
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_722a4c20d628a296a2454cd1",
+          "clientRequestId": "req_722a4c20d628a296a2454cd1",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 817.5,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 480,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 480,
+            "d1DurationMs": 242.51170000000002,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 20
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 43
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 50
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 47
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 36
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1083
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 46
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0647
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0847
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1065
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1475
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_4e1fab0d2c5eb1769de77846",
+          "clientRequestId": "req_4e1fab0d2c5eb1769de77846",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 814.6,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 480,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 480,
+            "d1DurationMs": 252.45029999999997,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 29
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 32
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 59
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 46
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 41
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.0976
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 45
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.057
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0571
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1113
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1273
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_33a76801f881a7f7f562f8ca",
+          "clientRequestId": "req_33a76801f881a7f7f562f8ca",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 813.7,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 408,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 408,
+            "d1DurationMs": 190.0415,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 39
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 9
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 35
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 29
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.2682
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 46
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1899
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1039
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1406
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.3389
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_2aace6db8eaafd38de4291c5",
+          "clientRequestId": "req_2aace6db8eaafd38de4291c5",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 812.8,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 500,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 500,
+            "d1DurationMs": 259.4777000000001,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 34
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 36
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 59
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 46
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 41
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1185
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 43
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0794
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0782
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0796
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.122
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_e4f3ef396f9fe28461478dbb",
+          "clientRequestId": "req_e4f3ef396f9fe28461478dbb",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 809.8,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 352,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 352,
+            "d1DurationMs": 251.90509999999998,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 33
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 54
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 44
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 45
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 41
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.2155
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 34
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1407
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1812
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1609
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.2068
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_75cfc763cb5efc05e8044ed3",
+          "clientRequestId": "req_75cfc763cb5efc05e8044ed3",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 804.1,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 495,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 495,
+            "d1DurationMs": 254.45879999999997,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 28
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 30
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 59
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 51
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 40
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1131
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 46
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0802
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0633
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1024
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0998
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_50d70b7ebc1725cb4deacc83",
+          "clientRequestId": "req_50d70b7ebc1725cb4deacc83",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 803.3,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 442,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 442,
+            "d1DurationMs": 266.6641,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 34
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 49
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 39
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 56
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 46
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1258
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 42
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0942
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1509
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1682
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.125
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_d31b0a3d576a971ab5473ec2",
+          "clientRequestId": "req_d31b0a3d576a971ab5473ec2",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 803.1,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 471,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 471,
+            "d1DurationMs": 237.49129999999997,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 19
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 31
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 58
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 53
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 33
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.0872
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 43
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.082
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0647
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.0976
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1598
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        },
+        {
+          "requestId": "req_737288a0eb15d7fd7e85b947",
+          "clientRequestId": "req_737288a0eb15d7fd7e85b947",
+          "endpoint": "/api/bootstrap",
+          "method": "GET",
+          "status": 200,
+          "scenario": "cold-bootstrap-burst",
+          "app": {
+            "wallMs": 802.5,
+            "responseBytes": 2449,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "serverWallMs": 417,
+            "bootstrapMode": "selected-learner-bounded"
+          },
+          "join": {
+            "invocation": {
+              "status": "missing",
+              "reason": "no-matching-invocation-log"
+            },
+            "capacityRequest": {
+              "status": "matched",
+              "reason": null
+            },
+            "notes": []
+          },
+          "cloudflare": {
+            "cpuTimeMs": null,
+            "wallTimeMs": null,
+            "outcome": null
+          },
+          "capacityRequest": {
+            "wallMs": 417,
+            "d1DurationMs": 260.66290000000004,
+            "queryCount": 11,
+            "d1RowsRead": 9,
+            "d1RowsWritten": 0,
+            "responseBytes": 2449,
+            "bootstrapMode": "selected-learner-bounded",
+            "statements": [
+              {
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 36
+              },
+              {
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 47
+              },
+              {
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 35
+              },
+              {
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 55
+              },
+              {
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
+                "rowsRead": 1,
+                "rowsWritten": null,
+                "durationMs": 43
+              },
+              {
+                "statementId": "stmt_504d2600ae796e0755c3685c",
+                "rowsRead": 4,
+                "rowsWritten": 0,
+                "durationMs": 0.1489
+              },
+              {
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
+                "rowsRead": 0,
+                "rowsWritten": null,
+                "durationMs": 44
+              },
+              {
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.07
+              },
+              {
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1325
+              },
+              {
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1707
+              },
+              {
+                "statementId": "stmt_b47f59c08bd65432344057f7",
+                "rowsRead": 0,
+                "rowsWritten": 0,
+                "durationMs": 0.1408
+              }
+            ],
+            "statementsTruncated": false,
+            "statementCount": 11
+          },
+          "classification": "unclassified-insufficient-logs",
+          "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
+        }
+      ],
+      "redaction": {
+        "version": "capacity-diagnostics-redaction-v1",
+        "requestIds": "sha256:24",
+        "statementIds": "sha256:24",
+        "rawRequestIdsPersisted": false,
+        "rawStatementNamesPersisted": false
+      }
+    }
+  },
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "statementIds": "sha256:24",
+    "rawRequestIdsPersisted": false,
+    "rawStatementNamesPersisted": false
+  }
+}

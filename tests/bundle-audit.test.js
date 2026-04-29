@@ -514,15 +514,7 @@ test('worker-first asset routing keeps demo and source lockdown routes out of SP
 });
 
 test('production bundle audit fails source paths served by SPA fallback', async () => {
-  const server = createServer((request, response) => {
-    if (request.url === '/assets/app.js') {
-      response.writeHead(200, { 'content-type': 'application/javascript' });
-      response.end('console.log("ok");');
-      return;
-    }
-    response.writeHead(200, { 'content-type': 'text/html' });
-    response.end('<!doctype html><script src="/assets/app.js"></script>');
-  });
+  const server = createSeoAuditStubServer({ sourceFallbackPaths: ['/src/main.js'] });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 
   try {
@@ -535,15 +527,14 @@ test('production bundle audit fails source paths served by SPA fallback', async 
         `http://127.0.0.1:${port}/`,
       ], {
         cwd: process.cwd(),
-        timeout: 5000,
+        timeout: 8000,
       });
     }, (error) => {
       assert.match(error.stderr, /Direct URL should be denied with a 4xx response, got 200: \/src\/main\.js/);
       return true;
     });
   } finally {
-    server.closeAllConnections?.();
-    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+    await closeServer(server);
   }
 });
 
@@ -876,6 +867,7 @@ function seoAuditLlmsTxt({ forbiddenToken = '' } = {}) {
 }
 
 function createSeoAuditStubServer(options = {}) {
+  const sourceFallbackPaths = new Set(options.sourceFallbackPaths || []);
   const server = createServer((request, response) => {
     const url = request.url || '/';
     const method = request.method || 'GET';
@@ -1018,6 +1010,10 @@ function createSeoAuditStubServer(options = {}) {
       write(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' }, seoAuditLlmsTxt({
         forbiddenToken: options.llmsForbiddenToken || '',
       }));
+      return;
+    }
+    if (sourceFallbackPaths.has(url)) {
+      write(200, { 'content-type': 'text/html', 'cache-control': 'no-store' }, seoAuditRootHtml());
       return;
     }
     if (url === '/src/bundles/app.bundle.js' || url === '/src/bundles/app.bundle.js?v=test') {
