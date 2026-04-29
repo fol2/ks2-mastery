@@ -168,6 +168,24 @@ function validateSpec(spec) {
   }
 }
 
+// ─── Preservation token derivation ────────────────────────────────────────────
+
+/**
+ * Derive preservation tokens from a stem by stripping punctuation and splitting
+ * into a normalised word array. Called at build time so generated items carry
+ * preservation metadata for the marking oracle.
+ */
+export function derivePreserveTokens(stem) {
+  return String(stem ?? '')
+    .replace(/["""''']/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean);
+}
+
 // ─── Public API ────────────────────────────────────────────────────────────────
 
 /**

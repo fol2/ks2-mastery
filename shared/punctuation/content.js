@@ -1175,6 +1175,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     rewardUnitId: 'dash-clauses-core',
     prompt: 'Correct the dash punctuation in this sentence.',
     stem: 'The signal failed –and the team waited.',
+    preserveTokens: ['the', 'signal', 'failed', 'the', 'team', 'waited'],
     accepted: [
       'The signal failed – the team waited.',
       'The signal failed - the team waited.',
