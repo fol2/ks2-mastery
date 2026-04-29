@@ -24,13 +24,26 @@ function isLegacyMonsterCelebrationEvent(event) {
 
 function normaliseProgressSnapshot(value) {
   const raw = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-  return {
+  const snapshot = {
     mastered: Math.max(0, Number(raw.mastered) || 0),
     stage: Math.max(0, Math.min(4, Number(raw.stage) || 0)),
     level: Math.max(0, Math.min(10, Number(raw.level) || 0)),
     caught: raw.caught === true,
     branch: normaliseMonsterBranch(raw.branch),
   };
+  if (typeof raw.displayState === 'string' && raw.displayState.trim()) {
+    snapshot.displayState = raw.displayState.trim();
+  }
+  if ('displayStars' in raw || 'stars' in raw || 'starHighWater' in raw) {
+    snapshot.displayStars = Math.max(0, Math.floor(Number(raw.displayStars ?? raw.stars ?? raw.starHighWater) || 0));
+  }
+  if ('displayStage' in raw) {
+    snapshot.displayStage = Math.max(0, Math.min(5, Math.floor(Number(raw.displayStage) || 0)));
+  }
+  if ('starStage' in raw) {
+    snapshot.starStage = Math.max(0, Math.min(5, Math.floor(Number(raw.starStage) || 0)));
+  }
+  return snapshot;
 }
 
 export function normaliseMonsterCelebrationEvent(event) {
@@ -52,6 +65,7 @@ function normaliseLegacyMonsterCelebrationEvent(event) {
     type: 'reward.monster',
     kind: event.kind,
     learnerId: typeof event.learnerId === 'string' ? event.learnerId : 'default',
+    subjectId: cleanString(event.subjectId),
     monsterId: event.monsterId,
     monster: {
       id: typeof monster.id === 'string' ? monster.id : event.monsterId,
@@ -116,6 +130,10 @@ function normalisePresentationCelebrationEvent(event) {
     type: REWARD_PRESENTATION_TYPE,
     kind: celebrationIntent.visualKind || event.kind,
     learnerId: event.learnerId,
+    subjectId: cleanString(event.subjectId, event.producerType === 'subject' ? event.producerId : ''),
+    producerType: cleanString(event.producerType),
+    producerId: cleanString(event.producerId),
+    rewardType: cleanString(event.rewardType),
     monsterId,
     monster: normalisedMonster,
     previous: normaliseProgressSnapshot(previous),
@@ -137,6 +155,10 @@ function normaliseQueuedPresentationCelebrationEvent(event) {
     type: REWARD_PRESENTATION_TYPE,
     kind,
     learnerId: cleanString(event.learnerId, 'default'),
+    subjectId: cleanString(event.subjectId, event.producerType === 'subject' ? event.producerId : ''),
+    producerType: cleanString(event.producerType),
+    producerId: cleanString(event.producerId),
+    rewardType: cleanString(event.rewardType),
     monsterId: cleanString(event.monsterId),
     monster: {
       ...event.monster,

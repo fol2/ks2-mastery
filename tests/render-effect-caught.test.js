@@ -82,12 +82,26 @@ test('caught effect: happy path — reward.monster event renders with toast text
   assert.equal(warnings.length, 0, `unexpected warnings: ${JSON.stringify(warnings)}`);
 });
 
-test('caught effect: first-Star Punctuation event uses the shared caught celebration kind', async () => {
+test('caught effect: first-Star unit-subject event renders the Egg Found visual', async () => {
   const event = makeRewardEvent({
-    id: 'reward.monster:learner-a:inklet:caught:first-star',
+    id: 'reward.monster:learner-a:bracehart:caught:first-star',
     kind: 'caught',
+    monsterId: 'bracehart',
+    monster: makeMonster({
+      id: 'bracehart',
+      name: 'Bracehart',
+      nameByStage: ['Bracehart Egg', 'Bracehart', 'Clausecub', 'Archhart', 'Mega Archhart'],
+    }),
     previous: { mastered: 0, stage: 0, displayState: 'not-found', caught: false, branch: 'b1' },
-    next: { mastered: 0, stage: 0, displayState: 'egg-found', caught: false, branch: 'b1' },
+    next: {
+      mastered: 0,
+      stage: 1,
+      displayStars: 1,
+      displayStage: 1,
+      displayState: 'egg-found',
+      caught: false,
+      branch: 'b2',
+    },
   });
   const out = await renderCelebrationLayerFixture({
     registrations: REGISTER_CAUGHT,
@@ -99,10 +113,132 @@ test('caught effect: first-Star Punctuation event uses the shared caught celebra
 
   assert.equal(before.queue.length, 1);
   assert.equal(after.queue.length, 1, 'render alone must not advance the queue');
-  assert.match(html, /Inklet Egg/);
-  assert.match(html, /You caught a new friend!/);
-  assert.match(html, /New friend/);
+  assert.match(html, /Bracehart Egg/);
+  assert.match(html, /You found a new egg!/);
+  assert.match(html, /Egg found/);
   assert.match(html, /class="monster-celebration-overlay caught"/);
+  assert.match(html, /assets\/monsters\/bracehart\/b2\/bracehart-b2-0/);
+  assert.doesNotMatch(html, /assets\/monsters\/bracehart\/b2\/bracehart-b2-1/);
+  assert.match(html, /data-stage="0"/);
+  assert.equal(warnings.length, 0, `unexpected warnings: ${JSON.stringify(warnings)}`);
+});
+
+test('caught effect: subject-scoped celebrations do not render on another subject landing', async () => {
+  const event = makeRewardEvent({
+    id: 'reward.monster:learner-a:grammar:bracehart:caught:first-star',
+    kind: 'caught',
+    subjectId: 'grammar',
+    monsterId: 'bracehart',
+    monster: makeMonster({
+      id: 'bracehart',
+      name: 'Bracehart',
+      nameByStage: ['Bracehart Egg', 'Bracehart', 'Clausecub', 'Archhart', 'Mega Archhart'],
+    }),
+    previous: { mastered: 0, stage: 0, displayState: 'not-found', caught: false, branch: 'b1' },
+    next: {
+      mastered: 0,
+      stage: 1,
+      displayStars: 1,
+      displayStage: 1,
+      displayState: 'egg-found',
+      caught: false,
+      branch: 'b1',
+    },
+  });
+  const out = await renderCelebrationLayerFixture({
+    registrations: REGISTER_CAUGHT,
+    activeSubjectId: 'spelling',
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html, before, after, warnings } = JSON.parse(out);
+
+  assert.equal(html, '');
+  assert.equal(before.queue.length, 1);
+  assert.equal(after.queue.length, 1, 'mismatched subject event must stay queued, not auto-dismiss');
+  assert.equal(after.queue[0].subjectId, 'grammar');
+  assert.equal(warnings.length, 0, `unexpected warnings: ${JSON.stringify(warnings)}`);
+});
+
+test('caught effect: legacy queued events infer subject scope from monster id', async () => {
+  const event = makeRewardEvent({
+    id: 'reward.monster:learner-a:legacy:bracehart:caught:first-star',
+    kind: 'caught',
+    subjectId: undefined,
+    producerType: undefined,
+    producerId: undefined,
+    monsterId: 'bracehart',
+    monster: makeMonster({
+      id: 'bracehart',
+      name: 'Bracehart',
+      nameByStage: ['Bracehart Egg', 'Bracehart', 'Clausecub', 'Archhart', 'Mega Archhart'],
+    }),
+    previous: { mastered: 0, stage: 0, displayState: 'not-found', caught: false, branch: 'b1' },
+    next: {
+      mastered: 0,
+      stage: 1,
+      displayStars: 1,
+      displayStage: 1,
+      displayState: 'egg-found',
+      caught: false,
+      branch: 'b1',
+    },
+  });
+  delete event.subjectId;
+  delete event.producerType;
+  delete event.producerId;
+  const out = await renderCelebrationLayerFixture({
+    registrations: REGISTER_CAUGHT,
+    activeSubjectId: 'spelling',
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html, before, after, warnings } = JSON.parse(out);
+
+  assert.equal(html, '');
+  assert.equal(before.queue.length, 1);
+  assert.equal(after.queue.length, 1, 'legacy Grammar event must stay queued on the Spelling route');
+  assert.equal(after.queue[0].monster.id, 'bracehart');
+  assert.equal(warnings.length, 0, `unexpected warnings: ${JSON.stringify(warnings)}`);
+});
+
+test('caught effect: subject-scoped celebrations render on their own subject landing', async () => {
+  const event = makeRewardEvent({
+    id: 'reward.monster:learner-a:grammar:bracehart:caught:first-star',
+    kind: 'caught',
+    subjectId: 'grammar',
+    monsterId: 'bracehart',
+    monster: makeMonster({
+      id: 'bracehart',
+      name: 'Bracehart',
+      nameByStage: ['Bracehart Egg', 'Bracehart', 'Clausecub', 'Archhart', 'Mega Archhart'],
+    }),
+    previous: { mastered: 0, stage: 0, displayState: 'not-found', caught: false, branch: 'b1' },
+    next: {
+      mastered: 0,
+      stage: 1,
+      displayStars: 1,
+      displayStage: 1,
+      displayState: 'egg-found',
+      caught: false,
+      branch: 'b1',
+    },
+  });
+  const out = await renderCelebrationLayerFixture({
+    registrations: REGISTER_CAUGHT,
+    activeSubjectId: 'grammar',
+    setup: `
+      store.pushMonsterCelebrations([${JSON.stringify(event)}]);
+    `,
+  });
+  const { html, before, after, warnings } = JSON.parse(out);
+
+  assert.match(html, /Bracehart Egg/);
+  assert.match(html, /You found a new egg!/);
+  assert.equal(before.queue.length, 1);
+  assert.equal(after.queue.length, 1);
   assert.equal(warnings.length, 0, `unexpected warnings: ${JSON.stringify(warnings)}`);
 });
 
