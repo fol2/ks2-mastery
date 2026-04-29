@@ -34,6 +34,9 @@ const EMPTY_STATE_CONSUMERS = [
   'src/surfaces/home/CodexCreatureLightbox.jsx',
   'src/subjects/spelling/components/SpellingWordBankScene.jsx',
   'src/subjects/grammar/components/GrammarSetupScene.jsx',
+  // P2 U5 additions — Hero Mode + Admin Hub adopters.
+  'src/surfaces/home/HeroQuestCard.jsx',
+  'src/surfaces/hubs/AdminPanelFrame.jsx',
 ];
 
 function readFile(relative) {
@@ -61,13 +64,14 @@ test('every plan-mandated surface imports the shared EmptyState primitive', () =
   }
 });
 
-test('EmptyState has ≥ 6 unique production import sites', () => {
-  // Six is the plan-mandated minimum. The allowlist above is the
-  // canonical count. If a future unit adds a seventh consumer, add it
-  // to the list so the test catches accidental removals.
+test('EmptyState has ≥ 8 unique production import sites', () => {
+  // P2 U5 raised the floor from 6 → 8 once HeroQuestCard and
+  // AdminPanelFrame adopted the primitive. The allowlist above is the
+  // canonical count. If a future unit adds a ninth consumer, add it to
+  // the list so the test catches accidental removals.
   assert.ok(
-    EMPTY_STATE_CONSUMERS.length >= 6,
-    `Plan-mandated minimum is 6 EmptyState consumers; got ${EMPTY_STATE_CONSUMERS.length}.`,
+    EMPTY_STATE_CONSUMERS.length >= 8,
+    `Plan-mandated minimum is 8 EmptyState consumers; got ${EMPTY_STATE_CONSUMERS.length}.`,
   );
 });
 
@@ -170,12 +174,14 @@ test('Grammar dashboard-empty copy keeps the existing anchor AND adds reassuranc
 const ERROR_CARD_CONSUMERS = [
   'src/surfaces/subject/SubjectRuntimeFallback.jsx',
   'src/surfaces/hubs/hub-utils.js',
+  // P2 U5 addition — Hero Mode error fallback.
+  'src/surfaces/home/HeroQuestCard.jsx',
 ];
 
-test('ErrorCard has ≥ 2 production import sites', () => {
+test('ErrorCard has ≥ 3 production import sites', () => {
   assert.ok(
-    ERROR_CARD_CONSUMERS.length >= 2,
-    `ErrorCard is meant to ship in ≥ 2 production sites; allowlist has ${ERROR_CARD_CONSUMERS.length}.`,
+    ERROR_CARD_CONSUMERS.length >= 3,
+    `ErrorCard is meant to ship in ≥ 3 production sites; allowlist has ${ERROR_CARD_CONSUMERS.length}.`,
   );
   for (const file of ERROR_CARD_CONSUMERS) {
     const source = readFile(file);
@@ -190,4 +196,56 @@ test('ErrorCard has ≥ 2 production import sites', () => {
       `${file} imports ErrorCard but never renders it`,
     );
   }
+});
+
+// ---------- P2 U5 canonical-copy regex (HeroQuestCard + AdminPanelFrame) ---------- //
+
+test('HeroQuestCard empty branch follows the canonical reassurance pattern', () => {
+  // The empty branch keeps the existing HERO_UI_REASON_LABELS message
+  // ("No Hero task is ready yet — your subjects are still available
+  // below.") that the dashboard tests already pin, and surfaces it via
+  // EmptyState. Title = "No Hero task is ready yet" so the heading
+  // semantic is preserved; body keeps the "your subjects are still
+  // available below" anchor learners + tests rely on.
+  const source = readFile('src/surfaces/home/HeroQuestCard.jsx');
+  assert.match(source, /No Hero task is ready yet/, 'HeroQuestCard empty title anchor');
+  assert.match(
+    source,
+    /your subjects are still available below/,
+    'HeroQuestCard empty body keeps the canonical "subjects below" hint',
+  );
+});
+
+test('HeroQuestCard error branch wires ErrorCard with hero-quest-load code + canonical copy', () => {
+  // The error branch keeps the existing copy strings asserted by
+  // tests/hero-dashboard-card.test.js ("Quest updated. Try again." for
+  // active-session conflict; "Your Hero Quest refreshed. Try the next
+  // task now." for refresh) but routes them through the shared
+  // ErrorCard so the data-error-code attribute is present.
+  const source = readFile('src/surfaces/home/HeroQuestCard.jsx');
+  assert.match(
+    source,
+    /code=["']hero-quest-load["']/,
+    'HeroQuestCard ErrorCard must surface code="hero-quest-load" for telemetry/locator preservation',
+  );
+  assert.match(source, /Quest updated\. Try again\./, 'active-session-conflict copy preserved');
+  assert.match(
+    source,
+    /Your Hero Quest refreshed\. Try the next task now\./,
+    'refresh copy preserved',
+  );
+});
+
+test('AdminPanelFrame default empty slot uses the canonical operator-tone copy', () => {
+  // Operator-facing tone — neutral and functional. Strings flow into
+  // the shared EmptyState primitive only when the consumer does not
+  // override the `emptyState` prop (the override path is exercised by
+  // tests/react-admin-panel-frame-characterisation.test.js).
+  const source = readFile('src/surfaces/hubs/AdminPanelFrame.jsx');
+  assert.match(source, /No data available/, 'AdminPanelFrame default empty title');
+  assert.match(
+    source,
+    /panel has nothing to display for the current filters or window/,
+    'AdminPanelFrame default empty body anchors on filters/window',
+  );
 });

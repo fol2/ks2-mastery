@@ -3,9 +3,10 @@ import {
   HERO_PROGRESS_COPY,
   HERO_ECONOMY_COPY,
   HERO_SUBJECT_LABELS,
-  HERO_UI_REASON_LABELS,
 } from '../../../shared/hero/hero-copy.js';
 import { Button } from '../../platform/ui/Button.jsx';
+import { EmptyState } from '../../platform/ui/EmptyState.jsx';
+import { ErrorCard } from '../../platform/ui/ErrorCard.jsx';
 
 /**
  * HeroQuestCard — child-facing Hero Quest card for the dashboard.
@@ -104,24 +105,21 @@ export function HeroQuestCard({ hero, actions }) {
     );
   }
 
-  // (g) Stale quest / error state
+  // (g) Stale quest / error state — routed through the shared ErrorCard
+  // primitive so `data-error-code="hero-quest-load"` carries telemetry +
+  // the canonical retry button is consistent with other error fallbacks.
   if (hasError && !hero.canStart && !hero.canContinue) {
     return (
       <div className="hero-quest-card hero-quest-card--error" data-hero-card>
-        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
-        <div className="hero-quest-card__error" aria-live="polite">
-          <p>{hero.error === 'hero_active_session_conflict'
+        <ErrorCard
+          title="Today's Hero Quest"
+          body={hero.error === 'hero_active_session_conflict'
             ? 'Quest updated. Try again.'
-            : 'Your Hero Quest refreshed. Try the next task now.'}</p>
-        </div>
-        <div className="hero-quest-card__cta-row">
-          <Button
-            size="xl"
-            onClick={() => actions.refreshHeroQuest()}
-          >
-            {HERO_CTA_TEXT.refresh}
-          </Button>
-        </div>
+            : 'Your Hero Quest refreshed. Try the next task now.'}
+          code="hero-quest-load"
+          onRetry={() => actions.refreshHeroQuest()}
+          retryLabel={HERO_CTA_TEXT.refresh}
+        />
       </div>
     );
   }
@@ -231,13 +229,16 @@ export function HeroQuestCard({ hero, actions }) {
     );
   }
 
-  // (e) No launchable tasks — enabled but nothing to start or continue
+  // (e) No launchable tasks — enabled but nothing to start or continue.
+  // Routed through the shared EmptyState primitive. Title + body keep
+  // the canonical "No Hero task is ready yet" anchor + "your subjects
+  // are still available below" hint that the dashboard tests pin.
   return (
     <div className="hero-quest-card hero-quest-card--empty" data-hero-card>
-      <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
-      <p className="hero-quest-card__message">
-        {HERO_UI_REASON_LABELS['no-launchable-tasks']}
-      </p>
+      <EmptyState
+        title="No Hero task is ready yet"
+        body="Your Hero progress is safe — your subjects are still available below."
+      />
     </div>
   );
 }
