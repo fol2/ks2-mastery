@@ -14,6 +14,24 @@ import {
 } from '../shared/punctuation/content.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Strip `explanation` keys from a validator structure for baseline comparison.
+ * Explanation is a P6 intentional addition that does not exist in frozen P4 baselines.
+ */
+function stripExplanation(value) {
+  if (Array.isArray(value)) return value.map(stripExplanation);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => key !== 'explanation')
+        .map(([key, v]) => [key, stripExplanation(v)]),
+    );
+  }
+  return value;
+}
+
 // ─── Fixture loading ──────────────────────────────────────────────────────────
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -312,7 +330,7 @@ test('depth 4 output matches P4 baseline for 18 DSL-converted families', () => {
         stem: i.stem,
         model: i.model,
         validatorType: i.validator?.type || null,
-        validator: i.validator || null,
+        validator: stripExplanation(i.validator) || null,
         rubric: i.rubric || null,
         misconceptionTags: i.misconceptionTags,
         readiness: i.readiness,

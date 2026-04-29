@@ -68,6 +68,20 @@ function stableJson(value) {
     .map((key) => [key, stableJson(value[key])]));
 }
 
+/**
+ * Strip `explanation` keys from a validator structure before hashing.
+ * Explanation is a P6 learner-feedback addition that must not alter template identity.
+ */
+function stripExplanationForHash(value) {
+  if (Array.isArray(value)) return value.map(stripExplanationForHash);
+  if (!isPlainObject(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => key !== 'explanation')
+      .map(([key, v]) => [key, stripExplanationForHash(v)]),
+  );
+}
+
 function templateIdFor(familyId, template) {
   const explicit = typeof template?.templateId === 'string' ? template.templateId.trim() : '';
   if (explicit) return explicit;
@@ -80,7 +94,7 @@ function templateIdFor(familyId, template) {
       : [],
     skillIds: uniqueStrings(template.skillIds).sort(),
     clusterId: template.clusterId || '',
-    validator: stableJson(template.validator || {}),
+    validator: stableJson(stripExplanationForHash(template.validator || {})),
     rubric: stableJson(template.rubric || {}),
   };
   return `${familyId}_template_${shortHash(JSON.stringify(stableJson(payload)))}`;
