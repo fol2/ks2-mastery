@@ -1189,6 +1189,9 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
   if (!selection.item) {
     throw serviceError('punctuation_content_unavailable', 'No published Punctuation content is available.');
   }
+  // U11: track scheduler reason and per-session signature exposure for telemetry.
+  const itemSignature = selection.item.variantSignature || '';
+  const prevSignatures = Array.isArray(session.selectedSignatures) ? session.selectedSignatures : [];
   const nextSession = {
     ...session,
     phase: 'active-item',
@@ -1197,6 +1200,10 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
     currentItem: normaliseItemForState(selection.item),
     recentItemIds: [...(session.recentItemIds || []), selection.item.id].slice(-10),
     weakFocus: session.mode === 'weak' ? normaliseWeakFocus(selection.weakFocus) : null,
+    selectionReason: selection.reason || 'fallback',
+    selectedSignatures: itemSignature
+      ? [...prevSignatures, itemSignature].slice(-20)
+      : prevSignatures,
   };
   return {
     version: PUNCTUATION_SERVICE_STATE_VERSION,

@@ -4,6 +4,7 @@ import {
   PUNCTUATION_RELEASE_ID,
 } from '../../../../shared/punctuation/content.js';
 import { PUNCTUATION_EVENT_TYPES } from '../../../../shared/punctuation/events.js';
+import { PUNCTUATION_TELEMETRY_EVENTS } from '../../../../shared/punctuation/telemetry-events.js';
 import { NotFoundError } from '../../errors.js';
 import { combineCommandEvents } from '../../projections/events.js';
 import { buildCommandProjectionReadModel } from '../../projections/read-models.js';
@@ -123,6 +124,133 @@ function deriveStarEvidenceEvents({ engineData, learnerId, gameState }) {
   return starEvents;
 }
 
+/**
+ * U11: Derives learning-health telemetry events from the post-command state.
+ *
+ * Emitted telemetry events:
+ * - SCHEDULER_REASON_SELECTED: after item selection, with reason/familyId/skillId
+ * - GENERATED_SIGNATURE_REPEATED: when selected signature was already exposed
+ * - MISCONCEPTION_RETRY_PASSED: correct answer on a misconception-retry item
+ * - STAR_EVIDENCE_DEDUPED_BY_SIGNATURE: when star evidence dedup occurs
+ *
+ * Payloads NEVER include raw answers, validators, rubrics, or child-sensitive data.
+ */
+function deriveTelemetryEvents({ state, command, previousState, starEvidenceEvents }) {
+  const events = [];
+  const session = state?.session;
+  if (!session) return events;
+
+  const selectionReason = session.selectionReason;
+  const currentItem = session.currentItem;
+  const itemSignature = currentItem?.variantSignature || '';
+  const familyId = currentItem?.generatorFamilyId || currentItem?.familyId || '';
+  const skillId = (Array.isArray(currentItem?.skillIds) ? currentItem.skillIds[0] : '') || '';
+  const clusterId = currentItem?.clusterId || '';
+  const rewardUnitId = currentItem?.rewardUnitId || '';
+  const mode = currentItem?.mode || '';
+
+  // After item selection: emit SCHEDULER_REASON_SELECTED
+  if (
+    selectionReason &&
+    session.phase === 'active-item' &&
+    (command.command === 'start-session' || command.command === 'continue-session')
+  ) {
+    events.push({
+      type: PUNCTUATION_TELEMETRY_EVENTS.SCHEDULER_REASON_SELECTED,
+      reason: selectionReason,
+      familyId,
+      skillId,
+      clusterId,
+      rewardUnitId,
+      mode,
+    });
+
+    // Check if the selected signature was already exposed in this session
+    const selectedSignatures = Array.isArray(session.selectedSignatures) ? session.selectedSignatures : [];
+    if (itemSignature && selectedSignatures.filter((s) => s === itemSignature).length > 1) {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.GENERATED_SIGNATURE_REPEATED,
+        variantSignature: itemSignature,
+        skillId,
+        clusterId,
+        mode,
+      });
+    }
+
+    // Emit reason-specific scheduled events
+    if (selectionReason === 'misconception-retry') {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.MISCONCEPTION_RETRY_SCHEDULED,
+        skillId,
+        clusterId,
+        familyId,
+      });
+    } else if (selectionReason === 'spaced-return') {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.SPACED_RETURN_SCHEDULED,
+        skillId,
+        clusterId,
+        familyId,
+      });
+    } else if (selectionReason === 'retention-after-secure') {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.RETENTION_AFTER_SECURE_SCHEDULED,
+        skillId,
+        clusterId,
+        familyId,
+      });
+    }
+  }
+
+  // After correct answer on misconception-retry: emit MISCONCEPTION_RETRY_PASSED
+  if (command.command === 'submit-answer' && state.phase === 'feedback') {
+    const feedback = state.feedback;
+    const prevSession = previousState?.session;
+    const prevReason = prevSession?.selectionReason;
+    if (feedback?.correct === true && prevReason === 'misconception-retry') {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.MISCONCEPTION_RETRY_PASSED,
+        skillId: prevSession?.currentItem?.skillIds?.[0] || '',
+        clusterId: prevSession?.currentItem?.clusterId || '',
+        variantSignature: prevSession?.currentItem?.variantSignature || '',
+      });
+    }
+    if (feedback?.correct === true && prevReason === 'spaced-return') {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.SPACED_RETURN_PASSED,
+        skillId: prevSession?.currentItem?.skillIds?.[0] || '',
+        clusterId: prevSession?.currentItem?.clusterId || '',
+      });
+    }
+    if (feedback?.correct === true && prevReason === 'retention-after-secure') {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.RETENTION_AFTER_SECURE_PASSED,
+        skillId: prevSession?.currentItem?.skillIds?.[0] || '',
+        clusterId: prevSession?.currentItem?.clusterId || '',
+      });
+    }
+  }
+
+  // Star evidence dedup: if star evidence events were suppressed due to
+  // signature dedup (same signature already recorded a star bump).
+  // We detect this by checking if the item's signature already appears in
+  // a previous star evidence event for the same monster.
+  if (starEvidenceEvents && starEvidenceEvents.length === 0 && session.phase === 'active-item') {
+    // If we expected star evidence but got none due to dedup, the signature was reused
+    const signatures = Array.isArray(session.selectedSignatures) ? session.selectedSignatures : [];
+    if (itemSignature && signatures.filter((s) => s === itemSignature).length > 1) {
+      events.push({
+        type: PUNCTUATION_TELEMETRY_EVENTS.STAR_EVIDENCE_DEDUPED_BY_SIGNATURE,
+        variantSignature: itemSignature,
+        skillId,
+        clusterId,
+      });
+    }
+  }
+
+  return events;
+}
+
 export function createPunctuationCommandHandlers({ now, random } = {}) {
   async function handlePunctuationCommand(command, context) {
     if (!PUNCTUATION_COMMANDS.includes(command.command)) {
@@ -201,6 +329,8 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
       // requireLearnerWriteAccess; skip the duplicate membership read.
       { skipAccessCheck: true },
     );
+    // U11: capture pre-command state for telemetry derivation (scheduler reason tracking).
+    const previousState = runtimeRecord.subjectRecord?.ui || null;
     const engine = createServerPunctuationEngine({
       now: typeof now === 'function' ? now : () => nowValue,
       random,
@@ -243,6 +373,15 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
           engineData: result.data,
           learnerId: command.learnerId,
           gameState: projectionState.gameState?.['monster-codex'] || null,
+        });
+    // U11: derive learning-health telemetry events from scheduler decisions.
+    const telemetryEvents = result.changed === false
+      ? []
+      : deriveTelemetryEvents({
+          state: result.state,
+          command,
+          previousState,
+          starEvidenceEvents,
         });
     const allDomainEvents = starEvidenceEvents.length
       ? [...result.events, ...starEvidenceEvents]
@@ -290,6 +429,7 @@ export function createPunctuationCommandHandlers({ now, random } = {}) {
       domainEvents: projectedEvents.domainEvents,
       reactionEvents: projectedEvents.reactionEvents,
       toastEvents: projectedEvents.toastEvents,
+      telemetryEvents,
     };
     if (result.changed !== false) {
       response.runtimeWrite = {
