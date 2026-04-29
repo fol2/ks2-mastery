@@ -6,6 +6,12 @@ import {
   PRIVACY_FORBIDDEN_FIELDS,
   stripPrivacyFields,
 } from '../../../shared/hero/metrics-privacy.js';
+import { deriveReadinessChecks } from './readiness.js';
+import {
+  deriveHeroHealthIndicators,
+  deriveReconciliationGap,
+  classifySpendPattern,
+} from './analytics.js';
 
 /**
  * Re-export for backwards compatibility.
@@ -66,6 +72,61 @@ export async function probeHeroTelemetry({ db, limit = 20 } = {}) {
   });
 
   return { events, count: events.length, probedAt };
+}
+
+// ── Expanded probe response builder (pA2 U4) ─────────────────────────
+// Composes readiness, health, reconciliation, and spend-pattern indicators
+// from hero state for a specific learner. Pure function — no DB access.
+
+/**
+ * Build expanded probe response for a specific learner.
+ *
+ * @param {Object} params
+ * @param {Object} params.probeResult — base probe result from probeHeroTelemetry
+ * @param {Object|null} params.heroState — normalised hero progress state
+ * @param {Object} params.resolvedFlags — env-like object with resolved Hero flags
+ * @param {string} params.dateKey — current date key (YYYY-MM-DD)
+ * @param {Object} params.overrideStatus — override status for the queried learner
+ * @returns {Object} expanded probe response (before privacy stripping)
+ */
+export function buildExpandedProbeResponse({
+  probeResult,
+  heroState,
+  resolvedFlags,
+  dateKey,
+  overrideStatus,
+}) {
+  const safeState = heroState && typeof heroState === 'object' ? heroState : null;
+  const ledger = safeState?.economy?.ledger ?? null;
+
+  // Derive readiness checks
+  const readiness = deriveReadinessChecks(safeState, resolvedFlags);
+
+  // Derive health indicators
+  const health = deriveHeroHealthIndicators(safeState, ledger);
+
+  // Derive reconciliation gap (ledger vs event_log count)
+  const reconciliation = deriveReconciliationGap(ledger, probeResult.count);
+
+  // Derive spend pattern for today
+  const campSpends = Array.isArray(ledger)
+    ? ledger.filter(e => e && e.type === 'camp_spend')
+    : [];
+  const spendPattern = classifySpendPattern(
+    campSpends,
+    dateKey,
+    safeState?.economy?.balance ?? 0,
+  );
+
+  return {
+    ok: true,
+    ...probeResult,
+    readiness,
+    health,
+    reconciliation,
+    spendPattern,
+    overrideStatus,
+  };
 }
 
 export { PRIVACY_STRIP_FIELDS, stripPrivacyFields };
