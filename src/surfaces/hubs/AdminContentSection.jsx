@@ -16,10 +16,12 @@ import {
 } from '../../platform/hubs/admin-content-overview.js';
 import {
   buildContentQualitySignals,
+  buildContentQualitySummary,
   summariseAvailability,
   formatCoverageLabel,
   coverageChipClass,
   SIGNAL_STATUS,
+  QUALITY_SUMMARY_STATUS,
 } from '../../platform/hubs/admin-content-quality-signals.js';
 import { RELEASE_READINESS } from '../../platform/hubs/admin-content-release-readiness.js';
 
@@ -244,6 +246,129 @@ function SubjectOverviewPanel({ model, actions }) {
           ))}
         </tbody>
       </table>
+    </section>
+  );
+}
+
+// U10 (P7): Content Quality Summary panel. Cross-subject status
+// overview with attention priority ordering. Uses safeSection-style
+// error boundary. Only renders deep-links when hasRealDiagnostics.
+const QUALITY_BADGE_STYLES = Object.freeze({
+  [QUALITY_SUMMARY_STATUS.GOOD_SIGNAL]: { backgroundColor: '#e6f4ea', color: '#1e7e34', border: '1px solid #1e7e34' },
+  [QUALITY_SUMMARY_STATUS.NO_DATA_YET]: { backgroundColor: '#f1f3f4', color: '#5f6368', border: '1px solid #dadce0' },
+  [QUALITY_SUMMARY_STATUS.SIGNAL_UNAVAILABLE]: { backgroundColor: '#fef7e0', color: '#b06000', border: '1px solid #b06000' },
+  [QUALITY_SUMMARY_STATUS.VALIDATION_BLOCKED]: { backgroundColor: '#fce8e6', color: '#c5221f', border: '1px solid #c5221f' },
+});
+
+function ContentQualitySummaryPanel({ model }) {
+  const qualitySignals = React.useMemo(
+    () => buildContentQualitySignals(model?.contentQualitySignals?.subjectSignals),
+    [model?.contentQualitySignals?.subjectSignals],
+  );
+
+  const summary = React.useMemo(
+    () => buildContentQualitySummary(qualitySignals),
+    [qualitySignals],
+  );
+
+  // safeSection-style: if signals failed entirely, show degraded state.
+  if (model?.contentQualitySignalsError) {
+    return (
+      <section className="card admin-card-spaced" data-panel="content-quality-summary">
+        <div className="eyebrow">Content Management</div>
+        <h3 className="section-title admin-section-title">Quality Summary</h3>
+        <div className="feedback bad">
+          <strong>Unable to load quality summary</strong>
+          <div className="small muted admin-note-spaced">
+            The quality signals endpoint returned an error. Per-subject details below may still work.
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!summary.subjectRows.length) {
+    return null;
+  }
+
+  return (
+    <section className="card admin-card-spaced" data-panel="content-quality-summary">
+      <div className="eyebrow">Content Management</div>
+      <h3 className="section-title admin-section-title">Quality Summary</h3>
+      <p className="small muted admin-overview-desc">
+        Cross-subject quality status. Subjects with good learning signal have durable evidence;
+        others are ordered by attention priority.
+      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <span
+          className="chip"
+          data-testid="quality-coverage-pct"
+          style={{ fontWeight: 600 }}
+        >
+          {String(summary.coveragePercentage)}% coverage
+        </span>
+        {summary.attentionPriority.length > 0 ? (
+          <span className="small muted" data-testid="quality-attention-count">
+            {String(summary.attentionPriority.length)} subject{summary.attentionPriority.length === 1 ? '' : 's'} need attention
+          </span>
+        ) : null}
+      </div>
+      <table className="admin-subject-overview-table" aria-label="Content quality summary">
+        <thead>
+          <tr className="admin-overview-thead-row">
+            <th className="small admin-overview-th-first">Subject</th>
+            <th className="small admin-overview-th">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {summary.subjectRows.map((row) => {
+            const badgeStyle = QUALITY_BADGE_STYLES[row.status] || {};
+            // isClickable: only when the subject has real diagnostics
+            const subjectSignalEntry = qualitySignals.find(
+              (s) => s.subjectKey === row.subject
+            );
+            const hasRealDiagnostics = subjectSignalEntry
+              ? summariseAvailability(subjectSignalEntry.signals) !== 'none'
+              : false;
+            const isClickable = hasRealDiagnostics && row.status === QUALITY_SUMMARY_STATUS.GOOD_SIGNAL;
+
+            return (
+              <tr
+                key={row.subject}
+                className="admin-overview-tbody-row"
+                data-subject-key={row.subject}
+                data-quality-status={row.status}
+                data-clickable={isClickable ? 'true' : undefined}
+              >
+                <td className="admin-overview-td-first">{row.subject}</td>
+                <td className="admin-overview-td">
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      ...badgeStyle,
+                    }}
+                    data-testid={`quality-status-${row.subject}`}
+                  >
+                    {row.label}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {summary.attentionPriority.length > 0 ? (
+        <div style={{ marginTop: '8px' }}>
+          <span className="small muted">Attention priority: </span>
+          <span className="small" data-testid="quality-attention-order">
+            {summary.attentionPriority.join(' → ')}
+          </span>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1059,6 +1184,7 @@ export function AdminContentSection({ model, appState, accessContext, actions })
   return (
     <>
       <SubjectOverviewPanel model={model} actions={actions} />
+      <ContentQualitySummaryPanel model={model} />
       <ContentQualitySignalsPanel model={model} />
       <ContentReleaseAndImport model={model} accessContext={accessContext} actions={actions} />
       <PostMegaSpellingDebugPanel debug={model.postMasteryDebug} />
