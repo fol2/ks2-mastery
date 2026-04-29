@@ -37,7 +37,7 @@
     "db:migrations:list:remote:oauth": "npm run db:migrations:list:remote",
     "db:backup:remote": "node ./scripts/d1-backup.mjs --remote",
     "db:reset:remote": "node ./scripts/d1-reset.mjs --remote",
-    "deploy": "node ./scripts/wrangler-oauth.mjs deploy && npm run audit:production -- --skip-local --retries 5 --retry-delay-ms 2000",
+    "deploy": "node ./scripts/wrangler-oauth.mjs deploy && npm run audit:production -- --skip-local --retries 30 --retry-delay-ms 5000",
     "deploy:oauth": "npm run deploy",
     "deploy:ci": "npm run deploy",
     "ops:tail": "node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format pretty",
