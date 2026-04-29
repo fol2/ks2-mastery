@@ -40,7 +40,7 @@ function normaliseForVariety(value) {
     .replace(/ /g, ' ')
     .replace(/[""]/g, '"')
     .replace(/['']/g, "'")
-    .replace(/[–—]/g, '-')
+    .replace(/[–—-]/g, ' ')   // Treat ALL dashes (en, em, hyphen) as word boundaries
     .replace(/[^a-z0-9\s]/gi, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -271,10 +271,23 @@ function buildItemEntry(item, { productionIds = null, clusterMap = null, reviewe
 function buildVarietyClusters(pool) {
   const stemGroups = new Map();
   const modelGroups = new Map();
+  const explanationGroups = new Map();
+  // Per-skill character frequency: key = 'skillId::characterName'
+  const characterPerSkill = new Map();
+  // Per-skill correction pattern: key = 'skillId::normalisedModel'
+  const correctionPerSkill = new Map();
+
+  // Extract character names (capitalised proper nouns, min 3 chars, not common starters)
+  const COMMON_STARTERS = new Set(['The', 'This', 'That', 'They', 'There', 'Their', 'These', 'Those', 'When', 'Where', 'What', 'Which', 'While', 'After', 'Before', 'During', 'Without', 'Although', 'Because', 'Since', 'Until', 'Unless', 'However', 'Therefore', 'Furthermore', 'Moreover', 'Nevertheless', 'Please', 'Most', 'Everyone', 'Our', 'Your', 'Some', 'Many', 'Few', 'All', 'Each', 'Every', 'Both', 'Neither', 'Either', 'Any', 'Take', 'Keep', 'Put', 'Bring', 'Pack', 'Check', 'Let', 'Don', 'Did', 'Does', 'Can', 'Could', 'Would', 'Should', 'Will', 'May', 'Might', 'Must', 'Shall', 'How', 'Why', 'Are', 'Were', 'Was', 'Has', 'Have', 'Had', 'Its', 'She', 'You', 'Well', 'Year', 'For', 'Im', 'Ive', 'Youre', 'Youll', 'Theyre', 'Weve', 'Wed']);
+  function extractCharacterNames(text) {
+    const matches = (text || '').match(/\b[A-Z][a-z]{2,}\b/g) || [];
+    return matches.filter((m) => !COMMON_STARTERS.has(m));
+  }
 
   for (const item of pool) {
     const normStem = normaliseForVariety(item.stem);
     const normModel = normaliseForVariety(item.model);
+    const normExplanation = normaliseForVariety(item.explanation);
 
     if (normStem) {
       if (!stemGroups.has(normStem)) stemGroups.set(normStem, []);
@@ -283,6 +296,28 @@ function buildVarietyClusters(pool) {
     if (normModel) {
       if (!modelGroups.has(normModel)) modelGroups.set(normModel, []);
       modelGroups.get(normModel).push(item);
+    }
+    if (normExplanation) {
+      if (!explanationGroups.has(normExplanation)) explanationGroups.set(normExplanation, []);
+      explanationGroups.get(normExplanation).push(item);
+    }
+
+    // Character name tracking per skill
+    const text = (item.stem || '') + ' ' + (item.model || '');
+    const names = extractCharacterNames(text);
+    for (const skill of (item.skillIds || [])) {
+      for (const name of names) {
+        const key = skill + ':' + ':' + name;
+        if (!characterPerSkill.has(key)) characterPerSkill.set(key, []);
+        characterPerSkill.get(key).push(item);
+      }
+
+      // Correction pattern per skill (normalised model groups within a skill)
+      if (normModel) {
+        const cpKey = skill + ':' + ':' + normModel;
+        if (!correctionPerSkill.has(cpKey)) correctionPerSkill.set(cpKey, []);
+        correctionPerSkill.get(cpKey).push(item);
+      }
     }
   }
 
@@ -315,6 +350,59 @@ function buildVarietyClusters(pool) {
       itemIds: items.map((i) => i.id).sort(),
       count: items.length,
       classification: isSameMode ? 'SAME-MODE-DUPLICATE' : 'CROSS-MODE-OVERLAP',
+      sampleModel: items[0].model || '',
+    });
+  }
+
+  // Repeated explanation clusters (items with identical normalised explanation)
+  for (const [normText, items] of explanationGroups) {
+    if (items.length < 2) continue;
+    const modes = [...new Set(items.map((i) => i.mode))].sort();
+    clusters.push({
+      type: 'explanation',
+      normalisedText: normText,
+      modes,
+      itemIds: items.map((i) => i.id).sort(),
+      count: items.length,
+      classification: 'REPEATED-EXPLANATION',
+      sampleExplanation: items[0].explanation || '',
+    });
+  }
+
+  // Character repetition clusters (same character > 3 times within a skill)
+  for (const [key, items] of characterPerSkill) {
+    if (items.length <= 3) continue;
+    const parts = key.split('::');
+    const skill = parts[0];
+    const character = parts[1];
+    const modes = [...new Set(items.map((i) => i.mode))].sort();
+    clusters.push({
+      type: 'character',
+      normalisedText: character.toLowerCase(),
+      modes,
+      itemIds: items.map((i) => i.id).sort(),
+      count: items.length,
+      classification: 'CHARACTER-OVERUSE',
+      skill,
+      character,
+    });
+  }
+
+  // Correction pattern clusters (same normalised model within a skill, > 1 item)
+  for (const [key, items] of correctionPerSkill) {
+    if (items.length < 2) continue;
+    const parts = key.split('::');
+    const skill = parts[0];
+    const modes = [...new Set(items.map((i) => i.mode))].sort();
+    const isSameMode = modes.length === 1;
+    clusters.push({
+      type: 'correction-pattern',
+      normalisedText: key,
+      modes,
+      itemIds: items.map((i) => i.id).sort(),
+      count: items.length,
+      classification: isSameMode ? 'SAME-CORRECTION-PATTERN' : 'CROSS-MODE-CORRECTION',
+      skill,
       sampleModel: items[0].model || '',
     });
   }
