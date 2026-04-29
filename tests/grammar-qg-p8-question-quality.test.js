@@ -94,3 +94,64 @@ test('all constructed-response golden answers mark correct via markByAnswerSpec'
 
   assert.ok(checkedCount > 0, 'At least one constructed-response golden was checked');
 });
+
+// --- P8 U2: Inventory contract tests ---
+
+import { buildInventory } from '../scripts/generate-grammar-qg-quality-inventory.mjs';
+
+test('inventory covers all templates in GRAMMAR_TEMPLATE_METADATA', () => {
+  const seeds = [1, 2, 3];
+  const inventory = buildInventory(seeds);
+  const inventoryTemplateIds = new Set(inventory.items.map((i) => i.templateId));
+  const allTemplateIds = GRAMMAR_TEMPLATE_METADATA.map((t) => t.id);
+
+  for (const id of allTemplateIds) {
+    assert.ok(
+      inventoryTemplateIds.has(id),
+      `Template "${id}" missing from inventory — generator may return null for all tested seeds`,
+    );
+  }
+  assert.equal(inventoryTemplateIds.size, allTemplateIds.length);
+});
+
+test('inventory items have all required fields', () => {
+  const seeds = [1];
+  const inventory = buildInventory(seeds);
+  assert.ok(inventory.items.length > 0, 'Inventory must produce at least one item');
+
+  const requiredKeys = [
+    'contentReleaseId', 'templateId', 'seed', 'itemId',
+    'conceptIds', 'questionType', 'inputType', 'isGenerated',
+    'isMixedTransfer', 'answerSpecKind', 'marks', 'promptText',
+    'visibleOptionsOrRows', 'expectedAnswerSummary', 'misconceptionId',
+    'solutionLines', 'variantSignature', 'generatorFamilyId', 'reviewStatus',
+  ];
+
+  const sample = inventory.items[0];
+  for (const key of requiredKeys) {
+    assert.ok(
+      Object.hasOwn(sample, key),
+      `Required field "${key}" missing from inventory item`,
+    );
+  }
+});
+
+test('redacted items exclude answer internals', () => {
+  const seeds = [1];
+  const inventory = buildInventory(seeds);
+  assert.ok(inventory.redactedItems.length > 0, 'Redacted inventory must produce items');
+
+  const forbiddenKeys = [
+    'answerSpecKind', 'expectedAnswerSummary', 'variantSignature',
+    'generatorFamilyId', 'solutionLines',
+  ];
+
+  for (const item of inventory.redactedItems) {
+    for (const key of forbiddenKeys) {
+      assert.ok(
+        !Object.hasOwn(item, key),
+        `Redacted item must NOT contain "${key}" but found it on item ${item.itemId}`,
+      );
+    }
+  }
+});
