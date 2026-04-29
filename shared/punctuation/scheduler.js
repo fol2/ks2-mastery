@@ -5,6 +5,8 @@ import {
   MAX_SAME_SIGNATURE_DAYS,
   MISCONCEPTION_RETRY_WINDOW,
   MISCONCEPTION_RETRY_PREFER_DIFFERENT_TEMPLATE,
+  MISCONCEPTION_RETRY_MAX_ATTEMPTS,
+  MIXED_REVIEW_MIN_RECENT_ATTEMPTS,
   SPACED_RETURN_MIN_DAYS,
   RETENTION_AFTER_SECURE_MIN_DAYS,
   EXPOSURE_WEIGHT_BLOCKED,
@@ -503,12 +505,39 @@ function rankMisconceptionCandidates(candidates, missedAttempt) {
     .sort((a, b) => b.rank - a.rank);
 }
 
+/**
+ * Count consecutive wrong misconception-retry attempts for a given tag (most recent first).
+ * Stops counting as soon as a correct answer or a non-matching tag is encountered.
+ */
+function consecutiveMisconceptionFailures(progress, tag) {
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+  let count = 0;
+  for (let i = attempts.length - 1; i >= 0; i--) {
+    const attempt = attempts[i];
+    if (!attempt) break;
+    const tags = Array.isArray(attempt.misconceptionTags) ? attempt.misconceptionTags : [];
+    if (!tags.includes(tag)) break;
+    if (attempt.correct === true) break;
+    count++;
+  }
+  return count;
+}
+
 function selectMisconceptionRetry(indexes, progress, session, recentSignatures) {
   const retriedMisconceptions = new Set(
     Array.isArray(session?.retriedMisconceptions) ? session.retriedMisconceptions : []
   );
   const missedAttempt = recentMisconceptionAttempt(progress, MISCONCEPTION_RETRY_WINDOW);
   if (!missedAttempt) return null;
+
+  // Loop-breaker: if the same misconception tag has been retried N times
+  // without a "passed" signal, demote (skip) this retry candidate to prevent
+  // trapping learners in infinite retry loops.
+  const missedTags = Array.isArray(missedAttempt.misconceptionTags) ? missedAttempt.misconceptionTags : [];
+  const allExhausted = missedTags.every(
+    (tag) => consecutiveMisconceptionFailures(progress, tag) >= MISCONCEPTION_RETRY_MAX_ATTEMPTS
+  );
+  if (allExhausted) return null;
 
   const candidates = misconceptionSiblingCandidates(indexes, missedAttempt, recentSignatures, retriedMisconceptions);
   if (!candidates.length) return null;
@@ -596,7 +625,7 @@ function classifyWeakReason(weakFocus, progress, item, session, now) {
   }
 
   // Mixed review: item's mode differs from last 3 modes in session
-  if (isMixedReview(item, session)) return REASON_TAGS.MIXED_REVIEW;
+  if (isMixedReview(item, session, progress)) return REASON_TAGS.MIXED_REVIEW;
 
   return REASON_TAGS.FALLBACK;
 }
@@ -633,25 +662,38 @@ function classifySmartReason(indexes, progress, item, session, now) {
   }
 
   // Mixed review: item's mode differs from last 3 modes in session
-  if (isMixedReview(item, session)) return REASON_TAGS.MIXED_REVIEW;
+  if (isMixedReview(item, session, progress)) return REASON_TAGS.MIXED_REVIEW;
 
   return REASON_TAGS.FALLBACK;
 }
 
 /**
- * Check whether the selected item's mode differs from the last 3 modes in session.
+ * Derive recent item modes from progress.attempts when session.recentModes is absent.
+ * Returns an array of mode strings from the last N meaningful attempts.
  */
-function isMixedReview(item, session) {
+export function deriveRecentModes(progress) {
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+  if (attempts.length < MIXED_REVIEW_MIN_RECENT_ATTEMPTS) return [];
+  return attempts.slice(-5).map((a) => a?.itemMode || a?.mode || '').filter(Boolean);
+}
+
+/**
+ * Check whether the selected item's mode differs from the last 3 modes in session.
+ * Derives recentModes from progress.attempts when session.recentModes is not explicitly provided.
+ */
+function isMixedReview(item, session, progress) {
   if (!item || !item.mode) return false;
   const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds : [];
-  if (recentIds.length < 3) return false;
-  const last3Modes = recentIds.slice(-3).map((id) => {
-    // We cannot look up items by id here without indexes — use recentModes if available
-    return null;
-  });
-  // Use session.recentModes if provided (an array of modes for recently shown items)
-  const recentModes = Array.isArray(session?.recentModes) ? session.recentModes : [];
-  if (recentModes.length < 3) return false;
+  if (recentIds.length < MIXED_REVIEW_MIN_RECENT_ATTEMPTS) return false;
+  // Use session.recentModes if explicitly provided
+  let recentModes = Array.isArray(session?.recentModes) && session.recentModes.length >= MIXED_REVIEW_MIN_RECENT_ATTEMPTS
+    ? session.recentModes
+    : null;
+  // Derive from progress.attempts when not explicitly provided
+  if (!recentModes) {
+    recentModes = deriveRecentModes(progress);
+  }
+  if (recentModes.length < MIXED_REVIEW_MIN_RECENT_ATTEMPTS) return false;
   const lastThree = recentModes.slice(-3);
   return lastThree.every((m) => m !== item.mode);
 }

@@ -8,6 +8,7 @@ export const MAX_SAME_SIGNATURE_DAYS = 7;
 // Misconception retry
 export const MISCONCEPTION_RETRY_WINDOW = 5; // look back N items for misconception match
 export const MISCONCEPTION_RETRY_PREFER_DIFFERENT_TEMPLATE = true;
+export const MISCONCEPTION_RETRY_MAX_ATTEMPTS = 3; // consecutive wrong retries before demotion
 
 // Spaced return
 export const SPACED_RETURN_MIN_DAYS = 3;
@@ -24,6 +25,9 @@ export const REASON_TAGS = Object.freeze({
   BREADTH_GAP: 'breadth-gap',
   FALLBACK: 'fallback',
 });
+
+// Mixed review derivation
+export const MIXED_REVIEW_MIN_RECENT_ATTEMPTS = 3;
 
 // Weight modifiers for exposure limits
 export const EXPOSURE_WEIGHT_BLOCKED = 0.01;
