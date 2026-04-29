@@ -20,6 +20,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASELINE = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'fixtures/punctuation-qg-p3-parity-baseline.json'), 'utf8'),
 );
+const P4_BASELINE = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'fixtures/punctuation-qg-p4-parity-baseline.json'), 'utf8'),
+);
 
 const PRIORITY_FAMILIES = [
   'gen_sentence_endings_insert',
@@ -29,6 +32,27 @@ const PRIORITY_FAMILIES = [
   'gen_dash_clause_combine',
   'gen_hyphen_insert',
   'gen_semicolon_list_fix',
+];
+
+const P4_LEGACY_FAMILIES = [
+  'gen_apostrophe_possession_insert',
+  'gen_apostrophe_mix_paragraph',
+  'gen_speech_insert',
+  'gen_fronted_speech_paragraph',
+  'gen_list_commas_insert',
+  'gen_list_commas_combine',
+  'gen_fronted_adverbial_fix',
+  'gen_fronted_adverbial_combine',
+  'gen_parenthesis_fix',
+  'gen_parenthesis_combine',
+  'gen_parenthesis_speech_paragraph',
+  'gen_colon_list_insert',
+  'gen_colon_list_combine',
+  'gen_semicolon_fix',
+  'gen_semicolon_combine',
+  'gen_colon_semicolon_paragraph',
+  'gen_bullet_points_fix',
+  'gen_bullet_points_paragraph',
 ];
 
 // ─── Parity: perFamily = 4 ───────────────────────────────────────────────────
@@ -184,5 +208,111 @@ test('content audit logic passes for DSL-converted families at perFamily=4', () 
   for (const item of generatedItems) {
     const result = markPunctuationAnswer({ item, answer: { typed: item.model } });
     assert.equal(result.correct, true, `Audit marking failed for ${item.id}`);
+  }
+});
+
+// ─── P4 Legacy Family Characterisation Baseline ──────────────────────────────
+
+test('P4 fixture covers exactly 18 legacy families and no P3-converted families', () => {
+  assert.equal(P4_BASELINE.meta.familyCount, 18);
+
+  const fixtureDepth4Families = Object.keys(P4_BASELINE.depth4);
+  const fixtureDepth8Families = Object.keys(P4_BASELINE.depth8);
+
+  assert.equal(fixtureDepth4Families.length, 18);
+  assert.equal(fixtureDepth8Families.length, 18);
+
+  // No overlap with P3-converted families
+  for (const familyId of PRIORITY_FAMILIES) {
+    assert.equal(
+      fixtureDepth4Families.includes(familyId), false,
+      `P3-converted family ${familyId} found in P4 fixture depth4`,
+    );
+    assert.equal(
+      fixtureDepth8Families.includes(familyId), false,
+      `P3-converted family ${familyId} found in P4 fixture depth8`,
+    );
+  }
+
+  // All 18 legacy families present
+  for (const familyId of P4_LEGACY_FAMILIES) {
+    assert.ok(
+      fixtureDepth4Families.includes(familyId),
+      `Missing legacy family ${familyId} in P4 fixture depth4`,
+    );
+    assert.ok(
+      fixtureDepth8Families.includes(familyId),
+      `Missing legacy family ${familyId} in P4 fixture depth8`,
+    );
+  }
+});
+
+test('depth 4 output matches P4 baseline for all 18 legacy families', () => {
+  const items = createPunctuationGeneratedItems({
+    seed: P4_BASELINE.meta.seed,
+    perFamily: 4,
+  });
+
+  for (const familyId of P4_LEGACY_FAMILIES) {
+    const familyItems = items
+      .filter((i) => i.generatorFamilyId === familyId)
+      .map((i) => ({
+        id: i.id,
+        generatorFamilyId: i.generatorFamilyId,
+        variantSignature: i.variantSignature,
+        templateId: i.templateId,
+        prompt: i.prompt,
+        stem: i.stem,
+        model: i.model,
+        validatorType: i.validator?.type || null,
+        validator: i.validator || null,
+        rubric: i.rubric || null,
+        misconceptionTags: i.misconceptionTags,
+        readiness: i.readiness,
+      }));
+
+    const expected = P4_BASELINE.depth4[familyId];
+    assert.equal(familyItems.length, expected.length,
+      `${familyId}: expected ${expected.length} items at depth 4, got ${familyItems.length}`);
+
+    for (let idx = 0; idx < familyItems.length; idx += 1) {
+      assert.deepEqual(familyItems[idx], expected[idx],
+        `${familyId} depth4 mismatch at index ${idx}`);
+    }
+  }
+});
+
+test('depth 8 output matches P4 baseline for all 18 legacy families', () => {
+  const items = createPunctuationGeneratedItems({
+    seed: P4_BASELINE.meta.seed,
+    perFamily: 8,
+  });
+
+  for (const familyId of P4_LEGACY_FAMILIES) {
+    const familyItems = items
+      .filter((i) => i.generatorFamilyId === familyId)
+      .map((i) => ({
+        id: i.id,
+        generatorFamilyId: i.generatorFamilyId,
+        variantSignature: i.variantSignature,
+        templateId: i.templateId,
+        prompt: i.prompt,
+        stem: i.stem,
+        model: i.model,
+        validatorType: i.validator?.type || null,
+        validator: i.validator || null,
+        rubric: i.rubric || null,
+        misconceptionTags: i.misconceptionTags,
+        readiness: i.readiness,
+      }));
+
+    const expected = P4_BASELINE.depth8[familyId];
+    assert.equal(familyItems.length, expected.length,
+      `${familyId}: expected ${expected.length} items at depth 8, got ${familyItems.length}`);
+
+    for (let idx = 0; idx < familyItems.length; idx += 1) {
+      assert.deepEqual(familyItems[idx], expected[idx],
+        `${familyId} depth8 mismatch at index ${idx}`);
+    }
   }
 });
