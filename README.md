@@ -69,6 +69,18 @@ Build and serve the Worker-backed app for product QA, or use `/demo` after deplo
 npm test
 ```
 
+### Create a lean share ZIP
+
+Use the lean ZIP script when you need a lightweight development/share package without full asset payloads:
+
+```bash
+node scripts/create-lean-zip.mjs
+```
+
+The generated archive is written to the parent folder (for example, `../ks2-mastery-lean.zip`).
+
+Read `scripts/create-lean-zip.README.md` before sharing it. That guide explains exactly what the lean archive excludes, how 0-byte placeholders work, and how recipients should interpret omitted files.
+
 ### Build and deploy
 
 ```bash
