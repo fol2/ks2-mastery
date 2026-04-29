@@ -133,12 +133,22 @@ function extractFrontmatter(reportContent) {
 const PLACEHOLDER_TOKEN_RE = /^(pending|todo|tbc|unknown|n\/a|tbd)$/i;
 
 /**
- * Returns true if the value is a placeholder token or empty string.
+ * Regex matching compound placeholder tokens — placeholder words combined with other
+ * purely-alphabetic words via hyphens/underscores. Examples: "pending-report-commit",
+ * "tbd-report", "report-pending". Values containing hex digits (e.g. "pending-abcdef1")
+ * are NOT matched because the segments are not purely alphabetic.
+ */
+const COMPOUND_PLACEHOLDER_RE = /^(pending|todo|tbc|unknown|n\/a|tbd)([-_][a-z]+)+$|^([a-z]+[-_])+(pending|todo|tbc|unknown|n\/a|tbd)$/i;
+
+/**
+ * Returns true if the value is a placeholder token, compound placeholder, or empty string.
  */
 function isPlaceholderValue(value) {
   if (typeof value !== 'string') return false;
   if (value.trim() === '') return true;
-  return PLACEHOLDER_TOKEN_RE.test(value.trim());
+  const trimmed = value.trim();
+  if (PLACEHOLDER_TOKEN_RE.test(trimmed)) return true;
+  return COMPOUND_PLACEHOLDER_RE.test(trimmed);
 }
 
 /**
