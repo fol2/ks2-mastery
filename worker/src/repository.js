@@ -2836,6 +2836,7 @@ async function readAccountDetail(db, {
   try {
     opsMetadata = await first(db, `
       SELECT ops_status, plan_label, tags_json, internal_notes,
+             conversion_source, cancelled_at, cancellation_reason,
              updated_at, updated_by_account_id, row_version
       FROM account_ops_metadata
       WHERE account_id = ?
