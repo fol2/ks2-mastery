@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
@@ -8,6 +8,7 @@ import {
   selectPunctuationItem,
   updateMemoryState,
 } from '../shared/punctuation/scheduler.js';
+import { REASON_TAGS } from '../shared/punctuation/scheduler-manifest.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -295,4 +296,269 @@ test('scheduler keeps candidate windows bounded for expanded manifests', async (
   });
   assert.equal(result.inspectedCount, 24);
   assert.ok(result.candidateCount > result.inspectedCount);
+});
+
+// --- Misconception retry tests ---
+
+function makeItem(id, { mode = 'choose', skillIds = ['sentence_endings'], clusterId = 'endmarks', rewardUnitId = 'sentence-endings-core', misconceptionTags = [], variantSignature = '', templateId = '', stem = '' } = {}) {
+  return {
+    id,
+    mode,
+    skillIds,
+    clusterId,
+    rewardUnitId,
+    prompt: 'Test prompt.',
+    options: ['A.', 'B.'],
+    correctIndex: 0,
+    explanation: 'Test explanation.',
+    model: 'A.',
+    misconceptionTags,
+    variantSignature,
+    templateId,
+    stem,
+    source: 'generated',
+  };
+}
+
+function makeIndexes(items) {
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  const itemsByMode = new Map();
+  const itemsBySkill = new Map();
+  const itemsByRewardUnit = new Map();
+  for (const item of items) {
+    if (!itemsByMode.has(item.mode)) itemsByMode.set(item.mode, []);
+    itemsByMode.get(item.mode).push(item);
+    for (const skillId of item.skillIds) {
+      if (!itemsBySkill.has(skillId)) itemsBySkill.set(skillId, []);
+      itemsBySkill.get(skillId).push(item);
+    }
+    if (!itemsByRewardUnit.has(item.rewardUnitId)) itemsByRewardUnit.set(item.rewardUnitId, []);
+    itemsByRewardUnit.get(item.rewardUnitId).push(item);
+  }
+  const skills = [...new Set(items.flatMap((item) => item.skillIds))].map((id) => ({ id, name: id, published: true, clusterId: 'endmarks' }));
+  const skillById = new Map(skills.map((skill) => [skill.id, skill]));
+  return {
+    items,
+    itemById,
+    itemsByMode,
+    itemsBySkill,
+    itemsByRewardUnit,
+    skillById,
+    skills,
+    clusters: [{ id: 'endmarks', published: true, skillIds: skills.map((s) => s.id) }],
+    clusterById: new Map([['endmarks', { id: 'endmarks', published: true }]]),
+    rewardUnits: [],
+    rewardUnitById: new Map(),
+    rewardUnitByKey: new Map(),
+    rewardUnitsByCluster: new Map(),
+    rewardUnitsBySkill: new Map(),
+    generatorFamilies: [],
+    generatorFamilyById: new Map(),
+    generatorFamiliesBySkill: new Map(),
+    publishedSkillIds: skills.map((s) => s.id),
+    publishedClusterIds: ['endmarks'],
+    publishedRewardUnits: [],
+  };
+}
+
+describe('misconception retry', () => {
+  const missedItem = makeItem('missed_item', {
+    misconceptionTags: ['endmarks.mark_mismatch', 'endmarks.capitalisation_missing'],
+    variantSignature: 'sig_missed',
+    templateId: 'tmpl_A',
+    stem: 'the boat sailed away',
+  });
+  const siblingDiffTemplate = makeItem('sibling_diff_tmpl', {
+    misconceptionTags: ['endmarks.mark_mismatch'],
+    variantSignature: 'sig_sibling_1',
+    templateId: 'tmpl_B',
+    stem: 'the kite flew high',
+  });
+  const siblingSameTemplate = makeItem('sibling_same_tmpl', {
+    misconceptionTags: ['endmarks.mark_mismatch'],
+    variantSignature: 'sig_sibling_2',
+    templateId: 'tmpl_A',
+    stem: 'the rain stopped at last',
+  });
+  const siblingDiffTemplateSameStem = makeItem('sibling_diff_tmpl_same_stem', {
+    misconceptionTags: ['endmarks.capitalisation_missing'],
+    variantSignature: 'sig_sibling_3',
+    templateId: 'tmpl_C',
+    stem: 'the boat sailed away',
+  });
+  const unrelatedItem = makeItem('unrelated_item', {
+    misconceptionTags: ['comma.missing_serial'],
+    variantSignature: 'sig_unrelated',
+    templateId: 'tmpl_X',
+    stem: 'we ate pies cakes and buns',
+  });
+
+  const allItems = [missedItem, siblingDiffTemplate, siblingSameTemplate, siblingDiffTemplateSameStem, unrelatedItem];
+  const indexes = makeIndexes(allItems);
+
+  function progressWithMiss(itemId, misconceptionTags, variantSignature = '', opts = {}) {
+    return {
+      items: {},
+      facets: {},
+      rewardUnits: {},
+      attempts: [
+        {
+          ts: 1000,
+          itemId,
+          variantSignature,
+          mode: 'choose',
+          skillIds: ['sentence_endings'],
+          rewardUnitId: 'sentence-endings-core',
+          correct: false,
+          misconceptionTags,
+          ...(opts.templateId ? { templateId: opts.templateId } : {}),
+          ...(opts.stem ? { stem: opts.stem } : {}),
+        },
+      ],
+      sessionsCompleted: 0,
+    };
+  }
+
+  test('wrong answer with known misconception schedules sibling with different signature', () => {
+    const progress = progressWithMiss('missed_item', ['endmarks.mark_mismatch'], 'sig_missed', { templateId: 'tmpl_A', stem: 'the boat sailed away' });
+    const result = selectPunctuationItem({
+      indexes,
+      progress,
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: 2000,
+      random: () => 0,
+    });
+
+    assert.equal(result.reason, REASON_TAGS.MISCONCEPTION_RETRY);
+    assert.notEqual(result.item.variantSignature, 'sig_missed');
+    assert.ok(result.item.misconceptionTags.includes('endmarks.mark_mismatch'));
+  });
+
+  test('retry does not reuse same variant signature if alternatives exist', () => {
+    // Add an item with same signature as missed — should never be selected
+    const sameSignatureItem = makeItem('same_sig_as_missed', {
+      misconceptionTags: ['endmarks.mark_mismatch'],
+      variantSignature: 'sig_missed',
+      templateId: 'tmpl_D',
+      stem: 'different stem',
+    });
+    const testItems = [...allItems, sameSignatureItem];
+    const testIndexes = makeIndexes(testItems);
+    const progress = progressWithMiss('missed_item', ['endmarks.mark_mismatch'], 'sig_missed');
+    const result = selectPunctuationItem({
+      indexes: testIndexes,
+      progress,
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: 2000,
+      random: () => 0,
+    });
+
+    assert.equal(result.reason, REASON_TAGS.MISCONCEPTION_RETRY);
+    assert.notEqual(result.item.variantSignature, 'sig_missed');
+  });
+
+  test('retry prefers different templateId over same templateId', () => {
+    const progress = progressWithMiss('missed_item', ['endmarks.mark_mismatch'], 'sig_missed', { templateId: 'tmpl_A', stem: 'the boat sailed away' });
+    const result = selectPunctuationItem({
+      indexes,
+      progress,
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: 2000,
+      random: () => 0,
+    });
+
+    assert.equal(result.reason, REASON_TAGS.MISCONCEPTION_RETRY);
+    // siblingDiffTemplate (tmpl_B, different stem) should rank highest
+    assert.equal(result.item.id, 'sibling_diff_tmpl');
+    assert.equal(result.item.templateId, 'tmpl_B');
+  });
+
+  test('retry falls back gracefully when family has only 1 template', () => {
+    const singleTemplateItems = [
+      missedItem,
+      siblingSameTemplate, // Same templateId (tmpl_A) as missed, but different signature
+    ];
+    const singleIndexes = makeIndexes(singleTemplateItems);
+    const progress = progressWithMiss('missed_item', ['endmarks.mark_mismatch'], 'sig_missed', { templateId: 'tmpl_A' });
+    const result = selectPunctuationItem({
+      indexes: singleIndexes,
+      progress,
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: 2000,
+      random: () => 0,
+    });
+
+    assert.equal(result.reason, REASON_TAGS.MISCONCEPTION_RETRY);
+    assert.equal(result.item.id, 'sibling_same_tmpl');
+  });
+
+  test('misconception tag not in any candidate falls back to standard selection', () => {
+    // Progress has a misconception that no other items share
+    const progress = progressWithMiss('missed_item', ['endmarks.rare_tag_nobody_has'], 'sig_missed');
+    const result = selectPunctuationItem({
+      indexes,
+      progress,
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: 2000,
+      random: () => 0,
+    });
+
+    assert.equal(result.reason, REASON_TAGS.FALLBACK);
+    assert.ok(result.item);
+  });
+
+  test('misconception retry respects session anti-repeat (does not retry same misconception twice)', () => {
+    const progress = progressWithMiss('missed_item', ['endmarks.mark_mismatch'], 'sig_missed');
+    // Mark the misconception tag as already retried in this session
+    const result = selectPunctuationItem({
+      indexes,
+      progress,
+      session: {
+        answeredCount: 1,
+        recentItemIds: ['sibling_diff_tmpl'],
+        retriedMisconceptions: ['endmarks.mark_mismatch'],
+      },
+      prefs: { mode: 'smart' },
+      now: 2000,
+      random: () => 0,
+    });
+
+    // Should fall back, because the misconception has already been retried
+    assert.equal(result.reason, REASON_TAGS.FALLBACK);
+  });
+
+  test('wrong fixed-item answer schedules generated sibling where appropriate', () => {
+    // Simulate a fixed item being missed, with a generated sibling available
+    const fixedMissed = makeItem('fixed_missed', {
+      misconceptionTags: ['endmarks.mark_mismatch'],
+      variantSignature: '',
+      templateId: '',
+      stem: 'the boat sailed away',
+    });
+    const generatedSibling = makeItem('gen_sibling', {
+      misconceptionTags: ['endmarks.mark_mismatch'],
+      variantSignature: 'sig_gen_1',
+      templateId: 'tmpl_gen_1',
+      stem: 'the horse jumped the fence',
+    });
+    const testItems = [fixedMissed, generatedSibling];
+    const testIndexes = makeIndexes(testItems);
+    const progress = progressWithMiss('fixed_missed', ['endmarks.mark_mismatch'], '');
+    const result = selectPunctuationItem({
+      indexes: testIndexes,
+      progress,
+      session: { answeredCount: 0, recentItemIds: [] },
+      prefs: { mode: 'smart' },
+      now: 2000,
+      random: () => 0,
+    });
+
+    assert.equal(result.reason, REASON_TAGS.MISCONCEPTION_RETRY);
+    assert.equal(result.item.id, 'gen_sibling');
+  });
 });

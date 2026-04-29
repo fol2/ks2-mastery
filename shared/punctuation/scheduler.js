@@ -4,6 +4,7 @@ import {
   MAX_SAME_SIGNATURE_ACROSS_ATTEMPTS,
   MAX_SAME_SIGNATURE_DAYS,
   MISCONCEPTION_RETRY_WINDOW,
+  MISCONCEPTION_RETRY_PREFER_DIFFERENT_TEMPLATE,
   SPACED_RETURN_MIN_DAYS,
   RETENTION_AFTER_SECURE_MIN_DAYS,
   EXPOSURE_WEIGHT_BLOCKED,
@@ -374,6 +375,118 @@ function avoidRecentSignatureItems(items, recentSignatures) {
   return freshItems.length ? freshItems : items;
 }
 
+// --- Misconception retry helpers ---
+
+function recentMisconceptionAttempt(progress, window) {
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+  const lookback = attempts.slice(-window);
+  for (let i = lookback.length - 1; i >= 0; i--) {
+    const attempt = lookback[i];
+    if (!attempt || attempt.correct === true) continue;
+    const tags = Array.isArray(attempt.misconceptionTags) ? attempt.misconceptionTags : [];
+    if (tags.length > 0) return attempt;
+  }
+  return null;
+}
+
+function misconceptionSiblingCandidates(indexes, missedAttempt, recentSignatures, retriedMisconceptions) {
+  const missedTags = Array.isArray(missedAttempt.misconceptionTags) ? missedAttempt.misconceptionTags : [];
+  const missedSignature = missedAttempt.variantSignature || '';
+  const missedItemId = missedAttempt.itemId || '';
+
+  // Collect all items sharing at least one misconception tag
+  const candidateMap = new Map();
+  const missedSkills = Array.isArray(missedAttempt.skillIds) ? missedAttempt.skillIds : [];
+
+  for (const skillId of missedSkills) {
+    const skillItems = indexes.itemsBySkill?.get(skillId) || [];
+    for (const item of skillItems) {
+      if (candidateMap.has(item.id)) continue;
+      if (item.id === missedItemId) continue;
+      const skill = indexes.skillById.get(item.skillIds?.[0]);
+      if (!skill?.published) continue;
+      const itemTags = Array.isArray(item.misconceptionTags) ? item.misconceptionTags : [];
+      const sharedTag = missedTags.find((tag) => itemTags.includes(tag));
+      if (!sharedTag) continue;
+      // Must have different variant signature
+      if (item.variantSignature && item.variantSignature === missedSignature) continue;
+      // Must not be recently seen
+      if (item.variantSignature && recentSignatures.has(item.variantSignature)) continue;
+      // Must not already have been retried for this misconception in this session
+      if (retriedMisconceptions.has(sharedTag)) continue;
+      candidateMap.set(item.id, { item, sharedTag });
+    }
+  }
+
+  // Also search by rewardUnitId for broader sibling coverage
+  if (missedAttempt.rewardUnitId) {
+    const unitItems = indexes.itemsByRewardUnit?.get(missedAttempt.rewardUnitId) || [];
+    for (const item of unitItems) {
+      if (candidateMap.has(item.id)) continue;
+      if (item.id === missedItemId) continue;
+      const skill = indexes.skillById.get(item.skillIds?.[0]);
+      if (!skill?.published) continue;
+      const itemTags = Array.isArray(item.misconceptionTags) ? item.misconceptionTags : [];
+      const sharedTag = missedTags.find((tag) => itemTags.includes(tag));
+      if (!sharedTag) continue;
+      if (item.variantSignature && item.variantSignature === missedSignature) continue;
+      if (item.variantSignature && recentSignatures.has(item.variantSignature)) continue;
+      if (retriedMisconceptions.has(sharedTag)) continue;
+      candidateMap.set(item.id, { item, sharedTag });
+    }
+  }
+
+  return [...candidateMap.values()];
+}
+
+function rankMisconceptionCandidates(candidates, missedAttempt) {
+  const missedTemplateId = missedAttempt.templateId || '';
+  const missedStem = missedAttempt.stem || '';
+
+  return candidates
+    .map(({ item, sharedTag }) => {
+      const itemTemplateId = item.templateId || '';
+      const itemStem = item.stem || '';
+      let rank;
+      if (MISCONCEPTION_RETRY_PREFER_DIFFERENT_TEMPLATE && itemTemplateId && missedTemplateId && itemTemplateId !== missedTemplateId) {
+        // Different template
+        if (itemStem && missedStem && itemStem !== missedStem) {
+          rank = 4; // Best: different template AND different stem
+        } else {
+          rank = 3; // Good: different template, same/no stem
+        }
+      } else {
+        // Same template or no template info — different signature is the minimum
+        rank = 1; // Lowest viable: same templateId, different signature
+      }
+      return { item, sharedTag, rank };
+    })
+    .sort((a, b) => b.rank - a.rank);
+}
+
+function selectMisconceptionRetry(indexes, progress, session, recentSignatures) {
+  const retriedMisconceptions = new Set(
+    Array.isArray(session?.retriedMisconceptions) ? session.retriedMisconceptions : []
+  );
+  const missedAttempt = recentMisconceptionAttempt(progress, MISCONCEPTION_RETRY_WINDOW);
+  if (!missedAttempt) return null;
+
+  const candidates = misconceptionSiblingCandidates(indexes, missedAttempt, recentSignatures, retriedMisconceptions);
+  if (!candidates.length) return null;
+
+  const ranked = rankMisconceptionCandidates(candidates, missedAttempt);
+  if (!ranked.length) return null;
+
+  const best = ranked[0];
+  return {
+    item: clone(best.item),
+    reason: REASON_TAGS.MISCONCEPTION_RETRY,
+    misconceptionTag: best.sharedTag,
+  };
+}
+
+// --- End misconception retry helpers ---
+
 function weakRows(indexes, progress, session, now, maxWindow) {
   const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
   const recentSignatures = recentSignatureSet(indexes, session, progress);
@@ -424,12 +537,29 @@ export function selectPunctuationItem({
     ? (session?.guidedSkillId || prefs.guidedSkillId || null)
     : null;
   const maxWindow = Math.max(1, candidateWindow);
+
+  // --- Misconception retry (applies to all modes) ---
+  const recentSignaturesForRetry = recentSignatureSet(indexes, session, progress);
+  const misconceptionResult = selectMisconceptionRetry(indexes, progress, session, recentSignaturesForRetry);
+  if (misconceptionResult) {
+    return {
+      item: misconceptionResult.item,
+      reason: misconceptionResult.reason,
+      targetMode: misconceptionResult.item?.mode || null,
+      targetClusterId: misconceptionResult.item?.clusterId || null,
+      weakFocus: null,
+      inspectedCount: 1,
+      candidateCount: 1,
+    };
+  }
+
   if (sessionMode === 'weak') {
     const rows = weakRows(indexes, progress, session, now, maxWindow);
     const picked = weightedPick(rows, random) || rows[0]?.item || null;
     const pickedRow = rows.find((row) => row.item.id === picked?.id) || null;
     return {
       item: picked ? clone(picked) : null,
+      reason: REASON_TAGS.FALLBACK,
       targetMode: picked?.mode || null,
       targetClusterId: picked?.clusterId || null,
       weakFocus: pickedRow ? clone(pickedRow.weakFocus) : null,
@@ -440,7 +570,7 @@ export function selectPunctuationItem({
 
   const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : [];
   const recent = new Set(recentIds);
-  const recentSignatures = recentSignatureSet(indexes, session, progress);
+  const recentSignatures = recentSignaturesForRetry;
   const previousItemId = typeof session?.currentItemId === 'string' && session.currentItemId
     ? session.currentItemId
     : recentIds.at(-1) || null;
@@ -478,6 +608,7 @@ export function selectPunctuationItem({
   const item = weightedPick(rows, random) || windowed[0] || null;
   return {
     item: item ? clone(item) : null,
+    reason: REASON_TAGS.FALLBACK,
     targetMode: selectedMode.mode,
     targetClusterId: clusterId,
     weakFocus: null,
