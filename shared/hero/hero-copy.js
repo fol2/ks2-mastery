@@ -3,36 +3,57 @@
 // All child-visible text for Hero Quest surfaces lives here.
 // Pure module — ZERO Worker, React, D1, or framework imports.
 //
-// The HERO_FORBIDDEN_VOCABULARY list is the canonical source of truth for
-// economy/pressure vocabulary scanning in boundary tests.
+// The HERO_FORBIDDEN_PRESSURE_VOCABULARY list is the canonical source of truth
+// for pressure/gambling vocabulary scanning in boundary tests.
 
 /**
- * Forbidden economy/pressure vocabulary.  No Hero-facing surface may
- * contain any of these tokens (case-insensitive).
+ * P4: Pressure/gambling vocabulary — ALWAYS forbidden in ALL Hero surfaces.
+ * These terms create urgency, gambling mechanics, or shop pressure.
  */
-export const HERO_FORBIDDEN_VOCABULARY = Object.freeze([
-  'coin',
+export const HERO_FORBIDDEN_PRESSURE_VOCABULARY = Object.freeze([
   'shop',
   'deal',
   'loot',
-  'streak',
-  'claim',
-  'reward',
-  'treasure',
-  'buy',
+  'jackpot',
   'limited time',
   'daily deal',
   "don't miss out",
-  'earn',
-  'claim your reward',
-  'earn coins',
+  'streak reward',
   'grind',
+  'buy now',
+  'spend now',
   'you missed out',
   'unlock now',
-  'spend now',
-  'jackpot',
-  'streak reward',
+  'treasure',
+  'claim your reward',
+  'earn coins',
 ]);
+
+/**
+ * P4: Economy vocabulary allowed ONLY in economy-scoped files.
+ * These terms must NOT appear in subject surfaces, HeroTaskBanner,
+ * scheduler explanations, or non-economy Hero copy.
+ */
+export const HERO_ECONOMY_ALLOWED_VOCABULARY = Object.freeze([
+  'coin',
+  'balance',
+  'Hero Coins',
+]);
+
+/**
+ * Files where economy vocabulary is permitted.
+ */
+export const HERO_ECONOMY_ALLOWED_FILES = Object.freeze([
+  'shared/hero/economy.js',
+  'shared/hero/hero-copy.js',
+  'shared/hero/claim-contract.js',
+  'src/platform/hero/hero-ui-model.js',
+  'src/surfaces/home/HeroQuestCard.jsx',
+  'worker/src/hero/read-model.js',
+]);
+
+// Backward compat — tests importing this get the pressure-only list
+export const HERO_FORBIDDEN_VOCABULARY = HERO_FORBIDDEN_PRESSURE_VOCABULARY;
 
 /**
  * P3 progress copy — shown in HeroQuestCard and HeroTaskBanner for
@@ -48,6 +69,18 @@ export const HERO_PROGRESS_COPY = Object.freeze({
   claiming: 'Checking your Hero progress…',
   refreshed: 'Your Hero Quest refreshed. Try the next task now.',
   bannerComplete: 'Hero task complete. Return to your Hero Quest for the next round.',
+});
+
+/**
+ * P4 economy copy — shown in HeroQuestCard when daily Coins are awarded.
+ * Calm, non-pressurising. No shop/deal/streak/loot language.
+ */
+export const HERO_ECONOMY_COPY = Object.freeze({
+  coinsAdded: 'Hero Coins added.',
+  coinsAddedDetail: 'You completed today\'s Hero Quest.',
+  balanceLabel: 'Hero Coins',
+  savedForCamp: 'Hero Coins saved for Hero Camp.',
+  dailyAvailable: 'Complete today\'s Hero Quest to add 100 Hero Coins.',
 });
 
 /**

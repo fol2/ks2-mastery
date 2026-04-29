@@ -114,7 +114,7 @@ test('readHeroProgressState with no existing row returns normalised empty state'
   // We verify the contract of normaliseHeroProgressState(null).
   const expected = normaliseHeroProgressState(null);
   assert.deepEqual(expected, emptyProgressState());
-  assert.equal(expected.version, 1);
+  assert.equal(expected.version, 2);
   assert.equal(expected.daily, null);
   assert.deepEqual(expected.recentClaims, []);
 
@@ -163,7 +163,7 @@ test('readHeroProgressState with valid existing row returns parsed state', async
   assert.ok(row, 'hero-mode row must exist after direct insert');
   const parsed = JSON.parse(row.state_json);
   const normalised = normaliseHeroProgressState(parsed);
-  assert.equal(normalised.version, 1);
+  assert.equal(normalised.version, 2);
   assert.equal(normalised.daily.questId, 'quest-abc');
   assert.equal(normalised.daily.status, 'active');
   assert.equal(normalised.daily.effortCompleted, 1);
@@ -576,7 +576,7 @@ test('batch atomicity: after hero mutation, child_game_state + mutation_receipts
   const gameRow = getHeroGameStateRow(server);
   assert.ok(gameRow, 'child_game_state must contain hero-mode row after mutation');
   const stateAfter = JSON.parse(gameRow.state_json);
-  assert.equal(stateAfter.version, 1);
+  assert.equal(stateAfter.version, 2);
 
   // 2. mutation_receipts row exists with kind='hero_command.claim-task'
   const receipt = getMutationReceipt(server, 'adult-a', 'hero-atomicity-1');
@@ -676,7 +676,7 @@ test('normaliseHeroProgressState with wrong version returns empty progress', () 
 test('normaliseHeroProgressState with valid minimal state returns normalised', () => {
   const input = { version: 1, daily: null, recentClaims: [] };
   const result = normaliseHeroProgressState(input);
-  assert.equal(result.version, 1);
+  assert.equal(result.version, 2);
   assert.equal(result.daily, null);
   assert.deepEqual(result.recentClaims, []);
 });

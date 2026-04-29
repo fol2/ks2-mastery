@@ -54,6 +54,7 @@ import {
   pruneRecentClaims,
 } from '../../shared/hero/progress-state.js';
 import { buildClaimRecord } from '../../shared/hero/claim-contract.js';
+import { canAwardDailyCompletionCoins, applyDailyCompletionCoinAward, HERO_DAILY_COMPLETION_COINS } from '../../shared/hero/economy.js';
 import { logRequestDenial } from './admin-denial-logger.js';
 import {
   DENIAL_RATE_LIMIT_EXCEEDED,
@@ -1429,6 +1430,11 @@ export function createWorkerApp({
 
           // P3 U6: claim-task command — full mutation with evidence, CAS, events.
           if (body?.command === 'claim-task') {
+            const economyEnabled = envFlagEnabled(env.HERO_MODE_ECONOMY_ENABLED);
+            // P4: Flag hierarchy: economy requires progress
+            if (economyEnabled && !envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+              return json({ ok: false, error: { code: 'hero_economy_misconfigured', message: 'Economy requires progress to be enabled' } }, 409);
+            }
             if (!envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
               try {
                 // eslint-disable-next-line no-console
@@ -1486,6 +1492,7 @@ export function createWorkerApp({
               practiceSessionRows,
               subjectUiStates,
               nowTs,
+              economyEnabled: envFlagEnabled(env.HERO_MODE_ECONOMY_ENABLED),
             });
 
             // Handle rejection
@@ -1506,6 +1513,7 @@ export function createWorkerApp({
 
             // Handle already-completed (safe duplicate)
             if (claimResult.status === 'already-completed') {
+              const dailyCoinsAlreadyAwarded = economyEnabled && Boolean(heroProgressState.daily?.economy?.dailyAwardLedgerEntryId);
               try {
                 // eslint-disable-next-line no-console
                 console.log(JSON.stringify({
@@ -1513,11 +1521,22 @@ export function createWorkerApp({
                   learnerId: heroLearnerId,
                   questId: body.questId || '',
                   taskId: body.taskId || '',
+                  ...(economyEnabled ? { hero_daily_coins_already_awarded: dailyCoinsAlreadyAwarded } : {}),
                 }));
               } catch { /* best-effort */ }
               return json({
                 ok: true,
-                heroClaim: { version: 1, status: 'already-completed', learnerId: heroLearnerId, taskId: claimResult.taskId, questId: claimResult.questId },
+                heroClaim: {
+                  version: 1,
+                  status: 'already-completed',
+                  learnerId: heroLearnerId,
+                  taskId: claimResult.taskId,
+                  questId: claimResult.questId,
+                  coinsEnabled: economyEnabled,
+                  coinsAwarded: 0,
+                  coinBalance: economyEnabled ? (heroProgressState.economy?.balance || 0) : 0,
+                  dailyCoinsAlreadyAwarded,
+                },
               });
             }
 
@@ -1551,7 +1570,23 @@ export function createWorkerApp({
               });
               updatedState = { ...updatedState, recentClaims: [...(updatedState.recentClaims || []), claimRecord] };
 
-              return { state: updatedState, claimResult };
+              // P4: Check if daily just completed and award coins
+              let economyResult = { awarded: false, alreadyAwarded: false, amount: 0, ledgerEntryId: null, balanceAfter: 0, blockedReason: null };
+              if (economyEnabled) {
+                const { canAward, reason } = canAwardDailyCompletionCoins(updatedState, economyEnabled);
+                if (canAward) {
+                  economyResult = applyDailyCompletionCoinAward(updatedState, {
+                    learnerId: heroLearnerId,
+                    nowTs,
+                    dailyCompletionCoins: HERO_DAILY_COMPLETION_COINS,
+                  });
+                  updatedState = economyResult.state;
+                } else {
+                  economyResult.blockedReason = reason;
+                }
+              }
+
+              return { state: updatedState, claimResult, economyResult };
             });
 
             // Build event_log entries (fire-and-forget, non-fatal)
@@ -1597,7 +1632,70 @@ export function createWorkerApp({
               console.error('[hero] claim event_log write failed:', err.message);
             }
 
-            // Build response
+            // P4: Economy event_log entry (fire-and-forget, non-fatal)
+            if (mutationResult.economyResult?.awarded) {
+              const ledgerEntryId = mutationResult.economyResult.ledgerEntryId;
+              try {
+                await run(db, `
+                  INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                  ON CONFLICT(id) DO NOTHING
+                `, [
+                  `hero-evt-${ledgerEntryId}`,
+                  heroLearnerId,
+                  null,
+                  'hero-mode',
+                  'hero.coins.awarded',
+                  JSON.stringify({ questId: body.questId, dateKey: heroProgressState.daily?.dateKey, amount: mutationResult.economyResult.amount, ledgerEntryId, balanceAfter: mutationResult.economyResult.balanceAfter }),
+                  nowTs,
+                  session.accountId,
+                ]);
+              } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('[hero] coins event_log write failed:', err.message);
+              }
+            }
+
+            // Build response — structured logs for economy
+            try {
+              if (mutationResult.economyResult?.awarded) {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_daily_coins_awarded',
+                  learnerId: heroLearnerId,
+                  questId: body.questId || '',
+                  amount: mutationResult.economyResult.amount,
+                  balanceAfter: mutationResult.economyResult.balanceAfter,
+                  ledgerEntryId: mutationResult.economyResult.ledgerEntryId,
+                }));
+              } else if (mutationResult.economyResult?.alreadyAwarded) {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_daily_coins_duplicate_prevented',
+                  learnerId: heroLearnerId,
+                  questId: body.questId || '',
+                  taskId: body.taskId || '',
+                  ledgerEntryId: mutationResult.economyResult.ledgerEntryId || '',
+                }));
+              } else if (!economyEnabled) {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_daily_coins_disabled',
+                  learnerId: heroLearnerId,
+                  questId: body.questId || '',
+                  taskId: body.taskId || '',
+                }));
+              } else if (economyEnabled && mutationResult.economyResult?.blockedReason) {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_daily_coins_blocked',
+                  learnerId: heroLearnerId,
+                  questId: body.questId || '',
+                  taskId: body.taskId || '',
+                  reason: mutationResult.economyResult.blockedReason,
+                }));
+              }
+            } catch { /* best-effort */ }
             try {
               // eslint-disable-next-line no-console
               console.log(JSON.stringify({
@@ -1626,7 +1724,10 @@ export function createWorkerApp({
                 effortCompleted: updatedDaily?.effortCompleted || 0,
                 effortPlanned: updatedDaily?.effortPlanned || 0,
                 dailyStatus: updatedDaily?.status || 'active',
-                coinsEnabled: false,
+                coinsEnabled: economyEnabled,
+                coinsAwarded: mutationResult.economyResult?.amount || 0,
+                coinBalance: mutationResult.economyResult?.balanceAfter || (mutationResult.state?.economy?.balance || 0),
+                dailyCoinsAlreadyAwarded: mutationResult.economyResult?.alreadyAwarded || false,
                 heroStatePersistenceEnabled: true,
               },
               mutation: mutationResult.mutation || null,

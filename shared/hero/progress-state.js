@@ -1,4 +1,6 @@
-export const HERO_PROGRESS_VERSION = 1;
+import { emptyEconomyState, normaliseHeroEconomyState } from './economy.js';
+
+export const HERO_PROGRESS_VERSION = 2;
 export const MAX_RECENT_CLAIMS_AGE_DAYS = 7;
 
 function emptyDailyState() {
@@ -10,17 +12,34 @@ export function emptyProgressState() {
     version: HERO_PROGRESS_VERSION,
     daily: null,
     recentClaims: [],
+    economy: emptyEconomyState(),
   };
 }
 
 export function normaliseHeroProgressState(raw) {
   if (!raw || typeof raw !== 'object') return emptyProgressState();
-  if (raw.version !== HERO_PROGRESS_VERSION) return emptyProgressState();
-  return {
-    version: HERO_PROGRESS_VERSION,
-    daily: normaliseDailyState(raw.daily),
-    recentClaims: Array.isArray(raw.recentClaims) ? raw.recentClaims : [],
-  };
+
+  if (raw.version === 1) {
+    // v1 → v2 upgrade: preserve daily + recentClaims, add empty economy
+    return {
+      version: HERO_PROGRESS_VERSION,
+      daily: normaliseDailyState(raw.daily),
+      recentClaims: Array.isArray(raw.recentClaims) ? raw.recentClaims : [],
+      economy: emptyEconomyState(),
+    };
+  }
+
+  if (raw.version === HERO_PROGRESS_VERSION) {
+    return {
+      version: HERO_PROGRESS_VERSION,
+      daily: normaliseDailyState(raw.daily),
+      recentClaims: Array.isArray(raw.recentClaims) ? raw.recentClaims : [],
+      economy: normaliseHeroEconomyState(raw.economy),
+    };
+  }
+
+  // Unknown or missing version — return empty v2 state
+  return emptyProgressState();
 }
 
 function normaliseDailyState(daily) {
@@ -44,6 +63,8 @@ function normaliseDailyState(daily) {
     firstStartedAt: daily.firstStartedAt || null,
     completedAt: daily.completedAt || null,
     lastUpdatedAt: daily.lastUpdatedAt || Date.now(),
+    // P4: Economy sub-block preserved from applyDailyCompletionCoinAward
+    economy: daily.economy && typeof daily.economy === 'object' ? daily.economy : null,
   };
 }
 

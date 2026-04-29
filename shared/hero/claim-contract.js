@@ -1,4 +1,4 @@
-export const FORBIDDEN_CLAIM_FIELDS = ['subjectId', 'payload', 'coins', 'reward', 'balance', 'monster', 'shop'];
+export const FORBIDDEN_CLAIM_FIELDS = ['subjectId', 'payload', 'coins', 'reward', 'balance', 'monster', 'shop', 'economy', 'amount'];
 
 export const REQUIRED_CLAIM_FIELDS = ['command', 'learnerId', 'questId', 'questFingerprint', 'taskId', 'requestId', 'expectedLearnerRevision'];
 

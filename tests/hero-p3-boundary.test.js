@@ -18,7 +18,13 @@ import { fileURLToPath } from 'node:url';
 
 import { createApiPlatformRepositories } from '../src/platform/core/repositories/index.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
-import { HERO_FORBIDDEN_VOCABULARY, HERO_PROGRESS_COPY } from '../shared/hero/hero-copy.js';
+import {
+  HERO_FORBIDDEN_VOCABULARY,
+  HERO_FORBIDDEN_PRESSURE_VOCABULARY,
+  HERO_ECONOMY_ALLOWED_VOCABULARY,
+  HERO_ECONOMY_ALLOWED_FILES,
+  HERO_PROGRESS_COPY,
+} from '../shared/hero/hero-copy.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
