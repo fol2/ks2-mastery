@@ -12,6 +12,7 @@ import {
   copyToClipboard,
 } from '../../platform/hubs/admin-safe-copy.js';
 import { consumeIncidentStash } from '../../platform/hubs/admin-incident-flow.js';
+import { formatIncidentStatus } from '../../platform/hubs/admin-incident-panel.js';
 
 // U8 (P4): Debug Bundle panel — extracted from AdminDebuggingSection.jsx.
 // Contains DebugBundlePanel + DebugBundleSectionTable + DebugBundleResult.
@@ -155,6 +156,32 @@ function DebugBundleResult({ bundleData }) {
         );
       })}
     </div>
+  );
+}
+
+function LinkedIncidentsSection({ linkedIncidents }) {
+  if (!Array.isArray(linkedIncidents) || linkedIncidents.length === 0) return null;
+  return (
+    <details className="admin-bundle-section-details" data-testid="bundle-linked-incidents">
+      <summary className="small admin-bundle-section-summary">
+        Linked Incidents ({linkedIncidents.length})
+      </summary>
+      <div className="admin-bundle-section-body">
+        {linkedIncidents.map((inc) => {
+          const display = formatIncidentStatus(inc.status);
+          return (
+            <div className="skill-row" key={inc.id} data-testid="bundle-linked-incident-row">
+              <div style={{ flex: 1 }}>
+                <strong style={{ fontSize: '0.85rem' }}>{inc.title || '(untitled)'}</strong>
+              </div>
+              <span className="chip" style={{ backgroundColor: display.colour, color: '#fff', fontSize: '0.7rem' }}>
+                {display.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </details>
   );
 }
 
@@ -318,6 +345,11 @@ export function DebugBundlePanel({ model, actions }) {
       ) : null}
 
       <DebugBundleResult bundleData={bundleData} />
+
+      {/* Admin-only extension: linked incidents (does not break 7-section contract) */}
+      {model?.permissions?.platformRole === 'admin' && bundleData?.linkedIncidents ? (
+        <LinkedIncidentsSection linkedIncidents={bundleData.linkedIncidents} />
+      ) : null}
     </section>
   );
 }

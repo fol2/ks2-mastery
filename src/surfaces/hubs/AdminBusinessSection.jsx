@@ -1,5 +1,6 @@
 import React from 'react';
 import { AdminPanelFrame } from './AdminPanelFrame.jsx';
+import { AdminIncidentPanel } from './AdminIncidentPanel.jsx';
 import { buildBusinessKpiModel } from '../../platform/hubs/admin-business-kpi.js';
 
 // P7 Unit 5: Business section — KPI analytics panel with real/demo split,
@@ -97,14 +98,8 @@ export function AdminBusinessSection({ actions }) {
         ))}
       </AdminPanelFrame>
 
-      {/* U7 placeholder: Support Incidents panel will be composed here */}
-      <section className="card admin-card-spaced" data-panel-frame="Support Incidents">
-        <div style={{ padding: 16 }}>
-          <div className="eyebrow">Support</div>
-          <h3 style={{ margin: '4px 0 8px', fontSize: '1rem' }}>Incidents</h3>
-          <p className="small muted">Support incident tracking will be added in a future unit.</p>
-        </div>
-      </section>
+      {/* U7: Support Incidents panel */}
+      <AdminIncidentPanel actions={actions} />
     </>
   );
 }
