@@ -1,53 +1,44 @@
 import React from 'react';
+import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
+import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.js';
+import { heroBgStyle } from '../../../platform/ui/hero-bg.js';
+import { SetupMorePractice } from '../../../platform/ui/SetupMorePractice.jsx';
 import {
-  GRAMMAR_REGION_IMAGE,
-  GRAMMAR_REGION_IMAGE_SMALL,
+  heroBgForGrammarSetup,
+  heroContrastProfileForGrammarBg,
+  heroToneForGrammarBg,
+} from './grammar-hero-bg.js';
+import {
   grammarMonsterAsset,
 } from '../metadata.js';
-import { normaliseGrammarSpeechRate } from '../speech.js';
 import {
   GRAMMAR_DASHBOARD_HERO,
   GRAMMAR_MORE_PRACTICE_MODES,
   GRAMMAR_PRIMARY_MODE_CARDS,
-  GRAMMAR_SECONDARY_MODE_LINKS,
   GRAMMAR_MONSTER_STRIP_CHILD_COPY,
   buildGrammarDashboardModel,
 } from './grammar-view-model.js';
-// SH2-U5: fresh-learner `dashboard.isEmpty` branch surfaces the canonical
-// three-part copy through the shared primitive. The pre-U5 bespoke
-// `.grammar-today-empty` div kept a single sentence and no reassurance —
-// the primitive also preserves the existing `data-testid` so the
-// grammar-phase3-child-copy test continues to find the anchor.
 import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 
-// Phase 5 U7+U8: Child-facing Grammar dashboard. Every label, mode id,
-// and card comes from the view-model (`grammar-view-model.js`). The JSX
-// layer is a layout-only component — we do not restate copy, filter ids,
-// or mode ids inline. Hero copy is driven by `GRAMMAR_DASHBOARD_HERO` so
-// James can swap the wording in one place after review.
-//
-// Layout (top → bottom):
-//   - Hero (headline + subheadline)
-//   - Monster strip (active creatures with Star progress bars)
-//   - Primary CTA (Start Smart Practice button)
-//   - Today cards (Due / Trouble spots / Secure / Streak)
-//   - Secondary links (Grammar Bank, Mini Test, Fix Trouble Spots)
-//   - More practice <details> disclosure (Learn, Surgery, Builder,
-//     Worked, Faded, Writing Try). Closed by default.
-//   - Quiet round-length + speech-rate controls.
-//
-// Everything the old adult-diagnostic surface said (`Worker-marked modes`,
-// `Worker marked` chip, `full map`, `Full placeholder map`, `All 18
-// Grammar concepts` grid) is removed. U10's fixture-driven absence test
-// covers regressions.
+/* Aligned Grammar setup scene.
+ *
+ * The previous layout collapsed hero copy + mode cards + controls into
+ * a bespoke `.grammar-primary-modes` panel with a static `<picture>`
+ * backdrop. The aligned design uses the same `.setup-grid` /
+ * `.setup-main` / `.setup-content` rhythm Spelling does, paints the
+ * region artwork via the shared `HeroBackdrop` (cross-fade + slow pan),
+ * and reads contrast tokens from the platform `useSetupHeroContrast`
+ * hook so text colour adapts to whatever artwork is on screen.
+ *
+ * Outer landmark + every existing `data-*` and `.grammar-*` test hook
+ * is preserved (`data-grammar-phase-root="dashboard"`,
+ * `.grammar-primary-mode`, `[data-action="grammar-set-mode"]`, etc).
+ *
+ * Round length is now a slide-button picker (`.length-picker`) instead
+ * of a `<select>`, mirroring Spelling's tweak-row pattern. */
 
-const SPEECH_RATE_OPTIONS = Object.freeze([
-  { value: 0.6, label: '0.6x slow' },
-  { value: 0.8, label: '0.8x steady' },
-  { value: 1, label: '1x normal' },
-  { value: 1.2, label: '1.2x quicker' },
-  { value: 1.4, label: '1.4x fast' },
-]);
+const NORMAL_ROUND_OPTIONS = ['3', '5', '8', '10', '15'];
+const MINI_TEST_ROUND_OPTIONS = ['8', '12'];
 
 function TodayCard({ card }) {
   return (
@@ -59,7 +50,6 @@ function TodayCard({ card }) {
   );
 }
 
-// U7 Phase 5: Monster strip entry — one per active Grammar monster.
 function MonsterStripEntry({ entry }) {
   const pct = entry.starMax > 0 ? Math.round((entry.stars / entry.starMax) * 100) : 0;
   const displayState = entry.displayState || 'not-found';
@@ -86,12 +76,22 @@ function MonsterStripEntry({ entry }) {
   );
 }
 
-function PrimaryModeCard({ card, selected, disabled, actions }) {
+function PrimaryModeCard({ card, selected, disabled, actions, textTone = 'dark' }) {
   const featured = card.featured === true;
-  const classes = ['grammar-primary-mode'];
-  if (selected) classes.push('selected');
+  // The card carries `.grammar-primary-mode` (the existing test hook +
+  // brand variant) AND `.mode-card` (the shared visual identity that
+  // Spelling tunes). Keep `grammar-primary-mode` FIRST in the class
+  // string so existing tests pinning `class="grammar-primary-mode..."`
+  // still match exactly. Both classes apply regardless of order at the
+  // CSS layer.
+  const classes = ['grammar-primary-mode', 'mode-card'];
+  if (selected && !disabled) classes.push('selected');
   if (disabled) classes.push('is-disabled');
   if (featured) classes.push('is-recommended');
+  const disabledEmpty = disabled && card.disabledWhenNoTrouble === true;
+  const showBadge = featured ? card.badge || 'RECOMMENDED' : null;
+  const badgeIsPlaceholder = !showBadge && disabledEmpty;
+  const description = disabledEmpty && card.disabledCopy ? card.disabledCopy : card.desc;
   return (
     <button
       type="button"
@@ -99,16 +99,28 @@ function PrimaryModeCard({ card, selected, disabled, actions }) {
       data-mode-id={card.id}
       data-action="grammar-set-mode"
       data-featured={featured ? 'true' : 'false'}
-      aria-pressed={selected ? 'true' : 'false'}
+      data-text-tone={textTone}
+      aria-pressed={selected && !disabled ? 'true' : 'false'}
       disabled={disabled}
       onClick={() => {
         if (disabled) return;
         actions.dispatch('grammar-set-mode', { value: card.id });
       }}
     >
-      {featured ? <span className="grammar-primary-mode-eyebrow">Recommended</span> : null}
+      <div className="mc-top">
+        <span className="mc-icon mc-icon-glyph" aria-hidden="true">
+          <span className="mc-glyph">{card.title.charAt(0)}</span>
+        </span>
+        {showBadge ? (
+          <span className={`mc-badge${featured ? ' recommended' : ''}`}>{showBadge}</span>
+        ) : badgeIsPlaceholder ? (
+          <span className="mc-badge is-placeholder">NONE YET</span>
+        ) : (
+          <span className="mc-badge-spacer" aria-hidden="true" />
+        )}
+      </div>
       <h4 className="grammar-primary-mode-title">{card.title}</h4>
-      <p className="grammar-primary-mode-desc">{card.desc}</p>
+      <p className="grammar-primary-mode-desc">{description}</p>
     </button>
   );
 }
@@ -117,15 +129,7 @@ function MoreModeCard({ card, selected, disabled, actions }) {
   const classes = ['grammar-secondary-mode'];
   if (selected) classes.push('selected');
   if (disabled) classes.push('is-disabled');
-  // U5 Phase 4: Surgery and Builder cards carry a "Mixed practice" label
-  // from `GRAMMAR_MORE_PRACTICE_MODES` so the dashboard surfaces the
-  // child-facing truth that these modes do not honour a focused concept
-  // id. Label renders under the mode title with `data-mode-label` so
-  // tests and QA can scope by the mode id. The label is decorative and
-  // does not change mode behaviour.
   const label = typeof card.label === 'string' && card.label ? card.label : '';
-  // U8 Phase 5: Writing Try (id: 'transfer') dispatches 'grammar-open-transfer'
-  // instead of 'grammar-set-mode' since it routes to the transfer scene.
   const isTransfer = card.id === 'transfer';
   const action = isTransfer ? 'grammar-open-transfer' : 'grammar-set-mode';
   return (
@@ -154,14 +158,55 @@ function MoreModeCard({ card, selected, disabled, actions }) {
   );
 }
 
+/* Slide-button round-length picker — same DOM rhythm as Spelling's
+ * `LengthPicker`, dynamic option list per mode (mini-test gives a
+ * shorter palette). The active index drives the `--selected-index`
+ * CSS variable; the slider transform is animated by the existing
+ * `.length-slider { transition: transform 260ms }` rule in app.css. */
+function RoundLengthPicker({ options, selectedValue, onChange, disabled, ariaLabel }) {
+  const selectedIndex = Math.max(0, options.indexOf(String(selectedValue)));
+  return (
+    <div className="length-control">
+      <div
+        className="length-picker"
+        role="radiogroup"
+        aria-label={ariaLabel}
+        style={{
+          '--option-count': String(options.length),
+          '--selected-index': String(selectedIndex),
+        }}
+      >
+        <span className="length-slider" aria-hidden="true" />
+        {options.map((value) => {
+          const selected = String(selectedValue) === value;
+          return (
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selected ? 'true' : 'false'}
+              className={`length-option${selected ? ' selected' : ''}`}
+              data-action="grammar-set-round-length"
+              data-pref="roundLength"
+              value={value}
+              disabled={disabled}
+              key={value}
+              onClick={() => onChange(value)}
+            >
+              <span>{value}</span>
+            </button>
+          );
+        })}
+      </div>
+      <span className="length-unit">questions</span>
+    </div>
+  );
+}
+
 export function GrammarSetupScene({ learner, grammar, rewardState, actions, runtimeReadOnly }) {
-  // U6 Phase 6: build concept nodes map + recent attempts from the grammar
-  // read-model, then thread them into the dashboard model so that
-  // dashboard.monsterStrip reflects live evidence derivation rather than
-  // only the persisted starHighWater latch.
+  // U6 Phase 6: build concept nodes map + recent attempts so the dashboard
+  // model reflects live evidence, not just persisted star high-water.
   const conceptNodesMap = {};
-  const analyticsConcepts = Array.isArray(grammar?.analytics?.concepts)
-    ? grammar.analytics.concepts : [];
+  const analyticsConcepts = Array.isArray(grammar?.analytics?.concepts) ? grammar.analytics.concepts : [];
   for (const c of analyticsConcepts) {
     if (c && typeof c === 'object' && typeof c.id === 'string') {
       conceptNodesMap[c.id] = c;
@@ -173,12 +218,39 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
   const selectedMode = dashboard.primaryMode;
   const miniTestMode = selectedMode === 'satsset';
   const setupDisabled = runtimeReadOnly || Boolean(grammar.pendingCommand);
-  const lengthOptions = miniTestMode ? [8, 12] : [3, 5, 8, 10, 15];
+
+  const lengthOptions = miniTestMode ? MINI_TEST_ROUND_OPTIONS : NORMAL_ROUND_OPTIONS;
+  const rawLength = Number(grammar.prefs?.roundLength);
   const selectedLength = miniTestMode
-    ? (Number(grammar.prefs?.roundLength) >= 10 ? 12 : 8)
-    : (Number(grammar.prefs?.roundLength) || 5);
-  const selectedSpeechRate = normaliseGrammarSpeechRate(grammar.prefs?.speechRate);
+    ? (rawLength >= 10 ? '12' : '8')
+    : (Number.isFinite(rawLength) && rawLength > 0 ? String(rawLength) : '5');
   const { title: heroTitle, subtitle: heroSubtitle } = GRAMMAR_DASHBOARD_HERO;
+
+  const troubleCard = (dashboard.todayCards || []).find((card) => card.id === 'trouble');
+  const troubleCount = Number(troubleCard?.value || 0);
+
+  const selectedModeCard = GRAMMAR_PRIMARY_MODE_CARDS.find((card) => card.id === selectedMode);
+  const selectedModeStartLabel = selectedMode === 'trouble'
+    ? 'Fix Trouble Spots'
+    : selectedMode === 'satsset'
+      ? 'Start Mini Test'
+      : `Start ${selectedModeCard?.title || 'Smart Practice'}`;
+
+  // Hero backdrop URL + contrast probe. The hook reads the curated
+  // per-tone profile when one is available and falls back to a runtime
+  // luminance probe when the active artwork is outside the table.
+  const heroBg = heroBgForGrammarSetup(learner?.id || '', { mode: selectedMode });
+  const mergedHeroStyle = { ...heroBgStyle(heroBg) };
+  const heroContrast = useSetupHeroContrast(heroBg, selectedMode, {
+    staticContrastForBg: heroContrastProfileForGrammarBg,
+    cardSelector: '.grammar-primary-mode',
+    controlSelectors: ['.tool-label', '.length-unit'],
+  });
+  const heroTone = heroContrast.contrast.tone || heroToneForGrammarBg(heroBg);
+  const setupClasses = ['setup-main', 'grammar-setup-main'];
+  if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
+
+  const openConceptBank = () => actions.dispatch('grammar-open-concept-bank');
 
   return (
     <section
@@ -186,143 +258,148 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
       aria-labelledby="grammar-dashboard-title"
       data-grammar-phase-root="dashboard"
     >
-      {/* Hero section */}
-      <div
-        className="grammar-hero"
-        style={{ '--grammar-hero-bg': `url(${GRAMMAR_REGION_IMAGE})` }}
-      >
-        <picture aria-hidden="true">
-          <source media="(max-width: 720px)" srcSet={GRAMMAR_REGION_IMAGE_SMALL} />
-          <img src={GRAMMAR_REGION_IMAGE} alt="" />
-        </picture>
-        <div className="grammar-hero-copy">
-          <h2 id="grammar-dashboard-title" className="grammar-hero-title">{heroTitle}</h2>
-          <p className="grammar-hero-subtitle">{heroSubtitle}</p>
-          {learner?.name ? (
-            <p className="grammar-hero-welcome">Hi {learner.name} — ready for a short round?</p>
-          ) : null}
-        </div>
-      </div>
+      <div className="setup-grid">
+        <section
+          className={setupClasses.join(' ')}
+          data-react-hero-contrast="true"
+          data-hero-tone={heroTone || undefined}
+          data-controls-tone={heroContrast.contrast.controls}
+          ref={heroContrast.ref}
+          style={mergedHeroStyle}
+          aria-label="Start practising"
+        >
+          <HeroBackdrop url={heroBg} />
+          <div className="setup-content">
+            <p className="eyebrow">Grammar · today</p>
+            <h1 id="grammar-dashboard-title" className="title grammar-hero-title">{heroTitle}</h1>
+            <p className="lede grammar-hero-subtitle">{heroSubtitle}</p>
+            {learner?.name ? (
+              <p className="grammar-hero-welcome">Hi {learner.name} — ready for a short round?</p>
+            ) : null}
 
-      {/* U7: Monster strip — 4 active monsters with Star progress */}
-      <section className="grammar-monster-strip" aria-label="Your Grammar creatures">
-        {dashboard.monsterStrip.map((entry) => (
-          <MonsterStripEntry entry={entry} key={entry.monsterId} />
-        ))}
-        <p className="grammar-monster-strip-hint">{GRAMMAR_MONSTER_STRIP_CHILD_COPY}</p>
-      </section>
+            <div className="mode-row grammar-mode-row">
+              {GRAMMAR_PRIMARY_MODE_CARDS.map((card, index) => {
+                const cardDisabled = setupDisabled
+                  || (card.disabledWhenNoTrouble === true && troubleCount === 0);
+                return (
+                  <PrimaryModeCard
+                    card={card}
+                    selected={card.id === selectedMode}
+                    disabled={cardDisabled}
+                    actions={actions}
+                    textTone={heroContrast.contrast.cards[index] || heroContrast.contrast.shell}
+                    key={card.id}
+                  />
+                );
+              })}
+            </div>
 
-      {/* U8: Primary CTA — Smart Practice only */}
-      <section className="grammar-primary-modes" aria-label="Start practising">
-        <div className="grammar-primary-grid">
-          {GRAMMAR_PRIMARY_MODE_CARDS.map((card) => (
-            <PrimaryModeCard
-              card={card}
-              selected={card.id === selectedMode}
-              disabled={setupDisabled}
-              actions={actions}
-              key={card.id}
-            />
-          ))}
-        </div>
+            <div className="setup-control-stack">
+              <div className="tweak-row">
+                <span className="tool-label">{miniTestMode ? 'Mini-set size' : 'Round length'}</span>
+                <RoundLengthPicker
+                  options={lengthOptions}
+                  selectedValue={selectedLength}
+                  onChange={(value) => actions.dispatch('grammar-set-round-length', { value })}
+                  disabled={setupDisabled}
+                  ariaLabel={miniTestMode ? 'Mini-set size' : 'Round length'}
+                />
+              </div>
+            </div>
 
-        <div className="grammar-round-controls">
-          <label className="field">
-            <span>{miniTestMode ? 'Mini-set size' : 'Round length'}</span>
-            <select
-              className="input"
-              value={String(selectedLength)}
-              disabled={setupDisabled}
-              onChange={(event) => actions.dispatch('grammar-set-round-length', { value: event.currentTarget.value })}
-            >
-              {lengthOptions.map((length) => <option value={length} key={length}>{length}</option>)}
-            </select>
-          </label>
-          <label className="field">
-            <span>Speech rate</span>
-            <select
-              className="input"
-              value={String(selectedSpeechRate)}
-              disabled={setupDisabled}
-              onChange={(event) => actions.dispatch('grammar-set-speech-rate', { value: event.currentTarget.value })}
-            >
-              {SPEECH_RATE_OPTIONS.map((option) => (
-                <option value={option.value} key={option.value}>{option.label}</option>
+            {grammar.error ? (
+              <div className="feedback bad" role="alert">
+                <strong>Grammar is unavailable right now</strong>
+                <div>{grammar.error}</div>
+              </div>
+            ) : null}
+
+            <div className="setup-begin-row grammar-start-row">
+              <button
+                className="btn primary xl"
+                type="button"
+                data-featured="true"
+                disabled={setupDisabled}
+                onClick={() => actions.dispatch('grammar-start')}
+              >
+                {grammar.pendingCommand === 'start-session'
+                  ? 'Starting...'
+                  : selectedModeStartLabel}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <aside className="setup-side grammar-setup-sidebar" aria-label="Where you stand">
+          <div className="ss-card grammar-setup-sidebar-card">
+            <header className="ss-head grammar-setup-sidebar-head">
+              <p className="eyebrow">Where you stand</p>
+              <button
+                type="button"
+                className="ss-codex-link grammar-setup-sidebar-codex-link"
+                data-action="grammar-open-concept-bank"
+                aria-label="Open the Grammar Bank"
+                onClick={openConceptBank}
+                disabled={setupDisabled}
+              >
+                Open bank →
+              </button>
+            </header>
+
+            <section className="grammar-monster-strip" aria-label="Your Grammar creatures">
+              {dashboard.monsterStrip.map((entry) => (
+                <MonsterStripEntry entry={entry} key={entry.monsterId} />
               ))}
-            </select>
-          </label>
-        </div>
+              <p className="grammar-monster-strip-hint">{GRAMMAR_MONSTER_STRIP_CHILD_COPY}</p>
+            </section>
 
-        {grammar.error ? (
-          <div className="feedback bad" role="alert">
-            <strong>Grammar is unavailable right now</strong>
-            <div>{grammar.error}</div>
+            <section className="grammar-today" aria-label="Today at a glance">
+              {dashboard.isEmpty ? (
+                <div className="grammar-today-empty" data-testid="grammar-today-empty">
+                  <EmptyState
+                    title="No rounds yet"
+                    body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
+                  />
+                </div>
+              ) : (
+                <div className="grammar-today-grid">
+                  {dashboard.todayCards.map((card) => (
+                    <TodayCard card={card} key={card.id} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <button
+              type="button"
+              className="ss-bank-link grammar-setup-sidebar-bank-link"
+              data-action="grammar-open-concept-bank"
+              onClick={openConceptBank}
+              disabled={setupDisabled}
+            >
+              <span className="ss-bank-link-body grammar-setup-sidebar-bank-link-body">
+                <span className="ss-bank-link-head grammar-setup-sidebar-bank-link-head">Browse the Grammar Bank</span>
+                <span className="ss-bank-link-sub grammar-setup-sidebar-bank-link-sub">Every concept, with progress and accuracy.</span>
+              </span>
+              <span className="ss-bank-link-arrow grammar-setup-sidebar-bank-link-arrow" aria-hidden="true">→</span>
+            </button>
           </div>
-        ) : null}
+        </aside>
 
-        <div className="grammar-start-row">
-          <button
-            className="btn primary xl"
-            type="button"
-            data-featured="true"
-            disabled={setupDisabled}
-            onClick={() => actions.dispatch('grammar-start')}
-          >
-            {grammar.pendingCommand === 'start-session' ? 'Starting...' : 'Start Smart Practice'}
-          </button>
-        </div>
-      </section>
-
-      {/* U8: Today cards — repositioned below primary CTA, above secondary links */}
-      <section className="grammar-today" aria-label="Today at a glance">
-        {dashboard.isEmpty ? (
-          <div className="grammar-today-empty" data-testid="grammar-today-empty">
-            <EmptyState
-              title="No rounds yet"
-              body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
-            />
-          </div>
-        ) : (
-          <div className="grammar-today-grid">
-            {dashboard.todayCards.map((card) => (
-              <TodayCard card={card} key={card.id} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* U8: Secondary links — Grammar Bank, Mini Test, Fix Trouble Spots */}
-      <nav className="grammar-secondary-links" aria-label="Other practice modes">
-        {GRAMMAR_SECONDARY_MODE_LINKS.map((link) => (
-          <button
-            type="button"
-            className={`grammar-secondary-link${selectedMode === link.id ? ' selected' : ''}`}
-            aria-pressed={selectedMode === link.id ? 'true' : 'false'}
-            key={link.id}
-            data-mode-id={link.id}
-            data-action={link.action}
-            disabled={setupDisabled}
-            onClick={() => {
-              if (setupDisabled) return;
-              if (link.action === 'grammar-open-concept-bank') {
-                actions.dispatch('grammar-open-concept-bank');
-              } else {
-                actions.dispatch('grammar-set-mode', { value: link.id });
-              }
-            }}
-          >
-            {link.title}
-          </button>
-        ))}
-      </nav>
-
-      {/* U8: More practice disclosure — Learn, Surgery, Builder, Worked, Faded, Writing Try */}
-      <details className="grammar-more-practice">
-        <summary>More practice</summary>
-        <div className="grammar-more-practice-grid">
-          {GRAMMAR_MORE_PRACTICE_MODES.filter(
-            (m) => m.id !== 'transfer' || dashboard.writingTryAvailable
-          ).map((card) => (
+        {/* "More practice" disclosure — optional, decision-light tail of
+         * secondary modes (Learn / Surgery / Builder / Worked / Faded /
+         * Writing Try). Lives INSIDE `.setup-grid` at row 2 column 1
+         * so its width matches `.setup-main` exactly. The disclosure is
+         * still detached from the panel itself (own div, opt-in
+         * `<details>`) so the primary panel keeps the single CTA. */}
+        <SetupMorePractice
+          summary="More practice"
+          disclosureClassName="setup-more-practice grammar-more-practice"
+          gridClassName="setup-more-practice-grid grammar-more-practice-grid"
+          cards={GRAMMAR_MORE_PRACTICE_MODES.filter(
+            (m) => m.id !== 'transfer' || dashboard.writingTryAvailable,
+          )}
+          renderCard={(card) => (
             <MoreModeCard
               card={card}
               selected={card.id === selectedMode}
@@ -330,9 +407,9 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
               actions={actions}
               key={card.id}
             />
-          ))}
-        </div>
-      </details>
+          )}
+        />
+      </div>
     </section>
   );
 }

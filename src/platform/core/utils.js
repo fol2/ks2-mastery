@@ -1,3 +1,19 @@
+/* Tiny deterministic hash over a string. Used as a stable, framework-free
+ * way to pick a "random-looking" but learner-stable index from a known
+ * pool — e.g. which hero tone or region to assign per learner. The hash
+ * is intentionally simple and JavaScript-bitwise so the same input
+ * yields the same output across browsers, the SSR harness, and the
+ * Worker runtime. */
+export function stableHash(value) {
+  const text = String(value || '');
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash << 5) - hash + text.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
 export function uid(prefix = 'id') {
   const random = Math.random().toString(36).slice(2, 10);
   return `${prefix}-${Date.now().toString(36)}-${random}`;

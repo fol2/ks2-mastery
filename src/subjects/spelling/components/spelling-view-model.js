@@ -1,12 +1,16 @@
 import { monsterSummaryFromSpellingAnalytics } from '../../../platform/game/monster-system.js';
 import { resolveMonsterVisual } from '../../../platform/game/monster-visual-config.js';
 import { monsterVisualFrameStyle } from '../../../platform/game/monster-visual-style.js';
-import { formatElapsedMinutes } from '../../../platform/core/utils.js';
+import { formatElapsedMinutes, stableHash as platformStableHash } from '../../../platform/core/utils.js';
+import {
+  HERO_PAN_SECONDS,
+  heroBgStyle as platformHeroBgStyle,
+  heroPanDelayStyle as platformHeroPanDelayStyle,
+} from '../../../platform/ui/hero-bg.js';
 import { createLockedPostMasteryState, isGuardianEligibleSlug } from '../service-contract.js';
 
 export const SPELLING_ACCENT = '#3E6FA8';
 export const DAY_MS = 24 * 60 * 60 * 1000;
-const HERO_PAN_SECONDS = 96;
 export const MODE_CARDS = Object.freeze([
   {
     id: 'smart',
@@ -214,15 +218,7 @@ export function accentFor(subject) {
   return subject?.accent || SPELLING_ACCENT;
 }
 
-export function stableHash(value) {
-  const text = String(value || '');
-  let hash = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    hash = (hash << 5) - hash + text.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
+export const stableHash = platformStableHash;
 
 export function spellingHeroMode(mode) {
   if (mode === 'trouble') return 'trouble';
@@ -399,15 +395,13 @@ export function heroContrastProfileForBg(url, mode = 'smart') {
   };
 }
 
-export function heroBgStyle(url) {
-  return url ? { '--hero-bg': `url('${url}')` } : {};
-}
-
-export function heroPanDelayStyle() {
-  if (typeof performance === 'undefined') return {};
-  const elapsed = (performance.now() / 1000) % (HERO_PAN_SECONDS * 2);
-  return { '--hero-pan-delay': `-${elapsed.toFixed(3)}s` };
-}
+// Backwards-compat re-exports — callers in this module and Spelling
+// components still import `heroBgStyle` / `heroPanDelayStyle` from
+// `spelling-view-model.js`; routing through the platform helpers keeps
+// the behaviour identical while letting Grammar / Punctuation share the
+// same engine without dragging the spelling view-model along.
+export const heroBgStyle = platformHeroBgStyle;
+export const heroPanDelayStyle = platformHeroPanDelayStyle;
 
 export function beginLabel(prefs) {
   if (prefs.mode === 'test') return 'Begin SATs test';

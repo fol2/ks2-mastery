@@ -1,4 +1,5 @@
 import React from 'react';
+import { GrammarAnalyticsScene } from './GrammarAnalyticsScene.jsx';
 import { GrammarConceptDetailModal } from './GrammarConceptDetailModal.jsx';
 import {
   GRAMMAR_BANK_CLUSTER_CHIPS,
@@ -137,7 +138,14 @@ function ConceptCard({ card, onPractise, onOpenDetail }) {
   );
 }
 
-export function GrammarConceptBankScene({ grammar, actions }) {
+export function GrammarConceptBankScene({
+  grammar,
+  actions,
+  learner = null,
+  rewardState = null,
+  subject = null,
+  runtimeReadOnly = false,
+}) {
   const bankUi = grammar?.bank || {};
   const activeStatus = bankUi.statusFilter || 'all';
   const activeCluster = bankUi.clusterFilter || 'all';
@@ -209,63 +217,83 @@ export function GrammarConceptBankScene({ grammar, actions }) {
 
       <AggregateCards counts={bankModel.counts} total={bankModel.total} />
 
-      <div className="grammar-bank-toolbar">
-        <label className="grammar-bank-search">
-          <span className="grammar-bank-search-label">Search concepts</span>
-          <input
-            type="search"
-            name="grammarConceptBankSearch"
-            autoComplete="off"
-            placeholder="Search concepts"
-            value={draftQuery}
-            data-action="grammar-concept-bank-search"
-            aria-label="Search Grammar concepts"
-            onChange={(event) => setDraftQuery(event.currentTarget.value.slice(0, 80))}
-            onBlur={(event) => commitSearch(event.currentTarget.value)}
-            onKeyDown={(event) => {
-              if (event.key !== 'Enter') return;
-              event.preventDefault();
-              commitSearch(event.currentTarget.value);
-            }}
-          />
-        </label>
-        <div className="grammar-bank-filter-stack">
-          <StatusFilterChips
-            counts={bankModel.counts}
-            activeFilter={activeStatus}
-            onChange={handleStatusChange}
-          />
-          <ClusterFilterChips
-            counts={bankModel.clusterCounts}
-            activeFilter={activeCluster}
-            onChange={handleClusterChange}
-          />
-        </div>
-      </div>
-
-      <p className="grammar-bank-summary" role="status">{summaryText}</p>
-
-      <div className="grammar-bank-grid">
-        {bankModel.cards.length
-          ? bankModel.cards.map((card) => (
-            <ConceptCard
-              card={card}
-              onPractise={handlePractise}
-              onOpenDetail={handleOpenDetail}
-              key={card.id}
+      <div className="grammar-bank-card-wrap">
+        <div className="grammar-bank-toolbar">
+          <label className="grammar-bank-search">
+            <span className="grammar-bank-search-label">Search concepts</span>
+            <input
+              type="search"
+              name="grammarConceptBankSearch"
+              autoComplete="off"
+              placeholder="Search concepts"
+              value={draftQuery}
+              data-action="grammar-concept-bank-search"
+              aria-label="Search Grammar concepts"
+              onChange={(event) => setDraftQuery(event.currentTarget.value.slice(0, 80))}
+              onBlur={(event) => commitSearch(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                commitSearch(event.currentTarget.value);
+              }}
             />
-          ))
-          : (
-            <div className="grammar-bank-empty" role="status">
-              {draftQuery ? GRAMMAR_BANK_HERO.emptyWithSearch : GRAMMAR_BANK_HERO.empty}
-            </div>
-          )
-        }
+          </label>
+          <div className="grammar-bank-filter-stack">
+            <StatusFilterChips
+              counts={bankModel.counts}
+              activeFilter={activeStatus}
+              onChange={handleStatusChange}
+            />
+            <ClusterFilterChips
+              counts={bankModel.clusterCounts}
+              activeFilter={activeCluster}
+              onChange={handleClusterChange}
+            />
+          </div>
+        </div>
+
+        <p className="grammar-bank-summary" role="status">{summaryText}</p>
+
+        <div className="grammar-bank-grid">
+          {bankModel.cards.length
+            ? bankModel.cards.map((card) => (
+              <ConceptCard
+                card={card}
+                onPractise={handlePractise}
+                onOpenDetail={handleOpenDetail}
+                key={card.id}
+              />
+            ))
+            : (
+              <div className="grammar-bank-empty" role="status">
+                {draftQuery ? GRAMMAR_BANK_HERO.emptyWithSearch : GRAMMAR_BANK_HERO.empty}
+              </div>
+            )
+          }
+        </div>
       </div>
 
       {detailCard ? (
         <GrammarConceptDetailModal card={detailCard} actions={actions} />
       ) : null}
+
+      {/* Aligned design: the adult escape hatch lives at the bottom of the
+       * Grammar Bank rather than as a sibling of the dashboard. The bank
+       * is the comprehensive concept view, so the parent / teacher lens
+       * sits naturally as a closed-by-default disclosure underneath. The
+       * `<details>` keeps the surface child-first — the parent has to
+       * explicitly opt in. */}
+      <details className="grammar-grown-up-view">
+        <summary>Grown-up view</summary>
+        <GrammarAnalyticsScene
+          subject={subject}
+          learner={learner}
+          grammar={grammar}
+          rewardState={rewardState}
+          actions={actions}
+          runtimeReadOnly={runtimeReadOnly}
+        />
+      </details>
     </section>
   );
 }

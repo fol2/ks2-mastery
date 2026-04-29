@@ -68,6 +68,46 @@ function SummaryCards({ cards }) {
   );
 }
 
+// Aligned ribbon header — sits above the five summary stat cards on the
+// regular-practice branch. Tone is "good" when every answered question was
+// correct, otherwise "warn". Headline + sub-copy mirror the prototype but
+// pull live numbers from the summary cards so we never duplicate state.
+function SummaryRibbon({ cards }) {
+  const cardMap = {};
+  for (const card of cards) {
+    if (card && typeof card.id === 'string') cardMap[card.id] = card;
+  }
+  const answered = Number(cardMap.answered?.value ?? 0);
+  const correct = Number(cardMap.correct?.value ?? 0);
+  const trouble = Number(cardMap.trouble?.value ?? 0);
+  const cleanRound = answered > 0 && correct === answered && trouble === 0;
+  const tone = cleanRound ? 'good' : 'warn';
+  const headline = cleanRound
+    ? 'Clean round — every answer landed.'
+    : `${correct} of ${answered} correct.`;
+  const sub = cleanRound
+    ? 'Your monsters earned a Star this round.'
+    : trouble > 0
+      ? `${trouble} concept${trouble === 1 ? '' : 's'} to revisit below.`
+      : 'A few wobbles to come back to next round.';
+  return (
+    <div
+      className="grammar-summary-ribbon"
+      data-tone={tone}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="grammar-summary-ribbon-icon" aria-hidden="true">
+        {cleanRound ? '✓' : '!'}
+      </div>
+      <div className="grammar-summary-ribbon-copy">
+        <p className="grammar-summary-ribbon-headline">{headline}</p>
+        <p className="grammar-summary-ribbon-sub">{sub}</p>
+      </div>
+    </div>
+  );
+}
+
 function ScoreCard({ summary }) {
   const questions = Array.isArray(summary?.miniTestReview?.questions)
     ? summary.miniTestReview.questions
@@ -256,6 +296,7 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
         <h2 className="section-title" id="grammar-summary-title">
           Nice work — round complete
         </h2>
+        <SummaryRibbon cards={cards} />
         <SummaryCards cards={cards} />
         <PrimaryActions buttons={buttons} disabled={disabled} />
         <SecondaryActions onGrownUp={handleGrownUp} disabled={disabled} />

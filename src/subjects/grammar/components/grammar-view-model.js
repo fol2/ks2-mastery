@@ -60,39 +60,45 @@ export function isGrammarFocusAllowedMode(mode) {
 // this as a prominent button above the fold with `data-featured="true"`.
 // Grammar Bank, Mini Test, and Fix Trouble Spots are demoted to secondary
 // links below the monster strip.
+// Aligned design language (post-prototype): the three decision-weight modes
+// — Smart Practice, Fix Trouble Spots, Mini Test — render as a 3-card row
+// inside the unified setup panel, mirroring the Spelling mode-row rhythm.
+// `featured: true` pins the recommended badge on Smart only. The two new
+// cards (`trouble`, `satsset`) carry their own short child-facing copy and
+// inherit the same `data-action="grammar-set-mode"` dispatch as Smart.
+//
+// `trouble` is `disabledWhenNoTrouble` so the JSX can render it greyed-out
+// with the prototype's "No trouble spots yet — try a round first." copy
+// when the dashboard read model reports zero trouble concepts.
 export const GRAMMAR_PRIMARY_MODE_CARDS = Object.freeze([
   Object.freeze({
     id: 'smart',
     title: 'Smart Practice',
-    desc: 'Due · weak · one fresh concept.',
+    desc: 'Mixed concepts shaped to today — what is due, where you wobbled.',
     featured: true,
-  }),
-]);
-
-// U8 Phase 5: Three modes demoted from primary cards to secondary links.
-// Order: Grammar Bank · Mini Test · Fix Trouble Spots. The JSX renders these
-// as text links below the monster strip — still accessible, but no longer
-// primary decision-weight buttons.
-export const GRAMMAR_SECONDARY_MODE_LINKS = Object.freeze([
-  Object.freeze({
-    id: 'bank',
-    title: 'Grammar Bank',
-    desc: 'Browse every concept with child-friendly statuses.',
-    action: 'grammar-open-concept-bank',
-  }),
-  Object.freeze({
-    id: 'satsset',
-    title: 'Mini Test',
-    desc: 'Short timed set. Marks at the end.',
-    action: 'grammar-set-mode',
+    badge: 'RECOMMENDED',
   }),
   Object.freeze({
     id: 'trouble',
     title: 'Fix Trouble Spots',
-    desc: 'Only the concepts you usually miss.',
-    action: 'grammar-set-mode',
+    desc: 'Drill the concepts that slipped most this week.',
+    featured: false,
+    disabledWhenNoTrouble: true,
+    disabledCopy: 'No trouble spots yet — try a round first.',
+  }),
+  Object.freeze({
+    id: 'satsset',
+    title: 'Mini Test',
+    desc: 'A short SATs-style set — no hints, marked at the end.',
+    featured: false,
   }),
 ]);
+
+// Aligned design language: every former secondary mode is now either a
+// primary card (`trouble`, `satsset`) or surfaced from the sidebar
+// (`bank` via the "Browse the Grammar Bank" shortcut). The empty array
+// keeps the export shape stable for callers that iterate it.
+export const GRAMMAR_SECONDARY_MODE_LINKS = Object.freeze([]);
 
 // Secondary modes disclosed under the dashboard's "More practice" details
 // block. U8 Phase 5: Writing Try moves here from the primary area, joining

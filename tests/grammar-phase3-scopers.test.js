@@ -106,14 +106,14 @@ for (const { label, scoper, tag } of SCOPER_MATRIX) {
 // Edge case — dashboard/summary/transfer require a sibling boundary marker
 // -----------------------------------------------------------------------------
 
-test('U2: scopeDashboard throws when grown-up-view sibling boundary is missing', () => {
-  // Dashboard's regex pins the root `</section>` via lookahead to the
-  // sibling `<details class="grammar-grown-up-view">`. If the sibling is
-  // absent (e.g. a broken shell), the lookahead fails and the scoper
-  // throws rather than walking to the first nested `</section>`.
-  const noSibling = '<section data-grammar-phase-root="dashboard"><section>inner</section></section>';
+test('U2: scopeDashboard throws when </div></main> shell boundary is missing', () => {
+  // Post Grammar-Aligned redesign: the dashboard's regex pins the root
+  // `</section>` via lookahead to the surrounding `</div></main>` close
+  // (the `grammar-surface` wrapper). Without that sibling pair the
+  // scoper refuses to walk to the first nested `</section>`.
+  const noShellClose = '<section data-grammar-phase-root="dashboard"><section>inner</section></section>';
   assert.throws(
-    () => scopeDashboard(noSibling),
+    () => scopeDashboard(noShellClose),
     /scopeDashboard: no data-grammar-phase-root="dashboard" landmark found/,
   );
 });
@@ -144,11 +144,15 @@ test('U2: scopeTransfer throws when </div></main> boundary is missing', () => {
 // -----------------------------------------------------------------------------
 
 test('U2: scopeDashboard returns a narrowed substring on well-formed HTML', () => {
-  const html = '<main><section data-grammar-phase-root="dashboard" class="grammar-dashboard">body</section><details class="grammar-grown-up-view">adult</details></main>';
+  // Well-formed shell: the dashboard root `</section>` is followed
+  // immediately by `</div></main>` (the `grammar-surface` wrapper close).
+  // Trailing app-shell siblings (e.g. home overlays) sit outside the
+  // boundary so the scope helper excludes them from the child sweep.
+  const html = '<main><div class="grammar-surface"><section data-grammar-phase-root="dashboard" class="grammar-dashboard">body</section></div></main><div class="home-overlays">adult</div>';
   const scoped = scopeDashboard(html);
   assert.match(scoped, /data-grammar-phase-root="dashboard"/);
   assert.match(scoped, /body/);
-  assert.doesNotMatch(scoped, /adult/, 'scoped must exclude the sibling grown-up content');
+  assert.doesNotMatch(scoped, /adult/, 'scoped must exclude the trailing app-shell content');
   assert.ok(scoped.length < html.length, 'scoped must be strictly narrower than full HTML');
 });
 
@@ -281,10 +285,14 @@ const LIVE_HARNESS_PHASES = Object.freeze([
   'analytics',
 ]);
 
-// Only `analytics` legitimately carries the adult copy; every other live
-// phase in the harness is a child scene whose scoped output must exclude
-// the disclosure and its adult vocabulary.
-const ADULT_LIVE_PHASES = Object.freeze(['analytics']);
+// `analytics` and `bank` legitimately carry the adult copy. Analytics IS
+// the adult surface; the bank embeds the Grown-up view as a
+// closed-by-default `<details>` (post Grammar-Aligned redesign — the
+// adult escape hatch was moved off the dashboard so the child landing is
+// fully child-first). Every other live phase in the harness is a pure
+// child scene whose scoped output must exclude the disclosure and its
+// adult vocabulary.
+const ADULT_LIVE_PHASES = Object.freeze(['analytics', 'bank']);
 
 for (const phase of LIVE_HARNESS_PHASES) {
   test(`U2: live ${phase} render carries the data-grammar-phase-root landmark`, () => {

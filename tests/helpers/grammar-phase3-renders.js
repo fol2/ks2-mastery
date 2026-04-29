@@ -520,9 +520,14 @@ function scopeLandmark(html, phase, rootTag, boundary = null) {
 }
 
 export function scopeDashboard(html) {
-  // Dashboard root section ends right before the sibling
-  // `<details class="grammar-grown-up-view">` disclosure.
-  return scopeLandmark(html, 'dashboard', 'section', '<details class="grammar-grown-up-view">');
+  // Post Grammar-Aligned redesign: the dashboard surface no longer carries
+  // the `<details class="grammar-grown-up-view">` disclosure as a sibling
+  // — that escape hatch was relocated into the Grammar Bank scene so the
+  // child landing is fully child-first. The boundary check now pins the
+  // root `</section>` against the surrounding `</div></main>` close
+  // (the `grammar-surface` wrapper closing inside the app shell). A
+  // refactor that re-orders the wrapper structure would still fail loud.
+  return scopeLandmark(html, 'dashboard', 'section', '</div></main>');
 }
 
 export function scopeSession(html) {
@@ -537,7 +542,49 @@ export function scopeSummary(html) {
 }
 
 export function scopeBank(html) {
-  return scopeLandmark(html, 'bank', 'section', null);
+  // Bank embeds the adult escape hatch (`<details class="grammar-grown-up-view">`)
+  // at the bottom — the post Grammar-Aligned design moved the disclosure off
+  // the dashboard and into the bank so the child landing stays fully
+  // child-first. The disclosure body renders `GrammarAnalyticsScene` with
+  // adult-only copy, so the child forbidden-term sweep MUST exclude that
+  // subtree from the narrowed bank HTML. We narrow to the landmark first,
+  // then snip the grown-up-view block by depth-balanced walk over the
+  // `<details>` open/close tags so a nested `<details>` inside the
+  // disclosure (none today, but defended against) does not bleed in.
+  const scoped = scopeLandmark(html, 'bank', 'section', null);
+  return stripDetailsSubtree(scoped, 'class="grammar-grown-up-view"');
+}
+
+function stripDetailsSubtree(html, attributeSignature) {
+  const openIdx = html.indexOf(`<details ${attributeSignature}`);
+  if (openIdx < 0) return html;
+  const openTagEnd = html.indexOf('>', openIdx);
+  if (openTagEnd < 0) return html;
+  const openMarker = '<details';
+  const closeMarker = '</details>';
+  let depth = 1;
+  let i = openTagEnd + 1;
+  while (i < html.length) {
+    if (html.slice(i, i + openMarker.length) === openMarker) {
+      const afterName = html[i + openMarker.length];
+      if (afterName === ' ' || afterName === '>' || afterName === '\t' || afterName === '\n') {
+        depth += 1;
+        i += openMarker.length;
+        continue;
+      }
+    }
+    if (html.slice(i, i + closeMarker.length) === closeMarker) {
+      depth -= 1;
+      if (depth === 0) {
+        const closeEnd = i + closeMarker.length;
+        return html.slice(0, openIdx) + html.slice(closeEnd);
+      }
+      i += closeMarker.length;
+      continue;
+    }
+    i += 1;
+  }
+  return html;
 }
 
 export function scopeTransfer(html) {

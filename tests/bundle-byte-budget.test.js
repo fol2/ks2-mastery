@@ -70,15 +70,18 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 // utility footprint; Grammar's matching display-state parity adds another
 // tiny cross-subject utility slice. The reward presentation queue, toast
 // compatibility layers, Hero Mode P3 daily-progress shell, Grammar's
-// bridge-ownership display gate, the Concordium Grand Star tier model, and
-// Hero Mode P5 Camp's child-facing spending surface keep Node 22/24 gzip
-// output near 223.9 KB, so the committed ceiling is 224,500
-// (matches `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES` in
+// bridge-ownership display gate, the Concordium Grand Star tier model,
+// Hero Mode P5 Camp's child-facing spending surface, and the Grammar
+// setup-aligned refactor (shared hero-bg / HeroBackdrop /
+// useSetupHeroContrast platform engines + slide-button RoundLengthPicker
+// + grammar-hero-bg view-model) keep Node 22/24 gzip output near
+// 226.3 KB, so the committed ceiling is 227,000 (matches
+// `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES` in
 // `scripts/audit-client-bundle.mjs`). The narrow headroom lets the team
 // land small copy / utility growth without an audit bump, but trips the
 // gate when ~50 KB of adult-only JS sneaks back into the critical path.
-const BASELINE_GZIP_BYTES = 203_227;
-const BUDGET_GZIP_BYTES = 224_500;
+const BASELINE_GZIP_BYTES = 206_000;
+const BUDGET_GZIP_BYTES = 227_000;
 const TEST_MODE_BUNDLE_MARKER = '__ks2_capacityMeta__';
 
 function isPlaywrightTestModeBundle(bundleBytes) {
