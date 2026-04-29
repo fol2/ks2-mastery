@@ -277,7 +277,6 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
 
             <div className="setup-begin-row grammar-start-row">
               <Button
-                variant="primary"
                 size="xl"
                 data-featured="true"
                 disabled={setupDisabled}

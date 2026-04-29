@@ -323,16 +323,14 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
             <h2 className="section-title">Today's punctuation mission</h2>
             <HeroWelcome name={learnerName} className="punctuation-hero-welcome" />
             <div className="punctuation-dashboard-cta-row">
-              {/* The inline `--btn-accent` Bellstorm-gold style is U6's
-               * scope (Punctuation token unification). U1 only changes
-               * the JSX shape: the rendered DOM keeps the same class
-               * string, the same data hooks, and the same inline
-               * accent — byte-identical to the pre-migration <button>
-               * so the Punctuation hero CTA selectors do not move. */}
+              {/* `--btn-accent: #B8873F` already set by `.punctuation-surface`
+               * on the scene root (`styles/app.css:1132-1136`); CSS variable
+               * inheritance carries it down to this CTA. The inline
+               * `style={{ '--btn-accent' }}` left over from the U1
+               * byte-identical migration is therefore redundant and
+               * dropped here as part of the U1 follow-up bundle sweep. */}
               <Button
-                variant="primary"
                 size="xl"
-                style={{ '--btn-accent': '#B8873F' }}
                 data-punctuation-cta=""
                 dataAction={ctaMode === 'continue' ? 'punctuation-continue' : 'punctuation-start'}
                 disabled={disabled}

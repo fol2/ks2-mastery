@@ -125,7 +125,6 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
               )}
               <div className="hero-cta-row">
                 <Button
-                  variant="primary"
                   size="xl"
                   dataAction="open-subject"
                   data-subject-id={ctaSubjectId}

@@ -32,7 +32,7 @@ export function HeroQuestCard({ hero, actions }) {
   if (hero.dailyStatus === 'completed') {
     return (
       <div className="hero-quest-card hero-quest-card--complete" data-hero-card>
-        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
+        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
         <p className="hero-quest-card__daily-complete" aria-live="polite">
           {HERO_PROGRESS_COPY.dailyComplete}
         </p>
@@ -59,12 +59,12 @@ export function HeroQuestCard({ hero, actions }) {
   if (hero.claiming) {
     return (
       <div className="hero-quest-card hero-quest-card--claiming" data-hero-card>
-        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
+        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
         <p className="hero-quest-card__claiming" aria-live="polite">
           {HERO_PROGRESS_COPY.claiming}
         </p>
         <div className="hero-quest-card__cta-row">
-          <Button variant="primary" size="xl" busy>
+          <Button size="xl" busy>
             {HERO_PROGRESS_COPY.claiming}
           </Button>
         </div>
@@ -79,7 +79,7 @@ export function HeroQuestCard({ hero, actions }) {
     const hasMore = completedCount < totalTasks;
     return (
       <div className="hero-quest-card hero-quest-card--claimed" data-hero-card aria-live="polite">
-        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
+        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
         <p className="hero-quest-card__task-complete">
           {HERO_PROGRESS_COPY.taskComplete}
         </p>
@@ -94,7 +94,6 @@ export function HeroQuestCard({ hero, actions }) {
         {hasMore && hero.canStart && (
           <div className="hero-quest-card__cta-row">
             <Button
-              variant="primary"
               size="xl"
               onClick={() => actions.startHeroQuestTask(hero.nextTask?.taskId)}
             >
@@ -118,7 +117,6 @@ export function HeroQuestCard({ hero, actions }) {
         </div>
         <div className="hero-quest-card__cta-row">
           <Button
-            variant="primary"
             size="xl"
             onClick={() => actions.refreshHeroQuest()}
           >
@@ -138,7 +136,7 @@ export function HeroQuestCard({ hero, actions }) {
     const completedCount = hero.completedTaskIds?.length || 0;
     return (
       <div className="hero-quest-card hero-quest-card--continue" data-hero-card>
-        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
+        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
         <p className="hero-quest-card__subtitle">
           You have a {subjectName} task in progress.
         </p>
@@ -149,7 +147,6 @@ export function HeroQuestCard({ hero, actions }) {
         )}
         <div className="hero-quest-card__cta-row">
           <Button
-            variant="primary"
             size="xl"
             onClick={() => actions.continueHeroTask(session.subjectId)}
           >
@@ -169,7 +166,7 @@ export function HeroQuestCard({ hero, actions }) {
 
     return (
       <div className="hero-quest-card hero-quest-card--ready" data-hero-card>
-        <h2 className="hero-quest-card__title">Today&apos;s Hero Quest</h2>
+        <h2 className="hero-quest-card__title">Today's Hero Quest</h2>
         <p className="hero-quest-card__subtitle">
           A few strong rounds picked from your ready subjects.
         </p>
@@ -224,7 +221,6 @@ export function HeroQuestCard({ hero, actions }) {
 
         <div className="hero-quest-card__cta-row">
           <Button
-            variant="primary"
             size="xl"
             busy={isLaunching}
             onClick={() => actions.startHeroQuestTask(task.taskId)}
