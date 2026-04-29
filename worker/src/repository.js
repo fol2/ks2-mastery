@@ -2912,6 +2912,26 @@ async function readAccountDetail(db, {
       updatedByAccountId: null,
       rowVersion: 0,
     },
+    // U8 (P7): Account lifecycle fields — computed at read-time.
+    lifecycleFields: buildLifecycleFields({ account, opsMetadata, nowTs }),
+  };
+}
+
+// U8 (P7): Build lifecycle fields for account detail response.
+function buildLifecycleFields({ account, opsMetadata, nowTs }) {
+  const createdAt = Number(account.created_at) || 0;
+  const accountAge = createdAt > 0 ? Math.floor((nowTs - createdAt) / 86400000) : 0;
+  const opsStatus = opsMetadata?.ops_status || 'active';
+  return {
+    planLabel: typeof opsMetadata?.plan_label === 'string' ? opsMetadata.plan_label : null,
+    accountType: account.account_type || 'real',
+    accountAge,
+    lastActive: null, // Populated by caller if practice_session data available
+    conversionSource: typeof opsMetadata?.conversion_source === 'string' ? opsMetadata.conversion_source : null,
+    paymentHold: opsStatus === 'payment_hold',
+    suspended: opsStatus === 'suspended',
+    cancelledAt: opsMetadata?.cancelled_at != null ? Number(opsMetadata.cancelled_at) : null,
+    cancellationReason: typeof opsMetadata?.cancellation_reason === 'string' ? opsMetadata.cancellation_reason : null,
   };
 }
 

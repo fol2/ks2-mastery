@@ -76,6 +76,14 @@ import {
   buildHumanSummary,
 } from './admin-debug-bundle.js';
 import { getBusinessKpis } from './admin-kpi-analytics.js';
+import {
+  createIncident,
+  updateIncidentStatus,
+  addIncidentNote,
+  addIncidentLink,
+  listIncidents,
+  getIncident,
+} from './admin-incident.js';
 
 
 // U7 (sys-hardening p1): CSP report endpoint constants. The endpoint
@@ -2856,6 +2864,157 @@ export function createWorkerApp({
             mutation: mutationFromRequest(body, request),
           });
           return json({ ok: true, ...result });
+        }
+
+        // U6 (P7): Support Incident CRUD + lifecycle routes.
+        if (url.pathname === '/api/admin/incidents' && request.method === 'GET') {
+          requireSameOrigin(request, env);
+          const db = requireDatabase(env);
+          const statusFilter = url.searchParams.get('status') || undefined;
+          const accountIdFilter = url.searchParams.get('accountId') || undefined;
+          const limit = url.searchParams.get('limit') || undefined;
+          const offset = url.searchParams.get('offset') || undefined;
+          // Admin or ops can list — role check delegated to assertAdminHubActorForBundle
+          await repository.assertAdminHubActorForBundle(session.accountId);
+          const result = await listIncidents(db, { status: statusFilter, accountId: accountIdFilter, limit, offset });
+          return json({ ok: true, refreshedAt: new Date().toISOString(), ...result });
+        }
+
+        if (url.pathname === '/api/admin/incidents' && request.method === 'POST') {
+          requireSameOrigin(request, env);
+          requireMutationCapability(session);
+          const incidentCreateLimit = await consumeRateLimit(env, {
+            bucket: 'admin-ops-mutation',
+            identifier: session.accountId,
+            limit: 60,
+            windowMs: 60_000,
+          });
+          if (!incidentCreateLimit.allowed) {
+            return rateLimitResponse({
+              code: 'admin_ops_mutation_rate_limited',
+              retryAfterSeconds: incidentCreateLimit.retryAfterSeconds,
+              extra: { message: 'Admin-ops mutations are rate-limited at 60 per minute per session.' },
+            });
+          }
+          // Admin-only for mutations
+          await repository.assertAdminHubActorForBundle(session.accountId);
+          const body = await readJson(request);
+          const db = requireDatabase(env);
+          const result = await createIncident(db, {
+            title: body.title,
+            accountId: body.accountId || null,
+            learnerId: body.learnerId || null,
+            createdBy: session.accountId,
+            idempotencyKey: body.idempotencyKey || null,
+          });
+          return json({ ok: true, ...result }, 201);
+        }
+
+        {
+          const incidentDetailMatch = /^\/api\/admin\/incidents\/([^/]+)$/.exec(url.pathname);
+          if (incidentDetailMatch && request.method === 'GET') {
+            requireSameOrigin(request, env);
+            await repository.assertAdminHubActorForBundle(session.accountId);
+            const db = requireDatabase(env);
+            const incidentId = decodeURIComponent(incidentDetailMatch[1]);
+            const result = await getIncident(db, { id: incidentId });
+            return json({ ok: true, ...result });
+          }
+        }
+
+        {
+          const incidentStatusMatch = /^\/api\/admin\/incidents\/([^/]+)\/status$/.exec(url.pathname);
+          if (incidentStatusMatch && request.method === 'PUT') {
+            requireSameOrigin(request, env);
+            requireMutationCapability(session);
+            const incidentStatusLimit = await consumeRateLimit(env, {
+              bucket: 'admin-ops-mutation',
+              identifier: session.accountId,
+              limit: 60,
+              windowMs: 60_000,
+            });
+            if (!incidentStatusLimit.allowed) {
+              return rateLimitResponse({
+                code: 'admin_ops_mutation_rate_limited',
+                retryAfterSeconds: incidentStatusLimit.retryAfterSeconds,
+                extra: { message: 'Admin-ops mutations are rate-limited at 60 per minute per session.' },
+              });
+            }
+            await repository.assertAdminHubActorForBundle(session.accountId);
+            const body = await readJson(request);
+            const db = requireDatabase(env);
+            const incidentId = decodeURIComponent(incidentStatusMatch[1]);
+            const result = await updateIncidentStatus(db, {
+              id: incidentId,
+              status: body.status,
+              rowVersion: body.rowVersion,
+              updatedBy: session.accountId,
+            });
+            return json({ ok: true, ...result });
+          }
+        }
+
+        {
+          const incidentNotesMatch = /^\/api\/admin\/incidents\/([^/]+)\/notes$/.exec(url.pathname);
+          if (incidentNotesMatch && request.method === 'POST') {
+            requireSameOrigin(request, env);
+            requireMutationCapability(session);
+            const incidentNoteLimit = await consumeRateLimit(env, {
+              bucket: 'admin-ops-mutation',
+              identifier: session.accountId,
+              limit: 60,
+              windowMs: 60_000,
+            });
+            if (!incidentNoteLimit.allowed) {
+              return rateLimitResponse({
+                code: 'admin_ops_mutation_rate_limited',
+                retryAfterSeconds: incidentNoteLimit.retryAfterSeconds,
+                extra: { message: 'Admin-ops mutations are rate-limited at 60 per minute per session.' },
+              });
+            }
+            await repository.assertAdminHubActorForBundle(session.accountId);
+            const body = await readJson(request);
+            const db = requireDatabase(env);
+            const incidentId = decodeURIComponent(incidentNotesMatch[1]);
+            const result = await addIncidentNote(db, {
+              incidentId,
+              authorId: session.accountId,
+              noteText: body.noteText,
+              audience: body.audience || 'admin_only',
+            });
+            return json({ ok: true, ...result }, 201);
+          }
+        }
+
+        {
+          const incidentLinksMatch = /^\/api\/admin\/incidents\/([^/]+)\/links$/.exec(url.pathname);
+          if (incidentLinksMatch && request.method === 'POST') {
+            requireSameOrigin(request, env);
+            requireMutationCapability(session);
+            const incidentLinkLimit = await consumeRateLimit(env, {
+              bucket: 'admin-ops-mutation',
+              identifier: session.accountId,
+              limit: 60,
+              windowMs: 60_000,
+            });
+            if (!incidentLinkLimit.allowed) {
+              return rateLimitResponse({
+                code: 'admin_ops_mutation_rate_limited',
+                retryAfterSeconds: incidentLinkLimit.retryAfterSeconds,
+                extra: { message: 'Admin-ops mutations are rate-limited at 60 per minute per session.' },
+              });
+            }
+            await repository.assertAdminHubActorForBundle(session.accountId);
+            const body = await readJson(request);
+            const db = requireDatabase(env);
+            const incidentId = decodeURIComponent(incidentLinksMatch[1]);
+            const result = await addIncidentLink(db, {
+              incidentId,
+              linkType: body.linkType,
+              linkTargetId: body.linkTargetId,
+            });
+            return json({ ok: true, ...result }, 201);
+          }
         }
 
         // U11: Marketing / Live Ops V0 — admin CRUD + lifecycle routes.
