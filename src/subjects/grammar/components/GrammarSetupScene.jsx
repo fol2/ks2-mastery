@@ -5,6 +5,7 @@ import { heroBgStyle } from '../../../platform/ui/hero-bg.js';
 import { SetupMorePractice } from '../../../platform/ui/SetupMorePractice.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import { HeroWelcome } from '../../../platform/ui/HeroWelcome.jsx';
+import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
 import {
   heroBgForGrammarSetup,
   heroContrastProfileForGrammarBg,
@@ -289,9 +290,14 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
           </div>
         </section>
 
-        <aside className="setup-side grammar-setup-sidebar" aria-label="Where you stand">
-          <div className="ss-card grammar-setup-sidebar-card">
-            <header className="ss-head grammar-setup-sidebar-head">
+        <SetupSidePanel
+          asideClassName="grammar-setup-sidebar"
+          cardClassName="grammar-setup-sidebar-card"
+          headClassName="grammar-setup-sidebar-head"
+          headTag="header"
+          ariaLabel="Where you stand"
+          head={(
+            <>
               <p className="eyebrow">Where you stand</p>
               <button
                 type="button"
@@ -303,32 +309,36 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
               >
                 Open bank →
               </button>
-            </header>
+            </>
+          )}
+          body={(
+            <>
+              <section className="grammar-monster-strip" aria-label="Your Grammar creatures">
+                {dashboard.monsterStrip.map((entry) => (
+                  <MonsterStripEntry entry={entry} key={entry.monsterId} />
+                ))}
+                <p className="grammar-monster-strip-hint">{GRAMMAR_MONSTER_STRIP_CHILD_COPY}</p>
+              </section>
 
-            <section className="grammar-monster-strip" aria-label="Your Grammar creatures">
-              {dashboard.monsterStrip.map((entry) => (
-                <MonsterStripEntry entry={entry} key={entry.monsterId} />
-              ))}
-              <p className="grammar-monster-strip-hint">{GRAMMAR_MONSTER_STRIP_CHILD_COPY}</p>
-            </section>
-
-            <section className="grammar-today" aria-label="Today at a glance">
-              {dashboard.isEmpty ? (
-                <div className="grammar-today-empty" data-testid="grammar-today-empty">
-                  <EmptyState
-                    title="No rounds yet"
-                    body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
-                  />
-                </div>
-              ) : (
-                <div className="grammar-today-grid">
-                  {dashboard.todayCards.map((card) => (
-                    <TodayCard card={card} key={card.id} />
-                  ))}
-                </div>
-              )}
-            </section>
-
+              <section className="grammar-today" aria-label="Today at a glance">
+                {dashboard.isEmpty ? (
+                  <div className="grammar-today-empty" data-testid="grammar-today-empty">
+                    <EmptyState
+                      title="No rounds yet"
+                      body="No rounds yet. Progress is saved as you practise. Start your first round to see your scores here."
+                    />
+                  </div>
+                ) : (
+                  <div className="grammar-today-grid">
+                    {dashboard.todayCards.map((card) => (
+                      <TodayCard card={card} key={card.id} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </>
+          )}
+          footer={(
             <button
               type="button"
               className="ss-bank-link grammar-setup-sidebar-bank-link"
@@ -342,8 +352,8 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
               </span>
               <span className="ss-bank-link-arrow grammar-setup-sidebar-bank-link-arrow" aria-hidden="true">→</span>
             </button>
-          </div>
-        </aside>
+          )}
+        />
 
         {/* "More practice" disclosure — optional, decision-light tail of
          * secondary modes (Learn / Surgery / Builder / Worked / Faded /

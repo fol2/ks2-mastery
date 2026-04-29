@@ -4,6 +4,7 @@ import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
+import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
 import {
   BOSS_DEFAULT_ROUND_LENGTH,
   SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
@@ -471,9 +472,10 @@ export function SpellingSetupScene({
         </div>
       </section>
 
-      <aside className="setup-side">
-        <div className="ss-card">
-          <div className="ss-head">
+      <SetupSidePanel
+        headTag="div"
+        head={(
+          <>
             <p className="eyebrow">Where you stand</p>
             <button
               type="button"
@@ -484,9 +486,15 @@ export function SpellingSetupScene({
             >
               Open codex →
             </button>
-          </div>
-          <SetupMeadow codex={codex} repositories={repositories} />
-          <SetupStatGrid stats={stats} />
+          </>
+        )}
+        body={(
+          <>
+            <SetupMeadow codex={codex} repositories={repositories} />
+            <SetupStatGrid stats={stats} />
+          </>
+        )}
+        footer={(
           <button
             type="button"
             className="ss-bank-link"
@@ -499,8 +507,8 @@ export function SpellingSetupScene({
             </span>
             <span className="ss-bank-link-arrow" aria-hidden="true">→</span>
           </button>
-        </div>
-      </aside>
+        )}
+      />
     </div>
   );
 }
