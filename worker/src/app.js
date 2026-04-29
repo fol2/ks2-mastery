@@ -48,7 +48,7 @@ import { handleHeroReadModel } from './hero/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
-import { probeHeroTelemetry } from './hero/telemetry-probe.js';
+import { probeHeroTelemetry, buildExpandedProbeResponse, stripPrivacyFields } from './hero/telemetry-probe.js';
 import { resolveHeroFlagsWithOverride } from '../../shared/hero/account-override.js';
 import {
   initialiseDailyProgress,
@@ -2662,9 +2662,11 @@ export function createWorkerApp({
           return json({ ok: true, ...kpiResult });
         }
 
-        // pA1 U2: Hero telemetry probe — read-only operational verification
+        // pA1 U2 + pA2 U4: Hero telemetry probe — read-only operational verification
         // for Ring 2–4 operators. Returns last-N hero events from event_log
         // with privacy re-validation. Admin/ops gated via assertAdminHubActorForBundle.
+        // pA2 U4: optional ?learnerId=X expands response with readiness, health,
+        // reconciliation gap, spend pattern, and override status.
         if (url.pathname === '/api/admin/hero/telemetry-probe' && request.method === 'GET') {
           requireSameOrigin(request, env);
           await repository.assertAdminHubActorForBundle(session.accountId);
@@ -2686,6 +2688,41 @@ export function createWorkerApp({
           const probeLimit = Number(url.searchParams.get('limit')) || 20;
           const db = requireDatabase(env);
           const probeResult = await probeHeroTelemetry({ db, limit: probeLimit });
+
+          // pA2 U4: expanded response when learnerId is provided
+          const probeLearnerIdParam = url.searchParams.get('learnerId');
+          if (probeLearnerIdParam) {
+            const heroState = await repository.readHeroProgress(probeLearnerIdParam);
+            const resolvedFlags = resolveHeroFlagsWithOverride({ env, accountId: session.accountId });
+            const dateKey = new Date().toISOString().slice(0, 10);
+
+            // Determine override status: is the queried learner's admin account in HERO_INTERNAL_ACCOUNTS?
+            let isInternalAccount = false;
+            try {
+              const raw = env.HERO_INTERNAL_ACCOUNTS;
+              if (raw) {
+                const parsed = JSON.parse(raw);
+                isInternalAccount = Array.isArray(parsed) && parsed.includes(session.accountId);
+              }
+            } catch { /* graceful — default to false */ }
+
+            const overrideStatus = {
+              accountId: session.accountId,
+              isInternalAccount,
+              effectiveFlags: resolvedFlags,
+            };
+
+            const expanded = buildExpandedProbeResponse({
+              probeResult,
+              heroState,
+              resolvedFlags,
+              dateKey,
+              overrideStatus,
+            });
+
+            return json(stripPrivacyFields(expanded));
+          }
+
           return json({ ok: true, ...probeResult });
         }
 
