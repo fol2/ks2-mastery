@@ -25,6 +25,8 @@ import {
 import {
   createPunctuationGeneratedItems,
   GENERATED_TEMPLATE_BANK,
+  PRODUCTION_DEPTH,
+  CAPACITY_DEPTH,
 } from '../shared/punctuation/generators.js';
 
 // ─── CLI parsing ────────────────────────────────────────────────────────────
@@ -162,24 +164,11 @@ function computeStarEvidenceDedup(fixture) {
 }
 
 function computeDepthValues() {
-  const productionDepth = 4;
-  const capacityDepth = 8;
-  return { productionDepth, capacityDepth };
+  return { productionDepth: PRODUCTION_DEPTH, capacityDepth: CAPACITY_DEPTH };
 }
 
-function computeDuplicateSignatureCount(manifest) {
-  const generatedItems = createPunctuationGeneratedItems({
-    manifest,
-    seed: manifest.releaseId || 'health-report',
-    perFamily: 4,
-  });
-  const signatureCounts = new Map();
-  for (const item of generatedItems) {
-    const sig = item.variantSignature;
-    if (!sig) continue;
-    signatureCounts.set(sig, (signatureCounts.get(sig) || 0) + 1);
-  }
-  return [...signatureCounts.entries()].filter(([, count]) => count > 1).length;
+function computeDuplicateSignatureCount(signatureRepeatRate) {
+  return signatureRepeatRate.duplicateSignatureCount;
 }
 
 function computeDuplicateStemModelClusters(manifest) {
@@ -255,7 +244,7 @@ export function buildHealthReport({ fixture = null, manifest = PUNCTUATION_CONTE
   const retentionAfterSecureRate = computeRetentionAfterSecureRate(effectiveFixture);
   const starEvidenceDedup = computeStarEvidenceDedup(effectiveFixture);
   const depthValues = computeDepthValues();
-  const duplicateSignatureCount = computeDuplicateSignatureCount(manifest);
+  const duplicateSignatureCount = computeDuplicateSignatureCount(signatureRepeatRate);
   const duplicateStemModelClusters = computeDuplicateStemModelClusters(manifest);
   const unsupportedReservedEvents = computeUnsupportedReservedEvents();
   const emittedEventCount = countEmittedEvents();

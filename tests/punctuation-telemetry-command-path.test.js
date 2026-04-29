@@ -643,6 +643,49 @@ test('STAR_EVIDENCE_DEDUPED_BY_SIGNATURE fires when the same signature gets a se
   }
 });
 
+test('curated item (no variantSignature) must NOT emit GENERATED_SIGNATURE_EXPOSED', async () => {
+  // Use random=0 which biases toward early (curated/fixed) items in the pool.
+  // Drive the session looking for a curated item and verify the event does NOT fire.
+  const h = createHarness({ random: () => 0 });
+  try {
+    const body = await h.command('start-session', { roundLength: '10' });
+    let currentSession = body.subjectReadModel?.session;
+    let testedAtLeastOne = false;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    // Check start-session telemetry for the curated item case
+    if (currentSession?.currentItem && !currentSession.currentItem.variantSignature) {
+      const ev = findEvent(body.telemetryEvents, PUNCTUATION_TELEMETRY_EVENTS.GENERATED_SIGNATURE_EXPOSED);
+      assert.equal(ev, undefined, 'GENERATED_SIGNATURE_EXPOSED must NOT fire for curated items (start-session)');
+      testedAtLeastOne = true;
+    }
+
+    while (attempts < maxAttempts && currentSession?.phase === 'active-item') {
+      attempts += 1;
+      const item = currentSession.currentItem;
+      const answer = correctAnswerFor(item);
+      // eslint-disable-next-line no-await-in-loop
+      await h.command('submit-answer', { ...answer, ...expectedContextForSession(currentSession) });
+      // eslint-disable-next-line no-await-in-loop
+      const nextBody = await h.command('continue-session', {});
+      const nextSession = nextBody.subjectReadModel?.session;
+
+      if (nextSession?.currentItem && !nextSession.currentItem.variantSignature) {
+        const ev = findEvent(nextBody.telemetryEvents, PUNCTUATION_TELEMETRY_EVENTS.GENERATED_SIGNATURE_EXPOSED);
+        assert.equal(ev, undefined, 'GENERATED_SIGNATURE_EXPOSED must NOT fire for curated items (continue-session)');
+        testedAtLeastOne = true;
+        break;
+      }
+      currentSession = nextSession;
+    }
+
+    assert.ok(testedAtLeastOne, 'Test must exercise at least one curated item to be meaningful');
+  } finally {
+    h.close();
+  }
+});
+
 test('SCHEDULER_REASON_SELECTED fires on continue-session', async () => {
   const h = createHarness();
   try {
@@ -720,6 +763,32 @@ test('telemetry manifest has exactly 11 entries matching telemetry-events.js', (
   const eventKeys = Object.keys(PUNCTUATION_TELEMETRY_EVENTS);
   assert.equal(manifestKeys.length, 11);
   assert.deepEqual(manifestKeys.sort(), eventKeys.sort());
+});
+
+test('drift guard: every manifest key exists in telemetry-events and vice versa', () => {
+  const manifestKeys = Object.keys(PUNCTUATION_TELEMETRY_MANIFEST);
+  const eventKeys = Object.keys(PUNCTUATION_TELEMETRY_EVENTS);
+
+  // Every key in manifest must exist in events
+  for (const key of manifestKeys) {
+    assert.ok(
+      Object.hasOwn(PUNCTUATION_TELEMETRY_EVENTS, key),
+      `Manifest key '${key}' has no corresponding entry in telemetry-events.js — modules have drifted`,
+    );
+    assert.equal(
+      PUNCTUATION_TELEMETRY_MANIFEST[key].event,
+      PUNCTUATION_TELEMETRY_EVENTS[key],
+      `Event value for '${key}' differs between manifest and telemetry-events.js`,
+    );
+  }
+
+  // Every key in events must exist in manifest
+  for (const key of eventKeys) {
+    assert.ok(
+      Object.hasOwn(PUNCTUATION_TELEMETRY_MANIFEST, key),
+      `Telemetry-events key '${key}' has no corresponding entry in telemetry-manifest.js — modules have drifted`,
+    );
+  }
 });
 
 test('telemetry manifest event values match telemetry-events.js values', () => {

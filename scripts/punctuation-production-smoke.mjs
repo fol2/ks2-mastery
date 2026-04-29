@@ -887,7 +887,37 @@ async function main() {
   if (attestationArgs.jsonOutput) {
     console.log(JSON.stringify(output, null, 2));
   } else {
-    console.log(JSON.stringify(output, null, 2));
+    const lines = [];
+    lines.push('# Punctuation Production Smoke');
+    lines.push('');
+    lines.push(`| Field | Value |`);
+    lines.push(`|-------|-------|`);
+    lines.push(`| OK | ${output.ok} |`);
+    lines.push(`| Origin | ${output.origin} |`);
+    lines.push(`| Account | ${output.accountId} |`);
+    lines.push(`| Learner | ${output.learnerId} |`);
+    lines.push(`| Environment | ${output.attestation.environment} |`);
+    lines.push(`| Worker SHA | ${output.attestation.workerCommitSha || '(none)'} |`);
+    lines.push('');
+    lines.push('## Punctuation');
+    lines.push('');
+    lines.push(`| Metric | Value |`);
+    lines.push(`|--------|-------|`);
+    lines.push(`| Smart item | ${output.punctuation.smartItemId} |`);
+    lines.push(`| Smart summary total | ${output.punctuation.smartSummaryTotal} |`);
+    lines.push(`| Fixed items | ${output.punctuation.localReleaseManifestExpectation.fixedItems} |`);
+    lines.push(`| Generated items | ${output.punctuation.localReleaseManifestExpectation.generatedItems} |`);
+    lines.push(`| Runtime items | ${output.punctuation.localReleaseManifestExpectation.runtimeItems} |`);
+    lines.push(`| Published reward units | ${output.punctuation.localReleaseManifestExpectation.publishedRewardUnits} |`);
+    lines.push('');
+    lines.push('## Spelling');
+    lines.push('');
+    lines.push(`| Metric | Value |`);
+    lines.push(`|--------|-------|`);
+    lines.push(`| Progress total | ${output.spelling.progressTotal} |`);
+    lines.push(`| Has prompt token | ${output.spelling.hasPromptToken} |`);
+    lines.push('');
+    console.log(lines.join('\n'));
   }
 }
 
