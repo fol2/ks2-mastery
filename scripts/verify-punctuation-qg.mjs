@@ -35,6 +35,10 @@ const components = [
     name: 'Reviewer report (require all DSL)',
     command: 'node scripts/audit-punctuation-content.mjs --reviewer-report --require-all-dsl',
   },
+  {
+    name: 'Learning-health report (strict, synthetic fixture)',
+    command: 'node scripts/punctuation-qg-health-report.mjs --strict --fixture synthetic',
+  },
 ];
 
 let passed = 0;
