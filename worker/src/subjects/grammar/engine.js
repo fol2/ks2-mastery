@@ -59,6 +59,16 @@ const NO_SESSION_FOCUS_MODES = new Set(['surgery', 'builder']);
 const GRAMMAR_CONCEPT_IDS = new Set(GRAMMAR_CONCEPTS.map((concept) => concept.id));
 const GOAL_TYPES = new Set(['questions', 'timed', 'due']);
 
+// P6 calibration telemetry — bucket raw elapsed time into coarse bands.
+export function bucketElapsedMs(ms) {
+  if (ms == null || ms < 0) return null;
+  if (ms < 2000) return '<2s';
+  if (ms < 5000) return '2-5s';
+  if (ms < 10000) return '5-10s';
+  if (ms < 20000) return '10-20s';
+  return '>20s';
+}
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -1696,6 +1706,16 @@ export function applyGrammarAttemptToState(state, {
     supportLevelAtScoring: attemptSupport.supportLevelAtScoring,
     mode: typeof mode === 'string' ? mode : '',
     supportContractVersion: SUPPORT_CONTRACT_VERSION,
+    // P6 calibration telemetry (event-only — never exposed in read models).
+    tags: (template?.tags || []).slice(),
+    answerSpecKind: template?.answerSpecKind || null,
+    sessionKind: typeof mode === 'string' ? mode : '',
+    elapsedMsBucket: bucketElapsedMs(null), // no client timing available yet
+    wasRetry: attempts > 1,
+    conceptStatusBefore: Object.fromEntries([...conceptIds].map(id => [id, statusesBefore.get(id) || 'new'])),
+    conceptStatusAfter: nonScoredAttempt
+      ? Object.fromEntries([...conceptIds].map(id => [id, statusesBefore.get(id) || 'new']))
+      : Object.fromEntries([...conceptIds].map(id => [id, grammarConceptStatus(state.mastery.concepts[id], nowTs)])),
     createdAt: nowTs,
   }];
   if (!nonScoredAttempt && result.misconception) {
