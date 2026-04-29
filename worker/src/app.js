@@ -47,11 +47,13 @@ import { isResetableBreakerName } from '../../src/platform/core/circuit-breaker.
 import { handleHeroReadModel } from './hero/routes.js';
 import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
+import { resolveHeroCampCommand } from './hero/camp.js';
 import {
   initialiseDailyProgress,
   markTaskStarted,
   applyClaimToProgress,
   pruneRecentClaims,
+  HERO_POOL_ROSTER_VERSION,
 } from '../../shared/hero/progress-state.js';
 import { buildClaimRecord } from '../../shared/hero/claim-contract.js';
 import { canAwardDailyCompletionCoins, applyDailyCompletionCoinAward, HERO_DAILY_COMPLETION_COINS } from '../../shared/hero/economy.js';
@@ -1730,6 +1732,142 @@ export function createWorkerApp({
                 dailyCoinsAlreadyAwarded: mutationResult.economyResult?.alreadyAwarded || false,
                 heroStatePersistenceEnabled: true,
               },
+              mutation: mutationResult.mutation || null,
+            });
+          }
+
+          // P5 U6: Camp spending commands (unlock-monster, evolve-monster)
+          if (body?.command === 'unlock-monster' || body?.command === 'evolve-monster') {
+            // Gate 1: Camp feature flag
+            if (!envFlagEnabled(env.HERO_MODE_CAMP_ENABLED)) {
+              return json({ ok: false, error: { code: 'hero_camp_disabled', message: 'Hero Camp is not enabled' } }, 409);
+            }
+            // Gate 2: Economy required for spending
+            if (!envFlagEnabled(env.HERO_MODE_ECONOMY_ENABLED)) {
+              return json({ ok: false, error: { code: 'hero_camp_misconfigured', message: 'Hero Camp requires economy to be enabled' } }, 409);
+            }
+            // Gate 3: Child UI required
+            if (!envFlagEnabled(env.HERO_MODE_CHILD_UI_ENABLED)) {
+              return json({ ok: false, error: { code: 'hero_camp_disabled', message: 'Hero Camp requires child UI to be enabled' } }, 409);
+            }
+
+            const nowTs = now();
+            const heroProgressState = await repository.readHeroProgress(heroLearnerId);
+
+            // Resolve the camp command (pure function)
+            const campResult = resolveHeroCampCommand({
+              command: body.command,
+              body,
+              heroState: heroProgressState,
+              learnerId: heroLearnerId,
+              rosterVersion: heroProgressState.heroPool?.rosterVersion || HERO_POOL_ROSTER_VERSION,
+              nowTs,
+            });
+
+            // Handle rejection
+            if (!campResult.ok) {
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_camp_command_rejected',
+                  learnerId: heroLearnerId,
+                  command: body.command,
+                  monsterId: body.monsterId || '',
+                  code: campResult.code,
+                }));
+              } catch { /* best-effort */ }
+              return json({ ok: false, error: { code: campResult.code, message: campResult.reason || campResult.code } }, campResult.httpStatus || 400);
+            }
+
+            // Handle idempotent duplicates (no mutation needed)
+            if (campResult.heroCampAction?.status === 'already-owned' || campResult.heroCampAction?.status === 'already-stage') {
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_camp_command_idempotent',
+                  learnerId: heroLearnerId,
+                  command: body.command,
+                  monsterId: body.monsterId || '',
+                  status: campResult.heroCampAction.status,
+                }));
+              } catch { /* best-effort */ }
+              return json({ ok: true, heroCampAction: campResult.heroCampAction });
+            }
+
+            // Execute mutation through runHeroCommand (same CAS / receipt / batch pattern as claim-task)
+            const heroCommand = {
+              command: body.command,
+              learnerId: heroLearnerId,
+              requestId: body.requestId,
+              correlationId: body.correlationId || null,
+              expectedLearnerRevision: body.expectedLearnerRevision,
+            };
+
+            const mutationResult = await repository.runHeroCommand(session.accountId, heroLearnerId, heroCommand, async () => {
+              const intent = campResult.intent;
+              const updatedHeroPool = { ...heroProgressState.heroPool };
+              updatedHeroPool.monsters = { ...updatedHeroPool.monsters, [intent.newMonsterState.monsterId]: intent.newMonsterState };
+              updatedHeroPool.lastUpdatedAt = nowTs;
+              updatedHeroPool.recentActions = [
+                ...(updatedHeroPool.recentActions || []),
+                intent.actionRecord,
+              ].slice(-30);
+
+              const updatedEconomy = { ...heroProgressState.economy };
+              updatedEconomy.ledger = [...(updatedEconomy.ledger || []), intent.ledgerEntry].slice(-180);
+              updatedEconomy.balance = intent.newBalance;
+              updatedEconomy.lifetimeSpent = intent.newLifetimeSpent;
+              updatedEconomy.lastUpdatedAt = nowTs;
+
+              const updatedState = {
+                ...heroProgressState,
+                heroPool: updatedHeroPool,
+                economy: updatedEconomy,
+              };
+
+              return { state: updatedState };
+            });
+
+            // Fire-and-forget event_log (non-fatal)
+            try {
+              const db = requireDatabase(env);
+              const eventType = body.command === 'unlock-monster'
+                ? 'hero.camp.monster.invited'
+                : 'hero.camp.monster.grown';
+              await run(db, `
+                INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO NOTHING
+              `, [
+                `hero-evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                heroLearnerId,
+                null,
+                'hero-mode',
+                eventType,
+                JSON.stringify({ command: body.command, monsterId: body.monsterId, ledgerEntryId: campResult.intent.ledgerEntry.entryId }),
+                nowTs,
+                session.accountId,
+              ]);
+            } catch (err) {
+              // eslint-disable-next-line no-console
+              console.error('[hero] camp event_log write failed:', err.message);
+            }
+
+            try {
+              // eslint-disable-next-line no-console
+              console.log(JSON.stringify({
+                event: 'hero_camp_command_succeeded',
+                learnerId: heroLearnerId,
+                command: body.command,
+                monsterId: body.monsterId || '',
+                cost: campResult.intent.ledgerEntry.amount * -1,
+                balanceAfter: campResult.intent.newBalance,
+              }));
+            } catch { /* best-effort */ }
+
+            return json({
+              ok: true,
+              heroCampAction: campResult.heroCampAction,
               mutation: mutationResult.mutation || null,
             });
           }
