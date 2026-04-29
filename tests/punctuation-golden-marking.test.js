@@ -23,6 +23,12 @@ import { listCommasInsertDsl } from '../shared/punctuation/dsl-families/list-com
 import { semicolonListFixDsl } from '../shared/punctuation/dsl-families/semicolon-list-fix.js';
 import { sentenceEndingsInsertDsl } from '../shared/punctuation/dsl-families/sentence-endings-insert.js';
 import { speechInsertDsl } from '../shared/punctuation/dsl-families/speech-insert.js';
+import { frontedAdverbialFixDsl } from '../shared/punctuation/dsl-families/fronted-adverbial-fix.js';
+import { frontedAdverbialCombineDsl } from '../shared/punctuation/dsl-families/fronted-adverbial-combine.js';
+import { parenthesisFixDsl } from '../shared/punctuation/dsl-families/parenthesis-fix.js';
+import { parenthesisCombineDsl } from '../shared/punctuation/dsl-families/parenthesis-combine.js';
+import { parenthesisSpeechParagraphDsl } from '../shared/punctuation/dsl-families/parenthesis-speech-paragraph.js';
+import { colonListInsertDsl } from '../shared/punctuation/dsl-families/colon-list-insert.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -62,6 +68,12 @@ const FAMILIES = [
   { name: 'semicolon-list-fix', dsl: semicolonListFixDsl, mode: 'fix' },
   { name: 'sentence-endings-insert', dsl: sentenceEndingsInsertDsl, mode: 'insert' },
   { name: 'speech-insert', dsl: speechInsertDsl, mode: 'insert' },
+  { name: 'fronted-adverbial-fix', dsl: frontedAdverbialFixDsl, mode: 'fix' },
+  { name: 'fronted-adverbial-combine', dsl: frontedAdverbialCombineDsl, mode: 'combine' },
+  { name: 'parenthesis-fix', dsl: parenthesisFixDsl, mode: 'fix' },
+  { name: 'parenthesis-combine', dsl: parenthesisCombineDsl, mode: 'combine' },
+  { name: 'parenthesis-speech-paragraph', dsl: parenthesisSpeechParagraphDsl, mode: 'paragraph' },
+  { name: 'colon-list-insert', dsl: colonListInsertDsl, mode: 'insert' },
 ];
 
 // ─── Main test ────────────────────────────────────────────────────────────────
@@ -139,8 +151,8 @@ test('golden marking tests: all DSL families pass accept cases and fail reject c
     );
   }
 
-  // Final sanity: we must have tested a meaningful number
-  assert.ok(totalTemplatesTested >= 7 * 8, `Expected at least 56 templates tested, got ${totalTemplatesTested}`);
+  // Final sanity: we must have tested a meaningful number (19 DSL families * 8 templates each)
+  assert.ok(totalTemplatesTested >= 19 * 8, `Expected at least 152 templates tested, got ${totalTemplatesTested}`);
   assert.ok(totalAcceptPassed >= totalTemplatesTested, `Expected at least ${totalTemplatesTested} accept passes, got ${totalAcceptPassed}`);
   assert.ok(totalRejectPassed >= totalTemplatesTested, `Expected at least ${totalTemplatesTested} reject passes, got ${totalRejectPassed}`);
 
