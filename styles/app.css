@@ -10478,6 +10478,59 @@ html { scroll-behavior: smooth; }
   gap: 20px;
 }
 
+/* --- U4 (refactor ui-consolidation): platform hero engine adoption ------- */
+/* `.setup-main` carries `min-height: 610px; overflow: hidden;
+   view-transition-name: spelling-hero-card` (app.css:4588-4608) to fit
+   Spelling's single-screen hero card. Punctuation's mission dashboard is
+   ~1000-1200px (hero + progress + monster row + map link + secondary
+   drawer) and must not inherit that 610px floor nor share the Spelling
+   view-transition name (collision risk). `overflow: visible` keeps
+   focus-ring rendering intact at the monster-meter edges. */
+.punctuation-setup-main {
+  min-height: auto;
+  overflow: visible;
+  view-transition-name: none;
+}
+
+/* KS2 44×44 tap-target floor for the platform `LengthPicker` adopted on
+   the Punctuation mission dashboard. The shared `.length-option` class
+   does NOT pin `min-height / min-width` — Grammar/Spelling rely on
+   padding + typography to carry the equivalent visual weight. Punctuation's
+   KS2 contract (mirrored on `.punctuation-length-toggle button` at line
+   10423-10439) demands the 44×44 floor explicitly, so the selector is
+   scoped narrowly to the mission dashboard (and the broader
+   `.punctuation-surface` anchor for future Punctuation adopters) so
+   Spelling/Grammar pickers are untouched. */
+.punctuation-mission-dashboard .length-option,
+.punctuation-surface .length-option {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 14px;
+}
+
+/* Bellstorm-gold `:focus-visible` ring — paired with the tap-target
+   rule so the Punctuation picker keeps both KS2 a11y attributes on
+   adoption. Same `#B8873F` hue + 18% alpha as
+   `.punctuation-length-toggle button:focus-visible`. Scoped to the
+   Punctuation surface so the Grammar / Spelling pickers keep their
+   default focus ring. */
+.punctuation-mission-dashboard .length-option:focus-visible,
+.punctuation-surface .length-option:focus-visible {
+  outline: none;
+  border-color: #B8873F;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+}
+
+/* --- Legacy hero chrome (dead selectors — kept one release cycle) ------- */
+/* The pre-U4 Punctuation Setup painted its hero via a static `<img
+   srcSet>` inside `.punctuation-dashboard-hero`. U4 moves backdrop
+   painting to the platform `HeroBackdrop` (which uses
+   `background-image` on `.punctuation-hero-backdrop`). The rules below
+   are retained for one release cycle so any external stylesheet /
+   admin-tool selector that targeted the old class does not break
+   mid-rollout. Follow-up PR removes them once Playwright locators
+   and the Admin Debug Bundle have caught up. */
+
 /* Hero: Bellstorm backdrop + headline + primary CTA */
 .punctuation-dashboard-hero {
   display: grid;
