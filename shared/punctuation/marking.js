@@ -6,6 +6,7 @@ const FACET_LABELS = Object.freeze({
   quote_variant: 'Matched inverted commas',
   speech_punctuation: 'Speech punctuation inside the closing inverted comma',
   reporting_clause: 'Reporting-clause comma',
+  reporting_clause_words: 'Reporting clause preserved',
   capitalisation: 'Capital letters',
   preservation: 'Target words preserved',
   content_preservation: 'Original words preserved',
@@ -709,9 +710,31 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
     || (rubric.reportingPosition === 'before' && shape === 'reporting-before')
     || (rubric.reportingPosition === 'after' && shape === 'reporting-after');
 
+  // Reporting-clause word enforcement: when rubric.reportingClause is supplied,
+  // verify the answer contains the required clause words (additive to P7 comma logic).
+  const expectedClauseWords = typeof rubric.reportingClause === 'string' && rubric.reportingClause.trim()
+    ? rubric.reportingClause.trim()
+    : null;
+  let clauseWordsOk = true;
+  if (expectedClauseWords) {
+    if (shape === 'speech-only') {
+      // No reporting clause in the answer at all — required clause omitted
+      clauseWordsOk = false;
+    } else {
+      // Extract the reporting clause text from the answer (text outside quotes)
+      const clauseText = shape === 'reporting-before'
+        ? beforeOpeningQuote(text, quote.pair)
+        : afterClosingQuote(text, quote.pair);
+      clauseWordsOk = includesWords(clauseText, expectedClauseWords);
+    }
+  }
+
   facets.push(facet('quote_variant', quoteOk));
   facets.push(facet('speech_punctuation', speechOk));
   facets.push(facet('reporting_clause', reportingOk));
+  if (expectedClauseWords) {
+    facets.push(facet('reporting_clause_words', clauseWordsOk));
+  }
   facets.push(facet('capitalisation', capitalOk));
   facets.push(facet('preservation', wordsOk));
   facets.push(facet('unwanted_punctuation', unwantedOk));
@@ -726,6 +749,7 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
   if (!capitalOk) tags.push('speech.capitalisation_missing');
   if (!wordsOk) tags.push('speech.words_changed');
   if (!unwantedOk) tags.push('speech.unwanted_punctuation');
+  if (expectedClauseWords && !clauseWordsOk) tags.push('speech.reporting_clause_changed');
 
   return {
     correct: facets.every((entry) => entry.ok),
