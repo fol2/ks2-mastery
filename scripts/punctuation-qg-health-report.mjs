@@ -200,6 +200,24 @@ function computeUnsupportedReservedEvents() {
   return { reserved, deprecated };
 }
 
+function computeTelemetryTestClassification() {
+  const declared = [];
+  const emitted = [];
+  const proofTested = [];
+  const smokeTested = [];
+  const reserved = [];
+
+  for (const [key, entry] of Object.entries(PUNCTUATION_TELEMETRY_MANIFEST)) {
+    declared.push(key);
+    if (entry.status === 'emitted') emitted.push(key);
+    if (entry.testLevel === 'proof') proofTested.push(key);
+    if (entry.testLevel === 'smoke') smokeTested.push(key);
+    if (entry.status === 'reserved') reserved.push(key);
+  }
+
+  return { declared, emitted, proofTested, smokeTested, reserved };
+}
+
 function countEmittedEvents() {
   return Object.values(PUNCTUATION_TELEMETRY_MANIFEST)
     .filter((entry) => entry.status === 'emitted')
@@ -248,6 +266,7 @@ export function buildHealthReport({ fixture = null, manifest = PUNCTUATION_CONTE
   const duplicateStemModelClusters = computeDuplicateStemModelClusters(manifest);
   const unsupportedReservedEvents = computeUnsupportedReservedEvents();
   const emittedEventCount = countEmittedEvents();
+  const telemetryTestClassification = computeTelemetryTestClassification();
 
   return {
     signatureExposure,
@@ -262,6 +281,7 @@ export function buildHealthReport({ fixture = null, manifest = PUNCTUATION_CONTE
     duplicateStemModelClusters,
     unsupportedReservedEvents,
     emittedEventCount,
+    telemetryTestClassification,
   };
 }
 
@@ -385,6 +405,19 @@ export function formatHealthReportMarkdown(report) {
       }
     }
   }
+  lines.push('');
+
+  // l. Telemetry test classification
+  lines.push('## Telemetry Test Classification');
+  lines.push('');
+  const tc = report.telemetryTestClassification;
+  lines.push('| Category | Count | Events |');
+  lines.push('|----------|-------|--------|');
+  lines.push(`| Declared | ${tc.declared.length} | — |`);
+  lines.push(`| Emitted | ${tc.emitted.length} | — |`);
+  lines.push(`| Proof-tested | ${tc.proofTested.length} | ${tc.proofTested.join(', ') || '—'} |`);
+  lines.push(`| Smoke-tested | ${tc.smokeTested.length} | ${tc.smokeTested.join(', ') || '—'} |`);
+  lines.push(`| Reserved | ${tc.reserved.length} | ${tc.reserved.join(', ') || '—'} |`);
   lines.push('');
 
   return lines.join('\n');

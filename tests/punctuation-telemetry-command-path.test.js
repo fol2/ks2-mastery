@@ -795,6 +795,27 @@ test('telemetry manifest event values match telemetry-events.js values', () => {
   for (const [key, entry] of Object.entries(PUNCTUATION_TELEMETRY_MANIFEST)) {
     assert.equal(entry.event, PUNCTUATION_TELEMETRY_EVENTS[key], `Event value mismatch for ${key}`);
     assert.ok(['emitted', 'reserved', 'deprecated'].includes(entry.status), `Invalid status for ${key}: ${entry.status}`);
+    assert.ok(
+      entry.testLevel === 'proof' || entry.testLevel === 'smoke' || entry.testLevel === null,
+      `Invalid testLevel for ${key}: ${entry.testLevel} (must be 'proof', 'smoke', or null)`,
+    );
+  }
+});
+
+test('telemetry manifest testLevel is null only for non-emitted events', () => {
+  for (const [key, entry] of Object.entries(PUNCTUATION_TELEMETRY_MANIFEST)) {
+    if (entry.status === 'emitted') {
+      assert.notEqual(
+        entry.testLevel, null,
+        `Emitted event ${key} must have testLevel 'proof' or 'smoke', not null`,
+      );
+    }
+    if (entry.status === 'reserved') {
+      assert.equal(
+        entry.testLevel, null,
+        `Reserved event ${key} must have testLevel null`,
+      );
+    }
   }
 });
 
