@@ -1,11 +1,15 @@
 import { readOnlyLearnerActionBlockReason } from '../../platform/hubs/shell-access.js';
-// SH2-U5: the AccessDeniedCard is Admin + Parent Hub's load-failure
-// fallback (cited by the plan as one of the two ErrorCard consumers).
-// We re-skin the inner feedback block on top of the shared primitive so
-// a future `data-error-code` debug hook is already wired in. The outer
-// `.card` chrome + "Back to dashboard" action row stay bespoke because
-// this fallback specifically navigates back to the dashboard rather
-// than offering a retry — different semantic than ErrorCard's onRetry.
+// SH2-U5 / P2 U2: the AccessDeniedCard is Admin + Parent Hub's
+// load-failure fallback (cited by the plan as one of the two ErrorCard
+// consumers). The inner feedback block rides on the shared `ErrorCard`
+// primitive so a future `data-error-code` debug hook is already wired
+// in, and the outer `.card` chrome is now the shared `Card` primitive
+// — preserving the bespoke `.access-denied-card` className for any
+// scoped CSS hooks. The "Back to dashboard" action row stays bespoke
+// because this fallback specifically navigates back to the dashboard
+// rather than offering a retry — different semantic than ErrorCard's
+// onRetry.
+import { Card } from '../../platform/ui/Card.jsx';
 import { ErrorCard } from '../../platform/ui/ErrorCard.jsx';
 
 export function formatTimestamp(value) {
@@ -37,11 +41,11 @@ export function AccessDeniedCard({ title, detail, onBack, code = '' }) {
   // SH2-U8: inline style prop migrated to `.access-denied-actions` class
   // (see docs/hardening/csp-inline-style-inventory.md).
   return (
-    <section className="card access-denied-card">
+    <Card as="section" className="access-denied-card">
       <ErrorCard title={title} body={detail} code={code} />
       <div className="actions access-denied-actions">
         <button className="btn secondary" type="button" onClick={onBack}>Back to dashboard</button>
       </div>
-    </section>
+    </Card>
   );
 }

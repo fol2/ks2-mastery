@@ -1,4 +1,3 @@
-import React from 'react';
 import { MonsterRender } from '../../platform/game/render/MonsterRender.jsx';
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { getHeroMonsterAssetSrc } from '../../platform/hero/hero-monster-assets.js';
 
 /**

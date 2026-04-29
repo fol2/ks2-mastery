@@ -1,4 +1,3 @@
-import React from 'react';
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { CodexCreatureVisual } from './CodexCreature.jsx';
 import {

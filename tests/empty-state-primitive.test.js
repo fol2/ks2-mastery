@@ -324,3 +324,168 @@ test('Primitives keep padding sane at mobile-360 (≤ 380px viewport clamp block
   assert.ok(loadingBlockPresent, '.loading-skeleton must have a narrow-viewport padding override');
   assert.ok(errorBlockPresent, '.error-card must have a narrow-viewport padding override');
 });
+
+// ---------- P2 U2: Card + SectionHeader ---------- //
+
+test('Card renders <div class="card [tone]"> with declared tone modifier and children', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { Card } from ${absoluteSpecifier('src/platform/ui/Card.jsx')};
+    const html = renderToStaticMarkup(
+      <Card tone="soft"><p>Inside the card.</p></Card>
+    );
+    console.log(html);
+  `);
+  assert.match(html, /^<div class="card soft"/, 'Card must render <div class="card soft"> for tone="soft"');
+  assert.match(html, /Inside the card\./, 'children must render inside the Card');
+});
+
+test('Card with no accent does NOT emit a --card-accent CSS variable', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { Card } from ${absoluteSpecifier('src/platform/ui/Card.jsx')};
+    const html = renderToStaticMarkup(<Card>plain</Card>);
+    console.log(html);
+  `);
+  assert.doesNotMatch(html, /--card-accent/, 'Card without accent prop must not emit the --card-accent variable, keeping the CSP inline-style ledger unchanged for the common case');
+  assert.doesNotMatch(html, /style=/, 'Card without accent must render no inline style at all');
+});
+
+test('Card with accent="var(--grammar-accent)" emits --card-accent variable in inline style', async () => {
+  // U2 plan: only Grammar's --grammar-accent is exercised as the working
+  // test case. Punctuation accent waits for U6.
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { Card } from ${absoluteSpecifier('src/platform/ui/Card.jsx')};
+    const html = renderToStaticMarkup(
+      <Card accent="var(--grammar-accent)">grammar-tinted</Card>
+    );
+    console.log(html);
+  `);
+  assert.match(html, /--card-accent\s*:\s*var\(--grammar-accent\)/, 'Card with accent must emit --card-accent: var(--grammar-accent)');
+});
+
+test('Card with as="article" produces <article> element while preserving .card class', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { Card } from ${absoluteSpecifier('src/platform/ui/Card.jsx')};
+    const html = renderToStaticMarkup(<Card as="article">art</Card>);
+    console.log(html);
+  `);
+  assert.match(html, /^<article class="card"/, 'as="article" must render <article class="card">');
+  assert.doesNotMatch(html, /<div /, 'no <div> wrapper should appear when as="article"');
+});
+
+test('Card forwards data-* + aria-* attributes for locator preservation', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { Card } from ${absoluteSpecifier('src/platform/ui/Card.jsx')};
+    const html = renderToStaticMarkup(
+      <Card as="section" data-section="hero" aria-label="Today's lesson">
+        body
+      </Card>
+    );
+    console.log(html);
+  `);
+  assert.match(html, /data-section="hero"/, 'data-section must pass through');
+  assert.match(html, /aria-label="Today&#x27;s lesson"/, 'aria-label must pass through');
+});
+
+test('SectionHeader renders eyebrow + title + subtitle + slots in DOM order with semantic landmarks', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SectionHeader } from ${absoluteSpecifier('src/platform/ui/SectionHeader.jsx')};
+    import { Button } from ${absoluteSpecifier('src/platform/ui/Button.jsx')};
+    const html = renderToStaticMarkup(
+      <SectionHeader
+        eyebrow="Today"
+        title="Word Bank"
+        subtitle="Words you have learned this week."
+        statusChip={<span className="chip">Live</span>}
+        trailingAction={<Button onClick={() => {}}>Start</Button>}
+      />
+    );
+    console.log(html);
+  `);
+  // Semantic landmark: <header> wrapper.
+  assert.match(html, /^<header class="section-header"/, 'SectionHeader default rendering must use <header> landmark');
+  // Heading element default level is 2.
+  assert.match(html, /<h2 class="section-title">Word Bank<\/h2>/, 'title must render as <h2 class="section-title">');
+  // Eyebrow + subtitle classes carry over from existing app.css.
+  assert.match(html, /<span class="eyebrow">Today<\/span>/);
+  assert.match(html, /<p class="subtitle">Words you have learned this week\.<\/p>/);
+  // DOM order: eyebrow → title → subtitle → statusChip → trailingAction.
+  const eyebrowIdx = html.indexOf('eyebrow');
+  const titleIdx = html.indexOf('section-title');
+  const subtitleIdx = html.indexOf('subtitle');
+  const statusIdx = html.indexOf('section-header-status');
+  const actionIdx = html.indexOf('section-header-action');
+  assert.ok(eyebrowIdx < titleIdx, 'eyebrow must precede title');
+  assert.ok(titleIdx < subtitleIdx, 'title must precede subtitle');
+  assert.ok(subtitleIdx < statusIdx, 'subtitle must precede statusChip');
+  assert.ok(statusIdx < actionIdx, 'statusChip must precede trailingAction in DOM order');
+  // Integration: trailingAction slot accepts a Button — assert Button rendered.
+  // Focus visibility is a runtime concern (.btn:focus-visible CSS rule);
+  // SSR cannot observe focus state, so we assert the Button child is
+  // present and not stripped by the slot pass-through.
+  assert.match(html, /<button[^>]*class="btn primary"[^>]*>Start<\/button>/, 'Button trailingAction must render inside the slot');
+});
+
+test('SectionHeader honours level prop and clamps invalid values', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SectionHeader } from ${absoluteSpecifier('src/platform/ui/SectionHeader.jsx')};
+    const html = renderToStaticMarkup(
+      <>
+        <SectionHeader title="Page" level={1} />
+        <SectionHeader title="Sub" level={3} />
+        <SectionHeader title="Bogus" level={9} />
+      </>
+    );
+    console.log(html);
+  `);
+  assert.match(html, /<h1 class="section-title">Page<\/h1>/, 'level=1 → <h1>');
+  assert.match(html, /<h3 class="section-title">Sub<\/h3>/, 'level=3 → <h3>');
+  assert.match(html, /<h6 class="section-title">Bogus<\/h6>/, 'invalid level=9 must clamp to <h6>');
+});
+
+test('SectionHeader skips empty slots cleanly (no empty <span> / <p> / status / action wrapper)', async () => {
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SectionHeader } from ${absoluteSpecifier('src/platform/ui/SectionHeader.jsx')};
+    const html = renderToStaticMarkup(<SectionHeader title="Just a title" />);
+    console.log(html);
+  `);
+  assert.match(html, /<h2 class="section-title">Just a title<\/h2>/);
+  assert.doesNotMatch(html, /class="eyebrow"/, 'no eyebrow span when prop is omitted');
+  assert.doesNotMatch(html, /class="subtitle"/, 'no subtitle paragraph when prop is omitted');
+  assert.doesNotMatch(html, /section-header-status/, 'no status wrapper when statusChip is omitted');
+  assert.doesNotMatch(html, /section-header-action/, 'no action wrapper when trailingAction is omitted');
+});
+
+test('SubjectRuntimeFallback renders ErrorCard inside the Card wrapper without changing accessibility tree', async () => {
+  // Integration check: the U2 migration of SubjectRuntimeFallback must
+  // continue to surface (a) the `.card.border-top.subject-runtime-fallback`
+  // class string for any scoped CSS hooks, (b) the inner ErrorCard's
+  // role="alert" + data-error-code, and (c) the diagnostic footer text.
+  const html = await renderFixture(`
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { SubjectRuntimeFallback } from ${absoluteSpecifier('src/surfaces/subject/SubjectRuntimeFallback.jsx')};
+    const html = renderToStaticMarkup(
+      <SubjectRuntimeFallback
+        subject={{ name: 'Grammar', accent: '#3E6FA8' }}
+        runtimeEntry={{ phase: 'render', methodName: 'renderPractice', message: 'Crashed.' }}
+        activeTab="practice"
+        onRetry={() => {}}
+      />
+    );
+    console.log(html);
+  `);
+  // Card preserves the legacy class string + element type.
+  assert.match(html, /<section class="card error border-top subject-runtime-fallback"/, 'SubjectRuntimeFallback must wrap in <section class="card error border-top subject-runtime-fallback">');
+  // Inner ErrorCard preserves its alert affordance.
+  assert.match(html, /role="alert"/, 'inner ErrorCard must keep role="alert" for AT');
+  assert.match(html, /data-error-code="renderPractice"/, 'inner ErrorCard must keep data-error-code');
+  // Diagnostic footer remains visible to operators.
+  assert.match(html, /Failure point: renderPractice/);
+});

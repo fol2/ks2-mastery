@@ -1,4 +1,3 @@
-import React from 'react';
 
 // Post-finish mini-test review surface. Mounted from `GrammarSummaryScene`
 // once the Worker sets `grammar.phase === 'summary'` and populates

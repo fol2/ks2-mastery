@@ -1,4 +1,3 @@
-import React from 'react';
 import { GRAMMAR_CLIENT_CONCEPTS } from '../metadata.js';
 import {
   GRAMMAR_CLUSTER_DISPLAY_NAMES,

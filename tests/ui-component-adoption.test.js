@@ -29,6 +29,21 @@ const BUTTON_CONSUMERS = [
   'src/surfaces/hubs/AdminPanelFrame.jsx',
 ];
 
+// P2 U2: closed allowlist of production surfaces that have adopted the
+// shared `Card` primitive. Every entry must import `Card` from the
+// shared primitive AND render `<Card` in source. The hub-utils file
+// re-exports the AccessDeniedCard helper used by Admin + Parent hubs.
+const CARD_CONSUMERS = [
+  'src/surfaces/subject/SubjectRuntimeFallback.jsx',
+  'src/surfaces/hubs/hub-utils.js',
+];
+
+// P2 U2: SectionHeader does not yet have a load-bearing migration site
+// (the plan lists the primitive as net-new with low-risk wrapper sites
+// only). The allowlist is empty at U2 close and grows in U7's
+// third-consumer falsifier pass.
+const SECTION_HEADER_CONSUMERS = [];
+
 function readFile(relative) {
   return readFileSync(path.join(rootDir, relative), 'utf8');
 }
@@ -59,4 +74,52 @@ test('Button has ≥ 5 unique production import sites at U1 close', () => {
     BUTTON_CONSUMERS.length >= 5,
     `U1 minimum is 5 Button consumers; got ${BUTTON_CONSUMERS.length}.`,
   );
+});
+
+test('every U2 surface imports the shared Card primitive', () => {
+  for (const file of CARD_CONSUMERS) {
+    const source = readFile(file);
+    assert.match(
+      source,
+      /import\s*\{[^}]*\bCard\b[^}]*\}\s*from\s*['"][^'"]*platform\/ui\/Card(\.jsx)?['"]/,
+      `${file} must import Card from the shared primitive at src/platform/ui/Card.jsx. ` +
+      'If this surface legitimately no longer needs the primitive, update the CARD_CONSUMERS '
+      + 'allowlist deliberately.',
+    );
+    assert.match(
+      source,
+      /<Card\b/,
+      `${file} imports Card but never uses it — a tree-shake would remove the import. ` +
+      'Either render the primitive in the migrated wrapper(s) or remove the import.',
+    );
+  }
+});
+
+test('Card has ≥ 2 unique production import sites at U2 close', () => {
+  // U2 plan calls out 2–3 low-risk wrapper migrations
+  // (SubjectRuntimeFallback, AccessDeniedCard, optionally Home). Two is
+  // the load-bearing minimum that proves the slot-composition shape.
+  assert.ok(
+    CARD_CONSUMERS.length >= 2,
+    `U2 minimum is 2 Card consumers; got ${CARD_CONSUMERS.length}.`,
+  );
+});
+
+test('SectionHeader allowlist consumers (if any) import + render the primitive', () => {
+  // Empty at U2 close — see SECTION_HEADER_CONSUMERS comment. The test
+  // exists so adding an entry to the allowlist is enough to enforce
+  // adoption without rewriting the test.
+  for (const file of SECTION_HEADER_CONSUMERS) {
+    const source = readFile(file);
+    assert.match(
+      source,
+      /import\s*\{[^}]*\bSectionHeader\b[^}]*\}\s*from\s*['"][^'"]*platform\/ui\/SectionHeader(\.jsx)?['"]/,
+      `${file} must import SectionHeader from src/platform/ui/SectionHeader.jsx`,
+    );
+    assert.match(
+      source,
+      /<SectionHeader\b/,
+      `${file} imports SectionHeader but never renders it — tree-shake would remove the import.`,
+    );
+  }
 });

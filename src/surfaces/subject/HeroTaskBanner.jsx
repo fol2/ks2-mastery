@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   HERO_INTENT_LABELS,
   HERO_PROGRESS_COPY,

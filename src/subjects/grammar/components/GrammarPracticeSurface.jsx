@@ -1,4 +1,3 @@
-import React from 'react';
 import { GrammarAnalyticsScene } from './GrammarAnalyticsScene.jsx';
 import { GrammarConceptBankScene } from './GrammarConceptBankScene.jsx';
 import { GrammarSessionScene } from './GrammarSessionScene.jsx';

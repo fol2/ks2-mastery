@@ -1,4 +1,3 @@
-import React from 'react';
 import { CodexCreatureTrigger } from './CodexCreature.jsx';
 import {
   CODEX_STAGES,

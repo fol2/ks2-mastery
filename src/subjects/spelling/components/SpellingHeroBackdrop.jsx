@@ -1,4 +1,3 @@
-import React from 'react';
 import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 
 /* Thin Spelling wrapper around the platform HeroBackdrop.
