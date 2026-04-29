@@ -342,5 +342,143 @@ export function createHeroModeClient({
     return responsePayload;
   }
 
-  return { readModel, startTask, claimTask };
+  // -----------------------------------------------------------------------
+  // unlockMonster
+  // -----------------------------------------------------------------------
+
+  async function unlockMonster({ learnerId, monsterId, branch, requestId } = {}) {
+    const cleanLearnerId = String(learnerId || '').trim();
+    if (!cleanLearnerId || !monsterId || !requestId) {
+      throw new HeroModeClientError({
+        code: 'hero_client_invalid',
+        status: 400,
+        retryable: false,
+        message: 'unlockMonster requires learnerId, monsterId, and requestId.',
+      });
+    }
+
+    const expectedLearnerRevision = typeof getLearnerRevision === 'function'
+      ? Number(getLearnerRevision(cleanLearnerId)) || 0
+      : 0;
+
+    // Body shape: Hero unlock-monster command.
+    // NEVER send cost, amount, balance, ledgerEntryId, stage, owned, payload.
+    const body = {
+      command: 'unlock-monster',
+      learnerId: cleanLearnerId,
+      monsterId,
+      branch: branch ?? null,
+      requestId,
+      expectedLearnerRevision,
+    };
+
+    let response;
+    try {
+      response = await fetchFn('/api/hero/command', {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      throw new HeroModeClientError({
+        code: 'network_error',
+        status: 0,
+        retryable: true,
+        message: error?.message || 'Hero unlock-monster request could not reach the server.',
+      });
+    }
+
+    const responsePayload = await parseJson(response);
+
+    if (!response.ok || responsePayload?.ok === false) {
+      const errorCode = responsePayload?.code || responsePayload?.error || 'hero_unlock_failed';
+      const heroError = new HeroModeClientError({
+        code: errorCode,
+        status: response.status,
+        payload: responsePayload,
+      });
+
+      if (errorCode === 'stale_write' && typeof onStaleWrite === 'function') {
+        onStaleWrite({ error: heroError, learnerId: cleanLearnerId });
+      }
+
+      throw heroError;
+    }
+
+    return responsePayload;
+  }
+
+  // -----------------------------------------------------------------------
+  // evolveMonster
+  // -----------------------------------------------------------------------
+
+  async function evolveMonster({ learnerId, monsterId, targetStage, requestId } = {}) {
+    const cleanLearnerId = String(learnerId || '').trim();
+    if (!cleanLearnerId || !monsterId || targetStage == null || !requestId) {
+      throw new HeroModeClientError({
+        code: 'hero_client_invalid',
+        status: 400,
+        retryable: false,
+        message: 'evolveMonster requires learnerId, monsterId, targetStage, and requestId.',
+      });
+    }
+
+    const expectedLearnerRevision = typeof getLearnerRevision === 'function'
+      ? Number(getLearnerRevision(cleanLearnerId)) || 0
+      : 0;
+
+    // Body shape: Hero evolve-monster command.
+    // NEVER send cost, amount, balance, ledgerEntryId, stage, owned, payload.
+    const body = {
+      command: 'evolve-monster',
+      learnerId: cleanLearnerId,
+      monsterId,
+      targetStage,
+      requestId,
+      expectedLearnerRevision,
+    };
+
+    let response;
+    try {
+      response = await fetchFn('/api/hero/command', {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      throw new HeroModeClientError({
+        code: 'network_error',
+        status: 0,
+        retryable: true,
+        message: error?.message || 'Hero evolve-monster request could not reach the server.',
+      });
+    }
+
+    const responsePayload = await parseJson(response);
+
+    if (!response.ok || responsePayload?.ok === false) {
+      const errorCode = responsePayload?.code || responsePayload?.error || 'hero_evolve_failed';
+      const heroError = new HeroModeClientError({
+        code: errorCode,
+        status: response.status,
+        payload: responsePayload,
+      });
+
+      if (errorCode === 'stale_write' && typeof onStaleWrite === 'function') {
+        onStaleWrite({ error: heroError, learnerId: cleanLearnerId });
+      }
+
+      throw heroError;
+    }
+
+    return responsePayload;
+  }
+
+  return { readModel, startTask, claimTask, unlockMonster, evolveMonster };
 }
