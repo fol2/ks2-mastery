@@ -64,6 +64,7 @@
     "verify:grammar-qg-p6": "npm run audit:grammar-qg && npm run audit:grammar-qg:deep && node --test tests/grammar-question-generator-audit.test.js tests/grammar-qg-p5-depth.test.js tests/grammar-qg-p5-content-quality.test.js tests/grammar-qg-p5-report-validation.test.js tests/grammar-qg-p6-governance.test.js tests/grammar-qg-p6-telemetry.test.js tests/grammar-qg-p6-health-report.test.js tests/grammar-qg-p6-mixed-transfer-calibration.test.js tests/grammar-qg-p6-retention.test.js tests/grammar-qg-p6-review-pack.test.js tests/grammar-functionality-completeness.test.js tests/grammar-production-smoke.test.js tests/grammar-selection.test.js tests/grammar-engine.test.js",
 
     "verify:grammar-qg-p7": "npm run verify:grammar-qg-p6 && node --test tests/grammar-qg-p7-governance.test.js tests/grammar-qg-p7-elapsed-timing.test.js tests/grammar-qg-p7-event-expansion.test.js tests/grammar-qg-p7-health-report.test.js tests/grammar-qg-p7-action-candidates.test.js tests/grammar-qg-p7-production-evidence.test.js tests/grammar-qg-p7-analytics-view.test.js",
+    "verify:grammar-qg-p8": "npm run verify:grammar-qg-p7 && node --test tests/grammar-qg-p8-question-quality.test.js tests/grammar-qg-p8-governance.test.js tests/grammar-qg-p8-oracles.test.js tests/grammar-qg-p8-review-register.test.js tests/grammar-qg-p8-ux-support.test.js",
     "grammar:qg:calibrate": "node scripts/grammar-qg-calibrate.mjs",
     "verify:punctuation-qg": "node scripts/verify-punctuation-qg.mjs",
     "verify:punctuation-qg:p5": "node scripts/verify-punctuation-qg-p5.mjs"
