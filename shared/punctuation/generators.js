@@ -69,15 +69,15 @@ function stableJson(value) {
 }
 
 /**
- * Strip `explanation` and `explanationRuleId` keys from a validator structure before hashing.
- * These are P6/P7 learner-feedback additions that must not alter template identity.
+ * Strip `explanation`, `explanationRuleId`, and `preserveTokens` keys before hashing.
+ * These are learner-feedback/preservation additions that must not alter template identity.
  */
 function stripExplanationForHash(value) {
   if (Array.isArray(value)) return value.map(stripExplanationForHash);
   if (!isPlainObject(value)) return value;
   return Object.fromEntries(
     Object.entries(value)
-      .filter(([key]) => key !== 'explanation' && key !== 'explanationRuleId')
+      .filter(([key]) => key !== 'explanation' && key !== 'explanationRuleId' && key !== 'preserveTokens')
       .map(([key, v]) => [key, stripExplanationForHash(v)]),
   );
 }

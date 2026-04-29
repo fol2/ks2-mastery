@@ -8,6 +8,7 @@ const FACET_LABELS = Object.freeze({
   reporting_clause: 'Reporting-clause comma',
   capitalisation: 'Capital letters',
   preservation: 'Target words preserved',
+  content_preservation: 'Original words preserved',
   apostrophe_forms: 'Apostrophe forms',
   comma_placement: 'Comma placement',
   boundary_mark: 'Boundary mark',
@@ -244,6 +245,51 @@ function wordSequencePreserved(text, words = []) {
 function wordCount(value) {
   const clean = stripPunctuation(value);
   return clean ? clean.split(' ').filter(Boolean).length : 0;
+}
+
+/**
+ * Derive preservation tokens from a stem string by stripping punctuation
+ * and splitting into a word array.
+ */
+export function derivePreserveTokens(stem) {
+  return stripPunctuation(stem).split(' ').filter(Boolean);
+}
+
+/**
+ * Evaluate whether a closed-item answer preserves the original word sequence
+ * (only punctuation/capitalisation changes allowed).
+ *
+ * Returns { preserved, extraWords, missingWords }.
+ */
+export function evaluatePreservation(answer, item) {
+  const text = normaliseAnswerText(answer);
+  const expectedTokens = Array.isArray(item.preserveTokens) && item.preserveTokens.length > 0
+    ? item.preserveTokens
+    : derivePreserveTokens(item.stem || '');
+
+  if (!expectedTokens.length) {
+    return { preserved: true, extraWords: [], missingWords: [] };
+  }
+
+  const answerWords = stripPunctuation(text).split(' ').filter(Boolean);
+  const expectedCount = expectedTokens.length;
+
+  // Reject answers with word count significantly exceeding expected (catches extra tails)
+  if (answerWords.length > expectedCount + 2) {
+    const extra = answerWords.slice(expectedCount);
+    return { preserved: false, extraWords: extra, missingWords: [] };
+  }
+
+  // Check all expected words appear in order
+  const preserved = wordSequencePreserved(text, expectedTokens);
+  if (!preserved) {
+    const expectedLower = expectedTokens.map((w) => w.toLowerCase());
+    const answerLower = answerWords.map((w) => w.toLowerCase());
+    const missing = expectedLower.filter((w) => !answerLower.includes(w));
+    return { preserved: false, extraWords: [], missingWords: missing };
+  }
+
+  return { preserved: true, extraWords: [], missingWords: [] };
 }
 
 function minimumWordCount(validator = {}) {
@@ -693,6 +739,22 @@ function markTransfer(item, answer) {
   const rawText = isPlainObject(answer) ? answer.typed ?? answer.answer : answer;
   const text = normaliseAnswerText(rawText);
   const validator = item.validator || {};
+
+  // Content preservation gate: for insert/fix items with a validator,
+  // reject answers that add extra content beyond the original words.
+  // Word-change detection is left to the validator-specific logic (better diagnostics).
+  if ((item.mode === 'insert' || item.mode === 'fix') && validator.type) {
+    const preservation = evaluatePreservation(text, item);
+    if (!preservation.preserved && preservation.extraWords.length > 0) {
+      return {
+        correct: false,
+        expected: item.model || '',
+        note: 'Keep the original words — only change the punctuation.',
+        misconceptionTags: ['content.words_added_or_changed'],
+        facets: [facet('content_preservation', false)],
+      };
+    }
+  }
 
   if (validator.type === 'startsWithWordQuestion') {
     const firstWord = String(validator.word || '').toLowerCase();
@@ -1150,6 +1212,21 @@ function markCombine(item, answer) {
   const rawText = isPlainObject(answer) ? answer.typed ?? answer.answer : answer;
   const text = normaliseAnswerText(rawText);
   const validator = item.validator || {};
+
+  // Content preservation gate for combine items with a validator.
+  // Only fires on extra-tail violations; word-change is left to validator logic.
+  if (validator.type) {
+    const preservation = evaluatePreservation(text, item);
+    if (!preservation.preserved && preservation.extraWords.length > 0) {
+      return {
+        correct: false,
+        expected: item.model || '',
+        note: 'Keep the original words — only change the punctuation.',
+        misconceptionTags: ['content.words_added_or_changed'],
+        facets: [facet('content_preservation', false)],
+      };
+    }
+  }
   const capitalOk = sentenceStartsWithCapital(text);
   const requiredTerminal = terminalMarkFromModel(item);
   const terminalOk = sentenceEnds(text, requiredTerminal);
