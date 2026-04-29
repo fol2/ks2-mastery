@@ -317,6 +317,25 @@ function requiredTokenCoverage(text, tokens = []) {
   };
 }
 
+export function evaluateMeaningfulness(text, validator, item) {
+  const minWords = validator.minMeaningfulWords ?? 5;
+  if (minWords === 0) return { meaningful: true, wordCount: wordCount(text), allWordsRequired: false };
+  if (item?.mode === 'paragraph') return { meaningful: true, wordCount: wordCount(text), allWordsRequired: false };
+
+  const count = wordCount(text);
+  const tokens = (Array.isArray(validator.tokens) ? validator.tokens : [])
+    .map((t) => stripPunctuation(t).toLowerCase())
+    .filter(Boolean);
+  const answerWords = stripPunctuation(text).toLowerCase().split(' ').filter(Boolean);
+  const allWordsRequired = tokens.length > 0 && answerWords.every((word) => tokens.includes(word));
+
+  return {
+    meaningful: count >= minWords && !allWordsRequired,
+    wordCount: count,
+    allWordsRequired,
+  };
+}
+
 function terminalMarkFromModel(item, fallback = '.') {
   const clean = canonicalPunctuationText(item?.model || acceptedAnswers(item)[0] || '');
   return clean.match(/([.?!])["']?$/)?.[1] || fallback;
@@ -789,24 +808,32 @@ function markTransfer(item, answer) {
     const terminalOk = sentenceEnds(text);
     const sentenceOk = transferSentenceOk(item, text);
     const completeOk = completeEnoughSentence(text, validator);
-    const correct = tokensOk && capitalOk && terminalOk && sentenceOk && completeOk;
+    const meaningfulness = item?.mode !== 'paragraph'
+      ? evaluateMeaningfulness(text, validator, item)
+      : { meaningful: true, wordCount: wordCount(text), allWordsRequired: false };
+    const meaningfulOk = meaningfulness.meaningful;
+    const correct = tokensOk && capitalOk && terminalOk && sentenceOk && completeOk && meaningfulOk;
+    const showMeaningfulFacet = minimumWordCount(validator) > 0 || !meaningfulOk;
     return {
       correct,
       expected: item.model || '',
-      note: missing.length ? `Include these exact forms: ${missing.join(', ')}.` : 'Good. The required punctuated forms are present.',
+      note: !meaningfulOk
+        ? 'Include your punctuated forms in a complete sentence.'
+        : (missing.length ? `Include these exact forms: ${missing.join(', ')}.` : 'Good. The required punctuated forms are present.'),
       misconceptionTags: correct ? [] : [...new Set([
         ...(tokensOk ? [] : itemTags(item)),
         ...(capitalOk ? [] : ['apostrophe.capitalisation_missing']),
         ...(terminalOk ? [] : ['apostrophe.terminal_missing']),
         ...(sentenceOk ? [] : ['transfer.extra_sentence']),
         ...(completeOk ? [] : ['transfer.sentence_fragment']),
+        ...(meaningfulOk ? [] : ['transfer.sentence_fragment']),
       ])],
       facets: [
         facet('preservation', tokensOk),
         facet('capitalisation', capitalOk),
         facet('terminal_punctuation', terminalOk),
         ...(item.mode === 'paragraph' ? [] : [facet('single_sentence', sentenceOk)]),
-        ...(minimumWordCount(validator) > 0 ? [facet('sentence_completeness', completeOk)] : []),
+        ...(showMeaningfulFacet ? [facet('sentence_completeness', completeOk && meaningfulOk)] : []),
       ],
     };
   }
