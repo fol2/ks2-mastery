@@ -7,6 +7,7 @@ import {
   GRAMMAR_TEMPLATE_METADATA,
   createGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
+import { markByAnswerSpec } from '../worker/src/subjects/grammar/answer-spec.js';
 
 const DEFAULT_SEEDS = Object.freeze([1, 2, 3]);
 
@@ -127,6 +128,64 @@ export function buildGrammarContentQualityAudit(seeds = DEFAULT_SEEDS) {
               detail: 'Raw prompt text equals the accepted answer — nothing to fix',
             });
             break;
+          }
+        }
+      }
+
+      // --- HARD FAIL 6: Near-miss marks correct ---
+      const nearMiss6 = question.answerSpec?.nearMiss;
+      if (Array.isArray(nearMiss6) && nearMiss6.length > 0 && question.answerSpec) {
+        for (const nm of nearMiss6) {
+          const result = markByAnswerSpec(question.answerSpec, nm);
+          if (result.correct === true) {
+            hardFailures.push({
+              rule: 'near-miss-marks-correct',
+              templateId: template.id,
+              seed,
+              detail: `Near-miss "${nm}" is marked correct by markByAnswerSpec`,
+            });
+            break;
+          }
+        }
+      }
+
+      // --- HARD FAIL 7: Near-miss equals golden (constructed-response only) ---
+      const constructedKinds7 = ['normalisedText', 'acceptedSet', 'punctuationPattern'];
+      if (question.answerSpec && constructedKinds7.includes(question.answerSpec.kind)) {
+        const golden7 = question.answerSpec.golden;
+        const nearMiss7 = question.answerSpec.nearMiss;
+        if (Array.isArray(golden7) && golden7.length > 0 && Array.isArray(nearMiss7) && nearMiss7.length > 0) {
+          const normGoldens = golden7.map(normaliseOption);
+          for (const nm of nearMiss7) {
+            if (normGoldens.includes(normaliseOption(nm))) {
+              hardFailures.push({
+                rule: 'near-miss-equals-golden',
+                templateId: template.id,
+                seed,
+                detail: `Near-miss "${nm}" equals a golden answer after normalisation`,
+              });
+              break;
+            }
+          }
+        }
+      }
+
+      // --- HARD FAIL 8: Raw prompt passes marking ---
+      const constructedKinds = ['normalisedText', 'acceptedSet', 'punctuationPattern'];
+      if (question.answerSpec && constructedKinds.includes(question.answerSpec.kind)) {
+        const nearMiss8 = question.answerSpec.nearMiss;
+        if (Array.isArray(nearMiss8) && nearMiss8.length > 0) {
+          for (const nm of nearMiss8) {
+            const result = markByAnswerSpec(question.answerSpec, nm);
+            if (result.correct === true) {
+              hardFailures.push({
+                rule: 'raw-prompt-passes',
+                templateId: template.id,
+                seed,
+                detail: `Near-miss/raw value "${nm}" passes markByAnswerSpec — question is a no-op`,
+              });
+              break;
+            }
           }
         }
       }
