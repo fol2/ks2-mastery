@@ -310,7 +310,7 @@ test('buildEvidencePanelModel surfaces threshold violations from P5 30-learner f
         certifying: false,
         dryRun: false,
         learners: 30,
-        finishedAt: '2026-04-28T21:33:08.171Z',
+        finishedAt: freshDate,
         commit: '1c56e06',
         failures: ['maxBootstrapP95Ms'],
         thresholdViolations: [
