@@ -681,7 +681,21 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
             answerFormId={answerFormId}
           />
         ) : null}
-        <p className="grammar-prompt">{item.promptText || 'Loading the next Grammar item...'}</p>
+        {item.promptParts ? (
+          <p className="grammar-prompt" aria-label={item.screenReaderPromptText || undefined}>
+            {item.promptParts.map((part, i) => {
+              switch (part.kind) {
+                case 'emphasis': return <em key={i}>{part.text}</em>;
+                case 'underline': return <span key={i} className="prompt-underline">{part.text}</span>;
+                case 'lineBreak': return <br key={i} />;
+                case 'sentence': return <span key={i} className="prompt-sentence">{part.text}</span>;
+                default: return <span key={i}>{part.text}</span>;
+              }
+            })}
+          </p>
+        ) : (
+          <p className="grammar-prompt">{item.promptText || 'Loading the next Grammar item...'}</p>
+        )}
         {item.checkLine ? <p className="grammar-check-line">{item.checkLine}</p> : null}
         <ReadAloudControls grammar={grammar} />
         {!isMiniTest ? <GuidancePanel support={session.supportGuidance} /> : null}

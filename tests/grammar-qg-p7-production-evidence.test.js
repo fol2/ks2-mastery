@@ -272,16 +272,16 @@ describe('Grammar QG P7 — Smoke artefact schema enforcement', () => {
     assert.ok(missing.includes('timestamp'));
   });
 
-  it('P8 bumps the content release ID for production content fix', async () => {
-    // P8 fixes speech_punctuation_fix content defect and bumps the release ID
+  it('P9 bumps the content release ID for prompt cue contract', async () => {
+    // P9 adds structured prompt cues and bumps the release ID
     const { GRAMMAR_CONTENT_RELEASE_ID } = await import('../worker/src/subjects/grammar/content.js');
-    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p8-2026-04-29',
-      'P8 must use new content release ID since it fixes production content');
+    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p9-2026-04-29',
+      'P9 must use new content release ID since it adds learner-visible serialisation fields');
   });
 
   it('smoke evidence file path uses current content release ID', () => {
-    const contentReleaseId = 'grammar-qg-p8-2026-04-29';
+    const contentReleaseId = 'grammar-qg-p9-2026-04-29';
     const expectedFileName = `grammar-production-smoke-${contentReleaseId}.json`;
-    assert.equal(expectedFileName, 'grammar-production-smoke-grammar-qg-p8-2026-04-29.json');
+    assert.equal(expectedFileName, 'grammar-production-smoke-grammar-qg-p9-2026-04-29.json');
   });
 });
