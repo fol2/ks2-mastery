@@ -1672,6 +1672,10 @@ export function createWorkerApp({
             // Build response — structured logs for economy
             try {
               if (mutationResult.economyResult?.awarded) {
+                const completedTaskCount = mutationResult.state?.daily?.completedTaskIds?.length || 0;
+                const coinsDateKey = mutationResult.state?.daily?.dateKey || heroProgressState?.daily?.dateKey || null;
+                const coinsDailyTasks = heroProgressState?.daily?.tasks || {};
+                const coinsUniqueSubjects = new Set(Object.values(coinsDailyTasks).map(t => t.subjectId).filter(Boolean));
                 // eslint-disable-next-line no-console
                 console.log(JSON.stringify({
                   event: 'hero_daily_coins_awarded',
@@ -1680,6 +1684,9 @@ export function createWorkerApp({
                   amount: mutationResult.economyResult.amount,
                   balanceAfter: mutationResult.economyResult.balanceAfter,
                   ledgerEntryId: mutationResult.economyResult.ledgerEntryId,
+                  eligibleSubjectCount: coinsUniqueSubjects.size || null,
+                  completedTaskCount,
+                  dateKey: coinsDateKey,
                 }));
               } else if (mutationResult.economyResult?.alreadyAwarded) {
                 // eslint-disable-next-line no-console
@@ -1710,6 +1717,13 @@ export function createWorkerApp({
               }
             } catch { /* best-effort */ }
             try {
+              // Derive learning-health dimensions for telemetry enrichment
+              const claimedProgressTask = heroProgressState?.daily?.tasks?.[body.taskId];
+              const dailyTasks = heroProgressState?.daily?.tasks || {};
+              const dailyTaskValues = Object.values(dailyTasks);
+              const totalTaskCount = dailyTaskValues.length || 1;
+              const sameSubjectCount = dailyTaskValues.filter(t => t.subjectId === (claimResult.subjectId || null)).length;
+              const uniqueSubjects = new Set(dailyTaskValues.map(t => t.subjectId).filter(Boolean));
               // eslint-disable-next-line no-console
               console.log(JSON.stringify({
                 event: 'hero_task_claim_succeeded',
@@ -1718,6 +1732,11 @@ export function createWorkerApp({
                 taskId: body.taskId || '',
                 subjectId: claimResult.subjectId || '',
                 dailyStatus: mutationResult.state?.daily?.status || '',
+                heroTaskIntent: claimedProgressTask?.intent || null,
+                launcher: claimedProgressTask?.launcher || null,
+                eligibleSubjectCount: uniqueSubjects.size || null,
+                postMegaFlag: null,
+                subjectMixShare: sameSubjectCount > 0 ? Math.round((sameSubjectCount / totalTaskCount) * 100) / 100 : null,
               }));
             } catch { /* best-effort */ }
 
@@ -1799,6 +1818,9 @@ export function createWorkerApp({
                     monsterId: body.monsterId || '',
                     balance: heroProgressState?.economy?.balance ?? 0,
                     required: campResult.reason,
+                    // P6 U8: economy health dimensions
+                    currentBalance: heroProgressState?.economy?.balance ?? 0,
+                    requiredAmount: campResult.requiredAmount ?? 0,
                   }));
                 }
               } catch { /* best-effort */ }
@@ -1880,6 +1902,7 @@ export function createWorkerApp({
             }
 
             try {
+              const _totalOwnedMonsters = Object.values(heroProgressState.heroPool?.monsters || {}).filter(m => m.owned).length;
               // eslint-disable-next-line no-console
               console.log(JSON.stringify({
                 event: 'hero_camp_command_succeeded',
@@ -1888,6 +1911,10 @@ export function createWorkerApp({
                 monsterId: body.monsterId || '',
                 cost: campResult.intent.ledgerEntry.amount * -1,
                 balanceAfter: campResult.intent.newBalance,
+                // P6 U8: economy health dimensions
+                balanceAfterSpend: campResult.intent.newBalance,
+                monsterStageAfter: campResult.intent.newMonsterState?.stage ?? 0,
+                totalOwnedMonsters: _totalOwnedMonsters,
               }));
               // Specific invite/grow telemetry
               if (body.command === 'unlock-monster') {
@@ -1899,6 +1926,10 @@ export function createWorkerApp({
                   branch: body.branch || '',
                   cost: campResult.intent.ledgerEntry.amount * -1,
                   balance: campResult.intent.newBalance,
+                  // P6 U8: economy health dimensions
+                  balanceAfterSpend: campResult.intent.newBalance,
+                  monsterStageAfter: 0,
+                  totalOwnedMonsters: _totalOwnedMonsters,
                 }));
               } else {
                 // eslint-disable-next-line no-console
@@ -1910,6 +1941,10 @@ export function createWorkerApp({
                   stageAfter: campResult.intent.ledgerEntry.stageAfter,
                   cost: campResult.intent.ledgerEntry.amount * -1,
                   balance: campResult.intent.newBalance,
+                  // P6 U8: economy health dimensions
+                  balanceAfterSpend: campResult.intent.newBalance,
+                  monsterStageAfter: campResult.intent.ledgerEntry.stageAfter ?? 0,
+                  totalOwnedMonsters: _totalOwnedMonsters,
                 }));
               }
             } catch { /* best-effort */ }

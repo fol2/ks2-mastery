@@ -70,6 +70,7 @@ function resolveUnlockMonster(body, heroState, learnerId, rosterVersion, nowTs) 
       code: result.code,
       httpStatus: result.code === 'hero_insufficient_coins' ? 409 : 400,
       reason: result.reason,
+      requiredAmount: result.requiredAmount ?? 0,
     };
   }
 
@@ -130,6 +131,7 @@ function resolveEvolveMonster(body, heroState, learnerId, rosterVersion, nowTs) 
       code: result.code,
       httpStatus: result.code === 'hero_insufficient_coins' ? 409 : 400,
       reason: result.reason,
+      requiredAmount: result.requiredAmount ?? 0,
     };
   }
 

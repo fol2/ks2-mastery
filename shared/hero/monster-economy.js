@@ -67,7 +67,7 @@ export function computeMonsterInviteIntent({
   // Cost and affordability
   const cost = getInviteCost();
   if (economyState.balance < cost) {
-    return { ok: false, code: 'hero_insufficient_coins', reason: `Need ${cost} coins, have ${economyState.balance}` };
+    return { ok: false, code: 'hero_insufficient_coins', reason: `Need ${cost} coins, have ${economyState.balance}`, requiredAmount: cost };
   }
 
   // Deterministic IDs
@@ -191,7 +191,7 @@ export function computeMonsterGrowIntent({
   // Cost and affordability
   const cost = getGrowCost(targetStage);
   if (economyState.balance < cost) {
-    return { ok: false, code: 'hero_insufficient_coins', reason: `Need ${cost} coins, have ${economyState.balance}` };
+    return { ok: false, code: 'hero_insufficient_coins', reason: `Need ${cost} coins, have ${economyState.balance}`, requiredAmount: cost };
   }
 
   // Deterministic IDs
