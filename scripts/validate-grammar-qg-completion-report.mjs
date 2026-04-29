@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { buildGrammarQuestionGeneratorAudit } from './audit-grammar-question-generator.mjs';
 import { buildGrammarContentQualityAudit } from './audit-grammar-content-quality.mjs';
+import { validateReportAgainstManifest, validateEvidenceManifest } from './validate-grammar-qg-certification-evidence.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -516,6 +517,17 @@ export function validateGrammarCompletionReport(reportContent, opts = {}) {
         actual: `evidence file not found at ${path.relative(rootDir, evidencePath)}`,
         message: `Report claims post-deploy smoke passed but evidence file does not exist: ${path.relative(rootDir, evidencePath)}`,
       });
+    }
+  }
+
+  // --- P9-U6: cross-validate oracle claims against certification manifest ---
+  const manifestPath = opts.manifestPath ||
+    path.join(rootDir, 'reports', 'grammar', 'grammar-qg-p9-certification-manifest.json');
+  if (existsSync(manifestPath) && !opts.skipManifestValidation) {
+    const manifestResult = validateEvidenceManifest(manifestPath);
+    if (manifestResult.valid) {
+      const oracleResult = validateReportAgainstManifest(reportContent, manifestResult.manifest);
+      mismatches.push(...oracleResult.mismatches);
     }
   }
 
