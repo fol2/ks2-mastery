@@ -195,3 +195,10 @@ test('evaluateSpeechRubric returns reporting_position facet false for wrong posi
   const positionFacet = result.facets.find((f) => f.id === 'reporting_position');
   assert.equal(positionFacet.ok, false);
 });
+
+// ─── Speech-only shape (no reporting clause) ────────────────────────────────
+
+test('speech-only shape (no reporting clause) is accepted with reportingPosition: any', () => {
+  const result = mark(makeItem({ rubric: { ...makeItem().rubric, reportingPosition: 'any' } }), '"Can we start now?"');
+  assert.equal(result.correct, true);
+});

@@ -214,11 +214,7 @@ function reportingCommaOk(text, pair, rubric, detectedShape) {
     const before = beforeOpeningQuote(text, pair);
     return /,\s*$/.test(before);
   }
-  // Explicit position 'after' with no shape detection fallback
-  if (rubric?.reportingPosition === 'after') return true;
-  const before = beforeOpeningQuote(text, pair);
-  if (!before) return true;
-  return /,\s*$/.test(before);
+  return true;
 }
 
 function speechPunctuationOk(quoted, requiredTerminal = null) {
@@ -653,7 +649,7 @@ export function evaluateSpeechRubric(answer, rubric = {}) {
   const shape = detectReportingShape(text, quote.pair);
   const reportingOk = reportingCommaOk(text, quote.pair, rubric, shape);
   const positionAllowsAfter = rubric?.reportingPosition === 'after' || rubric?.reportingPosition === 'any';
-  const sentenceCapitalOk = (positionAllowsAfter && shape === 'reporting-after')
+  const sentenceCapitalOk = (positionAllowsAfter && shape !== 'reporting-before')
     ? sentenceStartsWithCapital(text) || /^["'"'“‘]/.test(text)
     : sentenceStartsWithCapital(text);
   const capitalOk = sentenceCapitalOk && quotedWordsStartWithCapital(quoted);
