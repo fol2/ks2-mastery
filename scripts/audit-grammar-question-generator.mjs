@@ -97,7 +97,7 @@ function buildSignatureAudit(seeds) {
   for (const template of GRAMMAR_TEMPLATE_METADATA) {
     if (!template.generative) continue;
     if (!template.generatorFamilyId) missing.push(template.id);
-    const strictVariantTemplate = (template.tags || []).includes('qg-p1') || (template.tags || []).includes('qg-p3') || (template.tags || []).includes('qg-p4');
+    const strictVariantTemplate = (template.tags || []).some(tag => /^qg-p\d+$/.test(tag));
     for (const seed of seeds) {
       const question = createGrammarQuestion({ templateId: template.id, seed });
       const signature = grammarQuestionVariantSignature(question);

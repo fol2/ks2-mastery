@@ -88,6 +88,80 @@ function extractProductionSmokeStatus(reportContent) {
 }
 
 /**
+ * Extract YAML frontmatter as a flat key→value map.
+ * Only handles top-level scalar and list fields (no nested objects).
+ */
+function extractFrontmatter(reportContent) {
+  const fm = {};
+  const fmBlock = reportContent.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmBlock) return fm;
+
+  const lines = fmBlock[1].split(/\r?\n/);
+  let currentKey = null;
+  let currentList = null;
+
+  for (const line of lines) {
+    const scalarMatch = line.match(/^(\w[\w_]*):\s+(.+)$/);
+    if (scalarMatch) {
+      if (currentKey && currentList) fm[currentKey] = currentList;
+      currentKey = scalarMatch[1];
+      currentList = null;
+      fm[currentKey] = scalarMatch[2].trim();
+      continue;
+    }
+    const listStartMatch = line.match(/^(\w[\w_]*):\s*$/);
+    if (listStartMatch) {
+      if (currentKey && currentList) fm[currentKey] = currentList;
+      currentKey = listStartMatch[1];
+      currentList = [];
+      continue;
+    }
+    const listItemMatch = line.match(/^\s+-\s+(.+)$/);
+    if (listItemMatch && currentList) {
+      currentList.push(listItemMatch[1].trim());
+      continue;
+    }
+  }
+  if (currentKey && currentList) fm[currentKey] = currentList;
+  return fm;
+}
+
+/**
+ * Validate release-gate frontmatter fields.
+ * Required fields: implementation_prs (array), final_content_release_commit (string),
+ * post_merge_fix_commits (array — may be empty), final_report_commit (string).
+ */
+export function validateReleaseFrontmatter(reportContent) {
+  const fm = extractFrontmatter(reportContent);
+  const errors = [];
+
+  // implementation_prs — must be a non-empty array of strings
+  if (!Array.isArray(fm.implementation_prs) || fm.implementation_prs.length === 0) {
+    errors.push({ field: 'implementation_prs', message: 'Must be a non-empty list of PR references' });
+  }
+
+  // final_content_release_commit — must be a non-empty string (commit SHA or ref)
+  if (typeof fm.final_content_release_commit !== 'string' || fm.final_content_release_commit.length < 7) {
+    errors.push({ field: 'final_content_release_commit', message: 'Must be a commit SHA (at least 7 characters)' });
+  }
+
+  // post_merge_fix_commits — must be an array (may be empty)
+  if (!Array.isArray(fm.post_merge_fix_commits)) {
+    // Tolerate "none" or missing by treating non-array as empty
+    if (fm.post_merge_fix_commits && fm.post_merge_fix_commits !== 'none') {
+      errors.push({ field: 'post_merge_fix_commits', message: 'Must be a list (use empty list [] if none)' });
+    }
+  }
+
+  // final_report_commit — must be a non-empty string
+  if (typeof fm.final_report_commit !== 'string' || fm.final_report_commit.length < 7) {
+    errors.push({ field: 'final_report_commit', message: 'Must be a commit SHA (at least 7 characters)' });
+  }
+
+  return { valid: errors.length === 0, errors, frontmatter: fm };
+}
+
+/**
  * Extract the contentReleaseId from frontmatter or content block.
  */
 function extractContentReleaseId(reportContent) {

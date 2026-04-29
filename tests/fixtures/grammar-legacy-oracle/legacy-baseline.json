@@ -2969,7 +2969,7 @@
         "maxScore": 1,
         "misconception": null,
         "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: must. ’Must’ shows strongest obligation.",
+        "feedbackLong": "The correct answer is: must. ‘Must’ shows strongest obligation.",
         "answerText": "must",
         "minimalHint": "Check the sentence structure and the instruction again."
       },
@@ -2979,7 +2979,7 @@
         "maxScore": 1,
         "misconception": "modal_verb_confusion",
         "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: must. ’Must’ shows strongest obligation.",
+        "feedbackLong": "The correct answer is: must. ‘Must’ shows strongest obligation.",
         "answerText": "must",
         "minimalHint": "Compare how certain each modal verb sounds."
       }

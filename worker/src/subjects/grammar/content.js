@@ -1846,7 +1846,7 @@ const EXTRA_LEXICON = {
         "could",
         "should"
       ],
-      why: "’Must’ shows strongest obligation."
+      why: "‘Must’ shows strongest obligation."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: The clouds are dark, but the rain has not started. It ___ rain later.",
@@ -1856,7 +1856,7 @@ const EXTRA_LEXICON = {
         "should",
         "will"
       ],
-      why: "’Might’ shows possibility, not certainty."
+      why: "‘Might’ shows possibility, not certainty."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: You are giving advice to a friend. You ___ begin with the easier question.",
@@ -1866,7 +1866,7 @@ const EXTRA_LEXICON = {
         "might",
         "will"
       ],
-      why: "’Should’ is the modal of advice here."
+      why: "‘Should’ is the modal of advice here."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: The timetable is fixed. The coach ___ leave at 9 o’clock.",
@@ -1876,7 +1876,7 @@ const EXTRA_LEXICON = {
         "should",
         "must"
       ],
-      why: "’Will’ fits a definite future event here."
+      why: "‘Will’ fits a definite future event here."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: The teacher says this is allowed. You ___ use a dictionary during the test.",
@@ -1886,7 +1886,7 @@ const EXTRA_LEXICON = {
         "will",
         "might"
       ],
-      why: "’May’ is the modal of permission here."
+      why: "‘May’ is the modal of permission here."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: The swimmers are very strong. They ___ cross the lake without stopping.",
@@ -1896,7 +1896,7 @@ const EXTRA_LEXICON = {
         "should",
         "will"
       ],
-      why: "’Could’ expresses ability or capacity here."
+      why: "‘Could’ expresses ability or capacity here."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: The ice is very thin. You ___ not walk on the pond.",
@@ -1906,7 +1906,7 @@ const EXTRA_LEXICON = {
         "could",
         "would"
       ],
-      why: "’Must not’ expresses a strong prohibition here."
+      why: "‘Must not’ expresses a strong prohibition here."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: The forecast says sun all day. It ___ be warm enough for a picnic.",
@@ -1916,7 +1916,7 @@ const EXTRA_LEXICON = {
         "might",
         "could"
       ],
-      why: "’Should’ expresses a reasonable expectation based on evidence."
+      why: "‘Should’ expresses a reasonable expectation based on evidence."
     },
     {
       prompt: "Choose the modal verb that best fits the meaning: Ask your parents first. They ___ let you come to the party.",
@@ -1926,7 +1926,7 @@ const EXTRA_LEXICON = {
         "will",
         "shall"
       ],
-      why: "’Might’ shows an uncertain possibility that depends on someone else’s decision."
+      why: "‘Might’ shows an uncertain possibility that depends on someone else’s decision."
     }
   ]
 };
@@ -3792,25 +3792,25 @@ const TEMPLATES = [
                 stem:"In the sentence <strong>We stayed inside during the storm.</strong>, what is the word <strong>during</strong>?",
                 correct:"preposition",
                 distractors:["conjunction","adverb","pronoun"],
-                why:"’During’ introduces the phrase ‘during the storm’, so it is a preposition."
+                why:"‘During’ introduces the phrase ‘during the storm’, so it is a preposition."
               },
               {
                 stem:"In the sentence <strong>The old bridge creaked loudly.</strong>, what is the word <strong>loudly</strong>?",
                 correct:"adverb",
                 distractors:["adjective","verb","preposition"],
-                why:"’Loudly’ tells us how the bridge creaked, so it is an adverb."
+                why:"‘Loudly’ tells us how the bridge creaked, so it is an adverb."
               },
               {
                 stem:"In the sentence <strong>She packed her bag and left.</strong>, what is the word <strong>and</strong>?",
                 correct:"conjunction",
                 distractors:["preposition","adverb","pronoun"],
-                why:"’And’ joins two clauses together, so it is a conjunction."
+                why:"‘And’ joins two clauses together, so it is a conjunction."
               },
               {
                 stem:"In the sentence <strong>Several children waited by the gate.</strong>, what is the word <strong>Several</strong>?",
                 correct:"determiner",
                 distractors:["adjective","pronoun","adverb"],
-                why:"’Several’ tells us how many children, working as a determiner before the noun."
+                why:"‘Several’ tells us how many children, working as a determiner before the noun."
               }
             ];
             const item = cases[seed % cases.length];
@@ -7326,13 +7326,14 @@ function buildP4MixedTransferChoiceQuestion(template, seed, cases) {
   });
   const stemParts = [`<p>${escapeHtml(item.prompt)}</p>`];
   if (item.example) stemParts.push(`<p><strong>${escapeHtml(item.example)}</strong></p>`);
+  const conceptNames = template.skillIds.map(s => s.replace(/_/g, ' ')).join(' and ');
   return makeBaseQuestion(template, seed, {
     marks: 1,
     answerSpec,
     stemHtml: stemParts.join(""),
     inputSpec: { type: "single_choice", label: "Choose one", options: buildChoiceOptions(rng, correct, distractors) },
     solutionLines: [
-      "Apply both grammar concepts together to find the correct answer.",
+      `This question tests ${conceptNames} together.`,
       item.why,
       `The correct option is: ${correct}`
     ],
@@ -7363,13 +7364,14 @@ function buildP4MixedTransferClassifyQuestion(template, seed, cases) {
     feedbackLong: item.why,
     answerText
   });
+  const conceptNames = template.skillIds.map(s => s.replace(/_/g, ' ')).join(' and ');
   return makeBaseQuestion(template, seed, {
     marks: rows.length,
     answerSpec,
     stemHtml: `<p>${escapeHtml(item.prompt)}</p><p><strong>${escapeHtml(item.example)}</strong></p>`,
     inputSpec: { type: "table_choice", columns: allColumns, rows: rows.map(r => ({ key: r.key, label: r.label })) },
     solutionLines: [
-      "Classify each row by applying both grammar concepts.",
+      `This question tests ${conceptNames} together.`,
       item.why,
       answerText
     ],
@@ -7958,7 +7960,7 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p5-2026-04-28';
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p6-2026-04-29';
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);
