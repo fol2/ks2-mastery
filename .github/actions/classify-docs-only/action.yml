@@ -1,0 +1,21 @@
+name: Classify docs-only changes
+description: Emits docs_only=true when every changed file is documentation.
+inputs:
+  base-sha:
+    description: Base commit SHA for the pull request diff.
+    required: false
+    default: ''
+  head-sha:
+    description: Head commit SHA for the pull request diff.
+    required: false
+    default: ''
+outputs:
+  docs_only:
+    description: Whether the change set contains only documentation files.
+    value: ${{ steps.classify.outputs.docs_only }}
+runs:
+  using: composite
+  steps:
+    - id: classify
+      shell: bash
+      run: node scripts/ci-docs-only.mjs "${{ inputs.base-sha }}" "${{ inputs.head-sha }}"
