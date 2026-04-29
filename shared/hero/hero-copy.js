@@ -71,6 +71,7 @@ export const HERO_ECONOMY_ALLOWED_FILES = Object.freeze([
   'worker/src/hero/camp.js',
   'worker/src/hero/analytics.js',
   'worker/src/hero/readiness.js',
+  'worker/src/hero/telemetry-probe.js',
 ]);
 
 // Backward compat — tests importing this get the pressure-only list
