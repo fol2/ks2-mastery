@@ -135,8 +135,12 @@ const PLACEHOLDER_TOKEN_RE = /^(pending|todo|tbc|unknown|n\/a|tbd)$/i;
 /**
  * Regex matching compound placeholder tokens — placeholder words combined with other
  * purely-alphabetic words via hyphens/underscores. Examples: "pending-report-commit",
- * "tbd-report", "report-pending". Values containing hex digits (e.g. "pending-abcdef1")
- * are NOT matched because the segments are not purely alphabetic.
+ * "tbd-report", "report-pending", "todo-sha", "unknown-commit".
+ * Values containing hex digits (e.g. "pending-abcdef1") are NOT matched because the
+ * segments are not purely alphabetic.
+ *
+ * Also matches standalone dash-prefixed patterns like "todo-anything", "tbd-anything",
+ * "unknown-anything" even with multiple segments.
  */
 const COMPOUND_PLACEHOLDER_RE = /^(pending|todo|tbc|unknown|n\/a|tbd)([-_][a-z]+)+$|^([a-z]+[-_])+(pending|todo|tbc|unknown|n\/a|tbd)$/i;
 
@@ -577,6 +581,22 @@ async function main(argv) {
   }
 
   const reportContent = readFileSync(resolved, 'utf-8');
+
+  // Gate 1: frontmatter must be free of placeholder tokens
+  const frontmatterResult = validateReleaseFrontmatter(reportContent);
+  if (!frontmatterResult.valid) {
+    if (jsonOutput) {
+      console.log(JSON.stringify({ pass: false, gate: 'frontmatter', errors: frontmatterResult.errors }, null, 2));
+    } else {
+      console.log(`FAIL: Frontmatter validation failed — ${frontmatterResult.errors.length} error(s)\n`);
+      for (const e of frontmatterResult.errors) {
+        console.log(`  [${e.field}] ${e.message}`);
+      }
+    }
+    process.exit(1);
+  }
+
+  // Gate 2: metric validation against live audit
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const result = validateGrammarCompletionReport(reportContent, { deepSeeds });
 
