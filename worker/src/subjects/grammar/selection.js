@@ -5,6 +5,7 @@ import {
   grammarQuestionVariantSignature,
   grammarTemplateGeneratorFamilyId,
 } from './content.js';
+import { isTemplateBlocked } from './certification-status.js';
 
 export const SELECTION_WEIGHTS = Object.freeze({
   due: 3.0,
@@ -396,11 +397,13 @@ export function buildGrammarPracticeQueue({
   seed = 1,
   size = 1,
   now = Date.now(),
+  includeBlocked = false,
 } = {}) {
   const safeSize = Math.max(0, Math.floor(Number(size) || 0));
   if (safeSize === 0) return [];
   const normalisedFocus = normaliseFocus(focusConceptId);
-  const pool = focusAwarePool(mode, normalisedFocus, safeSize);
+  const unfilteredPool = focusAwarePool(mode, normalisedFocus, safeSize);
+  const pool = includeBlocked ? unfilteredPool : unfilteredPool.filter((t) => !isTemplateBlocked(t.id));
   const nowTs = Number(now) || Date.now();
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
@@ -476,6 +479,7 @@ export function buildGrammarMiniPack({
   recentAttempts = [],
   seed = 1,
   now = Date.now(),
+  includeBlocked = false,
 } = {}) {
   // Contract parity with buildGrammarPracticeQueue: size=0 returns an empty
   // array rather than silently coercing to a single-item pack. Surfaced by
@@ -484,7 +488,8 @@ export function buildGrammarMiniPack({
   if (requestedSize <= 0) return [];
   const safeSize = Math.max(1, requestedSize);
   const normalisedFocus = normaliseFocus(focusConceptId);
-  const pool = focusAwarePool('satsset', normalisedFocus, safeSize);
+  const unfilteredPool = focusAwarePool('satsset', normalisedFocus, safeSize);
+  const pool = includeBlocked ? unfilteredPool : unfilteredPool.filter((t) => !isTemplateBlocked(t.id));
   const nowTs = Number(now) || Date.now();
   const rng = seededRandom(Number(seed) || 1);
   const workingRecent = Array.isArray(recentAttempts) ? recentAttempts.slice() : [];
