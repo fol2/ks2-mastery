@@ -11,12 +11,18 @@ import { expandDslTemplates } from '../shared/punctuation/template-dsl.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 
 import { apostropheContractionsDsl } from '../shared/punctuation/dsl-families/apostrophe-contractions-fix.js';
+import { apostrophePossessionInsertDsl } from '../shared/punctuation/dsl-families/apostrophe-possession-insert.js';
+import { apostropheMixParagraphDsl } from '../shared/punctuation/dsl-families/apostrophe-mix-paragraph.js';
 import { commaClarityInsertDsl } from '../shared/punctuation/dsl-families/comma-clarity-insert.js';
 import { dashClauseCombineDsl } from '../shared/punctuation/dsl-families/dash-clause-combine.js';
 import { dashClauseFixDsl } from '../shared/punctuation/dsl-families/dash-clause-fix.js';
+import { frontedSpeechParagraphDsl } from '../shared/punctuation/dsl-families/fronted-speech-paragraph.js';
 import { hyphenInsertDsl } from '../shared/punctuation/dsl-families/hyphen-insert.js';
+import { listCommasCombineDsl } from '../shared/punctuation/dsl-families/list-commas-combine.js';
+import { listCommasInsertDsl } from '../shared/punctuation/dsl-families/list-commas-insert.js';
 import { semicolonListFixDsl } from '../shared/punctuation/dsl-families/semicolon-list-fix.js';
 import { sentenceEndingsInsertDsl } from '../shared/punctuation/dsl-families/sentence-endings-insert.js';
+import { speechInsertDsl } from '../shared/punctuation/dsl-families/speech-insert.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -44,12 +50,18 @@ function buildItemFromTemplate(template, mode) {
 
 const FAMILIES = [
   { name: 'apostrophe-contractions-fix', dsl: apostropheContractionsDsl, mode: 'fix' },
+  { name: 'apostrophe-possession-insert', dsl: apostrophePossessionInsertDsl, mode: 'insert' },
+  { name: 'apostrophe-mix-paragraph', dsl: apostropheMixParagraphDsl, mode: 'paragraph' },
   { name: 'comma-clarity-insert', dsl: commaClarityInsertDsl, mode: 'insert' },
   { name: 'dash-clause-combine', dsl: dashClauseCombineDsl, mode: 'combine' },
   { name: 'dash-clause-fix', dsl: dashClauseFixDsl, mode: 'fix' },
+  { name: 'fronted-speech-paragraph', dsl: frontedSpeechParagraphDsl, mode: 'paragraph' },
   { name: 'hyphen-insert', dsl: hyphenInsertDsl, mode: 'insert' },
+  { name: 'list-commas-combine', dsl: listCommasCombineDsl, mode: 'combine' },
+  { name: 'list-commas-insert', dsl: listCommasInsertDsl, mode: 'insert' },
   { name: 'semicolon-list-fix', dsl: semicolonListFixDsl, mode: 'fix' },
   { name: 'sentence-endings-insert', dsl: sentenceEndingsInsertDsl, mode: 'insert' },
+  { name: 'speech-insert', dsl: speechInsertDsl, mode: 'insert' },
 ];
 
 // ─── Main test ────────────────────────────────────────────────────────────────
