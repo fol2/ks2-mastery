@@ -67,6 +67,8 @@ function ChoiceList({ inputSpec, required = true, response = {}, describedBy = '
 function TableChoice({ inputSpec, required = true, response = {}, describedBy = '' }) {
   const rows = Array.isArray(inputSpec?.rows) ? inputSpec.rows : [];
   const columns = Array.isArray(inputSpec?.columns) ? inputSpec.columns : [];
+  // Determine if any row uses row-specific options (heterogeneous table)
+  const isHeterogeneous = rows.some(r => Array.isArray(r.options) && r.options.length > 0);
   // SH2-U7 review follow-up (FIX-1): describedBy + aria-invalid anchored to
   // the wrapping `<div>` so assistive tech announces the error when focus
   // moves into any of the inner radios. Each row already carries its own
@@ -79,31 +81,40 @@ function TableChoice({ inputSpec, required = true, response = {}, describedBy = 
       aria-invalid={describedBy ? 'true' : undefined}
     >
       <table className="grammar-table-choice">
-        <thead>
-          <tr>
-            <th>Sentence</th>
-            {columns.map((column) => <th key={column}>{column}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, rowIndex) => (
-            <tr key={row.key}>
-              <td>{row.label}</td>
-              {columns.map((column, columnIndex) => (
-                <td key={`${row.key}-${column}`}>
-                  <input
-                    type="radio"
-                    name={row.key}
-                    value={column}
-                    aria-label={`${row.label}: ${column}`}
-                    required={required}
-                    defaultChecked={String(response[row.key] ?? '') === String(column)}
-                    data-autofocus={rowIndex || columnIndex ? null : 'true'}
-                  />
-                </td>
-              ))}
+        {!isHeterogeneous && (
+          <thead>
+            <tr>
+              <th>Sentence</th>
+              {columns.map((column) => <th key={column}>{column}</th>)}
             </tr>
-          ))}
+          </thead>
+        )}
+        <tbody>
+          {rows.map((row, rowIndex) => {
+            const rowOptions = (Array.isArray(row.options) && row.options.length > 0)
+              ? row.options
+              : columns;
+            const rowAriaLabel = row.ariaLabel || row.label;
+            return (
+              <tr key={row.key} aria-label={rowAriaLabel}>
+                <td>{row.label}</td>
+                {rowOptions.map((option, optIndex) => (
+                  <td key={`${row.key}-${option}`}>
+                    <input
+                      type="radio"
+                      name={row.key}
+                      value={option}
+                      aria-label={`${rowAriaLabel}: ${option}`}
+                      required={required}
+                      defaultChecked={String(response[row.key] ?? '') === String(option)}
+                      data-autofocus={rowIndex || optIndex ? null : 'true'}
+                    />
+                    {isHeterogeneous && <span className="grammar-table-choice-label">{option}</span>}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

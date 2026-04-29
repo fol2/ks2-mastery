@@ -213,12 +213,16 @@ function normaliseGrammarResponse(inputSpec, response) {
   }
 
   if (spec.type === 'table_choice') {
-    const allowedValues = optionValueSet(spec.columns);
+    const globalAllowed = optionValueSet(spec.columns);
     const output = {};
     for (const row of Array.isArray(spec.rows) ? spec.rows.slice(0, LIST_RESPONSE_LIMIT) : []) {
       const key = typeof row?.key === 'string' ? row.key : '';
       if (!key) continue;
-      output[key] = normaliseChoiceValue(raw[key], allowedValues);
+      // Use row-specific options when present; fall back to global columns
+      const allowed = Array.isArray(row.options) && row.options.length > 0
+        ? optionValueSet(row.options)
+        : globalAllowed;
+      output[key] = normaliseChoiceValue(raw[key], allowed);
     }
     return output;
   }
