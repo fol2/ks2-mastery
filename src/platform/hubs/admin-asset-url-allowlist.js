@@ -56,6 +56,14 @@ export function isAllowedPreviewUrl(url, options) {
     return { allowed: false, reason: 'URL is malformed.' };
   }
 
+  // Post-parse protocol check — catches evasion via tab/newline injection
+  if (parsed.protocol === 'javascript:') {
+    return { allowed: false, reason: 'javascript: protocol is forbidden.' };
+  }
+  if (parsed.protocol === 'data:') {
+    return { allowed: false, reason: 'data: protocol is forbidden.' };
+  }
+
   // Reject non-HTTPS
   if (parsed.protocol !== 'https:') {
     return { allowed: false, reason: 'Only HTTPS URLs are permitted.' };
@@ -89,7 +97,7 @@ export function isAllowedPreviewUrl(url, options) {
  */
 export function getSafePreviewUrl(url, options) {
   const result = isAllowedPreviewUrl(url, options);
-  return result.allowed ? url : null;
+  return result.allowed ? url.trim() : null;
 }
 
 /**

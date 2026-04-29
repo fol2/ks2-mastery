@@ -217,7 +217,7 @@ const HANDLER_CAPABILITY_REGISTRY = Object.freeze({
  * @returns {HandlerCapability|null}
  */
 export function getHandlerCapability(handlerKey) {
-  return HANDLER_CAPABILITY_REGISTRY[handlerKey] || null;
+  return Object.hasOwn(HANDLER_CAPABILITY_REGISTRY, handlerKey) ? HANDLER_CAPABILITY_REGISTRY[handlerKey] : null;
 }
 
 /**

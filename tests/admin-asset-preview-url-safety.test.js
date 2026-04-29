@@ -252,6 +252,37 @@ describe('action classification — new asset actions (P7 U11)', () => {
   });
 });
 
+// ─── P7 review fixes — prototype pollution guard ────────────────────────────────
+
+describe('getHandlerCapability — prototype pollution guard', () => {
+  it('returns null for "constructor" (not a registered handler)', () => {
+    assert.equal(getHandlerCapability('constructor'), null);
+  });
+
+  it('returns null for "__proto__" (not a registered handler)', () => {
+    assert.equal(getHandlerCapability('__proto__'), null);
+  });
+});
+
+// ─── P7 review fixes — trimmed URL return ────────────────────────────────────
+
+describe('getSafePreviewUrl — trimmed URL', () => {
+  it('returns trimmed URL when input has surrounding whitespace', () => {
+    const result = getSafePreviewUrl('  https://ks2-mastery.pages.dev/x  ');
+    assert.equal(result, 'https://ks2-mastery.pages.dev/x');
+  });
+});
+
+// ─── P7 review fixes — post-parse protocol evasion ──────────────────────────
+
+describe('isAllowedPreviewUrl — post-parse protocol evasion', () => {
+  it('rejects javascript: with embedded tab (tab injection bypass)', () => {
+    const result = isAllowedPreviewUrl('java\tscript:alert(1)');
+    assert.equal(result.allowed, false);
+    assert.ok(result.reason.includes('javascript:'));
+  });
+});
+
 // ─── DEFAULT_ALLOWED_DOMAINS is frozen ────────────────────────────────────────
 
 describe('DEFAULT_ALLOWED_DOMAINS', () => {
