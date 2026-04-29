@@ -211,4 +211,6 @@ return { state: updatedState, claimResult, economyResult };
 - `docs/solutions/architecture-patterns/hero-p0-read-only-shadow-subsystem-2026-04-27.md` — DJB2 hash origin and three-layer architecture
 - `docs/solutions/architecture-patterns/admin-console-p4-hardening-truthfulness-adversarial-review-2026-04-27.md` — CAS + batch() atomicity reference pattern
 - Memory: `project_d1_atomicity_batch_vs_withtransaction.md` — batch() is the ONLY atomic write on D1
+- `docs/solutions/architecture-patterns/hero-p5-calm-spending-surface-deterministic-debit-2026-04-29.md` — spending-side extension that builds on this earning foundation; adds triple-layer debit idempotency and v3 state schema
 - PR #553 — Hero Mode P4 implementation (squash merge)
+- PR #564 — Hero Mode P5 implementation (squash merge)
