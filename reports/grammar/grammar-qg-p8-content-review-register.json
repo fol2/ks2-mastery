@@ -1,0 +1,782 @@
+[
+  {
+    "conceptId": "sentence_functions",
+    "templateId": "sentence_type_table",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "sentence_functions",
+    "templateId": "question_mark_select",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "word_classes",
+    "templateId": "word_class_underlined_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "word_classes",
+    "templateId": "identify_words_in_sentence",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "noun_phrases",
+    "templateId": "expanded_noun_phrase_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "noun_phrases",
+    "templateId": "build_noun_phrase",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "adverbials",
+    "templateId": "fronted_adverbial_choose",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "adverbials",
+    "templateId": "fix_fronted_adverbial",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "clauses",
+    "templateId": "subordinate_clause_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "clauses",
+    "templateId": "combine_clauses_rewrite",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "relative_clauses",
+    "templateId": "relative_clause_identify",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "relative_clauses",
+    "templateId": "relative_clause_complete",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "tense_aspect",
+    "templateId": "tense_form_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "tense_aspect",
+    "templateId": "tense_rewrite",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "standard_english",
+    "templateId": "standard_english_pairs",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "pronouns_cohesion",
+    "templateId": "pronoun_cohesion_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "formality",
+    "templateId": "formality_pairs",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "active_passive",
+    "templateId": "active_passive_rewrite",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "subject_object",
+    "templateId": "subject_object_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "modal_verbs",
+    "templateId": "modal_verb_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "parenthesis_commas",
+    "templateId": "parenthesis_replace_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "parenthesis_commas",
+    "templateId": "parenthesis_fix_sentence",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "speech_punctuation",
+    "templateId": "speech_punctuation_fix",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "apostrophes_possession",
+    "templateId": "apostrophe_possession_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "adverbials",
+    "templateId": "explain_reason_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "standard_english",
+    "templateId": "standard_fix_sentence",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "adverbials",
+    "templateId": "proc_fronted_adverbial_fix",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "boundary_punctuation",
+    "templateId": "proc_semicolon_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "boundary_punctuation",
+    "templateId": "proc_colon_list_fix",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "boundary_punctuation",
+    "templateId": "proc_dash_boundary_fix",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "hyphen_ambiguity",
+    "templateId": "proc_hyphen_ambiguity_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "speech_punctuation",
+    "templateId": "proc_speech_punctuation_fix",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "apostrophes_possession",
+    "templateId": "proc_apostrophe_possession_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "standard_english",
+    "templateId": "proc2_standard_english_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "standard_english",
+    "templateId": "proc2_standard_english_fix",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "tense_aspect",
+    "templateId": "proc2_tense_aspect_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "modal_verbs",
+    "templateId": "proc2_modal_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "formality",
+    "templateId": "proc2_formality_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "pronouns_cohesion",
+    "templateId": "proc2_pronoun_cohesion_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "subject_object",
+    "templateId": "proc2_subject_object_identify",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "active_passive",
+    "templateId": "proc2_passive_to_active",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "relative_clauses",
+    "templateId": "proc2_relative_clause_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "adverbials",
+    "templateId": "proc2_fronted_adverbial_build",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "boundary_punctuation",
+    "templateId": "proc2_boundary_punctuation_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "sentence_functions",
+    "templateId": "proc3_sentence_function_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "word_classes",
+    "templateId": "proc3_word_class_contrast_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "noun_phrases",
+    "templateId": "proc3_noun_phrase_build",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "clauses",
+    "templateId": "proc3_clause_join_rewrite",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "parenthesis_commas",
+    "templateId": "proc3_parenthesis_commas_fix",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "hyphen_ambiguity",
+    "templateId": "proc3_hyphen_fix_meaning",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "active_passive",
+    "templateId": "qg_active_passive_choice",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "subject_object",
+    "templateId": "qg_subject_object_classify_table",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "pronouns_cohesion",
+    "templateId": "qg_pronoun_referent_identify",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "formality",
+    "templateId": "qg_formality_classify_table",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "modal_verbs",
+    "templateId": "qg_modal_verb_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "hyphen_ambiguity",
+    "templateId": "qg_hyphen_ambiguity_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "sentence_functions",
+    "templateId": "qg_p3_sentence_functions_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "word_classes",
+    "templateId": "qg_p3_word_classes_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "noun_phrases",
+    "templateId": "qg_p3_noun_phrases_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "clauses",
+    "templateId": "qg_p3_clauses_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "relative_clauses",
+    "templateId": "qg_p3_relative_clauses_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "tense_aspect",
+    "templateId": "qg_p3_tense_aspect_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "pronouns_cohesion",
+    "templateId": "qg_p3_pronouns_cohesion_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "formality",
+    "templateId": "qg_p3_formality_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "active_passive",
+    "templateId": "qg_p3_active_passive_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "subject_object",
+    "templateId": "qg_p3_subject_object_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "parenthesis_commas",
+    "templateId": "qg_p3_parenthesis_commas_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "speech_punctuation",
+    "templateId": "qg_p3_speech_punctuation_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "apostrophes_possession",
+    "templateId": "qg_p3_apostrophe_possession_explain",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "apostrophes_possession",
+    "templateId": "proc3_apostrophe_rewrite",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "sentence_functions",
+    "templateId": "qg_p4_sentence_speech_transfer",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "word_classes",
+    "templateId": "qg_p4_word_class_noun_phrase_transfer",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "adverbials",
+    "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "relative_clauses",
+    "templateId": "qg_p4_relative_parenthesis_transfer",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "tense_aspect",
+    "templateId": "qg_p4_verb_form_register_transfer",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "pronouns_cohesion",
+    "templateId": "qg_p4_cohesion_formality_transfer",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "active_passive",
+    "templateId": "qg_p4_voice_roles_transfer",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  },
+  {
+    "conceptId": "apostrophes_possession",
+    "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+    "seed": 1,
+    "reviewerDecision": "accepted",
+    "severity": null,
+    "notes": "Automated oracle pass - adult review confirmed",
+    "feedbackReviewed": true,
+    "reviewedAt": "2026-04-29T00:00:00Z"
+  }
+]
