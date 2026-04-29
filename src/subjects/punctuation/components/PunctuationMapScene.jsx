@@ -64,6 +64,7 @@ import {
   normalisePunctuationMapUi,
 } from '../service-contract.js';
 import { PunctuationSkillDetailModal } from './PunctuationSkillDetailModal.jsx';
+import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 
 // Re-export so tests that historically imported `assembleSkillRows` from
 // the scene file keep working. The canonical definition lives in the
@@ -369,22 +370,22 @@ export function PunctuationMapScene({ ui, actions }) {
         </button>
       </header>
 
-      <div className="punctuation-hero">
-        <img
-          src={scene.src}
-          srcSet={scene.srcSet}
-          sizes="(max-width: 980px) 100vw, 960px"
-          alt=""
-          aria-hidden="true"
-        />
-        <div>
+      {/* U6: platform HeroBackdrop replaces the legacy static <img> inside
+          `.punctuation-hero`. Same pattern as U5's Session-scene swap — the
+          outer `.punctuation-map-hero` is the positioning ancestor
+          (`.hero-backdrop` paints at `position: absolute; inset: 0`), while
+          `.punctuation-map-hero-content` sits above via `z-index: 1`. URL
+          is the phase-stable `bellstormSceneForPhase('map').src`. */}
+      <section className="punctuation-map-hero" style={{ position: 'relative' }}>
+        <HeroBackdrop url={scene.src} extraBackdropClassName="punctuation-hero-backdrop" />
+        <div className="punctuation-map-hero-content">
           <div className="eyebrow">{PUNCTUATION_DASHBOARD_HERO.eyebrow}</div>
           <h2 className="section-title">Punctuation Map</h2>
           <p className="subtitle">
             The 14 Punctuation skills, grouped by monster. Tap a skill to see the rule or start a short round.
           </p>
         </div>
-      </div>
+      </section>
 
       <div className="punctuation-map-filters">
         <StatusFilterChips

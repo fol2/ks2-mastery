@@ -10588,6 +10588,34 @@ html { scroll-behavior: smooth; }
   gap: 6px;
 }
 
+/* --- U6 (refactor ui-consolidation): Summary + Map scene hero chrome --- */
+/* `.punctuation-summary-hero` and `.punctuation-map-hero` are positioning
+   ancestors for the platform `HeroBackdrop` (paints via
+   `position: absolute; inset: 0`). `overflow: hidden` clips the slow pan
+   animation to the card frame; `border-radius: inherit` keeps the painted
+   region inside the rounded card corners. Their `-content` children sit
+   above the absolute-positioned backdrop via `z-index: 1`. Same idiom as
+   `.punctuation-session-hero` / `-content` above — duplication is
+   intentional for clarity; a U7 sweep may consolidate. */
+.punctuation-summary-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.punctuation-summary-hero-content {
+  position: relative;
+  z-index: 1;
+}
+.punctuation-map-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.punctuation-map-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
 /* Progress row — compact stats strip */
 .punctuation-progress-row {
   padding: 0;
