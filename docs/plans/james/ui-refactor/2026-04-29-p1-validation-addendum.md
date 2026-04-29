@@ -172,3 +172,68 @@ The following claims are **not** made by this addendum:
 - The 10 worktree failures of `tests/empty-state-primitive.test.js` are documented as environmental (esbuild + tmpdir + symlinked `node_modules` resolution); the test file itself passes 14/14 when run from the main checkout against the same commit, which is the relevant signal.
 - The bundle baseline of `206_000` is documented as **stale** and **inherited** from P1, not as the operative budget. The operative budget is `BUDGET_GZIP_BYTES = 227_000` with ~116 B working headroom.
 - This addendum does not claim that all P2 gaps listed in §5 will be closed by P2. U4 (`SegmentedControl`) extraction is conditional. Other deferrals may surface during implementation; the U7 completion report is the authoritative record of what shipped.
+
+---
+
+## 8. U4 SegmentedControl scoping pass — deferral record
+
+**Date**: 2026-04-30
+**Plan unit**: U4 — `SegmentedControl` extraction (conditional)
+**Disposition**: **DEFER** — extract no primitive; ratify `LengthPicker` as canonical for the radiogroup-shaped picker family.
+
+### 8.1 Scoping criteria (from plan §U4)
+
+A site qualifies as a SegmentedControl consumer when **all** of the following hold:
+
+1. The role is choice between **mutually exclusive** options.
+2. Options are **co-located and displayed inline**.
+3. Selection **dispatches immediately** (no submit step).
+4. Locator preservation pattern is the LengthPicker shape (`actionName` / `prefKey` / `includeDataValue`) — i.e., the consumer wires telemetry to the click event, not to a form submit.
+
+Threshold: **≥ 2 concrete consumers + 1 about-to-adopt** (pioneer-then-pattern, R10).
+
+### 8.2 Candidate sites surveyed at commit `ba2d5154`
+
+| # | Site | Pattern | Immediate dispatch? | Disposition | Reason |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `src/surfaces/hubs/AdminIncidentPanel.jsx:467-475` (`FILTER_TABS`) | `<button class="btn">` / `<button class="btn ghost">` toggle | Yes (`onClick={() => handleFilterChange(tab.key)}`) | **Qualifies** | Inline button toggle, immediate filter dispatch via `onClick`. No `role="radiogroup"` semantics today — would be added on migration. Locator: `data-testid="filter-tab-{key}"`. |
+| 2 | `src/surfaces/profile/ProfileSettingsSurface.jsx:302` (TTS `radiogroup`) | Native `<input type="radio">` inside `role="radiogroup"`, with `defaultChecked` | No — change persists via the surrounding form save path, not on selection | Excluded | Native radio input pattern with form-save dispatch. Refactoring into a button-radiogroup primitive would be a behavioural change (loss of native form participation, change of dispatch shape). |
+| 3 | `src/subjects/punctuation/components/PunctuationSessionScene.jsx:131-150` (quiz choices) | Native `<input type="radio">` inside `role="radiogroup"`, dispatches via `onSubmit` form submit | No — explicit submit step (`<button class="btn primary" type="submit">`) | Excluded | Quiz-answer pattern with explicit submit gating. Different responsibility (answer evaluation, not control). Sharing a primitive would leak quiz semantics into a generic control. |
+| 4 | `src/surfaces/hubs/AdminSectionTabs.jsx` | `role="tablist"` | n/a | Excluded | Plan §U4 explicitly excludes tablists; tabs change view, segmented controls dispatch state. |
+| 5 | `src/surfaces/hubs/MonsterVisualFieldControls.jsx:119,170` | Native `<select>` dropdown | n/a | Excluded | Dropdown, not segmented control. |
+| 6 | `src/surfaces/hubs/AdminPanelFrame.jsx`, `src/surfaces/hubs/ParentHubSurface.jsx`, other `Admin*Section.jsx` files | No qualifying segmented-control / filter-chip patterns observed | n/a | Excluded | No matching patterns in these files at this commit. |
+| 7 | `src/platform/ui/LengthPicker.jsx` (existing) | Button-radiogroup with `role="radiogroup"`, `--option-count` / `--selected-index`, `actionName` / `prefKey` / `includeDataValue` locator props | Yes | **Canonical** | Already shipped; serves as the prior art the plan asks us to ratify or extract from. |
+
+### 8.3 Threshold check
+
+- **Concrete qualifying consumers (excluding LengthPicker)**: **1** — `AdminIncidentPanel` `FILTER_TABS`.
+- **About-to-adopt qualifying consumers**: **0** — none of the surveyed sites are slated for a near-term filter-chip migration that would adopt the same shape.
+- **Threshold required**: 2 concrete + 1 about-to-adopt.
+- **Result**: Threshold **not met** (1 + 0 < 2 + 1).
+
+### 8.4 Decision and rationale
+
+Per plan §U4 line 435 ("If only 0–1 found, defer"), U4 **defers** extraction. `LengthPicker` is ratified as the canonical radiogroup-shaped picker primitive. No `SegmentedControl.jsx` is created. No migration is performed. No new test file is added. `tests/platform-length-picker.test.js` remains the byte-identical SSR oracle for the family.
+
+Why deferral is the correct call (not a delay tactic):
+
+- The three remaining `role="radiogroup"` shapes in the repo (Profile TTS, Punctuation quiz, AdminIncidentPanel filter tabs) are **structurally heterogeneous**: native-radio + form-save vs. native-radio + form-submit vs. button-toggle + immediate dispatch. Forcing them through one primitive would either (a) leak the native-radio vs. button dichotomy into the API, or (b) coerce two of them into a shape that breaks their existing native-form / native-submit participation.
+- A one-consumer extraction now would be **premature abstraction** under YAGNI — the primitive's API contract would be defined by a single call site, with the second consumer (whenever it arrives) likely to bend the API on first contact.
+- Ratifying `LengthPicker` as canonical preserves the working pattern without locking in an API for hypothetical future consumers.
+
+### 8.5 Re-examination triggers
+
+Re-open U4 (or open a successor plan) when **either** of the following lands:
+
+1. A second filter-chip / segmented-control consumer is added that matches AdminIncidentPanel's shape (button-toggle + `role="radiogroup"` + immediate dispatch + `actionName`/`prefKey`/`includeDataValue`-style locator pattern). At that point, threshold = 2 concrete; if a third is in the planned next PR, the pioneer-then-pattern rule fires.
+2. A design-system-wide audit determines that the native-radio sites (Profile TTS, Punctuation quiz) should migrate to a button-radiogroup shape for consistency — a behavioural-change project that would itself fall outside P2's scope and require its own brainstorm/plan cycle.
+
+### 8.6 Recorded in the U7 completion report
+
+The U7 completion report (`docs/plans/james/ui-refactor/ui-refactor-p2-completion-report.md`, written at the close of P2) will reference this §8 as the authoritative record of U4's deferral.
+
+### 8.7 Non-claims
+
+- This deferral does **not** assert that the AdminIncidentPanel `FILTER_TABS` site is "correct as-is" — it is a button toggle without `role="radiogroup"` semantics, and the missing accessibility role is a real (small) gap. Closing it is **out of P2 scope** and may be picked up by a future a11y-polish unit.
+- This deferral does **not** assert that Profile TTS and Punctuation quiz never need a shared primitive. It asserts only that their shape today does not match LengthPicker / AdminIncidentPanel, and that forcing them into one primitive now would be premature.
+- This deferral does **not** modify `LengthPicker.jsx`, its test, or any consumer. The "ratification" is documentation-only.
