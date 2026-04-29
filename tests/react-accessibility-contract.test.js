@@ -101,11 +101,16 @@ test('Grammar dashboard exposes labelled form controls and a single primary acti
   const harness = openGrammarDashboard();
   const html = harness.render();
 
-  // Round length and speech rate selects live inside wrapping `<label>`
-  // elements (implicit labelling).
-  assert.match(html, /<label class="field"><span>Round length<\/span>/);
-  assert.match(html, /<label class="field"><span>Speech rate<\/span>/);
-  // Exactly one primary CTA in the default dashboard state (`Begin round`).
+  // Aligned design: round length is a slide-button radiogroup with an
+  // explicit `aria-label`, mirroring Spelling's setup picker. The
+  // speech-rate picker is removed from the dashboard surface — the
+  // session scene still owns the audio-replay control. The visible
+  // tweak label sits in a sibling `<span class="tool-label">` so screen
+  // readers also have a textual anchor adjacent to the picker.
+  assert.match(html, /<span class="tool-label">Round length<\/span>/);
+  assert.match(html, /<div class="length-picker" role="radiogroup" aria-label="Round length"/);
+  assert.doesNotMatch(html, /Speech rate/);
+  // Exactly one primary CTA in the default dashboard state (`Start ...`).
   const primaryMatches = html.match(/class="btn primary[^"]*"/g) || [];
   assert.equal(primaryMatches.length, 1, 'dashboard must render a single .btn.primary');
 });

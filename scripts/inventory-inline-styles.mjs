@@ -156,6 +156,12 @@ export const CLASSIFICATION = Object.freeze({
   // Profile
   'src/surfaces/profile/ProfileSettingsSurface.jsx': 'shared-pattern-available',
 
+  // Platform UI — shared hero backdrop primitive (cross-fade + pan).
+  // Sets `--hero-bg` and `--hero-pan-delay` per layer; both are
+  // dynamic per render and per learner so they cannot be hoisted to a
+  // static class.
+  'src/platform/ui/HeroBackdrop.jsx': 'dynamic-content-driven',
+
   // Subjects — spelling
   'src/subjects/spelling/components/SpellingCommon.jsx': 'css-var-ready',
   'src/subjects/spelling/components/SpellingHeroBackdrop.jsx': 'dynamic-content-driven',

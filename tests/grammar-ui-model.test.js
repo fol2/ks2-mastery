@@ -268,50 +268,53 @@ test('P2 session-ui: grammarFeedbackTone treats non-scored manual-review feedbac
 // GRAMMAR_PRIMARY_MODE_CARDS — roster + shape contract
 // -----------------------------------------------------------------------------
 
-// U8 Phase 5: GRAMMAR_PRIMARY_MODE_CARDS is now Smart Practice only.
-test('P5-U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS has exactly one card (Smart Practice)', () => {
-  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS.length, 1);
-  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS[0].id, 'smart');
-  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS[0].featured, true);
+// Aligned design language: GRAMMAR_PRIMARY_MODE_CARDS now carries the
+// three decision-weight modes (Smart, Trouble, Mini Test) so they render
+// as a 3-card mode-row matching Spelling's setup panel.
+test('aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS has three cards (smart, trouble, satsset)', () => {
+  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS.length, 3);
+  const ids = GRAMMAR_PRIMARY_MODE_CARDS.map((card) => card.id);
+  assert.deepEqual(ids, ['smart', 'trouble', 'satsset']);
 });
 
-test('P5-U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS title is Smart Practice', () => {
-  assert.equal(GRAMMAR_PRIMARY_MODE_CARDS[0].title, 'Smart Practice');
+test('aligned view-model: only Smart Practice carries featured/recommended', () => {
+  const featured = GRAMMAR_PRIMARY_MODE_CARDS.filter((card) => card.featured === true);
+  assert.equal(featured.length, 1);
+  assert.equal(featured[0].id, 'smart');
+  assert.equal(featured[0].title, 'Smart Practice');
+  assert.equal(featured[0].badge, 'RECOMMENDED');
 });
 
-test('P5-U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS is frozen and deeply frozen', () => {
+test('aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS is frozen and deeply frozen', () => {
   assert.equal(Object.isFrozen(GRAMMAR_PRIMARY_MODE_CARDS), true);
   for (const card of GRAMMAR_PRIMARY_MODE_CARDS) {
     assert.equal(Object.isFrozen(card), true);
   }
 });
 
-test('P5-U8 view-model: GRAMMAR_PRIMARY_MODE_CARDS titles use only child copy', () => {
+test('aligned view-model: GRAMMAR_PRIMARY_MODE_CARDS titles use only child copy', () => {
   for (const card of GRAMMAR_PRIMARY_MODE_CARDS) {
     assert.equal(isGrammarChildCopy(card.title), true, `title "${card.title}" contains forbidden term`);
     assert.equal(isGrammarChildCopy(card.desc), true, `desc "${card.desc}" contains forbidden term`);
   }
 });
 
-// U8 Phase 5: Three demoted modes as secondary links.
-test('P5-U8 view-model: GRAMMAR_SECONDARY_MODE_LINKS has Grammar Bank, Mini Test, Fix Trouble Spots', () => {
-  assert.equal(GRAMMAR_SECONDARY_MODE_LINKS.length, 3);
-  const ids = GRAMMAR_SECONDARY_MODE_LINKS.map((link) => link.id);
-  assert.deepEqual(ids, ['bank', 'satsset', 'trouble']);
+test('aligned view-model: trouble card declares disabledWhenNoTrouble + child-facing disabled copy', () => {
+  const trouble = GRAMMAR_PRIMARY_MODE_CARDS.find((card) => card.id === 'trouble');
+  assert.ok(trouble, 'trouble card exists');
+  assert.equal(trouble.disabledWhenNoTrouble, true);
+  assert.equal(typeof trouble.disabledCopy, 'string');
+  assert.ok(trouble.disabledCopy.length > 0);
+  assert.equal(isGrammarChildCopy(trouble.disabledCopy), true);
 });
 
-test('P5-U8 view-model: GRAMMAR_SECONDARY_MODE_LINKS is frozen and deeply frozen', () => {
+// Aligned design language: every former secondary mode is now either a
+// primary card or sidebar shortcut. The export stays as an empty frozen
+// array so iteration sites do not need to special-case undefined.
+test('aligned view-model: GRAMMAR_SECONDARY_MODE_LINKS is empty (callers iterate no rows)', () => {
+  assert.equal(Array.isArray(GRAMMAR_SECONDARY_MODE_LINKS), true);
+  assert.equal(GRAMMAR_SECONDARY_MODE_LINKS.length, 0);
   assert.equal(Object.isFrozen(GRAMMAR_SECONDARY_MODE_LINKS), true);
-  for (const link of GRAMMAR_SECONDARY_MODE_LINKS) {
-    assert.equal(Object.isFrozen(link), true);
-  }
-});
-
-test('P5-U8 view-model: GRAMMAR_SECONDARY_MODE_LINKS titles use only child copy', () => {
-  for (const link of GRAMMAR_SECONDARY_MODE_LINKS) {
-    assert.equal(isGrammarChildCopy(link.title), true, `title "${link.title}" contains forbidden term`);
-    assert.equal(isGrammarChildCopy(link.desc), true, `desc "${link.desc}" contains forbidden term`);
-  }
 });
 
 // -----------------------------------------------------------------------------
@@ -595,11 +598,11 @@ test('U8 view-model: isGrammarChildCopy safe on empty / non-string', () => {
 // buildGrammarDashboardModel
 // -----------------------------------------------------------------------------
 
-test('P5-U8 view-model: buildGrammarDashboardModel returns safe empty shape on null inputs', () => {
+test('aligned view-model: buildGrammarDashboardModel returns safe empty shape on null inputs', () => {
   const model = buildGrammarDashboardModel(null, null, null);
   assert.equal(Array.isArray(model.modeCards), true);
-  // U8 Phase 5: modeCards now contains only Smart Practice.
-  assert.equal(model.modeCards.length, 1);
+  // Aligned design: modeCards now carries 3 decision-weight modes.
+  assert.equal(model.modeCards.length, 3);
   assert.equal(model.modeCards[0].id, 'smart');
   assert.equal(model.modeCards[0].featured, true);
   assert.equal(model.todayCards.length, 4);
@@ -608,12 +611,13 @@ test('P5-U8 view-model: buildGrammarDashboardModel returns safe empty shape on n
   assert.equal(model.concordiumProgress.total, 18);
   assert.equal(model.primaryMode, 'smart');
   assert.equal(Array.isArray(model.moreModes), true);
-  // U8 Phase 5: moreModes now includes Writing Try (6 total).
+  // U8 Phase 5: moreModes still carries six modes (Writing Try included).
   assert.equal(model.moreModes.length, 6);
   assert.equal(typeof model.writingTryAvailable, 'boolean');
-  // U8 Phase 5: secondaryLinks has 3 demoted modes.
+  // Aligned design: secondaryLinks is empty — bank moved to sidebar,
+  // satsset + trouble promoted to primary cards.
   assert.equal(Array.isArray(model.secondaryLinks), true);
-  assert.equal(model.secondaryLinks.length, 3);
+  assert.equal(model.secondaryLinks.length, 0);
 });
 
 test('U8 view-model: buildGrammarDashboardModel surfaces concept counts', () => {
@@ -1107,8 +1111,9 @@ test('P5-U7 view-model: GRAMMAR_MONSTER_STRIP_CHILD_COPY is correct child-facing
 test('P5-U7 view-model: buildGrammarMonsterStripModel + buildGrammarDashboardModel compose without conflict', () => {
   const dashboard = buildGrammarDashboardModel({}, null, {});
   const strip = buildGrammarMonsterStripModel({}, null, null);
-  // Both return valid shapes without overwriting each other.
-  assert.equal(dashboard.modeCards.length, 1);
+  // Both return valid shapes without overwriting each other. Aligned design
+  // surfaces the three decision-weight modes as primary cards.
+  assert.equal(dashboard.modeCards.length, 3);
   assert.equal(strip.length, 4);
   assert.equal(dashboard.concordiumProgress.total, 18);
 });
@@ -1124,21 +1129,22 @@ test('P5-U8 view-model: Smart Practice is the only data-featured=true element', 
   assert.equal(featuredCards[0].id, 'smart');
 });
 
-test('P5-U8 view-model: Grammar Bank, Mini Test, Fix Trouble Spots appear as secondary links', () => {
-  const ids = GRAMMAR_SECONDARY_MODE_LINKS.map((link) => link.id);
-  assert.ok(ids.includes('bank'), 'Grammar Bank in secondary links');
-  assert.ok(ids.includes('satsset'), 'Mini Test in secondary links');
-  assert.ok(ids.includes('trouble'), 'Fix Trouble Spots in secondary links');
+test('aligned view-model: Mini Test + Fix Trouble Spots are primary cards; Grammar Bank moved to sidebar', () => {
+  const primaryIds = GRAMMAR_PRIMARY_MODE_CARDS.map((card) => card.id);
+  assert.ok(primaryIds.includes('satsset'), 'Mini Test in primary cards');
+  assert.ok(primaryIds.includes('trouble'), 'Fix Trouble Spots in primary cards');
+  // Grammar Bank no longer occupies a mode slot — the sidebar surfaces it
+  // via the `Browse the Grammar Bank` shortcut and `data-action="grammar-open-concept-bank"`.
+  assert.equal(primaryIds.includes('bank'), false, 'Grammar Bank is not a mode card');
+  assert.equal(GRAMMAR_SECONDARY_MODE_LINKS.length, 0, 'no secondary mode links remain');
 });
 
-test('P5-U8 view-model: Writing Try appears inside collapsed More practice', () => {
+test('aligned view-model: Writing Try appears inside collapsed More practice', () => {
   const moreIds = GRAMMAR_MORE_PRACTICE_MODES.map((mode) => mode.id);
   assert.ok(moreIds.includes('transfer'), 'Writing Try (transfer) in More practice');
   // Writing Try is NOT in primary or secondary.
   const primaryIds = GRAMMAR_PRIMARY_MODE_CARDS.map((c) => c.id);
-  const secondaryIds = GRAMMAR_SECONDARY_MODE_LINKS.map((l) => l.id);
   assert.equal(primaryIds.includes('transfer'), false, 'Writing Try not in primary');
-  assert.equal(secondaryIds.includes('transfer'), false, 'Writing Try not in secondary links');
 });
 
 test('P5-U8 view-model: More practice disclosure contains all 6 secondary modes', () => {
@@ -1148,12 +1154,13 @@ test('P5-U8 view-model: More practice disclosure contains all 6 secondary modes'
   );
 });
 
-test('P5-U8 view-model: fresh learner (no progress) still produces valid dashboard with Smart Practice accessible', () => {
+test('aligned view-model: fresh learner (no progress) still produces valid dashboard with Smart Practice accessible', () => {
   const model = buildGrammarDashboardModel({}, null, null);
   assert.equal(model.isEmpty, true);
-  assert.equal(model.modeCards.length, 1);
+  // Aligned design: 3 primary cards, 0 secondary, 6 in More practice.
+  assert.equal(model.modeCards.length, 3);
   assert.equal(model.modeCards[0].id, 'smart');
-  assert.equal(model.secondaryLinks.length, 3);
+  assert.equal(model.secondaryLinks.length, 0);
   assert.equal(model.moreModes.length, 6);
 });
 

@@ -109,7 +109,7 @@ test('browser migration smoke covers the React app root, Grammar completeness co
       ['js', "document.querySelector('[data-action=\"open-subject\"][data-subject-id=\"grammar\"]')?.click(); 'opened grammar';"],
       ['wait', '.grammar-dashboard'],
       ['text'],
-      ['js', "document.querySelector('.grammar-secondary-link[data-mode-id=\"satsset\"]')?.click(); 'selected mini-test';"],
+      ['js', "document.querySelector('.grammar-primary-mode[data-mode-id=\"satsset\"]')?.click(); 'selected mini-test';"],
       ['js', "document.querySelector('.grammar-dashboard .grammar-start-row .btn.primary')?.click(); 'started grammar mini-test';"],
       ['wait', '.grammar-mini-test-panel'],
       ['text'],

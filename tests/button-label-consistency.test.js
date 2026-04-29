@@ -417,6 +417,11 @@ test('button labels: every statically extractable label is classified', () => {
     'Learn',
     'Practise',
     'Open Punctuation Map',
+    // Aligned Grammar setup sidebar shortcut into the Grammar Bank. Bespoke
+    // because the sibling sidebar already carries `Browse the Grammar Bank`
+    // as the row-link copy; the small "Open bank →" button is the inline
+    // header affordance and intentionally short.
+    'Open bank →',
     'Open codex →',
     'Drill all',
     'Load more',

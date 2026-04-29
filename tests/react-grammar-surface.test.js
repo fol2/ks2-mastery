@@ -38,9 +38,10 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   // Phase 3 U1: hero copy comes from `GRAMMAR_DASHBOARD_HERO`.
   assert.match(html, /Grammar Garden/);
   assert.match(html, /Grow your Grammar creatures/);
-  // U8 Phase 5: Smart Practice is the sole primary CTA.
+  // Aligned design: Smart Practice + Mini Test + Fix Trouble Spots are
+  // the three decision-weight primary cards. Grammar Bank moves to the
+  // sidebar shortcut so the chip rail no longer carries it.
   assert.match(html, /Smart Practice/);
-  // U8 Phase 5: Grammar Bank, Mini Test, Fix Trouble Spots are secondary links.
   assert.match(html, /Fix Trouble Spots/);
   assert.match(html, /Mini Test/);
   assert.match(html, /Grammar Bank/);
@@ -50,7 +51,9 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   // Smart Practice is marked featured/recommended (U1 follower, cta_hierarchy).
   assert.match(html, /data-mode-id="smart"[^>]*data-featured="true"/);
   assert.match(html, /class="grammar-primary-mode[^"]*is-recommended[^"]*"[^>]*data-mode-id="smart"/);
-  assert.match(html, /Recommended/);
+  // Aligned design: badge is uppercase "RECOMMENDED" inside the mc-top
+  // row to match Spelling's mode-card silhouette.
+  assert.match(html, /RECOMMENDED/);
   // U7 Phase 5: Monster strip with 4 active creatures + child-facing copy.
   assert.match(html, /grammar-monster-strip/);
   assert.match(html, /data-monster-id="bracehart"/);
@@ -59,7 +62,7 @@ test('Grammar opens as the child-facing Grammar Garden dashboard', () => {
   assert.match(html, /0 \/ 100 Stars/);
   assert.match(html, /Get 1 Star to find the Egg\. Reach 100 Stars for Mega\./);
   // More practice disclosure is present and closed by default.
-  assert.match(html, /<details class="grammar-more-practice"><summary>More practice<\/summary>/);
+  assert.match(html, /<details class="setup-more-practice grammar-more-practice"><summary>More practice<\/summary>/);
   // U8 Phase 5: Writing Try now inside More practice (not primary area).
   assert.match(html, /data-action="grammar-open-transfer"/);
   assert.match(html, /Writing Try/);
@@ -77,7 +80,12 @@ test('Grammar dashboard omits adult-diagnostic copy and reserved monster names',
   // Narrow the absence check to the dashboard panel. The adult-only
   // analytics surface lives behind a sibling `<details class="grammar-grown-up-view">`
   // disclosure, so we scope to the dashboard section alone.
-  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><details class="grammar-grown-up-view">/);
+  // Aligned design: the dashboard <section> no longer carries a sibling
+  // <details class="grammar-grown-up-view"> — that adult escape hatch
+  // moved into the Grammar Bank. The boundary therefore terminates at
+  // the outer `</section></div>` pair (close of the dashboard, then
+  // close of the wrapping `<div class="grammar-surface">`).
+  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><\/div>/);
   assert.ok(dashboardMatch, 'dashboard section was rendered');
   const dashboardHtml = dashboardMatch[0];
 
@@ -204,7 +212,11 @@ test('Grammar surface runs KS2 mini-set mode with delayed feedback and end revie
   harness.dispatch('grammar-set-mode', { value: 'satsset' });
   let html = harness.render();
   assert.match(html, /Mini-set size/);
-  assert.match(html, /<option value="8" selected="">8<\/option><option value="12">12<\/option>/);
+  // Aligned design: round length is a slide-button picker (`length-picker`),
+  // not a `<select>`. Mini-set mode swaps the option list to 8 / 12 and
+  // selects 8 by default.
+  assert.match(html, /<button[^>]*class="length-option selected"[^>]*value="8"[^>]*><span>8<\/span><\/button>/);
+  assert.match(html, /<button[^>]*class="length-option"[^>]*value="12"[^>]*><span>12<\/span><\/button>/);
 
   harness.dispatch('grammar-start', {
     payload: {
@@ -835,7 +847,12 @@ test('Grammar analytics exposes parent summary draft enrichment', () => {
   const storage = installMemoryStorage();
   const harness = createGrammarHarness({ storage });
 
+  // Aligned design: the adult analytics surface lives inside the Grammar
+  // Bank's `<details class="grammar-grown-up-view">` disclosure. Navigate
+  // to the bank phase to render that tree (the `<details>` keeps its
+  // children in the DOM regardless of the open attribute).
   harness.dispatch('open-subject', { subjectId: 'grammar' });
+  harness.dispatch('grammar-open-concept-bank');
   let html = harness.render();
   assert.match(html, /Parent summary draft/);
 
@@ -886,11 +903,20 @@ test('Grammar dashboard disables mode cards, controls, and Begin button while a 
   }));
 
   const html = harness.render();
-  // U8 Phase 5: Smart Practice is the sole primary card, disabled during pending.
-  assert.match(html, /<button type="button" class="grammar-primary-mode selected is-disabled is-recommended" data-mode-id="smart" data-action="grammar-set-mode" data-featured="true" aria-pressed="true" disabled="">/);
-  // Round length select is disabled and shows the default 5 value selected.
-  assert.match(html, /<select class="input" disabled=""[^>]*><option value="3">3<\/option><option value="5" selected="">5<\/option>/);
-  // U8 Phase 5: Begin button renders the pending label.
+  // Aligned design: Smart Practice card disabled during pending. The
+  // `selected` class is suppressed while disabled so the card does not
+  // read as both pending and chosen — matches Spelling's mode-card
+  // disabled state and avoids double-affordance signal. The card now
+  // also carries the shared `mode-card` class for visual identity, in
+  // addition to the existing `grammar-primary-mode` test hook.
+  // `data-text-tone` is contrast-driven (depends on the active region
+  // tone) so the assertion accepts either dark or light without pinning
+  // the specific learner's tone hash.
+  assert.match(html, /<button type="button" class="grammar-primary-mode mode-card is-disabled is-recommended" data-mode-id="smart" data-action="grammar-set-mode" data-featured="true" data-text-tone="(?:dark|light)" aria-pressed="false" disabled="">/);
+  // Round-length picker (slide-button) renders the default 5 value
+  // selected and the option buttons reflect the pending-disabled state.
+  assert.match(html, /<button[^>]*class="length-option selected"[^>]*value="5"[^>]*disabled="">/);
+  // Aligned design: CTA renders the pending label inside the merged panel.
   assert.match(html, /<button class="btn primary xl" type="button" data-featured="true" disabled="">Starting\.\.\.<\/button>/);
 });
 
@@ -900,9 +926,11 @@ test('Grammar dashboard hides adult-diagnostic goal/teaching toggles but preserv
 
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   let html = harness.render();
-  // Child dashboard surfaces Speech rate only; adult-diagnostic toggles
-  // move out of the primary dashboard as of U1.
-  assert.match(html, /Speech rate/);
+  // Aligned design: Speech rate picker is removed from the dashboard so
+  // the child surface stays decision-light. The dispatch round-trip below
+  // still verifies the module accepts speech-rate updates, which the
+  // session scene applies via the audio replay control.
+  assert.doesNotMatch(html, /Speech rate/);
   assert.doesNotMatch(html, /Smart Review teaching items/);
   assert.doesNotMatch(html, /Show domain before answering/);
   assert.doesNotMatch(html, /Session goal/);
@@ -992,6 +1020,8 @@ test('Grammar monster progress rehydrates from persisted Codex state after reloa
   });
   harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({}, learnerId));
   harness.dispatch('open-subject', { subjectId: 'grammar' });
+  // Aligned design: Codex copy lives inside the bank's grown-up-view.
+  harness.dispatch('grammar-open-concept-bank');
 
   const html = harness.render();
 
@@ -1194,6 +1224,8 @@ test('Grammar analytics renders normalised recent activity before raw attempts',
     },
   }, learnerId));
   harness.dispatch('open-subject', { subjectId: 'grammar' });
+  // Aligned design: analytics renders inside the Grammar Bank.
+  harness.dispatch('grammar-open-concept-bank');
 
   const html = harness.render();
 
@@ -1218,6 +1250,8 @@ test('Grammar analytics falls back to legacy recent attempt result payloads', ()
     },
   }, learnerId));
   harness.dispatch('open-subject', { subjectId: 'grammar' });
+  // Aligned design: analytics renders inside the Grammar Bank.
+  harness.dispatch('grammar-open-concept-bank');
 
   const html = harness.render();
 
@@ -1498,7 +1532,7 @@ test('Grammar "More practice" disclosure exposes secondary modes without locked 
 
   // Secondary modes from `GRAMMAR_MORE_PRACTICE_MODES` render inside the
   // `<details class="grammar-more-practice">` disclosure as active cards.
-  assert.match(html, /<details class="grammar-more-practice"><summary>More practice<\/summary>/);
+  assert.match(html, /<details class="setup-more-practice grammar-more-practice"><summary>More practice<\/summary>/);
   assert.match(html, /data-mode-id="learn"/);
   assert.match(html, /Learn a concept/);
   assert.match(html, /data-mode-id="surgery"/);
@@ -1524,7 +1558,7 @@ test('U5: Grammar dashboard renders "Mixed practice" label on Surgery and Builde
 
   // Scope to the More practice disclosure so a stray "Mixed practice"
   // somewhere else in the app shell does not false-positive the assertion.
-  const disclosureMatch = html.match(/<details class="grammar-more-practice"[\s\S]*?<\/details>/);
+  const disclosureMatch = html.match(/<details class="setup-more-practice grammar-more-practice"[\s\S]*?<\/details>/);
   assert.ok(disclosureMatch, 'More practice disclosure renders');
   const disclosure = disclosureMatch[0];
 
@@ -1545,7 +1579,7 @@ test('U5: Grammar dashboard does NOT render "Mixed practice" on Learn, Worked, o
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   const html = harness.render();
 
-  const disclosureMatch = html.match(/<details class="grammar-more-practice"[\s\S]*?<\/details>/);
+  const disclosureMatch = html.match(/<details class="setup-more-practice grammar-more-practice"[\s\S]*?<\/details>/);
   assert.ok(disclosureMatch, 'More practice disclosure renders');
   const disclosure = disclosureMatch[0];
 
@@ -1567,11 +1601,14 @@ test('U5: Grammar primary cards (Smart, Trouble, Mini Test, Bank) never render t
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   const html = harness.render();
 
-  // Primary mode cards live outside the "More practice" disclosure. Scope
-  // to the primary section and assert no Mixed practice copy leaks into
-  // Smart / Trouble / Mini Test / Bank cards.
-  const primaryMatch = html.match(/<section class="grammar-primary-modes"[\s\S]*?<\/section>/);
-  assert.ok(primaryMatch, 'primary modes section renders');
+  // Primary mode cards live in the `.mode-row.grammar-mode-row` grid
+  // inside the setup-main panel (Spelling-style `setup-main` variant).
+  // Scope to that grid only — the "More practice" disclosure now lives
+  // INSIDE setup-main below the begin row, and it legitimately carries
+  // the `Mixed practice` label on Surgery + Builder. We are testing
+  // that the primary cards do NOT carry that label, not the whole panel.
+  const primaryMatch = html.match(/<div class="mode-row grammar-mode-row">[\s\S]*?<\/div>/);
+  assert.ok(primaryMatch, 'primary modes grid renders');
   assert.doesNotMatch(primaryMatch[0], /Mixed practice/);
   assert.doesNotMatch(primaryMatch[0], /data-mode-label="/);
 });
@@ -1792,6 +1829,8 @@ test('Grammar surface routes persisted retired-id state through the normaliser b
   });
   harness.store.updateSubjectUi('grammar', normaliseGrammarReadModel({}, learnerId));
   harness.dispatch('open-subject', { subjectId: 'grammar' });
+  // Aligned design: Codex copy now lives in the bank's grown-up-view.
+  harness.dispatch('grammar-open-concept-bank');
 
   const html = harness.render();
 
@@ -3331,18 +3370,20 @@ test('U7: analytics phase empty state — no recent activity and no question typ
   assert.match(html, /No question-type evidence recorded yet\./);
 });
 
-test('U7: dashboard <details class="grammar-grown-up-view"> stays as a closed-by-default escape hatch', () => {
+test('aligned design: <details class="grammar-grown-up-view"> lives in the Grammar Bank, not the dashboard', () => {
   const storage = installMemoryStorage();
   const harness = createAppHarness({ storage });
   harness.dispatch('open-subject', { subjectId: 'grammar' });
-  const html = harness.render();
+  const dashboardHtml = harness.render();
 
-  // The disclosure is present but closed — no `open` attribute. SSR cannot
-  // flip it programmatically; this assertion guards against drift that would
-  // render the disclosure open by default and leak adult copy into the child
-  // dashboard flow.
-  const details = html.match(/<details class="grammar-grown-up-view"[^>]*>/)?.[0];
-  assert.ok(details, 'grown-up view disclosure rendered on the dashboard');
+  // Dashboard surface is child-first — the adult escape hatch is gone.
+  assert.doesNotMatch(dashboardHtml, /<details class="grammar-grown-up-view"/);
+
+  // Navigate to the bank: the disclosure is present but closed by default.
+  harness.dispatch('grammar-open-concept-bank');
+  const bankHtml = harness.render();
+  const details = bankHtml.match(/<details class="grammar-grown-up-view"[^>]*>/)?.[0];
+  assert.ok(details, 'grown-up view disclosure rendered inside the bank');
   assert.doesNotMatch(details, /\bopen\b/, 'grown-up view disclosure must NOT be open by default');
 });
 
@@ -3354,7 +3395,12 @@ test('U7: default dashboard HTML carries no Grown-up intro copy outside the anal
 
   // Narrow to the dashboard panel so we do not sweep the sibling `<details>`
   // disclosure which legitimately holds adult copy ready for opening.
-  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><details class="grammar-grown-up-view">/);
+  // Aligned design: the dashboard <section> no longer carries a sibling
+  // <details class="grammar-grown-up-view"> — that adult escape hatch
+  // moved into the Grammar Bank. The boundary therefore terminates at
+  // the outer `</section></div>` pair (close of the dashboard, then
+  // close of the wrapping `<div class="grammar-surface">`).
+  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><\/div>/);
   assert.ok(dashboardMatch, 'dashboard section rendered');
   const dashboardHtml = dashboardMatch[0];
   assert.doesNotMatch(dashboardHtml, /Nothing here is a grade/i);
@@ -3432,7 +3478,12 @@ test('U10: forbidden-term sweep still passes on the child dashboard', () => {
   const harness = createAppHarness({ storage });
   harness.dispatch('open-subject', { subjectId: 'grammar' });
   const html = harness.render();
-  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><details class="grammar-grown-up-view">/);
+  // Aligned design: the dashboard <section> no longer carries a sibling
+  // <details class="grammar-grown-up-view"> — that adult escape hatch
+  // moved into the Grammar Bank. The boundary therefore terminates at
+  // the outer `</section></div>` pair (close of the dashboard, then
+  // close of the wrapping `<div class="grammar-surface">`).
+  const dashboardMatch = html.match(/<section class="grammar-dashboard"[\s\S]*?<\/section><\/div>/);
   assert.ok(dashboardMatch, 'dashboard section was rendered');
   const dashboardHtml = dashboardMatch[0];
   for (const term of GRAMMAR_CHILD_FORBIDDEN_TERMS) {

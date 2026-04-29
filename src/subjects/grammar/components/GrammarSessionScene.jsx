@@ -626,6 +626,29 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
           <div className="eyebrow">Grammar practice</div>
           <h2 id="grammar-session-title">{sessionTitle}</h2>
         </div>
+        <div
+          className="grammar-progress-dots"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={progressTotal}
+          aria-valuenow={Math.min(progressDone, progressTotal)}
+          aria-label={`Question ${Math.min(progressDone + 1, progressTotal)} of ${progressTotal}`}
+        >
+          {Array.from({ length: progressTotal }, (_, index) => {
+            const stateClass = index < progressDone
+              ? ' done'
+              : index === progressDone
+                ? ' current'
+                : '';
+            return (
+              <span
+                className={`grammar-progress-step${stateClass}`}
+                key={`grammar-progress-step-${index}`}
+                aria-hidden="true"
+              />
+            );
+          })}
+        </div>
         <div className="grammar-progress" aria-label="Round progress">
           <span>{progressDone}</span>
           <small>of {progressTotal}</small>
@@ -633,9 +656,9 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
       </div>
 
       <div className="grammar-prompt-card">
-        <div className="chip-row">
-          {infoChips.map((chip) => (
-            <span className="chip" key={chip}>{chip}</span>
+        <div className="chip-row grammar-info-chip-row">
+          {infoChips.map((chip, index) => (
+            <span className={`chip grammar-info-chip${index === 0 ? ' accent' : ''}`} key={chip}>{chip}</span>
           ))}
           {!isMiniTest ? <SessionGoalChip goal={session.goal} /> : null}
         </div>

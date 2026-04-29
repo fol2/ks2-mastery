@@ -158,7 +158,16 @@ function fallbackToneResults(container, probes) {
 }
 
 function resolveHeroLayer(container, url) {
-  const layers = Array.from(container.querySelectorAll?.('.spelling-hero-layer') || []);
+  // Subject-agnostic layer lookup. The shared `HeroBackdrop` stamps
+  // `data-hero-layer="true"` onto every layer it renders so any subject
+  // (Spelling, Grammar, future Punctuation) can be probed without us
+  // hard-coding a per-subject CSS class. Falls back to the legacy
+  // `.spelling-hero-layer` selector for any caller still on the older
+  // wrapper before the mid-2026-04-29 platform extraction.
+  const byAttr = Array.from(container.querySelectorAll?.('[data-hero-layer="true"]') || []);
+  const layers = byAttr.length
+    ? byAttr
+    : Array.from(container.querySelectorAll?.('.spelling-hero-layer') || []);
   if (!layers.length) return null;
   const reversed = layers.slice().reverse();
   return reversed.find((layer) => (

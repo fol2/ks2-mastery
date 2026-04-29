@@ -983,9 +983,11 @@ test.describe('P6 U9: Desktop viewport (1280x800) — landing + monster strip', 
     const todaySection = page.locator('.grammar-today');
     await expect(todaySection).toBeVisible();
 
-    // Secondary links nav is visible.
-    const secondaryNav = page.locator('.grammar-secondary-links');
-    await expect(secondaryNav).toBeVisible();
+    // Primary modes panel (merged hero + 3 mode cards) is visible. The
+    // aligned design uses the shared `.setup-main` shape with a Grammar
+    // brand variant via `.grammar-setup-main`.
+    const primaryModes = page.locator('.grammar-setup-main');
+    await expect(primaryModes).toBeVisible();
   });
 
   test('Smart Practice is the primary CTA with data-featured="true"', async ({ page }) => {
@@ -1143,13 +1145,13 @@ test.describe('P6 U9: Mobile viewport — responsive + touch', () => {
     const strip = page.locator('.grammar-monster-strip');
     await expect(strip).toBeVisible();
 
-    // Secondary links (Grammar Bank, Mini Test) visible.
+    // Grammar Bank (sidebar) and Mini Test (primary card) visible.
     const bankLink = page.locator('[data-action="grammar-open-concept-bank"]').first();
     await expect(bankLink).toBeVisible();
     await expect(bankLink).toBeEnabled();
-    const miniTestLink = page.locator('.grammar-secondary-link[data-mode-id="satsset"]');
-    await expect(miniTestLink).toBeVisible();
-    await expect(miniTestLink).toBeEnabled();
+    const miniTestCard = page.locator('.grammar-primary-mode[data-mode-id="satsset"]');
+    await expect(miniTestCard).toBeVisible();
+    await expect(miniTestCard).toBeEnabled();
   });
 
   test('Monster strip is readable and Star counts visible at mobile viewport', async ({ page }) => {
@@ -1199,13 +1201,15 @@ test.describe('P6 U9: Mobile viewport — responsive + touch', () => {
     expect(smartBox.width, 'Smart card width should be >= 40 for touch').toBeGreaterThanOrEqual(40);
     expect(smartBox.height, 'Smart card height should be >= 40 for touch').toBeGreaterThanOrEqual(40);
 
-    // Check secondary link buttons (Grammar Bank, Mini Test, etc.).
-    const secondaryLinks = page.locator('.grammar-secondary-link');
-    const linkCount = await secondaryLinks.count();
-    for (let i = 0; i < linkCount; i += 1) {
-      const box = await secondaryLinks.nth(i).boundingBox();
+    // Check every primary mode card (Smart Practice, Fix Trouble Spots,
+    // Mini Test) meets the 40x40 touch target.
+    const primaryCards = page.locator('.grammar-primary-mode');
+    const cardCount = await primaryCards.count();
+    expect(cardCount, 'Three primary mode cards should render').toBe(3);
+    for (let i = 0; i < cardCount; i += 1) {
+      const box = await primaryCards.nth(i).boundingBox();
       if (box) {
-        expect(box.height, `Secondary link ${i} height should be >= 40 for touch`).toBeGreaterThanOrEqual(40);
+        expect(box.height, `Primary card ${i} height should be >= 40 for touch`).toBeGreaterThanOrEqual(40);
       }
     }
   });
@@ -1355,15 +1359,15 @@ test.describe('P6 U9: Regression — Grammar Bank navigation + mode access', () 
     await seedFreshLearner(page);
     await openGrammarDashboard(page);
 
-    // Grammar Bank secondary link is visible and clickable.
+    // Grammar Bank sidebar link is visible and clickable.
     const bankLink = page.locator('[data-action="grammar-open-concept-bank"]').first();
     await expect(bankLink).toBeVisible();
     await expect(bankLink).toBeEnabled();
 
-    // Mini Test secondary link is visible and clickable.
-    const miniTestLink = page.locator('[data-mode-id="satsset"]').first();
-    await expect(miniTestLink).toBeVisible();
-    await expect(miniTestLink).toBeEnabled();
+    // Mini Test primary card is visible and clickable.
+    const miniTestCard = page.locator('.grammar-primary-mode[data-mode-id="satsset"]');
+    await expect(miniTestCard).toBeVisible();
+    await expect(miniTestCard).toBeEnabled();
 
     // Click Grammar Bank and verify it opens.
     await bankLink.click();
@@ -1376,12 +1380,11 @@ test.describe('P6 U9: Regression — Grammar Bank navigation + mode access', () 
     await closeBank.click();
     await expect(page.locator('.grammar-dashboard')).toBeVisible({ timeout: 15_000 });
 
-    // Click Mini Test secondary link and verify the mode is selected.
-    // The secondary link dispatches `grammar-set-mode` with value
-    // `satsset`. After clicking, the link gains `aria-pressed="true"`.
-    const miniTestSecondary = page.locator('.grammar-secondary-link[data-mode-id="satsset"]');
-    await expect(miniTestSecondary).toBeVisible();
-    await miniTestSecondary.click();
-    await expect(miniTestSecondary).toHaveAttribute('aria-pressed', 'true', { timeout: 5_000 });
+    // Click Mini Test primary card and verify the mode is selected.
+    // The card dispatches `grammar-set-mode` with value `satsset`.
+    // After clicking, the card gains `aria-pressed="true"`.
+    await expect(miniTestCard).toBeVisible();
+    await miniTestCard.click();
+    await expect(miniTestCard).toHaveAttribute('aria-pressed', 'true', { timeout: 5_000 });
   });
 });

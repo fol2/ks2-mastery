@@ -128,14 +128,6 @@ export function GrammarPracticeSurface({
   return (
     <div className="grammar-surface">
       <GrammarSetupScene {...shared} />
-      {/* Phase 3 U1 keeps the analytics surface reachable but demoted from
-          the dashboard primary view — it now lives behind a "Grown-up view"
-          disclosure per the U5 summary decision. Until U5/U7 land the
-          full split, this stays here as the non-primary grown-up surface. */}
-      <details className="grammar-grown-up-view">
-        <summary>Grown-up view</summary>
-        <GrammarAnalyticsScene {...shared} />
-      </details>
     </div>
   );
 }
