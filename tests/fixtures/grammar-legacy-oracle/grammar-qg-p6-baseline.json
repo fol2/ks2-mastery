@@ -1,0 +1,1977 @@
+{
+  "releaseId": "grammar-qg-p6-2026-04-29",
+  "conceptCount": 18,
+  "templateCount": 78,
+  "selectedResponseCount": 58,
+  "constructedResponseCount": 20,
+  "generatedTemplateCount": 52,
+  "fixedTemplateCount": 26,
+  "questionTypes": [
+    "build",
+    "choose",
+    "classify",
+    "explain",
+    "fill",
+    "fix",
+    "identify",
+    "rewrite"
+  ],
+  "duplicateTemplateIds": [],
+  "thinPoolConcepts": [],
+  "singleQuestionTypeConcepts": [],
+  "conceptCoverage": [
+    {
+      "conceptId": "active_passive",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "rewrite"
+      ],
+      "templateIds": [
+        "active_passive_rewrite",
+        "proc2_passive_to_active",
+        "qg_active_passive_choice",
+        "qg_p3_active_passive_explain",
+        "qg_p4_voice_roles_transfer"
+      ]
+    },
+    {
+      "conceptId": "adverbials",
+      "total": 6,
+      "generated": 3,
+      "fixed": 3,
+      "selectedResponse": 3,
+      "constructedResponse": 3,
+      "questionTypes": [
+        "build",
+        "choose",
+        "explain",
+        "fix"
+      ],
+      "templateIds": [
+        "explain_reason_choice",
+        "fix_fronted_adverbial",
+        "fronted_adverbial_choose",
+        "proc2_fronted_adverbial_build",
+        "proc_fronted_adverbial_fix",
+        "qg_p4_adverbial_clause_boundary_transfer"
+      ]
+    },
+    {
+      "conceptId": "apostrophes_possession",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 4,
+      "constructedResponse": 1,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "rewrite"
+      ],
+      "templateIds": [
+        "apostrophe_possession_choice",
+        "proc3_apostrophe_rewrite",
+        "proc_apostrophe_possession_choice",
+        "qg_p3_apostrophe_possession_explain",
+        "qg_p4_possession_hyphen_clarity_transfer"
+      ]
+    },
+    {
+      "conceptId": "boundary_punctuation",
+      "total": 5,
+      "generated": 5,
+      "fixed": 0,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ],
+      "templateIds": [
+        "proc2_boundary_punctuation_explain",
+        "proc_colon_list_fix",
+        "proc_dash_boundary_fix",
+        "proc_semicolon_choice",
+        "qg_p4_adverbial_clause_boundary_transfer"
+      ]
+    },
+    {
+      "conceptId": "clauses",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "identify",
+        "rewrite"
+      ],
+      "templateIds": [
+        "combine_clauses_rewrite",
+        "proc3_clause_join_rewrite",
+        "qg_p3_clauses_explain",
+        "qg_p4_adverbial_clause_boundary_transfer",
+        "subordinate_clause_choice"
+      ]
+    },
+    {
+      "conceptId": "formality",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain"
+      ],
+      "templateIds": [
+        "formality_pairs",
+        "proc2_formality_choice",
+        "qg_formality_classify_table",
+        "qg_p3_formality_explain",
+        "qg_p4_cohesion_formality_transfer"
+      ]
+    },
+    {
+      "conceptId": "hyphen_ambiguity",
+      "total": 4,
+      "generated": 4,
+      "fixed": 0,
+      "selectedResponse": 3,
+      "constructedResponse": 1,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ],
+      "templateIds": [
+        "proc3_hyphen_fix_meaning",
+        "proc_hyphen_ambiguity_choice",
+        "qg_hyphen_ambiguity_explain",
+        "qg_p4_possession_hyphen_clarity_transfer"
+      ]
+    },
+    {
+      "conceptId": "modal_verbs",
+      "total": 4,
+      "generated": 3,
+      "fixed": 1,
+      "selectedResponse": 4,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fill"
+      ],
+      "templateIds": [
+        "modal_verb_choice",
+        "proc2_modal_choice",
+        "qg_modal_verb_explain",
+        "qg_p4_verb_form_register_transfer"
+      ]
+    },
+    {
+      "conceptId": "noun_phrases",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "build",
+        "choose",
+        "classify",
+        "explain"
+      ],
+      "templateIds": [
+        "build_noun_phrase",
+        "expanded_noun_phrase_choice",
+        "proc3_noun_phrase_build",
+        "qg_p3_noun_phrases_explain",
+        "qg_p4_word_class_noun_phrase_transfer"
+      ]
+    },
+    {
+      "conceptId": "parenthesis_commas",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ],
+      "templateIds": [
+        "parenthesis_fix_sentence",
+        "parenthesis_replace_choice",
+        "proc3_parenthesis_commas_fix",
+        "qg_p3_parenthesis_commas_explain",
+        "qg_p4_relative_parenthesis_transfer"
+      ]
+    },
+    {
+      "conceptId": "pronouns_cohesion",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "identify"
+      ],
+      "templateIds": [
+        "proc2_pronoun_cohesion_choice",
+        "pronoun_cohesion_choice",
+        "qg_p3_pronouns_cohesion_explain",
+        "qg_p4_cohesion_formality_transfer",
+        "qg_pronoun_referent_identify"
+      ]
+    },
+    {
+      "conceptId": "relative_clauses",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "build",
+        "choose",
+        "explain",
+        "identify"
+      ],
+      "templateIds": [
+        "proc2_relative_clause_choice",
+        "qg_p3_relative_clauses_explain",
+        "qg_p4_relative_parenthesis_transfer",
+        "relative_clause_complete",
+        "relative_clause_identify"
+      ]
+    },
+    {
+      "conceptId": "sentence_functions",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "identify"
+      ],
+      "templateIds": [
+        "proc3_sentence_function_choice",
+        "qg_p3_sentence_functions_explain",
+        "qg_p4_sentence_speech_transfer",
+        "question_mark_select",
+        "sentence_type_table"
+      ]
+    },
+    {
+      "conceptId": "speech_punctuation",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix",
+        "identify"
+      ],
+      "templateIds": [
+        "proc_speech_punctuation_fix",
+        "qg_p3_speech_punctuation_explain",
+        "qg_p4_sentence_speech_transfer",
+        "question_mark_select",
+        "speech_punctuation_fix"
+      ]
+    },
+    {
+      "conceptId": "standard_english",
+      "total": 6,
+      "generated": 3,
+      "fixed": 3,
+      "selectedResponse": 4,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ],
+      "templateIds": [
+        "explain_reason_choice",
+        "proc2_standard_english_choice",
+        "proc2_standard_english_fix",
+        "qg_p4_verb_form_register_transfer",
+        "standard_english_pairs",
+        "standard_fix_sentence"
+      ]
+    },
+    {
+      "conceptId": "subject_object",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "classify",
+        "explain",
+        "identify"
+      ],
+      "templateIds": [
+        "proc2_subject_object_identify",
+        "qg_p3_subject_object_explain",
+        "qg_p4_voice_roles_transfer",
+        "qg_subject_object_classify_table",
+        "subject_object_choice"
+      ]
+    },
+    {
+      "conceptId": "tense_aspect",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 4,
+      "constructedResponse": 1,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fill",
+        "rewrite"
+      ],
+      "templateIds": [
+        "proc2_tense_aspect_choice",
+        "qg_p3_tense_aspect_explain",
+        "qg_p4_verb_form_register_transfer",
+        "tense_form_choice",
+        "tense_rewrite"
+      ]
+    },
+    {
+      "conceptId": "word_classes",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "identify"
+      ],
+      "templateIds": [
+        "identify_words_in_sentence",
+        "proc3_word_class_contrast_choice",
+        "qg_p3_word_classes_explain",
+        "qg_p4_word_class_noun_phrase_transfer",
+        "word_class_underlined_choice"
+      ]
+    }
+  ],
+  "explainTemplateCount": 17,
+  "conceptsWithExplainCoverage": [
+    "active_passive",
+    "adverbials",
+    "apostrophes_possession",
+    "boundary_punctuation",
+    "clauses",
+    "formality",
+    "hyphen_ambiguity",
+    "modal_verbs",
+    "noun_phrases",
+    "parenthesis_commas",
+    "pronouns_cohesion",
+    "relative_clauses",
+    "sentence_functions",
+    "speech_punctuation",
+    "standard_english",
+    "subject_object",
+    "tense_aspect",
+    "word_classes"
+  ],
+  "conceptsMissingExplainCoverage": [],
+  "explainCoverageByConcept": [
+    {
+      "conceptId": "active_passive",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_active_passive_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "rewrite"
+      ]
+    },
+    {
+      "conceptId": "adverbials",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "explain_reason_choice"
+      ],
+      "questionTypes": [
+        "build",
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "apostrophes_possession",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_apostrophe_possession_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "rewrite"
+      ]
+    },
+    {
+      "conceptId": "boundary_punctuation",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "proc2_boundary_punctuation_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "clauses",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_clauses_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "identify",
+        "rewrite"
+      ]
+    },
+    {
+      "conceptId": "formality",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_formality_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain"
+      ]
+    },
+    {
+      "conceptId": "hyphen_ambiguity",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_hyphen_ambiguity_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "modal_verbs",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_modal_verb_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fill"
+      ]
+    },
+    {
+      "conceptId": "noun_phrases",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_noun_phrases_explain"
+      ],
+      "questionTypes": [
+        "build",
+        "choose",
+        "classify",
+        "explain"
+      ]
+    },
+    {
+      "conceptId": "parenthesis_commas",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_parenthesis_commas_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "pronouns_cohesion",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_pronouns_cohesion_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "relative_clauses",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_relative_clauses_explain"
+      ],
+      "questionTypes": [
+        "build",
+        "choose",
+        "explain",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "sentence_functions",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_sentence_functions_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "speech_punctuation",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_speech_punctuation_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "standard_english",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "explain_reason_choice"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "subject_object",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_subject_object_explain"
+      ],
+      "questionTypes": [
+        "classify",
+        "explain",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "tense_aspect",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_tense_aspect_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fill",
+        "rewrite"
+      ]
+    },
+    {
+      "conceptId": "word_classes",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_word_classes_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "identify"
+      ]
+    }
+  ],
+  "p3ExplanationComplete": true,
+  "sampledSeeds": [
+    1,
+    2,
+    3
+  ],
+  "missingGeneratorMetadata": [],
+  "generatedSignatureCollisions": [],
+  "repeatedGeneratedVariants": [],
+  "legacyRepeatedGeneratedVariants": [],
+  "sampleCount": 156,
+  "samples": [
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "generatorFamilyId": "proc_fronted_adverbial_fix",
+      "seed": 1,
+      "signature": "grammar-v1:1g8xl3q"
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "generatorFamilyId": "proc_fronted_adverbial_fix",
+      "seed": 2,
+      "signature": "grammar-v1:04pr4gm"
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "generatorFamilyId": "proc_fronted_adverbial_fix",
+      "seed": 3,
+      "signature": "grammar-v1:1tgszjy"
+    },
+    {
+      "templateId": "proc_semicolon_choice",
+      "generatorFamilyId": "proc_semicolon_choice",
+      "seed": 1,
+      "signature": "grammar-v1:138w2ur"
+    },
+    {
+      "templateId": "proc_semicolon_choice",
+      "generatorFamilyId": "proc_semicolon_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0kxugl8"
+    },
+    {
+      "templateId": "proc_semicolon_choice",
+      "generatorFamilyId": "proc_semicolon_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1x6ihdz"
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "generatorFamilyId": "proc_colon_list_fix",
+      "seed": 1,
+      "signature": "grammar-v1:0cwbcp7"
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "generatorFamilyId": "proc_colon_list_fix",
+      "seed": 2,
+      "signature": "grammar-v1:15uxveu"
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "generatorFamilyId": "proc_colon_list_fix",
+      "seed": 3,
+      "signature": "grammar-v1:1ssolv6"
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "generatorFamilyId": "proc_dash_boundary_fix",
+      "seed": 1,
+      "signature": "grammar-v1:14tsrps"
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "generatorFamilyId": "proc_dash_boundary_fix",
+      "seed": 2,
+      "signature": "grammar-v1:186spa5"
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "generatorFamilyId": "proc_dash_boundary_fix",
+      "seed": 3,
+      "signature": "grammar-v1:0xnqnjq"
+    },
+    {
+      "templateId": "proc_hyphen_ambiguity_choice",
+      "generatorFamilyId": "proc_hyphen_ambiguity_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0g3sftt"
+    },
+    {
+      "templateId": "proc_hyphen_ambiguity_choice",
+      "generatorFamilyId": "proc_hyphen_ambiguity_choice",
+      "seed": 2,
+      "signature": "grammar-v1:1ybsdcd"
+    },
+    {
+      "templateId": "proc_hyphen_ambiguity_choice",
+      "generatorFamilyId": "proc_hyphen_ambiguity_choice",
+      "seed": 3,
+      "signature": "grammar-v1:0vy6ssj"
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "generatorFamilyId": "proc_speech_punctuation_fix",
+      "seed": 1,
+      "signature": "grammar-v1:1sx0xyf"
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "generatorFamilyId": "proc_speech_punctuation_fix",
+      "seed": 2,
+      "signature": "grammar-v1:0u4a176"
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "generatorFamilyId": "proc_speech_punctuation_fix",
+      "seed": 3,
+      "signature": "grammar-v1:00fedhb"
+    },
+    {
+      "templateId": "proc_apostrophe_possession_choice",
+      "generatorFamilyId": "proc_apostrophe_possession_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0nk933s"
+    },
+    {
+      "templateId": "proc_apostrophe_possession_choice",
+      "generatorFamilyId": "proc_apostrophe_possession_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0kntphw"
+    },
+    {
+      "templateId": "proc_apostrophe_possession_choice",
+      "generatorFamilyId": "proc_apostrophe_possession_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1n4zmgj"
+    },
+    {
+      "templateId": "proc2_standard_english_choice",
+      "generatorFamilyId": "proc2_standard_english_choice",
+      "seed": 1,
+      "signature": "grammar-v1:00pzz42"
+    },
+    {
+      "templateId": "proc2_standard_english_choice",
+      "generatorFamilyId": "proc2_standard_english_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0o72ars"
+    },
+    {
+      "templateId": "proc2_standard_english_choice",
+      "generatorFamilyId": "proc2_standard_english_choice",
+      "seed": 3,
+      "signature": "grammar-v1:17g2hf2"
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "generatorFamilyId": "proc2_standard_english_fix",
+      "seed": 1,
+      "signature": "grammar-v1:01lzmgr"
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "generatorFamilyId": "proc2_standard_english_fix",
+      "seed": 2,
+      "signature": "grammar-v1:1vudeac"
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "generatorFamilyId": "proc2_standard_english_fix",
+      "seed": 3,
+      "signature": "grammar-v1:0yjg2u2"
+    },
+    {
+      "templateId": "proc2_tense_aspect_choice",
+      "generatorFamilyId": "proc2_tense_aspect_choice",
+      "seed": 1,
+      "signature": "grammar-v1:1izoc9g"
+    },
+    {
+      "templateId": "proc2_tense_aspect_choice",
+      "generatorFamilyId": "proc2_tense_aspect_choice",
+      "seed": 2,
+      "signature": "grammar-v1:01bbuh3"
+    },
+    {
+      "templateId": "proc2_tense_aspect_choice",
+      "generatorFamilyId": "proc2_tense_aspect_choice",
+      "seed": 3,
+      "signature": "grammar-v1:0bybprq"
+    },
+    {
+      "templateId": "proc2_modal_choice",
+      "generatorFamilyId": "proc2_modal_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0qhf48c"
+    },
+    {
+      "templateId": "proc2_modal_choice",
+      "generatorFamilyId": "proc2_modal_choice",
+      "seed": 2,
+      "signature": "grammar-v1:17fv0fw"
+    },
+    {
+      "templateId": "proc2_modal_choice",
+      "generatorFamilyId": "proc2_modal_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1skcwev"
+    },
+    {
+      "templateId": "proc2_formality_choice",
+      "generatorFamilyId": "proc2_formality_choice",
+      "seed": 1,
+      "signature": "grammar-v1:1y25jbh"
+    },
+    {
+      "templateId": "proc2_formality_choice",
+      "generatorFamilyId": "proc2_formality_choice",
+      "seed": 2,
+      "signature": "grammar-v1:1dhp26a"
+    },
+    {
+      "templateId": "proc2_formality_choice",
+      "generatorFamilyId": "proc2_formality_choice",
+      "seed": 3,
+      "signature": "grammar-v1:19yg7s1"
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "generatorFamilyId": "proc2_pronoun_cohesion_choice",
+      "seed": 1,
+      "signature": "grammar-v1:1roa1tw"
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "generatorFamilyId": "proc2_pronoun_cohesion_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0grnzk8"
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "generatorFamilyId": "proc2_pronoun_cohesion_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1kyjjvc"
+    },
+    {
+      "templateId": "proc2_subject_object_identify",
+      "generatorFamilyId": "proc2_subject_object_identify",
+      "seed": 1,
+      "signature": "grammar-v1:116hzis"
+    },
+    {
+      "templateId": "proc2_subject_object_identify",
+      "generatorFamilyId": "proc2_subject_object_identify",
+      "seed": 2,
+      "signature": "grammar-v1:0pghuqx"
+    },
+    {
+      "templateId": "proc2_subject_object_identify",
+      "generatorFamilyId": "proc2_subject_object_identify",
+      "seed": 3,
+      "signature": "grammar-v1:0wj1y6r"
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "generatorFamilyId": "proc2_passive_to_active",
+      "seed": 1,
+      "signature": "grammar-v1:1i2byea"
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "generatorFamilyId": "proc2_passive_to_active",
+      "seed": 2,
+      "signature": "grammar-v1:0917idq"
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "generatorFamilyId": "proc2_passive_to_active",
+      "seed": 3,
+      "signature": "grammar-v1:0uogei8"
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "generatorFamilyId": "proc2_relative_clause_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0774huc"
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "generatorFamilyId": "proc2_relative_clause_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0vqd1u8"
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "generatorFamilyId": "proc2_relative_clause_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1m9mwdk"
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "generatorFamilyId": "proc2_fronted_adverbial_build",
+      "seed": 1,
+      "signature": "grammar-v1:06pt6ej"
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "generatorFamilyId": "proc2_fronted_adverbial_build",
+      "seed": 2,
+      "signature": "grammar-v1:1u8yvq1"
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "generatorFamilyId": "proc2_fronted_adverbial_build",
+      "seed": 3,
+      "signature": "grammar-v1:1hx02vd"
+    },
+    {
+      "templateId": "proc2_boundary_punctuation_explain",
+      "generatorFamilyId": "proc2_boundary_punctuation_explain",
+      "seed": 1,
+      "signature": "grammar-v1:04xhucf"
+    },
+    {
+      "templateId": "proc2_boundary_punctuation_explain",
+      "generatorFamilyId": "proc2_boundary_punctuation_explain",
+      "seed": 2,
+      "signature": "grammar-v1:17v1k6e"
+    },
+    {
+      "templateId": "proc2_boundary_punctuation_explain",
+      "generatorFamilyId": "proc2_boundary_punctuation_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0c44wkn"
+    },
+    {
+      "templateId": "proc3_sentence_function_choice",
+      "generatorFamilyId": "proc3_sentence_function_choice",
+      "seed": 1,
+      "signature": "grammar-v1:1haufxw"
+    },
+    {
+      "templateId": "proc3_sentence_function_choice",
+      "generatorFamilyId": "proc3_sentence_function_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0t4x2ao"
+    },
+    {
+      "templateId": "proc3_sentence_function_choice",
+      "generatorFamilyId": "proc3_sentence_function_choice",
+      "seed": 3,
+      "signature": "grammar-v1:0p5p7iu"
+    },
+    {
+      "templateId": "proc3_word_class_contrast_choice",
+      "generatorFamilyId": "proc3_word_class_contrast_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0fok8e6"
+    },
+    {
+      "templateId": "proc3_word_class_contrast_choice",
+      "generatorFamilyId": "proc3_word_class_contrast_choice",
+      "seed": 2,
+      "signature": "grammar-v1:1lvmipt"
+    },
+    {
+      "templateId": "proc3_word_class_contrast_choice",
+      "generatorFamilyId": "proc3_word_class_contrast_choice",
+      "seed": 3,
+      "signature": "grammar-v1:0z27pnh"
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "generatorFamilyId": "proc3_noun_phrase_build",
+      "seed": 1,
+      "signature": "grammar-v1:1itl27l"
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "generatorFamilyId": "proc3_noun_phrase_build",
+      "seed": 2,
+      "signature": "grammar-v1:1yo6k4j"
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "generatorFamilyId": "proc3_noun_phrase_build",
+      "seed": 3,
+      "signature": "grammar-v1:0wid472"
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "generatorFamilyId": "proc3_clause_join_rewrite",
+      "seed": 1,
+      "signature": "grammar-v1:1k791ij"
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "generatorFamilyId": "proc3_clause_join_rewrite",
+      "seed": 2,
+      "signature": "grammar-v1:05ezv4s"
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "generatorFamilyId": "proc3_clause_join_rewrite",
+      "seed": 3,
+      "signature": "grammar-v1:02t7wg2"
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "generatorFamilyId": "proc3_parenthesis_commas_fix",
+      "seed": 1,
+      "signature": "grammar-v1:05d0k6e"
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "generatorFamilyId": "proc3_parenthesis_commas_fix",
+      "seed": 2,
+      "signature": "grammar-v1:09jdm1d"
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "generatorFamilyId": "proc3_parenthesis_commas_fix",
+      "seed": 3,
+      "signature": "grammar-v1:09mrgre"
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "generatorFamilyId": "proc3_hyphen_fix_meaning",
+      "seed": 1,
+      "signature": "grammar-v1:0w1vwh6"
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "generatorFamilyId": "proc3_hyphen_fix_meaning",
+      "seed": 2,
+      "signature": "grammar-v1:0jqvzv1"
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "generatorFamilyId": "proc3_hyphen_fix_meaning",
+      "seed": 3,
+      "signature": "grammar-v1:0a4q3mu"
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "generatorFamilyId": "qg_active_passive_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0c2fs0d"
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "generatorFamilyId": "qg_active_passive_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0yyt0w3"
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "generatorFamilyId": "qg_active_passive_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1jxeh9b"
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "generatorFamilyId": "qg_subject_object_classify_table",
+      "seed": 1,
+      "signature": "grammar-v1:1rbp6tf"
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "generatorFamilyId": "qg_subject_object_classify_table",
+      "seed": 2,
+      "signature": "grammar-v1:1bse0ww"
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "generatorFamilyId": "qg_subject_object_classify_table",
+      "seed": 3,
+      "signature": "grammar-v1:1o2o9cl"
+    },
+    {
+      "templateId": "qg_pronoun_referent_identify",
+      "generatorFamilyId": "qg_pronoun_referent_identify",
+      "seed": 1,
+      "signature": "grammar-v1:1r6g1le"
+    },
+    {
+      "templateId": "qg_pronoun_referent_identify",
+      "generatorFamilyId": "qg_pronoun_referent_identify",
+      "seed": 2,
+      "signature": "grammar-v1:1d1js0x"
+    },
+    {
+      "templateId": "qg_pronoun_referent_identify",
+      "generatorFamilyId": "qg_pronoun_referent_identify",
+      "seed": 3,
+      "signature": "grammar-v1:0w87we9"
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "generatorFamilyId": "qg_formality_classify_table",
+      "seed": 1,
+      "signature": "grammar-v1:1vr1alu"
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "generatorFamilyId": "qg_formality_classify_table",
+      "seed": 2,
+      "signature": "grammar-v1:1akzwrd"
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "generatorFamilyId": "qg_formality_classify_table",
+      "seed": 3,
+      "signature": "grammar-v1:0a6at2x"
+    },
+    {
+      "templateId": "qg_modal_verb_explain",
+      "generatorFamilyId": "qg_modal_verb_explain",
+      "seed": 1,
+      "signature": "grammar-v1:1sj4s6u"
+    },
+    {
+      "templateId": "qg_modal_verb_explain",
+      "generatorFamilyId": "qg_modal_verb_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1e4bzev"
+    },
+    {
+      "templateId": "qg_modal_verb_explain",
+      "generatorFamilyId": "qg_modal_verb_explain",
+      "seed": 3,
+      "signature": "grammar-v1:18i9frr"
+    },
+    {
+      "templateId": "qg_hyphen_ambiguity_explain",
+      "generatorFamilyId": "qg_hyphen_ambiguity_explain",
+      "seed": 1,
+      "signature": "grammar-v1:11dzz0d"
+    },
+    {
+      "templateId": "qg_hyphen_ambiguity_explain",
+      "generatorFamilyId": "qg_hyphen_ambiguity_explain",
+      "seed": 2,
+      "signature": "grammar-v1:014cofb"
+    },
+    {
+      "templateId": "qg_hyphen_ambiguity_explain",
+      "generatorFamilyId": "qg_hyphen_ambiguity_explain",
+      "seed": 3,
+      "signature": "grammar-v1:17lba1l"
+    },
+    {
+      "templateId": "qg_p3_sentence_functions_explain",
+      "generatorFamilyId": "qg_p3_sentence_functions_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0uaoj6a"
+    },
+    {
+      "templateId": "qg_p3_sentence_functions_explain",
+      "generatorFamilyId": "qg_p3_sentence_functions_explain",
+      "seed": 2,
+      "signature": "grammar-v1:12teei9"
+    },
+    {
+      "templateId": "qg_p3_sentence_functions_explain",
+      "generatorFamilyId": "qg_p3_sentence_functions_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0n0t12b"
+    },
+    {
+      "templateId": "qg_p3_word_classes_explain",
+      "generatorFamilyId": "qg_p3_word_classes_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0w4wozh"
+    },
+    {
+      "templateId": "qg_p3_word_classes_explain",
+      "generatorFamilyId": "qg_p3_word_classes_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1v09om2"
+    },
+    {
+      "templateId": "qg_p3_word_classes_explain",
+      "generatorFamilyId": "qg_p3_word_classes_explain",
+      "seed": 3,
+      "signature": "grammar-v1:06le7tm"
+    },
+    {
+      "templateId": "qg_p3_noun_phrases_explain",
+      "generatorFamilyId": "qg_p3_noun_phrases_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0cj1zio"
+    },
+    {
+      "templateId": "qg_p3_noun_phrases_explain",
+      "generatorFamilyId": "qg_p3_noun_phrases_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1nusovs"
+    },
+    {
+      "templateId": "qg_p3_noun_phrases_explain",
+      "generatorFamilyId": "qg_p3_noun_phrases_explain",
+      "seed": 3,
+      "signature": "grammar-v1:1823evh"
+    },
+    {
+      "templateId": "qg_p3_clauses_explain",
+      "generatorFamilyId": "qg_p3_clauses_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0xtdmgv"
+    },
+    {
+      "templateId": "qg_p3_clauses_explain",
+      "generatorFamilyId": "qg_p3_clauses_explain",
+      "seed": 2,
+      "signature": "grammar-v1:01ecnf2"
+    },
+    {
+      "templateId": "qg_p3_clauses_explain",
+      "generatorFamilyId": "qg_p3_clauses_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0uqrbp5"
+    },
+    {
+      "templateId": "qg_p3_relative_clauses_explain",
+      "generatorFamilyId": "qg_p3_relative_clauses_explain",
+      "seed": 1,
+      "signature": "grammar-v1:1j6zczq"
+    },
+    {
+      "templateId": "qg_p3_relative_clauses_explain",
+      "generatorFamilyId": "qg_p3_relative_clauses_explain",
+      "seed": 2,
+      "signature": "grammar-v1:0bz3no3"
+    },
+    {
+      "templateId": "qg_p3_relative_clauses_explain",
+      "generatorFamilyId": "qg_p3_relative_clauses_explain",
+      "seed": 3,
+      "signature": "grammar-v1:1329zyb"
+    },
+    {
+      "templateId": "qg_p3_tense_aspect_explain",
+      "generatorFamilyId": "qg_p3_tense_aspect_explain",
+      "seed": 1,
+      "signature": "grammar-v1:1asnp8e"
+    },
+    {
+      "templateId": "qg_p3_tense_aspect_explain",
+      "generatorFamilyId": "qg_p3_tense_aspect_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1hm8yyu"
+    },
+    {
+      "templateId": "qg_p3_tense_aspect_explain",
+      "generatorFamilyId": "qg_p3_tense_aspect_explain",
+      "seed": 3,
+      "signature": "grammar-v1:1ayt8q8"
+    },
+    {
+      "templateId": "qg_p3_pronouns_cohesion_explain",
+      "generatorFamilyId": "qg_p3_pronouns_cohesion_explain",
+      "seed": 1,
+      "signature": "grammar-v1:1yywtk3"
+    },
+    {
+      "templateId": "qg_p3_pronouns_cohesion_explain",
+      "generatorFamilyId": "qg_p3_pronouns_cohesion_explain",
+      "seed": 2,
+      "signature": "grammar-v1:04zsn06"
+    },
+    {
+      "templateId": "qg_p3_pronouns_cohesion_explain",
+      "generatorFamilyId": "qg_p3_pronouns_cohesion_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0zlx8lh"
+    },
+    {
+      "templateId": "qg_p3_formality_explain",
+      "generatorFamilyId": "qg_p3_formality_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0ekiz2n"
+    },
+    {
+      "templateId": "qg_p3_formality_explain",
+      "generatorFamilyId": "qg_p3_formality_explain",
+      "seed": 2,
+      "signature": "grammar-v1:04o5vnt"
+    },
+    {
+      "templateId": "qg_p3_formality_explain",
+      "generatorFamilyId": "qg_p3_formality_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0gn4195"
+    },
+    {
+      "templateId": "qg_p3_active_passive_explain",
+      "generatorFamilyId": "qg_p3_active_passive_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0whqnbd"
+    },
+    {
+      "templateId": "qg_p3_active_passive_explain",
+      "generatorFamilyId": "qg_p3_active_passive_explain",
+      "seed": 2,
+      "signature": "grammar-v1:0yoqt5f"
+    },
+    {
+      "templateId": "qg_p3_active_passive_explain",
+      "generatorFamilyId": "qg_p3_active_passive_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0hdfkgi"
+    },
+    {
+      "templateId": "qg_p3_subject_object_explain",
+      "generatorFamilyId": "qg_p3_subject_object_explain",
+      "seed": 1,
+      "signature": "grammar-v1:092uxl7"
+    },
+    {
+      "templateId": "qg_p3_subject_object_explain",
+      "generatorFamilyId": "qg_p3_subject_object_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1ci5x8q"
+    },
+    {
+      "templateId": "qg_p3_subject_object_explain",
+      "generatorFamilyId": "qg_p3_subject_object_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0f6bj5b"
+    },
+    {
+      "templateId": "qg_p3_parenthesis_commas_explain",
+      "generatorFamilyId": "qg_p3_parenthesis_commas_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0r1wgro"
+    },
+    {
+      "templateId": "qg_p3_parenthesis_commas_explain",
+      "generatorFamilyId": "qg_p3_parenthesis_commas_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1no92yn"
+    },
+    {
+      "templateId": "qg_p3_parenthesis_commas_explain",
+      "generatorFamilyId": "qg_p3_parenthesis_commas_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0rd8cvk"
+    },
+    {
+      "templateId": "qg_p3_speech_punctuation_explain",
+      "generatorFamilyId": "qg_p3_speech_punctuation_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0prt8ia"
+    },
+    {
+      "templateId": "qg_p3_speech_punctuation_explain",
+      "generatorFamilyId": "qg_p3_speech_punctuation_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1347ddw"
+    },
+    {
+      "templateId": "qg_p3_speech_punctuation_explain",
+      "generatorFamilyId": "qg_p3_speech_punctuation_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0kareab"
+    },
+    {
+      "templateId": "qg_p3_apostrophe_possession_explain",
+      "generatorFamilyId": "qg_p3_apostrophe_possession_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0a7d6oe"
+    },
+    {
+      "templateId": "qg_p3_apostrophe_possession_explain",
+      "generatorFamilyId": "qg_p3_apostrophe_possession_explain",
+      "seed": 2,
+      "signature": "grammar-v1:0h90l1z"
+    },
+    {
+      "templateId": "qg_p3_apostrophe_possession_explain",
+      "generatorFamilyId": "qg_p3_apostrophe_possession_explain",
+      "seed": 3,
+      "signature": "grammar-v1:09edn4b"
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "generatorFamilyId": "proc3_apostrophe_rewrite",
+      "seed": 1,
+      "signature": "grammar-v1:0aiqzup"
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "generatorFamilyId": "proc3_apostrophe_rewrite",
+      "seed": 2,
+      "signature": "grammar-v1:1t2yk8d"
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "generatorFamilyId": "proc3_apostrophe_rewrite",
+      "seed": 3,
+      "signature": "grammar-v1:13s7nkl"
+    },
+    {
+      "templateId": "qg_p4_sentence_speech_transfer",
+      "generatorFamilyId": "qg_p4_sentence_speech_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:15383an"
+    },
+    {
+      "templateId": "qg_p4_sentence_speech_transfer",
+      "generatorFamilyId": "qg_p4_sentence_speech_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:1bj397b"
+    },
+    {
+      "templateId": "qg_p4_sentence_speech_transfer",
+      "generatorFamilyId": "qg_p4_sentence_speech_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:1xaiqyr"
+    },
+    {
+      "templateId": "qg_p4_word_class_noun_phrase_transfer",
+      "generatorFamilyId": "qg_p4_word_class_noun_phrase_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:1sjvebp"
+    },
+    {
+      "templateId": "qg_p4_word_class_noun_phrase_transfer",
+      "generatorFamilyId": "qg_p4_word_class_noun_phrase_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:0nnbwza"
+    },
+    {
+      "templateId": "qg_p4_word_class_noun_phrase_transfer",
+      "generatorFamilyId": "qg_p4_word_class_noun_phrase_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:094yl9z"
+    },
+    {
+      "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+      "generatorFamilyId": "qg_p4_adverbial_clause_boundary_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:1jplujw"
+    },
+    {
+      "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+      "generatorFamilyId": "qg_p4_adverbial_clause_boundary_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:0yud02b"
+    },
+    {
+      "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+      "generatorFamilyId": "qg_p4_adverbial_clause_boundary_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:19aekqo"
+    },
+    {
+      "templateId": "qg_p4_relative_parenthesis_transfer",
+      "generatorFamilyId": "qg_p4_relative_parenthesis_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:1bpe90j"
+    },
+    {
+      "templateId": "qg_p4_relative_parenthesis_transfer",
+      "generatorFamilyId": "qg_p4_relative_parenthesis_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:07xs2l1"
+    },
+    {
+      "templateId": "qg_p4_relative_parenthesis_transfer",
+      "generatorFamilyId": "qg_p4_relative_parenthesis_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:0wmyt9n"
+    },
+    {
+      "templateId": "qg_p4_verb_form_register_transfer",
+      "generatorFamilyId": "qg_p4_verb_form_register_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:0vhltu5"
+    },
+    {
+      "templateId": "qg_p4_verb_form_register_transfer",
+      "generatorFamilyId": "qg_p4_verb_form_register_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:0v7iqs1"
+    },
+    {
+      "templateId": "qg_p4_verb_form_register_transfer",
+      "generatorFamilyId": "qg_p4_verb_form_register_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:18cym0l"
+    },
+    {
+      "templateId": "qg_p4_cohesion_formality_transfer",
+      "generatorFamilyId": "qg_p4_cohesion_formality_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:1i67kz4"
+    },
+    {
+      "templateId": "qg_p4_cohesion_formality_transfer",
+      "generatorFamilyId": "qg_p4_cohesion_formality_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:13ulbt7"
+    },
+    {
+      "templateId": "qg_p4_cohesion_formality_transfer",
+      "generatorFamilyId": "qg_p4_cohesion_formality_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:1ege8ys"
+    },
+    {
+      "templateId": "qg_p4_voice_roles_transfer",
+      "generatorFamilyId": "qg_p4_voice_roles_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:04yww5r"
+    },
+    {
+      "templateId": "qg_p4_voice_roles_transfer",
+      "generatorFamilyId": "qg_p4_voice_roles_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:0i2k8bz"
+    },
+    {
+      "templateId": "qg_p4_voice_roles_transfer",
+      "generatorFamilyId": "qg_p4_voice_roles_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:1d0kt3m"
+    },
+    {
+      "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+      "generatorFamilyId": "qg_p4_possession_hyphen_clarity_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:15h30y2"
+    },
+    {
+      "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+      "generatorFamilyId": "qg_p4_possession_hyphen_clarity_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:1g9oqlp"
+    },
+    {
+      "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+      "generatorFamilyId": "qg_p4_possession_hyphen_clarity_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:1l1qtw7"
+    }
+  ],
+  "answerSpecTemplateCount": 47,
+  "answerSpecKindCounts": {
+    "acceptedSet": 2,
+    "exact": 23,
+    "manualReviewOnly": 4,
+    "multiField": 4,
+    "normalisedText": 5,
+    "punctuationPattern": 9
+  },
+  "constructedResponseTemplateCount": 20,
+  "constructedResponseAnswerSpecTemplateCount": 20,
+  "legacyAdapterTemplateCount": 0,
+  "manualReviewOnlyTemplateCount": 4,
+  "p2MigrationComplete": true,
+  "templatesMissingAnswerSpecs": [],
+  "invalidAnswerSpecs": [],
+  "mixedTransferTemplateCount": 8,
+  "conceptsWithMixedTransferCoverage": [
+    "active_passive",
+    "adverbials",
+    "apostrophes_possession",
+    "boundary_punctuation",
+    "clauses",
+    "formality",
+    "hyphen_ambiguity",
+    "modal_verbs",
+    "noun_phrases",
+    "parenthesis_commas",
+    "pronouns_cohesion",
+    "relative_clauses",
+    "sentence_functions",
+    "speech_punctuation",
+    "standard_english",
+    "subject_object",
+    "tense_aspect",
+    "word_classes"
+  ],
+  "conceptsMissingMixedTransferCoverage": [],
+  "p4MixedTransferComplete": true,
+  "deepSampledSeeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "generatedCaseDepthByFamily": [
+    {
+      "familyId": "proc_apostrophe_possession_choice",
+      "uniqueSignatures": 26,
+      "totalSampled": 30,
+      "depth": 26
+    },
+    {
+      "familyId": "proc_colon_list_fix",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "proc_dash_boundary_fix",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "proc_fronted_adverbial_fix",
+      "uniqueSignatures": 30,
+      "totalSampled": 30,
+      "depth": 30
+    },
+    {
+      "familyId": "proc_hyphen_ambiguity_choice",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "proc_semicolon_choice",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "proc_speech_punctuation_fix",
+      "uniqueSignatures": 29,
+      "totalSampled": 30,
+      "depth": 29
+    },
+    {
+      "familyId": "proc2_boundary_punctuation_explain",
+      "uniqueSignatures": 15,
+      "totalSampled": 30,
+      "depth": 15
+    },
+    {
+      "familyId": "proc2_formality_choice",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "proc2_fronted_adverbial_build",
+      "uniqueSignatures": 30,
+      "totalSampled": 30,
+      "depth": 30
+    },
+    {
+      "familyId": "proc2_modal_choice",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "proc2_passive_to_active",
+      "uniqueSignatures": 30,
+      "totalSampled": 30,
+      "depth": 30
+    },
+    {
+      "familyId": "proc2_pronoun_cohesion_choice",
+      "uniqueSignatures": 30,
+      "totalSampled": 30,
+      "depth": 30
+    },
+    {
+      "familyId": "proc2_relative_clause_choice",
+      "uniqueSignatures": 21,
+      "totalSampled": 30,
+      "depth": 21
+    },
+    {
+      "familyId": "proc2_standard_english_choice",
+      "uniqueSignatures": 25,
+      "totalSampled": 30,
+      "depth": 25
+    },
+    {
+      "familyId": "proc2_standard_english_fix",
+      "uniqueSignatures": 25,
+      "totalSampled": 30,
+      "depth": 25
+    },
+    {
+      "familyId": "proc2_subject_object_identify",
+      "uniqueSignatures": 30,
+      "totalSampled": 30,
+      "depth": 30
+    },
+    {
+      "familyId": "proc2_tense_aspect_choice",
+      "uniqueSignatures": 30,
+      "totalSampled": 30,
+      "depth": 30
+    },
+    {
+      "familyId": "proc3_apostrophe_rewrite",
+      "uniqueSignatures": 27,
+      "totalSampled": 30,
+      "depth": 27
+    },
+    {
+      "familyId": "proc3_clause_join_rewrite",
+      "uniqueSignatures": 12,
+      "totalSampled": 30,
+      "depth": 12
+    },
+    {
+      "familyId": "proc3_hyphen_fix_meaning",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "proc3_noun_phrase_build",
+      "uniqueSignatures": 30,
+      "totalSampled": 30,
+      "depth": 30
+    },
+    {
+      "familyId": "proc3_parenthesis_commas_fix",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "proc3_sentence_function_choice",
+      "uniqueSignatures": 28,
+      "totalSampled": 30,
+      "depth": 28
+    },
+    {
+      "familyId": "proc3_word_class_contrast_choice",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "qg_active_passive_choice",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "qg_formality_classify_table",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "qg_hyphen_ambiguity_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_modal_verb_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_active_passive_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_apostrophe_possession_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_clauses_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_formality_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_noun_phrases_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_parenthesis_commas_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_pronouns_cohesion_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_relative_clauses_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_sentence_functions_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_speech_punctuation_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_subject_object_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_tense_aspect_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p3_word_classes_explain",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p4_adverbial_clause_boundary_transfer",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p4_cohesion_formality_transfer",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p4_possession_hyphen_clarity_transfer",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p4_relative_parenthesis_transfer",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p4_sentence_speech_transfer",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p4_verb_form_register_transfer",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p4_voice_roles_transfer",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_p4_word_class_noun_phrase_transfer",
+      "uniqueSignatures": 8,
+      "totalSampled": 30,
+      "depth": 8
+    },
+    {
+      "familyId": "qg_pronoun_referent_identify",
+      "uniqueSignatures": 9,
+      "totalSampled": 30,
+      "depth": 9
+    },
+    {
+      "familyId": "qg_subject_object_classify_table",
+      "uniqueSignatures": 30,
+      "totalSampled": 30,
+      "depth": 30
+    }
+  ],
+  "lowDepthGeneratedTemplates": []
+}

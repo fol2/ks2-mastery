@@ -23,6 +23,7 @@ const qgP2BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionalit
 const qgP3BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/grammar-qg-p3-baseline.json');
 const qgP4BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/grammar-qg-p4-baseline.json');
 const qgP5BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/grammar-qg-p5-baseline.json');
+const qgP6BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/grammar-qg-p6-baseline.json');
 const perfectionPassBaselinePath = path.join(rootDir, 'tests/fixtures/grammar-functionality-completeness/perfection-pass-baseline.json');
 const phase3BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-phase3-baseline.json');
 const phase4BaselinePath = path.join(rootDir, 'tests/fixtures/grammar-phase4-baseline.json');
@@ -60,6 +61,10 @@ function readQgP4Baseline() {
 
 function readQgP5Baseline() {
   return JSON.parse(fs.readFileSync(qgP5BaselinePath, 'utf8'));
+}
+
+function readQgP6Baseline() {
+  return JSON.parse(fs.readFileSync(qgP6BaselinePath, 'utf8'));
 }
 
 function readPhase3Baseline() {
@@ -644,11 +649,11 @@ test('Grammar QG P4 baseline captures the final mixed-transfer denominator', () 
 // QG P5 — denominator drift detection baseline
 // -----------------------------------------------------------------------------
 
-test('Grammar QG P5 baseline captures the depth and stability denominator', () => {
-  const baseline = readQgP5Baseline();
+test('Grammar QG P6 baseline captures the depth and stability denominator', () => {
+  const baseline = readQgP6Baseline();
   const content = baseline.contentBaseline;
 
-  assert.equal(baseline.contentReleaseId, 'grammar-qg-p5-2026-04-28');
+  assert.equal(baseline.contentReleaseId, 'grammar-qg-p6-2026-04-29');
   assert.equal(content.conceptCount, 18);
   assert.equal(content.templateCount, 78);
   assert.equal(content.selectedResponseCount, 58);

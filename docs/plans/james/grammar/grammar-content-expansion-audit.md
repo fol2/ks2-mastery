@@ -5,7 +5,7 @@ status: p4-updated
 date: 2026-04-28
 plan: docs/plans/2026-04-26-001-feat-grammar-phase4-learning-hardening-plan.md
 unit: U12
-contentReleaseId: grammar-qg-p4-2026-04-28
+contentReleaseId: grammar-qg-p6-2026-04-29
 contentReleaseBump: yes
 ---
 

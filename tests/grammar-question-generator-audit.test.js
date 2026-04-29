@@ -8,7 +8,7 @@ import {
   createGrammarQuestion,
   grammarQuestionVariantSignature,
 } from '../worker/src/subjects/grammar/content.js';
-import { readGrammarQuestionGeneratorP5Baseline } from './helpers/grammar-legacy-oracle.js';
+import { readGrammarQuestionGeneratorP6Baseline } from './helpers/grammar-legacy-oracle.js';
 
 test('Grammar question-generator audit covers the current template inventory', () => {
   const audit = buildGrammarQuestionGeneratorAudit();
@@ -95,10 +95,10 @@ test('Grammar question-generator P5 denominator assertions', () => {
   assert.equal(audit.generatedSignatureCollisions.length, 0, 'Cross-template collisions must be zero');
 });
 
-test('Grammar P5 baseline fixture is frozen against live audit output', () => {
+test('Grammar P6 baseline fixture is frozen against live audit output', () => {
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds: [1, 2, 3], deepSeeds });
-  const baseline = readGrammarQuestionGeneratorP5Baseline();
+  const baseline = readGrammarQuestionGeneratorP6Baseline();
 
   assert.equal(audit.releaseId, baseline.releaseId);
   assert.equal(audit.conceptCount, baseline.conceptCount);
