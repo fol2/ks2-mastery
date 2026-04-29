@@ -50,10 +50,10 @@ Future migration PRs should:
 | Category | Count |
 | --- | --- |
 | `shared-pattern-available` | 135 |
-| `dynamic-content-driven` | 108 |
+| `dynamic-content-driven` | 110 |
 | `css-var-ready` | 3 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **248** |
+| **TOTAL** | **250** |
 
 ## Per-file inventory
 
