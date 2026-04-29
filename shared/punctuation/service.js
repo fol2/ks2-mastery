@@ -9,7 +9,7 @@ import {
   createPunctuationSessionCompletedEvent,
   createPunctuationUnitSecuredEvent,
 } from './events.js';
-import { createPunctuationRuntimeManifest } from './generators.js';
+import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from './generators.js';
 import { parseChoiceIndex } from './choice-index.js';
 import { markPunctuationAnswer, normaliseAnswerText } from './marking.js';
 import {
@@ -36,7 +36,6 @@ import { extractHeroSummaryContext } from '../hero/launch-context.js';
 
 const SUBJECT_ID = 'punctuation';
 const SERVER_AUTHORITY = 'worker';
-const GENERATED_ITEMS_PER_FAMILY = 4;
 const MAX_GPS_QUEUE_LENGTH = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAILY_TARGET_ATTEMPTS = 4;
@@ -1251,7 +1250,7 @@ export function createPunctuationService({
   random = Math.random,
   manifest = createPunctuationRuntimeManifest({
     manifest: PUNCTUATION_CONTENT_MANIFEST,
-    generatedPerFamily: GENERATED_ITEMS_PER_FAMILY,
+    generatedPerFamily: PRODUCTION_DEPTH,
   }),
   indexes = createPunctuationContentIndexes(manifest),
 } = {}) {
