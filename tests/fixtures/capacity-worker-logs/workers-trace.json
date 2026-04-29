@@ -1,0 +1,73 @@
+{
+  "records": [
+    {
+      "EventTimestampMs": 1777453200000,
+      "CPUTimeMs": 4.2,
+      "WallTimeMs": 930,
+      "Outcome": "ok",
+      "Event": {
+        "Request": {
+          "Method": "GET",
+          "URL": "https://ks2.eugnel.uk/api/bootstrap",
+          "Headers": {
+            "x-ks2-request-id": "ks2_req_11111111-1111-4111-8111-111111111111"
+          }
+        },
+        "Response": { "Status": 200 }
+      },
+      "logs": [
+        {
+          "message": "[ks2-worker] {\"event\":\"capacity.request\",\"requestId\":\"ks2_req_11111111-1111-4111-8111-111111111111\",\"endpoint\":\"/api/bootstrap\",\"method\":\"GET\",\"status\":200,\"phase\":\"bootstrap\",\"queryCount\":8,\"d1RowsRead\":120,\"d1RowsWritten\":0,\"d1DurationMs\":710,\"wallMs\":920,\"responseBytes\":78000,\"bootstrapMode\":\"selected-learner-bounded\",\"statements\":[{\"name\":\"all:SELECT child_subject_state\",\"rowsRead\":96,\"rowsWritten\":0,\"durationMs\":680}],\"statementsTruncated\":false,\"at\":\"2026-04-29T09:00:00.000Z\"}"
+        }
+      ]
+    },
+    {
+      "EventTimestampMs": 1777453201200,
+      "CPUTimeMs": 4.8,
+      "WallTimeMs": 940,
+      "Outcome": "ok",
+      "Event": {
+        "Request": {
+          "Method": "GET",
+          "URL": "https://ks2.eugnel.uk/api/bootstrap",
+          "Headers": {
+            "x-ks2-request-id": "ks2_req_11111111-1111-4111-8111-111111111111"
+          }
+        },
+        "Response": { "Status": 200 }
+      }
+    },
+    {
+      "EventTimestampMs": 1777453202000,
+      "CPUTimeMs": 2.1,
+      "WallTimeMs": 860,
+      "Outcome": "ok",
+      "Event": {
+        "Request": {
+          "Method": "GET",
+          "URL": "https://ks2.eugnel.uk/api/bootstrap",
+          "Headers": {
+            "x-ks2-request-id": "ks2_req_22222222-2222-4222-8222-222222222222"
+          }
+        },
+        "Response": { "Status": 200 }
+      }
+    },
+    {
+      "EventTimestampMs": 1777453203000,
+      "CPUTimeMs": 1.1,
+      "WallTimeMs": 80,
+      "Outcome": "ok",
+      "Event": {
+        "Request": {
+          "Method": "GET",
+          "URL": "https://ks2.eugnel.uk/api/bootstrap",
+          "Headers": {
+            "x-ks2-request-id": "ks2_req_99999999-9999-4999-8999-999999999999"
+          }
+        },
+        "Response": { "Status": 200 }
+      }
+    }
+  ]
+}

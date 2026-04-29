@@ -7,10 +7,12 @@ import { join } from 'node:path';
 
 import {
   EVIDENCE_SCHEMA_VERSION,
+  P1_UNCLASSIFIED_INSUFFICIENT_LOGS,
   P6_CERTIFIED_THRESHOLD_CONFIG_HASH,
   REQUEST_SAMPLES_HEAD_LIMIT,
   REQUEST_SAMPLES_TAIL_LIMIT,
   buildCapacityDiagnostics,
+  buildWorkerLogJoinDiagnostics,
   autoNameEvidencePath,
   buildEvidencePayload,
   buildProvenance,
@@ -328,6 +330,95 @@ test('buildCapacityDiagnostics records threshold provenance, endpoint inventory,
     observed: 1126.3,
     message: 'Bootstrap P95 wall time 1126.3 ms exceeds 1000 ms.',
   }]);
+});
+
+test('buildCapacityDiagnostics records the P1 evidence lane without changing certification gates', () => {
+  const diagnostics = buildCapacityDiagnostics({
+    options: {
+      mode: 'production',
+      origin: 'https://ks2.eugnel.uk',
+      demoSessions: true,
+      learners: 30,
+      bootstrapBurst: 20,
+      rounds: 1,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    tier: {
+      tier: '30-learner-beta-certified',
+      minEvidenceSchemaVersion: 2,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    summary: makeSummary(),
+    thresholdConfigHash: P6_CERTIFIED_THRESHOLD_CONFIG_HASH,
+  });
+
+  assert.equal(diagnostics.evidenceLane.matrix, 'p1-evidence-attribution');
+  assert.equal(diagnostics.evidenceLane.lane, 'strict-30-release-gate');
+  assert.equal(diagnostics.evidenceLane.certificationCandidate, true);
+  assert.equal(diagnostics.classification.certificationEligible, true);
+});
+
+test('buildWorkerLogJoinDiagnostics is diagnostic-only and records separate invocation and statement coverage', () => {
+  const diagnostics = buildWorkerLogJoinDiagnostics({
+    generatedAt: '2026-04-29T09:00:00Z',
+    sourceEvidencePath: 'reports/capacity/evidence/strict.json',
+    logSourcePaths: ['logs/workers.jsonl'],
+    samples: [
+      {
+        requestId: 'ks2_req_00000000-0000-4000-8000-000000000001',
+        endpoint: '/api/bootstrap',
+        method: 'GET',
+        wallMs: 950,
+        invocationJoinStatus: 'matched',
+        capacityRequestJoinStatus: 'matched',
+        cloudflare: { cpuTimeMs: 4.2, wallTimeMs: 930, outcome: 'ok' },
+        capacityRequest: {
+          d1DurationMs: 710,
+          queryCount: 8,
+          d1RowsRead: 120,
+          statements: [{ name: 'all:SELECT child_subject_state', durationMs: 680 }],
+        },
+        classification: 'd1-dominated',
+      },
+      {
+        requestId: 'ks2_req_00000000-0000-4000-8000-000000000002',
+        endpoint: '/api/bootstrap',
+        method: 'GET',
+        wallMs: 880,
+        invocationJoinStatus: 'matched',
+        capacityRequestJoinStatus: 'missing',
+        cloudflare: { cpuTimeMs: 2.1, wallTimeMs: 860, outcome: 'ok' },
+      },
+    ],
+  });
+
+  assert.equal(diagnostics.diagnosticOnly, true);
+  assert.equal(diagnostics.certification.contributesToCertification, false);
+  assert.equal(diagnostics.coverage.topTailSamples, 2);
+  assert.equal(diagnostics.coverage.invocation.matched, 2);
+  assert.equal(diagnostics.coverage.statementLogs.matched, 1);
+  assert.equal(diagnostics.coverage.statementLogs.missing, 1);
+  assert.equal(diagnostics.samples[0].classification, 'd1-dominated');
+  assert.equal(diagnostics.samples[1].classification, 'partial-invocation-only');
+});
+
+test('buildWorkerLogJoinDiagnostics marks missing Cloudflare CPU/wall as insufficient logs', () => {
+  const diagnostics = buildWorkerLogJoinDiagnostics({
+    samples: [{
+      requestId: 'ks2_req_00000000-0000-4000-8000-000000000003',
+      endpoint: '/api/bootstrap',
+      method: 'GET',
+      wallMs: 1020,
+      invocationJoinStatus: 'missing',
+      capacityRequestJoinStatus: 'matched',
+      capacityRequest: { d1DurationMs: 500, queryCount: 7 },
+      classification: 'd1-dominated',
+    }],
+  });
+
+  assert.equal(diagnostics.coverage.invocation.missing, 1);
+  assert.equal(diagnostics.coverage.statementLogs.matched, 1);
+  assert.equal(diagnostics.samples[0].classification, P1_UNCLASSIFIED_INSUFFICIENT_LOGS);
 });
 
 test('buildCapacityDiagnostics keeps complete passing strict evidence certification-eligible', () => {

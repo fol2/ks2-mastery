@@ -4,6 +4,20 @@ import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from '
 import { dirname, resolve } from 'node:path';
 
 export const EVIDENCE_SCHEMA_VERSION = 3;
+export const P1_WORKER_LOG_DIAGNOSTICS_VERSION = 1;
+export const P1_WORKER_LOG_DIAGNOSTIC_ONLY_REASON = 'worker-log-diagnostics-do-not-certify';
+export const P1_UNCLASSIFIED_INSUFFICIENT_LOGS = 'unclassified-insufficient-logs';
+export const P1_TAIL_CLASSIFICATIONS = Object.freeze([
+  P1_UNCLASSIFIED_INSUFFICIENT_LOGS,
+  'partial-invocation-only',
+  'd1-dominated',
+  'worker-cpu-dominated',
+  'payload-size-pressure',
+  'client-network-or-platform-overhead',
+  'mixed-no-single-dominant-resource',
+]);
+
+const P1_TAIL_CLASSIFICATION_SET = new Set(P1_TAIL_CLASSIFICATIONS);
 
 // Request-sample cap per endpoint when --include-request-samples is enabled.
 // Plan says 100 + 100 (first N and last N); this preserves post-mortem utility
@@ -110,8 +124,10 @@ export function buildCapacityDiagnostics({
   summary = {},
   thresholdViolations = [],
   thresholdConfigHash = null,
+  workerLogJoin = null,
 } = {}) {
   const baseClassification = classifyCapacityEvidenceRun(options, tier);
+  const evidenceLane = classifyP1EvidenceLane(options, tier);
   const endpointKeys = Object.keys(summary.endpoints || {});
   const bootstrapEndpointKeys = endpointKeys.filter((key) => key.endsWith('/api/bootstrap'));
   const commandEndpointKeys = endpointKeys.filter((key) => /subjects\/.*\/command/.test(key));
@@ -148,6 +164,7 @@ export function buildCapacityDiagnostics({
       certificationEligible,
       reasons,
     },
+    evidenceLane,
     runShape: baseClassification.runShape,
     endpointInventory,
     thresholdConfig: {
@@ -157,7 +174,211 @@ export function buildCapacityDiagnostics({
       hash: thresholdConfigHash || null,
     },
     thresholdViolations: normalisedViolations,
+    ...(workerLogJoin ? { workerLogJoin: buildWorkerLogJoinDiagnostics(workerLogJoin) } : {}),
   };
+}
+
+export function classifyP1EvidenceLane(options = {}, tier = {}) {
+  const base = classifyCapacityEvidenceRun(options, tier);
+  const reasons = [...base.reasons];
+  const sessionSourceMode = base.runShape.sessionSourceMode;
+  let lane = 'diagnostic-other';
+
+  if (base.runShape.mode === 'dry-run') {
+    lane = 'diagnostic-dry-run';
+  } else if (base.runShape.mode !== 'production') {
+    lane = 'diagnostic-non-production';
+  } else if (sessionSourceMode === 'manifest') {
+    lane = 'diagnostic-session-manifest';
+  } else if (!base.runShape.releaseGateShape) {
+    lane = 'diagnostic-alternate-run-shape';
+  } else if (base.runShape.originClass === 'production' && sessionSourceMode === 'demo-sessions') {
+    lane = 'strict-30-release-gate';
+  }
+
+  return {
+    matrix: 'p1-evidence-attribution',
+    lane,
+    diagnosticOnly: !base.certificationEligible,
+    certificationCandidate: base.certificationEligible,
+    requiresUniqueOutputPath: true,
+    reasons,
+  };
+}
+
+export function buildWorkerLogJoinDiagnostics(input = {}) {
+  const samples = Array.isArray(input.samples)
+    ? input.samples.map((sample) => normaliseWorkerLogJoinSample(sample))
+    : [];
+  const coverage = buildWorkerLogCoverage(samples);
+  const classificationCounts = {};
+  for (const sample of samples) {
+    classificationCounts[sample.classification] = (classificationCounts[sample.classification] || 0) + 1;
+  }
+
+  return {
+    schemaVersion: P1_WORKER_LOG_DIAGNOSTICS_VERSION,
+    diagnosticOnly: true,
+    generatedAt: typeof input.generatedAt === 'string' ? input.generatedAt : null,
+    sourceEvidencePath: typeof input.sourceEvidencePath === 'string' ? input.sourceEvidencePath : null,
+    logSourcePaths: Array.isArray(input.logSourcePaths)
+      ? input.logSourcePaths.filter((entry) => typeof entry === 'string')
+      : [],
+    certification: {
+      contributesToCertification: false,
+      reason: P1_WORKER_LOG_DIAGNOSTIC_ONLY_REASON,
+    },
+    coverage,
+    classificationCounts,
+    samples,
+  };
+}
+
+function buildWorkerLogCoverage(samples = []) {
+  const topTailSamples = samples.length;
+  let invocationMatched = 0;
+  let invocationPartial = 0;
+  let statementMatched = 0;
+  let statementPartial = 0;
+
+  for (const sample of samples) {
+    const invocationStatus = sample.join.invocation.status;
+    const statementStatus = sample.join.capacityRequest.status;
+    if (invocationStatus === 'matched') invocationMatched += 1;
+    if (invocationStatus === 'partial') invocationPartial += 1;
+    if (statementStatus === 'matched') statementMatched += 1;
+    if (statementStatus === 'partial') statementPartial += 1;
+  }
+
+  const ratio = (count) => (topTailSamples > 0 ? Number((count / topTailSamples).toFixed(4)) : 0);
+  return {
+    topTailSamples,
+    invocation: {
+      matched: invocationMatched,
+      partial: invocationPartial,
+      missing: topTailSamples - invocationMatched - invocationPartial,
+      coverageRatio: ratio(invocationMatched),
+    },
+    statementLogs: {
+      matched: statementMatched,
+      partial: statementPartial,
+      missing: topTailSamples - statementMatched - statementPartial,
+      coverageRatio: ratio(statementMatched),
+    },
+  };
+}
+
+function normaliseWorkerLogJoinSample(sample = {}) {
+  const join = sample.join && typeof sample.join === 'object' ? sample.join : {};
+  const invocationStatus = normaliseJoinStatus(
+    sample.invocationJoinStatus || join.invocation?.status,
+  );
+  const capacityRequestStatus = normaliseJoinStatus(
+    sample.capacityRequestJoinStatus || join.capacityRequest?.status || join.statementLogs?.status,
+  );
+  const cloudflare = normaliseCloudflareInvocation(sample.cloudflare || sample.invocation || {});
+  const capacityRequest = normaliseCapacityRequestLog(sample.capacityRequest || sample.statementLog || {});
+  const classification = normaliseTailClassification(
+    sample.classification,
+    invocationStatus,
+    cloudflare,
+    capacityRequestStatus,
+  );
+
+  return {
+    requestId: normaliseString(sample.requestId || sample.serverRequestId),
+    clientRequestId: normaliseString(sample.clientRequestId),
+    endpoint: normaliseString(sample.endpoint),
+    method: normaliseString(sample.method),
+    status: finiteOrNull(sample.status),
+    scenario: normaliseString(sample.scenario),
+    app: {
+      wallMs: finiteOrNull(sample.app?.wallMs ?? sample.wallMs),
+      responseBytes: finiteOrNull(sample.app?.responseBytes ?? sample.responseBytes),
+      queryCount: finiteOrNull(sample.app?.queryCount ?? sample.queryCount),
+      d1RowsRead: finiteOrNull(sample.app?.d1RowsRead ?? sample.d1RowsRead),
+      d1RowsWritten: finiteOrNull(sample.app?.d1RowsWritten ?? sample.d1RowsWritten),
+      serverWallMs: finiteOrNull(sample.app?.serverWallMs ?? sample.serverWallMs),
+      bootstrapMode: normaliseString(sample.app?.bootstrapMode ?? sample.bootstrapMode),
+    },
+    join: {
+      invocation: {
+        status: invocationStatus,
+        reason: normaliseString(join.invocation?.reason || sample.invocationJoinReason),
+      },
+      capacityRequest: {
+        status: capacityRequestStatus,
+        reason: normaliseString(join.capacityRequest?.reason || sample.capacityRequestJoinReason),
+      },
+      notes: Array.isArray(sample.joinNotes || join.notes)
+        ? (sample.joinNotes || join.notes).filter((entry) => typeof entry === 'string')
+        : [],
+    },
+    cloudflare,
+    capacityRequest,
+    classification,
+    classificationReason: normaliseString(sample.classificationReason),
+  };
+}
+
+function normaliseJoinStatus(value) {
+  if (value === 'matched' || value === 'partial') return value;
+  return 'missing';
+}
+
+function normaliseTailClassification(value, invocationStatus, cloudflare, capacityRequestStatus) {
+  if (
+    invocationStatus !== 'matched'
+    || !Number.isFinite(cloudflare.cpuTimeMs)
+    || !Number.isFinite(cloudflare.wallTimeMs)
+  ) {
+    return P1_UNCLASSIFIED_INSUFFICIENT_LOGS;
+  }
+  if (P1_TAIL_CLASSIFICATION_SET.has(value)) return value;
+  if (capacityRequestStatus !== 'matched') return 'partial-invocation-only';
+  return 'mixed-no-single-dominant-resource';
+}
+
+function normaliseCloudflareInvocation(value = {}) {
+  const cpuTimeMs = finiteOrNull(value.cpuTimeMs);
+  const wallTimeMs = finiteOrNull(value.wallTimeMs);
+  return {
+    cpuTimeMs,
+    wallTimeMs,
+    outcome: normaliseString(value.outcome),
+  };
+}
+
+function normaliseCapacityRequestLog(value = {}) {
+  const statements = Array.isArray(value.statements)
+    ? value.statements.slice(0, 50).map((entry) => ({
+      name: normaliseString(entry?.name),
+      rowsRead: finiteOrNull(entry?.rowsRead),
+      rowsWritten: finiteOrNull(entry?.rowsWritten),
+      durationMs: finiteOrNull(entry?.durationMs),
+    }))
+    : [];
+  return {
+    wallMs: finiteOrNull(value.wallMs),
+    d1DurationMs: finiteOrNull(value.d1DurationMs),
+    queryCount: finiteOrNull(value.queryCount),
+    d1RowsRead: finiteOrNull(value.d1RowsRead),
+    d1RowsWritten: finiteOrNull(value.d1RowsWritten),
+    responseBytes: finiteOrNull(value.responseBytes),
+    bootstrapMode: normaliseString(value.bootstrapMode),
+    statements,
+    statementsTruncated: value.statementsTruncated === true,
+  };
+}
+
+function normaliseString(value) {
+  return typeof value === 'string' && value ? value : null;
+}
+
+function finiteOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function buildRunShape(options = {}) {

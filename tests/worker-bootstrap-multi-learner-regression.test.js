@@ -114,21 +114,26 @@ function insertLearner(server, { id, name, sortIndex, role = 'owner', selected =
   }
 }
 
-function insertSubjectState(server, learnerId, subjectId) {
+function insertSubjectState(server, learnerId, subjectId, {
+  ui = { phase: 'idle' },
+  data = null,
+  updatedAt = NOW,
+} = {}) {
   const marker = FIXTURE[learnerId]?.[subjectId] || {};
+  const stateData = data || { prefs: { mode: 'smart', marker }, progress: { possess: { stage: marker.progress || 0 } } };
   runSql(server, `
     INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
     VALUES (?, ?, ?, ?, ?, ?)
   `, [
     learnerId,
     subjectId,
-    JSON.stringify({ phase: 'idle' }),
+    typeof ui === 'string' ? ui : JSON.stringify(ui),
     // Grammar preserves `data` verbatim through `subjectStateRowToRecord`.
     // Spelling and punctuation return `data: {}` through `publicSubjectStateRowToRecord`
     // — the fixture marker does NOT survive those code paths.
     // All identity assertions in this file use grammar for this reason.
-    JSON.stringify({ prefs: { mode: 'smart', marker }, progress: { possess: { stage: marker.progress || 0 } } }),
-    NOW,
+    JSON.stringify(stateData),
+    updatedAt,
     ACCOUNT_ID,
   ]);
 }
@@ -166,18 +171,25 @@ function insertGameState(server, learnerId) {
   ]);
 }
 
-function insertPracticeSession(server, learnerId, { id, subjectId = 'spelling' }) {
+function insertPracticeSession(server, learnerId, {
+  id,
+  subjectId = 'spelling',
+  status = 'completed',
+  createdAt = NOW,
+  updatedAt = createdAt,
+}) {
   runSql(server, `
     INSERT INTO practice_sessions (id, learner_id, subject_id, session_kind, status, session_state_json, summary_json, created_at, updated_at, updated_by_account_id)
-    VALUES (?, ?, ?, 'learning', 'completed', ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, 'learning', ?, ?, ?, ?, ?, ?)
   `, [
     id,
     learnerId,
     subjectId,
+    status,
     JSON.stringify({}),
     JSON.stringify({ cards: [] }),
-    NOW,
-    NOW,
+    createdAt,
+    updatedAt,
     ACCOUNT_ID,
   ]);
 }
@@ -465,6 +477,98 @@ test('multi-learner #4: practiceSessions and eventLog bounded to selected learne
       .filter((e) => e.learnerId !== 'learner-a')
       .map((e) => e.id);
     assert.deepEqual(nonAEventIds, [], 'no non-A events ship');
+  } finally {
+    server.close();
+  }
+});
+
+test('multi-learner #4a: stale active session is included from preloaded subject state', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, { id: 'learner-a', name: 'Alpha', sortIndex: 0, role: 'owner', selected: true });
+    insertLearner(server, { id: 'learner-b', name: 'Beta', sortIndex: 1, role: 'member' });
+    insertSubjectState(server, 'learner-a', 'spelling', {
+      ui: { phase: 'session', session: { id: 'learner-a-active-old' } },
+      updatedAt: NOW + 30,
+    });
+    insertSubjectState(server, 'learner-a', 'grammar', { updatedAt: NOW + 20 });
+    insertSubjectState(server, 'learner-b', 'spelling');
+
+    insertPracticeSession(server, 'learner-a', {
+      id: 'learner-a-active-old',
+      status: 'active',
+      createdAt: NOW - 1_000,
+      updatedAt: NOW - 1_000,
+    });
+    for (let i = 0; i < 7; i += 1) {
+      insertPracticeSession(server, 'learner-a', {
+        id: `learner-a-recent-${i}`,
+        createdAt: NOW + i,
+        updatedAt: NOW + i,
+      });
+    }
+    insertPracticeSession(server, 'learner-b', { id: 'learner-b-recent-0', createdAt: NOW + 100, updatedAt: NOW + 100 });
+
+    server.DB.clearQueryLog();
+    const response = await postBootstrap(server, {});
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const sessionIds = payload.practiceSessions.map((session) => session.id);
+    assert.equal(sessionIds.includes('learner-a-active-old'), true,
+      'active session referenced by preloaded subject state must ship even when it is outside recent sessions');
+    assert.equal(sessionIds.filter((id) => id === 'learner-a-active-old').length, 1,
+      'active session must not be duplicated with recent sessions');
+    assert.equal(payload.practiceSessions.every((session) => session.learnerId === 'learner-a'), true,
+      'selected-learner session bound still excludes sibling sessions');
+
+    const queryLog = server.DB.takeQueryLog();
+    const subjectStateReads = queryLog.filter((entry) => entry.operation === 'all' && /\bFROM child_subject_state\b/i.test(entry.sql));
+    assert.equal(subjectStateReads.length, 1,
+      'public bootstrap should reuse the preloaded child_subject_state rows for active-session discovery');
+    const activeSessionReads = queryLog.filter((entry) => entry.operation === 'all' && /\bFROM practice_sessions\b/i.test(entry.sql) && /\bAND id IN\b/i.test(entry.sql));
+    assert.equal(activeSessionReads.length, 1, 'active session row lookup still runs when a preloaded active id exists');
+    assert.deepEqual(activeSessionReads[0].params.filter((param) => param === 'learner-a-active-old'), ['learner-a-active-old'],
+      'active session lookup receives the id derived from preloaded subject state');
+  } finally {
+    server.close();
+  }
+});
+
+test('multi-learner #4b: malformed subject ui_json does not block other active sessions', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, { id: 'learner-a', name: 'Alpha', sortIndex: 0, role: 'owner', selected: true });
+    insertSubjectState(server, 'learner-a', 'spelling', {
+      ui: '{"phase":"session",',
+      updatedAt: NOW + 30,
+    });
+    insertSubjectState(server, 'learner-a', 'grammar', {
+      ui: { phase: 'session', session: { id: 'learner-a-valid-active' } },
+      updatedAt: NOW + 20,
+    });
+
+    insertPracticeSession(server, 'learner-a', {
+      id: 'learner-a-valid-active',
+      status: 'active',
+      createdAt: NOW - 1_000,
+      updatedAt: NOW - 1_000,
+    });
+    for (let i = 0; i < 7; i += 1) {
+      insertPracticeSession(server, 'learner-a', {
+        id: `learner-a-malformed-recent-${i}`,
+        createdAt: NOW + i,
+        updatedAt: NOW + i,
+      });
+    }
+
+    const response = await postBootstrap(server, {});
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.practiceSessions.some((session) => session.id === 'learner-a-valid-active'), true,
+      'a malformed newer ui_json row must not prevent a later valid active session from shipping');
   } finally {
     server.close();
   }

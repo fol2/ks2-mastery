@@ -44,6 +44,29 @@ Use dated output names under `reports/capacity/evidence/`. Replace `<date>` and 
 | T4 passes but T1 fails during setup or early bootstrap. | Session source or demo-session setup path may be the bottleneck. | Keep manifest evidence diagnostic until equivalence is approved. Do not reuse shared auth as a shortcut for certification. |
 | Any 5xx, network failure, `exceededCpu`, D1 overload, or missing bootstrap capacity metadata appears. | Release blocker. | Preserve the evidence file and classify the blocker before retrying. |
 
+## P1 Evidence Attribution Matrix
+
+P1 adds Worker CPU/wall attribution to the existing P6 matrix. It does not relax thresholds and it does not make manifest, warm-up, or reduced-burst runs certifying. Each run must use a unique output path so a repeated strict run cannot overwrite an earlier failure.
+
+| Run | Purpose | Evidence Path Rule | Worker Log Join | Classification |
+| --- | --- | --- | --- | --- |
+| T0 local smoke | Confirms the load driver, request ids, top-tail sample retention, and join tooling against local or fixture data. | `reports/capacity/evidence/<date>-p1-t0-local.json` | Optional fixture join. Missing logs are `unclassified-insufficient-logs`. | Diagnostic. |
+| T1 strict 30 baseline | Measures the current release-gate shape before optimisation. | `reports/capacity/evidence/<date>-p1-t1-strict.json` | Required for P1 attribution: join exported Worker logs by `serverRequestId`. | Certification candidate only if the existing strict gate and verifier pass; joined CPU/wall data cannot promote it. |
+| T3 reduced burst | Distinguishes burst sensitivity from application query fan-out. | `reports/capacity/evidence/<date>-p1-t3-burst10-rounds2.json` | Join logs for top-tail bootstrap request ids. | Diagnostic because the run shape differs from the release gate. |
+| T4 session manifest | Separates demo-session setup effects from steady-state route costs. | `reports/capacity/evidence/<date>-p1-t4-manifest.json` | Join logs if an approved manifest window exists. | Diagnostic unless a separate equivalence record exists. |
+| T5 repeated strict confidence | Checks whether T1 tail behaviour is reproducible. | `reports/capacity/evidence/<date>-p1-t5-strict-r1.json`, `...-r2.json`, etc. | Join each strict run separately; never merge logs across runs before preserving per-run output. | Each run stands on its own; repetition explains variance but does not mask threshold failure. |
+
+Run the join after collecting a bounded Cloudflare export:
+
+```bash
+node ./scripts/join-capacity-worker-logs.mjs \
+  --evidence reports/capacity/evidence/<date>-p1-t1-strict.json \
+  --logs reports/capacity/evidence/<date>-p1-t1-worker-logs.jsonl \
+  --output reports/capacity/evidence/<date>-p1-t1-tail-correlation.json
+```
+
+Read `diagnostics.workerLogJoin.coverage.invocation` separately from `diagnostics.workerLogJoin.coverage.statementLogs`. Invocation CPU/wall coverage can be complete while sampled `capacity.request` statement detail is incomplete; that state supports only partial attribution.
+
 ## Minimum Evidence Set Before Mitigation
 
 Before changing bootstrap behaviour or debating thresholds, collect at least three dated diagnostic runs from the matrix, including one strict T1 run and one repeated strict T5 run. Each evidence file should retain:

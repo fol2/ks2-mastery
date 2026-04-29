@@ -22,7 +22,11 @@
 // Adding a new collector field requires BOTH surfaces to be updated and an
 // explicit regression test in `tests/worker-capacity-telemetry.test.js`.
 
+import { BOOTSTRAP_PHASE_TIMING_NAMES } from './bootstrap-repository.js';
+
 const STATEMENT_HARD_CAP = 50;
+const BOOTSTRAP_PHASE_TIMING_HARD_CAP = 32;
+const BOOTSTRAP_PHASE_TIMING_MAX_DURATION_MS = 60_000;
 const REQUEST_ID_PATTERN = /^ks2_req_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const MAX_REQUEST_ID_LENGTH = 48;
 
@@ -100,6 +104,8 @@ const BOOTSTRAP_MODE_ALLOWED = new Set([
   'full-legacy',
   'not-modified',
 ]);
+
+const BOOTSTRAP_PHASE_TIMING_ALLOWED = new Set(BOOTSTRAP_PHASE_TIMING_NAMES);
 
 // U6: closed allowlist of `projectionFallback` tokens that may appear on
 // `meta.capacity.projectionFallback`. Extends U3's boolean-era stamp into
@@ -196,6 +202,13 @@ function toFiniteNumber(value) {
   return Number.isFinite(num) ? num : null;
 }
 
+function toCappedDurationMs(value) {
+  const duration = toFiniteNumber(value);
+  if (!Number.isFinite(duration)) return null;
+  const capped = Math.min(BOOTSTRAP_PHASE_TIMING_MAX_DURATION_MS, Math.max(0, duration));
+  return Math.round(capped * 1000) / 1000;
+}
+
 /**
  * Per-request telemetry collector. Mutable; lifetime bounded to a single
  * `fetch()` handler invocation. Constructor injection only.
@@ -218,6 +231,8 @@ export class CapacityCollector {
     this.d1DurationMs = 0;
     this.statements = [];
     this.statementsTruncated = false;
+    this.bootstrapPhaseTimings = [];
+    this.bootstrapPhaseTimingsTruncated = false;
 
     this.wallMs = null;
     this.responseBytes = null;
@@ -234,6 +249,7 @@ export class CapacityCollector {
     // NEVER appear in `toPublicJSON()` or `toStructuredLog()`.
     this.signalsRejected = 0;
     this.bootstrapCapacityDroppedKeys = 0;
+    this.bootstrapPhaseTimingsRejected = 0;
 
     // U3 round 1 (P2 #06): once `setFinal()` stamps the final status,
     // further mutations to `signals[]` are a no-op. This preserves the
@@ -273,6 +289,37 @@ export class CapacityCollector {
     } else {
       this.statementsTruncated = true;
     }
+  }
+
+  /**
+   * Record a bootstrap phase duration for structured diagnostics only.
+   * Phase names are a closed allowlist and values are bounded numbers;
+   * raw IDs, SQL, payload excerpts, prompts, and names never cross this
+   * surface. Post-`setFinal()` calls are ignored to preserve log/body
+   * parity with the rest of the collector.
+   *
+   * @param {string} name
+   * @param {number} durationMs
+   */
+  recordBootstrapPhaseTiming(name, durationMs) {
+    if (this.finalised) return;
+    if (typeof name !== 'string' || !BOOTSTRAP_PHASE_TIMING_ALLOWED.has(name)) {
+      this.bootstrapPhaseTimingsRejected += 1;
+      return;
+    }
+    const cappedDurationMs = toCappedDurationMs(durationMs);
+    if (!Number.isFinite(cappedDurationMs)) {
+      this.bootstrapPhaseTimingsRejected += 1;
+      return;
+    }
+    if (this.bootstrapPhaseTimings.length >= BOOTSTRAP_PHASE_TIMING_HARD_CAP) {
+      this.bootstrapPhaseTimingsTruncated = true;
+      return;
+    }
+    this.bootstrapPhaseTimings.push({
+      name,
+      durationMs: cappedDurationMs,
+    });
   }
 
   /**
@@ -459,7 +506,7 @@ export class CapacityCollector {
    * @returns {object}
    */
   toStructuredLog() {
-    return {
+    const output = {
       event: 'capacity.request',
       requestId: this.requestId,
       endpoint: this.endpoint,
@@ -480,6 +527,11 @@ export class CapacityCollector {
       bootstrapMode: this.bootstrapMode,
       signals: Array.isArray(this.signals) ? [...this.signals] : [],
     };
+    if (this.bootstrapPhaseTimings.length > 0) {
+      output.bootstrapPhaseTimings = this.bootstrapPhaseTimings.map((entry) => ({ ...entry }));
+      if (this.bootstrapPhaseTimingsTruncated) output.bootstrapPhaseTimingsTruncated = true;
+    }
+    return output;
   }
 }
 

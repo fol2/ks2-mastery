@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    {
+      "statement": "all:SELECT * FROM child_subject_state WHERE account_id = ? AND learner_id IN (?)",
+      "route": "GET /api/bootstrap",
+      "candidate": "Evaluate a covering lookup for account_id plus learner_id before changing the selected-learner bootstrap shape.",
+      "expectedReadReduction": "Reduce repeated child_subject_state scans in bootstrap top-tail samples if EXPLAIN QUERY PLAN confirms a scan.",
+      "writeCostRisk": "Additional index maintenance on subject-state writes; reject if write amplification threatens D1 rows written/day.",
+      "evidenceSource": "fixture query-plan note"
+    },
+    {
+      "statement": "all:SELECT * FROM practice_sessions WHERE account_id = ? AND learner_id IN (?)",
+      "route": "GET /api/bootstrap",
+      "candidate": "Review practice session lookup ordering."
+    },
+    {
+      "statement": "all:SELECT * FROM missing_table WHERE account_id = ?",
+      "route": "GET /api/bootstrap",
+      "candidate": "Do not accept unobserved statements.",
+      "expectedReadReduction": "Unknown.",
+      "writeCostRisk": "Unknown."
+    }
+  ]
+}

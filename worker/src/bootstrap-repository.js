@@ -49,6 +49,29 @@ export const BOOTSTRAP_MODES = new Set([
   'not-modified',
 ]);
 
+// P1 U3: closed bootstrap diagnostic phase tokens. These names are the
+// only phase labels allowed in structured capacity logs; durations are
+// recorded by CapacityCollector and never returned in child-facing JSON.
+export const BOOTSTRAP_PHASE_TIMING = Object.freeze({
+  account: 'account',
+  monsterVisualConfig: 'monsterVisualConfig',
+  membership: 'membership',
+  selectedLearner: 'selectedLearner',
+  revisionHash: 'revisionHash',
+  learnerList: 'learnerList',
+  subjectState: 'subjectState',
+  gameState: 'gameState',
+  sessions: 'sessions',
+  events: 'events',
+  readModel: 'readModel',
+  responseConstruction: 'responseConstruction',
+  notModifiedProbe: 'notModifiedProbe',
+});
+
+export const BOOTSTRAP_PHASE_TIMING_NAMES = Object.freeze(
+  Object.values(BOOTSTRAP_PHASE_TIMING),
+);
+
 // U7: snapshot for the v2 envelope shape. Locked per-version; a required
 // shape change without a `BOOTSTRAP_CAPACITY_VERSION` bump + a snapshot
 // update in the same PR fails the release-rule test (scenario 15).

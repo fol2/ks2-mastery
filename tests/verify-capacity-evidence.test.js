@@ -132,6 +132,106 @@ test('non-fail decision with backing JSON and matching commit passes', () => {
   }
 });
 
+test('worker-log joined diagnostics cannot declare certification contribution', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    diagnostics: {
+      workerLogJoin: {
+        diagnosticOnly: true,
+        certification: { contributesToCertification: true },
+        samples: [],
+      },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(result.report.some((line) => line.includes('joined Cloudflare CPU/wall data must not contribute')));
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('worker-log joined diagnostics classify missing CPU/wall logs as insufficient', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    diagnostics: {
+      workerLogJoin: {
+        diagnosticOnly: true,
+        certification: { contributesToCertification: false },
+        samples: [{
+          requestId: 'ks2_req_00000000-0000-4000-8000-000000000001',
+          join: { invocation: { status: 'missing' }, capacityRequest: { status: 'matched' } },
+          cloudflare: { cpuTimeMs: null, wallTimeMs: null },
+          classification: 'd1-dominated',
+        }],
+      },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(result.report.some((line) => line.includes('expected "unclassified-insufficient-logs"')));
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('worker-log joined diagnostics reject matched invocations with null CPU/wall logs', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  mkdirSync(evidenceDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    diagnostics: {
+      workerLogJoin: {
+        diagnosticOnly: true,
+        certification: { contributesToCertification: false },
+        samples: [{
+          requestId: 'ks2_req_00000000-0000-4000-8000-000000000002',
+          join: { invocation: { status: 'matched' }, capacityRequest: { status: 'matched' } },
+          cloudflare: { cpuTimeMs: null, wallTimeMs: null },
+          classification: 'd1-dominated',
+        }],
+      },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'smoke-pass', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(result.report.some((line) => line.includes('expected "unclassified-insufficient-logs"')));
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('tier above small-pilot-provisional requires evidenceSchemaVersion >= 2', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
   const docPath = join(tempDir, 'capacity.md');
