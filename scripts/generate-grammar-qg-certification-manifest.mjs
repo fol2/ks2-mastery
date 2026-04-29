@@ -26,6 +26,10 @@ async function main() {
   const seedCount = 30;
   const expectedItemCount = templateDenominator * seedCount;
 
+  // Derive phase label from the content release ID (e.g. "grammar-qg-p10-2026-04-29" → "p10")
+  const phaseMatch = GRAMMAR_CONTENT_RELEASE_ID.match(/grammar-qg-(p\d+)-/);
+  const phase = phaseMatch ? phaseMatch[1] : 'p10';
+
   const manifest = {
     contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
     templateDenominator,
@@ -39,22 +43,22 @@ async function main() {
     },
     expectedItemCount,
     expectedOutputPaths: [
-      'reports/grammar/grammar-qg-p9-question-inventory.json',
-      'reports/grammar/grammar-qg-p9-question-inventory-redacted.md',
+      `reports/grammar/grammar-qg-${phase}-question-inventory.json`,
+      `reports/grammar/grammar-qg-${phase}-question-inventory-redacted.md`,
     ],
     generatorScript: 'scripts/generate-grammar-qg-quality-inventory.mjs',
     generatorScriptHash,
-    generationCommand: 'node scripts/generate-grammar-qg-quality-inventory.mjs --seeds=1..30 --release=p9',
+    generationCommand: `node scripts/generate-grammar-qg-quality-inventory.mjs --seeds=1..30 --release=${phase}`,
     generatedAt: new Date().toISOString(),
     answerInternalsIncluded: true,
     answerInternalsRedacted: true,
   };
 
   await fs.mkdir(REPORTS_DIR, { recursive: true });
-  const manifestPath = path.join(REPORTS_DIR, 'grammar-qg-p9-certification-manifest.json');
+  const manifestPath = path.join(REPORTS_DIR, `grammar-qg-${phase}-certification-manifest.json`);
   await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
 
-  console.log('Grammar QG P9 Certification Manifest generated:');
+  console.log(`Grammar QG ${phase.toUpperCase()} Certification Manifest generated:`);
   console.log(`  Content Release: ${manifest.contentReleaseId}`);
   console.log(`  Template Denominator: ${manifest.templateDenominator}`);
   console.log(`  Expected Item Count: ${manifest.expectedItemCount}`);
