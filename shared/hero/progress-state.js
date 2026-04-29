@@ -80,10 +80,6 @@ export function normaliseHeroPoolState(raw) {
 
 // ── Progress state ──────────────────────────────────────────────
 
-function emptyDailyState() {
-  return null;
-}
-
 export function emptyProgressState() {
   return {
     version: HERO_PROGRESS_VERSION,
