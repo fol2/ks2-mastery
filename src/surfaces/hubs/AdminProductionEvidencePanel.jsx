@@ -132,7 +132,7 @@ export function AdminProductionEvidencePanel({ model, actions }) {
           <div><StateBadge state={panelModel.overallState} /></div>
         </div>
         <div className="small muted admin-evidence-generated">
-          Latest evidence run: {formatEvidenceTimestamp(panelModel.latestEvidenceAt)}
+          Latest capacity evidence run: {formatEvidenceTimestamp(panelModel.latestEvidenceAt)}
           {panelModel.isFresh ? ' (fresh)' : ' (stale)'}
         </div>
         <div className="small muted admin-evidence-generated">

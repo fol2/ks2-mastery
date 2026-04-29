@@ -32,14 +32,15 @@ describe('EVIDENCE_STATES', () => {
     assert.equal(Object.isFrozen(EVIDENCE_STATES), true);
   });
 
-  it('has exactly 9 values', () => {
-    assert.equal(Object.keys(EVIDENCE_STATES).length, 9);
+  it('has exactly 10 values', () => {
+    assert.equal(Object.keys(EVIDENCE_STATES).length, 10);
   });
 
   it('maps to expected string values', () => {
     assert.equal(EVIDENCE_STATES.NOT_AVAILABLE, 'not_available');
     assert.equal(EVIDENCE_STATES.STALE, 'stale');
     assert.equal(EVIDENCE_STATES.FAILING, 'failing');
+    assert.equal(EVIDENCE_STATES.NON_CERTIFYING, 'non_certifying');
     assert.equal(EVIDENCE_STATES.SMOKE_PASS, 'smoke_pass');
     assert.equal(EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL, 'small_pilot_provisional');
     assert.equal(EVIDENCE_STATES.CERTIFIED_30, 'certified_30_learner_beta');
@@ -54,7 +55,7 @@ describe('EVIDENCE_STATES', () => {
 // ---------------------------------------------------------------------------
 
 describe('isValidEvidenceState', () => {
-  it('accepts all 9 enum values', () => {
+  it('accepts all 10 enum values', () => {
     for (const value of Object.values(EVIDENCE_STATES)) {
       assert.equal(isValidEvidenceState(value), true, `expected ${value} to be valid`);
     }
@@ -101,6 +102,7 @@ describe('classifyEvidenceMetric', () => {
   const NOW = 1_700_000_000_000; // fixed reference time
   const FRESH = new Date(NOW - 60_000).toISOString(); // 1 minute ago — well within 24h
   const STALE_DATE = new Date(NOW - EVIDENCE_FRESH_THRESHOLD_MS - 1000).toISOString();
+  const freshMetric = (overrides = {}) => ({ finishedAt: FRESH, ...overrides });
 
   describe('returns NOT_AVAILABLE', () => {
     it('when metricValue is null', () => {
@@ -154,35 +156,35 @@ describe('classifyEvidenceMetric', () => {
       );
     });
 
-    it('when generatedAt is older than 24h', () => {
+    it('when finishedAt is older than 24h', () => {
       assert.equal(
-        classifyEvidenceMetric('smoke_pass', { ok: true, failures: [] }, STALE_DATE, NOW),
+        classifyEvidenceMetric('smoke_pass', freshMetric({ finishedAt: STALE_DATE, ok: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.STALE,
       );
     });
 
-    it('when generatedAt is exactly on the boundary (age === threshold + 1ms)', () => {
+    it('when finishedAt is exactly on the boundary (age === threshold + 1ms)', () => {
       const boundary = new Date(NOW - EVIDENCE_FRESH_THRESHOLD_MS - 1).toISOString();
       assert.equal(
-        classifyEvidenceMetric('smoke_pass', { ok: true }, boundary, NOW),
+        classifyEvidenceMetric('smoke_pass', freshMetric({ finishedAt: boundary, ok: true }), FRESH, NOW),
         EVIDENCE_STATES.STALE,
       );
     });
   });
 
-  describe('returns UNKNOWN for dryRun', () => {
+  describe('returns NON_CERTIFYING for dryRun', () => {
     it('when dryRun is true even if ok is true', () => {
       assert.equal(
-        classifyEvidenceMetric('smoke_pass', { ok: true, dryRun: true, failures: [] }, FRESH, NOW),
-        EVIDENCE_STATES.UNKNOWN,
+        classifyEvidenceMetric('smoke_pass', freshMetric({ ok: true, dryRun: true, failures: [] }), FRESH, NOW),
+        EVIDENCE_STATES.NON_CERTIFYING,
       );
     });
 
     it('dryRun check runs before failing check', () => {
       // If dryRun AND ok:false, dryRun wins because it is checked first.
       assert.equal(
-        classifyEvidenceMetric('smoke_pass', { ok: false, dryRun: true, failures: ['x'] }, FRESH, NOW),
-        EVIDENCE_STATES.UNKNOWN,
+        classifyEvidenceMetric('smoke_pass', freshMetric({ ok: false, dryRun: true, failures: ['x'] }), FRESH, NOW),
+        EVIDENCE_STATES.NON_CERTIFYING,
       );
     });
   });
@@ -190,28 +192,28 @@ describe('classifyEvidenceMetric', () => {
   describe('returns FAILING', () => {
     it('when ok is false (no failures array)', () => {
       assert.equal(
-        classifyEvidenceMetric('certified_30_learner_beta', { ok: false }, FRESH, NOW),
+        classifyEvidenceMetric('certified_30_learner_beta', freshMetric({ ok: false }), FRESH, NOW),
         EVIDENCE_STATES.FAILING,
       );
     });
 
     it('when ok is false with empty failures array', () => {
       assert.equal(
-        classifyEvidenceMetric('certified_30_learner_beta', { ok: false, failures: [] }, FRESH, NOW),
+        classifyEvidenceMetric('certified_30_learner_beta', freshMetric({ ok: false, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.FAILING,
       );
     });
 
     it('when ok is true but failures array is non-empty', () => {
       assert.equal(
-        classifyEvidenceMetric('certified_30_learner_beta', { ok: true, failures: ['max5xx'] }, FRESH, NOW),
+        classifyEvidenceMetric('certified_30_learner_beta', freshMetric({ ok: true, failures: ['max5xx'] }), FRESH, NOW),
         EVIDENCE_STATES.FAILING,
       );
     });
 
     it('when ok is false and failures array is non-empty', () => {
       assert.equal(
-        classifyEvidenceMetric('smoke_pass', { ok: false, failures: ['latency', 'error_rate'] }, FRESH, NOW),
+        classifyEvidenceMetric('smoke_pass', freshMetric({ ok: false, failures: ['latency', 'error_rate'] }), FRESH, NOW),
         EVIDENCE_STATES.FAILING,
       );
     });
@@ -220,36 +222,43 @@ describe('classifyEvidenceMetric', () => {
   describe('returns correct passing state by tier key', () => {
     it('smoke_pass → SMOKE_PASS', () => {
       assert.equal(
-        classifyEvidenceMetric('smoke_pass', { ok: true, failures: [] }, FRESH, NOW),
+        classifyEvidenceMetric('smoke_pass', freshMetric({ ok: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.SMOKE_PASS,
       );
     });
 
     it('small_pilot_provisional → SMALL_PILOT_PROVISIONAL', () => {
       assert.equal(
-        classifyEvidenceMetric('small_pilot_provisional', { ok: true, failures: [] }, FRESH, NOW),
+        classifyEvidenceMetric('small_pilot_provisional', freshMetric({ ok: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL,
       );
     });
 
     it('certified_30_learner_beta → CERTIFIED_30', () => {
       assert.equal(
-        classifyEvidenceMetric('certified_30_learner_beta', { ok: true, failures: [] }, FRESH, NOW),
+        classifyEvidenceMetric('certified_30_learner_beta', freshMetric({ ok: true, certifying: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.CERTIFIED_30,
       );
     });
 
     it('certified_60_learner_stretch → CERTIFIED_60', () => {
       assert.equal(
-        classifyEvidenceMetric('certified_60_learner_stretch', { ok: true, failures: [] }, FRESH, NOW),
+        classifyEvidenceMetric('certified_60_learner_stretch', freshMetric({ ok: true, certifying: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.CERTIFIED_60,
       );
     });
 
     it('certified_100_plus → CERTIFIED_100', () => {
       assert.equal(
-        classifyEvidenceMetric('certified_100_plus', { ok: true, failures: [] }, FRESH, NOW),
+        classifyEvidenceMetric('certified_100_plus', freshMetric({ ok: true, certifying: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.CERTIFIED_100,
+      );
+    });
+
+    it('certification tiers without positive certifying proof → NON_CERTIFYING', () => {
+      assert.equal(
+        classifyEvidenceMetric('certified_30_learner_beta', freshMetric({ ok: true, failures: [] }), FRESH, NOW),
+        EVIDENCE_STATES.NON_CERTIFYING,
       );
     });
   });
@@ -257,14 +266,14 @@ describe('classifyEvidenceMetric', () => {
   describe('returns UNKNOWN for unrecognised tier key', () => {
     it('unknown key with valid passing metric', () => {
       assert.equal(
-        classifyEvidenceMetric('totally_new_tier', { ok: true, failures: [] }, FRESH, NOW),
+        classifyEvidenceMetric('totally_new_tier', freshMetric({ ok: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.UNKNOWN,
       );
     });
 
     it('empty string key with valid passing metric', () => {
       assert.equal(
-        classifyEvidenceMetric('', { ok: true, failures: [] }, FRESH, NOW),
+        classifyEvidenceMetric('', freshMetric({ ok: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.UNKNOWN,
       );
     });
@@ -275,7 +284,7 @@ describe('classifyEvidenceMetric', () => {
       const atBoundary = new Date(NOW - EVIDENCE_FRESH_THRESHOLD_MS).toISOString();
       // ageMs === EVIDENCE_FRESH_THRESHOLD_MS, condition is > so NOT stale
       assert.notEqual(
-        classifyEvidenceMetric('smoke_pass', { ok: true, failures: [] }, atBoundary, NOW),
+        classifyEvidenceMetric('smoke_pass', freshMetric({ finishedAt: atBoundary, ok: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.STALE,
       );
     });
@@ -283,7 +292,7 @@ describe('classifyEvidenceMetric', () => {
     it('1ms past threshold IS stale', () => {
       const pastBoundary = new Date(NOW - EVIDENCE_FRESH_THRESHOLD_MS - 1).toISOString();
       assert.equal(
-        classifyEvidenceMetric('smoke_pass', { ok: true, failures: [] }, pastBoundary, NOW),
+        classifyEvidenceMetric('smoke_pass', freshMetric({ finishedAt: pastBoundary, ok: true, failures: [] }), FRESH, NOW),
         EVIDENCE_STATES.STALE,
       );
     });
@@ -298,14 +307,15 @@ describe('buildEvidencePanelModel', () => {
   const NOW = 1_700_000_000_000;
   const FRESH = new Date(NOW - 60_000).toISOString();
   const STALE_DATE = new Date(NOW - EVIDENCE_FRESH_THRESHOLD_MS - 1000).toISOString();
+  const freshMetric = (overrides = {}) => ({ finishedAt: FRESH, ...overrides });
 
   describe('with empty/null/malformed input', () => {
-    it('null → empty metrics, null generatedAt, stale, overallState=STALE', () => {
+    it('null → empty metrics, null generatedAt, overallState=NOT_AVAILABLE', () => {
       const result = buildEvidencePanelModel(null, NOW);
       assert.deepEqual(result.metrics, []);
       assert.equal(result.generatedAt, null);
       assert.equal(result.isFresh, false);
-      assert.equal(result.overallState, EVIDENCE_STATES.STALE);
+      assert.equal(result.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
     });
 
     it('undefined → same as null', () => {
@@ -313,7 +323,7 @@ describe('buildEvidencePanelModel', () => {
       assert.deepEqual(result.metrics, []);
       assert.equal(result.generatedAt, null);
       assert.equal(result.isFresh, false);
-      assert.equal(result.overallState, EVIDENCE_STATES.STALE);
+      assert.equal(result.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
     });
 
     it('empty object {} → same as null', () => {
@@ -321,15 +331,15 @@ describe('buildEvidencePanelModel', () => {
       assert.deepEqual(result.metrics, []);
       assert.equal(result.generatedAt, null);
       assert.equal(result.isFresh, false);
-      assert.equal(result.overallState, EVIDENCE_STATES.STALE);
+      assert.equal(result.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
     });
 
-    it('schema:2, metrics:{}, generatedAt:null → empty, stale', () => {
+    it('schema:2, metrics:{}, generatedAt:null → empty, not available', () => {
       const result = buildEvidencePanelModel({ schema: 2, metrics: {}, generatedAt: null }, NOW);
       assert.deepEqual(result.metrics, []);
       assert.equal(result.generatedAt, null);
       assert.equal(result.isFresh, false);
-      assert.equal(result.overallState, EVIDENCE_STATES.STALE);
+      assert.equal(result.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
     });
 
     it('string input is treated as empty (not an object)', () => {
@@ -384,9 +394,9 @@ describe('buildEvidencePanelModel', () => {
         schema: 2,
         generatedAt: FRESH,
         metrics: {
-          smoke_pass: { tier: 'smoke_pass', ok: true, failures: [] },
-          certified_60_learner_stretch: { tier: 'certified_60_learner_stretch', ok: true, failures: [] },
-          certified_30_learner_beta: { tier: 'certified_30_learner_beta', ok: true, failures: [] },
+          smoke_pass: freshMetric({ tier: 'smoke_pass', ok: true, failures: [] }),
+          certified_60_learner_stretch: freshMetric({ tier: 'certified_60_learner_stretch', ok: true, certifying: true, failures: [] }),
+          certified_30_learner_beta: freshMetric({ tier: 'certified_30_learner_beta', ok: true, certifying: true, failures: [] }),
         },
       };
       const result = buildEvidencePanelModel(summary, NOW);
@@ -399,8 +409,8 @@ describe('buildEvidencePanelModel', () => {
         schema: 2,
         generatedAt: FRESH,
         metrics: {
-          certified_60_learner_stretch: { tier: 'certified_60_learner_stretch', ok: true, failures: [] },
-          certified_30_learner_beta: { tier: 'certified_30_learner_beta', ok: false, failures: ['err'] },
+          certified_60_learner_stretch: freshMetric({ tier: 'certified_60_learner_stretch', ok: true, certifying: true, failures: [] }),
+          certified_30_learner_beta: freshMetric({ tier: 'certified_30_learner_beta', ok: false, failures: ['err'] }),
         },
       };
       const result = buildEvidencePanelModel(summary, NOW);
@@ -413,37 +423,37 @@ describe('buildEvidencePanelModel', () => {
         schema: 2,
         generatedAt: FRESH,
         metrics: {
-          smoke_pass: { tier: 'smoke_pass', ok: false, failures: ['x'] },
-          certified_30_learner_beta: { tier: 'certified_30_learner_beta', ok: false, failures: ['y'] },
+          smoke_pass: freshMetric({ tier: 'smoke_pass', ok: false, failures: ['x'] }),
+          certified_30_learner_beta: freshMetric({ tier: 'certified_30_learner_beta', ok: false, failures: ['y'] }),
         },
       };
       const result = buildEvidencePanelModel(summary, NOW);
       assert.equal(result.overallState, EVIDENCE_STATES.FAILING);
     });
 
-    it('all unknown + one failing → overall is FAILING (hasFailing path)', () => {
+    it('all unknown auxiliary metrics do not drive the capacity overall state', () => {
       const summary = {
         schema: 2,
         generatedAt: FRESH,
         metrics: {
-          some_new_tier: { tier: 'some_new_tier', ok: true, failures: [] },
-          another_tier: { tier: 'another_tier', ok: false, failures: ['z'] },
+          some_new_tier: freshMetric({ tier: 'some_new_tier', ok: true, failures: [] }),
+          another_tier: freshMetric({ tier: 'another_tier', ok: false, failures: ['z'] }),
         },
       };
       const result = buildEvidencePanelModel(summary, NOW);
-      // both best candidates: UNKNOWN (rank 2) and FAILING (rank 1)
-      // bestRank = 2 (UNKNOWN), hasFailing = true, 2 <= 2 && hasFailing → FAILING
-      assert.equal(result.overallState, EVIDENCE_STATES.FAILING);
+      assert.equal(result.isFresh, false);
+      assert.equal(result.latestEvidenceAt, null);
+      assert.equal(result.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
     });
   });
 
-  describe('stale summary', () => {
+  describe('stale evidence run', () => {
     it('overall is STALE regardless of passing metrics', () => {
       const summary = {
         schema: 2,
-        generatedAt: STALE_DATE,
+        generatedAt: FRESH,
         metrics: {
-          certified_100_plus: { tier: 'certified_100_plus', ok: true, failures: [] },
+          certified_100_plus: { tier: 'certified_100_plus', ok: true, certifying: true, failures: [], finishedAt: STALE_DATE },
         },
       };
       const result = buildEvidencePanelModel(summary, NOW);
@@ -534,7 +544,7 @@ describe('buildEvidencePanelModel', () => {
         metrics: {},
       };
       const result = buildEvidencePanelModel(summary, NOW);
-      assert.equal(result.isFresh, true);
+      assert.equal(result.isFresh, false);
       assert.deepEqual(result.metrics, []);
       assert.equal(result.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
     });

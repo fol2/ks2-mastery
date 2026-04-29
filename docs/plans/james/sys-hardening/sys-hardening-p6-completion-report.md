@@ -2,7 +2,7 @@
 title: "System Hardening P6 Completion Report"
 type: report
 status: completed
-date: 2026-04-28
+date: 2026-04-29
 branch: codex/sys-hardening-p6-capacity
 source_plan: docs/plans/2026-04-28-006-fix-p6-capacity-certification-handover-plan.md
 ---
@@ -35,7 +35,7 @@ The security gates also remain deliberately closed. CSP enforcement is deferred 
 `scripts/generate-evidence-summary.mjs` now treats certification as a positive proof problem. Certification-tier evidence needs all of the following before it can set `certifying: true`:
 
 - a passed evidence file;
-- schema-v2 report metadata;
+- current-schema report metadata;
 - declared certified tier metadata;
 - capacity-run evidence, not dry-run or preflight;
 - `diagnostics.classification.certificationEligible === true`.
@@ -48,7 +48,7 @@ This closes the previous false-certification paths identified during independent
 - shared-auth runs cannot certify isolated classroom load;
 - reduced learner/burst/round shapes cannot certify the strict 30/20/1 release gate.
 
-The generated `reports/capacity/latest-evidence-summary.json` now carries `certificationEligible` and `certificationReasons` so downstream UI has enough context to explain non-certifying results.
+The generated `reports/capacity/latest-evidence-summary.json` is now a schema-3, multi-source evidence summary. It keeps capacity certification separate from adjacent operational evidence such as Admin smoke, bootstrap smoke, CSP status, D1 migrations, build version, and KPI reconciliation. Capacity rows carry `certificationEligible` and `certificationReasons` so downstream UI has enough context to explain non-certifying results, while non-capacity sources can support operator situational awareness without accidentally promoting a classroom tier.
 
 ### Admin Production Evidence
 
@@ -97,11 +97,14 @@ The CSP and HSTS documents now contain dated P6 deferrals. They preserve the exi
 
 | Command | Result |
 | --- | --- |
-| `npm test` | Passed: 6,478 pass, 0 fail, 6 skipped. |
+| `npm test` | Passed after final reviewer-follower fixes: 7,176 tests, 7,170 pass, 0 fail, 6 skipped. |
 | `npm run check` | Passed: Wrangler dry-run build, public assert, and client bundle audit. Main bundle gzip remained under budget. |
-| `npm run capacity:verify-evidence` | Passed: 2 capacity evidence rows checked. |
-| Focused reviewer-follower suite | Passed: 155/155 across evidence summary, Admin evidence, capacity diagnostics, thresholds, and query-budget tests. |
-| `git diff --check` | Passed after removing baseline trailing whitespace. |
+| `npm run capacity:verify-evidence` | Passed: 3 capacity evidence rows checked. |
+| Focused P6/reviewer-follower suite | Passed: 439/439 across evidence summary, Admin evidence, capacity diagnostics, thresholds, Worker/Admin read models, and Grammar-adjacent release guards. |
+| Final blocker regression suite | Passed: 174/174 across Admin evidence characterisation, schema-3 summary generation, React Admin evidence rendering, and capacity evidence verification. |
+| Targeted drift suite | Passed: 92/92 across Admin evidence characterisation, production bootstrap probing, Grammar audit drift, Hero write-boundary guard, and Admin subject drilldown fixtures. |
+| Capacity evidence schema suite | Passed: 14/14 after updating the schema-version assertions to the current schema-3 evidence contract. |
+| `git diff --check` | Passed. |
 
 ### Production Evidence Considered
 
@@ -125,8 +128,34 @@ The branch followed the requested independent SDLC pattern.
 | Reviewer 1 | Capacity evidence correctness. | Found certification-eligibility and stale-freshness blockers. Both were fixed. |
 | Reviewer 2 | Security/release posture. | Confirmed no committed session cookies/API tokens in changed reports; found the same certification-eligibility blocker and baseline hygiene issues. Fixed. |
 | Reviewer 3 | Admin evidence UI/UX. | Found stale/fresh contradiction in the frame plus non-blocking detail/wrapping issues. Fixed. |
+| Reviewer 4 | Final release-blocker review after full local verification. | Found three remaining handover blockers: non-canonical HTTPS origins could still look production-like, the real Admin Hub route was not yet wired to the Production Evidence narrow refresh path, and the 60-learner evidence limits block contradicted its per-threshold config. All three were fixed and covered by tests. |
+| Reviewer 5 | Final PR blocker review after PR publication. | Found that Admin could still certify missing `certifying: true`, schema-3 summary generation could promote unverified evidence files, and auxiliary source timestamps could refresh stale capacity evidence. All three were fixed and covered by tests before merge. |
+| Reviewer 6 | Second final review of reviewer-follower fixes. | Found no blockers. Independently confirmed the three false-pass closures and reran the focused review checks plus capacity evidence verifier. |
 
-The reviewer-follower commit closed all P1/P2 findings before the branch was rebased onto the latest `origin/main`.
+The reviewer-follower work closed all P1/P2 findings before merge.
+
+### Final Reviewer-Follower Closure
+
+The last review pass changed the release safety posture in four important ways:
+
+- Certification production origin is now exact-match only: `https://ks2.eugnel.uk`. Other HTTPS origins, including `https://example.com`, classify as `external-https` and cannot certify a P6 classroom gate.
+- The strict 30-learner certification path now requires the pinned config file `reports/capacity/configs/30-learner-beta.json` and the expected SHA-256 hash. A same-shaped run with an alternate config path or changed config content is diagnostic, not certifying.
+- Admin Production Evidence is now wired through the full Admin Hub payload, the `createHubApi()` narrow route client, the `admin-ops-evidence-refresh` dispatcher, and a dedicated patch helper. The panel can no longer depend on a detached test-only route.
+- Capacity evidence verification now checks that `thresholds.limits.*` agrees with each per-threshold `configured` value. The P6 60-learner evidence was corrected so `requireZeroSignals` and `requireBootstrapCapacity` are both true in the machine-readable limits block.
+
+During this closure, the branch also fixed a stale upstream Grammar fixture drift that reproduced on clean `origin/main`. The fixture and deterministic freshness seed were updated narrowly so the P6 release gates could run against the current generated Grammar content without changing runtime Grammar behaviour.
+
+After `origin/main` advanced, the branch was rebased onto `7f8e0bcc` and the full local gate was rerun. That exposed one stale schema-v2 assertion file which had not been covered by the focused P6 suites. The test was updated to assert the current schema-3 contract via `EVIDENCE_SCHEMA_VERSION`, then the schema suite, full `npm test`, `npm run check`, capacity evidence verifier, and whitespace check all passed.
+
+The final PR review then found three more false-pass routes. The closure was deliberately fail-closed:
+
+- Admin metric classification now requires `certifying === true` before a certification-tier row can display as certified. Missing, null, or legacy values classify as non-certifying.
+- Schema-3 summary generation now builds a verifier-approved certification index from `docs/operations/capacity.md`; a certification-tier JSON file must be backed by a non-fail table row that passes `verifyEvidenceRow()` before it can set `certifying: true`.
+- Admin freshness and `latestEvidenceAt` now use capacity evidence metrics only. Auxiliary sources such as CSP status, D1 migration count, and build version still appear as context rows, but regenerating those sources cannot make stale capacity evidence look fresh.
+
+Those fixes added regression coverage for missing `certifying` proof, unverified certification-shaped evidence, and auxiliary-source freshness isolation. The final full local gate was then rerun and passed.
+
+A second final reviewer then rechecked `origin/main...HEAD` and found no blockers. That review confirmed that certification states require positive `certifying: true`, schema-3 certification promotion is gated by verified capacity-table evidence, dirty provenance is blocked through `verifyEvidenceRow()`, and auxiliary evidence timestamps cannot refresh capacity evidence. The reviewer also reran `npm run capacity:verify-evidence` and a focused 118-test review suite successfully.
 
 ## Why No Bootstrap Mitigation Shipped
 
@@ -146,7 +175,7 @@ This is intentional restraint. A mitigation PR should follow the diagnostic matr
 
 When reading Admin Production Evidence:
 
-- **Certified** means the evidence file passed and `diagnostics.classification.certificationEligible` was true.
+- **Certified** means the evidence file passed, `diagnostics.classification.certificationEligible` was true, `certifying === true` in the schema-3 summary, and the evidence file was backed by a verifier-approved certification row in `docs/operations/capacity.md`.
 - **Failed** means a real evidence file exists but thresholds, failures, or `ok` failed.
 - **Non-certifying** means the file may be useful diagnostically, but cannot promote capacity support.
 - **Stale** means the underlying evidence run is older than the freshness window, even if the summary was regenerated recently.

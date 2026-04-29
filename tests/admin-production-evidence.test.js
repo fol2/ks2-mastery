@@ -138,6 +138,17 @@ test('classifyEvidenceMetric returns CERTIFIED_30 for passing 30-learner tier', 
   assert.equal(result, EVIDENCE_STATES.CERTIFIED_30);
 });
 
+test('classifyEvidenceMetric requires positive certifying proof for certification tiers', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 1000).toISOString();
+  const result = classifyEvidenceMetric('certified_30_learner_beta', {
+    ok: true,
+    failures: [],
+    finishedAt: freshDate,
+  }, freshDate, now);
+  assert.equal(result, EVIDENCE_STATES.NON_CERTIFYING);
+});
+
 // ---------------------------------------------------------------------------
 // classifyEvidenceMetric — CERTIFIED_60
 // ---------------------------------------------------------------------------

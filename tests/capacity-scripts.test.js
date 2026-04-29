@@ -24,6 +24,7 @@ import {
   redactLogChunk,
   redactLogLine,
 } from '../scripts/lib/log-redaction.mjs';
+import { EVIDENCE_SCHEMA_VERSION } from '../scripts/lib/capacity-evidence.mjs';
 
 function jsonResponse(payload, init = {}) {
   const status = Number(init.status) || 200;
@@ -562,7 +563,7 @@ test('classroom load happy-path test with all network-failure-paired thresholds 
     assert.equal(report.failures.length, 0);
     assert.equal(report.thresholds.max5xx.passed, true);
     assert.equal(report.thresholds.maxBootstrapP95Ms.configured, 10000);
-    assert.equal(report.reportMeta.evidenceSchemaVersion, 2);
+    assert.equal(report.reportMeta.evidenceSchemaVersion, EVIDENCE_SCHEMA_VERSION);
     assert.equal(report.evidencePath, outputPath);
     assert.equal(report.diagnostics.classification.kind, 'diagnostic');
     assert.ok(report.diagnostics.classification.reasons.includes('not-production-mode'));
@@ -698,6 +699,7 @@ test('classroom load loads pinned threshold config via --config', async () => {
       max5xx: 0,
       maxNetworkFailures: 0,
       maxBootstrapP95Ms: 10000,
+      requireZeroSignals: true,
     },
   }));
 
@@ -715,6 +717,8 @@ test('classroom load loads pinned threshold config via --config', async () => {
     assert.equal(report.ok, true);
     assert.equal(report.thresholds.max5xx.configured, 0);
     assert.equal(report.thresholds.maxBootstrapP95Ms.configured, 10000);
+    assert.equal(report.thresholds.requireZeroSignals.configured, true);
+    assert.equal(report.thresholds.limits.requireZeroSignals, true);
     assert.equal(report.tier.tier, 'small-pilot-provisional');
     assert.equal(report.tier.minEvidenceSchemaVersion, 1);
   } finally {

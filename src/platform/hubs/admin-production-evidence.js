@@ -19,6 +19,18 @@ export const EVIDENCE_STATES = Object.freeze({
 });
 
 const VALID_STATES = new Set(Object.values(EVIDENCE_STATES));
+const CERTIFICATION_STATES = new Set([
+  EVIDENCE_STATES.CERTIFIED_30,
+  EVIDENCE_STATES.CERTIFIED_60,
+  EVIDENCE_STATES.CERTIFIED_100,
+]);
+const CAPACITY_METRIC_KEYS = new Set([
+  'smoke_pass',
+  'small_pilot_provisional',
+  'certified_30_learner_beta',
+  'certified_60_learner_stretch',
+  'certified_100_plus',
+]);
 
 /** Fresh threshold: 24 hours in milliseconds. */
 export const EVIDENCE_FRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
@@ -95,12 +107,7 @@ export function classifyEvidenceMetric(metricKey, metricValue, generatedAt, now)
   };
 
   const mappedState = tierMap[metricKey] || EVIDENCE_STATES.UNKNOWN;
-  const certificationStates = new Set([
-    EVIDENCE_STATES.CERTIFIED_30,
-    EVIDENCE_STATES.CERTIFIED_60,
-    EVIDENCE_STATES.CERTIFIED_100,
-  ]);
-  if (certificationStates.has(mappedState) && metricValue.certifying === false) {
+  if (CERTIFICATION_STATES.has(mappedState) && metricValue.certifying !== true) {
     return EVIDENCE_STATES.NON_CERTIFYING;
   }
 
@@ -125,9 +132,10 @@ export function buildEvidencePanelModel(summaryJson, now) {
     key,
     tier: value?.tier || key,
     state: classifyEvidenceMetric(key, value, generatedAt, now),
+    isCapacityEvidence: CAPACITY_METRIC_KEYS.has(key),
     status: value?.status || null,
     ok: Boolean(value?.ok),
-    certifying: Boolean(value?.certifying),
+    certifying: value?.certifying === true,
     evidenceKind: value?.evidenceKind || null,
     decision: value?.decision || null,
     failureReason: value?.failureReason || null,
@@ -145,10 +153,11 @@ export function buildEvidencePanelModel(summaryJson, now) {
     fileName: value?.fileName || null,
   })).sort(compareMetricRows);
 
-  const latestEvidenceAt = latestMetricTimestamp(metrics);
-  const isFresh = metrics.some((metric) => metric.state !== EVIDENCE_STATES.STALE);
+  const capacityMetrics = metrics.filter((metric) => metric.isCapacityEvidence);
+  const latestEvidenceAt = latestMetricTimestamp(capacityMetrics);
+  const isFresh = capacityMetrics.some((metric) => metric.state !== EVIDENCE_STATES.STALE);
 
-  const overallState = deriveOverallState(metrics, isFresh);
+  const overallState = deriveOverallState(capacityMetrics, isFresh);
 
   return { metrics, generatedAt, latestEvidenceAt, isFresh, overallState, sources };
 }

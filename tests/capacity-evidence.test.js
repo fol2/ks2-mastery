@@ -7,6 +7,7 @@ import { join } from 'node:path';
 
 import {
   EVIDENCE_SCHEMA_VERSION,
+  P6_CERTIFIED_THRESHOLD_CONFIG_HASH,
   REQUEST_SAMPLES_HEAD_LIMIT,
   REQUEST_SAMPLES_TAIL_LIMIT,
   buildCapacityDiagnostics,
@@ -48,8 +49,8 @@ function makeSummary(overrides = {}) {
   };
 }
 
-test('EVIDENCE_SCHEMA_VERSION is 2 (P4 U1 bumps to v2)', () => {
-  assert.equal(EVIDENCE_SCHEMA_VERSION, 2);
+test('EVIDENCE_SCHEMA_VERSION is 3 (multi-source evidence summary)', () => {
+  assert.equal(EVIDENCE_SCHEMA_VERSION, 3);
 });
 
 test('buildReportMeta records schema version + degrades unknown fields safely', () => {
@@ -60,7 +61,7 @@ test('buildReportMeta records schema version + degrades unknown fields safely', 
     bootstrapBurst: 8,
     rounds: 2,
   });
-  assert.equal(meta.evidenceSchemaVersion, 2);
+  assert.equal(meta.evidenceSchemaVersion, EVIDENCE_SCHEMA_VERSION);
   assert.equal(meta.learners, 4);
   assert.equal(meta.bootstrapBurst, 8);
   assert.equal(meta.rounds, 2);
@@ -177,7 +178,7 @@ test('buildEvidencePayload sets ok=false when any threshold fails', () => {
   });
   assert.equal(payload.ok, false);
   assert.ok(payload.failures.includes('max5xx'));
-  assert.equal(payload.reportMeta.evidenceSchemaVersion, 2);
+  assert.equal(payload.reportMeta.evidenceSchemaVersion, EVIDENCE_SCHEMA_VERSION);
   assert.equal(payload.reportMeta.environment, 'production');
   assert.equal(payload.safety.mode, 'production');
   assert.equal(payload.safety.demoSessions, false);
@@ -228,6 +229,44 @@ test('classifyCapacityEvidenceRun marks strict production demo run as certificat
   assert.equal(result.runShape.sessionSourceMode, 'demo-sessions');
 });
 
+test('classifyCapacityEvidenceRun rejects strict-shaped runs from non-canonical HTTPS origins', () => {
+  const result = classifyCapacityEvidenceRun({
+    mode: 'production',
+    origin: 'https://example.com',
+    demoSessions: true,
+    learners: 30,
+    bootstrapBurst: 20,
+    rounds: 1,
+    configPath: 'reports/capacity/configs/30-learner-beta.json',
+  }, {
+    tier: '30-learner-beta-certified',
+    minEvidenceSchemaVersion: 2,
+  });
+
+  assert.equal(result.kind, 'diagnostic');
+  assert.equal(result.certificationEligible, false);
+  assert.ok(result.reasons.includes('origin-external-https'));
+});
+
+test('classifyCapacityEvidenceRun rejects alternate threshold config paths', () => {
+  const result = classifyCapacityEvidenceRun({
+    mode: 'production',
+    origin: 'https://ks2.eugnel.uk',
+    demoSessions: true,
+    learners: 30,
+    bootstrapBurst: 20,
+    rounds: 1,
+    configPath: 'reports/capacity/configs/60-learner-stretch.json',
+  }, {
+    tier: '30-learner-beta-certified',
+    minEvidenceSchemaVersion: 2,
+  });
+
+  assert.equal(result.kind, 'diagnostic');
+  assert.equal(result.certificationEligible, false);
+  assert.ok(result.reasons.includes('threshold-config-not-p6-30-learner-beta'));
+});
+
 test('classifyCapacityEvidenceRun keeps reduced burst and manifest runs diagnostic', () => {
   const result = classifyCapacityEvidenceRun({
     mode: 'production',
@@ -265,7 +304,7 @@ test('buildCapacityDiagnostics records threshold provenance, endpoint inventory,
       configPath: 'reports/capacity/configs/30-learner-beta.json',
     },
     summary: makeSummary(),
-    thresholdConfigHash: 'abc123',
+    thresholdConfigHash: P6_CERTIFIED_THRESHOLD_CONFIG_HASH,
     thresholdViolations: [{
       threshold: 'max-bootstrap-p95-ms',
       limit: 1000,
@@ -282,7 +321,7 @@ test('buildCapacityDiagnostics records threshold provenance, endpoint inventory,
   assert.deepEqual(diagnostics.classification.reasons, ['threshold-violations']);
   assert.equal(diagnostics.endpointInventory.hasBootstrapMetrics, true);
   assert.equal(diagnostics.endpointInventory.hasCommandMetrics, true);
-  assert.equal(diagnostics.thresholdConfig.hash, 'abc123');
+  assert.equal(diagnostics.thresholdConfig.hash, P6_CERTIFIED_THRESHOLD_CONFIG_HASH);
   assert.deepEqual(diagnostics.thresholdViolations, [{
     threshold: 'max-bootstrap-p95-ms',
     limit: 1000,
@@ -308,6 +347,7 @@ test('buildCapacityDiagnostics keeps complete passing strict evidence certificat
       configPath: 'reports/capacity/configs/30-learner-beta.json',
     },
     summary: makeSummary(),
+    thresholdConfigHash: P6_CERTIFIED_THRESHOLD_CONFIG_HASH,
   });
 
   assert.equal(diagnostics.classification.kind, 'certification-candidate');
@@ -316,6 +356,32 @@ test('buildCapacityDiagnostics keeps complete passing strict evidence certificat
   assert.equal(diagnostics.classification.evidenceComplete, true);
   assert.equal(diagnostics.classification.certificationEligible, true);
   assert.deepEqual(diagnostics.classification.reasons, []);
+});
+
+test('buildCapacityDiagnostics requires the pinned certified threshold config hash', () => {
+  const diagnostics = buildCapacityDiagnostics({
+    options: {
+      mode: 'production',
+      origin: 'https://ks2.eugnel.uk',
+      demoSessions: true,
+      learners: 30,
+      bootstrapBurst: 20,
+      rounds: 1,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    tier: {
+      tier: '30-learner-beta-certified',
+      minEvidenceSchemaVersion: 2,
+      configPath: 'reports/capacity/configs/30-learner-beta.json',
+    },
+    summary: makeSummary(),
+    thresholdConfigHash: 'deadbeef',
+  });
+
+  assert.equal(diagnostics.classification.kind, 'diagnostic');
+  assert.equal(diagnostics.classification.shapeEligible, false);
+  assert.equal(diagnostics.classification.certificationEligible, false);
+  assert.ok(diagnostics.classification.reasons.includes('threshold-config-hash-mismatch'));
 });
 
 test('buildCapacityDiagnostics requires endpoint evidence even when the run shape is strict', () => {
@@ -335,6 +401,7 @@ test('buildCapacityDiagnostics requires endpoint evidence even when the run shap
       configPath: 'reports/capacity/configs/30-learner-beta.json',
     },
     summary: { endpoints: {} },
+    thresholdConfigHash: P6_CERTIFIED_THRESHOLD_CONFIG_HASH,
   });
 
   assert.equal(diagnostics.classification.kind, 'diagnostic');

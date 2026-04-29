@@ -774,19 +774,22 @@ function maxResponseBytesAcross(summary) {
  */
 function normaliseThresholdView(options = {}) {
   const nested = options.thresholds || {};
-  const flatKeys = [
+  const numericFlatKeys = [
     'max5xx',
     'maxNetworkFailures',
     'maxBootstrapP95Ms',
     'maxCommandP95Ms',
     'maxResponseBytes',
-    'requireZeroSignals',
-    'requireBootstrapCapacity',
   ];
   const view = { ...nested };
-  for (const key of flatKeys) {
+  for (const key of numericFlatKeys) {
     if (options[key] != null) view[key] = options[key];
   }
+  // Boolean gates default to false on the flat compatibility shape. Treat
+  // false as "not explicitly supplied" so a config file's true value is not
+  // silently disabled by parser defaults.
+  if (options.requireZeroSignals === true) view.requireZeroSignals = true;
+  if (options.requireBootstrapCapacity === true) view.requireBootstrapCapacity = true;
   return view;
 }
 
@@ -1246,6 +1249,7 @@ function buildThresholdsBlock(options, summary) {
       maxCommandP95Ms: thresholds.maxCommandP95Ms ?? null,
       maxResponseBytes: thresholds.maxResponseBytes ?? null,
       requireZeroSignals: thresholds.requireZeroSignals === true,
+      requireBootstrapCapacity: thresholds.requireBootstrapCapacity === true,
     },
     violations,
   };

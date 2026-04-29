@@ -15,6 +15,9 @@ export const P6_THIRTY_LEARNER_GATE_SHAPE = Object.freeze({
   bootstrapBurst: 20,
   rounds: 1,
 });
+export const P6_CERTIFICATION_PRODUCTION_ORIGIN = 'https://ks2.eugnel.uk';
+export const P6_CERTIFIED_THRESHOLD_CONFIG_PATH = 'reports/capacity/configs/30-learner-beta.json';
+export const P6_CERTIFIED_THRESHOLD_CONFIG_HASH = '2127fb3330207f59b587dee13671a8fec4853e1d85107a582ecd5199f2c3dbce';
 
 // Known keys for threshold config files. `validateThresholdConfigKeys` rejects
 // unknown keys so typos like `maxFivexx` cannot silently disable a gate.
@@ -86,6 +89,8 @@ export function classifyCapacityEvidenceRun(options = {}, tier = {}) {
 
   if (!options.configPath || !targetTier) {
     reasons.push('missing-pinned-threshold-config');
+  } else if (normaliseRepoPath(options.configPath) !== P6_CERTIFIED_THRESHOLD_CONFIG_PATH) {
+    reasons.push('threshold-config-not-p6-30-learner-beta');
   } else if (targetTier !== '30-learner-beta-certified') {
     reasons.push('tier-is-not-30-learner-beta-certified');
   }
@@ -117,11 +122,15 @@ export function buildCapacityDiagnostics({
     commandEndpointKeys,
   };
   const normalisedViolations = normaliseThresholdViolations(thresholdViolations);
-  const shapeEligible = baseClassification.certificationEligible;
+  const thresholdConfigHashEligible = thresholdConfigHash === P6_CERTIFIED_THRESHOLD_CONFIG_HASH;
+  const shapeEligible = baseClassification.certificationEligible && thresholdConfigHashEligible;
   const thresholdEligible = normalisedViolations.length === 0;
   const evidenceComplete = endpointInventory.hasBootstrapMetrics && endpointInventory.hasCommandMetrics;
   const resultReasons = [];
 
+  if (baseClassification.certificationEligible && !thresholdConfigHashEligible) {
+    resultReasons.push(thresholdConfigHash ? 'threshold-config-hash-mismatch' : 'missing-threshold-config-hash');
+  }
   if (!endpointInventory.hasBootstrapMetrics) resultReasons.push('missing-bootstrap-metrics');
   if (!endpointInventory.hasCommandMetrics) resultReasons.push('missing-command-metrics');
   if (!thresholdEligible) resultReasons.push('threshold-violations');
@@ -192,16 +201,23 @@ function classifyOrigin(origin) {
   if (!origin) return 'unknown';
   try {
     const url = new URL(origin);
+    if (url.origin === P6_CERTIFICATION_PRODUCTION_ORIGIN) return 'production';
     const host = url.hostname.toLowerCase();
     if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.test')) {
       return 'local';
     }
     if (/preview|staging|dev/.test(host)) return 'preview';
-    if (url.protocol === 'https:') return 'production';
+    if (url.protocol === 'https:') return 'external-https';
     return 'non-production';
   } catch {
     return 'unknown';
   }
+}
+
+function normaliseRepoPath(value) {
+  return String(value || '')
+    .replace(/\\/g, '/')
+    .replace(/^\.\//, '');
 }
 
 function normaliseThresholdViolations(violations = []) {

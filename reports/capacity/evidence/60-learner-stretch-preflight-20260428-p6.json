@@ -759,7 +759,8 @@
       "maxBootstrapP95Ms": 750,
       "maxCommandP95Ms": 400,
       "maxResponseBytes": 600000,
-      "requireZeroSignals": false
+      "requireZeroSignals": true,
+      "requireBootstrapCapacity": true
     }
   },
   "failures": [

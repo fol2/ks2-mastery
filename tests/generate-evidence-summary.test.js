@@ -62,6 +62,7 @@ test('buildEvidencePanelModel consumes schema 3 sources while retaining schema 2
       certified_30_learner_beta: {
         tier: 'certified_30_learner_beta',
         ok: true,
+        certifying: true,
         failures: [],
         finishedAt: fresh,
         commit: 'abc1234',
@@ -128,7 +129,7 @@ test('schema 3 missing and malformed sources fail closed without crashing the pa
   assert.equal(classifyEvidenceMetric('csp_status', 42, fresh, now), EVIDENCE_STATES.NOT_AVAILABLE);
 });
 
-test('schema 3 mixed source overall state prioritises certified capacity truth', () => {
+test('schema 3 mixed source overall state prioritises capacity truth over auxiliary smoke', () => {
   const now = 1_700_000_000_000;
   const fresh = new Date(now - 60_000).toISOString();
   const certified = buildEvidencePanelModel({
@@ -139,6 +140,7 @@ test('schema 3 mixed source overall state prioritises certified capacity truth',
       certified_30_learner_beta: {
         tier: 'certified_30_learner_beta',
         ok: true,
+        certifying: true,
         failures: [],
         finishedAt: fresh,
       },
@@ -155,7 +157,35 @@ test('schema 3 mixed source overall state prioritises certified capacity truth',
       admin_smoke: { tier: 'admin_smoke', ok: true, failures: [], finishedAt: fresh },
     },
   }, now);
-  assert.equal(smokeOnly.overallState, EVIDENCE_STATES.SMOKE_PASS);
+  assert.equal(smokeOnly.isFresh, false);
+  assert.equal(smokeOnly.latestEvidenceAt, null);
+  assert.equal(smokeOnly.overallState, EVIDENCE_STATES.NOT_AVAILABLE);
+});
+
+test('schema 3 auxiliary source timestamps cannot refresh stale capacity evidence', () => {
+  const now = 1_700_000_000_000;
+  const fresh = new Date(now - 60_000).toISOString();
+  const stale = new Date(now - (25 * 60 * 60 * 1000)).toISOString();
+  const model = buildEvidencePanelModel({
+    schema: 3,
+    generatedAt: fresh,
+    sources: {},
+    metrics: {
+      certified_30_learner_beta: {
+        tier: 'certified_30_learner_beta',
+        ok: true,
+        certifying: true,
+        failures: [],
+        finishedAt: stale,
+      },
+      admin_smoke: { tier: 'admin_smoke', ok: true, failures: [], finishedAt: fresh },
+      build_version: { tier: 'build_version', ok: true, failures: [], finishedAt: fresh },
+    },
+  }, now);
+
+  assert.equal(model.latestEvidenceAt, stale);
+  assert.equal(model.isFresh, false);
+  assert.equal(model.overallState, EVIDENCE_STATES.STALE);
 });
 
 test('classifyTier prefers declared tier metadata over filename fallback', () => {
@@ -334,11 +364,14 @@ test('buildEvidenceSummary fails closed for filename-only passed certification e
   assert.equal(metric.sourceTier, 'certified_30_learner_beta');
   assert.equal(metric.failureReason, 'missing-certification-diagnostics');
   assert.equal(metric.certificationEligible, false);
-  assert.deepEqual(metric.certificationReasons, ['missing-certification-diagnostics']);
+  assert.deepEqual(metric.certificationReasons, [
+    'missing-certification-diagnostics',
+    'evidence-not-in-verified-capacity-table',
+  ]);
   assert.equal(metric.thresholdsPassed, null);
 });
 
-test('buildEvidenceSummary certifies only diagnostics-approved production gate evidence', () => {
+test('buildEvidenceSummary refuses diagnostics-approved evidence until the capacity table verifier also approves it', () => {
   const summary = buildEvidenceSummary([
     {
       name: '30-learner-beta-v2-20260428-p6-strict.json',
@@ -367,6 +400,51 @@ test('buildEvidenceSummary certifies only diagnostics-approved production gate e
       },
     },
   ], { generatedAt: '2026-04-28T23:05:00.000Z' });
+
+  const metric = summary.metrics.certified_30_learner_beta;
+  assert.equal(metric.status, 'non_certifying');
+  assert.equal(metric.certifying, false);
+  assert.equal(metric.certificationEligible, false);
+  assert.deepEqual(metric.certificationReasons, ['evidence-not-in-verified-capacity-table']);
+  assert.equal(metric.failureReason, 'evidence-not-in-verified-capacity-table');
+  assert.equal(metric.thresholdsPassed, null);
+});
+
+test('buildEvidenceSummary certifies only diagnostics-approved production gate evidence verified by the capacity table', () => {
+  const fileName = '30-learner-beta-v2-20260428-p6-strict.json';
+  const summary = buildEvidenceSummary([
+    {
+      name: fileName,
+      data: {
+        ok: true,
+        dryRun: false,
+        reportMeta: {
+          commit: 'abc123',
+          origin: 'https://ks2.eugnel.uk',
+          learners: 30,
+          bootstrapBurst: 20,
+          rounds: 1,
+          finishedAt: '2026-04-28T23:00:00.000Z',
+          evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+        },
+        diagnostics: {
+          classification: {
+            certificationEligible: true,
+            kind: 'certification-candidate',
+            reasons: [],
+          },
+        },
+        thresholds: { violations: [] },
+        failures: [],
+        tier: { tier: '30-learner-beta-certified' },
+      },
+    },
+  ], {
+    generatedAt: '2026-04-28T23:05:00.000Z',
+    verifiedCertificationEvidence: new Map([
+      [fileName, { decision: '30-learner-beta-certified' }],
+    ]),
+  });
 
   const metric = summary.metrics.certified_30_learner_beta;
   assert.equal(metric.status, 'passed');
@@ -418,7 +496,7 @@ test('buildEvidenceSummary keeps diagnostics-only certification-shaped runs non-
     assert.equal(metric.status, 'non_certifying', label);
     assert.equal(metric.certifying, false, label);
     assert.equal(metric.failureReason, `not-certification-eligible: ${reason}`, label);
-    assert.deepEqual(metric.certificationReasons, [reason], label);
+    assert.deepEqual(metric.certificationReasons, [reason, 'evidence-not-in-verified-capacity-table'], label);
   }
 });
 

@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-04-29T00:19:10.075Z",
+  "generatedAt": "2026-04-29T00:47:06.113Z",
   "sources": {
     "capacity_evidence": {
       "file": "reports/capacity/evidence/",
@@ -42,7 +42,8 @@
       "evidenceKind": "capacity-run",
       "certificationEligible": false,
       "certificationReasons": [
-        "missing-certification-diagnostics"
+        "missing-certification-diagnostics",
+        "evidence-not-in-verified-capacity-table"
       ],
       "decision": "fail",
       "failureReason": "threshold-violations",
@@ -64,7 +65,8 @@
           "message": "Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms."
         }
       ],
-      "fileName": "30-learner-beta-v2-20260428-p5-warm.json"
+      "fileName": "30-learner-beta-v2-20260428-p5-warm.json",
+      "verifiedCapacityRowDecision": null
     },
     "certified_60_learner_stretch": {
       "tier": "certified_60_learner_stretch",
@@ -79,7 +81,8 @@
         "session-manifest-requires-equivalence-record",
         "non-p6-30-learner-gate-shape",
         "tier-is-not-30-learner-beta-certified",
-        "threshold-violations"
+        "threshold-violations",
+        "evidence-not-in-verified-capacity-table"
       ],
       "decision": "fail",
       "failureReason": "threshold-violations",
@@ -101,14 +104,15 @@
           "message": "Bootstrap P95 wall time 854 ms exceeds 750 ms."
         }
       ],
-      "fileName": "60-learner-stretch-preflight-20260428-p6.json"
+      "fileName": "60-learner-stretch-preflight-20260428-p6.json",
+      "verifiedCapacityRowDecision": null
     },
     "csp_status": {
       "tier": "csp_status",
       "ok": false,
       "dryRun": false,
       "mode": "report-only",
-      "finishedAt": "2026-04-29T00:19:10.075Z",
+      "finishedAt": "2026-04-29T00:47:06.113Z",
       "commit": null,
       "failures": [
         "csp_mode_is_report-only"
@@ -119,7 +123,7 @@
       "ok": true,
       "dryRun": false,
       "count": 14,
-      "finishedAt": "2026-04-29T00:19:10.075Z",
+      "finishedAt": "2026-04-29T00:47:06.113Z",
       "commit": null,
       "failures": []
     },
@@ -128,7 +132,7 @@
       "ok": true,
       "dryRun": false,
       "version": "0.1.0",
-      "finishedAt": "2026-04-29T00:19:10.075Z",
+      "finishedAt": "2026-04-29T00:47:06.113Z",
       "commit": null,
       "failures": []
     }

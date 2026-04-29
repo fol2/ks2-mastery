@@ -863,6 +863,61 @@ test('config without top-level tier field is rejected (adv-3)', () => {
   }
 });
 
+test('evidence limits block must match per-threshold configured values', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));
+  const docPath = join(tempDir, 'capacity.md');
+  const evidenceDir = join(tempDir, 'reports', 'capacity');
+  const configsDir = join(evidenceDir, 'configs');
+  mkdirSync(evidenceDir, { recursive: true });
+  mkdirSync(configsDir, { recursive: true });
+  const evidencePath = join(evidenceDir, 'latest-preview.json');
+  const configPath = join(configsDir, 'small-pilot.json');
+
+  writeFileSync(configPath, JSON.stringify({
+    tier: 'small-pilot-provisional',
+    thresholds: {
+      max5xx: 0,
+      maxBootstrapP95Ms: 1000,
+      maxCommandP95Ms: 750,
+      requireZeroSignals: true,
+    },
+  }));
+  writeFileSync(evidencePath, JSON.stringify(evidenceEnvelope({
+    reportMeta: { commit: 'abc1234567890abcdef1234567890abcdef12345', evidenceSchemaVersion: 2 },
+    tier: {
+      tier: 'small-pilot-provisional',
+      configPath: 'reports/capacity/configs/small-pilot.json',
+    },
+    thresholds: {
+      max5xx: { configured: 0, observed: 0, passed: true },
+      maxBootstrapP95Ms: { configured: 1000, observed: 320, passed: true },
+      maxCommandP95Ms: { configured: 750, observed: 180, passed: true },
+      requireZeroSignals: { configured: true, observed: 0, passed: true },
+      configured: true,
+      violations: [],
+      limits: {
+        max5xx: 0,
+        maxBootstrapP95Ms: 1000,
+        maxCommandP95Ms: 750,
+        requireZeroSignals: false,
+      },
+    },
+  })));
+  writeFileSync(docPath, makeDoc([
+    ['2026-04-25', 'abc1234', 'preview', 'Free', '10', '10', '1', '320', '180', '81000', '0', 'none', 'small-pilot-provisional', 'reports/capacity/latest-preview.json'],
+  ]));
+  const cwd = process.cwd();
+  try {
+    process.chdir(tempDir);
+    const result = verifyCapacityDoc(docPath);
+    assert.equal(result.ok, false);
+    assert.ok(result.report.some((line) => line.includes('evidence.thresholds.limits.requireZeroSignals')));
+  } finally {
+    process.chdir(cwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('runVerify empty tier object does not satisfy tier cross-check', () => {
   // tier: {} has no `tier` field — should behave identically to missing tier.
   const tempDir = mkdtempSync(join(tmpdir(), 'ks2-verify-'));

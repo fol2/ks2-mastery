@@ -11,6 +11,11 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EVIDENCE_SCHEMA_VERSION } from './lib/capacity-evidence.mjs';
+import {
+  extractEvidencePath,
+  parseEvidenceTable,
+  verifyEvidenceRow,
+} from './verify-capacity-evidence.mjs';
 
 const ROOT = resolve(import.meta.url.startsWith('file://')
   ? new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/i, '$1')
@@ -33,6 +38,12 @@ const CERTIFICATION_TIER_KEYS = new Set([
   TIER_KEYS.CERTIFIED_30,
   TIER_KEYS.CERTIFIED_60,
   TIER_KEYS.CERTIFIED_100,
+]);
+
+const CERTIFICATION_DECISIONS = new Set([
+  '30-learner-beta-certified',
+  '60-learner-stretch-certified',
+  '100-plus-certified',
 ]);
 
 function log(...args) {
@@ -226,17 +237,48 @@ function certificationClassification(data = {}) {
   };
 }
 
-function certificationNonEligibilityReason(data = {}) {
+function certificationTableVerification(fileName, declaredTier, verifiedCertificationEvidence = new Map()) {
+  const candidates = [
+    fileName,
+    `reports/capacity/evidence/${fileName}`,
+  ];
+  const verified = candidates
+    .map((candidate) => verifiedCertificationEvidence.get(candidate))
+    .find(Boolean);
+
+  if (!verified) {
+    return {
+      verified: false,
+      reason: 'evidence-not-in-verified-capacity-table',
+      rowDecision: null,
+    };
+  }
+  if (declaredTier && verified.decision !== declaredTier) {
+    return {
+      verified: false,
+      reason: `verified-table-decision-mismatch: ${verified.decision}`,
+      rowDecision: verified.decision,
+    };
+  }
+  return {
+    verified: true,
+    reason: null,
+    rowDecision: verified.decision,
+  };
+}
+
+function certificationNonEligibilityReason(data = {}, tableVerification = { verified: true }) {
   const classification = certificationClassification(data);
   if (!classification.present) return 'missing-certification-diagnostics';
   if (classification.reasons.length > 0) {
     return `not-certification-eligible: ${classification.reasons.join(', ')}`;
   }
   if (!classification.certificationEligible) return 'not-certification-eligible';
+  if (!tableVerification.verified) return tableVerification.reason;
   return null;
 }
 
-function deriveStatus({ data, tierKey, evidenceKind, failures, thresholdViolations }) {
+function deriveStatus({ data, tierKey, evidenceKind, failures, thresholdViolations, tableVerification }) {
   if (data?.dryRun || evidenceKind === 'dry-run') return 'non_certifying';
   if (failures.length > 0 || thresholdViolations.length > 0) return 'failed';
   if (evidenceKind === 'preflight') return 'non_certifying';
@@ -249,11 +291,14 @@ function deriveStatus({ data, tierKey, evidenceKind, failures, thresholdViolatio
     if (!certificationClassification(data).certificationEligible) {
       return 'non_certifying';
     }
+    if (!tableVerification.verified) {
+      return 'non_certifying';
+    }
   }
   return 'passed';
 }
 
-function deriveFailureReason({ data, tierKey, status, failures, thresholdViolations, evidenceKind }) {
+function deriveFailureReason({ data, tierKey, status, failures, thresholdViolations, evidenceKind, tableVerification }) {
   if (status === 'failed' && thresholdViolations.length > 0) return 'threshold-violations';
   if (status === 'failed' && failures.length > 0) return 'evidence-failures';
   if (status === 'non_certifying' && data?.dryRun) return 'dry-run';
@@ -263,7 +308,7 @@ function deriveFailureReason({ data, tierKey, status, failures, thresholdViolati
     if (evidenceKind === 'preflight') return evidenceKind;
   }
   if (status === 'non_certifying' && CERTIFICATION_TIER_KEYS.has(tierKey)) {
-    const reason = certificationNonEligibilityReason(data);
+    const reason = certificationNonEligibilityReason(data, tableVerification);
     if (reason) return reason;
   }
   if (status === 'non_certifying') {
@@ -290,21 +335,38 @@ function inferLearners(fileName) {
   return match ? Number(match[1]) : null;
 }
 
-function summariseEvidenceFile(name, data) {
+function summariseEvidenceFile(name, data, options = {}) {
   const tier = classifyTier(name, data);
   const key = tier === TIER_KEYS.UNKNOWN ? name.replace(/\.json$/, '') : tier;
   const evidenceTime = extractEvidenceTime(data, name);
   const thresholdViolations = normaliseThresholdViolations(data);
   const failures = normaliseFailures(data, thresholdViolations);
   const evidenceKind = classifyEvidenceKind(name, data);
-  const status = deriveStatus({ data, tierKey: key, evidenceKind, failures, thresholdViolations });
   const declaredTier = declaredSourceTier(data);
+  const tableVerification = CERTIFICATION_TIER_KEYS.has(key)
+    ? certificationTableVerification(name, declaredTier, options.verifiedCertificationEvidence)
+    : { verified: true, reason: null, rowDecision: null };
+  const status = deriveStatus({
+    data,
+    tierKey: key,
+    evidenceKind,
+    failures,
+    thresholdViolations,
+    tableVerification,
+  });
   const certification = certificationClassification(data);
+  const certificationReasons = CERTIFICATION_TIER_KEYS.has(key)
+    ? [
+        ...certification.reasons,
+        ...(tableVerification.reason ? [tableVerification.reason] : []),
+      ]
+    : [];
+  const certificationEligible = certification.certificationEligible && tableVerification.verified;
   const certifying = status === 'passed'
     && CERTIFICATION_TIER_KEYS.has(key)
     && evidenceKind === 'capacity-run'
     && !data?.dryRun
-    && certification.certificationEligible
+    && certificationEligible
     && Boolean(declaredTier && /certified/i.test(declaredTier));
 
   return {
@@ -315,10 +377,18 @@ function summariseEvidenceFile(name, data) {
     certifying,
     dryRun: Boolean(data?.dryRun),
     evidenceKind,
-    certificationEligible: CERTIFICATION_TIER_KEYS.has(key) ? certification.certificationEligible : null,
-    certificationReasons: CERTIFICATION_TIER_KEYS.has(key) ? certification.reasons : [],
+    certificationEligible: CERTIFICATION_TIER_KEYS.has(key) ? certificationEligible : null,
+    certificationReasons,
     decision: data?.decision || (status === 'failed' ? 'fail' : null),
-    failureReason: deriveFailureReason({ data, tierKey: key, status, failures, thresholdViolations, evidenceKind }),
+    failureReason: deriveFailureReason({
+      data,
+      tierKey: key,
+      status,
+      failures,
+      thresholdViolations,
+      evidenceKind,
+      tableVerification,
+    }),
     learners: data?.reportMeta?.learners ?? data?.safety?.learners ?? data?.shape?.learners ?? inferLearners(name),
     bootstrapBurst: data?.reportMeta?.bootstrapBurst ?? data?.safety?.bootstrapBurst ?? data?.shape?.bootstrapBurst ?? null,
     rounds: data?.reportMeta?.rounds ?? data?.shape?.rounds ?? null,
@@ -331,6 +401,7 @@ function summariseEvidenceFile(name, data) {
       : (thresholdViolations.length > 0 || failures.length > 0 ? false : null),
     thresholdViolations,
     fileName: name,
+    verifiedCapacityRowDecision: tableVerification.rowDecision,
     sort: {
       dateKey: evidenceTime.dateKey,
       phaseRank: phaseRank(data, name),
@@ -339,10 +410,10 @@ function summariseEvidenceFile(name, data) {
   };
 }
 
-export function buildMetrics(files) {
+export function buildMetrics(files, options = {}) {
   const metrics = {};
   for (const { name, data } of files) {
-    const metric = summariseEvidenceFile(name, data);
+    const metric = summariseEvidenceFile(name, data, options);
     const existing = metrics[metric.tier];
     if (!isNewerEvidence(metric, existing)) continue;
     metrics[metric.tier] = metric;
@@ -352,6 +423,49 @@ export function buildMetrics(files) {
     delete metric.sort;
   }
   return metrics;
+}
+
+function withWorkingDirectory(rootDir, callback) {
+  const previous = process.cwd();
+  try {
+    if (previous !== rootDir) process.chdir(rootDir);
+    return callback();
+  } finally {
+    if (process.cwd() !== previous) process.chdir(previous);
+  }
+}
+
+export function buildVerifiedCertificationEvidenceIndex(rootDir = ROOT) {
+  const docPath = join(rootDir, 'docs', 'operations', 'capacity.md');
+  if (!existsSync(docPath)) {
+    log(`Capacity evidence doc not found at ${docPath}`);
+    return new Map();
+  }
+
+  try {
+    const markdown = readFileSync(docPath, 'utf8');
+    const rows = parseEvidenceTable(markdown);
+    return withWorkingDirectory(rootDir, () => {
+      const verified = new Map();
+      for (const row of rows) {
+        if (!CERTIFICATION_DECISIONS.has(row.decision)) continue;
+        const evidencePath = extractEvidencePath(row.evidence);
+        if (!evidencePath) continue;
+        const result = verifyEvidenceRow(row);
+        if (!result.ok) {
+          log(`Certification row for ${evidencePath} failed verifier: ${result.messages.join('; ')}`);
+          continue;
+        }
+        const entry = { decision: row.decision };
+        verified.set(evidencePath, entry);
+        verified.set(evidencePath.split('/').pop(), entry);
+      }
+      return verified;
+    });
+  } catch (err) {
+    log(`Capacity evidence verifier index failed: ${err.message}`);
+    return new Map();
+  }
 }
 
 function readJsonSource(filePath, tierKey, rootDir = ROOT) {
@@ -469,8 +583,9 @@ export function aggregateSources(rootDir = ROOT) {
   const metrics = {};
 
   const capacityFiles = readEvidenceFiles(rootDir);
+  const verifiedCertificationEvidence = buildVerifiedCertificationEvidenceIndex(rootDir);
   log(`Found ${capacityFiles.length} capacity evidence file(s).`);
-  Object.assign(metrics, buildMetrics(capacityFiles));
+  Object.assign(metrics, buildMetrics(capacityFiles, { verifiedCertificationEvidence }));
   sources.capacity_evidence = {
     file: 'reports/capacity/evidence/',
     found: capacityFiles.length > 0,
@@ -509,10 +624,11 @@ export function aggregateSources(rootDir = ROOT) {
 export function buildEvidenceSummary(files, {
   generatedAt = new Date().toISOString(),
   sources = null,
+  verifiedCertificationEvidence = new Map(),
 } = {}) {
   const summary = {
     schema: EVIDENCE_SCHEMA_VERSION,
-    metrics: buildMetrics(files),
+    metrics: buildMetrics(files, { verifiedCertificationEvidence }),
     generatedAt,
   };
   if (sources) {
