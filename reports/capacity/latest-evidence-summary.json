@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-04-29T09:19:52.297Z",
+  "generatedAt": "2026-04-29T10:14:06.149Z",
   "sources": {
     "capacity_evidence": {
       "file": "reports/capacity/evidence/",
@@ -68,22 +68,16 @@
       "fileName": "30-learner-beta-v2-20260428-p5-warm.json",
       "verifiedCapacityRowDecision": null
     },
-    "certified_60_learner_stretch": {
-      "tier": "certified_60_learner_stretch",
+    "preflight_only": {
+      "tier": "preflight_only",
       "sourceTier": "60-learner-stretch-certified",
       "status": "failed",
       "ok": false,
       "certifying": false,
       "dryRun": false,
       "evidenceKind": "preflight",
-      "certificationEligible": false,
-      "certificationReasons": [
-        "session-manifest-requires-equivalence-record",
-        "non-p6-30-learner-gate-shape",
-        "tier-is-not-30-learner-beta-certified",
-        "threshold-violations",
-        "evidence-not-in-verified-capacity-table"
-      ],
+      "certificationEligible": null,
+      "certificationReasons": [],
       "decision": "fail",
       "failureReason": "threshold-violations",
       "learners": 60,
@@ -112,7 +106,7 @@
       "ok": false,
       "dryRun": false,
       "mode": "report-only",
-      "finishedAt": "2026-04-29T09:19:52.296Z",
+      "finishedAt": "2026-04-29T10:14:06.147Z",
       "commit": null,
       "failures": [
         "csp_mode_is_report-only"
@@ -122,8 +116,8 @@
       "tier": "d1_migrations",
       "ok": true,
       "dryRun": false,
-      "count": 14,
-      "finishedAt": "2026-04-29T09:19:52.296Z",
+      "count": 16,
+      "finishedAt": "2026-04-29T10:14:06.148Z",
       "commit": null,
       "failures": []
     },
@@ -132,7 +126,7 @@
       "ok": true,
       "dryRun": false,
       "version": "0.1.0",
-      "finishedAt": "2026-04-29T09:19:52.297Z",
+      "finishedAt": "2026-04-29T10:14:06.149Z",
       "commit": null,
       "failures": []
     }
