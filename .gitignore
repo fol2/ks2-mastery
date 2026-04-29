@@ -46,3 +46,7 @@ tests/journeys/artifacts/
 tests/journeys/*.log
 docs/export-chats/
 tests/playwright/__screenshots__/
+
+# Session artefacts — not source
+.claude/*.txt
+*.diff
