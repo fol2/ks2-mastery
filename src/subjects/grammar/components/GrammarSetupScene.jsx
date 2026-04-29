@@ -4,6 +4,7 @@ import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.
 import { heroBgStyle } from '../../../platform/ui/hero-bg.js';
 import { SetupMorePractice } from '../../../platform/ui/SetupMorePractice.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
+import { HeroWelcome } from '../../../platform/ui/HeroWelcome.jsx';
 import {
   heroBgForGrammarSetup,
   heroContrastProfileForGrammarBg,
@@ -230,9 +231,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
             <p className="eyebrow">Grammar · today</p>
             <h1 id="grammar-dashboard-title" className="title grammar-hero-title">{heroTitle}</h1>
             <p className="lede grammar-hero-subtitle">{heroSubtitle}</p>
-            {learner?.name ? (
-              <p className="grammar-hero-welcome">Hi {learner.name} — ready for a short round?</p>
-            ) : null}
+            <HeroWelcome name={learner?.name} className="grammar-hero-welcome" />
 
             <div className="mode-row grammar-mode-row">
               {GRAMMAR_PRIMARY_MODE_CARDS.map((card, index) => {
