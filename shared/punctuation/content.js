@@ -1315,7 +1315,7 @@ export const PUNCTUATION_ITEMS = Object.freeze([
       'We saw a man eating-shark.',
     ],
     correctIndex: 1,
-    explanation: 'Man-eating describes the shark and avoids the unintended meaning that a man is eating.',
+    explanation: 'The hyphen in man-eating shows it is one describing phrase, avoiding the unintended meaning that a man is eating.',
     model: 'We saw a man-eating shark.',
     misconceptionTags: ['boundary.hyphen_missing', 'boundary.hyphen_position'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
