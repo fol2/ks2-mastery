@@ -29,6 +29,14 @@ import { parenthesisFixDsl } from '../shared/punctuation/dsl-families/parenthesi
 import { parenthesisCombineDsl } from '../shared/punctuation/dsl-families/parenthesis-combine.js';
 import { parenthesisSpeechParagraphDsl } from '../shared/punctuation/dsl-families/parenthesis-speech-paragraph.js';
 import { colonListInsertDsl } from '../shared/punctuation/dsl-families/colon-list-insert.js';
+import { colonListCombineDsl } from '../shared/punctuation/dsl-families/colon-list-combine.js';
+import { semicolonFixDsl } from '../shared/punctuation/dsl-families/semicolon-fix.js';
+import { semicolonCombineDsl } from '../shared/punctuation/dsl-families/semicolon-combine.js';
+import { colonSemicolonParagraphDsl } from '../shared/punctuation/dsl-families/colon-semicolon-paragraph.js';
+import { bulletPointsFixDsl } from '../shared/punctuation/dsl-families/bullet-points-fix.js';
+import { bulletPointsParagraphDsl } from '../shared/punctuation/dsl-families/bullet-points-paragraph.js';
+
+import { GENERATED_TEMPLATE_BANK } from '../shared/punctuation/generators.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -74,7 +82,29 @@ const FAMILIES = [
   { name: 'parenthesis-combine', dsl: parenthesisCombineDsl, mode: 'combine' },
   { name: 'parenthesis-speech-paragraph', dsl: parenthesisSpeechParagraphDsl, mode: 'paragraph' },
   { name: 'colon-list-insert', dsl: colonListInsertDsl, mode: 'insert' },
+  { name: 'colon-list-combine', dsl: colonListCombineDsl, mode: 'combine' },
+  { name: 'semicolon-fix', dsl: semicolonFixDsl, mode: 'fix' },
+  { name: 'semicolon-combine', dsl: semicolonCombineDsl, mode: 'combine' },
+  { name: 'colon-semicolon-paragraph', dsl: colonSemicolonParagraphDsl, mode: 'paragraph' },
+  { name: 'bullet-points-fix', dsl: bulletPointsFixDsl, mode: 'fix' },
+  { name: 'bullet-points-paragraph', dsl: bulletPointsParagraphDsl, mode: 'paragraph' },
 ];
+
+// ─── Self-check: every generator bank family is covered ──────────────────────
+
+test('self-check: FAMILIES array covers every family in GENERATED_TEMPLATE_BANK', () => {
+  const bankFamilyIds = Object.keys(GENERATED_TEMPLATE_BANK);
+  const coveredIds = new Set(
+    FAMILIES.map(({ name }) => `gen_${name.replace(/-/g, '_')}`),
+  );
+
+  const missing = bankFamilyIds.filter((id) => !coveredIds.has(id));
+  assert.deepStrictEqual(
+    missing,
+    [],
+    `Golden marking test is missing coverage for bank families: ${missing.join(', ')}`,
+  );
+});
 
 // ─── Main test ────────────────────────────────────────────────────────────────
 
@@ -151,8 +181,8 @@ test('golden marking tests: all DSL families pass accept cases and fail reject c
     );
   }
 
-  // Final sanity: we must have tested a meaningful number (19 DSL families * 8 templates each)
-  assert.ok(totalTemplatesTested >= 19 * 8, `Expected at least 152 templates tested, got ${totalTemplatesTested}`);
+  // Final sanity: we must have tested a meaningful number (25 DSL families * 8 templates each)
+  assert.ok(totalTemplatesTested >= 25 * 8, `Expected at least 200 templates tested, got ${totalTemplatesTested}`);
   assert.ok(totalAcceptPassed >= totalTemplatesTested, `Expected at least ${totalTemplatesTested} accept passes, got ${totalAcceptPassed}`);
   assert.ok(totalRejectPassed >= totalTemplatesTested, `Expected at least ${totalTemplatesTested} reject passes, got ${totalRejectPassed}`);
 
