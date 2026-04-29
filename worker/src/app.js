@@ -49,6 +49,7 @@ import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
 import { probeHeroTelemetry } from './hero/telemetry-probe.js';
+import { resolveHeroFlagsWithOverride } from '../../shared/hero/account-override.js';
 import {
   initialiseDailyProgress,
   markTaskStarted,
@@ -1432,12 +1433,15 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/hero/command' && request.method === 'POST') {
-          if (!envFlagEnabled(env.HERO_MODE_LAUNCH_ENABLED)) {
+          // U8 security fix: apply per-account override BEFORE pre-gate checks
+          // so team accounts in HERO_INTERNAL_ACCOUNTS bypass global flag gates.
+          const heroCommandEnv = resolveHeroFlagsWithOverride({ env, accountId: session.accountId });
+          if (!envFlagEnabled(heroCommandEnv.HERO_MODE_LAUNCH_ENABLED)) {
             throw new NotFoundError('Hero launch is not available.', {
               code: 'hero_launch_disabled',
             });
           }
-          if (!envFlagEnabled(env.HERO_MODE_SHADOW_ENABLED)) {
+          if (!envFlagEnabled(heroCommandEnv.HERO_MODE_SHADOW_ENABLED)) {
             throw new ConflictError('Hero launch requires shadow mode to be enabled.', {
               code: 'hero_launch_misconfigured',
             });
@@ -1450,12 +1454,12 @@ export function createWorkerApp({
 
           // P3 U6: claim-task command — full mutation with evidence, CAS, events.
           if (body?.command === 'claim-task') {
-            const economyEnabled = envFlagEnabled(env.HERO_MODE_ECONOMY_ENABLED);
+            const economyEnabled = envFlagEnabled(heroCommandEnv.HERO_MODE_ECONOMY_ENABLED);
             // P4: Flag hierarchy: economy requires progress
-            if (economyEnabled && !envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+            if (economyEnabled && !envFlagEnabled(heroCommandEnv.HERO_MODE_PROGRESS_ENABLED)) {
               return json({ ok: false, error: { code: 'hero_economy_misconfigured', message: 'Economy requires progress to be enabled' } }, 409);
             }
-            if (!envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+            if (!envFlagEnabled(heroCommandEnv.HERO_MODE_PROGRESS_ENABLED)) {
               try {
                 // eslint-disable-next-line no-console
                 console.log(JSON.stringify({
@@ -1466,7 +1470,7 @@ export function createWorkerApp({
               } catch { /* best-effort */ }
               return json({ ok: false, error: { code: 'hero_claim_disabled', message: 'Hero progress is not enabled' } }, 404);
             }
-            if (!envFlagEnabled(env.HERO_MODE_CHILD_UI_ENABLED)) {
+            if (!envFlagEnabled(heroCommandEnv.HERO_MODE_CHILD_UI_ENABLED)) {
               return json({ ok: false, error: { code: 'hero_claim_disabled', message: 'Hero child UI is not enabled' } }, 404);
             }
 
@@ -1512,7 +1516,7 @@ export function createWorkerApp({
               practiceSessionRows,
               subjectUiStates,
               nowTs,
-              economyEnabled: envFlagEnabled(env.HERO_MODE_ECONOMY_ENABLED),
+              economyEnabled: envFlagEnabled(heroCommandEnv.HERO_MODE_ECONOMY_ENABLED),
             });
 
             // Handle rejection
@@ -1779,7 +1783,7 @@ export function createWorkerApp({
           // P5 U6: Camp spending commands (unlock-monster, evolve-monster)
           if (body?.command === 'unlock-monster' || body?.command === 'evolve-monster') {
             // Gate 1: Camp feature flag
-            if (!envFlagEnabled(env.HERO_MODE_CAMP_ENABLED)) {
+            if (!envFlagEnabled(heroCommandEnv.HERO_MODE_CAMP_ENABLED)) {
               try {
                 // eslint-disable-next-line no-console
                 console.log(JSON.stringify({ event: 'hero_camp_disabled_attempt', learnerId: heroLearnerId }));
@@ -1787,11 +1791,11 @@ export function createWorkerApp({
               return json({ ok: false, error: { code: 'hero_camp_disabled', message: 'Hero Camp is not enabled' } }, 409);
             }
             // Gate 2: Economy required for spending
-            if (!envFlagEnabled(env.HERO_MODE_ECONOMY_ENABLED)) {
+            if (!envFlagEnabled(heroCommandEnv.HERO_MODE_ECONOMY_ENABLED)) {
               return json({ ok: false, error: { code: 'hero_camp_misconfigured', message: 'Hero Camp requires economy to be enabled' } }, 409);
             }
             // Gate 3: Child UI required
-            if (!envFlagEnabled(env.HERO_MODE_CHILD_UI_ENABLED)) {
+            if (!envFlagEnabled(heroCommandEnv.HERO_MODE_CHILD_UI_ENABLED)) {
               return json({ ok: false, error: { code: 'hero_camp_disabled', message: 'Hero Camp requires child UI to be enabled' } }, 409);
             }
 
@@ -1981,7 +1985,7 @@ export function createWorkerApp({
             if (!subjectCommand) {
               // P3 U4: ensure progress marker exists even for already-started
               // (handles first start-task succeeded at subject level but progress write failed)
-              if (envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+              if (envFlagEnabled(heroCommandEnv.HERO_MODE_PROGRESS_ENABLED)) {
                 try {
                   await writeHeroProgressMarker({
                     repository, learnerId: heroLearnerId, accountId: session.accountId,
@@ -2024,7 +2028,7 @@ export function createWorkerApp({
               );
 
               // P3 U4: write hero progress marker after subject command succeeds
-              if (envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED)) {
+              if (envFlagEnabled(heroCommandEnv.HERO_MODE_PROGRESS_ENABLED)) {
                 try {
                   await writeHeroProgressMarker({
                     repository, learnerId: heroLearnerId, accountId: session.accountId,

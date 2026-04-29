@@ -162,6 +162,57 @@ test('integration: buildHeroShadowReadModel with override produces enabled UI fo
   assert.notEqual(result.ui.reason, 'child-ui-disabled');
 });
 
+// ── Command route pre-gate simulation ─────────────────────────────────
+
+test('command pre-gate: override account passes launch+shadow gate when global flags are off', () => {
+  const env = envWithTeamList([TEAM_ACCOUNT]);
+  const resolved = resolveHeroFlagsWithOverride({ env, accountId: TEAM_ACCOUNT });
+
+  // Simulate the pre-gate checks from /api/hero/command
+  const launchEnabled = ['1', 'true', 'yes', 'on'].includes(
+    String(resolved.HERO_MODE_LAUNCH_ENABLED || '').trim().toLowerCase()
+  );
+  const shadowEnabled = ['1', 'true', 'yes', 'on'].includes(
+    String(resolved.HERO_MODE_SHADOW_ENABLED || '').trim().toLowerCase()
+  );
+
+  assert.equal(launchEnabled, true, 'launch gate must pass for override account');
+  assert.equal(shadowEnabled, true, 'shadow gate must pass for override account');
+});
+
+test('command pre-gate: non-override account is blocked by launch gate when global flags are off', () => {
+  const env = envWithTeamList([TEAM_ACCOUNT]);
+  const resolved = resolveHeroFlagsWithOverride({ env, accountId: OTHER_ACCOUNT });
+
+  const launchEnabled = ['1', 'true', 'yes', 'on'].includes(
+    String(resolved.HERO_MODE_LAUNCH_ENABLED || '').trim().toLowerCase()
+  );
+
+  assert.equal(launchEnabled, false, 'launch gate must block non-override account');
+});
+
+test('command pre-gate: override account passes all 6 flag gates (claim-task + camp)', () => {
+  const env = envWithTeamList([TEAM_ACCOUNT]);
+  const resolved = resolveHeroFlagsWithOverride({ env, accountId: TEAM_ACCOUNT });
+
+  // All flag gates that appear in the command route handler
+  const gates = [
+    'HERO_MODE_LAUNCH_ENABLED',
+    'HERO_MODE_SHADOW_ENABLED',
+    'HERO_MODE_PROGRESS_ENABLED',
+    'HERO_MODE_CHILD_UI_ENABLED',
+    'HERO_MODE_ECONOMY_ENABLED',
+    'HERO_MODE_CAMP_ENABLED',
+  ];
+
+  for (const flag of gates) {
+    const enabled = ['1', 'true', 'yes', 'on'].includes(
+      String(resolved[flag] || '').trim().toLowerCase()
+    );
+    assert.equal(enabled, true, `${flag} gate must pass for override account`);
+  }
+});
+
 test('integration: buildHeroShadowReadModel without override keeps flags from env', () => {
   const env = envWithTeamList([TEAM_ACCOUNT]);
 
