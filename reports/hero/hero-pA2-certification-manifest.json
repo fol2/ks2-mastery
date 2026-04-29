@@ -1,0 +1,71 @@
+{
+  "phase": "hero-pA2",
+  "date": "2026-04-29",
+  "description": "Certification manifest for Hero Mode pA2 — gates the A3 recommendation",
+  "rings": {
+    "A2-0": {
+      "name": "Evidence close-out",
+      "requiredEvidence": [
+        {
+          "path": "docs/plans/james/hero-mode/A/hero-pA1-recommendation.md",
+          "condition": "status_not_pending",
+          "description": "pA1 recommendation finalised (not PENDING)"
+        }
+      ]
+    },
+    "A2-1": {
+      "name": "Ops + Privacy + Launchability",
+      "requiredTests": [
+        "tests/hero-pA2-privacy-recursive.test.js",
+        "tests/hero-pA2-launchability-secure-grammar.test.js",
+        "tests/hero-pA2-ops-probe.test.js",
+        "tests/hero-pA2-internal-override-surface.test.js"
+      ]
+    },
+    "A2-2": {
+      "name": "Internal production enablement",
+      "requiredEvidence": [
+        {
+          "path": "docs/plans/james/hero-mode/A/hero-pA2-internal-cohort-evidence.md",
+          "condition": "min_observations_1",
+          "description": "At least 1 cohort observation recorded"
+        }
+      ]
+    },
+    "A2-3": {
+      "name": "Multi-day internal cohort",
+      "requiredEvidence": [
+        {
+          "path": "docs/plans/james/hero-mode/A/hero-pA2-internal-cohort-evidence.md",
+          "condition": "min_observations_5_min_datekeys_2",
+          "description": "At least 5 dated observations with at least 2 unique date keys"
+        }
+      ]
+    },
+    "A2-4": {
+      "name": "A3 recommendation",
+      "requiredEvidence": [
+        {
+          "path": "docs/plans/james/hero-mode/A/hero-pA2-metrics-baseline.md",
+          "condition": "file_exists",
+          "description": "Metrics baseline document exists"
+        },
+        {
+          "path": "docs/plans/james/hero-mode/A/hero-pA2-risk-register.md",
+          "condition": "file_exists",
+          "description": "Risk register document exists"
+        },
+        {
+          "path": "docs/plans/james/hero-mode/A/hero-pA2-recommendation.md",
+          "condition": "contains_decision",
+          "description": "Recommendation contains one of: PROCEED / HOLD / ROLLBACK"
+        }
+      ]
+    }
+  },
+  "certificationStates": [
+    "NOT_CERTIFIED",
+    "CERTIFIED_WITH_LIMITATIONS",
+    "CERTIFIED_PRE_A3"
+  ]
+}
