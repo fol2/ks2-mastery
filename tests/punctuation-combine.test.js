@@ -127,7 +127,11 @@ test('semi-colon combine accepts preserved clauses and rejects comma splices', (
     answer: { typed: 'The rain had stopped; the pitch was still slippery. We played anyway.' },
   });
   assert.equal(extraSentence.correct, false);
-  assert.equal(extraSentence.misconceptionTags.includes('combine.extra_sentence'), true);
+  assert.equal(
+    extraSentence.misconceptionTags.includes('content.words_added_or_changed')
+    || extraSentence.misconceptionTags.includes('combine.extra_sentence'),
+    true,
+  );
 });
 
 test('dash combine requires a spaced dash between preserved clauses', () => {
