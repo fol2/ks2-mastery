@@ -50,6 +50,7 @@
     "smoke:production:admin-ops": "node ./scripts/admin-ops-production-smoke.mjs",
     "smoke:production:spelling-dense": "node ./scripts/spelling-dense-history-smoke.mjs",
     "smoke:production:spelling-audio": "node ./scripts/spelling-audio-production-smoke.mjs",
+    "smoke:staging:hero": "node ./scripts/hero-pA1-staging-smoke.mjs",
     "spelling:word-audio": "node ./scripts/build-spelling-word-audio.mjs",
     "spelling:audio-cache": "node ./scripts/precache-spelling-audio.mjs",
     "pretest": "node ./scripts/preflight-test.mjs",
