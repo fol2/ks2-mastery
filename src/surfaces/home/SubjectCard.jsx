@@ -7,13 +7,9 @@ export function SubjectCard({ subject, onOpen }) {
   const pct = Math.round((subject.progress || 0) * 100);
   const hasRegion = Boolean(subject.regionBase);
   const statusLabel = STATUS_LABEL[subject.status] || 'Soon';
-  // U3 (P2 refactor-ui): the bespoke `.progress > span` width interpolation
-  // is now a shared `ProgressMeter` primitive so the CSP inline-style
-  // budget retires this site. The legacy `.progress` wrapper class stays
-  // on the primitive's `className` slot so the existing
-  // `.subject-grid .progress` rules and the polish-progress-mount
-  // keyframe (`styles/app.css:9876`) continue to apply unchanged.
-  const meterLabel = subject.progressLabel || `${subject.name} progress`;
+  // U3: shared ProgressMeter retires the bespoke `.progress > span`
+  // inline-style width site; legacy `.progress` className kept on the
+  // primitive's slot so the polish-progress-mount keyframe still applies.
   return (
     <button
       className={'subject-card' + (isPlaceholder ? ' placeholder' : '')}
@@ -52,7 +48,7 @@ export function SubjectCard({ subject, onOpen }) {
           </div>
           <ProgressMeter
             value={pct}
-            label={meterLabel}
+            label={subject.progressLabel || `${subject.name} progress`}
             className="progress"
           />
         </div>

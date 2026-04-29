@@ -21,9 +21,8 @@
 
 export function ProgressMeter({ value, min = 0, max = 100, label, className, ...rest }) {
   const n = Number(value);
-  const c = !Number.isFinite(n) ? min : n < min ? min : n > max ? max : n;
-  const span = max - min;
-  const pct = span > 0 ? Math.round(((c - min) / span) * 100) : 0;
+  const c = Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : min;
+  const pct = max > min ? Math.round(((c - min) * 100) / (max - min)) : 0;
   return (
     <div
       {...rest}

@@ -35,13 +35,16 @@ const DEFAULT_PUBLIC_DIR = 'dist/public';
 // Grammar setup-aligned refactor (shared hero-bg + HeroBackdrop +
 // useSetupHeroContrast platform engines + slide-button RoundLengthPicker
 // + grammar-hero-bg view-model) keep Node 22/24 gzip output near 226.3 KB,
-// so the committed ceiling is 227,000: still tight enough to catch an
-// adult-surface re-import, without blocking on sub-kilobyte
-// compression/runtime drift. Override via CLI
-// `--main-bundle-budget-bytes` for experimentation. See
-// `tests/bundle-byte-budget.test.js` for the committed baseline +
-// rationale.
-const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 227_000;
+// so the prior committed ceiling was 227,000. P2 U3 (refactor-ui shared
+// primitives) lands two new utility components (`ProgressMeter` +
+// `StatCard`) in the main bundle — ~120 bytes of new gzip surface after
+// trimming. The committed ceiling rises to 227,200 to absorb this
+// deliberate utility-growth slice; the upper guard at
+// `BASELINE_GZIP_BYTES * 1.105 = 227,630` (see
+// `tests/bundle-byte-budget.test.js`) still holds 430 bytes of headroom for
+// future copy / utility drift. Override via CLI
+// `--main-bundle-budget-bytes` for experimentation.
+const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 227_200;
 
 const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/data\//, reason: 'full spelling content dataset' },
