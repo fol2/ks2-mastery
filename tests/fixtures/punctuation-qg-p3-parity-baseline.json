@@ -1,0 +1,1821 @@
+{
+  "seed": "punctuation-r4-full-14-skill-structure",
+  "perFamily4": [
+    {
+      "id": "gen_sentence_endings_insert_tszngv_1",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_16hqza",
+      "templateId": "gen_sentence_endings_insert_template_ojehq4",
+      "prompt": "Add the capital letter and end punctuation.",
+      "stem": "what a bright signal",
+      "model": "What a bright signal!",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.exclamation_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_tj01rw_2",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_rqywyf",
+      "templateId": "gen_sentence_endings_insert_template_xsusve",
+      "prompt": "Add the capital letter and end punctuation.",
+      "stem": "where is the tide bell",
+      "model": "Where is the tide bell?",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.question_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_ucyuut_3",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_1uxeibz",
+      "templateId": "gen_sentence_endings_insert_template_fce7xq",
+      "prompt": "Add the capital letter and end punctuation.",
+      "stem": "how quickly the fog cleared",
+      "model": "How quickly the fog cleared!",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.exclamation_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_u2z95u_4",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_1et5kmk",
+      "templateId": "gen_sentence_endings_insert_template_1030eck",
+      "prompt": "Add the capital letter and end punctuation.",
+      "stem": "did the crew check the lanterns",
+      "model": "Did the crew check the lanterns?",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.question_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_i4gqwe_1",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_7ipffv",
+      "templateId": "gen_apostrophe_contractions_fix_template_1x2iyq1",
+      "prompt": "Correct the apostrophes in the contractions.",
+      "stem": "We cant start because its raining.",
+      "model": "We can't start because it's raining.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_iegcld_2",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_1l2jy9t",
+      "templateId": "gen_apostrophe_contractions_fix_template_vcqv1j",
+      "prompt": "Correct the apostrophes in the contractions.",
+      "stem": "Theyre sure we wont be late.",
+      "model": "They're sure we won't be late.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_hkhjig_3",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_1ny1ioc",
+      "templateId": "gen_apostrophe_contractions_fix_template_1bwdvbz",
+      "prompt": "Correct the apostrophes in the contractions.",
+      "stem": "I dont think theyve finished.",
+      "model": "I don't think they've finished.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_huh57f_4",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_irs7ic",
+      "templateId": "gen_apostrophe_contractions_fix_template_zq96k9",
+      "prompt": "Correct the apostrophes in the contractions.",
+      "stem": "Youre sure he isnt coming.",
+      "model": "You're sure he isn't coming.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_7iybrn_1",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_m24dve",
+      "templateId": "gen_comma_clarity_insert_template_410pln",
+      "prompt": "Add the comma that makes the meaning clear.",
+      "stem": "When the mist lifted the tower appeared.",
+      "model": "When the mist lifted, the tower appeared.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "When the mist lifted"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_78yq2o_2",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_1czkw5m",
+      "templateId": "gen_comma_clarity_insert_template_i1jwnt",
+      "prompt": "Add the comma that makes the meaning clear.",
+      "stem": "In the evening the harbour was quiet.",
+      "model": "In the evening, the harbour was quiet.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "In the evening"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_82xj5l_3",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_1yp62hb",
+      "templateId": "gen_comma_clarity_insert_template_1iru80y",
+      "prompt": "Add the comma that makes the meaning clear.",
+      "stem": "As the whistle blew the teams lined up.",
+      "model": "As the whistle blew, the teams lined up.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "As the whistle blew"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_7sxxgm_4",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_1g84wrh",
+      "templateId": "gen_comma_clarity_insert_template_2c385o",
+      "prompt": "Add the comma that makes the meaning clear.",
+      "stem": "Without a map the walkers lost time.",
+      "model": "Without a map, the walkers lost time.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "Without a map"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_14ggaft_1",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_ynmwrz",
+      "templateId": "gen_dash_clause_fix_template_172ndjv",
+      "prompt": "Add a dash between the related clauses.",
+      "stem": "The bell rang everyone hurried inside.",
+      "model": "The bell rang – everyone hurried inside.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The bell rang",
+        "right": "everyone hurried inside",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_146goqu_2",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_erog6d",
+      "templateId": "gen_dash_clause_fix_template_11ejvfc",
+      "prompt": "Add a dash between the related clauses.",
+      "stem": "The gate was stuck we found another path.",
+      "model": "The gate was stuck – we found another path.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The gate was stuck",
+        "right": "we found another path",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_13wh31v_3",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_0gz5fc",
+      "templateId": "gen_dash_clause_fix_template_1h1bmqa",
+      "prompt": "Add a dash between the related clauses.",
+      "stem": "The bridge was closed the buses turned back.",
+      "model": "The bridge was closed – the buses turned back.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The bridge was closed",
+        "right": "the buses turned back",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_13mhhcw_4",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_7hfpqd",
+      "templateId": "gen_dash_clause_fix_template_1jrdtf5",
+      "prompt": "Add a dash between the related clauses.",
+      "stem": "The torch failed we used the lantern.",
+      "model": "The torch failed – we used the lantern.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The torch failed",
+        "right": "we used the lantern",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_4v5txn_1",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_cntndu",
+      "templateId": "gen_dash_clause_combine_template_1y5wkx",
+      "prompt": "Combine the two related clauses into one sentence with a dash.",
+      "stem": "The bell rang.\nEveryone hurried inside.",
+      "model": "The bell rang – everyone hurried inside.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The bell rang",
+        "right": "everyone hurried inside",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_4l688o_2",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_5qqk8w",
+      "templateId": "gen_dash_clause_combine_template_1o45ea6",
+      "prompt": "Combine the two related clauses into one sentence with a dash.",
+      "stem": "The gate was stuck.\nWe found another path.",
+      "model": "The gate was stuck – we found another path.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The gate was stuck",
+        "right": "we found another path",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_5f51bl_3",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_16braa6",
+      "templateId": "gen_dash_clause_combine_template_1l9y3bg",
+      "prompt": "Combine the two related clauses into one sentence with a dash.",
+      "stem": "The bridge was closed.\nThe buses turned back.",
+      "model": "The bridge was closed – the buses turned back.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The bridge was closed",
+        "right": "the buses turned back",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_555fmm_4",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_lin61y",
+      "templateId": "gen_dash_clause_combine_template_128nltn",
+      "prompt": "Combine the two related clauses into one sentence with a dash.",
+      "stem": "The torch failed.\nWe used the lantern.",
+      "model": "The torch failed – we used the lantern.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The torch failed",
+        "right": "we used the lantern",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_159c8id_1",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_jymsjm",
+      "templateId": "gen_hyphen_insert_template_1sq39kj",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The fast moving tide covered the rocks.",
+      "model": "The fast-moving tide covered the rocks.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "fast-moving tide"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_14zcmte_2",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_1lmq2gq",
+      "templateId": "gen_hyphen_insert_template_1cjtd6l",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The little used path was hidden.",
+      "model": "The little-used path was hidden.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "little-used path"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_14pd14f_3",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_043436",
+      "templateId": "gen_hyphen_insert_template_9wwl7p",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The cold blooded reptile rested.",
+      "model": "The cold-blooded reptile rested.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "cold-blooded reptile"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_14fdffg_4",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_1bp2lu0",
+      "templateId": "gen_hyphen_insert_template_1s9zvda",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The well known guide led us.",
+      "model": "The well-known guide led us.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "well-known guide"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_ox43sp_1",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_16xjpox",
+      "templateId": "gen_semicolon_list_fix_template_im9cuv",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "The winners were Aria, Year 5, Noah, Year 6 and Sam, Year 4.",
+      "model": "The winners were Aria, Year 5; Noah, Year 6; and Sam, Year 4.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Aria, Year 5",
+          "Noah, Year 6",
+          "Sam, Year 4"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_on4i3q_2",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_1gq3mzq",
+      "templateId": "gen_semicolon_list_fix_template_zurnf7",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "We visited Dover, England, Lyon, France and Porto, Portugal.",
+      "model": "We visited Dover, England; Lyon, France; and Porto, Portugal.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Dover, England",
+          "Lyon, France",
+          "Porto, Portugal"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_od4wer_3",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_plkjc8",
+      "templateId": "gen_semicolon_list_fix_template_1ssfry4",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "The clubs met in Leeds, Monday, York, Tuesday and Bath, Friday.",
+      "model": "The clubs met in Leeds, Monday; York, Tuesday; and Bath, Friday.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Leeds, Monday",
+          "York, Tuesday",
+          "Bath, Friday"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_o35aps_4",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_j0zb2u",
+      "templateId": "gen_semicolon_list_fix_template_u5ri7n",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "The stalls sold apples, Kent, pears, Devon and berries, Wales.",
+      "model": "The stalls sold apples, Kent; pears, Devon; and berries, Wales.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "apples, Kent",
+          "pears, Devon",
+          "berries, Wales"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    }
+  ],
+  "perFamily8": [
+    {
+      "id": "gen_sentence_endings_insert_tszngv_1",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_16hqza",
+      "templateId": "gen_sentence_endings_insert_template_ojehq4",
+      "prompt": "Add the capital letter and end punctuation.",
+      "stem": "what a bright signal",
+      "model": "What a bright signal!",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.exclamation_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_tj01rw_2",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_rqywyf",
+      "templateId": "gen_sentence_endings_insert_template_xsusve",
+      "prompt": "Add the capital letter and end punctuation.",
+      "stem": "where is the tide bell",
+      "model": "Where is the tide bell?",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.question_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_ucyuut_3",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_1uxeibz",
+      "templateId": "gen_sentence_endings_insert_template_fce7xq",
+      "prompt": "Add the capital letter and end punctuation.",
+      "stem": "how quickly the fog cleared",
+      "model": "How quickly the fog cleared!",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.exclamation_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_u2z95u_4",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_1et5kmk",
+      "templateId": "gen_sentence_endings_insert_template_1030eck",
+      "prompt": "Add the capital letter and end punctuation.",
+      "stem": "did the crew check the lanterns",
+      "model": "Did the crew check the lanterns?",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.question_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_sp18oz_5",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_1xpd9o4",
+      "templateId": "gen_sentence_endings_insert_template_2yc99n",
+      "prompt": "Rewrite the excited sentence with its capital letter and end mark.",
+      "stem": "what an amazing view",
+      "model": "What an amazing view!",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.exclamation_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_sf1n00_6",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_1jh5qb0",
+      "templateId": "gen_sentence_endings_insert_template_1vzqaaf",
+      "prompt": "Correct the sentence ending and capital letter.",
+      "stem": "the lights went out",
+      "model": "The lights went out.",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.terminal_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_t90g2x_7",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_hrwqmx",
+      "templateId": "gen_sentence_endings_insert_template_1i1qc4u",
+      "prompt": "Add the capital letter and the calm command ending.",
+      "stem": "please close the safety gate",
+      "model": "Please close the safety gate.",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.terminal_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_sentence_endings_insert_sz0udy_8",
+      "generatorFamilyId": "gen_sentence_endings_insert",
+      "variantSignature": "puncsig_cavybk",
+      "templateId": "gen_sentence_endings_insert_template_j8yehn",
+      "prompt": "Rewrite this as a correctly punctuated question.",
+      "stem": "can the rescue team hear us",
+      "model": "Can the rescue team hear us?",
+      "validator": null,
+      "misconceptionTags": [
+        "endmarks.question_mark_missing",
+        "endmarks.capitalisation_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_i4gqwe_1",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_7ipffv",
+      "templateId": "gen_apostrophe_contractions_fix_template_1x2iyq1",
+      "prompt": "Correct the apostrophes in the contractions.",
+      "stem": "We cant start because its raining.",
+      "model": "We can't start because it's raining.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_iegcld_2",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_1l2jy9t",
+      "templateId": "gen_apostrophe_contractions_fix_template_vcqv1j",
+      "prompt": "Correct the apostrophes in the contractions.",
+      "stem": "Theyre sure we wont be late.",
+      "model": "They're sure we won't be late.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_hkhjig_3",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_1ny1ioc",
+      "templateId": "gen_apostrophe_contractions_fix_template_1bwdvbz",
+      "prompt": "Correct the apostrophes in the contractions.",
+      "stem": "I dont think theyve finished.",
+      "model": "I don't think they've finished.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_huh57f_4",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_irs7ic",
+      "templateId": "gen_apostrophe_contractions_fix_template_zq96k9",
+      "prompt": "Correct the apostrophes in the contractions.",
+      "stem": "Youre sure he isnt coming.",
+      "model": "You're sure he isn't coming.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_j8f5oa_5",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_15z72b0",
+      "templateId": "gen_apostrophe_contractions_fix_template_1bwd8xp",
+      "prompt": "Correct the missing apostrophes in the contractions.",
+      "stem": "We havent checked because the phones arent working.",
+      "model": "We haven't checked because the phones aren't working.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_jierd9_6",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_1a5mmf4",
+      "templateId": "gen_apostrophe_contractions_fix_template_176acm5",
+      "prompt": "Fix only the contraction apostrophes.",
+      "stem": "Itll be easier if youre ready.",
+      "model": "It'll be easier if you're ready.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_iofyac_7",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_gmi07h",
+      "templateId": "gen_apostrophe_contractions_fix_template_1qrbirp",
+      "prompt": "Proofread the sentence and repair the contractions.",
+      "stem": "They didnt know we couldnt see.",
+      "model": "They didn't know we couldn't see.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_apostrophe_contractions_fix_iyfjzb_8",
+      "generatorFamilyId": "gen_apostrophe_contractions_fix",
+      "variantSignature": "puncsig_1a8hq50",
+      "templateId": "gen_apostrophe_contractions_fix_template_ekmyy8",
+      "prompt": "Rewrite with standard contraction punctuation.",
+      "stem": "Shes sure it doesnt matter.",
+      "model": "She's sure it doesn't matter.",
+      "validator": null,
+      "misconceptionTags": [
+        "apostrophe.contraction_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_7iybrn_1",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_m24dve",
+      "templateId": "gen_comma_clarity_insert_template_410pln",
+      "prompt": "Add the comma that makes the meaning clear.",
+      "stem": "When the mist lifted the tower appeared.",
+      "model": "When the mist lifted, the tower appeared.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "When the mist lifted"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_78yq2o_2",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_1czkw5m",
+      "templateId": "gen_comma_clarity_insert_template_i1jwnt",
+      "prompt": "Add the comma that makes the meaning clear.",
+      "stem": "In the evening the harbour was quiet.",
+      "model": "In the evening, the harbour was quiet.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "In the evening"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_82xj5l_3",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_1yp62hb",
+      "templateId": "gen_comma_clarity_insert_template_1iru80y",
+      "prompt": "Add the comma that makes the meaning clear.",
+      "stem": "As the whistle blew the teams lined up.",
+      "model": "As the whistle blew, the teams lined up.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "As the whistle blew"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_7sxxgm_4",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_1g84wrh",
+      "templateId": "gen_comma_clarity_insert_template_2c385o",
+      "prompt": "Add the comma that makes the meaning clear.",
+      "stem": "Without a map the walkers lost time.",
+      "model": "Without a map, the walkers lost time.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "Without a map"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_8mwqjj_5",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_z1a47h",
+      "templateId": "gen_comma_clarity_insert_template_w1a00o",
+      "prompt": "Correct the missing clarity comma.",
+      "stem": "If the alarm sounds the class will line up.",
+      "model": "If the alarm sounds, the class will line up.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "If the alarm sounds"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_8cx4uk_6",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_1t31x18",
+      "templateId": "gen_comma_clarity_insert_template_lmbc2f",
+      "prompt": "Rewrite with the clarity comma in the right place.",
+      "stem": "Near the old bridge the lane narrows.",
+      "model": "Near the old bridge, the lane narrows.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "Near the old bridge"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_96vxxh_7",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_1tsi7bg",
+      "templateId": "gen_comma_clarity_insert_template_1mewzdx",
+      "prompt": "Add the comma that separates the opening clause from the main clause.",
+      "stem": "Because the path flooded the cyclists turned back.",
+      "model": "Because the path flooded, the cyclists turned back.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "Because the path flooded"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_comma_clarity_insert_8wwc8i_8",
+      "generatorFamilyId": "gen_comma_clarity_insert",
+      "variantSignature": "puncsig_qk6z0r",
+      "templateId": "gen_comma_clarity_insert_template_1fkjhet",
+      "prompt": "Add the comma after the opening phrase to avoid a misread.",
+      "stem": "After the final whistle the crowd cheered.",
+      "model": "After the final whistle, the crowd cheered.",
+      "validator": {
+        "type": "startsWithPhraseComma",
+        "phrase": "After the final whistle"
+      },
+      "misconceptionTags": [
+        "comma.clarity_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_14ggaft_1",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_ynmwrz",
+      "templateId": "gen_dash_clause_fix_template_172ndjv",
+      "prompt": "Add a dash between the related clauses.",
+      "stem": "The bell rang everyone hurried inside.",
+      "model": "The bell rang – everyone hurried inside.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The bell rang",
+        "right": "everyone hurried inside",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_146goqu_2",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_erog6d",
+      "templateId": "gen_dash_clause_fix_template_11ejvfc",
+      "prompt": "Add a dash between the related clauses.",
+      "stem": "The gate was stuck we found another path.",
+      "model": "The gate was stuck – we found another path.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The gate was stuck",
+        "right": "we found another path",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_13wh31v_3",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_0gz5fc",
+      "templateId": "gen_dash_clause_fix_template_1h1bmqa",
+      "prompt": "Add a dash between the related clauses.",
+      "stem": "The bridge was closed the buses turned back.",
+      "model": "The bridge was closed – the buses turned back.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The bridge was closed",
+        "right": "the buses turned back",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_13mhhcw_4",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_7hfpqd",
+      "templateId": "gen_dash_clause_fix_template_1jrdtf5",
+      "prompt": "Add a dash between the related clauses.",
+      "stem": "The torch failed we used the lantern.",
+      "model": "The torch failed – we used the lantern.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The torch failed",
+        "right": "we used the lantern",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_15kep7p_5",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_1veuhh7",
+      "templateId": "gen_dash_clause_fix_template_1844l5f",
+      "prompt": "Add the dash between the two related ideas.",
+      "stem": "The path ended we climbed over the stile.",
+      "model": "The path ended – we climbed over the stile.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The path ended",
+        "right": "we climbed over the stile",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_15af3iq_6",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_ztd2vu",
+      "templateId": "gen_dash_clause_fix_template_1rtuesu",
+      "prompt": "Add a dash to mark the sudden shift.",
+      "stem": "The waves grew louder we stepped back.",
+      "model": "The waves grew louder – we stepped back.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The waves grew louder",
+        "right": "we stepped back",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_150fhtr_7",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_f035u2",
+      "templateId": "gen_dash_clause_fix_template_1in9cxb",
+      "prompt": "Replace the run-on join with a dash.",
+      "stem": "The door opened nobody spoke.",
+      "model": "The door opened – nobody spoke.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The door opened",
+        "right": "nobody spoke",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_fix_14qfw4s_8",
+      "generatorFamilyId": "gen_dash_clause_fix",
+      "variantSignature": "puncsig_16lxpmg",
+      "templateId": "gen_dash_clause_fix_template_139kw3z",
+      "prompt": "Use a dash to connect the surprise.",
+      "stem": "The signal vanished the team waited.",
+      "model": "The signal vanished – the team waited.",
+      "validator": {
+        "type": "requiresBoundaryBetweenClauses",
+        "left": "The signal vanished",
+        "right": "the team waited",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_4v5txn_1",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_cntndu",
+      "templateId": "gen_dash_clause_combine_template_1y5wkx",
+      "prompt": "Combine the two related clauses into one sentence with a dash.",
+      "stem": "The bell rang.\nEveryone hurried inside.",
+      "model": "The bell rang – everyone hurried inside.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The bell rang",
+        "right": "everyone hurried inside",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_4l688o_2",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_5qqk8w",
+      "templateId": "gen_dash_clause_combine_template_1o45ea6",
+      "prompt": "Combine the two related clauses into one sentence with a dash.",
+      "stem": "The gate was stuck.\nWe found another path.",
+      "model": "The gate was stuck – we found another path.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The gate was stuck",
+        "right": "we found another path",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_5f51bl_3",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_16braa6",
+      "templateId": "gen_dash_clause_combine_template_1l9y3bg",
+      "prompt": "Combine the two related clauses into one sentence with a dash.",
+      "stem": "The bridge was closed.\nThe buses turned back.",
+      "model": "The bridge was closed – the buses turned back.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The bridge was closed",
+        "right": "the buses turned back",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_555fmm_4",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_lin61y",
+      "templateId": "gen_dash_clause_combine_template_128nltn",
+      "prompt": "Combine the two related clauses into one sentence with a dash.",
+      "stem": "The torch failed.\nWe used the lantern.",
+      "model": "The torch failed – we used the lantern.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The torch failed",
+        "right": "we used the lantern",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_5z48pj_5",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_xt2swj",
+      "templateId": "gen_dash_clause_combine_template_0vulvo",
+      "prompt": "Join the surprise with a dash.",
+      "stem": "The door opened.\nNobody spoke.",
+      "model": "The door opened – nobody spoke.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The door opened",
+        "right": "nobody spoke",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_5p4n0k_6",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_eng87h",
+      "templateId": "gen_dash_clause_combine_template_qt9gg5",
+      "prompt": "Use one dash to combine the clauses.",
+      "stem": "The signal vanished.\nThe team waited.",
+      "model": "The signal vanished – the team waited.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The signal vanished",
+        "right": "the team waited",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_6j3g3h_7",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_1q6r4tu",
+      "templateId": "gen_dash_clause_combine_template_1d9hqe3",
+      "prompt": "Combine the two ideas with a dash.",
+      "stem": "The path ended.\nWe climbed over the stile.",
+      "model": "The path ended – we climbed over the stile.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The path ended",
+        "right": "we climbed over the stile",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_dash_clause_combine_693uei_8",
+      "generatorFamilyId": "gen_dash_clause_combine",
+      "variantSignature": "puncsig_0dzazg",
+      "templateId": "gen_dash_clause_combine_template_14p0lau",
+      "prompt": "Combine the sudden shift into one sentence with a dash.",
+      "stem": "The waves grew louder.\nWe stepped back.",
+      "model": "The waves grew louder – we stepped back.",
+      "validator": {
+        "type": "combineBoundaryBetweenClauses",
+        "left": "The waves grew louder",
+        "right": "we stepped back",
+        "mark": "-"
+      },
+      "misconceptionTags": [
+        "boundary.dash_missing"
+      ],
+      "readiness": [
+        "constrained_transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_159c8id_1",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_jymsjm",
+      "templateId": "gen_hyphen_insert_template_1sq39kj",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The fast moving tide covered the rocks.",
+      "model": "The fast-moving tide covered the rocks.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "fast-moving tide"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_14zcmte_2",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_1lmq2gq",
+      "templateId": "gen_hyphen_insert_template_1cjtd6l",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The little used path was hidden.",
+      "model": "The little-used path was hidden.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "little-used path"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_14pd14f_3",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_043436",
+      "templateId": "gen_hyphen_insert_template_9wwl7p",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The cold blooded reptile rested.",
+      "model": "The cold-blooded reptile rested.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "cold-blooded reptile"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_14fdffg_4",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_1bp2lu0",
+      "templateId": "gen_hyphen_insert_template_1s9zvda",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The well known guide led us.",
+      "model": "The well-known guide led us.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "well-known guide"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_145dtqh_5",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_q64ivl",
+      "templateId": "gen_hyphen_insert_template_1njtc98",
+      "prompt": "Fix the compound adjective before the noun.",
+      "stem": "The short term plan worked.",
+      "model": "The short-term plan worked.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "short-term plan"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_13ve81i_6",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_14mexqn",
+      "templateId": "gen_hyphen_insert_template_n0wm25",
+      "prompt": "Add the hyphen that avoids ambiguity.",
+      "stem": "The sugar free snack was popular.",
+      "model": "The sugar-free snack was popular.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "sugar-free snack"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_13lemcj_7",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_16synw7",
+      "templateId": "gen_hyphen_insert_template_1nij5zo",
+      "prompt": "Rewrite the age phrase with the needed hyphens.",
+      "stem": "The ten year old pupil read aloud.",
+      "model": "The ten-year-old pupil read aloud.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "ten-year-old pupil"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_hyphen_insert_13bf0nk_8",
+      "generatorFamilyId": "gen_hyphen_insert",
+      "variantSignature": "puncsig_ibjnhl",
+      "templateId": "gen_hyphen_insert_template_byvekv",
+      "prompt": "Add the hyphen to clarify the compound modifier.",
+      "stem": "The last minute change surprised us.",
+      "model": "The last-minute change surprised us.",
+      "validator": {
+        "type": "requiresHyphenatedPhrase",
+        "phrase": "last-minute change"
+      },
+      "misconceptionTags": [
+        "boundary.hyphen_missing"
+      ],
+      "readiness": [
+        "insertion",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_ox43sp_1",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_16xjpox",
+      "templateId": "gen_semicolon_list_fix_template_im9cuv",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "The winners were Aria, Year 5, Noah, Year 6 and Sam, Year 4.",
+      "model": "The winners were Aria, Year 5; Noah, Year 6; and Sam, Year 4.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Aria, Year 5",
+          "Noah, Year 6",
+          "Sam, Year 4"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_on4i3q_2",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_1gq3mzq",
+      "templateId": "gen_semicolon_list_fix_template_zurnf7",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "We visited Dover, England, Lyon, France and Porto, Portugal.",
+      "model": "We visited Dover, England; Lyon, France; and Porto, Portugal.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Dover, England",
+          "Lyon, France",
+          "Porto, Portugal"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_od4wer_3",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_plkjc8",
+      "templateId": "gen_semicolon_list_fix_template_1ssfry4",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "The clubs met in Leeds, Monday, York, Tuesday and Bath, Friday.",
+      "model": "The clubs met in Leeds, Monday; York, Tuesday; and Bath, Friday.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Leeds, Monday",
+          "York, Tuesday",
+          "Bath, Friday"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_o35aps_4",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_j0zb2u",
+      "templateId": "gen_semicolon_list_fix_template_u5ri7n",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "The stalls sold apples, Kent, pears, Devon and berries, Wales.",
+      "model": "The stalls sold apples, Kent; pears, Devon; and berries, Wales.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "apples, Kent",
+          "pears, Devon",
+          "berries, Wales"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_q12ikl_5",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_p915ja",
+      "templateId": "gen_semicolon_list_fix_template_1t9sa8p",
+      "prompt": "Add semi-colons so each complex list item stays clear.",
+      "stem": "The route stopped at Exeter, station one, Bristol, station two and Reading, station three.",
+      "model": "The route stopped at Exeter, station one; Bristol, station two; and Reading, station three.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Exeter, station one",
+          "Bristol, station two",
+          "Reading, station three"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_pr2wvm_6",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_1q19gaa",
+      "templateId": "gen_semicolon_list_fix_template_16n6vva",
+      "prompt": "Use semi-colons to separate the complex list items.",
+      "stem": "The survey covered Cardiff, Wales, Belfast, Northern Ireland and Truro, Cornwall.",
+      "model": "The survey covered Cardiff, Wales; Belfast, Northern Ireland; and Truro, Cornwall.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Cardiff, Wales",
+          "Belfast, Northern Ireland",
+          "Truro, Cornwall"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_ph3b6n_7",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_1u2kfuz",
+      "templateId": "gen_semicolon_list_fix_template_16iy3xs",
+      "prompt": "Correct the separators in the complex list.",
+      "stem": "The teams were Falcons, Year 5, Otters, Year 6 and Kites, Year 4.",
+      "model": "The teams were Falcons, Year 5; Otters, Year 6; and Kites, Year 4.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "Falcons, Year 5",
+          "Otters, Year 6",
+          "Kites, Year 4"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "misconception",
+        "negative_test"
+      ]
+    },
+    {
+      "id": "gen_semicolon_list_fix_p73pho_8",
+      "generatorFamilyId": "gen_semicolon_list_fix",
+      "variantSignature": "puncsig_10q27dd",
+      "templateId": "gen_semicolon_list_fix_template_1xy5igy",
+      "prompt": "Rewrite the complex list with semi-colons between the larger items.",
+      "stem": "The boxes contained shells, blue, pebbles, grey and glass, green.",
+      "model": "The boxes contained shells, blue; pebbles, grey; and glass, green.",
+      "validator": {
+        "type": "requiresSemicolonList",
+        "items": [
+          "shells, blue",
+          "pebbles, grey",
+          "glass, green"
+        ]
+      },
+      "misconceptionTags": [
+        "structure.semicolon_list_missing"
+      ],
+      "readiness": [
+        "proofreading",
+        "transfer",
+        "misconception",
+        "negative_test"
+      ]
+    }
+  ]
+}

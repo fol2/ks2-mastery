@@ -1,3 +1,5 @@
+export const CONTEXT_PACK_POLICY = 'teacher_admin_only';
+
 const MAX_ATOM_LENGTH = 48;
 const MAX_ATOMS_PER_KIND = 6;
 const MAX_TOTAL_ATOMS = 32;
