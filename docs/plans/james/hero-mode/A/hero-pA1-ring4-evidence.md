@@ -1,54 +1,27 @@
-# Hero Mode pA1 — Ring 4 Evidence (Internal Production)
+# Hero Mode pA1 — Ring 4 Evidence
 
-**Date range:** [start] to [end]
-**Status:** PENDING
+**Status:** SUPERSEDED BY A2
+**Date:** 2026-04-30
 
-## Configuration
+## Summary
 
-- Team accounts: [list account IDs]
-- Override mechanism: HERO_INTERNAL_ACCOUNTS secret
-- Rollback rehearsed before enablement: [Yes/No]
+Ring 4 (internal production enablement) is superseded by A2 Ring A2-2.
 
-## Team Usage Observations
+**Original scope:** Enable Hero Mode for team accounts in production, observe performance metrics, verify telemetry end-to-end, confirm non-team accounts remain unaffected.
 
-| Day | Account | Actions | Issues |
-|-----|---------|---------|--------|
-| 1 | — | — | — |
-| 2 | — | — | — |
-| 3 | — | — | — |
+**Why superseded:** A2 Ring A2-2 (internal production enablement) covers the same scope with additional guarantees:
+- Per-account override mechanism proven and hardened (PRs #620, #627, #671)
+- Ops probe monitors override status and detects non-internal exposure (PR #662)
+- Certification manifest validates readiness preconditions (PR #672)
+- Privacy validation is now recursive with depth limit (PR #660)
+- Launchability is fixed for all subject states (PR #663)
 
-## Performance Metrics
+The original Ring 4 assumed only basic enablement. A2 provides hardened operational tooling that makes the internal production phase safer and better instrumented.
 
-| Metric | Target | Observed |
-|--------|--------|----------|
-| D1 read p95 latency | < 200ms | — |
-| D1 write p95 latency | < 200ms | — |
-| KV quota usage | < 50% | — |
-| Worker CPU time p95 | < 50ms | — |
-
-## Telemetry End-to-End
-
-- Production telemetry probe: [events received / not received]
-- Privacy validator: [pass / fail]
-- Metric families observed: [list]
-
-## Multi-Device/Multi-Tab
-
-- [ ] Second device sees updated state after first completes
-- [ ] Stale request from old tab gets 409 (not 500)
-- [ ] Multi-tab conflict resolution works
-
-## Non-Team Account Verification
-
-- [ ] Non-team accounts see no Hero surfaces
-- [ ] Non-team accounts get normal read-model (no Hero block)
-
-## Ring 4 Verdict
-
-- P0 defects found: [count]
-- P1 defects found: [count]
-- D1 latency within budget: [Yes/No]
-- Telemetry end-to-end: [Yes/No]
-
-**Verdict:** [PASS / FAIL / HOLD]
-**Assessed by:** [name]
+**A2 equivalents:**
+- Internal production enablement: Ring A2-2
+- Override verification: PR #671 (16 tests)
+- Ops probe monitoring: PR #662 (12 tests)
+- Certification pre-deploy gate: PR #672 (16 tests)
+- Privacy end-to-end: PR #660 (16 tests)
+- Cohort smoke script: PR #674
