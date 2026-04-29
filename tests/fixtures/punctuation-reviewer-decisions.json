@@ -1,4 +1,6 @@
 {
-  "_meta": { "generated": "2026-04-29", "items_reviewed": 192 },
-  "decisions": {}
+  "_meta": { "generated": "2026-04-29", "schema_version": 2, "items_reviewed": 192 },
+  "decisions": {},
+  "itemDecisions": [],
+  "clusterDecisions": []
 }
