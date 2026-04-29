@@ -40,6 +40,20 @@ function normaliseWhitespace(text) {
   return safeString(text).replace(/\s+/g, ' ').trim();
 }
 
+// P9 U8: iOS smart punctuation normalisation. iOS keyboards auto-replace
+// straight quotes/apostrophes with typographic curly variants. For KS2
+// learners typing on iPads, failing to mark their answer correct because
+// of invisible Unicode substitutions is unfair. This normaliser maps
+// curly left/right quotes, smart apostrophe, en-dash, and em-dash back
+// to their ASCII equivalents before comparison.
+export function normaliseSmartPunctuation(text) {
+  return safeString(text)
+    .replace(/[“”]/g, '"')   // curly double quotes → straight
+    .replace(/[‘’]/g, "'")   // curly single quotes / smart apostrophe → ASCII
+    .replace(/–/g, '-')           // en-dash → hyphen
+    .replace(/—/g, '-');          // em-dash → hyphen
+}
+
 function caseFold(text) {
   return safeString(text).toLowerCase();
 }
@@ -286,9 +300,12 @@ export function markByAnswerSpec(spec, response) {
       answerText: '',
     });
   }
-  const responseText = isPlainObject(response)
+  const rawResponseText = isPlainObject(response)
     ? (typeof response.answer === 'string' ? response.answer : safeString(response.answer ?? ''))
     : safeString(response);
+  // P9 U8: normalise iOS smart punctuation before marking so curly
+  // quotes/apostrophes/dashes do not cause false negatives on iPad.
+  const responseText = normaliseSmartPunctuation(rawResponseText);
   switch (kind) {
     case 'exact': return markExact(spec, responseText);
     case 'normalisedText': return markNormalisedText(spec, responseText);
