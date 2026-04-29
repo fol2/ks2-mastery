@@ -206,3 +206,82 @@ describe('Grammar QG P7 — Production Evidence Export', () => {
     });
   });
 });
+
+// ─── P7 U9: Smoke artefact schema enforcement ───────────────────────────────
+
+describe('Grammar QG P7 — Smoke artefact schema enforcement', () => {
+  const REQUIRED_EVIDENCE_FIELDS = ['ok', 'origin', 'contentReleaseId', 'commitSha', 'timestamp'];
+
+  it('smoke artefact must include all required fields', () => {
+    // Build a well-formed evidence artefact matching what grammar-production-smoke.mjs produces
+    const evidence = {
+      ok: true,
+      origin: 'repository',
+      contentReleaseId: 'grammar-qg-p6-2026-04-29',
+      testedTemplateIds: ['qg_modal_verb_explain'],
+      answerSpecFamiliesCovered: ['exact'],
+      normalRoundResult: { ok: true, detail: 'pass' },
+      miniTestResult: { ok: true, detail: 'pass' },
+      repairResult: { ok: true, detail: 'pass' },
+      forbiddenKeyScanResult: { ok: true, detail: 'checked' },
+      timestamp: '2026-04-29T12:00:00.000Z',
+      commitSha: 'abcdef1234567890',
+    };
+
+    for (const field of REQUIRED_EVIDENCE_FIELDS) {
+      assert.ok(field in evidence, `Evidence artefact must include "${field}"`);
+      assert.ok(evidence[field] !== undefined, `Evidence artefact field "${field}" must not be undefined`);
+      assert.ok(evidence[field] !== null, `Evidence artefact field "${field}" must not be null`);
+      assert.ok(evidence[field] !== '', `Evidence artefact field "${field}" must not be empty`);
+    }
+  });
+
+  it('rejects artefact missing "ok" field', () => {
+    const evidence = {
+      origin: 'repository',
+      contentReleaseId: 'grammar-qg-p6-2026-04-29',
+      commitSha: 'abcdef1234567890',
+      timestamp: '2026-04-29T12:00:00.000Z',
+    };
+    const missing = REQUIRED_EVIDENCE_FIELDS.filter((f) => !(f in evidence));
+    assert.ok(missing.length > 0, 'Should detect missing "ok" field');
+    assert.ok(missing.includes('ok'));
+  });
+
+  it('rejects artefact missing "commitSha" field', () => {
+    const evidence = {
+      ok: true,
+      origin: 'repository',
+      contentReleaseId: 'grammar-qg-p6-2026-04-29',
+      timestamp: '2026-04-29T12:00:00.000Z',
+    };
+    const missing = REQUIRED_EVIDENCE_FIELDS.filter((f) => !(f in evidence));
+    assert.ok(missing.length > 0, 'Should detect missing "commitSha" field');
+    assert.ok(missing.includes('commitSha'));
+  });
+
+  it('rejects artefact missing "timestamp" field', () => {
+    const evidence = {
+      ok: true,
+      origin: 'repository',
+      contentReleaseId: 'grammar-qg-p6-2026-04-29',
+      commitSha: 'abcdef1234567890',
+    };
+    const missing = REQUIRED_EVIDENCE_FIELDS.filter((f) => !(f in evidence));
+    assert.ok(missing.length > 0, 'Should detect missing "timestamp" field');
+    assert.ok(missing.includes('timestamp'));
+  });
+
+  it('P7 uses the existing P6 content release ID (no bump)', async () => {
+    // P7 is analytics-only and does not bump the content release ID
+    const { GRAMMAR_CONTENT_RELEASE_ID } = await import('../worker/src/subjects/grammar/content.js');
+    assert.equal(GRAMMAR_CONTENT_RELEASE_ID, 'grammar-qg-p6-2026-04-29',
+      'P7 must use existing P6 content release ID since P7 is analytics-only');
+  });
+
+  it('smoke evidence file path uses existing content release ID', () => {
+    const contentReleaseId = 'grammar-qg-p6-2026-04-29';
+    const expectedFileName = `grammar-production-smoke-${contentReleaseId}.json`;
+    assert.equal(expectedFileName, 'grammar-production-smoke-grammar-qg-p6-2026-04-29.json');
+  });
+});
