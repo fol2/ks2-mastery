@@ -1,11 +1,84 @@
 import { emptyEconomyState, normaliseHeroEconomyState } from './economy.js';
+import {
+  HERO_POOL_ROSTER_VERSION as _HERO_POOL_ROSTER_VERSION,
+  isValidHeroMonsterId,
+  isValidHeroMonsterBranch,
+} from './hero-pool.js';
 
-export const HERO_PROGRESS_VERSION = 2;
+export const HERO_PROGRESS_VERSION = 3;
 export const MAX_RECENT_CLAIMS_AGE_DAYS = 7;
 
-function emptyDailyState() {
+
+// ── Hero Pool state ─────────────────────────────────────────────
+
+export const HERO_POOL_STATE_VERSION = 1;
+export const HERO_POOL_ROSTER_VERSION = _HERO_POOL_ROSTER_VERSION;
+
+export function emptyHeroPoolState() {
+  return {
+    version: HERO_POOL_STATE_VERSION,
+    rosterVersion: HERO_POOL_ROSTER_VERSION,
+    selectedMonsterId: null,
+    monsters: {},
+    recentActions: [],
+    lastUpdatedAt: null,
+  };
+}
+
+function normaliseStage(stage) {
+  if (typeof stage !== 'number') return 0;
+  if (!Number.isFinite(stage)) return 0;
+  return Math.max(0, Math.min(4, Math.floor(stage)));
+}
+
+function normaliseBranch(branch, owned) {
+  if (isValidHeroMonsterBranch(branch)) return branch;
+  // Only normalise to null — owned monsters with invalid branch also lose it
   return null;
 }
+
+export function normaliseHeroPoolState(raw) {
+  if (!raw || typeof raw !== 'object') return emptyHeroPoolState();
+
+  const monsters = {};
+
+  if (raw.monsters && typeof raw.monsters === 'object') {
+    for (const [id, m] of Object.entries(raw.monsters)) {
+      if (!isValidHeroMonsterId(id)) continue; // drop unknown IDs
+      if (!m || typeof m !== 'object') continue;
+      const owned = m.owned === true;
+      monsters[id] = {
+        monsterId: id,
+        owned,
+        stage: normaliseStage(m.stage),
+        branch: normaliseBranch(m.branch, owned),
+        investedCoins: typeof m.investedCoins === 'number' && Number.isFinite(m.investedCoins) ? Math.max(0, m.investedCoins) : 0,
+        invitedAt: m.invitedAt || null,
+        lastGrownAt: m.lastGrownAt || null,
+        lastLedgerEntryId: typeof m.lastLedgerEntryId === 'string' ? m.lastLedgerEntryId : null,
+      };
+    }
+  }
+
+  // Filter recentActions: keep only well-formed entries (objects with type+monsterId)
+  let recentActions = [];
+  if (Array.isArray(raw.recentActions)) {
+    recentActions = raw.recentActions.filter(
+      entry => entry && typeof entry === 'object' && typeof entry.type === 'string'
+    );
+  }
+
+  return {
+    version: HERO_POOL_STATE_VERSION,
+    rosterVersion: typeof raw.rosterVersion === 'string' ? raw.rosterVersion : HERO_POOL_ROSTER_VERSION,
+    selectedMonsterId: typeof raw.selectedMonsterId === 'string' && isValidHeroMonsterId(raw.selectedMonsterId) ? raw.selectedMonsterId : null,
+    monsters,
+    recentActions,
+    lastUpdatedAt: raw.lastUpdatedAt || null,
+  };
+}
+
+// ── Progress state ──────────────────────────────────────────────
 
 export function emptyProgressState() {
   return {
@@ -13,6 +86,7 @@ export function emptyProgressState() {
     daily: null,
     recentClaims: [],
     economy: emptyEconomyState(),
+    heroPool: emptyHeroPoolState(),
   };
 }
 
@@ -20,25 +94,39 @@ export function normaliseHeroProgressState(raw) {
   if (!raw || typeof raw !== 'object') return emptyProgressState();
 
   if (raw.version === 1) {
-    // v1 → v2 upgrade: preserve daily + recentClaims, add empty economy
+    // v1 → v3 upgrade: preserve daily + recentClaims, add empty economy + empty heroPool
     return {
       version: HERO_PROGRESS_VERSION,
       daily: normaliseDailyState(raw.daily),
       recentClaims: Array.isArray(raw.recentClaims) ? raw.recentClaims : [],
       economy: emptyEconomyState(),
+      heroPool: emptyHeroPoolState(),
     };
   }
 
-  if (raw.version === HERO_PROGRESS_VERSION) {
+  if (raw.version === 2) {
+    // v2 → v3 upgrade: preserve economy, add empty heroPool
     return {
       version: HERO_PROGRESS_VERSION,
       daily: normaliseDailyState(raw.daily),
       recentClaims: Array.isArray(raw.recentClaims) ? raw.recentClaims : [],
       economy: normaliseHeroEconomyState(raw.economy),
+      heroPool: emptyHeroPoolState(),
     };
   }
 
-  // Unknown or missing version — return empty v2 state
+  if (raw.version === HERO_PROGRESS_VERSION) {
+    // v3 → v3: normalise all sub-blocks
+    return {
+      version: HERO_PROGRESS_VERSION,
+      daily: normaliseDailyState(raw.daily),
+      recentClaims: Array.isArray(raw.recentClaims) ? raw.recentClaims : [],
+      economy: normaliseHeroEconomyState(raw.economy),
+      heroPool: normaliseHeroPoolState(raw.heroPool),
+    };
+  }
+
+  // Unknown or missing version — return safe empty v3 state
   return emptyProgressState();
 }
 

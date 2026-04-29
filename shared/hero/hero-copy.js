@@ -18,10 +18,14 @@ export const HERO_FORBIDDEN_PRESSURE_VOCABULARY = Object.freeze([
   'limited time',
   'daily deal',
   "don't miss out",
+  "don't miss",
   'streak reward',
   'grind',
+  'buy',
   'buy now',
+  'purchase',
   'spend now',
+  'offer',
   'you missed out',
   'unlock now',
   'treasure',
@@ -38,6 +42,13 @@ export const HERO_ECONOMY_ALLOWED_VOCABULARY = Object.freeze([
   'coin',
   'balance',
   'Hero Coins',
+  'invite',
+  'monster grow',
+  'camp',
+  'hero camp',
+  'hero pool',
+  'monster invite',
+  'hero monster',
 ]);
 
 /**
@@ -46,10 +57,18 @@ export const HERO_ECONOMY_ALLOWED_VOCABULARY = Object.freeze([
 export const HERO_ECONOMY_ALLOWED_FILES = Object.freeze([
   'shared/hero/economy.js',
   'shared/hero/hero-copy.js',
+  'shared/hero/hero-pool.js',
+  'shared/hero/monster-economy.js',
   'shared/hero/claim-contract.js',
   'src/platform/hero/hero-ui-model.js',
+  'src/platform/hero/hero-camp-model.js',
+  'src/platform/hero/hero-monster-assets.js',
   'src/surfaces/home/HeroQuestCard.jsx',
+  'src/surfaces/home/HeroCampPanel.jsx',
+  'src/surfaces/home/HeroCampMonsterCard.jsx',
+  'src/surfaces/home/HeroCampConfirmation.jsx',
   'worker/src/hero/read-model.js',
+  'worker/src/hero/camp.js',
 ]);
 
 // Backward compat — tests importing this get the pressure-only list

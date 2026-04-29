@@ -1300,3 +1300,119 @@ export function renderAppFixture({ route = 'dashboard' } = {}) {
     console.log(html);
   `);
 }
+
+export function renderHeroCampPanelFixture({ campModel, balance = 500, loading = false } = {}) {
+  // The HeroCampPanel takes { readModel, heroClient, learnerId, onRefresh }
+  // and internally calls buildHeroCampModel(readModel). We build a readModel
+  // from the campModel fixture that will produce the expected camp model.
+  const readModel = campModel && campModel.campEnabled
+    ? { camp: { enabled: true, balance: campModel.balance ?? balance, monsters: campModel.monsters || [], selectedMonsterId: campModel.selectedMonsterId || null, rosterVersion: campModel.rosterVersion || 'hero-pool-v1', recentActions: campModel.recentActions || [] } }
+    : campModel === null ? null : { camp: { enabled: false } };
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HeroCampPanel } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HeroCampPanel.jsx'))};
+
+    const readModel = ${JSON.stringify(readModel)};
+    const heroClient = { unlockMonster: async () => {}, evolveMonster: async () => {} };
+    const html = renderToStaticMarkup(
+      <HeroCampPanel readModel={readModel} heroClient={heroClient} learnerId="learner-test" onRefresh={() => {}} />
+    );
+    console.log(html);
+  `);
+}
+
+export function renderHeroCampMonsterCardFixture({ monster, balance = 500 } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HeroCampMonsterCard } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HeroCampMonsterCard.jsx'))};
+
+    const monster = ${JSON.stringify(monster)};
+    const balance = ${JSON.stringify(balance)};
+    const html = renderToStaticMarkup(
+      <HeroCampMonsterCard monster={monster} balance={balance} onInvite={() => {}} onGrow={() => {}} />
+    );
+    console.log(html);
+  `);
+}
+
+export function renderHeroCampConfirmationFixture({ visible = true, heading, balanceAfter, actionLabel } = {}) {
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HeroCampConfirmation } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HeroCampConfirmation.jsx'))};
+
+    const html = renderToStaticMarkup(
+      <HeroCampConfirmation
+        visible={${JSON.stringify(visible)}}
+        heading={${JSON.stringify(heading)}}
+        balanceAfter={${JSON.stringify(balanceAfter)}}
+        actionLabel={${JSON.stringify(actionLabel)}}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />
+    );
+    console.log(html);
+  `);
+}
+
+export function renderHomeSurfaceWithCampFixture({ hero = null, heroCamp = null, heroReadModel = null } = {}) {
+  // If heroCamp is provided with campEnabled, auto-build a heroReadModel
+  // that produces the expected camp model when no explicit heroReadModel given.
+  const derivedReadModel = heroReadModel || (heroCamp && heroCamp.campEnabled
+    ? { camp: { enabled: true, balance: heroCamp.balance ?? 500, monsters: heroCamp.monsters || [], selectedMonsterId: null, rosterVersion: 'hero-pool-v1', recentActions: [] } }
+    : null);
+  return renderFixture(`
+    import React from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { HomeSurface } from ${JSON.stringify(absoluteSpecifier('src/surfaces/home/HomeSurface.jsx'))};
+
+    const model = {
+      theme: 'light',
+      learner: { id: 'learner-a', name: 'Ava' },
+      learnerLabel: 'Ava',
+      learnerOptions: [{ id: 'learner-a', name: 'Ava', yearGroup: 'Y5' }],
+      signedInAs: null,
+      persistence: { mode: 'local-only', label: 'Local-only' },
+      monsterSummary: [],
+      subjects: [
+        { id: 'spelling', name: 'Spelling', blurb: 'KS2 spelling.', accent: '#3E6FA8', status: 'live', glyph: 'S', progress: 0, progressLabel: '0 words secure' },
+        { id: 'grammar', name: 'Grammar', blurb: 'KS2 grammar.', accent: '#A83E6F', status: 'live', glyph: 'G', progress: 0, progressLabel: '0 concepts' },
+        { id: 'punctuation', name: 'Punctuation', blurb: 'KS2 punctuation.', accent: '#6FA83E', status: 'live', glyph: 'P', progress: 0, progressLabel: '0 units' },
+      ],
+      dashboardStats: {
+        spelling: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+        grammar: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+        punctuation: { pct: 0, due: 0, streak: 0, nextUp: 'Ready' },
+      },
+      dueTotal: 0,
+      roundNumber: 1,
+      now: new Date('2026-04-22T12:00:00Z'),
+      permissions: { canOpenParentHub: false },
+      hero: ${JSON.stringify(hero)},
+      heroCamp: ${JSON.stringify(heroCamp)},
+      heroReadModel: ${JSON.stringify(derivedReadModel)},
+      heroClient: { unlockMonster: async () => {}, evolveMonster: async () => {} },
+    };
+    const actions = {
+      dispatch() {},
+      toggleTheme() {},
+      selectLearner() {},
+      navigateHome() {},
+      openProfileSettings() {},
+      openSubject() {},
+      openCodex() {},
+      openParentHub() {},
+      openAdminHub() {},
+      openHeroCamp() {},
+      logout() {},
+      retryPersistence() {},
+      startHeroQuestTask() {},
+      continueHeroTask() {},
+      refreshHeroQuest() {},
+    };
+    const html = renderToStaticMarkup(<HomeSurface model={model} actions={actions} />);
+    console.log(html);
+  `);
+}
