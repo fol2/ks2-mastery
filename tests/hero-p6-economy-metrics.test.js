@@ -174,6 +174,11 @@ describe('classifySpendPattern', () => {
     assert.equal(result.hoardingScore, 1.0);
   });
 
+  it('hoarding score at balance 5000 is unbounded (5.0)', () => {
+    const result = classifySpendPattern([], '2026-04-29', 5000);
+    assert.strictEqual(result.hoardingScore, 5);
+  });
+
   it('handles null/undefined recentActions gracefully', () => {
     const result = classifySpendPattern(null, DATE_KEY, 0);
     assert.equal(result.spendCountToday, 0);

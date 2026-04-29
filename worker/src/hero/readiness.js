@@ -9,10 +9,9 @@
  *
  * @param {Object|null} heroState — normalised hero progress state (or null)
  * @param {Object}      flags     — feature flag map (env-style keys to truthy values)
- * @param {Object}      [options]
  * @returns {{ checks: Array<{ name: string, status: 'pass'|'fail'|'not_started', detail: string }>, overall: 'ready'|'not_ready'|'not_started' }}
  */
-export function deriveReadinessChecks(heroState, flags, options = {}) {
+export function deriveReadinessChecks(heroState, flags) {
   const safeFlags = flags && typeof flags === 'object' ? flags : {};
   const safeState = heroState && typeof heroState === 'object' ? heroState : null;
 

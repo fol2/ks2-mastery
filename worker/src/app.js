@@ -1816,7 +1816,6 @@ export function createWorkerApp({
                     event: 'hero_monster_insufficient_coins',
                     learnerId: heroLearnerId,
                     monsterId: body.monsterId || '',
-                    balance: heroProgressState?.economy?.balance ?? 0,
                     required: campResult.reason,
                     // P6 U8: economy health dimensions
                     currentBalance: heroProgressState?.economy?.balance ?? 0,
@@ -1902,7 +1901,7 @@ export function createWorkerApp({
             }
 
             try {
-              const _totalOwnedMonsters = Object.values(heroProgressState.heroPool?.monsters || {}).filter(m => m.owned).length;
+              const totalOwnedMonsters = Object.values(mutationResult.state?.heroPool?.monsters || {}).filter(m => m.owned).length;
               // eslint-disable-next-line no-console
               console.log(JSON.stringify({
                 event: 'hero_camp_command_succeeded',
@@ -1914,7 +1913,7 @@ export function createWorkerApp({
                 // P6 U8: economy health dimensions
                 balanceAfterSpend: campResult.intent.newBalance,
                 monsterStageAfter: campResult.intent.newMonsterState?.stage ?? 0,
-                totalOwnedMonsters: _totalOwnedMonsters,
+                totalOwnedMonsters: totalOwnedMonsters,
               }));
               // Specific invite/grow telemetry
               if (body.command === 'unlock-monster') {
@@ -1929,7 +1928,7 @@ export function createWorkerApp({
                   // P6 U8: economy health dimensions
                   balanceAfterSpend: campResult.intent.newBalance,
                   monsterStageAfter: 0,
-                  totalOwnedMonsters: _totalOwnedMonsters,
+                  totalOwnedMonsters: totalOwnedMonsters,
                 }));
               } else {
                 // eslint-disable-next-line no-console
@@ -1944,7 +1943,7 @@ export function createWorkerApp({
                   // P6 U8: economy health dimensions
                   balanceAfterSpend: campResult.intent.newBalance,
                   monsterStageAfter: campResult.intent.ledgerEntry.stageAfter ?? 0,
-                  totalOwnedMonsters: _totalOwnedMonsters,
+                  totalOwnedMonsters: totalOwnedMonsters,
                 }));
               }
             } catch { /* best-effort */ }
