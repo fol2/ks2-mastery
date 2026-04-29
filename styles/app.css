@@ -8251,6 +8251,25 @@ textarea:focus-visible {
   text-transform: capitalize;
 }
 
+.grammar-table-choice-label {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 0.82rem;
+  text-transform: capitalize;
+  color: var(--ink-2);
+}
+
+@media (max-width: 540px) {
+  .grammar-table-choice {
+    min-width: unset;
+  }
+  .grammar-table-choice td,
+  .grammar-table-choice th {
+    padding: 6px 4px;
+    font-size: 0.82rem;
+  }
+}
+
 .grammar-multi-fields {
   display: grid;
   gap: 12px;

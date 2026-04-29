@@ -7369,7 +7369,16 @@ function buildP4MixedTransferClassifyQuestion(template, seed, cases) {
     marks: rows.length,
     answerSpec,
     stemHtml: `<p>${escapeHtml(item.prompt)}</p><p><strong>${escapeHtml(item.example)}</strong></p>`,
-    inputSpec: { type: "table_choice", columns: allColumns, rows: rows.map(r => ({ key: r.key, label: r.label })) },
+    inputSpec: { type: "table_choice", columns: allColumns, rows: rows.map(r => {
+      const rowObj = { key: r.key, label: r.label, ariaLabel: r.label };
+      // Include row-specific options when they differ from the global column set
+      const rowOpts = r.options;
+      if (rowOpts && (rowOpts.length !== allColumns.length ||
+          rowOpts.some(o => !allColumns.includes(o)))) {
+        rowObj.options = rowOpts;
+      }
+      return rowObj;
+    }) },
     solutionLines: [
       `This question tests ${conceptNames} together.`,
       item.why,
