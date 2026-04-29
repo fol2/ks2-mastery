@@ -244,6 +244,41 @@ should investigate. Schema is intentionally lighter than the
 >
 > **Next step:** Prepare a fresh session manifest with the full bucket-reset delay, then re-attempt the 60-learner shape with `--session-manifest`. If a single-host manifest still cannot be prepared safely, use a multi-IP source mode or independent runners. Until a run reaches `/api/bootstrap` and subject-command load, bottlenecks beyond 30 learners stay unmeasured; the latest 30-learner cert-tier run on commit `1c56e06` (decision=fail on `maxBootstrapP95Ms`) remains the highest-evidence claim.
 
+## Evidence Lane Semantics (P7)
+
+Evidence rows belong to one of several named lanes that determine how
+`verify-capacity-evidence.mjs` treats them. Lanes are inferred from
+the evidence shape and the `## Capacity Evidence` vs
+`## Capacity Preflight` table placement — they are NOT an explicit JSON
+field but rather an organisational taxonomy for operators.
+
+| Lane | Purpose | Certification-eligible |
+| --- | --- | --- |
+| `smoke` | Lightweight structural checks (bootstrap probe, production bundle audit). Quick post-deploy sanity that does not generate load. | No — backs `smoke-pass` only. |
+| `capacity_certification` | Full classroom-tier load runs against production with pinned threshold configs. The authoritative source for tier claims (`30-learner-beta-certified`, `60-learner-stretch-certified`, `100-plus-certified`). | Yes. |
+| `capacity_preflight` | Exploratory probes that look for the next bottleneck beyond the certified tier. Session-manifest or non-standard shapes. | No — preflight rows are explicitly non-certifying. |
+| `security_posture` | CSP report-only observation, header audits, redaction contract probes. | No — informational posture evidence only. |
+| `dense_history` | Dense-learner-progress latency checks (Smart Review caching, high-history bootstrap). Meaningful only with `--cookie` pointing at a dense account. | No — supplements certification with latency context. |
+
+### Key rule: preflight evidence is excluded from certification lanes
+
+`verify-capacity-evidence.mjs` skips rows placed in the
+`## Capacity Preflight` table entirely. A preflight row that later
+passes all thresholds does NOT automatically promote to certification;
+the operator must re-run the same shape as a proper certification-tier
+invocation (with `--config reports/capacity/configs/<tier>.json`) and
+place the result in the `## Capacity Evidence` table. This prevents
+optimistic "it passed once in preflight" claims from inflating the
+certified tier.
+
+### Operator guidance
+
+- Use `smoke` for every deploy (automated via `npm run smoke:production:*`).
+- Use `capacity_certification` only when actively seeking a tier upgrade or re-validating after a regression fix. Always invoke with a pinned threshold config.
+- Use `capacity_preflight` to explore the next scale point without polluting the certification record.
+- Use `security_posture` for CSP observation window evidence and header compliance checks.
+- Use `dense_history` to track latency improvements for high-history learners without conflating them with classroom-scale capacity.
+
 ## Operational Thresholds
 
 Treat any of these as release blockers until investigated:
