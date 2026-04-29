@@ -26,6 +26,7 @@ import {
   COPY_AUDIENCE,
 } from '../../platform/hubs/admin-safe-copy.js';
 import { saveIncidentStash } from '../../platform/hubs/admin-incident-flow.js';
+import { buildAccountLifecycleModel, classifyLifecycleField } from '../../platform/hubs/admin-account-lifecycle.js';
 
 // U4+U5: Accounts section — role management, ops metadata, and audit log.
 // Extracted from AdminHubSurface.jsx. All inline components preserved
@@ -419,6 +420,37 @@ function AccountSearchResultRow({ result, onSelect }) {
   );
 }
 
+function AccountLifecycleSubSection({ detail }) {
+  const lifecycleModel = buildAccountLifecycleModel(detail);
+  if (!lifecycleModel || !lifecycleModel.fields.length) return null;
+  return (
+    <div className="admin-account-lifecycle-wrap" data-testid="account-lifecycle-section">
+      <div className="eyebrow">Lifecycle</div>
+      {lifecycleModel.hasEnforcedFlags && (
+        <div className="callout warn small" data-testid="lifecycle-enforced-warning">
+          This account has active enforcement flags.
+        </div>
+      )}
+      <div className="admin-lifecycle-fields">
+        {lifecycleModel.fields.map((field) => (
+          <div className="admin-lifecycle-field-row" key={field.key} data-field={field.key}>
+            <span className="admin-lifecycle-label">{field.label}</span>
+            <span className="admin-lifecycle-value">
+              {field.value === true ? 'Yes' : field.value === false ? 'No' : (field.value != null ? String(field.value) : '—')}
+            </span>
+            {field.classification === 'enforced' && (
+              <span className="chip warn" data-testid={`lifecycle-badge-${field.key}`}>enforced</span>
+            )}
+            {field.classification === 'business_notes_only' && (
+              <span className="chip" data-testid={`lifecycle-badge-${field.key}`}>business notes</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AccountDetailPanel({ detail, onClose, onDebugBundle, onCopySupportSummary, copySummaryFeedback }) {
   if (!detail || !detail.account) return null;
   const { account, learners, recentErrors, recentDenials, recentMutations, opsMetadata } = detail;
@@ -452,6 +484,8 @@ function AccountDetailPanel({ detail, onClose, onDebugBundle, onCopySupportSumma
           {opsMetadata.internalNotes && <div className="small muted admin-account-ops-notes">Notes: {opsMetadata.internalNotes}</div>}
         </div>
       )}
+
+      <AccountLifecycleSubSection detail={detail} />
 
       <div className="eyebrow admin-account-learners-eyebrow">Learners ({learners.length})</div>
       {learners.length ? learners.map((l) => (
