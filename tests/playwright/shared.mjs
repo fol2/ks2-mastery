@@ -66,6 +66,16 @@ const SCREENSHOT_DETERMINISM_CSS = `
 .grammar-hero > img,
 .punctuation-hero img,
 .punctuation-strip img,
+/* U5 (refactor ui-consolidation) extension — the Punctuation Session
+   scene now paints via platform HeroBackdrop. The legacy `.punctuation-
+   strip img` rule above stays as harmless coverage; the new rule hides
+   the `background-image` paints on HeroBackdrop layers so deterministic
+   screenshot diffs do not see per-phase bellstorm variance. Matches both
+   the Session scene's scoped wrapper (`.punctuation-session-hero`) and
+   the Setup scene's one (`.punctuation-hero-backdrop` — already in place
+   from U4) so both surfaces stay deterministic. */
+.punctuation-hero-backdrop [data-hero-layer="true"],
+.punctuation-session-hero [data-hero-layer="true"],
 .monster-celebration-overlay,
 .monster-celebration-parts,
 .toast-shelf {
@@ -345,14 +355,21 @@ export function defaultMasks(page) {
     // viewport.
     page.locator('.grammar-prompt'),
     // SH2-U6 review nit-1 fix: the punctuation session renders its
-    // prompt as `<h2 className="section-title">` inside the
-    // `.punctuation-strip` header. The item source text lives in
-    // `[data-punctuation-session-source]` (a `<blockquote>`); both
-    // carry per-item variable content. `.punctuation-prompt` /
-    // `.punctuation-question` never existed in the DOM — removing
-    // the phantom selectors so the default-mask audit (NIT-2) shows
-    // every entry resolves to ≥1 element.
+    // prompt as `<h2 className="section-title">` inside the header.
+    // The item source text lives in `[data-punctuation-session-source]`
+    // (a `<blockquote>`); both carry per-item variable content.
+    // `.punctuation-prompt` / `.punctuation-question` never existed in
+    // the DOM — removing the phantom selectors so the default-mask
+    // audit (NIT-2) shows every entry resolves to ≥1 element.
     page.locator('[data-punctuation-session-source]'),
+    // U5 (refactor ui-consolidation): the Session scene header moved
+    // from `.punctuation-strip .section-title` to
+    // `.punctuation-session-hero-content .section-title` when the scene
+    // adopted the platform `HeroBackdrop`. The legacy selector stays as
+    // belt-and-braces so baselines captured against pre-U5 DOM remain
+    // masked during rollout; the new anchor is authoritative going
+    // forward.
+    page.locator('.punctuation-session-hero-content .section-title'),
     page.locator('.punctuation-strip .section-title'),
   ];
 }

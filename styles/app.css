@@ -10560,6 +10560,34 @@ html { scroll-behavior: smooth; }
   }
 }
 
+/* --- U5 (refactor ui-consolidation): Session-scene hero chrome --------- */
+/* `.punctuation-session-hero` is the positioning ancestor for the
+   platform `HeroBackdrop` which paints via `position: absolute; inset: 0`
+   (app.css:5526-5532). Without a `position: relative` wrapper the backdrop
+   would escape to the page root. `overflow: hidden` clips the slow pan
+   animation to the card frame; `border-radius: inherit` keeps the painted
+   region inside the rounded card corners (matches `.setup-main` behaviour
+   at app.css:4604-4607).
+
+   `.punctuation-session-hero-content` sits above the absolute-positioned
+   backdrop via `z-index: 1` so the eyebrow / section-title / subtitle
+   render on top, not behind, the painted artwork. The explicit
+   `position: relative` establishes a stacking context that z-index can
+   act on. */
+.punctuation-session-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+  min-height: 160px;
+}
+.punctuation-session-hero-content {
+  position: relative;
+  z-index: 1;
+  padding: 18px 20px;
+  display: grid;
+  gap: 6px;
+}
+
 /* Progress row — compact stats strip */
 .punctuation-progress-row {
   padding: 0;

@@ -261,6 +261,13 @@ async function injectFixedPromptContent(page) {
       '.prompt-sentence',
       '.cloze',
       '.grammar-prompt',
+      // U5 (refactor ui-consolidation): the Session-scene prompt moved
+      // from `.punctuation-strip .section-title` to
+      // `.punctuation-session-hero-content .section-title` when the
+      // scene adopted the platform `HeroBackdrop`. Both selectors are
+      // kept so this helper still stabilises text content on pre-U5
+      // baselines AND post-U5 DOM.
+      '.punctuation-session-hero-content .section-title',
       '.punctuation-strip .section-title',
       '[data-punctuation-session-source]',
     ];

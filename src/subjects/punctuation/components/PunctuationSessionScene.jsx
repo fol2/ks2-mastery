@@ -44,6 +44,7 @@
 
 import React, { useState } from 'react';
 
+import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   bellstormSceneForPhase,
@@ -326,7 +327,7 @@ function GpsDelayedFeedbackChips({ session }) {
 
 // --- Active-item branch ----------------------------------------------------
 
-function ActiveItemBranch({ ui, actions }) {
+function ActiveItemBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
   // SH2-U1: JSX-layer guard for Skip. The primary Submit is inside
   // `ChoiceItem` / `TextItem` sub-components and already uses the
   // shared `composeIsDisabled` adapter-state gate; the hook is
@@ -343,7 +344,6 @@ function ActiveItemBranch({ ui, actions }) {
   const skillName = skillHeaderName(item);
   const modeLabel = sessionModeHeaderLabel(session.mode);
   const help = punctuationSessionHelpVisibility(session, 'active-item');
-  const scene = bellstormSceneForPhase('active-item');
   const shape = punctuationSessionInputShape(item.mode);
   const submit = (payload) => actions.dispatch('punctuation-submit-form', payload);
   // SH2-U7: surface a session error banner via `role="alert"` and link it
@@ -371,15 +371,21 @@ function ActiveItemBranch({ ui, actions }) {
       data-punctuation-phase="active-item"
       style={{ borderTopColor: '#B8873F' }}
     >
-      <div className="punctuation-strip">
-        <img
-          src={scene.src}
-          srcSet={scene.srcSet}
-          sizes="(max-width: 980px) 100vw, 960px"
-          alt=""
-          aria-hidden="true"
+      {/* U5: platform HeroBackdrop replaces the legacy static <img> inside
+          `.punctuation-strip`. The outer `.punctuation-session-hero`
+          establishes the positioning ancestor — `.hero-backdrop` is
+          `position:absolute; inset:0` so it clips to this card-frame-shaped
+          box. `.punctuation-session-hero-content` sits above via
+          `z-index: 1`. URLs + previousUrl are threaded from the phase-stable
+          `PunctuationSessionScene` parent so active-item ↔ feedback cross-
+          fade works across the two JSX branches. */}
+      <section className="punctuation-session-hero">
+        <HeroBackdrop
+          url={heroUrl}
+          previousUrl={previousHeroUrl}
+          extraBackdropClassName="punctuation-hero-backdrop"
         />
-        <div>
+        <div className="punctuation-session-hero-content">
           <div
             className="eyebrow punctuation-session-progress"
             data-punctuation-session-progress
@@ -395,7 +401,7 @@ function ActiveItemBranch({ ui, actions }) {
           <h2 className="section-title">{punctuationChildRegisterOverrideString(item.prompt) || 'Punctuation practice'}</h2>
           <p className="subtitle">{currentItemInstruction(item)}</p>
         </div>
-      </div>
+      </section>
 
       {isGps ? <GpsDelayedFeedbackChips session={session} /> : null}
       {help.showTeachBox ? <CollapsedTeachBox guided={session.guided} /> : null}
@@ -498,7 +504,7 @@ function ActiveItemBranch({ ui, actions }) {
 //   - `<details>` → "Show model answer" revealing `feedback.displayCorrection`.
 //   - `<details>` → "Show more" revealing up to 2 child-labelled facet chips
 //     and any `misconceptionTags` that pass `punctuationChildMisconceptionLabel`.
-function FeedbackBranch({ ui, actions }) {
+function FeedbackBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
   // SH2-U1: JSX-layer guard for Continue (minimal GPS + normal branches).
   // The hook instance is shared across the two Continue buttons because
   // only one branch renders at a time — a learner cannot tap a GPS
@@ -514,7 +520,6 @@ function FeedbackBranch({ ui, actions }) {
   // no override entries match.
   const feedback = punctuationChildRegisterOverride(ui.feedback) || ui.feedback || {};
   const session = ui.session || {};
-  const scene = bellstormSceneForPhase('feedback');
   const isDisabled = composeIsDisabled(ui);
   const help = punctuationSessionHelpVisibility(session, 'feedback');
   const borderColor = feedback.kind === 'success' ? '#2E8479' : '#B8873F';
@@ -543,15 +548,18 @@ function FeedbackBranch({ ui, actions }) {
         data-punctuation-phase="feedback"
         style={{ borderTopColor: borderColor }}
       >
-        <div className="punctuation-strip">
-          <img
-            src={scene.src}
-            srcSet={scene.srcSet}
-            sizes="(max-width: 980px) 100vw, 960px"
-            alt=""
-            aria-hidden="true"
+        {/* U5: minimal-feedback / GPS early-return — same HeroBackdrop
+            pattern as active-item and scored-feedback. The prior URL comes
+            from the phase-stable parent so active-item → feedback cross-
+            fades. */}
+        <section className="punctuation-session-hero">
+          <HeroBackdrop
+            url={heroUrl}
+            previousUrl={previousHeroUrl}
+            extraBackdropClassName="punctuation-hero-backdrop"
           />
           <div
+            className="punctuation-session-hero-content"
             role="status"
             aria-live="polite"
             data-punctuation-session-feedback-live
@@ -560,7 +568,7 @@ function FeedbackBranch({ ui, actions }) {
             <h2 className="section-title">Saved</h2>
             <p className="subtitle">Your answer is locked in. Answers come at the end of the round.</p>
           </div>
-        </div>
+        </section>
         <div className="actions" style={{ marginTop: 16 }}>
           <button
             className="btn primary"
@@ -600,15 +608,16 @@ function FeedbackBranch({ ui, actions }) {
       data-punctuation-phase="feedback"
       style={{ borderTopColor: borderColor }}
     >
-      <div className="punctuation-strip">
-        <img
-          src={scene.src}
-          srcSet={scene.srcSet}
-          sizes="(max-width: 980px) 100vw, 960px"
-          alt=""
-          aria-hidden="true"
+      {/* U5: scored-feedback — HeroBackdrop with previousUrl threaded from
+          the phase-stable parent for active-item → feedback cross-fade. */}
+      <section className="punctuation-session-hero">
+        <HeroBackdrop
+          url={heroUrl}
+          previousUrl={previousHeroUrl}
+          extraBackdropClassName="punctuation-hero-backdrop"
         />
         <div
+          className="punctuation-session-hero-content"
           role="status"
           aria-live="polite"
           data-punctuation-session-feedback-live
@@ -617,7 +626,7 @@ function FeedbackBranch({ ui, actions }) {
           <h2 className="section-title">{feedback.headline || 'Feedback'}</h2>
           {feedback.body ? <p className="subtitle">{feedback.body}</p> : null}
         </div>
-      </div>
+      </section>
 
       {hasDisplayCorrection ? (
         <details
@@ -696,10 +705,57 @@ function FeedbackBranch({ ui, actions }) {
 
 // --- Default export --------------------------------------------------------
 
+// U5 (refactor ui-consolidation): owner of the in-scene bellstorm URL +
+// `previousUrl` handoff. The ref is declared HERE (phase-stable parent)
+// rather than inside the two branches so the active-item → feedback
+// transition threads the prior URL into `HeroBackdrop` for a cross-fade,
+// even though each branch mounts / unmounts as `ui.phase` flips (React
+// discards their local refs on unmount).
+//
+// Declared BEFORE any conditional return — React's rules of hooks require
+// unconditional ordering. Each branch continues to own its own early
+// returns for missing `session` / `currentItem`.
+//
+// Cross-scene handoff (feedback → summary) is explicitly deferred per the
+// plan's Scope Boundaries: lifting a ref into `PunctuationPracticeSurface`
+// (as Spelling does at SpellingPracticeSurface.jsx:152-157) is a follow-up
+// PR once the in-scene cross-fade is proven clean.
 export function PunctuationSessionScene({ ui, actions }) {
   const phase = ui?.phase;
+  const sceneUrl = bellstormSceneForPhase(phase === 'feedback' ? 'feedback' : 'active-item').src;
+
+  // Mount-stable ref captures the prior bellstorm URL across phase flips.
+  // `previousHeroUrl` is derived at render time — only non-empty when the
+  // last recorded URL differs from the current one (first paint of a new
+  // phase, e.g. active-item → feedback).
+  const previousHeroBgRef = React.useRef('');
+  const previousHeroUrl = previousHeroBgRef.current && previousHeroBgRef.current !== sceneUrl
+    ? previousHeroBgRef.current
+    : '';
+
+  // Update the ref AFTER paint so the next phase flip reads the
+  // just-painted URL as its `previousUrl`. Mirrors
+  // `SpellingPracticeSurface.jsx:156-158`.
+  React.useEffect(() => {
+    if (sceneUrl) previousHeroBgRef.current = sceneUrl;
+  }, [sceneUrl]);
+
   if (phase === 'feedback') {
-    return <FeedbackBranch ui={ui} actions={actions} />;
+    return (
+      <FeedbackBranch
+        ui={ui}
+        actions={actions}
+        heroUrl={sceneUrl}
+        previousHeroUrl={previousHeroUrl}
+      />
+    );
   }
-  return <ActiveItemBranch ui={ui} actions={actions} />;
+  return (
+    <ActiveItemBranch
+      ui={ui}
+      actions={actions}
+      heroUrl={sceneUrl}
+      previousHeroUrl={previousHeroUrl}
+    />
+  );
 }
