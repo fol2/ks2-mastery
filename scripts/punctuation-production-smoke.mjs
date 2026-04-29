@@ -7,7 +7,7 @@ import {
   createPunctuationContentIndexes,
   PUNCTUATION_RELEASE_ID,
 } from '../shared/punctuation/content.js';
-import { createPunctuationRuntimeManifest } from '../shared/punctuation/generators.js';
+import { createPunctuationRuntimeManifest, PRODUCTION_DEPTH } from '../shared/punctuation/generators.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
 import {
   assertNoForbiddenObjectKeys,
@@ -759,7 +759,55 @@ async function smokeSpelling({ origin, cookie, learnerId, revision }) {
   };
 }
 
+// ─── CLI argument parsing for attestation ───────────────────────────────────
+
+function parseAttestationArgs(argv) {
+  const envIndex = argv.indexOf('--env');
+  const environment = envIndex >= 0 && argv[envIndex + 1] ? argv[envIndex + 1] : 'local';
+  const commitIndex = argv.indexOf('--commit-sha');
+  const workerCommitSha = commitIndex >= 0 && argv[commitIndex + 1] ? argv[commitIndex + 1] : null;
+  const authenticated = argv.includes('--authenticated');
+  const adminHub = argv.includes('--admin-hub');
+  const jsonOutput = argv.includes('--json');
+  return { environment, workerCommitSha, authenticated, adminHub, jsonOutput };
+}
+
+export function buildAttestationMetadata({
+  environment = 'local',
+  workerCommitSha = null,
+  authenticatedCoverage = false,
+  adminHubCoverage = false,
+} = {}) {
+  const manifest = createPunctuationRuntimeManifest({ generatedPerFamily: PRODUCTION_DEPTH });
+  const indexes = createPunctuationContentIndexes(manifest);
+  const publishedFamilies = (manifest.generatorFamilies || []).filter((f) => f.published);
+  const generatedDepth = publishedFamilies.length > 0
+    ? Math.round(indexes.items.filter((i) => i.source === 'generated').length / publishedFamilies.length)
+    : 0;
+
+  return {
+    environment,
+    releaseId: manifest.releaseId || PUNCTUATION_RELEASE_ID,
+    runtimeItemCount: indexes.items.length,
+    generatedDepth,
+    workerCommitSha,
+    timestamp: new Date().toISOString(),
+    authenticatedCoverage,
+    adminHubCoverage,
+  };
+}
+
+export function assertAttestationRuntimeCount(attestation) {
+  const expectedForDepth = 92 + 25 * PRODUCTION_DEPTH;
+  if (attestation.runtimeItemCount !== expectedForDepth) {
+    throw new Error(
+      `Attestation runtime count mismatch: expected ${expectedForDepth} items for production depth ${PRODUCTION_DEPTH}, got ${attestation.runtimeItemCount}`,
+    );
+  }
+}
+
 async function main() {
+  const attestationArgs = parseAttestationArgs(process.argv);
   const origin = configuredOrigin();
   const demo = await createDemoSession(origin);
   const bootstrap = await loadBootstrap(origin, demo.cookie, { expectedSession: demo.session });
@@ -782,11 +830,25 @@ async function main() {
     revision: punctuation.revision,
   });
 
-  console.log(JSON.stringify({
+  const attestation = buildAttestationMetadata({
+    environment: attestationArgs.environment,
+    workerCommitSha: attestationArgs.workerCommitSha,
+    authenticatedCoverage: attestationArgs.authenticated,
+    adminHubCoverage: attestationArgs.adminHub,
+  });
+
+  assertAttestationRuntimeCount(attestation);
+
+  if (!attestationArgs.adminHub) {
+    console.error('[punctuation-production-smoke] NOTE: adminHubCoverage is false — admin credentials not available.');
+  }
+
+  const output = {
     ok: true,
     origin,
     accountId: demo.session.accountId,
     learnerId: bootstrap.learnerId,
+    attestation,
     punctuation: {
       productionObserved: {
         ...punctuation.smart.observedRuntimeStats,
@@ -820,7 +882,43 @@ async function main() {
       progressTotal: spelling.progressTotal,
       hasPromptToken: spelling.hasPromptToken,
     },
-  }, null, 2));
+  };
+
+  if (attestationArgs.jsonOutput) {
+    console.log(JSON.stringify(output, null, 2));
+  } else {
+    const lines = [];
+    lines.push('# Punctuation Production Smoke');
+    lines.push('');
+    lines.push(`| Field | Value |`);
+    lines.push(`|-------|-------|`);
+    lines.push(`| OK | ${output.ok} |`);
+    lines.push(`| Origin | ${output.origin} |`);
+    lines.push(`| Account | ${output.accountId} |`);
+    lines.push(`| Learner | ${output.learnerId} |`);
+    lines.push(`| Environment | ${output.attestation.environment} |`);
+    lines.push(`| Worker SHA | ${output.attestation.workerCommitSha || '(none)'} |`);
+    lines.push('');
+    lines.push('## Punctuation');
+    lines.push('');
+    lines.push(`| Metric | Value |`);
+    lines.push(`|--------|-------|`);
+    lines.push(`| Smart item | ${output.punctuation.smartItemId} |`);
+    lines.push(`| Smart summary total | ${output.punctuation.smartSummaryTotal} |`);
+    lines.push(`| Fixed items | ${output.punctuation.localReleaseManifestExpectation.fixedItems} |`);
+    lines.push(`| Generated items | ${output.punctuation.localReleaseManifestExpectation.generatedItems} |`);
+    lines.push(`| Runtime items | ${output.punctuation.localReleaseManifestExpectation.runtimeItems} |`);
+    lines.push(`| Published reward units | ${output.punctuation.localReleaseManifestExpectation.publishedRewardUnits} |`);
+    lines.push('');
+    lines.push('## Spelling');
+    lines.push('');
+    lines.push(`| Metric | Value |`);
+    lines.push(`|--------|-------|`);
+    lines.push(`| Progress total | ${output.spelling.progressTotal} |`);
+    lines.push(`| Has prompt token | ${output.spelling.hasPromptToken} |`);
+    lines.push('');
+    console.log(lines.join('\n'));
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

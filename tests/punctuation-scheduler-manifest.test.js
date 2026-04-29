@@ -11,9 +11,11 @@ describe('punctuation scheduler manifest', () => {
       'MAX_SAME_SIGNATURE_DAYS',
       'MISCONCEPTION_RETRY_WINDOW',
       'MISCONCEPTION_RETRY_PREFER_DIFFERENT_TEMPLATE',
+      'MISCONCEPTION_RETRY_MAX_ATTEMPTS',
       'SPACED_RETURN_MIN_DAYS',
       'RETENTION_AFTER_SECURE_MIN_DAYS',
       'REASON_TAGS',
+      'MIXED_REVIEW_MIN_RECENT_ATTEMPTS',
       'EXPOSURE_WEIGHT_BLOCKED',
       'EXPOSURE_WEIGHT_PENALISED',
       'EXPOSURE_WEIGHT_DAY_AVOIDED',
@@ -25,7 +27,7 @@ describe('punctuation scheduler manifest', () => {
 
   it('constant count matches expected (drift test)', () => {
     const exportedKeys = Object.keys(manifest);
-    assert.strictEqual(exportedKeys.length, 11, `Expected 11 exports, got ${exportedKeys.length}: ${exportedKeys.join(', ')}`);
+    assert.strictEqual(exportedKeys.length, 13, `Expected 13 exports, got ${exportedKeys.length}: ${exportedKeys.join(', ')}`);
   });
 
   it('REASON_TAGS is frozen with expected tags', () => {
@@ -41,8 +43,10 @@ describe('punctuation scheduler manifest', () => {
       manifest.MAX_SAME_SIGNATURE_ACROSS_ATTEMPTS,
       manifest.MAX_SAME_SIGNATURE_DAYS,
       manifest.MISCONCEPTION_RETRY_WINDOW,
+      manifest.MISCONCEPTION_RETRY_MAX_ATTEMPTS,
       manifest.SPACED_RETURN_MIN_DAYS,
       manifest.RETENTION_AFTER_SECURE_MIN_DAYS,
+      manifest.MIXED_REVIEW_MIN_RECENT_ATTEMPTS,
       manifest.EXPOSURE_WEIGHT_BLOCKED,
       manifest.EXPOSURE_WEIGHT_PENALISED,
       manifest.EXPOSURE_WEIGHT_DAY_AVOIDED,

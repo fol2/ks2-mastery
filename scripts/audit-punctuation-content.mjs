@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 import {
   createPunctuationContentIndexes,
@@ -443,6 +445,124 @@ function groupByNormalisedText(items, textFn) {
     .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
 }
 
+/**
+ * Group generated items into mode-scoped clusters by a text key (stem or model).
+ * Returns clusters where 2+ items share the same normalised text within the same mode.
+ */
+function groupDuplicatesByMode(items, textFn) {
+  const groups = new Map();
+  for (const item of items) {
+    const text = normaliseAuditText(textFn(item));
+    if (!text) continue;
+    const key = `${text}::${item.mode || ''}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+  return [...groups.entries()]
+    .filter(([, cluster]) => cluster.length > 1)
+    .map(([key, cluster]) => {
+      const [normText, mode] = key.split('::');
+      const familyIds = [...new Set(cluster.map((item) => item.generatorFamilyId || ''))].sort();
+      const templateIds = [...new Set(cluster.map((item) => item.templateId || ''))].sort();
+      const variantSignatures = [...new Set(cluster.map((item) => item.variantSignature || ''))].sort();
+      return {
+        clusterKey: key,
+        normalisedText: normText,
+        mode,
+        familyIds,
+        templateIds,
+        variantSignatures,
+        itemIds: cluster.map((item) => item.id).sort(),
+        count: cluster.length,
+      };
+    })
+    .sort((a, b) => b.count - a.count || a.clusterKey.localeCompare(b.clusterKey));
+}
+
+/**
+ * Build stem/model duplicate clusters at multiple depths, tracking which clusters
+ * appear first at which depth.
+ */
+export function buildStemModelClusters({
+  manifest = PUNCTUATION_CONTENT_MANIFEST,
+  seed = manifest.releaseId || 'punctuation-audit',
+  depths = [4, 6, 8],
+} = {}) {
+  const clustersByDepth = {};
+  for (const depth of depths) {
+    const items = createPunctuationGeneratedItems({ manifest, seed, perFamily: depth });
+    clustersByDepth[depth] = {
+      stems: groupDuplicatesByMode(items, (item) => item.stem),
+      models: groupDuplicatesByMode(items, (item) => item.model),
+    };
+  }
+
+  // Annotate each cluster with its first-appearance depth
+  const allClusters = new Map(); // clusterKey -> { ...cluster, firstDepth, visibleAtDepths }
+  for (const depth of depths) {
+    for (const kind of ['stems', 'models']) {
+      for (const cluster of clustersByDepth[depth][kind]) {
+        if (!allClusters.has(`${kind}:${cluster.clusterKey}`)) {
+          allClusters.set(`${kind}:${cluster.clusterKey}`, {
+            ...cluster,
+            kind,
+            firstDepth: depth,
+            visibleAtDepths: [depth],
+          });
+        } else {
+          allClusters.get(`${kind}:${cluster.clusterKey}`).visibleAtDepths.push(depth);
+        }
+      }
+    }
+  }
+
+  return {
+    clustersByDepth,
+    allClusters: [...allClusters.values()],
+  };
+}
+
+/**
+ * Load reviewer decisions from the fixture file.
+ * Returns an empty object if the file does not exist.
+ */
+export function loadStemReviewDecisions() {
+  const decisionPath = fileURLToPath(new URL(
+    '../tests/fixtures/punctuation-duplicate-stem-decisions.json',
+    import.meta.url,
+  ));
+  try {
+    return JSON.parse(readFileSync(decisionPath, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Validate stem/model clusters against reviewer decisions.
+ * Returns { ok, unreviewed } where unreviewed contains cluster keys needing a decision.
+ */
+export function validateStemReviewDecisions({ clusters, decisions, requestedDepth }) {
+  const VALID_DECISIONS = new Set([
+    'acceptable-intentional-overlap',
+    'needs-rewrite',
+    'acceptable-at-depth-4',
+    'acceptable-at-depth-6',
+    'acceptable-at-depth-8',
+  ]);
+  const unreviewed = [];
+  for (const cluster of clusters) {
+    // Only gate on clusters visible at or below the requested depth
+    const isVisibleAtRequestedDepth = cluster.visibleAtDepths.some((d) => d <= requestedDepth);
+    if (!isVisibleAtRequestedDepth) continue;
+    const decision = decisions[cluster.clusterKey];
+    if (!decision || !VALID_DECISIONS.has(decision)) {
+      unreviewed.push(cluster.clusterKey);
+    }
+  }
+  return { ok: unreviewed.length === 0, unreviewed };
+}
+
 function isDslBackedFamily(familyId) {
   const templates = GENERATED_TEMPLATE_BANK[familyId];
   if (!templates || !templates.length) return false;
@@ -472,6 +592,8 @@ export function buildReviewerReport({
   generatedItems = [],
   capacityDepth = 8,
   requireAllDsl = false,
+  requireStemReview = false,
+  requestedDepth = capacityDepth,
 }) {
   const findings = [];
 
@@ -572,6 +694,22 @@ export function buildReviewerReport({
     .filter((familyId) => !isDslBackedFamily(familyId))
     .sort();
 
+  // 12. Duplicate stem/model clusters (mode-scoped, depth-gated)
+  const stemModelClusterData = buildStemModelClusters({
+    manifest,
+    seed: audit.seed || manifest.releaseId || 'punctuation-audit',
+    depths: [4, 6, 8],
+  });
+  const stemModelClusters = stemModelClusterData.allClusters;
+  const stemModelDecisions = loadStemReviewDecisions();
+  const stemReviewValidation = requireStemReview
+    ? validateStemReviewDecisions({
+        clusters: stemModelClusters,
+        decisions: stemModelDecisions,
+        requestedDepth,
+      })
+    : { ok: true, unreviewed: [] };
+
   // ─── Severity-classified findings ───────────────────────────────────────────
 
   // Section 2: Duplicate variant signatures → Fail
@@ -671,6 +809,16 @@ export function buildReviewerReport({
     ));
   }
 
+  // Unreviewed stem/model clusters at requested depth → Fail (only when --require-stem-review)
+  if (requireStemReview && !stemReviewValidation.ok) {
+    for (const clusterKey of stemReviewValidation.unreviewed) {
+      findings.push(finding('Fail', 'unreviewed_stem_model_cluster',
+        `Unreviewed duplicate stem/model cluster at depth ${requestedDepth}: "${clusterKey}"`,
+        { detail: { clusterKey, requestedDepth } },
+      ));
+    }
+  }
+
   // Coverage signals → Info
   const dslFamilyCount = Object.keys(GENERATED_TEMPLATE_BANK).filter(isDslBackedFamily).length;
   const totalFamilyCount = Object.keys(GENERATED_TEMPLATE_BANK).length;
@@ -684,6 +832,12 @@ export function buildReviewerReport({
   findings.push(finding('Info', 'capacity_headroom',
     `Total spare capacity headroom across all families: ${totalSpare}`,
     { detail: { totalSpare, capacityDepth } },
+  ));
+
+  // Stem/model cluster summary → Info
+  findings.push(finding('Info', 'stem_model_cluster_summary',
+    `Duplicate stem/model clusters (mode-scoped): ${stemModelClusters.length} total`,
+    { detail: { totalClusters: stemModelClusters.length, reviewedCount: stemModelClusters.length - stemReviewValidation.unreviewed.length } },
   ));
 
   // ─── Summary ────────────────────────────────────────────────────────────────
@@ -747,6 +901,8 @@ export function buildReviewerReport({
     findings,
     duplicateStems,
     duplicateModels,
+    stemModelClusters,
+    stemReviewValidation,
     perFamilyCapacity,
     perSkillModes,
     perSkillValidatorCoverage,
@@ -880,6 +1036,33 @@ export function formatReviewerReport(report) {
   }
   lines.push('');
 
+  // Section 12: Duplicate Stem/Model Clusters (mode-scoped, depth-gated)
+  lines.push('12. Duplicate Stem/Model Clusters (mode-scoped):');
+  if (!report.stemModelClusters || report.stemModelClusters.length === 0) {
+    lines.push(`   0 clusters — no mode-scoped duplicate stems or models detected.`);
+  } else {
+    lines.push(`   ${report.stemModelClusters.length} cluster(s) detected:`);
+    for (const cluster of report.stemModelClusters) {
+      const textPreview = cluster.normalisedText.length > 80
+        ? `${cluster.normalisedText.slice(0, 80)}...`
+        : cluster.normalisedText;
+      const depthFlags = [4, 6, 8].map((d) => {
+        const visible = cluster.visibleAtDepths.includes(d);
+        return `depth-${d}: ${visible ? 'yes' : 'no'}`;
+      }).join(', ');
+      lines.push(`   - [${cluster.kind}] "${textPreview}" (mode=${cluster.mode})`);
+      lines.push(`     families: ${cluster.familyIds.join(', ')}`);
+      lines.push(`     templates: ${cluster.templateIds.join(', ')}`);
+      lines.push(`     signatures: ${cluster.variantSignatures.length}`);
+      lines.push(`     ${depthFlags}`);
+      const decision = report.stemReviewValidation
+        ? (loadStemReviewDecisions()[cluster.clusterKey] || '(unreviewed)')
+        : '(review not required)';
+      lines.push(`     decision: ${decision}`);
+    }
+  }
+  lines.push('');
+
   // Severity-classified findings summary
   lines.push('─── Findings ───────────────────────────────────────────────');
   lines.push('');
@@ -978,6 +1161,7 @@ function parseArgs(argv, { manifest = PUNCTUATION_CONTENT_MANIFEST } = {}) {
     strict: args.has('--strict'),
     reviewerReport: args.has('--reviewer-report'),
     requireAllDsl: args.has('--require-all-dsl'),
+    requireStemReview: args.has('--require-stem-review'),
     failOnDuplicateGeneratedSignatures: args.has('--fail-on-duplicate-generated-signatures')
       || args.has('--fail-on-duplicate-generated-content'),
     failOnDuplicateGeneratedContent: args.has('--fail-on-duplicate-generated-content'),
@@ -1080,11 +1264,16 @@ async function main() {
       generatedItems,
       capacityDepth: 8,
       requireAllDsl: args.requireAllDsl,
+      requireStemReview: args.requireStemReview,
+      requestedDepth: args.generatedPerFamily,
     });
     if (args.json) {
       process.stdout.write(`${JSON.stringify({ reviewerReport: report }, null, 2)}\n`);
     } else {
       process.stdout.write(formatReviewerReport(report));
+    }
+    if (args.requireStemReview && !report.stemReviewValidation.ok) {
+      process.exitCode = 1;
     }
   }
 }

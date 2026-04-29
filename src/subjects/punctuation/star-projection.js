@@ -578,12 +578,25 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnitEntries, monst
   // ---------------------------------------------------------------------------
   const facetQualifyingEvidence = new Map(); // facetKey -> count of deduped evidences
 
+  // U6: Track facets that had ANY correct attempt (including supported ones).
+  // This distinguishes "facet has no attempts" (backwards-compat: still counts)
+  // from "facet has only supported/duplicate attempts" (must NOT count).
+  const facetsWithAnyCorrectAttempt = new Set();
+
   // Per-facet dedup tracking.
   const signaturePerFacet = new Map(); // facetKey -> Set<signature>
   const templatePerFacet = new Map();  // facetKey -> Set<templateId>
 
   for (const attempt of (monsterAttempts || [])) {
     if (!attempt.correct) continue;
+
+    // U6: Record that this facet had a correct attempt (even if supported).
+    for (const skillId of attempt.skillIds) {
+      const skillCluster = SKILL_TO_CLUSTER.get(skillId);
+      if (!skillCluster || !monsterClusterIds.has(skillCluster)) continue;
+      facetsWithAnyCorrectAttempt.add(`${skillId}::${attempt.itemMode || ''}`);
+    }
+
     if (attempt.supported) continue; // Rule 1: supported excluded
 
     for (const skillId of attempt.skillIds) {
@@ -637,14 +650,16 @@ function computeMasteryStars(monsterClusterIds, facets, rewardUnitEntries, monst
     }
     if (snap.secure) {
       // QG-P4-U5: Only count facet as secure evidence if it has qualifying
-      // (deduped, non-supported) attempt evidence. Facets with no attempts
-      // in the current attempt set still count (backwards compatibility for
-      // imported/migrated state).
+      // (deduped, non-supported) attempt evidence. Facets with no correct
+      // attempts in the current attempt set still count (backwards compatibility
+      // for imported/migrated state).
+      // U6: Use facetsWithAnyCorrectAttempt to distinguish "no attempts at all"
+      // from "has attempts but all supported/duplicated".
       const facetKey = `${skillId}::${itemMode}`;
-      const hasAttemptEvidence = facetQualifyingEvidence.has(facetKey);
+      const hasAnyCorrectAttempt = facetsWithAnyCorrectAttempt.has(facetKey);
       const evidenceCount = facetQualifyingEvidence.get(facetKey) || 0;
-      if (hasAttemptEvidence && evidenceCount === 0) {
-        // Facet has attempts but all are duplicated/supported — skip.
+      if (hasAnyCorrectAttempt && evidenceCount === 0) {
+        // Facet has correct attempts but all are supported/duplicated — skip.
       } else {
         facetSecureCount += 1;
         if (snap.lapses === 0) {
