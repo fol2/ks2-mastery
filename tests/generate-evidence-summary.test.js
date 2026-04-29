@@ -197,9 +197,12 @@ test('classifyTier prefers declared tier metadata over filename fallback', () =>
     classifyTier('operator-note.json', { tier: { tier: '30-learner-beta-certified' } }),
     'certified_30_learner_beta',
   );
+  // U1 (P7): preflight files ALWAYS classify as preflight_only regardless of
+  // filename-embedded tier hints — prevents accidental displacement of real
+  // certification evidence.
   assert.equal(
     classifyTier('60-learner-stretch-preflight-20260428.json', {}),
-    'certified_60_learner_stretch',
+    'preflight_only',
   );
 });
 
@@ -281,7 +284,8 @@ test('buildEvidenceSummary reports 60-learner preflight setup blocker as non-cer
     },
   ], { generatedAt: '2026-04-28T22:00:00.000Z' });
 
-  const metric = summary.metrics.certified_60_learner_stretch;
+  // U1 (P7): preflight filenames always classify under preflight_only tier
+  const metric = summary.metrics.preflight_only;
   assert.equal(metric.status, 'non_certifying');
   assert.equal(metric.certifying, false);
   assert.equal(metric.evidenceKind, 'preflight');
@@ -328,7 +332,10 @@ test('buildEvidenceSummary reports preflight that reaches load but violates thre
     },
   ], { generatedAt: '2026-04-28T23:40:00.000Z' });
 
-  const metric = summary.metrics.certified_60_learner_stretch;
+  // U1 (P7): preflight filenames classify under preflight_only tier.
+  // Threshold violations still cause 'failed' status (checked before
+  // evidenceKind in deriveStatus).
+  const metric = summary.metrics.preflight_only;
   assert.equal(metric.status, 'failed');
   assert.equal(metric.certifying, false);
   assert.equal(metric.evidenceKind, 'preflight');
@@ -532,7 +539,9 @@ test('buildEvidenceSummary keeps the latest same-day phase evidence per tier', (
     },
   ], { generatedAt: '2026-04-28T22:00:00.000Z' });
 
-  const metric = summary.metrics.certified_60_learner_stretch;
+  // U1 (P7): preflight filenames classify under preflight_only tier;
+  // the P5 file wins as newer (higher phaseRank).
+  const metric = summary.metrics.preflight_only;
   assert.equal(metric.fileName, '60-learner-stretch-preflight-20260428-p5.json');
   assert.equal(metric.failureReason, 'session-manifest-preparation-rate-limited');
 });

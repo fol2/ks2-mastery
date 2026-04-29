@@ -123,10 +123,11 @@ describe('Hero P5 — structural boundaries', () => {
       // No migrations directory — that is acceptable
       files = [];
     }
-    // The highest known pre-P5 migration is 0013. Anything above means new tables were added.
+    // The highest known pre-P5 migration is 0015 (Admin Console P7 incidents).
+    // Anything above means Hero Camp specifically added new tables.
     const p5Migrations = files.filter(f => {
       const match = f.match(/^(\d+)/);
-      return match && parseInt(match[1], 10) > 13;
+      return match && parseInt(match[1], 10) > 15;
     });
     assert.equal(p5Migrations.length, 0, `P5 added new migrations: ${p5Migrations.join(', ')}`);
   });

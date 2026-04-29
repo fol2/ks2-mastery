@@ -140,6 +140,9 @@ export const CLASSIFICATION = Object.freeze({
   'src/surfaces/hubs/MonsterEffectBindingsPanel.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/MonsterEffectCatalogPanel.jsx': 'shared-pattern-available',
   'src/surfaces/hubs/MonsterEffectCelebrationPanel.jsx': 'shared-pattern-available',
+  'src/surfaces/hubs/AdminIncidentPanel.jsx': 'dynamic-content-driven',
+  'src/surfaces/hubs/AdminProductionEvidencePanel.jsx': 'dynamic-content-driven',
+  'src/surfaces/hubs/AdminBusinessSection.jsx': 'dynamic-content-driven',
   'src/surfaces/hubs/MonsterVisualConfigPanel.jsx': 'dynamic-content-driven',
   'src/surfaces/hubs/MonsterVisualPreviewGrid.jsx': 'dynamic-content-driven',
 
@@ -178,6 +181,9 @@ export const CLASSIFICATION = Object.freeze({
   'src/subjects/punctuation/components/PunctuationMapScene.jsx': 'dynamic-content-driven',
   'src/subjects/punctuation/components/PunctuationSessionScene.jsx': 'dynamic-content-driven',
   'src/subjects/punctuation/components/PunctuationSummaryScene.jsx': 'dynamic-content-driven',
+
+  // Platform UI
+  'src/platform/ui/LengthPicker.jsx': 'shared-pattern-available',
 
   // Platform game / render
   'src/platform/game/render/BaseSprite.jsx': 'dynamic-content-driven',
