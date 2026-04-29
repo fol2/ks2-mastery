@@ -49,6 +49,7 @@ const ITEM_MODE_LABELS = Object.freeze({
   combine: 'Sentence combining',
   paragraph: 'Paragraph repair',
 });
+const MISCONCEPTION_RETRY_NOTE = 'Here is a similar question to help you practise the same skill.';
 const SESSION_MODE_LABELS = Object.freeze({
   smart: 'Smart review',
   guided: 'Guided learn',
@@ -384,6 +385,7 @@ function normaliseState(value) {
     feedback: normalisePunctuationFeedback(raw.feedback),
     summary: normalisePunctuationSummary(raw.summary),
     error: typeof raw.error === 'string' ? raw.error : '',
+    itemNote: typeof raw.itemNote === 'string' ? raw.itemNote : '',
     availability: isPlainObject(raw.availability)
       ? {
           // Accepted statuses: 'ready' (default), 'degraded' (runtime still
@@ -1207,6 +1209,7 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
       ? [...prevSignatures, itemSignature].slice(-20)
       : prevSignatures,
   };
+  const isMisconceptionRetry = (selection.reason || 'fallback') === 'misconception-retry';
   return {
     version: PUNCTUATION_SERVICE_STATE_VERSION,
     phase: 'active-item',
@@ -1214,6 +1217,7 @@ function nextActiveState({ learnerId, session, data, indexes, prefs, now, random
     feedback: null,
     summary: null,
     error: '',
+    itemNote: isMisconceptionRetry ? MISCONCEPTION_RETRY_NOTE : '',
     availability: { status: 'ready', code: null, message: '' },
     learnerId,
   };
