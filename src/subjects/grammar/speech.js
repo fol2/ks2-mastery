@@ -52,14 +52,28 @@ function inputSpecSpeechParts(inputSpec = {}) {
   }
 
   if (inputSpec.type === 'table_choice') {
-    const rows = (Array.isArray(inputSpec.rows) ? inputSpec.rows : [])
-      .map((row) => cleanSpeechText(row?.label, 180))
-      .filter(Boolean);
-    const columns = (Array.isArray(inputSpec.columns) ? inputSpec.columns : [])
-      .map((column) => cleanSpeechText(column, 80))
-      .filter(Boolean);
-    if (rows.length) parts.push(`Rows: ${rows.join('. ')}`);
-    if (columns.length) parts.push(`Choices: ${columns.join(', ')}`);
+    const rows = Array.isArray(inputSpec.rows) ? inputSpec.rows : [];
+    const hasRowOptions = rows.some((row) => Array.isArray(row?.options) && row.options.length > 0);
+
+    if (hasRowOptions) {
+      for (const row of rows) {
+        const label = cleanSpeechText(row?.label, 180);
+        const opts = (Array.isArray(row?.options) ? row.options : [])
+          .map(optionLabel)
+          .filter(Boolean);
+        if (label && opts.length) parts.push(`Row ${label}: ${opts.join(', ')}`);
+        else if (label) parts.push(`Row ${label}`);
+      }
+    } else {
+      const rowLabels = rows
+        .map((row) => cleanSpeechText(row?.label, 180))
+        .filter(Boolean);
+      const columns = (Array.isArray(inputSpec.columns) ? inputSpec.columns : [])
+        .map((column) => cleanSpeechText(column, 80))
+        .filter(Boolean);
+      if (rowLabels.length) parts.push(`Rows: ${rowLabels.join('. ')}`);
+      if (columns.length) parts.push(`Choices: ${columns.join(', ')}`);
+    }
     return parts;
   }
 
@@ -133,10 +147,22 @@ export function buildGrammarSpeechText(grammar = {}) {
   const miniItem = session.type === 'mini-set' ? currentMiniTestItem(session) : null;
   const item = miniItem || session.currentItem || {};
   const parts = [];
-  pushText(parts, item.templateLabel, 180);
-  pushText(parts, item.promptText, 520);
-  pushText(parts, item.checkLine, 360);
-  parts.push(...inputSpecSpeechParts(item.inputSpec || {}));
+
+  const readAloud = typeof item.readAloudText === 'string' ? item.readAloudText.trim() : '';
+  const screenReader = typeof item.screenReaderPromptText === 'string' ? item.screenReaderPromptText.trim() : '';
+
+  if (readAloud) {
+    pushText(parts, readAloud, 720);
+    parts.push(...inputSpecSpeechParts(item.inputSpec || {}));
+  } else if (screenReader) {
+    pushText(parts, screenReader, 720);
+    parts.push(...inputSpecSpeechParts(item.inputSpec || {}));
+  } else {
+    pushText(parts, item.templateLabel, 180);
+    pushText(parts, item.promptText, 520);
+    pushText(parts, item.checkLine, 360);
+    parts.push(...inputSpecSpeechParts(item.inputSpec || {}));
+  }
 
   if (session.type !== 'mini-set') {
     pushSupportGuidance(parts, session.supportGuidance);
