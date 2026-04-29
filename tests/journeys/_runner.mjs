@@ -51,6 +51,8 @@ const JOURNEYS = [
   { name: 'map-guided-skill', module: './map-guided-skill.mjs' },
   { name: 'summary-back-while-pending', module: './summary-back-while-pending.mjs' },
   { name: 'reward-parity-visual', module: './reward-parity-visual.mjs' },
+  { name: 'hero-pA1-full-path', module: './hero-pA1-full-path.mjs' },
+  { name: 'hero-pA1-rollback-safety', module: './hero-pA1-rollback-safety.mjs' },
 ];
 
 function selectJourneys(argv) {
