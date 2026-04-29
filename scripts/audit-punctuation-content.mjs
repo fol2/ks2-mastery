@@ -423,6 +423,12 @@ export function formatPunctuationContentAudit(audit) {
 
 // ─── Reviewer report helpers ────────────────────────────────────────────────
 
+/** @typedef {'Fail' | 'Warning' | 'Info'} Severity */
+
+function finding(severity, code, message, detail = {}) {
+  return { severity, code, message, ...detail };
+}
+
 function groupByNormalisedText(items, textFn) {
   const groups = new Map();
   for (const item of items) {
@@ -443,12 +449,32 @@ function isDslBackedFamily(familyId) {
   return templates.some((t) => isPlainObject(t.tests));
 }
 
+/** Check if generated items leak validator/rubric into learner-visible fields */
+function redactionRiskFindings(generatedItems) {
+  const LEARNER_VISIBLE_FIELDS = ['stem', 'prompt', 'explanation', 'options'];
+  const risks = [];
+  for (const item of generatedItems) {
+    for (const field of LEARNER_VISIBLE_FIELDS) {
+      const value = item[field];
+      if (!value) continue;
+      const text = Array.isArray(value) ? value.join(' ') : String(value);
+      if (/\bvalidator\b/i.test(text) || /\brubric\b/i.test(text)) {
+        risks.push({ itemId: item.id, field, snippet: text.slice(0, 80) });
+      }
+    }
+  }
+  return risks;
+}
+
 export function buildReviewerReport({
   audit,
   manifest = PUNCTUATION_CONTENT_MANIFEST,
   generatedItems = [],
   capacityDepth = 8,
+  requireAllDsl = false,
 }) {
+  const findings = [];
+
   // 1. Top duplicate generated stems
   const duplicateStems = groupByNormalisedText(generatedItems, (item) => item.stem).slice(0, 10);
 
@@ -546,7 +572,179 @@ export function buildReviewerReport({
     .filter((familyId) => !isDslBackedFamily(familyId))
     .sort();
 
+  // ─── Severity-classified findings ───────────────────────────────────────────
+
+  // Section 2: Duplicate variant signatures → Fail
+  const allSignatures = generatedItems.map((item) => item.variantSignature).filter(Boolean);
+  const signatureGroups = groupByNormalisedText(
+    generatedItems.filter((item) => item.variantSignature),
+    (item) => item.variantSignature,
+  );
+  for (const group of signatureGroups) {
+    findings.push(finding('Fail', 'duplicate_variant_signature',
+      `Duplicate variant signature: "${group.key}" (${group.count} items)`,
+      { detail: { signature: group.key, ids: group.ids } },
+    ));
+  }
+
+  // Model-answer marking failures → Fail
+  for (const f of modelFailures) {
+    findings.push(finding('Fail', 'model_answer_fails_marking',
+      `Model answer fails marking: ${f.id} (${f.familyId}/${f.templateId})`,
+      { detail: { id: f.id, familyId: f.familyId, templateId: f.templateId } },
+    ));
+  }
+
+  // Missing validator/rubric (non-choose free-text skills with zero validators) → Fail
+  for (const row of perSkillValidatorCoverage) {
+    if (!row.hasValidators && row.totalRuntimeItems > 0) {
+      const skillRow = audit.bySkill.find((s) => s.skillId === row.skillId);
+      const hasNonChooseItems = skillRow && (skillRow.runtimeItemCount - skillRow.choiceItemCount) > 0;
+      if (hasNonChooseItems) {
+        findings.push(finding('Fail', 'missing_validator_rubric',
+          `Skill "${row.skillId}" has ${row.totalRuntimeItems} runtime items but 0 validator/rubric coverage`,
+          { detail: { skillId: row.skillId } },
+        ));
+      }
+    }
+  }
+
+  // Missing golden tests for DSL template → Fail
+  for (const entry of templatesMissingTests) {
+    findings.push(finding('Fail', 'missing_golden_tests',
+      `DSL template missing golden tests: ${entry.familyId}[${entry.templateIndex}]`,
+      { detail: { familyId: entry.familyId, templateIndex: entry.templateIndex } },
+    ));
+  }
+
+  // Duplicate stems → Warning
+  for (const group of duplicateStems) {
+    findings.push(finding('Warning', 'duplicate_stem',
+      `Duplicate stem: "${group.key}" (${group.count} items)`,
+      { detail: { stem: group.key, ids: group.ids } },
+    ));
+  }
+
+  // Duplicate models → Warning
+  for (const group of duplicateModels) {
+    findings.push(finding('Warning', 'duplicate_model',
+      `Duplicate model: "${group.key}" (${group.count} items)`,
+      { detail: { model: group.key, ids: group.ids } },
+    ));
+  }
+
+  // Thin mode coverage (skill with only 1 mode) → Warning
+  for (const row of perSkillModes) {
+    if (row.modes.length === 1) {
+      findings.push(finding('Warning', 'thin_mode_coverage',
+        `Skill "${row.skillId}" has only 1 mode: ${row.modes[0]}`,
+        { detail: { skillId: row.skillId, modes: row.modes } },
+      ));
+    }
+  }
+
+  // Low capacity depth (spare = 0) → Warning
+  for (const row of perFamilyCapacity) {
+    if (row.spareCapacity === 0 && row.capacitySignatures > 0) {
+      findings.push(finding('Warning', 'low_capacity_depth',
+        `Family "${row.familyId}" has zero spare capacity at depth ${capacityDepth}`,
+        { detail: { familyId: row.familyId, productionSignatures: row.productionSignatures, capacitySignatures: row.capacitySignatures } },
+      ));
+    }
+  }
+
+  // Legacy non-DSL families → Warning (or Fail with --require-all-dsl)
+  const legacySeverity = requireAllDsl ? 'Fail' : 'Warning';
+  for (const familyId of legacyFamilies) {
+    findings.push(finding(legacySeverity, 'legacy_non_dsl_family',
+      `Family "${familyId}" uses legacy non-DSL templates`,
+      { detail: { familyId } },
+    ));
+  }
+
+  // Redaction risk checks (Section 10) → Fail
+  const redactionRisks = redactionRiskFindings(generatedItems);
+  for (const risk of redactionRisks) {
+    findings.push(finding('Fail', 'read_model_forbidden_field',
+      `Generated item "${risk.itemId}" exposes validator/rubric in learner-visible field "${risk.field}"`,
+      { detail: risk },
+    ));
+  }
+
+  // Coverage signals → Info
+  const dslFamilyCount = Object.keys(GENERATED_TEMPLATE_BANK).filter(isDslBackedFamily).length;
+  const totalFamilyCount = Object.keys(GENERATED_TEMPLATE_BANK).length;
+  findings.push(finding('Info', 'dsl_coverage_ratio',
+    `DSL coverage: ${dslFamilyCount}/${totalFamilyCount} families are DSL-backed`,
+    { detail: { dslFamilyCount, totalFamilyCount, ratio: totalFamilyCount > 0 ? dslFamilyCount / totalFamilyCount : 0 } },
+  ));
+
+  // Capacity headroom → Info
+  const totalSpare = perFamilyCapacity.reduce((sum, row) => sum + row.spareCapacity, 0);
+  findings.push(finding('Info', 'capacity_headroom',
+    `Total spare capacity headroom across all families: ${totalSpare}`,
+    { detail: { totalSpare, capacityDepth } },
+  ));
+
+  // ─── Summary ────────────────────────────────────────────────────────────────
+
+  const severityCounts = { fail: 0, warning: 0, info: 0 };
+  for (const f of findings) {
+    if (f.severity === 'Fail') severityCounts.fail += 1;
+    else if (f.severity === 'Warning') severityCounts.warning += 1;
+    else severityCounts.info += 1;
+  }
+
+  const fixedItems = audit.summary.fixedItemCount;
+  const generatedItemCount = audit.summary.generatedItemCount;
+  const totalItems = audit.summary.runtimeItemCount;
+  const releaseId = manifest.releaseId || null;
+  const publishedRewardUnits = audit.summary.publishedRewardUnitCount;
+  const dslCoverage = totalFamilyCount > 0 ? dslFamilyCount / totalFamilyCount : 0;
+
+  // Golden test coverage per DSL family/template (Section 8)
+  const goldenTestCoverage = [];
+  for (const [familyId, templates] of Object.entries(GENERATED_TEMPLATE_BANK)) {
+    if (!isDslBackedFamily(familyId)) continue;
+    const total = templates.length;
+    const covered = templates.filter((t) => isPlainObject(t.tests)).length;
+    goldenTestCoverage.push({ familyId, covered, total, ratio: total > 0 ? covered / total : 0 });
+  }
+
+  // Recommended reviewer actions (Section 11)
+  const recommendedActions = [];
+  if (severityCounts.fail > 0) {
+    recommendedActions.push(`Fix ${severityCounts.fail} Fail-severity finding(s) before merging.`);
+  }
+  if (legacyFamilies.length > 0) {
+    recommendedActions.push(`Convert ${legacyFamilies.length} legacy families to DSL-backed templates.`);
+  }
+  if (templatesMissingTests.length > 0) {
+    recommendedActions.push(`Add golden tests to ${templatesMissingTests.length} DSL template(s) missing coverage.`);
+  }
+  if (modelFailures.length > 0) {
+    recommendedActions.push(`Investigate ${modelFailures.length} model-answer marking failure(s).`);
+  }
+  if (redactionRisks.length > 0) {
+    recommendedActions.push(`Review ${redactionRisks.length} generated item(s) leaking validator/rubric into learner-visible fields.`);
+  }
+  if (severityCounts.fail === 0 && severityCounts.warning === 0) {
+    recommendedActions.push('All clear — no actionable findings.');
+  }
+
+  const summary = {
+    fixedItems,
+    generatedItems: generatedItemCount,
+    totalItems,
+    releaseId,
+    rewardUnits: publishedRewardUnits,
+    dslCoverage,
+    severityCounts,
+  };
+
   return {
+    summary,
+    findings,
     duplicateStems,
     duplicateModels,
     perFamilyCapacity,
@@ -558,9 +756,14 @@ export function buildReviewerReport({
     templatesMissingTests,
     templatesNoAlternateTest,
     legacyFamilies,
+    goldenTestCoverage,
+    redactionRisks,
+    recommendedActions,
     capacityDepth,
   };
 }
+
+const SEVERITY_MARKERS = { Fail: '✗ Fail', Warning: '⚠ Warning', Info: 'ℹ Info' };
 
 export function formatReviewerReport(report) {
   const lines = [
@@ -571,105 +774,120 @@ export function formatReviewerReport(report) {
     '',
   ];
 
-  // 1. Top duplicate stems
-  lines.push('1. Top duplicate generated stems:');
+  // Section 1: Runtime summary
+  lines.push('1. Runtime summary:');
+  lines.push(`   Fixed items: ${report.summary.fixedItems}`);
+  lines.push(`   Generated items: ${report.summary.generatedItems}`);
+  lines.push(`   Total runtime items: ${report.summary.totalItems}`);
+  lines.push(`   Reward units: ${report.summary.rewardUnits}`);
+  lines.push(`   Release ID: ${report.summary.releaseId || '(none)'}`);
+  lines.push(`   Severity: ${report.summary.severityCounts.fail} Fail, ${report.summary.severityCounts.warning} Warning, ${report.summary.severityCounts.info} Info`);
+  lines.push('');
+
+  // Section 2: DSL coverage ratio
+  const dslInfo = report.findings.find((f) => f.code === 'dsl_coverage_ratio');
+  lines.push('2. DSL coverage ratio:');
+  if (dslInfo) {
+    lines.push(`   ${dslInfo.detail.dslFamilyCount}/${dslInfo.detail.totalFamilyCount} families DSL-backed (${(report.summary.dslCoverage * 100).toFixed(0)}%)`);
+  }
+  lines.push('');
+
+  // Section 3: Top duplicate generated stems
+  lines.push('3. Top duplicate generated stems:');
   if (report.duplicateStems.length === 0) {
     lines.push('   (none)');
   } else {
     for (const entry of report.duplicateStems) {
-      lines.push(`   [${entry.count}x] "${entry.key}" — ${entry.ids.join(', ')}`);
+      lines.push(`   ${SEVERITY_MARKERS.Warning} [${entry.count}x] "${entry.key}" — ${entry.ids.join(', ')}`);
     }
   }
   lines.push('');
 
-  // 2. Top duplicate models
-  lines.push('2. Top duplicate generated models:');
+  // Section 4: Top duplicate generated models
+  lines.push('4. Top duplicate generated models:');
   if (report.duplicateModels.length === 0) {
     lines.push('   (none)');
   } else {
     for (const entry of report.duplicateModels) {
-      lines.push(`   [${entry.count}x] "${entry.key}" — ${entry.ids.join(', ')}`);
+      lines.push(`   ${SEVERITY_MARKERS.Warning} [${entry.count}x] "${entry.key}" — ${entry.ids.join(', ')}`);
     }
   }
   lines.push('');
 
-  // 3. Per-family spare capacity
-  lines.push(`3. Per-family spare capacity at generatedPerFamily = ${report.capacityDepth}:`);
+  // Section 5: Per-family spare capacity
+  lines.push(`5. Per-family spare capacity at generatedPerFamily = ${report.capacityDepth}:`);
   for (const row of report.perFamilyCapacity) {
     const tag = row.isDsl ? '' : ' [legacy]';
     lines.push(`   - ${row.familyId}: production=${row.productionSignatures}, capacity=${row.capacitySignatures}, spare=${row.spareCapacity}${tag}`);
   }
   lines.push('');
 
-  // 4. Per-skill mode coverage
-  lines.push('4. Per-skill mode coverage:');
+  // Section 6: Per-skill mode coverage
+  lines.push('6. Per-skill mode coverage:');
   for (const row of report.perSkillModes) {
     lines.push(`   - ${row.skillId}: ${row.modes.join(', ') || '(none)'}`);
   }
   lines.push('');
 
-  // 5. Per-skill validator/rubric coverage
-  lines.push('5. Per-skill validator/rubric coverage:');
+  // Section 7: Per-skill validator/rubric coverage
+  lines.push('7. Per-skill validator/rubric coverage:');
   for (const row of report.perSkillValidatorCoverage) {
     lines.push(`   - ${row.skillId}: ${row.validatorCoverageCount}/${row.totalRuntimeItems} items`);
   }
   lines.push('');
 
-  // 6. Per-family template count
-  lines.push('6. Per-family template count:');
-  for (const row of report.perFamilyTemplateCount) {
-    const tag = row.isDsl ? ' [DSL]' : ' [legacy]';
-    lines.push(`   - ${row.familyId}: ${row.templateCount}${tag}`);
+  // Section 8: Golden test coverage per DSL family/template
+  lines.push('8. Golden test coverage per DSL family:');
+  if (!report.goldenTestCoverage || report.goldenTestCoverage.length === 0) {
+    lines.push('   (none)');
+  } else {
+    for (const row of report.goldenTestCoverage) {
+      lines.push(`   - ${row.familyId}: ${row.covered}/${row.total} templates covered (${(row.ratio * 100).toFixed(0)}%)`);
+    }
   }
   lines.push('');
 
-  // 7. Per-family signature count
-  lines.push('7. Per-family signature count (production depth):');
-  for (const row of report.perFamilySignatureCount) {
-    lines.push(`   - ${row.familyId}: ${row.signatureCount}`);
-  }
-  lines.push('');
-
-  // 8. Generated model-answer marking failures
-  lines.push('8. Generated model-answer marking failures:');
+  // Section 9: Generated model-answer marking failures
+  lines.push('9. Generated model-answer marking failures:');
   if (report.modelFailures.length === 0) {
     lines.push('   (none)');
   } else {
     for (const f of report.modelFailures) {
-      lines.push(`   - ${f.id} (${f.familyId}/${f.templateId})`);
+      lines.push(`   ${SEVERITY_MARKERS.Fail} ${f.id} (${f.familyId}/${f.templateId})`);
     }
   }
   lines.push('');
 
-  // 9. Templates missing accept/reject tests
-  lines.push('9. Templates missing accept/reject tests:');
-  if (report.templatesMissingTests.length === 0) {
+  // Section 10: Metadata/redaction risk checks
+  lines.push('10. Metadata/redaction risk checks:');
+  if (!report.redactionRisks || report.redactionRisks.length === 0) {
     lines.push('   (none)');
   } else {
-    for (const entry of report.templatesMissingTests) {
-      lines.push(`   - ${entry.familyId} [template index ${entry.templateIndex}]`);
+    for (const risk of report.redactionRisks) {
+      lines.push(`   ${SEVERITY_MARKERS.Fail} ${risk.itemId} leaks in "${risk.field}"`);
     }
   }
   lines.push('');
 
-  // 10. Templates with no alternate-answer test
-  lines.push('10. Templates with no alternate-answer test (dash/apostrophe/speech):');
-  if (report.templatesNoAlternateTest.length === 0) {
+  // Section 11: Recommended reviewer actions
+  lines.push('11. Recommended reviewer actions:');
+  if (!report.recommendedActions || report.recommendedActions.length === 0) {
     lines.push('   (none)');
   } else {
-    for (const entry of report.templatesNoAlternateTest) {
-      lines.push(`   - ${entry.familyId} [template index ${entry.templateIndex}]: "${entry.model}"`);
+    for (const action of report.recommendedActions) {
+      lines.push(`   - ${action}`);
     }
   }
   lines.push('');
 
-  // 11. Legacy non-DSL families
-  lines.push('11. Families using legacy non-DSL templates:');
-  if (report.legacyFamilies.length === 0) {
-    lines.push('   (none)');
+  // Severity-classified findings summary
+  lines.push('─── Findings ───────────────────────────────────────────────');
+  lines.push('');
+  if (report.findings.length === 0) {
+    lines.push('   (no findings)');
   } else {
-    for (const familyId of report.legacyFamilies) {
-      lines.push(`   - ${familyId}`);
+    for (const f of report.findings) {
+      lines.push(`   ${SEVERITY_MARKERS[f.severity]} ${f.message}`);
     }
   }
   lines.push('');
@@ -759,6 +977,7 @@ function parseArgs(argv, { manifest = PUNCTUATION_CONTENT_MANIFEST } = {}) {
     json: args.has('--json'),
     strict: args.has('--strict'),
     reviewerReport: args.has('--reviewer-report'),
+    requireAllDsl: args.has('--require-all-dsl'),
     failOnDuplicateGeneratedSignatures: args.has('--fail-on-duplicate-generated-signatures')
       || args.has('--fail-on-duplicate-generated-content'),
     failOnDuplicateGeneratedContent: args.has('--fail-on-duplicate-generated-content'),
@@ -860,6 +1079,7 @@ async function main() {
       audit,
       generatedItems,
       capacityDepth: 8,
+      requireAllDsl: args.requireAllDsl,
     });
     if (args.json) {
       process.stdout.write(`${JSON.stringify({ reviewerReport: report }, null, 2)}\n`);
