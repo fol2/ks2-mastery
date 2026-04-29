@@ -28,6 +28,7 @@ export function buildHeroCampModel(readModel) {
     recentActions: camp.recentActions || [],
     lastAction: (camp.recentActions || []).slice(-1)[0] || null,
     hasAffordableAction: monsters.some(m => m.canAffordInvite || m.canAffordGrow),
+    empty: monsters.length === 0 || monsters.every(m => !m.owned),
     insufficientBalanceMessage: 'Save more Hero Coins by completing Hero Quests.',
   };
 }
@@ -43,6 +44,7 @@ function emptyCampModel() {
     recentActions: [],
     lastAction: null,
     hasAffordableAction: false,
+    empty: true,
     insufficientBalanceMessage: null,
   };
 }
