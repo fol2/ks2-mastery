@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U8).
  */
 
+const EXPLANATION = 'Commas separate each item in a list so they are easy to read one by one.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -17,6 +19,8 @@ const TEMPLATES = [
       opening: 'The tray held',
       items: ['shells', 'feathers', 'pebbles'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -29,6 +33,8 @@ const TEMPLATES = [
       opening: 'We collected',
       items: ['leaves', 'twigs', 'acorns'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -41,6 +47,8 @@ const TEMPLATES = [
       opening: 'The bag contained',
       items: ['chalk', 'string', 'tape'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -53,6 +61,8 @@ const TEMPLATES = [
       opening: 'Our lunch included',
       items: ['apples', 'sandwiches', 'juice'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -66,6 +76,8 @@ const TEMPLATES = [
       opening: 'The toolkit included',
       items: ['pliers', 'spanners', 'screws'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -78,6 +90,8 @@ const TEMPLATES = [
       opening: 'We spotted',
       items: ['foxes', 'rabbits', 'deer'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -90,6 +104,8 @@ const TEMPLATES = [
       opening: 'The menu offered',
       items: ['soup', 'salad', 'bread'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -102,6 +118,8 @@ const TEMPLATES = [
       opening: 'They planted',
       items: ['oaks', 'elms', 'birches'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -123,6 +141,7 @@ export const listCommasCombineDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

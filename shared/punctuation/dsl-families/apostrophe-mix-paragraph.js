@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U8).
  */
 
+const EXPLANATION = 'The apostrophe marks contractions where letters are missing and possession where something belongs to a noun.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -20,11 +22,14 @@ const TEMPLATES = [
         {
           type: 'requiresApostropheForms',
           tokens: ["won't", "children's", "teachers' notes"],
-          forbidden: ['wont', 'childrens', 'teachers notes'],
+          forbidden: ['wont', 'childrens', 'teachers notes'],    explanation: EXPLANATION,
+
           misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -40,11 +45,14 @@ const TEMPLATES = [
         {
           type: 'requiresApostropheForms',
           tokens: ["can't", "men's", "boys' jackets"],
-          forbidden: ['cant', 'mens', 'boys jackets'],
+          forbidden: ['cant', 'mens', 'boys jackets'],    explanation: EXPLANATION,
+
           misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -60,11 +68,14 @@ const TEMPLATES = [
         {
           type: 'requiresApostropheForms',
           tokens: ["they're", "captain's", "don't", "team's"],
-          forbidden: ['theyre', 'captains', 'dont', 'teams plan'],
+          forbidden: ['theyre', 'captains', 'dont', 'teams plan'],    explanation: EXPLANATION,
+
           misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -80,11 +91,14 @@ const TEMPLATES = [
         {
           type: 'requiresApostropheForms',
           tokens: ["won't", "girl's", "it's", "teacher's"],
-          forbidden: ['wont', 'girls pencil', 'its', 'teachers shelf'],
+          forbidden: ['wont', 'girls pencil', 'its', 'teachers shelf'],    explanation: EXPLANATION,
+
           misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -101,11 +115,14 @@ const TEMPLATES = [
         {
           type: 'requiresApostropheForms',
           tokens: ["doesn't", "driver's", "passengers' bags"],
-          forbidden: ['doesnt', 'drivers', 'passengers bags'],
+          forbidden: ['doesnt', 'drivers', 'passengers bags'],    explanation: EXPLANATION,
+
           misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -121,11 +138,14 @@ const TEMPLATES = [
         {
           type: 'requiresApostropheForms',
           tokens: ["haven't", "nurse's", "doctors' notes"],
-          forbidden: ['havent', 'nurses', 'doctors notes'],
+          forbidden: ['havent', 'nurses', 'doctors notes'],    explanation: EXPLANATION,
+
           misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -141,11 +161,14 @@ const TEMPLATES = [
         {
           type: 'requiresApostropheForms',
           tokens: ["shouldn't", "builder's", "plumber's"],
-          forbidden: ['shouldnt', 'builders tools', 'plumbers van'],
+          forbidden: ['shouldnt', 'builders tools', 'plumbers van'],    explanation: EXPLANATION,
+
           misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -161,11 +184,14 @@ const TEMPLATES = [
         {
           type: 'requiresApostropheForms',
           tokens: ["you're", "cat's", "kitten's", "isn't"],
-          forbidden: ['youre', 'cats bowl', 'kittens bed', 'isnt'],
+          forbidden: ['youre', 'cats bowl', 'kittens bed', 'isnt'],    explanation: EXPLANATION,
+
           misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -189,6 +215,7 @@ export const apostropheMixParagraphDsl = TEMPLATES.map((t, i) =>
       skillIds: t.skillIds,
       clusterId: t.clusterId,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

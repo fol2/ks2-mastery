@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U9).
  */
 
+const EXPLANATION = 'A comma separates the opening adverbial phrase from the main clause so the reader knows where the main idea begins.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -16,6 +18,8 @@ const TEMPLATES = [
       type: 'startsWithPhraseComma',
       phrase: 'After the storm',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -27,6 +31,8 @@ const TEMPLATES = [
       type: 'startsWithPhraseComma',
       phrase: 'Before sunrise',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -38,6 +44,8 @@ const TEMPLATES = [
       type: 'startsWithPhraseComma',
       phrase: 'During the concert',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -49,6 +57,8 @@ const TEMPLATES = [
       type: 'startsWithPhraseComma',
       phrase: 'At the edge of the field',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -61,6 +71,8 @@ const TEMPLATES = [
       type: 'startsWithPhraseComma',
       phrase: 'Without warning',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -72,6 +84,8 @@ const TEMPLATES = [
       type: 'startsWithPhraseComma',
       phrase: 'Behind the shed',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -83,6 +97,8 @@ const TEMPLATES = [
       type: 'startsWithPhraseComma',
       phrase: 'Throughout the afternoon',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
   },
@@ -94,6 +110,8 @@ const TEMPLATES = [
       type: 'startsWithPhraseComma',
       phrase: 'Near the old bridge',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
   },
@@ -115,6 +133,7 @@ export const frontedAdverbialFixDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

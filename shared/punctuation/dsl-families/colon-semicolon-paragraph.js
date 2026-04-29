@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U10).
  */
 
+const EXPLANATION = 'A colon introduces a list after a complete sentence, and a semicolon joins two closely related main clauses.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -21,18 +23,22 @@ const TEMPLATES = [
           type: 'requiresColonBeforeList',
           opening: 'We needed three tools',
           items: ['a lantern', 'a compass', 'a notebook'],
-          allowTrailingText: true,
+          allowTrailingText: true,    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
         },
         {
           type: 'requiresBoundaryBetweenClauses',
           mark: ';',
           left: 'The tide rose',
-          right: 'the group moved inland',
+          right: 'the group moved inland',    explanation: EXPLANATION,
+
           misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -49,18 +55,22 @@ const TEMPLATES = [
           type: 'requiresColonBeforeList',
           opening: 'The kit held three things',
           items: ['a torch', 'a rope', 'a map'],
-          allowTrailingText: true,
+          allowTrailingText: true,    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
         },
         {
           type: 'requiresBoundaryBetweenClauses',
           mark: ';',
           left: 'The rain stopped',
-          right: 'the match continued',
+          right: 'the match continued',    explanation: EXPLANATION,
+
           misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -77,18 +87,22 @@ const TEMPLATES = [
           type: 'requiresColonBeforeList',
           opening: 'The box contained three items',
           items: ['a scarf', 'a medal', 'a badge'],
-          allowTrailingText: true,
+          allowTrailingText: true,    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
         },
         {
           type: 'requiresBoundaryBetweenClauses',
           mark: ';',
           left: 'The door opened',
-          right: 'the crowd cheered',
+          right: 'the crowd cheered',    explanation: EXPLANATION,
+
           misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -105,18 +119,22 @@ const TEMPLATES = [
           type: 'requiresColonBeforeList',
           opening: 'Our display needed three labels',
           items: ['rivers', 'mountains', 'coasts'],
-          allowTrailingText: true,
+          allowTrailingText: true,    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
         },
         {
           type: 'requiresBoundaryBetweenClauses',
           mark: ';',
           left: 'The lights dimmed',
-          right: 'the film began',
+          right: 'the film began',    explanation: EXPLANATION,
+
           misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -134,18 +152,22 @@ const TEMPLATES = [
           type: 'requiresColonBeforeList',
           opening: 'The shed stored three items',
           items: ['a mower', 'a rake', 'a hose'],
-          allowTrailingText: true,
+          allowTrailingText: true,    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
         },
         {
           type: 'requiresBoundaryBetweenClauses',
           mark: ';',
           left: 'The gate creaked',
-          right: 'the dog barked',
+          right: 'the dog barked',    explanation: EXPLANATION,
+
           misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -162,18 +184,22 @@ const TEMPLATES = [
           type: 'requiresColonBeforeList',
           opening: 'We tried three flavours',
           items: ['mint', 'lemon', 'ginger'],
-          allowTrailingText: true,
+          allowTrailingText: true,    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
         },
         {
           type: 'requiresBoundaryBetweenClauses',
           mark: ';',
           left: 'The queue grew',
-          right: 'the server worked faster',
+          right: 'the server worked faster',    explanation: EXPLANATION,
+
           misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -190,18 +216,22 @@ const TEMPLATES = [
           type: 'requiresColonBeforeList',
           opening: 'The park offered three trails',
           items: ['woodland', 'riverside', 'hilltop'],
-          allowTrailingText: true,
+          allowTrailingText: true,    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
         },
         {
           type: 'requiresBoundaryBetweenClauses',
           mark: ';',
           left: 'The fog lifted',
-          right: 'the runners set off',
+          right: 'the runners set off',    explanation: EXPLANATION,
+
           misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -218,18 +248,22 @@ const TEMPLATES = [
           type: 'requiresColonBeforeList',
           opening: 'The basket held three fruits',
           items: ['apples', 'pears', 'plums'],
-          allowTrailingText: true,
+          allowTrailingText: true,    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing'],
         },
         {
           type: 'requiresBoundaryBetweenClauses',
           mark: ';',
           left: 'The whistle blew',
-          right: 'the players stopped',
+          right: 'the players stopped',    explanation: EXPLANATION,
+
           misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -253,6 +287,7 @@ export const colonSemicolonParagraphDsl = TEMPLATES.map((t, i) =>
       skillIds: t.skillIds,
       clusterId: t.clusterId,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

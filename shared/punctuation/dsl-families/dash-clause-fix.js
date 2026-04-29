@@ -4,12 +4,16 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * DSL definitions for gen_dash_clause_fix family.
  */
 
+const EXPLANATION = 'A dash separates two independent but related ideas, often adding surprise or contrast.';
+
 const TEMPLATES = [
   {
     prompt: 'Add a dash between the related clauses.',
     stem: 'The gate was stuck we found another path.',
     model: 'The gate was stuck – we found another path.',
     validator: { type: 'requiresBoundaryBetweenClauses', left: 'The gate was stuck', right: 'we found another path', mark: '-' },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -18,6 +22,8 @@ const TEMPLATES = [
     stem: 'The bell rang everyone hurried inside.',
     model: 'The bell rang – everyone hurried inside.',
     validator: { type: 'requiresBoundaryBetweenClauses', left: 'The bell rang', right: 'everyone hurried inside', mark: '-' },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -26,6 +32,8 @@ const TEMPLATES = [
     stem: 'The torch failed we used the lantern.',
     model: 'The torch failed – we used the lantern.',
     validator: { type: 'requiresBoundaryBetweenClauses', left: 'The torch failed', right: 'we used the lantern', mark: '-' },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -34,6 +42,8 @@ const TEMPLATES = [
     stem: 'The bridge was closed the buses turned back.',
     model: 'The bridge was closed – the buses turned back.',
     validator: { type: 'requiresBoundaryBetweenClauses', left: 'The bridge was closed', right: 'the buses turned back', mark: '-' },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -42,6 +52,8 @@ const TEMPLATES = [
     stem: 'The waves grew louder we stepped back.',
     model: 'The waves grew louder – we stepped back.',
     validator: { type: 'requiresBoundaryBetweenClauses', left: 'The waves grew louder', right: 'we stepped back', mark: '-' },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
   },
@@ -50,6 +62,8 @@ const TEMPLATES = [
     stem: 'The door opened nobody spoke.',
     model: 'The door opened – nobody spoke.',
     validator: { type: 'requiresBoundaryBetweenClauses', left: 'The door opened', right: 'nobody spoke', mark: '-' },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -58,6 +72,8 @@ const TEMPLATES = [
     stem: 'The signal vanished the team waited.',
     model: 'The signal vanished – the team waited.',
     validator: { type: 'requiresBoundaryBetweenClauses', left: 'The signal vanished', right: 'the team waited', mark: '-' },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['proofreading', 'transfer', 'misconception', 'negative_test'],
   },
@@ -66,6 +82,8 @@ const TEMPLATES = [
     stem: 'The path ended we climbed over the stile.',
     model: 'The path ended – we climbed over the stile.',
     validator: { type: 'requiresBoundaryBetweenClauses', left: 'The path ended', right: 'we climbed over the stile', mark: '-' },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
   },
@@ -87,6 +105,7 @@ export const dashClauseFixDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

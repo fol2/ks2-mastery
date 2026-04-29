@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U8).
  */
 
+const EXPLANATION = 'Inverted commas wrap the spoken words, and the end punctuation stays inside the closing speech mark.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -18,6 +20,8 @@ const TEMPLATES = [
       spokenWords: 'can we start now',
       requiredTerminal: '?',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -31,6 +35,8 @@ const TEMPLATES = [
       spokenWords: 'the bell is ringing',
       requiredTerminal: '.',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -44,6 +50,8 @@ const TEMPLATES = [
       spokenWords: 'keep the gate closed',
       requiredTerminal: '.',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -57,6 +65,8 @@ const TEMPLATES = [
       spokenWords: 'where did the map go',
       requiredTerminal: '?',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -71,6 +81,8 @@ const TEMPLATES = [
       spokenWords: 'watch out for the wave',
       requiredTerminal: '!',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -84,6 +96,8 @@ const TEMPLATES = [
       spokenWords: 'the path is clear',
       requiredTerminal: '.',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -97,6 +111,8 @@ const TEMPLATES = [
       spokenWords: 'is the door locked',
       requiredTerminal: '?',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
   },
@@ -110,6 +126,8 @@ const TEMPLATES = [
       spokenWords: 'stay behind the line',
       requiredTerminal: '.',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
   },
@@ -131,6 +149,7 @@ export const speechInsertDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       rubric: t.rubric,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

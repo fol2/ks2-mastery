@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U10).
  */
 
+const EXPLANATION = 'A colon introduces the list after a complete opening, and each bullet follows a consistent punctuation pattern.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -23,11 +25,14 @@ const TEMPLATES = [
         {
           type: 'requiresBulletStemAndItems',
           stem: 'Pack',
-          items: ['pencils', 'rulers', 'glue sticks'],
+          items: ['pencils', 'rulers', 'glue sticks'],    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -46,11 +51,14 @@ const TEMPLATES = [
         {
           type: 'requiresBulletStemAndItems',
           stem: 'Bring',
-          items: ['a coat', 'a torch', 'a notebook'],
+          items: ['a coat', 'a torch', 'a notebook'],    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -69,11 +77,14 @@ const TEMPLATES = [
         {
           type: 'requiresBulletStemAndItems',
           stem: 'Take',
-          items: ['water', 'snacks', 'a hat'],
+          items: ['water', 'snacks', 'a hat'],    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -92,11 +103,14 @@ const TEMPLATES = [
         {
           type: 'requiresBulletStemAndItems',
           stem: 'Check',
-          items: ['doors', 'windows', 'lights'],
+          items: ['doors', 'windows', 'lights'],    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -116,11 +130,14 @@ const TEMPLATES = [
         {
           type: 'requiresBulletStemAndItems',
           stem: 'Collect',
-          items: ['shells', 'feathers', 'pebbles'],
+          items: ['shells', 'feathers', 'pebbles'],    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -139,11 +156,14 @@ const TEMPLATES = [
         {
           type: 'requiresBulletStemAndItems',
           stem: 'Prepare',
-          items: ['flour', 'butter', 'sugar'],
+          items: ['flour', 'butter', 'sugar'],    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -162,11 +182,14 @@ const TEMPLATES = [
         {
           type: 'requiresBulletStemAndItems',
           stem: 'Remember',
-          items: ['keys', 'phone', 'wallet'],
+          items: ['keys', 'phone', 'wallet'],    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -185,11 +208,14 @@ const TEMPLATES = [
         {
           type: 'requiresBulletStemAndItems',
           stem: 'Buy',
-          items: ['milk', 'bread', 'eggs'],
+          items: ['milk', 'bread', 'eggs'],    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -214,6 +240,7 @@ export const bulletPointsParagraphDsl = TEMPLATES.map((t, i) =>
       skillIds: t.skillIds,
       clusterId: t.clusterId,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

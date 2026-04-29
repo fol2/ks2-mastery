@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U9).
  */
 
+const EXPLANATION = 'Parenthetical commas set off removable extra detail, and inverted commas wrap spoken words with their punctuation inside.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -21,17 +23,21 @@ const TEMPLATES = [
           type: 'requiresParentheticalPhrase',
           before: 'The harbour',
           phrase: 'an old fishing port',
-          after: 'was busy',
+          after: 'was busy',    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
         },
         {
           type: 'speechWithWords',
           words: 'the bell is ringing',
-          requiredTerminal: '.',
+          requiredTerminal: '.',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -48,17 +54,21 @@ const TEMPLATES = [
           type: 'requiresParentheticalPhrase',
           before: 'The tower',
           phrase: 'a useful lookout',
-          after: 'stood above the bay',
+          after: 'stood above the bay',    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
         },
         {
           type: 'speechWithWords',
           words: 'where are the boats',
-          requiredTerminal: '?',
+          requiredTerminal: '?',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -75,17 +85,21 @@ const TEMPLATES = [
           type: 'requiresParentheticalPhrase',
           before: 'The library',
           phrase: 'a quiet room',
-          after: 'closed early',
+          after: 'closed early',    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
         },
         {
           type: 'speechWithWords',
           words: 'we can come back tomorrow',
-          requiredTerminal: '.',
+          requiredTerminal: '.',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -102,17 +116,21 @@ const TEMPLATES = [
           type: 'requiresParentheticalPhrase',
           before: 'Mr Patel',
           phrase: 'our maths teacher',
-          after: 'smiled proudly',
+          after: 'smiled proudly',    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
         },
         {
           type: 'speechWithWords',
           words: 'did we win',
-          requiredTerminal: '?',
+          requiredTerminal: '?',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -130,17 +148,21 @@ const TEMPLATES = [
           type: 'requiresParentheticalPhrase',
           before: 'The bridge',
           phrase: 'a stone crossing',
-          after: 'swayed in the wind',
+          after: 'swayed in the wind',    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
         },
         {
           type: 'speechWithWords',
           words: 'hold on tight',
-          requiredTerminal: '!',
+          requiredTerminal: '!',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -157,17 +179,21 @@ const TEMPLATES = [
           type: 'requiresParentheticalPhrase',
           before: 'The canal',
           phrase: 'a narrow waterway',
-          after: 'ran beside the park',
+          after: 'ran beside the park',    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
         },
         {
           type: 'speechWithWords',
           words: 'the ducks are nesting',
-          requiredTerminal: '.',
+          requiredTerminal: '.',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -184,17 +210,21 @@ const TEMPLATES = [
           type: 'requiresParentheticalPhrase',
           before: 'Mrs Khan',
           phrase: 'our head teacher',
-          after: 'opened the fete',
+          after: 'opened the fete',    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
         },
         {
           type: 'speechWithWords',
           words: 'can we have another go',
-          requiredTerminal: '?',
+          requiredTerminal: '?',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -211,17 +241,21 @@ const TEMPLATES = [
           type: 'requiresParentheticalPhrase',
           before: 'The clock',
           phrase: 'an ancient relic',
-          after: 'chimed at noon',
+          after: 'chimed at noon',    explanation: EXPLANATION,
+
           misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
         },
         {
           type: 'speechWithWords',
           words: 'it still works',
-          requiredTerminal: '.',
+          requiredTerminal: '.',    explanation: EXPLANATION,
+
           misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
         },
       ],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -245,6 +279,7 @@ export const parenthesisSpeechParagraphDsl = TEMPLATES.map((t, i) =>
       skillIds: t.skillIds,
       clusterId: t.clusterId,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U9).
  */
 
+const EXPLANATION = 'The extra information is set off with punctuation because it can be removed without breaking the sentence.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -18,6 +20,8 @@ const TEMPLATES = [
       phrase: 'an old fishing port',
       after: 'was busy',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -31,6 +35,8 @@ const TEMPLATES = [
       phrase: 'a useful lookout',
       after: 'stood above the bay',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -44,6 +50,8 @@ const TEMPLATES = [
       phrase: 'a quiet room',
       after: 'closed early',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -57,6 +65,8 @@ const TEMPLATES = [
       phrase: 'our maths teacher',
       after: 'smiled proudly',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -71,6 +81,8 @@ const TEMPLATES = [
       phrase: 'a stone crossing',
       after: 'swayed in the wind',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -84,6 +96,8 @@ const TEMPLATES = [
       phrase: 'a narrow waterway',
       after: 'ran beside the park',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -97,6 +111,8 @@ const TEMPLATES = [
       phrase: 'our head teacher',
       after: 'opened the fete',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -110,6 +126,8 @@ const TEMPLATES = [
       phrase: 'an ancient relic',
       after: 'chimed at noon',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -131,6 +149,7 @@ export const parenthesisCombineDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

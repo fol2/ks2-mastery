@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U8).
  */
 
+const EXPLANATION = 'Commas separate each item in a list so they are easy to read one by one.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -16,6 +18,8 @@ const TEMPLATES = [
       type: 'requiresListCommas',
       items: ['ropes', 'maps', 'snacks'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -27,6 +31,8 @@ const TEMPLATES = [
       type: 'requiresListCommas',
       items: ['shells', 'bells', 'chalk'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -38,6 +44,8 @@ const TEMPLATES = [
       type: 'requiresListCommas',
       items: ['paints', 'brushes', 'paper'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -49,6 +57,8 @@ const TEMPLATES = [
       type: 'requiresListCommas',
       items: ['gulls', 'seals', 'dolphins'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -61,6 +71,8 @@ const TEMPLATES = [
       type: 'requiresListCommas',
       items: ['pens', 'rulers', 'notebooks'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -72,6 +84,8 @@ const TEMPLATES = [
       type: 'requiresListCommas',
       items: ['buckets', 'spades', 'nets'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['insertion', 'misconception', 'negative_test'],
   },
@@ -83,6 +97,8 @@ const TEMPLATES = [
       type: 'requiresListCommas',
       items: ['roses', 'daisies', 'tulips'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
   },
@@ -94,6 +110,8 @@ const TEMPLATES = [
       type: 'requiresListCommas',
       items: ['coins', 'stamps', 'keys'],
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['insertion', 'transfer', 'misconception', 'negative_test'],
   },
@@ -115,6 +133,7 @@ export const listCommasInsertDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

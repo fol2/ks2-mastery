@@ -6,6 +6,8 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  * Templates 4-7: capacity expansion (new for P4-U10).
  */
 
+const EXPLANATION = 'A semicolon joins two complete sentences that are closely related in meaning.';
+
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
   {
@@ -18,6 +20,8 @@ const TEMPLATES = [
       right: 'the boats still waited',
       mark: ';',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -31,6 +35,8 @@ const TEMPLATES = [
       right: 'the match could continue',
       mark: ';',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -44,6 +50,8 @@ const TEMPLATES = [
       right: 'the class kept working',
       mark: ';',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -57,6 +65,8 @@ const TEMPLATES = [
       right: 'the hikers walked slowly',
       mark: ';',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -71,6 +81,8 @@ const TEMPLATES = [
       right: 'the shutters rattled loudly',
       mark: ';',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -84,6 +96,8 @@ const TEMPLATES = [
       right: 'the bats emerged from the cave',
       mark: ';',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
   },
@@ -97,6 +111,8 @@ const TEMPLATES = [
       right: 'the villagers moved to higher ground',
       mark: ';',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -110,6 +126,8 @@ const TEMPLATES = [
       right: 'the children lined up quietly',
       mark: ';',
     },
+    explanation: EXPLANATION,
+
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'transfer', 'misconception', 'negative_test'],
   },
@@ -131,6 +149,7 @@ export const semicolonCombineDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       validator: t.validator,
+      explanation: t.explanation,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),
