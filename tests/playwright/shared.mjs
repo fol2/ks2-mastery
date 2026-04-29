@@ -64,22 +64,13 @@ const SCREENSHOT_DETERMINISM_CSS = `
 .spelling-hero-backdrop .spelling-hero-layer,
 .grammar-hero picture,
 .grammar-hero > img,
-.punctuation-hero img,
-.punctuation-strip img,
-/* U5 (refactor ui-consolidation) extension — the Punctuation Session
-   scene now paints via platform HeroBackdrop. The legacy `.punctuation-
-   strip img` rule above stays as harmless coverage; the new rule hides
-   the `background-image` paints on HeroBackdrop layers so deterministic
-   screenshot diffs do not see per-phase bellstorm variance. Matches both
-   the Session scene's scoped wrapper (`.punctuation-session-hero`) and
-   the Setup scene's one (`.punctuation-hero-backdrop` — already in place
-   from U4) so both surfaces stay deterministic. */
+/* U5/U6/U7 (refactor ui-consolidation) — the three Punctuation scenes
+   (Setup, Session, Summary, Map) all paint via the platform HeroBackdrop.
+   Hiding the `background-image` paints on HeroBackdrop layers so
+   deterministic screenshot diffs do not see per-phase bellstorm variance.
+   The `data-hero-layer="true"` anchors match every adopter wrapper. */
 .punctuation-hero-backdrop [data-hero-layer="true"],
 .punctuation-session-hero [data-hero-layer="true"],
-/* U6 (refactor ui-consolidation) extension — Summary + Map scenes also paint
-   via platform HeroBackdrop. Belt-and-braces coverage on top of the
-   `.punctuation-hero-backdrop [data-hero-layer="true"]` rule above so any
-   future stylesheet change that repositions the layer still stays pinned. */
 .punctuation-summary-hero [data-hero-layer="true"],
 .punctuation-map-hero [data-hero-layer="true"],
 .monster-celebration-overlay,
@@ -368,24 +359,16 @@ export function defaultMasks(page) {
     // the DOM — removing the phantom selectors so the default-mask
     // audit (NIT-2) shows every entry resolves to ≥1 element.
     page.locator('[data-punctuation-session-source]'),
-    // U5 (refactor ui-consolidation): the Session scene header moved
-    // from `.punctuation-strip .section-title` to
-    // `.punctuation-session-hero-content .section-title` when the scene
-    // adopted the platform `HeroBackdrop`. The legacy selector stays as
-    // belt-and-braces so baselines captured against pre-U5 DOM remain
-    // masked during rollout; the new anchor is authoritative going
-    // forward.
+    // U5/U6 (refactor ui-consolidation): the Session / Summary / Map scene
+    // headers moved from the legacy `.punctuation-strip .section-title` /
+    // `.punctuation-hero .section-title` anchors onto the scene-specific
+    // `.punctuation-{session,summary,map}-hero-content .section-title`
+    // wrappers when each adopted the platform `HeroBackdrop`. U7 drops the
+    // legacy belt-and-braces entries now that no production JSX renders
+    // those class names.
     page.locator('.punctuation-session-hero-content .section-title'),
-    page.locator('.punctuation-strip .section-title'),
-    // U6 (refactor ui-consolidation): the Summary scene header moved from
-    // `.punctuation-strip .section-title` to
-    // `.punctuation-summary-hero-content .section-title`, and the Map scene
-    // header moved from `.punctuation-hero .section-title` to
-    // `.punctuation-map-hero-content .section-title`, when each adopted the
-    // platform `HeroBackdrop`. Legacy selectors stay as belt-and-braces.
     page.locator('.punctuation-summary-hero-content .section-title'),
     page.locator('.punctuation-map-hero-content .section-title'),
-    page.locator('.punctuation-hero .section-title'),
   ];
 }
 

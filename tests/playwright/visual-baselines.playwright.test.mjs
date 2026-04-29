@@ -261,20 +261,16 @@ async function injectFixedPromptContent(page) {
       '.prompt-sentence',
       '.cloze',
       '.grammar-prompt',
-      // U5 (refactor ui-consolidation): the Session-scene prompt moved
-      // from `.punctuation-strip .section-title` to
-      // `.punctuation-session-hero-content .section-title` when the
-      // scene adopted the platform `HeroBackdrop`. Both selectors are
-      // kept so this helper still stabilises text content on pre-U5
-      // baselines AND post-U5 DOM.
+      // U5/U6/U7 (refactor ui-consolidation): the Session / Summary / Map
+      // scene prompts now render inside the platform HeroBackdrop-adopting
+      // wrappers `.punctuation-{session,summary,map}-hero-content`. The
+      // legacy `.punctuation-strip .section-title` /
+      // `.punctuation-hero .section-title` belt-and-braces entries were
+      // dropped in U7 because no production JSX still renders those class
+      // names.
       '.punctuation-session-hero-content .section-title',
-      '.punctuation-strip .section-title',
-      // U6 (refactor ui-consolidation): Summary + Map scenes also carry
-      // platform HeroBackdrop wrappers; mirror the U5 selector additions
-      // so baseline capture still stabilises text across all three scenes.
       '.punctuation-summary-hero-content .section-title',
       '.punctuation-map-hero-content .section-title',
-      '.punctuation-hero .section-title',
       '[data-punctuation-session-source]',
     ];
     for (const selector of selectors) {

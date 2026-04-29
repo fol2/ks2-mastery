@@ -694,7 +694,7 @@ export function PunctuationSummaryScene({
           (`.hero-backdrop` is `position: absolute; inset: 0`), while
           `.punctuation-summary-hero-content` sits above via `z-index: 1`. URL
           is the phase-stable `bellstormSceneForPhase('summary').src`. */}
-      <section className="punctuation-summary-hero" style={{ position: 'relative' }}>
+      <section className="punctuation-summary-hero">
         <HeroBackdrop url={scene.src} extraBackdropClassName="punctuation-hero-backdrop" />
         <div className="punctuation-summary-hero-content">
           <div className="eyebrow">Summary</div>

@@ -376,7 +376,7 @@ export function PunctuationMapScene({ ui, actions }) {
           (`.hero-backdrop` paints at `position: absolute; inset: 0`), while
           `.punctuation-map-hero-content` sits above via `z-index: 1`. URL
           is the phase-stable `bellstormSceneForPhase('map').src`. */}
-      <section className="punctuation-map-hero" style={{ position: 'relative' }}>
+      <section className="punctuation-map-hero">
         <HeroBackdrop url={scene.src} extraBackdropClassName="punctuation-hero-backdrop" />
         <div className="punctuation-map-hero-content">
           <div className="eyebrow">{PUNCTUATION_DASHBOARD_HERO.eyebrow}</div>
