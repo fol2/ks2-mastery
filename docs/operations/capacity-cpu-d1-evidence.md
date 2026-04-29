@@ -52,7 +52,7 @@ The join script accepts:
 
 Pretty-tail console lines can prove sampled statement coverage, but they cannot fill `diagnostics.workerLogJoin.coverage.invocation`. Missing invocation CPU/wall coverage must remain `unclassified-insufficient-logs`.
 
-Unknown fields are ignored. Malformed JSONL lines are skipped with bounded warnings. The correlation output persists only bounded route, timing, D1, statement-name, and classification fields; it must not persist request bodies, cookies, learner names, raw SQL parameters, child answers, or free-form log messages.
+Unknown fields are ignored. Malformed JSONL lines are skipped with bounded warnings. The correlation output persists only bounded route, timing, D1, opaque statement IDs, and classification fields. Committed diagnostic artefacts hash retained request IDs and replace SQL/table/column statement names with stable opaque statement IDs; they must not persist request bodies, cookies, learner names, raw SQL parameters, child answers, or free-form log messages.
 
 ## Output Contract
 
@@ -62,7 +62,7 @@ Correlation output is written as a diagnostic artefact with:
 - `diagnostics.workerLogJoin.certification.contributesToCertification: false`
 - `diagnostics.workerLogJoin.coverage.invocation`: top-tail samples with matched Cloudflare CPU/wall invocation logs.
 - `diagnostics.workerLogJoin.coverage.statementLogs`: top-tail samples with matched sampled `capacity.request` statement breakdowns.
-- `diagnostics.workerLogJoin.samples[]`: per-request app wall time, response bytes, D1 counts, Cloudflare CPU/wall, outcome, capacity-request D1 duration, bounded statements, join status, and classification.
+- `diagnostics.workerLogJoin.samples[]`: per-request hashed request ID, app wall time, response bytes, D1 counts, Cloudflare CPU/wall, outcome, capacity-request D1 duration, bounded opaque statement IDs/counts, join status, and classification.
 
 Classification values are intentionally conservative:
 

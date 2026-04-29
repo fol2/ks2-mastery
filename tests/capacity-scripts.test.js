@@ -358,6 +358,62 @@ test('classroom load demo sessions fail closed instead of falling back to operat
   }
 });
 
+test('classroom load writes non-certifying evidence when demo-session setup fails with --output', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'ks2-capacity-setup-failure-'));
+  const outputPath = join(tempDir, 'setup-failure.json');
+  const previousFetch = globalThis.fetch;
+  const calls = [];
+
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    if (new URL(String(url)).pathname === '/api/demo/session') {
+      return jsonResponse({
+        ok: false,
+        code: 'demo_unavailable',
+        message: 'Demo session unavailable.',
+      }, { status: 503 });
+    }
+    return jsonResponse({ ok: true });
+  };
+
+  try {
+    let thrown = null;
+    try {
+      await runClassroomLoadTest([
+        '--local-fixture',
+        '--origin', 'http://localhost:8787',
+        '--demo-sessions',
+        '--learners', '1',
+        '--bootstrap-burst', '1',
+        '--rounds', '1',
+        '--output', outputPath,
+      ]);
+    } catch (error) {
+      thrown = error;
+    }
+
+    assert.ok(thrown, 'setup failure should still reject');
+    assert.match(thrown.message, /Demo session setup failed for learner-01/);
+    assert.equal(thrown.evidencePath, outputPath);
+    assert.equal(calls.length, 1);
+
+    const written = JSON.parse(readFileSync(outputPath, 'utf8'));
+    assert.equal(written.ok, false);
+    assert.equal(written.dryRun, false);
+    assert.equal(written.setupFailure.phase, 'setup');
+    assert.equal(written.setupFailure.measurements, 1);
+    assert.deepEqual(written.failures, ['setupFailure']);
+    assert.equal(written.summary.totalRequests, 1);
+    assert.equal(written.summary.statusCounts['503'], 1);
+    assert.equal(written.summary.failures[0].failureClass, 'setup');
+    assert.equal(written.sessionSourceMode, 'demo-sessions');
+    assert.equal(written.measurements, undefined);
+  } finally {
+    globalThis.fetch = previousFetch;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('classroom load summary groups operational failure signals', () => {
   const summary = summariseCapacityResults([
     {

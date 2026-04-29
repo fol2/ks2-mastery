@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
   buildEvidenceSummary,
   classifyTier,
+  writeEvidenceSummaryFile,
 } from '../scripts/generate-evidence-summary.mjs';
 import { EVIDENCE_SCHEMA_VERSION } from '../scripts/lib/capacity-evidence.mjs';
 import {
@@ -16,34 +17,39 @@ import {
 } from '../src/platform/hubs/admin-production-evidence.js';
 
 test('generate-evidence-summary emits schema 3 with the expected source manifest', () => {
-  const root = join(import.meta.url.startsWith('file://')
-    ? new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/i, '$1')
-    : process.cwd());
+  const root = mkdtempSync(join(tmpdir(), 'ks2-evidence-summary-'));
   const outputPath = join(root, 'reports', 'capacity', 'latest-evidence-summary.json');
 
-  execSync('node scripts/generate-evidence-summary.mjs', {
-    cwd: root,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    timeout: 10_000,
-  });
+  try {
+    mkdirSync(join(root, 'reports', 'capacity'), { recursive: true });
 
-  const summary = JSON.parse(readFileSync(outputPath, 'utf8'));
-  assert.equal(summary.schema, EVIDENCE_SCHEMA_VERSION);
-  assert.ok(summary.sources && typeof summary.sources === 'object');
-  assert.ok(summary.metrics && typeof summary.metrics === 'object');
+    writeEvidenceSummaryFile({
+      rootDir: root,
+      outputPath,
+      generatedAt: '2026-04-29T20:00:00.000Z',
+    });
 
-  for (const key of [
-    'capacity_evidence',
-    'admin_smoke',
-    'bootstrap_smoke',
-    'csp_status',
-    'd1_migrations',
-    'build_version',
-    'kpi_reconcile',
-  ]) {
-    assert.ok(key in summary.sources, `sources must contain ${key}`);
-    assert.equal(typeof summary.sources[key].found, 'boolean');
-    assert.equal(typeof summary.sources[key].file, 'string');
+    const summary = JSON.parse(readFileSync(outputPath, 'utf8'));
+    assert.equal(summary.schema, EVIDENCE_SCHEMA_VERSION);
+    assert.equal(summary.generatedAt, '2026-04-29T20:00:00.000Z');
+    assert.ok(summary.sources && typeof summary.sources === 'object');
+    assert.ok(summary.metrics && typeof summary.metrics === 'object');
+
+    for (const key of [
+      'capacity_evidence',
+      'admin_smoke',
+      'bootstrap_smoke',
+      'csp_status',
+      'd1_migrations',
+      'build_version',
+      'kpi_reconcile',
+    ]) {
+      assert.ok(key in summary.sources, `sources must contain ${key}`);
+      assert.equal(typeof summary.sources[key].found, 'boolean');
+      assert.equal(typeof summary.sources[key].file, 'string');
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
 
@@ -293,6 +299,19 @@ test('buildEvidenceSummary ignores diagnostic correlation and statement-map arte
       },
     },
     {
+      name: '30-learner-diagnostic-only-20260429.json',
+      data: {
+        ok: true,
+        diagnosticOnly: true,
+        reportMeta: {
+          learners: 30,
+          finishedAt: '2026-04-29T21:00:00.000Z',
+          evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+        },
+        tier: { tier: '30-learner-beta-certified' },
+      },
+    },
+    {
       name: '30-learner-beta-v2-20260428-p5-warm.json',
       data: {
         ok: false,
@@ -331,6 +350,55 @@ test('buildEvidenceSummary ignores diagnostic correlation and statement-map arte
   assert.deepEqual(Object.keys(summary.metrics), ['certified_30_learner_beta']);
   assert.equal(summary.metrics.certified_30_learner_beta.status, 'failed');
   assert.equal(summary.metrics.certified_30_learner_beta.evidenceKind, 'capacity-run');
+  assert.equal(summary.metrics.certified_30_learner_beta.fileName, '30-learner-beta-v2-20260428-p5-warm.json');
+});
+
+test('buildEvidenceSummary keeps capacity runs that embed worker-log join diagnostics', () => {
+  const fileName = '30-learner-beta-v2-20260429-p2-tail.json';
+  const summary = buildEvidenceSummary([
+    {
+      name: fileName,
+      data: {
+        ok: true,
+        dryRun: false,
+        reportMeta: {
+          commit: 'abc123',
+          origin: 'https://ks2.eugnel.uk',
+          learners: 30,
+          bootstrapBurst: 20,
+          rounds: 1,
+          finishedAt: '2026-04-29T21:30:00.000Z',
+          evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+        },
+        diagnostics: {
+          classification: {
+            certificationEligible: true,
+            kind: 'certification-candidate',
+            reasons: [],
+          },
+          workerLogJoin: {
+            diagnosticOnly: true,
+            certification: { contributesToCertification: false },
+            samples: [],
+          },
+        },
+        thresholds: { violations: [] },
+        failures: [],
+        tier: { tier: '30-learner-beta-certified' },
+      },
+    },
+  ], {
+    generatedAt: '2026-04-29T21:35:00.000Z',
+    verifiedCertificationEvidence: new Map([
+      [fileName, { decision: '30-learner-beta-certified' }],
+    ]),
+  });
+
+  const metric = summary.metrics.certified_30_learner_beta;
+  assert.equal(metric.fileName, fileName);
+  assert.equal(metric.evidenceKind, 'capacity-run');
+  assert.equal(metric.status, 'passed');
+  assert.equal(metric.certifying, true);
 });
 
 test('buildEvidenceSummary reports 60-learner preflight setup blocker as non-certifying', () => {

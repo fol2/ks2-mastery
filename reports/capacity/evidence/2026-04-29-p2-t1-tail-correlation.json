@@ -67,8 +67,8 @@
       },
       "samples": [
         {
-          "requestId": "ks2_req_ebb9d81b-1dc7-46f1-87d9-4c011cea243c",
-          "clientRequestId": "ks2_req_ebb9d81b-1dc7-46f1-87d9-4c011cea243c",
+          "requestId": "req_f072a50d0907189ee16b3a0c",
+          "clientRequestId": "req_f072a50d0907189ee16b3a0c",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -108,80 +108,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 21
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 23
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 68
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 49
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 37
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.159
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 71
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0854
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0629
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1903
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1254
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_109aa355-76c1-4914-9f71-67e9d763dd97",
-          "clientRequestId": "ks2_req_109aa355-76c1-4914-9f71-67e9d763dd97",
+          "requestId": "req_722a4c20d628a296a2454cd1",
+          "clientRequestId": "req_722a4c20d628a296a2454cd1",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -221,80 +222,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 20
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 43
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 50
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 47
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 36
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.1083
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 46
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0647
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0847
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1065
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1475
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_50fb6474-f6e4-4323-880a-6ea4b192ebbe",
-          "clientRequestId": "ks2_req_50fb6474-f6e4-4323-880a-6ea4b192ebbe",
+          "requestId": "req_4e1fab0d2c5eb1769de77846",
+          "clientRequestId": "req_4e1fab0d2c5eb1769de77846",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -334,80 +336,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 29
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 32
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 59
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 46
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 41
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.0976
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 45
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.057
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0571
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1113
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1273
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_0fdefde9-993f-4f19-aca5-61841dbf8cc2",
-          "clientRequestId": "ks2_req_0fdefde9-993f-4f19-aca5-61841dbf8cc2",
+          "requestId": "req_33a76801f881a7f7f562f8ca",
+          "clientRequestId": "req_33a76801f881a7f7f562f8ca",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -447,80 +450,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 31
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 39
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 9
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 35
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 29
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.2682
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 46
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1899
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1039
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1406
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.3389
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_58c71a14-f6d7-41a0-baba-42b05e83d0df",
-          "clientRequestId": "ks2_req_58c71a14-f6d7-41a0-baba-42b05e83d0df",
+          "requestId": "req_2aace6db8eaafd38de4291c5",
+          "clientRequestId": "req_2aace6db8eaafd38de4291c5",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -560,80 +564,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 34
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 36
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 59
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 46
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 41
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.1185
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 43
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0794
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0782
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0796
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.122
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_7579e72b-1eaa-4fa1-80a3-347698d102f3",
-          "clientRequestId": "ks2_req_7579e72b-1eaa-4fa1-80a3-347698d102f3",
+          "requestId": "req_e4f3ef396f9fe28461478dbb",
+          "clientRequestId": "req_e4f3ef396f9fe28461478dbb",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -673,80 +678,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 33
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 54
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 44
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 45
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 41
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.2155
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 34
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1407
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1812
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1609
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.2068
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_61b432f4-0c43-4459-9b05-00a249118d38",
-          "clientRequestId": "ks2_req_61b432f4-0c43-4459-9b05-00a249118d38",
+          "requestId": "req_75cfc763cb5efc05e8044ed3",
+          "clientRequestId": "req_75cfc763cb5efc05e8044ed3",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -786,80 +792,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 28
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 30
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 59
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 51
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 40
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.1131
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 46
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0802
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0633
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1024
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0998
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_e0ced4db-5fbd-4038-8acf-1137f842d16f",
-          "clientRequestId": "ks2_req_e0ced4db-5fbd-4038-8acf-1137f842d16f",
+          "requestId": "req_50d70b7ebc1725cb4deacc83",
+          "clientRequestId": "req_50d70b7ebc1725cb4deacc83",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -899,80 +906,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 34
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 49
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 39
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 56
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 46
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.1258
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 42
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0942
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1509
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1682
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.125
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_0f93ef41-921e-487f-9818-a6a59448939b",
-          "clientRequestId": "ks2_req_0f93ef41-921e-487f-9818-a6a59448939b",
+          "requestId": "req_d31b0a3d576a971ab5473ec2",
+          "clientRequestId": "req_d31b0a3d576a971ab5473ec2",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -1012,80 +1020,81 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 19
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 31
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 58
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 53
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 33
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.0872
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 43
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.082
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0647
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.0976
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1598
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         },
         {
-          "requestId": "ks2_req_69c15ee5-a6c4-4c52-9445-a1ef283aa867",
-          "clientRequestId": "ks2_req_69c15ee5-a6c4-4c52-9445-a1ef283aa867",
+          "requestId": "req_737288a0eb15d7fd7e85b947",
+          "clientRequestId": "req_737288a0eb15d7fd7e85b947",
           "endpoint": "/api/bootstrap",
           "method": "GET",
           "status": 200,
@@ -1125,78 +1134,93 @@
             "bootstrapMode": "selected-learner-bounded",
             "statements": [
               {
-                "name": "first:SELECT s.id AS session_id, s.session_hash, s.provider, s.session_kind, s.expi...",
+                "statementId": "stmt_0a9b7415b4e46e2bb809eb15",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 36
               },
               {
-                "name": "first:INSERT INTO adult_accounts (id, email, display_name, platform_role, selected_...",
+                "statementId": "stmt_477c1ecc7e39e1ea7984d480",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 47
               },
               {
-                "name": "first:SELECT id, account_type, demo_expires_at FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_858b85af6e83b01a2eded4f1",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 35
               },
               {
-                "name": "first:SELECT * FROM adult_accounts WHERE id = ?",
+                "statementId": "stmt_a28dc9ea4d37ba9eb2da607c",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 55
               },
               {
-                "name": "first:SELECT published_version, manifest_hash, published_at, schema_version FROM pl...",
+                "statementId": "stmt_a4dd531282b8dc18bb102fe5",
                 "rowsRead": 1,
                 "rowsWritten": null,
                 "durationMs": 43
               },
               {
-                "name": "all:SELECT m.account_id, m.learner_id, m.role, m.sort_index, m.created_at AS memb...",
+                "statementId": "stmt_504d2600ae796e0755c3685c",
                 "rowsRead": 4,
                 "rowsWritten": 0,
                 "durationMs": 0.1489
               },
               {
-                "name": "first:SELECT revision FROM adult_account_list_revisions WHERE account_id = ?",
+                "statementId": "stmt_d2e7e3f97c3469663ae7919e",
                 "rowsRead": 0,
                 "rowsWritten": null,
                 "durationMs": 44
               },
               {
-                "name": "all:SELECT learner_id, subject_id, ui_json, data_json, updated_at FROM child_subj...",
+                "statementId": "stmt_cd34344c5a376438ce8de1f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.07
               },
               {
-                "name": "all:SELECT learner_id, system_id, state_json, updated_at FROM child_game_state WH...",
+                "statementId": "stmt_45c9feedc6d059d265be5d7c",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1325
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, session_kind, status, session_state_json, ...",
+                "statementId": "stmt_4323917662e4b4b47784cfd4",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1707
               },
               {
-                "name": "all:SELECT id, learner_id, subject_id, system_id, event_type, event_json, created...",
+                "statementId": "stmt_b47f59c08bd65432344057f7",
                 "rowsRead": 0,
                 "rowsWritten": 0,
                 "durationMs": 0.1408
               }
             ],
-            "statementsTruncated": false
+            "statementsTruncated": false,
+            "statementCount": 11
           },
           "classification": "unclassified-insufficient-logs",
           "classificationReason": "Cloudflare invocation CPU/wall log is missing for this top-tail request."
         }
-      ]
+      ],
+      "redaction": {
+        "version": "capacity-diagnostics-redaction-v1",
+        "requestIds": "sha256:24",
+        "statementIds": "sha256:24",
+        "rawRequestIdsPersisted": false,
+        "rawStatementNamesPersisted": false
+      }
     }
+  },
+  "redaction": {
+    "version": "capacity-diagnostics-redaction-v1",
+    "requestIds": "sha256:24",
+    "statementIds": "sha256:24",
+    "rawRequestIdsPersisted": false,
+    "rawStatementNamesPersisted": false
   }
 }
