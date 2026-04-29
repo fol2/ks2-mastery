@@ -52,7 +52,11 @@ export function canonicalPunctuationText(value) {
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
     .replace(/\s+([,.;:?!])/g, '$1')
-    .replace(/([“"‘'])\s+/g, '$1')
+    .replace(/["']\s+/g, (match, offset, str) => {
+      // Preserve space after a terminal possessive apostrophe (e.g. teachers' notices)
+      if (match[0] === "'" && offset > 0 && /\w/.test(str[offset - 1])) return match;
+      return match[0];
+    })
     .replace(/\s+([”"’'])/g, '$1');
 }
 
@@ -63,7 +67,11 @@ function canonicalPunctuationLineText(value) {
     .split('\n')
     .map((line) => line
       .replace(/\s+([,.;:?!])/g, '$1')
-      .replace(/([“"‘'])\s+/g, '$1')
+      .replace(/["']\s+/g, (match, offset, str) => {
+        // Preserve space after a terminal possessive apostrophe (e.g. teachers' notices)
+        if (match[0] === "'" && offset > 0 && /\w/.test(str[offset - 1])) return match;
+        return match[0];
+      })
       .replace(/\s+([”"’'])/g, '$1'))
     .join('\n');
 }
