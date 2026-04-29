@@ -240,7 +240,7 @@ function resolveRepoRoot() {
   return process.cwd();
 }
 
-function resolveSmokeCommit() {
+async function resolveSmokeCommit() {
   const envSha = process.env.GITHUB_SHA || process.env.KS2_CAPACITY_COMMIT_SHA;
   if (envSha && /^[0-9a-f]{7,40}$/i.test(envSha)) return envSha;
   try {

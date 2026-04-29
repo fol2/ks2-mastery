@@ -289,10 +289,15 @@ function deriveLaneState(rows) {
   let hasFailing = false;
   let hasStale = false;
   let hasPassing = false;
+  let hasNonCertifying = false;
 
   for (const row of rows) {
     if (row.state === EVIDENCE_STATES.FAILING) hasFailing = true;
     else if (row.state === EVIDENCE_STATES.STALE) hasStale = true;
+    else if (
+      row.state === EVIDENCE_STATES.NON_CERTIFYING
+      || row.state === EVIDENCE_STATES.PREFLIGHT_ONLY
+    ) hasNonCertifying = true;
     else if (
       row.state === EVIDENCE_STATES.SMOKE_PASS
       || row.state === EVIDENCE_STATES.SMALL_PILOT_PROVISIONAL
@@ -305,6 +310,7 @@ function deriveLaneState(rows) {
   if (hasFailing) return EVIDENCE_STATES.FAILING;
   if (hasPassing) return EVIDENCE_STATES.SMOKE_PASS;
   if (hasStale) return EVIDENCE_STATES.STALE;
+  if (hasNonCertifying) return EVIDENCE_STATES.NON_CERTIFYING;
   return EVIDENCE_STATES.NOT_AVAILABLE;
 }
 

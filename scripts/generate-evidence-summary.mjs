@@ -77,6 +77,9 @@ export function classifyTier(fileName, data = {}) {
   // U1 (P7): Preflight files must never displace a real certification tier.
   // Early return BEFORE the regex cascade so filenames like
   // '60-learner-stretch-preflight-*.json' do not match CERTIFIED_60.
+  // Filename-based detection fires for real evidence files loaded from disk
+  // (which lack an evidenceKind field until classifyEvidenceKind enriches them).
+  if (/preflight/i.test(fileName)) return TIER_KEYS.PREFLIGHT;
   if (data?.evidenceKind === 'preflight') {
     return TIER_KEYS.PREFLIGHT;
   }

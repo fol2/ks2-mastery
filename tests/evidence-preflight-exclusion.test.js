@@ -78,6 +78,11 @@ test('classifyTier returns smoke_pass for smoke capacity-run', () => {
   assert.equal(result, 'smoke_pass');
 });
 
+test('classifies preflight by filename even without evidenceKind field', () => {
+  const result = classifyTier('60-learner-stretch-preflight-20260428-p6.json', {});
+  assert.equal(result, 'preflight_only');
+});
+
 test('classifyTier still works without evidenceKind (legacy files)', () => {
   const result = classifyTier('60-learner-stretch-20260425-p4.json', {});
   assert.equal(result, 'certified_60_learner_stretch');
