@@ -10,8 +10,10 @@ const FORBIDDEN_ITEM_FIELDS = new Set([
   'acceptedAnswers',
   'answers',
   'correctIndex',
+  'familyId',
   'generatorFamilyId',
   'rubric',
+  'tests',
   'validator',
   'validators',
   'seed',
@@ -26,11 +28,19 @@ const FORBIDDEN_ITEM_FIELDS = new Set([
 // feedback, analytics, context-pack, or availability payloads. Kept aligned
 // with scripts/punctuation-production-smoke.mjs:FORBIDDEN_PUNCTUATION_READ_MODEL_KEYS
 // so smoke-side and Worker-side guards share one contract.
+//
+// P4 additions:
+//   - `reason` — scheduler reason tag (from U3/U4/U6 selection telemetry)
+//   - `selectionReason` — session-level scheduler reason copy
+//   - `selectedSignatures` — session-level signature exposure log
 const FORBIDDEN_READ_MODEL_KEYS = new Set([
   ...FORBIDDEN_ITEM_FIELDS,
   'rawGenerator',
   'queueItemIds',
+  'reason',
   'responses',
+  'selectedSignatures',
+  'selectionReason',
   'variantSignature',
 ]);
 const OPAQUE_VARIANT_SIGNATURE_PATTERN = /^puncsig_[a-z0-9]+$/;
