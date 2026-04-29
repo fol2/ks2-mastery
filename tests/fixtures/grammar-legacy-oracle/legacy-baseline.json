@@ -1,3973 +1,1630 @@
 {
-  "contentReleaseId": "grammar-legacy-reviewed-2026-04-24",
-  "generatedAt": "fixture-generated-by-script",
+  "releaseId": "grammar-qg-p5-2026-04-28",
   "conceptCount": 18,
-  "templateCount": 51,
-  "selectedResponseCount": 31,
+  "templateCount": 78,
+  "selectedResponseCount": 58,
   "constructedResponseCount": 20,
-  "concepts": [
-    {
-      "id": "sentence_functions",
-      "domain": "Sentence function",
-      "name": "Sentence functions",
-      "punctuationForGrammar": true
-    },
-    {
-      "id": "word_classes",
-      "domain": "Word classes",
-      "name": "Word classes",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "noun_phrases",
-      "domain": "Phrases",
-      "name": "Expanded noun phrases",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "adverbials",
-      "domain": "Adverbials",
-      "name": "Adverbials and fronted adverbials",
-      "punctuationForGrammar": true
-    },
-    {
-      "id": "clauses",
-      "domain": "Clauses",
-      "name": "Subordinate clauses and conjunctions",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "relative_clauses",
-      "domain": "Clauses",
-      "name": "Relative clauses",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "tense_aspect",
-      "domain": "Verb forms",
-      "name": "Tense and aspect",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "standard_english",
-      "domain": "Standard English",
-      "name": "Standard English forms",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "pronouns_cohesion",
-      "domain": "Cohesion",
-      "name": "Pronouns and cohesion",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "formality",
-      "domain": "Register",
-      "name": "Formal and informal language",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "active_passive",
-      "domain": "Sentence structure",
-      "name": "Active and passive voice",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "subject_object",
-      "domain": "Sentence structure",
-      "name": "Subject and object",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "modal_verbs",
-      "domain": "Verb forms",
-      "name": "Modal verbs and possibility",
-      "punctuationForGrammar": false
-    },
-    {
-      "id": "parenthesis_commas",
-      "domain": "Punctuation for grammar",
-      "name": "Parenthesis and commas",
-      "punctuationForGrammar": true
-    },
-    {
-      "id": "speech_punctuation",
-      "domain": "Punctuation for grammar",
-      "name": "Direct speech punctuation",
-      "punctuationForGrammar": true
-    },
-    {
-      "id": "apostrophes_possession",
-      "domain": "Punctuation for grammar",
-      "name": "Possession with apostrophes",
-      "punctuationForGrammar": true
-    },
-    {
-      "id": "boundary_punctuation",
-      "domain": "Punctuation for grammar",
-      "name": "Colons, semi-colons and dashes",
-      "punctuationForGrammar": true
-    },
-    {
-      "id": "hyphen_ambiguity",
-      "domain": "Punctuation for grammar",
-      "name": "Hyphens to avoid ambiguity",
-      "punctuationForGrammar": true
-    }
+  "generatedTemplateCount": 52,
+  "fixedTemplateCount": 26,
+  "questionTypes": [
+    "build",
+    "choose",
+    "classify",
+    "explain",
+    "fill",
+    "fix",
+    "identify",
+    "rewrite"
   ],
-  "misconceptions": {
-    "sentence_function_confusion": "Mixed up sentence functions or punctuation cues",
-    "word_class_confusion": "Confused one word class with another",
-    "noun_phrase_confusion": "Did not build or spot a full noun phrase",
-    "fronted_adverbial_confusion": "Missed the fronted adverbial or its comma",
-    "subordinate_clause_confusion": "Confused main and subordinate clauses",
-    "relative_clause_confusion": "Missed how a relative clause links to a noun",
-    "tense_confusion": "Chose the wrong tense or aspect",
-    "standard_english_confusion": "Used a non-standard spoken form instead of Standard English",
-    "pronoun_cohesion_confusion": "Used a pronoun or noun choice that reduced clarity",
-    "formality_confusion": "Chose language at the wrong level of formality",
-    "active_passive_confusion": "Mixed up active and passive voice",
-    "subject_object_confusion": "Confused the subject and the object",
-    "modal_verb_confusion": "Missed the degree of certainty or possibility",
-    "parenthesis_confusion": "Missed how parenthesis or commas work",
-    "speech_punctuation_confusion": "Placed speech punctuation incorrectly",
-    "apostrophe_possession_confusion": "Confused singular and plural possession",
-    "punctuation_precision": "Grammar idea mostly right, but punctuation or exact form was off",
-    "misread_question": "Answered a different question from the one asked",
-    "boundary_punctuation_confusion": "Chose the wrong punctuation to mark a clause boundary or introduce a list",
-    "hyphen_ambiguity_confusion": "Missed how a hyphen changes the meaning"
-  },
-  "questionTypes": {
-    "identify": "Identify the feature",
-    "choose": "Choose the correct sentence",
-    "fix": "Fix the sentence",
-    "rewrite": "Rewrite the sentence",
-    "build": "Build / transform a sentence",
-    "explain": "Explain why",
-    "classify": "Classify",
-    "fill": "Complete the sentence"
-  },
-  "punctuationConceptIds": [
-    "sentence_functions",
-    "adverbials",
-    "parenthesis_commas",
-    "speech_punctuation",
-    "apostrophes_possession",
-    "boundary_punctuation",
-    "hyphen_ambiguity"
-  ],
-  "templates": [
+  "duplicateTemplateIds": [],
+  "thinPoolConcepts": [],
+  "singleQuestionTypeConcepts": [],
+  "conceptCoverage": [
     {
-      "id": "sentence_type_table",
-      "label": "Classify sentence functions",
-      "domain": "Sentence function",
-      "questionType": "classify",
-      "difficulty": 1,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
+      "conceptId": "active_passive",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "rewrite"
       ],
-      "skillIds": [
-        "sentence_functions"
-      ],
-      "sample": {
-        "templateId": "sentence_type_table",
-        "templateLabel": "Classify sentence functions",
-        "domain": "Sentence function",
-        "skillIds": [
-          "sentence_functions"
-        ],
-        "questionType": "classify",
-        "seed": 10000,
-        "itemId": "sentence_type_table:10000",
-        "marks": 2,
-        "promptText": "Tick one box in each row to show the sentence function.",
-        "inputSpec": {
-          "type": "table_choice",
-          "columns": [
-            "statement",
-            "question",
-            "command",
-            "exclamation"
-          ],
-          "rows": [
-            {
-              "key": "row0",
-              "label": "Bring your reading record tomorrow."
-            },
-            {
-              "key": "row1",
-              "label": "Our coach arrives at half past nine."
-            },
-            {
-              "key": "row2",
-              "label": "How quickly the rabbit ran!"
-            },
-            {
-              "key": "row3",
-              "label": "Where did you put the compass?"
-            }
-          ]
-        },
-        "solutionLines": [
-          "A statement tells, a question asks, a command instructs, and an exclamation shows strong feeling.",
-          "Judge each whole sentence, not only the punctuation at the end."
-        ]
-      },
-      "correctResponse": {
-        "row0": "command",
-        "row1": "statement",
-        "row2": "exclamation",
-        "row3": "question"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "Bring your reading record tomorrow. → command | Our coach arrives at half past nine. → statement | How quickly the rabbit ran! → exclamation | Where did you put the compass? → question",
-        "answerText": "Bring your reading record tomorrow. → command | Our coach arrives at half past nine. → statement | How quickly the rabbit ran! → exclamation | Where did you put the compass? → question",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "sentence_function_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "Bring your reading record tomorrow. → command | Our coach arrives at half past nine. → statement | How quickly the rabbit ran! → exclamation | Where did you put the compass? → question",
-        "answerText": "Bring your reading record tomorrow. → command | Our coach arrives at half past nine. → statement | How quickly the rabbit ran! → exclamation | Where did you put the compass? → question",
-        "minimalHint": "Ask what the sentence is doing: telling, asking, ordering, or exclaiming."
-      }
+      "templateIds": [
+        "active_passive_rewrite",
+        "proc2_passive_to_active",
+        "qg_active_passive_choice",
+        "qg_p3_active_passive_explain",
+        "qg_p4_voice_roles_transfer"
+      ]
     },
     {
-      "id": "question_mark_select",
-      "label": "Find the real questions",
-      "domain": "Sentence function",
-      "questionType": "identify",
-      "difficulty": 1,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
+      "conceptId": "adverbials",
+      "total": 6,
+      "generated": 3,
+      "fixed": 3,
+      "selectedResponse": 3,
+      "constructedResponse": 3,
+      "questionTypes": [
+        "build",
+        "choose",
+        "explain",
+        "fix"
       ],
-      "skillIds": [
-        "sentence_functions",
-        "speech_punctuation"
-      ],
-      "sample": {
-        "templateId": "question_mark_select",
-        "templateLabel": "Find the real questions",
-        "domain": "Sentence function",
-        "skillIds": [
-          "sentence_functions",
-          "speech_punctuation"
-        ],
-        "questionType": "identify",
-        "seed": 10017,
-        "itemId": "question_mark_select:10017",
-        "marks": 1,
-        "promptText": "Tick all the sentences that must end with a question mark.",
-        "inputSpec": {
-          "type": "checkbox_list",
-          "label": "Sentences",
-          "options": [
-            {
-              "value": "What a long journey this has been",
-              "label": "What a long journey this has been"
-            },
-            {
-              "value": "Can you help me carry the boxes",
-              "label": "Can you help me carry the boxes"
-            },
-            {
-              "value": "Mum wondered whether the parcel had arrived",
-              "label": "Mum wondered whether the parcel had arrived"
-            },
-            {
-              "value": "Did the coach leave on time",
-              "label": "Did the coach leave on time"
-            }
-          ]
-        },
-        "solutionLines": [
-          "A direct question asks for an answer.",
-          "An indirect question like 'Mum wondered whether...' is still a statement."
-        ]
-      },
-      "correctResponse": {
-        "selected": [
-          "Can you help me carry the boxes",
-          "Did the coach leave on time"
-        ]
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on time.",
-        "answerText": "Can you help me carry the boxes; Did the coach leave on time",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "sentence_function_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The sentences needing question marks are: Can you help me carry the boxes; Did the coach leave on time.",
-        "answerText": "Can you help me carry the boxes; Did the coach leave on time",
-        "minimalHint": "Ask what the sentence is doing: telling, asking, ordering, or exclaiming."
-      }
+      "templateIds": [
+        "explain_reason_choice",
+        "fix_fronted_adverbial",
+        "fronted_adverbial_choose",
+        "proc2_fronted_adverbial_build",
+        "proc_fronted_adverbial_fix",
+        "qg_p4_adverbial_clause_boundary_transfer"
+      ]
     },
     {
-      "id": "word_class_underlined_choice",
-      "label": "Identify the word class",
-      "domain": "Word classes",
-      "questionType": "identify",
-      "difficulty": 1,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
+      "conceptId": "apostrophes_possession",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 4,
+      "constructedResponse": 1,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "rewrite"
       ],
-      "skillIds": [
-        "word_classes"
-      ],
-      "sample": {
-        "templateId": "word_class_underlined_choice",
-        "templateLabel": "Identify the word class",
-        "domain": "Word classes",
-        "skillIds": [
-          "word_classes"
-        ],
-        "questionType": "identify",
-        "seed": 10034,
-        "itemId": "word_class_underlined_choice:10034",
-        "marks": 1,
-        "promptText": "Which word class is the underlined word in the sentence below? On sunny days, Ben often plays outside before dinner.",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "adverb",
-              "label": "adverb"
-            },
-            {
-              "value": "conjunction",
-              "label": "conjunction"
-            },
-            {
-              "value": "adjective",
-              "label": "adjective"
-            },
-            {
-              "value": "determiner",
-              "label": "determiner"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Work out the underlined word's job in the sentence.",
-          "Here, 'often' is modifying the verb or whole clause."
-        ]
-      },
-      "correctResponse": {
-        "answer": "adverb"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The underlined word is adverb.",
-        "answerText": "adverb",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "word_class_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The underlined word is adverb.",
-        "answerText": "adverb",
-        "minimalHint": "Look at the word’s job in the sentence, not just what it seems to mean on its own."
-      }
+      "templateIds": [
+        "apostrophe_possession_choice",
+        "proc3_apostrophe_rewrite",
+        "proc_apostrophe_possession_choice",
+        "qg_p3_apostrophe_possession_explain",
+        "qg_p4_possession_hyphen_clarity_transfer"
+      ]
     },
     {
-      "id": "identify_words_in_sentence",
-      "label": "Select words with the target job",
-      "domain": "Word classes",
-      "questionType": "identify",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
+      "conceptId": "boundary_punctuation",
+      "total": 5,
+      "generated": 5,
+      "fixed": 0,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
       ],
-      "skillIds": [
-        "word_classes"
-      ],
-      "sample": {
-        "templateId": "identify_words_in_sentence",
-        "templateLabel": "Select words with the target job",
-        "domain": "Word classes",
-        "skillIds": [
-          "word_classes"
-        ],
-        "questionType": "identify",
-        "seed": 10051,
-        "itemId": "identify_words_in_sentence:10051",
-        "marks": 1,
-        "promptText": "Select all the pronouns in the sentence below. She handed it to them before they left.",
-        "inputSpec": {
-          "type": "checkbox_list",
-          "label": "Pronouns",
-          "asTokens": true,
-          "options": [
-            {
-              "value": "She",
-              "label": "She"
-            },
-            {
-              "value": "handed",
-              "label": "handed"
-            },
-            {
-              "value": "it",
-              "label": "it"
-            },
-            {
-              "value": "to",
-              "label": "to"
-            },
-            {
-              "value": "them",
-              "label": "them"
-            },
-            {
-              "value": "before",
-              "label": "before"
-            },
-            {
-              "value": "they",
-              "label": "they"
-            },
-            {
-              "value": "left",
-              "label": "left"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Find the words that are working as pronouns.",
-          "Correct selection: She, it, them, they."
-        ]
-      },
-      "correctResponse": {
-        "selected": [
-          "She",
-          "it",
-          "them",
-          "they"
-        ]
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct words are: She, it, them, they.",
-        "answerText": "She, it, them, they",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "word_class_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct words are: She, it, them, they.",
-        "answerText": "She, it, them, they",
-        "minimalHint": "Look at the word’s job in the sentence, not just what it seems to mean on its own."
-      }
+      "templateIds": [
+        "proc2_boundary_punctuation_explain",
+        "proc_colon_list_fix",
+        "proc_dash_boundary_fix",
+        "proc_semicolon_choice",
+        "qg_p4_adverbial_clause_boundary_transfer"
+      ]
     },
     {
-      "id": "expanded_noun_phrase_choice",
-      "label": "Spot the expanded noun phrase",
-      "domain": "Phrases",
-      "questionType": "choose",
-      "difficulty": 1,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
+      "conceptId": "clauses",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "identify",
+        "rewrite"
       ],
-      "skillIds": [
-        "noun_phrases"
-      ],
-      "sample": {
-        "templateId": "expanded_noun_phrase_choice",
-        "templateLabel": "Spot the expanded noun phrase",
-        "domain": "Phrases",
-        "skillIds": [
-          "noun_phrases"
-        ],
-        "questionType": "choose",
-        "seed": 10068,
-        "itemId": "expanded_noun_phrase_choice:10068",
-        "marks": 1,
-        "promptText": "Which sentence contains an expanded noun phrase?",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "The tired explorers climbed the hill.",
-              "label": "The tired explorers climbed the hill."
-            },
-            {
-              "value": "Across the field, the dog barked.",
-              "label": "Across the field, the dog barked."
-            },
-            {
-              "value": "Because it was late, we hurried.",
-              "label": "Because it was late, we hurried."
-            },
-            {
-              "value": "Please close the shutters.",
-              "label": "Please close the shutters."
-            }
-          ]
-        },
-        "solutionLines": [
-          "A noun phrase must centre on a noun.",
-          "Expanded noun phrases add detail with extra words attached to that noun."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The tired explorers climbed the hill."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: The tired explorers climbed the hill..",
-        "answerText": "The tired explorers climbed the hill.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "noun_phrase_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: The tired explorers climbed the hill..",
-        "answerText": "The tired explorers climbed the hill.",
-        "minimalHint": "A noun phrase must centre on a noun. Check which words belong with that noun."
-      }
+      "templateIds": [
+        "combine_clauses_rewrite",
+        "proc3_clause_join_rewrite",
+        "qg_p3_clauses_explain",
+        "qg_p4_adverbial_clause_boundary_transfer",
+        "subordinate_clause_choice"
+      ]
     },
     {
-      "id": "build_noun_phrase",
-      "label": "Build a noun phrase",
-      "domain": "Phrases",
-      "questionType": "build",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": false,
-      "tags": [
-        "builder"
-      ],
-      "skillIds": [
-        "noun_phrases"
-      ],
-      "sample": {
-        "templateId": "build_noun_phrase",
-        "templateLabel": "Build a noun phrase",
-        "domain": "Phrases",
-        "skillIds": [
-          "noun_phrases"
-        ],
-        "questionType": "build",
-        "seed": 10085,
-        "itemId": "build_noun_phrase:10085",
-        "marks": 2,
-        "promptText": "Build a noun phrase of at least three words to complete the sentence below. ___ found the silver key.",
-        "inputSpec": {
-          "type": "multi",
-          "fields": [
-            {
-              "key": "part1",
-              "label": "Part 1",
-              "kind": "select",
-              "options": [
-                [
-                  "",
-                  "Choose"
-                ],
-                [
-                  "The nervous young",
-                  "The nervous young"
-                ],
-                [
-                  "Suddenly",
-                  "Suddenly"
-                ],
-                [
-                  "If",
-                  "If"
-                ]
-              ]
-            },
-            {
-              "key": "part2",
-              "label": "Part 2",
-              "kind": "select",
-              "options": [
-                [
-                  "",
-                  "Choose"
-                ],
-                [
-                  "explorer",
-                  "explorer"
-                ],
-                [
-                  "ran",
-                  "ran"
-                ],
-                [
-                  "under",
-                  "under"
-                ]
-              ]
-            },
-            {
-              "key": "part3",
-              "label": "Part 3",
-              "kind": "select",
-              "options": [
-                [
-                  "",
-                  "Choose"
-                ],
-                [
-                  "from our class",
-                  "from our class"
-                ],
-                [
-                  "very carefully",
-                  "very carefully"
-                ],
-                [
-                  "because of the rain",
-                  "because of the rain"
-                ]
-              ]
-            }
-          ]
-        },
-        "solutionLines": [
-          "Choose a sensible determiner/adjective opening, then a noun, then extra detail attached to that noun.",
-          "A strong answer is: The nervous young explorer from our class."
-        ]
-      },
-      "correctResponse": {
-        "part1": "The nervous young",
-        "part2": "explorer",
-        "part3": "from our class"
-      },
-      "correctResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 0,
-        "misconception": null,
-        "feedbackShort": "Saved for review.",
-        "feedbackLong": "Your noun phrase has been saved for review. It is not auto-marked for mastery.",
-        "answerText": "",
-        "minimalHint": "This writing response is for review, not automatic marking.",
-        "nonScored": true,
-        "manualReviewOnly": true
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 0,
-        "misconception": null,
-        "feedbackShort": "Saved for review.",
-        "feedbackLong": "Your noun phrase has been saved for review. It is not auto-marked for mastery.",
-        "answerText": "",
-        "minimalHint": "This writing response is for review, not automatic marking.",
-        "nonScored": true,
-        "manualReviewOnly": true
-      }
-    },
-    {
-      "id": "fronted_adverbial_choose",
-      "label": "Spot the fronted adverbial",
-      "domain": "Adverbials",
-      "questionType": "choose",
-      "difficulty": 1,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "adverbials"
-      ],
-      "sample": {
-        "templateId": "fronted_adverbial_choose",
-        "templateLabel": "Spot the fronted adverbial",
-        "domain": "Adverbials",
-        "skillIds": [
-          "adverbials"
-        ],
-        "questionType": "choose",
-        "seed": 10102,
-        "itemId": "fronted_adverbial_choose:10102",
-        "marks": 1,
-        "promptText": "Which sentence starts with a fronted adverbial?",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "She is feeling tired, so Kal is going to her room.",
-              "label": "She is feeling tired, so Kal is going to her room."
-            },
-            {
-              "value": "After dinner, Kal is going to her room.",
-              "label": "After dinner, Kal is going to her room."
-            },
-            {
-              "value": "Arun told me that Kal is going to her room.",
-              "label": "Arun told me that Kal is going to her room."
-            },
-            {
-              "value": "I wonder when Kal is going to her room.",
-              "label": "I wonder when Kal is going to her room."
-            }
-          ]
-        },
-        "solutionLines": [
-          "A fronted adverbial gives when, where or how information at the start of the sentence.",
-          "In KS2 contexts it is commonly followed by a comma."
-        ]
-      },
-      "correctResponse": {
-        "answer": "After dinner, Kal is going to her room."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: After dinner, Kal is going to her room.",
-        "answerText": "After dinner, Kal is going to her room.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "fronted_adverbial_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: After dinner, Kal is going to her room.",
-        "answerText": "After dinner, Kal is going to her room.",
-        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
-      }
-    },
-    {
-      "id": "fix_fronted_adverbial",
-      "label": "Add the comma after a fronted adverbial",
-      "domain": "Adverbials",
-      "questionType": "fix",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": false,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "adverbials"
-      ],
-      "sample": {
-        "templateId": "fix_fronted_adverbial",
-        "templateLabel": "Add the comma after a fronted adverbial",
-        "domain": "Adverbials",
-        "skillIds": [
-          "adverbials"
-        ],
-        "questionType": "fix",
-        "seed": 10119,
-        "itemId": "fix_fronted_adverbial:10119",
-        "marks": 2,
-        "promptText": "Copy the sentence and add the comma after the fronted adverbial. Before sunrise the campers packed their bags.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Type the corrected sentence here."
-        },
-        "solutionLines": [
-          "Spot the opening adverbial telling us when.",
-          "Add a comma after that opening phrase.",
-          "Correct answer: Before sunrise, the campers packed their bags."
-        ]
-      },
-      "correctResponse": {
-        "answer": "Before sunrise, the campers packed their bags."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct sentence is: Before sunrise, the campers packed their bags.",
-        "answerText": "Before sunrise, the campers packed their bags.",
-        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "fronted_adverbial_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct sentence is: Before sunrise, the campers packed their bags.",
-        "answerText": "Before sunrise, the campers packed their bags.",
-        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
-      }
-    },
-    {
-      "id": "subordinate_clause_choice",
-      "label": "Identify the subordinate clause",
-      "domain": "Clauses",
-      "questionType": "identify",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "clauses"
-      ],
-      "sample": {
-        "templateId": "subordinate_clause_choice",
-        "templateLabel": "Identify the subordinate clause",
-        "domain": "Clauses",
-        "skillIds": [
-          "clauses"
-        ],
-        "questionType": "identify",
-        "seed": 10136,
-        "itemId": "subordinate_clause_choice:10136",
-        "marks": 1,
-        "promptText": "Which option is the subordinate clause in the sentence below? If the path is icy, wear your boots.",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "wear your boots",
-              "label": "wear your boots"
-            },
-            {
-              "value": "If the path is icy",
-              "label": "If the path is icy"
-            },
-            {
-              "value": "the path is icy boots",
-              "label": "the path is icy boots"
-            },
-            {
-              "value": "icy wear",
-              "label": "icy wear"
-            }
-          ]
-        },
-        "solutionLines": [
-          "A subordinate clause often begins with a conjunction such as because, when, if or although.",
-          "It depends on the main clause to complete the full meaning."
-        ]
-      },
-      "correctResponse": {
-        "answer": "If the path is icy"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The subordinate clause is: If the path is icy.",
-        "answerText": "If the path is icy",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "subordinate_clause_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The subordinate clause is: If the path is icy.",
-        "answerText": "If the path is icy",
-        "minimalHint": "A subordinate clause usually depends on the main clause. Ask whether it can stand alone here."
-      }
-    },
-    {
-      "id": "combine_clauses_rewrite",
-      "label": "Combine ideas into one sentence",
-      "domain": "Clauses",
-      "questionType": "rewrite",
-      "difficulty": 3,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": false,
-      "tags": [
-        "builder",
-        "surgery"
-      ],
-      "skillIds": [
-        "clauses"
-      ],
-      "sample": {
-        "templateId": "combine_clauses_rewrite",
-        "templateLabel": "Combine ideas into one sentence",
-        "domain": "Clauses",
-        "skillIds": [
-          "clauses"
-        ],
-        "questionType": "rewrite",
-        "seed": 10153,
-        "itemId": "combine_clauses_rewrite:10153",
-        "marks": 2,
-        "promptText": "Combine the ideas into one sentence using because. Sam wore gloves. It was cold.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Combined sentence",
-          "placeholder": "Write one complete sentence."
-        },
-        "solutionLines": [
-          "Use 'because' to show cause.",
-          "Either order can work if the punctuation is correct.",
-          "A strong answer is: Sam wore gloves because it was cold."
-        ]
-      },
-      "correctResponse": {
-        "answer": "Sam wore gloves because it was cold."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: Sam wore gloves because it was cold.",
-        "answerText": "Sam wore gloves because it was cold.",
-        "minimalHint": "A subordinate clause usually depends on the main clause. Ask whether it can stand alone here."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "subordinate_clause_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: Sam wore gloves because it was cold.",
-        "answerText": "Sam wore gloves because it was cold.",
-        "minimalHint": "A subordinate clause usually depends on the main clause. Ask whether it can stand alone here."
-      }
-    },
-    {
-      "id": "relative_clause_identify",
-      "label": "Spot the relative clause",
-      "domain": "Clauses",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "relative_clauses"
-      ],
-      "sample": {
-        "templateId": "relative_clause_identify",
-        "templateLabel": "Spot the relative clause",
-        "domain": "Clauses",
-        "skillIds": [
-          "relative_clauses"
-        ],
-        "questionType": "choose",
-        "seed": 10170,
-        "itemId": "relative_clause_identify:10170",
-        "marks": 1,
-        "promptText": "Which sentence contains a relative clause?",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "The boy who dropped his hat waved to us.",
-              "label": "The boy who dropped his hat waved to us."
-            },
-            {
-              "value": "When the boy dropped his hat, he waved to us.",
-              "label": "When the boy dropped his hat, he waved to us."
-            },
-            {
-              "value": "The boy dropped his hat and waved to us.",
-              "label": "The boy dropped his hat and waved to us."
-            },
-            {
-              "value": "Waving to us, the boy dropped his hat.",
-              "label": "Waving to us, the boy dropped his hat."
-            }
-          ]
-        },
-        "solutionLines": [
-          "A relative clause gives extra information about a noun.",
-          "It often begins with who, which, that, where, when or whose."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The boy who dropped his hat waved to us."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct sentence is: The boy who dropped his hat waved to us.",
-        "answerText": "The boy who dropped his hat waved to us.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "relative_clause_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct sentence is: The boy who dropped his hat waved to us.",
-        "answerText": "The boy who dropped his hat waved to us.",
-        "minimalHint": "A relative clause adds extra information about a noun. Find the noun it is attached to."
-      }
-    },
-    {
-      "id": "relative_clause_complete",
-      "label": "Complete with a relative clause",
-      "domain": "Clauses",
-      "questionType": "build",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "builder"
-      ],
-      "skillIds": [
-        "relative_clauses"
-      ],
-      "sample": {
-        "templateId": "relative_clause_complete",
-        "templateLabel": "Complete with a relative clause",
-        "domain": "Clauses",
-        "skillIds": [
-          "relative_clauses"
-        ],
-        "questionType": "build",
-        "seed": 10187,
-        "itemId": "relative_clause_complete:10187",
-        "marks": 1,
-        "promptText": "Complete the sentence with the best relative clause. The teacher ___ helped us with the project.",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "who had visited Egypt",
-              "label": "who had visited Egypt"
-            },
-            {
-              "value": "because she visited Egypt",
-              "label": "because she visited Egypt"
-            },
-            {
-              "value": "after visiting Egypt",
-              "label": "after visiting Egypt"
-            },
-            {
-              "value": "and visited Egypt",
-              "label": "and visited Egypt"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Choose the clause that adds extra information about the noun and fits the sentence smoothly.",
-          "Correct answer: who had visited Egypt"
-        ]
-      },
-      "correctResponse": {
-        "answer": "who had visited Egypt"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The best completion is: who had visited Egypt.",
-        "answerText": "who had visited Egypt",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "relative_clause_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The best completion is: who had visited Egypt.",
-        "answerText": "who had visited Egypt",
-        "minimalHint": "A relative clause adds extra information about a noun. Find the noun it is attached to."
-      }
-    },
-    {
-      "id": "tense_form_choice",
-      "label": "Choose the correct verb form",
-      "domain": "Verb forms",
-      "questionType": "fill",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "tense_aspect"
-      ],
-      "sample": {
-        "templateId": "tense_form_choice",
-        "templateLabel": "Choose the correct verb form",
-        "domain": "Verb forms",
-        "skillIds": [
-          "tense_aspect"
-        ],
-        "questionType": "fill",
-        "seed": 10204,
-        "itemId": "tense_form_choice:10204",
-        "marks": 1,
-        "promptText": "Choose the best verb form to complete the sentence. While we ___ to our friend, his phone started ringing.",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "talked",
-              "label": "talked"
-            },
-            {
-              "value": "have talked",
-              "label": "have talked"
-            },
-            {
-              "value": "were talking",
-              "label": "were talking"
-            },
-            {
-              "value": "had talked",
-              "label": "had talked"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Use the time clues in the sentence.",
-          "Check whether the meaning needs simple, progressive, present perfect or past perfect."
-        ]
-      },
-      "correctResponse": {
-        "answer": "were talking"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct form is: were talking.",
-        "answerText": "were talking",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "tense_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct form is: were talking.",
-        "answerText": "were talking",
-        "minimalHint": "Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form."
-      }
-    },
-    {
-      "id": "tense_rewrite",
-      "label": "Rewrite in a different tense",
-      "domain": "Verb forms",
-      "questionType": "rewrite",
-      "difficulty": 3,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": false,
-      "tags": [
-        "surgery",
-        "builder"
-      ],
-      "skillIds": [
-        "tense_aspect"
-      ],
-      "sample": {
-        "templateId": "tense_rewrite",
-        "templateLabel": "Rewrite in a different tense",
-        "domain": "Verb forms",
-        "skillIds": [
-          "tense_aspect"
-        ],
-        "questionType": "rewrite",
-        "seed": 10221,
-        "itemId": "tense_rewrite:10221",
-        "marks": 2,
-        "promptText": "Rewrite the sentence in the past progressive. The dog chases the cat.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Rewritten sentence",
-          "placeholder": "Write the full sentence."
-        },
-        "solutionLines": [
-          "Change the simple present verb into the past progressive form.",
-          "Use 'was' with 'chasing'.",
-          "The correct sentence is: The dog was chasing the cat."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The dog was chasing the cat."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: The dog was chasing the cat.",
-        "answerText": "The dog was chasing the cat.",
-        "minimalHint": "Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "tense_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: The dog was chasing the cat.",
-        "answerText": "The dog was chasing the cat.",
-        "minimalHint": "Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form."
-      }
-    },
-    {
-      "id": "standard_english_pairs",
-      "label": "Choose the Standard English forms",
-      "domain": "Standard English",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "standard_english"
-      ],
-      "sample": {
-        "templateId": "standard_english_pairs",
-        "templateLabel": "Choose the Standard English forms",
-        "domain": "Standard English",
-        "skillIds": [
-          "standard_english"
-        ],
-        "questionType": "choose",
-        "seed": 10238,
-        "itemId": "standard_english_pairs:10238",
-        "marks": 2,
-        "promptText": "Choose the correct verb form in each pair to complete the sentences using Standard English.",
-        "inputSpec": {
-          "type": "multi",
-          "fields": [
-            {
-              "key": "row0",
-              "label": "We was / were going on a school trip.",
-              "kind": "radio",
-              "options": [
-                [
-                  "was",
-                  "was"
-                ],
-                [
-                  "were",
-                  "were"
-                ]
-              ]
-            },
-            {
-              "key": "row1",
-              "label": "The musicians did / done a sound check.",
-              "kind": "radio",
-              "options": [
-                [
-                  "did",
-                  "did"
-                ],
-                [
-                  "done",
-                  "done"
-                ]
-              ]
-            }
-          ]
-        },
-        "solutionLines": [
-          "Standard English uses the accepted written verb forms.",
-          "Be careful not to copy a spoken local form into formal writing."
-        ]
-      },
-      "correctResponse": {
-        "row0": "were",
-        "row1": "did"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "Correct choices: were; did.",
-        "answerText": "were; did",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "standard_english_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "Correct choices: were; did.",
-        "answerText": "were; did",
-        "minimalHint": "Choose the form you would expect in formal writing, not the spoken form you might hear."
-      }
-    },
-    {
-      "id": "pronoun_cohesion_choice",
-      "label": "Choose the clearest cohesive version",
-      "domain": "Cohesion",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "pronouns_cohesion"
-      ],
-      "sample": {
-        "templateId": "pronoun_cohesion_choice",
-        "templateLabel": "Choose the clearest cohesive version",
-        "domain": "Cohesion",
-        "skillIds": [
-          "pronouns_cohesion"
-        ],
-        "questionType": "choose",
-        "seed": 10255,
-        "itemId": "pronoun_cohesion_choice:10255",
-        "marks": 1,
-        "promptText": "Which version is clearest and avoids awkward repetition without becoming confusing?",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "Arjun gave Arjun's book to Arjun's sister because Arjun had finished Arjun's book.",
-              "label": "Arjun gave Arjun's book to Arjun's sister because Arjun had finished Arjun's book."
-            },
-            {
-              "value": "Arjun gave his book to his sister because he had finished it.",
-              "label": "Arjun gave his book to his sister because he had finished it."
-            },
-            {
-              "value": "Arjun gave his book to his sister because it had finished him.",
-              "label": "Arjun gave his book to his sister because it had finished him."
-            },
-            {
-              "value": "He gave it to her because he had finished her.",
-              "label": "He gave it to her because he had finished her."
-            }
-          ]
-        },
-        "solutionLines": [
-          "Good cohesion reduces repetition without making the meaning unclear.",
-          "A pronoun must clearly point to the right noun."
-        ]
-      },
-      "correctResponse": {
-        "answer": "Arjun gave his book to his sister because he had finished it."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The clearest version is: Arjun gave his book to his sister because he had finished it.",
-        "answerText": "Arjun gave his book to his sister because he had finished it.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "pronoun_cohesion_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The clearest version is: Arjun gave his book to his sister because he had finished it.",
-        "answerText": "Arjun gave his book to his sister because he had finished it.",
-        "minimalHint": "A pronoun should make the sentence smoother without making the meaning unclear."
-      }
-    },
-    {
-      "id": "formality_pairs",
-      "label": "Choose the more formal option",
-      "domain": "Register",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "formality"
-      ],
-      "sample": {
-        "templateId": "formality_pairs",
-        "templateLabel": "Choose the more formal option",
-        "domain": "Register",
-        "skillIds": [
-          "formality"
-        ],
-        "questionType": "choose",
-        "seed": 10272,
-        "itemId": "formality_pairs:10272",
-        "marks": 2,
-        "promptText": "Circle the most formal option in each underlined pair below to complete the passage.",
-        "inputSpec": {
-          "type": "multi",
-          "fields": [
-            {
-              "key": "row0",
-              "label": "The basketball club was set up / established last year.",
-              "kind": "radio",
-              "options": [
-                [
-                  "set up",
-                  "set up"
-                ],
-                [
-                  "established",
-                  "established"
-                ]
-              ]
-            },
-            {
-              "key": "row1",
-              "label": "They asked for / requested new equipment.",
-              "kind": "radio",
-              "options": [
-                [
-                  "asked for",
-                  "asked for"
-                ],
-                [
-                  "requested",
-                  "requested"
-                ]
-              ]
-            },
-            {
-              "key": "row2",
-              "label": "Now they play / compete in a local league.",
-              "kind": "radio",
-              "options": [
-                [
-                  "play",
-                  "play"
-                ],
-                [
-                  "compete",
-                  "compete"
-                ]
-              ]
-            }
-          ]
-        },
-        "solutionLines": [
-          "Formal language usually uses more precise or less chatty vocabulary.",
-          "The best option depends on the setting and purpose."
-        ]
-      },
-      "correctResponse": {
-        "row0": "established",
-        "row1": "requested",
-        "row2": "compete"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "Correct formal choices: established; requested; compete.",
-        "answerText": "established; requested; compete",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "formality_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "Correct formal choices: established; requested; compete.",
-        "answerText": "established; requested; compete",
-        "minimalHint": "Match the language to a formal setting, not everyday chat."
-      }
-    },
-    {
-      "id": "active_passive_rewrite",
-      "label": "Transform active and passive voice",
-      "domain": "Sentence structure",
-      "questionType": "rewrite",
-      "difficulty": 3,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": false,
-      "tags": [
-        "builder",
-        "surgery"
-      ],
-      "skillIds": [
-        "active_passive"
-      ],
-      "sample": {
-        "templateId": "active_passive_rewrite",
-        "templateLabel": "Transform active and passive voice",
-        "domain": "Sentence structure",
-        "skillIds": [
-          "active_passive"
-        ],
-        "questionType": "rewrite",
-        "seed": 10289,
-        "itemId": "active_passive_rewrite:10289",
-        "marks": 2,
-        "promptText": "Rewrite the sentence in the passive. Keep the same tense. The team will collect the trophy.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Rewritten sentence",
-          "placeholder": "Write the full transformed sentence."
-        },
-        "solutionLines": [
-          "Keep the future tense by using 'will be'.",
-          "Then add the past participle 'collected'.",
-          "A correct answer is: The trophy will be collected by the team."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The trophy will be collected by the team."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: The trophy will be collected by the team.",
-        "answerText": "The trophy will be collected by the team.",
-        "minimalHint": "In active voice, the doer comes first. In passive voice, the thing affected comes first."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "active_passive_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: The trophy will be collected by the team.",
-        "answerText": "The trophy will be collected by the team.",
-        "minimalHint": "In active voice, the doer comes first. In passive voice, the thing affected comes first."
-      }
-    },
-    {
-      "id": "subject_object_choice",
-      "label": "Identify subject or object",
-      "domain": "Sentence structure",
-      "questionType": "identify",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "subject_object"
-      ],
-      "sample": {
-        "templateId": "subject_object_choice",
-        "templateLabel": "Identify subject or object",
-        "domain": "Sentence structure",
-        "skillIds": [
-          "subject_object"
-        ],
-        "questionType": "identify",
-        "seed": 10306,
-        "itemId": "subject_object_choice:10306",
-        "marks": 1,
-        "promptText": "In the sentence below, what is the object? The noisy gull stole the sandwich from Max.",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "The noisy gull",
-              "label": "The noisy gull"
-            },
-            {
-              "value": "stole",
-              "label": "stole"
-            },
-            {
-              "value": "the sandwich",
-              "label": "the sandwich"
-            },
-            {
-              "value": "from Max",
-              "label": "from Max"
-            }
-          ]
-        },
-        "solutionLines": [
-          "The subject usually does the action; the object usually receives it.",
-          "Ignore opening adverbials when finding the subject or object."
-        ]
-      },
-      "correctResponse": {
-        "answer": "the sandwich"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The object is: the sandwich.",
-        "answerText": "the sandwich",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "subject_object_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The object is: the sandwich.",
-        "answerText": "the sandwich",
-        "minimalHint": "The subject does the action; the object receives it."
-      }
-    },
-    {
-      "id": "modal_verb_choice",
-      "label": "Choose the best modal meaning",
-      "domain": "Verb forms",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "modal_verbs"
-      ],
-      "sample": {
-        "templateId": "modal_verb_choice",
-        "templateLabel": "Choose the best modal meaning",
-        "domain": "Verb forms",
-        "skillIds": [
-          "modal_verbs"
-        ],
-        "questionType": "choose",
-        "seed": 10323,
-        "itemId": "modal_verb_choice:10323",
-        "marks": 1,
-        "promptText": "Which sentence shows the least certainty that the team will win?",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "The team must win.",
-              "label": "The team must win."
-            },
-            {
-              "value": "The team will win.",
-              "label": "The team will win."
-            },
-            {
-              "value": "The team should win.",
-              "label": "The team should win."
-            },
-            {
-              "value": "The team might win.",
-              "label": "The team might win."
-            }
-          ]
-        },
-        "solutionLines": [
-          "Compare how certain, likely or strong each modal verb sounds.",
-          "The best answer depends on the meaning, not just the grammar label."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The team might win."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: The team might win..",
-        "answerText": "The team might win.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "modal_verb_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: The team might win..",
-        "answerText": "The team might win.",
-        "minimalHint": "Compare how certain each modal verb sounds."
-      }
-    },
-    {
-      "id": "parenthesis_replace_choice",
-      "label": "Choose punctuation for parenthesis",
-      "domain": "Punctuation for grammar",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "parenthesis_commas"
-      ],
-      "sample": {
-        "templateId": "parenthesis_replace_choice",
-        "templateLabel": "Choose punctuation for parenthesis",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "parenthesis_commas"
-        ],
-        "questionType": "choose",
-        "seed": 10340,
-        "itemId": "parenthesis_replace_choice:10340",
-        "marks": 1,
-        "promptText": "What punctuation could be used instead of brackets in the sentence below? Tokyo (the capital of Japan) is one of the largest cities in the world.",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "hyphens",
-              "label": "hyphens"
-            },
-            {
-              "value": "colons",
-              "label": "colons"
-            },
-            {
-              "value": "semi-colons",
-              "label": "semi-colons"
-            },
-            {
-              "value": "dashes",
-              "label": "dashes"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Brackets, dashes and paired commas can all mark parenthesis in many KS2 contexts.",
-          "Here the best replacement from the options is dashes."
-        ]
-      },
-      "correctResponse": {
-        "answer": "dashes"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: dashes.",
-        "answerText": "dashes",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "parenthesis_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: dashes.",
-        "answerText": "dashes",
-        "minimalHint": "Parenthesis adds extra information that could be lifted out."
-      }
-    },
-    {
-      "id": "parenthesis_fix_sentence",
-      "label": "Insert brackets for parenthesis",
-      "domain": "Punctuation for grammar",
-      "questionType": "fix",
-      "difficulty": 3,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": false,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "parenthesis_commas"
-      ],
-      "sample": {
-        "templateId": "parenthesis_fix_sentence",
-        "templateLabel": "Insert brackets for parenthesis",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "parenthesis_commas"
-        ],
-        "questionType": "fix",
-        "seed": 10357,
-        "itemId": "parenthesis_fix_sentence:10357",
-        "marks": 2,
-        "promptText": "Insert a pair of brackets in the correct place. My cousin the youngest in the family won the chess trophy.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Type the corrected sentence."
-        },
-        "solutionLines": [
-          "The bracketed words add extra information about 'my cousin'.",
-          "The main sentence still works without them.",
-          "The correct sentence is: My cousin (the youngest in the family) won the chess trophy."
-        ]
-      },
-      "correctResponse": {
-        "answer": "My cousin (the youngest in the family) won the chess trophy."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: My cousin (the youngest in the family) won the chess trophy.",
-        "answerText": "My cousin (the youngest in the family) won the chess trophy.",
-        "minimalHint": "Parenthesis adds extra information that could be lifted out."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "parenthesis_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: My cousin (the youngest in the family) won the chess trophy.",
-        "answerText": "My cousin (the youngest in the family) won the chess trophy.",
-        "minimalHint": "Parenthesis adds extra information that could be lifted out."
-      }
-    },
-    {
-      "id": "speech_punctuation_fix",
-      "label": "Punctuate direct speech",
-      "domain": "Punctuation for grammar",
-      "questionType": "fix",
-      "difficulty": 3,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": false,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "speech_punctuation"
-      ],
-      "sample": {
-        "templateId": "speech_punctuation_fix",
-        "templateLabel": "Punctuate direct speech",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "speech_punctuation"
-        ],
-        "questionType": "fix",
-        "seed": 10374,
-        "itemId": "speech_punctuation_fix:10374",
-        "marks": 2,
-        "promptText": "Punctuate the direct speech correctly. \"Where are you going\" asked Mum.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Correctly punctuated sentence",
-          "placeholder": "Type the corrected sentence."
-        },
-        "solutionLines": [
-          "The spoken words are a question.",
-          "The question mark belongs inside the speech marks.",
-          "A correct answer is: \"Where are you going?\" asked Mum."
-        ]
-      },
-      "correctResponse": {
-        "answer": "\"Where are you going?\" asked Mum."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: “Where are you going?” asked Mum.",
-        "answerText": "“Where are you going?” asked Mum.",
-        "minimalHint": "Check where the spoken words end and where the reporting clause begins."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "speech_punctuation_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: “Where are you going?” asked Mum.",
-        "answerText": "“Where are you going?” asked Mum.",
-        "minimalHint": "Check where the spoken words end and where the reporting clause begins."
-      }
-    },
-    {
-      "id": "apostrophe_possession_choice",
-      "label": "Choose the correct possessive apostrophe",
-      "domain": "Punctuation for grammar",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
-        "identify"
-      ],
-      "skillIds": [
-        "apostrophes_possession"
-      ],
-      "sample": {
-        "templateId": "apostrophe_possession_choice",
-        "templateLabel": "Choose the correct possessive apostrophe",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "apostrophes_possession"
-        ],
-        "questionType": "choose",
-        "seed": 10391,
-        "itemId": "apostrophe_possession_choice:10391",
-        "marks": 1,
-        "promptText": "Choose the correct phrase to complete the sentence: The ___ coats were hanging by the door.",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "children's",
-              "label": "children's"
-            },
-            {
-              "value": "childrens'",
-              "label": "childrens'"
-            },
-            {
-              "value": "childrens",
-              "label": "childrens"
-            },
-            {
-              "value": "child's",
-              "label": "child's"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Work out who owns the noun.",
-          "Then decide whether the owner is singular or plural."
-        ]
-      },
-      "correctResponse": {
-        "answer": "children's"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: children's.",
-        "answerText": "children's",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "apostrophe_possession_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: children's.",
-        "answerText": "children's",
-        "minimalHint": "Ask who owns the noun, and whether the owner is singular or plural."
-      }
-    },
-    {
-      "id": "explain_reason_choice",
-      "label": "Explain why",
-      "domain": "Explanation",
-      "questionType": "explain",
-      "difficulty": 3,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": false,
-      "tags": [
+      "conceptId": "formality",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "classify",
         "explain"
       ],
-      "skillIds": [
-        "adverbials",
-        "standard_english"
-      ],
-      "sample": {
-        "templateId": "explain_reason_choice",
-        "templateLabel": "Explain why",
-        "domain": "Explanation",
-        "skillIds": [
-          "adverbials",
-          "standard_english"
-        ],
-        "questionType": "explain",
-        "seed": 10408,
-        "itemId": "explain_reason_choice:10408",
-        "marks": 1,
-        "promptText": "Why is there a comma after the opening words in this sentence? Before sunrise, the campers packed their bags.",
-        "inputSpec": {
-          "type": "single_choice",
-          "options": [
-            {
-              "value": "Because the opening words are a fronted adverbial.",
-              "label": "Because the opening words are a fronted adverbial."
-            },
-            {
-              "value": "Because every long sentence needs a comma near the start.",
-              "label": "Because every long sentence needs a comma near the start."
-            },
-            {
-              "value": "Because ‘sunrise’ is a noun.",
-              "label": "Because ‘sunrise’ is a noun."
-            },
-            {
-              "value": "Because the sentence is in the past tense.",
-              "label": "Because the sentence is in the past tense."
-            }
-          ]
-        },
-        "solutionLines": [
-          "Focus on the grammar reason, not just a vague comment that it 'sounds better'.",
-          "The best explanation names the right feature and why it matters."
-        ]
-      },
-      "correctResponse": {
-        "answer": "Because the opening words are a fronted adverbial."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The best explanation is: Because the opening words are a fronted adverbial..",
-        "answerText": "Because the opening words are a fronted adverbial.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "fronted_adverbial_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The best explanation is: Because the opening words are a fronted adverbial..",
-        "answerText": "Because the opening words are a fronted adverbial.",
-        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
-      }
+      "templateIds": [
+        "formality_pairs",
+        "proc2_formality_choice",
+        "qg_formality_classify_table",
+        "qg_p3_formality_explain",
+        "qg_p4_cohesion_formality_transfer"
+      ]
     },
     {
-      "id": "standard_fix_sentence",
-      "label": "Rewrite in Standard English",
-      "domain": "Standard English",
-      "questionType": "fix",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": false,
-      "tags": [
-        "surgery"
+      "conceptId": "hyphen_ambiguity",
+      "total": 4,
+      "generated": 4,
+      "fixed": 0,
+      "selectedResponse": 3,
+      "constructedResponse": 1,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
       ],
-      "skillIds": [
-        "standard_english"
-      ],
-      "sample": {
-        "templateId": "standard_fix_sentence",
-        "templateLabel": "Rewrite in Standard English",
-        "domain": "Standard English",
-        "skillIds": [
-          "standard_english"
-        ],
-        "questionType": "fix",
-        "seed": 10425,
-        "itemId": "standard_fix_sentence:10425",
-        "marks": 2,
-        "promptText": "Rewrite the sentence in Standard English. I done my homework before tea.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Write the corrected sentence."
-        },
-        "solutionLines": [
-          "Replace the non-standard spoken form.",
-          "Standard English uses 'did' here.",
-          "The correct sentence is: I did my homework before tea."
-        ]
-      },
-      "correctResponse": {
-        "answer": "I did my homework before tea."
-      },
-      "correctResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 0,
-        "misconception": null,
-        "feedbackShort": "Saved for review.",
-        "feedbackLong": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.",
-        "answerText": "",
-        "minimalHint": "This writing response is for review, not automatic marking.",
-        "nonScored": true,
-        "manualReviewOnly": true
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 0,
-        "misconception": null,
-        "feedbackShort": "Saved for review.",
-        "feedbackLong": "Your Standard English rewrite has been saved for review. It is not auto-marked for mastery.",
-        "answerText": "",
-        "minimalHint": "This writing response is for review, not automatic marking.",
-        "nonScored": true,
-        "manualReviewOnly": true
-      }
+      "templateIds": [
+        "proc3_hyphen_fix_meaning",
+        "proc_hyphen_ambiguity_choice",
+        "qg_hyphen_ambiguity_explain",
+        "qg_p4_possession_hyphen_clarity_transfer"
+      ]
     },
     {
-      "id": "proc_fronted_adverbial_fix",
-      "label": "Fix comma after fronted adverbial",
-      "domain": "Adverbials",
-      "questionType": "fix",
-      "difficulty": 1,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "surgery"
+      "conceptId": "modal_verbs",
+      "total": 4,
+      "generated": 3,
+      "fixed": 1,
+      "selectedResponse": 4,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fill"
       ],
-      "skillIds": [
-        "adverbials"
-      ],
-      "sample": {
-        "templateId": "proc_fronted_adverbial_fix",
-        "templateLabel": "Fix comma after fronted adverbial",
-        "domain": "Adverbials",
-        "skillIds": [
-          "adverbials"
-        ],
-        "questionType": "fix",
-        "seed": 10442,
-        "itemId": "proc_fronted_adverbial_fix:10442",
-        "marks": 2,
-        "promptText": "Rewrite the sentence with the punctuation corrected. On Friday morning Ruby found the map.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Write the corrected sentence."
-        },
-        "solutionLines": [
-          "Spot the opening time, place or manner phrase.",
-          "Because the fronted adverbial comes first, place a comma after it.",
-          "A correct answer is: On Friday morning, Ruby found the map."
-        ]
-      },
-      "correctResponse": {
-        "answer": "On Friday morning, Ruby found the map."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: On Friday morning, Ruby found the map.",
-        "answerText": "On Friday morning, Ruby found the map.",
-        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "fronted_adverbial_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: On Friday morning, Ruby found the map.",
-        "answerText": "On Friday morning, Ruby found the map.",
-        "minimalHint": "If the sentence opens with when, where or how information, check whether it needs a comma after it."
-      }
+      "templateIds": [
+        "modal_verb_choice",
+        "proc2_modal_choice",
+        "qg_modal_verb_explain",
+        "qg_p4_verb_form_register_transfer"
+      ]
     },
     {
-      "id": "proc_semicolon_choice",
-      "label": "Choose a semi-colon",
-      "domain": "Punctuation for grammar",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [
+      "conceptId": "noun_phrases",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "build",
+        "choose",
+        "classify",
+        "explain"
+      ],
+      "templateIds": [
+        "build_noun_phrase",
+        "expanded_noun_phrase_choice",
+        "proc3_noun_phrase_build",
+        "qg_p3_noun_phrases_explain",
+        "qg_p4_word_class_noun_phrase_transfer"
+      ]
+    },
+    {
+      "conceptId": "parenthesis_commas",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ],
+      "templateIds": [
+        "parenthesis_fix_sentence",
+        "parenthesis_replace_choice",
+        "proc3_parenthesis_commas_fix",
+        "qg_p3_parenthesis_commas_explain",
+        "qg_p4_relative_parenthesis_transfer"
+      ]
+    },
+    {
+      "conceptId": "pronouns_cohesion",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "explain",
         "identify"
       ],
-      "skillIds": [
-        "boundary_punctuation"
-      ],
-      "sample": {
-        "templateId": "proc_semicolon_choice",
-        "templateLabel": "Choose a semi-colon",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "boundary_punctuation"
-        ],
-        "questionType": "choose",
-        "seed": 10459,
-        "itemId": "proc_semicolon_choice:10459",
-        "marks": 1,
-        "promptText": "Which punctuation mark best completes the sentence below? The rain stopped ___ the playground began to fill.",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": ";",
-              "label": ";"
-            },
-            {
-              "value": ":",
-              "label": ":"
-            },
-            {
-              "value": ",",
-              "label": ","
-            },
-            {
-              "value": "?",
-              "label": "?"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Both parts are complete clauses and closely linked in meaning.",
-          "A semi-colon can join closely related main clauses without a conjunction.",
-          "The best answer is: The rain stopped; the playground began to fill."
-        ]
-      },
-      "correctResponse": {
-        "answer": ";"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The best answer is: The rain stopped; the playground began to fill.",
-        "answerText": ";",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "boundary_punctuation_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The best answer is: The rain stopped; the playground began to fill.",
-        "answerText": ";",
-        "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
-      }
+      "templateIds": [
+        "proc2_pronoun_cohesion_choice",
+        "pronoun_cohesion_choice",
+        "qg_p3_pronouns_cohesion_explain",
+        "qg_p4_cohesion_formality_transfer",
+        "qg_pronoun_referent_identify"
+      ]
     },
     {
-      "id": "proc_colon_list_fix",
-      "label": "Insert a colon for a list",
-      "domain": "Punctuation for grammar",
-      "questionType": "fix",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "boundary_punctuation"
-      ],
-      "sample": {
-        "templateId": "proc_colon_list_fix",
-        "templateLabel": "Insert a colon for a list",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "boundary_punctuation"
-        ],
-        "questionType": "fix",
-        "seed": 10476,
-        "itemId": "proc_colon_list_fix:10476",
-        "marks": 2,
-        "promptText": "Rewrite the sentence with a colon in the correct place. The gardener planted four types of vegetable carrots, beans, potatoes, onions.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Write the corrected sentence."
-        },
-        "solutionLines": [
-          "Check that the words before the list make a complete clause.",
-          "A colon can introduce the list that follows.",
-          "A correct answer is: The gardener planted four types of vegetable: carrots, beans, potatoes, onions."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The gardener planted four types of vegetable: carrots, beans, potatoes, onions."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
-        "answerText": "The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
-        "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "boundary_punctuation_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
-        "answerText": "The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
-        "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
-      }
-    },
-    {
-      "id": "proc_dash_boundary_fix",
-      "label": "Insert a dash to mark a strong break",
-      "domain": "Punctuation for grammar",
-      "questionType": "fix",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "boundary_punctuation"
-      ],
-      "sample": {
-        "templateId": "proc_dash_boundary_fix",
-        "templateLabel": "Insert a dash to mark a strong break",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "boundary_punctuation"
-        ],
-        "questionType": "fix",
-        "seed": 10493,
-        "itemId": "proc_dash_boundary_fix:10493",
-        "marks": 2,
-        "promptText": "Rewrite the sentence with a dash in the correct place. The result surprised us all the youngest team had won.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Write the corrected sentence."
-        },
-        "solutionLines": [
-          "Both parts are strongly linked, and the second part explains or expands the first.",
-          "A dash can mark that strong break.",
-          "A correct answer is: The result surprised us all – the youngest team had won."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The result surprised us all – the youngest team had won."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: The result surprised us all – the youngest team had won.",
-        "answerText": "The result surprised us all – the youngest team had won.",
-        "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "boundary_punctuation_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: The result surprised us all – the youngest team had won.",
-        "answerText": "The result surprised us all – the youngest team had won.",
-        "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
-      }
-    },
-    {
-      "id": "proc_hyphen_ambiguity_choice",
-      "label": "Choose the clearer hyphenated sentence",
-      "domain": "Punctuation for grammar",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [
+      "conceptId": "relative_clauses",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "build",
+        "choose",
+        "explain",
         "identify"
       ],
-      "skillIds": [
-        "hyphen_ambiguity"
-      ],
-      "sample": {
-        "templateId": "proc_hyphen_ambiguity_choice",
-        "templateLabel": "Choose the clearer hyphenated sentence",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "hyphen_ambiguity"
-        ],
-        "questionType": "choose",
-        "seed": 10510,
-        "itemId": "proc_hyphen_ambiguity_choice:10510",
-        "marks": 1,
-        "promptText": "Which sentence means the shop has second-hand items?",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "Mum found a bargain at the second-hand shop.",
-              "label": "Mum found a bargain at the second-hand shop."
-            },
-            {
-              "value": "Mum found a bargain at the second hand shop.",
-              "label": "Mum found a bargain at the second hand shop."
-            },
-            {
-              "value": "Mum found a second bargain handed to her at the shop.",
-              "label": "Mum found a second bargain handed to her at the shop."
-            },
-            {
-              "value": "Mum found a shop with a second hand at the counter.",
-              "label": "Mum found a shop with a second hand at the counter."
-            }
-          ]
-        },
-        "solutionLines": [
-          "Read both versions carefully and compare the meaning.",
-          "The hyphen shows that two words are working together as one describing idea.",
-          "The hyphen turns 'second-hand' into one describing idea for the shop."
-        ]
-      },
-      "correctResponse": {
-        "answer": "Mum found a bargain at the second-hand shop."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The clearer answer is: Mum found a bargain at the second-hand shop.",
-        "answerText": "Mum found a bargain at the second-hand shop.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "hyphen_ambiguity_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The clearer answer is: Mum found a bargain at the second-hand shop.",
-        "answerText": "Mum found a bargain at the second-hand shop.",
-        "minimalHint": "Say the phrase both ways in your head. Which version makes the meaning clear?"
-      }
+      "templateIds": [
+        "proc2_relative_clause_choice",
+        "qg_p3_relative_clauses_explain",
+        "qg_p4_relative_parenthesis_transfer",
+        "relative_clause_complete",
+        "relative_clause_identify"
+      ]
     },
     {
-      "id": "proc_speech_punctuation_fix",
-      "label": "Fix speech punctuation",
-      "domain": "Punctuation for grammar",
-      "questionType": "fix",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "speech_punctuation"
-      ],
-      "sample": {
-        "templateId": "proc_speech_punctuation_fix",
-        "templateLabel": "Fix speech punctuation",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "speech_punctuation"
-        ],
-        "questionType": "fix",
-        "seed": 10527,
-        "itemId": "proc_speech_punctuation_fix:10527",
-        "marks": 2,
-        "promptText": "Punctuate the direct speech correctly. \"When does the match begin\" said Dad.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Correctly punctuated sentence",
-          "placeholder": "Type the corrected sentence."
-        },
-        "solutionLines": [
-          "The spoken words are a question.",
-          "The question mark belongs inside the speech marks.",
-          "A correct answer is: \"When does the match begin?\" said Dad."
-        ]
-      },
-      "correctResponse": {
-        "answer": "\"When does the match begin?\" said Dad."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: \"When does the match begin?\" said Dad.",
-        "answerText": "\"When does the match begin?\" said Dad.",
-        "minimalHint": "Check where the spoken words end and where the reporting clause begins."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "speech_punctuation_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: \"When does the match begin?\" said Dad.",
-        "answerText": "\"When does the match begin?\" said Dad.",
-        "minimalHint": "Check where the spoken words end and where the reporting clause begins."
-      }
-    },
-    {
-      "id": "proc_apostrophe_possession_choice",
-      "label": "Choose the correct possessive apostrophe",
-      "domain": "Punctuation for grammar",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [
+      "conceptId": "sentence_functions",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
         "identify"
       ],
-      "skillIds": [
-        "apostrophes_possession"
-      ],
-      "sample": {
-        "templateId": "proc_apostrophe_possession_choice",
-        "templateLabel": "Choose the correct possessive apostrophe",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "apostrophes_possession"
-        ],
-        "questionType": "choose",
-        "seed": 10544,
-        "itemId": "proc_apostrophe_possession_choice:10544",
-        "marks": 1,
-        "promptText": "Choose the correct phrase for people and their bikes.",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "the peoples bikes",
-              "label": "the peoples bikes"
-            },
-            {
-              "value": "the people's bikes",
-              "label": "the people's bikes"
-            },
-            {
-              "value": "the people' bikes",
-              "label": "the people' bikes"
-            },
-            {
-              "value": "the people bikes",
-              "label": "the people bikes"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Ask who owns the noun.",
-          "Then decide whether the owner is singular, a regular plural ending in s, or an irregular plural.",
-          "The correct answer is: the people's bikes"
-        ]
-      },
-      "correctResponse": {
-        "answer": "the people's bikes"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: the people's bikes",
-        "answerText": "the people's bikes",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "apostrophe_possession_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: the people's bikes",
-        "answerText": "the people's bikes",
-        "minimalHint": "Ask who owns the noun, and whether the owner is singular or plural."
-      }
+      "templateIds": [
+        "proc3_sentence_function_choice",
+        "qg_p3_sentence_functions_explain",
+        "qg_p4_sentence_speech_transfer",
+        "question_mark_select",
+        "sentence_type_table"
+      ]
     },
     {
-      "id": "proc2_standard_english_choice",
-      "label": "Choose Standard English",
-      "domain": "Standard English",
-      "questionType": "choose",
-      "difficulty": 1,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [],
-      "skillIds": [
-        "standard_english"
-      ],
-      "sample": {
-        "templateId": "proc2_standard_english_choice",
-        "templateLabel": "Choose Standard English",
-        "domain": "Standard English",
-        "skillIds": [
-          "standard_english"
-        ],
-        "questionType": "choose",
-        "seed": 10561,
-        "itemId": "proc2_standard_english_choice:10561",
-        "marks": 1,
-        "promptText": "Which sentence is written in Standard English?",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "I done my homework before tea.",
-              "label": "I done my homework before tea."
-            },
-            {
-              "value": "I have did my homework before tea.",
-              "label": "I have did my homework before tea."
-            },
-            {
-              "value": "I did my homework before tea.",
-              "label": "I did my homework before tea."
-            },
-            {
-              "value": "I do my homework before tea.",
-              "label": "I do my homework before tea."
-            }
-          ]
-        },
-        "solutionLines": [
-          "Focus on the verb form that would fit formal written English.",
-          "Standard English uses 'did' here.",
-          "The correct answer is: I did my homework before tea."
-        ]
-      },
-      "correctResponse": {
-        "answer": "I did my homework before tea."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: I did my homework before tea.",
-        "answerText": "I did my homework before tea.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "standard_english_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: I did my homework before tea.",
-        "answerText": "I did my homework before tea.",
-        "minimalHint": "Choose the form you would expect in formal writing, not the spoken form you might hear."
-      }
-    },
-    {
-      "id": "proc2_standard_english_fix",
-      "label": "Rewrite in Standard English",
-      "domain": "Standard English",
-      "questionType": "fix",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "standard_english"
-      ],
-      "sample": {
-        "templateId": "proc2_standard_english_fix",
-        "templateLabel": "Rewrite in Standard English",
-        "domain": "Standard English",
-        "skillIds": [
-          "standard_english"
-        ],
-        "questionType": "fix",
-        "seed": 10578,
-        "itemId": "proc2_standard_english_fix:10578",
-        "marks": 2,
-        "promptText": "Rewrite the sentence in Standard English. Amira seen the comet after school.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Write the corrected sentence."
-        },
-        "solutionLines": [
-          "Find the non-standard spoken form.",
-          "Replace it with the Standard English verb form.",
-          "A correct answer is: Amira saw the comet after school."
-        ]
-      },
-      "correctResponse": {
-        "answer": "Amira saw the comet after school."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: Amira saw the comet after school.",
-        "answerText": "Amira saw the comet after school.",
-        "minimalHint": "Choose the form you would expect in formal writing, not the spoken form you might hear."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "standard_english_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: Amira saw the comet after school.",
-        "answerText": "Amira saw the comet after school.",
-        "minimalHint": "Choose the form you would expect in formal writing, not the spoken form you might hear."
-      }
-    },
-    {
-      "id": "proc2_tense_aspect_choice",
-      "label": "Choose the correct tense or aspect",
-      "domain": "Verb forms",
-      "questionType": "fill",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [],
-      "skillIds": [
-        "tense_aspect"
-      ],
-      "sample": {
-        "templateId": "proc2_tense_aspect_choice",
-        "templateLabel": "Choose the correct tense or aspect",
-        "domain": "Verb forms",
-        "skillIds": [
-          "tense_aspect"
-        ],
-        "questionType": "fill",
-        "seed": 10595,
-        "itemId": "proc2_tense_aspect_choice:10595",
-        "marks": 1,
-        "promptText": "Choose the verb form that best completes the sentence: By the time the bell rang, The pupils ___ the project.",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "packed",
-              "label": "packed"
-            },
-            {
-              "value": "are packing",
-              "label": "are packing"
-            },
-            {
-              "value": "have packed",
-              "label": "have packed"
-            },
-            {
-              "value": "had packed",
-              "label": "had packed"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Look for the time signal in the sentence.",
-          "The past perfect shows an earlier past action before another past event.",
-          "The correct answer is: had packed"
-        ]
-      },
-      "correctResponse": {
-        "answer": "had packed"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "By the time the bell rang, The pupils had packed the project.",
-        "answerText": "had packed",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "tense_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "By the time the bell rang, The pupils had packed the project.",
-        "answerText": "had packed",
-        "minimalHint": "Check when the action happened and whether the sentence needs a simple, progressive, perfect, or past perfect form."
-      }
-    },
-    {
-      "id": "proc2_modal_choice",
-      "label": "Choose the modal verb",
-      "domain": "Verb forms",
-      "questionType": "fill",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [],
-      "skillIds": [
-        "modal_verbs"
-      ],
-      "sample": {
-        "templateId": "proc2_modal_choice",
-        "templateLabel": "Choose the modal verb",
-        "domain": "Verb forms",
-        "skillIds": [
-          "modal_verbs"
-        ],
-        "questionType": "fill",
-        "seed": 10612,
-        "itemId": "proc2_modal_choice:10612",
-        "marks": 1,
-        "promptText": "Choose the modal verb that best fits the meaning: This is a rule on the climbing wall. You ___ wear a helmet.",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "might",
-              "label": "might"
-            },
-            {
-              "value": "could",
-              "label": "could"
-            },
-            {
-              "value": "should",
-              "label": "should"
-            },
-            {
-              "value": "must",
-              "label": "must"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Match the modal verb to the meaning: advice, possibility, certainty or obligation.",
-          "'Must' shows strongest obligation.",
-          "The correct answer is: must"
-        ]
-      },
-      "correctResponse": {
-        "answer": "must"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: must. ’Must’ shows strongest obligation.",
-        "answerText": "must",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "modal_verb_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: must. ’Must’ shows strongest obligation.",
-        "answerText": "must",
-        "minimalHint": "Compare how certain each modal verb sounds."
-      }
-    },
-    {
-      "id": "proc2_formality_choice",
-      "label": "Choose the more formal sentence",
-      "domain": "Register",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [],
-      "skillIds": [
-        "formality"
-      ],
-      "sample": {
-        "templateId": "proc2_formality_choice",
-        "templateLabel": "Choose the more formal sentence",
-        "domain": "Register",
-        "skillIds": [
-          "formality"
-        ],
-        "questionType": "choose",
-        "seed": 10629,
-        "itemId": "proc2_formality_choice:10629",
-        "marks": 1,
-        "promptText": "Which sentence is most suitable for a formal thank-you letter?",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "I am writing to express my gratitude for your generous donation.",
-              "label": "I am writing to express my gratitude for your generous donation."
-            },
-            {
-              "value": "Thanks so much for the cash you gave us.",
-              "label": "Thanks so much for the cash you gave us."
-            },
-            {
-              "value": "Just wanted to say thanks for giving us that money.",
-              "label": "Just wanted to say thanks for giving us that money."
-            },
-            {
-              "value": "Cheers for the donation – it was really kind.",
-              "label": "Cheers for the donation – it was really kind."
-            }
-          ]
-        },
-        "solutionLines": [
-          "Formal writing avoids chatty wording and uses more precise vocabulary.",
-          "Formal thank-you letters use measured expressions rather than chatty abbreviations.",
-          "The correct answer is: I am writing to express my gratitude for your generous donation."
-        ]
-      },
-      "correctResponse": {
-        "answer": "I am writing to express my gratitude for your generous donation."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: I am writing to express my gratitude for your generous donation.",
-        "answerText": "I am writing to express my gratitude for your generous donation.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "formality_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: I am writing to express my gratitude for your generous donation.",
-        "answerText": "I am writing to express my gratitude for your generous donation.",
-        "minimalHint": "Match the language to a formal setting, not everyday chat."
-      }
-    },
-    {
-      "id": "proc2_pronoun_cohesion_choice",
-      "label": "Choose the clearer cohesive version",
-      "domain": "Cohesion",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [],
-      "skillIds": [
-        "pronouns_cohesion"
-      ],
-      "sample": {
-        "templateId": "proc2_pronoun_cohesion_choice",
-        "templateLabel": "Choose the clearer cohesive version",
-        "domain": "Cohesion",
-        "skillIds": [
-          "pronouns_cohesion"
-        ],
-        "questionType": "choose",
-        "seed": 10646,
-        "itemId": "proc2_pronoun_cohesion_choice:10646",
-        "marks": 1,
-        "promptText": "Which version keeps the meaning clearest?",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "Ben gave Amira the glove because Amira needed it for the next lesson.",
-              "label": "Ben gave Amira the glove because Amira needed it for the next lesson."
-            },
-            {
-              "value": "Ben gave Amira the glove because she needed it for the next lesson.",
-              "label": "Ben gave Amira the glove because she needed it for the next lesson."
-            },
-            {
-              "value": "Ben gave Amira it because Amira needed it for the next lesson.",
-              "label": "Ben gave Amira it because Amira needed it for the next lesson."
-            },
-            {
-              "value": "Ben gave the glove to her because Amira needed it for the next lesson.",
-              "label": "Ben gave the glove to her because Amira needed it for the next lesson."
-            }
-          ]
-        },
-        "solutionLines": [
-          "A pronoun should help the sentence flow without making the meaning unclear.",
-          "Good cohesion avoids unnecessary repetition without making the referent unclear.",
-          "The clearest answer is: Ben gave Amira the glove because Amira needed it for the next lesson."
-        ]
-      },
-      "correctResponse": {
-        "answer": "Ben gave Amira the glove because Amira needed it for the next lesson."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The clearest answer is: Ben gave Amira the glove because Amira needed it for the next lesson.",
-        "answerText": "Ben gave Amira the glove because Amira needed it for the next lesson.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "pronoun_cohesion_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The clearest answer is: Ben gave Amira the glove because Amira needed it for the next lesson.",
-        "answerText": "Ben gave Amira the glove because Amira needed it for the next lesson.",
-        "minimalHint": "A pronoun should make the sentence smoother without making the meaning unclear."
-      }
-    },
-    {
-      "id": "proc2_subject_object_identify",
-      "label": "Identify subject or object",
-      "domain": "Sentence structure",
-      "questionType": "identify",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [],
-      "skillIds": [
-        "subject_object"
-      ],
-      "sample": {
-        "templateId": "proc2_subject_object_identify",
-        "templateLabel": "Identify subject or object",
-        "domain": "Sentence structure",
-        "skillIds": [
-          "subject_object"
-        ],
-        "questionType": "identify",
-        "seed": 10663,
-        "itemId": "proc2_subject_object_identify:10663",
-        "marks": 1,
-        "promptText": "Which words are the object in this sentence? Before sunrise, Ava washed the trophy before the lesson.",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "Ava",
-              "label": "Ava"
-            },
-            {
-              "value": "the trophy",
-              "label": "the trophy"
-            },
-            {
-              "value": "before the lesson",
-              "label": "before the lesson"
-            },
-            {
-              "value": "Before sunrise",
-              "label": "Before sunrise"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Ask who or what is doing the action. Then ask who or what receives it.",
-          "The object receives the action. The subject does the action.",
-          "The correct answer is: the trophy"
-        ]
-      },
-      "correctResponse": {
-        "answer": "the trophy"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: the trophy",
-        "answerText": "the trophy",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "subject_object_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: the trophy",
-        "answerText": "the trophy",
-        "minimalHint": "The subject does the action; the object receives it."
-      }
-    },
-    {
-      "id": "proc2_passive_to_active",
-      "label": "Rewrite passive as active",
-      "domain": "Sentence structure",
-      "questionType": "rewrite",
-      "difficulty": 3,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "builder"
-      ],
-      "skillIds": [
-        "active_passive"
-      ],
-      "sample": {
-        "templateId": "proc2_passive_to_active",
-        "templateLabel": "Rewrite passive as active",
-        "domain": "Sentence structure",
-        "skillIds": [
-          "active_passive"
-        ],
-        "questionType": "rewrite",
-        "seed": 10680,
-        "itemId": "proc2_passive_to_active:10680",
-        "marks": 2,
-        "promptText": "Rewrite the sentence in the active voice. The sketchbook is carried by Sam before lunch.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Rewritten sentence",
-          "placeholder": "Write the full sentence."
-        },
-        "solutionLines": [
-          "Find the doer after 'by' in the passive sentence.",
-          "Move that doer into the subject position and keep the tense steady.",
-          "A correct answer is: Sam carries the sketchbook before lunch."
-        ]
-      },
-      "correctResponse": {
-        "answer": "Sam carries the sketchbook before lunch."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: Sam carries the sketchbook before lunch.",
-        "answerText": "Sam carries the sketchbook before lunch.",
-        "minimalHint": "In active voice, the doer comes first. In passive voice, the thing affected comes first."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "active_passive_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: Sam carries the sketchbook before lunch.",
-        "answerText": "Sam carries the sketchbook before lunch.",
-        "minimalHint": "In active voice, the doer comes first. In passive voice, the thing affected comes first."
-      }
-    },
-    {
-      "id": "proc2_relative_clause_choice",
-      "label": "Choose the sentence with a relative clause",
-      "domain": "Clauses",
-      "questionType": "identify",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [],
-      "skillIds": [
-        "relative_clauses"
-      ],
-      "sample": {
-        "templateId": "proc2_relative_clause_choice",
-        "templateLabel": "Choose the sentence with a relative clause",
-        "domain": "Clauses",
-        "skillIds": [
-          "relative_clauses"
-        ],
-        "questionType": "identify",
-        "seed": 10697,
-        "itemId": "proc2_relative_clause_choice:10697",
-        "marks": 1,
-        "promptText": "Which sentence contains a relative clause?",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "When everyone wanted the coat, it was easy to spot.",
-              "label": "When everyone wanted the coat, it was easy to spot."
-            },
-            {
-              "value": "The coat that everyone wanted was easy to spot.",
-              "label": "The coat that everyone wanted was easy to spot."
-            },
-            {
-              "value": "The club coat was easy to spot.",
-              "label": "The club coat was easy to spot."
-            },
-            {
-              "value": "The coat was easy to spot outside.",
-              "label": "The coat was easy to spot outside."
-            }
-          ]
-        },
-        "solutionLines": [
-          "A relative clause adds information about a noun.",
-          "A relative clause gives extra information about the noun using words such as 'that' or 'which'.",
-          "The correct answer is: The coat that everyone wanted was easy to spot."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The coat that everyone wanted was easy to spot."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct answer is: The coat that everyone wanted was easy to spot.",
-        "answerText": "The coat that everyone wanted was easy to spot.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "relative_clause_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct answer is: The coat that everyone wanted was easy to spot.",
-        "answerText": "The coat that everyone wanted was easy to spot.",
-        "minimalHint": "A relative clause adds extra information about a noun. Find the noun it is attached to."
-      }
-    },
-    {
-      "id": "proc2_fronted_adverbial_build",
-      "label": "Build a sentence with a fronted adverbial",
-      "domain": "Adverbials",
-      "questionType": "build",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "builder"
-      ],
-      "skillIds": [
-        "adverbials"
-      ],
-      "sample": {
-        "templateId": "proc2_fronted_adverbial_build",
-        "templateLabel": "Build a sentence with a fronted adverbial",
-        "domain": "Adverbials",
-        "skillIds": [
-          "adverbials"
-        ],
-        "questionType": "build",
-        "seed": 10714,
-        "itemId": "proc2_fronted_adverbial_build:10714",
-        "marks": 2,
-        "promptText": "Use this opening phrase and clause to build one correct sentence. Opening phrase: At the edge of the field Main clause: Noah locked the window",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Your sentence",
-          "placeholder": "Write one complete sentence."
-        },
-        "solutionLines": [
-          "Put the fronted adverbial first.",
-          "Add a comma after it before the main clause begins.",
-          "A correct answer is: At the edge of the field, Noah locked the window."
-        ]
-      },
-      "correctResponse": {
-        "answer": "At the edge of the field, Noah locked the window."
-      },
-      "correctResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 0,
-        "misconception": null,
-        "feedbackShort": "Saved for review.",
-        "feedbackLong": "Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.",
-        "answerText": "",
-        "minimalHint": "This writing response is for review, not automatic marking.",
-        "nonScored": true,
-        "manualReviewOnly": true
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 0,
-        "misconception": null,
-        "feedbackShort": "Saved for review.",
-        "feedbackLong": "Your fronted-adverbial sentence has been saved for review. It is not auto-marked for mastery.",
-        "answerText": "",
-        "minimalHint": "This writing response is for review, not automatic marking.",
-        "nonScored": true,
-        "manualReviewOnly": true
-      }
-    },
-    {
-      "id": "proc2_boundary_punctuation_explain",
-      "label": "Explain boundary punctuation",
-      "domain": "Punctuation for grammar",
-      "questionType": "explain",
-      "difficulty": 3,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [],
-      "skillIds": [
-        "boundary_punctuation"
-      ],
-      "sample": {
-        "templateId": "proc2_boundary_punctuation_explain",
-        "templateLabel": "Explain boundary punctuation",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "boundary_punctuation"
-        ],
-        "questionType": "explain",
-        "seed": 10731,
-        "itemId": "proc2_boundary_punctuation_explain:10731",
-        "marks": 1,
-        "promptText": "Why is the punctuation in this sentence effective? The audience clapped loudly; the choir took a bow.",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "A semi-colon can join two closely related main clauses.",
-              "label": "A semi-colon can join two closely related main clauses."
-            },
-            {
-              "value": "A semi-colon introduces direct speech.",
-              "label": "A semi-colon introduces direct speech."
-            },
-            {
-              "value": "A semi-colon shows possession.",
-              "label": "A semi-colon shows possession."
-            },
-            {
-              "value": "A semi-colon marks a fronted adverbial.",
-              "label": "A semi-colon marks a fronted adverbial."
-            }
-          ]
-        },
-        "solutionLines": [
-          "Look at the relationship between the parts of the sentence.",
-          "Both sides of the semi-colon are complete clauses.",
-          "The best explanation is: A semi-colon can join two closely related main clauses."
-        ]
-      },
-      "correctResponse": {
-        "answer": "A semi-colon can join two closely related main clauses."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The best explanation is: A semi-colon can join two closely related main clauses.",
-        "answerText": "A semi-colon can join two closely related main clauses.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "boundary_punctuation_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The best explanation is: A semi-colon can join two closely related main clauses.",
-        "answerText": "A semi-colon can join two closely related main clauses.",
-        "minimalHint": "Ask whether the first part is a complete clause and whether the second part explains it, adds a list, or stands as another clause."
-      }
-    },
-    {
-      "id": "proc3_sentence_function_choice",
-      "label": "Choose the sentence function",
-      "domain": "Sentence function",
-      "questionType": "choose",
-      "difficulty": 1,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [
+      "conceptId": "speech_punctuation",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 3,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix",
         "identify"
       ],
-      "skillIds": [
-        "sentence_functions"
-      ],
-      "sample": {
-        "templateId": "proc3_sentence_function_choice",
-        "templateLabel": "Choose the sentence function",
-        "domain": "Sentence function",
-        "skillIds": [
-          "sentence_functions"
-        ],
-        "questionType": "choose",
-        "seed": 10748,
-        "itemId": "proc3_sentence_function_choice:10748",
-        "marks": 1,
-        "promptText": "Which sentence is a statement?",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "The path beside the stream was muddy.",
-              "label": "The path beside the stream was muddy."
-            },
-            {
-              "value": "Bring the blue folder to the hall.",
-              "label": "Bring the blue folder to the hall."
-            },
-            {
-              "value": "Who packed the blue folder?",
-              "label": "Who packed the blue folder?"
-            },
-            {
-              "value": "How bright the lantern looked!",
-              "label": "How bright the lantern looked!"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Decide what the whole sentence is doing.",
-          "A statement gives information.",
-          "The correct sentence is: The path beside the stream was muddy."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The path beside the stream was muddy."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "The correct sentence is: The path beside the stream was muddy.",
-        "answerText": "The path beside the stream was muddy.",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "sentence_function_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "The correct sentence is: The path beside the stream was muddy.",
-        "answerText": "The path beside the stream was muddy.",
-        "minimalHint": "Ask what the sentence is doing: telling, asking, ordering, or exclaiming."
-      }
+      "templateIds": [
+        "proc_speech_punctuation_fix",
+        "qg_p3_speech_punctuation_explain",
+        "qg_p4_sentence_speech_transfer",
+        "question_mark_select",
+        "speech_punctuation_fix"
+      ]
     },
     {
-      "id": "proc3_word_class_contrast_choice",
-      "label": "Choose the correct word class",
-      "domain": "Word classes",
-      "questionType": "choose",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": true,
-      "generative": true,
-      "tags": [
+      "conceptId": "standard_english",
+      "total": 6,
+      "generated": 3,
+      "fixed": 3,
+      "selectedResponse": 4,
+      "constructedResponse": 2,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ],
+      "templateIds": [
+        "explain_reason_choice",
+        "proc2_standard_english_choice",
+        "proc2_standard_english_fix",
+        "qg_p4_verb_form_register_transfer",
+        "standard_english_pairs",
+        "standard_fix_sentence"
+      ]
+    },
+    {
+      "conceptId": "subject_object",
+      "total": 5,
+      "generated": 4,
+      "fixed": 1,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "classify",
+        "explain",
         "identify"
       ],
-      "skillIds": [
-        "word_classes"
-      ],
-      "sample": {
-        "templateId": "proc3_word_class_contrast_choice",
-        "templateLabel": "Choose the correct word class",
-        "domain": "Word classes",
-        "skillIds": [
-          "word_classes"
-        ],
-        "questionType": "choose",
-        "seed": 10765,
-        "itemId": "proc3_word_class_contrast_choice:10765",
-        "marks": 1,
-        "promptText": "In the sentence Afterwards, Ben hurried inside., what is the word Afterwards?",
-        "inputSpec": {
-          "type": "single_choice",
-          "label": "Choose one",
-          "options": [
-            {
-              "value": "determiner",
-              "label": "determiner"
-            },
-            {
-              "value": "adverb",
-              "label": "adverb"
-            },
-            {
-              "value": "preposition",
-              "label": "preposition"
-            },
-            {
-              "value": "conjunction",
-              "label": "conjunction"
-            }
-          ]
-        },
-        "solutionLines": [
-          "Focus on the word's job in the sentence, not just its meaning on its own.",
-          "'Afterwards' tells us when Ben hurried, so it is an adverb.",
-          "The correct answer is: adverb."
-        ]
-      },
-      "correctResponse": {
-        "answer": "adverb"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 1,
-        "maxScore": 1,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "‘Afterwards’ tells us when Ben hurried, so it is an adverb.",
-        "answerText": "adverb",
-        "minimalHint": "Check the sentence structure and the instruction again."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 1,
-        "misconception": "word_class_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "‘Afterwards’ tells us when Ben hurried, so it is an adverb.",
-        "answerText": "adverb",
-        "minimalHint": "Look at the word’s job in the sentence, not just what it seems to mean on its own."
-      }
+      "templateIds": [
+        "proc2_subject_object_identify",
+        "qg_p3_subject_object_explain",
+        "qg_p4_voice_roles_transfer",
+        "qg_subject_object_classify_table",
+        "subject_object_choice"
+      ]
     },
     {
-      "id": "proc3_noun_phrase_build",
-      "label": "Build an expanded noun phrase",
-      "domain": "Phrases",
-      "questionType": "build",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "builder"
+      "conceptId": "tense_aspect",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 4,
+      "constructedResponse": 1,
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fill",
+        "rewrite"
       ],
-      "skillIds": [
-        "noun_phrases"
-      ],
-      "sample": {
-        "templateId": "proc3_noun_phrase_build",
-        "templateLabel": "Build an expanded noun phrase",
-        "domain": "Phrases",
-        "skillIds": [
-          "noun_phrases"
-        ],
-        "questionType": "build",
-        "seed": 10782,
-        "itemId": "proc3_noun_phrase_build:10782",
-        "marks": 2,
-        "promptText": "Use all the words to build an expanded noun phrase that could complete the sentence. Words: the / tiny / striped / trophy ___ was still on the shelf.",
-        "inputSpec": {
-          "type": "text",
-          "label": "Expanded noun phrase",
-          "placeholder": "Type the noun phrase."
-        },
-        "solutionLines": [
-          "Start with the determiner, then add the describing words, then finish with the noun.",
-          "A clear expanded noun phrase is: the tiny striped trophy.",
-          "The whole phrase centres on the noun at the end."
-        ]
-      },
-      "correctResponse": {
-        "answer": "the tiny striped trophy"
-      },
-      "correctResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 0,
-        "misconception": null,
-        "feedbackShort": "Saved for review.",
-        "feedbackLong": "Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.",
-        "answerText": "",
-        "minimalHint": "This writing response is for review, not automatic marking.",
-        "nonScored": true,
-        "manualReviewOnly": true
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 0,
-        "misconception": null,
-        "feedbackShort": "Saved for review.",
-        "feedbackLong": "Your expanded noun phrase has been saved for review. It is not auto-marked for mastery.",
-        "answerText": "",
-        "minimalHint": "This writing response is for review, not automatic marking.",
-        "nonScored": true,
-        "manualReviewOnly": true
-      }
+      "templateIds": [
+        "proc2_tense_aspect_choice",
+        "qg_p3_tense_aspect_explain",
+        "qg_p4_verb_form_register_transfer",
+        "tense_form_choice",
+        "tense_rewrite"
+      ]
     },
     {
-      "id": "proc3_clause_join_rewrite",
-      "label": "Join clauses with a conjunction",
-      "domain": "Clauses",
-      "questionType": "rewrite",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "builder"
+      "conceptId": "word_classes",
+      "total": 5,
+      "generated": 3,
+      "fixed": 2,
+      "selectedResponse": 5,
+      "constructedResponse": 0,
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "identify"
       ],
-      "skillIds": [
-        "clauses"
-      ],
-      "sample": {
-        "templateId": "proc3_clause_join_rewrite",
-        "templateLabel": "Join clauses with a conjunction",
-        "domain": "Clauses",
-        "skillIds": [
-          "clauses"
-        ],
-        "questionType": "rewrite",
-        "seed": 10799,
-        "itemId": "proc3_clause_join_rewrite:10799",
-        "marks": 2,
-        "promptText": "Combine these ideas into one sentence using if. The rain starts. Go inside the tent.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Combined sentence",
-          "placeholder": "Write one combined sentence."
-        },
-        "solutionLines": [
-          "Use the conjunction to join the ideas so the relationship is clear.",
-          "If the rain starts, go inside the tent.",
-          "Check that the sentence is complete and punctuated as one whole sentence."
-        ]
-      },
-      "correctResponse": {
-        "answer": "If the rain starts, go inside the tent."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: If the rain starts, go inside the tent.",
-        "answerText": "If the rain starts, go inside the tent.",
-        "minimalHint": "A subordinate clause usually depends on the main clause. Ask whether it can stand alone here."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "subordinate_clause_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: If the rain starts, go inside the tent.",
-        "answerText": "If the rain starts, go inside the tent.",
-        "minimalHint": "A subordinate clause usually depends on the main clause. Ask whether it can stand alone here."
-      }
-    },
-    {
-      "id": "proc3_parenthesis_commas_fix",
-      "label": "Add commas for parenthesis",
-      "domain": "Punctuation for grammar",
-      "questionType": "fix",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "parenthesis_commas"
-      ],
-      "sample": {
-        "templateId": "proc3_parenthesis_commas_fix",
-        "templateLabel": "Add commas for parenthesis",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "parenthesis_commas"
-        ],
-        "questionType": "fix",
-        "seed": 10816,
-        "itemId": "proc3_parenthesis_commas_fix:10816",
-        "marks": 2,
-        "promptText": "Add commas to show the parenthesis. The new path believe it or not was finished in a day.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Type the corrected sentence."
-        },
-        "solutionLines": [
-          "Find the extra information that could be lifted out.",
-          "The phrase 'believe it or not' is an inserted aside adding the speaker's surprise.",
-          "A correct answer is: The new path, believe it or not, was finished in a day."
-        ]
-      },
-      "correctResponse": {
-        "answer": "The new path, believe it or not, was finished in a day."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: The new path, believe it or not, was finished in a day.",
-        "answerText": "The new path, believe it or not, was finished in a day.",
-        "minimalHint": "Parenthesis adds extra information that could be lifted out."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "parenthesis_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: The new path, believe it or not, was finished in a day.",
-        "answerText": "The new path, believe it or not, was finished in a day.",
-        "minimalHint": "Parenthesis adds extra information that could be lifted out."
-      }
-    },
-    {
-      "id": "proc3_hyphen_fix_meaning",
-      "label": "Use a hyphen to make the meaning clear",
-      "domain": "Punctuation for grammar",
-      "questionType": "fix",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "surgery"
-      ],
-      "skillIds": [
-        "hyphen_ambiguity"
-      ],
-      "sample": {
-        "templateId": "proc3_hyphen_fix_meaning",
-        "templateLabel": "Use a hyphen to make the meaning clear",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "hyphen_ambiguity"
-        ],
-        "questionType": "fix",
-        "seed": 10833,
-        "itemId": "proc3_hyphen_fix_meaning:10833",
-        "marks": 2,
-        "promptText": "Rewrite the sentence with a hyphen to make the meaning clear. We crossed the narrow, fast flowing stream.",
-        "inputSpec": {
-          "type": "textarea",
-          "label": "Corrected sentence",
-          "placeholder": "Type the corrected sentence."
-        },
-        "solutionLines": [
-          "Find the words that work together as one describing idea before the noun.",
-          "The hyphen joins 'fast-flowing' because both words describe the stream together.",
-          "A correct answer is: We crossed the narrow, fast-flowing stream."
-        ]
-      },
-      "correctResponse": {
-        "answer": "We crossed the narrow, fast-flowing stream."
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: We crossed the narrow, fast-flowing stream.",
-        "answerText": "We crossed the narrow, fast-flowing stream.",
-        "minimalHint": "The grammar idea is close. Check the exact punctuation and wording."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "punctuation_precision",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: We crossed the narrow, fast-flowing stream.",
-        "answerText": "We crossed the narrow, fast-flowing stream.",
-        "minimalHint": "The grammar idea is close. Check the exact punctuation and wording."
-      }
-    },
-    {
-      "id": "proc3_apostrophe_rewrite",
-      "label": "Rewrite with a possessive apostrophe",
-      "domain": "Punctuation for grammar",
-      "questionType": "rewrite",
-      "difficulty": 2,
-      "satsFriendly": true,
-      "isSelectedResponse": false,
-      "generative": true,
-      "tags": [
-        "builder"
-      ],
-      "skillIds": [
-        "apostrophes_possession"
-      ],
-      "sample": {
-        "templateId": "proc3_apostrophe_rewrite",
-        "templateLabel": "Rewrite with a possessive apostrophe",
-        "domain": "Punctuation for grammar",
-        "skillIds": [
-          "apostrophes_possession"
-        ],
-        "questionType": "rewrite",
-        "seed": 10850,
-        "itemId": "proc3_apostrophe_rewrite:10850",
-        "marks": 2,
-        "promptText": "Rewrite this phrase using the correct possessive apostrophe. the lunchboxes belonging to the people",
-        "inputSpec": {
-          "type": "text",
-          "label": "Rewritten phrase",
-          "placeholder": "Type the rewritten phrase."
-        },
-        "solutionLines": [
-          "Work out who owns the noun.",
-          "An irregular plural owner that does not end in s usually takes apostrophe + s.",
-          "A correct answer is: the people's lunchboxes"
-        ]
-      },
-      "correctResponse": {
-        "answer": "the people's lunchboxes"
-      },
-      "correctResult": {
-        "correct": true,
-        "score": 2,
-        "maxScore": 2,
-        "misconception": null,
-        "feedbackShort": "Correct.",
-        "feedbackLong": "A correct answer is: the people's lunchboxes",
-        "answerText": "the people's lunchboxes",
-        "minimalHint": "Ask who owns the noun, and whether the owner is singular or plural."
-      },
-      "emptyResult": {
-        "correct": false,
-        "score": 0,
-        "maxScore": 2,
-        "misconception": "apostrophe_possession_confusion",
-        "feedbackShort": "Not quite.",
-        "feedbackLong": "A correct answer is: the people's lunchboxes",
-        "answerText": "the people's lunchboxes",
-        "minimalHint": "Ask who owns the noun, and whether the owner is singular or plural."
-      }
+      "templateIds": [
+        "identify_words_in_sentence",
+        "proc3_word_class_contrast_choice",
+        "qg_p3_word_classes_explain",
+        "qg_p4_word_class_noun_phrase_transfer",
+        "word_class_underlined_choice"
+      ]
     }
-  ]
+  ],
+  "explainTemplateCount": 17,
+  "conceptsWithExplainCoverage": [
+    "active_passive",
+    "adverbials",
+    "apostrophes_possession",
+    "boundary_punctuation",
+    "clauses",
+    "formality",
+    "hyphen_ambiguity",
+    "modal_verbs",
+    "noun_phrases",
+    "parenthesis_commas",
+    "pronouns_cohesion",
+    "relative_clauses",
+    "sentence_functions",
+    "speech_punctuation",
+    "standard_english",
+    "subject_object",
+    "tense_aspect",
+    "word_classes"
+  ],
+  "conceptsMissingExplainCoverage": [],
+  "explainCoverageByConcept": [
+    {
+      "conceptId": "active_passive",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_active_passive_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "rewrite"
+      ]
+    },
+    {
+      "conceptId": "adverbials",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "explain_reason_choice"
+      ],
+      "questionTypes": [
+        "build",
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "apostrophes_possession",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_apostrophe_possession_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "rewrite"
+      ]
+    },
+    {
+      "conceptId": "boundary_punctuation",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "proc2_boundary_punctuation_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "clauses",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_clauses_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "identify",
+        "rewrite"
+      ]
+    },
+    {
+      "conceptId": "formality",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_formality_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain"
+      ]
+    },
+    {
+      "conceptId": "hyphen_ambiguity",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_hyphen_ambiguity_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "modal_verbs",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_modal_verb_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fill"
+      ]
+    },
+    {
+      "conceptId": "noun_phrases",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_noun_phrases_explain"
+      ],
+      "questionTypes": [
+        "build",
+        "choose",
+        "classify",
+        "explain"
+      ]
+    },
+    {
+      "conceptId": "parenthesis_commas",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_parenthesis_commas_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "pronouns_cohesion",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_pronouns_cohesion_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "relative_clauses",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_relative_clauses_explain"
+      ],
+      "questionTypes": [
+        "build",
+        "choose",
+        "explain",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "sentence_functions",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_sentence_functions_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "speech_punctuation",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_speech_punctuation_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "standard_english",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "explain_reason_choice"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fix"
+      ]
+    },
+    {
+      "conceptId": "subject_object",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_subject_object_explain"
+      ],
+      "questionTypes": [
+        "classify",
+        "explain",
+        "identify"
+      ]
+    },
+    {
+      "conceptId": "tense_aspect",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_tense_aspect_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "explain",
+        "fill",
+        "rewrite"
+      ]
+    },
+    {
+      "conceptId": "word_classes",
+      "explainTemplateCount": 1,
+      "explainTemplateIds": [
+        "qg_p3_word_classes_explain"
+      ],
+      "questionTypes": [
+        "choose",
+        "classify",
+        "explain",
+        "identify"
+      ]
+    }
+  ],
+  "p3ExplanationComplete": true,
+  "sampledSeeds": [
+    1,
+    2,
+    3
+  ],
+  "missingGeneratorMetadata": [],
+  "generatedSignatureCollisions": [],
+  "repeatedGeneratedVariants": [],
+  "legacyRepeatedGeneratedVariants": [],
+  "sampleCount": 156,
+  "samples": [
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "generatorFamilyId": "proc_fronted_adverbial_fix",
+      "seed": 1,
+      "signature": "grammar-v1:1g8xl3q"
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "generatorFamilyId": "proc_fronted_adverbial_fix",
+      "seed": 2,
+      "signature": "grammar-v1:04pr4gm"
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "generatorFamilyId": "proc_fronted_adverbial_fix",
+      "seed": 3,
+      "signature": "grammar-v1:1tgszjy"
+    },
+    {
+      "templateId": "proc_semicolon_choice",
+      "generatorFamilyId": "proc_semicolon_choice",
+      "seed": 1,
+      "signature": "grammar-v1:138w2ur"
+    },
+    {
+      "templateId": "proc_semicolon_choice",
+      "generatorFamilyId": "proc_semicolon_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0kxugl8"
+    },
+    {
+      "templateId": "proc_semicolon_choice",
+      "generatorFamilyId": "proc_semicolon_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1x6ihdz"
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "generatorFamilyId": "proc_colon_list_fix",
+      "seed": 1,
+      "signature": "grammar-v1:0cwbcp7"
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "generatorFamilyId": "proc_colon_list_fix",
+      "seed": 2,
+      "signature": "grammar-v1:15uxveu"
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "generatorFamilyId": "proc_colon_list_fix",
+      "seed": 3,
+      "signature": "grammar-v1:1ssolv6"
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "generatorFamilyId": "proc_dash_boundary_fix",
+      "seed": 1,
+      "signature": "grammar-v1:14tsrps"
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "generatorFamilyId": "proc_dash_boundary_fix",
+      "seed": 2,
+      "signature": "grammar-v1:186spa5"
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "generatorFamilyId": "proc_dash_boundary_fix",
+      "seed": 3,
+      "signature": "grammar-v1:0xnqnjq"
+    },
+    {
+      "templateId": "proc_hyphen_ambiguity_choice",
+      "generatorFamilyId": "proc_hyphen_ambiguity_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0g3sftt"
+    },
+    {
+      "templateId": "proc_hyphen_ambiguity_choice",
+      "generatorFamilyId": "proc_hyphen_ambiguity_choice",
+      "seed": 2,
+      "signature": "grammar-v1:1ybsdcd"
+    },
+    {
+      "templateId": "proc_hyphen_ambiguity_choice",
+      "generatorFamilyId": "proc_hyphen_ambiguity_choice",
+      "seed": 3,
+      "signature": "grammar-v1:0vy6ssj"
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "generatorFamilyId": "proc_speech_punctuation_fix",
+      "seed": 1,
+      "signature": "grammar-v1:1sx0xyf"
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "generatorFamilyId": "proc_speech_punctuation_fix",
+      "seed": 2,
+      "signature": "grammar-v1:0u4a176"
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "generatorFamilyId": "proc_speech_punctuation_fix",
+      "seed": 3,
+      "signature": "grammar-v1:00fedhb"
+    },
+    {
+      "templateId": "proc_apostrophe_possession_choice",
+      "generatorFamilyId": "proc_apostrophe_possession_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0nk933s"
+    },
+    {
+      "templateId": "proc_apostrophe_possession_choice",
+      "generatorFamilyId": "proc_apostrophe_possession_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0kntphw"
+    },
+    {
+      "templateId": "proc_apostrophe_possession_choice",
+      "generatorFamilyId": "proc_apostrophe_possession_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1n4zmgj"
+    },
+    {
+      "templateId": "proc2_standard_english_choice",
+      "generatorFamilyId": "proc2_standard_english_choice",
+      "seed": 1,
+      "signature": "grammar-v1:00pzz42"
+    },
+    {
+      "templateId": "proc2_standard_english_choice",
+      "generatorFamilyId": "proc2_standard_english_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0o72ars"
+    },
+    {
+      "templateId": "proc2_standard_english_choice",
+      "generatorFamilyId": "proc2_standard_english_choice",
+      "seed": 3,
+      "signature": "grammar-v1:17g2hf2"
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "generatorFamilyId": "proc2_standard_english_fix",
+      "seed": 1,
+      "signature": "grammar-v1:01lzmgr"
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "generatorFamilyId": "proc2_standard_english_fix",
+      "seed": 2,
+      "signature": "grammar-v1:1vudeac"
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "generatorFamilyId": "proc2_standard_english_fix",
+      "seed": 3,
+      "signature": "grammar-v1:0yjg2u2"
+    },
+    {
+      "templateId": "proc2_tense_aspect_choice",
+      "generatorFamilyId": "proc2_tense_aspect_choice",
+      "seed": 1,
+      "signature": "grammar-v1:1izoc9g"
+    },
+    {
+      "templateId": "proc2_tense_aspect_choice",
+      "generatorFamilyId": "proc2_tense_aspect_choice",
+      "seed": 2,
+      "signature": "grammar-v1:01bbuh3"
+    },
+    {
+      "templateId": "proc2_tense_aspect_choice",
+      "generatorFamilyId": "proc2_tense_aspect_choice",
+      "seed": 3,
+      "signature": "grammar-v1:0bybprq"
+    },
+    {
+      "templateId": "proc2_modal_choice",
+      "generatorFamilyId": "proc2_modal_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0qhf48c"
+    },
+    {
+      "templateId": "proc2_modal_choice",
+      "generatorFamilyId": "proc2_modal_choice",
+      "seed": 2,
+      "signature": "grammar-v1:17fv0fw"
+    },
+    {
+      "templateId": "proc2_modal_choice",
+      "generatorFamilyId": "proc2_modal_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1skcwev"
+    },
+    {
+      "templateId": "proc2_formality_choice",
+      "generatorFamilyId": "proc2_formality_choice",
+      "seed": 1,
+      "signature": "grammar-v1:1y25jbh"
+    },
+    {
+      "templateId": "proc2_formality_choice",
+      "generatorFamilyId": "proc2_formality_choice",
+      "seed": 2,
+      "signature": "grammar-v1:1dhp26a"
+    },
+    {
+      "templateId": "proc2_formality_choice",
+      "generatorFamilyId": "proc2_formality_choice",
+      "seed": 3,
+      "signature": "grammar-v1:19yg7s1"
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "generatorFamilyId": "proc2_pronoun_cohesion_choice",
+      "seed": 1,
+      "signature": "grammar-v1:1roa1tw"
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "generatorFamilyId": "proc2_pronoun_cohesion_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0grnzk8"
+    },
+    {
+      "templateId": "proc2_pronoun_cohesion_choice",
+      "generatorFamilyId": "proc2_pronoun_cohesion_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1kyjjvc"
+    },
+    {
+      "templateId": "proc2_subject_object_identify",
+      "generatorFamilyId": "proc2_subject_object_identify",
+      "seed": 1,
+      "signature": "grammar-v1:116hzis"
+    },
+    {
+      "templateId": "proc2_subject_object_identify",
+      "generatorFamilyId": "proc2_subject_object_identify",
+      "seed": 2,
+      "signature": "grammar-v1:0pghuqx"
+    },
+    {
+      "templateId": "proc2_subject_object_identify",
+      "generatorFamilyId": "proc2_subject_object_identify",
+      "seed": 3,
+      "signature": "grammar-v1:0wj1y6r"
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "generatorFamilyId": "proc2_passive_to_active",
+      "seed": 1,
+      "signature": "grammar-v1:1i2byea"
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "generatorFamilyId": "proc2_passive_to_active",
+      "seed": 2,
+      "signature": "grammar-v1:0917idq"
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "generatorFamilyId": "proc2_passive_to_active",
+      "seed": 3,
+      "signature": "grammar-v1:0uogei8"
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "generatorFamilyId": "proc2_relative_clause_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0774huc"
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "generatorFamilyId": "proc2_relative_clause_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0vqd1u8"
+    },
+    {
+      "templateId": "proc2_relative_clause_choice",
+      "generatorFamilyId": "proc2_relative_clause_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1m9mwdk"
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "generatorFamilyId": "proc2_fronted_adverbial_build",
+      "seed": 1,
+      "signature": "grammar-v1:06pt6ej"
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "generatorFamilyId": "proc2_fronted_adverbial_build",
+      "seed": 2,
+      "signature": "grammar-v1:1u8yvq1"
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "generatorFamilyId": "proc2_fronted_adverbial_build",
+      "seed": 3,
+      "signature": "grammar-v1:1hx02vd"
+    },
+    {
+      "templateId": "proc2_boundary_punctuation_explain",
+      "generatorFamilyId": "proc2_boundary_punctuation_explain",
+      "seed": 1,
+      "signature": "grammar-v1:04xhucf"
+    },
+    {
+      "templateId": "proc2_boundary_punctuation_explain",
+      "generatorFamilyId": "proc2_boundary_punctuation_explain",
+      "seed": 2,
+      "signature": "grammar-v1:17v1k6e"
+    },
+    {
+      "templateId": "proc2_boundary_punctuation_explain",
+      "generatorFamilyId": "proc2_boundary_punctuation_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0c44wkn"
+    },
+    {
+      "templateId": "proc3_sentence_function_choice",
+      "generatorFamilyId": "proc3_sentence_function_choice",
+      "seed": 1,
+      "signature": "grammar-v1:1haufxw"
+    },
+    {
+      "templateId": "proc3_sentence_function_choice",
+      "generatorFamilyId": "proc3_sentence_function_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0t4x2ao"
+    },
+    {
+      "templateId": "proc3_sentence_function_choice",
+      "generatorFamilyId": "proc3_sentence_function_choice",
+      "seed": 3,
+      "signature": "grammar-v1:0p5p7iu"
+    },
+    {
+      "templateId": "proc3_word_class_contrast_choice",
+      "generatorFamilyId": "proc3_word_class_contrast_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0fok8e6"
+    },
+    {
+      "templateId": "proc3_word_class_contrast_choice",
+      "generatorFamilyId": "proc3_word_class_contrast_choice",
+      "seed": 2,
+      "signature": "grammar-v1:1lvmipt"
+    },
+    {
+      "templateId": "proc3_word_class_contrast_choice",
+      "generatorFamilyId": "proc3_word_class_contrast_choice",
+      "seed": 3,
+      "signature": "grammar-v1:0z27pnh"
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "generatorFamilyId": "proc3_noun_phrase_build",
+      "seed": 1,
+      "signature": "grammar-v1:1itl27l"
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "generatorFamilyId": "proc3_noun_phrase_build",
+      "seed": 2,
+      "signature": "grammar-v1:1yo6k4j"
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "generatorFamilyId": "proc3_noun_phrase_build",
+      "seed": 3,
+      "signature": "grammar-v1:0wid472"
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "generatorFamilyId": "proc3_clause_join_rewrite",
+      "seed": 1,
+      "signature": "grammar-v1:1k791ij"
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "generatorFamilyId": "proc3_clause_join_rewrite",
+      "seed": 2,
+      "signature": "grammar-v1:05ezv4s"
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "generatorFamilyId": "proc3_clause_join_rewrite",
+      "seed": 3,
+      "signature": "grammar-v1:02t7wg2"
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "generatorFamilyId": "proc3_parenthesis_commas_fix",
+      "seed": 1,
+      "signature": "grammar-v1:05d0k6e"
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "generatorFamilyId": "proc3_parenthesis_commas_fix",
+      "seed": 2,
+      "signature": "grammar-v1:09jdm1d"
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "generatorFamilyId": "proc3_parenthesis_commas_fix",
+      "seed": 3,
+      "signature": "grammar-v1:09mrgre"
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "generatorFamilyId": "proc3_hyphen_fix_meaning",
+      "seed": 1,
+      "signature": "grammar-v1:0w1vwh6"
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "generatorFamilyId": "proc3_hyphen_fix_meaning",
+      "seed": 2,
+      "signature": "grammar-v1:0jqvzv1"
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "generatorFamilyId": "proc3_hyphen_fix_meaning",
+      "seed": 3,
+      "signature": "grammar-v1:0a4q3mu"
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "generatorFamilyId": "qg_active_passive_choice",
+      "seed": 1,
+      "signature": "grammar-v1:0c2fs0d"
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "generatorFamilyId": "qg_active_passive_choice",
+      "seed": 2,
+      "signature": "grammar-v1:0yyt0w3"
+    },
+    {
+      "templateId": "qg_active_passive_choice",
+      "generatorFamilyId": "qg_active_passive_choice",
+      "seed": 3,
+      "signature": "grammar-v1:1jxeh9b"
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "generatorFamilyId": "qg_subject_object_classify_table",
+      "seed": 1,
+      "signature": "grammar-v1:1rbp6tf"
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "generatorFamilyId": "qg_subject_object_classify_table",
+      "seed": 2,
+      "signature": "grammar-v1:1bse0ww"
+    },
+    {
+      "templateId": "qg_subject_object_classify_table",
+      "generatorFamilyId": "qg_subject_object_classify_table",
+      "seed": 3,
+      "signature": "grammar-v1:1o2o9cl"
+    },
+    {
+      "templateId": "qg_pronoun_referent_identify",
+      "generatorFamilyId": "qg_pronoun_referent_identify",
+      "seed": 1,
+      "signature": "grammar-v1:1r6g1le"
+    },
+    {
+      "templateId": "qg_pronoun_referent_identify",
+      "generatorFamilyId": "qg_pronoun_referent_identify",
+      "seed": 2,
+      "signature": "grammar-v1:1d1js0x"
+    },
+    {
+      "templateId": "qg_pronoun_referent_identify",
+      "generatorFamilyId": "qg_pronoun_referent_identify",
+      "seed": 3,
+      "signature": "grammar-v1:0w87we9"
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "generatorFamilyId": "qg_formality_classify_table",
+      "seed": 1,
+      "signature": "grammar-v1:1vr1alu"
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "generatorFamilyId": "qg_formality_classify_table",
+      "seed": 2,
+      "signature": "grammar-v1:1akzwrd"
+    },
+    {
+      "templateId": "qg_formality_classify_table",
+      "generatorFamilyId": "qg_formality_classify_table",
+      "seed": 3,
+      "signature": "grammar-v1:0a6at2x"
+    },
+    {
+      "templateId": "qg_modal_verb_explain",
+      "generatorFamilyId": "qg_modal_verb_explain",
+      "seed": 1,
+      "signature": "grammar-v1:1sj4s6u"
+    },
+    {
+      "templateId": "qg_modal_verb_explain",
+      "generatorFamilyId": "qg_modal_verb_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1e4bzev"
+    },
+    {
+      "templateId": "qg_modal_verb_explain",
+      "generatorFamilyId": "qg_modal_verb_explain",
+      "seed": 3,
+      "signature": "grammar-v1:18i9frr"
+    },
+    {
+      "templateId": "qg_hyphen_ambiguity_explain",
+      "generatorFamilyId": "qg_hyphen_ambiguity_explain",
+      "seed": 1,
+      "signature": "grammar-v1:11dzz0d"
+    },
+    {
+      "templateId": "qg_hyphen_ambiguity_explain",
+      "generatorFamilyId": "qg_hyphen_ambiguity_explain",
+      "seed": 2,
+      "signature": "grammar-v1:014cofb"
+    },
+    {
+      "templateId": "qg_hyphen_ambiguity_explain",
+      "generatorFamilyId": "qg_hyphen_ambiguity_explain",
+      "seed": 3,
+      "signature": "grammar-v1:17lba1l"
+    },
+    {
+      "templateId": "qg_p3_sentence_functions_explain",
+      "generatorFamilyId": "qg_p3_sentence_functions_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0uaoj6a"
+    },
+    {
+      "templateId": "qg_p3_sentence_functions_explain",
+      "generatorFamilyId": "qg_p3_sentence_functions_explain",
+      "seed": 2,
+      "signature": "grammar-v1:12teei9"
+    },
+    {
+      "templateId": "qg_p3_sentence_functions_explain",
+      "generatorFamilyId": "qg_p3_sentence_functions_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0n0t12b"
+    },
+    {
+      "templateId": "qg_p3_word_classes_explain",
+      "generatorFamilyId": "qg_p3_word_classes_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0w4wozh"
+    },
+    {
+      "templateId": "qg_p3_word_classes_explain",
+      "generatorFamilyId": "qg_p3_word_classes_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1v09om2"
+    },
+    {
+      "templateId": "qg_p3_word_classes_explain",
+      "generatorFamilyId": "qg_p3_word_classes_explain",
+      "seed": 3,
+      "signature": "grammar-v1:06le7tm"
+    },
+    {
+      "templateId": "qg_p3_noun_phrases_explain",
+      "generatorFamilyId": "qg_p3_noun_phrases_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0cj1zio"
+    },
+    {
+      "templateId": "qg_p3_noun_phrases_explain",
+      "generatorFamilyId": "qg_p3_noun_phrases_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1nusovs"
+    },
+    {
+      "templateId": "qg_p3_noun_phrases_explain",
+      "generatorFamilyId": "qg_p3_noun_phrases_explain",
+      "seed": 3,
+      "signature": "grammar-v1:1823evh"
+    },
+    {
+      "templateId": "qg_p3_clauses_explain",
+      "generatorFamilyId": "qg_p3_clauses_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0xtdmgv"
+    },
+    {
+      "templateId": "qg_p3_clauses_explain",
+      "generatorFamilyId": "qg_p3_clauses_explain",
+      "seed": 2,
+      "signature": "grammar-v1:01ecnf2"
+    },
+    {
+      "templateId": "qg_p3_clauses_explain",
+      "generatorFamilyId": "qg_p3_clauses_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0uqrbp5"
+    },
+    {
+      "templateId": "qg_p3_relative_clauses_explain",
+      "generatorFamilyId": "qg_p3_relative_clauses_explain",
+      "seed": 1,
+      "signature": "grammar-v1:1j6zczq"
+    },
+    {
+      "templateId": "qg_p3_relative_clauses_explain",
+      "generatorFamilyId": "qg_p3_relative_clauses_explain",
+      "seed": 2,
+      "signature": "grammar-v1:0bz3no3"
+    },
+    {
+      "templateId": "qg_p3_relative_clauses_explain",
+      "generatorFamilyId": "qg_p3_relative_clauses_explain",
+      "seed": 3,
+      "signature": "grammar-v1:1329zyb"
+    },
+    {
+      "templateId": "qg_p3_tense_aspect_explain",
+      "generatorFamilyId": "qg_p3_tense_aspect_explain",
+      "seed": 1,
+      "signature": "grammar-v1:1asnp8e"
+    },
+    {
+      "templateId": "qg_p3_tense_aspect_explain",
+      "generatorFamilyId": "qg_p3_tense_aspect_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1hm8yyu"
+    },
+    {
+      "templateId": "qg_p3_tense_aspect_explain",
+      "generatorFamilyId": "qg_p3_tense_aspect_explain",
+      "seed": 3,
+      "signature": "grammar-v1:1ayt8q8"
+    },
+    {
+      "templateId": "qg_p3_pronouns_cohesion_explain",
+      "generatorFamilyId": "qg_p3_pronouns_cohesion_explain",
+      "seed": 1,
+      "signature": "grammar-v1:1yywtk3"
+    },
+    {
+      "templateId": "qg_p3_pronouns_cohesion_explain",
+      "generatorFamilyId": "qg_p3_pronouns_cohesion_explain",
+      "seed": 2,
+      "signature": "grammar-v1:04zsn06"
+    },
+    {
+      "templateId": "qg_p3_pronouns_cohesion_explain",
+      "generatorFamilyId": "qg_p3_pronouns_cohesion_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0zlx8lh"
+    },
+    {
+      "templateId": "qg_p3_formality_explain",
+      "generatorFamilyId": "qg_p3_formality_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0ekiz2n"
+    },
+    {
+      "templateId": "qg_p3_formality_explain",
+      "generatorFamilyId": "qg_p3_formality_explain",
+      "seed": 2,
+      "signature": "grammar-v1:04o5vnt"
+    },
+    {
+      "templateId": "qg_p3_formality_explain",
+      "generatorFamilyId": "qg_p3_formality_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0gn4195"
+    },
+    {
+      "templateId": "qg_p3_active_passive_explain",
+      "generatorFamilyId": "qg_p3_active_passive_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0whqnbd"
+    },
+    {
+      "templateId": "qg_p3_active_passive_explain",
+      "generatorFamilyId": "qg_p3_active_passive_explain",
+      "seed": 2,
+      "signature": "grammar-v1:0yoqt5f"
+    },
+    {
+      "templateId": "qg_p3_active_passive_explain",
+      "generatorFamilyId": "qg_p3_active_passive_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0hdfkgi"
+    },
+    {
+      "templateId": "qg_p3_subject_object_explain",
+      "generatorFamilyId": "qg_p3_subject_object_explain",
+      "seed": 1,
+      "signature": "grammar-v1:092uxl7"
+    },
+    {
+      "templateId": "qg_p3_subject_object_explain",
+      "generatorFamilyId": "qg_p3_subject_object_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1ci5x8q"
+    },
+    {
+      "templateId": "qg_p3_subject_object_explain",
+      "generatorFamilyId": "qg_p3_subject_object_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0f6bj5b"
+    },
+    {
+      "templateId": "qg_p3_parenthesis_commas_explain",
+      "generatorFamilyId": "qg_p3_parenthesis_commas_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0r1wgro"
+    },
+    {
+      "templateId": "qg_p3_parenthesis_commas_explain",
+      "generatorFamilyId": "qg_p3_parenthesis_commas_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1no92yn"
+    },
+    {
+      "templateId": "qg_p3_parenthesis_commas_explain",
+      "generatorFamilyId": "qg_p3_parenthesis_commas_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0rd8cvk"
+    },
+    {
+      "templateId": "qg_p3_speech_punctuation_explain",
+      "generatorFamilyId": "qg_p3_speech_punctuation_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0prt8ia"
+    },
+    {
+      "templateId": "qg_p3_speech_punctuation_explain",
+      "generatorFamilyId": "qg_p3_speech_punctuation_explain",
+      "seed": 2,
+      "signature": "grammar-v1:1347ddw"
+    },
+    {
+      "templateId": "qg_p3_speech_punctuation_explain",
+      "generatorFamilyId": "qg_p3_speech_punctuation_explain",
+      "seed": 3,
+      "signature": "grammar-v1:0kareab"
+    },
+    {
+      "templateId": "qg_p3_apostrophe_possession_explain",
+      "generatorFamilyId": "qg_p3_apostrophe_possession_explain",
+      "seed": 1,
+      "signature": "grammar-v1:0a7d6oe"
+    },
+    {
+      "templateId": "qg_p3_apostrophe_possession_explain",
+      "generatorFamilyId": "qg_p3_apostrophe_possession_explain",
+      "seed": 2,
+      "signature": "grammar-v1:0h90l1z"
+    },
+    {
+      "templateId": "qg_p3_apostrophe_possession_explain",
+      "generatorFamilyId": "qg_p3_apostrophe_possession_explain",
+      "seed": 3,
+      "signature": "grammar-v1:09edn4b"
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "generatorFamilyId": "proc3_apostrophe_rewrite",
+      "seed": 1,
+      "signature": "grammar-v1:0aiqzup"
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "generatorFamilyId": "proc3_apostrophe_rewrite",
+      "seed": 2,
+      "signature": "grammar-v1:1t2yk8d"
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "generatorFamilyId": "proc3_apostrophe_rewrite",
+      "seed": 3,
+      "signature": "grammar-v1:13s7nkl"
+    },
+    {
+      "templateId": "qg_p4_sentence_speech_transfer",
+      "generatorFamilyId": "qg_p4_sentence_speech_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:15383an"
+    },
+    {
+      "templateId": "qg_p4_sentence_speech_transfer",
+      "generatorFamilyId": "qg_p4_sentence_speech_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:1bj397b"
+    },
+    {
+      "templateId": "qg_p4_sentence_speech_transfer",
+      "generatorFamilyId": "qg_p4_sentence_speech_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:1xaiqyr"
+    },
+    {
+      "templateId": "qg_p4_word_class_noun_phrase_transfer",
+      "generatorFamilyId": "qg_p4_word_class_noun_phrase_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:1sjvebp"
+    },
+    {
+      "templateId": "qg_p4_word_class_noun_phrase_transfer",
+      "generatorFamilyId": "qg_p4_word_class_noun_phrase_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:0nnbwza"
+    },
+    {
+      "templateId": "qg_p4_word_class_noun_phrase_transfer",
+      "generatorFamilyId": "qg_p4_word_class_noun_phrase_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:094yl9z"
+    },
+    {
+      "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+      "generatorFamilyId": "qg_p4_adverbial_clause_boundary_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:1jplujw"
+    },
+    {
+      "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+      "generatorFamilyId": "qg_p4_adverbial_clause_boundary_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:0yud02b"
+    },
+    {
+      "templateId": "qg_p4_adverbial_clause_boundary_transfer",
+      "generatorFamilyId": "qg_p4_adverbial_clause_boundary_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:19aekqo"
+    },
+    {
+      "templateId": "qg_p4_relative_parenthesis_transfer",
+      "generatorFamilyId": "qg_p4_relative_parenthesis_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:1bpe90j"
+    },
+    {
+      "templateId": "qg_p4_relative_parenthesis_transfer",
+      "generatorFamilyId": "qg_p4_relative_parenthesis_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:07xs2l1"
+    },
+    {
+      "templateId": "qg_p4_relative_parenthesis_transfer",
+      "generatorFamilyId": "qg_p4_relative_parenthesis_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:0wmyt9n"
+    },
+    {
+      "templateId": "qg_p4_verb_form_register_transfer",
+      "generatorFamilyId": "qg_p4_verb_form_register_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:0vhltu5"
+    },
+    {
+      "templateId": "qg_p4_verb_form_register_transfer",
+      "generatorFamilyId": "qg_p4_verb_form_register_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:0v7iqs1"
+    },
+    {
+      "templateId": "qg_p4_verb_form_register_transfer",
+      "generatorFamilyId": "qg_p4_verb_form_register_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:18cym0l"
+    },
+    {
+      "templateId": "qg_p4_cohesion_formality_transfer",
+      "generatorFamilyId": "qg_p4_cohesion_formality_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:1i67kz4"
+    },
+    {
+      "templateId": "qg_p4_cohesion_formality_transfer",
+      "generatorFamilyId": "qg_p4_cohesion_formality_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:13ulbt7"
+    },
+    {
+      "templateId": "qg_p4_cohesion_formality_transfer",
+      "generatorFamilyId": "qg_p4_cohesion_formality_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:1ege8ys"
+    },
+    {
+      "templateId": "qg_p4_voice_roles_transfer",
+      "generatorFamilyId": "qg_p4_voice_roles_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:04yww5r"
+    },
+    {
+      "templateId": "qg_p4_voice_roles_transfer",
+      "generatorFamilyId": "qg_p4_voice_roles_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:0i2k8bz"
+    },
+    {
+      "templateId": "qg_p4_voice_roles_transfer",
+      "generatorFamilyId": "qg_p4_voice_roles_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:1d0kt3m"
+    },
+    {
+      "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+      "generatorFamilyId": "qg_p4_possession_hyphen_clarity_transfer",
+      "seed": 1,
+      "signature": "grammar-v1:15h30y2"
+    },
+    {
+      "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+      "generatorFamilyId": "qg_p4_possession_hyphen_clarity_transfer",
+      "seed": 2,
+      "signature": "grammar-v1:1g9oqlp"
+    },
+    {
+      "templateId": "qg_p4_possession_hyphen_clarity_transfer",
+      "generatorFamilyId": "qg_p4_possession_hyphen_clarity_transfer",
+      "seed": 3,
+      "signature": "grammar-v1:1l1qtw7"
+    }
+  ],
+  "answerSpecTemplateCount": 47,
+  "answerSpecKindCounts": {
+    "acceptedSet": 2,
+    "exact": 23,
+    "manualReviewOnly": 4,
+    "multiField": 4,
+    "normalisedText": 5,
+    "punctuationPattern": 9
+  },
+  "constructedResponseTemplateCount": 20,
+  "constructedResponseAnswerSpecTemplateCount": 20,
+  "legacyAdapterTemplateCount": 0,
+  "manualReviewOnlyTemplateCount": 4,
+  "p2MigrationComplete": true,
+  "templatesMissingAnswerSpecs": [],
+  "invalidAnswerSpecs": [],
+  "mixedTransferTemplateCount": 8,
+  "conceptsWithMixedTransferCoverage": [
+    "active_passive",
+    "adverbials",
+    "apostrophes_possession",
+    "boundary_punctuation",
+    "clauses",
+    "formality",
+    "hyphen_ambiguity",
+    "modal_verbs",
+    "noun_phrases",
+    "parenthesis_commas",
+    "pronouns_cohesion",
+    "relative_clauses",
+    "sentence_functions",
+    "speech_punctuation",
+    "standard_english",
+    "subject_object",
+    "tense_aspect",
+    "word_classes"
+  ],
+  "conceptsMissingMixedTransferCoverage": [],
+  "p4MixedTransferComplete": true
 }
