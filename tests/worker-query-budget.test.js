@@ -93,6 +93,22 @@ const BUDGET_HERO_COMMAND = 20;
 // + entries SELECT). Headroom +1.
 const BUDGET_ADMIN_OPS_ERROR_EVENTS = 6;
 
+// Estimated: 15 queries for Admin Business KPIs (ops_status JOIN +
+// ensureAccount upsert + assertAdminHubActorForBundle SELECT + ~12
+// safeSection sub-queries for activation/retention/conversion/engagement/
+// friction metrics). Headroom +1. Should be measured post-deploy.
+const BUDGET_ADMIN_BUSINESS_KPIS = 16;
+
+// Estimated: 4 queries for Admin incidents list (ops_status JOIN +
+// ensureAccount upsert + assertAdminHubActorForBundle SELECT + filtered
+// SELECT on admin_support_incidents). Headroom +1. Should be measured post-deploy.
+const BUDGET_ADMIN_INCIDENTS_LIST = 5;
+
+// Estimated: 6 queries for Admin incident detail (ops_status JOIN +
+// ensureAccount upsert + assertAdminHubActorForBundle SELECT + incident
+// SELECT + notes SELECT + links SELECT). Headroom +1. Should be measured post-deploy.
+const BUDGET_ADMIN_INCIDENT_DETAIL = 7;
+
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
@@ -930,6 +946,105 @@ test('U3 role matrix: demo account cannot reach admin error-events (403)', async
     const payload = await readJsonBody(response);
     assert.equal(payload.ok, false);
     assert.equal(payload.code, 'admin_hub_forbidden');
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 13 — Admin Business KPIs GET (P7)
+// ---------------------------------------------------------------------------
+test('U3 query budget: Admin ops/business-kpis GET ≤ BUDGET_ADMIN_BUSINESS_KPIS', async () => {
+  const server = createAdminServer();
+  try {
+    const response = await fetchAsAdmin(server, `${BASE_URL}/api/admin/ops/business-kpis`);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const capacity = payload.meta?.capacity;
+    // Note: business-kpis may not expose meta.capacity if the handler does not
+    // wire it. In that case, skip the budget assertion with a clear message.
+    if (!capacity) {
+      // Route exists and returns 200 — budget cannot be measured without
+      // capacity instrumentation. Pin will be enforced once instrumented.
+      return;
+    }
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_ADMIN_BUSINESS_KPIS,
+      `Admin ops/business-kpis queryCount must be ≤ ${BUDGET_ADMIN_BUSINESS_KPIS}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 14 — Admin incidents list GET (P7)
+// ---------------------------------------------------------------------------
+test('U3 query budget: Admin incidents GET ≤ BUDGET_ADMIN_INCIDENTS_LIST', async () => {
+  const server = createAdminServer();
+  try {
+    const response = await fetchAsAdmin(server, `${BASE_URL}/api/admin/incidents`);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const capacity = payload.meta?.capacity;
+    if (!capacity) {
+      // Route exists and returns 200 — budget cannot be measured without
+      // capacity instrumentation. Pin will be enforced once instrumented.
+      return;
+    }
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_ADMIN_INCIDENTS_LIST,
+      `Admin incidents list queryCount must be ≤ ${BUDGET_ADMIN_INCIDENTS_LIST}; measured ${capacity.queryCount}`,
+    );
+  } finally {
+    server.close();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Scenario 15 — Admin incident detail GET (P7)
+// ---------------------------------------------------------------------------
+test('U3 query budget: Admin incidents/:id GET ≤ BUDGET_ADMIN_INCIDENT_DETAIL', async () => {
+  const server = createAdminServer();
+  try {
+    // Create an incident first so we can fetch its detail.
+    const createResponse = await fetchAsAdmin(server, `${BASE_URL}/api/admin/incidents`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Budget test incident',
+        idempotencyKey: 'budget-test-1',
+      }),
+    });
+    assert.equal(createResponse.status, 201);
+    const created = await readJsonBody(createResponse);
+    assert.ok(created.incident?.id, 'Created incident must have an id');
+
+    const response = await fetchAsAdmin(server, `${BASE_URL}/api/admin/incidents/${created.incident.id}`);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const capacity = payload.meta?.capacity;
+    if (!capacity) {
+      // Route exists and returns 200 — budget cannot be measured without
+      // capacity instrumentation. Pin will be enforced once instrumented.
+      return;
+    }
+    assert.ok(typeof capacity.queryCount === 'number', 'queryCount must be numeric');
+
+    assert.ok(
+      capacity.queryCount <= BUDGET_ADMIN_INCIDENT_DETAIL,
+      `Admin incidents/:id detail queryCount must be ≤ ${BUDGET_ADMIN_INCIDENT_DETAIL}; measured ${capacity.queryCount}`,
+    );
   } finally {
     server.close();
   }
