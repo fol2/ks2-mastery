@@ -3,6 +3,7 @@ import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 import { useSetupHeroContrast } from '../../../platform/ui/useSetupHeroContrast.js';
 import { heroBgStyle } from '../../../platform/ui/hero-bg.js';
 import { SetupMorePractice } from '../../../platform/ui/SetupMorePractice.jsx';
+import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import {
   heroBgForGrammarSetup,
   heroContrastProfileForGrammarBg,
@@ -158,50 +159,6 @@ function MoreModeCard({ card, selected, disabled, actions }) {
   );
 }
 
-/* Slide-button round-length picker — same DOM rhythm as Spelling's
- * `LengthPicker`, dynamic option list per mode (mini-test gives a
- * shorter palette). The active index drives the `--selected-index`
- * CSS variable; the slider transform is animated by the existing
- * `.length-slider { transition: transform 260ms }` rule in app.css. */
-function RoundLengthPicker({ options, selectedValue, onChange, disabled, ariaLabel }) {
-  const selectedIndex = Math.max(0, options.indexOf(String(selectedValue)));
-  return (
-    <div className="length-control">
-      <div
-        className="length-picker"
-        role="radiogroup"
-        aria-label={ariaLabel}
-        style={{
-          '--option-count': String(options.length),
-          '--selected-index': String(selectedIndex),
-        }}
-      >
-        <span className="length-slider" aria-hidden="true" />
-        {options.map((value) => {
-          const selected = String(selectedValue) === value;
-          return (
-            <button
-              type="button"
-              role="radio"
-              aria-checked={selected ? 'true' : 'false'}
-              className={`length-option${selected ? ' selected' : ''}`}
-              data-action="grammar-set-round-length"
-              data-pref="roundLength"
-              value={value}
-              disabled={disabled}
-              key={value}
-              onClick={() => onChange(value)}
-            >
-              <span>{value}</span>
-            </button>
-          );
-        })}
-      </div>
-      <span className="length-unit">questions</span>
-    </div>
-  );
-}
-
 export function GrammarSetupScene({ learner, grammar, rewardState, actions, runtimeReadOnly }) {
   // U6 Phase 6: build concept nodes map + recent attempts so the dashboard
   // model reflects live evidence, not just persisted star high-water.
@@ -297,12 +254,15 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
             <div className="setup-control-stack">
               <div className="tweak-row">
                 <span className="tool-label">{miniTestMode ? 'Mini-set size' : 'Round length'}</span>
-                <RoundLengthPicker
+                <LengthPicker
                   options={lengthOptions}
                   selectedValue={selectedLength}
                   onChange={(value) => actions.dispatch('grammar-set-round-length', { value })}
                   disabled={setupDisabled}
                   ariaLabel={miniTestMode ? 'Mini-set size' : 'Round length'}
+                  unit="questions"
+                  actionName="grammar-set-round-length"
+                  prefKey="roundLength"
                 />
               </div>
             </div>

@@ -3,6 +3,7 @@ import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConf
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
+import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import {
   BOSS_DEFAULT_ROUND_LENGTH,
   SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
@@ -199,77 +200,6 @@ function GraduationStatRibbon({ postMastery, secureCount }) {
         </div>
       ))}
     </dl>
-  );
-}
-
-function LengthPicker({ prefs, actions, disabled = false }) {
-  const selectedValue = String(prefs.roundLength || '10');
-  const selectedIndex = Math.max(0, ROUND_LENGTH_OPTIONS.indexOf(selectedValue));
-  return (
-    <div className="length-control">
-      <div
-        className="length-picker"
-        role="radiogroup"
-        aria-label="Round length"
-        style={{ '--option-count': String(ROUND_LENGTH_OPTIONS.length), '--selected-index': String(selectedIndex) }}
-      >
-        <span className="length-slider" aria-hidden="true" />
-        {ROUND_LENGTH_OPTIONS.map((value) => {
-          const selected = selectedValue === value;
-          return (
-            <button
-              type="button"
-              role="radio"
-              aria-checked={selected ? 'true' : 'false'}
-              className={`length-option${selected ? ' selected' : ''}`}
-              data-action="spelling-set-pref"
-              data-pref="roundLength"
-              value={value}
-              disabled={disabled}
-              key={value}
-              onClick={(event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'roundLength', value })}
-            >
-              <span>{value}</span>
-            </button>
-          );
-        })}
-      </div>
-      <span className="length-unit">words</span>
-    </div>
-  );
-}
-
-function YearPicker({ prefs, actions, disabled = false }) {
-  const selectedValue = prefs.yearFilter || 'core';
-  const selectedIndex = Math.max(0, YEAR_FILTER_OPTIONS.findIndex((option) => option.value === selectedValue));
-  return (
-    <div
-      className="length-picker"
-      role="radiogroup"
-      aria-label="Spelling pool"
-      style={{ '--option-count': String(YEAR_FILTER_OPTIONS.length), '--selected-index': String(selectedIndex) }}
-    >
-      <span className="length-slider" aria-hidden="true" />
-      {YEAR_FILTER_OPTIONS.map(({ value, label }) => {
-        const selected = selectedValue === value;
-        return (
-          <button
-            type="button"
-            role="radio"
-            aria-checked={selected ? 'true' : 'false'}
-            className={`length-option${selected ? ' selected' : ''}`}
-            data-action="spelling-set-pref"
-            data-pref="yearFilter"
-            value={value}
-            disabled={disabled}
-            key={value}
-            onClick={(event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'yearFilter', value })}
-          >
-            <span>{label}</span>
-          </button>
-        );
-      })}
-    </div>
   );
 }
 
@@ -631,11 +561,28 @@ function LegacySetupContent({
       <div className="setup-control-stack">
         <div className={tweakClass} {...tweakAria}>
           <span className="tool-label">Round length</span>
-          <LengthPicker prefs={prefs} actions={actions} disabled={hideTweaks || preferenceControlsDisabled} />
+          <LengthPicker
+            options={ROUND_LENGTH_OPTIONS}
+            selectedValue={String(prefs.roundLength || '10')}
+            onChange={(value, event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'roundLength', value })}
+            disabled={hideTweaks || preferenceControlsDisabled}
+            ariaLabel="Round length"
+            unit="words"
+            actionName="spelling-set-pref"
+            prefKey="roundLength"
+          />
         </div>
         <div className={tweakClass} {...tweakAria}>
           <span className="tool-label">Pool</span>
-          <YearPicker prefs={prefs} actions={actions} disabled={hideTweaks || preferenceControlsDisabled} />
+          <LengthPicker
+            options={YEAR_FILTER_OPTIONS}
+            selectedValue={prefs.yearFilter || 'core'}
+            onChange={(value, event) => renderAction(actions, event, 'spelling-set-pref', { pref: 'yearFilter', value })}
+            disabled={hideTweaks || preferenceControlsDisabled}
+            ariaLabel="Spelling pool"
+            actionName="spelling-set-pref"
+            prefKey="yearFilter"
+          />
         </div>
         <div className="tweak-row">
           <span className="tool-label">Options</span>
