@@ -8,11 +8,12 @@
  * 4. The total oracle test count is reproducible from manifest windows
  * 5. All oracle families are represented in the manifest
  */
-import { describe, it } from 'node:test';
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import os from 'node:os';
 
 import {
   parseSeedWindow,
@@ -20,6 +21,10 @@ import {
   validateEvidenceManifest,
   validateReportAgainstManifest,
   validateSmokeEvidence,
+  extractCertificationDecision,
+  extractPostDeploySmokeEvidence,
+  extractLimitations,
+  SMOKE_EVIDENCE_REQUIRED_FIELDS,
 } from '../scripts/validate-grammar-qg-certification-evidence.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -380,5 +385,209 @@ describe('P9 Oracle Windows: completion report validator integration', () => {
     const module = await import('../scripts/validate-grammar-qg-completion-report.mjs');
     assert.ok(typeof module.validateGrammarCompletionReport === 'function');
     assert.ok(typeof module.validateReleaseFrontmatter === 'function');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 10. Production smoke evidence gate (P9-U9)
+// ---------------------------------------------------------------------------
+
+describe('P9 Production Smoke Evidence Gate', () => {
+  let tmpDir;
+
+  before(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'grammar-smoke-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'reports', 'grammar'), { recursive: true });
+  });
+
+  after(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function buildFrontmatterReport(opts = {}) {
+    const {
+      certDecision = 'CERTIFIED_POST_DEPLOY',
+      postDeploySmokeEvidence = null,
+      limitations = null,
+      releaseId = 'grammar-qg-p8-2026-04-29',
+    } = opts;
+    const lines = ['---'];
+    lines.push(`certification_decision: ${certDecision}`);
+    if (postDeploySmokeEvidence) {
+      lines.push(`post_deploy_smoke_evidence: ${postDeploySmokeEvidence}`);
+    }
+    if (limitations) {
+      lines.push('limitations:');
+      for (const lim of limitations) {
+        lines.push(`  - ${lim}`);
+      }
+    }
+    lines.push('---');
+    lines.push('');
+    lines.push('# Grammar QG Completion Report');
+    lines.push('');
+    lines.push(`Content release id: ${releaseId}`);
+    return lines.join('\n');
+  }
+
+  function writeValidSmokeFile(releaseId) {
+    const evidence = {
+      releaseId,
+      deployedUrl: 'https://ks2-mastery.example.com',
+      timestamp: '2026-04-29T18:00:00.000Z',
+      command: 'node scripts/production-smoke.mjs --release=p8',
+      learnerFixtureType: 'fresh-learner',
+      itemCreationResult: { status: 'pass', itemCount: 3 },
+      answerSubmissionResult: { status: 'pass', correctCount: 3 },
+      readModelUpdateResult: { status: 'pass', starsUpdated: true },
+      noAnswerLeakAssertion: { status: 'pass', leakedFields: [] },
+      failureDetails: null,
+    };
+    const filePath = path.join(tmpDir, 'reports', 'grammar', `grammar-production-smoke-${releaseId}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(evidence, null, 2));
+    return filePath;
+  }
+
+  // --- Test: CERTIFIED_POST_DEPLOY without smoke file → fails ---
+  it('fails when report claims CERTIFIED_POST_DEPLOY but smoke file is absent', () => {
+    const releaseId = 'grammar-qg-test-missing-2026-04-29';
+    const report = buildFrontmatterReport({ certDecision: 'CERTIFIED_POST_DEPLOY', releaseId });
+    const testManifest = { contentReleaseId: releaseId };
+
+    const result = validateSmokeEvidence(testManifest, report, { rootDir: tmpDir });
+    assert.equal(result.pass, false, 'Should fail without smoke evidence file');
+    const err = result.mismatches.find((m) => m.field === 'smokeEvidenceFile');
+    assert.ok(err, 'Expected smokeEvidenceFile mismatch');
+    assert.match(err.message, /CERTIFIED_POST_DEPLOY/);
+  });
+
+  // --- Test: CERTIFIED_PRE_DEPLOY with smoke="not-run" → passes ---
+  it('passes when report claims CERTIFIED_PRE_DEPLOY with smoke not-run', () => {
+    const releaseId = 'grammar-qg-test-predeploy-2026-04-29';
+    const report = buildFrontmatterReport({
+      certDecision: 'CERTIFIED_PRE_DEPLOY',
+      postDeploySmokeEvidence: 'not-run',
+      releaseId,
+    });
+    const testManifest = { contentReleaseId: releaseId };
+
+    const result = validateSmokeEvidence(testManifest, report, { rootDir: tmpDir });
+    assert.equal(result.pass, true, `Expected pass but got: ${JSON.stringify(result.mismatches)}`);
+  });
+
+  // --- Test: CERTIFIED_POST_DEPLOY with valid smoke file → passes ---
+  it('passes when report claims CERTIFIED_POST_DEPLOY with valid smoke file', () => {
+    const releaseId = 'grammar-qg-test-valid-2026-04-29';
+    writeValidSmokeFile(releaseId);
+    const report = buildFrontmatterReport({ certDecision: 'CERTIFIED_POST_DEPLOY', releaseId });
+    const testManifest = { contentReleaseId: releaseId };
+
+    const result = validateSmokeEvidence(testManifest, report, { rootDir: tmpDir });
+    assert.equal(result.pass, true, `Expected pass but got: ${JSON.stringify(result.mismatches)}`);
+  });
+
+  // --- Test: smoke evidence file with wrong releaseId → fails ---
+  it('fails when smoke evidence file has mismatched releaseId', () => {
+    const manifestReleaseId = 'grammar-qg-test-mismatch-2026-04-29';
+    const wrongReleaseId = 'grammar-qg-WRONG-release';
+    // Write file at the expected path but with wrong internal releaseId
+    const evidence = {
+      releaseId: wrongReleaseId,
+      deployedUrl: 'https://ks2-mastery.example.com',
+      timestamp: '2026-04-29T18:00:00.000Z',
+      command: 'node scripts/production-smoke.mjs',
+      learnerFixtureType: 'fresh-learner',
+      itemCreationResult: { status: 'pass' },
+      answerSubmissionResult: { status: 'pass' },
+      readModelUpdateResult: { status: 'pass' },
+      noAnswerLeakAssertion: { status: 'pass' },
+      failureDetails: null,
+    };
+    const filePath = path.join(tmpDir, 'reports', 'grammar', `grammar-production-smoke-${manifestReleaseId}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(evidence, null, 2));
+
+    const report = buildFrontmatterReport({ certDecision: 'CERTIFIED_POST_DEPLOY', releaseId: manifestReleaseId });
+    const testManifest = { contentReleaseId: manifestReleaseId };
+
+    const result = validateSmokeEvidence(testManifest, report, { rootDir: tmpDir });
+    assert.equal(result.pass, false, 'Should fail with mismatched releaseId');
+    const err = result.mismatches.find((m) => m.field === 'smokeEvidenceReleaseIdMismatch');
+    assert.ok(err, 'Expected smokeEvidenceReleaseIdMismatch');
+    assert.match(err.message, /does not match/);
+  });
+
+  // --- Test: smoke evidence file missing required fields → fails ---
+  it('fails when smoke evidence file is missing required fields', () => {
+    const releaseId = 'grammar-qg-test-incomplete-2026-04-29';
+    // Write file with only some fields
+    const incompleteEvidence = {
+      releaseId,
+      deployedUrl: 'https://ks2-mastery.example.com',
+      // Missing: timestamp, command, learnerFixtureType, itemCreationResult,
+      //          answerSubmissionResult, readModelUpdateResult, noAnswerLeakAssertion, failureDetails
+    };
+    const filePath = path.join(tmpDir, 'reports', 'grammar', `grammar-production-smoke-${releaseId}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(incompleteEvidence, null, 2));
+
+    const report = buildFrontmatterReport({ certDecision: 'CERTIFIED_POST_DEPLOY', releaseId });
+    const testManifest = { contentReleaseId: releaseId };
+
+    const result = validateSmokeEvidence(testManifest, report, { rootDir: tmpDir });
+    assert.equal(result.pass, false, 'Should fail with missing fields');
+    const fieldErrs = result.mismatches.filter((m) => m.field === 'smokeEvidenceFieldMissing');
+    assert.ok(fieldErrs.length > 0, 'Expected smokeEvidenceFieldMissing errors');
+    // Should report exactly the missing fields
+    const missingFieldNames = fieldErrs.map((e) => e.claimed.match(/"(.+)"/)[1]);
+    assert.ok(missingFieldNames.includes('timestamp'));
+    assert.ok(missingFieldNames.includes('command'));
+    assert.ok(missingFieldNames.includes('learnerFixtureType'));
+  });
+
+  // --- Test: CERTIFIED_WITH_LIMITATIONS with "post-deploy not run" → passes ---
+  it('passes when report claims CERTIFIED_WITH_LIMITATIONS with limitation "post-deploy not run"', () => {
+    const releaseId = 'grammar-qg-test-limited-2026-04-29';
+    const report = buildFrontmatterReport({
+      certDecision: 'CERTIFIED_WITH_LIMITATIONS',
+      limitations: ['post-deploy not run'],
+      releaseId,
+    });
+    const testManifest = { contentReleaseId: releaseId };
+
+    const result = validateSmokeEvidence(testManifest, report, { rootDir: tmpDir });
+    assert.equal(result.pass, true, `Expected pass but got: ${JSON.stringify(result.mismatches)}`);
+  });
+
+  // --- Test: extractCertificationDecision ---
+  it('extractCertificationDecision extracts from frontmatter', () => {
+    const report = '---\ncertification_decision: CERTIFIED_POST_DEPLOY\n---\n# Report';
+    assert.equal(extractCertificationDecision(report), 'CERTIFIED_POST_DEPLOY');
+  });
+
+  it('extractCertificationDecision returns null when absent', () => {
+    const report = '---\ntitle: Report\n---\n# Report';
+    assert.equal(extractCertificationDecision(report), null);
+  });
+
+  // --- Test: extractPostDeploySmokeEvidence ---
+  it('extractPostDeploySmokeEvidence extracts "not-run"', () => {
+    const report = '---\npost_deploy_smoke_evidence: not-run\n---\n# Report';
+    assert.equal(extractPostDeploySmokeEvidence(report), 'not-run');
+  });
+
+  // --- Test: extractLimitations ---
+  it('extractLimitations extracts limitation list', () => {
+    const report = '---\nlimitations:\n  - post-deploy not run\n  - staging only\n---\n# Report';
+    const lims = extractLimitations(report);
+    assert.deepEqual(lims, ['post-deploy not run', 'staging only']);
+  });
+
+  // --- Test: SMOKE_EVIDENCE_REQUIRED_FIELDS is complete ---
+  it('SMOKE_EVIDENCE_REQUIRED_FIELDS contains all expected fields', () => {
+    const expected = [
+      'releaseId', 'deployedUrl', 'timestamp', 'command', 'learnerFixtureType',
+      'itemCreationResult', 'answerSubmissionResult', 'readModelUpdateResult',
+      'noAnswerLeakAssertion', 'failureDetails',
+    ];
+    assert.deepEqual(SMOKE_EVIDENCE_REQUIRED_FIELDS, expected);
   });
 });

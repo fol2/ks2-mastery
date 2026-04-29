@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { buildGrammarQuestionGeneratorAudit } from './audit-grammar-question-generator.mjs';
 import { buildGrammarContentQualityAudit } from './audit-grammar-content-quality.mjs';
-import { validateReportAgainstManifest, validateEvidenceManifest } from './validate-grammar-qg-certification-evidence.mjs';
+import { validateReportAgainstManifest, validateEvidenceManifest, validateSmokeEvidence, extractCertificationDecision, extractPostDeploySmokeEvidence } from './validate-grammar-qg-certification-evidence.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -504,19 +504,34 @@ export function validateGrammarCompletionReport(reportContent, opts = {}) {
     }
   }
 
-  // --- production-smoke evidence file validation ---
-  const claimsPostDeployPassed = smokeStatus.postDeploySmoke &&
-    (smokeStatus.postDeploySmoke.includes('passed') || smokeStatus.postDeploySmoke.includes('pass'));
-  if (claimsPostDeployPassed) {
-    const releaseId = reportedReleaseId || audit.releaseId;
-    const evidencePath = path.join(rootDir, 'reports', 'grammar', `grammar-production-smoke-${releaseId}.json`);
-    if (!existsSync(evidencePath)) {
-      mismatches.push({
-        field: 'productionSmokeEvidence',
-        claimed: 'post-deploy smoke passed',
-        actual: `evidence file not found at ${path.relative(rootDir, evidencePath)}`,
-        message: `Report claims post-deploy smoke passed but evidence file does not exist: ${path.relative(rootDir, evidencePath)}`,
-      });
+  // --- production-smoke evidence file validation (P9-U9 enhanced) ---
+  const certDecision = extractCertificationDecision(reportContent);
+  const postDeploySmokeField = extractPostDeploySmokeEvidence(reportContent);
+
+  // If certification_decision is CERTIFIED_POST_DEPLOY, delegate full validation to validateSmokeEvidence
+  if (certDecision && /certified[_-]?post[_-]?deploy/i.test(certDecision)) {
+    const smokeManifest = { contentReleaseId: reportedReleaseId || audit.releaseId };
+    const smokeResult = validateSmokeEvidence(smokeManifest, reportContent, { rootDir });
+    mismatches.push(...smokeResult.mismatches);
+  } else if (certDecision && /certified[_-]?pre[_-]?deploy/i.test(certDecision)) {
+    // CERTIFIED_PRE_DEPLOY: no smoke file required — skip
+  } else if (certDecision && /certified[_-]?with[_-]?limitations/i.test(certDecision)) {
+    // CERTIFIED_WITH_LIMITATIONS: no smoke file required — skip
+  } else {
+    // Legacy fallback: check text-based smoke claims
+    const claimsPostDeployPassed = smokeStatus.postDeploySmoke &&
+      (smokeStatus.postDeploySmoke.includes('passed') || smokeStatus.postDeploySmoke.includes('pass'));
+    if (claimsPostDeployPassed) {
+      const releaseId = reportedReleaseId || audit.releaseId;
+      const evidencePath = path.join(rootDir, 'reports', 'grammar', `grammar-production-smoke-${releaseId}.json`);
+      if (!existsSync(evidencePath)) {
+        mismatches.push({
+          field: 'productionSmokeEvidence',
+          claimed: 'post-deploy smoke passed',
+          actual: `evidence file not found at ${path.relative(rootDir, evidencePath)}`,
+          message: `Report claims post-deploy smoke passed but evidence file does not exist: ${path.relative(rootDir, evidencePath)}`,
+        });
+      }
     }
   }
 
