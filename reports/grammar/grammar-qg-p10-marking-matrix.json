@@ -1,0 +1,1724 @@
+{
+  "metadata": {
+    "contentReleaseId": "grammar-qg-p10-2026-04-29",
+    "generatedAt": "2026-04-29T23:40:56.627Z",
+    "seedRange": "1..10",
+    "totalEntries": 190,
+    "goldenPassCount": 160,
+    "goldenFailCount": 0,
+    "goldenUnknownCount": 30,
+    "emptyRejectsCount": 190
+  },
+  "entries": [
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "After the concert, the audience cheered loudly.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "Later that afternoon, our team finally scored.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "Before sunrise, the campers packed their bags.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "After the concert, the audience cheered loudly.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "Later that afternoon, our team finally scored.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Before sunrise, the campers packed their bags.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "After the concert, the audience cheered loudly.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "Later that afternoon, our team finally scored.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "Before sunrise, the campers packed their bags.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "fix_fronted_adverbial",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "After the concert, the audience cheered loudly.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "Sam wore gloves because it was cold.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "When the bell rang, the pupils lined up.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "Although Mia was tired, she finished the race.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "Sam wore gloves because it was cold.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "When the bell rang, the pupils lined up.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Although Mia was tired, she finished the race.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "Sam wore gloves because it was cold.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "When the bell rang, the pupils lined up.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "Although Mia was tired, she finished the race.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "combine_clauses_rewrite",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "Sam wore gloves because it was cold.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "I have finished my homework.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "She had packed her bag before the trip.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "The dog was chasing the cat.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "I have finished my homework.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "She had packed her bag before the trip.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "The dog was chasing the cat.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "I have finished my homework.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "She had packed her bag before the trip.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "The dog was chasing the cat.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "tense_rewrite",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "I have finished my homework.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "The bread was baked by the chef.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "The trophy will be collected by the team.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "The council maintains the local park.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "The bread was baked by the chef.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "The trophy will be collected by the team.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "The council maintains the local park.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "The bread was baked by the chef.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "The trophy will be collected by the team.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "The council maintains the local park.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "active_passive_rewrite",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "The bread was baked by the chef.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "My cousin (the youngest in the family) won the chess trophy.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "Our class visited a castle (the oldest in the county) to help with our history project.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "My cousin (the youngest in the family) won the chess trophy.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "Our class visited a castle (the oldest in the county) to help with our history project.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "My cousin (the youngest in the family) won the chess trophy.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Our class visited a castle (the oldest in the county) to help with our history project.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "My cousin (the youngest in the family) won the chess trophy.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "Our class visited a castle (the oldest in the county) to help with our history project.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "My cousin (the youngest in the family) won the chess trophy.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "parenthesis_fix_sentence",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "Our class visited a castle (the oldest in the county) to help with our history project.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "Dad shouted, \"Run inside!\"",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Sit down!\" said the coach.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Where are you going?\" asked Mum.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "Dad shouted, \"Run inside!\"",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Sit down!\" said the coach.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Where are you going?\" asked Mum.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "Dad shouted, \"Run inside!\"",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Sit down!\" said the coach.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Where are you going?\" asked Mum.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "speech_punctuation_fix",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "Dad shouted, \"Run inside!\"",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "standard_fix_sentence",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "With great care, Ava locked the window.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "With great care, Noah found the map.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "With great care, Ava carried the trophy.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "After the final whistle, Noah carried the gate.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "With great care, Nora found the gate.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Without warning, Ava opened the rucksack.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "Before sunrise, Ava lifted the sketchbook.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "After lunch, Amira lifted the map.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "After lunch, Sam cleaned the gate.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_fronted_adverbial_fix",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "Without warning, Ruby cleaned the rucksack.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "For the picnic we packed three things: bread, fruit, juice.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "The museum displayed four objects: a helmet, a shield, a sword, a coin.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "We still needed two items for camp: a torch, a sleeping bag.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "The club offered three prizes: a medal, a certificate, a book token.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "The recipe called for five ingredients: flour, butter, eggs, sugar, milk.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Three countries were represented at the fair: France, Japan, Brazil.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "The explorer carried four essential supplies: a compass, a water bottle, a rope, a first-aid kit.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "The school banned three items from the playground: skateboards, glass bottles, footballs.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "The gardener planted four types of vegetable: carrots, beans, potatoes, onions.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_colon_list_fix",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "For the picnic we packed three things: bread, fruit, juice.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "I had one worry – the batteries were flat.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "The plan was simple – follow the red arrows.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "There was only one answer – turn back at once.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "One thought filled my mind – where had the key gone.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "She had made her decision – the letter would be posted today.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "The message was clear – everyone must leave the building at once.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "He remembered just one rule – never open the gate after dark.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "The result surprised us all – the youngest team had won.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "Only one thing could save us – the map in her rucksack.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_dash_boundary_fix",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "I had one worry – the batteries were flat.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "Ben said, \"Shut the gate behind you!\"",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "\"What a huge wave that was!\" asked Ava.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Why are your boots muddy?\" said Ava.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "the guide asked, \"Bring the torch with you!\"",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "\"What a huge wave that was!\" whispered Ben.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Have you packed the torch?\" said Miss Patel.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "Mum said, \"Hold the ladder steady!\"",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "\"What a huge wave that was!\" whispered Dad.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "\"Where is the spare key?\" called Dad.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc_speech_punctuation_fix",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "Miss Patel called, \"Shut the gate behind you!\"",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "Ava doesn't know why the gate is locked.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "Noah doesn't know where the hall is.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "Ava doesn't know where the hall is.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "Noah saw the comet last night.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "Nora doesn't know the answer yet.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Ava doesn't know why the gate is locked.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "The visitors were waiting by the gate.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "They were standing near the hall.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "We were ready for the start.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_standard_english_fix",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "Ruby doesn't know why the gate is locked.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "Amira lifts the lantern this morning.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "Jay packs the map after the match.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "Jay lifts the lantern.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "Ruby packed the map.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "Jay packed the picnic basket after the match.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Luca paints the lantern.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "Ava washes the lantern after the match.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "Ben carries the rucksack after the match.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "Mia opens the picnic basket this morning.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_passive_to_active",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "Luca painted the sketchbook this morning.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc2_fronted_adverbial_build",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 1,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 2,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 3,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 4,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 5,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 6,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 7,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 8,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 9,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_noun_phrase_build",
+      "seed": 10,
+      "inputType": "text",
+      "goldenAnswer": null,
+      "goldenMarksCorrect": null,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "We stayed inside because it was raining.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "Ben hurried home because he had forgotten his kit.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "Mia smiled because she had found the missing map.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "Although Mia was tired, she finished the race.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "Although the path was muddy, the walkers kept going.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Although the room was noisy, Jay carried on reading.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "When the bell rang, the pupils lined up.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "When the gate opened, the crowd cheered.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "When the lights went out, everyone fell silent.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_clause_join_rewrite",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "If you need help, call the office.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "The map, in my opinion, needs replacing.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "Our new puppy, to my surprise, slept through the storm.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "The coach, without any warning, changed the teams.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "The old bridge, as everyone knew, was unsafe.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "The visitors, despite the rain, stayed until the end.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "Her answer, I think, was correct.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "The new path, believe it or not, was finished in a day.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "The hall, to be honest, needed a new coat of paint.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "Ben, after a short pause, opened the gate.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_parenthesis_commas_fix",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "The map, in my opinion, needs replacing.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 1,
+      "inputType": "textarea",
+      "goldenAnswer": "We saw a man-eating shark near the rocks.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 2,
+      "inputType": "textarea",
+      "goldenAnswer": "The class made a last-minute poster for the hall.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 3,
+      "inputType": "textarea",
+      "goldenAnswer": "She bought a sugar-free drink for the journey.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 4,
+      "inputType": "textarea",
+      "goldenAnswer": "The team needed a well-earned break after the match.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 5,
+      "inputType": "textarea",
+      "goldenAnswer": "Ben wore his brand-new trainers to the park.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 6,
+      "inputType": "textarea",
+      "goldenAnswer": "We crossed the narrow, fast-flowing stream.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 7,
+      "inputType": "textarea",
+      "goldenAnswer": "The school held a fun-filled sports day on Friday.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 8,
+      "inputType": "textarea",
+      "goldenAnswer": "Mia drew a life-size portrait of her brother.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 9,
+      "inputType": "textarea",
+      "goldenAnswer": "We visited the small-animal hospital after lunch.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_hyphen_fix_meaning",
+      "seed": 10,
+      "inputType": "textarea",
+      "goldenAnswer": "We saw a man-eating shark near the rocks.",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 1,
+      "inputType": "text",
+      "goldenAnswer": "Luca's coats",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 2,
+      "inputType": "text",
+      "goldenAnswer": "Noah's tickets",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 3,
+      "inputType": "text",
+      "goldenAnswer": "Zac's tickets",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 4,
+      "inputType": "text",
+      "goldenAnswer": "Mia's lunchboxes",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 5,
+      "inputType": "text",
+      "goldenAnswer": "the children's coats",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 6,
+      "inputType": "text",
+      "goldenAnswer": "Amira's bags",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 7,
+      "inputType": "text",
+      "goldenAnswer": "Ruby's boots",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 8,
+      "inputType": "text",
+      "goldenAnswer": "the boys' books",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 9,
+      "inputType": "text",
+      "goldenAnswer": "the children's books",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    },
+    {
+      "templateId": "proc3_apostrophe_rewrite",
+      "seed": 10,
+      "inputType": "text",
+      "goldenAnswer": "the men's bags",
+      "goldenMarksCorrect": true,
+      "emptyMarksIncorrect": true,
+      "whitespaceMarksIncorrect": true
+    }
+  ]
+}
