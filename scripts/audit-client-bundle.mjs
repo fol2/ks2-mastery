@@ -30,14 +30,15 @@ const DEFAULT_PUBLIC_DIR = 'dist/public';
 // first-paint utility footprint. Grammar's matching display-state parity
 // adds another tiny cross-subject utility slice. The reward presentation
 // queue, toast compatibility layers, Hero Mode P3 daily-progress shell,
-// Grammar's bridge-ownership display gate, and the Concordium Grand Star tier
-// model keep Node 22/24 gzip output near 220.0 KB, so the committed ceiling is
-// 221,000: still tight enough to catch an adult-surface re-import, without
-// blocking on sub-kilobyte compression/runtime drift. Override via CLI
+// Grammar's bridge-ownership display gate, the Concordium Grand Star tier
+// model, and Hero Mode P5 Camp's child-facing spending surface keep Node 22/24
+// gzip output near 223.9 KB, so the committed ceiling is 224,500: still tight
+// enough to catch an adult-surface re-import, without blocking on
+// sub-kilobyte compression/runtime drift. Override via CLI
 // `--main-bundle-budget-bytes` for experimentation. See
 // `tests/bundle-byte-budget.test.js` for the committed baseline +
 // rationale.
-const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 221_000;
+const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 224_500;
 
 const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/data\//, reason: 'full spelling content dataset' },

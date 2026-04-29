@@ -508,6 +508,11 @@ test('button labels: every statically extractable label is classified', () => {
     // list".
     'Yes,',
     'Back to list',
+    // Hero Mode P5 Camp: calm dismissal CTAs. "Not now" lets the child
+    // back out of a spend confirmation without pressure, and "Done" closes
+    // the post-action acknowledgement / insufficient-balance message.
+    'Not now',
+    'Done',
   ]);
   // Additional unknowns: dump and fail with the full list so U12+ can
   // decide which to promote and which to allowlist. Do NOT add to
