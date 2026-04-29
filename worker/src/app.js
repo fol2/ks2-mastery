@@ -1740,6 +1740,10 @@ export function createWorkerApp({
           if (body?.command === 'unlock-monster' || body?.command === 'evolve-monster') {
             // Gate 1: Camp feature flag
             if (!envFlagEnabled(env.HERO_MODE_CAMP_ENABLED)) {
+              try {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({ event: 'hero_camp_disabled_attempt', learnerId: heroLearnerId }));
+              } catch { /* best-effort */ }
               return json({ ok: false, error: { code: 'hero_camp_disabled', message: 'Hero Camp is not enabled' } }, 409);
             }
             // Gate 2: Economy required for spending
@@ -1775,6 +1779,17 @@ export function createWorkerApp({
                   monsterId: body.monsterId || '',
                   code: campResult.code,
                 }));
+                // Specific insufficient-coins telemetry
+                if (campResult.code === 'hero_insufficient_coins') {
+                  // eslint-disable-next-line no-console
+                  console.log(JSON.stringify({
+                    event: 'hero_monster_insufficient_coins',
+                    learnerId: heroLearnerId,
+                    monsterId: body.monsterId || '',
+                    balance: heroProgressState?.economy?.balance ?? 0,
+                    required: campResult.reason,
+                  }));
+                }
               } catch { /* best-effort */ }
               return json({ ok: false, error: { code: campResult.code, message: campResult.reason || campResult.code } }, campResult.httpStatus || 400);
             }
@@ -1784,9 +1799,8 @@ export function createWorkerApp({
               try {
                 // eslint-disable-next-line no-console
                 console.log(JSON.stringify({
-                  event: 'hero_camp_command_idempotent',
+                  event: 'hero_monster_duplicate_prevented',
                   learnerId: heroLearnerId,
-                  command: body.command,
                   monsterId: body.monsterId || '',
                   status: campResult.heroCampAction.status,
                 }));
@@ -1863,6 +1877,29 @@ export function createWorkerApp({
                 cost: campResult.intent.ledgerEntry.amount * -1,
                 balanceAfter: campResult.intent.newBalance,
               }));
+              // Specific invite/grow telemetry
+              if (body.command === 'unlock-monster') {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_monster_invited',
+                  learnerId: heroLearnerId,
+                  monsterId: body.monsterId || '',
+                  branch: body.branch || '',
+                  cost: campResult.intent.ledgerEntry.amount * -1,
+                  balance: campResult.intent.newBalance,
+                }));
+              } else {
+                // eslint-disable-next-line no-console
+                console.log(JSON.stringify({
+                  event: 'hero_monster_grown',
+                  learnerId: heroLearnerId,
+                  monsterId: body.monsterId || '',
+                  stageBefore: campResult.intent.ledgerEntry.stageBefore,
+                  stageAfter: campResult.intent.ledgerEntry.stageAfter,
+                  cost: campResult.intent.ledgerEntry.amount * -1,
+                  balance: campResult.intent.newBalance,
+                }));
+              }
             } catch { /* best-effort */ }
 
             return json({

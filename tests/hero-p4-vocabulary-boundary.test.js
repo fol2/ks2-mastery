@@ -56,7 +56,7 @@ function stripVocabDefinitions(source) {
   // Strip exported const arrays that define vocabulary or forbidden-field lists
   return source
     .replace(
-      /export\s+const\s+(?:HERO_(?:FORBIDDEN_PRESSURE_VOCABULARY|ECONOMY_ALLOWED_VOCABULARY|FORBIDDEN_VOCABULARY|ECONOMY_ALLOWED_FILES)|FORBIDDEN_CLAIM_FIELDS)\s*=\s*(?:Object\.freeze\()?\[[\s\S]*?\]\)?;/g,
+      /export\s+const\s+(?:HERO_(?:FORBIDDEN_PRESSURE_VOCABULARY|ECONOMY_ALLOWED_VOCABULARY|FORBIDDEN_VOCABULARY|ECONOMY_ALLOWED_FILES)|FORBIDDEN_C(?:LAIM|AMP)_FIELDS)\s*=\s*(?:Object\.freeze\()?\[[\s\S]*?\]\)?;/g,
       '',
     );
 }

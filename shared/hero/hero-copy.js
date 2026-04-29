@@ -58,10 +58,17 @@ export const HERO_ECONOMY_ALLOWED_FILES = Object.freeze([
   'shared/hero/economy.js',
   'shared/hero/hero-copy.js',
   'shared/hero/hero-pool.js',
+  'shared/hero/monster-economy.js',
   'shared/hero/claim-contract.js',
   'src/platform/hero/hero-ui-model.js',
+  'src/platform/hero/hero-camp-model.js',
+  'src/platform/hero/hero-monster-assets.js',
   'src/surfaces/home/HeroQuestCard.jsx',
+  'src/surfaces/home/HeroCampPanel.jsx',
+  'src/surfaces/home/HeroCampMonsterCard.jsx',
+  'src/surfaces/home/HeroCampConfirmation.jsx',
   'worker/src/hero/read-model.js',
+  'worker/src/hero/camp.js',
 ]);
 
 // Backward compat — tests importing this get the pressure-only list
