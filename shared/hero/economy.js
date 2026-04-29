@@ -148,8 +148,6 @@ export function applyDailyCompletionCoinAward(heroState, { learnerId, nowTs, dai
   return { state: updatedState, awarded: true, alreadyAwarded: false, amount: dailyCompletionCoins, ledgerEntryId: entryId, balanceAfter };
 }
 
-// ── State helpers ────────────────────────────────────────────────
-
 // ── Child-safe read model projection ───────────────────────────
 
 export function selectChildSafeEconomyReadModel(heroState, dateKey, questId) {
@@ -197,7 +195,7 @@ function buildChildSafeLedgerEntries(ledger) {
   }));
 }
 
-// ── State helpers ────────────────────────────────────────────────
+// ── Normalisation ───────────────────────────────────────────────
 
 export function normaliseHeroEconomyState(raw) {
   if (!raw || typeof raw !== 'object') return emptyEconomyState();

@@ -1842,29 +1842,31 @@ export function createWorkerApp({
               return { state: updatedState };
             });
 
-            // Fire-and-forget event_log (non-fatal)
-            try {
-              const db = requireDatabase(env);
-              const eventType = body.command === 'unlock-monster'
-                ? 'hero.camp.monster.invited'
-                : 'hero.camp.monster.grown';
-              await run(db, `
-                INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO NOTHING
-              `, [
-                `hero-evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-                heroLearnerId,
-                null,
-                'hero-mode',
-                eventType,
-                JSON.stringify({ command: body.command, monsterId: body.monsterId, ledgerEntryId: campResult.intent.ledgerEntry.entryId }),
-                nowTs,
-                session.accountId,
-              ]);
-            } catch (err) {
-              // eslint-disable-next-line no-console
-              console.error('[hero] camp event_log write failed:', err.message);
+            // Fire-and-forget event_log (non-fatal) — skip on receipt replay to avoid duplicates
+            if (!mutationResult.replayed) {
+              try {
+                const db = requireDatabase(env);
+                const eventType = body.command === 'unlock-monster'
+                  ? 'hero.camp.monster.invited'
+                  : 'hero.camp.monster.grown';
+                await run(db, `
+                  INSERT INTO event_log (id, learner_id, subject_id, system_id, event_type, event_json, created_at, actor_account_id)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                  ON CONFLICT(id) DO NOTHING
+                `, [
+                  `hero-evt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+                  heroLearnerId,
+                  null,
+                  'hero-mode',
+                  eventType,
+                  JSON.stringify({ command: body.command, monsterId: body.monsterId, ledgerEntryId: campResult.intent.ledgerEntry.entryId }),
+                  nowTs,
+                  session.accountId,
+                ]);
+              } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('[hero] camp event_log write failed:', err.message);
+              }
             }
 
             try {

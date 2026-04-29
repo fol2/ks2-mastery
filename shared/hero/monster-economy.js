@@ -156,11 +156,6 @@ export function computeMonsterGrowIntent({
     return { ok: false, code: 'hero_monster_stage_invalid', reason: `Target stage must be 1-${maxStage}` };
   }
 
-  // Check if target exceeds max
-  if (targetStage > maxStage) {
-    return { ok: false, code: 'hero_monster_max_stage', reason: `Target stage ${targetStage} exceeds max ${maxStage}` };
-  }
-
   const currentStage = existingMonster.stage;
 
   // Already at or past target

@@ -31,7 +31,7 @@ function normaliseStage(stage) {
   return Math.max(0, Math.min(4, Math.floor(stage)));
 }
 
-function normaliseBranch(branch, owned) {
+function normaliseBranch(branch) {
   if (isValidHeroMonsterBranch(branch)) return branch;
   // Only normalise to null — owned monsters with invalid branch also lose it
   return null;
@@ -51,7 +51,7 @@ export function normaliseHeroPoolState(raw) {
         monsterId: id,
         owned,
         stage: normaliseStage(m.stage),
-        branch: normaliseBranch(m.branch, owned),
+        branch: normaliseBranch(m.branch),
         investedCoins: typeof m.investedCoins === 'number' && Number.isFinite(m.investedCoins) ? Math.max(0, m.investedCoins) : 0,
         invitedAt: m.invitedAt || null,
         lastGrownAt: m.lastGrownAt || null,

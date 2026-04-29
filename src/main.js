@@ -2588,6 +2588,8 @@ function buildHomeModel(appState, context) {
     now: new Date(),
     permissions: { canOpenParentHub },
     hero: buildHeroHomeModel(heroUi || {}),
+    heroReadModel: heroUi?.readModel || null,
+    heroClient,
   };
 }
 
