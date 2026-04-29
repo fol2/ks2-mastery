@@ -5,7 +5,24 @@
  * and cross-mode cluster decisions. Core P7 invariant: empty decisions FAIL.
  */
 
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+
+// ─── Stable cluster ID generation ───────────────────────────────────────────
+
+/**
+ * Generate a deterministic cluster ID from member item IDs.
+ * Sorts member IDs, joins with ':', and produces a truncated SHA-256 hex hash.
+ *
+ * @param {string[]} memberItemIds - The IDs of items belonging to the cluster
+ * @param {string} [clusterType='cluster'] - Optional cluster type prefix
+ * @returns {string} Stable cluster ID in format `{type}_{hash12}`
+ */
+function generateStableClusterId(memberItemIds, clusterType = 'cluster') {
+  const sorted = [...memberItemIds].sort();
+  const hash = createHash('sha256').update(sorted.join(':')).digest('hex').slice(0, 12);
+  return `${clusterType}_${hash}`;
+}
 
 // ─── Decision states ─────────────────────────────────────────────────────────
 
@@ -375,6 +392,7 @@ export {
   DECISION_STATES,
   ALL_DECISION_VALUES,
   BLOCKING_DECISIONS,
+  generateStableClusterId,
   validateItemDecision,
   validateClusterDecision,
   validateDecisionSchema,
