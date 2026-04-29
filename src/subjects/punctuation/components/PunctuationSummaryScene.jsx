@@ -78,6 +78,7 @@ import {
 } from './punctuation-view-model.js';
 import { PUNCTUATION_CLIENT_SKILLS } from '../read-model.js';
 import { emitPunctuationEvent } from '../telemetry.js';
+import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 
 // --- Local helpers ---------------------------------------------------------
 
@@ -687,20 +688,20 @@ export function PunctuationSummaryScene({
       // and the module's `accent` field.
       style={{ borderTopColor: '#B8873F' }}
     >
-      <div className="punctuation-strip">
-        <img
-          src={scene.src}
-          srcSet={scene.srcSet}
-          sizes="(max-width: 980px) 100vw, 960px"
-          alt=""
-          aria-hidden="true"
-        />
-        <div>
+      {/* U6: platform HeroBackdrop replaces the legacy static <img> inside
+          `.punctuation-strip`. Same pattern as U5's Session-scene swap — the
+          outer `.punctuation-summary-hero` acts as the positioning ancestor
+          (`.hero-backdrop` is `position: absolute; inset: 0`), while
+          `.punctuation-summary-hero-content` sits above via `z-index: 1`. URL
+          is the phase-stable `bellstormSceneForPhase('summary').src`. */}
+      <section className="punctuation-summary-hero" style={{ position: 'relative' }}>
+        <HeroBackdrop url={scene.src} extraBackdropClassName="punctuation-hero-backdrop" />
+        <div className="punctuation-summary-hero-content">
           <div className="eyebrow">Summary</div>
           <h2 className="section-title">{headline}</h2>
           <p className="subtitle">{subtitle}</p>
         </div>
-      </div>
+      </section>
       <CorrectCountLine summary={summary} />
       <ScoreChipRow summary={summary} />
       <SkillsExercisedRow summary={summary} />

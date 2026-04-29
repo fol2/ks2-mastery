@@ -76,6 +76,12 @@ const SCREENSHOT_DETERMINISM_CSS = `
    from U4) so both surfaces stay deterministic. */
 .punctuation-hero-backdrop [data-hero-layer="true"],
 .punctuation-session-hero [data-hero-layer="true"],
+/* U6 (refactor ui-consolidation) extension — Summary + Map scenes also paint
+   via platform HeroBackdrop. Belt-and-braces coverage on top of the
+   `.punctuation-hero-backdrop [data-hero-layer="true"]` rule above so any
+   future stylesheet change that repositions the layer still stays pinned. */
+.punctuation-summary-hero [data-hero-layer="true"],
+.punctuation-map-hero [data-hero-layer="true"],
 .monster-celebration-overlay,
 .monster-celebration-parts,
 .toast-shelf {
@@ -371,6 +377,15 @@ export function defaultMasks(page) {
     // forward.
     page.locator('.punctuation-session-hero-content .section-title'),
     page.locator('.punctuation-strip .section-title'),
+    // U6 (refactor ui-consolidation): the Summary scene header moved from
+    // `.punctuation-strip .section-title` to
+    // `.punctuation-summary-hero-content .section-title`, and the Map scene
+    // header moved from `.punctuation-hero .section-title` to
+    // `.punctuation-map-hero-content .section-title`, when each adopted the
+    // platform `HeroBackdrop`. Legacy selectors stay as belt-and-braces.
+    page.locator('.punctuation-summary-hero-content .section-title'),
+    page.locator('.punctuation-map-hero-content .section-title'),
+    page.locator('.punctuation-hero .section-title'),
   ];
 }
 

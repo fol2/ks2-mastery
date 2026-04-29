@@ -269,6 +269,12 @@ async function injectFixedPromptContent(page) {
       // baselines AND post-U5 DOM.
       '.punctuation-session-hero-content .section-title',
       '.punctuation-strip .section-title',
+      // U6 (refactor ui-consolidation): Summary + Map scenes also carry
+      // platform HeroBackdrop wrappers; mirror the U5 selector additions
+      // so baseline capture still stabilises text across all three scenes.
+      '.punctuation-summary-hero-content .section-title',
+      '.punctuation-map-hero-content .section-title',
+      '.punctuation-hero .section-title',
       '[data-punctuation-session-source]',
     ];
     for (const selector of selectors) {
