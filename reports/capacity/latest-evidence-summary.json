@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-04-29T00:47:06.113Z",
+  "generatedAt": "2026-04-29T09:19:52.297Z",
   "sources": {
     "capacity_evidence": {
       "file": "reports/capacity/evidence/",
@@ -112,7 +112,7 @@
       "ok": false,
       "dryRun": false,
       "mode": "report-only",
-      "finishedAt": "2026-04-29T00:47:06.113Z",
+      "finishedAt": "2026-04-29T09:19:52.296Z",
       "commit": null,
       "failures": [
         "csp_mode_is_report-only"
@@ -123,7 +123,7 @@
       "ok": true,
       "dryRun": false,
       "count": 14,
-      "finishedAt": "2026-04-29T00:47:06.113Z",
+      "finishedAt": "2026-04-29T09:19:52.296Z",
       "commit": null,
       "failures": []
     },
@@ -132,7 +132,7 @@
       "ok": true,
       "dryRun": false,
       "version": "0.1.0",
-      "finishedAt": "2026-04-29T00:47:06.113Z",
+      "finishedAt": "2026-04-29T09:19:52.297Z",
       "commit": null,
       "failures": []
     }

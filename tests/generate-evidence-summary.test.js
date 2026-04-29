@@ -122,7 +122,11 @@ test('schema 3 missing and malformed sources fail closed without crashing the pa
     metrics: {},
   };
   const model = buildEvidencePanelModel(summary, now);
-  assert.equal(model.metrics.find((metric) => metric.key === 'admin_smoke'), undefined);
+  // U1 (P7): missing sources now produce explicit NOT_AVAILABLE rows.
+  const adminSmokeRow = model.metrics.find((metric) => metric.key === 'admin_smoke');
+  assert.ok(adminSmokeRow, 'missing source emits a NOT_AVAILABLE row');
+  assert.equal(adminSmokeRow.state, EVIDENCE_STATES.NOT_AVAILABLE);
+  assert.equal(adminSmokeRow.failureReason, 'source-not-found');
   assert.equal(model.sources.admin_smoke.found, false);
   assert.equal(classifyEvidenceMetric('admin_smoke', undefined, fresh, now), EVIDENCE_STATES.NOT_AVAILABLE);
   assert.equal(classifyEvidenceMetric('kpi_reconcile', 'broken', fresh, now), EVIDENCE_STATES.NOT_AVAILABLE);

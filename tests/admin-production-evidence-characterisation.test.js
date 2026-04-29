@@ -32,8 +32,8 @@ describe('EVIDENCE_STATES', () => {
     assert.equal(Object.isFrozen(EVIDENCE_STATES), true);
   });
 
-  it('has exactly 10 values', () => {
-    assert.equal(Object.keys(EVIDENCE_STATES).length, 10);
+  it('has exactly 11 values (P7: +PREFLIGHT_ONLY)', () => {
+    assert.equal(Object.keys(EVIDENCE_STATES).length, 11);
   });
 
   it('maps to expected string values', () => {
