@@ -226,6 +226,41 @@ function weightedPick(rows, random = Math.random) {
   return rows[rows.length - 1].item;
 }
 
+/**
+ * Compute exposure penalty multiplier for a candidate item based on signature history.
+ *
+ * Three tiers (applied in priority order):
+ *   1. Per-session block:   signature already selected this session → ×0.01
+ *   2. Recent-attempts:     signature in last N attempts              → ×0.1
+ *   3. Day-window avoidance: signature seen within last 7 days        → ×0.3
+ *
+ * Returns 1.0 when no penalty applies.
+ * Fixed items (no variantSignature) are never penalised.
+ */
+function signatureExposurePenalty(item, progress, sessionSignatures, now, { isMisconceptionRetry = false } = {}) {
+  if (!item.variantSignature) return 1.0;
+
+  const sig = item.variantSignature;
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
+
+  // Per-session block (relaxed for misconception-retry)
+  if (!isMisconceptionRetry && sessionSignatures.has(sig)) return EXPOSURE_WEIGHT_BLOCKED;
+
+  // Recent-attempts lookback
+  const recentAttempts = attempts.slice(-MAX_SAME_SIGNATURE_ACROSS_ATTEMPTS);
+  const recentHit = recentAttempts.some(a => a?.variantSignature === sig);
+  if (recentHit) return EXPOSURE_WEIGHT_PENALISED;
+
+  // Day-window avoidance
+  const dayMs = MAX_SAME_SIGNATURE_DAYS * DAY_MS;
+  const nowMs = typeof now === 'function' ? now() : now;
+  const cutoff = (Number.isFinite(nowMs) ? nowMs : 0) - dayMs;
+  const dayHit = attempts.some(a => a?.variantSignature === sig && (a.timestamp || 0) > cutoff);
+  if (dayHit) return EXPOSURE_WEIGHT_DAY_AVOIDED;
+
+  return 1.0;
+}
+
 function recentMissForItem(progress, item) {
   const attempts = Array.isArray(progress?.attempts) ? progress.attempts : [];
   return attempts.slice(-12).reverse().find((attempt) => {
@@ -256,7 +291,7 @@ function strongestFacet(indexes, progress, item, now) {
     .sort((a, b) => b.rank - a.rank || a.mastery - b.mastery || a.skillId.localeCompare(b.skillId))[0] || null;
 }
 
-function weakCandidateRow(indexes, progress, item, now, order, recent, recentSignatures) {
+function weakCandidateRow(indexes, progress, item, now, order, recent, recentSignatures, sessionSignatures) {
   const itemSnap = memorySnapshot(progressForItem(progress, item.id), now);
   const facet = strongestFacet(indexes, progress, item, now);
   const recentMiss = recentMissForItem(progress, item);
@@ -297,12 +332,16 @@ function weakCandidateRow(indexes, progress, item, now, order, recent, recentSig
   if (recent.has(item.id)) priority *= 0.08;
   else if (item.variantSignature && recentSignatures.has(item.variantSignature)) priority *= 0.18;
 
+  // Per-signature exposure limit penalty (3-tier)
+  const exposureMul = signatureExposurePenalty(item, progress, sessionSignatures || new Set(), now);
+  priority *= exposureMul;
+
   const focusSkillId = facet?.skillId || item.skillIds?.[0] || '';
   return {
     item,
     order,
     priority,
-    weight: Math.max(0.1, priority),
+    weight: Math.max(EXPOSURE_WEIGHT_BLOCKED, priority),
     weakFocus: {
       skillId: focusSkillId,
       skillName: skillName(indexes, focusSkillId),
@@ -490,13 +529,16 @@ function selectMisconceptionRetry(indexes, progress, session, recentSignatures) 
 function weakRows(indexes, progress, session, now, maxWindow) {
   const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
   const recentSignatures = recentSignatureSet(indexes, session, progress);
+  const sessionSignatures = new Set(
+    Array.isArray(session?.selectedSignatures) ? session.selectedSignatures : []
+  );
   const rows = [];
   const seen = new Set();
   const limit = Math.max(1, maxWindow);
   const addItem = (item) => {
     if (rows.length >= limit || !publishedItem(indexes, item) || seen.has(item.id)) return;
     seen.add(item.id);
-    rows.push(weakCandidateRow(indexes, progress, item, now, rows.length, recent, recentSignatures));
+    rows.push(weakCandidateRow(indexes, progress, item, now, rows.length, recent, recentSignatures, sessionSignatures));
   };
   const addFacet = ({ skillId, mode }) => {
     for (const item of indexes.itemsByMode.get(mode) || []) {
@@ -571,6 +613,10 @@ export function selectPunctuationItem({
   const recentIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : [];
   const recent = new Set(recentIds);
   const recentSignatures = recentSignaturesForRetry;
+  const sessionSignatures = new Set(
+    Array.isArray(session?.selectedSignatures) ? session.selectedSignatures : []
+  );
+  const isMisconceptionRetry = session?.selectionReason === REASON_TAGS.MISCONCEPTION_RETRY;
   const previousItemId = typeof session?.currentItemId === 'string' && session.currentItemId
     ? session.currentItemId
     : recentIds.at(-1) || null;
@@ -602,7 +648,9 @@ export function selectPunctuationItem({
     if (snap.bucket === 'secure') weight *= 0.25;
     if (recent.has(item.id)) weight *= 0.12;
     else if (item.variantSignature && recentSignatures.has(item.variantSignature)) weight *= 0.2;
-    return { item, weight };
+    // Per-signature exposure limit penalty (3-tier)
+    weight *= signatureExposurePenalty(item, progress, sessionSignatures, now, { isMisconceptionRetry });
+    return { item, weight: Math.max(EXPOSURE_WEIGHT_BLOCKED, weight) };
   }).filter((row) => row.weight > 0);
 
   const item = weightedPick(rows, random) || windowed[0] || null;
