@@ -1,6 +1,7 @@
 const LAUNCHER_TO_MODE = Object.freeze({
   'smart-practice': 'smart',
   'trouble-practice': 'trouble',
+  'mini-test': 'satsset',
 });
 
 export function mapToSubjectPayload(taskEnvelope) {

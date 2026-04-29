@@ -54,6 +54,14 @@ test('Grammar trouble-practice maps to { mode: "trouble" }', () => {
   assert.deepStrictEqual(result.payload, { mode: 'trouble' });
 });
 
+test('Grammar mini-test maps to { mode: "satsset" } (pA2 U3)', () => {
+  const envelope = { subjectId: 'grammar', launcher: 'mini-test' };
+  const result = mapHeroEnvelopeToSubjectPayload(envelope);
+  assert.equal(result.launchable, true);
+  assert.equal(result.subjectId, 'grammar');
+  assert.deepStrictEqual(result.payload, { mode: 'satsset' });
+});
+
 // ── Punctuation happy paths ────────────────────────────────────────
 
 test('Punctuation smart-practice maps to { mode: "smart" }', () => {
