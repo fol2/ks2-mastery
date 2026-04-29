@@ -1,4 +1,3 @@
-import React from 'react';
 
 /**
  * HeroCampConfirmation — calm confirmation dialog for Hero Camp actions.

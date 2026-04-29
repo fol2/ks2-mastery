@@ -184,6 +184,11 @@ export const CLASSIFICATION = Object.freeze({
 
   // Platform UI
   'src/platform/ui/LengthPicker.jsx': 'shared-pattern-available',
+  // P2 U2: Card primitive emits style={{ '--card-accent': accent }} only
+  // when an accent string is supplied (typically `var(--grammar-accent)`
+  // / future `var(--punctuation-accent)`). Pure CSS-variable passthrough
+  // — no server data enters the style bag.
+  'src/platform/ui/Card.jsx': 'css-var-ready',
 
   // Platform game / render
   'src/platform/game/render/BaseSprite.jsx': 'dynamic-content-driven',

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useMonsterVisualConfig } from '../../platform/game/MonsterVisualConfigContext.jsx';
 import { resolveMonsterVisual } from '../../platform/game/monster-visual-config.js';
 import { monsterVisualCelebrationStyle } from '../../platform/game/monster-visual-style.js';

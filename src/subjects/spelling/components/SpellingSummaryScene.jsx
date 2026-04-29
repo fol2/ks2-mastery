@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { AnimatedPromptCard, PathProgress, Ribbon } from './SpellingCommon.jsx';

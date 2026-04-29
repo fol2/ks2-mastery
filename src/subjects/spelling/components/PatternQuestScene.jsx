@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   spellingSessionContextNote,

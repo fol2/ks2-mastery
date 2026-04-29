@@ -1,4 +1,3 @@
-import React from 'react';
 import { AdminPanelFrame } from '../../surfaces/hubs/AdminPanelFrame.jsx';
 import { buildCalibrationViewModel } from '../calibration-view-model.js';
 import './GrammarCalibrationPanel.css';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { AdultConfidenceChip, adultConfidenceFromRow } from './AdultConfidenceChip.jsx';
 import { progressForGrammarMonster } from '../../../platform/game/monster-system.js';
 import { monsterAsset, monsterAssetSrcSet } from '../../../platform/game/monsters.js';

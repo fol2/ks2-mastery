@@ -1,4 +1,3 @@
-import React from 'react';
 import { isGrammarConfidenceLabel } from '../../../../shared/grammar/confidence.js';
 
 // Phase 4 U7: the AdultConfidenceChip lives in its own module so every adult

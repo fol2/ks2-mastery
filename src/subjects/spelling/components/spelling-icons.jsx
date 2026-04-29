@@ -1,4 +1,3 @@
-import React from 'react';
 
 export function ArrowRightIcon({ size = 16 }) {
   return (
