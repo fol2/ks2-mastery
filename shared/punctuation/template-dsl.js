@@ -233,6 +233,7 @@ export function expandDslTemplates(dslDefinitions, { embedTemplateId = true } = 
         ...(isPlainObject(buildResult.rubric) ? { rubric: buildResult.rubric } : {}),
         ...(Array.isArray(buildResult.accepted) ? { accepted: buildResult.accepted } : {}),
         explanation: buildResult.explanation || 'This generated item practises the same published punctuation skill.',
+        ...(typeof buildResult.explanationRuleId === 'string' ? { explanationRuleId: buildResult.explanationRuleId } : {}),
         ...skillIdsEntry,
         ...clusterIdEntry,
         misconceptionTags: buildResult.misconceptionTags || spec.misconceptionTags,

@@ -7,6 +7,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'Every bullet in a list must follow the same punctuation pattern so the reader knows the list is consistent.';
+const EXPLANATION_RULE_ID = 'bullet.stem-consistency';
 
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
@@ -142,6 +143,7 @@ export const bulletPointsFixDsl = TEMPLATES.map((t, i) =>
       model: t.model,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

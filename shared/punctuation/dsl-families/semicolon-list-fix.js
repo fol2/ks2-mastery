@@ -5,6 +5,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'Semicolons separate complex list items that already contain commas, keeping each group clear.';
+const EXPLANATION_RULE_ID = 'semicolon.complex-list';
 
 const TEMPLATES = [
   {
@@ -106,6 +107,7 @@ export const semicolonListFixDsl = TEMPLATES.map((t, i) =>
       model: t.model,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

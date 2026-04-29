@@ -7,6 +7,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'A comma follows the fronted adverbial, and inverted commas wrap the spoken words with their punctuation inside.';
+const EXPLANATION_RULE_ID = 'mixed.fronted-speech';
 
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
@@ -264,6 +265,7 @@ export const frontedSpeechParagraphDsl = TEMPLATES.map((t, i) =>
       clusterId: t.clusterId,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

@@ -7,6 +7,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'The apostrophe before the s shows that the item belongs to the noun.';
+const EXPLANATION_RULE_ID = 'apostrophe.possession-singular';
 
 const TEMPLATES = [
   // ─── Legacy parity (indices 0-3) ─────────────────────────────────────────────
@@ -134,6 +135,7 @@ export const apostrophePossessionInsertDsl = TEMPLATES.map((t, i) =>
       model: t.model,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

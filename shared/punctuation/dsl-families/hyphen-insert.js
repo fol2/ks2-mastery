@@ -5,6 +5,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'The hyphen joins words into a single describing phrase so the reader knows they work together before the noun.';
+const EXPLANATION_RULE_ID = 'hyphen.compound-modifier';
 
 const TEMPLATES = [
   {
@@ -106,6 +107,7 @@ export const hyphenInsertDsl = TEMPLATES.map((t, i) =>
       model: t.model,
       validator: t.validator,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),

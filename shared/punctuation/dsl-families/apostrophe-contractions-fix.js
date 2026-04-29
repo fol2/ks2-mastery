@@ -5,6 +5,7 @@ import { definePunctuationTemplate } from '../template-dsl.js';
  */
 
 const EXPLANATION = 'The apostrophe shows where letters have been removed to shorten two words into one.';
+const EXPLANATION_RULE_ID = 'apostrophe.contraction';
 
 const TEMPLATES = [
   {
@@ -89,6 +90,7 @@ export const apostropheContractionsDsl = TEMPLATES.map((t, i) =>
       stem: t.stem,
       model: t.model,
       explanation: t.explanation,
+      explanationRuleId: EXPLANATION_RULE_ID,
       misconceptionTags: t.misconceptionTags,
       readiness: t.readiness,
     }),
