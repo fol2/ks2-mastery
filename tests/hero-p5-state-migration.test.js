@@ -164,7 +164,7 @@ test('valid v3 normalises without data loss (owned monsters preserved)', () => {
           lastLedgerEntryId: 'ledger-abc',
         },
       },
-      recentActions: [{ action: 'invite', monsterId: 'loomrill', ts: 6000 }],
+      recentActions: [{ type: 'monster-invite', monsterId: 'loomrill', ts: 6000 }],
       lastUpdatedAt: 8000,
     },
   };
@@ -188,7 +188,7 @@ test('valid v3 normalises without data loss (owned monsters preserved)', () => {
   assert.equal(loomrill.stage, 1);
   assert.equal(loomrill.branch, null);
   assert.equal(loomrill.investedCoins, 150);
-  assert.deepEqual(result.heroPool.recentActions, [{ action: 'invite', monsterId: 'loomrill', ts: 6000 }]);
+  assert.deepEqual(result.heroPool.recentActions, [{ type: 'monster-invite', monsterId: 'loomrill', ts: 6000 }]);
   assert.equal(result.heroPool.lastUpdatedAt, 8000);
 });
 
@@ -548,4 +548,41 @@ test('version field is 3 after normalisation regardless of input version', () =>
     const result = normaliseHeroProgressState(input);
     assert.equal(result.version, 3, `failed for input: ${JSON.stringify(input)}`);
   }
+});
+
+// ── Write-normalise-read roundtrip for recentActions ─────────────
+
+test('recentActions produced by computeMonsterInviteIntent survive normalisation roundtrip', () => {
+  // Build an action record the same way monster-economy.js does
+  const actionRecord = {
+    actionId: 'hero-ledger-abc123',
+    requestId: null,
+    type: 'monster-invite',
+    monsterId: 'glossbloom',
+    stageBefore: null,
+    stageAfter: 0,
+    branch: 'b1',
+    cost: 150,
+    ledgerEntryId: 'hero-ledger-abc123',
+    createdAt: Date.now(),
+  };
+
+  const state = {
+    version: 3,
+    heroPool: {
+      version: 1,
+      rosterVersion: 'hero-pool-v1',
+      selectedMonsterId: null,
+      monsters: {},
+      recentActions: [actionRecord],
+      lastUpdatedAt: Date.now(),
+    },
+    economy: { version: 1, balance: 0, lifetimeEarned: 150, lifetimeSpent: 150, ledger: [], lastUpdatedAt: null },
+    daily: null,
+    recentClaims: [],
+  };
+
+  const normalised = normaliseHeroProgressState(state);
+  assert.equal(normalised.heroPool.recentActions.length, 1, 'recentActions must survive normalisation');
+  assert.equal(normalised.heroPool.recentActions[0].type, 'monster-invite');
 });

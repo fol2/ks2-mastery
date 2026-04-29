@@ -60,11 +60,11 @@ export function normaliseHeroPoolState(raw) {
     }
   }
 
-  // Filter recentActions: keep only well-formed entries (objects with action+monsterId)
+  // Filter recentActions: keep only well-formed entries (objects with type+monsterId)
   let recentActions = [];
   if (Array.isArray(raw.recentActions)) {
     recentActions = raw.recentActions.filter(
-      entry => entry && typeof entry === 'object' && typeof entry.action === 'string'
+      entry => entry && typeof entry === 'object' && typeof entry.type === 'string'
     );
   }
 

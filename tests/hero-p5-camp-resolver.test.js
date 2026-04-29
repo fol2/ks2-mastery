@@ -244,6 +244,21 @@ test('evolve-monster: insufficient coins returns hero_insufficient_coins with ht
   assert.equal(result.httpStatus, 409);
 });
 
+// ── Error: unknown command ─────────────────────────────────────────
+
+test('unknown command returns error', () => {
+  const result = resolveHeroCampCommand({
+    command: 'steal-coins',
+    body: { monsterId: 'glossbloom', branch: 'b1' },
+    heroState: makeHeroState(),
+    learnerId: LEARNER,
+    rosterVersion: ROSTER_V,
+    nowTs: NOW,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.httpStatus, 400);
+});
+
 // ── Boundary: zero imports from subject runtime ─────────────────────
 
 test('structural: camp.js has zero imports from subject runtime', () => {
