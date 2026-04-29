@@ -6676,6 +6676,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the head noun and the word class of the underlined word in this noun phrase.",
       example: "those incredibly brave firefighters",
+      focus: "incredibly",
       fields: [
         { label: "Head noun", correct: "firefighters", options: ["those", "incredibly", "brave", "firefighters"] },
         { label: "Word class of 'incredibly'", correct: "adverb", options: ["adjective", "adverb", "noun", "determiner"] }
@@ -7135,6 +7136,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
       example: "The trophy was awarded to Amir by the head teacher.",
+      focus: "The trophy",
       fields: [
         { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
         { label: "Role of 'the trophy'", correct: "subject", options: ["subject", "object"] }
@@ -7145,6 +7147,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
       example: "The goalkeeper saved the penalty brilliantly.",
+      focus: "the penalty",
       fields: [
         { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
         { label: "Role of 'the penalty'", correct: "object", options: ["subject", "object"] }
@@ -7155,6 +7158,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
       example: "The cake was eaten by the children before lunch.",
+      focus: "The cake",
       fields: [
         { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
         { label: "Role of 'the cake'", correct: "subject", options: ["subject", "object"] }
@@ -7165,6 +7169,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
       example: "Lena painted the scenery for the school play.",
+      focus: "the scenery",
       fields: [
         { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
         { label: "Role of 'the scenery'", correct: "object", options: ["subject", "object"] }
@@ -7175,6 +7180,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
       example: "The windows were smashed by the hailstones during the storm.",
+      focus: "The windows",
       fields: [
         { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
         { label: "Role of 'the windows'", correct: "subject", options: ["subject", "object"] }
@@ -7185,6 +7191,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
       example: "The librarian shelved the new books carefully.",
+      focus: "the new books",
       fields: [
         { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
         { label: "Role of 'the new books'", correct: "object", options: ["subject", "object"] }
@@ -7195,6 +7202,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
       example: "The letter was posted by Grandma yesterday afternoon.",
+      focus: "The letter",
       fields: [
         { label: "Voice of the sentence", correct: "passive", options: ["active", "passive"] },
         { label: "Role of 'the letter'", correct: "subject", options: ["subject", "object"] }
@@ -7205,6 +7213,7 @@ const P4_MIXED_TRANSFER_CASES = Object.freeze({
     {
       prompt: "Identify the voice and the grammatical role of the underlined noun phrase.",
       example: "The children carried the heavy equipment across the field.",
+      focus: "the heavy equipment",
       fields: [
         { label: "Voice of the sentence", correct: "active", options: ["active", "passive"] },
         { label: "Role of 'the heavy equipment'", correct: "object", options: ["subject", "object"] }
@@ -7365,10 +7374,27 @@ function buildP4MixedTransferClassifyQuestion(template, seed, cases) {
     answerText
   });
   const conceptNames = template.skillIds.map(s => s.replace(/_/g, ' ')).join(' and ');
+
+  // P10 U2: Build stemHtml with proper <u> wrapping when focus is specified.
+  // The focus field identifies the exact word/phrase to underline.
+  let stemHtml;
+  if (item.focus) {
+    const escapedExample = escapeHtml(item.example);
+    const escapedFocus = escapeHtml(item.focus);
+    const sentenceWithUnderline = escapedExample.replace(escapedFocus, `<u>${escapedFocus}</u>`);
+    stemHtml = `<p>${escapeHtml(item.prompt)}</p><p><strong>${sentenceWithUnderline}</strong></p>`;
+  } else {
+    stemHtml = `<p>${escapeHtml(item.prompt)}</p><p><strong>${escapeHtml(item.example)}</strong></p>`;
+  }
+
+  // P10 U2: Set focusTarget for enrichment when prompt says "underlined" and focus exists
+  const focusTarget = item.focus || null;
+
   return makeBaseQuestion(template, seed, {
     marks: rows.length,
     answerSpec,
-    stemHtml: `<p>${escapeHtml(item.prompt)}</p><p><strong>${escapeHtml(item.example)}</strong></p>`,
+    stemHtml,
+    focusTarget,
     inputSpec: { type: "table_choice", columns: allColumns, rows: rows.map(r => {
       const rowObj = { key: r.key, label: r.label, ariaLabel: r.label };
       // Include row-specific options when they differ from the global column set
@@ -7398,15 +7424,38 @@ function buildP3ExplanationChoiceQuestion(template, seed, cases) {
     feedbackLong:item.why,
     answerText:correct
   });
+
+  // P10 U2: When the prompt mentions "underlined group/word" and there's a focus
+  // field, wrap the focus phrase in <u> within the example sentence for correct
+  // prompt-cue extraction. This ensures focusCue targets the noun phrase, not
+  // the whole sentence.
+  const promptMentionsUnderline = /underlined/i.test(item.prompt);
   const stemParts = [
     `<p>${escapeHtml(item.prompt)}</p>`
   ];
-  if (item.example) stemParts.push(`<p><strong>${escapeHtml(item.example)}</strong></p>`);
-  if (item.focus) stemParts.push(`<p><strong>Focus:</strong> ${escapeHtml(item.focus)}</p>`);
+  if (item.example) {
+    if (item.focus && promptMentionsUnderline) {
+      // Wrap the focus phrase in <u> within the sentence
+      const escapedExample = escapeHtml(item.example);
+      const escapedFocus = escapeHtml(item.focus);
+      const sentenceWithUnderline = escapedExample.replace(escapedFocus, `<u>${escapedFocus}</u>`);
+      stemParts.push(`<p><strong>${sentenceWithUnderline}</strong></p>`);
+    } else {
+      stemParts.push(`<p><strong>${escapeHtml(item.example)}</strong></p>`);
+    }
+  }
+  if (item.focus && !promptMentionsUnderline) {
+    stemParts.push(`<p><strong>Focus:</strong> ${escapeHtml(item.focus)}</p>`);
+  }
+
+  // P10 U2: Set focusTarget for enrichment when focus exists
+  const focusTarget = item.focus || null;
+
   return makeBaseQuestion(template, seed, {
     marks:1,
     answerSpec,
     stemHtml:stemParts.join(""),
+    focusTarget,
     inputSpec:{ type:"single_choice", label:"Choose one", options:buildChoiceOptions(rng, correct, distractors) },
     solutionLines:[
       "Choose the option that explains the grammar relationship.",
@@ -7591,9 +7640,27 @@ function extractBoldSentence(stemHtml) {
 function buildPromptParts(plainPrompt, cueType, targetWord, targetSentence) {
   const parts = [];
 
+  // P10 U2: Determine instruction-only text. If the plainPrompt already contains
+  // the target sentence inline (from stripped HTML), extract just the instruction
+  // portion to avoid duplicating the sentence content in promptParts.
+  let instructionText = plainPrompt;
+  if (targetSentence && plainPrompt.includes(targetSentence)) {
+    // Remove the sentence content from the instruction text
+    const idx = plainPrompt.indexOf(targetSentence);
+    instructionText = cleanSpaces(plainPrompt.slice(0, idx));
+  } else if (targetWord && !targetSentence && plainPrompt.includes(targetWord)) {
+    // For noun-phrase/word targets with no separate sentence, keep instruction only
+    // if the prompt text extends well beyond the target (e.g. "...in the sentence below? <sentence>")
+    const idx = plainPrompt.lastIndexOf(targetWord);
+    const beforeTarget = plainPrompt.slice(0, idx).trim();
+    // Only strip if there's meaningful instruction text before the target
+    if (beforeTarget.length > 20) {
+      instructionText = cleanSpaces(beforeTarget);
+    }
+  }
+
   if (cueType === 'underline' && targetWord) {
-    // Split prompt into text + cue reference, then append sentence
-    parts.push({ kind: 'text', text: plainPrompt });
+    parts.push({ kind: 'text', text: instructionText });
     if (targetSentence) {
       parts.push({ kind: 'lineBreak', text: '' });
       const sentenceBeforeTarget = targetSentence.split(targetWord);
@@ -7604,15 +7671,19 @@ function buildPromptParts(plainPrompt, cueType, targetWord, targetSentence) {
       } else {
         parts.push({ kind: 'sentence', text: targetSentence });
       }
+    } else {
+      // No separate sentence — target word stands alone (e.g. noun phrase context)
+      parts.push({ kind: 'lineBreak', text: '' });
+      parts.push({ kind: 'underline', text: targetWord });
     }
   } else if (cueType === 'target-sentence' && targetSentence) {
-    parts.push({ kind: 'text', text: plainPrompt });
+    parts.push({ kind: 'text', text: instructionText });
     if (!plainPrompt.includes(targetSentence)) {
       parts.push({ kind: 'lineBreak', text: '' });
       parts.push({ kind: 'sentence', text: targetSentence });
     }
   } else if (cueType === 'bold' && targetWord) {
-    parts.push({ kind: 'text', text: plainPrompt });
+    parts.push({ kind: 'text', text: instructionText });
     if (targetSentence) {
       parts.push({ kind: 'lineBreak', text: '' });
       parts.push({ kind: 'emphasis', text: targetSentence });
@@ -7633,18 +7704,37 @@ function enrichPromptCue(question) {
 
   const underlinedWord = extractUnderlinedWord(question.stemHtml);
   const boldSentence = extractBoldSentence(question.stemHtml);
-  const targetWord = underlinedWord || boldSentence || null;
+
+  // P10 U2: When the prompt says "underlined noun phrase/group/word" but the
+  // stemHtml uses <strong> (not <u>), fall back to the question's focusTarget
+  // field which the template generator sets to the intended underline target.
+  let targetWord;
+  if (cueType === 'underline') {
+    targetWord = underlinedWord || question.focusTarget || boldSentence || null;
+  } else {
+    targetWord = underlinedWord || boldSentence || null;
+  }
   const targetSentence = boldSentence || null;
 
   // Build focusCue
-  if (cueType === 'underline' && underlinedWord) {
-    question.focusCue = { type: 'underline', text: underlinedWord };
+  if (cueType === 'underline' && targetWord) {
+    question.focusCue = { type: 'underline', text: targetWord };
   } else if (cueType === 'bold' && boldSentence) {
     question.focusCue = { type: 'bold', text: boldSentence };
   } else if (cueType === 'quoted-word' && targetWord) {
     question.focusCue = { type: 'quoted-word', text: targetWord };
   } else if (cueType === 'target-sentence' && targetSentence) {
     question.focusCue = { type: 'target-sentence', text: targetSentence };
+  }
+
+  // P10 U2: Cue consistency enforcement — if cueType is 'underline' but we
+  // couldn't resolve any target (no <u> tag, no focusTarget, no bold fallback),
+  // provide minimal promptParts (text-only) without a focusCue. This handles
+  // templates like formality_pairs where "underlined pair" refers to UI-level
+  // formatting rather than a prompt-cue target requiring visual highlighting.
+  if (!question.focusCue && cueType === 'underline') {
+    question.promptParts = [{ kind: 'text', text: plainPrompt }];
+    return question;
   }
 
   // Build promptParts
@@ -7675,6 +7765,9 @@ function enrichPromptCue(question) {
       question.readAloudText = `${plainPrompt} Focus on: ${word}.`;
     }
   }
+
+  // P10 U2: Clean up internal-only field — do not leak focusTarget to serialised output
+  delete question.focusTarget;
 
   return question;
 }
