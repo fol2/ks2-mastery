@@ -32,6 +32,7 @@ import {
   punctuationStageLabel,
 } from './punctuation-view-model.js';
 import { emitPunctuationEvent } from '../telemetry.js';
+import { HeroWelcome } from '../../../platform/ui/HeroWelcome.jsx';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
 // one-shot stored-prefs migration. Local to this scene because the
@@ -302,11 +303,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
         <div className="punctuation-dashboard-hero-content">
           <div className="eyebrow">Bellstorm Coast</div>
           <h2 className="section-title">Today's punctuation mission</h2>
-          {learnerName ? (
-            <p className="punctuation-hero-welcome">
-              {`Hi ${learnerName} — ready for a short round?`}
-            </p>
-          ) : null}
+          <HeroWelcome name={learnerName} className="punctuation-hero-welcome" />
           <div className="punctuation-dashboard-cta-row">
             <button
               type="button"
