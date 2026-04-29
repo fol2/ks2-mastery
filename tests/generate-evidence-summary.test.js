@@ -265,6 +265,74 @@ test('buildEvidenceSummary reports P5 30-learner beta-v2 threshold failure as fa
   ]);
 });
 
+test('buildEvidenceSummary ignores diagnostic correlation and statement-map artefacts', () => {
+  const summary = buildEvidenceSummary([
+    {
+      name: '2026-04-29-p2-t1-tail-correlation.json',
+      data: {
+        ok: true,
+        kind: 'capacity-worker-log-correlation',
+        diagnosticOnly: true,
+        diagnostics: {
+          workerLogJoin: {
+            diagnosticOnly: true,
+            certification: { contributesToCertification: false },
+            samples: [],
+          },
+        },
+      },
+    },
+    {
+      name: '2026-04-29-p2-t1-statement-map.json',
+      data: {
+        schema: 1,
+        kind: 'capacity-statement-map',
+        modellingOnly: true,
+        certifying: false,
+        coverage: { status: 'complete' },
+      },
+    },
+    {
+      name: '30-learner-beta-v2-20260428-p5-warm.json',
+      data: {
+        ok: false,
+        dryRun: false,
+        reportMeta: {
+          commit: '1c56e069c4bd95828328410bec3fef81564677ca',
+          learners: 30,
+          bootstrapBurst: 20,
+          rounds: 1,
+          finishedAt: '2026-04-28T21:33:08.171Z',
+          evidenceSchemaVersion: EVIDENCE_SCHEMA_VERSION,
+        },
+        diagnostics: {
+          classification: {
+            certificationEligible: false,
+            kind: 'diagnostic',
+            reasons: ['threshold-violations'],
+          },
+        },
+        thresholds: {
+          violations: [
+            {
+              threshold: 'max-bootstrap-p95-ms',
+              limit: 1000,
+              observed: 1167.4,
+              message: 'Bootstrap P95 wall time 1167.4 ms exceeds 1000 ms.',
+            },
+          ],
+        },
+        failures: ['maxBootstrapP95Ms'],
+        tier: { tier: '30-learner-beta-certified' },
+      },
+    },
+  ], { generatedAt: '2026-04-29T20:00:00.000Z' });
+
+  assert.deepEqual(Object.keys(summary.metrics), ['certified_30_learner_beta']);
+  assert.equal(summary.metrics.certified_30_learner_beta.status, 'failed');
+  assert.equal(summary.metrics.certified_30_learner_beta.evidenceKind, 'capacity-run');
+});
+
 test('buildEvidenceSummary reports 60-learner preflight setup blocker as non-certifying', () => {
   const summary = buildEvidenceSummary([
     {

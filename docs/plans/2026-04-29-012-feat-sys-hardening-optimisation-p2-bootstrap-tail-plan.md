@@ -1,7 +1,7 @@
 ---
 title: "feat: System Hardening Optimisation P2 Bootstrap Tail Reduction"
 type: feat
-status: active
+status: completed
 date: 2026-04-29
 origin: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p2.md
 source_docs:

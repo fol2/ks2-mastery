@@ -18,3 +18,18 @@ test('deploy script gives the production audit enough Cloudflare propagation tim
   assert.ok(retries >= 30, `expected at least 30 production-audit retries, got ${retries}`);
   assert.ok(retryDelayMs >= 5000, `expected at least 5000 ms retry delay, got ${retryDelayMs}`);
 });
+
+test('Cloudflare tail scripts keep package-script OAuth routing and explicit formats', async () => {
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  const prettyTail = pkg.scripts?.['ops:tail'] || '';
+  const jsonTail = pkg.scripts?.['ops:tail:json'] || '';
+
+  assert.equal(prettyTail, 'node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format pretty');
+  assert.equal(jsonTail, 'node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format json');
+
+  for (const [name, script] of Object.entries({ 'ops:tail': prettyTail, 'ops:tail:json': jsonTail })) {
+    assert.match(script, /^node \.\/scripts\/wrangler-oauth\.mjs tail ks2-mastery /, name);
+    assert.doesNotMatch(script, /\bnpx\s+wrangler\b/, name);
+    assert.equal(script.match(/--format\b/g)?.length, 1, `${name} must set exactly one tail format`);
+  }
+});

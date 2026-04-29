@@ -177,10 +177,21 @@ function isNewerEvidence(next, existing) {
 }
 
 function classifyEvidenceKind(fileName, data = {}) {
+  if (
+    data?.kind === 'capacity-worker-log-correlation'
+    || data?.kind === 'capacity-statement-map'
+    || data?.diagnostics?.workerLogJoin
+  ) {
+    return 'diagnostic-artifact';
+  }
   if (/preflight/i.test(fileName)) return 'preflight';
   if (data?.setupFailure || data?.metrics === null) return 'preflight';
   if (data?.dryRun) return 'dry-run';
   return 'capacity-run';
+}
+
+function shouldSummariseEvidenceKind(evidenceKind) {
+  return evidenceKind !== 'diagnostic-artifact';
 }
 
 function normaliseFailures(data = {}, thresholdViolations = []) {
@@ -425,6 +436,7 @@ export function buildMetrics(files, options = {}) {
   const metrics = {};
   for (const { name, data } of files) {
     const metric = summariseEvidenceFile(name, data, options);
+    if (!shouldSummariseEvidenceKind(metric.evidenceKind)) continue;
     const existing = metrics[metric.tier];
     if (!isNewerEvidence(metric, existing)) continue;
     metrics[metric.tier] = metric;

@@ -67,6 +67,16 @@ node ./scripts/join-capacity-worker-logs.mjs \
 
 Read `diagnostics.workerLogJoin.coverage.invocation` separately from `diagnostics.workerLogJoin.coverage.statementLogs`. Invocation CPU/wall coverage can be complete while sampled `capacity.request` statement detail is incomplete; that state supports only partial attribution.
 
+## P2 Evidence Lock, 2026-04-29
+
+The first post-P1 strict run passed the 30-learner shape, but the repeated strict run did not:
+
+- T1 `reports/capacity/evidence/2026-04-29-p2-t1-strict-post-p1.json`: bootstrap P95 814.6 ms, max 818.2 ms, response bytes 2449, query count P95/max 11, D1 rows read P95/max 9, D1 rows written P95/max 0, zero 5xx/network/signal failures.
+- T5 `reports/capacity/evidence/2026-04-29-p2-t5-strict-repeat-1.json`: bootstrap P95 1354.5 ms against the 1000 ms gate, max 2062.2 ms, response bytes 2449, query count P95/max 11, D1 rows read P95/max 9, D1 rows written P95/max 0, zero 5xx/network/signal failures.
+- Pretty-tail joins matched sampled statement logs for 10/10 top-tail bootstrap requests in both runs, but matched invocation CPU/wall logs for 0/10. The correct classification is `unclassified-insufficient-logs`.
+
+This locks P2 to evidence-capture repair before any D1, Worker CPU, payload, launch-policy, or certification change. Public capacity wording remains `small-pilot-provisional`.
+
 ## Minimum Evidence Set Before Mitigation
 
 Before changing bootstrap behaviour or debating thresholds, collect at least three dated diagnostic runs from the matrix, including one strict T1 run and one repeated strict T5 run. Each evidence file should retain:
