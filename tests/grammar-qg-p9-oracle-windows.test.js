@@ -433,6 +433,8 @@ describe('P9 Production Smoke Evidence Gate', () => {
   function writeValidSmokeFile(releaseId) {
     const evidence = {
       releaseId,
+      evidenceOrigin: 'post-deploy',
+      environment: 'https://ks2-mastery.example.com',
       deployedUrl: 'https://ks2-mastery.example.com',
       timestamp: '2026-04-29T18:00:00.000Z',
       command: 'node scripts/production-smoke.mjs --release=p8',
@@ -441,6 +443,8 @@ describe('P9 Production Smoke Evidence Gate', () => {
       answerSubmissionResult: { status: 'pass', correctCount: 3 },
       readModelUpdateResult: { status: 'pass', starsUpdated: true },
       noAnswerLeakAssertion: { status: 'pass', leakedFields: [] },
+      semanticCueAssertion: { ok: true, detail: 'repair smoke passed' },
+      releaseIdAssertion: { ok: true, detail: `contentReleaseId=${releaseId}` },
       failureDetails: null,
     };
     const filePath = path.join(tmpDir, 'reports', 'grammar', `grammar-production-smoke-${releaseId}.json`);
@@ -493,6 +497,8 @@ describe('P9 Production Smoke Evidence Gate', () => {
     // Write file at the expected path but with wrong internal releaseId
     const evidence = {
       releaseId: wrongReleaseId,
+      evidenceOrigin: 'post-deploy',
+      environment: 'https://ks2-mastery.example.com',
       deployedUrl: 'https://ks2-mastery.example.com',
       timestamp: '2026-04-29T18:00:00.000Z',
       command: 'node scripts/production-smoke.mjs',
@@ -501,6 +507,8 @@ describe('P9 Production Smoke Evidence Gate', () => {
       answerSubmissionResult: { status: 'pass' },
       readModelUpdateResult: { status: 'pass' },
       noAnswerLeakAssertion: { status: 'pass' },
+      semanticCueAssertion: { ok: true, detail: 'repair smoke passed' },
+      releaseIdAssertion: { ok: true, detail: `contentReleaseId=${wrongReleaseId}` },
       failureDetails: null,
     };
     const filePath = path.join(tmpDir, 'reports', 'grammar', `grammar-production-smoke-${manifestReleaseId}.json`);
@@ -584,9 +592,10 @@ describe('P9 Production Smoke Evidence Gate', () => {
   // --- Test: SMOKE_EVIDENCE_REQUIRED_FIELDS is complete ---
   it('SMOKE_EVIDENCE_REQUIRED_FIELDS contains all expected fields', () => {
     const expected = [
-      'releaseId', 'deployedUrl', 'timestamp', 'command', 'learnerFixtureType',
-      'itemCreationResult', 'answerSubmissionResult', 'readModelUpdateResult',
-      'noAnswerLeakAssertion', 'failureDetails',
+      'releaseId', 'evidenceOrigin', 'environment', 'deployedUrl', 'timestamp',
+      'command', 'learnerFixtureType', 'itemCreationResult', 'answerSubmissionResult',
+      'readModelUpdateResult', 'noAnswerLeakAssertion', 'semanticCueAssertion',
+      'releaseIdAssertion', 'failureDetails',
     ];
     assert.deepEqual(SMOKE_EVIDENCE_REQUIRED_FIELDS, expected);
   });

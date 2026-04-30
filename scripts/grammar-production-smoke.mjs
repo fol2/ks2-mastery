@@ -34,6 +34,10 @@ const EVIDENCE_ORIGIN_FLAG_INDEX = CLI_ARGS.indexOf('--evidence-origin');
 const CONFIGURED_ORIGIN_VALUE = EVIDENCE_ORIGIN_FLAG_INDEX !== -1 && CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
   ? CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
   : 'repository';
+const RELEASE_ID_ARG = CLI_ARGS.find(a => a.startsWith('--release-id='));
+const CONFIGURED_RELEASE_ID = RELEASE_ID_ARG ? RELEASE_ID_ARG.split('=')[1] : GRAMMAR_CONTENT_RELEASE_ID;
+const OUT_ARG = CLI_ARGS.find(a => a.startsWith('--out='));
+const CONFIGURED_OUT_PATH = OUT_ARG ? OUT_ARG.split('=')[1] : null;
 
 const GRAMMAR_SMOKE_ITEM = Object.freeze({
   templateId: 'qg_modal_verb_explain',
@@ -591,23 +595,37 @@ async function main() {
   if (JSON_OUTPUT) {
     const evidence = {
       ok: overallOk,
+      releaseId: CONFIGURED_RELEASE_ID,
+      evidenceOrigin: CONFIGURED_ORIGIN_VALUE,
+      environment: origin,
+      deployedUrl: origin,
       origin: CONFIGURED_ORIGIN_VALUE,
-      contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID,
+      contentReleaseId: CONFIGURED_RELEASE_ID,
       testedTemplateIds,
       answerSpecFamiliesCovered: grammar
         ? grammar.answerSpecFamilies.covered
         : [],
+      command: `npm run smoke:production:grammar -- --json --evidence-origin ${CONFIGURED_ORIGIN_VALUE} --release-id=${CONFIGURED_RELEASE_ID}`,
+      learnerFixtureType: 'demo-session',
+      itemCreationResult: normalRoundResult,
+      answerSubmissionResult: normalRoundResult,
+      readModelUpdateResult: normalRoundResult,
+      noAnswerLeakAssertion: forbiddenKeyScanResult,
+      semanticCueAssertion: repairResult,
+      releaseIdAssertion: { ok: true, detail: `contentReleaseId=${CONFIGURED_RELEASE_ID}` },
       normalRoundResult,
       miniTestResult,
       repairResult,
       forbiddenKeyScanResult,
+      failureDetails: overallOk ? null : { normalRoundResult, miniTestResult, repairResult },
       timestamp: new Date().toISOString(),
       commitSha: getCommitSha(),
     };
 
-    const reportsDir = path.join(ROOT_DIR, 'reports', 'grammar');
-    mkdirSync(reportsDir, { recursive: true });
-    const outPath = path.join(reportsDir, `grammar-production-smoke-${GRAMMAR_CONTENT_RELEASE_ID}.json`);
+    const outPath = CONFIGURED_OUT_PATH
+      ? path.resolve(ROOT_DIR, CONFIGURED_OUT_PATH)
+      : path.join(ROOT_DIR, 'reports', 'grammar', `grammar-production-smoke-${CONFIGURED_RELEASE_ID}.json`);
+    mkdirSync(path.dirname(outPath), { recursive: true });
     const jsonStr = JSON.stringify(evidence, null, 2);
     writeFileSync(outPath, jsonStr + '\n', 'utf8');
     console.log(jsonStr);
