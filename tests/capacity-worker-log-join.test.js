@@ -17,6 +17,7 @@ import {
 const TRACE_FIXTURE = 'tests/fixtures/capacity-worker-logs/workers-trace.json';
 const JSONL_FIXTURE = 'tests/fixtures/capacity-worker-logs/tail-worker.jsonl';
 const P3_FIXTURE = 'tests/fixtures/capacity-worker-logs/p3-invocation-export.jsonl';
+const P3_FIXTURE_REQUEST_ID = 'p3_fixture_req_55555555-5555-4555-8555-555555555555';
 const OPAQUE_REQUEST_ID_RE = /^req_[0-9a-f]{24}$/;
 const OPAQUE_STATEMENT_ID_RE = /^stmt_[0-9a-f]{24}$/;
 
@@ -110,14 +111,15 @@ test('joinCapacityWorkerLogs joins JSON Workers Trace invocation and capacity.re
 });
 
 test('joinCapacityWorkerLogs joins the P3 canonical cf-worker-event JSONL export with finite invocation coverage', () => {
+  assert.doesNotMatch(readFileSync(P3_FIXTURE, 'utf8'), /ks2_req_/);
   const parsed = parseWorkerLogExport(readFileSync(P3_FIXTURE, 'utf8'), { sourcePath: P3_FIXTURE });
   const evidence = redactPersistedEvidenceRequestIds(evidenceWithSamples([{
     scenario: 'cold-bootstrap-burst',
     status: 200,
     wallMs: 920,
     responseBytes: 29589,
-    clientRequestId: 'ks2_req_55555555-5555-4555-8555-555555555555',
-    serverRequestId: 'ks2_req_55555555-5555-4555-8555-555555555555',
+    clientRequestId: P3_FIXTURE_REQUEST_ID,
+    serverRequestId: P3_FIXTURE_REQUEST_ID,
     queryCount: 9,
     d1RowsRead: 9,
     d1RowsWritten: 0,
@@ -148,7 +150,83 @@ test('joinCapacityWorkerLogs joins the P3 canonical cf-worker-event JSONL export
   assert.equal(sample.cloudflare.wallTimeMs, 840);
   assert.equal(sample.capacityRequest.statementCount, 1);
   assert.match(sample.capacityRequest.statements[0].statementId, OPAQUE_STATEMENT_ID_RE);
-  assert.doesNotMatch(JSON.stringify(output), /ks2_req_55555555/);
+  assert.doesNotMatch(JSON.stringify(output), /p3_fixture_req_|ks2_req_/);
+});
+
+test('parseWorkerLogExport supports pretty wrangler tail JSON with message arrays', () => {
+  const tailObject = {
+    wallTime: 840,
+    cpuTime: 6.25,
+    outcome: 'ok',
+    logs: [{
+      message: [
+        '[ks2-worker]',
+        JSON.stringify({
+          event: 'capacity.request',
+          requestId: P3_FIXTURE_REQUEST_ID,
+          endpoint: '/api/bootstrap',
+          method: 'GET',
+          status: 200,
+          phase: 'bootstrap',
+          queryCount: 9,
+          d1RowsRead: 9,
+          d1RowsWritten: 0,
+          d1DurationMs: 110,
+          wallMs: 820,
+          responseBytes: 29589,
+          bootstrapMode: 'selected-learner-bounded',
+          statements: [{ name: 'bootstrap.selectedLearnerState.read', rowsRead: 9, rowsWritten: 0, durationMs: 80 }],
+          statementsTruncated: false,
+          at: '2026-04-30T10:00:01.100Z',
+        }),
+      ],
+      level: 'log',
+      timestamp: 1777543201100,
+    }],
+    eventTimestamp: 1777543201000,
+    event: {
+      request: {
+        method: 'GET',
+        url: 'https://ks2.eugnel.uk/api/bootstrap',
+        headers: { 'x-ks2-request-id': P3_FIXTURE_REQUEST_ID },
+      },
+      response: { status: 200 },
+    },
+  };
+  const parsed = parseWorkerLogExport([
+    '> ks2-mastery@0.1.0 ops:tail:json',
+    '> node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format json',
+    '',
+    JSON.stringify(tailObject, null, 2),
+  ].join('\n'), { sourcePath: 'pretty-wrangler-tail' });
+  const evidence = redactPersistedEvidenceRequestIds(evidenceWithSamples([{
+    scenario: 'cold-bootstrap-burst',
+    status: 200,
+    wallMs: 920,
+    responseBytes: 29589,
+    clientRequestId: P3_FIXTURE_REQUEST_ID,
+    serverRequestId: P3_FIXTURE_REQUEST_ID,
+  }], {
+    startedAt: '2026-04-30T10:00:00Z',
+    finishedAt: '2026-04-30T10:02:00Z',
+  }));
+  const output = joinCapacityWorkerLogs({
+    evidence,
+    records: parsed.records,
+    generatedAt: '2026-04-30T10:03:00Z',
+    warnings: parsed.warnings,
+  });
+  const sample = output.diagnostics.workerLogJoin.samples[0];
+
+  assert.deepEqual(parsed.warnings, []);
+  assert.deepEqual(output.warnings, []);
+  assert.equal(output.diagnostics.workerLogJoin.coverage.invocation.matched, 1);
+  assert.equal(output.diagnostics.workerLogJoin.coverage.statementLogs.matched, 1);
+  assert.equal(sample.join.invocation.status, 'matched');
+  assert.equal(sample.join.capacityRequest.status, 'matched');
+  assert.equal(sample.cloudflare.cpuTimeMs, 6.25);
+  assert.equal(sample.cloudflare.wallTimeMs, 840);
+  assert.doesNotMatch(JSON.stringify(output), /p3_fixture_req_|ks2_req_/);
 });
 
 test('parseWorkerLogExport supports JSONL Tail exports and skips malformed lines with bounded warnings', () => {
@@ -244,8 +322,8 @@ test('joinCapacityWorkerLogs warns when log timestamps do not overlap the eviden
       status: 200,
       wallMs: 920,
       responseBytes: 29589,
-      clientRequestId: 'ks2_req_55555555-5555-4555-8555-555555555555',
-      serverRequestId: 'ks2_req_55555555-5555-4555-8555-555555555555',
+      clientRequestId: P3_FIXTURE_REQUEST_ID,
+      serverRequestId: P3_FIXTURE_REQUEST_ID,
     }], {
       startedAt: '2026-04-30T10:05:00Z',
       finishedAt: '2026-04-30T10:06:00Z',
@@ -255,6 +333,29 @@ test('joinCapacityWorkerLogs warns when log timestamps do not overlap the eviden
   });
 
   assert.ok(output.warnings.some((warning) => warning.startsWith('capture-window-no-overlap:')));
+  assert.deepEqual(output.diagnostics.workerLogJoin.warnings, output.warnings);
+});
+
+test('joinCapacityWorkerLogs warns when parsed logs cannot prove their capture window', () => {
+  const parsed = parseWorkerLogExport(
+    '{"CPUTimeMs":6.1,"WallTimeMs":710,"Outcome":"ok","Event":{"Request":{"Method":"GET","URL":"https://ks2.eugnel.uk/api/bootstrap","Headers":{"x-ks2-request-id":"ks2_req_10101010-1010-4010-8010-101010101010"}},"Response":{"Status":200}},"logs":[{"message":"[ks2-worker] {\\"event\\":\\"capacity.request\\",\\"requestId\\":\\"ks2_req_10101010-1010-4010-8010-101010101010\\",\\"endpoint\\":\\"/api/bootstrap\\",\\"method\\":\\"GET\\",\\"status\\":200,\\"phase\\":\\"bootstrap\\",\\"queryCount\\":9,\\"d1RowsRead\\":9,\\"d1RowsWritten\\":0,\\"d1DurationMs\\":120,\\"wallMs\\":700,\\"responseBytes\\":28000,\\"bootstrapMode\\":\\"selected-learner-bounded\\",\\"statements\\":[{\\"name\\":\\"bootstrap.selectedLearnerState.read\\",\\"rowsRead\\":9,\\"rowsWritten\\":0,\\"durationMs\\":80}],\\"statementsTruncated\\":false}"}]}',
+    { sourcePath: 'timestamp-free-jsonl' },
+  );
+  const output = joinCapacityWorkerLogs({
+    evidence: evidenceWithSamples([{
+      scenario: 'cold-bootstrap-burst',
+      status: 200,
+      wallMs: 720,
+      responseBytes: 28000,
+      clientRequestId: 'ks2_req_10101010-1010-4010-8010-101010101010',
+      serverRequestId: 'ks2_req_10101010-1010-4010-8010-101010101010',
+    }]),
+    records: parsed.records,
+    generatedAt: '2026-04-29T09:10:00Z',
+  });
+
+  assert.equal(output.diagnostics.workerLogJoin.coverage.invocation.matched, 1);
+  assert.ok(output.warnings.some((warning) => warning.startsWith('capture-window-missing-log-timestamps:')));
   assert.deepEqual(output.diagnostics.workerLogJoin.warnings, output.warnings);
 });
 

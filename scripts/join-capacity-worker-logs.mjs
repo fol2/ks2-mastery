@@ -91,6 +91,14 @@ export function parseWorkerLogExport(content, { sourcePath = 'inline' } = {}) {
     // Fall through to JSONL / console-line parsing.
   }
 
+  const streamedEntries = entriesFromPrettyJsonStream(text);
+  if (streamedEntries.some((entry) => entry.raw.includes('\n'))) {
+    return {
+      records: normaliseWorkerLogEntries(streamedEntries.map((entry) => entry.value), warnings),
+      warnings,
+    };
+  }
+
   const entries = [];
   for (const [index, line] of text.split(/\r?\n/).entries()) {
     const trimmed = line.trim();
@@ -106,6 +114,53 @@ export function parseWorkerLogExport(content, { sourcePath = 'inline' } = {}) {
     records: normaliseWorkerLogEntries(entries, warnings),
     warnings,
   };
+}
+
+function entriesFromPrettyJsonStream(text) {
+  const entries = [];
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (start === -1) {
+      if (char === '{') {
+        start = index;
+        depth = 1;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+    } else if (char === '{') {
+      depth += 1;
+    } else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        const raw = text.slice(start, index + 1);
+        try {
+          entries.push({ raw, value: JSON.parse(raw) });
+        } catch {
+          // Ignore partial or non-JSON snippets; line parsing will warn if needed.
+        }
+        start = -1;
+      }
+    }
+  }
+  return entries;
 }
 
 function entriesFromJsonExport(parsed) {
@@ -270,6 +325,11 @@ function visitCapacityCandidates(value, payloads, warnings, depth) {
   if (Array.isArray(value.message)) {
     const hasMarker = value.message.some((entry) => entry === 'capacity.request' || String(entry).includes('capacity.request'));
     if (hasMarker) {
+      for (const entry of value.message) {
+        if (typeof entry !== 'string') continue;
+        const parsed = parseCapacityString(entry, warnings);
+        if (parsed) payloads.push(parsed);
+      }
       const objectPayload = value.message.find((entry) => entry && typeof entry === 'object' && !Array.isArray(entry));
       if (objectPayload) payloads.push({ event: 'capacity.request', ...objectPayload });
     }
@@ -386,7 +446,15 @@ function pushCaptureWindowWarning(warnings, evidence, records) {
   const timestamps = records
     .map((record) => record.timestampMs)
     .filter((value) => Number.isFinite(value));
-  if (!timestamps.length) return;
+  if (!timestamps.length) {
+    if (records.length > 0) {
+      pushWarning(
+        warnings,
+        `capture-window-missing-log-timestamps: ${records.length} parsed log records cannot validate evidence window ${new Date(startedAt).toISOString()}..${new Date(finishedAt).toISOString()}`,
+      );
+    }
+    return;
+  }
 
   const logStart = Math.min(...timestamps);
   const logEnd = Math.max(...timestamps);
@@ -697,6 +765,7 @@ function collectRequestIds(value) {
     if (typeof entry !== 'object') return;
     for (const [key, child] of Object.entries(entry)) {
       if (/request.?id/i.test(key) && typeof child === 'string') {
+        if (child) ids.add(child);
         for (const match of child.matchAll(REQUEST_ID_RE)) ids.add(match[0]);
       } else {
         scan(child, depth + 1);
