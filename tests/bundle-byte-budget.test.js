@@ -22,9 +22,9 @@
 // compatibility layers, Hero Mode P3 daily-progress shell, Grammar's
 // bridge-ownership display gate, the Concordium Grand Star tier model, and
 // Hero Mode P5 Camp's child-facing spending surface keep Node 22/24 gzip
-// output near 223.9 KB. The committed ceiling is now `224_500`, keeping the
-// headroom narrow while avoiding a sub-kilobyte
-// compression/runtime false blocker.
+// output near 223.9 KB. The committed ceiling is now `232_000`
+// (re-baselined 2026-04-30 for UI Refactor P3), keeping the headroom
+// narrow while avoiding a sub-kilobyte compression/runtime false blocker.
 // The audit still fails
 // when ~50 KB of adult-only JS sneaks back into the critical path (the
 // exact regression the code-split protects against). The audit driver re-reads
@@ -62,29 +62,17 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 
 // Measured on SH2-U10 first post-split build. If this figure drifts up
 // by more than a few kilobytes the committed budget needs a deliberate
-// re-evaluation — not a silent bump. Baseline × 1.05 = ~213,389,
-// rounded up to 214,000. Node 24's zlib output for the current Hero P2
-// baseline sits just above that. Phase 7's Punctuation remote-summary
-// safety and radio-focus accessibility fixes lift the Node 22 build to
-// ~215.1 KB. Punctuation's Star-based display parity adds a small first-paint
-// utility footprint; Grammar's matching display-state parity adds another
-// tiny cross-subject utility slice. The reward presentation queue, toast
-// compatibility layers, Hero Mode P3 daily-progress shell, Grammar's
-// bridge-ownership display gate, the Concordium Grand Star tier model,
-// Hero Mode P5 Camp's child-facing spending surface, and the Grammar
-// setup-aligned refactor (shared hero-bg / HeroBackdrop /
-// useSetupHeroContrast platform engines + slide-button RoundLengthPicker
-// + grammar-hero-bg view-model) keep Node 22/24 gzip output near
-// 226.3 KB. P2 U3 (refactor-ui shared primitives) adds the
-// `ProgressMeter` + `StatCard` utility components to the main bundle,
-// which lands ~120 bytes of new gzip surface after trim. The committed
-// ceiling rises to 227,500 (matches `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES`
-// in `scripts/audit-client-bundle.mjs`). The upper guard at
-// `BASELINE_GZIP_BYTES * 1.105 = 227,630` still holds 130 bytes of
-// headroom — the gate continues to trip when ~50 KB of adult-only JS
-// sneaks back into the critical path.
-const BASELINE_GZIP_BYTES = 206_000;
-const BUDGET_GZIP_BYTES = 227_500;
+// re-evaluation — not a silent bump.
+//
+// Re-baselined 2026-04-30 for UI Refactor P3 (5 new platform primitives).
+// Owner-approved. P3 U0-U6 landed SubjectThemeScope, SessionHUD,
+// ActionRow, SessionSummaryFrame + subject adapters, growing the gzip
+// main bundle from ~227 KB (P2 close) to ~230.5 KB. New baseline 210,000;
+// new ceiling 232,000. Upper guard: 210,000 × 1.105 = 232,050 — the
+// gate continues to trip when ~50 KB of adult-only JS sneaks back into
+// the critical path.
+const BASELINE_GZIP_BYTES = 210_000;
+const BUDGET_GZIP_BYTES = 232_000;
 const TEST_MODE_BUNDLE_MARKER = '__ks2_capacityMeta__';
 
 function isPlaywrightTestModeBundle(bundleBytes) {
