@@ -56,6 +56,11 @@ test('React spelling setup scene disables start while options are saving', async
 // CTA loses its themed accent/a11y ordering; this test fails fast.
 test('React spelling start CTA inherits subject theme + endIcon order in the rendered DOM', async () => {
   const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
+  assert.match(
+    html,
+    /<div[^>]*class="[^"]*\bsubject-theme\b[^"]*"[^>]*data-subject="spelling"/,
+    'Spelling setup must render inside the subject theme scope for CTA accent tokens',
+  );
   const startButtonMatch = html.match(
     /<button[^>]*data-action="spelling-start"[^>]*>[\s\S]*?<\/button>/,
   );

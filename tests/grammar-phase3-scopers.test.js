@@ -145,10 +145,11 @@ test('U2: scopeTransfer throws when </div></main> boundary is missing', () => {
 
 test('U2: scopeDashboard returns a narrowed substring on well-formed HTML', () => {
   // Well-formed shell: the dashboard root `</section>` is followed
-  // immediately by `</div></main>` (the `grammar-surface` wrapper close).
+  // immediately by `</div></div></main>` (PracticeStage, then the
+  // `grammar-surface` wrapper close).
   // Trailing app-shell siblings (e.g. home overlays) sit outside the
   // boundary so the scope helper excludes them from the child sweep.
-  const html = '<main><div class="grammar-surface"><section data-grammar-phase-root="dashboard" class="grammar-dashboard">body</section></div></main><div class="home-overlays">adult</div>';
+  const html = '<main><div class="grammar-surface"><div class="practice-stage"><section data-grammar-phase-root="dashboard" class="grammar-dashboard">body</section></div></div></main><div class="home-overlays">adult</div>';
   const scoped = scopeDashboard(html);
   assert.match(scoped, /data-grammar-phase-root="dashboard"/);
   assert.match(scoped, /body/);

@@ -69,6 +69,7 @@ export const HERO_ECONOMY_ALLOWED_FILES = Object.freeze([
   'src/surfaces/home/HeroCampPanel.jsx',
   'src/surfaces/home/HeroCampMonsterCard.jsx',
   'src/surfaces/home/HeroCampConfirmation.jsx',
+  'worker/src/hero/routes.js',
   'worker/src/hero/read-model.js',
   'worker/src/hero/routes.js',
   'worker/src/hero/camp.js',
