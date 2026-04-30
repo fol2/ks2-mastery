@@ -20,6 +20,7 @@ export const MIN_MS = 60 * 1000;
 
 const SMART_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix', 'transfer', 'combine', 'paragraph']);
 const GUIDED_MODE_CYCLE = Object.freeze(['choose', 'insert', 'fix']);
+const RECENT_ITEM_AVOIDANCE_WINDOW = 6;
 const CLUSTER_MODE = Object.freeze({
   endmarks: 'endmarks',
   apostrophe: 'apostrophe',
@@ -400,6 +401,24 @@ function recentSignatureSet(indexes, session = {}, progress = {}) {
   return signatures;
 }
 
+function recentItemSet(session = {}, progress = {}, limit = RECENT_ITEM_AVOIDANCE_WINDOW) {
+  const ids = new Set();
+  const sessionIds = Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-limit) : [];
+  for (const itemId of sessionIds) {
+    if (typeof itemId === 'string' && itemId) ids.add(itemId);
+  }
+  const attempts = Array.isArray(progress?.attempts) ? progress.attempts.slice(-limit) : [];
+  for (const attempt of attempts) {
+    if (typeof attempt?.itemId === 'string' && attempt.itemId) ids.add(attempt.itemId);
+  }
+  return ids;
+}
+
+function avoidRecentItemRows(rows, recent) {
+  const freshRows = rows.filter((row) => !recent.has(row.item?.id));
+  return freshRows.length ? freshRows : rows;
+}
+
 function avoidRecentSignatureRows(rows, recentSignatures) {
   const freshRows = rows.filter((row) => {
     const signature = row.item?.variantSignature;
@@ -556,7 +575,7 @@ function selectMisconceptionRetry(indexes, progress, session, recentSignatures) 
 // --- End misconception retry helpers ---
 
 function weakRows(indexes, progress, session, now, maxWindow) {
-  const recent = new Set(Array.isArray(session?.recentItemIds) ? session.recentItemIds.slice(-6) : []);
+  const recent = recentItemSet(session, progress);
   const recentSignatures = recentSignatureSet(indexes, session, progress);
   const sessionSignatures = new Set(
     Array.isArray(session?.selectedSignatures) ? session.selectedSignatures : []
@@ -589,7 +608,7 @@ function weakRows(indexes, progress, session, now, maxWindow) {
   }
 
   const sortedRows = rows.sort((a, b) => b.priority - a.priority || a.order - b.order);
-  return avoidRecentSignatureRows(sortedRows, recentSignatures);
+  return avoidRecentItemRows(avoidRecentSignatureRows(sortedRows, recentSignatures), recent);
 }
 
 // --- Reason tag classification helpers ---
