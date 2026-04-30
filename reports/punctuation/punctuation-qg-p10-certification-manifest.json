@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "subject": "punctuation",
+  "phase": "punctuation-qg-p10",
+  "certificationStatus": "BLOCKED_PENDING_HUMAN_ACCEPTANCE",
+  "statusRationale": "Machine gates can run for the P10 source snapshot, but public production certification remains blocked until named human acceptance is complete. Live production smoke has not run.",
+  "releaseId": "punctuation-r4-full-14-skill-structure",
+  "source": {
+    "zip": {
+      "name": "ks2-mastery-lean-04301832.zip",
+      "sha256": "47bf712c7c65a5e3e56ad68be30e88344ffb17252d3c6eb7d34d556e77b99745"
+    },
+    "git": {
+      "repository": "fol2/ks2-mastery",
+      "ref": "codex/punctuation-qg-p10-delivery",
+      "commitSha": "6be41349cd958f73f073e4c88b43f148920b7ced",
+      "commitContainsAllVerifiedPaths": false,
+      "verifiedPaths": [
+        "package.json",
+        "shared/punctuation/marking.js",
+        "tests/punctuation-closed-lexical-preservation-p10.test.js",
+        "scripts/verify-punctuation-qg-p10.mjs",
+        "scripts/validate-punctuation-qg-certification-evidence.mjs",
+        "scripts/verify-punctuation-qg-p9.mjs",
+        "tests/fixtures/punctuation-reviewer-decisions.json",
+        "tests/fixtures/punctuation-negative-vectors.json",
+        "docs/plans/james/punctuation/questions-generator/punctuation-qg-p10-completion-report.md"
+      ],
+      "pathHashes": {
+        "package.json": "9784d59e10b6b2dc3ac7b1fdd32574532d49c3f786dd8fd35a37b06f6476b7f2",
+        "shared/punctuation/marking.js": "fdf4a562bc33393f9d09a4e8dc7bc658f3cb10f03fb19ebbdd8547e725011ab0",
+        "tests/punctuation-closed-lexical-preservation-p10.test.js": "4392941b4955c2951a59f18a167c92e7b826c3d13b296d47bebbab2ed4c930ce",
+        "scripts/verify-punctuation-qg-p10.mjs": "37171879343dddde38269cc8713b01b5a6b7a3f4d6eba07d8600434ae5791693",
+        "scripts/validate-punctuation-qg-certification-evidence.mjs": "781dae65eb08fdd03daeb6b3b0310824ad5188f03eedb8b6c8bc5e2f7c15a414",
+        "scripts/verify-punctuation-qg-p9.mjs": "564c9eac5bcc76fd5b929b6ef63f6a668a6f6b1a1b3c5cac57070e26e73d7781",
+        "tests/fixtures/punctuation-reviewer-decisions.json": "fe68d0f535f914436312b131a4a78cb3df72592489059ac3e0d9dfc6c5dbcec9",
+        "tests/fixtures/punctuation-negative-vectors.json": "ef42eb0b0864fb9658af04453716f0a0fc1bd33674160c11b9b24576378d2b74",
+        "docs/plans/james/punctuation/questions-generator/punctuation-qg-p10-completion-report.md": "0b7f4e48e07117cbdd727b8039c90301fc89e79ffe56c54ba3d295b6541fe1f6"
+      }
+    }
+  },
+  "runtimePool": {
+    "productionDepth": 4,
+    "fixedItems": 92,
+    "generatedProductionItems": 100,
+    "totalProductionItems": 192
+  },
+  "localVerification": {
+    "command": "npm run verify:punctuation-qg:p10",
+    "status": "pass",
+    "exitCode": 0,
+    "nodeVersion": "v22.16.0",
+    "npmVersion": "10.9.2",
+    "logicalGates": 56,
+    "logPath": "reports/punctuation/punctuation-qg-p10-verify.log",
+    "logSha256": "220f82ae796371183f15a8ae027e333bbe60c27b0f212755c0cb9b0935e6991a"
+  },
+  "review": {
+    "aiPreReview": {
+      "status": "complete",
+      "method": "multi-perspective teacher/engineer/parent simulation",
+      "itemDecisions": 192,
+      "reviewRequiredClusterDecisions": 47
+    },
+    "humanAcceptance": {
+      "status": "not_started",
+      "reviewer": null,
+      "role": null,
+      "reviewedAt": null,
+      "acceptedItems": null,
+      "acceptedReviewRequiredClusters": null,
+      "blockers": []
+    }
+  },
+  "liveProductionSmoke": {
+    "status": "not_run",
+    "environment": null,
+    "origin": null,
+    "releaseId": "punctuation-r4-full-14-skill-structure",
+    "deployedCommitOrWorkerVersion": null,
+    "timestamp": null,
+    "command": null,
+    "result": null,
+    "artefactPath": null,
+    "artefactSha256": null
+  },
+  "depth6": {
+    "status": "blocked",
+    "reason": "Depth 6 remains blocked until candidate item review, candidate negative vectors, candidate cluster decisions, live evidence, and explicit product-owner acceptance are complete."
+  }
+}

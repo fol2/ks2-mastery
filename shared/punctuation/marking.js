@@ -989,12 +989,11 @@ function markTransfer(item, answer) {
   const text = normaliseAnswerText(rawText);
   const validator = item.validator || {};
 
-  // Content preservation gate: for insert/fix items with a validator,
-  // reject answers that add extra content beyond the original words.
-  // Word-change detection is left to the validator-specific logic (better diagnostics).
+  // Content preservation gate: closed insert/fix transfer items must keep the
+  // supplied words exactly. Learners should only add or repair punctuation.
   if ((item.mode === 'insert' || item.mode === 'fix') && validator.type) {
     const preservation = evaluatePreservation(text, item);
-    if (!preservation.preserved && preservation.extraWords.length > 0) {
+    if (!preservation.preserved) {
       return {
         correct: false,
         expected: item.model || '',
