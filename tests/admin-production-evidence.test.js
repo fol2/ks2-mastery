@@ -549,6 +549,23 @@ test('P4-U3 S2: diagnostic tail-correlation file cannot produce certification st
   }
 });
 
+// Scenario 2b: Recognised certification key with certifying: false cannot certify
+test('P4-U3 S2b: recognised certification key with certifying false returns NON_CERTIFYING', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  const result = classifyEvidenceMetric('certified_30_learner_beta', {
+    ok: true,
+    certifying: false,
+    status: 'passed',
+    finishedAt: freshDate,
+    failures: [],
+    thresholdViolations: [],
+  }, freshDate, now);
+  assert.equal(result, EVIDENCE_STATES.NON_CERTIFYING,
+    'recognised key with certifying: false must return NON_CERTIFYING, not CERTIFIED_30');
+});
+
 // Scenario 3: Failed setup evidence classifies as FAILING or NON_CERTIFYING
 test('P4-U3 S3: failed setup evidence (ok: false) classifies as FAILING', () => {
   const now = Date.now();
@@ -608,6 +625,34 @@ test('P4-U3 S4: smoke-tier evidence backs SMOKE_PASS only', () => {
   assert.ok(
     results.every((r) => !certStates.has(r)),
     'no smoke key can produce a certification state',
+  );
+});
+
+// Scenario 4b: Smoke key with certifying: true still returns SMOKE_PASS, never CERTIFIED_30
+test('P4-U3 S4b: smoke key with certifying true cannot produce certification state', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  const smokeKeys = ['smoke_pass', 'admin_smoke', 'bootstrap_smoke'];
+  assert.ok(smokeKeys.length > 0, 'vacuous-truth guard: smokeKeys non-empty');
+
+  const results = smokeKeys.map((key) => classifyEvidenceMetric(key, {
+    ok: true,
+    certifying: true,
+    finishedAt: freshDate,
+    failures: [],
+  }, freshDate, now));
+
+  assert.ok(results.length > 0, 'vacuous-truth guard: results non-empty');
+  assert.ok(
+    results.every((r) => r === EVIDENCE_STATES.SMOKE_PASS),
+    'smoke keys with certifying: true must still produce SMOKE_PASS, never CERTIFIED_30',
+  );
+
+  const certStates = new Set([EVIDENCE_STATES.CERTIFIED_30, EVIDENCE_STATES.CERTIFIED_60, EVIDENCE_STATES.CERTIFIED_100]);
+  assert.ok(
+    results.every((r) => !certStates.has(r)),
+    'smoke keys must never reach any certification state regardless of certifying flag',
   );
 });
 
@@ -773,4 +818,54 @@ test('P4-U3 S7: setup-rate-limited evidence cannot overwrite promoted CERTIFIED_
   assert.notEqual(corruptedPanel.metrics[0].state, EVIDENCE_STATES.CERTIFIED_30);
   assert.equal(corruptedPanel.metrics[0].state, EVIDENCE_STATES.NON_CERTIFYING);
   assert.notEqual(corruptedPanel.overallState, EVIDENCE_STATES.CERTIFIED_30);
+});
+
+// Scenario 7b: Panel coexistence — promoted and rate-limited metrics BOTH in same summary
+test('P4-U3 S7b: panel with promoted CERTIFIED_30 and coexisting NON_CERTIFYING preflight preserves certification', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  const summary = {
+    schema: 2,
+    generatedAt: freshDate,
+    metrics: {
+      certified_30_learner_beta: {
+        ok: true,
+        certifying: true,
+        status: 'passed',
+        decision: '30-learner-beta-certified',
+        learners: 30,
+        finishedAt: freshDate,
+        failures: [],
+        thresholdViolations: [],
+      },
+      preflight_only: {
+        ok: false,
+        certifying: false,
+        status: 'non_certifying',
+        evidenceKind: 'preflight',
+        decision: 'fail',
+        failureReason: 'session-manifest-preparation-rate-limited',
+        learners: 60,
+        finishedAt: freshDate,
+        failures: ['maxBootstrapP95Ms'],
+        thresholdViolations: [{ threshold: 'max-bootstrap-p95-ms', limit: 750, observed: 854 }],
+      },
+    },
+  };
+
+  const panel = buildEvidencePanelModel(summary, now);
+  assert.ok(panel.metrics.length > 1, 'vacuous-truth guard: multiple metrics present');
+
+  const certMetric = panel.metrics.find((m) => m.key === 'certified_30_learner_beta');
+  const preflightMetric = panel.metrics.find((m) => m.key === 'preflight_only');
+
+  assert.ok(certMetric, 'promoted metric present in panel');
+  assert.ok(preflightMetric, 'preflight metric present in panel');
+  assert.equal(certMetric.state, EVIDENCE_STATES.CERTIFIED_30,
+    'promoted metric retains CERTIFIED_30 when preflight coexists');
+  assert.equal(preflightMetric.state, EVIDENCE_STATES.NON_CERTIFYING,
+    'preflight metric remains NON_CERTIFYING in same panel');
+  assert.equal(panel.overallState, EVIDENCE_STATES.CERTIFIED_30,
+    'overall panel state is CERTIFIED_30 — preflight cannot downgrade it');
 });
