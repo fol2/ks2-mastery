@@ -118,6 +118,63 @@ test('weak mode avoids repeating a recent item when another weak alternative exi
   assert.equal(result.weakFocus.source, 'weak_facet');
 });
 
+test('weak mode avoids the last attempted item when a new session starts', () => {
+  const weakFacet = updateMemoryState(createMemoryState(), false, 0);
+  const items = [
+    {
+      id: 'weak_fixed_insert',
+      mode: 'insert',
+      skillIds: ['speech'],
+      clusterId: 'speech',
+      rewardUnitId: 'speech-core',
+      prompt: 'Add the missing punctuation.',
+      source: 'fixed',
+    },
+    {
+      id: 'weak_generated_insert',
+      mode: 'insert',
+      skillIds: ['speech'],
+      clusterId: 'speech',
+      rewardUnitId: 'speech-core',
+      prompt: 'Add the missing punctuation in another sentence.',
+      source: 'generated',
+      variantSignature: 'puncsig_recentalt',
+    },
+  ];
+  const indexes = {
+    items,
+    itemById: new Map(items.map((item) => [item.id, item])),
+    itemsByMode: new Map([['insert', items]]),
+    skillById: new Map([['speech', { id: 'speech', name: 'Direct speech', published: true }]]),
+  };
+
+  const result = selectPunctuationItem({
+    indexes,
+    progress: {
+      items: {},
+      facets: { 'speech::insert': weakFacet },
+      rewardUnits: {},
+      attempts: [
+        {
+          itemId: 'weak_fixed_insert',
+          mode: 'insert',
+          itemMode: 'insert',
+          skillIds: ['speech'],
+          correct: true,
+        },
+      ],
+      sessionsCompleted: 0,
+    },
+    session: { mode: 'weak', answeredCount: 0, recentItemIds: [] },
+    prefs: { mode: 'weak' },
+    now: 0,
+    random: () => 0,
+  });
+
+  assert.equal(result.item.id, 'weak_generated_insert');
+  assert.equal(result.weakFocus.source, 'weak_facet');
+});
+
 test('scheduler avoids recently seen generated variant signatures when alternatives exist', () => {
   const signatureItem = (id, variantSignature) => ({
     id,

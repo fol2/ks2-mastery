@@ -256,6 +256,31 @@ test('weak spots sessions target weak facets and record weak attempt metadata', 
   assert.equal(attempt.supportLevel, 0);
 });
 
+test('weak spots sessions rotate away from the item attempted in the previous session', () => {
+  const repository = makeRepository();
+  repository.writeData('learner-a', {
+    prefs: { mode: 'smart', roundLength: '1' },
+    progress: {
+      items: {},
+      facets: { 'speech::insert': updateMemoryState(createMemoryState(), false, 0) },
+      rewardUnits: {},
+      attempts: [],
+      sessionsCompleted: 0,
+    },
+  });
+  const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
+
+  const first = service.startSession('learner-a', { mode: 'weak', roundLength: '1' }).state;
+  assert.equal(first.session.currentItem.id, 'sp_insert_question');
+  service.submitAnswer('learner-a', first, correctAnswerFor(first.session.currentItem));
+
+  const second = service.startSession('learner-a', { mode: 'weak', roundLength: '1' }).state;
+  assert.notEqual(second.session.currentItem.id, first.session.currentItem.id);
+  assert.equal(second.session.currentItem.mode, 'insert');
+  assert.equal(second.session.weakFocus.skillId, 'speech');
+  assert.equal(second.session.weakFocus.source, 'weak_facet');
+});
+
 test('mixed transfer attempts update every included skill-by-mode facet', () => {
   const mixedTransfer = PUNCTUATION_CONTENT_MANIFEST.items.find((entry) => entry.id === 'sp_fa_transfer_at_last_speech');
   const manifest = {
