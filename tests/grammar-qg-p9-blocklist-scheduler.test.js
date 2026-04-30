@@ -59,18 +59,22 @@ describe('P9 Certification Status Map: completeness', () => {
   });
 });
 
-describe('P9 Certification Status Map: module parity with JSON artefact', () => {
+describe('P9 historical status map and active runtime coverage', () => {
   it('CERTIFICATION_STATUS_MAP has all 78 template keys', () => {
     assert.equal(Object.keys(CERTIFICATION_STATUS_MAP).length, 78);
   });
 
-  it('module map matches JSON artefact status for every template', () => {
+  it('active runtime map covers every historical P9 template ID', () => {
     for (const template of GRAMMAR_TEMPLATE_METADATA) {
-      const jsonEntry = statusMapJson[template.id];
       const moduleEntry = CERTIFICATION_STATUS_MAP[template.id];
       assert.ok(moduleEntry, `Module missing template: ${template.id}`);
-      assert.equal(moduleEntry.status, jsonEntry.status, `Status mismatch for ${template.id}`);
     }
+  });
+
+  it('historical P9 JSON is not treated as the active production runtime authority', () => {
+    const limitedRuntimeTemplates = Object.values(CERTIFICATION_STATUS_MAP)
+      .filter((entry) => entry.status === 'approved_with_limitation');
+    assert.equal(limitedRuntimeTemplates.length, 4);
   });
 });
 

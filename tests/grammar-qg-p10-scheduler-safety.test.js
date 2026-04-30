@@ -1,8 +1,9 @@
 /**
- * Grammar QG P10 U8 — Scheduler Safety
+ * Grammar QG P10 U8 — Historical Scheduler Safety
  *
- * Proves that the P10 certification status map is consistent with the quality
- * register and that blocked templates are excluded from scheduling.
+ * Proves that the historical P10 certification status map remains internally
+ * consistent, while active runtime scheduling uses the current P11/P12-derived
+ * generated authority.
  *
  * R-U4 addendum: proves that engine.js paths (takeDueRetry, nextItem
  * direct-launch, startSimilarProblem) respect the blocklist.
@@ -76,16 +77,18 @@ describe('P10 Scheduler Safety: status map structure', () => {
 // 2. Module parity with JSON artefact
 // ---------------------------------------------------------------------------
 
-describe('P10 Scheduler Safety: module vs JSON parity', () => {
-  const statusMap = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
-
-  it('CERTIFICATION_STATUS_MAP matches P10 JSON artefact for every template', () => {
+describe('P10 Historical Scheduler Safety: active runtime coverage', () => {
+  it('active runtime map covers every historical P10 template ID', () => {
     for (const template of GRAMMAR_TEMPLATE_METADATA) {
-      const jsonEntry = statusMap[template.id];
       const moduleEntry = CERTIFICATION_STATUS_MAP[template.id];
       assert.ok(moduleEntry, `Module missing template: ${template.id}`);
-      assert.equal(moduleEntry.status, jsonEntry.status, `Status mismatch for ${template.id}`);
     }
+  });
+
+  it('historical P10 JSON is not treated as the active production runtime authority', () => {
+    const limitedRuntimeTemplates = Object.values(CERTIFICATION_STATUS_MAP)
+      .filter((entry) => entry.status === 'approved_with_limitation');
+    assert.equal(limitedRuntimeTemplates.length, 4);
   });
 });
 
@@ -115,7 +118,7 @@ describe('P10 Scheduler Safety: blocked template exclusion', () => {
       assert.equal(
         isTemplateBlocked(template.id),
         false,
-        `Template ${template.id} should not be blocked (all P10 templates are approved)`,
+        `Template ${template.id} should not be blocked by the active runtime authority`,
       );
     }
   });

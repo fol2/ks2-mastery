@@ -432,18 +432,22 @@ describe('P9 Production Smoke Evidence Gate', () => {
 
   function writeValidSmokeFile(releaseId) {
     const evidence = {
+      ok: true,
       releaseId,
+      contentReleaseId: releaseId,
       evidenceOrigin: 'post-deploy',
-      environment: 'https://ks2-mastery.example.com',
-      deployedUrl: 'https://ks2-mastery.example.com',
+      environment: 'production',
+      deployedUrl: 'https://ks2.eugnel.uk',
       timestamp: '2026-04-29T18:00:00.000Z',
       command: 'node scripts/production-smoke.mjs --release=p8',
       learnerFixtureType: 'fresh-learner',
-      itemCreationResult: { status: 'pass', itemCount: 3 },
-      answerSubmissionResult: { status: 'pass', correctCount: 3 },
-      readModelUpdateResult: { status: 'pass', starsUpdated: true },
-      noAnswerLeakAssertion: { status: 'pass', leakedFields: [] },
+      itemCreationResult: { pass: true, itemCount: 3 },
+      answerSubmissionResult: { pass: true, correctCount: 3 },
+      readModelUpdateResult: { pass: true, starsUpdated: true },
+      noAnswerLeakAssertion: { pass: true, leakedFields: [] },
       semanticCueAssertion: { ok: true, detail: 'repair smoke passed' },
+      promptCueAssertion: { pass: true, checked: true },
+      readAloudAssertion: { pass: true, checked: true },
       releaseIdAssertion: { ok: true, detail: `contentReleaseId=${releaseId}` },
       failureDetails: null,
     };
@@ -496,18 +500,22 @@ describe('P9 Production Smoke Evidence Gate', () => {
     const wrongReleaseId = 'grammar-qg-WRONG-release';
     // Write file at the expected path but with wrong internal releaseId
     const evidence = {
+      ok: true,
       releaseId: wrongReleaseId,
+      contentReleaseId: wrongReleaseId,
       evidenceOrigin: 'post-deploy',
-      environment: 'https://ks2-mastery.example.com',
-      deployedUrl: 'https://ks2-mastery.example.com',
+      environment: 'production',
+      deployedUrl: 'https://ks2.eugnel.uk',
       timestamp: '2026-04-29T18:00:00.000Z',
       command: 'node scripts/production-smoke.mjs',
       learnerFixtureType: 'fresh-learner',
-      itemCreationResult: { status: 'pass' },
-      answerSubmissionResult: { status: 'pass' },
-      readModelUpdateResult: { status: 'pass' },
-      noAnswerLeakAssertion: { status: 'pass' },
+      itemCreationResult: { pass: true },
+      answerSubmissionResult: { pass: true },
+      readModelUpdateResult: { pass: true },
+      noAnswerLeakAssertion: { pass: true },
       semanticCueAssertion: { ok: true, detail: 'repair smoke passed' },
+      promptCueAssertion: { pass: true, checked: true },
+      readAloudAssertion: { pass: true, checked: true },
       releaseIdAssertion: { ok: true, detail: `contentReleaseId=${wrongReleaseId}` },
       failureDetails: null,
     };
@@ -592,10 +600,10 @@ describe('P9 Production Smoke Evidence Gate', () => {
   // --- Test: SMOKE_EVIDENCE_REQUIRED_FIELDS is complete ---
   it('SMOKE_EVIDENCE_REQUIRED_FIELDS contains all expected fields', () => {
     const expected = [
-      'releaseId', 'evidenceOrigin', 'environment', 'deployedUrl', 'timestamp',
+      'ok', 'releaseId', 'evidenceOrigin', 'environment', 'deployedUrl', 'timestamp',
       'command', 'learnerFixtureType', 'itemCreationResult', 'answerSubmissionResult',
       'readModelUpdateResult', 'noAnswerLeakAssertion', 'semanticCueAssertion',
-      'releaseIdAssertion', 'failureDetails',
+      'promptCueAssertion', 'readAloudAssertion', 'releaseIdAssertion', 'failureDetails',
     ];
     assert.deepEqual(SMOKE_EVIDENCE_REQUIRED_FIELDS, expected);
   });

@@ -64,8 +64,8 @@ async function main() {
     },
     expectedItemCount,
     expectedOutputPaths: [
-      `reports/grammar/grammar-qg-${phase}-question-inventory.json`,
-      `reports/grammar/grammar-qg-${phase}-question-inventory-redacted.md`,
+      `reports/grammar/grammar-qg-${phase}-render-inventory.json`,
+      `reports/grammar/grammar-qg-${phase}-render-inventory-redacted.md`,
     ],
     artefacts: {
       renderInventory: `reports/grammar/grammar-qg-${phase}-render-inventory.json`,
