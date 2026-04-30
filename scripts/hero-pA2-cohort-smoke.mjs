@@ -287,7 +287,12 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('Fatal error:', err.message);
-  process.exit(1);
-});
+// Only run main when invoked directly (not when imported for testing)
+const _scriptUrl = fileURLToPath(import.meta.url);
+const _invokedAs = process.argv[1] ? resolve(process.argv[1]) : '';
+if (_scriptUrl === _invokedAs) {
+  main().catch((err) => {
+    console.error('Fatal error:', err.message);
+    process.exit(1);
+  });
+}
