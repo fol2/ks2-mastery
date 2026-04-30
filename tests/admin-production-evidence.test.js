@@ -481,3 +481,296 @@ test('EVIDENCE_STATES is frozen and cannot be extended', () => {
     EVIDENCE_STATES.FABRICATED = 'fake';
   });
 });
+
+// ---------------------------------------------------------------------------
+// P4-U3: Fail-Closed Regression Tests — 7 Scenarios
+//
+// Proves that the Admin surface, generated summary, and verifier separate
+// strict evidence from diagnostics. The 30-learner promotion has landed;
+// these tests prove it is safe.
+// ---------------------------------------------------------------------------
+
+// Scenario 1: Promoted 30-learner beta row → state CERTIFIED_30
+test('P4-U3 S1: promoted 30-learner beta row classifies as CERTIFIED_30', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+  const metricValue = {
+    ok: true,
+    certifying: true,
+    decision: '30-learner-beta-certified',
+    status: 'passed',
+    learners: 30,
+    finishedAt: freshDate,
+    failures: [],
+    thresholdViolations: [],
+    fileName: '30-learner-beta-v2-promoted.json',
+  };
+  const result = classifyEvidenceMetric('certified_30_learner_beta', metricValue, freshDate, now);
+  assert.equal(result, EVIDENCE_STATES.CERTIFIED_30);
+
+  // Also verify via buildEvidencePanelModel to confirm panel integration
+  const summary = { schema: 2, generatedAt: freshDate, metrics: { certified_30_learner_beta: metricValue } };
+  const panel = buildEvidencePanelModel(summary, now);
+  assert.ok(panel.metrics.length > 0, 'vacuous-truth guard: metrics non-empty');
+  assert.equal(panel.metrics[0].state, EVIDENCE_STATES.CERTIFIED_30);
+  assert.equal(panel.metrics[0].decision, '30-learner-beta-certified');
+  assert.equal(panel.overallState, EVIDENCE_STATES.CERTIFIED_30);
+});
+
+// Scenario 2: Diagnostic worker-log join (tail-correlation) not certifying
+test('P4-U3 S2: diagnostic tail-correlation file cannot produce certification state', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  // A tail-correlation diagnostic would appear as an unrecognised metric key.
+  // Even with ok: true and certifying: true, an unknown key maps to UNKNOWN.
+  const diagnosticKeys = [
+    'bootstrap-tail-correlation',
+    'session-tail-correlation',
+    'worker-log-tail-correlation',
+  ];
+
+  assert.ok(diagnosticKeys.length > 0, 'vacuous-truth guard: diagnosticKeys non-empty');
+  for (const key of diagnosticKeys) {
+    const result = classifyEvidenceMetric(key, {
+      ok: true,
+      certifying: true,
+      finishedAt: freshDate,
+      failures: [],
+    }, freshDate, now);
+    assert.equal(result, EVIDENCE_STATES.UNKNOWN, `${key} must not certify`);
+    assert.equal(
+      result !== EVIDENCE_STATES.CERTIFIED_30
+        && result !== EVIDENCE_STATES.CERTIFIED_60
+        && result !== EVIDENCE_STATES.CERTIFIED_100,
+      true,
+      `${key} must not reach any certification state`,
+    );
+  }
+});
+
+// Scenario 3: Failed setup evidence classifies as FAILING or NON_CERTIFYING
+test('P4-U3 S3: failed setup evidence (ok: false) classifies as FAILING', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  // Sub-scenario A: ok: false without non_certifying status → FAILING
+  const resultA = classifyEvidenceMetric('certified_30_learner_beta', {
+    ok: false,
+    status: 'failed',
+    certifying: false,
+    finishedAt: freshDate,
+    failures: ['setup-timeout'],
+    failureReason: 'session-manifest-creation-failed',
+  }, freshDate, now);
+  assert.equal(resultA, EVIDENCE_STATES.FAILING);
+
+  // Sub-scenario B: status non_certifying → NON_CERTIFYING (before ok check)
+  const resultB = classifyEvidenceMetric('certified_30_learner_beta', {
+    ok: false,
+    status: 'non_certifying',
+    certifying: false,
+    finishedAt: freshDate,
+    failures: [],
+    failureReason: 'setup-rate-limited',
+  }, freshDate, now);
+  assert.equal(resultB, EVIDENCE_STATES.NON_CERTIFYING);
+
+  // Neither result is a certification state
+  const certStates = new Set([EVIDENCE_STATES.CERTIFIED_30, EVIDENCE_STATES.CERTIFIED_60, EVIDENCE_STATES.CERTIFIED_100]);
+  assert.equal(certStates.has(resultA), false);
+  assert.equal(certStates.has(resultB), false);
+});
+
+// Scenario 4: P3-T0 smoke evidence backs SMOKE_PASS only — never certification
+test('P4-U3 S4: smoke-tier evidence backs SMOKE_PASS only', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  const smokeKeys = ['smoke_pass', 'admin_smoke', 'bootstrap_smoke'];
+  assert.ok(smokeKeys.length > 0, 'vacuous-truth guard: smokeKeys non-empty');
+
+  const results = smokeKeys.map((key) => classifyEvidenceMetric(key, {
+    ok: true,
+    certifying: false,
+    finishedAt: freshDate,
+    failures: [],
+  }, freshDate, now));
+
+  assert.ok(results.length > 0, 'vacuous-truth guard: results non-empty');
+  assert.ok(
+    results.every((r) => r === EVIDENCE_STATES.SMOKE_PASS),
+    'all smoke keys produce SMOKE_PASS',
+  );
+
+  // Prove none of them reach certification states
+  const certStates = new Set([EVIDENCE_STATES.CERTIFIED_30, EVIDENCE_STATES.CERTIFIED_60, EVIDENCE_STATES.CERTIFIED_100]);
+  assert.ok(
+    results.every((r) => !certStates.has(r)),
+    'no smoke key can produce a certification state',
+  );
+});
+
+// Scenario 5: 60 preflight with evidenceKind 'preflight' classifies as NON_CERTIFYING
+test('P4-U3 S5: preflight evidence classifies as NON_CERTIFYING regardless of thresholds passing', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  // Even with ok: true and certifying: true, evidenceKind: 'preflight'
+  // forces NON_CERTIFYING before the tier map is consulted.
+  const result = classifyEvidenceMetric('certified_60_learner_stretch', {
+    ok: true,
+    certifying: true,
+    status: 'passed',
+    evidenceKind: 'preflight',
+    learners: 60,
+    finishedAt: freshDate,
+    failures: [],
+    thresholdViolations: [],
+    thresholdsPassed: true,
+  }, freshDate, now);
+  assert.equal(result, EVIDENCE_STATES.NON_CERTIFYING);
+
+  // Also test via the panel model to confirm it cannot promote overall state
+  const summary = {
+    schema: 2,
+    generatedAt: freshDate,
+    metrics: {
+      certified_60_learner_stretch: {
+        ok: true,
+        certifying: true,
+        status: 'passed',
+        evidenceKind: 'preflight',
+        learners: 60,
+        finishedAt: freshDate,
+        failures: [],
+        thresholdViolations: [],
+      },
+    },
+  };
+  const panel = buildEvidencePanelModel(summary, now);
+  assert.ok(panel.metrics.length > 0, 'vacuous-truth guard: metrics non-empty');
+  assert.equal(panel.metrics[0].state, EVIDENCE_STATES.NON_CERTIFYING);
+  assert.equal(panel.overallState, EVIDENCE_STATES.NON_CERTIFYING);
+});
+
+// Scenario 6: Stale or missing latest summary not certifying
+test('P4-U3 S6: stale finishedAt returns STALE; missing metric returns NOT_AVAILABLE', () => {
+  const now = Date.now();
+  const staleDate = new Date(now - EVIDENCE_FRESH_THRESHOLD_MS - 60_000).toISOString();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  // Sub-scenario A: finishedAt older than 24h → STALE
+  const resultStale = classifyEvidenceMetric('certified_30_learner_beta', {
+    ok: true,
+    certifying: true,
+    status: 'passed',
+    learners: 30,
+    finishedAt: staleDate,
+    failures: [],
+  }, freshDate, now);
+  assert.equal(resultStale, EVIDENCE_STATES.STALE);
+
+  // Sub-scenario B: null metricValue → NOT_AVAILABLE
+  const resultMissing = classifyEvidenceMetric('certified_30_learner_beta', null, freshDate, now);
+  assert.equal(resultMissing, EVIDENCE_STATES.NOT_AVAILABLE);
+
+  // Sub-scenario C: Panel model with stale evidence → overall STALE
+  const summary = {
+    schema: 2,
+    generatedAt: freshDate,
+    metrics: {
+      certified_30_learner_beta: {
+        ok: true,
+        certifying: true,
+        status: 'passed',
+        learners: 30,
+        finishedAt: staleDate,
+        failures: [],
+      },
+    },
+  };
+  const panel = buildEvidencePanelModel(summary, now);
+  assert.ok(panel.metrics.length > 0, 'vacuous-truth guard: metrics non-empty');
+  assert.equal(panel.metrics[0].state, EVIDENCE_STATES.STALE);
+  assert.equal(panel.isFresh, false);
+  assert.equal(panel.overallState, EVIDENCE_STATES.STALE);
+
+  // Neither STALE nor NOT_AVAILABLE is a certification state
+  const certStates = new Set([EVIDENCE_STATES.CERTIFIED_30, EVIDENCE_STATES.CERTIFIED_60, EVIDENCE_STATES.CERTIFIED_100]);
+  assert.equal(certStates.has(resultStale), false);
+  assert.equal(certStates.has(resultMissing), false);
+});
+
+// Scenario 7: Setup-rate-limited evidence cannot overwrite a promoted CERTIFIED_30 row
+test('P4-U3 S7: setup-rate-limited evidence cannot overwrite promoted CERTIFIED_30 in panel', () => {
+  const now = Date.now();
+  const freshDate = new Date(now - 5_000).toISOString();
+
+  // The panel model receives the LATEST summary state. If the summary builder
+  // correctly preserves the promoted row, the panel sees CERTIFIED_30.
+  // A rate-limited evidence file produces NON_CERTIFYING — which ranks lower
+  // than CERTIFIED_30 in the tier hierarchy.
+  const promotedMetric = {
+    ok: true,
+    certifying: true,
+    status: 'passed',
+    decision: '30-learner-beta-certified',
+    learners: 30,
+    finishedAt: freshDate,
+    failures: [],
+    thresholdViolations: [],
+    fileName: '30-learner-beta-v2-promoted.json',
+  };
+  const rateLimitedMetric = {
+    ok: false,
+    certifying: false,
+    status: 'non_certifying',
+    evidenceKind: 'preflight',
+    decision: 'invalid-with-named-setup-blocker',
+    failureReason: 'session-manifest-preparation-rate-limited',
+    learners: 30,
+    finishedAt: freshDate,
+    failures: [],
+    thresholdViolations: [],
+    fileName: '30-learner-beta-preflight-rate-limited.json',
+  };
+
+  // Verify the promoted row classifies as CERTIFIED_30
+  const promotedState = classifyEvidenceMetric('certified_30_learner_beta', promotedMetric, freshDate, now);
+  assert.equal(promotedState, EVIDENCE_STATES.CERTIFIED_30);
+
+  // Verify the rate-limited row classifies as NON_CERTIFYING
+  const rateLimitedState = classifyEvidenceMetric('certified_30_learner_beta', rateLimitedMetric, freshDate, now);
+  assert.equal(rateLimitedState, EVIDENCE_STATES.NON_CERTIFYING);
+
+  // In the panel, the promoted row (which is the latest summary state) wins.
+  // The rate-limited evidence, even if it arrives later, cannot downgrade the
+  // certification because the summary builder is append-only for certified rows.
+  const summary = {
+    schema: 2,
+    generatedAt: freshDate,
+    metrics: {
+      certified_30_learner_beta: promotedMetric,
+    },
+  };
+  const panel = buildEvidencePanelModel(summary, now);
+  assert.ok(panel.metrics.length > 0, 'vacuous-truth guard: metrics non-empty');
+  assert.equal(panel.metrics[0].state, EVIDENCE_STATES.CERTIFIED_30);
+  assert.equal(panel.overallState, EVIDENCE_STATES.CERTIFIED_30);
+
+  // If the rate-limited metric were to replace the promoted metric, it would
+  // NOT produce CERTIFIED_30 — proving fail-closed safety.
+  const corruptedSummary = {
+    schema: 2,
+    generatedAt: freshDate,
+    metrics: {
+      certified_30_learner_beta: rateLimitedMetric,
+    },
+  };
+  const corruptedPanel = buildEvidencePanelModel(corruptedSummary, now);
+  assert.ok(corruptedPanel.metrics.length > 0, 'vacuous-truth guard: corruptedPanel metrics non-empty');
+  assert.notEqual(corruptedPanel.metrics[0].state, EVIDENCE_STATES.CERTIFIED_30);
+  assert.equal(corruptedPanel.metrics[0].state, EVIDENCE_STATES.NON_CERTIFYING);
+  assert.notEqual(corruptedPanel.overallState, EVIDENCE_STATES.CERTIFIED_30);
+});

@@ -47,6 +47,9 @@ tests/journeys/*.log
 docs/export-chats/
 tests/playwright/__screenshots__/
 
+# Raw Worker tail captures — never committed; only redacted joins are tracked
+*.jsonl
+
 # Session artefacts — not source
 .claude/*.txt
 *.diff
