@@ -176,36 +176,26 @@ npm run check
 
 Result: Wrangler dry-run build, public asset assertion, and client bundle audit passed.
 
-Full `npm test` did not pass:
+Final PR CI passed after the rebase:
 
 ```sh
-npm test
+npm test + npm run check
 ```
 
-Result: exit code 1 locally and in the PR `Node Tests (PR)` check. The PR run reported 16,252 tests, 16,228 passes, and 14 failures. The observed failing tests were outside the P5 capacity files touched in this delivery:
+Result: PASS on the final PR #794 head `92508e4b` after rebasing onto the latest `origin/main`.
 
-- `tests/csp-inline-style-budget.test.js` reported that the committed inventory markdown total row is stale: expected 254, actual 245.
-- `tests/grammar-phase3-child-copy.test.js` reported two dashboard-scope failures because the rendered Grammar dashboard lacks `data-grammar-phase-root="dashboard"` and still exposes forbidden child-copy terms.
-- `tests/grammar-phase3-roster.test.js` reported one dashboard-scope failure because the rendered Grammar dashboard still exposes reserved Grammar monster names.
-- `tests/grammar-phase3-scopers.test.js` reported two dashboard-scope failures because the rendered Grammar dashboard lacks `data-grammar-phase-root="dashboard"` and the scoped HTML still includes adult-copy disclosure.
-- `tests/hero-launch-boundary.test.js` reported that Hero source still contains economy vocabulary tokens.
-- `tests/hero-no-write-boundary.test.js` reported that P0 Hero source still contains reward or economy tokens.
-- `tests/hero-p4-vocabulary-boundary.test.js` reported that economy terms still appear in Hero files outside `HERO_ECONOMY_ALLOWED_FILES`.
-- `tests/react-spelling-surface.test.js` reported that the Spelling start CTA did not forward `style.--btn-accent`.
-- `tests/subject-contract.test.js` reported that the Spelling practice dashboard renders service UI metadata.
-- `tests/ui-token-contract.test.js` reported 25 existing raw hex literals in shared UI primitives or Home tree files.
-- `tests/worker-hero-read-model.test.js` failed on missing `dailyQuest.debug.candidateCount`.
-- `tests/worker-mutation-capability-coverage.test.js` reported `POST /api/hero/command` missing a nearby `requireMutationCapability(session)` call.
+Final PR #794 status:
 
-Targeted confirmation for the Grammar dashboard and Spelling CTA failures:
+- PR state: merged.
+- Merge commit: `abd23e20ea7c13159c63f8d28f29e0753368045b`.
+- Merged at: 2026-04-30 21:29:20 UTC.
+- `Node Tests (PR)` / `npm test + npm run check`: PASS.
+- `Client Bundle Audit (PR)` / `npm run audit:client`: PASS.
+- `Punctuation Content Audit (PR)` / `npm run audit:punctuation-content`: PASS.
+- `GitGuardian Security Checks`: PASS.
+- `Playwright (PR)` mobile golden path job: skipped by path classification.
 
-```sh
-node --test tests/grammar-phase3-child-copy.test.js tests/grammar-phase3-roster.test.js tests/grammar-phase3-scopers.test.js tests/react-spelling-surface.test.js
-```
-
-Result: exit code 1, with 108 tests run, 102 passed, and 6 failed. The six failures were the two Grammar child-copy dashboard checks, one Grammar reserved-roster dashboard check, two Grammar dashboard scoper checks, and one Spelling CTA style-forwarding check.
-
-Those failures were not fixed in P5 to avoid widening the hardening diagnostic scope. They should be handled as separate inventory ratchet, Grammar scoping, Spelling UI token, UI token contract, Hero vocabulary boundary, Hero read-model, and Hero route hardening follow-up work.
+An earlier pre-rebase PR run and local full-suite run failed on unrelated non-P5 tests. That failure state was superseded by the final rebase onto `origin/main`, after which the PR CI passed and the PR was merged.
 
 ## Final decision
 
