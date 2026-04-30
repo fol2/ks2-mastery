@@ -1,0 +1,82 @@
+{
+  "ok": true,
+  "origin": "https://ks2.eugnel.uk",
+  "accountId": "demo-h3g3J1uyIA9BTA",
+  "learnerId": "learner-demo-KVokvEjuLuIS-g",
+  "attestation": {
+    "environment": "production",
+    "releaseId": "punctuation-r4-full-14-skill-structure",
+    "runtimeItemCount": 192,
+    "generatedDepth": 4,
+    "workerCommitSha": "2169acdac51848c9f0f2691b2da00f5fe5aa6c55",
+    "timestamp": "2026-04-30T22:01:04.476Z",
+    "authenticatedCoverage": false,
+    "adminHubCoverage": false
+  },
+  "punctuation": {
+    "productionObserved": {
+      "releaseId": "punctuation-r4-full-14-skill-structure",
+      "runtimeItems": 192,
+      "publishedRewardUnits": 14,
+      "generatedItemCommandPathProbe": {
+        "itemId": "gen_speech_insert_1srve21_3",
+        "mode": "insert",
+        "skillIds": [
+          "speech"
+        ],
+        "feedbackKind": "error",
+        "misconceptionTags": [
+          "speech.quote_missing"
+        ]
+      }
+    },
+    "localReleaseManifestExpectation": {
+      "fixedItems": 92,
+      "generatedItems": 100,
+      "generatedPerFamily": 4,
+      "runtimeItems": 192,
+      "publishedRewardUnits": 14
+    },
+    "smartItemId": "pa_choose_coach",
+    "smartSummaryTotal": 1,
+    "generatedIncorrectItemId": "gen_speech_insert_1srve21_3",
+    "generatedIncorrectMisconceptionTags": [
+      "speech.quote_missing"
+    ],
+    "dashAcceptance": [
+      {
+        "variant": "spaced-hyphen",
+        "itemId": "dc_insert_door_froze",
+        "mode": "insert",
+        "skillIds": [
+          "dash_clause"
+        ]
+      },
+      {
+        "variant": "en-dash",
+        "itemId": "gen_dash_clause_fix_14ggaft_1",
+        "mode": "fix",
+        "skillIds": [
+          "dash_clause"
+        ]
+      },
+      {
+        "variant": "em-dash",
+        "itemId": "dc_transfer_curtain_rose",
+        "mode": "transfer",
+        "skillIds": [
+          "dash_clause"
+        ]
+      }
+    ],
+    "oxfordCommaItemId": "gen_list_commas_combine_peklr6_1",
+    "advancedMode": "gps",
+    "advancedItemId": "sl_choose_clubs",
+    "advancedReviewItems": 1,
+    "parentHubAttempts": 30
+  },
+  "spelling": {
+    "progressTotal": 1,
+    "hasPromptToken": true
+  }
+}
