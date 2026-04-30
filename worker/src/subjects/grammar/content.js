@@ -7625,6 +7625,21 @@ function detectCueType(plainPrompt) {
   return null;
 }
 
+// P11 U3: Maps cue-pattern match to a semantic target kind used for
+// kind-aware accessibility copy (screen-reader / read-aloud phrasing).
+// Order matters: specific underline variants must precede the generic 'sentence'
+// fallback, because prompts like "underlined word in the sentence below" contain
+// both patterns but the cue target is the word, not the sentence.
+function detectTargetKind(plainPrompt) {
+  if (/\bunderlined\s+noun\s+phrase/i.test(plainPrompt)) return 'noun-phrase';
+  if (/\bunderlined\s+group/i.test(plainPrompt)) return 'group';
+  if (/\bunderlined\s+pair/i.test(plainPrompt)) return 'pair';
+  if (/\bunderlined\s+word/i.test(plainPrompt)) return 'word';
+  if (/\bin\s+bold\b/i.test(plainPrompt)) return 'word';
+  if (/\bsentence\s+below/i.test(plainPrompt)) return 'sentence';
+  return 'word';
+}
+
 function extractUnderlinedWord(stemHtml) {
   const match = stemHtml.match(/<u>([^<]+)<\/u>/);
   return match ? match[1] : null;
@@ -7764,16 +7779,19 @@ function enrichPromptCue(question) {
     ? resolveTargetSentence(question, plainPrompt)
     : (boldSentence || null);
 
+  // P11 U3: Determine the semantic kind of the cue target for accessibility copy
+  const targetKind = detectTargetKind(plainPrompt);
+
   // Build focusCue (targetOccurrence: 1 disambiguates which occurrence is the
   // target when the cue text appears multiple times in the sentence)
   if (cueType === 'underline' && targetWord) {
-    question.focusCue = { type: 'underline', targetText: targetWord, targetOccurrence: 1 };
+    question.focusCue = { type: 'underline', targetKind, targetText: targetWord, targetOccurrence: 1 };
   } else if (cueType === 'bold' && boldSentence) {
-    question.focusCue = { type: 'bold', targetText: boldSentence, targetOccurrence: 1 };
+    question.focusCue = { type: 'bold', targetKind, targetText: boldSentence, targetOccurrence: 1 };
   } else if (cueType === 'quoted-word' && targetWord) {
-    question.focusCue = { type: 'quoted-word', targetText: targetWord, targetOccurrence: 1 };
+    question.focusCue = { type: 'quoted-word', targetKind, targetText: targetWord, targetOccurrence: 1 };
   } else if (cueType === 'target-sentence' && targetSentence) {
-    question.focusCue = { type: 'target-sentence', targetText: targetSentence, targetOccurrence: 1 };
+    question.focusCue = { type: 'target-sentence', targetKind: 'sentence', targetText: targetSentence, targetOccurrence: 1 };
   }
 
   // P10 U2: Cue consistency enforcement — if cueType is 'underline' but we
@@ -7793,29 +7811,46 @@ function enrichPromptCue(question) {
   // Build promptParts
   question.promptParts = buildPromptParts(plainPrompt, cueType, targetWord, targetSentence);
 
-  // screenReaderPromptText — mentions the target word clearly
+  // P11 U3: screenReaderPromptText — kind-aware phrasing for assistive tech
   if (question.focusCue) {
     const word = question.focusCue.targetText;
+    const kind = question.focusCue.targetKind;
     if (cueType === 'underline') {
-      question.screenReaderPromptText = `${plainPrompt} Target word: ${word}`;
+      if (kind === 'noun-phrase') {
+        question.screenReaderPromptText = `${plainPrompt} The underlined noun phrase is: ${word}`;
+      } else if (kind === 'group' || kind === 'pair') {
+        question.screenReaderPromptText = `${plainPrompt} The underlined ${kind} is: ${word}`;
+      } else {
+        question.screenReaderPromptText = `${plainPrompt} Target word: ${word}`;
+      }
     } else if (cueType === 'bold') {
       question.screenReaderPromptText = `${plainPrompt} Focus: ${word}`;
     } else if (cueType === 'target-sentence') {
-      question.screenReaderPromptText = `${plainPrompt} Sentence: ${word}`;
+      question.screenReaderPromptText = `${plainPrompt} The sentence is: ${word}`;
     } else {
       question.screenReaderPromptText = `${plainPrompt} Target: ${word}`;
     }
   }
 
-  // readAloudText — full spoken form including cue
+  // P11 U3: readAloudText — kind-aware spoken form with conditional punctuation
   if (question.focusCue) {
     const word = question.focusCue.targetText;
+    const kind = question.focusCue.targetKind;
+    const needsDot = !/[.!?]$/.test(word.trim());
+    const dot = needsDot ? '.' : '';
+
     if (cueType === 'underline') {
-      question.readAloudText = `${plainPrompt} The underlined word is: ${word}.`;
+      if (kind === 'noun-phrase') {
+        question.readAloudText = `${plainPrompt} The underlined noun phrase is: ${word}${dot}`;
+      } else if (kind === 'group' || kind === 'pair') {
+        question.readAloudText = `${plainPrompt} The underlined ${kind} is: ${word}${dot}`;
+      } else {
+        question.readAloudText = `${plainPrompt} The underlined word is: ${word}${dot}`;
+      }
     } else if (cueType === 'target-sentence') {
-      question.readAloudText = `${plainPrompt} The sentence is: ${word}.`;
+      question.readAloudText = `${plainPrompt} The sentence is: ${word}${dot}`;
     } else {
-      question.readAloudText = `${plainPrompt} Focus on: ${word}.`;
+      question.readAloudText = `${plainPrompt} Focus on: ${word}${dot}`;
     }
   }
 
