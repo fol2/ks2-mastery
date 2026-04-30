@@ -8,6 +8,7 @@ import { GRAMMAR_CONTENT_RELEASE_ID } from '../worker/src/subjects/grammar/conte
 import {
   validateReleaseIdConsistency,
   validateEvidenceManifest,
+  validateInventoryReleaseIds,
 } from '../scripts/validate-grammar-qg-certification-evidence.mjs';
 import {
   validateReleaseFrontmatter,
@@ -294,5 +295,29 @@ describe('P10 Evidence Truth: report-vs-manifest release ID', () => {
     const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
     const result = validateReleaseIdConsistency(manifest, GRAMMAR_CONTENT_RELEASE_ID);
     assert.equal(result.pass, true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 8. Inventory release ID cross-check (P10-R-U9)
+// ---------------------------------------------------------------------------
+
+describe('P10 Evidence Truth: inventory release ID cross-check', () => {
+  const inventoryPath = path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory.json');
+
+  it('inventory metadata release ID matches code constant', () => {
+    assert.ok(fs.existsSync(inventoryPath), 'Render inventory must exist');
+    const result = validateInventoryReleaseIds(inventoryPath, GRAMMAR_CONTENT_RELEASE_ID);
+    const metadataMismatch = result.mismatches.find((m) => m.field === 'inventoryMetadataReleaseId');
+    assert.equal(metadataMismatch, undefined,
+      `Inventory metadata.contentReleaseId must match ${GRAMMAR_CONTENT_RELEASE_ID}`);
+  });
+
+  it('inventory items release IDs match code constant', () => {
+    assert.ok(fs.existsSync(inventoryPath), 'Render inventory must exist');
+    const result = validateInventoryReleaseIds(inventoryPath, GRAMMAR_CONTENT_RELEASE_ID);
+    const itemMismatches = result.mismatches.filter((m) => m.field.startsWith('inventoryItem['));
+    assert.equal(itemMismatches.length, 0,
+      `All sampled inventory items must have contentReleaseId === ${GRAMMAR_CONTENT_RELEASE_ID}`);
   });
 });

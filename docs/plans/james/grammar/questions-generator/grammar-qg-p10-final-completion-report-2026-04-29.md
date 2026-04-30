@@ -10,10 +10,17 @@ implementation_prs:
   - "#668"
   - "#669"
   - "#675"
+  - "#687"
+  - "#688"
+  - "#689"
+  - "#690"
+  - "#691"
+  - "#692"
+  - "#698"
 final_content_release_commit: "a28d4962"
 post_merge_fix_commits:
   - "665 (U2 target-sentence dedup hotfix)"
-final_report_commit: "pending-this-commit"
+final_report_commit: "01f6bb98"
 baseline_content_release_id: grammar-qg-p9-2026-04-29
 final_content_release_id: grammar-qg-p10-2026-04-29
 content_release_id_changed: "true"
@@ -29,7 +36,7 @@ post_deploy_smoke_evidence: not-run
 
 ## Executive Summary
 
-P10 returns the Grammar Question Generator to first principles: every question a child sees must be logically correct, visually unambiguous, correctly marked, accessible, and backed by reproducible evidence. Where P9 built certification infrastructure, P10 locks the actual question pool to production quality.
+P10 returns the Grammar Question Generator to first principles: every question a child sees must be logically correct, visually unambiguous, correctly marked, accessible, and backed by reproducible evidence. Where P9 built certification infrastructure, P10 locks the actual question pool to production quality. A seven-PR remediation pass (PRs #687–#692, #698) closed minor test coverage gaps, added inventory cross-check validation, and resolved all evidence-truth placeholders.
 
 **Key numbers:**
 - 6 PRs across 11 implementation units (U0–U9, U11)
