@@ -164,20 +164,43 @@ describe('Hero pA2 Certification Validator', () => {
   });
 
   describe('helper: checkContainsDecision', () => {
-    it('finds PROCEED TO A3', () => {
+    it('finds PROCEED TO A3 with Decision: prefix', () => {
       assert.equal(checkContainsDecision('Decision: PROCEED TO A3'), true);
     });
 
-    it('finds HOLD AND HARDEN', () => {
-      assert.equal(checkContainsDecision('Decision: HOLD AND HARDEN'), true);
+    it('finds HOLD AND HARDEN with Recommendation: prefix', () => {
+      assert.equal(checkContainsDecision('**Recommendation:** HOLD AND HARDEN'), true);
     });
 
-    it('finds ROLLBACK', () => {
+    it('finds ROLLBACK with Decision: prefix', () => {
       assert.equal(checkContainsDecision('Decision: ROLLBACK'), true);
     });
 
-    it('returns false when no decision keyword', () => {
+    it('returns false when no decision keyword at all', () => {
       assert.equal(checkContainsDecision('No decision here.'), false);
+    });
+
+    it('rejects placeholder text inside square brackets', () => {
+      const placeholder = '**Recommendation:** [PROCEED TO A3 / HOLD AND HARDEN / ROLLBACK]';
+      assert.equal(checkContainsDecision(placeholder), false);
+    });
+
+    it('returns false when decision keyword in body text without label prefix', () => {
+      const bodyOnly = 'We should PROCEED TO A3 based on evidence.';
+      assert.equal(checkContainsDecision(bodyOnly), false);
+    });
+
+    it('finds decision on a multi-line document with label', () => {
+      const doc = [
+        '# Recommendation',
+        '',
+        'Some preamble text.',
+        '',
+        '**Decision:** PROCEED TO A3',
+        '',
+        'Rationale: all rings pass.',
+      ].join('\n');
+      assert.equal(checkContainsDecision(doc), true);
     });
   });
 

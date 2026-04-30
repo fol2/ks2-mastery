@@ -45,10 +45,17 @@ function countObservations(content) {
 }
 
 /**
- * Check that the file contains one of the valid decision keywords.
+ * Check that the file contains one of the valid decision keywords on a labelled
+ * line (Decision: / Recommendation:) and NOT inside bracket-enclosed placeholder
+ * text like [PROCEED TO A3 / HOLD AND HARDEN / ROLLBACK].
  */
 function checkContainsDecision(content) {
-  return /PROCEED TO A3|HOLD AND HARDEN|ROLLBACK/i.test(content);
+  const lines = content.split('\n');
+  const labelPattern = /(?:Decision|Recommendation):\s*\*?\*?\s*(PROCEED TO A3|HOLD AND HARDEN|ROLLBACK)/i;
+  return lines.some(line => {
+    if (/\[.*(?:PROCEED|HOLD|ROLLBACK).*\]/.test(line)) return false;
+    return labelPattern.test(line);
+  });
 }
 
 // ---------------------------------------------------------------------------
