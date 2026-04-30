@@ -21,7 +21,7 @@ final_content_release_commit: 7b39a78e
 post_merge_fix_commits:
   - "#739"
   - "#740"
-final_report_commit: pending-this-commit
+final_report_commit: f4e5ccd4
 ---
 
 # Grammar QG P11 — Final Completion Report
@@ -348,3 +348,9 @@ Two rounds of 10 independent reviewers validated the delivery against the origin
 | #739 | R1 fix | Expected-release flag and U7 schema coverage | 4 |
 | #740 | R2 fix | Assertion matching constant value not name | 0 (fix only) |
 | **Total** | **U1–U10 + review fixes** | | **~950** |
+
+---
+
+## 13. Addendum (P12 Context)
+
+P11 fixed learner-facing prompt-cue and read-aloud code. P12 locked production evidence and validated the release package.
