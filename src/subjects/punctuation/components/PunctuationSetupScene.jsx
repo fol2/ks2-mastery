@@ -53,6 +53,7 @@ import { Button } from '../../../platform/ui/Button.jsx';
 import { ProgressMeter } from '../../../platform/ui/ProgressMeter.jsx';
 import { StatCard } from '../../../platform/ui/StatCard.jsx';
 import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
+import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
 // one-shot stored-prefs migration. Local to this scene because the
@@ -306,6 +307,7 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
   if (heroContrast.contrast.shell === 'light') setupClasses.push('hero-dark');
 
   return (
+    <PracticeStage subjectId="punctuation" scene="setup" backdrop="punctuation-map">
     <section
       className="card border-top punctuation-surface punctuation-setup-scene punctuation-mission-dashboard"
       data-punctuation-phase="setup"
@@ -446,5 +448,6 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
         </section>
       </div>
     </section>
+    </PracticeStage>
   );
 }

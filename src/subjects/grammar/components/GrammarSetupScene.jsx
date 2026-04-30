@@ -23,6 +23,7 @@ import {
 import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
+import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
 
 /* Aligned Grammar setup scene.
  *
@@ -213,6 +214,7 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
   const openConceptBank = () => actions.dispatch('grammar-open-concept-bank');
 
   return (
+    <PracticeStage subjectId="grammar" scene="setup" backdrop="library">
     <section
       className="grammar-dashboard"
       aria-labelledby="grammar-dashboard-title"
@@ -394,5 +396,6 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
         />
       </div>
     </section>
+    </PracticeStage>
   );
 }

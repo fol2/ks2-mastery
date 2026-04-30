@@ -15,6 +15,7 @@ import {
 } from '../session-ui.js';
 import { translateGrammarSessionError } from '../module.js';
 import { SessionHUD } from '../../../platform/ui/SessionHUD.jsx';
+import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
 
 function optionLabel(option) {
   if (Array.isArray(option)) return String(option[1] ?? option[0] ?? '');
@@ -621,6 +622,7 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
     : '';
 
   return (
+    <PracticeStage subjectId="grammar" scene="session" backdrop="library">
     <section
       className="grammar-session"
       aria-labelledby="grammar-session-title"
@@ -819,5 +821,6 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
         </form>
       </div>
     </section>
+    </PracticeStage>
   );
 }
