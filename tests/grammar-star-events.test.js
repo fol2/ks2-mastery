@@ -104,6 +104,7 @@ test('U6 star event: first Star on Bracehart fires caught only', () => {
   assert.equal(events.length, 1, 'exactly one event');
   assert.equal(events[0].kind, 'caught', 'first Star emits caught');
   assert.equal(events[0].monsterId, 'bracehart');
+  assert.equal(events[0].next.stage, 0, 'first Star renders the egg asset stage');
   assert.equal(events[0].next.displayState, 'egg-found');
   assert.equal(events.some((e) => e.kind === 'evolve'), false, 'no evolve on first Star');
 });
@@ -123,6 +124,7 @@ test('U6 star event: 14->15 Stars fires evolve for Hatch', () => {
 
   assert.equal(events.length, 1, 'one threshold event');
   assert.equal(events[0].kind, 'evolve', 'Hatch threshold emits evolve');
+  assert.equal(events[0].next.stage, 1, 'Hatch renders asset stage 1');
   assert.equal(events[0].next.displayState, 'hatch');
 });
 
@@ -141,6 +143,7 @@ test('U6 star event: 34->35 Stars fires evolve for Growing', () => {
 
   assert.equal(events.length, 1, 'one threshold event');
   assert.equal(events[0].kind, 'evolve', 'Growing threshold emits evolve');
+  assert.equal(events[0].next.stage, 2, 'Growing renders asset stage 2');
   assert.equal(events[0].next.displayState, 'evolve');
 });
 
@@ -159,6 +162,7 @@ test('U6 star event: 64->65 Stars fires evolve for Nearly Mega', () => {
 
   assert.equal(events.length, 1, 'one threshold event');
   assert.equal(events[0].kind, 'evolve', 'Nearly Mega threshold emits evolve');
+  assert.equal(events[0].next.stage, 3, 'Nearly Mega renders asset stage 3');
   assert.equal(events[0].next.displayState, 'strong');
 });
 
@@ -177,6 +181,7 @@ test('U6 star event: 99->100 Stars fires mega', () => {
 
   assert.equal(events.length, 1, 'one threshold event');
   assert.equal(events[0].kind, 'mega', 'Mega threshold emits mega');
+  assert.equal(events[0].next.stage, 4, 'Mega renders asset stage 4');
   assert.equal(events[0].next.displayState, 'mega');
 });
 
@@ -853,8 +858,8 @@ test('U5 Egg: caught:true persists in progressForGrammarMonster after star-evide
   assert.ok(progress.stars >= 1, 'progress.stars >= 1');
   assert.equal(progress.starHighWater, 1, 'progress.starHighWater is 1');
 
-  // stage should be at least 1 (Egg found)
-  assert.ok(progress.stage >= 1, 'stage >= 1 (Egg found)');
+  assert.equal(progress.displayState, 'egg-found', 'displayState marks the found egg');
+  assert.equal(progress.stage, 0, 'Egg found renders asset stage 0');
 });
 
 // ---------------------------------------------------------------------------

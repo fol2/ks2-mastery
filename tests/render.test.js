@@ -555,6 +555,70 @@ test('codex entries use grammar displayState for first-Star Egg Found', async ()
   assert.match(entry.img, /bracehart-b2-0\.640\.webp/);
 });
 
+test('codex entries map grammar display stages to monster asset stages', async () => {
+  const { buildCodexEntries } = await import('../src/surfaces/home/data.js');
+  const entries = buildCodexEntries([
+    {
+      subjectId: 'grammar',
+      monster: MONSTERS.bracehart,
+      progress: {
+        caught: true,
+        mastered: 2,
+        stage: 1,
+        displayStars: 15,
+        displayStage: 2,
+        displayState: 'hatch',
+        branch: 'b2',
+      },
+    },
+    {
+      subjectId: 'grammar',
+      monster: MONSTERS.couronnail,
+      progress: {
+        caught: true,
+        mastered: 3,
+        stage: 2,
+        displayStars: 35,
+        displayStage: 3,
+        displayState: 'evolve',
+        branch: 'b1',
+      },
+    },
+    {
+      subjectId: 'grammar',
+      monster: MONSTERS.concordium,
+      progress: {
+        caught: true,
+        mastered: 4,
+        stage: 3,
+        displayStars: 65,
+        displayStage: 4,
+        displayState: 'strong',
+        branch: 'b1',
+      },
+    },
+  ]);
+
+  const bracehart = entries.find((entry) => entry.id === 'bracehart');
+  const couronnail = entries.find((entry) => entry.id === 'couronnail');
+  const concordium = entries.find((entry) => entry.id === 'concordium');
+
+  assert.equal(bracehart.stage, 1);
+  assert.equal(bracehart.name, 'Bracehart');
+  assert.equal(bracehart.stageLabel, 'Hatched');
+  assert.match(bracehart.img, /bracehart-b2-1\.640\.webp/);
+
+  assert.equal(couronnail.stage, 2);
+  assert.equal(couronnail.name, 'Regalcurl');
+  assert.equal(couronnail.stageLabel, 'Growing');
+  assert.match(couronnail.img, /couronnail-b1-2\.640\.webp/);
+
+  assert.equal(concordium.stage, 3);
+  assert.equal(concordium.name, 'Crowncord');
+  assert.equal(concordium.stageLabel, 'Nearly Mega');
+  assert.match(concordium.img, /concordium-b1-3\.640\.webp/);
+});
+
 test('home meadow keeps grammar first-Star Egg Found as an egg', async () => {
   const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
   const [egg] = buildMeadowMonsters([
@@ -576,6 +640,29 @@ test('home meadow keeps grammar first-Star Egg Found as an egg', async () => {
   assert.equal(egg.id, 'bracehart-egg');
   assert.equal(egg.stage, 0);
   assert.equal(egg.path, 'none');
+});
+
+test('home meadow maps grammar hatch displayState to asset stage 1', async () => {
+  const { buildMeadowMonsters } = await import('../src/surfaces/home/data.js');
+  const [monster] = buildMeadowMonsters([
+    {
+      subjectId: 'grammar',
+      monster: MONSTERS.bracehart,
+      progress: {
+        caught: true,
+        mastered: 2,
+        stage: 1,
+        displayStars: 15,
+        displayStage: 2,
+        displayState: 'hatch',
+        branch: 'b1',
+      },
+    },
+  ]);
+
+  assert.equal(monster.id, 'bracehart-caught');
+  assert.equal(monster.stage, 1);
+  assert.notEqual(monster.path, 'none');
 });
 
 test('codex subject groups arrive in spelling → punctuation → grammar order with totals', async () => {
