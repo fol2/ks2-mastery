@@ -7727,15 +7727,16 @@ function enrichPromptCue(question) {
   }
   const targetSentence = boldSentence || null;
 
-  // Build focusCue
+  // Build focusCue (targetOccurrence: 1 disambiguates which occurrence is the
+  // target when the cue text appears multiple times in the sentence)
   if (cueType === 'underline' && targetWord) {
-    question.focusCue = { type: 'underline', text: targetWord };
+    question.focusCue = { type: 'underline', text: targetWord, targetOccurrence: 1 };
   } else if (cueType === 'bold' && boldSentence) {
-    question.focusCue = { type: 'bold', text: boldSentence };
+    question.focusCue = { type: 'bold', text: boldSentence, targetOccurrence: 1 };
   } else if (cueType === 'quoted-word' && targetWord) {
-    question.focusCue = { type: 'quoted-word', text: targetWord };
+    question.focusCue = { type: 'quoted-word', text: targetWord, targetOccurrence: 1 };
   } else if (cueType === 'target-sentence' && targetSentence) {
-    question.focusCue = { type: 'target-sentence', text: targetSentence };
+    question.focusCue = { type: 'target-sentence', text: targetSentence, targetOccurrence: 1 };
   }
 
   // P10 U2: Cue consistency enforcement — if cueType is 'underline' but we
