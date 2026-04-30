@@ -14,7 +14,7 @@
 //
 // Key constraint: NEVER imports from worker/src/ — only from shared/hero/.
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,6 +22,7 @@ import {
   validateMetricPrivacyRecursive,
   stripPrivacyFields,
 } from '../shared/hero/metrics-privacy.js';
+import { classifyConfidence } from '../shared/hero/confidence.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_OUTPUT = resolve(__dirname, '../reports/hero/hero-pA3-telemetry-report.json');
@@ -70,14 +71,9 @@ export function parseArgs(argv) {
   return args;
 }
 
-// ── Confidence classification ───────────────────────────────────────
-
-export function classifyConfidence(count) {
-  if (count >= 100) return 'high';
-  if (count >= 30) return 'medium';
-  if (count >= 10) return 'low';
-  return 'insufficient';
-}
+// ── Confidence classification (imported from shared/hero/confidence.js) ──
+// Re-export for backward-compatible test imports
+export { classifyConfidence };
 
 // ── Privacy validation ──────────────────────────────────────────────
 
@@ -617,11 +613,13 @@ function writeOutput(report, args) {
     mkdirSync(outputDir, { recursive: true });
   }
 
+  const tmpPath = args.output + '.tmp';
   if (args.format === 'markdown') {
-    writeFileSync(args.output, formatMarkdown(report), 'utf8');
+    writeFileSync(tmpPath, formatMarkdown(report), 'utf8');
   } else {
-    writeFileSync(args.output, JSON.stringify(report, null, 2), 'utf8');
+    writeFileSync(tmpPath, JSON.stringify(report, null, 2), 'utf8');
   }
+  renameSync(tmpPath, args.output);
 }
 
 const _scriptUrl = fileURLToPath(import.meta.url);
