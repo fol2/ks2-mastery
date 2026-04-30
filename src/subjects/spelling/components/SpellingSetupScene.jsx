@@ -6,6 +6,7 @@ import { useSetupHeroContrast } from './useSetupHeroContrast.js';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
+import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
 import { SubjectThemeScope } from '../../../platform/ui/SubjectThemeScope.jsx';
 import {
   BOSS_DEFAULT_ROUND_LENGTH,
@@ -507,6 +508,19 @@ export function SpellingSetupScene({
             <span className="ss-bank-link-arrow" aria-hidden="true">→</span>
           </button>
         )}
+      />
+
+      <SubjectCompanionPanel
+        subjectId="spelling"
+        learnerName={learner.name}
+        monsters={(Array.isArray(codex) ? codex : []).filter((e) => e?.progress?.caught).slice(0, 4).map((e) => ({ id: e.monster.id, name: e.monster.name }))}
+        stats={[
+          { label: 'Secure', value: String(stats.secure || 0) },
+          { label: 'Due', value: String(stats.due || 0), tone: 'warn' },
+          { label: 'Accuracy', value: stats.accuracy == null ? '—' : `${stats.accuracy}%` },
+        ]}
+        nextFocus={stats.trouble > 0 ? `${stats.trouble} trouble word${stats.trouble === 1 ? '' : 's'} need attention` : ''}
+        emptyState="Catch your first monster to see companions here."
       />
     </SubjectThemeScope>
   );

@@ -52,6 +52,7 @@ import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { ProgressMeter } from '../../../platform/ui/ProgressMeter.jsx';
 import { StatCard } from '../../../platform/ui/StatCard.jsx';
+import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
 
 // The 6 Phase 2 cluster mode ids + `guided` — the set that triggers the
 // one-shot stored-prefs migration. Local to this scene because the
@@ -309,6 +310,18 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
       className="card border-top punctuation-surface punctuation-setup-scene punctuation-mission-dashboard"
       data-punctuation-phase="setup"
     >
+      <SubjectCompanionPanel
+        subjectId="punctuation"
+        learnerName={learnerName}
+        monsters={dashboard.activeMonsters.map((m) => ({ id: m.id, name: m.name }))}
+        stats={[
+          { label: 'Due today', value: String(dueCount) },
+          { label: 'Wobbly', value: String(weakCount), tone: weakCount > 0 ? 'warn' : undefined },
+          { label: 'Grand Stars', value: String(grandStars) },
+        ]}
+        nextFocus={weakCount > 0 ? `${weakCount} wobbly spot${weakCount === 1 ? '' : 's'} to fix` : ''}
+        emptyState="Find your first punctuation egg to see companions here."
+      />
       <div className="setup-grid">
         <section
           className={setupClasses.join(' ')}
