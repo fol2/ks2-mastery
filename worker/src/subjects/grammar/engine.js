@@ -28,6 +28,7 @@ import {
   buildGrammarMiniPack,
   buildGrammarPracticeQueue,
 } from './selection.js';
+import { isTemplateBlocked } from './certification-status.js';
 import {
   GRAMMAR_TRANSFER_HISTORY_PER_PROMPT,
   GRAMMAR_TRANSFER_MAX_PROMPTS,
@@ -623,6 +624,7 @@ function weightedTemplatePick(state, { mode, focusConceptId, seed, nowTs = Date.
 function takeDueRetry(state, { mode, focusConceptId, nowTs }) {
   const index = state.retryQueue.findIndex((entry) => {
     if (Number(entry.dueAt) > nowTs) return false;
+    if (isTemplateBlocked(entry.templateId)) return false;
     const template = grammarTemplateById(entry.templateId);
     return templateFits(template, { mode, focusConceptId });
   });
@@ -642,7 +644,7 @@ function itemFromTemplate(template, seed) {
   return serialiseGrammarQuestion(question);
 }
 
-function nextItem(state, { mode, focusConceptId, seed, templateId = '', nowTs = Date.now() } = {}) {
+function nextItem(state, { mode, focusConceptId, seed, templateId = '', nowTs = Date.now(), session = null } = {}) {
   if (templateId) {
     const template = grammarTemplateById(templateId);
     if (!template) {
@@ -651,6 +653,13 @@ function nextItem(state, { mode, focusConceptId, seed, templateId = '', nowTs = 
         subjectId: SUBJECT_ID,
         templateId,
       });
+    }
+    // Blocklist gate: blocked templates are only allowed through in debug/review modes.
+    if (isTemplateBlocked(templateId)) {
+      const allowDebugBypass = Boolean(session?.debugMode) || Boolean(session?.reviewMode);
+      if (!allowDebugBypass) {
+        return { blocked: true, templateId, reason: 'template-not-certified' };
+      }
     }
     if (!templateFits(template, { mode, focusConceptId })) {
       throw new BadRequestError('Grammar template is not available for this Grammar mode or focus concept.', {
@@ -1094,7 +1103,16 @@ function startSession(state, payload, nowTs, learnerId) {
     seed: baseSeed,
     nowTs,
     templateId,
+    session: payload,
   });
+  if (firstItem && firstItem.blocked) {
+    throw new BadRequestError('Grammar template is not certified for learner-facing use.', {
+      code: 'grammar_template_blocked',
+      subjectId: SUBJECT_ID,
+      templateId: firstItem.templateId,
+      reason: firstItem.reason,
+    });
+  }
   state.phase = 'session';
   state.awaitingAdvance = false;
   state.feedback = null;
@@ -1516,6 +1534,9 @@ function startSimilarProblem(state, nowTs) {
   const session = assertRepairableSession(state);
   const repair = ensureRepairState(session);
   const baseItem = session.currentItem;
+  // Blocklist gate: if the base template is now blocked, no similar problem
+  // can be generated from it.
+  if (isTemplateBlocked(baseItem.templateId)) return null;
   const nextSimilarIndex = repair.similarProblems + 1;
   const seed = (Number(baseItem.seed) + nextSimilarIndex * 2654435761) >>> 0;
   const item = nextItem(state, {
@@ -1524,6 +1545,7 @@ function startSimilarProblem(state, nowTs) {
     seed,
     templateId: baseItem.templateId,
     nowTs,
+    session,
   });
   repair.similarProblems = nextSimilarIndex;
   repair.retryingCurrent = false;
@@ -2231,7 +2253,13 @@ export function createServerGrammarEngine({ now = Date.now } = {}) {
       } else if (command === 'show-worked-solution') {
         events = showWorkedSolution(state);
       } else if (command === 'start-similar-problem') {
-        events = startSimilarProblem(state, nowTs);
+        const similarResult = startSimilarProblem(state, nowTs);
+        if (similarResult === null) {
+          events = [];
+          changed = false;
+        } else {
+          events = similarResult;
+        }
       } else if (command === 'request-ai-enrichment') {
         aiEnrichment = requestAiEnrichment(state, payload, nowTs);
         const persistentAiEnrichment = normalisePersistentAiEnrichment(aiEnrichment);
