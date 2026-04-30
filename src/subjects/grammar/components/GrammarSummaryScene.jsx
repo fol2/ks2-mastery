@@ -1,4 +1,5 @@
 import { Button } from '../../../platform/ui/Button.jsx';
+import { SessionSummaryFrame } from '../../../platform/ui/SessionSummaryFrame.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import { GrammarMiniTestReview } from './GrammarMiniTestReview.jsx';
 import { grammarSummaryCards } from './grammar-view-model.js';
@@ -188,6 +189,60 @@ function firstMissedMiniTestConceptId(summary) {
   return '';
 }
 
+// U6: Thin adapter mapping existing grammar summary view-model to
+// SessionSummaryFrame props. Preserves existing next-action routes.
+// Display-only — no mastery mutation.
+function GrammarSummaryFrameAdapter({ summary, cards, actions }) {
+  if (!summary) return null;
+  const cardMap = {};
+  for (const card of (cards || [])) {
+    if (card && typeof card.id === 'string') cardMap[card.id] = card;
+  }
+  const answered = Number(cardMap.answered?.value ?? 0);
+  const correct = Number(cardMap.correct?.value ?? 0);
+  const trouble = Number(cardMap.trouble?.value ?? 0);
+  const cleanRound = answered > 0 && correct === answered && trouble === 0;
+  const outcome = cleanRound ? 'secure' : (correct > 0 ? 'improving' : 'needs-practice');
+  const title = cleanRound
+    ? 'Clean round — every answer landed.'
+    : `${correct} of ${answered} correct.`;
+  const highlights = [];
+  for (const card of (cards || [])) {
+    if (card && card.id !== 'monster-progress' && card.label && card.value !== undefined) {
+      highlights.push(`${card.label}: ${card.value}`);
+    }
+  }
+  const misconceptions = [];
+  if (trouble > 0 && cardMap.trouble?.detail) {
+    misconceptions.push(String(cardMap.trouble.detail));
+  }
+  const nextPrimaryAction = {
+    label: 'Start another round',
+    dataAction: 'grammar-start-again',
+    onClick: () => actions.dispatch('grammar-start-again'),
+  };
+  const secondaryActions = [
+    {
+      label: 'Open Grammar Bank',
+      dataAction: 'grammar-open-concept-bank',
+      variant: 'secondary',
+      onClick: () => actions.dispatch('grammar-open-concept-bank'),
+    },
+  ];
+  return (
+    <SessionSummaryFrame
+      subjectId="grammar"
+      outcome={outcome}
+      title={title}
+      highlights={highlights}
+      misconceptions={misconceptions}
+      progressDelta={[]}
+      nextPrimaryAction={nextPrimaryAction}
+      secondaryActions={secondaryActions}
+    />
+  );
+}
+
 export function GrammarSummaryScene({ grammar, rewardState, actions, learner, runtimeReadOnly }) {
   const summary = grammar.summary || {};
   const pending = Boolean(grammar.pendingCommand);
@@ -257,6 +312,8 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
           runtimeReadOnly={runtimeReadOnly}
           pending={pending}
         />
+        {/* U6: Shared summary engine adoption — display-only. */}
+        <GrammarSummaryFrameAdapter summary={summary} cards={cards} actions={actions} />
       </div>
     );
   }
@@ -299,6 +356,8 @@ export function GrammarSummaryScene({ grammar, rewardState, actions, learner, ru
         <PrimaryActions buttons={buttons} disabled={disabled} />
         <SecondaryActions onGrownUp={handleGrownUp} disabled={disabled} />
       </section>
+      {/* U6: Shared summary engine adoption — display-only. */}
+      <GrammarSummaryFrameAdapter summary={summary} cards={cards} actions={actions} />
     </div>
   );
 }

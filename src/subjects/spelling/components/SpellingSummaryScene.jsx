@@ -1,4 +1,5 @@
 import { Button } from '../../../platform/ui/Button.jsx';
+import { SessionSummaryFrame } from '../../../platform/ui/SessionSummaryFrame.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { AnimatedPromptCard, PathProgress, Ribbon } from './SpellingCommon.jsx';
@@ -144,6 +145,55 @@ function SummaryPatternQuestMissList({ mistakes = [] }) {
         ))}
       </div>
     </div>
+  );
+}
+
+// U6: Thin adapter mapping existing spelling summary view-model to
+// SessionSummaryFrame props. Preserves existing feedback copy and
+// next-action route dispatch. Display-only — no mastery mutation.
+function SpellingSummaryFrameAdapter({ summary, actions }) {
+  if (!summary) return null;
+  const toneGood = !summary.mistakes || !summary.mistakes.length;
+  const outcome = toneGood ? 'secure' : 'needs-practice';
+  const title = summaryHeadline(summary);
+  const highlights = [];
+  if (summary.cards) {
+    for (const card of summary.cards) {
+      if (card && card.label && card.value !== undefined) {
+        highlights.push(`${card.label}: ${card.value}`);
+      }
+    }
+  }
+  const misconceptions = [];
+  if (summary.mistakes && summary.mistakes.length) {
+    for (const word of summary.mistakes) {
+      if (word && word.word) misconceptions.push(word.word);
+    }
+  }
+  const nextPrimaryAction = {
+    label: 'Back to dashboard',
+    dataAction: 'spelling-back',
+    onClick: (event) => renderAction(actions, event, 'spelling-back'),
+  };
+  const secondaryActions = [
+    {
+      label: 'Open word bank',
+      dataAction: 'spelling-open-word-bank',
+      variant: 'ghost',
+      onClick: (event) => renderAction(actions, event, 'spelling-open-word-bank'),
+    },
+  ];
+  return (
+    <SessionSummaryFrame
+      subjectId="spelling"
+      outcome={outcome}
+      title={title}
+      highlights={highlights}
+      misconceptions={misconceptions}
+      progressDelta={[]}
+      nextPrimaryAction={nextPrimaryAction}
+      secondaryActions={secondaryActions}
+    />
   );
 }
 
@@ -379,6 +429,9 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
             </button>
           </div>
         </AnimatedPromptCard>
+        {/* U6: Shared summary engine adoption — SessionSummaryFrame renders
+            alongside the existing visual shell. Display-only, no mutation. */}
+        <SpellingSummaryFrameAdapter summary={summary} actions={actions} />
       </div>
     </div>
   );
