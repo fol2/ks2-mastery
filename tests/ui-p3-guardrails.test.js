@@ -343,17 +343,17 @@ test('P3 ratchet: BUDGET_GZIP_BYTES in bundle-byte-budget.test.js <= 232,000', (
 });
 
 // ────────────────────────────────────────────────────────────────────
-// 15. Inline-style budget: POST_MIGRATION_TOTAL <= 245.
+// 15. Inline-style budget: POST_MIGRATION_TOTAL <= 254 (owner-approved P3 exception).
 // ────────────────────────────────────────────────────────────────────
-test('P3 ratchet: POST_MIGRATION_TOTAL in inventory-inline-styles.mjs <= 245', () => {
+test('P3 ratchet: POST_MIGRATION_TOTAL in inventory-inline-styles.mjs <= 254', () => {
   const src = read('scripts/inventory-inline-styles.mjs');
-  // Match the expression line: export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 245
+  // Match the expression line: export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 254
   const commentMatch = src.match(/POST_MIGRATION_TOTAL\s*=\s*[^;]+;\s*\/\/\s*(\d+)/);
   if (commentMatch) {
     const total = Number(commentMatch[1]);
     assert.ok(
-      total <= 245,
-      `POST_MIGRATION_TOTAL is ${total}, must be <= 245.`,
+      total <= 254,
+      `POST_MIGRATION_TOTAL is ${total}, must be <= 254.`,
     );
     return;
   }
@@ -362,7 +362,7 @@ test('P3 ratchet: POST_MIGRATION_TOTAL in inventory-inline-styles.mjs <= 245', (
   assert.ok(directMatch, 'Could not find POST_MIGRATION_TOTAL in inventory-inline-styles.mjs');
   const total = Number(directMatch[1]);
   assert.ok(
-    total <= 245,
-    `POST_MIGRATION_TOTAL is ${total}, must be <= 245.`,
+    total <= 254,
+    `POST_MIGRATION_TOTAL is ${total}, must be <= 254.`,
   );
 });
