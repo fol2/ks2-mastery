@@ -369,7 +369,7 @@ function ActiveItemBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
       className="card border-top punctuation-surface punctuation-session-scene"
       data-punctuation-session-scene
       data-punctuation-phase="active-item"
-      style={{ borderTopColor: '#B8873F' }}
+      style={{ borderTopColor: 'var(--subject-accent, #B8873F)' }}
     >
       {/* U5: platform HeroBackdrop replaces the legacy static <img> inside
           `.punctuation-strip`. The outer `.punctuation-session-hero`
@@ -522,7 +522,11 @@ function FeedbackBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
   const session = ui.session || {};
   const isDisabled = composeIsDisabled(ui);
   const help = punctuationSessionHelpVisibility(session, 'feedback');
-  const borderColor = feedback.kind === 'success' ? '#2E8479' : '#B8873F';
+  // P3 U1: accent tokens sourced from CSS variables instead of raw hex.
+  // Success uses `--good-strong` (semantic green); default uses subject accent.
+  const borderColor = feedback.kind === 'success'
+    ? 'var(--good-strong, #2E8479)'
+    : 'var(--subject-accent, #B8873F)';
 
   // adv-232-004: the minimal-feedback branch gates on the authoritative
   // `!help.showFeedback` signal from `punctuationSessionHelpVisibility`,

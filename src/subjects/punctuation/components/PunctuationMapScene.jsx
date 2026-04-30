@@ -351,7 +351,7 @@ export function PunctuationMapScene({ ui, actions }) {
       className="card border-top punctuation-surface punctuation-map-scene"
       data-punctuation-map
       data-punctuation-phase="map"
-      style={{ borderTopColor: '#B8873F' }}
+      style={{ borderTopColor: 'var(--subject-accent, #B8873F)' }}
     >
       {/* Back button at the top, mirroring Spelling word-bank-topbar and
           Grammar grammar-bank-topbar (design-lens MEDIUM). A top-of-scene

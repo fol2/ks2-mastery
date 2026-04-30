@@ -13396,3 +13396,125 @@ html { scroll-behavior: smooth; }
     gap: 8px 14px;
   }
 }
+
+/* =============================================================================
+ * Subject Theme Token System (UI Refactor P3 U1)
+ *
+ * `.subject-theme[data-subject]` blocks declare per-subject visual identity
+ * through CSS custom properties. Each subject maps four accent tokens which
+ * cascade into the cross-surface aliases that shared primitives (Button,
+ * ProgressMeter, Card) consume.
+ *
+ * Token mapping:
+ *   --subject-accent       → primary brand colour for the subject
+ *   --subject-accent-ink   → darker legible-on-white variant
+ *   --subject-accent-soft  → tinted background fill
+ *   --subject-accent-border→ border tint (30% accent mixed with --line)
+ *
+ * Remapped aliases (low specificity via :where):
+ *   --btn-accent, --card-accent, --progress-accent, --accent
+ *
+ * Dark-mode overrides follow each light block via the
+ * `:root[data-theme="dark"]` and `@media (prefers-color-scheme: dark)` pair
+ * so both explicit and system-preference dark modes are covered.
+ * ============================================================================= */
+
+/* --- Spelling --- */
+.subject-theme[data-subject="spelling"] {
+  --subject-accent: #3E6FA8;
+  --subject-accent-ink: #274D79;
+  --subject-accent-soft: #DCE6F3;
+  --subject-accent-border: color-mix(in oklab, #3E6FA8 30%, var(--line));
+}
+:root[data-theme="dark"] .subject-theme[data-subject="spelling"],
+:root:not([data-theme="light"]) .subject-theme[data-subject="spelling"] {
+  --subject-accent: #6E9ED6;
+  --subject-accent-ink: #A7C2E4;
+  --subject-accent-soft: color-mix(in oklab, #3E6FA8 26%, var(--bg));
+  --subject-accent-border: color-mix(in oklab, #6E9ED6 30%, var(--line));
+}
+
+/* --- Grammar --- */
+.subject-theme[data-subject="grammar"] {
+  --subject-accent: #7e5bb6;
+  --subject-accent-ink: #5c4490;
+  --subject-accent-soft: #ece1f6;
+  --subject-accent-border: color-mix(in oklab, #7e5bb6 30%, var(--line));
+}
+:root[data-theme="dark"] .subject-theme[data-subject="grammar"],
+:root:not([data-theme="light"]) .subject-theme[data-subject="grammar"] {
+  --subject-accent: #b89be5;
+  --subject-accent-ink: #d6c4f2;
+  --subject-accent-soft: color-mix(in oklab, #7e5bb6 26%, var(--bg));
+  --subject-accent-border: color-mix(in oklab, #b89be5 30%, var(--line));
+}
+
+/* --- Punctuation --- */
+.subject-theme[data-subject="punctuation"] {
+  --subject-accent: #B8873F;
+  --subject-accent-ink: #8C6730;
+  --subject-accent-soft: #F5E8D0;
+  --subject-accent-border: color-mix(in oklab, #B8873F 30%, var(--line));
+}
+:root[data-theme="dark"] .subject-theme[data-subject="punctuation"],
+:root:not([data-theme="light"]) .subject-theme[data-subject="punctuation"] {
+  --subject-accent: #d6a86a;
+  --subject-accent-ink: #e8c896;
+  --subject-accent-soft: color-mix(in oklab, #B8873F 26%, var(--bg));
+  --subject-accent-border: color-mix(in oklab, #d6a86a 30%, var(--line));
+}
+
+/* --- Reading (placeholder) --- */
+.subject-theme[data-subject="reading"] {
+  --subject-accent: #4B7A4A;
+  --subject-accent-ink: #366836;
+  --subject-accent-soft: #E2F0E2;
+  --subject-accent-border: color-mix(in oklab, #4B7A4A 30%, var(--line));
+}
+:root[data-theme="dark"] .subject-theme[data-subject="reading"],
+:root:not([data-theme="light"]) .subject-theme[data-subject="reading"] {
+  --subject-accent: #7CB87A;
+  --subject-accent-ink: #9CC59A;
+  --subject-accent-soft: color-mix(in oklab, #4B7A4A 26%, var(--bg));
+  --subject-accent-border: color-mix(in oklab, #7CB87A 30%, var(--line));
+}
+
+/* --- Reasoning (placeholder) --- */
+.subject-theme[data-subject="reasoning"] {
+  --subject-accent: #8A5A9D;
+  --subject-accent-ink: #6B3F80;
+  --subject-accent-soft: #F0E4F5;
+  --subject-accent-border: color-mix(in oklab, #8A5A9D 30%, var(--line));
+}
+:root[data-theme="dark"] .subject-theme[data-subject="reasoning"],
+:root:not([data-theme="light"]) .subject-theme[data-subject="reasoning"] {
+  --subject-accent: #B88FCC;
+  --subject-accent-ink: #C4A5D4;
+  --subject-accent-soft: color-mix(in oklab, #8A5A9D 26%, var(--bg));
+  --subject-accent-border: color-mix(in oklab, #B88FCC 30%, var(--line));
+}
+
+/* --- Arithmetic (placeholder) --- */
+.subject-theme[data-subject="arithmetic"] {
+  --subject-accent: #C06B3E;
+  --subject-accent-ink: #964F2B;
+  --subject-accent-soft: #F8E4D6;
+  --subject-accent-border: color-mix(in oklab, #C06B3E 30%, var(--line));
+}
+:root[data-theme="dark"] .subject-theme[data-subject="arithmetic"],
+:root:not([data-theme="light"]) .subject-theme[data-subject="arithmetic"] {
+  --subject-accent: #E8975C;
+  --subject-accent-ink: #F2B756;
+  --subject-accent-soft: color-mix(in oklab, #C06B3E 26%, var(--bg));
+  --subject-accent-border: color-mix(in oklab, #E8975C 30%, var(--line));
+}
+
+/* Subject-theme accent remap — low specificity via :where so callers can
+ * override locally. Carries the four cross-surface accent tokens onto the
+ * subject-theme wrapper. */
+:where(.subject-theme[data-subject]) {
+  --accent: var(--subject-accent, var(--brand));
+  --btn-accent: var(--subject-accent, var(--brand));
+  --card-accent: var(--subject-accent, var(--brand));
+  --progress-accent: var(--subject-accent, var(--brand));
+}

@@ -6,6 +6,7 @@ import { useSetupHeroContrast } from './useSetupHeroContrast.js';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
+import { SubjectThemeScope } from '../../../platform/ui/SubjectThemeScope.jsx';
 import {
   BOSS_DEFAULT_ROUND_LENGTH,
   SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
@@ -406,7 +407,7 @@ export function SpellingSetupScene({
   const showWorkshopLayer = !showVaultLayer && !isHydrationChecking;
 
   return (
-    <div className="setup-grid" style={{ gridColumn: '1/-1' }}>
+    <SubjectThemeScope subjectId="spelling" className="setup-grid" style={{ gridColumn: '1/-1' }}>
       <SoftLockoutBanner
         state={softLockoutState}
         onAcknowledge={softLockoutAcknowledge}
@@ -510,7 +511,7 @@ export function SpellingSetupScene({
           </button>
         )}
       />
-    </div>
+    </SubjectThemeScope>
   );
 }
 
@@ -603,18 +604,12 @@ function LegacySetupContent({
         </div>
       </div>
       <div className="setup-begin-row">
-        {/* P2 U7: third-consumer falsifier — Spelling primary CTA migrates
-         * to the shared Button primitive. The inline `--btn-accent` style
-         * (Bellstorm-gold accent threading) is preserved via Button's
-         * safelisted style rest-prop because Spelling does not yet have a
-         * `:where(.spelling-...) ` accent remap; that token unification is
-         * deferred to a future subject-token sweep. The `<ArrowRightIcon />`
-         * slot moves to Button's `endIcon` prop so DOM order
-         * (label -> trailing chevron) stays byte-identical for screen-reader
-         * announcement. */}
+        {/* P3 U1: `--btn-accent` now cascades via the SubjectThemeScope
+         * wrapper (`.subject-theme[data-subject="spelling"]` in app.css).
+         * The inline style override is removed — the CSS remap provides
+         * the same `#3E6FA8` value as the former prop-threaded accent. */}
         <Button
           size="xl"
-          style={{ '--btn-accent': accent }}
           dataAction="spelling-start"
           disabled={startDisabled}
           onClick={(event) => renderAction(actions, event, 'spelling-start')}

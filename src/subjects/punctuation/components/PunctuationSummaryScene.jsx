@@ -683,10 +683,9 @@ export function PunctuationSummaryScene({
       className="card border-top punctuation-surface"
       data-punctuation-summary
       // U4 follower (design-lens MEDIUM 5): borderTopColor now matches the
-      // canonical Punctuation accent `#B8873F` (Bellstorm gold) rather than
-      // the stray `#2E8479` teal. Aligns with `PunctuationPracticeSurface`
-      // and the module's `accent` field.
-      style={{ borderTopColor: '#B8873F' }}
+      // canonical Punctuation accent (Bellstorm gold). P3 U1: sourced from
+      // CSS variable rather than raw hex.
+      style={{ borderTopColor: 'var(--subject-accent, #B8873F)' }}
     >
       {/* U6: platform HeroBackdrop replaces the legacy static <img> inside
           `.punctuation-strip`. Same pattern as U5's Session-scene swap — the
