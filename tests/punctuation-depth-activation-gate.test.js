@@ -43,6 +43,10 @@ function makePassingOptions(overrides = {}) {
     expectedRuntimeCount: FIXED_ITEM_COUNT + FAMILY_COUNT * 6,
     fixedItemCount: FIXED_ITEM_COUNT,
     familyCount: FAMILY_COUNT,
+    preservationOraclePass: true,
+    negativeVectorsPass: true,
+    transferMeaningfulnessPass: true,
+    candidateDecisionsPopulated: true,
     ...overrides,
   };
 }
@@ -262,8 +266,8 @@ test('output lists exact blockers by item/cluster/family ID', () => {
 
 // ─── Evidence constant coverage ─────────────────────────────────────────────
 
-test('DEPTH_ACTIVATION_EVIDENCE contains exactly 9 items', () => {
-  assert.equal(DEPTH_ACTIVATION_EVIDENCE.length, 9);
+test('DEPTH_ACTIVATION_EVIDENCE contains exactly 13 items', () => {
+  assert.equal(DEPTH_ACTIVATION_EVIDENCE.length, 13);
 });
 
 test('all evidence items are checked in a passing gate result', () => {
