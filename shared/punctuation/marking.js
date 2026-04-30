@@ -792,7 +792,7 @@ function markTransfer(item, answer) {
       return {
         correct: false,
         expected: item.model || '',
-        note: 'Keep the original words — only change the punctuation.',
+        note: 'You changed the sentence — only add or fix the punctuation.',
         misconceptionTags: ['content.words_added_or_changed'],
         facets: [facet('content_preservation', false)],
       };
@@ -936,11 +936,13 @@ function markTransfer(item, answer) {
   if (validator.type === 'speechWithWords') {
     const requiredTerminal = validator.requiredTerminal || '?';
     const reportingPosition = item.rubric?.reportingPosition || undefined;
+    const reportingClause = validator.reportingClause || item.rubric?.reportingClause || undefined;
     const rubric = evaluateSpeechRubric(text, {
       type: 'speech',
       spokenWords: validator.words,
       requiredTerminal,
       ...(reportingPosition ? { reportingPosition } : {}),
+      ...(reportingClause ? { reportingClause } : {}),
     });
     const posAllowsAfter = reportingPosition === 'any' || reportingPosition === 'after';
     const looksReportingAfter = posAllowsAfter && /^["'“”‘’]/.test(text);
@@ -949,10 +951,22 @@ function markTransfer(item, answer) {
       ? singleSpeechSentenceOk(text, sentenceTerminal)
       : transferSentenceOk(item, text, sentenceTerminal);
     const correct = rubric.correct && sentenceOk;
+    // Determine feedback note: distinguish reporting-clause-words failure
+    let note;
+    if (rubric.correct) {
+      note = 'The spoken words are punctuated as a question.';
+    } else {
+      const clauseWordsFacet = rubric.facets.find((f) => f.id === 'reporting_clause_words');
+      if (clauseWordsFacet && !clauseWordsFacet.ok) {
+        note = 'Keep the reporting clause from the question.';
+      } else {
+        note = 'Include inverted commas around the spoken words and keep the question mark with the speech.';
+      }
+    }
     return {
       correct,
       expected: item.model || '',
-      note: rubric.correct ? 'The spoken words are punctuated as a question.' : 'Include inverted commas around the spoken words and keep the question mark with the speech.',
+      note,
       misconceptionTags: correct ? [] : [...new Set([
         ...(rubric.correct ? [] : rubric.misconceptionTags),
         ...(sentenceOk ? [] : ['transfer.extra_sentence']),
@@ -1272,7 +1286,7 @@ function markCombine(item, answer) {
       return {
         correct: false,
         expected: item.model || '',
-        note: 'Keep the original words — only change the punctuation.',
+        note: 'You changed the sentence — only add or fix the punctuation.',
         misconceptionTags: ['content.words_added_or_changed'],
         facets: [facet('content_preservation', false)],
       };

@@ -246,6 +246,17 @@ function evaluateProductionGate(data, productionItemIds) {
     }
   }
 
+  // P8-U6: reject auto-generated identical rationales (requires 2+ items)
+  const rationales = data.itemDecisions
+    .map((d) => d.rationale)
+    .filter((r) => typeof r === 'string' && r.length > 0);
+  if (rationales.length > 1 && rationales.length === data.itemDecisions.length) {
+    const allSame = rationales.every((r) => r === rationales[0]);
+    if (allSame) {
+      blockers.push({ itemId: '*', reason: 'auto-generated identical rationales detected' });
+    }
+  }
+
   return {
     pass: blockers.length === 0,
     blockers,

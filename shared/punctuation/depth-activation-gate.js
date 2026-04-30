@@ -32,6 +32,10 @@ export const DEPTH_ACTIVATION_EVIDENCE = Object.freeze([
   'runtime-count-valid',
   'release-id-change',
   'star-evidence-scoped',
+  'preservation-oracle-pass',
+  'negative-vectors-pass',
+  'transfer-meaningfulness-pass',
+  'candidate-decisions-populated',
 ]);
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -55,6 +59,10 @@ const EXPECTED_DEPTH_6_RELEASE_ID = 'punctuation-r5-qg-depth-6';
  * @param {number} options.expectedRuntimeCount - Expected total items at target depth
  * @param {number} options.fixedItemCount - Number of fixed (non-generated) items
  * @param {number} options.familyCount - Number of published generator families
+ * @param {boolean} options.preservationOraclePass - Whether preservation oracle tests pass
+ * @param {boolean} options.negativeVectorsPass - Whether negative vector tests pass
+ * @param {boolean} options.transferMeaningfulnessPass - Whether transfer meaningfulness tests pass
+ * @param {boolean} options.candidateDecisionsPopulated - Whether all depth-6 candidate items are reviewed
  * @returns {{ pass: boolean, outcome: string, blockers: Array, evidence: Array }}
  */
 export function evaluateDepthActivationGate(options) {
@@ -70,6 +78,10 @@ export function evaluateDepthActivationGate(options) {
     expectedRuntimeCount,
     fixedItemCount,
     familyCount,
+    preservationOraclePass,
+    negativeVectorsPass,
+    transferMeaningfulnessPass,
+    candidateDecisionsPopulated,
   } = options;
 
   // Depth-8 is NEVER learner-facing — reject immediately
@@ -203,6 +215,46 @@ export function evaluateDepthActivationGate(options) {
 
   // 9. star-evidence-scoped — structural guarantee (always true by design)
   evidence.push({ id: 'star-evidence-scoped', pass: true });
+
+  // 10. preservation-oracle-pass (P8-U9)
+  const preservationPass = preservationOraclePass === true;
+  evidence.push({ id: 'preservation-oracle-pass', pass: preservationPass });
+  if (!preservationPass) {
+    blockers.push({
+      evidence: 'preservation-oracle-pass',
+      reason: 'Preservation oracle tests are not passing (U1 must be green)',
+    });
+  }
+
+  // 11. negative-vectors-pass (P8-U9)
+  const negVectorsPass = negativeVectorsPass === true;
+  evidence.push({ id: 'negative-vectors-pass', pass: negVectorsPass });
+  if (!negVectorsPass) {
+    blockers.push({
+      evidence: 'negative-vectors-pass',
+      reason: 'Negative vector tests are not passing (U4 must be green)',
+    });
+  }
+
+  // 12. transfer-meaningfulness-pass (P8-U9)
+  const transferPass = transferMeaningfulnessPass === true;
+  evidence.push({ id: 'transfer-meaningfulness-pass', pass: transferPass });
+  if (!transferPass) {
+    blockers.push({
+      evidence: 'transfer-meaningfulness-pass',
+      reason: 'Transfer meaningfulness tests are not passing (U3 must be green)',
+    });
+  }
+
+  // 13. candidate-decisions-populated (P8-U9)
+  const candidatesPopulated = candidateDecisionsPopulated === true;
+  evidence.push({ id: 'candidate-decisions-populated', pass: candidatesPopulated });
+  if (!candidatesPopulated) {
+    blockers.push({
+      evidence: 'candidate-decisions-populated',
+      reason: 'Not all depth-6 candidate items have been reviewed',
+    });
+  }
 
   // ─── Outcome determination ──────────────────────────────────────────────────
 
