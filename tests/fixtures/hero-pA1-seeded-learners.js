@@ -8,6 +8,7 @@
 
 import { HERO_POOL_ROSTER_VERSION } from '../../shared/hero/hero-pool.js';
 import { HERO_ECONOMY_VERSION } from '../../shared/hero/economy.js';
+import { deriveDateKey } from '../../shared/hero/seed.js';
 
 // ── Subject read-model fixtures ─────────────────────────────────────
 
@@ -61,7 +62,10 @@ export function lockedPlaceholders() {
 // ── Hero progress state fixtures ─────────────────────────────────────
 
 const NOW = Date.now();
-const DATE_KEY = '2026-04-29';
+// Derived from NOW so the fixture tracks today's London date — keeps the
+// flag-ladder D2 reconciliation in sync with the read-model's
+// progressDateMatch check (which compares against deriveDateKey(now)).
+const DATE_KEY = deriveDateKey(NOW);
 
 /**
  * Learner who has completed today's quest (all tasks completed, daily complete).
