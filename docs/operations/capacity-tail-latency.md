@@ -79,7 +79,7 @@ This locks P2 to evidence-capture repair before any D1, Worker CPU, payload, lau
 
 ## P3 Invocation Telemetry Gate
 
-P3 is a telemetry-gate phase, not a performance mitigation phase. The implementation branch adds parser fixtures, capture-window warnings, raw-log guardrails, and operator documentation. It does not run production load tests and does not create certifying P3 evidence by itself.
+P3 is a telemetry-gate phase, not a performance mitigation phase. The initial implementation branch added parser fixtures, capture-window warnings, raw-log guardrails, and operator documentation. The later P3 completion work used that tooling to run the strict production evidence sequence recorded below. Tooling artefacts and diagnostic joins still do not create certifying P3 evidence by themselves.
 
 The canonical P3 capture path is the JSONL Cloudflare Workers Logs/Tail invocation shape documented in `docs/operations/capacity-cpu-d1-evidence.md` and locked by `tests/fixtures/capacity-worker-logs/p3-invocation-export.jsonl`.
 

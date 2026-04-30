@@ -13,6 +13,10 @@ p3_decision: strict-30-certified-candidate
 public_capacity_status: small-pilot-provisional
 certification_status: candidate-pending-separate-status-pr
 recommended_next_phase: phase-4a-capacity-status-update-and-60-learner-diagnostic
+implementation_pr: https://github.com/fol2/ks2-mastery/pull/723
+implementation_merge_commit: 3af2b44beaf3b89e476b1eb837569e30dc1717fb
+implementation_merged_at: 2026-04-30T03:38:52Z
+post_merge_review_status: go
 ---
 
 # System Hardening Optimisation P3 Completion Report
@@ -239,6 +243,31 @@ The full test run emitted existing warning noise from known test surfaces, inclu
 
 The new P3 committed artefacts were also scanned for common privacy hazards. No raw Worker request identifiers, bearer tokens, session cookies, SQL text, or obvious table-name leakage were found in the new P3 evidence set.
 
+## Post-Merge SDLC Closure
+
+PR #723, `feat(capacity): complete P3 strict telemetry gate`, was merged to `main` on 2026-04-30 at merge commit `3af2b44beaf3b89e476b1eb837569e30dc1717fb`.
+
+The final post-merge independent review round returned GO from all three reviewers:
+
+| Reviewer lane | Verdict | Notes |
+| --- | --- | --- |
+| Contract and gap review | GO | Confirmed the original P3 contract is closed, the report does not overclaim public/Admin promotion, and the terminal decision remains `strict-30-certified-candidate`. |
+| QA and security review | GO | Confirmed P3 production-derived evidence and latest summaries do not contain committed secrets, cookies, tokens, raw Worker request identifiers, SQL/table names, learner/account identifiers, or request/response bodies. |
+| Release hygiene review | GO | Confirmed PR #723 is merged, `origin/main` contains merge commit `3af2b44beaf3b89e476b1eb837569e30dc1717fb`, the remote branch was deleted, and no unresolved PR reviews or review threads remained. |
+
+Remote checks before merge were green or intentionally skipped:
+
+| Check | Result |
+| --- | --- |
+| `npm test + npm run check` | Passed |
+| `npm run audit:client` | Passed |
+| `npm run audit:punctuation-content` | Passed |
+| Path classification jobs | Passed |
+| GitGuardian Security Checks | Passed |
+| Chromium + mobile-390 golden paths | Skipped by path classifier |
+
+After merge, the Workers build for `ks2-mastery` also completed successfully. The remote feature branch `codex/sys-hardening-p3-gap-fixes` was deleted.
+
 ## Residual Risks and Non-Claims
 
 The following gaps remain by design:
@@ -278,4 +307,4 @@ The crucial ordering is status governance first, then larger capacity diagnostic
 
 P3 fixed the original gap. The system now has repeated strict 30-learner production evidence with machine-joinable Cloudflare invocation CPU/wall telemetry and complete sampled statement-log coverage for retained top-tail bootstrap samples.
 
-The branch should land as a P3 completion and evidence-lock update. The public capacity status should move only through the next reviewed capacity-status PR.
+The P3 completion and evidence-lock update has landed on `main`. The public capacity status should move only through the next reviewed capacity-status PR.
