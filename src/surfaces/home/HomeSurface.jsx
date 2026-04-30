@@ -6,6 +6,7 @@ import { HeroQuestCard } from './HeroQuestCard.jsx';
 import { HeroCampPanel } from './HeroCampPanel.jsx';
 import { IconArrowRight } from './icons.jsx';
 import { Button } from '../../platform/ui/Button.jsx';
+import { HomeHeroScene } from '../../platform/ui/HomeHeroScene.jsx';
 import {
   buildMeadowMonsters,
   buildSubjectCards,
@@ -145,24 +146,38 @@ export function HomeSurface({ model, actions, shellClassName = 'app-shell' }) {
         </div>
       </div>
 
-      <div className="home-section-head">
-        <h2 className="section-title">Your subjects</h2>
-        {model.permissions?.canOpenParentHub && (
-          <button
-            type="button"
-            className="home-section-link"
-            onClick={actions.openParentHub}
-          >
-            Parent hub →
-          </button>
-        )}
-      </div>
+      <HomeHeroScene
+        learner={model.learner}
+        readySubjects={subjectCards}
+        todayFocus={recommendation ? `Today's best: ${recommendation.subjectName}` : undefined}
+        creatureHighlights={meadowMonsters.slice(0, 3).map((m) => m.name).filter(Boolean)}
+        primaryAction={{
+          label: ctaLabel,
+          dataAction: 'open-subject',
+          onClick: () => actions.openSubject(ctaSubjectId),
+        }}
+        secondaryActions={[{ label: 'Open codex', dataAction: 'open-codex', onClick: actions.openCodex }]}
+        heroQuest={hero}
+      >
+        <div className="home-section-head">
+          <h2 className="section-title">Your subjects</h2>
+          {model.permissions?.canOpenParentHub && (
+            <button
+              type="button"
+              className="home-section-link"
+              onClick={actions.openParentHub}
+            >
+              Parent hub →
+            </button>
+          )}
+        </div>
 
-      <div className="subject-grid">
-        {subjectCards.map((subject) => (
-          <SubjectCard key={subject.id} subject={subject} onOpen={actions.openSubject} />
-        ))}
-      </div>
+        <div className="subject-grid">
+          {subjectCards.map((subject) => (
+            <SubjectCard key={subject.id} subject={subject} onOpen={actions.openSubject} />
+          ))}
+        </div>
+      </HomeHeroScene>
     </div>
   );
 }
