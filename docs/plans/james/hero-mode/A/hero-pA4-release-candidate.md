@@ -38,12 +38,12 @@ The following deliverables constitute the pA4 release candidate:
 | # | Deliverable | Location |
 |---|-------------|----------|
 | 1 | External cohort resolver (HERO_EXTERNAL_ACCOUNTS) | `shared/hero/account-override.js` |
-| 2 | Unified route integration with overrideStatus | `src/hero/routes/` |
+| 2 | Unified route integration with overrideStatus | `worker/src/hero/routes.js` |
 | 3 | 13 stop condition guards | `shared/hero/stop-conditions.js` |
 | 4 | 9 warning condition detectors | `shared/hero/warning-conditions.js` |
-| 5 | Metrics infrastructure (18 launch + 11 product + 10 safety) | `shared/hero/metrics/` |
-| 6 | Product signal analysis with reward farming detection | `shared/hero/product-metrics.js` |
-| 7 | Multi-day cohort simulation (8 accounts, 7 days) | `scripts/hero-pA4-cohort-simulation.mjs` |
+| 5 | Metrics infrastructure (18 launch + 11 product + 10 safety) | `shared/hero/product-signals.js` |
+| 6 | Product signal analysis with reward farming detection | `shared/hero/product-signals.js` |
+| 7 | Multi-day cohort simulation (8 accounts, 7 days) | `scripts/hero-pA4-external-cohort-smoke.mjs` |
 | 8 | Browser smoke validation script | `scripts/hero-pA4-external-cohort-smoke.mjs` |
 | 9 | Parent/adult explainer | `docs/plans/james/hero-mode/A/hero-pA4-parent-explainer.md` |
 | 10 | Support triage pack | `docs/plans/james/hero-mode/A/hero-pA4-support-pack.md` |

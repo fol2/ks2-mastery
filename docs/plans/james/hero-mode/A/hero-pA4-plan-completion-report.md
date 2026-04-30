@@ -15,7 +15,7 @@ Hero Mode pA4 productionisation infrastructure is code-complete. The delivery im
 Key metrics:
 - 14 implementation units, all merged
 - 7 PRs: #743, #744, #745, #746, #747, #748, #749, #750
-- 503 new tests passing
+- pA4 focused local suite: 503 tests, 503 pass, 0 fail
 - 0 regression in existing test suite
 - 10/10 contract deliverables created
 - 13 stop condition guards automated
@@ -128,7 +128,7 @@ Key metrics:
 
 4. **Minimal runtime footprint**: Only `worker/src/app.js` and `shared/hero/account-override.js` were modified. All other delivery is additive scripts, tests, and documentation.
 
-5. **503 tests in 635ms**: Node.js built-in test runner keeps the full pA4 suite fast enough for CI feedback loops.
+5. **pA4 focused local suite: 503 tests, 503 pass, 0 fail** in 635ms: Node.js built-in test runner keeps the full pA4 suite fast enough for CI feedback loops.
 
 ---
 
