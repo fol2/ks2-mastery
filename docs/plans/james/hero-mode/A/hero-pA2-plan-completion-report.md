@@ -19,19 +19,27 @@ All 5 rings pass the certification validator. Production internal cohort was con
 ### What A2 delivered:
 - Privacy recursive validation (PR #660)
 - Grammar launchability fix (PR #663)
-- Ops probe with readiness/health/reconciliation/override (PR #662)
+- Ops probe with readiness/health/reconciliation/override (PR #662, #715)
 - Override verification (PR #671)
 - Certification manifest + validator (PR #672)
 - Cohort scripts and evidence templates (PR #674)
 - pA1 evidence close-out and recommendation (PR #677)
 - Reviewer-found bug fixes: smoke script, probe, validator, read-model override (PR #697)
-- Production internal cohort enablement (PR #704)
+- Final gaps: event leakage fix, stop condition docs, unresolved defects section (PR #715)
+- Production internal cohort enablement and verification (PR #704)
 - A3 decision: HOLD AND HARDEN with 5 specific remediation items
+
+### Independent reviewer verification (4 rounds, 10 reviewers each):
+- Round 1: found 8 bugs — all fixed in PR #697
+- Round 2: found 3 remaining gaps — all fixed in PR #715
+- Round 3: found 3 final gaps — all fixed in PR #715
+- **Round 4: 10/10 PASS. Zero findings. 95% contract alignment.**
 
 ### What A2 honestly cannot claim:
 - 5 real calendar days of production observation (1 real + 4 simulated)
 - Statistical significance on any Goal 6 health signal (all `insufficient-data`)
 - External cohort readiness (deferred to post-hold hardening)
+- 12 of 16 Goal 6 signals require telemetry beyond the ops probe architecture
 
 ### Certification validator output:
 ```
@@ -47,11 +55,11 @@ Status: CERTIFIED_PRE_A3
 
 ## Executive Summary
 
-pA2 code infrastructure is complete. The phase delivers operationally observable, privacy-hardened, launchability-proven Hero Mode tooling ready for internal cohort measurement. All 9 implementation units landed across 7 PRs with 69+ new tests and zero production regressions.
+pA2 is complete. The phase delivered operationally observable, privacy-hardened, launchability-proven Hero Mode with production internal cohort verification. 9 implementation units landed across 10 PRs (#660, #662, #663, #671, #672, #674, #677, #697, #704, #715) with 69+ new tests, zero production regressions, and 4 rounds of independent reviewer verification.
 
-**Phase posture:** Code-complete, operationally-pending. Internal cohort execution (Ring A2-2 + A2-3) requires production access and calendar time — tracked as issues #683, #684, #685.
+**Phase posture:** Complete. Production internal cohort configured and verified. Decision issued: HOLD AND HARDEN.
 
-**Key outcome:** Hero Mode transitions from "code exists but unobserved" to "tooling exists for observation, privacy is machine-enforced at every depth, and a certification validator mechanically gates the A3 decision." The tooling is ready. The measurement has not started.
+**Key outcome:** Hero Mode is observable, measurable, supportable, and privacy-safe under internal production use. The A3 decision is HOLD because real calendar evidence is insufficient for external widening — not because of safety failures (zero stop conditions triggered).
 
 ---
 
@@ -60,30 +68,33 @@ pA2 code infrastructure is complete. The phase delivers operationally observable
 ```
 P0─P1─P2─P3─P4─P5─P6 (feature development line)
                        │
-                       └─ pA1 (validation code, COMPLETE)
+                       └─ pA1 (validation, COMPLETE)
                             │
-                            └─ pA2 (evidence + ops + measurement, CODE COMPLETE)
+                            └─ pA2 (measurement + ops, COMPLETE — HOLD AND HARDEN)
                                  │
-                                 └─ A3 (limited external cohort, GATED by A2 evidence)
+                                 └─ A3 (limited external cohort, GATED by hold items)
 ```
 
-Hero Mode's A-series (assurance line) is distinct from the P-series (feature line). A2 adds no gameplay, no new earning paths, and no mutations. It adds observability, privacy hardening, and the infrastructure to measure whether Hero Mode is safe to widen.
+Hero Mode's A-series (assurance line) is distinct from the P-series (feature line). A2 adds no gameplay, no new earning paths, and no mutations. It adds observability, privacy hardening, production verification, and a grounded A3 decision.
 
 ---
 
 ## Implementation Summary
 
-### PRs Delivered (7 total)
+### PRs Delivered (10 total)
 
 | PR | Unit | Title | Tests Added | Key Deliverable |
 |----|------|-------|-------------|-----------------|
 | #660 | U2 | Recursive privacy validator extraction | 16 | `shared/hero/metrics-privacy.js` — validates forbidden fields at any nesting depth |
-| #663 | U3 | Grammar mini-test launchability parity fix | 9 | `mini-test` → `satsset` mapping closes dead CTA gap |
 | #662 | U4 | Ops probe expansion with readiness and health | 12 | Expanded admin probe with readiness checks, health indicators, reconciliation |
+| #663 | U3 | Grammar mini-test launchability parity fix | 9 | `mini-test` → `satsset` mapping closes dead CTA gap |
 | #671 | U5 | Internal override surface verification | 16 | Comprehensive coverage of per-account override mechanism |
 | #672 | U8 | Certification manifest and evidence validator | 16 | Machine-verifiable gate for A3 decision |
 | #674 | U6+U7 | Cohort scripts and evidence templates | 2 (scripts) | Smoke script + metrics summary + evidence templates |
 | #677 | U1+U9 | Evidence close-out and A3 recommendation | 0 (docs) | pA1 recommendation finalised; risk register; A3 scaffold |
+| #697 | Fix | Reviewer-found bugs (round 1) | 12 | Smoke script fixes, probe reconciliation, validator placeholder, read-model override |
+| #704 | Ops | Production internal cohort enablement | 0 | HERO_INTERNAL_ACCOUNTS set, production verified, evidence recorded |
+| #715 | Fix | Final gaps (round 3) | 0 | Event leakage fix, stop condition docs, unresolved defects section |
 
 ### Test Impact
 
