@@ -30,6 +30,20 @@ The machine-verifiable P10 gates pass under Node `v22.16.0` / npm `10.9.2`. The 
 | U6 live production smoke | Not run | Manifest records `liveProductionSmoke.status: not_run`; verifier blocks post-deploy certification. |
 | U7 depth-6 scope | Preserved blocked | `PRODUCTION_DEPTH` remains 4; depth-6 candidate delta remains blocked. |
 
+## AI simulated acceptance
+
+James requested a simulated human-acceptance pass after the first machine-gate delivery. That review has been recorded as:
+
+```text
+reports/punctuation/punctuation-qg-p10-ai-simulated-acceptance.json
+sha256: cfbe2bc3da100a4d37b80258741ee1a95e5bfec8537835e04f099525c6337f0c
+decision: ACCEPTED_AS_AI_SIMULATION
+certificationAuthority: false
+mustNotBeUsedAsHumanAcceptance: true
+```
+
+This is useful second-pass review evidence, but it deliberately does not satisfy the P10 human acceptance requirement. The release status therefore remains `BLOCKED_PENDING_HUMAN_ACCEPTANCE`.
+
 ## Verification evidence
 
 Canonical P10 verifier:
@@ -91,6 +105,8 @@ This is outside the Punctuation P10 marking/verifier change surface.
 Source-proven: the P10 preservation lock, lexical-replacement oracle, verifier, manifest validator, reviewer count checks, depth-4 lock, and depth-6 block are all present in the working tree and locally exercised under Node 22.
 
 Local-run-proven: the P10 verifier and focused Punctuation gates pass locally. The archived verifier log is recorded with an exact SHA-256 digest.
+
+AI-simulated accepted: proven as a non-certifying review artefact. It is explicitly barred from satisfying human acceptance.
 
 Human-accepted: not proven. The current fixture explicitly records `human_acceptance.status: not_started`.
 

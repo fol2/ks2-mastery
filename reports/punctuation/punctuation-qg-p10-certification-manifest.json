@@ -30,7 +30,7 @@
         "shared/punctuation/marking.js": "fdf4a562bc33393f9d09a4e8dc7bc658f3cb10f03fb19ebbdd8547e725011ab0",
         "tests/punctuation-closed-lexical-preservation-p10.test.js": "4392941b4955c2951a59f18a167c92e7b826c3d13b296d47bebbab2ed4c930ce",
         "scripts/verify-punctuation-qg-p10.mjs": "37171879343dddde38269cc8713b01b5a6b7a3f4d6eba07d8600434ae5791693",
-        "scripts/validate-punctuation-qg-certification-evidence.mjs": "781dae65eb08fdd03daeb6b3b0310824ad5188f03eedb8b6c8bc5e2f7c15a414",
+        "scripts/validate-punctuation-qg-certification-evidence.mjs": "c21abf53f16446b234e0863669d511c447436dd5da4f23cdf6f8873ca4bed054",
         "scripts/verify-punctuation-qg-p9.mjs": "564c9eac5bcc76fd5b929b6ef63f6a668a6f6b1a1b3c5cac57070e26e73d7781",
         "tests/fixtures/punctuation-reviewer-decisions.json": "fe68d0f535f914436312b131a4a78cb3df72592489059ac3e0d9dfc6c5dbcec9",
         "tests/fixtures/punctuation-negative-vectors.json": "ef42eb0b0864fb9658af04453716f0a0fc1bd33674160c11b9b24576378d2b74"
@@ -59,6 +59,13 @@
       "method": "multi-perspective teacher/engineer/parent simulation",
       "itemDecisions": 192,
       "reviewRequiredClusterDecisions": 47
+    },
+    "aiSimulatedAcceptance": {
+      "status": "complete_non_certifying",
+      "path": "reports/punctuation/punctuation-qg-p10-ai-simulated-acceptance.json",
+      "sha256": "cfbe2bc3da100a4d37b80258741ee1a95e5bfec8537835e04f099525c6337f0c",
+      "certificationAuthority": false,
+      "mustNotBeUsedAsHumanAcceptance": true
     },
     "humanAcceptance": {
       "status": "not_started",

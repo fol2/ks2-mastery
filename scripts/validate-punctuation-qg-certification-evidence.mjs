@@ -80,6 +80,14 @@ function gitObjectExists(root, commitSha, relativePath) {
   }
 }
 
+function gitBlobSha256(root, commitSha, relativePath) {
+  const content = execFileSync('git', ['show', `${commitSha}:${relativePath}`], {
+    cwd: root,
+    encoding: 'buffer',
+  });
+  return createHash('sha256').update(content).digest('hex');
+}
+
 function validateSource(errors, warnings, manifest, root, certifying) {
   if (!requireObject(errors, manifest.source, 'source')) return;
   const { source } = manifest;
@@ -124,6 +132,16 @@ function validateSource(errors, warnings, manifest, root, certifying) {
       }
       if (git.commitContainsAllVerifiedPaths === true && !gitObjectExists(root, git.commitSha, relativePath)) {
         addError(errors, `source.git.commitSha does not contain verified path: ${relativePath}`);
+      }
+      if (git.commitContainsAllVerifiedPaths === true && /^[0-9a-f]{64}$/.test(String(expectedHash || ''))) {
+        try {
+          const commitHash = gitBlobSha256(root, git.commitSha, relativePath);
+          if (commitHash !== expectedHash) {
+            addError(errors, `source.git.commitSha hash mismatch for ${relativePath}: manifest=${expectedHash}, commit=${commitHash}`);
+          }
+        } catch (error) {
+          addError(errors, `failed to hash source.git.commitSha path ${relativePath}: ${error.message}`);
+        }
       }
     }
   }
@@ -178,13 +196,34 @@ function validateLocalVerification(errors, warnings, manifest, root) {
   }
 }
 
-function validateReview(errors, manifest, certifying) {
+function validateReview(errors, manifest, certifying, root) {
   if (!requireObject(errors, manifest.review, 'review')) return;
   const { review } = manifest;
   if (!requireObject(errors, review.aiPreReview, 'review.aiPreReview')) return;
   requireExact(errors, review.aiPreReview.status, 'complete', 'review.aiPreReview.status');
   requireExact(errors, review.aiPreReview.itemDecisions, 192, 'review.aiPreReview.itemDecisions');
   requireExact(errors, review.aiPreReview.reviewRequiredClusterDecisions, 47, 'review.aiPreReview.reviewRequiredClusterDecisions');
+
+  if (review.aiSimulatedAcceptance !== undefined) {
+    if (!requireObject(errors, review.aiSimulatedAcceptance, 'review.aiSimulatedAcceptance')) return;
+    const simulated = review.aiSimulatedAcceptance;
+    requireExact(errors, simulated.status, 'complete_non_certifying', 'review.aiSimulatedAcceptance.status');
+    requireExact(errors, simulated.certificationAuthority, false, 'review.aiSimulatedAcceptance.certificationAuthority');
+    requireExact(errors, simulated.mustNotBeUsedAsHumanAcceptance, true, 'review.aiSimulatedAcceptance.mustNotBeUsedAsHumanAcceptance');
+    requireString(errors, simulated.path, 'review.aiSimulatedAcceptance.path');
+    requireSha256(errors, simulated.sha256, 'review.aiSimulatedAcceptance.sha256');
+    if (typeof simulated.path === 'string' && simulated.path) {
+      const simulatedPath = resolve(root, simulated.path);
+      if (!existsSync(simulatedPath)) {
+        addError(errors, `review.aiSimulatedAcceptance.path does not exist: ${simulated.path}`);
+      } else if (/^[0-9a-f]{64}$/.test(String(simulated.sha256 || ''))) {
+        const actualHash = sha256File(simulatedPath);
+        if (actualHash !== simulated.sha256) {
+          addError(errors, `review.aiSimulatedAcceptance.sha256 mismatch: manifest=${simulated.sha256}, actual=${actualHash}`);
+        }
+      }
+    }
+  }
 
   if (!requireObject(errors, review.humanAcceptance, 'review.humanAcceptance')) return;
   const human = review.humanAcceptance;
@@ -252,7 +291,7 @@ export function validatePunctuationCertificationManifest(manifestPath, { root = 
   validateSource(errors, warnings, manifest, root, certifying);
   validateRuntimePool(errors, manifest);
   validateLocalVerification(errors, warnings, manifest, root);
-  validateReview(errors, manifest, certifying);
+  validateReview(errors, manifest, certifying, root);
   validateLiveSmoke(errors, manifest);
   validateDepth6(errors, manifest);
 
