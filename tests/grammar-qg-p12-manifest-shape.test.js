@@ -9,9 +9,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import os from 'node:os';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -79,17 +81,20 @@ describe('Grammar QG P12 manifest shape', () => {
   });
 
   it('--phase CLI arg overrides default certificationPhase', () => {
-    // Run the generator with a custom --phase and verify the output
-    const tmpDir = path.resolve(ROOT_DIR, 'reports', 'grammar');
-    execSync(`node "${GENERATOR_SCRIPT}" --phase=grammar-qg-p99`, { cwd: ROOT_DIR });
+    const tmpDir = mkdtempSync(path.join(os.tmpdir(), 'grammar-qg-manifest-'));
+    try {
+      execSync(`node "${GENERATOR_SCRIPT}" --phase=grammar-qg-p99 --output-dir="${tmpDir}"`, { cwd: ROOT_DIR });
 
-    // The manifest is written to the same path (derived from content release, not phase)
-    const regenManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
-    assert.equal(regenManifest.certificationPhase, 'grammar-qg-p99');
+      // The manifest filename is derived from content release, not the phase override.
+      const generatedPath = path.join(tmpDir, 'grammar-qg-p11-certification-manifest.json');
+      const regenManifest = JSON.parse(fs.readFileSync(generatedPath, 'utf8'));
+      assert.equal(regenManifest.certificationPhase, 'grammar-qg-p99');
 
-    // Restore original by re-running with correct phase
-    execSync(`node "${GENERATOR_SCRIPT}" --phase=grammar-qg-p12`, { cwd: ROOT_DIR });
-    const restored = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
-    assert.equal(restored.certificationPhase, 'grammar-qg-p12');
+      execSync(`node "${GENERATOR_SCRIPT}" --phase=grammar-qg-p12 --output-dir="${tmpDir}"`, { cwd: ROOT_DIR });
+      const restored = JSON.parse(fs.readFileSync(generatedPath, 'utf8'));
+      assert.equal(restored.certificationPhase, 'grammar-qg-p12');
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

@@ -20,6 +20,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { GRAMMAR_CONTENT_RELEASE_ID } from '../worker/src/subjects/grammar/content.js';
+import {
+  CERTIFICATION_STATUS_MAP,
+  GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID,
+  GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT,
+  isTemplateBlocked,
+} from '../worker/src/subjects/grammar/certification-status.js';
+import {
+  buildGeneratedSource,
+  buildRuntimeCertificationStatus,
+} from './generate-grammar-qg-runtime-certification-status.mjs';
 import { extractFrontmatter } from './validate-grammar-qg-completion-report.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -84,6 +94,310 @@ export function readJsonArtefact(manifest, key, rootDir = ROOT_DIR) {
       path: resolved.path,
     };
   }
+}
+
+/**
+ * Validate legacy expectedOutputPaths when a manifest still includes them.
+ * Canonical release validation uses manifest.artefacts, but any extra manifest
+ * path claims must still be true or explicitly removed.
+ *
+ * @param {object} manifest - Parsed certification manifest JSON.
+ * @param {object} [opts] - Options.
+ * @param {string} [opts.rootDir] - Project root directory.
+ * @returns {{ pass: boolean, mismatches: Array<{ field: string, claimed: any, actual: any, message: string }> }}
+ */
+export function validateManifestExpectedOutputPaths(manifest, opts = {}) {
+  const rootDir = opts.rootDir || ROOT_DIR;
+  const mismatches = [];
+
+  if (manifest.expectedOutputPaths == null) {
+    return { pass: true, mismatches };
+  }
+
+  if (!Array.isArray(manifest.expectedOutputPaths)) {
+    return {
+      pass: false,
+      mismatches: [{
+        field: 'manifestExpectedOutputPathsShape',
+        claimed: manifest.expectedOutputPaths,
+        actual: 'array or omitted',
+        message: 'Manifest expectedOutputPaths must be an array when present',
+      }],
+    };
+  }
+
+  for (const [index, entry] of manifest.expectedOutputPaths.entries()) {
+    const relPath = typeof entry === 'string' ? entry : entry?.path;
+    const isLegacyNonAuthoritative = entry && typeof entry === 'object'
+      && (entry.legacy === true || entry.authoritative === false);
+
+    if (!relPath || typeof relPath !== 'string') {
+      mismatches.push({
+        field: `expectedOutputPaths[${index}]`,
+        claimed: entry,
+        actual: 'string path',
+        message: `Manifest expectedOutputPaths[${index}] must name a path or be removed`,
+      });
+      continue;
+    }
+
+    const absPath = path.resolve(rootDir, relPath);
+    if (!existsSync(absPath) && !isLegacyNonAuthoritative) {
+      mismatches.push({
+        field: `expectedOutputPaths[${index}]`,
+        claimed: relPath,
+        actual: 'file not found',
+        message: `Manifest expected output path does not exist: ${relPath}`,
+      });
+    }
+  }
+
+  return { pass: mismatches.length === 0, mismatches };
+}
+
+function sameStringArray(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
+}
+
+function addMismatch(mismatches, field, claimed, actual, message) {
+  mismatches.push({ field, claimed, actual, message });
+}
+
+/**
+ * Validate that the runtime Worker status authority exactly matches the
+ * manifest's certification status-map artefact.
+ *
+ * @param {object} manifest - Parsed certification manifest JSON.
+ * @param {object} [opts] - Options.
+ * @param {string} [opts.rootDir] - Project root directory.
+ * @returns {{ pass: boolean, mismatches: Array<{ field: string, claimed: any, actual: any, message: string }> }}
+ */
+export function validateRuntimeCertificationAuthority(manifest, opts = {}) {
+  const rootDir = opts.rootDir || ROOT_DIR;
+  const mismatches = [];
+
+  const statusMapResult = readJsonArtefact(manifest, 'certificationStatusMap', rootDir);
+  if (!statusMapResult.ok) {
+    addMismatch(
+      mismatches,
+      'runtimeCertificationStatusMapResolve',
+      'manifest.artefacts.certificationStatusMap',
+      statusMapResult.error,
+      statusMapResult.error,
+    );
+    return { pass: false, mismatches };
+  }
+
+  const statusMapReleaseId = statusMapResult.data?.metadata?.contentReleaseId;
+  if (statusMapReleaseId !== manifest.contentReleaseId) {
+    addMismatch(
+      mismatches,
+      'runtimeStatusMapReleaseId',
+      statusMapReleaseId || null,
+      manifest.contentReleaseId,
+      `Certification status map metadata.contentReleaseId "${statusMapReleaseId || 'missing'}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
+    );
+  }
+
+  if (GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID !== manifest.contentReleaseId) {
+    addMismatch(
+      mismatches,
+      'runtimeGeneratedReleaseId',
+      GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID,
+      manifest.contentReleaseId,
+      `Runtime generated certification release "${GRAMMAR_RUNTIME_CERTIFICATION_RELEASE_ID}" does not match manifest "${manifest.contentReleaseId}"`,
+    );
+  }
+
+  if (GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT !== manifest.templateDenominator) {
+    addMismatch(
+      mismatches,
+      'runtimeGeneratedTemplateCount',
+      GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT,
+      manifest.templateDenominator,
+      `Runtime generated template count ${GRAMMAR_RUNTIME_CERTIFICATION_TEMPLATE_COUNT} does not match manifest denominator ${manifest.templateDenominator}`,
+    );
+  }
+
+  let expectedRuntime;
+  try {
+    expectedRuntime = buildRuntimeCertificationStatus(statusMapResult.data, { statusMapPath: statusMapResult.path });
+  } catch (err) {
+    addMismatch(
+      mismatches,
+      'runtimeStatusMapShape',
+      'valid generated runtime status input',
+      err.message,
+      `Certification status map cannot generate runtime authority: ${err.message}`,
+    );
+    return { pass: false, mismatches };
+  }
+
+  const generatedPath = path.resolve(rootDir, 'worker', 'src', 'subjects', 'grammar', 'certification-status.generated.js');
+  const expectedGeneratedSource = buildGeneratedSource(expectedRuntime);
+  if (!existsSync(generatedPath)) {
+    addMismatch(
+      mismatches,
+      'runtimeGeneratedSourceMissing',
+      'worker/src/subjects/grammar/certification-status.generated.js',
+      'file not found',
+      'Committed runtime generated status source is missing',
+    );
+  } else {
+    const committedSource = readFileSync(generatedPath, 'utf8');
+    if (committedSource !== expectedGeneratedSource) {
+      addMismatch(
+        mismatches,
+        'runtimeGeneratedSourceDrift',
+        'committed generated source',
+        'regenerated source differs',
+        'Committed runtime generated status source is stale; regenerate it from the manifest certification status map',
+      );
+    }
+  }
+
+  const runtimeIds = Object.keys(CERTIFICATION_STATUS_MAP);
+  const expectedIds = Object.keys(expectedRuntime.entries);
+  if (runtimeIds.length !== expectedIds.length) {
+    addMismatch(
+      mismatches,
+      'runtimeStatusEntryCount',
+      runtimeIds.length,
+      expectedIds.length,
+      `Runtime status map has ${runtimeIds.length} entries but expected ${expectedIds.length}`,
+    );
+  }
+
+  const runtimeIdSet = new Set(runtimeIds);
+  const expectedIdSet = new Set(expectedIds);
+  const missingRuntimeIds = expectedIds.filter((id) => !runtimeIdSet.has(id));
+  const extraRuntimeIds = runtimeIds.filter((id) => !expectedIdSet.has(id));
+  if (missingRuntimeIds.length > 0) {
+    addMismatch(
+      mismatches,
+      'runtimeStatusMissingTemplates',
+      missingRuntimeIds,
+      'no missing templates',
+      `Runtime status map missing template(s): ${missingRuntimeIds.join(', ')}`,
+    );
+  }
+  if (extraRuntimeIds.length > 0) {
+    addMismatch(
+      mismatches,
+      'runtimeStatusUnknownTemplates',
+      extraRuntimeIds,
+      'no unknown runtime templates',
+      `Runtime status map has unknown template(s): ${extraRuntimeIds.join(', ')}`,
+    );
+  }
+
+  for (const templateId of expectedIds) {
+    const expectedEntry = expectedRuntime.entries[templateId];
+    const runtimeEntry = CERTIFICATION_STATUS_MAP[templateId];
+    if (!runtimeEntry) continue;
+
+    if (runtimeEntry.status !== expectedEntry.status) {
+      addMismatch(
+        mismatches,
+        `runtimeStatusMismatch:${templateId}`,
+        runtimeEntry.status,
+        expectedEntry.status,
+        `Runtime status for ${templateId} is "${runtimeEntry.status}" but status-map artefact says "${expectedEntry.status}"`,
+      );
+    }
+    if (runtimeEntry.severity !== expectedEntry.severity) {
+      addMismatch(
+        mismatches,
+        `runtimeSeverityMismatch:${templateId}`,
+        runtimeEntry.severity,
+        expectedEntry.severity,
+        `Runtime severity for ${templateId} is "${runtimeEntry.severity}" but status-map artefact says "${expectedEntry.severity}"`,
+      );
+    }
+    if (!sameStringArray(runtimeEntry.evidence, expectedEntry.evidence)) {
+      addMismatch(
+        mismatches,
+        `runtimeEvidenceMismatch:${templateId}`,
+        runtimeEntry.evidence,
+        expectedEntry.evidence,
+        `Runtime evidence for ${templateId} does not match the status-map artefact`,
+      );
+    }
+  }
+
+  if (isTemplateBlocked('__grammar_qg_p13_unknown_template__') !== true) {
+    addMismatch(
+      mismatches,
+      'runtimeUnknownTemplateFailClosed',
+      false,
+      true,
+      'Runtime isTemplateBlocked must block unknown template IDs',
+    );
+  }
+
+  return { pass: mismatches.length === 0, mismatches };
+}
+
+/**
+ * Validate that active runtime authority no longer references P10 artefacts or
+ * an all-approved metadata fallback.
+ */
+export function validateNoLegacyRuntimeAuthorityReferences(opts = {}) {
+  const rootDir = opts.rootDir || ROOT_DIR;
+  const mismatches = [];
+  const runtimePath = path.resolve(rootDir, 'worker', 'src', 'subjects', 'grammar', 'certification-status.js');
+  const generatedPath = path.resolve(rootDir, 'worker', 'src', 'subjects', 'grammar', 'certification-status.generated.js');
+  const packagePath = path.resolve(rootDir, 'package.json');
+
+  for (const filePath of [runtimePath, generatedPath]) {
+    if (!existsSync(filePath)) continue;
+    const relPath = path.relative(rootDir, filePath);
+    const source = readFileSync(filePath, 'utf8');
+    if (source.includes('grammar-qg-p10-certification-status-map.json')) {
+      addMismatch(
+        mismatches,
+        'legacyP10RuntimeReference',
+        relPath,
+        'no P10 runtime status artefact reference',
+        `${relPath} references grammar-qg-p10-certification-status-map.json`,
+      );
+    }
+    if (source.includes('loadFromJsonRegister') || source.includes('new Function(') || source.includes('createRequire(')) {
+      addMismatch(
+        mismatches,
+        'nodeDynamicRuntimeStatusLoader',
+        relPath,
+        'Worker-safe static generated import',
+        `${relPath} contains a dynamic Node loader pattern`,
+      );
+    }
+    if (source.includes('GRAMMAR_TEMPLATE_METADATA.map') && source.includes("status: 'approved'")) {
+      addMismatch(
+        mismatches,
+        'allApprovedRuntimeFallback',
+        relPath,
+        'no metadata-derived all-approved fallback',
+        `${relPath} appears to build an all-approved fallback from GRAMMAR_TEMPLATE_METADATA`,
+      );
+    }
+  }
+
+  if (existsSync(packagePath)) {
+    const pkg = JSON.parse(readFileSync(packagePath, 'utf8'));
+    const activeReleaseScript = pkg?.scripts?.['verify:grammar-qg-production-release'] || '';
+    if (activeReleaseScript.includes('grammar-qg-p10-certification-manifest.json')) {
+      addMismatch(
+        mismatches,
+        'legacyP10ActiveReleaseGate',
+        activeReleaseScript,
+        'P11 production release manifest',
+        'Active Grammar QG production-release script references the P10 certification manifest',
+      );
+    }
+  }
+
+  return { pass: mismatches.length === 0, mismatches };
 }
 
 /**
@@ -321,6 +635,7 @@ export function validateReportAgainstManifest(reportContent, manifest) {
  * Required fields in a production smoke evidence JSON file.
  */
 export const SMOKE_EVIDENCE_REQUIRED_FIELDS = [
+  'ok',
   'releaseId',
   'evidenceOrigin',
   'environment',
@@ -333,9 +648,18 @@ export const SMOKE_EVIDENCE_REQUIRED_FIELDS = [
   'readModelUpdateResult',
   'noAnswerLeakAssertion',
   'semanticCueAssertion',
+  'promptCueAssertion',
+  'readAloudAssertion',
   'releaseIdAssertion',
   'failureDetails',
 ];
+
+function smokeAssertionPassed(value) {
+  if (value == null || typeof value !== 'object') return false;
+  if ('pass' in value) return value.pass === true;
+  if ('ok' in value) return value.ok === true;
+  return false;
+}
 
 /**
  * Extract the certification_decision from report frontmatter.
@@ -438,15 +762,17 @@ export function validateSmokeEvidence(manifest, reportContent, opts = {}) {
       return { pass: false, mismatches };
     }
 
-    const evidencePath = path.join(rootDir, 'reports', 'grammar', `grammar-production-smoke-${releaseId}.json`);
+    const evidenceRelPath = manifest?.artefacts?.productionSmoke
+      || path.join('reports', 'grammar', `grammar-production-smoke-${releaseId}.json`);
+    const evidencePath = path.resolve(rootDir, evidenceRelPath);
 
     // Check file existence
     if (!existsSync(evidencePath)) {
       mismatches.push({
         field: 'smokeEvidenceFile',
         claimed: 'CERTIFIED_POST_DEPLOY',
-        actual: `evidence file not found at reports/grammar/grammar-production-smoke-${releaseId}.json`,
-        message: `Report claims CERTIFIED_POST_DEPLOY but smoke evidence file does not exist: reports/grammar/grammar-production-smoke-${releaseId}.json`,
+        actual: `evidence file not found at ${evidenceRelPath}`,
+        message: `Report claims CERTIFIED_POST_DEPLOY but smoke evidence file does not exist: ${evidenceRelPath}`,
       });
       return { pass: false, mismatches };
     }
@@ -485,6 +811,82 @@ export function validateSmokeEvidence(manifest, reportContent, opts = {}) {
         actual: evidence.releaseId,
         message: `Smoke evidence releaseId "${evidence.releaseId}" does not match manifest contentReleaseId "${releaseId}"`,
       });
+    }
+
+    if (evidence.contentReleaseId && evidence.contentReleaseId !== releaseId) {
+      mismatches.push({
+        field: 'smokeEvidenceContentReleaseIdMismatch',
+        claimed: releaseId,
+        actual: evidence.contentReleaseId,
+        message: `Smoke evidence contentReleaseId "${evidence.contentReleaseId}" does not match manifest contentReleaseId "${releaseId}"`,
+      });
+    }
+
+    if (evidence.evidenceOrigin !== 'post-deploy') {
+      mismatches.push({
+        field: 'smokeEvidenceOrigin',
+        claimed: 'post-deploy',
+        actual: evidence.evidenceOrigin,
+        message: `Smoke evidence origin must be "post-deploy", got "${evidence.evidenceOrigin}"`,
+      });
+    }
+
+    if (evidence.environment !== 'production') {
+      mismatches.push({
+        field: 'smokeEvidenceEnvironment',
+        claimed: 'production',
+        actual: evidence.environment,
+        message: `Smoke evidence environment must be "production", got "${evidence.environment}"`,
+      });
+    }
+
+    try {
+      const deployedHost = new URL(evidence.deployedUrl).host;
+      if (deployedHost !== 'ks2.eugnel.uk') {
+        mismatches.push({
+          field: 'smokeEvidenceDeployedUrl',
+          claimed: 'ks2.eugnel.uk',
+          actual: evidence.deployedUrl,
+          message: `Smoke evidence deployedUrl must point at production ks2.eugnel.uk, got "${evidence.deployedUrl}"`,
+        });
+      }
+    } catch {
+      mismatches.push({
+        field: 'smokeEvidenceDeployedUrl',
+        claimed: 'valid production URL',
+        actual: evidence.deployedUrl,
+        message: `Smoke evidence deployedUrl is not a valid URL: ${evidence.deployedUrl}`,
+      });
+    }
+
+    if (evidence.ok !== true) {
+      mismatches.push({
+        field: 'smokeEvidenceOk',
+        claimed: true,
+        actual: evidence.ok,
+        message: 'Smoke evidence ok must be true for CERTIFIED_POST_DEPLOY',
+      });
+    }
+
+    const assertionFields = [
+      'itemCreationResult',
+      'answerSubmissionResult',
+      'readModelUpdateResult',
+      'noAnswerLeakAssertion',
+      'semanticCueAssertion',
+      'promptCueAssertion',
+      'readAloudAssertion',
+      'releaseIdAssertion',
+    ];
+    for (const field of assertionFields) {
+      if (!smokeAssertionPassed(evidence[field])) {
+        mismatches.push({
+          field: `smokeAssertion:${field}`,
+          claimed: 'passing assertion',
+          actual: evidence[field] || null,
+          message: `Smoke evidence assertion ${field} must pass for CERTIFIED_POST_DEPLOY`,
+        });
+      }
     }
 
     return { pass: mismatches.length === 0, mismatches };
@@ -1002,6 +1404,20 @@ async function main(argv) {
 
   console.log(`PASS: Manifest schema valid (${Object.keys(manifestResult.manifest.seedWindowPerEvidenceType).length} oracle families)`);
 
+  const expectedPathResult = validateManifestExpectedOutputPaths(manifestResult.manifest);
+  if (!expectedPathResult.pass) {
+    if (jsonOutput) {
+      console.log(JSON.stringify({ pass: false, gate: 'manifest-expected-output-paths', mismatches: expectedPathResult.mismatches }, null, 2));
+    } else {
+      console.log(`FAIL: Manifest expected output paths — ${expectedPathResult.mismatches.length} mismatch(es)\n`);
+      for (const m of expectedPathResult.mismatches) {
+        console.log(`  [${m.field}] ${m.message}`);
+      }
+    }
+    process.exit(1);
+  }
+  console.log('PASS: Manifest expected output paths are valid or absent');
+
   // Gate 1b: Validate render inventory release IDs if inventory exists
   const releaseId = manifestResult.manifest.contentReleaseId;
   let inventoryPath;
@@ -1049,6 +1465,31 @@ async function main(argv) {
     process.exit(1);
   }
   console.log(`PASS: Release ID consistent (manifest ↔ code: ${releaseId})`);
+
+  if (manifestResult.manifest.contentReleaseId === GRAMMAR_CONTENT_RELEASE_ID) {
+    const runtimeResult = validateRuntimeCertificationAuthority(manifestResult.manifest);
+    const legacyRuntimeResult = validateNoLegacyRuntimeAuthorityReferences();
+    const runtimeMismatches = [
+      ...runtimeResult.mismatches,
+      ...legacyRuntimeResult.mismatches,
+    ];
+    if (runtimeMismatches.length > 0) {
+      if (jsonOutput) {
+        console.log(JSON.stringify({ pass: false, gate: 'runtime-certification-authority', mismatches: runtimeMismatches }, null, 2));
+      } else {
+        console.log(`FAIL: Runtime certification authority — ${runtimeMismatches.length} mismatch(es)\n`);
+        for (const m of runtimeMismatches) {
+          console.log(`  [${m.field}] ${m.message}`);
+          console.log(`    claimed: ${JSON.stringify(m.claimed)}`);
+          console.log(`    actual:  ${JSON.stringify(m.actual)}\n`);
+        }
+      }
+      process.exit(1);
+    }
+    console.log('PASS: Runtime certification authority matches manifest status map and fails closed');
+  } else {
+    console.log(`SKIP: Runtime certification authority gate not applied to historical release ${manifestResult.manifest.contentReleaseId}`);
+  }
 
   // Gate 2: Cross-validate report if provided
   if (reportPath) {

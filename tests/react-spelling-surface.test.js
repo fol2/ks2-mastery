@@ -46,17 +46,15 @@ test('React spelling setup scene disables start while options are saving', async
   assert.match(startButtonMatch[0], /disabled=""/);
 });
 
-// P2 U7 falsifier: pin the migration-specific render output that the
-// reviewer flagged as unverified — Button's safelisted `style` rest-prop
-// forwarding the inline `--btn-accent` Bellstorm gold (Spelling lacks a
-// :where(.spelling-...) accent remap; deferred to a future subject-token
-// sweep — see completion report §6.2), and the `endIcon` slot resolving
-// to a `<span class="btn-end-icon">` AFTER the label text inside the
-// rendered <button>. If a future Button refactor silently dropped
-// `style` from the rest-prop safelist or wrapped endIcon ahead of the
-// label, the existing 750 spelling tests would stay green; this test
-// fails fast in that scenario.
-test('React spelling start CTA forwards Button style + endIcon to the rendered DOM (U7 falsifier)', async () => {
+// P2 U7/P3 U1 falsifier: pin the migration-specific render output that
+// the reviewer flagged as unverified — the start CTA now inherits its
+// `--btn-accent` from the surrounding SubjectThemeScope instead of
+// carrying an inline style prop, and the `endIcon` slot resolves to a
+// `<span class="btn-end-icon">` AFTER the label text inside the rendered
+// <button>. If a future refactor drops the subject scope or wraps endIcon
+// ahead of the label, the wider spelling suite can stay green while the
+// CTA loses its themed accent/a11y ordering; this test fails fast.
+test('React spelling start CTA inherits subject theme + endIcon order in the rendered DOM', async () => {
   const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
   const startButtonMatch = html.match(
     /<button[^>]*data-action="spelling-start"[^>]*>[\s\S]*?<\/button>/,
@@ -64,15 +62,18 @@ test('React spelling start CTA forwards Button style + endIcon to the rendered D
   assert.ok(startButtonMatch, 'expected a <button data-action="spelling-start"> with body');
   const startButtonHtml = startButtonMatch[0];
 
-  // (a) Inline `--btn-accent` survives the Button safelist + Object.assign
-  //     merge into buttonProps. The exact value is set via the
-  //     `accent` prop on SpellingSetupScene; we assert presence + a
-  //     valid 6-char hex form rather than pinning the literal hue so a
-  //     future palette refresh does not require a test bump.
+  // (a) The CTA should inherit `--btn-accent` from the spelling subject
+  //     scope. Reintroducing the old inline style would regress the CSP
+  //     inline-style budget and duplicate the theme source of truth.
   assert.match(
+    html,
+    /class="subject-theme setup-grid"[^>]*data-subject="spelling"/,
+    'Spelling setup must render inside the subject theme scope',
+  );
+  assert.doesNotMatch(
     startButtonHtml,
-    /style="--btn-accent:\s*#[0-9a-fA-F]{6}/,
-    'Button must forward style.--btn-accent so Spelling accent threads through',
+    /\bstyle="/,
+    'Spelling start CTA should inherit its accent from SubjectThemeScope, not an inline style',
   );
 
   // (b) `endIcon` slot renders as `<span class="btn-end-icon">` AFTER

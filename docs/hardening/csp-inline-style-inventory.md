@@ -49,11 +49,11 @@ Future migration PRs should:
 
 | Category | Count |
 | --- | --- |
-| `dynamic-content-driven` | 142 |
-| `shared-pattern-available` | 96 |
-| `css-var-ready` | 5 |
+| `dynamic-content-driven` | 141 |
+| `shared-pattern-available` | 104 |
+| `css-var-ready` | 7 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **245** |
+| **TOTAL** | **254** |
 
 ## Per-file inventory
 
@@ -70,16 +70,18 @@ Future migration PRs should:
 | `src/surfaces/hubs/AdminErrorTimelinePanel.jsx` | 9 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/AdminHubSurface.jsx` | 7 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterEffectCelebrationPanel.jsx` | 7 | `shared-pattern-available` | no |
-| `src/subjects/spelling/components/SpellingSetupScene.jsx` | 5 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/AdminAccountsSection.jsx` | 5 | `shared-pattern-available` | yes |
 | `src/surfaces/hubs/AdminMarketingSection.jsx` | 5 | `shared-pattern-available` | no |
+| `src/surfaces/hubs/AdminVisualEngineSection.jsx` | 5 | `shared-pattern-available` | no |
 | `src/surfaces/profile/ProfileSettingsSurface.jsx` | 5 | `shared-pattern-available` | yes |
 | `src/surfaces/subject/SubjectRoute.jsx` | 5 | `dynamic-content-driven` | no |
 | `src/subjects/spelling/components/PatternQuestScene.jsx` | 4 | `dynamic-content-driven` | no |
 | `src/subjects/spelling/components/SpellingSessionScene.jsx` | 4 | `dynamic-content-driven` | no |
+| `src/subjects/spelling/components/SpellingSetupScene.jsx` | 4 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/AdminBusinessSection.jsx` | 4 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/AdminContentSection.jsx` | 4 | `shared-pattern-available` | yes |
 | `src/surfaces/hubs/AdminDebugBundlePanel.jsx` | 4 | `shared-pattern-available` | no |
+| `src/platform/ui/ActionRow.jsx` | 3 | `shared-pattern-available` | no |
 | `src/subjects/spelling/components/SpellingSummaryScene.jsx` | 3 | `dynamic-content-driven` | no |
 | `src/surfaces/hubs/AdminSectionTabs.jsx` | 3 | `shared-pattern-available` | no |
 | `src/surfaces/hubs/MonsterVisualPreviewGrid.jsx` | 3 | `dynamic-content-driven` | no |
@@ -99,7 +101,9 @@ Future migration PRs should:
 | `src/platform/ui/HeroBackdrop.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/platform/ui/LengthPicker.jsx` | 1 | `shared-pattern-available` | no |
 | `src/platform/ui/LoadingSkeleton.jsx` | 1 | `css-var-ready` | no |
+| `src/platform/ui/PracticeStage.jsx` | 1 | `css-var-ready` | no |
 | `src/platform/ui/ProgressMeter.jsx` | 1 | `css-var-ready` | no |
+| `src/platform/ui/SubjectThemeScope.jsx` | 1 | `css-var-ready` | no |
 | `src/subjects/punctuation/components/PunctuationMapScene.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/subjects/spelling/components/SpellingWordBankScene.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCreature.jsx` | 1 | `dynamic-content-driven` | no |

@@ -30,14 +30,18 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 
 const CLI_ARGS = process.argv.slice(2);
 const JSON_OUTPUT = CLI_ARGS.includes('--json');
-const EVIDENCE_ORIGIN_FLAG_INDEX = CLI_ARGS.indexOf('--evidence-origin');
-const CONFIGURED_ORIGIN_VALUE = EVIDENCE_ORIGIN_FLAG_INDEX !== -1 && CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
-  ? CLI_ARGS[EVIDENCE_ORIGIN_FLAG_INDEX + 1]
-  : 'repository';
-const RELEASE_ID_ARG = CLI_ARGS.find(a => a.startsWith('--release-id='));
-const CONFIGURED_RELEASE_ID = RELEASE_ID_ARG ? RELEASE_ID_ARG.split('=')[1] : GRAMMAR_CONTENT_RELEASE_ID;
-const OUT_ARG = CLI_ARGS.find(a => a.startsWith('--out='));
-const CONFIGURED_OUT_PATH = OUT_ARG ? OUT_ARG.split('=')[1] : null;
+
+function cliValue(name, fallback = '') {
+  const equalsArg = CLI_ARGS.find((arg) => arg.startsWith(`${name}=`));
+  if (equalsArg) return equalsArg.slice(name.length + 1);
+  const index = CLI_ARGS.indexOf(name);
+  if (index !== -1 && CLI_ARGS[index + 1]) return CLI_ARGS[index + 1];
+  return fallback;
+}
+
+const CONFIGURED_ORIGIN_VALUE = cliValue('--evidence-origin', 'repository');
+const CONFIGURED_RELEASE_ID = cliValue('--expected-release', cliValue('--release-id', GRAMMAR_CONTENT_RELEASE_ID));
+const CONFIGURED_OUT_PATH = cliValue('--out', '') || null;
 
 const GRAMMAR_SMOKE_ITEM = Object.freeze({
   templateId: 'qg_modal_verb_explain',
@@ -47,6 +51,16 @@ const GRAMMAR_SMOKE_ITEM = Object.freeze({
 const GRAMMAR_MINI_TEST_ITEM = Object.freeze({
   templateId: 'fronted_adverbial_choose',
   seed: 11,
+});
+
+const GRAMMAR_TARGET_SENTENCE_CUE_ITEM = Object.freeze({
+  templateId: 'identify_words_in_sentence',
+  seed: 1,
+});
+
+const GRAMMAR_NOUN_PHRASE_CUE_ITEM = Object.freeze({
+  templateId: 'qg_p4_voice_roles_transfer',
+  seed: 1,
 });
 
 export const GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS = Object.freeze([
@@ -186,6 +200,11 @@ async function smokeGrammarNormalRound({ origin, cookie, learnerId, revision }) 
   assert.equal(startModel?.session?.serverAuthority, 'worker', 'Grammar session was not Worker-owned.');
   assert.equal(startModel?.session?.targetCount, 1, 'Grammar smoke round did not use one target item.');
   assert.equal(startModel?.session?.currentItem?.templateId, GRAMMAR_SMOKE_ITEM.templateId);
+  assert.equal(
+    startModel?.session?.currentItem?.contentReleaseId,
+    CONFIGURED_RELEASE_ID,
+    `Grammar current item did not serve expected release ${CONFIGURED_RELEASE_ID}.`,
+  );
   assertNoForbiddenGrammarReadModelKeys(startModel, 'grammar.startModel');
 
   const response = correctResponseFor(startModel.session.currentItem);
@@ -222,6 +241,7 @@ async function smokeGrammarNormalRound({ origin, cookie, learnerId, revision }) 
   return {
     revision,
     templateId: startModel.session.currentItem.templateId,
+    contentReleaseId: startModel.session.currentItem.contentReleaseId,
     summaryAnswered: summaryModel.summary.answered,
   };
 }
@@ -453,6 +473,66 @@ async function smokeGrammarAnswerSpecFamilies({ origin, cookie, learnerId, revis
   return { revision, covered };
 }
 
+async function smokeGrammarCueAssertions({ origin, cookie, learnerId, revision }) {
+  let step = await subjectCommand({
+    origin,
+    cookie,
+    subjectId: 'grammar',
+    learnerId,
+    revision,
+    command: 'start-session',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: GRAMMAR_TARGET_SENTENCE_CUE_ITEM.templateId,
+      seed: GRAMMAR_TARGET_SENTENCE_CUE_ITEM.seed,
+    },
+  });
+  revision = step.revision;
+  let model = step.payload.subjectReadModel;
+  let item = model?.session?.currentItem;
+  assert.equal(model?.phase, 'session', 'Grammar target-sentence cue smoke did not start in session phase.');
+  assert.equal(item?.templateId, GRAMMAR_TARGET_SENTENCE_CUE_ITEM.templateId);
+  assert.equal(item?.focusCue?.type, 'target-sentence', 'Target-sentence cue smoke did not expose target-sentence focusCue.');
+  assert.equal(item?.focusCue?.targetKind, 'sentence', 'Target-sentence cue smoke did not expose sentence targetKind.');
+  assert.ok(item?.focusCue?.targetText, 'Target-sentence cue smoke did not expose targetText.');
+  assert.ok(item?.screenReaderPromptText?.includes(item.focusCue.targetText), 'Target-sentence screen-reader text did not include targetText.');
+  assert.ok(item?.readAloudText?.includes(item.focusCue.targetText), 'Target-sentence read-aloud text did not include targetText.');
+  assert.match(item.readAloudText, /The sentence is:/, 'Target-sentence read-aloud text did not use sentence phrasing.');
+  assertNoForbiddenGrammarReadModelKeys(model, 'grammar.targetSentenceCueModel');
+
+  step = await subjectCommand({
+    origin,
+    cookie,
+    subjectId: 'grammar',
+    learnerId,
+    revision,
+    command: 'start-session',
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: GRAMMAR_NOUN_PHRASE_CUE_ITEM.templateId,
+      seed: GRAMMAR_NOUN_PHRASE_CUE_ITEM.seed,
+    },
+  });
+  revision = step.revision;
+  model = step.payload.subjectReadModel;
+  item = model?.session?.currentItem;
+  assert.equal(model?.phase, 'session', 'Grammar noun-phrase cue smoke did not start in session phase.');
+  assert.equal(item?.templateId, GRAMMAR_NOUN_PHRASE_CUE_ITEM.templateId);
+  assert.equal(item?.focusCue?.targetKind, 'noun-phrase', 'Noun-phrase cue smoke did not expose noun-phrase targetKind.');
+  assert.match(item?.readAloudText || '', /The underlined noun phrase is:/, 'Noun-phrase read-aloud text did not say noun phrase.');
+  assert.doesNotMatch(item?.readAloudText || '', /The underlined word is:/, 'Noun-phrase read-aloud text incorrectly said word.');
+  assert.match(item?.screenReaderPromptText || '', /The underlined noun phrase is:/, 'Noun-phrase screen-reader text did not say noun phrase.');
+  assertNoForbiddenGrammarReadModelKeys(model, 'grammar.nounPhraseCueModel');
+
+  return {
+    revision,
+    targetSentenceTemplateId: GRAMMAR_TARGET_SENTENCE_CUE_ITEM.templateId,
+    nounPhraseTemplateId: GRAMMAR_NOUN_PHRASE_CUE_ITEM.templateId,
+  };
+}
+
 async function smokeGrammar({ origin, cookie, learnerId, revision }) {
   const normal = await smokeGrammarNormalRound({ origin, cookie, learnerId, revision });
   const miniTest = await smokeGrammarMiniTest({
@@ -473,13 +553,20 @@ async function smokeGrammar({ origin, cookie, learnerId, revision }) {
     learnerId,
     revision: repairAi.revision,
   });
+  const cueAssertions = await smokeGrammarCueAssertions({
+    origin,
+    cookie,
+    learnerId,
+    revision: answerSpecFamilies.revision,
+  });
 
   return {
-    revision: answerSpecFamilies.revision,
+    revision: cueAssertions.revision,
     normal,
     miniTest,
     repairAi,
     answerSpecFamilies,
+    cueAssertions,
   };
 }
 
@@ -526,6 +613,7 @@ async function main() {
   let normalRoundResult = { ok: false, detail: '' };
   let miniTestResult = { ok: false, detail: '' };
   let repairResult = { ok: false, detail: '' };
+  let cueAssertionResult = { ok: false, detail: '' };
   let forbiddenKeyScanResult = { ok: true, detail: 'checked via assertNoForbiddenGrammarReadModelKeys in each phase' };
   let testedTemplateIds = [];
   let overallOk = true;
@@ -541,10 +629,16 @@ async function main() {
     normalRoundResult = { ok: true, detail: `templateId=${grammar.normal.templateId}, answered=${grammar.normal.summaryAnswered}` };
     miniTestResult = { ok: true, detail: `answered=${grammar.miniTest.answered}, reviewSize=${grammar.miniTest.reviewSize}` };
     repairResult = { ok: true, detail: `supportKind=${grammar.repairAi.supportKind}, aiKind=${grammar.repairAi.aiKind}` };
+    cueAssertionResult = {
+      ok: true,
+      detail: `targetSentence=${grammar.cueAssertions.targetSentenceTemplateId}, nounPhrase=${grammar.cueAssertions.nounPhraseTemplateId}`,
+    };
     testedTemplateIds = [
       GRAMMAR_SMOKE_ITEM.templateId,
       GRAMMAR_MINI_TEST_ITEM.templateId,
       ...GRAMMAR_ANSWER_SPEC_FAMILY_SMOKE_ITEMS.map((item) => item.templateId),
+      GRAMMAR_TARGET_SENTENCE_CUE_ITEM.templateId,
+      GRAMMAR_NOUN_PHRASE_CUE_ITEM.templateId,
     ];
   } catch (error) {
     overallOk = false;
@@ -555,6 +649,8 @@ async function main() {
       miniTestResult = { ok: false, detail: msg };
     } else if (msg.includes('repair') || msg.includes('faded') || msg.includes('similar')) {
       repairResult = { ok: false, detail: msg };
+    } else if (msg.includes('cue') || msg.includes('read-aloud') || msg.includes('screen-reader') || msg.includes('noun-phrase')) {
+      cueAssertionResult = { ok: false, detail: msg };
     } else {
       normalRoundResult = { ok: false, detail: msg };
     }
@@ -583,6 +679,7 @@ async function main() {
           repairSupportKind: grammar.repairAi.supportKind,
           aiKind: grammar.repairAi.aiKind,
           answerSpecFamilies: grammar.answerSpecFamilies.covered,
+          cueAssertions: grammar.cueAssertions,
         },
         spelling: {
           progressTotal: spelling.progressTotal,
@@ -593,11 +690,25 @@ async function main() {
   }
 
   if (JSON_OUTPUT) {
+    const environment = origin === 'https://ks2.eugnel.uk' ? 'production' : 'non-production';
+    const releaseIdAssertion = grammar
+      ? {
+          ok: grammar.normal.contentReleaseId === CONFIGURED_RELEASE_ID,
+          detail: `contentReleaseId=${grammar.normal.contentReleaseId}`,
+        }
+      : { ok: false, detail: `contentReleaseId not observed; expected ${CONFIGURED_RELEASE_ID}` };
+    const command = [
+      'npm run smoke:production:grammar -- --json',
+      `--evidence-origin=${CONFIGURED_ORIGIN_VALUE}`,
+      `--expected-release=${CONFIGURED_RELEASE_ID}`,
+      ...(CONFIGURED_OUT_PATH ? [`--out=${CONFIGURED_OUT_PATH}`] : []),
+    ].join(' ');
+
     const evidence = {
       ok: overallOk,
       releaseId: CONFIGURED_RELEASE_ID,
       evidenceOrigin: CONFIGURED_ORIGIN_VALUE,
-      environment: origin,
+      environment,
       deployedUrl: origin,
       origin: CONFIGURED_ORIGIN_VALUE,
       contentReleaseId: CONFIGURED_RELEASE_ID,
@@ -605,19 +716,22 @@ async function main() {
       answerSpecFamiliesCovered: grammar
         ? grammar.answerSpecFamilies.covered
         : [],
-      command: `npm run smoke:production:grammar -- --json --evidence-origin ${CONFIGURED_ORIGIN_VALUE} --release-id=${CONFIGURED_RELEASE_ID}`,
+      command,
       learnerFixtureType: 'demo-session',
       itemCreationResult: normalRoundResult,
       answerSubmissionResult: normalRoundResult,
       readModelUpdateResult: normalRoundResult,
       noAnswerLeakAssertion: forbiddenKeyScanResult,
-      semanticCueAssertion: repairResult,
-      releaseIdAssertion: { ok: true, detail: `contentReleaseId=${CONFIGURED_RELEASE_ID}` },
+      semanticCueAssertion: cueAssertionResult,
+      promptCueAssertion: cueAssertionResult,
+      readAloudAssertion: cueAssertionResult,
+      releaseIdAssertion,
       normalRoundResult,
       miniTestResult,
       repairResult,
+      cueAssertionResult,
       forbiddenKeyScanResult,
-      failureDetails: overallOk ? null : { normalRoundResult, miniTestResult, repairResult },
+      failureDetails: overallOk ? null : { normalRoundResult, miniTestResult, repairResult, cueAssertionResult },
       timestamp: new Date().toISOString(),
       commitSha: getCommitSha(),
     };

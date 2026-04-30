@@ -15,8 +15,8 @@
   },
   "expectedItemCount": 2340,
   "expectedOutputPaths": [
-    "reports/grammar/grammar-qg-p11-question-inventory.json",
-    "reports/grammar/grammar-qg-p11-question-inventory-redacted.md"
+    "reports/grammar/grammar-qg-p11-render-inventory.json",
+    "reports/grammar/grammar-qg-p11-render-inventory-redacted.md"
   ],
   "artefacts": {
     "renderInventory": "reports/grammar/grammar-qg-p11-render-inventory.json",
@@ -29,9 +29,9 @@
     "productionSmoke": "reports/grammar/grammar-production-smoke-grammar-qg-p11-2026-04-30.json"
   },
   "generatorScript": "scripts/generate-grammar-qg-quality-inventory.mjs",
-  "generatorScriptHash": "82b0bf220b9bd6b6d0190dbd5bb64bc98777f191b0ea4e2adaa471ec140535c8",
+  "generatorScriptHash": "3a1af25b8d10a5f4077aec408772cea62290ec068360d2a27aaa83480c1a6a87",
   "generationCommand": "node scripts/generate-grammar-qg-quality-inventory.mjs --seeds=1..30 --release=p11",
-  "generatedAt": "2026-04-30T15:35:10.353Z",
+  "generatedAt": "2026-04-30T20:55:11.082Z",
   "answerInternalsIncluded": true,
   "answerInternalsRedacted": true,
   "postDeployRequiredForPostDeployCertification": true

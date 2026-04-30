@@ -1,11 +1,14 @@
 /**
- * Grammar QG P11 U8 — Scheduler Blocklist Verification
+ * Grammar QG P13 — Scheduler Blocklist Verification
  *
- * After U1-U7 remediated all S0/S1 issues, this test suite verifies:
- * 1. All 78 templates have entries in the P10 certification status map
- * 2. No template is currently marked 'blocked' (all issues resolved)
+ * Verifies that the active runtime scheduler is governed by the P11/P12
+ * certification status source, not the historical P10 status map.
+ *
+ * 1. All 78 templates have entries in the P11 certification status map
+ * 2. No template is currently blocked or retired
  * 3. Unknown template IDs are blocked by the fail-closed guard
  * 4. The active template denominator equals 78
+ * 5. approved_with_limitation decisions are preserved at runtime
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,21 +26,22 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
-const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p10-certification-status-map.json');
+const STATUS_MAP_PATH = path.resolve(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p11-certification-status-map.json');
 
 const statusMapJson = JSON.parse(fs.readFileSync(STATUS_MAP_PATH, 'utf8'));
+const statusMapById = new Map(statusMapJson.entries.map((entry) => [entry.templateId, entry]));
 
 // ---------------------------------------------------------------------------
 // 1. Completeness — all 78 templates are in the certification map
 // ---------------------------------------------------------------------------
 
-describe('P11 U8 Scheduler Blocklist: completeness', () => {
+describe('P13 Scheduler Blocklist: completeness', () => {
   it('certification status map has exactly 78 entries', () => {
-    assert.equal(Object.keys(statusMapJson).length, 78);
+    assert.equal(statusMapJson.entries.length, 78);
   });
 
   it('every GRAMMAR_TEMPLATE_METADATA template exists in the certification map', () => {
-    const mapKeys = new Set(Object.keys(statusMapJson));
+    const mapKeys = new Set(statusMapJson.entries.map((entry) => entry.templateId));
     for (const template of GRAMMAR_TEMPLATE_METADATA) {
       assert.ok(mapKeys.has(template.id), `Template ${template.id} is missing from the certification status map — would be blocked by fail-closed guard`);
     }
@@ -45,7 +49,7 @@ describe('P11 U8 Scheduler Blocklist: completeness', () => {
 
   it('no unknown templates exist in the map (no stale entries)', () => {
     const knownIds = new Set(GRAMMAR_TEMPLATE_METADATA.map((t) => t.id));
-    for (const id of Object.keys(statusMapJson)) {
+    for (const id of statusMapById.keys()) {
       assert.ok(knownIds.has(id), `Certification map contains unknown template: ${id}`);
     }
   });
@@ -55,24 +59,31 @@ describe('P11 U8 Scheduler Blocklist: completeness', () => {
 // 2. All S0/S1 issues resolved — no blocked templates
 // ---------------------------------------------------------------------------
 
-describe('P11 U8 Scheduler Blocklist: zero blocked templates', () => {
-  it('no template has status "blocked" in the JSON artefact', () => {
-    const blocked = Object.entries(statusMapJson)
-      .filter(([, entry]) => entry.status === 'blocked')
-      .map(([id]) => id);
+describe('P13 Scheduler Blocklist: zero blocked templates', () => {
+  it('no template has blocked or retire_candidate decision in the JSON artefact', () => {
+    const blocked = statusMapJson.entries
+      .filter((entry) => entry.decision === 'blocked' || entry.decision === 'retire_candidate')
+      .map((entry) => entry.templateId);
     assert.equal(blocked.length, 0, `Blocked templates found: ${blocked.join(', ')}`);
   });
 
-  it('no template has status "blocked" in the runtime module', () => {
+  it('no template has blocked or retire_candidate status in the runtime module', () => {
     const blocked = Object.entries(CERTIFICATION_STATUS_MAP)
-      .filter(([, entry]) => entry.status === 'blocked')
+      .filter(([, entry]) => entry.status === 'blocked' || entry.status === 'retire_candidate')
       .map(([id]) => id);
     assert.equal(blocked.length, 0, `Module reports blocked templates: ${blocked.join(', ')}`);
   });
 
-  it('all templates are approved (no watchlist either)', () => {
-    for (const [id, entry] of Object.entries(statusMapJson)) {
-      assert.equal(entry.status, 'approved', `Template ${id} has non-approved status: ${entry.status}`);
+  it('approved_with_limitation decisions are preserved and still schedulable', () => {
+    const limitedEntries = statusMapJson.entries.filter((entry) => entry.decision === 'approved_with_limitation');
+    assert.equal(limitedEntries.length, 4);
+    for (const entry of limitedEntries) {
+      assert.equal(
+        CERTIFICATION_STATUS_MAP[entry.templateId].status,
+        'approved_with_limitation',
+        `Template ${entry.templateId} limitation decision must be preserved at runtime`,
+      );
+      assert.equal(isTemplateBlocked(entry.templateId), false, `${entry.templateId} should remain schedulable`);
     }
   });
 });
@@ -81,7 +92,7 @@ describe('P11 U8 Scheduler Blocklist: zero blocked templates', () => {
 // 3. Fail-closed guard — unknown IDs are blocked
 // ---------------------------------------------------------------------------
 
-describe('P11 U8 Scheduler Blocklist: fail-closed behaviour', () => {
+describe('P13 Scheduler Blocklist: fail-closed behaviour', () => {
   it('isTemplateBlocked returns true for an unknown template ID', () => {
     assert.equal(isTemplateBlocked('__nonexistent_phantom_id__'), true);
   });
@@ -109,7 +120,7 @@ describe('P11 U8 Scheduler Blocklist: fail-closed behaviour', () => {
 // 4. Active template denominator
 // ---------------------------------------------------------------------------
 
-describe('P11 U8 Scheduler Blocklist: active denominator', () => {
+describe('P13 Scheduler Blocklist: active denominator', () => {
   it('active template count equals 78', () => {
     const activeCount = GRAMMAR_TEMPLATE_METADATA.filter((t) => !isTemplateBlocked(t.id)).length;
     assert.equal(activeCount, 78);

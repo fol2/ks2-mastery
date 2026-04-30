@@ -43,7 +43,7 @@ export function PracticeStage({
   children,
 }) {
   const theme = getSubjectTheme(subjectId);
-  const accentColour = theme ? theme.accentSoft : '#f5f5f5';
+  const accentColour = theme ? theme.accentSoft : 'var(--panel-soft)';
   const classes = ['practice-stage', `ps-scene-${scene}`];
   classes.push(BACKDROP_CLASSES[backdrop] || 'ps-backdrop-default');
   if (motion !== 'none') classes.push(MOTION_CLASSES[motion] || '');
