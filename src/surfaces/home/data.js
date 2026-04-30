@@ -286,6 +286,23 @@ function subjectUsesStarDisplayState(subjectId) {
   return subjectId === 'punctuation' || subjectId === 'grammar';
 }
 
+function grammarAssetStageForDisplayState(displayState, displayStage, fallbackStage) {
+  switch (displayState) {
+    case 'egg-found': return 0;
+    case 'hatch': return 1;
+    case 'evolve': return 2;
+    case 'strong': return 3;
+    case 'mega': return 4;
+    default: {
+      const numericDisplayStage = Math.floor(Number(displayStage));
+      if (Number.isFinite(numericDisplayStage) && numericDisplayStage > 0) {
+        return Math.max(0, Math.min(4, numericDisplayStage - 1));
+      }
+      return Math.max(0, Math.min(4, Math.floor(Number(fallbackStage) || 0)));
+    }
+  }
+}
+
 function entryDisplayInfo(entry = {}) {
   const progress = entry.progress || {};
   const stage = Math.max(0, Math.min(4, Number(progress?.stage) || 0));
@@ -306,7 +323,9 @@ function entryDisplayInfo(entry = {}) {
   const displayState = typeof progress.displayState === 'string' ? progress.displayState : '';
   const found = displayState ? displayState !== 'not-found' : progress.caught === true || displayStars > 0 || (Number(progress.mastered) || 0) > 0;
   const isEgg = found && (displayState === 'egg-found' || (!displayState && rawDisplayStage === 0));
-  const assetStage = isEgg ? 0 : Math.max(0, Math.min(4, rawDisplayStage || stage));
+  const assetStage = subjectId === 'grammar'
+    ? grammarAssetStageForDisplayState(displayState, rawDisplayStage, stage)
+    : (isEgg ? 0 : Math.max(0, Math.min(4, rawDisplayStage || stage)));
   return {
     displayStars,
     displayStage: rawDisplayStage,

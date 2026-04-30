@@ -31,9 +31,9 @@ export const GRAMMAR_MONSTER_STAR_MAX = 100;
 export const GRAMMAR_GRAND_STAR_MODEL_VERSION = 2;
 
 /**
- * Named stage thresholds. Internal stage 0-4 uses egg/hatch/evolve3/mega.
- * Display stage 0-5 uses all six. See grammarStarStageFor and
- * grammarStarDisplayStage for the mapping.
+ * Named stage thresholds. Asset stage 0-4 uses egg/hatch/evolve/strong/mega.
+ * Display stage 0-5 includes the hidden not-found state. See
+ * grammarStarStageFor and grammarStarDisplayStage for the mapping.
  */
 export const GRAMMAR_STAR_STAGE_THRESHOLDS = Object.freeze({
   egg: 1,
@@ -415,14 +415,14 @@ export function grammarStarNextMilestone(displayStage) {
 // ---------------------------------------------------------------------------
 
 /**
- * Maps Stars to internal stage 0-4 for compatibility with the existing
- * monster system (stages 0 = not found, 1 = egg, 2 = hatch/growing,
- * 3 = nearly mega, 4 = mega).
+ * Maps Stars to asset stage 0-4 for compatibility with monster webp assets.
+ * Stage 0 is the egg asset; 0 Stars are hidden by displayState='not-found'.
  *
  * Stage mapping:
- *   0 Stars        → 0 (Not found)
- *   1-14 Stars     → 1 (Egg found)
- *   15-64 Stars    → 2 (Hatched / Growing)
+ *   0 Stars        → 0 (hidden by display state; do not render as egg)
+ *   1-14 Stars     → 0 (Egg found)
+ *   15-34 Stars    → 1 (Hatched)
+ *   35-64 Stars    → 2 (Growing)
  *   65-99 Stars    → 3 (Nearly Mega)
  *   100 Stars      → 4 (Mega)
  */
@@ -430,8 +430,9 @@ export function grammarStarStageFor(stars) {
   const s = safeNum(stars);
   if (s >= GRAMMAR_STAR_STAGE_THRESHOLDS.mega) return 4;
   if (s >= GRAMMAR_STAR_STAGE_THRESHOLDS.evolve3) return 3;
-  if (s >= GRAMMAR_STAR_STAGE_THRESHOLDS.hatch) return 2;
-  if (s >= GRAMMAR_STAR_STAGE_THRESHOLDS.egg) return 1;
+  if (s >= GRAMMAR_STAR_STAGE_THRESHOLDS.evolve2) return 2;
+  if (s >= GRAMMAR_STAR_STAGE_THRESHOLDS.hatch) return 1;
+  if (s >= GRAMMAR_STAR_STAGE_THRESHOLDS.egg) return 0;
   return 0;
 }
 
