@@ -7,7 +7,7 @@
 PUNCTUATION QG P10 VERIFICATION
 ══════════════════════════════════════════════════════════════
 
-  ▶ P9 composed gates ...  ✓ P9 composed gates (10.6s)
+  ▶ P9 composed gates ...  ✓ P9 composed gates (10.1s)
   ▶ P10 lexical-replacement oracle ...  ✓ P10 lexical-replacement oracle (0.2s)
   ▶ Model-answer preservation after P10 patch ...  ✓ Model-answer preservation after P10 patch (0.0s) — items=148, answers=169
   ▶ Reviewer decision integrity ...  ✓ Reviewer decision integrity (0.1s) — schema=3, ai_pre_review=complete, items=192, review_required_clusters=47
@@ -16,7 +16,7 @@ PUNCTUATION QG P10 VERIFICATION
   ▶ Certification manifest validation ...  ✓ Certification manifest validation (0.2s)
   ▶ Depth-4 production-depth lock ...  ✓ Depth-4 production-depth lock (0.0s) — PRODUCTION_DEPTH=4, fixed=92, generated=100, total=192
   ▶ Depth-6 remains blocked ...  ✓ Depth-6 remains blocked (0.0s) — depth6_candidate_delta=50, status=blocked
-  ▶ Live production smoke truth gate ...  ✓ Live production smoke truth gate (0.0s) — liveProductionSmoke=not_run
+  ▶ Live production smoke truth gate ...  ✓ Live production smoke truth gate (0.0s) — liveProductionSmoke=pass
 
 ──────────────────────────────────────────────────────────────
   Summary:
@@ -25,12 +25,9 @@ PUNCTUATION QG P10 VERIFICATION
     Passed:             10/10
     Failed:             0
     Production depth:   4
-    Certification:      CERTIFIED_PRE_DEPLOY
-    Elapsed:            11.2s
+    Certification:      CERTIFIED_POST_DEPLOY
+    Elapsed:            10.7s
 ──────────────────────────────────────────────────────────────
 
-  Post-deploy blockers:
-    - Live production smoke has not run, so post-deploy certification is unavailable.
-
-  RESULT: CERTIFIED_PRE_DEPLOY
+  RESULT: CERTIFIED_POST_DEPLOY
 
