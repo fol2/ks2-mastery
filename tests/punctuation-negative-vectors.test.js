@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 
 import { PUNCTUATION_ITEMS, PUNCTUATION_CONTENT_INDEXES } from '../shared/punctuation/content.js';
 import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
+import { GENERATED_TEMPLATE_BANK } from '../shared/punctuation/generators.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(readFileSync(join(__dirname, 'fixtures/punctuation-negative-vectors.json'), 'utf8'));
@@ -22,16 +23,17 @@ test('fixture has correct schema version and metadata', () => {
   assert.ok(Array.isArray(fixture.choiceValidation));
 });
 
-test('fixture covers all 72 non-choice items with at least 2 vectors each', () => {
+test('fixture covers all 72 non-choice fixed items with at least 2 vectors each', () => {
+  const fixedVectors = fixture.vectors.filter((v) => !v.failureType.includes('generated'));
   const coverage = new Map();
-  for (const v of fixture.vectors) {
+  for (const v of fixedVectors) {
     coverage.set(v.itemId, (coverage.get(v.itemId) || 0) + 1);
   }
-  assert.equal(coverage.size, 72, `Expected 72 covered items, got ${coverage.size}`);
   for (const item of nonChoiceItems) {
     const count = coverage.get(item.id) || 0;
     assert.ok(count >= 2, `Item ${item.id} has only ${count} vectors (need >= 2)`);
   }
+  assert.ok(coverage.size >= 72, `Expected >= 72 covered fixed items, got ${coverage.size}`);
 });
 
 test('fixture has exactly 20 choice validation entries', () => {
@@ -44,8 +46,9 @@ test('total negative vectors >= 189', () => {
 
 // ---- Negative vector verification ----
 
-test('every negative vector marks INCORRECT through markPunctuationAnswer()', () => {
-  for (const vector of fixture.vectors) {
+test('every non-generated negative vector marks INCORRECT through markPunctuationAnswer()', () => {
+  const fixedVectors = fixture.vectors.filter((v) => !v.failureType.includes('generated'));
+  for (const vector of fixedVectors) {
     const item = PUNCTUATION_CONTENT_INDEXES.itemById.get(vector.itemId);
     assert.ok(item, `Item ${vector.itemId} not found in content`);
     const result = markPunctuationAnswer({ item, answer: { typed: vector.answer } });
@@ -143,6 +146,101 @@ test('every speech item with reportingClause has at least one wrong_reporting_cl
     assert.ok(
       coveredIds.has(item.id),
       `Speech item ${item.id} (reportingClause="${item.rubric.reportingClause}") missing wrong_reporting_clause vector`,
+    );
+  }
+});
+
+// ---- U3: Short-tail and generated coverage ----
+
+test('short-tail vectors (changed_content_short_tail) reject through markPunctuationAnswer()', () => {
+  const shortTailVectors = fixture.vectors.filter((v) => v.failureType === 'changed_content_short_tail');
+  assert.ok(shortTailVectors.length >= 4, `Expected >= 4 short_tail vectors, got ${shortTailVectors.length}`);
+  for (const vector of shortTailVectors) {
+    const item = PUNCTUATION_CONTENT_INDEXES.itemById.get(vector.itemId);
+    assert.ok(item, `Item ${vector.itemId} not found in content`);
+    const result = markPunctuationAnswer({ item, answer: { typed: vector.answer } });
+    assert.equal(
+      result.correct,
+      false,
+      `Short-tail vector for ${vector.itemId} should be incorrect but was correct. Answer: "${vector.answer}"`,
+    );
+  }
+});
+
+test('extra-phrase vectors (changed_content_extra_phrase) reject through markPunctuationAnswer()', () => {
+  const extraPhraseVectors = fixture.vectors.filter((v) => v.failureType === 'changed_content_extra_phrase');
+  assert.ok(extraPhraseVectors.length >= 2, `Expected >= 2 extra_phrase vectors, got ${extraPhraseVectors.length}`);
+  for (const vector of extraPhraseVectors) {
+    const item = PUNCTUATION_CONTENT_INDEXES.itemById.get(vector.itemId);
+    assert.ok(item, `Item ${vector.itemId} not found in content`);
+    const result = markPunctuationAnswer({ item, answer: { typed: vector.answer } });
+    assert.equal(
+      result.correct,
+      false,
+      `Extra-phrase vector for ${vector.itemId} should be incorrect but was correct. Answer: "${vector.answer}"`,
+    );
+  }
+});
+
+test('speech extra-tail vectors reject and include speech.extra_words_outside_reporting_clause misconception', () => {
+  const speechTailVectors = fixture.vectors.filter(
+    (v) => v.failureType === 'speech_extra_tail' || v.failureType === 'speech_extra_outer_words',
+  );
+  assert.ok(speechTailVectors.length >= 3, `Expected >= 3 speech tail vectors, got ${speechTailVectors.length}`);
+  for (const vector of speechTailVectors) {
+    const item = PUNCTUATION_CONTENT_INDEXES.itemById.get(vector.itemId);
+    assert.ok(item, `Item ${vector.itemId} not found in content`);
+    const result = markPunctuationAnswer({ item, answer: { typed: vector.answer } });
+    assert.equal(
+      result.correct,
+      false,
+      `Speech tail vector for ${vector.itemId} should be incorrect. Answer: "${vector.answer}"`,
+    );
+    assert.ok(
+      result.misconceptionTags.includes('speech.extra_words_outside_reporting_clause')
+        || result.misconceptionTags.includes('content.words_added_or_changed'),
+      `Speech tail vector for ${vector.itemId} should include speech.extra_words_outside_reporting_clause or content.words_added_or_changed. Got: [${result.misconceptionTags.join(', ')}]`,
+    );
+  }
+});
+
+test('generated vectors exist and reject through markPunctuationAnswer()', () => {
+  const generatedVectors = fixture.vectors.filter((v) => v.failureType.includes('generated'));
+  assert.ok(
+    generatedVectors.length > 0,
+    'GUARD: zero generated vectors found — at least one generated-item vector is required',
+  );
+  assert.ok(generatedVectors.length >= 8, `Expected >= 8 generated vectors, got ${generatedVectors.length}`);
+
+  for (const vector of generatedVectors) {
+    // Generated vectors reference generator families, not fixed content items.
+    // We build a synthetic item from the template bank to verify marking rejects.
+    const familyId = vector.generatorFamily;
+    assert.ok(familyId, `Generated vector missing generatorFamily field`);
+    const templates = GENERATED_TEMPLATE_BANK[familyId];
+    assert.ok(templates && templates.length > 0, `No templates found for family ${familyId}`);
+
+    // Use the first template as the synthetic item structure
+    const template = templates[0];
+    const syntheticItem = {
+      id: vector.itemId,
+      mode: template.mode || (familyId.includes('combine') ? 'combine' : familyId.includes('fix') ? 'fix' : 'insert'),
+      skillIds: template.skillIds || [familyId.replace(/^gen_/, '').replace(/_(?:insert|fix|combine|paragraph)$/, '')],
+      stem: template.stem || '',
+      model: template.model || '',
+      accepted: [template.model, ...(template.accepted || [])].filter(Boolean),
+      validator: template.validator || undefined,
+      rubric: template.rubric || undefined,
+      misconceptionTags: template.misconceptionTags || [],
+      preserveTokens: template.preserveTokens || undefined,
+      source: 'generated',
+    };
+
+    const result = markPunctuationAnswer({ item: syntheticItem, answer: { typed: vector.answer } });
+    assert.equal(
+      result.correct,
+      false,
+      `Generated vector for ${vector.itemId} (${familyId}) should be incorrect but was correct. Answer: "${vector.answer}"`,
     );
   }
 });

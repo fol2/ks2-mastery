@@ -1138,6 +1138,136 @@
       "answer": "\"Where are we meeting?\" asked Tom.",
       "expectedResult": "fail",
       "failureType": "wrong_reporting_clause"
+    },
+    {
+      "itemId": "lc_insert_supplies",
+      "answer": "We needed pencils, rulers and glue today.",
+      "expectedResult": "fail",
+      "failureType": "changed_content_short_tail"
+    },
+    {
+      "itemId": "lc_insert_supplies",
+      "answer": "We needed pencils, rulers and glue in class.",
+      "expectedResult": "fail",
+      "failureType": "changed_content_short_tail"
+    },
+    {
+      "itemId": "pa_insert_museum",
+      "answer": "The museum, a former station, was busy today.",
+      "expectedResult": "fail",
+      "failureType": "changed_content_short_tail"
+    },
+    {
+      "itemId": "pa_insert_museum",
+      "answer": "The museum, a former station, was busy in class.",
+      "expectedResult": "fail",
+      "failureType": "changed_content_short_tail"
+    },
+    {
+      "itemId": "lc_insert_supplies",
+      "answer": "We needed pencils, rulers and glue in the art room.",
+      "expectedResult": "fail",
+      "failureType": "changed_content_extra_phrase"
+    },
+    {
+      "itemId": "pa_insert_museum",
+      "answer": "The museum, a former station, was busy during the holiday.",
+      "expectedResult": "fail",
+      "failureType": "changed_content_extra_phrase"
+    },
+    {
+      "itemId": "sp_insert_question",
+      "answer": "Ella asked, \"Can we start now?\" today.",
+      "expectedResult": "fail",
+      "failureType": "speech_extra_tail"
+    },
+    {
+      "itemId": "sp_insert_question",
+      "answer": "Ella asked, \"Can we start now?\" in the cupboard.",
+      "expectedResult": "fail",
+      "failureType": "speech_extra_tail"
+    },
+    {
+      "itemId": "sp_fix_question",
+      "answer": "\"Where are we meeting?\" asked Zara in class.",
+      "expectedResult": "fail",
+      "failureType": "speech_extra_tail"
+    },
+    {
+      "itemId": "sp_insert_question",
+      "answer": "Ella asked, \"Can we start now?\" she repeated.",
+      "expectedResult": "fail",
+      "failureType": "speech_extra_outer_words"
+    },
+    {
+      "itemId": "sp_fix_question",
+      "answer": "\"Where are we meeting?\" asked Zara loudly in the hallway.",
+      "expectedResult": "fail",
+      "failureType": "speech_extra_outer_words"
+    },
+    {
+      "itemId": "gen_list_commas_insert",
+      "answer": "We packed ropes, maps and snacks today.",
+      "expectedResult": "fail",
+      "failureType": "generated_closed_extra_tail",
+      "generatorFamily": "gen_list_commas_insert",
+      "generatorTemplateModel": "We packed ropes, maps and snacks."
+    },
+    {
+      "itemId": "gen_fronted_adverbial_fix",
+      "answer": "After the storm, the path was muddy today.",
+      "expectedResult": "fail",
+      "failureType": "generated_closed_extra_tail",
+      "generatorFamily": "gen_fronted_adverbial_fix",
+      "generatorTemplateModel": "After the storm, the path was muddy."
+    },
+    {
+      "itemId": "gen_semicolon_fix",
+      "answer": "The lighthouse was bright; the boats still waited today.",
+      "expectedResult": "fail",
+      "failureType": "generated_closed_extra_tail",
+      "generatorFamily": "gen_semicolon_fix",
+      "generatorTemplateModel": "The lighthouse was bright; the boats still waited."
+    },
+    {
+      "itemId": "gen_dash_clause_fix",
+      "answer": "The gate was stuck – we found another path today.",
+      "expectedResult": "fail",
+      "failureType": "generated_closed_extra_tail",
+      "generatorFamily": "gen_dash_clause_fix",
+      "generatorTemplateModel": "The gate was stuck – we found another path."
+    },
+    {
+      "itemId": "gen_hyphen_insert",
+      "answer": "The little-used path was hidden today.",
+      "expectedResult": "fail",
+      "failureType": "generated_closed_extra_tail",
+      "generatorFamily": "gen_hyphen_insert",
+      "generatorTemplateModel": "The little-used path was hidden."
+    },
+    {
+      "itemId": "gen_parenthesis_fix",
+      "answer": "The harbour, an old fishing port, was busy today.",
+      "expectedResult": "fail",
+      "failureType": "generated_closed_extra_tail",
+      "generatorFamily": "gen_parenthesis_fix",
+      "generatorTemplateModel": "The harbour, an old fishing port, was busy."
+    },
+    {
+      "itemId": "gen_apostrophe_possession_insert",
+      "answer": "The captain's whistle was beside the team's coats today.",
+      "expectedResult": "fail",
+      "failureType": "generated_closed_extra_tail",
+      "generatorFamily": "gen_apostrophe_possession_insert",
+      "generatorTemplateModel": "The captain's whistle was beside the team's coats."
+    },
+    {
+      "itemId": "gen_speech_insert",
+      "answer": "Maya asked, \"Can we start now?\" today.",
+      "expectedResult": "fail",
+      "failureType": "generated_closed_extra_tail",
+      "generatorFamily": "gen_speech_insert",
+      "generatorTemplateModel": "Maya asked, \"Can we start now?\""
     }
   ],
   "choiceValidation": [
