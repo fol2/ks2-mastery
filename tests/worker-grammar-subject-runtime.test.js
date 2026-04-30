@@ -744,6 +744,62 @@ test('Grammar command route starts explicit templates without inheriting stored 
   DB.close();
 });
 
+test('Grammar command route exposes learner cue metadata through the read model', async () => {
+  const DB = createMigratedSqliteD1Database();
+  const app = createWorkerApp({ now: () => 1_777_000_000_000 });
+  seedAccountLearner(DB);
+
+  const targetSentence = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-target-sentence-cue-start',
+    expectedLearnerRevision: 0,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: 'identify_words_in_sentence',
+      seed: 1,
+    },
+  });
+  assert.equal(targetSentence.response.status, 200, JSON.stringify(targetSentence.body));
+  const targetSentenceItem = targetSentence.body.subjectReadModel.session.currentItem;
+  assert.equal(targetSentenceItem.templateId, 'identify_words_in_sentence');
+  assert.ok(Array.isArray(targetSentenceItem.promptParts));
+  assert.equal(targetSentenceItem.focusCue.type, 'target-sentence');
+  assert.equal(targetSentenceItem.focusCue.targetKind, 'sentence');
+  assert.ok(targetSentenceItem.focusCue.targetText.length >= 16);
+  assert.ok(targetSentenceItem.screenReaderPromptText.includes(targetSentenceItem.focusCue.targetText));
+  assert.ok(targetSentenceItem.readAloudText.includes(targetSentenceItem.focusCue.targetText));
+  assert.match(targetSentenceItem.readAloudText, /The sentence is:/);
+  assert.equal(targetSentenceItem.focusTarget, undefined);
+  assert.equal(targetSentenceItem.solutionLines, undefined);
+
+  const nounPhrase = await postCommand(app, DB, {
+    command: 'start-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-noun-phrase-cue-start',
+    expectedLearnerRevision: 1,
+    payload: {
+      mode: 'smart',
+      roundLength: 1,
+      templateId: 'qg_p4_voice_roles_transfer',
+      seed: 1,
+    },
+  });
+  assert.equal(nounPhrase.response.status, 200, JSON.stringify(nounPhrase.body));
+  const nounPhraseItem = nounPhrase.body.subjectReadModel.session.currentItem;
+  assert.equal(nounPhraseItem.templateId, 'qg_p4_voice_roles_transfer');
+  assert.equal(nounPhraseItem.focusCue.type, 'underline');
+  assert.equal(nounPhraseItem.focusCue.targetKind, 'noun-phrase');
+  assert.match(nounPhraseItem.screenReaderPromptText, /The underlined noun phrase is:/);
+  assert.match(nounPhraseItem.readAloudText, /The underlined noun phrase is:/);
+  assert.doesNotMatch(nounPhraseItem.readAloudText, /The underlined word is:/);
+  assert.equal(nounPhraseItem.focusTarget, undefined);
+  assert.equal(nounPhraseItem.solutionLines, undefined);
+
+  DB.close();
+});
+
 test('Grammar command route accepts sentence builder mode', async () => {
   const DB = createMigratedSqliteD1Database();
   const app = createWorkerApp({ now: () => 1_777_000_000_000 });

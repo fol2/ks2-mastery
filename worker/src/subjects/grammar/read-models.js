@@ -46,9 +46,41 @@ function safeInputSpec(inputSpec) {
   return clone;
 }
 
+const SAFE_PROMPT_PART_KINDS = new Set(['text', 'lineBreak', 'sentence', 'underline', 'emphasis']);
+const SAFE_FOCUS_CUE_TYPES = new Set(['underline', 'bold', 'quoted-word', 'target-sentence']);
+const SAFE_FOCUS_CUE_TARGET_KINDS = new Set(['word', 'noun-phrase', 'sentence', 'group', 'pair']);
+
+function safePromptParts(promptParts) {
+  if (!Array.isArray(promptParts)) return null;
+  const parts = promptParts.map((part) => {
+    if (!isPlainObject(part)) return null;
+    if (!SAFE_PROMPT_PART_KINDS.has(part.kind)) return null;
+    const kind = part.kind;
+    const text = typeof part.text === 'string' ? part.text : '';
+    return { kind, text };
+  }).filter((part) => part && (part.kind === 'lineBreak' || part.text));
+  return parts.length ? parts : null;
+}
+
+function safeFocusCue(focusCue) {
+  if (!isPlainObject(focusCue)) return null;
+  const type = SAFE_FOCUS_CUE_TYPES.has(focusCue.type) ? focusCue.type : '';
+  const targetKind = SAFE_FOCUS_CUE_TARGET_KINDS.has(focusCue.targetKind) ? focusCue.targetKind : '';
+  const targetText = typeof focusCue.targetText === 'string' ? focusCue.targetText : '';
+  if (!type || !targetKind || !targetText) return null;
+  return {
+    type,
+    targetKind,
+    targetText,
+    targetOccurrence: Number.isFinite(Number(focusCue.targetOccurrence)) ? Number(focusCue.targetOccurrence) : 1,
+  };
+}
+
 function safeCurrentItem(item) {
   if (!isPlainObject(item)) return null;
-  return {
+  const promptParts = safePromptParts(item.promptParts);
+  const focusCue = safeFocusCue(item.focusCue);
+  const output = {
     contentReleaseId: item.contentReleaseId === GRAMMAR_CONTENT_RELEASE_ID ? GRAMMAR_CONTENT_RELEASE_ID : '',
     templateId: typeof item.templateId === 'string' ? item.templateId : '',
     templateLabel: typeof item.templateLabel === 'string' ? item.templateLabel : '',
@@ -73,6 +105,15 @@ function safeCurrentItem(item) {
       }
       : null,
   };
+  if (promptParts) output.promptParts = promptParts;
+  if (focusCue) output.focusCue = focusCue;
+  if (typeof item.screenReaderPromptText === 'string' && item.screenReaderPromptText) {
+    output.screenReaderPromptText = item.screenReaderPromptText;
+  }
+  if (typeof item.readAloudText === 'string' && item.readAloudText) {
+    output.readAloudText = item.readAloudText;
+  }
+  return output;
 }
 
 function safeMiniTestQuestion(entry, index, currentIndex, { includeItem = false, includeMarked = false } = {}) {
