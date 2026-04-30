@@ -7,6 +7,8 @@
 
 **Evidence boundary:** this baseline contains one real production observation from 2026-04-30 and four operator-accepted simulation rows from issue #684. The simulated rows complete the A2-3 decision gate by operator instruction, but they do not represent elapsed real production calendar days.
 
+**Code-complete vs. external-readiness distinction (A3 annotation, 2026-04-30):** The A2 phase is *code complete* — all implementation, testing, privacy hardening, and operational tooling are delivered and working. The phase is *mechanically certified* — the validator passes all rings. However, "code complete" and "mechanically certified" do not imply "external readiness proven". External readiness requires real repeated-use evidence from a sufficient cohort over elapsed calendar time, which A2 deliberately deferred to the A3 hold-and-harden phase. This baseline's `insufficient-data` confidence ratings correctly reflect that gap.
+
 ---
 
 ## 1. Readiness (confidence: insufficient)

@@ -19,13 +19,15 @@ They are recorded to complete the A2-3 decision gate after operator confirmation
 
 ## Observation Log
 
-| Date | Learner | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Status |
-|------|---------|-----------|----------------|----------------|----------------|----------|--------|
-| 2026-04-30 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | OK |
-| 2026-05-01 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | SIMULATION-OK |
-| 2026-05-02 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | SIMULATION-OK |
-| 2026-05-03 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | SIMULATION-OK |
-| 2026-05-04 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | SIMULATION-OK |
+| Date | Learner | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Source | Status |
+|------|---------|-----------|----------------|----------------|----------------|----------|--------|--------|
+| 2026-04-30 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | real-production | OK |
+| 2026-05-01 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | simulation | SIMULATION-OK |
+| 2026-05-02 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | simulation | SIMULATION-OK |
+| 2026-05-03 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | simulation | SIMULATION-OK |
+| 2026-05-04 | learner-mog9aal4-p1f8xbmp | ready | 0 | 0 | no-gap | override-active | simulation | SIMULATION-OK |
+
+> **A3 provenance annotation (added 2026-04-30):** The `Source` column was added retroactively during pA3 Ring A3-0 drift reconciliation. Row 1 is `real-production` (verified against live production Worker via PR #704). Rows 2-5 are `simulation` (operator-accepted modelled outcomes from issue #684, not elapsed real calendar observations).
 
 ## Stop Conditions
 
