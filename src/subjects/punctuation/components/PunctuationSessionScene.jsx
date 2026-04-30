@@ -46,6 +46,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '../../../platform/ui/Button.jsx';
 import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
+import { PracticeStage } from '../../../platform/ui/PracticeStage.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   bellstormSceneForPhase,
@@ -750,22 +751,12 @@ export function PunctuationSessionScene({ ui, actions }) {
     if (sceneUrl) previousHeroBgRef.current = sceneUrl;
   }, [sceneUrl]);
 
-  if (phase === 'feedback') {
-    return (
-      <FeedbackBranch
-        ui={ui}
-        actions={actions}
-        heroUrl={sceneUrl}
-        previousHeroUrl={previousHeroUrl}
-      />
-    );
-  }
+  const branch = phase === 'feedback'
+    ? <FeedbackBranch ui={ui} actions={actions} heroUrl={sceneUrl} previousHeroUrl={previousHeroUrl} />
+    : <ActiveItemBranch ui={ui} actions={actions} heroUrl={sceneUrl} previousHeroUrl={previousHeroUrl} />;
   return (
-    <ActiveItemBranch
-      ui={ui}
-      actions={actions}
-      heroUrl={sceneUrl}
-      previousHeroUrl={previousHeroUrl}
-    />
+    <PracticeStage subjectId="punctuation" scene="session" backdrop="punctuation-map">
+      {branch}
+    </PracticeStage>
   );
 }
