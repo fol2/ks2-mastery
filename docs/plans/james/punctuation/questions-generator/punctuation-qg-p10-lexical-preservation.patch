@@ -1,0 +1,88 @@
+--- a/shared/punctuation/marking.js
++++ b/shared/punctuation/marking.js
+@@ -994,7 +994,7 @@
+   // Word-change detection is left to the validator-specific logic (better diagnostics).
+   if ((item.mode === 'insert' || item.mode === 'fix') && validator.type) {
+     const preservation = evaluatePreservation(text, item);
+-    if (!preservation.preserved && preservation.extraWords.length > 0) {
++    if (!preservation.preserved) {
+       return {
+         correct: false,
+         expected: item.model || '',
+
+--- /dev/null
++++ b/tests/punctuation-closed-lexical-preservation-p10.test.js
+@@ -0,0 +1,73 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++
++import { PUNCTUATION_CONTENT_MANIFEST, PUNCTUATION_ITEMS } from '../shared/punctuation/content.js';
++import { PRODUCTION_DEPTH, createPunctuationGeneratedItems } from '../shared/punctuation/generators.js';
++import { markPunctuationAnswer } from '../shared/punctuation/marking.js';
++
++const STOP_WORDS = new Set([
++  'the', 'a', 'an', 'and', 'or', 'but', 'we', 'you', 'i', 'he', 'she', 'they', 'it',
++  'was', 'were', 'is', 'are', 'am', 'be', 'been', 'being', 'had', 'has', 'have',
++  'do', 'did', 'does', 'to', 'of', 'in', 'on', 'at', 'for', 'with', 'from', 'by',
++  'as', 'that', 'this', 'who', 'which', 'when', 'where', 'why', 'can', 'could',
++  'will', 'would', 'shall', 'should', 'may', 'might', 'must', 'our', 'your', 'my',
++  'his', 'her', 'their', 'its', 'not',
++]);
++
++function wordMatches(text) {
++  return [...String(text).matchAll(/[A-Za-z][A-Za-z']*/g)].map((match) => ({
++    word: match[0],
++    index: match.index,
++  }));
++}
++
++function lexicalReplacementVariants(model) {
++  return wordMatches(model)
++    .filter(({ word }) => word.length > 2 && !STOP_WORDS.has(word.toLowerCase()))
++    .slice(0, 4)
++    .map(({ word, index }) => {
++      const replacement = /^[A-Z]/.test(word) ? 'Banana' : 'banana';
++      return model.slice(0, index) + replacement + model.slice(index + word.length);
++    });
++}
++
++function productionPool() {
++  const generated = createPunctuationGeneratedItems({
++    manifest: PUNCTUATION_CONTENT_MANIFEST,
++    seed: PUNCTUATION_CONTENT_MANIFEST.releaseId || 'punctuation',
++    perFamily: PRODUCTION_DEPTH,
++  });
++  return [
++    ...PUNCTUATION_ITEMS.map((item) => ({ ...item, _source: 'fixed' })),
++    ...generated.map((item) => ({ ...item, _source: 'generated' })),
++  ];
++}
++
++test('P10: generated closed insert/fix items reject same-count lexical replacements', () => {
++  const items = productionPool().filter((item) =>
++    item._source === 'generated'
++      && ['insert', 'fix'].includes(item.mode)
++      && item.validator
++      && typeof item.model === 'string'
++      && item.model.trim()
++  );
++  assert.ok(items.length > 0, 'Expected generated closed insert/fix items in production pool');
++
++  const leaks = [];
++  let attempts = 0;
++  for (const item of items) {
++    const modelResult = markPunctuationAnswer({ item, answer: { typed: item.model } });
++    assert.equal(modelResult.correct, true, `Model answer should still pass for ${item.id}: ${item.model}`);
++
++    for (const answer of lexicalReplacementVariants(item.model)) {
++      attempts += 1;
++      const result = markPunctuationAnswer({ item, answer: { typed: answer } });
++      if (result.correct) {
++        leaks.push({ itemId: item.id, family: item.generatorFamilyId, answer });
++      }
++    }
++  }
++
++  assert.ok(attempts > 0, 'P10 lexical-replacement audit must exercise at least one adversarial answer');
++  assert.deepEqual(leaks, []);
++});
