@@ -9,7 +9,7 @@ problem_type: evidence-attribution
 
 # Capacity CPU and D1 Evidence Attribution
 
-This guide covers the P1 evidence-attribution lane for joining Cloudflare Worker invocation telemetry to KS2 Mastery capacity evidence. The output is diagnostic only: joined CPU, Worker wall time, invocation outcome, and sampled `capacity.request` statement details must never certify or promote a classroom capacity claim.
+This guide covers the evidence-attribution lane for joining Cloudflare Worker invocation telemetry to KS2 Mastery capacity evidence. The output is diagnostic only: joined CPU, Worker wall time, invocation outcome, and sampled `capacity.request` statement details must never certify or promote a classroom capacity claim.
 
 ## Evidence Lanes
 
@@ -18,17 +18,56 @@ This guide covers the P1 evidence-attribution lane for joining Cloudflare Worker
 - Missing Worker logs are fail-closed as `unclassified-insufficient-logs`. A missing invocation log, missing CPU/wall fields, or malformed export cannot be reinterpreted as a pass.
 - Invocation coverage and sampled `capacity.request` statement coverage are separate. Invocation CPU/wall can be present while statement logs are sampled out.
 
+## P3 Canonical Invocation Capture
+
+P3 uses a Cloudflare Workers Logs/Tail JSONL invocation export as the canonical capture source. The expected invocation record is a `cf-worker-event` shape with finite Cloudflare CPU and wall fields, request method/url/status, timestamp, and retained request-id material. The fixture that locks the accepted schema is:
+
+- `tests/fixtures/capacity-worker-logs/p3-invocation-export.jsonl`
+
+The live operator command is:
+
+```bash
+P3_RUN=2026-04-30-p3-t1
+RAW_LOG=/tmp/ks2-${P3_RUN}-worker-tail.jsonl
+npm run ops:tail:json > "$RAW_LOG"
+```
+
+The raw log path must stay outside git. If a local operator must temporarily place raw captures under `reports/capacity/evidence/`, names containing `worker-log`, `worker-tail`, `pretty-tail`, `raw-tail`, `tail-raw`, or ending in `-tail` before a raw log extension are ignored by `reports/capacity/.gitignore`. Do not name redacted artefacts with those raw-log tokens; use `*-tail-correlation.json`, `*-statement-map.json`, and `*-tail-classification.md`.
+
+The JSONL export must provide finite `cpuTimeMs` and `wallTimeMs` values. Pretty tail output can still prove sampled `capacity.request` statement coverage, but it is not sufficient for P3 invocation telemetry. If the JSON tail available to the operator does not include finite CPU/wall fields and no approved Workers Logs, Tail Worker, Trace, or Logpush export with the same machine-joinable fields is available, P3 exits through `telemetry-repair-failed`. In that exit path, do not run promotion wording, do not infer CPU from wall time, and do not start D1/Worker CPU/payload mitigation.
+
 ## Collection Flow
 
-1. Run the relevant capacity matrix command with a unique output path and top-tail samples retained.
-2. Export a bounded Cloudflare Workers Logs, Tail Workers, or Logpush JSON/JSONL slice for the same time window.
-3. Join the exported logs to the evidence by request id:
+1. Start the bounded JSON tail or approved Workers Logs export and record the local raw path.
+2. Run the relevant capacity matrix command with a unique output path and top-tail samples retained.
+3. Stop the capture after the capacity run finishes.
+4. Confirm the capture window overlaps the evidence `startedAt` / `finishedAt` window.
+5. Join the exported logs to the evidence by request id.
+6. Commit only the redacted correlation, statement map, classification, and strict evidence artefacts.
+
+Operator checklist for every P3 strict or smoke join:
+
+| Field | Required value |
+| --- | --- |
+| Capture start/end | UTC timestamps bracketing the evidence run. |
+| Origin | `https://ks2.eugnel.uk` for production strict evidence. |
+| Config path | `reports/capacity/configs/30-learner-beta.json` for strict 30 candidates. |
+| Learners / burst / rounds | `30 / 20 / 1` for strict 30 candidates. |
+| Evidence path | Unique `reports/capacity/evidence/<date>-p3-*.json` path. |
+| Raw log path | Local path such as `/tmp/ks2-<run>-worker-tail.jsonl`; not committed. |
+| Redacted join path | `reports/capacity/evidence/<date>-p3-*-tail-correlation.json`. |
+| Statement map path | `reports/capacity/evidence/<date>-p3-*-statement-map.json` when statement logs are captured. |
+| Invocation coverage | `diagnostics.workerLogJoin.coverage.invocation` from the joined output. |
+| Statement coverage | `diagnostics.workerLogJoin.coverage.statementLogs` from the joined output. |
+| Warnings | Must not include `capture-window-no-overlap` for decision-grade evidence. |
+
+Join the exported logs to the evidence by request id:
 
 ```bash
 node ./scripts/join-capacity-worker-logs.mjs \
-  --evidence reports/capacity/evidence/30-learner-beta-v2-2026-04-29-p1-strict.json \
-  --logs reports/capacity/evidence/worker-logs-2026-04-29.jsonl \
-  --output reports/capacity/evidence/2026-04-29-p1-tail-correlation.json
+  --evidence reports/capacity/evidence/2026-04-30-p3-t1-strict.json \
+  --logs /tmp/ks2-p3-t1-worker-tail.jsonl \
+  --output reports/capacity/evidence/2026-04-30-p3-t1-tail-correlation.json
 ```
 
 The join script matches `serverRequestId` first. It only falls back to the echoed `clientRequestId` when the evidence proves the Worker accepted that id by echoing the same value.
@@ -63,6 +102,7 @@ Correlation output is written as a diagnostic artefact with:
 - `diagnostics.workerLogJoin.coverage.invocation`: top-tail samples with matched Cloudflare CPU/wall invocation logs.
 - `diagnostics.workerLogJoin.coverage.statementLogs`: top-tail samples with matched sampled `capacity.request` statement breakdowns.
 - `diagnostics.workerLogJoin.samples[]`: per-request hashed request ID, app wall time, response bytes, D1 counts, Cloudflare CPU/wall, outcome, capacity-request D1 duration, bounded opaque statement IDs/counts, join status, and classification.
+- `diagnostics.workerLogJoin.warnings[]`: bounded warning strings copied from the join. `capture-window-no-overlap` means the log timestamps do not overlap the capacity evidence window. `insufficient-invocation-coverage` means sampled statement logs matched the retained top-tail set but finite invocation CPU/wall coverage remained zero.
 
 Classification values are intentionally conservative:
 
