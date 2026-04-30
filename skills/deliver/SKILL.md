@@ -192,6 +192,16 @@ Review Follower (if any BLOCKING)
   → Repeat until zero blockers
 ```
 
+### ⛔ Anti-circumvention: Phase 3 review rules
+
+These are HARD rules. Violating any of them is a protocol failure:
+
+1. **BLOCK means BLOCK.** You cannot reclassify a BLOCK as "advisory", "minor", "acceptable", "edge case only", or "not applicable". If a reviewer returns BLOCK, the fix cycle MUST run.
+2. **You cannot merge with open blockers.** No PR merges until ALL dispatched reviewers return APPROVE. There is no "merge now, fix later" path.
+3. **You cannot reduce the reviewer set.** All 4 always-on reviewers must be dispatched for every PR. You cannot skip one because "this PR is small" or "only touches tests".
+4. **Re-review means ALL reviewers.** After fixes, re-dispatch ALL reviewers that were originally dispatched — not just the one that blocked. Fixes can introduce new issues.
+5. **You cannot self-approve.** The orchestrator cannot decide a finding is invalid. Only a re-dispatched reviewer can clear its own block.
+
 ### Merge Gate
 
 - ALL reviewers must APPROVE (zero blockers)
@@ -218,6 +228,8 @@ This step is the core quality gate of the delivery. It MUST run. The contract is
 
 ### Reviewer Panel (10 independent subagents)
 
+ALL 10 reviewers MUST be dispatched. You cannot reduce this number.
+
 Spawn 10 independent subagent reviewers in parallel:
 
 1. **Functional Completeness** — every contract requirement is implemented and working
@@ -238,21 +250,55 @@ Each reviewer:
 - Reads the **current codebase state** (post all Phase 3 merges)
 - Returns: PASS or BLOCK (with specific, actionable findings referencing contract requirements)
 
+### ⛔ Anti-circumvention: Phase 4 delivery review rules
+
+These are the HARDEST rules in the entire pipeline. This is where delivery quality is enforced. Every observed failure of this pipeline has been the orchestrator rationalising its way past a BLOCK here.
+
+1. **BLOCK means FIX CYCLE. No exceptions.** If a reviewer returns BLOCK, you MUST invoke `/ce-work` (fix mode) to address the findings. You cannot:
+   - Reclassify the BLOCK as "advisory" or "informational"
+   - Decide the finding is "minor" or "low priority"
+   - Argue the reviewer is wrong without dispatching a fix
+   - Claim the dimension is "N/A" to skip it (if truly N/A, the reviewer itself will return PASS — you do not make this judgement)
+   - Proceed to Phase 5 while any BLOCK exists
+
+2. **All 10 reviewers must be dispatched. Every time.** You cannot:
+   - Skip reviewers because "this contract doesn't have UI" (the reviewer decides that, not you)
+   - Reduce to 6 or 8 reviewers to save tokens
+   - Merge dimensions (e.g., "security and performance are both fine" — they are separate reviewers)
+   - Substitute your own assessment for a reviewer's verdict
+
+3. **Re-review means ALL 10. Every time.** After fixes:
+   - Dispatch all 10 again — not just the ones that blocked
+   - Previously-passing reviewers can issue NEW blocks on the re-review
+   - This is by design: fixes can break previously-passing areas
+
+4. **The fix cycle has its own mandatory code review.** The `/ce-work` (fix mode) follows the full Phase 3 per-unit pipeline including MANDATORY code reviewers. You cannot:
+   - Push fixes directly without a PR
+   - Merge fix PRs without code reviewer approval
+   - Skip the review follower cycle if a code reviewer blocks
+
+5. **Only reviewer verdicts count.** The orchestrator cannot:
+   - Override a BLOCK ("I checked and it's fine")
+   - Declare delivery complete while any BLOCK stands
+   - Decide findings are "already addressed" without a re-review confirming PASS
+
+6. **"N/A" is the reviewer's call, not yours.** If a dimension does not apply to this contract (e.g., no UI work), the reviewer for that dimension will return PASS with a note explaining why. You do not pre-empt this by not dispatching the reviewer.
+
 ### Fixing blockers (`/ce-work` — fix mode)
 
 If ANY reviewer blocks:
-1. Collect all blocking findings from all reviewers
+1. Collect ALL blocking findings from ALL reviewers (not just one)
 2. Invoke `/ce-work` to implement the fixes — this is a DIFFERENT `/ce-work` invocation from Phase 3:
    - **Phase 3 `/ce-work`**: implements plan units (building new features)
    - **Phase 4 `/ce-work`**: fixes delivery gaps found by contract reviewers (patching to meet the contract)
-3. The fix `/ce-work` follows the same per-unit pipeline: worker → PR → MANDATORY code reviewers → follower → merge
+3. The fix `/ce-work` follows the FULL per-unit pipeline: worker → PR → MANDATORY code reviewers → follower → merge. No shortcuts.
 4. After ALL fix PRs merged, re-invite ALL 10 delivery reviewers (not just the ones that blocked)
 5. On re-review rounds, reviewers re-evaluate the ENTIRE contract at the highest standard — new blockers from previously-passing areas are valid and expected
 6. Repeat until all 10 simultaneously PASS
 
 ### Exit criteria
 
-The contract is **delivered** when all 10 reviewers simultaneously return PASS on the same codebase state. Report: "Phase 4 complete: contract delivered. Starting Phase 5."
+The contract is **delivered** ONLY when all 10 reviewers simultaneously return PASS on the same codebase state. Report: "Phase 4 complete: contract delivered (round N, all 10 PASS). Starting Phase 5."
 
 ---
 
@@ -354,6 +400,23 @@ If `/dream` is available, invoke it. Consolidate session learnings into persiste
 - Report progress only at phase transitions: "Phase 1 complete. Phase 2 starting."
 - Stop ONLY when all phases complete (Phase 8, or Phase 7 if `/dream` unavailable).
 - If truly stuck (missing credentials, environment broken), report the blocker and stop.
+
+### ⛔ Orchestrator integrity rule
+
+You are NOT allowed to rationalise skipping reviewers or overriding their verdicts. If you catch yourself thinking any of the following, STOP — you are about to violate protocol:
+
+| Rationalisation thought | What you MUST do instead |
+|---|---|
+| "This BLOCK is minor / advisory" | Run the fix cycle. BLOCK = fix. |
+| "This dimension doesn't apply" | Dispatch the reviewer anyway. Let IT decide. |
+| "The reviewer is wrong" | Run the fix cycle. Only a re-review clears a BLOCK. |
+| "I'll fix it in the report" | No. Fix it in code. Reports document, they don't fix. |
+| "Good enough for this contract" | Not your call. 10 reviewers decide "good enough". |
+| "I'll save tokens by skipping X" | Protocol is non-negotiable. Dispatch all. |
+| "The contract says N/A" | Dispatch reviewer. It will PASS if truly N/A. |
+| "I already checked this myself" | Self-review ≠ independent review. Dispatch. |
+| "Only 1 reviewer blocked, rest passed" | 1 BLOCK = fix cycle → re-review ALL 10. |
+| "The findings overlap with Phase 3 review" | Phase 4 is a different concern. Run it fully. |
 
 ## No-Regression Guarantees
 
