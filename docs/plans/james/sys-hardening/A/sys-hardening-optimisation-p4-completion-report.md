@@ -10,6 +10,8 @@ prs:
   - "#754 — U1 baseline lock"
   - "#756 — U2 30-learner promotion"
   - "#758 — U3/U4/U5 fail-closed tests, 60-learner prep, budget refresh"
+  - "#761 — U6/U7/U8 status report, path decision, completion report"
+  - "#765 — fix: 3 explicit negative tests for delivery reviewer BLOCK"
 ---
 
 # System Hardening Optimisation P4 — Completion Report
@@ -109,10 +111,11 @@ No raw Worker/Tail captures committed to git. Confirmed:
 | Gate | Result |
 |------|--------|
 | `npm run capacity:verify-evidence` | PASS (5 rows, no skip-ancestry) |
-| `tests/admin-production-evidence.test.js` | PASS (36 tests including 7 new P4 scenarios) |
+| `tests/admin-production-evidence.test.js` | PASS (39 tests including 10 P4 scenarios: S1-S7 + S2b/S4b/S7b) |
 | `tests/capacity-budget-ledger.test.js` | PASS (6 tests) |
 | Threshold configs unchanged | PASS (no modifications) |
 | Runtime code unchanged | PASS (no `src/` or `worker/` changes) |
+| 10-reviewer delivery validation | PASS (all 10 dimensions, 1 fix round for test coverage) |
 
 ---
 
@@ -135,11 +138,12 @@ No raw Worker/Tail captures committed to git. Confirmed:
 
 | Metric | Value |
 |--------|-------|
-| PRs merged | 3 (#754, #756, #758) |
-| Plan units delivered (autonomous) | 7/7 (U1-U7 + U8) |
+| PRs merged | 5 (#754, #756, #758, #761, #765) |
+| Plan units delivered (autonomous) | 8/8 (U1-U8) |
 | Plan units deferred (human-required) | 2 (P4-U3 execution, P4-U4 tasks 1-4) |
-| Tests added | 7 fail-closed scenarios |
-| Regression tests passing | All |
+| Tests added | 10 fail-closed scenarios (7 original + 3 explicit negative tests from fix round) |
+| Regression tests passing | All (39/39 admin-production-evidence, 6/6 capacity-budget-ledger) |
 | Runtime code changes | 0 |
 | Threshold config changes | 0 |
-| Review iterations | 1 (plan review found 2 blockers, resolved in 1 pass) |
+| Plan review iterations | 1 (3 reviewers found 2 blockers, resolved in 1 pass) |
+| Delivery review iterations | 2 (10 reviewers; round 1 had 1 BLOCK on test coverage, fix PR #765, round 2 all 10 PASS) |
