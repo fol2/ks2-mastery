@@ -128,10 +128,9 @@ function insertSubjectState(server, learnerId, subjectId, {
     learnerId,
     subjectId,
     typeof ui === 'string' ? ui : JSON.stringify(ui),
-    // Grammar preserves `data` verbatim through `subjectStateRowToRecord`.
-    // Spelling and punctuation return `data: {}` through `publicSubjectStateRowToRecord`
-    // — the fixture marker does NOT survive those code paths.
-    // All identity assertions in this file use grammar for this reason.
+    // The public transform strips `data` for all child-facing subject
+    // projections. Grammar keeps this marker under `ui.prefs` after the
+    // Worker read-model is rebuilt.
     JSON.stringify(stateData),
     updatedAt,
     ACCOUNT_ID,
@@ -291,31 +290,35 @@ test('multi-learner #1: POST bootstrap ships child_subject_state for all 3 writa
     assert.deepEqual(subjectKeys, expectedKeys,
       `subjectStates must include all writable learners across all 3 subjects, got ${JSON.stringify(subjectKeys)}`);
 
-    // Verify data identity via the grammar path (grammar preserves `data`
-    // verbatim through `subjectStateRowToRecord`; spelling/punctuation
-    // redact private session fields but keep `prefs` + `progress`).
+    // Verify identity via the Grammar public read-model. The public transform
+    // strips raw data for all three subjects, so subject identity must survive
+    // through the redacted UI payload instead.
     const aGrammar = payload.subjectStates['learner-a::grammar'];
     assert.ok(aGrammar, 'learner-a grammar subject state present');
-    assert.equal(aGrammar?.data?.prefs?.marker?.fixture, 'learner-a-grammar',
-      `learner-a grammar fixture marker identity, got ${JSON.stringify(aGrammar?.data?.prefs?.marker)}`);
-    assert.equal(aGrammar?.data?.prefs?.marker?.progress, 88);
+    assert.deepEqual(aGrammar.data, {}, 'learner-a grammar data stripped by public transform');
+    assert.equal(aGrammar?.ui?.learnerId, 'learner-a');
+    assert.equal(aGrammar?.ui?.prefs?.marker?.fixture, 'learner-a-grammar',
+      `learner-a grammar fixture marker identity, got ${JSON.stringify(aGrammar?.ui?.prefs?.marker)}`);
+    assert.equal(aGrammar?.ui?.prefs?.marker?.progress, 88);
 
     const bGrammar = payload.subjectStates['learner-b::grammar'];
     assert.ok(bGrammar, 'learner-b grammar subject state present');
-    assert.equal(bGrammar?.data?.prefs?.marker?.fixture, 'learner-b-grammar',
-      `learner-b grammar fixture marker identity, got ${JSON.stringify(bGrammar?.data?.prefs?.marker)}`);
-    assert.equal(bGrammar?.data?.prefs?.marker?.progress, 53);
+    assert.deepEqual(bGrammar.data, {}, 'learner-b grammar data stripped by public transform');
+    assert.equal(bGrammar?.ui?.learnerId, 'learner-b');
+    assert.equal(bGrammar?.ui?.prefs?.marker?.fixture, 'learner-b-grammar',
+      `learner-b grammar fixture marker identity, got ${JSON.stringify(bGrammar?.ui?.prefs?.marker)}`);
+    assert.equal(bGrammar?.ui?.prefs?.marker?.progress, 53);
 
     const cGrammar = payload.subjectStates['learner-c::grammar'];
     assert.ok(cGrammar, 'learner-c grammar subject state present');
-    assert.equal(cGrammar?.data?.prefs?.marker?.fixture, 'learner-c-grammar',
-      `learner-c grammar fixture marker identity, got ${JSON.stringify(cGrammar?.data?.prefs?.marker)}`);
-    assert.equal(cGrammar?.data?.prefs?.marker?.progress, 12);
+    assert.deepEqual(cGrammar.data, {}, 'learner-c grammar data stripped by public transform');
+    assert.equal(cGrammar?.ui?.learnerId, 'learner-c');
+    assert.equal(cGrammar?.ui?.prefs?.marker?.fixture, 'learner-c-grammar',
+      `learner-c grammar fixture marker identity, got ${JSON.stringify(cGrammar?.ui?.prefs?.marker)}`);
+    assert.equal(cGrammar?.ui?.prefs?.marker?.progress, 12);
 
-    // Spelling and punctuation entries exist but data is stripped by public transform.
-    // Grammar preserves `data` verbatim — spelling/punctuation return `data: {}`.
-    // Check each writable learner's spelling + punctuation entries confirm the
-    // public transform ran (data stripped) while verifying correct learner routing.
+    // Spelling and punctuation entries also strip raw data in the public
+    // transform while preserving the correct learner routing.
     const aSpelling = payload.subjectStates['learner-a::spelling'];
     assert.ok(aSpelling, 'learner-a spelling entry present');
     assert.deepEqual(aSpelling.data, {}, 'learner-a spelling data stripped by public transform');
@@ -600,9 +603,9 @@ test('multi-learner #5: GET bootstrap returns same multi-learner structure', asy
       'learner-c::monster-codex',
     ], 'GET: gameState keys match writable learners');
 
-    // Identity check via grammar data.
+    // Identity check via the Grammar public read-model.
     assert.equal(
-      payload.subjectStates['learner-b::grammar']?.data?.prefs?.marker?.fixture,
+      payload.subjectStates['learner-b::grammar']?.ui?.prefs?.marker?.fixture,
       'learner-b-grammar',
       'GET: learner-b grammar fixture identity',
     );
@@ -830,7 +833,22 @@ test('multi-learner #10: notModified invalidation on sibling subject-state write
       SET data_json = ?, updated_at = ?
       WHERE learner_id = ? AND subject_id = ?
     `, [
-      JSON.stringify({ prefs: { mode: 'smart', marker: { fixture: 'learner-b-grammar-mutated', progress: 99 } }, progress: { possess: { stage: 99 } } }),
+      JSON.stringify({
+        prefs: { mode: 'learn', marker: { fixture: 'learner-b-grammar-mutated', progress: 99 } },
+        mastery: {
+          concepts: {
+            sentence_functions: {
+              attempts: 3,
+              correct: 3,
+              wrong: 0,
+              strength: 0.9,
+              correctStreak: 3,
+              intervalDays: 8,
+              dueAt: NOW + 365 * 86_400_000,
+            },
+          },
+        },
+      }),
       NOW + 1,
       'learner-b',
       'grammar',
@@ -845,13 +863,16 @@ test('multi-learner #10: notModified invalidation on sibling subject-state write
     assert.notEqual(payload.revision?.hash, H1,
       'new hash differs from H1 after sibling write');
 
-    // Value-level: mutated data ships through.
+    // Value-level: mutated data is reflected in the redacted read-model.
     const bGrammar = payload.subjectStates?.['learner-b::grammar'];
     assert.ok(bGrammar, 'B grammar state present in full bundle');
-    assert.equal(bGrammar?.data?.prefs?.marker?.fixture, 'learner-b-grammar-mutated',
-      'mutated fixture marker ships through');
-    assert.equal(bGrammar?.data?.progress?.possess?.stage, 99,
-      'mutated progress stage ships through');
+    assert.deepEqual(bGrammar.data, {}, 'B grammar raw data stays stripped');
+    assert.equal(bGrammar?.ui?.prefs?.marker?.fixture, 'learner-b-grammar-mutated',
+      'mutated fixture marker ships through the read-model');
+    assert.equal(bGrammar?.ui?.prefs?.mode, 'learn',
+      'mutated prefs mode ships through the read-model');
+    assert.equal(bGrammar?.ui?.stats?.concepts?.secured, 1,
+      'mutated mastery ships through the read-model stats');
   } finally {
     server.close();
   }

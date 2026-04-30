@@ -837,15 +837,63 @@ test('U7 scenario 22: POST notModified does not rotate session cookies', async (
 // design.md.
 // ---------------------------------------------------------------------------
 
-function insertSubjectStateFor(server, accountId, learnerId, subjectId) {
+function grammarHydrationData({ mode = 'smart', marker = null } = {}) {
+  return {
+    prefs: {
+      mode,
+      ...(marker ? { marker } : {}),
+    },
+    mastery: {
+      concepts: {
+        sentence_functions: {
+          attempts: 3,
+          correct: 3,
+          wrong: 0,
+          strength: 0.9,
+          correctStreak: 3,
+          intervalDays: 8,
+          dueAt: NOW + 365 * 86_400_000,
+        },
+      },
+    },
+  };
+}
+
+function punctuationHydrationData() {
+  return {
+    prefs: { mode: 'smart', roundLength: '4' },
+    progress: {
+      items: {},
+      facets: {},
+      rewardUnits: {},
+      attempts: [{
+        ts: NOW,
+        itemId: 'bootstrap-punctuation-item',
+        mode: 'choose',
+        itemMode: 'choose',
+        skillIds: ['endmarks_full_stop'],
+        rewardUnitId: 'endmarks',
+        sessionMode: 'smart',
+        supportLevel: 0,
+        meaningful: true,
+        correct: true,
+        misconceptionTags: [],
+        facetOutcomes: [],
+      }],
+      sessionsCompleted: 1,
+    },
+  };
+}
+
+function insertSubjectStateFor(server, accountId, learnerId, subjectId, { ui = { phase: 'idle' }, data = null } = {}) {
   runSql(server, `
     INSERT INTO child_subject_state (learner_id, subject_id, ui_json, data_json, updated_at, updated_by_account_id)
     VALUES (?, ?, ?, ?, ?, ?)
   `, [
     learnerId,
     subjectId,
-    JSON.stringify({ phase: 'idle' }),
-    JSON.stringify({ prefs: { mode: 'smart' }, progress: { possess: { stage: 3 } } }),
+    JSON.stringify(ui),
+    JSON.stringify(data || { prefs: { mode: 'smart' }, progress: { possess: { stage: 3 } } }),
     NOW,
     accountId,
   ]);
@@ -935,18 +983,15 @@ test('U1 hotfix: child_subject_state ships for all writable learners (multi-lear
       'bootstrapCapacity.subjectStatesBounded must be stamped false (U1 contract)');
 
     // M1 follow-up 2026-04-26: value-level assertion. Prove the seeded
-    // `data_json` marker actually flows through for a non-selected
-    // sibling — not an empty placeholder keyed only by learnerId. We
-    // use `grammar` because `publicSubjectStateRowToRecord` only
-    // redacts `data` on `spelling`/`punctuation` (per the private-
-    // prompt leak test at scenario 21); `grammar` falls through to
-    // `subjectStateRowToRecord`, which preserves `data` verbatim.
+    // `data_json` marker actually flows through for a non-selected sibling
+    // via the public Grammar read-model, while raw data stays stripped.
     const siblingGrammar = payload.subjectStates['learner-b::grammar'];
     assert.ok(siblingGrammar, 'sibling grammar subject-state row present');
-    assert.equal(siblingGrammar?.data?.prefs?.mode, 'smart',
-      `M1: sibling subjectState.data carries the seeded prefs.mode marker, got ${JSON.stringify(siblingGrammar)}`);
-    assert.equal(siblingGrammar?.data?.progress?.possess?.stage, 3,
-      'M1: sibling subjectState.data carries the seeded progress.possess.stage marker');
+    assert.deepEqual(siblingGrammar.data, {}, 'M1: sibling grammar raw data is stripped');
+    assert.equal(siblingGrammar?.ui?.learnerId, 'learner-b',
+      'M1: sibling grammar read-model is built for learner-b');
+    assert.equal(siblingGrammar?.ui?.prefs?.mode, 'smart',
+      `M1: sibling grammar read-model carries the seeded prefs.mode marker, got ${JSON.stringify(siblingGrammar)}`);
   } finally {
     server.close();
   }
@@ -988,6 +1033,50 @@ test('U1 hotfix: GET /api/bootstrap also ships child_subject_state for all writa
 
     assert.equal(payload.meta?.capacity?.bootstrapMode, 'selected-learner-bounded');
     assert.equal(payload.bootstrapCapacity?.subjectStatesBounded, false);
+  } finally {
+    server.close();
+  }
+});
+
+test('fresh bootstrap hydrates Punctuation and Grammar public stats from stored subject state', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'punctuation', {
+      data: punctuationHydrationData(),
+    });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'grammar', {
+      data: grammarHydrationData({ mode: 'learn' }),
+    });
+
+    const response = await getBootstrap(server);
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+    assert.equal(payload.ok, true);
+
+    const punctuation = payload.subjectStates?.['learner-a::punctuation'];
+    assert.ok(punctuation, 'fresh bootstrap includes punctuation subject state');
+    assert.deepEqual(punctuation.data, {}, 'punctuation raw data stays stripped');
+    assert.equal(punctuation.ui?.learnerId, 'learner-a');
+    assert.equal(punctuation.ui?.stats?.attempts, 1,
+      'punctuation stored attempts hydrate into first-paint stats');
+    assert.equal(punctuation.ui?.stats?.correct, 1,
+      'punctuation stored correct count hydrates into first-paint stats');
+    assert.ok(punctuation.ui?.starView?.perMonster,
+      'punctuation first-paint read-model includes starView');
+
+    const grammar = payload.subjectStates?.['learner-a::grammar'];
+    assert.ok(grammar, 'fresh bootstrap includes grammar subject state');
+    assert.deepEqual(grammar.data, {}, 'grammar raw data stays stripped');
+    assert.equal(grammar.ui?.learnerId, 'learner-a');
+    assert.equal(grammar.ui?.prefs?.mode, 'learn',
+      'grammar stored prefs hydrate into first-paint read-model');
+    assert.equal(grammar.ui?.stats?.concepts?.secured, 1,
+      'grammar stored mastery hydrates into first-paint stats');
+    assert.equal(grammar.ui?.analytics?.progressSnapshot?.trackedConcepts, 1,
+      'grammar first-paint analytics tracks stored mastery concepts');
+    assert.equal(grammar.ui?.analytics?.progressSnapshot?.securedConcepts, 1,
+      'grammar first-paint analytics exposes secured concepts');
   } finally {
     server.close();
   }
@@ -1041,7 +1130,7 @@ test('U1 follow-up B1: sibling subject_state write invalidates lastKnownRevision
       SET data_json = ?, updated_at = ?
       WHERE learner_id = ? AND subject_id = ?
     `, [
-      JSON.stringify({ prefs: { mode: 'smart' }, progress: { possess: { stage: 4 } } }),
+      JSON.stringify(grammarHydrationData({ mode: 'learn' })),
       NOW + 1,
       'learner-b',
       'grammar',
@@ -1058,11 +1147,15 @@ test('U1 follow-up B1: sibling subject_state write invalidates lastKnownRevision
     assert.notEqual(payload.revision.hash, H1,
       'B1: new revision hash differs from H1 after sibling write');
 
-    // Value-level check: B's mutated data ships through on the full bundle.
+    // Value-level check: B's mutated state ships through on the full bundle
+    // as a redacted Grammar read-model.
     const siblingGrammar = payload.subjectStates?.['learner-b::grammar'];
     assert.ok(siblingGrammar, 'B1: sibling grammar state present in full bundle');
-    assert.equal(siblingGrammar?.data?.progress?.possess?.stage, 4,
-      'B1: mutated stage marker ships in the full bundle after probe miss');
+    assert.deepEqual(siblingGrammar.data, {}, 'B1: sibling grammar raw data is stripped');
+    assert.equal(siblingGrammar?.ui?.prefs?.mode, 'learn',
+      'B1: mutated prefs ship in the full bundle after probe miss');
+    assert.equal(siblingGrammar?.ui?.stats?.concepts?.secured, 1,
+      'B1: mutated mastery stats ship in the full bundle after probe miss');
   } finally {
     server.close();
   }
