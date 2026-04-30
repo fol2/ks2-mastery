@@ -1,7 +1,7 @@
 ---
 title: "Hero Mode pA2 — Plan Completion Report"
 type: completion-report
-status: complete
+status: code-complete-awaiting-operational-execution
 date: 2026-04-30
 plan: docs/plans/2026-04-29-015-feat-hero-mode-pA2-evidence-cohort-ops-plan.md
 origin: docs/plans/james/hero-mode/A/hero-mode-pA2.md
@@ -10,13 +10,29 @@ previous: docs/plans/james/hero-mode/A/hero-pA1-plan-completion-report.md
 
 # Hero Mode pA2 — Plan Completion Report
 
+## Status Correction (2026-04-30)
+
+**This report was originally filed claiming phase completion. That was over-claiming.**
+
+The honest status is: **Ring A2-1 code infrastructure is complete. Rings A2-2 through A2-4 require production execution and are NOT done.**
+
+The A2 contract's primary purpose is measurement and operational evidence — not code infrastructure. Code is a prerequisite, not the deliverable. The A3 decision cannot be made without production cohort data.
+
+**What is done:** Privacy hardening, launchability fix, ops probe expansion, override verification, certification manifest, cohort scripts, evidence close-out tooling.
+
+**What is NOT done:** Internal cohort execution, 5-day observation, metrics baselines, A3 decision. These are tracked as GitHub issues #683, #684, #685.
+
+**Certification status:** `CERTIFIED_WITH_LIMITATIONS` — A2-0 and A2-1 pass; A2-2/3/4 fail (zero cohort observations).
+
+---
+
 ## Executive Summary
 
-pA2 code work is complete. The phase delivers a fully operationally observable, privacy-hardened, launchability-proven Hero Mode ready for internal cohort measurement. All 9 implementation units landed across 7 PRs with 71+ new tests and zero production regressions.
+pA2 code infrastructure is complete. The phase delivers operationally observable, privacy-hardened, launchability-proven Hero Mode tooling ready for internal cohort measurement. All 9 implementation units landed across 7 PRs with 69+ new tests and zero production regressions.
 
-**Phase posture:** Code-complete. Internal cohort execution (Ring A2-2 + A2-3) is calendar-bound and awaits team configuration of `HERO_INTERNAL_ACCOUNTS` secret.
+**Phase posture:** Code-complete, operationally-pending. Internal cohort execution (Ring A2-2 + A2-3) requires production access and calendar time — tracked as issues #683, #684, #685.
 
-**Key outcome:** Hero Mode transitions from "code exists but unobserved in production" to "operators can see everything, privacy is machine-enforced at every depth, and a certification validator mechanically gates the A3 decision."
+**Key outcome:** Hero Mode transitions from "code exists but unobserved" to "tooling exists for observation, privacy is machine-enforced at every depth, and a certification validator mechanically gates the A3 decision." The tooling is ready. The measurement has not started.
 
 ---
 
