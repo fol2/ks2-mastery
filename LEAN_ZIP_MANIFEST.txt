@@ -1,0 +1,54 @@
+# Grammar QG P11 Production Release — Lean ZIP Manifest
+# Content release: grammar-qg-p11-2026-04-30
+# Certification phase: grammar-qg-p12
+# Generated: 2026-04-30
+
+## Evidence Artefacts (tracked in repo)
+
+reports/grammar/grammar-qg-p11-certification-manifest.json
+reports/grammar/grammar-qg-p11-render-inventory.json
+reports/grammar/grammar-qg-p11-render-inventory-redacted.md
+reports/grammar/grammar-qg-p11-quality-register.json
+reports/grammar/grammar-qg-p11-distractor-audit.json
+reports/grammar/grammar-qg-p11-marking-matrix.json
+reports/grammar/grammar-qg-p11-certification-status-map.json
+
+## Evidence Scripts (tracked in repo)
+
+scripts/audit-grammar-prompt-cues-semantic.mjs
+scripts/validate-grammar-qg-certification-evidence.mjs
+scripts/generate-grammar-qg-certification-manifest.mjs
+scripts/generate-grammar-qg-render-inventory.mjs
+scripts/generate-grammar-qg-quality-register.mjs
+scripts/audit-grammar-distractor-quality.mjs
+scripts/generate-grammar-marking-matrix.mjs
+scripts/generate-grammar-qg-certification-status-map.mjs
+scripts/grammar-production-smoke.mjs
+
+## Production Smoke Evidence (generated post-deploy)
+# NOT tracked until deployment. Run command below after deploy:
+# npm run smoke:production:grammar -- --json --evidence-origin post-deploy --release-id grammar-qg-p11-2026-04-30 --out reports/grammar/grammar-production-smoke-grammar-qg-p11-2026-04-30.json
+reports/grammar/grammar-production-smoke-grammar-qg-p11-2026-04-30.json
+
+## Regeneration Commands
+
+# Manifest:
+# node scripts/generate-grammar-qg-certification-manifest.mjs --phase=grammar-qg-p12
+
+# Render inventory:
+# node scripts/generate-grammar-qg-render-inventory.mjs --out-prefix=grammar-qg-p11
+
+# Quality register:
+# node scripts/generate-grammar-qg-quality-register.mjs --out=reports/grammar/grammar-qg-p11-quality-register.json
+
+# Distractor audit:
+# node scripts/audit-grammar-distractor-quality.mjs --out=reports/grammar/grammar-qg-p11-distractor-audit.json
+
+# Marking matrix:
+# node scripts/generate-grammar-marking-matrix.mjs --out=reports/grammar/grammar-qg-p11-marking-matrix.json
+
+# Certification status map:
+# node scripts/generate-grammar-qg-certification-status-map.mjs --quality-register=reports/grammar/grammar-qg-p11-quality-register.json --out=reports/grammar/grammar-qg-p11-certification-status-map.json
+
+## Validation Command
+# node scripts/validate-grammar-qg-certification-evidence.mjs reports/grammar/grammar-qg-p11-certification-manifest.json --expected-release=grammar-qg-p11-2026-04-30
