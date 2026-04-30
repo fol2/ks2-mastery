@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -108,6 +110,7 @@ test('report claiming post-deploy smoke passed without evidence file fails', () 
   const deepSeeds = Array.from({ length: 30 }, (_, i) => i + 1);
   const audit = buildGrammarQuestionGeneratorAudit({ seeds, deepSeeds });
   const contentQuality = buildGrammarContentQualityAudit(seeds);
+  const missingEvidenceRoot = mkdtempSync(path.join(tmpdir(), 'grammar-qg-p5-report-'));
 
   // Build a report that claims post-deploy smoke passed
   const report = buildValidMockReport(audit, contentQuality)
@@ -117,7 +120,7 @@ test('report claiming post-deploy smoke passed without evidence file fails', () 
     );
 
   const result = validateGrammarCompletionReport(report, {
-    rootDir: ROOT_DIR,
+    rootDir: missingEvidenceRoot,
     seeds,
     deepSeeds,
     auditOverride: audit,
