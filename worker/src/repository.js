@@ -156,6 +156,7 @@ import {
 } from './projections/events.js';
 import { buildSpellingAudioCue } from './subjects/spelling/audio.js';
 import { buildPunctuationReadModel } from './subjects/punctuation/read-models.js';
+import { buildGrammarReadModel } from './subjects/grammar/read-models.js';
 import { listPunctuationEvents } from './subjects/punctuation/events.js';
 import { createPunctuationService } from '../../shared/punctuation/service.js';
 import {
@@ -336,25 +337,49 @@ function redactPunctuationUiForClient(ui, data = {}, learnerId = '', { now = Dat
   return readModel;
 }
 
-async function publicSubjectStateRowToRecord(row, { spellingContentSnapshot = null, now = Date.now() } = {}) {
-  const record = subjectStateRowToRecord(row);
-  if (row.subject_id === 'punctuation') {
-    return normaliseSubjectStateRecord({
-      ui: redactPunctuationUiForClient(record.ui, record.data, row.learner_id, { now }),
-      data: {},
-      updatedAt: record.updatedAt,
-    });
-  }
-  if (row.subject_id !== 'spelling') return record;
-  const audio = await buildSpellingAudioCue({
-    learnerId: row.learner_id,
-    state: record.ui,
+function redactGrammarUiForClient(ui, data = {}, learnerId = '', { now = Date.now() } = {}) {
+  const state = {
+    ...(data && typeof data === 'object' && !Array.isArray(data) ? data : {}),
+    ...(ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {}),
+  };
+  return buildGrammarReadModel({
+    learnerId,
+    state,
+    now,
+    aiEnrichment: state.aiEnrichment || null,
   });
-  return normaliseSubjectStateRecord({
-    ui: redactSpellingUiForClient(record.ui, record.data, row.learner_id, {
+}
+
+const PUBLIC_SUBJECT_READ_MODEL_BUILDERS = Object.freeze({
+  async spelling({ record, row, spellingContentSnapshot, now }) {
+    const audio = await buildSpellingAudioCue({
+      learnerId: row.learner_id,
+      state: record.ui,
+    });
+    return redactSpellingUiForClient(record.ui, record.data, row.learner_id, {
       audio,
       contentSnapshot: spellingContentSnapshot,
       now,
+    });
+  },
+  punctuation({ record, row, now }) {
+    return redactPunctuationUiForClient(record.ui, record.data, row.learner_id, { now });
+  },
+  grammar({ record, row, now }) {
+    return redactGrammarUiForClient(record.ui, record.data, row.learner_id, { now });
+  },
+});
+
+async function publicSubjectStateRowToRecord(row, { spellingContentSnapshot = null, now = Date.now() } = {}) {
+  const record = subjectStateRowToRecord(row);
+  const buildPublicUi = PUBLIC_SUBJECT_READ_MODEL_BUILDERS[row.subject_id];
+  if (!buildPublicUi) return record;
+  return normaliseSubjectStateRecord({
+    ui: await buildPublicUi({
+      record,
+      row,
+      now,
+      spellingContentSnapshot,
     }),
     data: {},
     updatedAt: record.updatedAt,
