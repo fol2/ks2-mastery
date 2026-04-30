@@ -6,6 +6,8 @@
  * 1. No whole-sentence underline when prompt asks for word/phrase
  * 2. No duplicate content in promptParts
  * 3. If prompt contains cue language, focusCue must exist (or explicit fallback)
+ * 4. Screen-reader/read-aloud alignment — both mention focusCue.text
+ * 5. cueNotRequiredReason present when promptParts exist without focusCue
  *
  * Usage:
  *   node scripts/audit-grammar-prompt-cues.mjs --seeds=1..30 --json
@@ -94,6 +96,33 @@ function auditQuestion(templateId, seed) {
       failures.push({
         check: 'missing-cue-data',
         message: `Prompt contains cue language but no focusCue or promptParts`
+      });
+    }
+  }
+
+  // Check 4: Screen-reader/read-aloud alignment — both must mention focusCue.text
+  if (q.focusCue && q.focusCue.text) {
+    const cueTextLower = q.focusCue.text.toLowerCase();
+    if (q.screenReaderPromptText && !q.screenReaderPromptText.toLowerCase().includes(cueTextLower)) {
+      failures.push({
+        check: 'screen-reader-misaligned',
+        message: `screenReaderPromptText does not mention focusCue.text "${q.focusCue.text}"`
+      });
+    }
+    if (q.readAloudText && !q.readAloudText.toLowerCase().includes(cueTextLower)) {
+      failures.push({
+        check: 'read-aloud-misaligned',
+        message: `readAloudText does not mention focusCue.text "${q.focusCue.text}"`
+      });
+    }
+  }
+
+  // Check 5: cueNotRequiredReason for promptParts without focusCue
+  if (q.promptParts && q.promptParts.length > 0 && !q.focusCue) {
+    if (!q.cueNotRequiredReason || typeof q.cueNotRequiredReason !== 'string' || q.cueNotRequiredReason.trim() === '') {
+      failures.push({
+        check: 'missing-cue-not-required-reason',
+        message: `Has promptParts but no focusCue and missing cueNotRequiredReason`
       });
     }
   }

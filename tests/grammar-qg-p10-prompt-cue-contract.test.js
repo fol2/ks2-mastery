@@ -240,7 +240,58 @@ describe('P10 U2 REGRESSION: target-sentence cue produces visible sentence part'
 });
 
 // ---------------------------------------------------------------------------
-// 9. REGRESSION: focusTarget must NOT leak to serialised output (any template)
+// 9. P10 U7: screenReaderPromptText includes focusCue.text
+// ---------------------------------------------------------------------------
+
+describe('P10 U7: screenReaderPromptText includes focusCue.text', () => {
+  it('word_class_underlined_choice seed 1: screenReaderPromptText mentions focusCue.text', () => {
+    const q = generateQuestion('word_class_underlined_choice', 1);
+    assert.ok(q, 'question must be generated');
+    assert.ok(q.focusCue, 'focusCue must be present');
+    assert.ok(q.screenReaderPromptText, 'screenReaderPromptText must be present');
+    assert.ok(
+      q.screenReaderPromptText.toLowerCase().includes(q.focusCue.text.toLowerCase()),
+      `screenReaderPromptText must contain focusCue.text "${q.focusCue.text}" — got "${q.screenReaderPromptText}"`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 10. P10 U7: readAloudText includes focusCue.text
+// ---------------------------------------------------------------------------
+
+describe('P10 U7: readAloudText includes focusCue.text', () => {
+  it('word_class_underlined_choice seed 1: readAloudText mentions focusCue.text', () => {
+    const q = generateQuestion('word_class_underlined_choice', 1);
+    assert.ok(q, 'question must be generated');
+    assert.ok(q.focusCue, 'focusCue must be present');
+    assert.ok(q.readAloudText, 'readAloudText must be present');
+    assert.ok(
+      q.readAloudText.toLowerCase().includes(q.focusCue.text.toLowerCase()),
+      `readAloudText must contain focusCue.text "${q.focusCue.text}" — got "${q.readAloudText}"`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 11. P10 U7: cueNotRequiredReason present when promptParts exist without focusCue
+// ---------------------------------------------------------------------------
+
+describe('P10 U7: cueNotRequiredReason present when promptParts exist without focusCue', () => {
+  it('formality_pairs seed 1: has cueNotRequiredReason when promptParts exist without focusCue', () => {
+    const q = generateQuestion('formality_pairs', 1);
+    assert.ok(q, 'question must be generated');
+    assert.ok(q.promptParts, 'promptParts must be present');
+    assert.strictEqual(q.focusCue, undefined, 'focusCue must NOT be present for this template');
+    assert.ok(
+      q.cueNotRequiredReason && typeof q.cueNotRequiredReason === 'string' && q.cueNotRequiredReason.trim().length > 0,
+      `cueNotRequiredReason must be a non-empty string — got "${q.cueNotRequiredReason}"`
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 12. REGRESSION: focusTarget must NOT leak to serialised output (any template)
 // ---------------------------------------------------------------------------
 
 describe('P10 U2 REGRESSION: focusTarget never present on serialised output', () => {
