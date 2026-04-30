@@ -16,35 +16,16 @@ const DEFAULT_BUNDLE = 'src/bundles/app.bundle.js';
 const DEFAULT_METAFILE = 'src/bundles/app.bundle.meta.json';
 const DEFAULT_PUBLIC_DIR = 'dist/public';
 
-// SH2-U10: byte-budget gate on the main-bundle gzip size. Baseline
-// measured against the SH2-U10 first post-split build
-// (`npm run build:bundles` on `feat/sh2-u10-bundle-hygiene`): gzip
-// was 203,227 bytes vs the 253,181 bytes pre-split main bundle on
-// `main`. That is a ~50 KB first-paint reduction — the adult-only
-// Admin Hub + Parent Hub hubs now ship as lazy-loaded chunks.
-// Budget was originally `baseline × 1.05 ≈ 213,390`, rounded up to
-// 214,000. Node 24's zlib output for the current Hero P2 baseline sits
-// just above that at ~214,020 bytes. Phase 7's Punctuation remote-summary
-// safety and radio-focus accessibility fixes lift the Node 22 build to
-// ~215.1 KB. Punctuation's Star-based display parity added a small
-// first-paint utility footprint. Grammar's matching display-state parity
-// adds another tiny cross-subject utility slice. The reward presentation
-// queue, toast compatibility layers, Hero Mode P3 daily-progress shell,
-// Grammar's bridge-ownership display gate, the Concordium Grand Star tier
-// model, Hero Mode P5 Camp's child-facing spending surface, and the
-// Grammar setup-aligned refactor (shared hero-bg + HeroBackdrop +
-// useSetupHeroContrast platform engines + slide-button RoundLengthPicker
-// + grammar-hero-bg view-model) keep Node 22/24 gzip output near 226.3 KB,
-// so the prior committed ceiling was 227,000. P2 U3 (refactor-ui shared
-// primitives) lands two new utility components (`ProgressMeter` +
-// `StatCard`) in the main bundle — ~120 bytes of new gzip surface after
-// trimming. The committed ceiling rises to 227,500 to absorb this
-// deliberate utility-growth slice; the upper guard at
-// `BASELINE_GZIP_BYTES * 1.105 = 227,630` (see
-// `tests/bundle-byte-budget.test.js`) still holds 430 bytes of headroom for
-// future copy / utility drift. Override via CLI
-// `--main-bundle-budget-bytes` for experimentation.
-const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 227_500;
+// SH2-U10: byte-budget gate on the main-bundle gzip size.
+//
+// Re-baselined 2026-04-30 for UI Refactor P3 (5 new platform primitives).
+// Owner-approved. P3 U0-U6 landed SubjectThemeScope, SessionHUD,
+// ActionRow, SessionSummaryFrame + subject adapters, growing the gzip
+// main bundle from ~227 KB (P2 close) to ~230.5 KB. New ceiling: 232,000.
+// Upper guard in tests/bundle-byte-budget.test.js:
+//   BASELINE 210,000 × 1.105 = 232,050 — headroom remains 50 B.
+// Override via CLI `--main-bundle-budget-bytes` for experimentation.
+const DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES = 232_000;
 
 const FORBIDDEN_MODULES = [
   { pattern: /^src\/subjects\/spelling\/data\//, reason: 'full spelling content dataset' },
