@@ -1,9 +1,9 @@
 # Grammar QG P10 — Quality Register
 
 **Content Release:** grammar-qg-p10-2026-04-29
-**Generated:** 2026-04-30T00:24:03.745Z
+**Generated:** 2026-04-30T01:56:35.963Z
 **Templates:** 78
-**Approved:** 78 | **Blocked:** 0
+**Approved:** 70 | **Blocked:** 0
 **High-risk (1..15 seeds):** 28
 
 ## Summary Table
@@ -11,11 +11,11 @@
 | # | Template ID | Decision | Severity | Seed Window | Final Action |
 |---|-------------|----------|----------|-------------|--------------|
 | 1 | `sentence_type_table` | approved | - | 1..10 | ship |
-| 2 | `question_mark_select` | approved | - | 1..10 | ship |
+| 2 | `question_mark_select` | approved_with_limitation | - | 1..10 | ship-with-monitoring |
 | 3 | `word_class_underlined_choice` | approved | - | 1..15 | ship |
-| 4 | `identify_words_in_sentence` | approved | - | 1..15 | ship |
+| 4 | `identify_words_in_sentence` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 5 | `expanded_noun_phrase_choice` | approved | - | 1..10 | ship |
-| 6 | `build_noun_phrase` | approved | - | 1..15 | ship |
+| 6 | `build_noun_phrase` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 7 | `fronted_adverbial_choose` | approved | - | 1..10 | ship |
 | 8 | `fix_fronted_adverbial` | approved | - | 1..15 | ship |
 | 9 | `subordinate_clause_choice` | approved | - | 1..15 | ship |
@@ -24,9 +24,9 @@
 | 12 | `relative_clause_complete` | approved | - | 1..10 | ship |
 | 13 | `tense_form_choice` | approved | - | 1..10 | ship |
 | 14 | `tense_rewrite` | approved | - | 1..15 | ship |
-| 15 | `standard_english_pairs` | approved | - | 1..10 | ship |
+| 15 | `standard_english_pairs` | approved_with_limitation | - | 1..10 | ship-with-monitoring |
 | 16 | `pronoun_cohesion_choice` | approved | - | 1..10 | ship |
-| 17 | `formality_pairs` | approved | - | 1..10 | ship |
+| 17 | `formality_pairs` | approved_with_limitation | - | 1..10 | ship-with-monitoring |
 | 18 | `active_passive_rewrite` | approved | - | 1..15 | ship |
 | 19 | `subject_object_choice` | approved | - | 1..15 | ship |
 | 20 | `modal_verb_choice` | approved | - | 1..10 | ship |
@@ -35,7 +35,7 @@
 | 23 | `speech_punctuation_fix` | approved | - | 1..15 | ship |
 | 24 | `apostrophe_possession_choice` | approved | - | 1..10 | ship |
 | 25 | `explain_reason_choice` | approved | - | 1..10 | ship |
-| 26 | `standard_fix_sentence` | approved | - | 1..15 | ship |
+| 26 | `standard_fix_sentence` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 27 | `proc_fronted_adverbial_fix` | approved | - | 1..15 | ship |
 | 28 | `proc_semicolon_choice` | approved | - | 1..15 | ship |
 | 29 | `proc_colon_list_fix` | approved | - | 1..15 | ship |
@@ -52,11 +52,11 @@
 | 40 | `proc2_subject_object_identify` | approved | - | 1..10 | ship |
 | 41 | `proc2_passive_to_active` | approved | - | 1..15 | ship |
 | 42 | `proc2_relative_clause_choice` | approved | - | 1..10 | ship |
-| 43 | `proc2_fronted_adverbial_build` | approved | - | 1..15 | ship |
+| 43 | `proc2_fronted_adverbial_build` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 44 | `proc2_boundary_punctuation_explain` | approved | - | 1..10 | ship |
 | 45 | `proc3_sentence_function_choice` | approved | - | 1..10 | ship |
 | 46 | `proc3_word_class_contrast_choice` | approved | - | 1..10 | ship |
-| 47 | `proc3_noun_phrase_build` | approved | - | 1..15 | ship |
+| 47 | `proc3_noun_phrase_build` | approved_with_limitation | - | 1..15 | ship-with-monitoring |
 | 48 | `proc3_clause_join_rewrite` | approved | - | 1..15 | ship |
 | 49 | `proc3_parenthesis_commas_fix` | approved | - | 1..15 | ship |
 | 50 | `proc3_hyphen_fix_meaning` | approved | - | 1..15 | ship |
@@ -102,7 +102,7 @@
 - **Grammar logic:** Grammar logic partially valid for concept 'sentence_functions'; some seeds produce incorrect marking
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
 - **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
@@ -114,7 +114,7 @@
 
 ### `question_mark_select`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
@@ -125,7 +125,7 @@
 - **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
 - **Feedback:** Feedback fields not populated — requires review
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
@@ -163,7 +163,7 @@
 
 ### `identify_words_in_sentence`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
@@ -174,7 +174,7 @@
 - **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
 - **Feedback:** Feedback fields not populated — requires review
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
@@ -210,7 +210,7 @@
 
 ### `build_noun_phrase`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
@@ -221,7 +221,7 @@
 - **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
 - **Feedback:** Feedback fields not populated — requires review
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
@@ -441,7 +441,7 @@
 
 ### `standard_english_pairs`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
@@ -452,7 +452,7 @@
 - **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
 - **Feedback:** Feedback fields not populated — requires review
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
@@ -486,7 +486,7 @@
 
 ### `formality_pairs`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
@@ -497,7 +497,7 @@
 - **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
 - **Feedback:** Feedback fields not populated — requires review
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
@@ -719,7 +719,7 @@
 
 ### `standard_fix_sentence`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
@@ -730,7 +730,7 @@
 - **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
 - **Feedback:** Feedback fields not populated — requires review
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
@@ -1154,7 +1154,7 @@
 
 ### `proc2_fronted_adverbial_build`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
@@ -1165,7 +1165,7 @@
 - **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
 - **Feedback:** Feedback fields not populated — requires review
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
@@ -1249,7 +1249,7 @@
 
 ### `proc3_noun_phrase_build`
 
-- **Decision:** approved
+- **Decision:** approved_with_limitation
 - **Severity:** none
 - **Reviewer:** automated-p10-oracle
 - **Method:** automated-oracle-with-concrete-evidence
@@ -1260,7 +1260,7 @@
 - **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
 - **Feedback:** Feedback fields not populated — requires review
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
-- **Final action:** ship
+- **Final action:** ship-with-monitoring
 
 **Concrete examples:**
 
@@ -1389,7 +1389,7 @@
 - **Grammar logic:** Grammar logic partially valid for concept 'subject_object'; some seeds produce incorrect marking
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
 - **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
@@ -1434,7 +1434,7 @@
 - **Grammar logic:** Grammar logic partially valid for concept 'formality'; some seeds produce incorrect marking
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
 - **Marking:** 0/10 seeds mark correctly; 10 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
 - **Accessibility:** No visual cue required; standard text prompt accessible by default
 - **Final action:** ship
 
@@ -1867,7 +1867,7 @@
 - **Grammar logic:** Grammar logic partially valid for concept 'word_classes, noun_phrases'; some seeds produce incorrect marking
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
 - **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
 - **Final action:** ship
 
@@ -1986,7 +1986,7 @@
 - **Grammar logic:** Grammar logic partially valid for concept 'active_passive, subject_object'; some seeds produce incorrect marking
 - **Distractor quality:** Table-choice: each row has column distractors drawn from related grammatical categories
 - **Marking:** 0/15 seeds mark correctly; 15 seed(s) fail golden validation
-- **Feedback:** Feedback fields not populated — requires review
+- **Feedback:** Table-choice: feedback delivered via row-level correctness indicators (green/red). No text feedback field exists for this input type — by design.
 - **Accessibility:** focusCue present with screenReaderPromptText; readAloudText mentions target
 - **Final action:** ship
 
