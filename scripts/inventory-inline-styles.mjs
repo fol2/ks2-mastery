@@ -184,6 +184,10 @@ export const CLASSIFICATION = Object.freeze({
 
   // Platform UI
   'src/platform/ui/LengthPicker.jsx': 'shared-pattern-available',
+  // P3 U1: SubjectThemeScope accepts an optional `style` prop that
+  // callers may pass for layout (e.g. `gridColumn`). Pure CSS-variable
+  // pass-through — the wrapper's own tokens are CSS-only.
+  'src/platform/ui/SubjectThemeScope.jsx': 'css-var-ready',
   // P2 U2: Card primitive emits style={{ '--card-accent': accent }} only
   // when an accent string is supplied (typically `var(--grammar-accent)`
   // / future `var(--punctuation-accent)`). Pure CSS-variable passthrough
