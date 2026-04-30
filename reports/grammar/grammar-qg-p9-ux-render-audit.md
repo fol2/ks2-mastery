@@ -49,7 +49,7 @@ Tested scenarios:
 
 | Cue Type | Templates | Verified |
 |---|---|---|
-| `underline` (focusCue) | `word_class_underlined_choice` + others | Yes — promptParts includes underline part matching focusCue.text |
+| `underline` (focusCue) | `word_class_underlined_choice` + others | Yes — promptParts includes underline part matching focusCue.targetText |
 | Backwards compat (no cue) | All non-cue templates | Yes — promptText present, no promptParts/focusCue |
 | `screenReaderPromptText` | All focusCue templates | Yes — always includes "Target word:" prefix |
 
