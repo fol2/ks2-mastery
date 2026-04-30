@@ -176,25 +176,32 @@ Worker (subagent in worktree)
 
 Every PR MUST go through BOTH independent code review AND contract alignment review before merge. These are NOT optional. Do not merge without approval from both reviewer types.
 
+**Each reviewer = 1 separate independent subagent call.** All reviewers are dispatched in parallel. They do not share context, do not see each other's verdicts, and each returns its own independent judgement.
+
 ```
-Code Reviewers (parallel independent subagents)
-  → Always-on: ce-correctness-reviewer, ce-maintainability-reviewer,
-    ce-testing-reviewer, ce-project-standards-reviewer
-  → Conditional: ce-security-reviewer, ce-performance-reviewer,
+Code Reviewers (each is 1 separate Agent call, all dispatched in parallel)
+  → ce-correctness-reviewer        — 1 independent agent call
+  → ce-maintainability-reviewer    — 1 independent agent call
+  → ce-testing-reviewer            — 1 independent agent call
+  → ce-project-standards-reviewer  — 1 independent agent call
+  → + conditional (each also 1 independent agent call):
+    ce-security-reviewer, ce-performance-reviewer,
     ce-reliability-reviewer, ce-data-migrations-reviewer
   → Each returns: APPROVE or BLOCKING (with findings)
 
-Contract Reviewer (1 independent subagent, dispatched in parallel with code reviewers)
+Contract Reviewer (1 separate independent Agent call, dispatched in parallel with code reviewers)
   → Reads: the original CONTRACT (not just the plan) + the PR diff
   → Validates: does this unit deliver what the contract requires for this scope?
   → Checks: no requirement dropped, no acceptance criteria missed, no scope creep
   → Returns: APPROVE or BLOCKING (with specific contract requirement references)
 
+Total per PR: minimum 5 separate Agent calls (4 code + 1 contract), up to 9 if all conditional reviewers apply. You cannot combine any of these into fewer calls.
+
 Review Follower (if any BLOCKING from code OR contract reviewer)
   → git pull origin <branch> first
   → Address all blocking findings
   → Push fixes
-  → Re-dispatch ALL reviewers (code + contract, not just blockers)
+  → Re-dispatch ALL reviewers (code + contract, not just blockers) — same number of separate Agent calls
   → Repeat until zero blockers
 ```
 
