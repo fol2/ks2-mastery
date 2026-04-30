@@ -446,6 +446,12 @@ textarea:focus-visible {
 }
 .card.border-top {
   border-top-width: 4px;
+  /* Subject-accent ribbon: any consumer exposing --card-accent (Card
+   * primitive's accent prop, or a subject-scoped remap) drives the
+   * colour automatically. Inline borderTopColor still wins for callers
+   * that need a literal (AdminHubSurface, subject placeholders).
+   * Falls back to currentColor when neither is supplied. */
+  border-top-color: var(--card-accent, currentColor);
 }
 .card-header {
   display: flex;
@@ -1129,8 +1135,46 @@ textarea:focus-visible {
 .feedback.warn { background: var(--warn-soft); border-color: #edd9ae; }
 .feedback.bad { background: var(--bad-soft); border-color: #f0c8c5; }
 
+/* P2-U6 (refactor-ui shared primitives): Bellstorm gold accent token.
+ * Mirrors the Grammar plum block at L11857-11880, narrowed to the slots
+ * that have real consumers today: `--accent` (var consumers across the
+ * shared button + setup palette), `--btn-accent` (`.btn.primary`),
+ * `--card-accent` (the canonical `.card.border-top` rule at L447-457),
+ * and `--subject-accent` (ProgressMeter's fill fallback at L13354).
+ * Sibling tokens (`-ink` / `-soft` / `-border`) are deferred to the PR
+ * that introduces the first consumer — declaring them now would lock
+ * speculative names against future cleanup. */
+.punctuation-surface,
+.punctuation-setup-main,
+.punctuation-session-scene,
+.punctuation-summary-shell,
+.punctuation-map-scene {
+  --punctuation-accent: #B8873F;
+}
+:root[data-theme="dark"] .punctuation-surface,
+:root[data-theme="dark"] .punctuation-setup-main,
+:root[data-theme="dark"] .punctuation-session-scene,
+:root[data-theme="dark"] .punctuation-summary-shell,
+:root[data-theme="dark"] .punctuation-map-scene {
+  --punctuation-accent: #d6a86a;
+}
+/* Subject-accent remap: low-specificity `:where(...)` so callers can
+ * still override locally if a future scene needs to. Carries the four
+ * cross-surface accent tokens onto every stable Punctuation landmark. */
+:where(
+  .punctuation-surface,
+  .punctuation-setup-main,
+  .punctuation-session-scene,
+  .punctuation-summary-shell,
+  .punctuation-map-scene
+) {
+  --accent: var(--punctuation-accent, var(--brand));
+  --btn-accent: var(--punctuation-accent, var(--brand));
+  --card-accent: var(--punctuation-accent, var(--brand));
+  --subject-accent: var(--punctuation-accent, var(--brand));
+}
+
 .punctuation-surface {
-  --btn-accent: #B8873F;
   display: grid;
   gap: 16px;
   overflow: hidden;
@@ -1158,13 +1202,13 @@ textarea:focus-visible {
 
 .choice-card:hover,
 .choice-card:focus-within {
-  border-color: #B8873F;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+  border-color: var(--punctuation-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
 }
 
 .choice-card input {
   margin: 3px 0 0;
-  accent-color: #B8873F;
+  accent-color: var(--punctuation-accent);
 }
 
 .choice-card span {
@@ -10337,12 +10381,12 @@ html { scroll-behavior: smooth; }
 }
 .punctuation-primary-mode-card:hover:not(:disabled),
 .punctuation-primary-mode-card:focus-visible {
-  border-color: #B8873F;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+  border-color: var(--punctuation-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
 }
 .punctuation-primary-mode-card[aria-pressed="true"] {
-  border-color: #B8873F;
-  background: color-mix(in oklab, #B8873F 8%, var(--panel));
+  border-color: var(--punctuation-accent);
+  background: color-mix(in oklab, var(--punctuation-accent) 8%, var(--panel));
 }
 .punctuation-primary-mode-card:disabled {
   cursor: not-allowed;
@@ -10385,8 +10429,8 @@ html { scroll-behavior: smooth; }
 }
 .punctuation-secondary-mode-card:hover:not(:disabled),
 .punctuation-secondary-mode-card:focus-visible {
-  border-color: #B8873F;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+  border-color: var(--punctuation-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
 }
 .punctuation-secondary-mode-title {
   margin: 0;
@@ -10424,8 +10468,8 @@ html { scroll-behavior: smooth; }
 }
 .punctuation-length-toggle button:focus-visible {
   outline: none;
-  border-color: #B8873F;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+  border-color: var(--punctuation-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
 }
 
 /* --- Setup — active monster strip -------------------------------------- */
@@ -10507,8 +10551,8 @@ html { scroll-behavior: smooth; }
 .punctuation-mission-dashboard .length-option:focus-visible,
 .punctuation-surface .length-option:focus-visible {
   outline: none;
-  border-color: #B8873F;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+  border-color: var(--punctuation-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
 }
 
 /* --- U5/U6/U7 (refactor ui-consolidation): Punctuation scene hero chrome */
@@ -10622,7 +10666,7 @@ html { scroll-behavior: smooth; }
 .punctuation-monster-meter-fill {
   height: 100%;
   border-radius: 4px;
-  background: #B8873F;
+  background: var(--punctuation-accent);
   transition: width var(--dur-slow) var(--ease-out);
 }
 .punctuation-monster-meter-count {
@@ -10648,8 +10692,8 @@ html { scroll-behavior: smooth; }
 }
 .punctuation-map-link:hover:not(:disabled),
 .punctuation-map-link:focus-visible {
-  border-color: #B8873F;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+  border-color: var(--punctuation-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
 }
 .punctuation-map-link:disabled {
   cursor: not-allowed;
@@ -10686,8 +10730,8 @@ html { scroll-behavior: smooth; }
 }
 .punctuation-secondary-action:hover:not(:disabled),
 .punctuation-secondary-action:focus-visible {
-  border-color: #B8873F;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+  border-color: var(--punctuation-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
 }
 .punctuation-secondary-action.is-disabled,
 .punctuation-secondary-action:disabled {
@@ -10825,8 +10869,8 @@ html { scroll-behavior: smooth; }
 }
 .punctuation-map-chips button:focus-visible {
   outline: none;
-  border-color: #B8873F;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #B8873F 18%, transparent);
+  border-color: var(--punctuation-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--punctuation-accent) 18%, transparent);
 }
 .punctuation-map-summary {
   margin: 0;
@@ -10943,7 +10987,7 @@ html { scroll-behavior: smooth; }
   z-index: 2;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-top: 3px solid #B8873F; /* Bellstorm Coast subject accent */
+  border-top: 3px solid var(--punctuation-accent); /* Bellstorm Coast subject accent */
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   width: 100%;
@@ -11007,7 +11051,7 @@ html { scroll-behavior: smooth; }
 .punctuation-skill-modal-contrast-bad {
   margin: 0;
   padding: 10px 14px;
-  border-left: 3px solid #B8873F;
+  border-left: 3px solid var(--punctuation-accent);
   background: var(--panel-soft);
   border-radius: var(--radius-sm);
   white-space: pre-wrap;

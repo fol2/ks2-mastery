@@ -50,10 +50,10 @@ Future migration PRs should:
 | Category | Count |
 | --- | --- |
 | `dynamic-content-driven` | 142 |
-| `shared-pattern-available` | 98 |
+| `shared-pattern-available` | 96 |
 | `css-var-ready` | 5 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **247** |
+| **TOTAL** | **245** |
 
 ## Per-file inventory
 
@@ -85,7 +85,6 @@ Future migration PRs should:
 | `src/surfaces/hubs/MonsterVisualPreviewGrid.jsx` | 3 | `dynamic-content-driven` | no |
 | `src/platform/game/render/effects/celebration-shell.js` | 2 | `third-party-boundary` | no |
 | `src/subjects/grammar/components/GrammarSetupScene.jsx` | 2 | `shared-pattern-available` | no |
-| `src/subjects/punctuation/components/PunctuationSetupScene.jsx` | 2 | `shared-pattern-available` | yes |
 | `src/subjects/spelling/components/SpellingCommon.jsx` | 2 | `css-var-ready` | no |
 | `src/subjects/spelling/components/SpellingWordDetailModal.jsx` | 2 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCard.jsx` | 2 | `dynamic-content-driven` | no |
