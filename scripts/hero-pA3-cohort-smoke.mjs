@@ -9,10 +9,10 @@
 //
 // In dry-run mode, prints the observation record without appending.
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { detectStopConditions } from './hero-pA2-cohort-smoke.mjs';
+import { detectStopConditions } from '../shared/hero/stop-conditions.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const EVIDENCE_PATH = resolve(__dirname, '../docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md');
@@ -74,17 +74,21 @@ export function parseArgs(argv) {
 
 // ── Probe fetching ──────────────────────────────────────────────────
 
-async function fetchProbe(probeUrl, learnerId) {
+export async function fetchProbe(probeUrl, learnerId) {
   const url = `${probeUrl}?learnerId=${encodeURIComponent(learnerId)}&limit=5`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
     if (!response.ok) {
       return { error: `HTTP ${response.status}`, data: null };
     }
     const data = await response.json();
     return { error: null, data };
   } catch (err) {
-    return { error: err.message, data: null };
+    clearTimeout(timer);
+    return { error: err.name === 'AbortError' ? 'Timeout after 15s' : err.message, data: null };
   }
 }
 
@@ -245,7 +249,9 @@ async function main() {
         mkdirSync(dir, { recursive: true });
       }
       content = EVIDENCE_TEMPLATE;
-      writeFileSync(EVIDENCE_PATH, content, 'utf8');
+      const initTmpPath = EVIDENCE_PATH + '.tmp';
+      writeFileSync(initTmpPath, content, 'utf8');
+      renameSync(initTmpPath, EVIDENCE_PATH);
       console.log(`\nCreated evidence file: ${EVIDENCE_PATH}`);
     } else {
       content = readFileSync(EVIDENCE_PATH, 'utf8');
@@ -255,7 +261,9 @@ async function main() {
     const stopRows = formatStopConditionRows(observations);
 
     const updated = insertIntoObservationLog(content, observationRows, stopRows);
-    writeFileSync(EVIDENCE_PATH, updated, 'utf8');
+    const tmpPath = EVIDENCE_PATH + '.tmp';
+    writeFileSync(tmpPath, updated, 'utf8');
+    renameSync(tmpPath, EVIDENCE_PATH);
     console.log(`Inserted ${observations.length} observation(s) into ${EVIDENCE_PATH}`);
   } else {
     console.log('\n(Dry run — no file written)');

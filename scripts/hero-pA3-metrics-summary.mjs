@@ -8,9 +8,10 @@
 //   [--evidence PATH] \
 //   [--telemetry PATH]
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { classifyConfidence } from '../shared/hero/confidence.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_EVIDENCE = resolve(__dirname, '../docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md');
@@ -106,14 +107,9 @@ export function separateByProvenance(observations) {
   return { real, staging, local, simulation, manual, other, total: observations.length };
 }
 
-// ── Confidence classification ───────────────────────────────────────
-
-export function classifyConfidence(count) {
-  if (count >= 100) return 'high';
-  if (count >= 30) return 'medium';
-  if (count >= 10) return 'low';
-  return 'insufficient';
-}
+// ── Confidence classification (imported from shared/hero/confidence.js) ──
+// Re-export for backward-compatible test imports
+export { classifyConfidence };
 
 /**
  * Provenance-qualified confidence: based on real row count, not total.
@@ -495,12 +491,14 @@ function main() {
   // Generate document
   const doc = generateBaselineDocument(metrics, telemetryDimensions, telemetryReport);
 
-  // Write output
+  // Write output (atomic: write to tmp then rename)
   const outputDir = dirname(args.output);
   if (!existsSync(outputDir)) {
     mkdirSync(outputDir, { recursive: true });
   }
-  writeFileSync(args.output, doc, 'utf8');
+  const tmpPath = args.output + '.tmp';
+  writeFileSync(tmpPath, doc, 'utf8');
+  renameSync(tmpPath, args.output);
   console.log(`\nBaseline written to: ${args.output}`);
 }
 
