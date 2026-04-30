@@ -281,6 +281,38 @@ test('weak spots sessions rotate away from the item attempted in the previous se
   assert.equal(second.session.weakFocus.source, 'weak_facet');
 });
 
+test('weak spots sessions rotate misconception retry siblings across new sessions', () => {
+  const repository = makeRepository();
+  repository.writeData('learner-a', {
+    prefs: { mode: 'smart', roundLength: '1' },
+    progress: {
+      items: { sp_insert_question: updateMemoryState(createMemoryState(), false, 0) },
+      facets: { 'speech::insert': updateMemoryState(createMemoryState(), false, 0) },
+      rewardUnits: {},
+      attempts: [
+        {
+          itemId: 'sp_insert_question',
+          mode: 'insert',
+          itemMode: 'insert',
+          skillIds: ['speech'],
+          rewardUnitId: 'speech-core',
+          misconceptionTags: ['speech.quote_missing', 'speech.reporting_comma_missing'],
+          correct: false,
+          timestamp: 0,
+        },
+      ],
+      sessionsCompleted: 0,
+    },
+  });
+  const service = createPunctuationService({ repository, now: () => 0, random: () => 0 });
+
+  const first = service.startSession('learner-a', { mode: 'weak', roundLength: '1' }).state;
+  service.submitAnswer('learner-a', first, correctAnswerFor(first.session.currentItem));
+
+  const second = service.startSession('learner-a', { mode: 'weak', roundLength: '1' }).state;
+  assert.notEqual(second.session.currentItem.id, first.session.currentItem.id);
+});
+
 test('mixed transfer attempts update every included skill-by-mode facet', () => {
   const mixedTransfer = PUNCTUATION_CONTENT_MANIFEST.items.find((entry) => entry.id === 'sp_fa_transfer_at_last_speech');
   const manifest = {
