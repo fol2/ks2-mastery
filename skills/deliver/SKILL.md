@@ -172,23 +172,29 @@ Worker (subagent in worktree)
     - For UI/UX units: invoke /ce-frontend-design
 ```
 
-### MANDATORY: Per-unit code review (DO NOT SKIP)
+### MANDATORY: Per-unit review — code + contract (DO NOT SKIP)
 
-Every PR MUST go through independent code review before merge. This step is NOT optional. Do not merge without reviewer approval.
+Every PR MUST go through BOTH independent code review AND contract alignment review before merge. These are NOT optional. Do not merge without approval from both reviewer types.
 
 ```
-Reviewers (parallel independent subagents)
+Code Reviewers (parallel independent subagents)
   → Always-on: ce-correctness-reviewer, ce-maintainability-reviewer,
     ce-testing-reviewer, ce-project-standards-reviewer
   → Conditional: ce-security-reviewer, ce-performance-reviewer,
     ce-reliability-reviewer, ce-data-migrations-reviewer
   → Each returns: APPROVE or BLOCKING (with findings)
 
-Review Follower (if any BLOCKING)
+Contract Reviewer (1 independent subagent, dispatched in parallel with code reviewers)
+  → Reads: the original CONTRACT (not just the plan) + the PR diff
+  → Validates: does this unit deliver what the contract requires for this scope?
+  → Checks: no requirement dropped, no acceptance criteria missed, no scope creep
+  → Returns: APPROVE or BLOCKING (with specific contract requirement references)
+
+Review Follower (if any BLOCKING from code OR contract reviewer)
   → git pull origin <branch> first
   → Address all blocking findings
   → Push fixes
-  → Re-dispatch ALL reviewers (not just blockers)
+  → Re-dispatch ALL reviewers (code + contract, not just blockers)
   → Repeat until zero blockers
 ```
 
@@ -198,14 +204,15 @@ These are HARD rules. Violating any of them is a protocol failure:
 
 1. **BLOCK means BLOCK.** You cannot reclassify a BLOCK as "advisory", "minor", "acceptable", "edge case only", or "not applicable". If a reviewer returns BLOCK, the fix cycle MUST run.
 2. **You cannot merge with open blockers.** No PR merges until ALL dispatched reviewers return APPROVE. There is no "merge now, fix later" path.
-3. **You cannot reduce the reviewer set.** All 4 always-on reviewers must be dispatched for every PR. You cannot skip one because "this PR is small" or "only touches tests".
+3. **You cannot reduce the reviewer set.** All 4 always-on code reviewers + 1 contract reviewer must be dispatched for every PR. You cannot skip any because "this PR is small" or "only touches tests".
 4. **Re-review means ALL reviewers.** After fixes, re-dispatch ALL reviewers that were originally dispatched — not just the one that blocked. Fixes can introduce new issues.
 5. **You cannot self-approve.** The orchestrator cannot decide a finding is invalid. Only a re-dispatched reviewer can clear its own block.
 6. **You cannot merge on red CI.** If `gh pr checks` shows any failure, the PR does NOT merge. Investigate the failure, fix it (via the review follower cycle), and wait for green. There is no "CI is flaky, merge anyway" exception.
 
 ### Merge Gate
 
-- ALL reviewers must APPROVE (zero blockers)
+- ALL code reviewers must APPROVE (zero blockers)
+- Contract reviewer must APPROVE (zero blockers)
 - `gh pr checks` must all pass (CI green)
 - Only then: `gh pr merge --squash --delete-branch`
 - `git fetch origin`
