@@ -44,6 +44,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { Button } from '../../../platform/ui/Button.jsx';
 import { HeroBackdrop } from '../../../platform/ui/HeroBackdrop.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
@@ -151,14 +152,14 @@ function ChoiceItem({ item, disabled, submitLabel, onSubmit, errorMessageId = ''
         ))}
       </div>
       <div className="actions">
-        <button
-          className="btn primary"
+        <Button
+          variant="primary"
           type="submit"
           disabled={disabled || choiceIndex === ''}
           data-punctuation-submit
         >
           {submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -229,22 +230,21 @@ function TextItem({ item, disabled, submitLabel, shape, onSubmit, errorMessageId
         />
       </label>
       <div className="actions">
-        <button
-          className="btn primary"
+        <Button
+          variant="primary"
           type="submit"
           disabled={disabled}
           data-punctuation-submit
         >
           {submitLabel}
-        </button>
-        <button
-          className="btn secondary"
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           disabled={disabled}
           onClick={() => setTyped(initialValue)}
         >
           Reset text
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -485,24 +485,22 @@ function ActiveItemBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
       ) : null}
 
       <div className="actions punctuation-session-secondary-actions" style={{ marginTop: 16 }}>
-        <button
-          className="btn ghost"
-          type="button"
+        <Button
+          variant="ghost"
           disabled={isDisabled || submitLock.locked}
           data-punctuation-skip
           onClick={() => submitLock.run(async () => actions.dispatch('punctuation-skip'))}
         >
           Skip
-        </button>
-        <button
-          className="btn ghost"
-          type="button"
+        </Button>
+        <Button
+          variant="ghost"
           disabled={isDisabled}
           data-punctuation-end-round
           onClick={() => actions.dispatch('punctuation-end-early')}
         >
           End round
-        </button>
+        </Button>
       </div>
     </section>
   );
@@ -586,23 +584,21 @@ function FeedbackBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
           </div>
         </section>
         <div className="actions" style={{ marginTop: 16 }}>
-          <button
-            className="btn primary"
-            type="button"
+          <Button
+            variant="primary"
             disabled={isDisabled || submitLock.locked}
             data-punctuation-continue
             onClick={() => submitLock.run(async () => actions.dispatch('punctuation-continue'))}
           >
             Continue
-          </button>
-          <button
-            className="btn secondary"
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
             disabled={isDisabled}
             onClick={() => actions.dispatch('punctuation-end-early')}
           >
             Finish now
-          </button>
+          </Button>
         </div>
       </section>
     );
@@ -697,23 +693,21 @@ function FeedbackBranch({ ui, actions, heroUrl = '', previousHeroUrl = '' }) {
       ) : null}
 
       <div className="actions" style={{ marginTop: 16 }}>
-        <button
-          className="btn primary"
-          type="button"
+        <Button
+          variant="primary"
           disabled={isDisabled || submitLock.locked}
           data-punctuation-continue
           onClick={() => submitLock.run(async () => actions.dispatch('punctuation-continue'))}
         >
           Continue
-        </button>
-        <button
-          className="btn secondary"
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           disabled={isDisabled}
           onClick={() => actions.dispatch('punctuation-end-early')}
         >
           Finish now
-        </button>
+        </Button>
       </div>
     </section>
   );

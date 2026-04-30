@@ -1,3 +1,4 @@
+import { Button } from '../../../platform/ui/Button.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { AnimatedPromptCard, PathProgress, Ribbon } from './SpellingCommon.jsx';
@@ -274,17 +275,17 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
                   {summary.mistakes.map((word) => (
                     <span className="fchip fchip--static" key={word.slug}>{word.word}</span>
                   ))}
-                  <button
-                    type="button"
-                    className="btn primary sm"
-                    data-action="spelling-drill-all"
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    dataAction="spelling-drill-all"
                     disabled={runtimeReadOnly || pending || submitLock.locked}
                     onClick={(event) => {
                       submitLock.run(async () => renderAction(actions, event, 'spelling-drill-all'));
                     }}
                   >
                     {guardianPracticeActionLabel()} <ArrowRightIcon />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -309,17 +310,17 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
                       {word.word}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    className="btn primary sm"
-                    data-action="spelling-drill-all"
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    dataAction="spelling-drill-all"
                     disabled={runtimeReadOnly || pending || submitLock.locked}
                     onClick={(event) => {
                       submitLock.run(async () => renderAction(actions, event, 'spelling-drill-all'));
                     }}
                   >
                     Drill all {summary.mistakes.length} <ArrowRightIcon />
-                  </button>
+                  </Button>
                 </div>
               </div>
             )
@@ -335,37 +336,37 @@ export function SpellingSummaryScene({ learner, ui, accent, actions, postMastery
               // a pattern id and refuse. Routing back to the dashboard keeps
               // the chooser-first flow until summary state threads the
               // patternId through for a P2.5 iteration.
-              <button
-                type="button"
-                className="btn primary lg"
+              <Button
+                variant="primary"
+                size="lg"
                 style={{ '--btn-accent': accent }}
-                data-action="spelling-back"
+                dataAction="spelling-back"
                 onClick={(event) => renderAction(actions, event, 'spelling-back')}
               >
                 Back to dashboard <ArrowRightIcon />
-              </button>
+              </Button>
             ) : (
               <>
-                <button
-                  type="button"
-                  className="btn ghost lg"
-                  data-action="spelling-back"
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  dataAction="spelling-back"
                   onClick={(event) => renderAction(actions, event, 'spelling-back')}
                 >
                   Back to dashboard
-                </button>
-                <button
-                  type="button"
-                  className="btn primary lg"
+                </Button>
+                <Button
+                  variant="primary"
+                  size="lg"
                   style={{ '--btn-accent': accent }}
-                  data-action="spelling-start-again"
+                  dataAction="spelling-start-again"
                   disabled={runtimeReadOnly || pending || submitLock.locked}
                   onClick={(event) => {
                     submitLock.run(async () => renderAction(actions, event, 'spelling-start-again'));
                   }}
                 >
                   {pendingCommand === 'start-session' ? 'Starting...' : 'Start another round'} <ArrowRightIcon />
-                </button>
+                </Button>
               </>
             )}
             <button

@@ -254,17 +254,21 @@ test('U3 SessionHUD: adopted in PunctuationSessionScene', () => {
 
 test('U3 Spelling session: preserves all data-action selectors', () => {
   const source = readSource('src/subjects/spelling/components/SpellingSessionScene.jsx');
-  const requiredSelectors = [
-    'data-action="spelling-back"',
-    'data-action="spelling-submit-form"',
-    'data-action="spelling-replay"',
-    'data-action="spelling-replay-slow"',
-    'data-action="spelling-continue"',
-    'data-action="spelling-skip"',
-    'data-action="spelling-end-early"',
+  // P3 U2: Button primitive uses `dataAction` prop (renders as `data-action`
+  // in the DOM). Accept either the raw HTML attribute or the JSX prop form.
+  const requiredActions = [
+    'spelling-back',
+    'spelling-submit-form',
+    'spelling-replay',
+    'spelling-replay-slow',
+    'spelling-continue',
+    'spelling-skip',
+    'spelling-end-early',
   ];
-  for (const sel of requiredSelectors) {
-    assert.ok(source.includes(sel), `SpellingSessionScene must preserve "${sel}"`);
+  for (const action of requiredActions) {
+    const hasRaw = source.includes(`data-action="${action}"`);
+    const hasProp = source.includes(`dataAction="${action}"`);
+    assert.ok(hasRaw || hasProp, `SpellingSessionScene must preserve data-action="${action}" (via raw attribute or dataAction prop)`);
   }
 });
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '../../../platform/ui/Button.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   buildGrammarSpeechText,
@@ -468,33 +469,30 @@ function RepairActions({ isMiniTest, isFeedback, help, feedback, pending, runtim
     if (tone !== 'bad') return null;
     return (
       <div className="grammar-repair-actions" aria-label="Grammar repair actions">
-        <button
-          className="btn secondary"
-          type="button"
+        <Button
+          variant="secondary"
           disabled={disabled}
           onClick={() => submitLock.run(async () => actions.dispatch('grammar-retry-current-question'))}
         >
           Retry
-        </button>
+        </Button>
         {help.showWorkedSolution ? (
-          <button
-            className="btn secondary"
-            type="button"
+          <Button
+            variant="secondary"
             disabled={disabled}
             onClick={() => submitLock.run(async () => actions.dispatch('grammar-show-worked-solution'))}
           >
             Worked solution
-          </button>
+          </Button>
         ) : null}
         {help.showSimilarProblem ? (
-          <button
-            className="btn secondary"
-            type="button"
+          <Button
+            variant="secondary"
             disabled={disabled}
             onClick={() => submitLock.run(async () => actions.dispatch('grammar-start-similar-problem'))}
           >
             Similar problem
-          </button>
+          </Button>
         ) : null}
       </div>
     );
@@ -505,22 +503,20 @@ function RepairActions({ isMiniTest, isFeedback, help, feedback, pending, runtim
   if (!help?.showFadedSupport || !help?.showSimilarProblem) return null;
   return (
     <div className="grammar-repair-actions" aria-label="Grammar support actions">
-      <button
-        className="btn secondary"
-        type="button"
+      <Button
+        variant="secondary"
         disabled={disabled}
         onClick={() => submitLock.run(async () => actions.dispatch('grammar-use-faded-support'))}
       >
         Faded support
-      </button>
-      <button
-        className="btn secondary"
-        type="button"
+      </Button>
+      <Button
+        variant="secondary"
         disabled={disabled}
         onClick={() => submitLock.run(async () => actions.dispatch('grammar-start-similar-problem'))}
       >
         Similar problem
-      </button>
+      </Button>
     </div>
   );
 }
@@ -536,22 +532,20 @@ function AiEnrichmentActions({ isMiniTest, isFeedback, pending, runtimeReadOnly,
   const explanationLabel = isFeedback ? 'Explain another way' : 'Explain this';
   return (
     <div className="grammar-ai-actions" aria-label="Grammar enrichment actions">
-      <button
-        className="btn secondary"
-        type="button"
+      <Button
+        variant="secondary"
         disabled={disabled}
         onClick={() => actions.dispatch('grammar-request-ai-enrichment', { kind: 'explanation' })}
       >
         {explanationLabel}
-      </button>
-      <button
-        className="btn secondary"
-        type="button"
+      </Button>
+      <Button
+        variant="secondary"
         disabled={disabled}
         onClick={() => actions.dispatch('grammar-request-ai-enrichment', { kind: 'revision-card' })}
       >
         Revision cards
-      </button>
+      </Button>
     </div>
   );
 }
@@ -564,9 +558,8 @@ function ReadAloudControls({ grammar }) {
 
   return (
     <div className="grammar-read-aloud" aria-label="Grammar read aloud">
-      <button
-        className="btn secondary"
-        type="button"
+      <Button
+        variant="secondary"
         disabled={disabled}
         onClick={() => {
           const result = speakGrammarReadModel(grammar, { rate: grammar.prefs?.speechRate });
@@ -574,7 +567,7 @@ function ReadAloudControls({ grammar }) {
         }}
       >
         Read aloud
-      </button>
+      </Button>
       {!speechAvailable ? <span className="small muted">Speech synthesis unavailable</span> : null}
       {status ? <span className="small muted" role="status">{status}</span> : null}
     </div>
@@ -789,40 +782,38 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
           <div className="actions">
             {isMiniTest ? (
               <>
-                <button className="btn primary" type="submit" name="_action" value="save" disabled={submitDisabled}>
+                <Button variant="primary" type="submit" name="_action" value="save" disabled={submitDisabled}>
                   {pending && grammar.pendingCommand === 'save-mini-test-response' ? 'Saving...' : 'Save response'}
-                </button>
-                <button className="btn secondary" type="submit" name="_action" value="save-next" disabled={submitDisabled}>
+                </Button>
+                <Button variant="secondary" type="submit" name="_action" value="save-next" disabled={submitDisabled}>
                   Save and next
-                </button>
-                <button className="btn ghost" type="submit" name="_action" value="finish" disabled={runtimeReadOnly || pending}>
+                </Button>
+                <Button variant="ghost" type="submit" name="_action" value="finish" disabled={runtimeReadOnly || pending}>
                   {pending && grammar.pendingCommand === 'finish-mini-test' ? 'Finishing...' : 'Finish mini-set'}
-                </button>
+                </Button>
               </>
             ) : (
-              <button className="btn primary" type="submit" disabled={submitDisabled}>
+              <Button variant="primary" type="submit" disabled={submitDisabled}>
                 {pending && grammar.pendingCommand === 'submit-answer' ? 'Checking...' : submitLabel}
-              </button>
+              </Button>
             )}
             {!isMiniTest && isFeedback ? (
-              <button
-                className="btn secondary"
-                type="button"
+              <Button
+                variant="secondary"
                 disabled={runtimeReadOnly || pending || submitLock.locked}
                 onClick={() => submitLock.run(async () => actions.dispatch('grammar-continue'))}
               >
                 {progressDone >= progressTotal ? 'Finish round' : 'Next question'}
-              </button>
+              </Button>
             ) : null}
             {!isMiniTest ? (
-              <button
-                className="btn ghost"
-                type="button"
+              <Button
+                variant="ghost"
                 disabled={pending}
                 onClick={() => actions.dispatch('grammar-end-early')}
               >
                 End round
-              </button>
+              </Button>
             ) : null}
           </div>
         </form>

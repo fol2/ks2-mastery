@@ -31,6 +31,14 @@ const BUTTON_CONSUMERS = [
   // to <Button>. Adding the surface to the allowlist locks the adoption
   // — a future refactor that removes the import would now fail this test.
   'src/subjects/spelling/components/SpellingSetupScene.jsx',
+  // P3 U2: Action Engine pass 1 — session + summary scenes fully migrated
+  // to <Button> primitive. All raw .btn call sites in these files retired.
+  'src/subjects/spelling/components/SpellingSessionScene.jsx',
+  'src/subjects/grammar/components/GrammarSessionScene.jsx',
+  'src/subjects/punctuation/components/PunctuationSessionScene.jsx',
+  'src/subjects/spelling/components/SpellingSummaryScene.jsx',
+  'src/subjects/grammar/components/GrammarSummaryScene.jsx',
+  'src/subjects/punctuation/components/PunctuationSummaryScene.jsx',
 ];
 
 // P2 U2: closed allowlist of production surfaces that have adopted the
@@ -85,12 +93,11 @@ test('every U1 surface imports the shared Button primitive', () => {
   }
 });
 
-test('Button has ≥ 5 unique production import sites at U1 close', () => {
-  // Five is the U1-mandated minimum. U7's third-consumer falsifier
-  // pass extends this list (Spelling + any ratified later migrations).
+test('Button has ≥ 12 unique production import sites at P3 U2 close', () => {
+  // P2 U1 mandated 5 minimum. P3 U2 adds 6 session + summary scenes.
   assert.ok(
-    BUTTON_CONSUMERS.length >= 5,
-    `U1 minimum is 5 Button consumers; got ${BUTTON_CONSUMERS.length}.`,
+    BUTTON_CONSUMERS.length >= 12,
+    `P3 U2 minimum is 12 Button consumers; got ${BUTTON_CONSUMERS.length}.`,
   );
 });
 

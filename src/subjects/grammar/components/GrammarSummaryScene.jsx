@@ -1,3 +1,4 @@
+import { Button } from '../../../platform/ui/Button.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import { GrammarMiniTestReview } from './GrammarMiniTestReview.jsx';
 import { grammarSummaryCards } from './grammar-view-model.js';
@@ -139,16 +140,15 @@ function PrimaryActions({ buttons, disabled }) {
   return (
     <div className="grammar-summary-primary-actions" role="group" aria-label="Next steps">
       {buttons.map((button) => (
-        <button
+        <Button
           key={button.action}
-          type="button"
-          className={`btn ${button.variant || 'primary'}`}
-          data-action={button.action}
+          variant={button.variant || 'primary'}
+          dataAction={button.action}
           disabled={disabled || button.disabled === true || submitLock.locked}
           onClick={() => submitLock.run(async () => button.onClick())}
         >
           {button.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -157,16 +157,15 @@ function PrimaryActions({ buttons, disabled }) {
 function SecondaryActions({ onGrownUp, disabled }) {
   return (
     <div className="grammar-summary-secondary-actions">
-      <button
-        type="button"
-        className="btn ghost"
-        data-action="grammar-open-analytics"
+      <Button
+        variant="ghost"
+        dataAction="grammar-open-analytics"
         aria-label="Open adult report"
         disabled={disabled}
         onClick={onGrownUp}
       >
         Grown-up view
-      </button>
+      </Button>
     </div>
   );
 }
