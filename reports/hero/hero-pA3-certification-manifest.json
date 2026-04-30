@@ -1,0 +1,52 @@
+{
+  "phase": "hero-pA3",
+  "date": "2026-04-30",
+  "description": "Certification manifest for Hero Mode pA3 — gates the A4 recommendation",
+  "rings": {
+    "A3-0": {
+      "name": "Evidence provenance and docs reconciliation",
+      "requiredEvidence": [
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "file_exists", "description": "A3 evidence file with provenance schema" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-rollback-procedure.md", "condition": "file_exists", "description": "Rollback procedure documented" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-support-checklist.md", "condition": "file_exists", "description": "Support checklist documented" }
+      ]
+    },
+    "A3-1": {
+      "name": "Real internal production cohort",
+      "requiredEvidence": [
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "min_real_observations_5", "description": "At least 5 real-production observations" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "min_real_datekeys_2", "description": "At least 2 unique date keys from real observations" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md", "condition": "min_real_learners_3", "description": "At least 3 unique learner profiles from real observations" }
+      ]
+    },
+    "A3-2": {
+      "name": "Goal 6 telemetry extraction",
+      "requiredEvidence": [
+        { "path": "reports/hero/hero-pA3-telemetry-report.json", "condition": "file_exists", "description": "Telemetry extraction report generated" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-metrics-baseline.md", "condition": "file_exists", "description": "A3 metrics baseline with provenance-qualified confidence" }
+      ]
+    },
+    "A3-3": {
+      "name": "Browser QA and rollback evidence",
+      "requiredEvidence": [
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-browser-qa-evidence.md", "condition": "status_not_pending", "description": "Browser QA completed (not PENDING)" }
+      ]
+    },
+    "A3-4": {
+      "name": "A4 recommendation",
+      "requiredEvidence": [
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-risk-register.md", "condition": "file_exists", "description": "A3 risk register exists" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-recommendation.md", "condition": "contains_decision", "description": "A4 recommendation issued" }
+      ]
+    },
+    "A3-5": {
+      "name": "External micro-cohort (optional)",
+      "optional": true,
+      "requiredEvidence": [
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-external-cohort-evidence.md", "condition": "min_real_observations_5", "description": "At least 5 external cohort observations" },
+        { "path": "docs/plans/james/hero-mode/A/hero-pA3-external-cohort-evidence.md", "condition": "min_real_datekeys_14", "description": "At least 14 unique date keys (14-day minimum)" }
+      ]
+    }
+  },
+  "certificationStates": ["NOT_CERTIFIED", "CERTIFIED_WITH_LIMITATIONS", "CERTIFIED_PRE_A4"]
+}
