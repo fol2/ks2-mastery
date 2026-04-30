@@ -85,6 +85,27 @@ describe('evaluateMeaningfulness()', () => {
     assert.equal(result.meaningful, true);
     assert.equal(result.wordCount, 5);
     assert.equal(result.allWordsRequired, false);
+    assert.equal(result.hasVerbFrame, true);
+  });
+
+  test('rejects nonsense with no verb outside required tokens', () => {
+    const result = evaluateMeaningfulness(
+      "Blue can't red we're purple.",
+      { type: 'requiresTokens', tokens: ["can't", "we're"] },
+      { mode: 'transfer' },
+    );
+    assert.equal(result.meaningful, false);
+    assert.equal(result.hasVerbFrame, false);
+  });
+
+  test('passes sentence with verb outside required tokens', () => {
+    const result = evaluateMeaningfulness(
+      "We can't go because we're too tired.",
+      { type: 'requiresTokens', tokens: ["can't", "we're"] },
+      { mode: 'transfer' },
+    );
+    assert.equal(result.meaningful, true);
+    assert.equal(result.hasVerbFrame, true);
   });
 });
 
