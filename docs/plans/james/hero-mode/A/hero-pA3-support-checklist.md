@@ -216,6 +216,20 @@ This checklist maps every stop condition from pA3 section 8 to the specific oper
 
 ---
 
+### 16. Untraceable evidence rows
+
+**Detection:** Evidence rows cannot be traced to source, environment, and collection method. Check that every row in the evidence file has all provenance metadata (Source column populated, operator recorded, collection date present).
+
+**Investigation steps:**
+1. Scan the evidence file for rows where the Source column is empty, missing, or contains an unrecognised value.
+2. Cross-reference each row with the operator log — confirm which human or script produced it.
+3. Verify the collection date is present and corresponds to actual probe execution timestamps.
+4. Check whether the row was manually inserted without running the cohort smoke script.
+
+**Response:** Pause evidence collection. Investigate the source of untraceable rows. Do not count untraceable rows toward certification gates. Correct or remove affected rows before resuming evidence collection.
+
+---
+
 ## Quick Reference Table
 
 | # | Stop Condition | Severity | Response | Check Location |
@@ -235,6 +249,7 @@ This checklist maps every stop condition from pA3 section 8 to the specific oper
 | 13 | Simulated as real | High | Correct classification | Evidence file |
 | 14 | Camp before learning | Medium | Narrow | Client UI ordering |
 | 15 | Pressure copy | Medium | Narrow | hero-copy.js + client strings |
+| 16 | Untraceable evidence rows | High | Pause | Evidence file provenance metadata |
 
 ---
 
