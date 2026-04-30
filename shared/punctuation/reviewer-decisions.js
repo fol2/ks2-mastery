@@ -173,6 +173,105 @@ function validateDecisionSchema(data) {
   return { valid: errors.length === 0, errors };
 }
 
+// ─── Schema v3 meta validation ─────────────────────────────────────────────
+
+const VALID_SCHEMA_VERSIONS = [2, 3];
+
+/**
+ * Validate v3 _meta block.
+ * Backward-compatible: v2 meta is accepted without extra fields.
+ * v3 meta requires ai_pre_review, human_acceptance, production_certification.
+ *
+ * @param {object} meta - The _meta object
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+function validateMetaSchema(meta) {
+  const errors = [];
+
+  if (!meta || typeof meta !== 'object') {
+    return { valid: false, errors: ['_meta must be an object'] };
+  }
+
+  const version = meta.schema_version;
+  if (!VALID_SCHEMA_VERSIONS.includes(version)) {
+    errors.push(`schema_version ${version} is not supported. Must be one of: ${VALID_SCHEMA_VERSIONS.join(', ')}`);
+  }
+
+  // v3-specific validation
+  if (version === 3) {
+    // ai_pre_review
+    if (!meta.ai_pre_review || typeof meta.ai_pre_review !== 'object') {
+      errors.push('v3 _meta requires ai_pre_review object');
+    } else {
+      if (typeof meta.ai_pre_review.status !== 'string') {
+        errors.push('ai_pre_review.status must be a string');
+      }
+    }
+
+    // human_acceptance
+    if (!meta.human_acceptance || typeof meta.human_acceptance !== 'object') {
+      errors.push('v3 _meta requires human_acceptance object');
+    } else {
+      if (typeof meta.human_acceptance.status !== 'string') {
+        errors.push('human_acceptance.status must be a string');
+      }
+      // If status is 'complete', reviewer must be present
+      if (meta.human_acceptance.status === 'complete') {
+        if (!meta.human_acceptance.reviewer || typeof meta.human_acceptance.reviewer !== 'string') {
+          errors.push('human_acceptance.reviewer is required when status is "complete"');
+        }
+      }
+    }
+
+    // production_certification
+    if (!meta.production_certification || typeof meta.production_certification !== 'object') {
+      errors.push('v3 _meta requires production_certification object');
+    } else {
+      if (typeof meta.production_certification.status !== 'string') {
+        errors.push('production_certification.status must be a string');
+      }
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Evaluate the review-authority gate.
+ *
+ * FAILS if:
+ * - ai_pre_review.status !== 'complete'
+ * - production_certification.status === 'certified' while human_acceptance.status !== 'complete'
+ *
+ * @param {object} meta - The _meta object
+ * @returns {{ pass: boolean, blockers: string[] }}
+ */
+function evaluateAuthorityGate(meta) {
+  const blockers = [];
+
+  if (!meta || typeof meta !== 'object') {
+    return { pass: false, blockers: ['_meta is missing or invalid'] };
+  }
+
+  // v2 fixture has no authority fields — pass trivially for backward compat
+  if (meta.schema_version === 2) {
+    return { pass: true, blockers: [] };
+  }
+
+  // ai_pre_review must be complete
+  if (!meta.ai_pre_review || meta.ai_pre_review.status !== 'complete') {
+    blockers.push('ai_pre_review.status must be "complete"');
+  }
+
+  // Cannot certify without human acceptance
+  if (meta.production_certification?.status === 'certified'
+    && (!meta.human_acceptance || meta.human_acceptance.status !== 'complete')) {
+    blockers.push('production_certification cannot be "certified" while human_acceptance is not "complete"');
+  }
+
+  return { pass: blockers.length === 0, blockers };
+}
+
 // ─── Gate evaluation ─────────────────────────────────────────────────────────
 
 /**
@@ -318,12 +417,25 @@ function evaluateDepth6Gate(data, candidateItemIds) {
  * Evaluate the cluster gate for cross-mode overlaps.
  *
  * Each cluster must have an `acceptable-cross-mode-overlap` decision with rationale.
+ * Accepts either an array of cluster ID strings, or an array of cluster objects
+ * with `stableId` and `reviewRequired` fields. When objects are provided, only
+ * clusters where `reviewRequired === true` are checked.
  *
  * @param {object} data - The decisions data with clusterDecisions array
- * @param {string[]} crossModeClusterIds - IDs of cross-mode overlap clusters to check
+ * @param {Array<string|{stableId: string, reviewRequired: boolean}>} crossModeClusterIdsOrObjects - IDs or cluster objects
  * @returns {{ pass: boolean, blockers: Array<{clusterId: string, reason: string}>, stats: object }}
  */
-function evaluateClusterGate(data, crossModeClusterIds) {
+function evaluateClusterGate(data, crossModeClusterIdsOrObjects) {
+  // Normalise input: extract IDs, filtering to reviewRequired when objects provided
+  let crossModeClusterIds;
+  if (crossModeClusterIdsOrObjects.length > 0 && typeof crossModeClusterIdsOrObjects[0] === 'object') {
+    crossModeClusterIds = crossModeClusterIdsOrObjects
+      .filter((c) => c.reviewRequired === true)
+      .map((c) => c.stableId);
+  } else {
+    crossModeClusterIds = crossModeClusterIdsOrObjects;
+  }
+
   const stats = { total: crossModeClusterIds.length, approved: 0, blocked: 0, missing: 0 };
   const blockers = [];
 
@@ -403,10 +515,13 @@ export {
   DECISION_STATES,
   ALL_DECISION_VALUES,
   BLOCKING_DECISIONS,
+  VALID_SCHEMA_VERSIONS,
   generateStableClusterId,
   validateItemDecision,
   validateClusterDecision,
   validateDecisionSchema,
+  validateMetaSchema,
+  evaluateAuthorityGate,
   evaluateProductionGate,
   evaluateDepth6Gate,
   evaluateClusterGate,
