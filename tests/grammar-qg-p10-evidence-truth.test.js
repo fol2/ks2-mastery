@@ -299,6 +299,33 @@ describe('P10 Evidence Truth: report-vs-manifest release ID', () => {
 });
 
 // ---------------------------------------------------------------------------
+// 7b. Report frontmatter final_content_release_id cross-check
+// ---------------------------------------------------------------------------
+
+describe('P10 Evidence Truth: report frontmatter final_content_release_id', () => {
+  it('wrong final_content_release_id in report frontmatter triggers mismatch', () => {
+    const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
+    const reportContent = [
+      '---',
+      'final_content_release_id: grammar-qg-p8-stale-2026-04-29',
+      'implementation_prs:',
+      '  - "#650"',
+      'final_content_release_commit: a1b2c3d4e5f6g7h8',
+      'post_merge_fix_commits: []',
+      'final_report_commit: b2c3d4e5f6a7b8c9',
+      '---',
+      '',
+      '# Report',
+    ].join('\n');
+    const result = validateReleaseIdConsistency(manifest, null, reportContent);
+    assert.equal(result.pass, false);
+    const fm_mismatch = result.mismatches.find((m) => m.field === 'reportFrontmatterVsCodeReleaseId');
+    assert.ok(fm_mismatch, 'Expected mismatch for reportFrontmatterVsCodeReleaseId');
+    assert.match(fm_mismatch.message, /grammar-qg-p8-stale/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 8. Inventory release ID cross-check (P10-R-U9)
 // ---------------------------------------------------------------------------
 

@@ -20,6 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { GRAMMAR_CONTENT_RELEASE_ID } from '../worker/src/subjects/grammar/content.js';
+import { extractFrontmatter } from './validate-grammar-qg-completion-report.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -528,7 +529,7 @@ export function validateInventoryReleaseIds(inventoryPath, expectedReleaseId) {
  * @param {string} [reportReleaseId] - Release ID extracted from a completion report (optional).
  * @returns {{ pass: boolean, mismatches: Array<{ field: string, claimed: any, actual: any, message: string }> }}
  */
-export function validateReleaseIdConsistency(manifest, reportReleaseId) {
+export function validateReleaseIdConsistency(manifest, reportReleaseId, reportContent) {
   const mismatches = [];
 
   if (manifest.contentReleaseId !== GRAMMAR_CONTENT_RELEASE_ID) {
@@ -547,6 +548,19 @@ export function validateReleaseIdConsistency(manifest, reportReleaseId) {
       actual: manifest.contentReleaseId,
       message: `Report release ID "${reportReleaseId}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
     });
+  }
+
+  // Cross-check report frontmatter final_content_release_id if reportContent provided
+  if (reportContent != null) {
+    const fm = extractFrontmatter(reportContent);
+    if (fm.final_content_release_id != null && fm.final_content_release_id !== GRAMMAR_CONTENT_RELEASE_ID) {
+      mismatches.push({
+        field: 'reportFrontmatterVsCodeReleaseId',
+        claimed: fm.final_content_release_id,
+        actual: GRAMMAR_CONTENT_RELEASE_ID,
+        message: `Report frontmatter final_content_release_id "${fm.final_content_release_id}" does not match code GRAMMAR_CONTENT_RELEASE_ID "${GRAMMAR_CONTENT_RELEASE_ID}"`,
+      });
+    }
   }
 
   return { pass: mismatches.length === 0, mismatches };
