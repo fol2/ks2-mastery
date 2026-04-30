@@ -271,10 +271,12 @@ These are the HARDEST rules in the entire pipeline. This is where delivery quali
    - Substitute your own assessment for a reviewer's verdict
    - Dispatch a single agent "covering all dimensions" — each dimension = 1 independent agent call
 
-3. **Re-review means ALL 10. Every time.** After fixes:
+3. **Re-review means ALL 10. Every time. From scratch.** After fixes:
    - Dispatch all 10 again — not just the ones that blocked
    - Previously-passing reviewers can issue NEW blocks on the re-review
    - This is by design: fixes can break previously-passing areas
+   - You cannot "run the remaining N" — if you dispatched fewer than 10 initially, that was a protocol violation. The fix is to re-run ALL 10 from scratch, not to "top up" with the missing ones
+   - Partial runs are invalid. Only a complete set of 10 simultaneous PASS verdicts from the same round counts
 
 4. **The fix cycle has its own mandatory code review.** The `/ce-work` (fix mode) follows the full Phase 3 per-unit pipeline including MANDATORY code reviewers. You cannot:
    - Push fixes directly without a PR
@@ -423,6 +425,8 @@ You are NOT allowed to rationalise skipping reviewers or overriding their verdic
 | "The findings overlap with Phase 3 review" | Phase 4 is a different concern. Run it fully. |
 | "I'll dispatch one agent for all 10 dimensions" | No. 10 dimensions = 10 separate Agent calls. 1 agent ≠ 10 reviewers. |
 | "I can cover these in fewer agents" | Independence requires separate context. Each reviewer = 1 agent call. |
+| "I'll run the remaining N reviewers" | No. Partial runs are invalid. Re-run ALL 10 from scratch. |
+| "3 passed already, I just need the other 7" | Invalid. All 10 must come from the same round. Start over. |
 
 ## No-Regression Guarantees
 
