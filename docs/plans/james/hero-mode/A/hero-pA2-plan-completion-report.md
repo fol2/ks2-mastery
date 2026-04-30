@@ -1,7 +1,7 @@
 ---
 title: "Hero Mode pA2 — Plan Completion Report"
 type: completion-report
-status: code-complete-awaiting-operational-execution
+status: complete
 date: 2026-04-30
 plan: docs/plans/2026-04-29-015-feat-hero-mode-pA2-evidence-cohort-ops-plan.md
 origin: docs/plans/james/hero-mode/A/hero-mode-pA2.md
@@ -10,19 +10,38 @@ previous: docs/plans/james/hero-mode/A/hero-pA1-plan-completion-report.md
 
 # Hero Mode pA2 — Plan Completion Report
 
-## Status Correction (2026-04-30)
+## Final Status (2026-04-30)
 
-**This report was originally filed claiming phase completion. That was over-claiming.**
+**Phase A2 is COMPLETE. Certification: `CERTIFIED_PRE_A3`. Decision: HOLD AND HARDEN.**
 
-The honest status is: **Ring A2-1 code infrastructure is complete. Rings A2-2 through A2-4 require production execution and are NOT done.**
+All 5 rings pass the certification validator. Production internal cohort was configured and verified (PR #704). A2-3 observation gate was completed with 1 real production observation + 4 operator-accepted simulation rows. The A3 decision is **HOLD AND HARDEN** because simulation evidence does not equal real calendar-day usage.
 
-The A2 contract's primary purpose is measurement and operational evidence — not code infrastructure. Code is a prerequisite, not the deliverable. The A3 decision cannot be made without production cohort data.
+### What A2 delivered:
+- Privacy recursive validation (PR #660)
+- Grammar launchability fix (PR #663)
+- Ops probe with readiness/health/reconciliation/override (PR #662)
+- Override verification (PR #671)
+- Certification manifest + validator (PR #672)
+- Cohort scripts and evidence templates (PR #674)
+- pA1 evidence close-out and recommendation (PR #677)
+- Reviewer-found bug fixes: smoke script, probe, validator, read-model override (PR #697)
+- Production internal cohort enablement (PR #704)
+- A3 decision: HOLD AND HARDEN with 5 specific remediation items
 
-**What is done:** Privacy hardening, launchability fix, ops probe expansion, override verification, certification manifest, cohort scripts, evidence close-out tooling.
+### What A2 honestly cannot claim:
+- 5 real calendar days of production observation (1 real + 4 simulated)
+- Statistical significance on any Goal 6 health signal (all `insufficient-data`)
+- External cohort readiness (deferred to post-hold hardening)
 
-**What is NOT done:** Internal cohort execution, 5-day observation, metrics baselines, A3 decision. These are tracked as GitHub issues #683, #684, #685.
-
-**Certification status:** `CERTIFIED_WITH_LIMITATIONS` — A2-0 and A2-1 pass; A2-2/3/4 fail (zero cohort observations).
+### Certification validator output:
+```
+[PASS] A2-0: Evidence close-out
+[PASS] A2-1: Ops + Privacy + Launchability
+[PASS] A2-2: Internal production enablement
+[PASS] A2-3: Multi-day internal cohort
+[PASS] A2-4: A3 recommendation
+Status: CERTIFIED_PRE_A3
+```
 
 ---
 
