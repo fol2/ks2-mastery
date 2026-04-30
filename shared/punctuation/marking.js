@@ -32,7 +32,8 @@ const FACET_LABELS = Object.freeze({
  * 2. speech_punctuation — punctuation outside closing speech mark
  * 3. reporting_clause — missing comma between reporting clause and speech
  * 4. reporting_clause_words — changed the reporting clause
- * 5. preservation — changed the spoken words
+ * 5. content_preservation — extra or changed words in the answer
+ * 6. preservation — changed the spoken words
  * Returns null if all facets pass (or none are present).
  */
 function speechFailureNote(facets) {
@@ -46,6 +47,8 @@ function speechFailureNote(facets) {
   if (reportingClause && !reportingClause.ok) return 'Add a comma between the reporting clause and the speech.';
   const reportingClauseWords = lookup('reporting_clause_words');
   if (reportingClauseWords && !reportingClauseWords.ok) return 'Keep the reporting clause from the question.';
+  const contentPreservation = lookup('content_preservation');
+  if (contentPreservation && !contentPreservation.ok) return 'Keep the sentence from the question and do not add extra words.';
   const preservation = lookup('preservation');
   if (preservation && !preservation.ok) return 'Keep the exact spoken words from the question.';
   return null;
@@ -290,7 +293,8 @@ export function derivePreserveTokens(stem) {
  */
 export function evaluatePreservation(answer, item) {
   const text = normaliseAnswerText(answer);
-  const expectedTokens = Array.isArray(item.preserveTokens) && item.preserveTokens.length > 0
+  const hasExplicitTokens = Array.isArray(item.preserveTokens) && item.preserveTokens.length > 0;
+  const expectedTokens = hasExplicitTokens
     ? item.preserveTokens
     : derivePreserveTokens(item.stem || '');
 
@@ -301,10 +305,19 @@ export function evaluatePreservation(answer, item) {
   const answerWords = stripPunctuation(text).split(' ').filter(Boolean);
   const expectedCount = expectedTokens.length;
 
-  // Reject answers with word count significantly exceeding expected (catches extra tails)
-  if (answerWords.length > expectedCount + 2) {
-    const extra = answerWords.slice(expectedCount);
-    return { preserved: false, extraWords: extra, missingWords: [] };
+  // Combine items with multi-line stems (bullets/notes) legitimately introduce
+  // joining words like "and" — use a generous tolerance for those only.
+  const isMultiLineStem = !hasExplicitTokens && typeof item.stem === 'string' && /\n/.test(item.stem);
+  const countTolerance = isMultiLineStem ? 2 : 0;
+
+  // Reject answers with word count outside tolerance
+  if (answerWords.length > expectedCount + countTolerance
+    || (!isMultiLineStem && answerWords.length < expectedCount)) {
+    const expectedLower = expectedTokens.map((w) => String(w).toLowerCase());
+    const answerLower = answerWords.map((w) => String(w).toLowerCase());
+    const extra = answerWords.length > expectedCount ? answerWords.slice(expectedCount) : [];
+    const missing = expectedLower.filter((w) => !answerLower.includes(w));
+    return { preserved: false, extraWords: extra, missingWords: missing };
   }
 
   // Check all expected words appear in order
@@ -1637,6 +1650,26 @@ function markExact(item, answer) {
 
   if (item.rubric?.type === 'speech') {
     rubricResult = evaluateSpeechRubric(text, item.rubric);
+    if (rubricResult.correct
+      && ['insert', 'fix', 'combine'].includes(item.mode)
+      && typeof item.stem === 'string'
+      && item.stem.trim()) {
+      const preservation = evaluatePreservation(text, item);
+      if (!preservation.preserved) {
+        rubricResult = {
+          ...rubricResult,
+          correct: false,
+          misconceptionTags: [...new Set([
+            ...(rubricResult.misconceptionTags || []),
+            'speech.extra_words_outside_reporting_clause',
+          ])],
+          facets: [
+            ...(rubricResult.facets || []),
+            facet('content_preservation', false),
+          ],
+        };
+      }
+    }
     exact = exact || rubricResult.correct;
   }
 
