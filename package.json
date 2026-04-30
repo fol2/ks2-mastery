@@ -10,6 +10,7 @@
     "audit:punctuation-content": "node ./scripts/audit-punctuation-content.mjs",
     "audit:grammar-qg": "node scripts/audit-grammar-question-generator.mjs --json",
     "audit:grammar-qg:deep": "node scripts/audit-grammar-question-generator.mjs --deep --json",
+    "audit:grammar-qg:semantic": "node scripts/audit-grammar-prompt-cues-semantic.mjs --seeds=1..30 --json",
     "preview:punctuation-templates": "node scripts/preview-punctuation-templates.mjs",
     "audit:production": "node ./scripts/production-bundle-audit.mjs",
     "assert:build-public": "node ./scripts/assert-build-public.mjs",
