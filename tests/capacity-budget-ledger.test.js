@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   CLOUDFLARE_FREE_LIMITS,
@@ -16,7 +17,7 @@ import {
 const FIXTURE_DIR = new URL('./fixtures/capacity-budget-ledger/', import.meta.url);
 
 function fixturePath(name) {
-  return new URL(name, FIXTURE_DIR).pathname;
+  return fileURLToPath(new URL(name, FIXTURE_DIR));
 }
 
 function readEvidenceFixture(name) {
@@ -114,8 +115,8 @@ test('budget ledger CLI writes latest-pattern JSON and tracked markdown outputs'
 test('budget ledger defaults to tracked docs output and latest JSON pattern', () => {
   const parsed = parseBudgetLedgerArgs(['--input', fixturePath('measured-route-summary.json')]);
   assert.equal(parsed.jsonOutputPath, DEFAULT_BUDGET_LEDGER_JSON_PATH);
-  assert.match(parsed.jsonOutputPath, /reports\/capacity\/latest-.*\.json$/);
-  assert.equal(parsed.markdownOutputPath, 'docs/operations/capacity-1000-learner-free-tier-budget.md');
+  assert.match(parsed.jsonOutputPath.replace(/\\/g, '/'), /reports\/capacity\/latest-.*\.json$/);
+  assert.equal(parsed.markdownOutputPath.replace(/\\/g, '/'), 'docs/operations/capacity-1000-learner-free-tier-budget.md');
 });
 
 test('budget ledger markdown labels modelling as non-certifying', () => {

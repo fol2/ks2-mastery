@@ -118,6 +118,14 @@ P3 obtained finite invocation CPU/wall coverage and completed the strict repeat 
 
 Diagnostic classification across the strict-run retained bootstrap top tails was mostly `d1-dominated` (24/30 samples), with 3 `worker-cpu-dominated` samples and 3 `client-network-or-platform-overhead` samples. Because all strict repeats passed, the P3 decision is `strict-30-certified-candidate`, not a Phase 4 D1 or Worker CPU mitigation.
 
+## P4 60-Learner Diagnostic Preparation, 2026-04-30
+
+The 60-learner diagnostic is prepared but pending operator execution. It stretches the certified 30-learner shape to 60 concurrent virtual learners with tighter thresholds configured in `reports/capacity/configs/60-learner-stretch.json` (bootstrap P95 750 ms, command P95 400 ms).
+
+Session-manifest mode is required because `DEMO_LIMITS.createIp = 30` per 10-minute window prevents creating 60 demo sessions in a single burst. The operator uses a 28/28/4 batch strategy with 10-minute bucket-reset delays between batches.
+
+Threshold config: `reports/capacity/configs/60-learner-stretch.json` (750 ms bootstrap P95, 400 ms command P95, 600 000 bytes max response, zero 5xx, zero signals). The operator checklist with full command sequences is at `reports/capacity/configs/p4-60-diagnostic-checklist.md`.
+
 ## Minimum Evidence Set Before Mitigation
 
 Before changing bootstrap behaviour or debating thresholds, collect at least three dated diagnostic runs from the matrix, including one strict T1 run and one repeated strict T5 run. Each evidence file should retain:
