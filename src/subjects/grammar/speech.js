@@ -115,7 +115,7 @@ function pushSupportGuidance(parts, support) {
 
   const contrast = isPlainObject(support.contrast) ? support.contrast : {};
   pushText(parts, contrast.secureExample, 220);
-  pushText(parts, contrast.nearMiss, 220);
+  pushText(parts, contrast.commonMixUp || contrast.nearMiss, 220);
   pushText(parts, contrast.why, 260);
 }
 

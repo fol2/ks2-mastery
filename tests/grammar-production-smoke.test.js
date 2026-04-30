@@ -157,6 +157,7 @@ test('Grammar production smoke scans mini-test, support, and AI enrichment read 
       supportGuidance: {
         kind: 'faded',
         notices: ['Use the visible prompt only.'],
+        contrast: { commonMixUp: 'A safe visible mix-up.' },
       },
     },
     aiEnrichment: {
@@ -179,6 +180,13 @@ test('Grammar production smoke scans mini-test, support, and AI enrichment read 
       session: { supportGuidance: { workedExample: { correctResponses: ['A'] } } },
     }, 'grammar.supportModel'),
     /grammar\.supportModel\.session\.supportGuidance\.workedExample\.correctResponses exposed a server-only field/,
+  );
+
+  assert.throws(
+    () => assertNoForbiddenGrammarReadModelKeys({
+      session: { supportGuidance: { contrast: { nearMiss: 'Hidden answer-spec vocabulary.' } } },
+    }, 'grammar.supportModel'),
+    /grammar\.supportModel\.session\.supportGuidance\.contrast\.nearMiss exposed a server-only field/,
   );
 
   assert.throws(
