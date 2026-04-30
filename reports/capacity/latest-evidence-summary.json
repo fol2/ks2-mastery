@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-04-30T03:10:07.369Z",
+  "generatedAt": "2026-04-30T15:55:17.819Z",
   "sources": {
     "capacity_evidence": {
       "file": "reports/capacity/evidence/",
@@ -35,28 +35,26 @@
     "certified_30_learner_beta": {
       "tier": "certified_30_learner_beta",
       "sourceTier": "30-learner-beta-certified",
-      "status": "non_certifying",
+      "status": "passed",
       "ok": true,
-      "certifying": false,
+      "certifying": true,
       "dryRun": false,
       "evidenceKind": "capacity-run",
-      "certificationEligible": false,
-      "certificationReasons": [
-        "evidence-not-in-verified-capacity-table"
-      ],
+      "certificationEligible": true,
+      "certificationReasons": [],
       "decision": null,
-      "failureReason": "evidence-not-in-verified-capacity-table",
+      "failureReason": null,
       "learners": 30,
       "bootstrapBurst": 20,
       "rounds": 1,
       "finishedAt": "2026-04-30T03:08:07.687Z",
       "finishedAtPrecision": "timestamp",
-      "commit": "b469e585c193b6197fdf1b98ac649de782d03027",
+      "commit": "3af2b44beaf3b89e476b1eb837569e30dc1717fb",
       "failures": [],
-      "thresholdsPassed": null,
+      "thresholdsPassed": true,
       "thresholdViolations": [],
       "fileName": "2026-04-30-p3-t5-strict-r2.json",
-      "verifiedCapacityRowDecision": null
+      "verifiedCapacityRowDecision": "30-learner-beta-certified"
     },
     "preflight_only": {
       "tier": "preflight_only",
@@ -96,7 +94,7 @@
       "ok": false,
       "dryRun": false,
       "mode": "report-only",
-      "finishedAt": "2026-04-30T03:10:07.378Z",
+      "finishedAt": "2026-04-30T15:55:18.913Z",
       "commit": null,
       "failures": [
         "csp_mode_is_report-only"
@@ -107,7 +105,7 @@
       "ok": true,
       "dryRun": false,
       "count": 16,
-      "finishedAt": "2026-04-30T03:10:07.378Z",
+      "finishedAt": "2026-04-30T15:55:18.914Z",
       "commit": null,
       "failures": []
     },
@@ -116,7 +114,7 @@
       "ok": true,
       "dryRun": false,
       "version": "0.1.0",
-      "finishedAt": "2026-04-30T03:10:07.378Z",
+      "finishedAt": "2026-04-30T15:55:18.914Z",
       "commit": null,
       "failures": []
     }
