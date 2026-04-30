@@ -299,7 +299,10 @@ test('fixed negative vectors are loaded and marked against items', () => {
   const targetItem = pool.find((i) => i.mode === 'insert' || i.mode === 'fix');
   assert.ok(targetItem, 'Need at least one insert/fix item');
 
-  // Create a synthetic negative vector for this item
+  // Create a synthetic negative vector for this item.
+  // The fixture field name is `answer` (matched in PR #694 — the
+  // negative-vector field-name bug fix). `buildItemEntry` reads
+  // `vec.answer` and surfaces it on `entry.fixedNegativeVectors[].input`.
   const negativeVectorMap = new Map();
   negativeVectorMap.set(targetItem.id, [
     { itemId: targetItem.id, answer: 'completely wrong answer here', expectedCorrect: false },
