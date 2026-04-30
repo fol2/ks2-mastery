@@ -23,7 +23,6 @@ const tmpDir = path.join(rootDir, 'dist', 'public.tmp');
 //  - `dist/public/_headers` carries the CSP line with the hash value
 //    substituted into the `'sha256-BUILD_TIME_HASH'` placeholder.
 const generatedCspHashPath = path.join(rootDir, 'worker', 'src', 'generated-csp-hash.js');
-const publicCspHashArtefactPath = path.join(outputDir, '.csp-theme-hash');
 const publicHeadersPath = path.join(outputDir, '_headers');
 const appBundleScriptSrc = './src/bundles/app.bundle.js';
 
@@ -154,10 +153,6 @@ try {
     await writeFile(path.join(pageDir, 'index.html'), renderIntentSeoPage(page), 'utf8');
   }
 
-  await rm(outputDir, { recursive: true, force: true });
-  await cp(tmpDir, outputDir, { recursive: true, force: true });
-  await rm(tmpDir, { recursive: true, force: true });
-
   // U7/U2 SEO: compute the inline script SHA-256 values from the canonical
   // source (`index.html` at repo root). The public HTML rewrites only the
   // external module script URL, so the inline script hashes are unchanged.
@@ -182,12 +177,13 @@ try {
     '',
   ].join('\n');
   await writeFile(generatedCspHashPath, generatedModule, 'utf8');
-  await writeFile(publicCspHashArtefactPath, `${cspInlineScriptHashes.join('\n')}\n`, 'utf8');
+  await writeFile(path.join(tmpDir, '.csp-theme-hash'), `${cspInlineScriptHashes.join('\n')}\n`, 'utf8');
 
   // Substitute the placeholder token in `_headers`. Each public header block
   // carries the same placeholder in `script-src` and `script-src-elem`; every
   // occurrence is rewritten to the current inline-script hash directives.
-  const headersContent = await readFile(publicHeadersPath, 'utf8');
+  const tmpHeadersPath = path.join(tmpDir, '_headers');
+  const headersContent = await readFile(tmpHeadersPath, 'utf8');
   const substituted = headersContent.replaceAll("'sha256-BUILD_TIME_HASH'", cspInlineScriptHashDirectives);
   if (!cspInlineScriptHashes.every((hash) => substituted.includes(hash))) {
     throw new Error(
@@ -195,7 +191,11 @@ try {
       + 'Restore the placeholder or update scripts/build-public.mjs.',
     );
   }
-  await writeFile(publicHeadersPath, substituted, 'utf8');
+  await writeFile(tmpHeadersPath, substituted, 'utf8');
+
+  await rm(outputDir, { recursive: true, force: true });
+  await cp(tmpDir, outputDir, { recursive: true, force: true });
+  await rm(tmpDir, { recursive: true, force: true });
 } catch (error) {
   console.error(error);
   process.exit(1);
