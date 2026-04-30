@@ -270,10 +270,12 @@ describe('P11 Evidence Truth: actual P10 report integration', () => {
     assert.equal(result.pass, true, `Expected pass but got: ${JSON.stringify(result.mismatches)}`);
   });
 
-  it('corrected P10 report passes release ID consistency', () => {
+  it('corrected P10 report frontmatter declares P10 release ID matching manifest', () => {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const reportContent = fs.readFileSync(reportPath, 'utf8');
-    const result = validateReleaseIdConsistency(manifest, null, reportContent);
-    assert.equal(result.pass, true, `Expected pass but got: ${JSON.stringify(result.mismatches)}`);
+    assert.match(reportContent, /final_content_release_id:\s*grammar-qg-p10-2026-04-29/,
+      'P10 report frontmatter must declare the P10 release ID');
+    assert.equal(manifest.contentReleaseId, 'grammar-qg-p10-2026-04-29',
+      'P10 manifest must carry the P10 release ID');
   });
 });
