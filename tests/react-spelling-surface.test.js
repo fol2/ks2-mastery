@@ -23,7 +23,15 @@ test('React spelling setup scene disables start while a remote start is pending'
   });
 
   assert.match(html, /Starting\.\.\./);
-  assert.match(html, /<button[^>]*data-action="spelling-start"[^>]*disabled=""/);
+  // P2 U7: assertions are attribute-order-agnostic. The shared Button
+  // primitive emits `disabled=""` before `data-action=…` (consequence of
+  // explicit prop ordering inside Button.jsx), whereas the legacy raw
+  // <button> rendered them in JSX-source order. Both shapes are
+  // semantically equivalent and the test only cares that BOTH attributes
+  // appear on the same <button>.
+  const startButtonMatch = html.match(/<button[^>]*data-action="spelling-start"[^>]*>/);
+  assert.ok(startButtonMatch, 'expected a <button data-action="spelling-start"> in rendered HTML');
+  assert.match(startButtonMatch[0], /disabled=""/);
 });
 
 test('React spelling setup scene disables start while options are saving', async () => {
@@ -33,7 +41,9 @@ test('React spelling setup scene disables start while options are saving', async
   });
 
   assert.match(html, /Saving\.\.\./);
-  assert.match(html, /<button[^>]*data-action="spelling-start"[^>]*disabled=""/);
+  const startButtonMatch = html.match(/<button[^>]*data-action="spelling-start"[^>]*>/);
+  assert.ok(startButtonMatch, 'expected a <button data-action="spelling-start"> in rendered HTML');
+  assert.match(startButtonMatch[0], /disabled=""/);
 });
 
 test('client spelling read model preserves word-family variant preference', () => {

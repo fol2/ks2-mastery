@@ -3,6 +3,7 @@ import { useMonsterVisualConfig } from '../../../platform/game/MonsterVisualConf
 import { SpellingHeroBackdrop } from './SpellingHeroBackdrop.jsx';
 import { ArrowRightIcon, CheckIcon } from './spelling-icons.jsx';
 import { useSetupHeroContrast } from './useSetupHeroContrast.js';
+import { Button } from '../../../platform/ui/Button.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
 import {
@@ -602,16 +603,25 @@ function LegacySetupContent({
         </div>
       </div>
       <div className="setup-begin-row">
-        <button
-          type="button"
-          className="btn primary xl"
+        {/* P2 U7: third-consumer falsifier — Spelling primary CTA migrates
+         * to the shared Button primitive. The inline `--btn-accent` style
+         * (Bellstorm-gold accent threading) is preserved via Button's
+         * safelisted style rest-prop because Spelling does not yet have a
+         * `:where(.spelling-...) ` accent remap; that token unification is
+         * deferred to a future subject-token sweep. The `<ArrowRightIcon />`
+         * slot moves to Button's `endIcon` prop so DOM order
+         * (label -> trailing chevron) stays byte-identical for screen-reader
+         * announcement. */}
+        <Button
+          size="xl"
           style={{ '--btn-accent': accent }}
-          data-action="spelling-start"
+          dataAction="spelling-start"
           disabled={startDisabled}
           onClick={(event) => renderAction(actions, event, 'spelling-start')}
+          endIcon={<ArrowRightIcon />}
         >
-          {beginText} <ArrowRightIcon />
-        </button>
+          {beginText}
+        </Button>
       </div>
     </>
   );

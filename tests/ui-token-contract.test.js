@@ -141,3 +141,130 @@ test('PunctuationSetupScene.jsx preserves stable journey-spec data-* selectors',
     );
   }
 });
+
+// P2 U7 (refactor-ui shared primitives): broader hex-literal ratchet.
+//
+// Plan: docs/plans/2026-04-29-011-refactor-ui-shared-primitives-plan.md §U7 line 569.
+//
+// Locks every file under the curated path glob against re-introduction
+// of raw 6-char hex literals. The glob deliberately covers the
+// shared-primitive surface area (`src/platform/ui/**`), the Punctuation
+// setup scene (the U6 token-unification site), and the Home surface
+// tree (`src/surfaces/home/**`). It excludes `PunctuationMapScene.jsx`,
+// `PunctuationSessionScene.jsx`, and `PunctuationSummaryScene.jsx`
+// because they still carry `#B8873F` literals and are deferred to a
+// post-P2 sweep — keeping them out of the glob keeps this ratchet
+// honest.
+//
+// Allowlist: `src/surfaces/home/data.js` is a subject-metadata fixture
+// exporting `SUBJECT_DECOR` (linear-gradient accent strings keyed by
+// subject id). These are content fixtures, not styling tokens — they
+// are consumed by the SubjectCard render layer and intentionally live
+// outside the var(--*-accent) chain. The plan §U7 line 569 explicitly
+// allowlists "subject metadata fixtures" exactly because of this case.
+
+import { readdir } from 'node:fs/promises';
+
+const TOKEN_GLOB_DIRS = [
+  path.resolve(REPO_ROOT, 'src/platform/ui'),
+  path.resolve(REPO_ROOT, 'src/surfaces/home'),
+];
+const TOKEN_GLOB_FILES = [
+  path.resolve(REPO_ROOT, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'),
+];
+// Subject-metadata fixtures: linear-gradient accent strings keyed by
+// subject id, consumed as content rather than as token-driven styling.
+// Adding to this allowlist requires a deliberate decision — the
+// per-file justification belongs in the entry comment.
+const TOKEN_ALLOWLIST = new Set([
+  path.resolve(REPO_ROOT, 'src/surfaces/home/data.js'),
+]);
+
+async function collectTokenGlobFiles() {
+  const collected = new Set(TOKEN_GLOB_FILES);
+  for (const dir of TOKEN_GLOB_DIRS) {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      if (!entry.name.endsWith('.js') && !entry.name.endsWith('.jsx')) continue;
+      collected.add(path.join(dir, entry.name));
+    }
+  }
+  return [...collected].filter((p) => !TOKEN_ALLOWLIST.has(p)).sort();
+}
+
+test('curated-glob hex-literal ratchet — no raw #XXXXXX literals in shared primitives or Home tree (comments stripped)', async () => {
+  const files = await collectTokenGlobFiles();
+  assert.ok(
+    files.length >= 8,
+    `Expected ≥ 8 files under the token glob; got ${files.length}. `
+    + 'A sudden drop suggests a directory move or rename — refresh TOKEN_GLOB_DIRS.',
+  );
+  const offences = [];
+  for (const file of files) {
+    const source = await readFile(file, 'utf8');
+    const stripped = stripJsComments(source);
+    const lines = stripped.split('\n');
+    lines.forEach((line, idx) => {
+      const hexMatch = line.match(/#[0-9A-Fa-f]{6}\b/);
+      if (hexMatch) {
+        const relative = path.relative(REPO_ROOT, file);
+        offences.push(`${relative}:${idx + 1}  ${hexMatch[0]}  ←  ${line.trim().slice(0, 100)}`);
+      }
+    });
+  }
+  assert.equal(
+    offences.length,
+    0,
+    'Raw 6-char hex literals found in curated-glob files. Replace with a `var(--*-accent)` '
+    + 'token (or, if the value is a subject-metadata fixture, add the file to TOKEN_ALLOWLIST '
+    + 'with a per-entry justification). Offences:\n  - ' + offences.join('\n  - '),
+  );
+});
+
+// AE for plan §11 (completion-report wording guard): the U7 completion
+// report MUST NOT contain forbidden marketing phrases that would
+// over-claim what P2 has shipped. The completion report exists only
+// after this unit lands, so the test fails-soft (no-op) if the file is
+// absent — and asserts the absence of forbidden phrases when present.
+test('U7 completion report does NOT contain forbidden marketing claims', async () => {
+  const reportPath = path.resolve(
+    REPO_ROOT,
+    'docs/plans/james/ui-refactor/ui-refactor-p2-completion-report.md',
+  );
+  let source;
+  try {
+    source = await readFile(reportPath, 'utf8');
+  } catch {
+    // Report may not have landed yet during U7-in-progress edits; the
+    // ratchet activates as soon as the report exists. The file MUST
+    // exist by the time U7 commits land on `main`, so a green test
+    // before the file lands is a transient state, not a permanent gap.
+    return;
+  }
+  const FORBIDDEN_PHRASES = [
+    'the design system is finished',
+    'all colours and inline styles are tokenised',
+    // The third forbidden phrase from plan §574 ("full verification passed"
+    // without command evidence) is a structural claim, not an exact
+    // string — it is enforced by the report's required §7
+    // "Verification commands" section. The literal phrase itself,
+    // however, would also be a regression: anyone writing it without
+    // command output should fail this gate.
+    'full verification passed',
+  ];
+  for (const phrase of FORBIDDEN_PHRASES) {
+    assert.equal(
+      source.toLowerCase().includes(phrase),
+      false,
+      `Completion report contains the forbidden phrase "${phrase}" — over-claims what P2 ships. `
+      + 'Either rephrase or, if the claim is genuinely backed by command evidence, anchor it '
+      + 'next to the evidence in the §7 Verification commands section.',
+    );
+  }
+});
