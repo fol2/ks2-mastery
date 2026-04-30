@@ -2687,10 +2687,9 @@ export function createWorkerApp({
           }
           const probeLimit = Number(url.searchParams.get('limit')) || 20;
           const db = requireDatabase(env);
-          const probeResult = await probeHeroTelemetry({ db, limit: probeLimit });
-
           // pA2 U4: expanded response when learnerId is provided
           const probeLearnerIdParam = url.searchParams.get('learnerId');
+          const probeResult = await probeHeroTelemetry({ db, limit: probeLimit, learnerId: probeLearnerIdParam || null });
           if (probeLearnerIdParam) {
             const heroState = await repository.readHeroProgress(probeLearnerIdParam);
             const dateKey = new Date().toISOString().slice(0, 10);

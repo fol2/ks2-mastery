@@ -50,6 +50,15 @@ Hero Mode increased clarity and completion without increasing spam, dead ends, d
 
 No stop condition requires rollback. The limitation is evidence strength, not an observed safety failure.
 
+## Unresolved Defects
+
+No code-level defects remain that would block A3 consideration:
+
+- All prior reviewer-found bugs (smoke script field mismatches, certification validator placeholder false-positive, ops probe reconciliation scope, read-model override gate) were fixed in PR #697.
+- The cross-learner event leakage in the ops probe events array is a data-boundary issue (admin-only, non-exploitable by end-users) — fixed in the final gaps PR.
+- No stop conditions were triggered during the real or simulated observations.
+- The one structural limitation (ops probe measures 4/16 Goal 6 signals) is a design ceiling, not a defect — documented in the metrics baseline Coverage Limitations section.
+
 ## Privacy Assessment
 
 Privacy is acceptable for continued internal hardening:

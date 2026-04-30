@@ -70,13 +70,13 @@ describe('detectStopConditions', () => {
     assert.equal(gap.level, 'stop');
   });
 
-  it('override mismatch (isInternalAccount false) fires a warn', () => {
+  it('override mismatch (isInternalAccount false) fires a stop per §8 #9', () => {
     const input = makeHealthy();
     input.overrideStatus = { accountId: 'ext-1', isInternalAccount: false, effectiveFlags: {} };
     const conditions = detectStopConditions(input);
     const ovr = conditions.find(c => c.key === 'override-not-internal');
     assert.ok(ovr, 'expected override-not-internal condition');
-    assert.equal(ovr.level, 'warn');
+    assert.equal(ovr.level, 'stop');
   });
 
   it('readiness degraded fires a warn with failed checks', () => {
