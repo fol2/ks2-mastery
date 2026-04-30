@@ -695,6 +695,102 @@ export function validateReportCounts(manifest, reportPath, opts = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Cross-check: marking matrix totalEntries (P11-U7)
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that the marking matrix JSON metadata.totalEntries matches expectations.
+ *
+ * @param {object} manifest - Parsed certification manifest JSON (unused but kept for API consistency).
+ * @param {string} rootDir - Project root directory.
+ * @returns {{ pass: boolean, expected: number, actual: number }}
+ */
+export function validateMarkingMatrixCounts(manifest, rootDir) {
+  const effectiveRoot = rootDir || ROOT_DIR;
+  const matrixPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json');
+
+  if (!existsSync(matrixPath)) {
+    return { pass: false, expected: 80, actual: 0, error: `Marking matrix file not found: ${matrixPath}` };
+  }
+
+  let matrix;
+  try {
+    matrix = JSON.parse(readFileSync(matrixPath, 'utf8'));
+  } catch (err) {
+    return { pass: false, expected: 80, actual: 0, error: `Failed to parse marking matrix JSON: ${err.message}` };
+  }
+
+  const actual = matrix?.metadata?.totalEntries ?? 0;
+  const expected = 80; // seeds 1..5, 16 entries per seed
+  return { pass: actual === expected, expected, actual };
+}
+
+// ---------------------------------------------------------------------------
+// Cross-check: distractor review coverage (P11-U6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that every template flagged as requiresAdultReview in the distractor
+ * audit has a corresponding adultReviewDecision in the quality register.
+ *
+ * @param {string} rootDir - Project root directory.
+ * @returns {{ pass: boolean, missing: string[], covered: string[] }}
+ */
+export function validateDistractorReviewCoverage(rootDir) {
+  const effectiveRoot = rootDir || ROOT_DIR;
+  const auditPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-distractor-audit.json');
+  const registerPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-quality-register.json');
+
+  if (!existsSync(auditPath)) {
+    return { pass: false, missing: [], covered: [], error: `Distractor audit file not found: ${auditPath}` };
+  }
+  if (!existsSync(registerPath)) {
+    return { pass: false, missing: [], covered: [], error: `Quality register file not found: ${registerPath}` };
+  }
+
+  let audit, register;
+  try {
+    audit = JSON.parse(readFileSync(auditPath, 'utf8'));
+  } catch (err) {
+    return { pass: false, missing: [], covered: [], error: `Failed to parse distractor audit: ${err.message}` };
+  }
+  try {
+    register = JSON.parse(readFileSync(registerPath, 'utf8'));
+  } catch (err) {
+    return { pass: false, missing: [], covered: [], error: `Failed to parse quality register: ${err.message}` };
+  }
+
+  // Collect unique templates requiring adult review
+  const requiresReview = new Set();
+  for (const item of (audit.results || [])) {
+    if (item.requiresAdultReview) {
+      requiresReview.add(item.templateId);
+    }
+  }
+
+  // Also include ambiguousTemplates from metadata
+  for (const t of (audit.ambiguousTemplates || [])) {
+    requiresReview.add(t);
+  }
+
+  // Check each against quality register
+  const missing = [];
+  const covered = [];
+  const registerMap = new Map((register.entries || []).map((e) => [e.templateId, e]));
+
+  for (const templateId of requiresReview) {
+    const entry = registerMap.get(templateId);
+    if (!entry || !entry.adultReviewDecision) {
+      missing.push(templateId);
+    } else {
+      covered.push(templateId);
+    }
+  }
+
+  return { pass: missing.length === 0, missing, covered };
+}
+
+// ---------------------------------------------------------------------------
 // CLI entry point
 // ---------------------------------------------------------------------------
 

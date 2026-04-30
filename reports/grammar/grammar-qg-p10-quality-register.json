@@ -6,7 +6,14 @@
     "approved": 74,
     "approvedWithLimitation": 4,
     "blocked": 0,
-    "highRiskCount": 28
+    "highRiskCount": 28,
+    "adultReviewsCompleted": 18,
+    "adultReviewBreakdown": {
+      "approved_with_review": 15,
+      "approved_with_limitation": 3,
+      "blocked": 0,
+      "retire_candidate": 0
+    }
   },
   "entries": [
     {
@@ -551,7 +558,16 @@
       "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Subordinate vs main clause distinction can be ambiguous for multi-clause sentences where clause boundaries overlap",
+        "disambiguationRationale": "Prompt explicitly names the sentence and asks for THE subordinate clause; only one correct subordinating conjunction fragment is offered",
+        "acceptedExample": "When the bell rang (correct subordinate clause beginning with subordinating conjunction)",
+        "rejectedAlternative": "the pupils lined up quietly (rejected: this is the main clause)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "combine_clauses_rewrite",
@@ -656,7 +672,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Relative clauses can be confused with other post-modifier structures (prepositional phrases, appositives)",
+        "disambiguationRationale": "Prompt asks to identify the relative clause specifically; correct answer always contains a relative pronoun (who/which/that)",
+        "acceptedExample": "who lives next door (contains relative pronoun \"who\")",
+        "rejectedAlternative": "in the garden (rejected: prepositional phrase, not a relative clause)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "relative_clause_complete",
@@ -709,7 +734,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Completing a relative clause requires understanding which word introduces relative modification",
+        "disambiguationRationale": "Prompt provides sentence with gap where only a relative pronoun + clause makes grammatical sense; distractors are non-relative completions",
+        "acceptedExample": "which was painted red (relative clause with \"which\")",
+        "rejectedAlternative": "and then fell over (rejected: coordinating conjunction, not a relative clause)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "tense_form_choice",
@@ -1066,7 +1100,16 @@
       "markingJudgement": "Golden answers mark correct across all 15 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "focusCue present with screenReaderPromptText; readAloudText mentions target",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Subject/object roles can be ambiguous in passive constructions or with fronted objects",
+        "disambiguationRationale": "Prompt uses active-voice sentences where the agent performing the action is unambiguously the subject",
+        "acceptedExample": "The cat (subject performing the action of chasing)",
+        "rejectedAlternative": "the mouse (rejected: receives the action, so is the object)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "modal_verb_choice",
@@ -1119,7 +1162,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Modal verbs can overlap in meaning (e.g. could/might both express possibility)",
+        "disambiguationRationale": "Prompt specifies the sentence context constraining which modal verb fits; only one option maintains the required meaning",
+        "acceptedExample": "must (indicates obligation in context \"You ___ wear a helmet\")",
+        "rejectedAlternative": "might (rejected: expresses possibility, not obligation required by context)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "parenthesis_replace_choice",
@@ -2060,7 +2112,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Year 6 modal verb questions involve nuance between obligation, possibility, and permission",
+        "disambiguationRationale": "Prompt constrains the sentence meaning so only one modal verb produces the intended pragmatic force",
+        "acceptedExample": "should (advice context: \"You ___ practise every day\")",
+        "rejectedAlternative": "will (rejected: expresses future certainty, not advice)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "proc2_formality_choice",
@@ -2113,7 +2174,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Formality judgements exist on a spectrum; some distractors may be defensibly semi-formal",
+        "disambiguationRationale": "Prompt specifies the register (e.g. formal letter) and correct answer uses clearly formal Standard English; however some distractors are borderline",
+        "acceptedExample": "I am writing to request two extra chairs for the hall. (formal register)",
+        "rejectedAlternative": "Can we get a couple more chairs for the hall? (rejected: informal register)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_limitation"
+      }
     },
     {
       "templateId": "proc2_pronoun_cohesion_choice",
@@ -2219,7 +2289,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Subject/object identification in complex sentences with multiple noun phrases",
+        "disambiguationRationale": "Prompt presents simple active-voice sentence structure; identifies target noun phrase and asks for its grammatical role",
+        "acceptedExample": "object (the noun phrase receives the action in the given sentence)",
+        "rejectedAlternative": "subject (rejected: the noun phrase does not perform the action)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "proc2_passive_to_active",
@@ -2324,7 +2403,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Relative clause identification in Year 6 curriculum overlaps with embedded clause concepts",
+        "disambiguationRationale": "Prompt asks specifically which option is a relative clause; correct answer contains a relative pronoun introducing modification",
+        "acceptedExample": "that I borrowed from the library (relative clause modifying a noun)",
+        "rejectedAlternative": "from the library shelf (rejected: prepositional phrase, not relative clause)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "proc2_fronted_adverbial_build",
@@ -2972,7 +3060,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Explaining why a modal verb creates a particular meaning can involve interpretation",
+        "disambiguationRationale": "Prompt asks for the grammatical function of the modal verb; only one explanation correctly describes obligation/possibility/permission",
+        "acceptedExample": "It shows obligation because \"must\" indicates something is required",
+        "rejectedAlternative": "It shows past tense because \"must\" happened yesterday (rejected: modal verbs do not indicate tense)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "qg_hyphen_ambiguity_explain",
@@ -3237,7 +3334,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Explaining clause types requires distinguishing subordinate from main clause function",
+        "disambiguationRationale": "Prompt identifies a specific clause in the sentence and asks why it is subordinate; only one answer correctly references dependency on the main clause",
+        "acceptedExample": "It cannot stand alone as a sentence and depends on the main clause",
+        "rejectedAlternative": "It contains a verb so it is the main clause (rejected: subordinate clauses also contain verbs)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "qg_p3_relative_clauses_explain",
@@ -3290,7 +3396,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Relative clause explanation overlaps with general subordinate clause explanation",
+        "disambiguationRationale": "Prompt asks specifically why the clause is a RELATIVE clause; only one answer references the relative pronoun introducing noun modification",
+        "acceptedExample": "It begins with \"who\" and gives extra information about the noun",
+        "rejectedAlternative": "It is at the end of the sentence (rejected: position does not define clause type)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "qg_p3_tense_aspect_explain",
@@ -3449,7 +3564,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Formality explanations can be subjective; what counts as \"chatty\" vs \"neutral\" is debatable",
+        "disambiguationRationale": "Prompt asks why a sentence is informal; correct answer references a specific informal feature. However some distractors describe plausible but incorrect grammatical reasons",
+        "acceptedExample": "It uses chatty wording that suits speech more than formal writing",
+        "rejectedAlternative": "It is informal because it contains a noun phrase (rejected: noun phrases appear in all registers)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_limitation"
+      }
     },
     {
       "templateId": "qg_p3_active_passive_explain",
@@ -3555,7 +3679,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Subject/object explanation in complex sentences where semantic role and syntactic position may conflict",
+        "disambiguationRationale": "Prompt uses a sentence with clear agent-patient structure; asks why a specific noun phrase is the object. However some distractors present subtly incorrect reasoning",
+        "acceptedExample": "The soup receives the action of tasting",
+        "rejectedAlternative": "The soup does the action (rejected: the soup is acted upon, not the agent)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_limitation"
+      }
     },
     {
       "templateId": "qg_p3_parenthesis_commas_explain",
@@ -3916,7 +4049,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Adverbial clause boundaries in transferred contexts can overlap with other clause types",
+        "disambiguationRationale": "Prompt provides a sentence and asks to identify where the adverbial clause starts/ends; subordinating conjunction marks the boundary unambiguously",
+        "acceptedExample": "Because the road was flooded (adverbial clause beginning with subordinating conjunction)",
+        "rejectedAlternative": "the road was flooded quickly (rejected: includes main clause material beyond the boundary)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "qg_p4_relative_parenthesis_transfer",
@@ -3969,7 +4111,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Relative clause as parenthesis can be confused with other parenthetical structures (dashes, brackets)",
+        "disambiguationRationale": "Prompt asks to identify the relative clause used as parenthesis; correct answer is bounded by commas and contains a relative pronoun",
+        "acceptedExample": ", who had won the race, (relative clause functioning as parenthesis)",
+        "rejectedAlternative": "(the winner) (rejected: bracketed noun phrase, not a relative clause)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "qg_p4_verb_form_register_transfer",
@@ -4022,7 +4173,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Verb form and register interaction involves nuance about subjunctive and formal imperative forms",
+        "disambiguationRationale": "Prompt specifies the register context and asks which verb form is appropriate; only one option matches both grammar and register requirements",
+        "acceptedExample": "were (formal subjunctive: \"If I were you\")",
+        "rejectedAlternative": "was (rejected: informal alternative not matching the specified formal register)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "qg_p4_cohesion_formality_transfer",
@@ -4075,7 +4235,16 @@
       "markingJudgement": "Golden answers mark correct across all 10 seeds; empty/whitespace rejected",
       "feedbackJudgement": "feedbackLong references grammar rule; feedbackShort provides one-line summary",
       "accessibilityJudgement": "No visual cue required; standard text prompt accessible by default",
-      "finalAction": "ship"
+      "finalAction": "ship",
+      "adultReviewDecision": {
+        "ambiguousRisk": "Cohesion and formality transfer questions test whether learners can apply register knowledge to new contexts",
+        "disambiguationRationale": "Prompt provides a clear formal/informal context and asks which cohesive device matches; only one option maintains register consistency",
+        "acceptedExample": "Furthermore (formal cohesive adverb for a formal letter)",
+        "rejectedAlternative": "Plus (rejected: informal cohesive device inappropriate for the formal context)",
+        "reviewerId": "grammar-engineering-review",
+        "reviewDate": "2026-04-30",
+        "finalStatus": "approved_with_review"
+      }
     },
     {
       "templateId": "qg_p4_voice_roles_transfer",
