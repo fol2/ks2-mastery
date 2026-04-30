@@ -85,6 +85,8 @@ The canonical P3 capture path is the JSONL Cloudflare Workers Logs/Tail invocati
 
 This fixture proves parser compatibility only. A live P3 operator smoke must still prove that the actual Cloudflare export available to the operator contains finite CPU/wall fields and usable timestamps before any strict P3 run is treated as decision-grade.
 
+On 2026-04-30, `reports/capacity/evidence/2026-04-30-p3-t0-smoke.json` and `reports/capacity/evidence/2026-04-30-p3-t0-smoke-tail-correlation.json` proved the live `npm run ops:tail:json` operator path against a bounded production smoke: 2/2 retained top-tail bootstrap samples matched invocation CPU/wall and statement logs with no join warnings. That smoke is still diagnostic-only because the run shape was one learner, burst 1, and one round.
+
 For each strict P3 run, keep these artefacts separate:
 
 | Run | Evidence path | Raw log path | Redacted join path | Statement map path | Certification role |

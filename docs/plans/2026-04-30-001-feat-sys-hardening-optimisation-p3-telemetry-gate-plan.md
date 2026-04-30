@@ -25,6 +25,8 @@ Implement P3 as an observability repair and strict evidence decision phase: prov
 
 PR #699 executed only the repo-local telemetry-tooling slice of this plan. It did not close the original P3 contract. The remaining P3 contract work is the operator smoke, strict production reruns, top-tail classification, and final decision report required by `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md`.
 
+The 2026-04-30 P3-T0 smoke later proved the live `npm run ops:tail:json` path on a bounded production run, with 2/2 retained top-tail bootstrap samples matched for both invocation CPU/wall and statement logs. That smoke closes the operator-path proof gap only; strict P3-T1 and P3-T5 repeat evidence remain required.
+
 ---
 
 ## Problem Frame

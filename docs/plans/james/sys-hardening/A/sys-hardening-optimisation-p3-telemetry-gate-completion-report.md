@@ -13,7 +13,7 @@ source_contract: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.
 source_plan: docs/plans/2026-04-30-001-feat-sys-hardening-optimisation-p3-telemetry-gate-plan.md
 source_baseline: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3-baseline.md
 certification_status: non-certifying
-recommended_next_path: p3-operator-smoke-and-strict-telemetry-capture
+recommended_next_path: p3-strict-30-telemetry-rerun
 ---
 
 # System Hardening Optimisation P3 Telemetry Gate Completion Report
@@ -62,6 +62,32 @@ The changed files in the merged implementation were:
 - `tests/fixtures/capacity-worker-logs/p3-invocation-export.jsonl`
 
 The report PR #705 also changed `scripts/build-public.mjs` to publish substituted CSP headers atomically. That was a build determinism fix discovered while validating the report branch; it is not P3 capacity evidence and should not be counted as part of the capacity certification surface.
+
+## P3-T0 Live Smoke Proof
+
+The post-merge gap review requested a live proof that the canonical `npm run ops:tail:json` path is usable by an operator, not only represented by a fixture. A bounded production smoke now proves that path. It is deliberately non-certifying because it used one learner, one bootstrap burst, and one round.
+
+| Field | Result |
+| --- | --- |
+| Capacity evidence | `reports/capacity/evidence/2026-04-30-p3-t0-smoke.json` |
+| Redacted join artefact | `reports/capacity/evidence/2026-04-30-p3-t0-smoke-tail-correlation.json` |
+| Raw local capture | `/tmp/ks2-2026-04-30-p3-t0-smoke-worker-tail.jsonl` |
+| Run shape | Production origin, demo sessions, 1 learner, burst 1, 1 round |
+| Certification role | Diagnostic only: `non-p6-30-learner-gate-shape` |
+| Evidence provenance | Commit `1fbd5af35031c533042863082e1116251c4a36f3`, dirty tree false |
+| Bootstrap P95 / max | 425.4 ms / 425.4 ms |
+| Invocation coverage | 2/2 retained top-tail bootstrap samples matched |
+| Statement-log coverage | 2/2 retained top-tail bootstrap samples matched |
+| Join warnings | None |
+
+The joined top-tail smoke samples were:
+
+| Scenario | Client wall | App wall | Worker wall | Worker CPU | D1 duration | Classification |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `initial-bootstrap` | 425.4 ms | 95 ms | 125 ms | 13 ms | 55.6 ms | `worker-cpu-dominated` |
+| `cold-bootstrap-burst` | 182.4 ms | 86 ms | 106 ms | 7 ms | 50.6 ms | `mixed-no-single-dominant-resource` |
+
+This closes the live-smoke proof gap for the canonical tail path. It does not close the original P3 contract because P3 still requires strict 30 P3-T1 and P3-T5 repeat evidence before a terminal decision can be written.
 
 ## Evidence Baseline Preserved
 

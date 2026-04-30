@@ -32,6 +32,11 @@ RAW_LOG=/tmp/ks2-${P3_RUN}-worker-tail.jsonl
 npm run ops:tail:json > "$RAW_LOG"
 ```
 
+The 2026-04-30 P3-T0 smoke confirmed that this package script can emit the live pretty JSON stream shape needed for finite Cloudflare CPU/wall joins. The committed proof is diagnostic-only:
+
+- `reports/capacity/evidence/2026-04-30-p3-t0-smoke.json`
+- `reports/capacity/evidence/2026-04-30-p3-t0-smoke-tail-correlation.json`
+
 The raw log path must stay outside git. If a local operator must temporarily place raw captures under `reports/capacity/evidence/`, names containing `worker-log`, `worker-tail`, `pretty-tail`, `raw-tail`, `tail-raw`, or ending in `-tail` before a raw log extension are ignored by `reports/capacity/.gitignore`. Do not name redacted artefacts with those raw-log tokens; use `*-tail-correlation.json`, `*-statement-map.json`, and `*-tail-classification.md`.
 
 The JSONL export must provide finite `cpuTimeMs` and `wallTimeMs` values. Pretty tail output can still prove sampled `capacity.request` statement coverage, but it is not sufficient for P3 invocation telemetry. If the JSON tail available to the operator does not include finite CPU/wall fields and no approved Workers Logs, Tail Worker, Trace, or Logpush export with the same machine-joinable fields is available, P3 exits through `telemetry-repair-failed`. In that exit path, do not run promotion wording, do not infer CPU from wall time, and do not start D1/Worker CPU/payload mitigation.
