@@ -29,6 +29,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs/promises';
+import { parseArgs } from 'node:util';
 
 import {
   GRAMMAR_TEMPLATE_METADATA,
@@ -227,13 +228,23 @@ export function runDistractorAudit() {
 }
 
 async function main() {
+  const { values } = parseArgs({
+    options: {
+      out: { type: 'string', default: '' },
+    },
+    strict: false,
+  });
+
   const audit = runDistractorAudit();
 
   await fs.mkdir(REPORTS_DIR, { recursive: true });
-  const outputPath = path.join(REPORTS_DIR, 'grammar-qg-p10-distractor-audit.json');
+  const outputPath = values.out
+    ? path.resolve(values.out)
+    : path.join(REPORTS_DIR, 'grammar-qg-p10-distractor-audit.json');
+  await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, JSON.stringify(audit, null, 2) + '\n', 'utf8');
 
-  console.log('Grammar QG P10 Distractor Audit:');
+  console.log('Grammar Distractor Audit:');
   console.log(`  Templates audited: ${audit.metadata.templatesAudited}`);
   console.log(`  Total items: ${audit.metadata.totalItems}`);
   console.log(`  S0 failures: ${audit.metadata.s0Count}`);

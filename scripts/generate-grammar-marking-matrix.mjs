@@ -23,6 +23,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs/promises';
+import { parseArgs } from 'node:util';
 
 import {
   GRAMMAR_TEMPLATE_METADATA,
@@ -241,17 +242,27 @@ function generateMarkdown(matrix) {
 // ---------------------------------------------------------------------------
 
 async function main() {
+  const { values } = parseArgs({
+    options: {
+      out: { type: 'string', default: '' },
+    },
+    strict: false,
+  });
+
   const matrix = buildMarkingMatrix();
 
   await fs.mkdir(REPORTS_DIR, { recursive: true });
 
-  const jsonPath = path.join(REPORTS_DIR, 'grammar-qg-p10-marking-matrix.json');
+  const jsonPath = values.out
+    ? path.resolve(values.out)
+    : path.join(REPORTS_DIR, 'grammar-qg-p10-marking-matrix.json');
+  await fs.mkdir(path.dirname(jsonPath), { recursive: true });
   await fs.writeFile(jsonPath, JSON.stringify(matrix, null, 2) + '\n', 'utf8');
 
-  const mdPath = path.join(REPORTS_DIR, 'grammar-qg-p10-marking-matrix.md');
+  const mdPath = jsonPath.replace(/\.json$/, '.md');
   await fs.writeFile(mdPath, generateMarkdown(matrix), 'utf8');
 
-  console.log('Grammar QG P10 Marking Matrix (9-category) generated:');
+  console.log('Grammar Marking Matrix (9-category) generated:');
   console.log(`  Total entries: ${matrix.metadata.totalEntries}`);
   console.log(`  Variant categories: ${matrix.metadata.variantCategories}`);
   console.log(`  JSON: ${jsonPath}`);

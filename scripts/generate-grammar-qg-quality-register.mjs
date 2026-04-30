@@ -18,6 +18,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs/promises';
+import { parseArgs } from 'node:util';
 
 import {
   GRAMMAR_TEMPLATE_METADATA,
@@ -562,17 +563,27 @@ function generateMarkdownReport(register) {
 }
 
 async function main() {
+  const { values } = parseArgs({
+    options: {
+      out: { type: 'string', default: '' },
+    },
+    strict: false,
+  });
+
   const register = buildQualityRegister();
 
   await fs.mkdir(REPORTS_DIR, { recursive: true });
 
-  const jsonPath = path.join(REPORTS_DIR, 'grammar-qg-p10-quality-register.json');
+  const jsonPath = values.out
+    ? path.resolve(values.out)
+    : path.join(REPORTS_DIR, 'grammar-qg-p10-quality-register.json');
+  await fs.mkdir(path.dirname(jsonPath), { recursive: true });
   await fs.writeFile(jsonPath, JSON.stringify(register, null, 2) + '\n', 'utf8');
 
-  const mdPath = path.join(REPORTS_DIR, 'grammar-qg-p10-quality-register.md');
+  const mdPath = jsonPath.replace(/\.json$/, '.md');
   await fs.writeFile(mdPath, generateMarkdownReport(register) + '\n', 'utf8');
 
-  console.log('Grammar QG P10 Quality Register generated:');
+  console.log('Grammar Quality Register generated:');
   console.log(`  Templates: ${register.metadata.templateCount}`);
   console.log(`  Approved: ${register.metadata.approved}`);
   console.log(`  Blocked: ${register.metadata.blocked}`);
