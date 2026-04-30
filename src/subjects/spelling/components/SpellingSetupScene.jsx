@@ -6,6 +6,7 @@ import { useSetupHeroContrast } from './useSetupHeroContrast.js';
 import { Button } from '../../../platform/ui/Button.jsx';
 import { LengthPicker } from '../../../platform/ui/LengthPicker.jsx';
 import { SetupSidePanel } from '../../../platform/ui/SetupSidePanel.jsx';
+import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
 import { SubjectThemeScope } from '../../../platform/ui/SubjectThemeScope.jsx';
 import {
   BOSS_DEFAULT_ROUND_LENGTH,
@@ -491,6 +492,25 @@ export function SpellingSetupScene({
           <>
             <SetupMeadow codex={codex} repositories={repositories} />
             <SetupStatGrid stats={stats} />
+            <SubjectCompanionPanel
+              subjectId="spelling"
+              learnerName={learner.name}
+              monsters={(Array.isArray(codex) ? codex : [])
+                .filter((entry) => entry?.progress?.caught)
+                .slice(0, 4)
+                .map((entry) => ({
+                  name: entry.monster?.name || entry.monster?.id || '',
+                  imageUrl: entry.monster?.imageUrl || '',
+                  discovered: true,
+                }))}
+              stats={[
+                { label: 'Total', value: String(stats.total ?? 0) },
+                { label: 'Secure', value: String(stats.secure ?? 0) },
+                { label: 'Due', value: String(stats.due ?? 0), tone: 'warn' },
+              ]}
+              nextFocus={stats.trouble > 0 ? `${stats.trouble} weak spot${stats.trouble === 1 ? '' : 's'} to address` : ''}
+              emptyState="Catch your first creature to see companions here."
+            />
           </>
         )}
         footer={(

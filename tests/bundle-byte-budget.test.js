@@ -77,14 +77,16 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 // + grammar-hero-bg view-model) keep Node 22/24 gzip output near
 // 226.3 KB. P2 U3 (refactor-ui shared primitives) adds the
 // `ProgressMeter` + `StatCard` utility components to the main bundle,
-// which lands ~120 bytes of new gzip surface after trim. The committed
-// ceiling rises to 227,500 (matches `DEFAULT_MAIN_BUNDLE_GZIP_BUDGET_BYTES`
-// in `scripts/audit-client-bundle.mjs`). The upper guard at
-// `BASELINE_GZIP_BYTES * 1.105 = 227,630` still holds 130 bytes of
-// headroom — the gate continues to trip when ~50 KB of adult-only JS
-// sneaks back into the critical path.
-const BASELINE_GZIP_BYTES = 206_000;
-const BUDGET_GZIP_BYTES = 227_500;
+// which lands ~120 bytes of new gzip surface after trim. P3 U5+U6
+// (SubjectCompanionPanel + SessionSummaryFrame) add the shared companion
+// panel and summary engine primitives adopted by all three subjects.
+// Re-baselined to 210,000 to reflect the post-P3 bundle size. The
+// upper guard at `BASELINE_GZIP_BYTES * 1.105 = 232,050` still holds
+// ~1 KB of headroom above the committed budget — the gate continues
+// to trip when ~50 KB of adult-only JS sneaks back into the critical
+// path.
+const BASELINE_GZIP_BYTES = 210_000;
+const BUDGET_GZIP_BYTES = 231_000;
 const TEST_MODE_BUNDLE_MARKER = '__ks2_capacityMeta__';
 
 function isPlaywrightTestModeBundle(bundleBytes) {
