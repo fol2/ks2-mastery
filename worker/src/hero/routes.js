@@ -7,6 +7,7 @@
 import { json } from '../http.js';
 import { NotFoundError } from '../errors.js';
 import { buildHeroShadowReadModel } from './read-model.js';
+import { resolveHeroFlagsWithOverride } from '../../../shared/hero/account-override.js';
 
 function envFlagEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
@@ -36,8 +37,12 @@ export async function handleHeroReadModel({
   now,
   capacity,
 }) {
-  // 1. Feature flag gate
-  if (!envFlagEnabled(env.HERO_MODE_SHADOW_ENABLED)) {
+  // 1. Apply per-account override before feature flag gate (pA2 #683 fix).
+  //    Without this, internal cohort accounts with global flags OFF cannot
+  //    access the read-model — the override only applied on command routes.
+  const resolvedEnv = resolveHeroFlagsWithOverride({ env, accountId: session.accountId });
+
+  if (!envFlagEnabled(resolvedEnv.HERO_MODE_SHADOW_ENABLED)) {
     throw new NotFoundError('Hero shadow read model is not available.', {
       code: 'hero_shadow_disabled',
     });
@@ -59,9 +64,9 @@ export async function handleHeroReadModel({
   const subjectReadModels = await repository.readHeroSubjectReadModels(learnerId);
 
   // 4b. P3 U7: load progress bundle for the v4 read model when progress enabled.
-  const progressFlagEnabled = envFlagEnabled(env.HERO_MODE_PROGRESS_ENABLED);
-  const economyFlagEnabled = envFlagEnabled(env.HERO_MODE_ECONOMY_ENABLED);
-  const campFlagEnabled = envFlagEnabled(env.HERO_MODE_CAMP_ENABLED);
+  const progressFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_PROGRESS_ENABLED);
+  const economyFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_ECONOMY_ENABLED);
+  const campFlagEnabled = envFlagEnabled(resolvedEnv.HERO_MODE_CAMP_ENABLED);
   const heroProgressData = progressFlagEnabled
     ? await repository.readHeroProgressData(learnerId)
     : { heroProgressState: null, recentCompletedSessions: [] };
@@ -74,7 +79,7 @@ export async function handleHeroReadModel({
     accountId: session.accountId || '',
     subjectReadModels,
     now: nowTs,
-    env,
+    env: resolvedEnv,
     heroProgressState: heroProgressData.heroProgressState,
     recentCompletedSessions: heroProgressData.recentCompletedSessions,
     progressEnabled: progressFlagEnabled,
@@ -98,7 +103,7 @@ export async function handleHeroReadModel({
   // Strip debug block from the child-visible response — debug data is
   // useful for shadow/internal diagnostics but must not leak to the child browser.
   const { debug, ...safeResult } = result;
-  const responseHero = envFlagEnabled(env.HERO_MODE_CHILD_UI_ENABLED) ? safeResult : result;
+  const responseHero = envFlagEnabled(resolvedEnv.HERO_MODE_CHILD_UI_ENABLED) ? safeResult : result;
 
   return json({ ok: true, hero: responseHero });
 }

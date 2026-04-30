@@ -87,6 +87,7 @@ export async function probeHeroTelemetry({ db, limit = 20 } = {}) {
  * @param {Object} params.resolvedFlags — env-like object with resolved Hero flags
  * @param {string} params.dateKey — current date key (YYYY-MM-DD)
  * @param {Object} params.overrideStatus — override status for the queried learner
+ * @param {number|null} [params.learnerEventCount] — learner-specific event count for reconciliation
  * @returns {Object} expanded probe response (before privacy stripping)
  */
 export function buildExpandedProbeResponse({
@@ -95,6 +96,7 @@ export function buildExpandedProbeResponse({
   resolvedFlags,
   dateKey,
   overrideStatus,
+  learnerEventCount,
 }) {
   const safeState = heroState && typeof heroState === 'object' ? heroState : null;
   const ledger = safeState?.economy?.ledger ?? null;
@@ -102,11 +104,14 @@ export function buildExpandedProbeResponse({
   // Derive readiness checks
   const readiness = deriveReadinessChecks(safeState, resolvedFlags);
 
-  // Derive health indicators
+  // Derive health indicators (add raw balance for pA2 stop-condition detection)
   const health = deriveHeroHealthIndicators(safeState, ledger);
+  health.balance = safeState?.economy?.balance ?? 0;
 
-  // Derive reconciliation gap (ledger vs event_log count)
-  const reconciliation = deriveReconciliationGap(ledger, probeResult.count);
+  // Derive reconciliation gap (ledger vs event_log count).
+  // Use learner-specific event count when available (pA2 U4 fix),
+  // falling back to system-wide probeResult.count for backwards compat.
+  const reconciliation = deriveReconciliationGap(ledger, learnerEventCount ?? probeResult.count);
 
   // Derive spend pattern for today
   const campSpends = Array.isArray(ledger)

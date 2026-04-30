@@ -59,6 +59,26 @@ function makeOverrideStatus({ isInternal = false } = {}) {
   };
 }
 
+// pA2 U5: override status reflecting the PARENT account (not operator)
+function makeParentOverrideStatus({ parentAccountId = 'acc-parent-1', isInternal = false, learnerId = 'learner-1' } = {}) {
+  return {
+    queriedLearnerId: learnerId,
+    parentAccountId,
+    isInternalAccount: isInternal,
+    effectiveFlags: makeAllFlagsEnabled(),
+  };
+}
+
+function makeOrphanOverrideStatus({ learnerId = 'learner-orphan' } = {}) {
+  return {
+    queriedLearnerId: learnerId,
+    parentAccountId: null,
+    isInternalAccount: null,
+    effectiveFlags: makeAllFlagsEnabled(),
+    reason: 'parent-account-not-found',
+  };
+}
+
 // ── buildExpandedProbeResponse ─────────────────────────────────────
 
 describe('buildExpandedProbeResponse', () => {
@@ -347,5 +367,156 @@ describe('buildExpandedProbeResponse', () => {
     const flagsCheck = result.readiness.checks.find(c => c.name === 'flagsConfigured');
     assert.equal(flagsCheck.status, 'fail');
     assert.equal(result.readiness.overall, 'not_ready');
+  });
+
+  // ── pA2 U4: learner-scoped reconciliation ─────────────────────────────
+
+  it('reconciliation uses learnerEventCount when provided (not system-wide probeResult.count)', () => {
+    // Ledger has 5 entries, system-wide count is 100, but learner-specific count is 4
+    const heroState = makeFullHeroState({
+      balance: 200,
+      ledger: [
+        { type: 'daily_completion', amount: 100, createdAt: '2026-04-29T10:00:00.000Z' },
+        { type: 'daily_completion', amount: 100, createdAt: '2026-04-28T10:00:00.000Z' },
+        { type: 'camp_spend', amount: -50, createdAt: '2026-04-29T11:00:00.000Z' },
+        { type: 'camp_spend', amount: -30, createdAt: '2026-04-28T11:00:00.000Z' },
+        { type: 'daily_completion', amount: 100, createdAt: '2026-04-27T10:00:00.000Z' },
+      ],
+    });
+
+    const result = buildExpandedProbeResponse({
+      probeResult: makeBaseProbeResult(100), // system-wide: 100 events
+      heroState,
+      resolvedFlags: makeAllFlagsEnabled(),
+      dateKey: '2026-04-29',
+      overrideStatus: makeOverrideStatus(),
+      learnerEventCount: 4, // learner-specific: only 4 events
+    });
+
+    // Gap = 5 (ledger) - 4 (learner events) = 1
+    assert.equal(result.reconciliation.hasGap, true);
+    assert.equal(result.reconciliation.ledgerCount, 5);
+    assert.equal(result.reconciliation.eventCount, 4);
+    assert.equal(result.reconciliation.gap, 1);
+  });
+
+  it('reconciliation falls back to probeResult.count when learnerEventCount is null', () => {
+    const heroState = makeFullHeroState({
+      balance: 200,
+      ledger: [
+        { type: 'daily_completion', amount: 100, createdAt: '2026-04-29T10:00:00.000Z' },
+        { type: 'daily_completion', amount: 100, createdAt: '2026-04-28T10:00:00.000Z' },
+      ],
+    });
+
+    const result = buildExpandedProbeResponse({
+      probeResult: makeBaseProbeResult(2), // system-wide count
+      heroState,
+      resolvedFlags: makeAllFlagsEnabled(),
+      dateKey: '2026-04-29',
+      overrideStatus: makeOverrideStatus(),
+      learnerEventCount: null, // explicitly null — fallback
+    });
+
+    assert.equal(result.reconciliation.hasGap, false);
+    assert.equal(result.reconciliation.eventCount, 2);
+    assert.equal(result.reconciliation.gap, 0);
+  });
+
+  it('reconciliation falls back to probeResult.count when learnerEventCount is undefined (backwards compat)', () => {
+    const heroState = makeFullHeroState({
+      balance: 200,
+      ledger: [
+        { type: 'daily_completion', amount: 100, createdAt: '2026-04-29T10:00:00.000Z' },
+        { type: 'daily_completion', amount: 100, createdAt: '2026-04-28T10:00:00.000Z' },
+        { type: 'daily_completion', amount: 100, createdAt: '2026-04-27T10:00:00.000Z' },
+      ],
+    });
+
+    // No learnerEventCount param at all — old call shape
+    const result = buildExpandedProbeResponse({
+      probeResult: makeBaseProbeResult(3),
+      heroState,
+      resolvedFlags: makeAllFlagsEnabled(),
+      dateKey: '2026-04-29',
+      overrideStatus: makeOverrideStatus(),
+    });
+
+    assert.equal(result.reconciliation.hasGap, false);
+    assert.equal(result.reconciliation.eventCount, 3);
+    assert.equal(result.reconciliation.gap, 0);
+  });
+
+  // ── pA2 U5: override status reflects parent account ───────────────────
+
+  it('override status reflects parent account, not operator account', () => {
+    const result = buildExpandedProbeResponse({
+      probeResult: makeBaseProbeResult(1),
+      heroState: makeFullHeroState(),
+      resolvedFlags: makeAllFlagsEnabled(),
+      dateKey: '2026-04-29',
+      overrideStatus: makeParentOverrideStatus({
+        parentAccountId: 'acc-parent-1',
+        isInternal: true,
+        learnerId: 'learner-1',
+      }),
+    });
+
+    // Must have queriedLearnerId and parentAccountId, NOT operator accountId
+    assert.equal(result.overrideStatus.queriedLearnerId, 'learner-1');
+    assert.equal(result.overrideStatus.parentAccountId, 'acc-parent-1');
+    assert.equal(result.overrideStatus.isInternalAccount, true);
+    assert.equal('accountId' in result.overrideStatus, false);
+  });
+
+  it('override status for non-internal parent account', () => {
+    const result = buildExpandedProbeResponse({
+      probeResult: makeBaseProbeResult(1),
+      heroState: makeFullHeroState(),
+      resolvedFlags: makeAllFlagsEnabled(),
+      dateKey: '2026-04-29',
+      overrideStatus: makeParentOverrideStatus({
+        parentAccountId: 'acc-parent-external',
+        isInternal: false,
+        learnerId: 'learner-2',
+      }),
+    });
+
+    assert.equal(result.overrideStatus.queriedLearnerId, 'learner-2');
+    assert.equal(result.overrideStatus.parentAccountId, 'acc-parent-external');
+    assert.equal(result.overrideStatus.isInternalAccount, false);
+  });
+
+  it('override status for orphan learner (parent-account-not-found)', () => {
+    const result = buildExpandedProbeResponse({
+      probeResult: makeBaseProbeResult(0),
+      heroState: null,
+      resolvedFlags: makeAllFlagsEnabled(),
+      dateKey: '2026-04-29',
+      overrideStatus: makeOrphanOverrideStatus({ learnerId: 'learner-orphan' }),
+    });
+
+    assert.equal(result.overrideStatus.queriedLearnerId, 'learner-orphan');
+    assert.equal(result.overrideStatus.parentAccountId, null);
+    assert.equal(result.overrideStatus.isInternalAccount, null);
+    assert.equal(result.overrideStatus.reason, 'parent-account-not-found');
+  });
+
+  it('backwards compat: old overrideStatus shape still passes through without learnerId', () => {
+    // Pre-fix shape: { accountId, isInternalAccount, effectiveFlags }
+    const legacyOverride = makeOverrideStatus({ isInternal: false });
+
+    const result = buildExpandedProbeResponse({
+      probeResult: makeBaseProbeResult(1),
+      heroState: makeFullHeroState(),
+      resolvedFlags: makeAllFlagsEnabled(),
+      dateKey: '2026-04-29',
+      overrideStatus: legacyOverride,
+    });
+
+    // The function just passes overrideStatus through — old shape preserved
+    assert.equal(result.overrideStatus.accountId, 'acc-admin-1');
+    assert.equal(result.overrideStatus.isInternalAccount, false);
+    assert.ok(result.overrideStatus.effectiveFlags);
   });
 });
