@@ -230,14 +230,15 @@ test('S6: no P0 Hero source file contains reward/economy tokens', () => {
   ];
 
   // P3+ files that legitimately use economy-adjacent vocabulary as part of
-  // the claim/reward architecture, field-rejection guards, or product-health
-  // warning boundaries — excluded from this P0-era scan.
+  // claim/reward, Camp, or product-health analysis boundaries — excluded from
+  // this P0-era scan.
   const S6_EXCLUDED_SUFFIXES = [
     'hero-copy.js',
     'claim-contract.js',
     'claim-resolver.js',
     'camp.js',
     'monster-economy.js',
+    'product-signals.js',
     'warning-conditions.js',
   ];
 

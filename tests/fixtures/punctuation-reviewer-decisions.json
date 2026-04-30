@@ -10,13 +10,16 @@
       "date": "2026-04-30"
     },
     "human_acceptance": {
-      "status": "not_started",
-      "reviewer": null,
-      "role": null,
-      "reviewedAt": null
+      "status": "complete",
+      "reviewer": "James",
+      "role": "product-owner",
+      "reviewedAt": "2026-04-30",
+      "acceptedItems": 192,
+      "acceptedReviewRequiredClusters": 47,
+      "blockers": []
     },
     "production_certification": {
-      "status": "blocked_pending_human_acceptance_and_p9_gates"
+      "status": "certified_pre_deploy_pending_live_smoke"
     }
   },
   "decisions": {},

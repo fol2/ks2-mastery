@@ -1433,8 +1433,8 @@ export function createWorkerApp({
         }
 
         if (url.pathname === '/api/hero/command' && request.method === 'POST') {
+          requireSameOrigin(request, env);
           requireMutationCapability(session);
-
           // U8 security fix: apply per-account override BEFORE pre-gate checks
           // so team accounts in HERO_INTERNAL_ACCOUNTS bypass global flag gates.
           // pA4 U2: unified resolver — also captures overrideStatus for ops output.
@@ -1466,7 +1466,6 @@ export function createWorkerApp({
               code: 'hero_launch_misconfigured',
             });
           }
-          requireSameOrigin(request, env);
           const body = await readJson(request);
           const heroLearnerId = body?.learnerId || '';
           await repository.requireLearnerReadAccess(session.accountId, heroLearnerId);

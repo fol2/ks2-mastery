@@ -143,4 +143,5 @@ test('spelling practice dashboard renders without service UI metadata', async ()
   assert.match(html, /Round setup/);
   assert.match(html, /class="subject-theme setup-grid"/);
   assert.match(html, /data-subject="spelling"/);
+  assert.doesNotMatch(html, /#3E6FA8/i);
 });

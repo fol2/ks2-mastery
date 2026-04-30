@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "subject": "punctuation",
+  "phase": "punctuation-qg-p10",
+  "certificationStatus": "CERTIFIED_PRE_DEPLOY",
+  "statusRationale": "Depth-4 P10 source and local gates pass, and James has accepted the 192-item depth-4 production pool with 47 review-required clusters. Live production smoke has not run, so post-deploy certification remains unavailable.",
+  "releaseId": "punctuation-r4-full-14-skill-structure",
+  "source": {
+    "zip": {
+      "name": "ks2-mastery-lean-04301832.zip",
+      "sha256": "47bf712c7c65a5e3e56ad68be30e88344ffb17252d3c6eb7d34d556e77b99745"
+    },
+    "git": {
+      "repository": "fol2/ks2-mastery",
+      "ref": "codex/punctuation-qg-p10-delivery",
+      "commitSha": "ba5d901dac5f4d5ca2d619e10402c82ef3da8ad8",
+      "commitContainsAllVerifiedPaths": true,
+      "verifiedPaths": [
+        "package.json",
+        "shared/punctuation/marking.js",
+        "tests/punctuation-closed-lexical-preservation-p10.test.js",
+        "scripts/verify-punctuation-qg-p10.mjs",
+        "scripts/validate-punctuation-qg-certification-evidence.mjs",
+        "scripts/verify-punctuation-qg-p9.mjs",
+        "tests/fixtures/punctuation-reviewer-decisions.json",
+        "tests/fixtures/punctuation-negative-vectors.json"
+      ],
+      "pathHashes": {
+        "package.json": "2ef87e85014975677aeca7a085515786639fd2b62e58f61fa0205a70ecd0728a",
+        "shared/punctuation/marking.js": "fdf4a562bc33393f9d09a4e8dc7bc658f3cb10f03fb19ebbdd8547e725011ab0",
+        "tests/punctuation-closed-lexical-preservation-p10.test.js": "4392941b4955c2951a59f18a167c92e7b826c3d13b296d47bebbab2ed4c930ce",
+        "scripts/verify-punctuation-qg-p10.mjs": "cd9a73a2a139ba2bdf86ffa36ac572667a7f8ee60ee1d952e1c5a658acbcad8b",
+        "scripts/validate-punctuation-qg-certification-evidence.mjs": "c21abf53f16446b234e0863669d511c447436dd5da4f23cdf6f8873ca4bed054",
+        "scripts/verify-punctuation-qg-p9.mjs": "564c9eac5bcc76fd5b929b6ef63f6a668a6f6b1a1b3c5cac57070e26e73d7781",
+        "tests/fixtures/punctuation-reviewer-decisions.json": "1ebf53c2e106bead3db78a8f05aa05a8bc8d022f77b9fec4320a35e93fa36ffa",
+        "tests/fixtures/punctuation-negative-vectors.json": "ef42eb0b0864fb9658af04453716f0a0fc1bd33674160c11b9b24576378d2b74"
+      }
+    }
+  },
+  "runtimePool": {
+    "productionDepth": 4,
+    "fixedItems": 92,
+    "generatedProductionItems": 100,
+    "totalProductionItems": 192
+  },
+  "localVerification": {
+    "command": "npm run verify:punctuation-qg:p10",
+    "status": "pass",
+    "exitCode": 0,
+    "nodeVersion": "v22.16.0",
+    "npmVersion": "10.9.2",
+    "logicalGates": 56,
+    "logPath": "reports/punctuation/punctuation-qg-p10-verify.log",
+    "logSha256": "d50205eb5d034233a13e275c853209543f608fbf0daa0ccb07e9e291d8cb4b8e"
+  },
+  "review": {
+    "aiPreReview": {
+      "status": "complete",
+      "method": "multi-perspective teacher/engineer/parent simulation",
+      "itemDecisions": 192,
+      "reviewRequiredClusterDecisions": 47
+    },
+    "aiSimulatedAcceptance": {
+      "status": "complete_non_certifying",
+      "path": "reports/punctuation/punctuation-qg-p10-ai-simulated-acceptance.json",
+      "sha256": "cfbe2bc3da100a4d37b80258741ee1a95e5bfec8537835e04f099525c6337f0c",
+      "certificationAuthority": false,
+      "mustNotBeUsedAsHumanAcceptance": true
+    },
+    "humanAcceptance": {
+      "status": "complete",
+      "reviewer": "James",
+      "role": "product-owner",
+      "reviewedAt": "2026-04-30T20:55:41Z",
+      "acceptedItems": 192,
+      "acceptedReviewRequiredClusters": 47,
+      "blockers": []
+    }
+  },
+  "liveProductionSmoke": {
+    "status": "not_run",
+    "environment": null,
+    "origin": null,
+    "releaseId": "punctuation-r4-full-14-skill-structure",
+    "deployedCommitOrWorkerVersion": null,
+    "timestamp": null,
+    "command": null,
+    "result": null,
+    "artefactPath": null,
+    "artefactSha256": null
+  },
+  "depth6": {
+    "status": "blocked",
+    "reason": "Depth 6 remains blocked until candidate item review, candidate negative vectors, candidate cluster decisions, live evidence, and explicit product-owner acceptance are complete."
+  }
+}

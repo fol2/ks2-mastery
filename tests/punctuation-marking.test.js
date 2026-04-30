@@ -135,7 +135,7 @@ test('comma list transfer requires preserved items and KS2 list comma placement'
     answer: { typed: 'We packed pencils, rulers, and glue.' },
   });
   assert.equal(changedInsertStem.correct, false);
-  assert.equal(changedInsertStem.misconceptionTags.includes('comma.list_words_changed'), true);
+  assert.equal(changedInsertStem.misconceptionTags.includes('content.words_added_or_changed'), true);
 
   const finalComma = markPunctuationAnswer({
     item: item('lc_transfer_trip'),

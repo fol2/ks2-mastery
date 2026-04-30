@@ -1,0 +1,36 @@
+
+> ks2-mastery@0.1.0 verify:punctuation-qg:p10
+> node scripts/verify-punctuation-qg-p10.mjs
+
+
+══════════════════════════════════════════════════════════════
+PUNCTUATION QG P10 VERIFICATION
+══════════════════════════════════════════════════════════════
+
+  ▶ P9 composed gates ...  ✓ P9 composed gates (10.6s)
+  ▶ P10 lexical-replacement oracle ...  ✓ P10 lexical-replacement oracle (0.2s)
+  ▶ Model-answer preservation after P10 patch ...  ✓ Model-answer preservation after P10 patch (0.0s) — items=148, answers=169
+  ▶ Reviewer decision integrity ...  ✓ Reviewer decision integrity (0.1s) — schema=3, ai_pre_review=complete, items=192, review_required_clusters=47
+  ▶ Reviewer cluster alignment ...  ✓ Reviewer cluster alignment (0.1s)
+  ▶ Human acceptance truth gate ...  ✓ Human acceptance truth gate (0.0s) — human_acceptance=complete reviewer=James, items=192, review_required_clusters=47
+  ▶ Certification manifest validation ...  ✓ Certification manifest validation (0.2s)
+  ▶ Depth-4 production-depth lock ...  ✓ Depth-4 production-depth lock (0.0s) — PRODUCTION_DEPTH=4, fixed=92, generated=100, total=192
+  ▶ Depth-6 remains blocked ...  ✓ Depth-6 remains blocked (0.0s) — depth6_candidate_delta=50, status=blocked
+  ▶ Live production smoke truth gate ...  ✓ Live production smoke truth gate (0.0s) — liveProductionSmoke=not_run
+
+──────────────────────────────────────────────────────────────
+  Summary:
+    Top-level gates:    10
+    Logical gates:      56
+    Passed:             10/10
+    Failed:             0
+    Production depth:   4
+    Certification:      CERTIFIED_PRE_DEPLOY
+    Elapsed:            11.2s
+──────────────────────────────────────────────────────────────
+
+  Post-deploy blockers:
+    - Live production smoke has not run, so post-deploy certification is unavailable.
+
+  RESULT: CERTIFIED_PRE_DEPLOY
+

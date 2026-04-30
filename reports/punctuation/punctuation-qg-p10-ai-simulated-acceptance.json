@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "kind": "ai_simulated_acceptance_not_human_acceptance",
+  "subject": "punctuation",
+  "phase": "punctuation-qg-p10",
+  "reviewer": {
+    "name": "Codex",
+    "type": "ai_simulated_reviewer",
+    "roleSimulated": "product-owner-and-teacher-acceptance-panel"
+  },
+  "completedAt": "2026-04-30T20:39:09Z",
+  "decision": "ACCEPTED_AS_AI_SIMULATION",
+  "certificationAuthority": false,
+  "mustNotBeUsedAsHumanAcceptance": true,
+  "scope": {
+    "productionDepth": 4,
+    "fixedItems": 92,
+    "generatedProductionItems": 100,
+    "totalProductionItems": 192,
+    "reviewRequiredClusters": 47,
+    "depth6Status": "blocked"
+  },
+  "evidenceReviewed": {
+    "canonicalVerifier": {
+      "command": "npm run verify:punctuation-qg:p10",
+      "nodeVersion": "v22.16.0",
+      "npmVersion": "10.9.2",
+      "topLevelGates": 10,
+      "logicalGates": 56,
+      "result": "BLOCKED_PENDING_HUMAN_ACCEPTANCE"
+    },
+    "lexicalOracle": {
+      "itemsInspected": 123,
+      "lexicalReplacementAttempts": 481,
+      "falseAccepts": 0,
+      "modelAndAcceptedAnswersChecked": 139
+    },
+    "reviewerSummary": {
+      "productionItems": 192,
+      "approvedProductionItems": 192,
+      "reviewRequiredClusters": 47,
+      "approvedReviewRequiredClusters": 47
+    },
+    "certificationManifest": {
+      "path": "reports/punctuation/punctuation-qg-p10-certification-manifest.json",
+      "validation": "pass",
+      "certificationStatus": "BLOCKED_PENDING_HUMAN_ACCEPTANCE"
+    }
+  },
+  "acceptanceChecklist": [
+    {
+      "id": "lexical-preservation",
+      "status": "accepted",
+      "note": "Closed insert/fix items reject content substitutions, additions, and removals while preserving model and accepted-answer correctness."
+    },
+    {
+      "id": "reviewer-pack-integrity",
+      "status": "accepted",
+      "note": "Depth-4 reviewer item and review-required cluster counts remain aligned."
+    },
+    {
+      "id": "evidence-boundary",
+      "status": "accepted",
+      "note": "The release does not claim human acceptance or live production smoke."
+    },
+    {
+      "id": "depth-6-boundary",
+      "status": "accepted",
+      "note": "Depth 6 remains blocked pending separate candidate review and acceptance."
+    }
+  ],
+  "blockingFindings": [],
+  "residualRisks": [
+    "This is an AI simulation and cannot satisfy the P10 human acceptance requirement.",
+    "Live production remains unproven because deployed smoke has not run for this release identity.",
+    "The wider npm test suite still has unrelated Grammar dashboard fixture failures outside the Punctuation P10 change surface."
+  ]
+}
