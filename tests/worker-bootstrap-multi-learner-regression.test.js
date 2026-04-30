@@ -155,7 +155,9 @@ function insertGameState(server, learnerId) {
   // Only `monster-codex` system_id survives `publicGameStateRowToRecord`.
   // Seed `inklet` + `glimmerbug` entries with per-learner branch values.
   // The (inklet.branch, glimmerbug.branch) tuple uniquely identifies each
-  // learner's game state through the public transform.
+  // learner's game state through the public transform. `bracehart` locks the
+  // Grammar hydration path: spelling-progress merge must update spelling
+  // entries without erasing non-spelling reward state.
   runSql(server, `
     INSERT INTO child_game_state (learner_id, system_id, state_json, updated_at, updated_by_account_id)
     VALUES (?, 'monster-codex', ?, ?, ?)
@@ -164,6 +166,11 @@ function insertGameState(server, learnerId) {
     JSON.stringify({
       inklet: { mastered: [`${learnerId}-ink-word`], caught: true, branch: branches.inklet },
       glimmerbug: { mastered: [`${learnerId}-glim-word`], caught: true, branch: branches.glimmerbug },
+      bracehart: {
+        caught: true,
+        mastered: ['grammar:grammar-legacy-reviewed-2026-04-24:clauses'],
+        starHighWater: 17,
+      },
     }),
     NOW,
     ACCOUNT_ID,
@@ -379,6 +386,10 @@ test('multi-learner #2: POST bootstrap ships child_game_state for all 3 writable
       `learner-a inklet branch identity, got ${JSON.stringify(aGame?.inklet)}`);
     assert.equal(aGame?.glimmerbug?.branch, 'b2',
       `learner-a glimmerbug branch identity, got ${JSON.stringify(aGame?.glimmerbug)}`);
+    assert.equal(aGame?.bracehart?.caught, true,
+      `learner-a Grammar monster survives spelling merge, got ${JSON.stringify(aGame?.bracehart)}`);
+    assert.equal(aGame?.bracehart?.starHighWater, 17,
+      `learner-a Grammar star high-water survives spelling merge, got ${JSON.stringify(aGame?.bracehart)}`);
 
     const bGame = payload.gameState['learner-b::monster-codex'];
     assert.ok(bGame, 'learner-b game state present');
@@ -386,6 +397,10 @@ test('multi-learner #2: POST bootstrap ships child_game_state for all 3 writable
       `learner-b inklet branch identity, got ${JSON.stringify(bGame?.inklet)}`);
     assert.equal(bGame?.glimmerbug?.branch, 'b1',
       `learner-b glimmerbug branch identity, got ${JSON.stringify(bGame?.glimmerbug)}`);
+    assert.equal(bGame?.bracehart?.caught, true,
+      `learner-b Grammar monster survives spelling merge, got ${JSON.stringify(bGame?.bracehart)}`);
+    assert.equal(bGame?.bracehart?.starHighWater, 17,
+      `learner-b Grammar star high-water survives spelling merge, got ${JSON.stringify(bGame?.bracehart)}`);
 
     const cGame = payload.gameState['learner-c::monster-codex'];
     assert.ok(cGame, 'learner-c game state present');
@@ -393,6 +408,10 @@ test('multi-learner #2: POST bootstrap ships child_game_state for all 3 writable
       `learner-c inklet branch identity, got ${JSON.stringify(cGame?.inklet)}`);
     assert.equal(cGame?.glimmerbug?.branch, 'b1',
       `learner-c glimmerbug branch identity, got ${JSON.stringify(cGame?.glimmerbug)}`);
+    assert.equal(cGame?.bracehart?.caught, true,
+      `learner-c Grammar monster survives spelling merge, got ${JSON.stringify(cGame?.bracehart)}`);
+    assert.equal(cGame?.bracehart?.starHighWater, 17,
+      `learner-c Grammar star high-water survives spelling merge, got ${JSON.stringify(cGame?.bracehart)}`);
 
     // No learner-d entries.
     const dKeys = gameKeys.filter((k) => k.startsWith('learner-d'));

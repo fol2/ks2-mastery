@@ -406,7 +406,10 @@ async function mergePublicSpellingCodexState(db, accountId, subjectRows, gameSta
     const derived = publicMonsterCodexStateFromSpellingProgress(progress, snapshot, existingState, { learnerId: row.learner_id });
     if (!derived) continue;
     if (derived.knownWordCount > 0 || !publicMonsterCodexHasMastery(existingState)) {
-      gameState[key] = derived.state;
+      gameState[key] = publicMonsterCodexState({
+        ...existingState,
+        ...derived.state,
+      }, { learnerId: row.learner_id });
     }
   }
 
