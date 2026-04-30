@@ -228,9 +228,11 @@ This step is the core quality gate of the delivery. It MUST run. The contract is
 
 ### Reviewer Panel (10 independent subagents)
 
-ALL 10 reviewers MUST be dispatched. You cannot reduce this number.
+ALL 10 reviewers MUST be dispatched as **10 separate subagent calls**. You cannot reduce this number.
 
-Spawn 10 independent subagent reviewers in parallel:
+**Each reviewer = 1 independent subagent.** You MUST spawn 10 separate Agent tool calls — one per dimension. You cannot combine multiple dimensions into a single agent call. A single agent "reviewing all 10 dimensions" is NOT 10 independent reviewers — it is 1 reviewer pretending to be 10. Independence means each reviewer has its own context, its own judgement, and returns its own verdict without seeing the others.
+
+Spawn 10 independent subagent reviewers in parallel (10 separate Agent calls):
 
 1. **Functional Completeness** — every contract requirement is implemented and working
 2. **Test Coverage** — all acceptance criteria have corresponding tests
@@ -261,11 +263,13 @@ These are the HARDEST rules in the entire pipeline. This is where delivery quali
    - Claim the dimension is "N/A" to skip it (if truly N/A, the reviewer itself will return PASS — you do not make this judgement)
    - Proceed to Phase 5 while any BLOCK exists
 
-2. **All 10 reviewers must be dispatched. Every time.** You cannot:
+2. **All 10 reviewers must be dispatched as 10 SEPARATE subagent calls. Every time.** You cannot:
    - Skip reviewers because "this contract doesn't have UI" (the reviewer decides that, not you)
    - Reduce to 6 or 8 reviewers to save tokens
    - Merge dimensions (e.g., "security and performance are both fine" — they are separate reviewers)
+   - Combine multiple dimensions into one agent call (that is 1 reviewer, not 10)
    - Substitute your own assessment for a reviewer's verdict
+   - Dispatch a single agent "covering all dimensions" — each dimension = 1 independent agent call
 
 3. **Re-review means ALL 10. Every time.** After fixes:
    - Dispatch all 10 again — not just the ones that blocked
@@ -417,6 +421,8 @@ You are NOT allowed to rationalise skipping reviewers or overriding their verdic
 | "I already checked this myself" | Self-review ≠ independent review. Dispatch. |
 | "Only 1 reviewer blocked, rest passed" | 1 BLOCK = fix cycle → re-review ALL 10. |
 | "The findings overlap with Phase 3 review" | Phase 4 is a different concern. Run it fully. |
+| "I'll dispatch one agent for all 10 dimensions" | No. 10 dimensions = 10 separate Agent calls. 1 agent ≠ 10 reviewers. |
+| "I can cover these in fewer agents" | Independence requires separate context. Each reviewer = 1 agent call. |
 
 ## No-Regression Guarantees
 
