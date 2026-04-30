@@ -201,6 +201,7 @@ These are HARD rules. Violating any of them is a protocol failure:
 3. **You cannot reduce the reviewer set.** All 4 always-on reviewers must be dispatched for every PR. You cannot skip one because "this PR is small" or "only touches tests".
 4. **Re-review means ALL reviewers.** After fixes, re-dispatch ALL reviewers that were originally dispatched — not just the one that blocked. Fixes can introduce new issues.
 5. **You cannot self-approve.** The orchestrator cannot decide a finding is invalid. Only a re-dispatched reviewer can clear its own block.
+6. **You cannot merge on red CI.** If `gh pr checks` shows any failure, the PR does NOT merge. Investigate the failure, fix it (via the review follower cycle), and wait for green. There is no "CI is flaky, merge anyway" exception.
 
 ### Merge Gate
 
@@ -427,6 +428,7 @@ You are NOT allowed to rationalise skipping reviewers or overriding their verdic
 | "I can cover these in fewer agents" | Independence requires separate context. Each reviewer = 1 agent call. |
 | "I'll run the remaining N reviewers" | No. Partial runs are invalid. Re-run ALL 10 from scratch. |
 | "3 passed already, I just need the other 7" | Invalid. All 10 must come from the same round. Start over. |
+| "CI is flaky, I'll merge anyway" | No. Red CI = no merge. Investigate and fix. |
 
 ## No-Regression Guarantees
 
