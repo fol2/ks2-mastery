@@ -1,9 +1,11 @@
 ---
 title: "refactor: UI Refactor P2 — Shared Interaction and Surface Contract"
 type: refactor
-status: active
+status: completed
 date: 2026-04-29
+completed: 2026-04-30
 origin: docs/plans/james/ui-refactor/ui-refactor-p2.md
+completion_report: docs/plans/james/ui-refactor/ui-refactor-p2-completion-report.md
 ---
 
 # refactor: UI Refactor P2 — Shared Interaction and Surface Contract
