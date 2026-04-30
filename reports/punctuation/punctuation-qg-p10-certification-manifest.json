@@ -13,7 +13,7 @@
     "git": {
       "repository": "fol2/ks2-mastery",
       "ref": "codex/punctuation-qg-p10-delivery",
-      "commitSha": "933b227d43784ddddc5c60d123601f0d1eb49826",
+      "commitSha": "d3638ade7fbbb52abc6684ddf99d32b7a0ea463d",
       "commitContainsAllVerifiedPaths": true,
       "verifiedPaths": [
         "package.json",
