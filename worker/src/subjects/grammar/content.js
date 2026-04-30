@@ -7698,6 +7698,39 @@ function buildPromptParts(plainPrompt, cueType, targetWord, targetSentence) {
   return parts;
 }
 
+// ---------------------------------------------------------------------------
+// P11 U2: Semantic target-sentence extraction helpers
+// ---------------------------------------------------------------------------
+
+function extractParagraphTextBlocks(stemHtml) {
+  return [...stemHtml.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+    .map((match) => match[1].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function isSentenceCueCandidate(text) {
+  const value = text.replace(/\s+/g, ' ').trim();
+  if (value.length < 16) return false;
+  if (!/\s/.test(value)) return false;
+  if (!(/[.!?]/.test(value) || value.includes('___'))) return false;
+  if (/^(subject|object|adverbs?|determiners?|pronouns?|conjunctions?)$/i.test(value)) return false;
+  return true;
+}
+
+function resolveTargetSentence(question, plainPrompt) {
+  // 1. Explicit field check
+  if (question.targetSentence && isSentenceCueCandidate(question.targetSentence)) {
+    return question.targetSentence;
+  }
+  if (question.focusTarget && isSentenceCueCandidate(question.focusTarget)) {
+    return question.focusTarget;
+  }
+  // 2. Paragraph block scan — reverse for last qualifying candidate
+  const blocks = extractParagraphTextBlocks(question.stemHtml || '');
+  const candidate = [...blocks].reverse().find(isSentenceCueCandidate);
+  return candidate || null;
+}
+
 function enrichPromptCue(question) {
   if (!question || !question.stemHtml) return question;
 
@@ -7725,7 +7758,11 @@ function enrichPromptCue(question) {
   } else {
     targetWord = underlinedWord || boldSentence || null;
   }
-  const targetSentence = boldSentence || null;
+  // P11 U2: For target-sentence cue type, use the semantic resolver instead of
+  // the first-bold heuristic (which picks grammar labels like "adverbs"/"subject").
+  const targetSentence = (cueType === 'target-sentence')
+    ? resolveTargetSentence(question, plainPrompt)
+    : (boldSentence || null);
 
   // Build focusCue (targetOccurrence: 1 disambiguates which occurrence is the
   // target when the cue text appears multiple times in the sentence)
@@ -8206,7 +8243,7 @@ export function grammarQuestionVariantSignature(question) {
   return `grammar-v1:${stableStringHash(JSON.stringify(payload))}`;
 }
 
-export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p10-2026-04-29';
+export const GRAMMAR_CONTENT_RELEASE_ID = 'grammar-qg-p11-2026-04-30';
 export const GRAMMAR_MISCONCEPTIONS = Object.freeze(MISCONCEPTIONS);
 export const GRAMMAR_MINIMAL_HINTS = Object.freeze(MINIMAL_HINTS);
 export const GRAMMAR_QUESTION_TYPES = Object.freeze(QUESTION_TYPES);
