@@ -330,13 +330,8 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
             <h2 className="section-title">Today's punctuation mission</h2>
             <HeroWelcome name={learnerName} className="punctuation-hero-welcome" />
             <div className="punctuation-dashboard-cta-row">
-              {/* `--btn-accent` flows from the P2-U6 Punctuation accent
-               * remap (`:where(.punctuation-surface, …) { --btn-accent:
-               * var(--punctuation-accent) }` in `styles/app.css`). CSS
-               * variable inheritance carries the Bellstorm gold down to
-               * this CTA without any inline style — the legacy
-               * `style={{ '--btn-accent' }}` from the U1 byte-identical
-               * migration was dropped in the U1 follow-up sweep. */}
+              {/* --btn-accent inherits via the .punctuation-surface accent
+               * remap in styles/app.css — no inline override needed. */}
               <Button
                 size="xl"
                 data-punctuation-cta=""

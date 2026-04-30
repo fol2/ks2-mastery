@@ -39,16 +39,13 @@ function stripJsComments(source) {
   return blockStripped.replace(/\/\/[^\n]*/g, '');
 }
 
-test('styles/app.css declares the --punctuation-accent token family in light mode', async () => {
+test('styles/app.css declares --punctuation-accent in light mode', async () => {
   const css = await readFile(APP_CSS_PATH, 'utf8');
+  // Sibling tokens (-ink / -soft / -border) are deferred until the PR
+  // that introduces the first consumer — declaring them now would lock
+  // speculative names against future cleanup. See plan §U6.
   assert.match(css, /--punctuation-accent\s*:\s*#B8873F\b/i,
     '--punctuation-accent must be declared with the canonical Bellstorm gold #B8873F');
-  assert.match(css, /--punctuation-accent-ink\s*:/,
-    '--punctuation-accent-ink must be declared (mirrors --grammar-accent-ink)');
-  assert.match(css, /--punctuation-accent-soft\s*:/,
-    '--punctuation-accent-soft must be declared (mirrors --grammar-accent-soft)');
-  assert.match(css, /--punctuation-accent-border\s*:/,
-    '--punctuation-accent-border must be declared (mirrors --grammar-accent-border)');
 });
 
 test('styles/app.css declares a dark-mode --punctuation-accent variant', async () => {
@@ -89,7 +86,23 @@ test('styles/app.css remaps --punctuation-accent onto --accent / --btn-accent / 
   assert.match(
     css,
     /:where\([^)]*\.punctuation-surface[^)]*\)\s*\{[^}]*--subject-accent\s*:\s*var\(\s*--punctuation-accent/,
-    ':where(...)-scoped block must expose --punctuation-accent as --subject-accent (cross-subject parity)',
+    ':where(...)-scoped block must expose --punctuation-accent as --subject-accent '
+    + '(consumed by ProgressMeter fill at styles/app.css:13354)',
+  );
+});
+
+test('canonical .card.border-top reads var(--card-accent) — closes the colour-resolution loop', async () => {
+  // This is the consumer side of the --card-accent contract: any
+  // subject-scoped remap that exposes --card-accent (Punctuation today,
+  // future subjects later) drives the border ribbon automatically. The
+  // fallback is `currentColor` so subjects without a remap retain the
+  // pre-token default (no visible border colour beyond inherited ink).
+  // Lock the canonical rule so a future "cleanup" cannot drop the line.
+  const css = await readFile(APP_CSS_PATH, 'utf8');
+  assert.match(
+    css,
+    /\.card\.border-top\s*\{[^}]*border-top-color\s*:\s*var\(\s*--card-accent\s*,\s*currentColor\s*\)/,
+    '.card.border-top must read var(--card-accent, currentColor) so subject remaps drive the ribbon',
   );
 });
 

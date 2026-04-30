@@ -273,17 +273,20 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // `--progress-value` per render (numeric-clamped, css-var-ready), so the
 // global net delta is -1. Constants bumped from 250 → 247.
 //
-// P2-U6 (refactor-ui shared primitives): removed the inline
-// `style={{ borderTopColor: '#B8873F' }}` site at PunctuationSetupScene.jsx:311.
-// The Bellstorm gold border-top now flows through the new `--punctuation-accent`
-// token + the `:where(.punctuation-surface, …) { --card-accent: var(--punctuation-accent) }`
-// remap in styles/app.css, with `.punctuation-surface.border-top {
-// border-top-color: var(--punctuation-accent); }` as a non-invasive
-// Punctuation-scoped override (no canonical `.card.border-top` rule change).
-// Net delta: -1 site. Constants bumped from 247 → 246.
+// P2-U6 (refactor-ui shared primitives): two-site cleanup on
+// PunctuationSetupScene.jsx —
+//   1. removed the inline borderTopColor at line 311 (real inline site).
+//   2. trimmed the legacy comment block above the CTA so it no longer
+//      contains the literal bytes that the byte-oracle counts as a site.
+// The Bellstorm gold border-top now flows through the new
+// --punctuation-accent token + the :where(.punctuation-surface, ...)
+// remap in styles/app.css, and the canonical .card.border-top rule was
+// extended to read var(--card-accent, currentColor) so subject remaps
+// drive the ribbon directly (no per-subject override needed). Net
+// delta: -2 sites. Constants bumped from 247 → 245.
 export const PRE_MIGRATION_TOTAL = 439;
-export const SITES_MIGRATED_THIS_PR = 193;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 246
+export const SITES_MIGRATED_THIS_PR = 194;
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 245
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';

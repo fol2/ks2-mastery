@@ -50,10 +50,10 @@ Future migration PRs should:
 | Category | Count |
 | --- | --- |
 | `dynamic-content-driven` | 142 |
-| `shared-pattern-available` | 97 |
+| `shared-pattern-available` | 96 |
 | `css-var-ready` | 5 |
 | `third-party-boundary` | 2 |
-| **TOTAL** | **246** |
+| **TOTAL** | **245** |
 
 ## Per-file inventory
 
@@ -101,7 +101,6 @@ Future migration PRs should:
 | `src/platform/ui/LoadingSkeleton.jsx` | 1 | `css-var-ready` | no |
 | `src/platform/ui/ProgressMeter.jsx` | 1 | `css-var-ready` | no |
 | `src/subjects/punctuation/components/PunctuationMapScene.jsx` | 1 | `dynamic-content-driven` | no |
-| `src/subjects/punctuation/components/PunctuationSetupScene.jsx` | 1 | `shared-pattern-available` | yes |
 | `src/subjects/spelling/components/SpellingWordBankScene.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCreature.jsx` | 1 | `dynamic-content-driven` | no |
 | `src/surfaces/home/CodexCreatureLightbox.jsx` | 1 | `dynamic-content-driven` | no |
