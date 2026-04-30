@@ -185,6 +185,9 @@ const TOKEN_GLOB_FILES = [
 // per-file justification belongs in the entry comment.
 const TOKEN_ALLOWLIST = new Set([
   path.resolve(REPO_ROOT, 'src/surfaces/home/data.js'),
+  // Subject theme registry: canonical metadata values consumed by JS-only
+  // fallback contexts, not component styling literals.
+  path.resolve(REPO_ROOT, 'src/platform/ui/subject-themes.js'),
 ]);
 
 async function collectTokenGlobFiles() {

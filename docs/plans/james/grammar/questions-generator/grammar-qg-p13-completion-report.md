@@ -15,8 +15,7 @@ concept_count: 18
 inventory_item_count: 2340
 limitations:
   - Production smoke evidence is pending deployment.
-  - Node 22 release-gate evidence must be captured in CI or a Node 22 runtime before post-deploy certification.
-  - Repository-wide npm test is currently blocked by non-P13 failures and must be green before deployment.
+  - Local release-gate evidence was captured on Node 24.2.0 / npm 11.6.3; CI evidence must still be green before merge.
 ---
 
 # Grammar QG P13 — Runtime Certification Authority and Post-Deploy Production Certification
@@ -99,9 +98,9 @@ Focused P13 gates are implemented in `tests/grammar-qg-p13-runtime-certification
 
 | Check | Runtime | Result |
 |-------|---------|--------|
-| `npm run verify:grammar-qg-production-release` | Node v24.2.0 / npm 11.6.3, commit `6be41349` plus working-tree P13 changes | Passed. This covered the P11 release chain, P13 runtime authority tests, semantic prompt-cue audit (`totalChecked: 2340`, no findings), and the certification evidence validator. |
-| `npm run check` | Node v24.2.0 / npm 11.6.3, commit `6be41349` plus working-tree P13 changes | Passed. Wrangler dry-run completed after `npm run build`, `npm run assert:build-public`, and `npm run audit:client`. |
+| `npm run verify:grammar-qg-production-release` | Node v24.2.0 / npm 11.6.3, branch `codex/grammar-qg-p13-runtime-certification` | Passed. This covered the P11 release chain, P13 runtime authority tests, semantic prompt-cue audit (`totalChecked: 2340`, no findings), and the certification evidence validator. |
+| `npm run check` | Node v24.2.0 / npm 11.6.3, branch `codex/grammar-qg-p13-runtime-certification` | Passed. Wrangler dry-run completed after `npm run build`, `npm run assert:build-public`, and `npm run audit:client`. |
 | `git diff --check` | Working tree | Passed. |
-| `npm test` | Node v24.2.0 / npm 11.6.3, commit `6be41349` plus working-tree P13 changes | Failed on existing repository-wide gates outside the P13 runtime authority path. Observed failures included dashboard child-phase assertions, subject contract/theme token assertions, UI raw-hex token ratchet, worker capacity overhead budget, hero read-model fixture shape, and missing mutation capability coverage for `/api/hero/command`. |
+| `npm test` | Node v24.2.0 / npm 11.6.3, branch `codex/grammar-qg-p13-runtime-certification` | Passed: 16,240 tests; 16,234 passed; 0 failed; 6 skipped. |
 
-Post-deploy smoke is not yet present, no production deployment was performed from this branch, and this report deliberately does not claim post-deploy certification. Before deployment, repository-wide `npm test` should be made green or an explicit release-owner waiver should document why the unrelated failures do not block this Grammar release. A CI or local Node 22 run should also capture the release-gate evidence required by U6.
+Post-deploy smoke is not yet present, no production deployment was performed from this branch, and this report deliberately does not claim post-deploy certification. Before merge, GitHub CI must rerun on the pushed PR branch and remain green. After deployment, production smoke must write `reports/grammar/grammar-production-smoke-grammar-qg-p11-2026-04-30.json` before this report can move to `CERTIFIED_POST_DEPLOY`.

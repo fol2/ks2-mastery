@@ -411,8 +411,9 @@ const PHASE_RENDERERS = Object.freeze({
  * @param {string} html — full rendered HTML.
  * @param {string} phase — phase key, e.g. `"dashboard"`.
  * @param {string} rootTag — the landmark root tag name, e.g. `"section"` or `"div"`.
- * @param {string|null} [boundary] — optional substring that must appear immediately
- *   after the root close. Pass `null` when no sibling boundary is required.
+ * @param {string|string[]|null} [boundary] — optional substring(s) that must
+ *   appear immediately after the root close. Pass `null` when no sibling
+ *   boundary is required.
  * @returns {string} the landmark-rooted substring (landmark open → root close).
  * @throws {Error} on missing / multiple landmarks, unbalanced tags, or missing
  *   expected boundary.
@@ -510,7 +511,10 @@ function scopeLandmark(html, phase, rootTag, boundary = null) {
   // This preserves the old regex lookahead contract so a refactor that
   // reorders the sibling siblings (e.g. inserting a `<hr>` between the
   // dashboard root and the grown-up-view disclosure) still fails loud.
-  if (boundary !== null && html.slice(rootEnd, rootEnd + boundary.length) !== boundary) {
+  const boundaries = Array.isArray(boundary) ? boundary : (boundary === null ? [] : [boundary]);
+  if (boundaries.length > 0 && !boundaries.some((candidate) => (
+    html.slice(rootEnd, rootEnd + candidate.length) === candidate
+  ))) {
     throw new Error(
       `${scoperName}: no data-grammar-phase-root="${phase}" landmark found in rendered HTML`,
     );
@@ -524,10 +528,12 @@ export function scopeDashboard(html) {
   // the `<details class="grammar-grown-up-view">` disclosure as a sibling
   // — that escape hatch was relocated into the Grammar Bank scene so the
   // child landing is fully child-first. The boundary check now pins the
-  // root `</section>` against the surrounding `</div></main>` close
-  // (the `grammar-surface` wrapper closing inside the app shell). A
-  // refactor that re-orders the wrapper structure would still fail loud.
-  return scopeLandmark(html, 'dashboard', 'section', '</div></main>');
+  // root `</section>` against the surrounding shell close. The current
+  // aligned dashboard renders inside both `.practice-stage` and
+  // `.grammar-surface`, while older fixtures model only `.grammar-surface`;
+  // both boundaries stay accepted so the helper guards production markup
+  // without making legacy scoper fixtures brittle.
+  return scopeLandmark(html, 'dashboard', 'section', ['</div></div></main>', '</div></main>']);
 }
 
 export function scopeSession(html) {

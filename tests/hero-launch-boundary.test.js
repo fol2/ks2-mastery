@@ -133,7 +133,15 @@ test('S-L4: no Hero source file contains economy vocabulary tokens', () => {
   // adjacent terms are legitimate in the server-side reward/claim boundary.
   // camp.js, monster-economy.js: P5 camp architecture — uses economy terms
   // in field-rejection guards and spending computation (legitimate use).
-  const EXCLUDED_BASENAMES = new Set(['hero-copy.js', 'claim-contract.js', 'claim-resolver.js', 'camp.js', 'monster-economy.js']);
+  // warning-conditions.js: product-health boundary for economy support reports.
+  const EXCLUDED_BASENAMES = new Set([
+    'hero-copy.js',
+    'claim-contract.js',
+    'claim-resolver.js',
+    'camp.js',
+    'monster-economy.js',
+    'warning-conditions.js',
+  ]);
 
   const allHeroFiles = [
     ...collectJsFiles(SHARED_HERO_DIR),

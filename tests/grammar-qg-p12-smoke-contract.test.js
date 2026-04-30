@@ -8,6 +8,7 @@ import { SMOKE_EVIDENCE_REQUIRED_FIELDS } from '../scripts/validate-grammar-qg-c
  * This is the single source of truth for test assertions below.
  */
 const P12_CONTRACT_FIELDS = [
+  'ok',
   'releaseId',
   'evidenceOrigin',
   'environment',
@@ -20,6 +21,8 @@ const P12_CONTRACT_FIELDS = [
   'readModelUpdateResult',
   'noAnswerLeakAssertion',
   'semanticCueAssertion',
+  'promptCueAssertion',
+  'readAloudAssertion',
   'releaseIdAssertion',
   'failureDetails',
 ];

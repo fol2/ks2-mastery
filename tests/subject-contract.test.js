@@ -141,5 +141,6 @@ test('spelling practice dashboard renders without service UI metadata', async ()
   const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
 
   assert.match(html, /Round setup/);
-  assert.match(html, /#3E6FA8/i);
+  assert.match(html, /class="subject-theme setup-grid"/);
+  assert.match(html, /data-subject="spelling"/);
 });

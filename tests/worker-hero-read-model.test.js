@@ -95,7 +95,7 @@ test('hero read-model: flag on returns eligibleSubjects and lockedSubjects array
   server.close();
 });
 
-test('hero read-model: flag on returns dailyQuest with tasks, effort, debug', async () => {
+test('hero read-model: flag on returns dailyQuest with tasks and strips debug over HTTP', async () => {
   const server = createServerWithHeroFlag(true);
   await seedLearner(server, 'adult-a', 'learner-a');
 
@@ -111,16 +111,7 @@ test('hero read-model: flag on returns dailyQuest with tasks, effort, debug', as
   assert.equal(typeof quest.effortPlanned, 'number');
   assert.ok(Array.isArray(quest.tasks));
 
-  // Debug object
-  const debug = payload.hero.debug;
-  assert.equal(typeof debug.candidateCount, 'number');
-  assert.ok(Array.isArray(debug.rejectedCandidates));
-  assert.equal(typeof debug.subjectMix, 'object');
-  assert.equal(typeof debug.safety, 'object');
-  assert.equal(debug.safety.noWrites, true);
-  assert.equal(debug.safety.noCoins, true);
-  assert.equal(debug.safety.noChildUi, true);
-  assert.equal(debug.safety.noSubjectMutation, true);
+  assert.equal('debug' in payload.hero, false);
 
   server.close();
 });

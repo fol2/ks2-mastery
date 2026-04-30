@@ -106,10 +106,10 @@ for (const { label, scoper, tag } of SCOPER_MATRIX) {
 // Edge case — dashboard/summary/transfer require a sibling boundary marker
 // -----------------------------------------------------------------------------
 
-test('U2: scopeDashboard throws when </div></main> shell boundary is missing', () => {
+test('U2: scopeDashboard throws when shell boundary is missing', () => {
   // Post Grammar-Aligned redesign: the dashboard's regex pins the root
-  // `</section>` via lookahead to the surrounding `</div></main>` close
-  // (the `grammar-surface` wrapper). Without that sibling pair the
+  // `</section>` via lookahead to the surrounding shell wrapper close.
+  // Without that sibling close sequence the
   // scoper refuses to walk to the first nested `</section>`.
   const noShellClose = '<section data-grammar-phase-root="dashboard"><section>inner</section></section>';
   assert.throws(
@@ -149,6 +149,19 @@ test('U2: scopeDashboard returns a narrowed substring on well-formed HTML', () =
   // Trailing app-shell siblings (e.g. home overlays) sit outside the
   // boundary so the scope helper excludes them from the child sweep.
   const html = '<main><div class="grammar-surface"><section data-grammar-phase-root="dashboard" class="grammar-dashboard">body</section></div></main><div class="home-overlays">adult</div>';
+  const scoped = scopeDashboard(html);
+  assert.match(scoped, /data-grammar-phase-root="dashboard"/);
+  assert.match(scoped, /body/);
+  assert.doesNotMatch(scoped, /adult/, 'scoped must exclude the trailing app-shell content');
+  assert.ok(scoped.length < html.length, 'scoped must be strictly narrower than full HTML');
+});
+
+test('U2: scopeDashboard accepts the PracticeStage dashboard wrapper boundary', () => {
+  // Current production SSR wraps the dashboard section in PracticeStage
+  // inside the grammar-surface wrapper: `</section></div></div></main>`.
+  // This keeps the child scoper aligned with the actual React tree while
+  // still excluding trailing app-shell content.
+  const html = '<main><div class="grammar-surface"><div class="practice-stage"><section data-grammar-phase-root="dashboard" class="grammar-dashboard">body</section></div></div></main><div class="home-overlays">adult</div>';
   const scoped = scopeDashboard(html);
   assert.match(scoped, /data-grammar-phase-root="dashboard"/);
   assert.match(scoped, /body/);
