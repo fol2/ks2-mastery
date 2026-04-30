@@ -34,15 +34,15 @@ Use this when: a specific account triggers a stop condition or needs to be remov
 2. **Remove the target account ID from the JSON array:**
    ```json
    // Before:
-   ["adult-d9BHpWh3iAL4b5qB", "adult-2dT1zFI9zZQ_p1Zs", "adult-9jXhUwpAdIrKB_g5"]
+   ["adult-EXAMPLE-ACCOUNT-1", "adult-EXAMPLE-ACCOUNT-2", "adult-EXAMPLE-ACCOUNT-3"]
 
-   // After (removing adult-2dT1zFI9zZQ_p1Zs):
-   ["adult-d9BHpWh3iAL4b5qB", "adult-9jXhUwpAdIrKB_g5"]
+   // After (removing adult-EXAMPLE-ACCOUNT-2):
+   ["adult-EXAMPLE-ACCOUNT-1", "adult-EXAMPLE-ACCOUNT-3"]
    ```
 
 3. **Deploy the updated secret:**
    ```bash
-   echo '["adult-d9BHpWh3iAL4b5qB", "adult-9jXhUwpAdIrKB_g5"]' | wrangler secret put HERO_INTERNAL_ACCOUNTS
+   echo '["adult-EXAMPLE-ACCOUNT-1", "adult-EXAMPLE-ACCOUNT-3"]' | wrangler secret put HERO_INTERNAL_ACCOUNTS
    ```
 
 4. **Verify removal took effect:**
@@ -101,7 +101,7 @@ When re-enabling accounts after a rollback:
 
 2. **Re-add account IDs to the allowlist:**
    ```bash
-   echo '["adult-d9BHpWh3iAL4b5qB", "adult-2dT1zFI9zZQ_p1Zs"]' | wrangler secret put HERO_INTERNAL_ACCOUNTS
+   echo '["adult-EXAMPLE-ACCOUNT-1", "adult-EXAMPLE-ACCOUNT-2"]' | wrangler secret put HERO_INTERNAL_ACCOUNTS
    ```
 
 3. **Verify state continuity:**

@@ -49,7 +49,7 @@ import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
 import { probeHeroTelemetry, buildExpandedProbeResponse, stripPrivacyFields } from './hero/telemetry-probe.js';
-import { resolveHeroFlagsWithOverride } from '../../shared/hero/account-override.js';
+import { resolveHeroFlagsWithOverride, HERO_FLAG_KEYS } from '../../shared/hero/account-override.js';
 import {
   initialiseDailyProgress,
   markTaskStarted,
@@ -2735,11 +2735,15 @@ export function createWorkerApp({
               } catch { /* graceful — default to false */ }
             }
 
+            // P0 security: project only Hero flag keys — never expose full env secrets
+            const effectiveFlags = Object.fromEntries(
+              HERO_FLAG_KEYS.map(k => [k, resolvedFlags[k] || ''])
+            );
             const overrideStatus = {
               queriedLearnerId: probeLearnerIdParam,
               parentAccountId,
               isInternalAccount,
-              effectiveFlags: resolvedFlags,
+              effectiveFlags,
               ...(parentAccountId === null ? { reason: 'parent-account-not-found' } : {}),
             };
 
