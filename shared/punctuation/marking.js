@@ -25,6 +25,32 @@ const FACET_LABELS = Object.freeze({
   unwanted_punctuation: 'No duplicated punctuation outside the quote',
 });
 
+/**
+ * Given a speech rubric's facets array, return the highest-priority
+ * child-actionable failure message. Priority order:
+ * 1. quote_variant — missing inverted commas
+ * 2. speech_punctuation — punctuation outside closing speech mark
+ * 3. reporting_clause — missing comma between reporting clause and speech
+ * 4. reporting_clause_words — changed the reporting clause
+ * 5. preservation — changed the spoken words
+ * Returns null if all facets pass (or none are present).
+ */
+function speechFailureNote(facets) {
+  if (!Array.isArray(facets) || facets.length === 0) return null;
+  const lookup = (id) => facets.find((f) => f.id === id);
+  const quoteVariant = lookup('quote_variant');
+  if (quoteVariant && !quoteVariant.ok) return 'Put inverted commas around the spoken words.';
+  const speechPunctuation = lookup('speech_punctuation');
+  if (speechPunctuation && !speechPunctuation.ok) return 'The punctuation mark belongs inside the closing speech mark.';
+  const reportingClause = lookup('reporting_clause');
+  if (reportingClause && !reportingClause.ok) return 'Add a comma between the reporting clause and the speech.';
+  const reportingClauseWords = lookup('reporting_clause_words');
+  if (reportingClauseWords && !reportingClauseWords.ok) return 'Keep the reporting clause from the question.';
+  const preservation = lookup('preservation');
+  if (preservation && !preservation.ok) return 'Keep the exact spoken words from the question.';
+  return null;
+}
+
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -951,18 +977,10 @@ function markTransfer(item, answer) {
       ? singleSpeechSentenceOk(text, sentenceTerminal)
       : transferSentenceOk(item, text, sentenceTerminal);
     const correct = rubric.correct && sentenceOk;
-    // Determine feedback note: distinguish reporting-clause-words failure
-    let note;
-    if (rubric.correct) {
-      note = 'The spoken words are punctuated as a question.';
-    } else {
-      const clauseWordsFacet = rubric.facets.find((f) => f.id === 'reporting_clause_words');
-      if (clauseWordsFacet && !clauseWordsFacet.ok) {
-        note = 'Keep the reporting clause from the question.';
-      } else {
-        note = 'Include inverted commas around the spoken words and keep the question mark with the speech.';
-      }
-    }
+    // Determine feedback note: priority-based facet failure messages
+    const note = rubric.correct
+      ? 'The spoken words are punctuated as a question.'
+      : (speechFailureNote(rubric.facets) || 'Check the direct-speech punctuation carefully.');
     return {
       correct,
       expected: item.model || '',
@@ -1458,7 +1476,11 @@ function markExact(item, answer) {
   return {
     correct: exact,
     expected: item.model || acceptedAnswers(item)[0] || '',
-    note: exact ? (item.explanation || '') : (rubricResult?.misconceptionTags?.length ? 'Check the direct-speech punctuation carefully.' : item.explanation || ''),
+    note: exact
+      ? (item.explanation || '')
+      : (rubricResult?.facets?.length
+          ? (speechFailureNote(rubricResult.facets) || 'Check the direct-speech punctuation carefully.')
+          : item.explanation || ''),
     misconceptionTags: exact
       ? []
       : (rubricResult?.misconceptionTags?.length

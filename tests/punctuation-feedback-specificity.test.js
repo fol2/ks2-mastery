@@ -121,6 +121,68 @@ test('speech item with missing reporting clause gives reporting-clause feedback'
   assert.equal(result.note, 'Keep the reporting clause from the question.');
 });
 
+// ─── U8-2b: Speech item 5 distinct failure modes ────────────────────────────────
+
+test('speech failure mode 1: missing inverted commas gives quote_variant feedback', () => {
+  const item = makeSpeechItem();
+  // No inverted commas at all
+  const result = markPunctuationAnswer({
+    item,
+    answer: { typed: 'Mia asked, Can we start now?' },
+  });
+
+  assert.equal(result.correct, false);
+  assert.equal(result.note, 'Put inverted commas around the spoken words.');
+});
+
+test('speech failure mode 2: punctuation outside marks gives speech_punctuation feedback', () => {
+  const item = makeSpeechItem();
+  // Question mark outside the closing quote
+  const result = markPunctuationAnswer({
+    item,
+    answer: { typed: 'Mia asked, "Can we start now"?' },
+  });
+
+  assert.equal(result.correct, false);
+  assert.equal(result.note, 'The punctuation mark belongs inside the closing speech mark.');
+});
+
+test('speech failure mode 3: missing reporting comma gives reporting_clause feedback', () => {
+  const item = makeSpeechItem();
+  // No comma between "asked" and the opening quote
+  const result = markPunctuationAnswer({
+    item,
+    answer: { typed: 'Mia asked "Can we start now?"' },
+  });
+
+  assert.equal(result.correct, false);
+  assert.equal(result.note, 'Add a comma between the reporting clause and the speech.');
+});
+
+test('speech failure mode 4: changed reporting clause gives reporting_clause_words feedback', () => {
+  const item = makeSpeechItem();
+  // Changed "Mia asked" to "Tom shouted"
+  const result = markPunctuationAnswer({
+    item,
+    answer: { typed: 'Tom shouted, "Can we start now?"' },
+  });
+
+  assert.equal(result.correct, false);
+  assert.equal(result.note, 'Keep the reporting clause from the question.');
+});
+
+test('speech failure mode 5: changed spoken words gives preservation feedback', () => {
+  const item = makeSpeechItem();
+  // Changed spoken words from "can we start now" to something else
+  const result = markPunctuationAnswer({
+    item,
+    answer: { typed: 'Mia asked, "Are we going home?"' },
+  });
+
+  assert.equal(result.correct, false);
+  assert.equal(result.note, 'Keep the exact spoken words from the question.');
+});
+
 // ─── U8-3: Transfer fragment gives sentence-completeness feedback ─────────────
 
 test('transfer fragment gives sentence-completeness feedback', () => {
