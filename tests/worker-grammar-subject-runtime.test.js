@@ -610,6 +610,10 @@ test('Grammar command route persists repair actions through Worker commands', as
   assert.equal(faded.response.status, 200, JSON.stringify(faded.body));
   assert.equal(faded.body.subjectReadModel.session.supportLevel, 1);
   assert.equal(faded.body.subjectReadModel.session.supportGuidance.kind, 'faded');
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(faded.body.subjectReadModel.session.supportGuidance.contrast || {}, 'nearMiss'),
+    false,
+  );
 
   const submit = await postCommand(app, DB, {
     command: 'submit-answer',
@@ -851,7 +855,8 @@ test('Grammar faded guidance omits contrast examples that match current options'
   assert.ok(optionLabels.includes('The club got set up last year.'));
   assert.equal(session.supportGuidance.kind, 'faded');
   assert.equal(session.supportGuidance.contrast.secureExample, undefined);
-  assert.equal(session.supportGuidance.contrast.nearMiss, undefined);
+  assert.equal(session.supportGuidance.contrast.commonMixUp, undefined);
+  assert.equal(Object.prototype.hasOwnProperty.call(session.supportGuidance.contrast, 'nearMiss'), false);
   assert.equal(session.supportGuidance.contrast.why, 'The first is more formal.');
   assert.equal(JSON.stringify(session.supportGuidance).includes('The club was established last year.'), false);
   assert.equal(JSON.stringify(session.supportGuidance).includes('The club got set up last year.'), false);

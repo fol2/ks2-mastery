@@ -318,12 +318,12 @@ function safeContrast(concept, currentTexts = new Set()) {
   const contrast = isPlainObject(concept?.contrast) ? concept.contrast : {};
   if (!contrast.good && !contrast.nearMiss && !contrast.why) return null;
   const secureExample = safeGuidanceText(contrast.good, currentTexts);
-  const nearMiss = safeGuidanceText(contrast.nearMiss, currentTexts);
+  const commonMixUp = safeGuidanceText(contrast.nearMiss, currentTexts);
   const why = safeGuidanceText(contrast.why, currentTexts);
-  if (!secureExample && !nearMiss && !why) return null;
+  if (!secureExample && !commonMixUp && !why) return null;
   const model = {};
   if (secureExample) model.secureExample = secureExample;
-  if (nearMiss) model.nearMiss = nearMiss;
+  if (commonMixUp) model.commonMixUp = commonMixUp;
   if (why) model.why = why;
   return model;
 }

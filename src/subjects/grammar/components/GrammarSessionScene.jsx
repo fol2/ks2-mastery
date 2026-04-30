@@ -286,6 +286,7 @@ function GuidancePanel({ support }) {
   const notices = Array.isArray(support.notices) ? support.notices.filter(Boolean) : [];
   const example = support.workedExample || {};
   const contrast = support.contrast || {};
+  const commonMixUp = contrast.commonMixUp || contrast.nearMiss || '';
 
   return (
     <aside className={`grammar-guidance ${worked ? 'worked' : 'faded'}`} aria-label={support.title || 'Grammar guidance'}>
@@ -304,10 +305,10 @@ function GuidancePanel({ support }) {
 
       {!worked && support.summary ? <p className="grammar-guidance-summary">{support.summary}</p> : null}
 
-      {!worked && (contrast.secureExample || contrast.nearMiss || contrast.why) ? (
+      {!worked && (contrast.secureExample || commonMixUp || contrast.why) ? (
         <div className="grammar-guidance-contrast">
           {contrast.secureExample ? <p><span>Secure</span>{contrast.secureExample}</p> : null}
-          {contrast.nearMiss ? <p><span>Near miss</span>{contrast.nearMiss}</p> : null}
+          {commonMixUp ? <p><span>Near miss</span>{commonMixUp}</p> : null}
           {contrast.why ? <p><span>Check</span>{contrast.why}</p> : null}
         </div>
       ) : null}
