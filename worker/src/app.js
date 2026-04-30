@@ -2693,23 +2693,55 @@ export function createWorkerApp({
           const probeLearnerIdParam = url.searchParams.get('learnerId');
           if (probeLearnerIdParam) {
             const heroState = await repository.readHeroProgress(probeLearnerIdParam);
-            const resolvedFlags = resolveHeroFlagsWithOverride({ env, accountId: session.accountId });
             const dateKey = new Date().toISOString().slice(0, 10);
 
-            // Determine override status: is the queried learner's admin account in HERO_INTERNAL_ACCOUNTS?
-            let isInternalAccount = false;
+            // pA2 U4 fix: learner-specific event count for reconciliation
+            // (probeResult.count is system-wide across all learners)
+            let learnerEventCount = null;
             try {
-              const raw = env.HERO_INTERNAL_ACCOUNTS;
-              if (raw) {
-                const parsed = JSON.parse(raw);
-                isInternalAccount = Array.isArray(parsed) && parsed.includes(session.accountId);
-              }
-            } catch { /* graceful — default to false */ }
+              const countRow = await db.prepare(
+                `SELECT COUNT(*) as cnt FROM event_log WHERE system_id = 'hero-mode' AND learner_id = ?`
+              ).bind(probeLearnerIdParam).first();
+              learnerEventCount = countRow?.cnt ?? null;
+            } catch { /* graceful — fall back to system-wide count */ }
+
+            // pA2 U5 fix: override status must reflect the QUERIED learner's
+            // parent account, not the calling operator's session.accountId.
+            let parentAccountId = null;
+            try {
+              const membershipRow = await db.prepare(
+                `SELECT account_id FROM account_learner_memberships WHERE learner_id = ?`
+              ).bind(probeLearnerIdParam).first();
+              parentAccountId = membershipRow?.account_id ?? null;
+            } catch { /* orphan learner — parentAccountId stays null */ }
+
+            // Resolve flags using the PARENT account (not operator)
+            const resolvedFlags = resolveHeroFlagsWithOverride({
+              env,
+              accountId: parentAccountId ?? session.accountId,
+            });
+
+            let isInternalAccount = null;
+            if (parentAccountId === null) {
+              // Orphan learner — cannot determine internal status
+              isInternalAccount = null;
+            } else {
+              isInternalAccount = false;
+              try {
+                const raw = env.HERO_INTERNAL_ACCOUNTS;
+                if (raw) {
+                  const parsed = JSON.parse(raw);
+                  isInternalAccount = Array.isArray(parsed) && parsed.includes(parentAccountId);
+                }
+              } catch { /* graceful — default to false */ }
+            }
 
             const overrideStatus = {
-              accountId: session.accountId,
+              queriedLearnerId: probeLearnerIdParam,
+              parentAccountId,
               isInternalAccount,
               effectiveFlags: resolvedFlags,
+              ...(parentAccountId === null ? { reason: 'parent-account-not-found' } : {}),
             };
 
             const expanded = buildExpandedProbeResponse({
@@ -2718,6 +2750,7 @@ export function createWorkerApp({
               resolvedFlags,
               dateKey,
               overrideStatus,
+              learnerEventCount,
             });
 
             return json(stripPrivacyFields(expanded));
