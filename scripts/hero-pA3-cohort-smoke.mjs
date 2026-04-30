@@ -63,9 +63,10 @@ export function parseArgs(argv) {
     }
   }
 
-  // Validate source
+  // Validate source — invalid falls back to lowest-trust tier
   if (!VALID_SOURCES.includes(args.source)) {
-    args.source = 'real-production';
+    process.stderr.write(`WARNING: unrecognised --source "${args.source}" — falling back to "simulation" (lowest trust tier)\n`);
+    args.source = 'simulation';
   }
 
   return args;

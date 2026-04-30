@@ -263,6 +263,9 @@ export function validateCertification(manifest, fileReader, rootDir) {
               ringResult.failures.push(`Insufficient real-production learners (${counts.realLearners.length}/${parsed.threshold}): ${evidence.path}`);
             }
           }
+        } else {
+          ringResult.pass = false;
+          ringResult.failures.push(`Unknown condition type: ${evidence.condition}`);
         }
       }
     }

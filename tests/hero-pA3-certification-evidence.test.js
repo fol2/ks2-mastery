@@ -418,6 +418,61 @@ describe('Hero pA3 Certification Validator', () => {
     });
   });
 
+  // ── Unrecognised condition type ───────────────────────────────────
+
+  describe('unrecognised condition type', () => {
+    it('marks ring as failed with descriptive message for unknown condition', () => {
+      const manifestWithUnknown = {
+        phase: 'hero-pA3',
+        date: '2026-04-30',
+        rings: {
+          'A3-0': {
+            name: 'Test ring with unknown condition',
+            requiredEvidence: [
+              { path: 'docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md', condition: 'invented_condition_xyz', description: 'Bogus condition' },
+            ],
+          },
+        },
+      };
+
+      const files = {
+        [fullPath('docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md')]: '# Evidence\n\nSome content.',
+      };
+      const reader = createMockReader(files);
+      const result = validateCertification(manifestWithUnknown, reader, ROOT);
+
+      assert.equal(result.rings['A3-0'].pass, false);
+      assert.ok(result.rings['A3-0'].failures.some(f => f.includes('Unknown condition type: invented_condition_xyz')));
+    });
+
+    it('ring with mix of valid and unknown conditions fails on unknown', () => {
+      const manifestMixed = {
+        phase: 'hero-pA3',
+        date: '2026-04-30',
+        rings: {
+          'A3-0': {
+            name: 'Mixed conditions ring',
+            requiredEvidence: [
+              { path: 'docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md', condition: 'file_exists', description: 'File must exist' },
+              { path: 'docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md', condition: 'future_condition_not_yet_implemented', description: 'Not implemented' },
+            ],
+          },
+        },
+      };
+
+      const files = {
+        [fullPath('docs/plans/james/hero-mode/A/hero-pA3-internal-cohort-evidence.md')]: '# Evidence\n\nSome content.',
+      };
+      const reader = createMockReader(files);
+      const result = validateCertification(manifestMixed, reader, ROOT);
+
+      assert.equal(result.rings['A3-0'].pass, false);
+      assert.ok(result.rings['A3-0'].failures.some(f => f.includes('Unknown condition type: future_condition_not_yet_implemented')));
+      // The file_exists condition still passed (no "File missing" failure for that one)
+      assert.ok(!result.rings['A3-0'].failures.some(f => f.includes('File missing')));
+    });
+  });
+
   // ── Full pipeline with mock fileReader ────────────────────────────
 
   describe('full pipeline', () => {

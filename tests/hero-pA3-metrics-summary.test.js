@@ -69,12 +69,12 @@ describe('parseArgs', () => {
 // ── 9-column parsing ────────────────────────────────────────────────
 
 describe('parseObservationTable (9-column)', () => {
-  it('parses valid 9-column row with Source', () => {
+  it('parses valid 9-column row with Source at position 8', () => {
     const content = `# Evidence
-| Date | Learner | Source | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Status |
-|------|---------|--------|-----------|----------------|----------------|----------------|----------|--------|
-| 2026-04-28 | learner-1 | real-production | ready | 100-299 | 5 | no-gap | internal | ok |
-| 2026-04-28 | learner-2 | simulation | not-ready | 0 | 0 | gap-detected | internal | ok |
+| Date | Learner | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Source | Status |
+|------|---------|-----------|----------------|----------------|----------------|----------|--------|--------|
+| 2026-04-28 | learner-1 | ready | 100-299 | 5 | no-gap | internal | real-production | ok |
+| 2026-04-28 | learner-2 | not-ready | 0 | 0 | gap-detected | internal | simulation | ok |
 `;
     const rows = parseObservationTable(content);
     assert.equal(rows.length, 2);
@@ -85,9 +85,9 @@ describe('parseObservationTable (9-column)', () => {
   });
 
   it('ignores header/separator rows', () => {
-    const content = `| Date | Learner | Source | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Status |
-|------|---------|--------|-----------|----------------|----------------|----------------|----------|--------|
-| 2026-04-28 | learner-1 | real-production | ready | 100-299 | 5 | no-gap | internal | ok |`;
+    const content = `| Date | Learner | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Source | Status |
+|------|---------|-----------|----------------|----------------|----------------|----------|--------|--------|
+| 2026-04-28 | learner-1 | ready | 100-299 | 5 | no-gap | internal | real-production | ok |`;
     const rows = parseObservationTable(content);
     assert.equal(rows.length, 1);
   });
@@ -102,19 +102,24 @@ describe('parseObservationTable (9-column)', () => {
 // ── Provenance separation ───────────────────────────────────────────
 
 describe('separateByProvenance', () => {
-  it('separates real from simulation and manual', () => {
+  it('separates all 5 provenance types correctly', () => {
     const observations = [
       makeRow({ source: 'real-production' }),
       makeRow({ source: 'real-production', learner: 'learner-2' }),
+      makeRow({ source: 'staging', learner: 'learner-3' }),
+      makeRow({ source: 'local', learner: 'learner-4' }),
       makeRow({ source: 'simulation' }),
       makeRow({ source: 'simulation' }),
-      makeRow({ source: 'manual-inspection' }),
+      makeRow({ source: 'manual-note', learner: 'learner-5' }),
     ];
     const p = separateByProvenance(observations);
     assert.equal(p.real.length, 2);
+    assert.equal(p.staging.length, 1);
+    assert.equal(p.local.length, 1);
     assert.equal(p.simulation.length, 2);
     assert.equal(p.manual.length, 1);
-    assert.equal(p.total, 5);
+    assert.equal(p.other.length, 0);
+    assert.equal(p.total, 7);
   });
 
   it('handles unknown source in other bucket', () => {
@@ -299,5 +304,72 @@ describe('generateBaselineDocument', () => {
 
     assert.ok(doc.includes('Telemetry report available:** No'));
     assert.ok(doc.includes('telemetry-pending'));
+  });
+});
+
+// ── Round-trip integration: smoke output format is parseable by metrics-summary ──
+
+describe('round-trip: smoke script output parseable by metrics-summary', () => {
+  it('formatObservationRow output is parseable by parseObservationTable', async () => {
+    const { formatObservationRow } = await import('../scripts/hero-pA3-cohort-smoke.mjs');
+
+    const obs = {
+      date: '2026-04-30',
+      learner: 'round-trip-learner',
+      readiness: 'ready',
+      balanceBucket: '300-599',
+      ledgerEntries: 7,
+      reconciliation: 'no-gap',
+      override: 'override-active',
+      source: 'real-production',
+      status: 'OK',
+    };
+
+    const row = formatObservationRow(obs);
+    const content = `| Date | Learner | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Source | Status |\n|------|---------|-----------|----------------|----------------|----------------|----------|--------|--------|\n${row}`;
+    const parsed = parseObservationTable(content);
+
+    assert.equal(parsed.length, 1);
+    assert.equal(parsed[0].date, '2026-04-30');
+    assert.equal(parsed[0].learner, 'round-trip-learner');
+    assert.equal(parsed[0].readiness, 'ready');
+    assert.equal(parsed[0].balanceBucket, '300-599');
+    assert.equal(parsed[0].ledgerEntries, 7);
+    assert.equal(parsed[0].reconciliation, 'no-gap');
+    assert.equal(parsed[0].override, 'override-active');
+    assert.equal(parsed[0].source, 'real-production');
+    assert.equal(parsed[0].status, 'OK');
+  });
+
+  it('all 5 provenance types round-trip correctly', async () => {
+    const { formatObservationRow } = await import('../scripts/hero-pA3-cohort-smoke.mjs');
+
+    const sources = ['real-production', 'staging', 'local', 'simulation', 'manual-note'];
+    const rows = sources.map((source, i) => formatObservationRow({
+      date: `2026-04-${String(25 + i).padStart(2, '0')}`,
+      learner: `learner-${i}`,
+      readiness: 'ready',
+      balanceBucket: '100-299',
+      ledgerEntries: i + 1,
+      reconciliation: 'no-gap',
+      override: 'no-override',
+      source,
+      status: 'OK',
+    }));
+
+    const content = `| Date | Learner | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Source | Status |\n|------|---------|-----------|----------------|----------------|----------------|----------|--------|--------|\n${rows.join('\n')}`;
+    const parsed = parseObservationTable(content);
+
+    assert.equal(parsed.length, 5);
+    for (let i = 0; i < 5; i++) {
+      assert.equal(parsed[i].source, sources[i]);
+    }
+
+    const provenance = separateByProvenance(parsed);
+    assert.equal(provenance.real.length, 1);
+    assert.equal(provenance.staging.length, 1);
+    assert.equal(provenance.local.length, 1);
+    assert.equal(provenance.simulation.length, 1);
+    assert.equal(provenance.manual.length, 1);
   });
 });

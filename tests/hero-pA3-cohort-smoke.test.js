@@ -99,9 +99,9 @@ describe('pA3 cohort smoke: parseArgs', () => {
     assert.equal(args.source, 'manual-note');
   });
 
-  it('invalid source falls back to real-production', () => {
+  it('invalid source falls back to simulation (lowest trust tier)', () => {
     const args = parseArgs(['node', 'script.mjs', '--source', 'invalid-value']);
-    assert.equal(args.source, 'real-production');
+    assert.equal(args.source, 'simulation');
   });
 
   it('--dry-run flag sets dryRun', () => {

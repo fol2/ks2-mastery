@@ -545,15 +545,15 @@ describe('Hero pA3 Pipeline Integration', () => {
   // ── 10. Metrics summary integration ───────────────────────────────
 
   describe('metrics summary parses 9-column format correctly', () => {
-    it('parseObservationTable extracts rows from 9-column evidence', () => {
+    it('parseObservationTable extracts rows from 9-column evidence (Source at position 8)', () => {
       const content = [
         '# Evidence',
         '',
-        '| Date | Learner | Source | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Status |',
-        '|------|---------|--------|-----------|----------------|----------------|----------------|----------|--------|',
-        '| 2026-04-25 | learner-A | real-production | ready | 300-599 | 5 | no-gap | override-active | OK |',
-        '| 2026-04-26 | learner-B | simulation | ready | 100-299 | 3 | no-gap | no-override | OK |',
-        '| 2026-04-27 | learner-C | real-production | not-ready | 0-99 | 1 | gap | no-override | WARN:insufficient |',
+        '| Date | Learner | Readiness | Balance Bucket | Ledger Entries | Reconciliation | Override | Source | Status |',
+        '|------|---------|-----------|----------------|----------------|----------------|----------|--------|--------|',
+        '| 2026-04-25 | learner-A | ready | 300-599 | 5 | no-gap | override-active | real-production | OK |',
+        '| 2026-04-26 | learner-B | ready | 100-299 | 3 | no-gap | no-override | simulation | OK |',
+        '| 2026-04-27 | learner-C | not-ready | 0-99 | 1 | gap | no-override | real-production | WARN:insufficient |',
       ].join('\n');
 
       const observations = parseObservationTable(content);
@@ -565,19 +565,23 @@ describe('Hero pA3 Pipeline Integration', () => {
       assert.equal(observations[2].status, 'WARN:insufficient');
     });
 
-    it('separateByProvenance correctly splits real vs simulation', () => {
+    it('separateByProvenance correctly splits all 5 provenance types', () => {
       const observations = [
         { source: 'real-production', date: '2026-04-25', learner: 'a' },
         { source: 'real-production', date: '2026-04-26', learner: 'b' },
+        { source: 'staging', date: '2026-04-25', learner: 'e' },
+        { source: 'local', date: '2026-04-26', learner: 'f' },
         { source: 'simulation', date: '2026-04-25', learner: 'c' },
-        { source: 'manual-inspection', date: '2026-04-27', learner: 'd' },
+        { source: 'manual-note', date: '2026-04-27', learner: 'd' },
       ];
 
       const result = separateByProvenance(observations);
       assert.equal(result.real.length, 2);
+      assert.equal(result.staging.length, 1);
+      assert.equal(result.local.length, 1);
       assert.equal(result.simulation.length, 1);
       assert.equal(result.manual.length, 1);
-      assert.equal(result.total, 4);
+      assert.equal(result.total, 6);
     });
 
     it('classifyConfidence returns correct tier labels', () => {
