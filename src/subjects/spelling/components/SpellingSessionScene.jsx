@@ -12,6 +12,7 @@ import {
 import {
   SPELLING_DURABLE_PERSISTENCE_WARNING_COPY,
 } from '../service-contract.js';
+import { Button } from '../../../platform/ui/Button.jsx';
 import { SoftLockoutBanner, useSoftLockoutState } from './SoftLockoutBanner.jsx';
 import { ArrowRightIcon, SpeakerIcon, SpeakerSlowIcon } from './spelling-icons.jsx';
 import {
@@ -92,15 +93,14 @@ export function SpellingSessionScene({
       <section className="card" style={{ gridColumn: '1/-1' }}>
         <div className="eyebrow">No active session</div>
         <h2 className="section-title">Start a spelling round</h2>
-        <button
-          className="btn primary"
-          type="button"
+        <Button
+          variant="primary"
           style={{ '--btn-accent': accent }}
-          data-action="spelling-back"
+          dataAction="spelling-back"
           onClick={(event) => renderAction(actions, event, 'spelling-back')}
         >
           Back to spelling dashboard
-        </button>
+        </Button>
       </section>
     );
   }
@@ -312,35 +312,30 @@ export function SpellingSessionScene({
               />
             </div>
             <div className="audio-row">
-              <button
-                type="button"
-                className="btn icon lg"
+              <Button
+                variant="icon"
+                size="lg"
                 aria-label="Replay the dictated word"
-                data-action="spelling-replay"
+                dataAction="spelling-replay"
                 data-testid="spelling-replay"
-                // SH2-U4: disable replay buttons while a fetch is in
-                // flight so a fast second click cannot pile up a
-                // second overlapping playback. `playbackId` still
-                // guards the underlying pipeline; this visual lock
-                // makes the intent visible.
                 disabled={runtimeReadOnly || ttsStatus === 'loading'}
-                aria-busy={ttsStatus === 'loading'}
+                busy={ttsStatus === 'loading'}
                 onClick={(event) => renderAction(actions, event, 'spelling-replay')}
               >
                 <SpeakerIcon />
-              </button>
-              <button
-                type="button"
-                className="btn icon lg"
+              </Button>
+              <Button
+                variant="icon"
+                size="lg"
                 aria-label="Replay slowly"
-                data-action="spelling-replay-slow"
+                dataAction="spelling-replay-slow"
                 data-testid="spelling-replay-slow"
                 disabled={runtimeReadOnly || ttsStatus === 'loading'}
-                aria-busy={ttsStatus === 'loading'}
+                busy={ttsStatus === 'loading'}
                 onClick={(event) => renderAction(actions, event, 'spelling-replay-slow')}
               >
                 <SpeakerSlowIcon />
-              </button>
+              </Button>
               {ttsStatus === 'loading' ? (
                 <span
                   className="chip spelling-tts-pending-chip"
@@ -363,14 +358,14 @@ export function SpellingSessionScene({
               </div>
             ) : null}
             <div className="action-row">
-              <button className="btn primary lg" style={{ '--btn-accent': accent }} type="submit" disabled={awaitingAdvance || runtimeReadOnly || pending}>
+              <Button variant="primary" size="lg" style={{ '--btn-accent': accent }} type="submit" disabled={awaitingAdvance || runtimeReadOnly || pending}>
                 {effectiveSubmitLabel}{awaitingAdvance || pending ? null : <> <ArrowRightIcon /></>}
-              </button>
+              </Button>
               {awaitingAdvance ? (
-                <button
-                  className="btn good lg"
-                  type="button"
-                  data-action="spelling-continue"
+                <Button
+                  variant="good"
+                  size="lg"
+                  dataAction="spelling-continue"
                   disabled={runtimeReadOnly || pending || submitLock.locked}
                   onClick={(event) => {
                     // SH2-U1: the hook's `run()` flips `pendingRef.current`
@@ -386,20 +381,20 @@ export function SpellingSessionScene({
                   }}
                 >
                   Continue <ArrowRightIcon />
-                </button>
+                </Button>
               ) : null}
               {session.type !== 'test' && !awaitingAdvance && session.phase === 'question' ? (
-                <button
-                  className="btn ghost lg"
-                  type="button"
-                  data-action="spelling-skip"
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  dataAction="spelling-skip"
                   disabled={runtimeReadOnly || pending || submitLock.locked}
                   onClick={(event) => {
                     submitLock.run(async () => renderAction(actions, event, 'spelling-skip'));
                   }}
                 >
                   {skipLabel}
-                </button>
+                </Button>
               ) : null}
             </div>
           </form>
@@ -415,15 +410,15 @@ export function SpellingSessionScene({
             <div className="voice-note small muted">{voiceNote}</div>
           </div>
           <div className="session-footer-right">
-            <button
-              className="btn sm bad"
-              type="button"
-              data-action="spelling-end-early"
+            <Button
+              variant="bad"
+              size="sm"
+              dataAction="spelling-end-early"
               disabled={runtimeReadOnly || pending}
               onClick={(event) => renderAction(actions, event, 'spelling-end-early')}
             >
               End round early
-            </button>
+            </Button>
           </div>
         </footer>
       </div>

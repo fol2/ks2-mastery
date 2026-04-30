@@ -59,6 +59,7 @@
 
 import { useRef } from 'react';
 
+import { Button } from '../../../platform/ui/Button.jsx';
 import { useSubmitLock } from '../../../platform/react/use-submit-lock.js';
 import {
   ACTIVE_PUNCTUATION_MONSTER_IDS,
@@ -536,45 +537,41 @@ function NextActionRow({ ui, actions }) {
   const isNavigationDisabled = composeIsNavigationDisabled(ui);
   return (
     <div className="actions punctuation-summary-actions" style={{ marginTop: 16 }}>
-      <button
-        className="btn primary"
-        type="button"
+      <Button
+        variant="primary"
         disabled={isDisabled}
-        data-action="punctuation-start"
-        data-value="weak"
+        dataAction="punctuation-start"
+        dataValue="weak"
         onClick={() => submitLock.run(async () => actions.dispatch('punctuation-start', { mode: 'weak' }))}
       >
         Practise wobbly spots
-      </button>
-      <button
-        className="btn secondary"
-        type="button"
+      </Button>
+      <Button
+        variant="secondary"
         disabled={isDisabled}
-        data-action="punctuation-open-map"
+        dataAction="punctuation-open-map"
         onClick={() => submitLock.run(async () => actions.dispatch('punctuation-open-map'))}
       >
         Open Punctuation Map
-      </button>
-      <button
-        className="btn secondary"
-        type="button"
+      </Button>
+      <Button
+        variant="secondary"
         disabled={isDisabled}
-        data-action="punctuation-start-again"
+        dataAction="punctuation-start-again"
         data-punctuation-start-again
         onClick={() => submitLock.run(async () => actions.dispatch('punctuation-start-again'))}
       >
         Start again
-      </button>
-      <button
-        className="btn ghost"
-        type="button"
+      </Button>
+      <Button
+        variant="ghost"
         disabled={isNavigationDisabled}
         aria-disabled={isNavigationDisabled ? 'true' : 'false'}
-        data-action="punctuation-back"
+        dataAction="punctuation-back"
         onClick={() => submitLock.run(async () => actions.dispatch('punctuation-back'))}
       >
         Back to dashboard
-      </button>
+      </Button>
     </div>
   );
 }
