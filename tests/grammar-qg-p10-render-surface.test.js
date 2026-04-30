@@ -128,6 +128,51 @@ describe('P10 Render Surface — qg_p4_voice_roles_transfer DOM', () => {
 });
 
 // ---------------------------------------------------------------------------
+// 2b. qg_p4_word_class_noun_phrase_transfer: underline on 1-3 word target
+// ---------------------------------------------------------------------------
+
+describe('P10 Render Surface — qg_p4_word_class_noun_phrase_transfer DOM', () => {
+  const TEMPLATE_ID = 'qg_p4_word_class_noun_phrase_transfer';
+  const items = generateForTemplate(TEMPLATE_ID, 5).filter(
+    ({ serialised }) =>
+      serialised.promptParts && serialised.promptParts.some((p) => p.kind === 'underline'),
+  );
+
+  it('generates >0 items with underline promptParts (empty-fails invariant)', () => {
+    assert.ok(
+      items.length > 0,
+      `Expected >0 items with underline promptParts for "${TEMPLATE_ID}" but got ${items.length}`,
+    );
+  });
+
+  for (const { seed, serialised } of items) {
+    it(`seed=${seed}: HTML contains a .prompt-underline element`, () => {
+      const html = renderGrammarItem(serialised);
+      const doc = parseHtml(html);
+      const underlines = doc.querySelectorAll('.prompt-underline');
+      assert.ok(
+        underlines.length >= 1,
+        `Expected at least one .prompt-underline element but found ${underlines.length}`,
+      );
+    });
+
+    it(`seed=${seed}: underlined text is 1-3 words (target word within noun phrase)`, () => {
+      const html = renderGrammarItem(serialised);
+      const doc = parseHtml(html);
+      const underline = doc.querySelector('.prompt-underline');
+      assert.ok(underline, 'Must have .prompt-underline element in rendered HTML');
+      const text = underline.textContent.trim();
+      assert.ok(text.length > 0, 'Underline text must be non-empty');
+      const wordCount = text.split(/\s+/).length;
+      assert.ok(
+        wordCount >= 1 && wordCount <= 3,
+        `Underlined text "${text}" should be 1-3 words, got ${wordCount}`,
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 3. Homogeneous table: all <tr> rows have the same radio input count
 // ---------------------------------------------------------------------------
 

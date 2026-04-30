@@ -318,6 +318,6 @@ describe('P10 Evidence Truth: inventory release ID cross-check', () => {
     const result = validateInventoryReleaseIds(inventoryPath, GRAMMAR_CONTENT_RELEASE_ID);
     const itemMismatches = result.mismatches.filter((m) => m.field.startsWith('inventoryItem['));
     assert.equal(itemMismatches.length, 0,
-      `All sampled inventory items must have contentReleaseId === ${GRAMMAR_CONTENT_RELEASE_ID}`);
+      `All inventory items must have contentReleaseId === ${GRAMMAR_CONTENT_RELEASE_ID}`);
   });
 });

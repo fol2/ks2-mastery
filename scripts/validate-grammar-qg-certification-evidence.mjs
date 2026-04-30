@@ -498,10 +498,9 @@ export function validateInventoryReleaseIds(inventoryPath, expectedReleaseId) {
     });
   }
 
-  // Sample first 10 items and check their contentReleaseId
+  // Check ALL items for contentReleaseId consistency (no sampling — full sweep)
   const items = Array.isArray(inventory?.items) ? inventory.items : [];
-  const sampleSize = Math.min(10, items.length);
-  for (let i = 0; i < sampleSize; i++) {
+  for (let i = 0; i < items.length; i++) {
     const item = items[i];
     if (item?.contentReleaseId !== expectedReleaseId) {
       mismatches.push({
