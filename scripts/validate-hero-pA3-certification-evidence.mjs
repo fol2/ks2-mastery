@@ -24,7 +24,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
  * Check that a file does NOT contain "Status: PENDING" or "**Status:** PENDING".
  */
 export function checkStatusNotPending(content) {
-  const pendingPattern = /(?:\*\*Status:\*\*|Status:)\s*PENDING/i;
+  const pendingPattern = /(?:\*\*Status:\*\*|Status:)\s*(?:PENDING|TEMPLATE)/i;
   return !pendingPattern.test(content);
 }
 
@@ -261,6 +261,18 @@ export function validateCertification(manifest, fileReader, rootDir) {
             if (counts.realLearners.length < parsed.threshold) {
               ringResult.pass = false;
               ringResult.failures.push(`Insufficient real-production learners (${counts.realLearners.length}/${parsed.threshold}): ${evidence.path}`);
+            }
+          }
+        } else if (evidence.condition === 'no_stop_conditions') {
+          if (!fileReader.exists(fullPath)) {
+            ringResult.pass = false;
+            ringResult.failures.push(`File missing: ${evidence.path} — ${evidence.description}`);
+          } else {
+            const content = fileReader.read(fullPath);
+            const stopFiredPattern = /\|\s*\w[^|]*\|\s*Yes\s*\|/i;
+            if (stopFiredPattern.test(content)) {
+              ringResult.pass = false;
+              ringResult.failures.push(`Stop condition fired (Observed: Yes): ${evidence.path}`);
             }
           }
         } else {
