@@ -208,7 +208,7 @@ describe('P10 Evidence Artefacts: quality register', () => {
       }
       // Validate specific field values
       assert.ok(entry.templateId, 'entry.templateId required');
-      assert.ok(['approved', 'blocked'].includes(entry.decision), `Invalid decision: ${entry.decision}`);
+      assert.ok(['approved', 'approved_with_limitation', 'blocked'].includes(entry.decision), `Invalid decision: ${entry.decision}`);
       assert.equal(entry.reviewerId, 'automated-p10-oracle');
       assert.equal(entry.reviewMethod, 'automated-oracle-with-concrete-evidence');
       assert.ok(
@@ -217,9 +217,9 @@ describe('P10 Evidence Artefacts: quality register', () => {
       );
       assert.ok(Array.isArray(entry.concreteExamples), 'concreteExamples must be array');
       assert.ok(entry.concreteExamples.length >= 3, `concreteExamples must have >= 3 items, got ${entry.concreteExamples.length}`);
-      assert.ok(['ship', 'requires-adult-review'].includes(entry.finalAction), `Invalid finalAction: ${entry.finalAction}`);
-      // severity: null if approved, S0/S1/S2 if blocked
-      if (entry.decision === 'approved') {
+      assert.ok(['ship', 'ship-with-monitoring', 'requires-adult-review'].includes(entry.finalAction), `Invalid finalAction: ${entry.finalAction}`);
+      // severity: null if approved/approved_with_limitation, S0/S1/S2 if blocked
+      if (entry.decision === 'approved' || entry.decision === 'approved_with_limitation') {
         assert.equal(entry.severity, null, `Approved entry ${entry.templateId} must have severity null`);
       } else {
         assert.ok(['S0', 'S1', 'S2'].includes(entry.severity), `Blocked entry must have S0/S1/S2 severity`);
