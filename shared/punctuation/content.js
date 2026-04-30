@@ -296,6 +296,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'What a fantastic goal!',
     misconceptionTags: ['endmarks.capitalisation_missing', 'endmarks.mark_mismatch', 'endmarks.terminal_missing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'sentence-ending.terminal-mark',
+
     source: 'fixed',
   },
   {
@@ -311,6 +313,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Why was the hall still locked?',
     misconceptionTags: ['endmarks.capitalisation_missing', 'endmarks.question_mark_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'sentence-ending.terminal-mark',
+
     source: 'fixed',
   },
   {
@@ -326,6 +330,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Do not forget your reading journal.',
     misconceptionTags: ['endmarks.mark_mismatch', 'endmarks.capitalisation_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'sentence-ending.terminal-mark',
+
     source: 'fixed',
   },
   {
@@ -342,6 +348,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'startsWithWordQuestion', word: 'Why' },
     misconceptionTags: ['endmarks.question_mark_missing', 'endmarks.capitalisation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'sentence-ending.terminal-mark',
+
     source: 'fixed',
   },
   {
@@ -362,6 +370,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Where is the science tray?',
     misconceptionTags: ['endmarks.question_mark_missing', 'endmarks.capitalisation_missing', 'endmarks.terminal_missing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'sentence-ending.terminal-mark',
+
     source: 'fixed',
   },
   {
@@ -377,6 +387,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Please close the classroom door.',
     misconceptionTags: ['endmarks.capitalisation_missing', 'endmarks.terminal_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'sentence-ending.terminal-mark',
+
     source: 'fixed',
   },
   {
@@ -392,6 +404,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'What a clever idea!',
     misconceptionTags: ['endmarks.mark_mismatch', 'endmarks.capitalisation_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'sentence-ending.terminal-mark',
+
     source: 'fixed',
   },
   {
@@ -408,6 +422,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'startsWithWordQuestion', word: 'Where' },
     misconceptionTags: ['endmarks.question_mark_missing', 'endmarks.capitalisation_missing', 'endmarks.question_starter_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'sentence-ending.terminal-mark',
+
     source: 'fixed',
   },
   {
@@ -428,6 +444,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'We packed torches, maps and water.',
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma', 'comma.comma_after_verb'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'list.comma-separation',
+
     source: 'fixed',
   },
   {
@@ -448,6 +466,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['comma.list_separator_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'list.comma-separation',
+
     source: 'fixed',
   },
   {
@@ -468,6 +488,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['comma.list_separator_missing', 'comma.unnecessary_final_comma'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'list.comma-separation',
+
     source: 'fixed',
   },
   {
@@ -484,6 +506,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'requiresListCommas', items: ['torches', 'maps', 'water'] },
     misconceptionTags: ['comma.list_separator_missing', 'comma.list_words_changed', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'list.comma-separation',
+
     source: 'fixed',
   },
   {
@@ -505,6 +529,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['comma.list_separator_missing', 'comma.list_words_changed', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'list.comma-separation',
+
     source: 'fixed',
   },
   {
@@ -525,6 +551,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['comma.list_separator_missing', 'comma.list_words_changed', 'comma.unnecessary_final_comma'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'list.comma-separation',
+
     source: 'fixed',
   },
   {
@@ -545,6 +573,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "She didn't know we'd already left.",
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.terminal_missing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.contraction',
+
     source: 'fixed',
   },
   {
@@ -560,6 +590,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "You'll see that I'm ready because I've packed already.",
     misconceptionTags: ['apostrophe.contraction_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.contraction',
+
     source: 'fixed',
   },
   {
@@ -575,6 +607,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "I can't believe we're nearly there.",
     misconceptionTags: ['apostrophe.contraction_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.contraction',
+
     source: 'fixed',
   },
   {
@@ -591,6 +625,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'requiresTokens', tokens: ["can't", "we're"] },
     misconceptionTags: ['apostrophe.contraction_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.contraction',
+
     source: 'fixed',
   },
   {
@@ -611,6 +647,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "They're sure we don't need tickets.",
     misconceptionTags: ['apostrophe.contraction_missing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.contraction',
+
     source: 'fixed',
   },
   {
@@ -626,6 +664,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "We'll check that you're ready before we leave.",
     misconceptionTags: ['apostrophe.contraction_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.contraction',
+
     source: 'fixed',
   },
   {
@@ -642,6 +682,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'requiresTokens', tokens: ["don't", "they're"], minimumWordCount: 4 },
     misconceptionTags: ['apostrophe.contraction_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.contraction',
+
     source: 'fixed',
   },
   {
@@ -662,6 +704,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "The teachers' room was next to the library.",
     misconceptionTags: ['apostrophe.possession_missing', 'apostrophe.possession_number', 'apostrophe.terminal_missing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.possession-plural',
+
     source: 'fixed',
   },
   {
@@ -677,6 +721,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "The girl's coat was hanging on the peg.",
     misconceptionTags: ['apostrophe.possession_missing', 'apostrophe.possession_number'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.possession-singular',
+
     source: 'fixed',
   },
   {
@@ -692,6 +738,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "The children's boots were lined up by the door.",
     misconceptionTags: ['apostrophe.possession_missing', 'apostrophe.irregular_plural'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.possession-singular',
+
     source: 'fixed',
   },
   {
@@ -708,6 +756,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'requiresTokens', tokens: ["children's", "teachers'"] },
     misconceptionTags: ['apostrophe.possession_missing', 'apostrophe.possession_number'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.possession-mixed',
+
     source: 'fixed',
   },
   {
@@ -728,6 +778,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Mum said, "Put your shoes by the door."',
     misconceptionTags: ['speech.reporting_comma_missing', 'speech.punctuation_outside_quote'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'speech.inverted_commas',
+
     source: 'fixed',
   },
   {
@@ -750,6 +802,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['speech.quote_missing', 'speech.punctuation_outside_quote', 'speech.reporting_comma_missing', 'speech.capitalisation_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'speech.inverted_commas',
+
     source: 'fixed',
   },
   {
@@ -772,6 +826,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['speech.punctuation_outside_quote', 'speech.quote_unmatched', 'speech.words_changed'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'speech.inverted_commas',
+
     source: 'fixed',
   },
   {
@@ -794,6 +850,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['speech.quote_missing', 'speech.punctuation_outside_quote', 'speech.reporting_comma_missing', 'speech.capitalisation_missing', 'speech.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'speech.inverted_commas',
+
     source: 'fixed',
   },
   {
@@ -816,6 +874,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing', 'speech.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'mixed.fronted-speech',
+
     source: 'fixed',
   },
   {
@@ -836,6 +896,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Before lunch, we finished the poster.',
     misconceptionTags: ['comma.fronted_adverbial_missing', 'comma.comma_inside_phrase', 'comma.comma_after_subject'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'fronted-adverbial.comma-after-opener',
+
     source: 'fixed',
   },
   {
@@ -851,6 +913,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Without warning, the bell began to ring.',
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'fronted-adverbial.comma-after-opener',
+
     source: 'fixed',
   },
   {
@@ -866,6 +930,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'At last, we reached the harbour.',
     misconceptionTags: ['comma.fronted_adverbial_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'fronted-adverbial.comma-after-opener',
+
     source: 'fixed',
   },
   {
@@ -882,6 +948,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'startsWithPhraseComma', phrase: 'After lunch' },
     misconceptionTags: ['comma.fronted_adverbial_missing', 'comma.capitalisation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'fronted-adverbial.comma-after-opener',
+
     source: 'fixed',
   },
   {
@@ -902,6 +970,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['comma.fronted_adverbial_missing', 'comma.opening_phrase_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'fronted-adverbial.comma-after-opener',
+
     source: 'fixed',
   },
   {
@@ -922,6 +992,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: "Let's eat, Grandma.",
     misconceptionTags: ['comma.clarity_missing', 'apostrophe.contraction_missing', 'comma.comma_after_subject'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'comma.clarity',
+
     source: 'fixed',
   },
   {
@@ -937,6 +1009,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Most of the time, travellers worry about delays.',
     misconceptionTags: ['comma.clarity_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'comma.clarity',
+
     source: 'fixed',
   },
   {
@@ -952,6 +1026,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'When the rain stopped, the children cheered.',
     misconceptionTags: ['comma.clarity_missing', 'comma.opening_clause_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'comma.clarity',
+
     source: 'fixed',
   },
   {
@@ -968,6 +1044,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'startsWithPhraseComma', phrase: 'In the morning' },
     misconceptionTags: ['comma.clarity_missing', 'comma.capitalisation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'comma.clarity',
+
     source: 'fixed',
   },
   {
@@ -988,6 +1066,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Before cooking, children wash their hands.',
     misconceptionTags: ['comma.clarity_missing', 'comma.comma_inside_phrase', 'comma.comma_after_subject'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'comma.clarity',
+
     source: 'fixed',
   },
   {
@@ -1003,6 +1083,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'After supper, we read quietly.',
     misconceptionTags: ['comma.clarity_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'comma.clarity',
+
     source: 'fixed',
   },
   {
@@ -1018,6 +1100,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'If you get lost, ask a helper.',
     misconceptionTags: ['comma.clarity_missing', 'comma.opening_clause_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'comma.clarity',
+
     source: 'fixed',
   },
   {
@@ -1034,6 +1118,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'startsWithPhraseComma', phrase: 'After the match' },
     misconceptionTags: ['comma.clarity_missing', 'comma.capitalisation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'comma.clarity',
+
     source: 'fixed',
   },
   {
@@ -1054,6 +1140,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The rain had stopped; the pitch was still slippery.',
     misconceptionTags: ['boundary.comma_splice', 'boundary.extra_conjunction', 'boundary.semicolon_missing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.independent-clauses',
+
     source: 'fixed',
   },
   {
@@ -1069,6 +1157,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The lights dimmed; the audience fell silent.',
     misconceptionTags: ['boundary.semicolon_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.independent-clauses',
+
     source: 'fixed',
   },
   {
@@ -1084,6 +1174,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The path was narrow; the map showed a safer route.',
     misconceptionTags: ['boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.independent-clauses',
+
     source: 'fixed',
   },
   {
@@ -1105,6 +1197,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['boundary.semicolon_missing', 'boundary.comma_splice', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.independent-clauses',
+
     source: 'fixed',
   },
   {
@@ -1126,6 +1220,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['boundary.semicolon_missing', 'boundary.comma_splice', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.independent-clauses',
+
     source: 'fixed',
   },
   {
@@ -1146,6 +1242,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The path was flooded – we took the longer route.',
     misconceptionTags: ['boundary.comma_splice', 'boundary.dash_missing', 'boundary.dash_spacing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'dash.clause-separation',
+
     source: 'fixed',
   },
   {
@@ -1165,6 +1263,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The door creaked open – we froze.',
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'dash.clause-separation',
+
     source: 'fixed',
   },
   {
@@ -1185,6 +1285,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The signal failed – the team waited.',
     misconceptionTags: ['boundary.dash_spacing', 'boundary.extra_conjunction'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'dash.clause-separation',
+
     source: 'fixed',
   },
   {
@@ -1210,6 +1312,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['boundary.dash_missing', 'boundary.comma_splice', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'dash.clause-separation',
+
     source: 'fixed',
   },
   {
@@ -1235,6 +1339,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['boundary.dash_missing', 'boundary.comma_splice', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'dash.clause-separation',
+
     source: 'fixed',
   },
   {
@@ -1255,6 +1361,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The lights went out – everyone stayed still.',
     misconceptionTags: ['boundary.comma_splice', 'boundary.dash_missing', 'boundary.dash_spacing'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'dash.clause-separation',
+
     source: 'fixed',
   },
   {
@@ -1274,6 +1382,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The alarm rang – everyone lined up.',
     misconceptionTags: ['boundary.dash_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'dash.clause-separation',
+
     source: 'fixed',
   },
   {
@@ -1299,6 +1409,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['boundary.dash_missing', 'boundary.comma_splice', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'dash.clause-separation',
+
     source: 'fixed',
   },
   {
@@ -1319,6 +1431,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'We saw a man-eating shark.',
     misconceptionTags: ['boundary.hyphen_missing', 'boundary.hyphen_position'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'hyphen.compound-modifier',
+
     source: 'fixed',
   },
   {
@@ -1334,6 +1448,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The little-used room was locked.',
     misconceptionTags: ['boundary.hyphen_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'hyphen.compound-modifier',
+
     source: 'fixed',
   },
   {
@@ -1349,6 +1465,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'We watched a fast-moving train.',
     misconceptionTags: ['boundary.hyphen_missing'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'hyphen.compound-modifier',
+
     source: 'fixed',
   },
   {
@@ -1365,6 +1483,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'requiresHyphenatedPhrase', phrase: 'well-known author' },
     misconceptionTags: ['boundary.hyphen_missing', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'hyphen.compound-modifier',
+
     source: 'fixed',
   },
   {
@@ -1381,6 +1501,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'requiresHyphenatedPhrase', phrase: 'man-eating shark' },
     misconceptionTags: ['boundary.hyphen_missing', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'hyphen.compound-modifier',
+
     source: 'fixed',
   },
   {
@@ -1401,6 +1523,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The small-business owner thanked us.',
     misconceptionTags: ['boundary.hyphen_missing', 'boundary.hyphen_position'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'hyphen.compound-modifier',
+
     source: 'fixed',
   },
   {
@@ -1416,6 +1540,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The well-behaved puppy waited by the gate.',
     misconceptionTags: ['boundary.hyphen_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'hyphen.compound-modifier',
+
     source: 'fixed',
   },
   {
@@ -1432,6 +1558,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     validator: { type: 'requiresHyphenatedPhrase', phrase: 'part-time job', minimumWordCount: 5 },
     misconceptionTags: ['boundary.hyphen_missing', 'boundary.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'hyphen.compound-modifier',
+
     source: 'fixed',
   },
   {
@@ -1452,6 +1580,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Mr Patel, our coach, arrived early.',
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'parenthesis.additional-information',
+
     source: 'fixed',
   },
   {
@@ -1477,6 +1607,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.parenthesis_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'parenthesis.additional-information',
+
     source: 'fixed',
   },
   {
@@ -1502,6 +1634,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.parenthesis_unbalanced'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'parenthesis.additional-information',
+
     source: 'fixed',
   },
   {
@@ -1523,6 +1657,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'structure.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'parenthesis.additional-information',
+
     source: 'fixed',
   },
   {
@@ -1548,6 +1684,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'structure.words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'parenthesis.additional-information',
+
     source: 'fixed',
   },
   {
@@ -1568,6 +1706,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'We needed three things: a torch, a map and a whistle.',
     misconceptionTags: ['structure.colon_missing', 'structure.colon_after_incomplete_clause'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'colon.complete-introduction',
+
     source: 'fixed',
   },
   {
@@ -1583,6 +1723,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The team won three awards: player of the match, best defence and fair play.',
     misconceptionTags: ['structure.colon_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'colon.complete-introduction',
+
     source: 'fixed',
   },
   {
@@ -1598,6 +1740,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'We packed three things: tents, food and torches.',
     misconceptionTags: ['structure.colon_missing', 'structure.comma_before_list'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'colon.complete-introduction',
+
     source: 'fixed',
   },
   {
@@ -1618,6 +1762,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.colon_missing', 'structure.list_words_changed', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'colon.complete-introduction',
+
     source: 'fixed',
   },
   {
@@ -1638,6 +1784,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.colon_missing', 'structure.list_words_changed', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'colon.complete-introduction',
+
     source: 'fixed',
   },
   {
@@ -1658,6 +1806,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.colon_missing', 'structure.list_words_changed', 'structure.list_separator_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'colon.complete-introduction',
+
     source: 'fixed',
   },
   {
@@ -1678,6 +1828,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'We visited York, England; Cardiff, Wales; and Belfast, Northern Ireland.',
     misconceptionTags: ['structure.semicolon_list_missing', 'structure.semicolon_list_misplaced'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.complex-list',
+
     source: 'fixed',
   },
   {
@@ -1693,6 +1845,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'We visited York, England; Cardiff, Wales; and Belfast, Northern Ireland.',
     misconceptionTags: ['structure.semicolon_list_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.complex-list',
+
     source: 'fixed',
   },
   {
@@ -1708,6 +1862,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Our captains were Sam, Year 5; Aisha, Year 6; and Noor, Year 6.',
     misconceptionTags: ['structure.semicolon_list_missing', 'structure.semicolon_list_misplaced'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.complex-list',
+
     source: 'fixed',
   },
   {
@@ -1727,6 +1883,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.semicolon_list_missing', 'structure.list_words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.complex-list',
+
     source: 'fixed',
   },
   {
@@ -1747,6 +1905,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The clubs met in Leeds, Yorkshire; Exeter, Devon; and Perth, Scotland.',
     misconceptionTags: ['structure.semicolon_list_missing', 'structure.semicolon_list_misplaced'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.complex-list',
+
     source: 'fixed',
   },
   {
@@ -1762,6 +1922,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The helpers were Maya, register monitor; Leo, equipment monitor; and Aisha, line leader.',
     misconceptionTags: ['structure.semicolon_list_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.complex-list',
+
     source: 'fixed',
   },
   {
@@ -1777,6 +1939,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'The stalls were crafts, table one; games, table two; and snacks, table three.',
     misconceptionTags: ['structure.semicolon_list_missing', 'structure.semicolon_list_misplaced'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.complex-list',
+
     source: 'fixed',
   },
   {
@@ -1796,6 +1960,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.semicolon_list_missing', 'structure.list_words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'semicolon.complex-list',
+
     source: 'fixed',
   },
   {
@@ -1816,6 +1982,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     model: 'Bring:\n- a drink\n- a hat\n- a sketchbook',
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['retrieve_discriminate', 'misconception', 'negative_test'],
+    explanationRuleId: 'bullet.stem-consistency',
+
     source: 'fixed',
   },
   {
@@ -1836,6 +2004,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.bullet_colon_missing'],
     readiness: ['insertion', 'misconception', 'negative_test'],
+    explanationRuleId: 'bullet.stem-consistency',
+
     source: 'fixed',
   },
   {
@@ -1856,6 +2026,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.bullet_punctuation_inconsistent'],
     readiness: ['proofreading', 'misconception', 'negative_test'],
+    explanationRuleId: 'bullet.stem-consistency',
+
     source: 'fixed',
   },
   {
@@ -1876,6 +2048,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent', 'structure.list_words_changed'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'bullet.stem-consistency',
+
     source: 'fixed',
   },
   {
@@ -1907,6 +2081,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['comma.fronted_adverbial_missing', 'speech.quote_missing', 'speech.reporting_comma_missing', 'speech.punctuation_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'mixed.fronted-speech',
+
     source: 'fixed',
   },
   {
@@ -1940,6 +2116,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.parenthesis_missing', 'structure.parenthesis_unbalanced', 'speech.quote_missing', 'speech.reporting_comma_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'mixed.parenthesis-speech',
+
     source: 'fixed',
   },
   {
@@ -1974,6 +2152,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.colon_missing', 'structure.list_separator_missing', 'boundary.comma_splice', 'boundary.semicolon_missing'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'mixed.colon-semicolon',
+
     source: 'fixed',
   },
   {
@@ -2003,6 +2183,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['structure.bullet_colon_missing', 'structure.bullet_marker_missing', 'structure.bullet_punctuation_inconsistent'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'bullet.colon-and-consistency',
+
     source: 'fixed',
   },
   {
@@ -2029,6 +2211,8 @@ export const PUNCTUATION_ITEMS = Object.freeze([
     },
     misconceptionTags: ['apostrophe.contraction_missing', 'apostrophe.possession_missing', 'apostrophe.possession_number'],
     readiness: ['constrained_transfer', 'misconception', 'negative_test'],
+    explanationRuleId: 'apostrophe.possession-mixed',
+
     source: 'fixed',
   },
 ]);

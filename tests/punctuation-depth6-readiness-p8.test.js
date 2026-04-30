@@ -46,32 +46,35 @@ function makePassingOptions(overrides = {}) {
     negativeVectorsPass: true,
     transferMeaningfulnessPass: true,
     candidateDecisionsPopulated: true,
+    starEvidenceScoped: true,
+    deploymentCommitSha: 'abc1234567890def1234567890abcdef12345678',
     ...overrides,
   };
 }
 
-// ─── P8-U9: DEPTH_ACTIVATION_EVIDENCE now contains 13 items ─────────────────
+// ─── P8-U9: DEPTH_ACTIVATION_EVIDENCE now contains 14 items (13 + deployment-commit-sha) ───
 
-test('DEPTH_ACTIVATION_EVIDENCE contains exactly 13 items after P8', () => {
-  assert.equal(DEPTH_ACTIVATION_EVIDENCE.length, 13);
+test('DEPTH_ACTIVATION_EVIDENCE contains exactly 14 items after P8', () => {
+  assert.equal(DEPTH_ACTIVATION_EVIDENCE.length, 14);
 });
 
-test('DEPTH_ACTIVATION_EVIDENCE includes the 4 new P8 checks', () => {
+test('DEPTH_ACTIVATION_EVIDENCE includes the 4 new P8 checks plus deployment-commit-sha', () => {
   assert.ok(DEPTH_ACTIVATION_EVIDENCE.includes('preservation-oracle-pass'));
   assert.ok(DEPTH_ACTIVATION_EVIDENCE.includes('negative-vectors-pass'));
   assert.ok(DEPTH_ACTIVATION_EVIDENCE.includes('transfer-meaningfulness-pass'));
   assert.ok(DEPTH_ACTIVATION_EVIDENCE.includes('candidate-decisions-populated'));
+  assert.ok(DEPTH_ACTIVATION_EVIDENCE.includes('deployment-commit-sha'));
 });
 
 // ─── All evidence present → raise-all-to-6 outcome ──────────────────────────
 
-test('all 13 evidence checks present → raise-all-to-6 outcome', () => {
+test('all 14 evidence checks present → raise-all-to-6 outcome', () => {
   const result = evaluateDepthActivationGate(makePassingOptions());
 
   assert.equal(result.pass, true);
   assert.equal(result.outcome, 'raise-all-to-6');
   assert.equal(result.blockers.length, 0);
-  assert.equal(result.evidence.length, 13);
+  assert.equal(result.evidence.length, 14);
   for (const item of result.evidence) {
     assert.equal(item.pass, true, `evidence "${item.id}" should pass`);
   }
@@ -197,7 +200,7 @@ test('gate does not mutate input with new P8 options', () => {
 
 // ─── All evidence items are checked in gate result ───────────────────────────
 
-test('all 13 evidence items appear in passing gate result', () => {
+test('all 14 evidence items appear in passing gate result', () => {
   const result = evaluateDepthActivationGate(makePassingOptions());
   const evidenceIds = result.evidence.map((e) => e.id);
 

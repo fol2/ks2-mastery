@@ -302,7 +302,7 @@ test('fixed negative vectors are loaded and marked against items', () => {
   // Create a synthetic negative vector for this item
   const negativeVectorMap = new Map();
   negativeVectorMap.set(targetItem.id, [
-    { itemId: targetItem.id, input: 'completely wrong answer here', expectedCorrect: false },
+    { itemId: targetItem.id, answer: 'completely wrong answer here', expectedCorrect: false },
   ]);
 
   const entry = buildItemEntry(targetItem, { productionIds, clusterMap, itemDecisionMap, negativeVectorMap });

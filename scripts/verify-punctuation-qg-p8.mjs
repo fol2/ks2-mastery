@@ -1,8 +1,16 @@
 #!/usr/bin/env node
+
+// ─── Node version check (must precede all imports) ─────────────────────────────
+const major = parseInt(process.versions.node.split('.')[0], 10);
+if (major < 22) {
+  console.error(`\n  ✗ Node ${process.versions.node} detected — requires Node ≥ 22\n    .nvmrc specifies 22. Please switch: nvm use 22\n`);
+  process.exit(1);
+}
+
 // P8 verification entry point — single command that runs ALL Punctuation QG P8 checks.
 //
-// Composes ALL P7 gates (27 logical) plus P8-specific gates (9) for a total of 36 logical gates
-// across 10 top-level gates.
+// Composes ALL P7 gates (27 logical) plus P8-specific gates (10) for a total of 37 logical gates
+// across 11 top-level gates.
 //
 // Gate layout:
 //   1.  P7 verification gates (27 logical — composing P6 -> P5 -> P4 -> base)   [PRODUCTION]
@@ -15,9 +23,10 @@
 //   8.  Production human QA gate                                                 [PRODUCTION]
 //   9.  Feedback specificity tests                                               [PRODUCTION]
 //   10. Depth-6 quality-readiness gate                                           [DEPTH-6-CANDIDATE]
+//   11. Production QA decisions (real fixture)                                    [PRODUCTION]
 //
 // Depth decision: production depth remains at 4.
-// Rationale: P8 quality gates pass across all 36 logical gates, but depth-6 raise
+// Rationale: P8 quality gates pass across all 37 logical gates, but depth-6 raise
 // requires full reviewer-decision population plus human sign-off on all generated
 // candidates. The plan explicitly states: "Do not raise production depth merely
 // because the capacity audit passes."
@@ -105,6 +114,12 @@ const gates = [
     label: LABEL.DEPTH6,
     logicalGates: 1,
   },
+  {
+    name: 'Production QA decisions (real fixture)',
+    command: 'node -e "import { loadReviewerDecisions, evaluateProductionGate } from \'./shared/punctuation/reviewer-decisions.js\'; import { PUNCTUATION_ITEMS, PUNCTUATION_CONTENT_MANIFEST } from \'./shared/punctuation/content.js\'; import { createPunctuationGeneratedItems, PRODUCTION_DEPTH } from \'./shared/punctuation/generators.js\'; const gen=createPunctuationGeneratedItems({manifest:PUNCTUATION_CONTENT_MANIFEST,seed:PUNCTUATION_CONTENT_MANIFEST.releaseId||\'punctuation\',perFamily:PRODUCTION_DEPTH}); const ids=[...PUNCTUATION_ITEMS.map(i=>i.id),...gen.map(i=>i.id)]; const {data}=loadReviewerDecisions(\'tests/fixtures/punctuation-reviewer-decisions.json\'); const r=evaluateProductionGate(data,ids); if(!r.pass){console.error(\'Production QA gate FAILED:\',JSON.stringify(r.blockers.slice(0,5)));process.exit(1);} console.log(\'Production QA: \'+r.stats.approved+\'/\'+r.stats.total+\' approved\');"',
+    label: LABEL.PRODUCTION,
+    logicalGates: 1,
+  },
 ];
 
 // ─── Execution ──────────────────────────────────────────────────────────────
@@ -181,7 +196,7 @@ for (const result of results) {
 console.log('\n──────────────────────────────────────────────────────────────');
 console.log('  Measured counts:');
 console.log(`    Top-level gates:    ${gates.length}`);
-console.log(`    Logical gates:      ${totalLogicalGates} (P7: 27 composed + P8: 9 specific)`);
+console.log(`    Logical gates:      ${totalLogicalGates} (P7: 27 composed + P8: 10 specific)`);
 console.log(`    Passed:             ${passed}/${gates.length}`);
 console.log(`    Failed:             ${failed}`);
 if (failedNames.length > 0) {

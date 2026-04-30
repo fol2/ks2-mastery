@@ -47,6 +47,8 @@ function makePassingOptions(overrides = {}) {
     negativeVectorsPass: true,
     transferMeaningfulnessPass: true,
     candidateDecisionsPopulated: true,
+    starEvidenceScoped: true,
+    deploymentCommitSha: 'abc1234567890def1234567890abcdef12345678',
     ...overrides,
   };
 }
@@ -266,8 +268,8 @@ test('output lists exact blockers by item/cluster/family ID', () => {
 
 // ─── Evidence constant coverage ─────────────────────────────────────────────
 
-test('DEPTH_ACTIVATION_EVIDENCE contains exactly 13 items', () => {
-  assert.equal(DEPTH_ACTIVATION_EVIDENCE.length, 13);
+test('DEPTH_ACTIVATION_EVIDENCE contains exactly 14 items', () => {
+  assert.equal(DEPTH_ACTIVATION_EVIDENCE.length, 14);
 });
 
 test('all evidence items are checked in a passing gate result', () => {
@@ -293,12 +295,36 @@ test('release ID already at depth-6 value → gate fails (no promotion needed)',
 
 // ─── Star evidence is structural guarantee ──────────────────────────────────
 
-test('star-evidence-scoped always passes (structural guarantee)', () => {
+test('star-evidence-scoped passes when caller provides true', () => {
   const result = evaluateDepthActivationGate(makePassingOptions());
   const starEvidence = result.evidence.find((e) => e.id === 'star-evidence-scoped');
 
   assert.ok(starEvidence);
   assert.equal(starEvidence.pass, true);
+});
+
+test('star-evidence-scoped fails when caller provides false', () => {
+  const result = evaluateDepthActivationGate(makePassingOptions({ starEvidenceScoped: false }));
+
+  assert.equal(result.pass, false);
+  assert.equal(result.outcome, 'keep-depth-4');
+  assert.ok(result.blockers.some((b) => b.evidence === 'star-evidence-scoped'));
+});
+
+test('deployment-commit-sha fails with invalid SHA', () => {
+  const result = evaluateDepthActivationGate(makePassingOptions({ deploymentCommitSha: 'not-a-sha!' }));
+
+  assert.equal(result.pass, false);
+  assert.equal(result.outcome, 'keep-depth-4');
+  assert.ok(result.blockers.some((b) => b.evidence === 'deployment-commit-sha'));
+});
+
+test('deployment-commit-sha fails when missing', () => {
+  const result = evaluateDepthActivationGate(makePassingOptions({ deploymentCommitSha: undefined }));
+
+  assert.equal(result.pass, false);
+  assert.equal(result.outcome, 'keep-depth-4');
+  assert.ok(result.blockers.some((b) => b.evidence === 'deployment-commit-sha'));
 });
 
 // ─── PRODUCTION_DEPTH import verification ───────────────────────────────────
