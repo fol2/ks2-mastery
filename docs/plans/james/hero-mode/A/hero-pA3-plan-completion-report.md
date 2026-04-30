@@ -2,13 +2,13 @@
 
 **Phase:** pA3 — Real-Cohort Evidence Hardening and External-Cohort Readiness Contract  
 **Date completed:** 2026-04-30  
-**Total PRs:** 7 (4 feature + 3 hardening fix — all merged to main, CI green)  
+**Total PRs:** 8 (4 feature + 3 hardening fix + 1 validator tightening — all merged to main, CI green)  
 **Total tests:** 160 (across 5 test files, all passing)  
 **Total new/modified files:** 30+  
 **Total lines added:** ~6,500+  
 **Runtime Hero Mode code modified:** 1 file (worker/src/app.js — P0 security fix only)  
 **Regression risk:** Near-zero — all feature deliverables are infrastructure-only; the one runtime fix tightens security (projection of effectiveFlags)  
-**Review cycles:** 2 (10 independent adversarial reviewers → 3 fix PRs → verification)
+**Review cycles:** 4 (40 total reviewer dispatches; Round 4 achieved 10/10 PASS with zero findings)
 
 ---
 
@@ -340,6 +340,49 @@ All 10 issues confirmed fixed on current main:
 - Write-then-rename atomic pattern on all file writes
 - Real account IDs replaced with EXAMPLE placeholders
 
+### Round 3: Contract-Holding Reviewers (10 dispatched)
+
+10 fresh reviewers, each holding a specific contract section, validated the post-fix state:
+
+| # | Contract Section | Verdict |
+|---|-----------------|---------|
+| 1 | §4 Goal 1 (provenance) | PASS — 6/6 bullets mechanically enforced |
+| 2 | §4 Goal 3 (telemetry) | PASS — 16/16 signals accounted for |
+| 3 | §6 Gates A-E | 4 PARTIAL, 1 PASS — 3 minor validator gaps identified |
+| 4 | §8 Stop conditions | PASS — 16/16 covered |
+| 5 | §2 Product boundary | PASS — zero violations |
+| 6 | §7 Rings A3-0 to A3-5 | ALL TOOLING READY |
+| 7 | Security posture | PASS — 5/6 secure (pA2 residual only) |
+| 8 | Test completeness | PASS — all Round 1 gaps closed |
+| 9 | §5 Non-goals | PASS — zero forbidden features |
+| 10 | Zero-regression | CONFIRMED — only allowed P0 fix touched runtime |
+
+Round 3 identified 3 additional validator tightening opportunities:
+1. `min_real_datekeys` threshold 2→5 (match contract's "5 calendar days")
+2. `no_stop_conditions` gate added to Ring A3-1
+3. `checkStatusNotPending` now also rejects "TEMPLATE" status
+
+All 3 fixes committed directly to main (single commit, tests green).
+
+### Round 4: Final Contract Validation (10 dispatched)
+
+10 reviewers re-validated against the same contract sections after Round 3 fixes:
+
+| # | Contract Section | Verdict |
+|---|-----------------|---------|
+| 1 | §4 Goal 1 (provenance) | **PASS** — 6/6 bullets |
+| 2 | §4 Goal 3 (telemetry) | **PASS** — 16/16 signals + privacy two-layer |
+| 3 | §6 Gates A-E | **PASS** — all 5 gates pass |
+| 4 | §8 Stop conditions | **PASS** — 16/16 + no_stop_conditions gate |
+| 5 | §2 Product boundary | **PASS** — zero violations |
+| 6 | §7 Rings A3-0 to A3-5 | **PASS** — all 6 READY, no gaps |
+| 7 | Security posture | **PASS** — 5/5 secure |
+| 8 | Test completeness | **PASS** — all 6 gaps closed |
+| 9 | §5 Non-goals | **PASS** — zero forbidden features |
+| 10 | Zero-regression | **PASS** — confirmed unchanged |
+
+**Round 4 result: 10/10 PASS. Zero further comments. No actionable findings.**
+
 ### Reviewers' Residual Observations (Accepted/Deferred)
 
 | Observation | Status | Rationale |
@@ -347,9 +390,12 @@ All 10 issues confirmed fixed on current main:
 | Date-key spoofing via manual edit | Accepted risk | Evidence file is git-tracked; manual edits are visible in diff |
 | Manifest manipulation (remove ring) | Accepted risk | Manifest is committed; git blame provides audit trail |
 | Privacy allowlist is static (7 fields) | Accepted risk | Adding new child-content field names requires code change (reviewable) |
-| concurrent smoke script runs (TOCTOU) | Deferred | Add lockfile guard in A4 if multi-operator use becomes common |
+| Concurrent smoke script runs (TOCTOU) | Deferred | Add lockfile guard in A4 if multi-operator use becomes common |
 | JSONL evidence format | Deferred to A6+ | Current markdown format is human-readable and sufficient for A4 |
+| Mastery drift unmeasurable from event_log | Accepted | Contract allows explicit listing; requires child_subject_state comparison |
+| Gate D manual-only (no Playwright) | Accepted | No automated browser regression in A-series scope |
+| Device/session diversity not mechanically gated | Accepted | Operator-attested per planner discretion (§9) |
 
 ---
 
-*Generated and hardened 2026-04-30 as part of the pA3 SDLC cycle (2 review rounds, 10 adversarial reviewers, 7 PRs total).*
+*Generated and hardened 2026-04-30 as part of the pA3 SDLC cycle (4 review rounds, 40 total reviewer dispatches, 8 PRs total, 10/10 final pass).*
