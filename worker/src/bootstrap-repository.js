@@ -32,10 +32,15 @@ export const PUBLIC_BOOTSTRAP_RECENT_EVENT_LIMIT_PER_LEARNER = 50;
 //     writable learner) so sibling subject_state writes invalidate the
 //     `bootstrapNotModifiedProbe` short-circuit (B1 blocker).
 // Stale v2 clients will naturally miss, re-fetch, and bind to the v3 hash.
+// PR799 follow-up 2026-04-30: bumped 3 -> 4 when Grammar subject-state
+// bootstrap changed from raw state passthrough to the public read-model.
+// The response's top-level keys did not change, but the cached
+// `subjectStates.*.ui` representation did; keeping v3 would let stable
+// accounts honour `notModified` forever and keep the stale raw Grammar cache.
 // Any additive required field on the bootstrap envelope MUST bump this in
 // the same PR. `tests/worker-bootstrap-v2.test.js` has a snapshot test that
 // fails if the envelope shape changes without a version bump (scenario 15).
-export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 3;
+export const PUBLIC_BOOTSTRAP_CAPACITY_VERSION = 4;
 export const BOOTSTRAP_CAPACITY_VERSION = PUBLIC_BOOTSTRAP_CAPACITY_VERSION;
 
 // U7: closed union for `meta.capacity.bootstrapMode` when the public
@@ -115,8 +120,8 @@ export const BOOTSTRAP_V2_ENVELOPE_SHAPE = Object.freeze({
 //
 // Changing this input format (or the truncation length) is equivalent to
 // bumping `BOOTSTRAP_CAPACITY_VERSION` — stale clients will silently
-// reject `notModified` responses via the schema check. The version bump
-// in this PR from 2→3 forces v2 clients to miss once and re-bind.
+// reject `notModified` responses via the schema check. The version bumps
+// from 2 -> 3 and 3 -> 4 force stale clients to miss once and re-bind.
 export async function computeBootstrapRevisionHash({
   accountId,
   accountRevision,
