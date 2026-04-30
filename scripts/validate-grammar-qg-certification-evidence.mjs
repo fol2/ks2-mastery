@@ -322,6 +322,8 @@ export function validateReportAgainstManifest(reportContent, manifest) {
  */
 export const SMOKE_EVIDENCE_REQUIRED_FIELDS = [
   'releaseId',
+  'evidenceOrigin',
+  'environment',
   'deployedUrl',
   'timestamp',
   'command',
@@ -330,6 +332,8 @@ export const SMOKE_EVIDENCE_REQUIRED_FIELDS = [
   'answerSubmissionResult',
   'readModelUpdateResult',
   'noAnswerLeakAssertion',
+  'semanticCueAssertion',
+  'releaseIdAssertion',
   'failureDetails',
 ];
 
