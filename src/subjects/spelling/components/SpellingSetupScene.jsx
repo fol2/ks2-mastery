@@ -290,7 +290,6 @@ export function SpellingSetupScene({
   prefs,
   ui,
   codex,
-  accent,
   actions,
   postMastery,
   setupHeroTone = '',
@@ -450,7 +449,6 @@ export function SpellingSetupScene({
           ) : showVaultLayer ? (
             <PostMegaSetupContent
               prefs={prefs}
-              accent={accent}
               actions={actions}
               postMastery={postMastery}
               stats={stats}
@@ -462,7 +460,6 @@ export function SpellingSetupScene({
           ) : (
             <LegacySetupContent
               prefs={prefs}
-              accent={accent}
               actions={actions}
               stats={stats}
               heroContrast={heroContrast}
@@ -517,7 +514,6 @@ export function SpellingSetupScene({
 
 function LegacySetupContent({
   prefs,
-  accent,
   actions,
   stats,
   heroContrast,
@@ -708,7 +704,6 @@ function CheckingWordVaultContent() {
  *    card as "next in the journey" rather than "empty". */
 function PostMegaSetupContent({
   prefs,
-  accent,
   actions,
   postMastery,
   stats,

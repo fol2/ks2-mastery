@@ -13426,12 +13426,19 @@ html { scroll-behavior: smooth; }
   --subject-accent-soft: #DCE6F3;
   --subject-accent-border: color-mix(in oklab, #3E6FA8 30%, var(--line));
 }
-:root[data-theme="dark"] .subject-theme[data-subject="spelling"],
-:root:not([data-theme="light"]) .subject-theme[data-subject="spelling"] {
+:root[data-theme="dark"] .subject-theme[data-subject="spelling"] {
   --subject-accent: #6E9ED6;
   --subject-accent-ink: #A7C2E4;
   --subject-accent-soft: color-mix(in oklab, #3E6FA8 26%, var(--bg));
   --subject-accent-border: color-mix(in oklab, #6E9ED6 30%, var(--line));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .subject-theme[data-subject="spelling"] {
+    --subject-accent: #6E9ED6;
+    --subject-accent-ink: #A7C2E4;
+    --subject-accent-soft: color-mix(in oklab, #3E6FA8 26%, var(--bg));
+    --subject-accent-border: color-mix(in oklab, #6E9ED6 30%, var(--line));
+  }
 }
 
 /* --- Grammar --- */
@@ -13441,12 +13448,19 @@ html { scroll-behavior: smooth; }
   --subject-accent-soft: #ece1f6;
   --subject-accent-border: color-mix(in oklab, #7e5bb6 30%, var(--line));
 }
-:root[data-theme="dark"] .subject-theme[data-subject="grammar"],
-:root:not([data-theme="light"]) .subject-theme[data-subject="grammar"] {
+:root[data-theme="dark"] .subject-theme[data-subject="grammar"] {
   --subject-accent: #b89be5;
   --subject-accent-ink: #d6c4f2;
   --subject-accent-soft: color-mix(in oklab, #7e5bb6 26%, var(--bg));
   --subject-accent-border: color-mix(in oklab, #b89be5 30%, var(--line));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .subject-theme[data-subject="grammar"] {
+    --subject-accent: #b89be5;
+    --subject-accent-ink: #d6c4f2;
+    --subject-accent-soft: color-mix(in oklab, #7e5bb6 26%, var(--bg));
+    --subject-accent-border: color-mix(in oklab, #b89be5 30%, var(--line));
+  }
 }
 
 /* --- Punctuation --- */
@@ -13456,12 +13470,19 @@ html { scroll-behavior: smooth; }
   --subject-accent-soft: #F5E8D0;
   --subject-accent-border: color-mix(in oklab, #B8873F 30%, var(--line));
 }
-:root[data-theme="dark"] .subject-theme[data-subject="punctuation"],
-:root:not([data-theme="light"]) .subject-theme[data-subject="punctuation"] {
+:root[data-theme="dark"] .subject-theme[data-subject="punctuation"] {
   --subject-accent: #d6a86a;
   --subject-accent-ink: #e8c896;
   --subject-accent-soft: color-mix(in oklab, #B8873F 26%, var(--bg));
   --subject-accent-border: color-mix(in oklab, #d6a86a 30%, var(--line));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .subject-theme[data-subject="punctuation"] {
+    --subject-accent: #d6a86a;
+    --subject-accent-ink: #e8c896;
+    --subject-accent-soft: color-mix(in oklab, #B8873F 26%, var(--bg));
+    --subject-accent-border: color-mix(in oklab, #d6a86a 30%, var(--line));
+  }
 }
 
 /* --- Reading (placeholder) --- */
@@ -13471,12 +13492,19 @@ html { scroll-behavior: smooth; }
   --subject-accent-soft: #E2F0E2;
   --subject-accent-border: color-mix(in oklab, #4B7A4A 30%, var(--line));
 }
-:root[data-theme="dark"] .subject-theme[data-subject="reading"],
-:root:not([data-theme="light"]) .subject-theme[data-subject="reading"] {
+:root[data-theme="dark"] .subject-theme[data-subject="reading"] {
   --subject-accent: #7CB87A;
   --subject-accent-ink: #9CC59A;
   --subject-accent-soft: color-mix(in oklab, #4B7A4A 26%, var(--bg));
   --subject-accent-border: color-mix(in oklab, #7CB87A 30%, var(--line));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .subject-theme[data-subject="reading"] {
+    --subject-accent: #7CB87A;
+    --subject-accent-ink: #9CC59A;
+    --subject-accent-soft: color-mix(in oklab, #4B7A4A 26%, var(--bg));
+    --subject-accent-border: color-mix(in oklab, #7CB87A 30%, var(--line));
+  }
 }
 
 /* --- Reasoning (placeholder) --- */
@@ -13486,12 +13514,19 @@ html { scroll-behavior: smooth; }
   --subject-accent-soft: #F0E4F5;
   --subject-accent-border: color-mix(in oklab, #8A5A9D 30%, var(--line));
 }
-:root[data-theme="dark"] .subject-theme[data-subject="reasoning"],
-:root:not([data-theme="light"]) .subject-theme[data-subject="reasoning"] {
+:root[data-theme="dark"] .subject-theme[data-subject="reasoning"] {
   --subject-accent: #B88FCC;
   --subject-accent-ink: #C4A5D4;
   --subject-accent-soft: color-mix(in oklab, #8A5A9D 26%, var(--bg));
   --subject-accent-border: color-mix(in oklab, #B88FCC 30%, var(--line));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .subject-theme[data-subject="reasoning"] {
+    --subject-accent: #B88FCC;
+    --subject-accent-ink: #C4A5D4;
+    --subject-accent-soft: color-mix(in oklab, #8A5A9D 26%, var(--bg));
+    --subject-accent-border: color-mix(in oklab, #B88FCC 30%, var(--line));
+  }
 }
 
 /* --- Arithmetic (placeholder) --- */
@@ -13501,12 +13536,19 @@ html { scroll-behavior: smooth; }
   --subject-accent-soft: #F8E4D6;
   --subject-accent-border: color-mix(in oklab, #C06B3E 30%, var(--line));
 }
-:root[data-theme="dark"] .subject-theme[data-subject="arithmetic"],
-:root:not([data-theme="light"]) .subject-theme[data-subject="arithmetic"] {
+:root[data-theme="dark"] .subject-theme[data-subject="arithmetic"] {
   --subject-accent: #E8975C;
   --subject-accent-ink: #F2B756;
   --subject-accent-soft: color-mix(in oklab, #C06B3E 26%, var(--bg));
   --subject-accent-border: color-mix(in oklab, #E8975C 30%, var(--line));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .subject-theme[data-subject="arithmetic"] {
+    --subject-accent: #E8975C;
+    --subject-accent-ink: #F2B756;
+    --subject-accent-soft: color-mix(in oklab, #C06B3E 26%, var(--bg));
+    --subject-accent-border: color-mix(in oklab, #E8975C 30%, var(--line));
+  }
 }
 
 /* Subject-theme accent remap — low specificity via :where so callers can
