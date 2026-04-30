@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "subject": "punctuation",
   "phase": "punctuation-qg-p10",
-  "certificationStatus": "BLOCKED_PENDING_HUMAN_ACCEPTANCE",
-  "statusRationale": "Machine gates can run for the P10 source snapshot, but public production certification remains blocked until named human acceptance is complete. Live production smoke has not run.",
+  "certificationStatus": "CERTIFIED_PRE_DEPLOY",
+  "statusRationale": "Depth-4 P10 source and local gates pass, and James has accepted the 192-item depth-4 production pool with 47 review-required clusters. Live production smoke has not run, so post-deploy certification remains unavailable.",
   "releaseId": "punctuation-r4-full-14-skill-structure",
   "source": {
     "zip": {
@@ -29,10 +29,10 @@
         "package.json": "9784d59e10b6b2dc3ac7b1fdd32574532d49c3f786dd8fd35a37b06f6476b7f2",
         "shared/punctuation/marking.js": "fdf4a562bc33393f9d09a4e8dc7bc658f3cb10f03fb19ebbdd8547e725011ab0",
         "tests/punctuation-closed-lexical-preservation-p10.test.js": "4392941b4955c2951a59f18a167c92e7b826c3d13b296d47bebbab2ed4c930ce",
-        "scripts/verify-punctuation-qg-p10.mjs": "37171879343dddde38269cc8713b01b5a6b7a3f4d6eba07d8600434ae5791693",
+        "scripts/verify-punctuation-qg-p10.mjs": "cd9a73a2a139ba2bdf86ffa36ac572667a7f8ee60ee1d952e1c5a658acbcad8b",
         "scripts/validate-punctuation-qg-certification-evidence.mjs": "c21abf53f16446b234e0863669d511c447436dd5da4f23cdf6f8873ca4bed054",
         "scripts/verify-punctuation-qg-p9.mjs": "564c9eac5bcc76fd5b929b6ef63f6a668a6f6b1a1b3c5cac57070e26e73d7781",
-        "tests/fixtures/punctuation-reviewer-decisions.json": "fe68d0f535f914436312b131a4a78cb3df72592489059ac3e0d9dfc6c5dbcec9",
+        "tests/fixtures/punctuation-reviewer-decisions.json": "1ebf53c2e106bead3db78a8f05aa05a8bc8d022f77b9fec4320a35e93fa36ffa",
         "tests/fixtures/punctuation-negative-vectors.json": "ef42eb0b0864fb9658af04453716f0a0fc1bd33674160c11b9b24576378d2b74"
       }
     }
@@ -68,12 +68,12 @@
       "mustNotBeUsedAsHumanAcceptance": true
     },
     "humanAcceptance": {
-      "status": "not_started",
-      "reviewer": null,
-      "role": null,
-      "reviewedAt": null,
-      "acceptedItems": null,
-      "acceptedReviewRequiredClusters": null,
+      "status": "complete",
+      "reviewer": "James",
+      "role": "product-owner",
+      "reviewedAt": "2026-04-30T20:55:41Z",
+      "acceptedItems": 192,
+      "acceptedReviewRequiredClusters": 47,
       "blockers": []
     }
   },

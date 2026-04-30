@@ -1,7 +1,7 @@
 ---
 phase: punctuation-qg-p10
-title: Punctuation QG P10 — Machine-Gate Completion Report
-status: blocked_pending_human_acceptance
+title: Punctuation QG P10 — Pre-Deploy Certification Report
+status: certified_pre_deploy
 owner: KS2 Mastery / Punctuation
 language: en-GB
 created: 2026-04-30
@@ -10,13 +10,13 @@ verification_log: reports/punctuation/punctuation-qg-p10-verify.log
 verification_log_sha256: d959818a0466e3b8ccab2c8e55a02308ec8620a846a5a22177f8e74c665cf730
 ---
 
-# Punctuation QG P10 — Machine-Gate Completion Report
+# Punctuation QG P10 — Pre-Deploy Certification Report
 
 ## Executive summary
 
 P10 closes the remaining generated-item lexical-preservation leak for closed punctuation transfer items. Closed generated and fixed `insert` and `fix` items now reject any failed preservation, including same-count lexical substitutions where the learner changes a content word but keeps the punctuation shape.
 
-The machine-verifiable P10 gates pass under Node `v22.16.0` / npm `10.9.2`. The canonical verifier reports `BLOCKED_PENDING_HUMAN_ACCEPTANCE`, not a production-certified status, because named human acceptance is still `not_started` in the reviewer fixture and live production smoke is `not_run`.
+The machine-verifiable P10 gates pass under Node `v22.16.0` / npm `10.9.2`. James has accepted the depth-4 P10 release scope as product owner: 192 production items and 47 review-required clusters. The canonical verifier therefore reports `CERTIFIED_PRE_DEPLOY`. Live production smoke is still `not_run`, so post-deploy certification is not claimed.
 
 ## Delivery mapping
 
@@ -25,8 +25,8 @@ The machine-verifiable P10 gates pass under Node `v22.16.0` / npm `10.9.2`. The 
 | U1 lexical preservation lock | Done | `shared/punctuation/marking.js` rejects any failed preservation for closed `insert` / `fix` transfer items. |
 | U2 P10 lexical-replacement oracle | Done | `tests/punctuation-closed-lexical-preservation-p10.test.js`, 4 tests passing. |
 | U3 P10 verifier | Done | `npm run verify:punctuation-qg:p10`, 10 top-level gates / 56 logical gates. |
-| U4 certification manifest and validator | Done, non-certifying | `reports/punctuation/punctuation-qg-p10-certification-manifest.json` and `scripts/validate-punctuation-qg-certification-evidence.mjs`. |
-| U5 human acceptance truth gate | Blocked honestly | Fixture still has `human_acceptance.status: not_started`; verifier blocks public certification. |
+| U4 certification manifest and validator | Done, pre-deploy certifying | `reports/punctuation/punctuation-qg-p10-certification-manifest.json` and `scripts/validate-punctuation-qg-certification-evidence.mjs`. |
+| U5 human acceptance truth gate | Done | Fixture records James as product-owner acceptor for 192 items and 47 review-required clusters, with no blockers. |
 | U6 live production smoke | Not run | Manifest records `liveProductionSmoke.status: not_run`; verifier blocks post-deploy certification. |
 | U7 depth-6 scope | Preserved blocked | `PRODUCTION_DEPTH` remains 4; depth-6 candidate delta remains blocked. |
 
@@ -42,7 +42,7 @@ certificationAuthority: false
 mustNotBeUsedAsHumanAcceptance: true
 ```
 
-This is useful second-pass review evidence, but it deliberately does not satisfy the P10 human acceptance requirement. The release status therefore remains `BLOCKED_PENDING_HUMAN_ACCEPTANCE`.
+This is useful second-pass review evidence, but it deliberately does not satisfy the P10 human acceptance requirement. The P10 human acceptance requirement is satisfied only by James's explicit depth-4 approval, recorded separately in the reviewer fixture and manifest.
 
 ## Verification evidence
 
@@ -55,7 +55,7 @@ Logical gates: 56
 Passed: 10/10
 Failed: 0
 Production depth: 4
-Certification: BLOCKED_PENDING_HUMAN_ACCEPTANCE
+Certification: CERTIFIED_PRE_DEPLOY
 ```
 
 Archived verifier output:
@@ -108,16 +108,16 @@ Local-run-proven: the P10 verifier and focused Punctuation gates pass locally. T
 
 AI-simulated accepted: proven as a non-certifying review artefact. It is explicitly barred from satisfying human acceptance.
 
-Human-accepted: not proven. The current fixture explicitly records `human_acceptance.status: not_started`.
+Human-accepted: proven for depth 4. James accepted the 192-item production pool and 47 review-required clusters on 2026-04-30 as product owner, with no blockers.
 
 Live-production-proven: not proven. No smoke was run against `https://ks2.eugnel.uk` for this P10 release identity.
 
 ## Final status
 
-Punctuation QG P10 is machine-gate complete for the depth-4 source snapshot, but it is not public-production-certified yet. The correct current status is:
+Punctuation QG P10 is certified pre-deploy for the depth-4 source snapshot. The correct current status is:
 
 ```text
-BLOCKED_PENDING_HUMAN_ACCEPTANCE
+CERTIFIED_PRE_DEPLOY
 ```
 
-The release may only move to `CERTIFIED_PRE_DEPLOY` after named human acceptance is recorded. It may only move to `CERTIFIED_POST_DEPLOY` after live production smoke passes with origin, environment, release identity, deployed commit or Worker version, timestamp, result, artefact path, and artefact SHA-256.
+The release may only move to `CERTIFIED_POST_DEPLOY` after live production smoke passes with origin, environment, release identity, deployed commit or Worker version, timestamp, result, artefact path, and artefact SHA-256.

@@ -114,7 +114,16 @@ function checkHumanAcceptance() {
         throw new Error(`human_acceptance.${field} is required when complete`);
       }
     }
-    return { detail: `human_acceptance=complete reviewer=${human.reviewer}` };
+    if (human.acceptedItems !== 192) {
+      throw new Error(`human_acceptance.acceptedItems=${human.acceptedItems}, expected 192`);
+    }
+    if (human.acceptedReviewRequiredClusters !== 47) {
+      throw new Error(`human_acceptance.acceptedReviewRequiredClusters=${human.acceptedReviewRequiredClusters}, expected 47`);
+    }
+    if (!Array.isArray(human.blockers) || human.blockers.length > 0) {
+      throw new Error('human_acceptance.blockers must be an empty array when complete');
+    }
+    return { detail: `human_acceptance=complete reviewer=${human.reviewer}, items=192, review_required_clusters=47` };
   }
   return {
     detail: `human_acceptance=${human.status || 'missing'}`,
