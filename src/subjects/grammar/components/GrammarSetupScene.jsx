@@ -22,6 +22,7 @@ import {
 } from './grammar-view-model.js';
 import { EmptyState } from '../../../platform/ui/EmptyState.jsx';
 import { Button } from '../../../platform/ui/Button.jsx';
+import { SubjectCompanionPanel } from '../../../platform/ui/SubjectCompanionPanel.jsx';
 
 /* Aligned Grammar setup scene.
  *
@@ -335,6 +336,20 @@ export function GrammarSetupScene({ learner, grammar, rewardState, actions, runt
                   </div>
                 )}
               </section>
+
+              <SubjectCompanionPanel
+                subjectId="grammar"
+                monsters={dashboard.monsterStrip.map((entry) => ({
+                  name: entry.name,
+                  discovered: entry.displayState !== 'not-found',
+                }))}
+                stats={(dashboard.todayCards || []).map((card) => ({
+                  label: card.label,
+                  value: String(card.value),
+                }))}
+                nextFocus={troubleCount > 0 ? 'Trouble concepts need revision' : ''}
+                emptyState="Start practising to see your Grammar companions."
+              />
             </>
           )}
           footer={(
