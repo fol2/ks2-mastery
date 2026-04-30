@@ -92,7 +92,7 @@ function extractProductionSmokeStatus(reportContent) {
  * Extract YAML frontmatter as a flat key→value map.
  * Only handles top-level scalar and list fields (no nested objects).
  */
-function extractFrontmatter(reportContent) {
+export function extractFrontmatter(reportContent) {
   const fm = {};
   const fmBlock = reportContent.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!fmBlock) return fm;

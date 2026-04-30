@@ -217,7 +217,7 @@ describe('P10 Evidence Artefacts: quality register', () => {
       );
       assert.ok(Array.isArray(entry.concreteExamples), 'concreteExamples must be array');
       assert.ok(entry.concreteExamples.length >= 3, `concreteExamples must have >= 3 items, got ${entry.concreteExamples.length}`);
-      assert.ok(['ship', 'requires-adult-review'].includes(entry.finalAction), `Invalid finalAction: ${entry.finalAction}`);
+      assert.ok(['ship', 'ship-with-monitoring', 'requires-adult-review'].includes(entry.finalAction), `Invalid finalAction: ${entry.finalAction}`);
       // severity: null if approved, S0/S1/S2 if blocked
       if (entry.decision === 'approved') {
         assert.equal(entry.severity, null, `Approved entry ${entry.templateId} must have severity null`);
@@ -302,6 +302,11 @@ describe('P10 Evidence Artefacts: distractor audit', () => {
             assert.ok(typeof opt.whyWrong === 'string', 'opt.whyWrong must be string when misconceptionTag is present');
             assert.ok(opt.whyWrong.length > 0, 'opt.whyWrong must not be empty');
           }
+          // P10 Gap 4: per-option defensibleAlternative and promptDisambiguates
+          assert.ok(typeof opt.defensibleAlternative === 'boolean',
+            `opt.defensibleAlternative must be boolean for distractor "${opt.optionText}" in ${item.templateId} seed ${item.seed}`);
+          assert.ok(typeof opt.promptDisambiguates === 'boolean',
+            `opt.promptDisambiguates must be boolean for distractor "${opt.optionText}" in ${item.templateId} seed ${item.seed}`);
         } else {
           assert.equal(opt.misconceptionTag, null, 'correct option must have null misconceptionTag');
           assert.equal(opt.whyWrong, null, 'correct option must have null whyWrong');

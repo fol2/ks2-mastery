@@ -228,7 +228,7 @@ async function writeReports(inventory) {
   ];
 
   for (const item of redacted) {
-    const cue = item.focusCue ? `${item.focusCue.type}: ${item.focusCue.text}` : '-';
+    const cue = item.focusCue ? `${item.focusCue.type}: ${item.focusCue.targetText}` : '-';
     const prompt = (item.promptText || '').slice(0, 60).replace(/\|/g, '\\|').replace(/\n/g, ' ');
     mdLines.push(`| ${item.templateId} | ${item.seed} | ${item.inputType} | ${cue} | ${prompt} |`);
   }

@@ -6,7 +6,7 @@
  * 1. No whole-sentence underline when prompt asks for word/phrase
  * 2. No duplicate content in promptParts
  * 3. If prompt contains cue language, focusCue must exist (or explicit fallback)
- * 4. Screen-reader/read-aloud alignment — both mention focusCue.text
+ * 4. Screen-reader/read-aloud alignment — both mention focusCue.targetText
  * 5. cueNotRequiredReason present when promptParts exist without focusCue
  *
  * Usage:
@@ -58,17 +58,17 @@ function auditQuestion(templateId, seed) {
 
   // Check 1: No whole-sentence underline when prompt asks for word/phrase
   if (q.focusCue && q.focusCue.type === 'underline') {
-    const wc = wordCount(q.focusCue.text);
+    const wc = wordCount(q.focusCue.targetText);
     if (UNDERLINE_WORD_RE.test(plainPrompt) && wc > 3) {
       failures.push({
         check: 'whole-sentence-underline-word',
-        message: `Prompt asks for "underlined word" but focusCue.text has ${wc} words: "${q.focusCue.text}"`
+        message: `Prompt asks for "underlined word" but focusCue.targetText has ${wc} words: "${q.focusCue.targetText}"`
       });
     }
     if (UNDERLINE_PHRASE_RE.test(plainPrompt) && wc > 8) {
       failures.push({
         check: 'whole-sentence-underline-phrase',
-        message: `Prompt asks for "underlined phrase/group" but focusCue.text has ${wc} words: "${q.focusCue.text}"`
+        message: `Prompt asks for "underlined phrase/group" but focusCue.targetText has ${wc} words: "${q.focusCue.targetText}"`
       });
     }
   }
@@ -100,19 +100,19 @@ function auditQuestion(templateId, seed) {
     }
   }
 
-  // Check 4: Screen-reader/read-aloud alignment — both must mention focusCue.text
-  if (q.focusCue && q.focusCue.text) {
-    const cueTextLower = q.focusCue.text.toLowerCase();
+  // Check 4: Screen-reader/read-aloud alignment — both must mention focusCue.targetText
+  if (q.focusCue && q.focusCue.targetText) {
+    const cueTextLower = q.focusCue.targetText.toLowerCase();
     if (q.screenReaderPromptText && !q.screenReaderPromptText.toLowerCase().includes(cueTextLower)) {
       failures.push({
         check: 'screen-reader-misaligned',
-        message: `screenReaderPromptText does not mention focusCue.text "${q.focusCue.text}"`
+        message: `screenReaderPromptText does not mention focusCue.targetText "${q.focusCue.targetText}"`
       });
     }
     if (q.readAloudText && !q.readAloudText.toLowerCase().includes(cueTextLower)) {
       failures.push({
         check: 'read-aloud-misaligned',
-        message: `readAloudText does not mention focusCue.text "${q.focusCue.text}"`
+        message: `readAloudText does not mention focusCue.targetText "${q.focusCue.targetText}"`
       });
     }
   }

@@ -12,6 +12,7 @@ import {
 } from '../scripts/validate-grammar-qg-certification-evidence.mjs';
 import {
   validateReleaseFrontmatter,
+  extractFrontmatter,
 } from '../scripts/validate-grammar-qg-completion-report.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -319,5 +320,47 @@ describe('P10 Evidence Truth: inventory release ID cross-check', () => {
     const itemMismatches = result.mismatches.filter((m) => m.field.startsWith('inventoryItem['));
     assert.equal(itemMismatches.length, 0,
       `All inventory items must have contentReleaseId === ${GRAMMAR_CONTENT_RELEASE_ID}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9. Report frontmatter final_content_release_id cross-check (P10-U0)
+// ---------------------------------------------------------------------------
+
+describe('P10 Evidence Truth: frontmatter final_content_release_id cross-check', () => {
+  it('mismatched final_content_release_id in frontmatter fails', () => {
+    const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
+    const staleReportFm = { final_content_release_id: 'grammar-qg-p9-2026-04-29' };
+    const result = validateReleaseIdConsistency(manifest, null, staleReportFm);
+    assert.equal(result.pass, false);
+    const mismatch = result.mismatches.find((m) => m.field === 'reportFrontmatterVsCodeReleaseId');
+    assert.ok(mismatch, 'Expected reportFrontmatterVsCodeReleaseId mismatch');
+    assert.match(mismatch.message, /grammar-qg-p9/);
+  });
+
+  it('matching final_content_release_id passes', () => {
+    const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
+    const correctReportFm = { final_content_release_id: GRAMMAR_CONTENT_RELEASE_ID };
+    const result = validateReleaseIdConsistency(manifest, null, correctReportFm);
+    assert.equal(result.pass, true);
+  });
+
+  it('null frontmatter does not cause failure (backwards compatible)', () => {
+    const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
+    const result = validateReleaseIdConsistency(manifest, null, null);
+    assert.equal(result.pass, true);
+  });
+
+  it('real P10 completion report frontmatter matches GRAMMAR_CONTENT_RELEASE_ID', () => {
+    const reportPath = path.join(ROOT_DIR, 'docs', 'plans', 'james', 'grammar',
+      'questions-generator', 'grammar-qg-p10-final-completion-report-2026-04-29.md');
+    assert.ok(fs.existsSync(reportPath), 'P10 completion report must exist');
+    const content = fs.readFileSync(reportPath, 'utf8');
+    const fm = extractFrontmatter(content);
+    assert.equal(fm.final_content_release_id, GRAMMAR_CONTENT_RELEASE_ID,
+      `Report final_content_release_id must equal ${GRAMMAR_CONTENT_RELEASE_ID}`);
+    const manifest = { contentReleaseId: GRAMMAR_CONTENT_RELEASE_ID };
+    const result = validateReleaseIdConsistency(manifest, null, fm);
+    assert.equal(result.pass, true, `Cross-check must pass: ${JSON.stringify(result.mismatches)}`);
   });
 });

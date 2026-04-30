@@ -56,6 +56,24 @@ const AMBIGUOUS_SKILL_IDS = Object.freeze([
   'relative_clauses',
 ]);
 
+/**
+ * Misconception tags where the distractor's incorrect answer is defensible
+ * under an alternative grammatical reading (genuine linguistic ambiguity).
+ */
+const DEFENSIBLE_MISCONCEPTION_TAGS = Object.freeze(new Set([
+  'formality_confusion',
+  'modal_certainty_confusion',
+  'clause_type_confusion',
+  'subject_object_confusion',
+  'relative_subordinate_confusion',
+]));
+
+/**
+ * Regex that detects explicit disambiguation language in a prompt.
+ * If the prompt disambiguates, the distractor is less defensible in context.
+ */
+const DISAMBIGUATION_RE = /\b(in this context|in the sentence below|based on the sentence|looking at how it is used)\b/i;
+
 function isAmbiguousTemplate(template) {
   const skillIds = template.skillIds || [];
   return skillIds.some((id) => AMBIGUOUS_SKILL_IDS.includes(id));
@@ -96,6 +114,10 @@ export function runDistractorAudit() {
       const incorrectOptions = [];
       const optionDetails = [];
 
+      // Extract the plain prompt text for disambiguation check
+      const plainPrompt = (question.stemHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const promptDisambiguates = DISAMBIGUATION_RE.test(plainPrompt);
+
       for (const opt of options) {
         const resp = { answer: inputType === 'multi_choice' ? [opt.value] : opt.value };
         const result = evaluateGrammarQuestion(question, resp);
@@ -103,12 +125,22 @@ export function runDistractorAudit() {
         const misconceptionTag = (!isCorrect && result?.misconception) ? result.misconception : null;
         const whyWrong = misconceptionTag ? (GRAMMAR_MISCONCEPTIONS[misconceptionTag] || null) : null;
 
-        optionDetails.push({
+        const detail = {
           optionText: opt.label || opt.value,
           isCorrect,
           misconceptionTag,
           whyWrong,
-        });
+        };
+
+        // Per-option flags for distractors: defensibleAlternative and promptDisambiguates
+        if (!isCorrect) {
+          detail.defensibleAlternative = misconceptionTag
+            ? DEFENSIBLE_MISCONCEPTION_TAGS.has(misconceptionTag)
+            : false;
+          detail.promptDisambiguates = promptDisambiguates;
+        }
+
+        optionDetails.push(detail);
 
         if (isCorrect) {
           correctOptions.push(opt.value);

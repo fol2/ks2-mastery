@@ -40,7 +40,7 @@ describe('P9 prompt cue: word_class_underlined_choice', () => {
     assert.ok(q, 'question must be generated');
     assert.ok(q.focusCue, 'focusCue must be present');
     assert.strictEqual(q.focusCue.type, 'underline');
-    assert.ok(q.focusCue.text.length > 0, 'focusCue.text must be non-empty');
+    assert.ok(q.focusCue.targetText.length > 0, 'focusCue.targetText must be non-empty');
   });
 
   it('question has promptParts array', () => {
@@ -51,7 +51,7 @@ describe('P9 prompt cue: word_class_underlined_choice', () => {
     // Must contain an underline part matching the focusCue word
     const underlinePart = q.promptParts.find(p => p.kind === 'underline');
     assert.ok(underlinePart, 'must have an underline part');
-    assert.strictEqual(underlinePart.text, q.focusCue.text);
+    assert.strictEqual(underlinePart.text, q.focusCue.targetText);
   });
 
   it('screenReaderPromptText mentions the target word', () => {
@@ -59,8 +59,8 @@ describe('P9 prompt cue: word_class_underlined_choice', () => {
     assert.ok(q, 'question must be generated');
     assert.ok(q.screenReaderPromptText, 'screenReaderPromptText must exist');
     assert.ok(
-      q.screenReaderPromptText.includes(q.focusCue.text),
-      `screenReaderPromptText must mention '${q.focusCue.text}'`
+      q.screenReaderPromptText.includes(q.focusCue.targetText),
+      `screenReaderPromptText must mention '${q.focusCue.targetText}'`
     );
     assert.ok(
       q.screenReaderPromptText.includes('Target word:'),
@@ -73,7 +73,7 @@ describe('P9 prompt cue: word_class_underlined_choice', () => {
     assert.ok(q, 'question must be generated');
     assert.ok(q.readAloudText, 'readAloudText must exist');
     assert.ok(
-      q.readAloudText.includes(q.focusCue.text),
+      q.readAloudText.includes(q.focusCue.targetText),
       'readAloudText must mention the underlined word'
     );
   });
@@ -212,12 +212,12 @@ describe('P9 prompt cue: screenReaderPromptText mentions target', () => {
   });
 
   for (const template of cueTemplates) {
-    it(`${template.id}: screenReaderPromptText mentions focusCue.text`, () => {
+    it(`${template.id}: screenReaderPromptText mentions focusCue.targetText`, () => {
       const q = createGrammarQuestion({ templateId: template.id, seed: 1 });
       assert.ok(q.screenReaderPromptText, 'screenReaderPromptText must exist');
       assert.ok(
-        q.screenReaderPromptText.includes(q.focusCue.text),
-        `screenReaderPromptText must mention '${q.focusCue.text}'`
+        q.screenReaderPromptText.includes(q.focusCue.targetText),
+        `screenReaderPromptText must mention '${q.focusCue.targetText}'`
       );
     });
   }
