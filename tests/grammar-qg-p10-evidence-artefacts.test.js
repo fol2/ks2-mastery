@@ -92,15 +92,80 @@ describe('P10 Evidence Artefacts: quality register', () => {
     assert.equal(data.entries.length, 78, `Expected 78 entries, got ${data.entries.length}`);
   });
 
-  it('each entry has required fields', () => {
+  it('each entry has all 14 required fields (13 content + templateId)', () => {
+    if (!fs.existsSync(registerPath)) return;
+    const data = JSON.parse(fs.readFileSync(registerPath, 'utf8'));
+    const requiredFields = [
+      'templateId',
+      'decision',
+      'severity',
+      'reviewerId',
+      'reviewMethod',
+      'seedWindow',
+      'concreteExamples',
+      'answerabilityJudgement',
+      'grammarLogicJudgement',
+      'distractorQualityJudgement',
+      'markingJudgement',
+      'feedbackJudgement',
+      'accessibilityJudgement',
+      'finalAction',
+    ];
+
+    for (const entry of data.entries) {
+      for (const field of requiredFields) {
+        assert.ok(
+          field in entry,
+          `entry ${entry.templateId} missing field '${field}'`,
+        );
+      }
+      // Validate specific field values
+      assert.ok(entry.templateId, 'entry.templateId required');
+      assert.ok(['approved', 'blocked'].includes(entry.decision), `Invalid decision: ${entry.decision}`);
+      assert.equal(entry.reviewerId, 'automated-p10-oracle');
+      assert.equal(entry.reviewMethod, 'automated-oracle-with-concrete-evidence');
+      assert.ok(
+        entry.seedWindow === '1..10' || entry.seedWindow === '1..15',
+        `Invalid seedWindow: ${entry.seedWindow}`,
+      );
+      assert.ok(Array.isArray(entry.concreteExamples), 'concreteExamples must be array');
+      assert.ok(entry.concreteExamples.length >= 3, `concreteExamples must have >= 3 items, got ${entry.concreteExamples.length}`);
+      assert.ok(['ship', 'requires-adult-review'].includes(entry.finalAction), `Invalid finalAction: ${entry.finalAction}`);
+      // severity: null if approved, S0/S1/S2 if blocked
+      if (entry.decision === 'approved') {
+        assert.equal(entry.severity, null, `Approved entry ${entry.templateId} must have severity null`);
+      } else {
+        assert.ok(['S0', 'S1', 'S2'].includes(entry.severity), `Blocked entry must have S0/S1/S2 severity`);
+      }
+      // String judgement fields must be non-empty strings
+      assert.ok(typeof entry.answerabilityJudgement === 'string' && entry.answerabilityJudgement.length > 0);
+      assert.ok(typeof entry.grammarLogicJudgement === 'string' && entry.grammarLogicJudgement.length > 0);
+      assert.ok(typeof entry.distractorQualityJudgement === 'string' && entry.distractorQualityJudgement.length > 0);
+      assert.ok(typeof entry.markingJudgement === 'string' && entry.markingJudgement.length > 0);
+      assert.ok(typeof entry.feedbackJudgement === 'string' && entry.feedbackJudgement.length > 0);
+      assert.ok(typeof entry.accessibilityJudgement === 'string' && entry.accessibilityJudgement.length > 0);
+    }
+  });
+
+  it('concrete examples have required subfields', () => {
     if (!fs.existsSync(registerPath)) return;
     const data = JSON.parse(fs.readFileSync(registerPath, 'utf8'));
     for (const entry of data.entries) {
-      assert.ok(entry.templateId, 'entry.templateId required');
-      assert.ok(['approved', 'blocked'].includes(entry.decision), `Invalid decision: ${entry.decision}`);
-      assert.equal(entry.reviewMethod, 'automated-oracle');
-      assert.equal(entry.seedWindow, '1..10');
-      assert.ok(Array.isArray(entry.evidence), 'entry.evidence must be array');
+      for (const ex of entry.concreteExamples) {
+        assert.ok(typeof ex.seed === 'number', `example.seed must be number in ${entry.templateId}`);
+        assert.ok(typeof ex.promptText === 'string', `example.promptText must be string in ${entry.templateId}`);
+        assert.ok(typeof ex.markingResult === 'string', `example.markingResult must be string in ${entry.templateId}`);
+        assert.ok(typeof ex.feedbackSnippet === 'string', `example.feedbackSnippet must be string in ${entry.templateId}`);
+      }
+    }
+  });
+
+  it('high-risk templates have seedWindow 1..15 and 5 examples', () => {
+    if (!fs.existsSync(registerPath)) return;
+    const data = JSON.parse(fs.readFileSync(registerPath, 'utf8'));
+    const highRisk = data.entries.filter((e) => e.seedWindow === '1..15');
+    for (const entry of highRisk) {
+      assert.equal(entry.concreteExamples.length, 5, `High-risk ${entry.templateId} needs 5 examples`);
     }
   });
 });
