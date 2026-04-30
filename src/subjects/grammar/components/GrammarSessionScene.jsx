@@ -13,6 +13,7 @@ import {
   grammarFeedbackTone,
 } from '../session-ui.js';
 import { translateGrammarSessionError } from '../module.js';
+import { SessionHUD } from '../../../platform/ui/SessionHUD.jsx';
 
 function optionLabel(option) {
   if (Array.isArray(option)) return String(option[1] ?? option[0] ?? '');
@@ -664,6 +665,16 @@ export function GrammarSessionScene({ grammar, actions, runtimeReadOnly }) {
           <span>{progressDone}</span>
           <small>of {progressTotal}</small>
         </div>
+        <SessionHUD
+          subjectId="grammar"
+          answeredCount={progressDone}
+          totalCount={progressTotal}
+          remainingCount={Math.max(0, progressTotal - progressDone)}
+          currentIndex={progressDone}
+          modeLabel={session.mode || ''}
+          supportState={help.showFadedSupport ? 'available' : 'none'}
+          progressLabel={progressLabel}
+        />
       </div>
 
       <div className="grammar-prompt-card">
