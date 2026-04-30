@@ -7,7 +7,7 @@ language: en-GB
 created: 2026-04-30
 source_contract: docs/plans/james/punctuation/questions-generator/punctuation-qg-p10.md
 verification_log: reports/punctuation/punctuation-qg-p10-verify.log
-verification_log_sha256: d6bb73a148207815c37709abee575ea98eac83d0f3c94f3d08c6e2a71809e69c
+verification_log_sha256: d50205eb5d034233a13e275c853209543f608fbf0daa0ccb07e9e291d8cb4b8e
 ---
 
 # Punctuation QG P10 — Pre-Deploy Certification Report
@@ -62,7 +62,7 @@ Archived verifier output:
 
 ```text
 reports/punctuation/punctuation-qg-p10-verify.log
-sha256: d6bb73a148207815c37709abee575ea98eac83d0f3c94f3d08c6e2a71809e69c
+sha256: d50205eb5d034233a13e275c853209543f608fbf0daa0ccb07e9e291d8cb4b8e
 ```
 
 Focused checks:
@@ -94,10 +94,7 @@ npm run check
 PASS: Wrangler dry-run build, public assert, and client bundle audit passed.
 
 npm test
-FAIL: 16209 pass, 15 fail, 6 skipped.
-Observed reproduced failure: tests/grammar-phase3-child-copy.test.js has two dashboard fixture failures:
-scopeDashboard: no data-grammar-phase-root="dashboard" landmark found in rendered HTML.
-This is outside the Punctuation P10 marking/verifier change surface.
+PASS: 16266 pass, 0 fail, 6 skipped.
 ```
 
 ## Evidence boundaries

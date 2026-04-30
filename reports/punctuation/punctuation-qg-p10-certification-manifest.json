@@ -13,7 +13,7 @@
     "git": {
       "repository": "fol2/ks2-mastery",
       "ref": "codex/punctuation-qg-p10-delivery",
-      "commitSha": "d3638ade7fbbb52abc6684ddf99d32b7a0ea463d",
+      "commitSha": "ba5d901dac5f4d5ca2d619e10402c82ef3da8ad8",
       "commitContainsAllVerifiedPaths": true,
       "verifiedPaths": [
         "package.json",
@@ -26,7 +26,7 @@
         "tests/fixtures/punctuation-negative-vectors.json"
       ],
       "pathHashes": {
-        "package.json": "9784d59e10b6b2dc3ac7b1fdd32574532d49c3f786dd8fd35a37b06f6476b7f2",
+        "package.json": "2ef87e85014975677aeca7a085515786639fd2b62e58f61fa0205a70ecd0728a",
         "shared/punctuation/marking.js": "fdf4a562bc33393f9d09a4e8dc7bc658f3cb10f03fb19ebbdd8547e725011ab0",
         "tests/punctuation-closed-lexical-preservation-p10.test.js": "4392941b4955c2951a59f18a167c92e7b826c3d13b296d47bebbab2ed4c930ce",
         "scripts/verify-punctuation-qg-p10.mjs": "cd9a73a2a139ba2bdf86ffa36ac572667a7f8ee60ee1d952e1c5a658acbcad8b",
@@ -51,7 +51,7 @@
     "npmVersion": "10.9.2",
     "logicalGates": 56,
     "logPath": "reports/punctuation/punctuation-qg-p10-verify.log",
-    "logSha256": "d6bb73a148207815c37709abee575ea98eac83d0f3c94f3d08c6e2a71809e69c"
+    "logSha256": "d50205eb5d034233a13e275c853209543f608fbf0daa0ccb07e9e291d8cb4b8e"
   },
   "review": {
     "aiPreReview": {
