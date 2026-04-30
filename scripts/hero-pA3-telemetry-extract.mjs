@@ -117,13 +117,15 @@ export function parseRows(rawRows) {
     } catch {
       eventJson = null;
     }
+    // Defence-in-depth: strip forbidden fields before any aggregation/processing
+    const cleanedJson = eventJson ? stripPrivacyFields(eventJson) : null;
     return {
       id: row.id,
       learnerId: row.learner_id,
       subjectId: row.subject_id,
       systemId: row.system_id,
       eventType: row.event_type,
-      eventJson,
+      eventJson: cleanedJson,
       createdAt: row.created_at,
     };
   });

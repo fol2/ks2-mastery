@@ -16,7 +16,7 @@ export const PRIVACY_FORBIDDEN_FIELDS = Object.freeze([
   'childContent',
 ]);
 
-const MAX_DEPTH = 10;
+const MAX_DEPTH = 50;
 
 /**
  * Recursively validate that an event payload contains no forbidden fields

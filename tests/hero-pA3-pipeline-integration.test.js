@@ -27,7 +27,10 @@ import {
 
 import {
   validateMetricPrivacyRecursive,
+  stripPrivacyFields,
 } from '../shared/hero/metrics-privacy.js';
+
+import { HERO_FLAG_KEYS } from '../shared/hero/account-override.js';
 
 // ── Shared test manifest (real manifest structure) ─────────────────
 
@@ -610,6 +613,164 @@ describe('Hero pA3 Pipeline Integration', () => {
       assert.deepEqual(parsed[0].eventJson, { valid: true });
       assert.equal(parsed[1].eventJson, null); // malformed => null
       assert.equal(parsed[2].eventJson, null); // null stays null
+    });
+
+    it('parseRows strips forbidden fields from event_json (defence-in-depth)', () => {
+      const rawRows = [
+        {
+          id: 1, learner_id: 'l1', subject_id: 's1', system_id: 'hero-mode',
+          event_type: 'hero.task.completed',
+          event_json: JSON.stringify({ taskId: 't1', rawAnswer: 'secret child text', data: { intent: 'weak-repair' } }),
+          created_at: '2026-04-25T10:00:00Z',
+        },
+      ];
+
+      const parsed = parseRows(rawRows);
+      assert.equal(parsed.length, 1);
+      // rawAnswer must be stripped
+      assert.equal('rawAnswer' in parsed[0].eventJson, false);
+      // Non-forbidden fields remain
+      assert.equal(parsed[0].eventJson.taskId, 't1');
+      assert.equal(parsed[0].eventJson.data.intent, 'weak-repair');
+    });
+  });
+
+  // ── 11. Privacy depth hardening (MAX_DEPTH=50) ────────────────────
+
+  describe('privacy depth hardening — formerly MAX_DEPTH=10 bypass', () => {
+    it('detects forbidden field at depth 11 (previously bypassed)', () => {
+      // Build a payload nested 11 levels deep
+      let payload = { rawAnswer: 'leaked child answer' };
+      for (let i = 0; i < 10; i++) {
+        payload = { [`level${10 - i}`]: payload };
+      }
+      // payload is now: { level1: { level2: ... { level10: { rawAnswer: ... } } } }
+
+      const result = validateMetricPrivacyRecursive(payload);
+      assert.equal(result.valid, false);
+      assert.ok(result.violations.length > 0);
+      assert.ok(result.violations[0].includes('rawAnswer'));
+    });
+
+    it('detects forbidden field at depth 49 (well within new limit)', () => {
+      // Build a payload nested 49 levels deep
+      let payload = { childFreeText: 'deeply hidden secret' };
+      for (let i = 0; i < 48; i++) {
+        payload = { [`d${48 - i}`]: payload };
+      }
+
+      const result = validateMetricPrivacyRecursive(payload);
+      assert.equal(result.valid, false);
+      assert.ok(result.violations.length > 0);
+      assert.ok(result.violations[0].includes('childFreeText'));
+    });
+
+    it('stripPrivacyFields strips at depth 11 (previously returned unchanged)', () => {
+      // Build a payload with forbidden field at depth 11
+      let payload = { childInput: 'secret child input', safe: 'visible' };
+      for (let i = 0; i < 10; i++) {
+        payload = { [`level${10 - i}`]: payload };
+      }
+
+      const stripped = stripPrivacyFields(payload);
+
+      // Navigate to depth 11 in the stripped result
+      let node = stripped;
+      for (let i = 1; i <= 10; i++) {
+        node = node[`level${i}`];
+        assert.ok(node, `level${i} should exist in stripped output`);
+      }
+      // childInput must be stripped, safe must remain
+      assert.equal('childInput' in node, false);
+      assert.equal(node.safe, 'visible');
+    });
+
+    it('stripPrivacyFields strips at depth 49', () => {
+      // Build a payload with forbidden field at depth 49
+      let payload = { rawText: 'deeply hidden', keep: 'this' };
+      for (let i = 0; i < 48; i++) {
+        payload = { [`d${48 - i}`]: payload };
+      }
+
+      const stripped = stripPrivacyFields(payload);
+
+      // Navigate to depth 49 in the stripped result
+      let node = stripped;
+      for (let i = 1; i <= 48; i++) {
+        node = node[`d${i}`];
+        assert.ok(node, `d${i} should exist in stripped output`);
+      }
+      assert.equal('rawText' in node, false);
+      assert.equal(node.keep, 'this');
+    });
+  });
+
+  // ── 12. Env secrets projection (effectiveFlags) ───────────────────
+
+  describe('env secrets projection — effectiveFlags must only contain Hero flag keys', () => {
+    it('HERO_FLAG_KEYS is frozen and contains exactly 6 known keys', () => {
+      assert.equal(HERO_FLAG_KEYS.length, 6);
+      assert.ok(HERO_FLAG_KEYS.includes('HERO_MODE_SHADOW_ENABLED'));
+      assert.ok(HERO_FLAG_KEYS.includes('HERO_MODE_LAUNCH_ENABLED'));
+      assert.ok(HERO_FLAG_KEYS.includes('HERO_MODE_CHILD_UI_ENABLED'));
+      assert.ok(HERO_FLAG_KEYS.includes('HERO_MODE_PROGRESS_ENABLED'));
+      assert.ok(HERO_FLAG_KEYS.includes('HERO_MODE_ECONOMY_ENABLED'));
+      assert.ok(HERO_FLAG_KEYS.includes('HERO_MODE_CAMP_ENABLED'));
+      assert.ok(Object.isFrozen(HERO_FLAG_KEYS));
+    });
+
+    it('projecting resolvedFlags through HERO_FLAG_KEYS excludes secret keys', () => {
+      // Simulate what resolveHeroFlagsWithOverride returns (full env + overrides)
+      const resolvedFlags = {
+        HERO_MODE_SHADOW_ENABLED: 'true',
+        HERO_MODE_LAUNCH_ENABLED: 'true',
+        HERO_MODE_CHILD_UI_ENABLED: 'true',
+        HERO_MODE_PROGRESS_ENABLED: 'true',
+        HERO_MODE_ECONOMY_ENABLED: 'true',
+        HERO_MODE_CAMP_ENABLED: 'true',
+        // These are secrets that MUST NOT leak
+        HERO_INTERNAL_ACCOUNTS: '["adult-secret-1","adult-secret-2"]',
+        DB_AUTH_TOKEN: 'super-secret-db-token',
+        STRIPE_KEY: 'sk_live_secret',
+        SESSION_SECRET: 'hmac-key-never-expose',
+      };
+
+      // Apply the same projection used in the fixed app.js
+      const effectiveFlags = Object.fromEntries(
+        HERO_FLAG_KEYS.map(k => [k, resolvedFlags[k] || ''])
+      );
+
+      // Must contain all 6 Hero flags
+      for (const key of HERO_FLAG_KEYS) {
+        assert.equal(effectiveFlags[key], 'true', `${key} should be present`);
+      }
+
+      // Must NOT contain any secrets
+      assert.equal('HERO_INTERNAL_ACCOUNTS' in effectiveFlags, false);
+      assert.equal('DB_AUTH_TOKEN' in effectiveFlags, false);
+      assert.equal('STRIPE_KEY' in effectiveFlags, false);
+      assert.equal('SESSION_SECRET' in effectiveFlags, false);
+
+      // Must have exactly 6 keys
+      assert.equal(Object.keys(effectiveFlags).length, 6);
+    });
+
+    it('projection returns empty string for missing flag keys', () => {
+      const resolvedFlags = {
+        HERO_MODE_SHADOW_ENABLED: 'true',
+        // Other 5 keys missing (non-internal account scenario)
+        SOME_SECRET: 'should-not-appear',
+      };
+
+      const effectiveFlags = Object.fromEntries(
+        HERO_FLAG_KEYS.map(k => [k, resolvedFlags[k] || ''])
+      );
+
+      assert.equal(effectiveFlags.HERO_MODE_SHADOW_ENABLED, 'true');
+      assert.equal(effectiveFlags.HERO_MODE_LAUNCH_ENABLED, '');
+      assert.equal(effectiveFlags.HERO_MODE_CAMP_ENABLED, '');
+      assert.equal('SOME_SECRET' in effectiveFlags, false);
+      assert.equal(Object.keys(effectiveFlags).length, 6);
     });
   });
 });
