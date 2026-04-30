@@ -2,12 +2,13 @@
 
 **Phase:** pA3 — Real-Cohort Evidence Hardening and External-Cohort Readiness Contract  
 **Date completed:** 2026-04-30  
-**Total PRs:** 4 (all merged to main, CI green)  
-**Total new tests:** 142 (51 + 64 + 27 across 5 test files)  
-**Total new/modified files:** 24  
-**Total lines added:** ~5,360  
-**Runtime Hero Mode code modified:** 0 files  
-**Regression risk:** Zero — all deliverables are infrastructure-only (scripts, docs, tests)
+**Total PRs:** 7 (4 feature + 3 hardening fix — all merged to main, CI green)  
+**Total tests:** 160 (across 5 test files, all passing)  
+**Total new/modified files:** 30+  
+**Total lines added:** ~6,500+  
+**Runtime Hero Mode code modified:** 1 file (worker/src/app.js — P0 security fix only)  
+**Regression risk:** Near-zero — all feature deliverables are infrastructure-only; the one runtime fix tightens security (projection of effectiveFlags)  
+**Review cycles:** 2 (10 independent adversarial reviewers → 3 fix PRs → verification)
 
 ---
 
@@ -297,4 +298,58 @@ The internal and external cohort use identical formats (9-column provenance tabl
 
 ---
 
-*Generated 2026-04-30 as part of the pA3 SDLC cycle.*
+## 10. Adversarial Review Cycle
+
+### Round 1: 10 Independent Reviewers
+
+After the initial 4 PRs merged, 10 independent adversarial reviewers were dispatched in parallel:
+
+| Reviewer | Focus | Key Findings |
+|----------|-------|-------------|
+| Correctness | Logic errors, edge cases | Column-order mismatch (HIGH), source default inversion |
+| Maintainability | Over-engineering, coupling | Cross-phase import coupling, classifyConfidence duplication |
+| Testing | Coverage gaps, weak assertions | Dry-run test doesn't verify contract, stop-condition rows untested |
+| Security | Privacy, injection, secrets | P0 env secrets exposure, learner IDs in docs, strip-before-process gap |
+| Reliability | Crash resilience, concurrency | No fetch timeout, non-atomic writes, TOCTOU race |
+| Contract Compliance | Does code satisfy spec? | Source default trust inversion, missing stop condition #13 |
+| Performance | SQL efficiency, memory | Missing LIMIT on event_log query, same file read 3x |
+| Architecture | Extensibility, separation | DI pattern validated, ring criticality should be manifest-declared |
+| Project Standards | Conventions, compatibility | Zero violations found |
+| Adversarial | Break the system | 8 attack vectors constructed, 3 exploitable |
+
+### Fix PRs (Round 1 → Round 2)
+
+| PR | Title | Fixes |
+|---|---|---|
+| #731 | Privacy & security hardening | MAX_DEPTH 10→50, strip-before-process, env secrets projection, doc redaction |
+| #732 | Pipeline correctness | Column order fix, source→simulation default, condition else-branch, stop condition #13 |
+| #733 | Reliability & maintainability | Shared modules (stop-conditions, confidence), fetch timeout, atomic writes |
+
+### Round 2: Verification
+
+All 10 issues confirmed fixed on current main:
+- 160 tests pass
+- Column order aligned (Source at match[8])
+- MAX_DEPTH = 50 (was 10)
+- Invalid --source defaults to simulation with stderr warning
+- effectiveFlags projected through HERO_FLAG_KEYS (6 keys only)
+- detectStopConditions imported from shared/hero/stop-conditions.js
+- stripPrivacyFields applied to every parsed row before signal extraction
+- Unknown condition types fail ring with descriptive message
+- AbortController with 15s timeout on fetch
+- Write-then-rename atomic pattern on all file writes
+- Real account IDs replaced with EXAMPLE placeholders
+
+### Reviewers' Residual Observations (Accepted/Deferred)
+
+| Observation | Status | Rationale |
+|-------------|--------|-----------|
+| Date-key spoofing via manual edit | Accepted risk | Evidence file is git-tracked; manual edits are visible in diff |
+| Manifest manipulation (remove ring) | Accepted risk | Manifest is committed; git blame provides audit trail |
+| Privacy allowlist is static (7 fields) | Accepted risk | Adding new child-content field names requires code change (reviewable) |
+| concurrent smoke script runs (TOCTOU) | Deferred | Add lockfile guard in A4 if multi-operator use becomes common |
+| JSONL evidence format | Deferred to A6+ | Current markdown format is human-readable and sufficient for A4 |
+
+---
+
+*Generated and hardened 2026-04-30 as part of the pA3 SDLC cycle (2 review rounds, 10 adversarial reviewers, 7 PRs total).*
