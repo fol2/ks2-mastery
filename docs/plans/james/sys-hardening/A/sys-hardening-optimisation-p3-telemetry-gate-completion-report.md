@@ -7,7 +7,7 @@ date: 2026-04-30
 route: system-hardening-and-optimisation
 owner: james / engineering agent
 implementation_pr: https://github.com/fol2/ks2-mastery/pull/699
-merge_commit: 32cd5a306f62245cbfb81893934a7aab6e5fc062
+merge_result_commit: 32cd5a306f62245cbfb81893934a7aab6e5fc062
 source_contract: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md
 source_plan: docs/plans/2026-04-30-001-feat-sys-hardening-optimisation-p3-telemetry-gate-plan.md
 source_baseline: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3-baseline.md
@@ -19,7 +19,7 @@ recommended_next_path: p3-operator-smoke-and-strict-telemetry-capture
 
 ## Executive Summary
 
-PR #699, `feat(capacity): harden P3 worker telemetry gate`, has completed the full SDLC loop and was merged to `main` on 2026-04-30 as merge commit `32cd5a306f62245cbfb81893934a7aab6e5fc062`.
+PR #699, `feat(capacity): harden P3 worker telemetry gate`, has completed the full SDLC loop and was merged to `main` on 2026-04-30 as squash merge result commit `32cd5a306f62245cbfb81893934a7aab6e5fc062`.
 
 This was a repo-local P3 telemetry-gate delivery. It did not run production strict P3 capacity evidence, did not certify 30 learners, did not promote public capacity wording, and did not choose a D1, Worker CPU, payload, platform, or policy optimisation. That boundary is intentional. The merged work makes the next P3 evidence run decision-grade by forcing invocation CPU/wall telemetry, statement-log coverage, redaction, raw-log retention, and warning semantics to be explicit.
 
@@ -192,7 +192,7 @@ The key product decision remains deliberately deferred. This merged PR makes the
 | Item | State |
 | --- | --- |
 | Implementation PR | Merged: https://github.com/fol2/ks2-mastery/pull/699 |
-| Merge commit | `32cd5a306f62245cbfb81893934a7aab6e5fc062` |
+| Squash merge result commit | `32cd5a306f62245cbfb81893934a7aab6e5fc062` |
 | Remote implementation branch | Deleted: `codex/sys-hardening-p3-telemetry` |
 | Local gate | Passed |
 | Remote PR CI | Passed before merge |
