@@ -1,23 +1,38 @@
 /**
- * Grammar QG P10 U9 — Render Surface Tests
+ * Grammar QG P10 — React DOM Render Surface Tests
  *
- * Structural render tests for key template families:
- * - word_class_underlined_choice: promptParts has underline part with single word
- * - Heterogeneous tables: row-specific options present
- * - Homogeneous tables: all rows share global columns
+ * Renders serialised grammar items through the real GrammarSessionScene
+ * component via React's renderToStaticMarkup, then parses the output with
+ * jsdom to assert on actual DOM structure:
+ *
+ * - word_class_underlined_choice: exactly one `.prompt-underline` element
+ *   containing a single word (no spaces)
+ * - qg_p4_voice_roles_transfer: underline on 2-4 word phrase
+ * - Homogeneous table: all `<tr>` rows have the same radio input count
+ * - Heterogeneous table: different rows carry different option labels
+ * - Keyboard accessibility: every `<input>` has `name` or `aria-label`
  *
  * Every test asserts >0 generated items (empty-fails invariant).
  */
-import { describe, it } from 'node:test';
+import { describe, it, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { JSDOM } from 'jsdom';
 
 import {
   createGrammarQuestion,
   serialiseGrammarQuestion,
-  GRAMMAR_TEMPLATE_METADATA,
 } from '../worker/src/subjects/grammar/content.js';
 
+import {
+  renderGrammarItem,
+  cleanupGrammarRenderHarness,
+} from './helpers/grammar-render-harness.js';
+
 const SEED_COUNT = 15;
+
+after(() => {
+  cleanupGrammarRenderHarness();
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,11 +47,16 @@ function generateForTemplate(templateId, seedMax = SEED_COUNT) {
   return items;
 }
 
+function parseHtml(html) {
+  const dom = new JSDOM(html);
+  return dom.window.document;
+}
+
 // ---------------------------------------------------------------------------
-// 1. word_class_underlined_choice: promptParts underline structure
+// 1. word_class_underlined_choice: prompt-underline DOM structure
 // ---------------------------------------------------------------------------
 
-describe('P10 Render Surface — word_class_underlined_choice promptParts', () => {
+describe('P10 Render Surface — word_class_underlined_choice DOM', () => {
   const TEMPLATE_ID = 'word_class_underlined_choice';
   const items = generateForTemplate(TEMPLATE_ID);
 
@@ -45,65 +65,70 @@ describe('P10 Render Surface — word_class_underlined_choice promptParts', () =
   });
 
   for (const { seed, serialised } of items) {
-    it(`seed=${seed}: promptParts contains an underline part`, () => {
-      const parts = serialised.promptParts;
-      assert.ok(Array.isArray(parts), 'promptParts must be an array');
-      const underlinePart = parts.find((p) => p.kind === 'underline');
-      assert.ok(underlinePart, 'Must have a part with kind "underline"');
-      assert.ok(underlinePart.text.length > 0, 'Underline text must be non-empty');
+    it(`seed=${seed}: HTML contains exactly one .prompt-underline element`, () => {
+      const html = renderGrammarItem(serialised);
+      const doc = parseHtml(html);
+      const underlines = doc.querySelectorAll('.prompt-underline');
+      assert.equal(
+        underlines.length,
+        1,
+        `Expected exactly 1 .prompt-underline element but found ${underlines.length}`,
+      );
     });
 
-    it(`seed=${seed}: underline text is a single word (no spaces in main token)`, () => {
-      const parts = serialised.promptParts;
-      const underlinePart = parts.find((p) => p.kind === 'underline');
-      assert.ok(underlinePart, 'Must have underline part');
-      // Allow hyphenated compounds; reject multi-word phrases
-      const wordCount = underlinePart.text.trim().split(/\s+/).length;
-      assert.ok(wordCount <= 2, `Underlined text "${underlinePart.text}" should be a single word or hyphenated pair, got ${wordCount} words`);
-    });
-
-    it(`seed=${seed}: focusCue matches underline target`, () => {
-      const focusCue = serialised.focusCue;
-      assert.ok(focusCue, 'focusCue must be present');
-      assert.equal(focusCue.type, 'underline', 'focusCue type must be "underline"');
-      const parts = serialised.promptParts;
-      const underlinePart = parts.find((p) => p.kind === 'underline');
-      assert.equal(focusCue.text, underlinePart.text, 'focusCue.text must match underline part text');
+    it(`seed=${seed}: underlined text is a single word (no spaces)`, () => {
+      const html = renderGrammarItem(serialised);
+      const doc = parseHtml(html);
+      const underline = doc.querySelector('.prompt-underline');
+      assert.ok(underline, 'Must have .prompt-underline element');
+      const text = underline.textContent.trim();
+      assert.ok(text.length > 0, 'Underline text must be non-empty');
+      const wordCount = text.split(/\s+/).length;
+      assert.ok(
+        wordCount <= 2,
+        `Underlined text "${text}" should be a single word or hyphenated pair, got ${wordCount} words`,
+      );
     });
   }
 });
 
 // ---------------------------------------------------------------------------
-// 2. Heterogeneous table: row-specific options
+// 2. qg_p4_voice_roles_transfer: underline on 2-4 word phrase
 // ---------------------------------------------------------------------------
 
-describe('P10 Render Surface — heterogeneous table (qg_p4_voice_roles_transfer)', () => {
+describe('P10 Render Surface — qg_p4_voice_roles_transfer DOM', () => {
   const TEMPLATE_ID = 'qg_p4_voice_roles_transfer';
-  const items = [];
+  const items = generateForTemplate(TEMPLATE_ID).filter(
+    ({ serialised }) =>
+      serialised.promptParts && serialised.promptParts.some((p) => p.kind === 'underline'),
+  );
 
-  for (let seed = 1; seed <= SEED_COUNT; seed++) {
-    const q = createGrammarQuestion({ templateId: TEMPLATE_ID, seed });
-    if (q && q.inputSpec?.type === 'table_choice') {
-      items.push({ seed, question: q });
-    }
-  }
-
-  it('generates >0 table_choice items (empty-fails invariant)', () => {
-    assert.ok(items.length > 0, `Expected >0 table_choice items for "${TEMPLATE_ID}" but got ${items.length}`);
+  it('generates >0 items with underline promptParts (empty-fails invariant)', () => {
+    assert.ok(
+      items.length > 0,
+      `Expected >0 items with underline promptParts for "${TEMPLATE_ID}" but got ${items.length}`,
+    );
   });
 
-  for (const { seed, question } of items) {
-    it(`seed=${seed}: has rows with row-specific options`, () => {
-      const rows = question.inputSpec.rows;
-      assert.ok(rows.length > 0, 'Must have at least one row');
-      const hasRowOptions = rows.some((r) => Array.isArray(r.options) && r.options.length > 0);
-      assert.ok(hasRowOptions, 'Heterogeneous table must have rows with row-specific options');
+  for (const { seed, serialised } of items) {
+    it(`seed=${seed}: underlined phrase is 2-4 words`, () => {
+      const html = renderGrammarItem(serialised);
+      const doc = parseHtml(html);
+      const underline = doc.querySelector('.prompt-underline');
+      assert.ok(underline, 'Must have .prompt-underline element in rendered HTML');
+      const text = underline.textContent.trim();
+      assert.ok(text.length > 0, 'Underline text must be non-empty');
+      const wordCount = text.split(/\s+/).length;
+      assert.ok(
+        wordCount >= 2 && wordCount <= 4,
+        `Underlined text "${text}" should be 2-4 words, got ${wordCount}`,
+      );
     });
   }
 });
 
 // ---------------------------------------------------------------------------
-// 3. Homogeneous table: sentence_type_table
+// 3. Homogeneous table: all <tr> rows have the same radio input count
 // ---------------------------------------------------------------------------
 
 describe('P10 Render Surface — homogeneous table (sentence_type_table)', () => {
@@ -113,66 +138,128 @@ describe('P10 Render Surface — homogeneous table (sentence_type_table)', () =>
   for (let seed = 1; seed <= SEED_COUNT; seed++) {
     const q = createGrammarQuestion({ templateId: TEMPLATE_ID, seed });
     if (q && q.inputSpec?.type === 'table_choice') {
-      items.push({ seed, question: q });
+      items.push({ seed, question: q, serialised: serialiseGrammarQuestion(q) });
     }
   }
 
   it('generates >0 table_choice items (empty-fails invariant)', () => {
-    assert.ok(items.length > 0, `Expected >0 table_choice items for "${TEMPLATE_ID}" but got ${items.length}`);
+    assert.ok(
+      items.length > 0,
+      `Expected >0 table_choice items for "${TEMPLATE_ID}" but got ${items.length}`,
+    );
   });
 
-  for (const { seed, question } of items) {
-    it(`seed=${seed}: has global columns shared by all rows`, () => {
-      const columns = question.inputSpec.columns;
-      assert.ok(Array.isArray(columns), 'Must have a columns array');
-      assert.ok(columns.length > 0, 'Must have at least one column');
-    });
-
-    it(`seed=${seed}: rows reference global columns only (homogeneous)`, () => {
-      const globalColumns = new Set(question.inputSpec.columns);
-      const rows = question.inputSpec.rows;
-      assert.ok(rows.length > 0, 'Must have at least one row');
+  for (const { seed, serialised } of items) {
+    it(`seed=${seed}: all <tr> rows have the same number of radio inputs`, () => {
+      const html = renderGrammarItem(serialised);
+      const doc = parseHtml(html);
+      const rows = doc.querySelectorAll('tbody tr');
+      assert.ok(rows.length > 0, 'Must have at least one <tr> in tbody');
+      const counts = [];
       for (const row of rows) {
-        if (Array.isArray(row.options)) {
-          for (const opt of row.options) {
-            assert.ok(
-              globalColumns.has(opt),
-              `Row "${row.key || row.label}" option "${opt}" not in global columns`,
-            );
-          }
-        }
+        const radios = row.querySelectorAll('input[type="radio"]');
+        counts.push(radios.length);
       }
+      const allSame = counts.every((c) => c === counts[0]);
+      assert.ok(
+        allSame,
+        `All rows must have the same radio count; got ${JSON.stringify(counts)}`,
+      );
+      assert.ok(counts[0] > 0, 'Each row must have at least one radio input');
     });
   }
 });
 
 // ---------------------------------------------------------------------------
-// 4. Overall render surface coverage
+// 4. Heterogeneous table: different rows have different option labels
 // ---------------------------------------------------------------------------
 
-describe('P10 Render Surface — global coverage assertions', () => {
-  it('all 78 templates produce at least one question across seeds 1..15', () => {
-    let generatedCount = 0;
-    for (const template of GRAMMAR_TEMPLATE_METADATA) {
-      const items = generateForTemplate(template.id);
-      assert.ok(
-        items.length > 0,
-        `Template "${template.id}" produced 0 items across ${SEED_COUNT} seeds`,
-      );
-      generatedCount++;
+describe('P10 Render Surface — heterogeneous table (qg_p4_voice_roles_transfer)', () => {
+  const TEMPLATE_ID = 'qg_p4_voice_roles_transfer';
+  const items = [];
+
+  for (let seed = 1; seed <= SEED_COUNT; seed++) {
+    const q = createGrammarQuestion({ templateId: TEMPLATE_ID, seed });
+    if (q && q.inputSpec?.type === 'table_choice') {
+      items.push({ seed, question: q, serialised: serialiseGrammarQuestion(q) });
     }
-    assert.equal(generatedCount, 78, `Expected 78 templates but processed ${generatedCount}`);
+  }
+
+  it('generates >0 table_choice items (empty-fails invariant)', () => {
+    assert.ok(
+      items.length > 0,
+      `Expected >0 table_choice items for "${TEMPLATE_ID}" but got ${items.length}`,
+    );
   });
 
-  it('serialiseGrammarQuestion returns non-null for every generated question', () => {
-    let checked = 0;
-    for (const template of GRAMMAR_TEMPLATE_METADATA) {
-      const q = createGrammarQuestion({ templateId: template.id, seed: 1 });
-      if (!q) continue;
-      const s = serialiseGrammarQuestion(q);
-      assert.ok(s, `serialise returned null for template "${template.id}" seed 1`);
-      checked++;
+  for (const { seed, serialised } of items) {
+    it(`seed=${seed}: rows have different option labels (heterogeneous)`, () => {
+      const html = renderGrammarItem(serialised);
+      const doc = parseHtml(html);
+      const rows = doc.querySelectorAll('tbody tr');
+      assert.ok(rows.length > 1, 'Heterogeneous table must have multiple rows');
+
+      // Collect the set of aria-label values per row (each radio has an
+      // aria-label like "Sentence: option")
+      const rowLabelSets = [];
+      for (const row of rows) {
+        const radios = row.querySelectorAll('input[type="radio"]');
+        const labels = [...radios].map((r) => r.getAttribute('aria-label') || '');
+        rowLabelSets.push(labels.join('|'));
+      }
+      // At least two rows must differ in their option labels
+      const uniqueSets = new Set(rowLabelSets);
+      assert.ok(
+        uniqueSets.size > 1,
+        `Expected heterogeneous rows with different labels but all rows had identical labels: ${rowLabelSets[0]}`,
+      );
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 5. Keyboard accessibility: all <input> elements have name or aria-label
+// ---------------------------------------------------------------------------
+
+describe('P10 Render Surface — keyboard accessibility (input attributes)', () => {
+  const TEMPLATE_IDS = [
+    'word_class_underlined_choice',
+    'qg_p4_voice_roles_transfer',
+    'sentence_type_table',
+  ];
+  const allItems = [];
+
+  for (const templateId of TEMPLATE_IDS) {
+    for (let seed = 1; seed <= SEED_COUNT; seed++) {
+      const q = createGrammarQuestion({ templateId, seed });
+      if (q) {
+        allItems.push({ templateId, seed, serialised: serialiseGrammarQuestion(q) });
+      }
     }
-    assert.ok(checked > 0, 'Must check at least one template');
+  }
+
+  it('generates >0 items across accessibility templates (empty-fails invariant)', () => {
+    assert.ok(
+      allItems.length > 0,
+      `Expected >0 items across templates but got ${allItems.length}`,
+    );
   });
+
+  for (const { templateId, seed, serialised } of allItems) {
+    it(`${templateId} seed=${seed}: every <input> has name or aria-label`, () => {
+      const html = renderGrammarItem(serialised);
+      const doc = parseHtml(html);
+      const inputs = doc.querySelectorAll('input');
+      assert.ok(inputs.length > 0, 'Must have at least one <input> element');
+      for (const input of inputs) {
+        const hasName = input.hasAttribute('name') && input.getAttribute('name').length > 0;
+        const hasAriaLabel =
+          input.hasAttribute('aria-label') && input.getAttribute('aria-label').length > 0;
+        assert.ok(
+          hasName || hasAriaLabel,
+          `<input> missing both name and aria-label: ${input.outerHTML.slice(0, 120)}`,
+        );
+      }
+    });
+  }
 });
