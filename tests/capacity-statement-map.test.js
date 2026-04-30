@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -89,6 +89,58 @@ test('statement map preserves truncated statement evidence and refuses recommend
   );
   assert.doesNotMatch(JSON.stringify(report), /ks2_req_/);
   assert.doesNotMatch(JSON.stringify(report), /SELECT|child_subject_state|account_id|learner_id/);
+});
+
+test('statement map reads pretty wrangler tail JSON with message arrays', () => {
+  const prettyTail = [
+    '> ks2-mastery@0.1.0 ops:tail:json',
+    '> node ./scripts/wrangler-oauth.mjs tail ks2-mastery --format json',
+    JSON.stringify({
+      $cloudflare: {
+        $metadata: { type: 'cf-worker-event' },
+      },
+      logs: [
+        {
+          message: [
+            '[ks2-worker]',
+            JSON.stringify({
+              event: 'capacity.request',
+              route: 'GET /api/bootstrap',
+              requestId: 'p3_fixture_req_statement_map_1',
+              queryCount: 1,
+              d1RowsRead: 1,
+              d1RowsWritten: 0,
+              d1DurationMs: 12,
+              wallMs: 30,
+              responseBytes: 2048,
+              statements: [
+                { name: 'SELECT * FROM child_subject_state', rowsRead: 1, rowsWritten: 0, durationMs: 12 },
+              ],
+            }),
+          ],
+        },
+      ],
+    }, null, 2),
+  ].join('\n');
+
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'ks2-statement-map-pretty-'));
+  try {
+    const inputPath = path.join(tempDir, 'pretty-tail.jsonl');
+    writeFileSync(inputPath, prettyTail, 'utf8');
+    const records = readStatementMapInput(inputPath);
+    const report = buildCapacityStatementMap({
+      records,
+      generatedAt: '2026-04-30T00:00:00.000Z',
+    });
+
+    assert.equal(records.length, 1);
+    assert.equal(report.coverage.status, 'complete');
+    assert.equal(report.topStatements.length, 1);
+    assert.match(report.topStatements[0].statementId, OPAQUE_STATEMENT_ID_RE);
+    assert.doesNotMatch(JSON.stringify(report), /p3_fixture_req_statement_map_1|SELECT|child_subject_state/);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 });
 
 test('statement map CLI writes deterministic JSON from fixtures', async () => {
