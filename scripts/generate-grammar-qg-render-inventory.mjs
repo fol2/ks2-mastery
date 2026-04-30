@@ -13,6 +13,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs/promises';
+import { parseArgs } from 'node:util';
 
 import {
   GRAMMAR_TEMPLATE_METADATA,
@@ -200,14 +201,14 @@ function redactItem(item) {
   return redacted;
 }
 
-async function writeReports(inventory) {
+async function writeReports(inventory, outPrefix = 'grammar-qg-p10') {
   await fs.mkdir(REPORTS_DIR, { recursive: true });
 
-  const jsonPath = path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory.json');
+  const jsonPath = path.join(REPORTS_DIR, `${outPrefix}-render-inventory.json`);
   await fs.writeFile(jsonPath, JSON.stringify(inventory, null, 2) + '\n', 'utf8');
 
   // Full markdown (non-redacted — for adult review, includes answers)
-  const fullMdPath = path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory.md');
+  const fullMdPath = path.join(REPORTS_DIR, `${outPrefix}-render-inventory.md`);
   await fs.writeFile(fullMdPath, buildFullMarkdown(inventory) + '\n', 'utf8');
 
   // Redacted markdown
@@ -233,7 +234,7 @@ async function writeReports(inventory) {
     mdLines.push(`| ${item.templateId} | ${item.seed} | ${item.inputType} | ${cue} | ${prompt} |`);
   }
 
-  const redactedMdPath = path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory-redacted.md');
+  const redactedMdPath = path.join(REPORTS_DIR, `${outPrefix}-render-inventory-redacted.md`);
   await fs.writeFile(redactedMdPath, mdLines.join('\n') + '\n', 'utf8');
 
   return { jsonPath, fullMdPath, redactedMdPath };
@@ -283,10 +284,18 @@ function formatVisibleOptionsSummary(visibleOptions) {
 }
 
 async function main() {
-  const inventory = buildRenderInventory();
-  const paths = await writeReports(inventory);
+  const { values } = parseArgs({
+    options: {
+      'out-prefix': { type: 'string', default: 'grammar-qg-p10' },
+    },
+    strict: false,
+  });
+  const outPrefix = values['out-prefix'];
 
-  console.log('Grammar QG P10 Render Inventory generated (enriched U6):');
+  const inventory = buildRenderInventory();
+  const paths = await writeReports(inventory, outPrefix);
+
+  console.log(`Grammar Render Inventory generated (prefix: ${outPrefix}):`);
   console.log(`  Total items: ${inventory.metadata.totalItems}`);
   console.log(`  Templates: ${inventory.metadata.templateCount}`);
   console.log(`  Seed range: ${inventory.metadata.seedRange}`);
