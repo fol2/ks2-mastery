@@ -88,7 +88,7 @@ No intentional visual changes were approved in P3. All migrations preserve exist
 
 **Node version**: v25.7.0 (Windows 11, x64)
 
-**Run summary**: 115 P3-specific tests pass across 11 test files. Full suite (including pre-existing tests) runs without regression.
+**Run summary**: 116 P3-specific tests pass across 9 test files. Full suite (including pre-existing tests) runs without regression.
 
 New test files created across P3:
 
@@ -116,7 +116,7 @@ New test files created across P3:
 
 ## Inline-Style Budget
 
-- POST_MIGRATION_TOTAL: **245** sites (down from 439 pre-migration)
+- POST_MIGRATION_TOTAL: **254** sites (P3 added 9 classified sites: ActionRow 3, PracticeStage 1, AdminVisualEngineSection 5. Owner-approved exception.)
 - 194 sites migrated across P2-P3
 
 ---
@@ -158,7 +158,7 @@ The following are explicitly NOT claimed by this report:
 
 - Design system completeness — NOT claimed. P3 ships 5 new primitives; the full design system remains in progress.
 - Full button migration — NOT claimed. Session/summary/setup/home scenes are migrated; practice surfaces and modals retain legacy `.btn` patterns.
-- Total inline style removal — NOT claimed. 245 inline-style sites remain (down from 439).
+- Total inline style removal — NOT claimed. 254 inline-style sites remain (down from 448 pre-P3).
 - Production verification — NOT claimed. All evidence is source-level; production verification requires human deployment.
 - Hero Mode economy readiness — NOT claimed. P3 touches UI primitives only; Hero Mode economy is a separate workstream.
 - Future subject implementation — NOT claimed. Integration points are declared and accept arbitrary `subjectId` values; no future subject content exists.

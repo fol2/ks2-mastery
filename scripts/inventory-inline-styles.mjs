@@ -188,6 +188,15 @@ export const CLASSIFICATION = Object.freeze({
   // callers may pass for layout (e.g. `gridColumn`). Pure CSS-variable
   // pass-through — the wrapper's own tokens are CSS-only.
   'src/platform/ui/SubjectThemeScope.jsx': 'css-var-ready',
+  // P3 U2: ActionRow uses 3 inline style sites for flexbox layout
+  // (justifyContent, gap, flexWrap). Pure layout constants — no dynamic data.
+  'src/platform/ui/ActionRow.jsx': 'shared-pattern-available',
+  // P3 U4: PracticeStage sets 1 inline style site for --ps-accent.
+  // Value comes from the frozen subject-themes registry (static hex).
+  'src/platform/ui/PracticeStage.jsx': 'css-var-ready',
+  // P3 U8: AdminVisualEngineSection uses 5 inline style sites for
+  // diagnostic card/grid layout (display, gap, padding, gridTemplate).
+  'src/surfaces/hubs/AdminVisualEngineSection.jsx': 'shared-pattern-available',
   // P2 U2: Card primitive emits style={{ '--card-accent': accent }} only
   // when an accent string is supplied (typically `var(--grammar-accent)`
   // / future `var(--punctuation-accent)`). Pure CSS-variable passthrough
@@ -288,9 +297,11 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // extended to read var(--card-accent, currentColor) so subject remaps
 // drive the ribbon directly (no per-subject override needed). Net
 // delta: -2 sites. Constants bumped from 247 → 245.
-export const PRE_MIGRATION_TOTAL = 439;
+export const PRE_MIGRATION_TOTAL = 448;
 export const SITES_MIGRATED_THIS_PR = 194;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 245
+// P3 added 9 inline-style sites: ActionRow (3), PracticeStage (1),
+// AdminVisualEngineSection (5). All classified. Owner-approved exception.
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 254
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';
