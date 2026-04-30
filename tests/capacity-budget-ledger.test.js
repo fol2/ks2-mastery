@@ -13,6 +13,9 @@ import {
   renderBudgetLedgerMarkdown,
   runCapacityBudgetLedger,
 } from '../scripts/build-capacity-budget-ledger.mjs';
+import {
+  buildRouteCostEvidence,
+} from '../scripts/plan-route-cost-diagnostic.mjs';
 
 const FIXTURE_DIR = new URL('./fixtures/capacity-budget-ledger/', import.meta.url);
 
@@ -70,6 +73,129 @@ test('budget ledger keeps missing CPU joins unknown without losing request and D
   assert.equal(model.totals.dynamicRequestsPerDay > 0, true);
   assert.equal(model.totals.d1RowsReadPerDay > 0, true);
   assert.equal(model.warnings.includes('missing-measured-parent-admin-route-cost'), true);
+});
+
+test('budget ledger consumes route-cost evidence and tail-correlation CPU coverage', () => {
+  const routeCosts = buildRouteCostEvidence({
+    budget: {
+      routeCosts: [
+        {
+          route: 'POST /api/demo/session',
+          count: 2,
+          queryCountP95: 4,
+          d1RowsReadP95: 5,
+          d1RowsWrittenP95: 1,
+          responseBytesP95: 155,
+        },
+        {
+          route: 'POST /api/subjects/grammar/command',
+          count: 6,
+          queryCountP95: 22,
+          d1RowsReadP95: 499,
+          d1RowsWrittenP95: 32,
+          responseBytesP95: 29596,
+        },
+      ],
+    },
+    tailCorrelations: [{
+      path: 'reports/capacity/evidence/p5-tail-correlation.json',
+      data: {
+        kind: 'capacity-worker-log-correlation',
+        redaction: { rawRequestIdsPersisted: false },
+        diagnostics: {
+          workerLogJoin: {
+            samples: [{
+              endpoint: '/api/bootstrap',
+              method: 'GET',
+              app: { wallMs: 700, responseBytes: 2500, queryCount: 11, d1RowsRead: 9, d1RowsWritten: 0 },
+              cloudflare: { cpuTimeMs: 6, wallTimeMs: 240 },
+              capacityRequest: { d1DurationMs: 180, queryCount: 11, d1RowsRead: 9, d1RowsWritten: 0, responseBytes: 2500 },
+            }],
+          },
+        },
+      },
+    }],
+    generatedAt: '2026-04-30T00:00:00.000Z',
+  });
+  const ledger = buildCapacityBudgetLedger({
+    evidenceFiles: [{ path: 'reports/capacity/evidence/p5-route-costs.json', data: routeCosts }],
+    learnerCounts: [1000],
+    generatedAt: '2026-04-30T00:00:00.000Z',
+  });
+  const expected = ledger.scenarios[0].modes.expected;
+
+  assert.equal(ledger.modellingOnly, true);
+  assert.equal(ledger.certifying, false);
+  assert.equal(ledger.routeFamilyCoverage.measured, 1);
+  assert.equal(ledger.routeFamilyCoverage.partial, 2);
+  assert.equal(ledger.routeFamilyCoverage.missing, 9);
+  assert.notEqual(expected.workerCpu.status, 'unknown');
+  assert.ok(ledger.routeFamilyCoverage.families.some((entry) => (
+    entry.routeFamily === 'full-bootstrap' && entry.routes.includes('GET /api/bootstrap')
+  )));
+  assert.ok(ledger.missingRouteCosts.some((entry) => entry.routeFamily === 'parent-summary-hub-read'));
+  assert.ok(ledger.missingRouteCosts.some((entry) => entry.routeFamily === 'hero-read-model'));
+});
+
+test('budget ledger keeps Hero command tail costs split by explicit command action', () => {
+  const ledger = buildCapacityBudgetLedger({
+    evidenceFiles: [{
+      path: 'reports/capacity/evidence/hero-tail-correlation.json',
+      data: {
+        kind: 'capacity-worker-log-correlation',
+        redaction: { rawRequestIdsPersisted: false },
+        diagnostics: {
+          workerLogJoin: {
+            samples: [
+              {
+                endpoint: '/api/hero/command',
+                method: 'POST',
+                app: { command: 'start-task', wallMs: 100, responseBytes: 500, queryCount: 6, d1RowsRead: 7, d1RowsWritten: 2 },
+                cloudflare: { cpuTimeMs: 4, wallTimeMs: 100 },
+                capacityRequest: { d1DurationMs: 25, queryCount: 6, d1RowsRead: 7, d1RowsWritten: 2, responseBytes: 500 },
+              },
+              {
+                endpoint: '/api/hero/command',
+                method: 'POST',
+                app: { command: 'claim-task', wallMs: 140, responseBytes: 600, queryCount: 8, d1RowsRead: 9, d1RowsWritten: 3 },
+                cloudflare: { cpuTimeMs: 5, wallTimeMs: 140 },
+                capacityRequest: { d1DurationMs: 30, queryCount: 8, d1RowsRead: 9, d1RowsWritten: 3, responseBytes: 600 },
+              },
+              {
+                endpoint: '/api/hero/command',
+                method: 'POST',
+                app: { command: 'unlock-monster', wallMs: 180, responseBytes: 700, queryCount: 10, d1RowsRead: 11, d1RowsWritten: 4 },
+                cloudflare: { cpuTimeMs: 6, wallTimeMs: 180 },
+                capacityRequest: { d1DurationMs: 35, queryCount: 10, d1RowsRead: 11, d1RowsWritten: 4, responseBytes: 700 },
+              },
+              {
+                endpoint: '/api/hero/command',
+                method: 'POST',
+                app: { wallMs: 999, responseBytes: 999, queryCount: 99, d1RowsRead: 99, d1RowsWritten: 99 },
+                cloudflare: { cpuTimeMs: 99, wallTimeMs: 999 },
+                capacityRequest: { d1DurationMs: 99, queryCount: 99, d1RowsRead: 99, d1RowsWritten: 99, responseBytes: 999 },
+              },
+            ],
+          },
+        },
+      },
+    }],
+    learnerCounts: [30],
+    generatedAt: '2026-04-30T00:00:00.000Z',
+  });
+
+  const heroCosts = ledger.routeCosts.filter((entry) => entry.route === 'POST /api/hero/command');
+  assert.deepEqual(
+    heroCosts
+      .map((entry) => [entry.routeFamily, entry.commandAction, entry.workerCpuMsP95])
+      .sort((left, right) => left[0].localeCompare(right[0])),
+    [
+      ['hero-command-camp', 'camp', 6],
+      ['hero-command-claim', 'claim', 5],
+      ['hero-command-start', 'start', 4],
+    ],
+  );
+  assert.equal(heroCosts.some((entry) => entry.workerCpuMsP95 === 99), false);
 });
 
 test('budget ledger refuses unsupported Cloudflare Free limit values', () => {

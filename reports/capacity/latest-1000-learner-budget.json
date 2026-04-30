@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "kind": "capacity-1000-learner-free-tier-budget-ledger",
-  "generatedAt": "2026-04-30T15:59:40.338Z",
+  "generatedAt": "2026-04-30T20:28:32.109Z",
   "modellingOnly": true,
   "certifying": false,
   "certification": {
@@ -24,25 +24,9 @@
   "redThresholdPercent": 80,
   "sources": [
     {
-      "path": "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
-      "evidenceKind": "capacity-run",
-      "finishedAt": "2026-04-30T02:42:49.614Z",
-      "inputCertifying": false,
-      "usedForCertification": false,
-      "modellingInputStatus": "non-certifying-modelling-input"
-    },
-    {
-      "path": "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r1.json",
-      "evidenceKind": "capacity-run",
-      "finishedAt": "2026-04-30T02:55:26.708Z",
-      "inputCertifying": false,
-      "usedForCertification": false,
-      "modellingInputStatus": "non-certifying-modelling-input"
-    },
-    {
-      "path": "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r2.json",
-      "evidenceKind": "capacity-run",
-      "finishedAt": "2026-04-30T03:08:07.687Z",
+      "path": "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+      "evidenceKind": "route-cost-diagnostic",
+      "finishedAt": "2026-04-30T20:25:58.997Z",
       "inputCertifying": false,
       "usedForCertification": false,
       "modellingInputStatus": "non-certifying-modelling-input"
@@ -50,17 +34,67 @@
   ],
   "routeCosts": [
     {
+      "route": "GET /api/admin/ops/production-evidence",
+      "phase": "parent-admin",
+      "routeFamily": "admin-production-evidence-overview",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
+      "workerCpuMsP50": null,
+      "workerCpuMsP95": null,
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    },
+    {
       "route": "GET /api/bootstrap",
       "phase": "bootstrap",
+      "routeFamily": "full-bootstrap",
+      "routeCostStatus": "measured",
+      "evidenceStatus": "diagnostic-only",
+      "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/evidence/2026-04-30-p3-t5-strict-r2-tail-correlation.json",
+        "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r1.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r2.json"
       ],
       "count": 50,
+      "wallMsP50": 710.2,
+      "wallMsP95": 719,
+      "wallMsMax": 719,
       "queryCountP50": 11,
       "queryCountP95": 11,
       "queryCountMax": 11,
+      "d1DurationMsP50": 164.50390000000002,
+      "d1DurationMsP95": 197.4371,
+      "d1DurationMsMax": 197.4371,
       "d1RowsReadP50": 9,
       "d1RowsReadP95": 9,
       "d1RowsReadMax": 9,
@@ -70,22 +104,148 @@
       "responseBytesP50": 2449,
       "responseBytesP95": 2449,
       "responseBytesMax": 2449,
+      "workerCpuMsP50": 13,
+      "workerCpuMsP95": 21,
+      "workerCpuMsMax": 21,
+      "workerWallMsP50": 282,
+      "workerWallMsP95": 354,
+      "workerWallMsMax": 354
+    },
+    {
+      "route": "GET /api/hero/read-model",
+      "phase": "hero",
+      "routeFamily": "hero-read-model",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
       "workerCpuMsP50": null,
       "workerCpuMsP95": null,
-      "workerCpuMsMax": null
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    },
+    {
+      "route": "GET /api/hubs/parent",
+      "phase": "parent-admin",
+      "routeFamily": "parent-summary-hub-read",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
+      "workerCpuMsP50": null,
+      "workerCpuMsP95": null,
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    },
+    {
+      "route": "POST /api/bootstrap",
+      "phase": "bootstrap",
+      "routeFamily": "not-modified-bootstrap",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
+      "workerCpuMsP50": null,
+      "workerCpuMsP95": null,
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
     },
     {
       "route": "POST /api/demo/session",
       "phase": "setup",
+      "routeFamily": "demo-session-setup",
+      "routeCostStatus": "partial",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r1.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r2.json"
       ],
       "count": 30,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
       "queryCountP50": null,
       "queryCountP95": null,
       "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
       "d1RowsReadP50": null,
       "d1RowsReadP95": null,
       "d1RowsReadMax": null,
@@ -97,20 +257,149 @@
       "responseBytesMax": 155,
       "workerCpuMsP50": null,
       "workerCpuMsP95": null,
-      "workerCpuMsMax": null
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    },
+    {
+      "route": "POST /api/hero/command",
+      "phase": "hero-command",
+      "routeFamily": "hero-command-start",
+      "commandAction": "start",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
+      "workerCpuMsP50": null,
+      "workerCpuMsP95": null,
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    },
+    {
+      "route": "POST /api/hero/command",
+      "phase": "hero-command",
+      "routeFamily": "hero-command-claim",
+      "commandAction": "claim",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
+      "workerCpuMsP50": null,
+      "workerCpuMsP95": null,
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    },
+    {
+      "route": "POST /api/hero/command",
+      "phase": "hero-command",
+      "routeFamily": "hero-command-camp",
+      "commandAction": "camp",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
+      "workerCpuMsP50": null,
+      "workerCpuMsP95": null,
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
     },
     {
       "route": "POST /api/subjects/grammar/command",
       "phase": "command",
+      "routeFamily": "grammar-command",
+      "routeCostStatus": "partial",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
       "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t1-strict.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r1.json",
         "reports\\capacity\\evidence\\2026-04-30-p3-t5-strict-r2.json"
       ],
       "count": 90,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
       "queryCountP50": 20,
       "queryCountP95": 22,
       "queryCountMax": 23,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
       "d1RowsReadP50": 21,
       "d1RowsReadP95": 499,
       "d1RowsReadMax": 2031,
@@ -122,7 +411,954 @@
       "responseBytesMax": 29597,
       "workerCpuMsP50": null,
       "workerCpuMsP95": null,
-      "workerCpuMsMax": null
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    },
+    {
+      "route": "POST /api/subjects/punctuation/command",
+      "phase": "command",
+      "routeFamily": "punctuation-command",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
+      "workerCpuMsP50": null,
+      "workerCpuMsP95": null,
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    },
+    {
+      "route": "POST /api/subjects/spelling/command",
+      "phase": "command",
+      "routeFamily": "spelling-command",
+      "routeCostStatus": "requires-production-operator",
+      "evidenceStatus": "modelling-only",
+      "redactionStatus": "redacted-aggregate",
+      "sourcePaths": [
+        "reports/capacity/evidence/2026-04-30-p5-route-costs.json",
+        "reports/capacity/latest-1000-learner-budget.json"
+      ],
+      "count": null,
+      "wallMsP50": null,
+      "wallMsP95": null,
+      "wallMsMax": null,
+      "queryCountP50": null,
+      "queryCountP95": null,
+      "queryCountMax": null,
+      "d1DurationMsP50": null,
+      "d1DurationMsP95": null,
+      "d1DurationMsMax": null,
+      "d1RowsReadP50": null,
+      "d1RowsReadP95": null,
+      "d1RowsReadMax": null,
+      "d1RowsWrittenP50": null,
+      "d1RowsWrittenP95": null,
+      "d1RowsWrittenMax": null,
+      "responseBytesP50": null,
+      "responseBytesP95": null,
+      "responseBytesMax": null,
+      "workerCpuMsP50": null,
+      "workerCpuMsP95": null,
+      "workerCpuMsMax": null,
+      "workerWallMsP50": null,
+      "workerWallMsP95": null,
+      "workerWallMsMax": null
+    }
+  ],
+  "routeFamilyCoverage": {
+    "required": 12,
+    "measured": 1,
+    "partial": 2,
+    "missing": 9,
+    "families": [
+      {
+        "routeFamily": "full-bootstrap",
+        "status": "measured",
+        "routes": [
+          "GET /api/bootstrap"
+        ],
+        "missingMetrics": [],
+        "evidenceStatuses": [
+          "diagnostic-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "not-modified-bootstrap",
+        "status": "blocked-or-missing",
+        "routes": [
+          "POST /api/bootstrap"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "demo-session-setup",
+        "status": "partial",
+        "routes": [
+          "POST /api/demo/session"
+        ],
+        "missingMetrics": [
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "spelling-command",
+        "status": "blocked-or-missing",
+        "routes": [
+          "POST /api/subjects/spelling/command"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "grammar-command",
+        "status": "partial",
+        "routes": [
+          "POST /api/subjects/grammar/command"
+        ],
+        "missingMetrics": [
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "punctuation-command",
+        "status": "blocked-or-missing",
+        "routes": [
+          "POST /api/subjects/punctuation/command"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "parent-summary-hub-read",
+        "status": "blocked-or-missing",
+        "routes": [
+          "GET /api/hubs/parent"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "admin-production-evidence-overview",
+        "status": "blocked-or-missing",
+        "routes": [
+          "GET /api/admin/ops/production-evidence"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "hero-read-model",
+        "status": "blocked-or-missing",
+        "routes": [
+          "GET /api/hero/read-model"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "hero-command-start",
+        "status": "blocked-or-missing",
+        "routes": [
+          "POST /api/hero/command"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "hero-command-claim",
+        "status": "blocked-or-missing",
+        "routes": [
+          "POST /api/hero/command"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      },
+      {
+        "routeFamily": "hero-command-camp",
+        "status": "blocked-or-missing",
+        "routes": [
+          "POST /api/hero/command"
+        ],
+        "missingMetrics": [
+          "count",
+          "wallMsP50",
+          "wallMsP95",
+          "wallMsMax",
+          "workerCpuMsP50",
+          "workerCpuMsP95",
+          "workerCpuMsMax",
+          "workerWallMsP50",
+          "workerWallMsP95",
+          "workerWallMsMax",
+          "d1DurationMsP50",
+          "d1DurationMsP95",
+          "d1DurationMsMax",
+          "queryCountP50",
+          "queryCountP95",
+          "queryCountMax",
+          "d1RowsReadP50",
+          "d1RowsReadP95",
+          "d1RowsReadMax",
+          "d1RowsWrittenP50",
+          "d1RowsWrittenP95",
+          "d1RowsWrittenMax",
+          "responseBytesP50",
+          "responseBytesP95",
+          "responseBytesMax"
+        ],
+        "evidenceStatuses": [
+          "modelling-only"
+        ],
+        "redactionStatuses": [
+          "redacted-aggregate"
+        ]
+      }
+    ]
+  },
+  "missingRouteCosts": [
+    {
+      "routeFamily": "not-modified-bootstrap",
+      "status": "blocked-or-missing",
+      "routes": [
+        "POST /api/bootstrap"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "demo-session-setup",
+      "status": "partial",
+      "routes": [
+        "POST /api/demo/session"
+      ],
+      "missingMetrics": [
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "spelling-command",
+      "status": "blocked-or-missing",
+      "routes": [
+        "POST /api/subjects/spelling/command"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "grammar-command",
+      "status": "partial",
+      "routes": [
+        "POST /api/subjects/grammar/command"
+      ],
+      "missingMetrics": [
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "punctuation-command",
+      "status": "blocked-or-missing",
+      "routes": [
+        "POST /api/subjects/punctuation/command"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "parent-summary-hub-read",
+      "status": "blocked-or-missing",
+      "routes": [
+        "GET /api/hubs/parent"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "admin-production-evidence-overview",
+      "status": "blocked-or-missing",
+      "routes": [
+        "GET /api/admin/ops/production-evidence"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "hero-read-model",
+      "status": "blocked-or-missing",
+      "routes": [
+        "GET /api/hero/read-model"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "hero-command-start",
+      "status": "blocked-or-missing",
+      "routes": [
+        "POST /api/hero/command"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "hero-command-claim",
+      "status": "blocked-or-missing",
+      "routes": [
+        "POST /api/hero/command"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
+    },
+    {
+      "routeFamily": "hero-command-camp",
+      "status": "blocked-or-missing",
+      "routes": [
+        "POST /api/hero/command"
+      ],
+      "missingMetrics": [
+        "count",
+        "wallMsP50",
+        "wallMsP95",
+        "wallMsMax",
+        "workerCpuMsP50",
+        "workerCpuMsP95",
+        "workerCpuMsMax",
+        "workerWallMsP50",
+        "workerWallMsP95",
+        "workerWallMsMax",
+        "d1DurationMsP50",
+        "d1DurationMsP95",
+        "d1DurationMsMax",
+        "queryCountP50",
+        "queryCountP95",
+        "queryCountMax",
+        "d1RowsReadP50",
+        "d1RowsReadP95",
+        "d1RowsReadMax",
+        "d1RowsWrittenP50",
+        "d1RowsWrittenP95",
+        "d1RowsWrittenMax",
+        "responseBytesP50",
+        "responseBytesP95",
+        "responseBytesMax"
+      ],
+      "evidenceStatuses": [
+        "modelling-only"
+      ],
+      "redactionStatuses": [
+        "redacted-aggregate"
+      ]
     }
   ],
   "scenarios": [
@@ -173,14 +1409,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 13,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 130,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -204,11 +1442,6 @@
               "quota": "d1RowsReadPerDay",
               "percent": 0.16,
               "status": "unknown"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -218,8 +1451,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -228,8 +1461,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -238,29 +1471,19 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
-          "phase2Recommendations": [
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
-            }
-          ]
+          "warnings": [],
+          "phase2Recommendations": []
         },
         "expected": {
           "learners": 30,
@@ -306,14 +1529,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -337,11 +1562,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 1.08,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -351,8 +1571,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -361,8 +1581,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -371,29 +1591,19 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
-          "phase2Recommendations": [
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
-            }
-          ]
+          "warnings": [],
+          "phase2Recommendations": []
         },
         "pessimistic": {
           "learners": 30,
@@ -439,14 +1649,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -470,11 +1682,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 2.58,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -484,8 +1691,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -494,8 +1701,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -504,20 +1711,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "statement-map-backed query-plan read reduction",
@@ -534,13 +1739,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         }
@@ -593,14 +1791,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 13,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 130,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -624,11 +1824,6 @@
               "quota": "d1RowsReadPerDay",
               "percent": 0.32,
               "status": "unknown"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -638,8 +1833,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -648,8 +1843,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -658,29 +1853,19 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
-          "phase2Recommendations": [
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
-            }
-          ]
+          "warnings": [],
+          "phase2Recommendations": []
         },
         "expected": {
           "learners": 60,
@@ -726,14 +1911,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -757,11 +1944,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 2.16,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -771,8 +1953,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -781,8 +1963,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -791,29 +1973,19 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
-          "phase2Recommendations": [
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
-            }
-          ]
+          "warnings": [],
+          "phase2Recommendations": []
         },
         "pessimistic": {
           "learners": 60,
@@ -859,14 +2031,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -890,11 +2064,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 5.15,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -904,8 +2073,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -914,8 +2083,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -924,20 +2093,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "statement-map-backed query-plan read reduction",
@@ -954,13 +2121,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         }
@@ -1013,14 +2173,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 13,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 130,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -1044,11 +2206,6 @@
               "quota": "d1RowsReadPerDay",
               "percent": 0.54,
               "status": "unknown"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -1058,8 +2215,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -1068,8 +2225,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -1078,29 +2235,19 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
-          "phase2Recommendations": [
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
-            }
-          ]
+          "warnings": [],
+          "phase2Recommendations": []
         },
         "expected": {
           "learners": 100,
@@ -1146,14 +2293,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -1177,11 +2326,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 3.6,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -1191,8 +2335,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -1201,8 +2345,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -1211,20 +2355,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "write-amplification review before new indexes",
@@ -1232,13 +2374,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         },
@@ -1286,14 +2421,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -1317,11 +2454,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 8.59,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -1331,8 +2463,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -1341,8 +2473,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -1351,20 +2483,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "statement-map-backed query-plan read reduction",
@@ -1381,13 +2511,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         }
@@ -1440,14 +2563,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 13,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 130,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -1471,11 +2596,6 @@
               "quota": "d1RowsReadPerDay",
               "percent": 1.62,
               "status": "unknown"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -1485,8 +2605,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -1495,8 +2615,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -1505,29 +2625,19 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
-          "phase2Recommendations": [
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
-            }
-          ]
+          "warnings": [],
+          "phase2Recommendations": []
         },
         "expected": {
           "learners": 300,
@@ -1573,14 +2683,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -1604,11 +2716,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 10.8,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -1618,8 +2725,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -1628,8 +2735,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -1638,20 +2745,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "statement-map-backed query-plan read reduction",
@@ -1668,13 +2773,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         },
@@ -1722,14 +2820,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -1753,11 +2853,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 25.76,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -1767,8 +2862,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -1777,8 +2872,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -1787,20 +2882,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "statement-map-backed query-plan read reduction",
@@ -1817,13 +2910,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         }
@@ -1876,14 +2962,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 13,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 130,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -1907,11 +2995,6 @@
               "quota": "d1RowsReadPerDay",
               "percent": 5.4,
               "status": "unknown"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -1921,8 +3004,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -1931,8 +3014,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -1941,20 +3024,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "write-amplification review before new indexes",
@@ -1962,13 +3043,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         },
@@ -2016,14 +3090,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -2047,11 +3123,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 36.02,
               "status": "green"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -2061,8 +3132,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -2071,8 +3142,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -2081,20 +3152,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "statement-map-backed query-plan read reduction",
@@ -2111,13 +3180,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         },
@@ -2165,14 +3227,16 @@
             }
           },
           "workerCpu": {
-            "status": "unknown",
-            "reason": "missing-worker-cpu-join",
-            "maxWorkerCpuMs": null,
+            "status": "red",
+            "reason": "partial-worker-cpu-join",
+            "maxWorkerCpuMs": 21,
+            "maxRoute": "GET /api/bootstrap",
+            "limitMs": 10,
+            "percentOfLimit": 210,
             "routesMissingCpu": [
-              "GET /api/bootstrap",
+              "GET /api/admin/ops/production-evidence",
               "POST /api/demo/session",
-              "POST /api/subjects/grammar/command",
-              "parent-admin"
+              "POST /api/subjects/grammar/command"
             ]
           },
           "d1Invocation": {
@@ -2196,11 +3260,6 @@
               "quota": "dynamicRequestsPerDay",
               "percent": 85.88,
               "status": "red"
-            },
-            {
-              "quota": "workerCpuMsPerInvocation",
-              "percent": null,
-              "status": "unknown"
             }
           ],
           "metricGaps": {
@@ -2210,8 +3269,8 @@
                 "reason": "missing-query-count"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-query-count"
               }
             ],
             "d1RowsRead": [
@@ -2220,8 +3279,8 @@
                 "reason": "missing-d1-rows-read"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-read"
               }
             ],
             "d1RowsWritten": [
@@ -2230,20 +3289,18 @@
                 "reason": "missing-d1-rows-written"
               },
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-d1-rows-written"
               }
             ],
             "responseBytes": [
               {
-                "route": "parent-admin",
-                "reason": "missing-route-cost"
+                "route": "GET /api/admin/ops/production-evidence",
+                "reason": "missing-response-bytes"
               }
             ]
           },
-          "warnings": [
-            "missing-measured-parent-admin-route-cost"
-          ],
+          "warnings": [],
           "phase2Recommendations": [
             {
               "path": "statement-map-backed query-plan read reduction",
@@ -2268,13 +3325,6 @@
                 "D1 rows written/day"
               ],
               "triggeredBy": "d1RowsWrittenPerDay"
-            },
-            {
-              "path": "complete Worker CPU join before CPU optimisation",
-              "protects": [
-                "Worker CPU ms/invocation attribution"
-              ],
-              "triggeredBy": "missing-worker-cpu-join"
             }
           ]
         }

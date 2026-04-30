@@ -3,6 +3,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import {
+  REQUIRED_ROUTE_COST_METRICS,
+  REQUIRED_ROUTE_FAMILIES,
+} from './plan-route-cost-diagnostic.mjs';
+
 export const DEFAULT_BUDGET_LEDGER_JSON_PATH = path.join(
   'reports',
   'capacity',
@@ -53,6 +58,16 @@ const MODE_ASSUMPTIONS = Object.freeze({
   },
 });
 
+const HERO_COMMAND_ACTIONS = Object.freeze({
+  'start-task': 'start',
+  start: 'start',
+  'claim-task': 'claim',
+  claim: 'claim',
+  'unlock-monster': 'camp',
+  'evolve-monster': 'camp',
+  camp: 'camp',
+});
+
 function finiteOrNull(value) {
   if (value == null || value === '' || typeof value === 'boolean') return null;
   const n = Number(value);
@@ -66,6 +81,34 @@ function round(value, digits = 2) {
   return Math.round(n * factor) / factor;
 }
 
+function percentile(values, percentileValue) {
+  const finite = values.map((value) => Number(value)).filter(Number.isFinite).sort((left, right) => left - right);
+  if (!finite.length) return null;
+  const index = Math.min(finite.length - 1, Math.ceil((percentileValue / 100) * finite.length) - 1);
+  return finite[index];
+}
+
+function normaliseHeroCommandAction(action) {
+  if (!action || typeof action !== 'string') return '';
+  return HERO_COMMAND_ACTIONS[action] || '';
+}
+
+function commandActionFromSample(sample = {}) {
+  return normaliseHeroCommandAction(
+    sample.commandAction
+      || sample.command
+      || sample.app?.commandAction
+      || sample.app?.command
+      || sample.capacityRequest?.commandAction
+      || sample.capacityRequest?.command
+      || sample.request?.commandAction
+      || sample.request?.command
+      || sample.request?.body?.command
+      || sample.body?.command
+      || sample.payload?.command,
+  );
+}
+
 function classifyRoute(route = '', metrics = {}) {
   if (metrics.phase) return String(metrics.phase);
   if (/\/api\/bootstrap\b/.test(route)) return 'bootstrap';
@@ -73,6 +116,24 @@ function classifyRoute(route = '', metrics = {}) {
   if (/\/api\/demo\/session\b/.test(route)) return 'setup';
   if (/\/api\/admin\b|\/api\/parent\b/.test(route)) return 'parent-admin';
   return 'other';
+}
+
+function routeFamilyForRoute(route = '', metrics = {}) {
+  if (metrics.routeFamily) return String(metrics.routeFamily);
+  if (/^GET\s+\/api\/bootstrap\b/.test(route)) return 'full-bootstrap';
+  if (/^POST\s+\/api\/bootstrap\b/.test(route)) return 'not-modified-bootstrap';
+  if (/^POST\s+\/api\/demo\/session\b/.test(route)) return 'demo-session-setup';
+  if (/^POST\s+\/api\/subjects\/spelling\/command\b/.test(route)) return 'spelling-command';
+  if (/^POST\s+\/api\/subjects\/grammar\/command\b/.test(route)) return 'grammar-command';
+  if (/^POST\s+\/api\/subjects\/punctuation\/command\b/.test(route)) return 'punctuation-command';
+  if (/^GET\s+\/api\/hubs\/parent\b/.test(route)) return 'parent-summary-hub-read';
+  if (/^GET\s+\/api\/admin\/ops\/production-evidence\b/.test(route)) return 'admin-production-evidence-overview';
+  if (/^GET\s+\/api\/hero\/read-model\b/.test(route)) return 'hero-read-model';
+  if (/^POST\s+\/api\/hero\/command\b/.test(route)) {
+    const commandAction = normaliseHeroCommandAction(metrics.commandAction || metrics.command);
+    return commandAction ? `hero-command-${commandAction}` : 'unknown';
+  }
+  return 'unknown';
 }
 
 function validateLimits(limits = CLOUDFLARE_FREE_LIMITS) {
@@ -105,12 +166,32 @@ function evidenceTime(data = {}) {
 
 function evidenceKind(data = {}) {
   if (data?.evidenceKind) return String(data.evidenceKind);
+  if (data?.kind === 'capacity-route-cost-diagnostic') return 'route-cost-diagnostic';
+  if (data?.kind === 'capacity-worker-log-correlation') return 'worker-log-correlation';
   if (data?.dryRun) return 'dry-run';
   if (data?.setupFailure || data?.metrics === null) return 'preflight';
   return 'capacity-run';
 }
 
 function routeEntriesFromEvidence(data = {}) {
+  if (data?.kind === 'capacity-route-cost-diagnostic' && Array.isArray(data.routeFamilies)) {
+    return data.routeFamilies.map((entry) => [
+      entry.route || `${entry.method || 'GET'} ${entry.endpoint || 'unknown'}`,
+      {
+        ...(entry.metrics || {}),
+        phase: entry.broadPhase || entry.phase,
+        routeFamily: entry.routeFamily,
+        commandAction: entry.commandAction,
+        routeCostStatus: entry.status,
+        evidenceStatus: entry.evidenceStatus,
+        redactionStatus: entry.redactionStatus,
+        sourcePaths: entry.sourcePaths,
+      },
+    ]);
+  }
+  if (data?.kind === 'capacity-worker-log-correlation') {
+    return routeEntriesFromWorkerLogCorrelation(data);
+  }
   if (Array.isArray(data.routeSummaries)) {
     return data.routeSummaries.map((entry) => [entry.route || entry.endpoint || 'unknown', entry]);
   }
@@ -120,6 +201,58 @@ function routeEntriesFromEvidence(data = {}) {
   const endpoints = data?.summary?.endpoints || data?.endpoints || null;
   if (endpoints && typeof endpoints === 'object') return Object.entries(endpoints);
   return [];
+}
+
+function routeEntriesFromWorkerLogCorrelation(data = {}) {
+  const samples = data?.diagnostics?.workerLogJoin?.samples || [];
+  const byRouteFamily = new Map();
+  for (const sample of samples) {
+    const method = String(sample.method || 'GET').toUpperCase();
+    const endpoint = sample.endpoint || '/api/bootstrap';
+    const route = `${method} ${endpoint}`;
+    const commandAction = commandActionFromSample(sample);
+    const routeFamily = routeFamilyForRoute(route, { commandAction });
+    if (routeFamily === 'unknown') continue;
+    const bucketKey = `${routeFamily}\u0000${route}`;
+    const bucket = byRouteFamily.get(bucketKey) || { route, routeFamily, commandAction, samples: [] };
+    bucket.samples.push(sample);
+    byRouteFamily.set(bucketKey, bucket);
+  }
+  return [...byRouteFamily.values()].map(({ route, routeFamily, commandAction, samples: routeSamples }) => [
+    route,
+    {
+      phase: classifyRoute(route),
+      routeFamily,
+      ...(commandAction ? { commandAction } : {}),
+      count: routeSamples.length,
+      wallMsP50: percentile(routeSamples.map((sample) => sample.app?.wallMs), 50),
+      wallMsP95: percentile(routeSamples.map((sample) => sample.app?.wallMs), 95),
+      wallMsMax: percentile(routeSamples.map((sample) => sample.app?.wallMs), 100),
+      workerCpuMsP50: percentile(routeSamples.map((sample) => sample.cloudflare?.cpuTimeMs), 50),
+      workerCpuMsP95: percentile(routeSamples.map((sample) => sample.cloudflare?.cpuTimeMs), 95),
+      workerCpuMsMax: percentile(routeSamples.map((sample) => sample.cloudflare?.cpuTimeMs), 100),
+      workerWallMsP50: percentile(routeSamples.map((sample) => sample.cloudflare?.wallTimeMs), 50),
+      workerWallMsP95: percentile(routeSamples.map((sample) => sample.cloudflare?.wallTimeMs), 95),
+      workerWallMsMax: percentile(routeSamples.map((sample) => sample.cloudflare?.wallTimeMs), 100),
+      d1DurationMsP50: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1DurationMs), 50),
+      d1DurationMsP95: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1DurationMs), 95),
+      d1DurationMsMax: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1DurationMs), 100),
+      queryCountP50: percentile(routeSamples.map((sample) => sample.capacityRequest?.queryCount ?? sample.app?.queryCount), 50),
+      queryCountP95: percentile(routeSamples.map((sample) => sample.capacityRequest?.queryCount ?? sample.app?.queryCount), 95),
+      queryCountMax: percentile(routeSamples.map((sample) => sample.capacityRequest?.queryCount ?? sample.app?.queryCount), 100),
+      d1RowsReadP50: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1RowsRead ?? sample.app?.d1RowsRead), 50),
+      d1RowsReadP95: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1RowsRead ?? sample.app?.d1RowsRead), 95),
+      d1RowsReadMax: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1RowsRead ?? sample.app?.d1RowsRead), 100),
+      d1RowsWrittenP50: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1RowsWritten ?? sample.app?.d1RowsWritten), 50),
+      d1RowsWrittenP95: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1RowsWritten ?? sample.app?.d1RowsWritten), 95),
+      d1RowsWrittenMax: percentile(routeSamples.map((sample) => sample.capacityRequest?.d1RowsWritten ?? sample.app?.d1RowsWritten), 100),
+      responseBytesP50: percentile(routeSamples.map((sample) => sample.capacityRequest?.responseBytes ?? sample.app?.responseBytes), 50),
+      responseBytesP95: percentile(routeSamples.map((sample) => sample.capacityRequest?.responseBytes ?? sample.app?.responseBytes), 95),
+      responseBytesMax: percentile(routeSamples.map((sample) => sample.capacityRequest?.responseBytes ?? sample.app?.responseBytes), 100),
+      evidenceStatus: 'diagnostic-only',
+      redactionStatus: data?.redaction?.rawRequestIdsPersisted === false ? 'redacted-aggregate' : 'unknown',
+    },
+  ]);
 }
 
 function metricValue(metrics = {}, names = []) {
@@ -132,14 +265,27 @@ function metricValue(metrics = {}, names = []) {
 
 function normaliseRouteCost(route, metrics = {}, sourcePath = null) {
   const phase = classifyRoute(route, metrics);
+  const routeFamily = routeFamilyForRoute(route, metrics);
+  const commandAction = normaliseHeroCommandAction(metrics.commandAction || metrics.command);
   return {
     route,
     phase,
-    sourcePaths: sourcePath ? [sourcePath] : [],
+    routeFamily,
+    ...(commandAction ? { commandAction } : {}),
+    routeCostStatus: metrics.routeCostStatus || 'measured',
+    evidenceStatus: metrics.evidenceStatus || null,
+    redactionStatus: metrics.redactionStatus || null,
+    sourcePaths: [...new Set([sourcePath, ...(Array.isArray(metrics.sourcePaths) ? metrics.sourcePaths : [])].filter(Boolean))],
     count: finiteOrNull(metrics.count),
+    wallMsP50: metricValue(metrics, ['wallMsP50', 'p50WallMs']),
+    wallMsP95: metricValue(metrics, ['wallMsP95', 'p95WallMs']),
+    wallMsMax: metricValue(metrics, ['wallMsMax', 'maxWallMs']),
     queryCountP50: metricValue(metrics, ['queryCountP50', 'queriesP50']),
     queryCountP95: metricValue(metrics, ['queryCountP95', 'queriesP95', 'queryCount']),
     queryCountMax: metricValue(metrics, ['queryCountMax', 'queryCount']),
+    d1DurationMsP50: metricValue(metrics, ['d1DurationMsP50', 'd1MsP50']),
+    d1DurationMsP95: metricValue(metrics, ['d1DurationMsP95', 'd1MsP95', 'd1DurationMs']),
+    d1DurationMsMax: metricValue(metrics, ['d1DurationMsMax', 'd1MsMax', 'd1DurationMs']),
     d1RowsReadP50: metricValue(metrics, ['d1RowsReadP50', 'rowsReadP50']),
     d1RowsReadP95: metricValue(metrics, ['d1RowsReadP95', 'rowsReadP95', 'd1RowsRead']),
     d1RowsReadMax: metricValue(metrics, ['d1RowsReadMax', 'rowsReadMax', 'd1RowsRead']),
@@ -152,6 +298,9 @@ function normaliseRouteCost(route, metrics = {}, sourcePath = null) {
     workerCpuMsP50: metricValue(metrics, ['workerCpuMsP50', 'cpuMsP50', 'cloudflareCpuMsP50']),
     workerCpuMsP95: metricValue(metrics, ['workerCpuMsP95', 'cpuMsP95', 'cloudflareCpuMsP95', 'workerCpuMs']),
     workerCpuMsMax: metricValue(metrics, ['workerCpuMsMax', 'cpuMsMax', 'cloudflareCpuMsMax', 'workerCpuMs']),
+    workerWallMsP50: metricValue(metrics, ['workerWallMsP50', 'workerWallP50', 'cloudflareWallMsP50']),
+    workerWallMsP95: metricValue(metrics, ['workerWallMsP95', 'workerWallP95', 'cloudflareWallMsP95', 'workerWallMs']),
+    workerWallMsMax: metricValue(metrics, ['workerWallMsMax', 'workerWallMax', 'cloudflareWallMsMax', 'workerWallMs']),
   };
 }
 
@@ -166,23 +315,65 @@ function mergeMetric(left, right, key) {
 function mergeRouteCosts(costs = []) {
   const byRoute = new Map();
   for (const cost of costs) {
-    const existing = byRoute.get(cost.route);
+    const mergeKey = `${cost.routeFamily || 'unknown'}\u0000${cost.route}`;
+    const existing = byRoute.get(mergeKey);
     if (!existing) {
-      byRoute.set(cost.route, { ...cost, sourcePaths: [...cost.sourcePaths] });
+      byRoute.set(mergeKey, { ...cost, sourcePaths: [...cost.sourcePaths] });
       continue;
     }
     const merged = { ...existing };
     for (const key of Object.keys(cost)) {
-      if (key === 'route' || key === 'phase') continue;
+      if (['route', 'phase', 'routeFamily', 'routeCostStatus', 'evidenceStatus', 'redactionStatus'].includes(key)) continue;
       if (key === 'sourcePaths') {
         merged.sourcePaths = [...new Set([...merged.sourcePaths, ...cost.sourcePaths])].sort();
       } else {
         merged[key] = mergeMetric(existing, cost, key);
       }
     }
-    byRoute.set(cost.route, merged);
+    byRoute.set(mergeKey, merged);
   }
   return [...byRoute.values()].sort((left, right) => left.route.localeCompare(right.route));
+}
+
+function buildRouteFamilyCoverage(routeCosts = []) {
+  const byFamily = new Map();
+  for (const cost of routeCosts) {
+    if (!byFamily.has(cost.routeFamily)) byFamily.set(cost.routeFamily, []);
+    byFamily.get(cost.routeFamily).push(cost);
+  }
+  const families = REQUIRED_ROUTE_FAMILIES.map((family) => {
+    const matches = byFamily.get(family.id) || [];
+    if (!matches.length) {
+      return {
+        routeFamily: family.id,
+        status: 'missing-route',
+        routes: [],
+        missingMetrics: [...REQUIRED_ROUTE_COST_METRICS],
+      };
+    }
+    const missingMetrics = REQUIRED_ROUTE_COST_METRICS.filter((metric) => (
+      !matches.some((cost) => finiteOrNull(cost[metric]) !== null)
+    ));
+    const hasAnyMetric = matches.some((cost) => (
+      REQUIRED_ROUTE_COST_METRICS.some((metric) => finiteOrNull(cost[metric]) !== null)
+    ));
+    const hasPartialStatus = matches.some((cost) => cost.routeCostStatus === 'partial');
+    return {
+      routeFamily: family.id,
+      status: !missingMetrics.length ? 'measured' : (hasAnyMetric || hasPartialStatus ? 'partial' : 'blocked-or-missing'),
+      routes: matches.map((cost) => cost.route),
+      missingMetrics,
+      evidenceStatuses: [...new Set(matches.map((cost) => cost.evidenceStatus).filter(Boolean))].sort(),
+      redactionStatuses: [...new Set(matches.map((cost) => cost.redactionStatus).filter(Boolean))].sort(),
+    };
+  });
+  return {
+    required: REQUIRED_ROUTE_FAMILIES.length,
+    measured: families.filter((family) => family.status === 'measured').length,
+    partial: families.filter((family) => family.status === 'partial').length,
+    missing: families.filter((family) => family.status === 'missing-route' || family.status === 'blocked-or-missing').length,
+    families,
+  };
 }
 
 export function extractMeasuredRouteCosts(evidenceFiles = []) {
@@ -477,6 +668,7 @@ export function buildCapacityBudgetLedger({
   validateLimits(limits);
   const { sources, routeCosts } = extractMeasuredRouteCosts(evidenceFiles);
   if (!routeCosts.length) throw new Error('No measured route summaries found in budget ledger inputs');
+  const routeFamilyCoverage = buildRouteFamilyCoverage(routeCosts);
 
   const scenarios = learnerCounts.map((learners) => ({
     learners,
@@ -504,6 +696,10 @@ export function buildCapacityBudgetLedger({
     redThresholdPercent: 80,
     sources,
     routeCosts,
+    routeFamilyCoverage,
+    missingRouteCosts: routeFamilyCoverage.families.filter((family) => (
+      family.status !== 'measured'
+    )),
     scenarios,
   };
 }
@@ -572,6 +768,18 @@ export function renderBudgetLedgerMarkdown(ledger) {
         lines.push(`| ${scenario.learners} | ${mode} | ${recommendation.path} | ${recommendation.protects.join(', ')} | ${recommendation.triggeredBy} |`);
       }
     }
+  }
+
+  lines.push(
+    '',
+    '## Required Route-Family Coverage',
+    '',
+    '| Route family | Status | Routes | Missing metrics |',
+    '| --- | --- | --- | --- |',
+  );
+
+  for (const family of ledger.routeFamilyCoverage.families) {
+    lines.push(`| ${family.routeFamily} | ${family.status} | ${family.routes.length ? family.routes.join(', ') : 'none'} | ${family.missingMetrics.length ? family.missingMetrics.join(', ') : 'none'} |`);
   }
 
   lines.push(
