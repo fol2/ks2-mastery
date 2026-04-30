@@ -32,7 +32,8 @@ const FACET_LABELS = Object.freeze({
  * 2. speech_punctuation — punctuation outside closing speech mark
  * 3. reporting_clause — missing comma between reporting clause and speech
  * 4. reporting_clause_words — changed the reporting clause
- * 5. preservation — changed the spoken words
+ * 5. content_preservation — extra or changed words in the answer
+ * 6. preservation — changed the spoken words
  * Returns null if all facets pass (or none are present).
  */
 function speechFailureNote(facets) {

@@ -118,6 +118,19 @@ test('sp_fix_question + "in class" → reject (speech misconception)', () => {
   assert.equal(facetById(result, 'content_preservation')?.ok, false);
 });
 
+// ─── Word-removal: truncated answers must reject ───────────────────────────────
+
+test('lc_insert_supplies with "glue" removed → reject', () => {
+  const testItem = item('lc_insert_supplies');
+  assert.ok(testItem, 'item lc_insert_supplies must exist');
+  // Submit answer with one content word ("glue") removed from the stem
+  const result = markPunctuationAnswer({
+    item: testItem,
+    answer: { typed: 'We needed pencils, rulers and.' },
+  });
+  assert.equal(result.correct, false, 'Removing a content word must reject');
+});
+
 // ─── Regression: model answers still mark correct ────────────────────────────
 
 test('lc_insert_supplies model answer marks correct', () => {
@@ -212,12 +225,16 @@ test('generated speech-insert item + "today" rejects', () => {
   const correct = markPunctuationAnswer({ item: genItem, answer: { typed: genItem.model } });
   assert.equal(correct.correct, true, `Model answer should pass: ${genItem.model}`);
 
-  // With "today" appended (short tail) should reject
+  // With "today" appended AFTER the closing quote (short tail) should reject
+  // e.g. 'Maya asked, "Can we start now?"' → 'Maya asked, "Can we start now?" today.'
+  const badAnswer = genItem.model.replace(/\.?$/, '') + ' today.';
   const withTail = markPunctuationAnswer({
     item: genItem,
-    answer: { typed: genItem.model.replace(/[.!?]"?'?$/, ' today.') },
+    answer: { typed: badAnswer },
   });
-  assert.equal(withTail.correct, false, 'Extra "today" should reject for gen speech-insert');
+  assert.equal(withTail.correct, false, `Extra "today" should reject for gen speech-insert: ${badAnswer}`);
+  assert.equal(facetById(withTail, 'content_preservation')?.ok, false,
+    'content_preservation facet must be present and false');
 });
 
 // ─── Guard: at least one generated case inspected ────────────────────────────
