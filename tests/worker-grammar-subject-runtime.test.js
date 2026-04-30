@@ -245,6 +245,19 @@ test('Grammar command route persists subject state, practice session, and events
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM practice_sessions WHERE subject_id = 'grammar'").get().count, 1);
   assert.equal(DB.db.prepare("SELECT COUNT(*) AS count FROM event_log WHERE subject_id = 'grammar' AND event_type = 'grammar.answer-submitted'").get().count, 1);
 
+  const summary = await postCommand(app, DB, {
+    command: 'continue-session',
+    learnerId: 'learner-a',
+    requestId: 'grammar-summary-redaction',
+    expectedLearnerRevision: 2,
+    payload: {},
+  });
+  assert.equal(summary.response.status, 200, JSON.stringify(summary.body));
+  assert.equal(summary.body.subjectReadModel.phase, 'summary');
+  assert.equal(summary.body.subjectReadModel.summary.answered, 1);
+  assert.equal(Object.prototype.hasOwnProperty.call(summary.body.subjectReadModel.summary, 'sessionId'), false);
+  assert.equal(summary.body.domainEvents.some((event) => event.type === 'grammar.session-completed'), true);
+
   DB.close();
 });
 
@@ -511,6 +524,7 @@ test('Grammar command route runs strict mini-test save, navigation, and finish c
   assert.equal(finish.response.status, 200, JSON.stringify(finish.body));
   assert.equal(finish.body.subjectReadModel.phase, 'summary');
   assert.equal(finish.body.subjectReadModel.summary.answered, 1);
+  assert.equal(Object.prototype.hasOwnProperty.call(finish.body.subjectReadModel.summary, 'sessionId'), false);
   assert.equal(finish.body.subjectReadModel.summary.miniTestReview.questions.length, 8);
   assert.equal(finish.body.domainEvents.filter((event) => event.type === 'grammar.answer-submitted').length, 1);
   assert.equal(finish.body.domainEvents.some((event) => event.type === 'grammar.session-completed'), true);
