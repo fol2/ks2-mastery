@@ -1,11 +1,11 @@
 ---
 title: "feat: System Hardening Optimisation P3 Invocation Telemetry Gate"
 type: feat
-status: partially-executed
+status: completed
 date: 2026-04-30
 origin: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md
-contract_status: open
-completion_scope: "PR #699 completed repo-local P3 telemetry tooling and guardrails only; production strict evidence, classification, the required final P3 report, and the P3 terminal decision remain open."
+contract_status: terminal-outcome-recorded
+completion_scope: "P3 completed with strict-30-certified-candidate evidence on 2026-04-30; public/Admin promotion remains a separate reviewed capacity-status row."
 source_docs:
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p2-completion-report.md
@@ -23,9 +23,11 @@ deepened: 2026-04-30
 
 Implement P3 as an observability repair and strict evidence decision phase: prove a machine-joinable Cloudflare invocation CPU/wall capture path, repeat the strict 30-learner gate with that telemetry present, then choose one next mitigation path from evidence rather than optimisation guesswork.
 
-PR #699 executed only the repo-local telemetry-tooling slice of this plan. It did not close the original P3 contract. The remaining P3 contract work is the operator smoke, strict production reruns, top-tail classification, and final decision report required by `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md`.
+PR #699 executed only the repo-local telemetry-tooling slice of this plan. A later gap-fix branch completed the remaining P3 contract work: operator smoke, strict production reruns, top-tail classification, and the final decision report required by `docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md`.
 
-The 2026-04-30 P3-T0 smoke later proved the live `npm run ops:tail:json` path on a bounded production run, with 2/2 retained top-tail bootstrap samples matched for both invocation CPU/wall and statement logs. That smoke closes the operator-path proof gap only; strict P3-T1 and P3-T5 repeat evidence remain required.
+The 2026-04-30 P3-T0 smoke proved the live `npm run ops:tail:json` path on a bounded production run, with 2/2 retained top-tail bootstrap samples matched for both invocation CPU/wall and statement logs. Strict P3-T1, P3-T5 repeat 1, and P3-T5 repeat 2 then passed the strict 30 learner gate with 10/10 retained bootstrap top-tail invocation coverage and 10/10 statement-log coverage on each run.
+
+Terminal P3 outcome: `strict-30-certified-candidate`. Public/Admin promotion remains intentionally deferred to a separate capacity-status row PR.
 
 ---
 

@@ -106,6 +106,18 @@ Read these warning codes before interpreting a join:
 
 If P3 cannot obtain finite invocation CPU/wall coverage from the canonical JSONL source or an approved equivalent Workers Logs/Tail/Trace/Logpush export, the outcome is `telemetry-repair-failed`. Keep public capacity wording at `small-pilot-provisional`, keep P2 T5 as the active strict 30 row, and open an observability-continuation path rather than an optimisation PR.
 
+## P3 Evidence Lock, 2026-04-30
+
+P3 obtained finite invocation CPU/wall coverage and completed the strict repeat gate. The public/Admin capacity status is not promoted by this diagnostic section; promotion still requires a separate reviewed capacity-status row.
+
+| Run | Bootstrap P95 | Bootstrap max | Command P95 | Invocation coverage | Statement coverage | Warnings | Result |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| P3-T1 strict | 701.3 ms | 703.7 ms | 292.7 ms | 10/10 | 10/10 | 0 | Pass |
+| P3-T5 strict repeat 1 | 661.4 ms | 664.3 ms | 319.2 ms | 10/10 | 10/10 | 0 | Pass |
+| P3-T5 strict repeat 2 | 715.2 ms | 719.0 ms | 279.7 ms | 10/10 | 10/10 | 0 | Pass |
+
+Diagnostic classification across the strict-run retained bootstrap top tails was mostly `d1-dominated` (24/30 samples), with 3 `worker-cpu-dominated` samples and 3 `client-network-or-platform-overhead` samples. Because all strict repeats passed, the P3 decision is `strict-30-certified-candidate`, not a Phase 4 D1 or Worker CPU mitigation.
+
 ## Minimum Evidence Set Before Mitigation
 
 Before changing bootstrap behaviour or debating thresholds, collect at least three dated diagnostic runs from the matrix, including one strict T1 run and one repeated strict T5 run. Each evidence file should retain:

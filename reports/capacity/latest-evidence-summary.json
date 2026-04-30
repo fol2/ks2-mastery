@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-04-29T19:58:39.879Z",
+  "generatedAt": "2026-04-30T03:10:07.369Z",
   "sources": {
     "capacity_evidence": {
       "file": "reports/capacity/evidence/",
@@ -35,37 +35,27 @@
     "certified_30_learner_beta": {
       "tier": "certified_30_learner_beta",
       "sourceTier": "30-learner-beta-certified",
-      "status": "failed",
-      "ok": false,
+      "status": "non_certifying",
+      "ok": true,
       "certifying": false,
       "dryRun": false,
       "evidenceKind": "capacity-run",
       "certificationEligible": false,
       "certificationReasons": [
-        "threshold-violations",
         "evidence-not-in-verified-capacity-table"
       ],
-      "decision": "fail",
-      "failureReason": "threshold-violations",
+      "decision": null,
+      "failureReason": "evidence-not-in-verified-capacity-table",
       "learners": 30,
       "bootstrapBurst": 20,
       "rounds": 1,
-      "finishedAt": "2026-04-29T19:38:25.019Z",
+      "finishedAt": "2026-04-30T03:08:07.687Z",
       "finishedAtPrecision": "timestamp",
-      "commit": "e5d03117bd7c46c269bf1d75cceca42b31452bc8",
-      "failures": [
-        "maxBootstrapP95Ms"
-      ],
-      "thresholdsPassed": false,
-      "thresholdViolations": [
-        {
-          "threshold": "max-bootstrap-p95-ms",
-          "limit": 1000,
-          "observed": 1354.5,
-          "message": "Bootstrap P95 wall time 1354.5 ms exceeds 1000 ms."
-        }
-      ],
-      "fileName": "2026-04-29-p2-t5-strict-repeat-1.json",
+      "commit": "b469e585c193b6197fdf1b98ac649de782d03027",
+      "failures": [],
+      "thresholdsPassed": null,
+      "thresholdViolations": [],
+      "fileName": "2026-04-30-p3-t5-strict-r2.json",
       "verifiedCapacityRowDecision": null
     },
     "preflight_only": {
@@ -106,7 +96,7 @@
       "ok": false,
       "dryRun": false,
       "mode": "report-only",
-      "finishedAt": "2026-04-29T19:58:39.878Z",
+      "finishedAt": "2026-04-30T03:10:07.378Z",
       "commit": null,
       "failures": [
         "csp_mode_is_report-only"
@@ -117,7 +107,7 @@
       "ok": true,
       "dryRun": false,
       "count": 16,
-      "finishedAt": "2026-04-29T19:58:39.878Z",
+      "finishedAt": "2026-04-30T03:10:07.378Z",
       "commit": null,
       "failures": []
     },
@@ -126,7 +116,7 @@
       "ok": true,
       "dryRun": false,
       "version": "0.1.0",
-      "finishedAt": "2026-04-29T19:58:39.879Z",
+      "finishedAt": "2026-04-30T03:10:07.378Z",
       "commit": null,
       "failures": []
     }

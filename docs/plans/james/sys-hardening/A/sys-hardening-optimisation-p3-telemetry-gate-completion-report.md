@@ -1,19 +1,19 @@
 ---
 title: "System Hardening Optimisation P3 Telemetry Gate Completion Report"
 type: completion-report
-status: tooling-complete
+status: superseded-by-final-p3-report
 language: en-GB
 date: 2026-04-30
 route: system-hardening-and-optimisation
 owner: james / engineering agent
 implementation_pr: https://github.com/fol2/ks2-mastery/pull/699
 merge_result_commit: 32cd5a306f62245cbfb81893934a7aab6e5fc062
-contract_status: open
+contract_status: terminal-outcome-recorded
 source_contract: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md
 source_plan: docs/plans/2026-04-30-001-feat-sys-hardening-optimisation-p3-telemetry-gate-plan.md
 source_baseline: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3-baseline.md
-certification_status: non-certifying
-recommended_next_path: p3-strict-30-telemetry-rerun
+certification_status: superseded
+recommended_next_path: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3-completion-report.md
 ---
 
 # System Hardening Optimisation P3 Telemetry Gate Completion Report
@@ -24,7 +24,7 @@ PR #699, `feat(capacity): harden P3 worker telemetry gate`, completed the teleme
 
 This was a repo-local P3 telemetry-gate delivery. It did not run production strict P3 capacity evidence, did not certify 30 learners, did not promote public capacity wording, and did not choose a D1, Worker CPU, payload, platform, or policy optimisation. That boundary is intentional. The merged work makes the next P3 evidence run decision-grade by forcing invocation CPU/wall telemetry, statement-log coverage, redaction, raw-log retention, and warning semantics to be explicit.
 
-This report is therefore not the final P3 completion report required by the source contract. The original P3 contract remains open until the operator smoke, strict production reruns, top-tail classification, and terminal P3 decision are recorded at:
+This report is therefore not the final P3 completion report required by the source contract. The original P3 contract has since been closed by the final P3 completion report at:
 
 ```text
 docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3-completion-report.md
