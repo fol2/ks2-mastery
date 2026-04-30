@@ -40,21 +40,37 @@ export function detectRawChildContent(payload) {
 
 /**
  * Detect non-cohort accounts seeing Hero surfaces.
- * A non-cohort account (overrideStatus === 'none') must never see Hero UI.
+ * Requires both:
+ *   1. overrideStatus is 'none' or 'excluded' (not in any cohort)
+ *   2. At least one observed exposure signal is true
  *
- * @param {{ accountId: string, env: object }} params
+ * This eliminates false positives from normal accounts that never saw Hero UI.
+ * If no exposure signals are provided, returns not-triggered (fail safe).
+ *
+ * @param {{ accountId: string, env: object, heroSurfaceVisible?: boolean, commandAccepted?: boolean, readModelEnabled?: boolean }} params
  * @returns {{ triggered: boolean, condition: string, detail: string }}
  */
-export function detectNonCohortExposure({ accountId, env } = {}) {
+export function detectNonCohortExposure({ accountId, env, heroSurfaceVisible, commandAccepted, readModelEnabled } = {}) {
   if (!accountId || !env) {
     return { triggered: false, condition: 'non-cohort-exposure', detail: '' };
   }
+
+  // Fail safe: if no exposure signals provided at all, do not trigger
+  const hasAnySignal = heroSurfaceVisible === true || commandAccepted === true || readModelEnabled === true;
+  if (!hasAnySignal) {
+    return { triggered: false, condition: 'non-cohort-exposure', detail: '' };
+  }
+
   const { overrideStatus } = resolveHeroFlagsForAccount({ env, accountId });
-  if (overrideStatus === 'none') {
+  if (overrideStatus === 'none' || overrideStatus === 'excluded') {
+    const signals = [];
+    if (heroSurfaceVisible) signals.push('heroSurfaceVisible');
+    if (commandAccepted) signals.push('commandAccepted');
+    if (readModelEnabled) signals.push('readModelEnabled');
     return {
       triggered: true,
       condition: 'non-cohort-exposure',
-      detail: `account ${accountId} is not in any cohort list`,
+      detail: `account ${accountId} is not in any cohort list; exposure signals: ${signals.join(', ')}`,
     };
   }
   return { triggered: false, condition: 'non-cohort-exposure', detail: '' };
