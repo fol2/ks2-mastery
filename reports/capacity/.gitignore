@@ -27,6 +27,11 @@ evidence/**/*worker-log*.jsonl
 evidence/**/*worker-log*.ndjson
 evidence/**/*worker-log*.log
 evidence/**/*worker-log*.txt
+evidence/**/*worker-tail*.json
+evidence/**/*worker-tail*.jsonl
+evidence/**/*worker-tail*.ndjson
+evidence/**/*worker-tail*.log
+evidence/**/*worker-tail*.txt
 evidence/**/*pretty-tail*.json
 evidence/**/*pretty-tail*.jsonl
 evidence/**/*pretty-tail*.ndjson
@@ -42,4 +47,9 @@ evidence/**/*tail-raw*.jsonl
 evidence/**/*tail-raw*.ndjson
 evidence/**/*tail-raw*.log
 evidence/**/*tail-raw*.txt
+evidence/**/*-tail.json
+evidence/**/*-tail.jsonl
+evidence/**/*-tail.ndjson
+evidence/**/*-tail.log
+evidence/**/*-tail.txt
 !README.md

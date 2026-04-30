@@ -1,9 +1,10 @@
 ---
 title: "feat: System Hardening Optimisation P3 Invocation Telemetry Gate"
 type: feat
-status: completed
+status: tooling-complete
 date: 2026-04-30
 origin: docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md
+completion_scope: "Repo-local P3 telemetry tooling and guardrails only; production strict evidence, classification, and final P3 decision remain follow-up."
 source_docs:
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p3.md
   - docs/plans/james/sys-hardening/A/sys-hardening-optimisation-p2-completion-report.md
@@ -45,7 +46,7 @@ P2 ended correctly as non-certifying: the first strict 30 run passed, the repeat
 - R2. Prove one canonical machine-joinable Cloudflare invocation capture path that includes finite CPU and wall time for top-tail Worker invocations.
 - R3. Keep invocation coverage and sampled `capacity.request` statement coverage separate; complete statement logs must not be interpreted as complete CPU/wall coverage.
 - R4. Preserve request-id pairing and capture-window discipline so strict-run top-tail request IDs can be joined to raw operator-held logs without committing raw logs.
-- R5. Keep redaction fail-closed: committed artefacts use opaque `req_<hash>` and `stmt_<hash>` identifiers and must not include raw `ks2_req_*`, SQL, table/column names, cookies, bearer tokens, learner names, answers, request bodies, or response bodies.
+- R5. Keep redaction fail-closed: committed production-derived evidence artefacts use opaque `req_<hash>` and `stmt_<hash>` identifiers and must not include raw `ks2_req_*`, SQL, table/column names, cookies, bearer tokens, learner names, answers, request bodies, or response bodies. Parser fixtures may contain raw-looking IDs or field names only when they are synthetic, production-free, and explicitly treated as test fixtures rather than evidence artefacts.
 - R6. Rerun strict 30 evidence only after the capture path is proven; strict certification candidates must use the pinned `reports/capacity/configs/30-learner-beta.json` shape and unique output paths.
 - R7. Classify top-tail bootstrap samples using client wall, app/server wall, Cloudflare Worker wall, Worker CPU, D1 duration, query count, D1 rows read/written, response bytes, statement coverage, and classification reasons.
 - R8. Update Admin/Operations evidence truth only through verifier-backed and generated summary paths; diagnostic worker-log joins must remain diagnostic-only.
@@ -249,7 +250,7 @@ The decision matrix for P3 is:
 
 **Approach:**
 - Select and document the canonical P3 capture source from the operator-available Cloudflare surface: JSON tail, Workers Logs export, Workers Trace/Logpush export, Tail Worker export, or another approved JSON/JSONL source.
-- Add a redacted fixture for the chosen shape with CPU/wall fields, outcome/status, timestamp, request URL/method, and enough request-id material to join.
+- Add a synthetic, production-free parser fixture for the chosen shape with CPU/wall fields, outcome/status, timestamp, request URL/method, and enough request-id material to join. Raw-looking request IDs are permitted only inside this fixture to exercise parser semantics; they must not appear in committed production-derived evidence artefacts.
 - Keep parser support permissive for known wrappers but strict for CPU/wall semantics: missing, null, non-finite, or single-sided CPU/wall values must not become zeroes or matched invocation coverage.
 - Report invocation coverage separately from statement coverage and preserve partial states.
 - Treat malformed pretty/log lines as bounded warnings, not silent success.

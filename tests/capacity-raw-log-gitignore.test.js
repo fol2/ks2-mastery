@@ -20,9 +20,11 @@ function isIgnored(repoPath) {
 test('P3 raw Worker/Tail captures stay ignored while redacted evidence remains tracked', () => {
   const rawPaths = [
     'reports/capacity/evidence/2026-04-30-p3-worker-log.jsonl',
+    'reports/capacity/evidence/2026-04-30-p3-worker-tail.jsonl',
     'reports/capacity/evidence/2026-04-30-p3-pretty-tail.log',
     'reports/capacity/evidence/2026-04-30-p3-raw-tail.ndjson',
     'reports/capacity/evidence/2026-04-30-p3-tail-raw.txt',
+    'reports/capacity/evidence/2026-04-30-p3-tail.jsonl',
   ];
   for (const rawPath of rawPaths) {
     assert.equal(isIgnored(rawPath), true, `${rawPath} should stay local-only`);

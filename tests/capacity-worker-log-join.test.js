@@ -282,6 +282,36 @@ test('joinCapacityWorkerLogs warns for full statement coverage with zero invocat
   assert.ok(output.warnings.some((warning) => warning.startsWith('insufficient-invocation-coverage:')));
 });
 
+test('joinCapacityWorkerLogs preserves semantic gate warnings ahead of malformed-line noise', () => {
+  const parsed = parseWorkerLogExport([
+    ...Array.from({ length: 25 }, (_, index) => `not json ${index}`),
+    '[ks2-worker] {"event":"capacity.request","requestId":"ks2_req_99999999-9999-4999-8999-999999999999","endpoint":"/api/bootstrap","method":"GET","status":200,"phase":"bootstrap","queryCount":9,"d1RowsRead":9,"d1RowsWritten":0,"d1DurationMs":120,"wallMs":700,"responseBytes":28000,"bootstrapMode":"selected-learner-bounded","statements":[{"name":"bootstrap.selectedLearnerState.read","rowsRead":9,"rowsWritten":0,"durationMs":80}],"statementsTruncated":false,"at":"2026-04-29T09:00:10.000Z"}',
+  ].join('\n'), { sourcePath: 'noisy-tail' });
+
+  const output = joinCapacityWorkerLogs({
+    evidence: evidenceWithSamples([{
+      scenario: 'cold-bootstrap-burst',
+      status: 200,
+      wallMs: 720,
+      responseBytes: 28000,
+      clientRequestId: 'ks2_req_99999999-9999-4999-8999-999999999999',
+      serverRequestId: 'ks2_req_99999999-9999-4999-8999-999999999999',
+    }], {
+      startedAt: '2026-04-30T10:05:00Z',
+      finishedAt: '2026-04-30T10:06:00Z',
+    }),
+    records: parsed.records,
+    generatedAt: '2026-04-30T10:07:00Z',
+    warnings: parsed.warnings,
+  });
+
+  assert.equal(output.warnings.length, 20);
+  assert.ok(output.warnings.some((warning) => warning.startsWith('capture-window-no-overlap:')));
+  assert.ok(output.warnings.some((warning) => warning.startsWith('insufficient-invocation-coverage:')));
+  assert.ok(output.warnings.some((warning) => warning.includes('skipped malformed log line')));
+  assert.deepEqual(output.diagnostics.workerLogJoin.warnings, output.warnings);
+});
+
 test('joinCapacityWorkerLogs matches raw logs against redacted persisted evidence ids', () => {
   const parsed = parseWorkerLogExport(readFileSync(TRACE_FIXTURE, 'utf8'), { sourcePath: TRACE_FIXTURE });
   const evidence = redactPersistedEvidenceRequestIds(evidenceWithSamples([{

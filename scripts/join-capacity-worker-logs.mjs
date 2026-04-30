@@ -368,10 +368,13 @@ export function joinCapacityWorkerLogs({
 }
 
 function buildJoinWarnings({ evidence, records, workerLogJoin, warnings }) {
+  const gateWarnings = [];
+  pushCaptureWindowWarning(gateWarnings, evidence, records);
+  pushCoverageWarning(gateWarnings, workerLogJoin);
+
   const output = [];
+  for (const warning of gateWarnings) pushWarning(output, warning);
   for (const warning of warnings || []) pushWarning(output, warning);
-  pushCaptureWindowWarning(output, evidence, records);
-  pushCoverageWarning(output, workerLogJoin);
   return output;
 }
 
