@@ -183,7 +183,7 @@ describe('P11 Evidence Truth: release ID consistency hard failure', () => {
     assert.equal(result.mismatches.length, 1);
     assert.equal(result.mismatches[0].field, 'manifestVsCodeReleaseId');
     assert.match(result.mismatches[0].message, /grammar-qg-p9/);
-    assert.match(result.mismatches[0].message, /GRAMMAR_CONTENT_RELEASE_ID/);
+    assert.match(result.mismatches[0].message, /grammar-qg-p11-2026-04-30/);
   });
 
   it('correct manifest release ID passes', () => {
