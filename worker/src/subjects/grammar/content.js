@@ -7706,6 +7706,10 @@ function enrichPromptCue(question) {
   if (!cueType) {
     // Clean up internal-only field even on early return — do not leak to serialised output
     delete question.focusTarget;
+    // P10 U7: If promptParts exist but no cue language detected, explain why focusCue is absent
+    if (question.promptParts) {
+      question.cueNotRequiredReason = 'no-cue-language-in-prompt';
+    }
     return question;
   }
 
@@ -7741,6 +7745,10 @@ function enrichPromptCue(question) {
   // formatting rather than a prompt-cue target requiring visual highlighting.
   if (!question.focusCue && cueType === 'underline') {
     question.promptParts = [{ kind: 'text', text: plainPrompt }];
+    // P10 U7: Explain why focusCue is absent despite promptParts being present
+    question.cueNotRequiredReason = 'unresolvable-underline-target';
+    // Clean up internal-only field
+    delete question.focusTarget;
     return question;
   }
 
