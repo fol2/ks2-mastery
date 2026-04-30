@@ -29,11 +29,11 @@ Phase 1.5: Commit & merge plan PR (doc-only, CI auto-pass)
 Phase 2: /ce-worktree ─── create isolated worktree (no questions)
     │
     ▼
-Phase 3: /ce-work ─── SDLC cycle (per unit: worker → reviewers → follower → merge)
+Phase 3: /ce-work (BUILD) ─── implement plan units (worker → MANDATORY reviewers → merge)
     │
     ▼
-Phase 4: Delivery ─── 10 contract reviewers validate entire contract (all must PASS)
-    │                  (if blockers: back to Phase 3 for fixes, then re-review ALL 10)
+Phase 4: Delivery ─── 10 contract reviewers validate entire contract (MANDATORY, DO NOT SKIP)
+    │                  if blockers: /ce-work (FIX) → MANDATORY reviewers → merge → re-review ALL 10
     ▼
 Phase 5: Report ─── completion report .md, PR merged to main
     │
@@ -152,9 +152,11 @@ Invoke `/ce-worktree` after the plan PR is merged.
 
 ---
 
-## Phase 3: SDLC Cycle (`/ce-work`)
+## Phase 3: SDLC Implementation (`/ce-work` — build mode)
 
-Invoke `/ce-work` inside the worktree with the generated plan. This phase implements all units of work through the full SDLC pipeline. It does NOT include the delivery validation or the completion report — those are separate phases.
+**Purpose:** Implement all planned units of work. This is the BUILD phase.
+
+Invoke `/ce-work` inside the worktree with the generated plan. The scope of this invocation is strictly: implement the plan units, get each through per-unit code review, and merge. It does NOT validate the contract as a whole — that is Phase 4's job.
 
 ### Per-unit pipeline
 
@@ -168,7 +170,13 @@ Worker (subagent in worktree)
     - "Do not use git stash."
     - "Include 'Plan Deviations' in PR body if you deviate."
     - For UI/UX units: invoke /ce-frontend-design
+```
 
+### MANDATORY: Per-unit code review (DO NOT SKIP)
+
+Every PR MUST go through independent code review before merge. This step is NOT optional. Do not merge without reviewer approval.
+
+```
 Reviewers (parallel independent subagents)
   → Always-on: ce-correctness-reviewer, ce-maintainability-reviewer,
     ce-testing-reviewer, ce-project-standards-reviewer
@@ -182,54 +190,65 @@ Review Follower (if any BLOCKING)
   → Push fixes
   → Re-dispatch ALL reviewers (not just blockers)
   → Repeat until zero blockers
-
-Merge Gate
-  → gh pr checks must all pass
-  → gh pr merge --squash --delete-branch
-  → git fetch origin
-  → Next unit
 ```
+
+### Merge Gate
+
+- ALL reviewers must APPROVE (zero blockers)
+- `gh pr checks` must all pass (CI green)
+- Only then: `gh pr merge --squash --delete-branch`
+- `git fetch origin`
+- Next unit
 
 ### Exit criteria
 
-Phase 3 is complete when ALL plan units have merged PRs with green CI. Report: "Phase 3 complete: N/N units merged. Starting Phase 4."
+Phase 3 is complete when ALL plan units have merged PRs with green CI AND reviewer approval. Report: "Phase 3 complete: N/N units merged. Starting Phase 4."
 
 ---
 
-## Phase 4: Delivery Cycle (10 contract reviewers)
+## Phase 4: Delivery Validation (10 contract reviewers → `/ce-work` fix mode)
 
-This is a separate validation phase. It runs AFTER all SDLC units are merged. Its purpose is to validate the **entire contract** has been delivered at the highest standard — not just that individual units passed review.
+**Purpose:** Validate the ENTIRE contract has been delivered correctly. This is the VALIDATE phase.
+
+This is a fundamentally different workflow from Phase 3. Phase 3 reviews individual PRs for code quality. Phase 4 reviews the entire delivered codebase against the original contract at the highest standard. These are independent concerns — passing Phase 3 does NOT mean Phase 4 will pass.
+
+### MANDATORY: 10-reviewer contract validation (DO NOT SKIP)
+
+This step is the core quality gate of the delivery. It MUST run. The contract is NOT delivered until all 10 reviewers pass. Do not proceed to Phase 5 without completing this phase.
 
 ### Reviewer Panel (10 independent subagents)
 
 Spawn 10 independent subagent reviewers in parallel:
 
-1. **Functional Completeness** — every requirement implemented
-2. **Test Coverage** — all acceptance criteria have tests
+1. **Functional Completeness** — every contract requirement is implemented and working
+2. **Test Coverage** — all acceptance criteria have corresponding tests
 3. **Code Quality** — maintainability, naming, structure
-4. **Architecture Alignment** — matches codebase conventions
-5. **Security & Safety** — no vulnerabilities, safe defaults
-6. **Performance** — no regressions, efficient
-7. **UX/UI Fidelity** — (if applicable) design intent met
+4. **Architecture Alignment** — matches established codebase conventions
+5. **Security & Safety** — no vulnerabilities, proper validation, safe defaults
+6. **Performance** — no regressions, efficient implementations
+7. **UX/UI Fidelity** — (if applicable) matches design intent, accessible
 8. **Documentation** — self-documenting, complex logic explained
-9. **Edge Cases & Error Handling** — boundaries covered
-10. **Integration & Regression** — no side effects
+9. **Edge Cases & Error Handling** — graceful failures, boundary conditions covered
+10. **Integration & Regression** — no side effects on existing functionality
 
 ### Protocol
 
 Each reviewer:
-- Reads the **original contract** in full
-- Reads the **current codebase state** (post all SDLC merges)
-- Returns: PASS or BLOCK (with specific, actionable findings)
+- Reads the **original contract** in full (not just the plan — the contract itself)
+- Reads the **current codebase state** (post all Phase 3 merges)
+- Returns: PASS or BLOCK (with specific, actionable findings referencing contract requirements)
 
-### Iteration
+### Fixing blockers (`/ce-work` — fix mode)
 
 If ANY reviewer blocks:
-1. Collect all blocking findings
-2. Execute Phase 3 SDLC cycle for the fixes (worker → reviewers → follower → merge)
-3. After fixes merged, re-invite ALL 10 delivery reviewers (not just the blockers)
-4. On subsequent rounds, reviewers re-evaluate the ENTIRE contract at the highest standard (new blockers from previously-passing areas are valid)
-5. Repeat until all 10 simultaneously PASS
+1. Collect all blocking findings from all reviewers
+2. Invoke `/ce-work` to implement the fixes — this is a DIFFERENT `/ce-work` invocation from Phase 3:
+   - **Phase 3 `/ce-work`**: implements plan units (building new features)
+   - **Phase 4 `/ce-work`**: fixes delivery gaps found by contract reviewers (patching to meet the contract)
+3. The fix `/ce-work` follows the same per-unit pipeline: worker → PR → MANDATORY code reviewers → follower → merge
+4. After ALL fix PRs merged, re-invite ALL 10 delivery reviewers (not just the ones that blocked)
+5. On re-review rounds, reviewers re-evaluate the ENTIRE contract at the highest standard — new blockers from previously-passing areas are valid and expected
+6. Repeat until all 10 simultaneously PASS
 
 ### Exit criteria
 
