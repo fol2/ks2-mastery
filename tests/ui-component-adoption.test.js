@@ -27,6 +27,10 @@ const BUTTON_CONSUMERS = [
   'src/subjects/punctuation/components/PunctuationSetupScene.jsx',
   'src/surfaces/home/HomeSurface.jsx',
   'src/surfaces/hubs/AdminPanelFrame.jsx',
+  // P2 U7: third-consumer falsifier successfully migrated SpellingSetupScene
+  // to <Button>. Adding the surface to the allowlist locks the adoption
+  // — a future refactor that removes the import would now fail this test.
+  'src/subjects/spelling/components/SpellingSetupScene.jsx',
 ];
 
 // P2 U2: closed allowlist of production surfaces that have adopted the

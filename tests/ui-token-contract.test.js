@@ -141,3 +141,106 @@ test('PunctuationSetupScene.jsx preserves stable journey-spec data-* selectors',
     );
   }
 });
+
+// P2 U7 (refactor-ui shared primitives): broader hex-literal ratchet.
+//
+// Plan: docs/plans/2026-04-29-011-refactor-ui-shared-primitives-plan.md §U7 line 569.
+//
+// Locks every file under the curated path glob against re-introduction
+// of raw 6-char hex literals. The glob deliberately covers the
+// shared-primitive surface area (`src/platform/ui/**`), the Punctuation
+// setup scene (the U6 token-unification site), and the Home surface
+// tree (`src/surfaces/home/**`). It excludes `PunctuationMapScene.jsx`,
+// `PunctuationSessionScene.jsx`, and `PunctuationSummaryScene.jsx`
+// because they still carry `#B8873F` literals and are deferred to a
+// post-P2 sweep — keeping them out of the glob keeps this ratchet
+// honest.
+//
+// Allowlist: `src/surfaces/home/data.js` is a subject-metadata fixture
+// exporting `SUBJECT_DECOR` (linear-gradient accent strings keyed by
+// subject id). These are content fixtures, not styling tokens — they
+// are consumed by the SubjectCard render layer and intentionally live
+// outside the var(--*-accent) chain. The plan §U7 line 569 explicitly
+// allowlists "subject metadata fixtures" exactly because of this case.
+
+import { readdir } from 'node:fs/promises';
+
+const TOKEN_GLOB_DIRS = [
+  path.resolve(REPO_ROOT, 'src/platform/ui'),
+  path.resolve(REPO_ROOT, 'src/surfaces/home'),
+];
+const TOKEN_GLOB_FILES = [
+  path.resolve(REPO_ROOT, 'src/subjects/punctuation/components/PunctuationSetupScene.jsx'),
+  // U7 review: extend the ratchet to the other two SetupScenes in scope.
+  // Grammar already passed token unification, Spelling threads accent
+  // inline through Button (deferred remap noted in completion report
+  // §6.2). Locking both files prevents future drift even though they
+  // contain zero hex literals today.
+  path.resolve(REPO_ROOT, 'src/subjects/grammar/components/GrammarSetupScene.jsx'),
+  path.resolve(REPO_ROOT, 'src/subjects/spelling/components/SpellingSetupScene.jsx'),
+];
+// Subject-metadata fixtures: linear-gradient accent strings keyed by
+// subject id, consumed as content rather than as token-driven styling.
+// Adding to this allowlist requires a deliberate decision — the
+// per-file justification belongs in the entry comment.
+const TOKEN_ALLOWLIST = new Set([
+  path.resolve(REPO_ROOT, 'src/surfaces/home/data.js'),
+]);
+
+async function collectTokenGlobFiles() {
+  const collected = new Set(TOKEN_GLOB_FILES);
+  for (const dir of TOKEN_GLOB_DIRS) {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      if (!entry.name.endsWith('.js') && !entry.name.endsWith('.jsx')) continue;
+      collected.add(path.join(dir, entry.name));
+    }
+  }
+  return [...collected].filter((p) => !TOKEN_ALLOWLIST.has(p)).sort();
+}
+
+test('curated-glob hex-literal ratchet — no raw #XXXXXX literals in shared primitives or Home tree (comments stripped)', async () => {
+  const files = await collectTokenGlobFiles();
+  // Floor pinned close to the live count so a directory rename / file
+  // disappearance lands a loud failure instead of silently weakening
+  // the ratchet. Bump in a paired commit if a deliberate file move
+  // shrinks the glob, mirroring the reasoning at line 81 of
+  // tests/bundle-byte-budget.test.js.
+  const MIN_GLOB_FILES = 25;
+  assert.ok(
+    files.length >= MIN_GLOB_FILES,
+    `Expected ≥ ${MIN_GLOB_FILES} files under the token glob; got ${files.length}. `
+    + 'A sudden drop suggests a directory move or rename — refresh TOKEN_GLOB_DIRS.',
+  );
+  const offences = [];
+  for (const file of files) {
+    const source = await readFile(file, 'utf8');
+    const stripped = stripJsComments(source);
+    const lines = stripped.split('\n');
+    lines.forEach((line, idx) => {
+      const hexMatch = line.match(/#[0-9A-Fa-f]{6}\b/);
+      if (hexMatch) {
+        const relative = path.relative(REPO_ROOT, file);
+        offences.push(`${relative}:${idx + 1}  ${hexMatch[0]}  ←  ${line.trim().slice(0, 100)}`);
+      }
+    });
+  }
+  assert.equal(
+    offences.length,
+    0,
+    'Raw 6-char hex literals found in curated-glob files. Replace with a `var(--*-accent)` '
+    + 'token (or, if the value is a subject-metadata fixture, add the file to TOKEN_ALLOWLIST '
+    + 'with a per-entry justification). Offences:\n  - ' + offences.join('\n  - '),
+  );
+});
+
+// Note: the completion-report wording guard (plan §574 "no forbidden
+// claims") lives in `tests/ui-completion-report-claims.test.js` —
+// extracted from this file so `ui-token-contract` stays focused on
+// CSS-variable plumbing and hex-literal ratchets.

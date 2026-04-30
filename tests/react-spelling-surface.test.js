@@ -23,7 +23,15 @@ test('React spelling setup scene disables start while a remote start is pending'
   });
 
   assert.match(html, /Starting\.\.\./);
-  assert.match(html, /<button[^>]*data-action="spelling-start"[^>]*disabled=""/);
+  // P2 U7: assertions are attribute-order-agnostic. The shared Button
+  // primitive emits `disabled=""` before `data-action=…` (consequence of
+  // explicit prop ordering inside Button.jsx), whereas the legacy raw
+  // <button> rendered them in JSX-source order. Both shapes are
+  // semantically equivalent and the test only cares that BOTH attributes
+  // appear on the same <button>.
+  const startButtonMatch = html.match(/<button[^>]*data-action="spelling-start"[^>]*>/);
+  assert.ok(startButtonMatch, 'expected a <button data-action="spelling-start"> in rendered HTML');
+  assert.match(startButtonMatch[0], /disabled=""/);
 });
 
 test('React spelling setup scene disables start while options are saving', async () => {
@@ -33,7 +41,49 @@ test('React spelling setup scene disables start while options are saving', async
   });
 
   assert.match(html, /Saving\.\.\./);
-  assert.match(html, /<button[^>]*data-action="spelling-start"[^>]*disabled=""/);
+  const startButtonMatch = html.match(/<button[^>]*data-action="spelling-start"[^>]*>/);
+  assert.ok(startButtonMatch, 'expected a <button data-action="spelling-start"> in rendered HTML');
+  assert.match(startButtonMatch[0], /disabled=""/);
+});
+
+// P2 U7 falsifier: pin the migration-specific render output that the
+// reviewer flagged as unverified — Button's safelisted `style` rest-prop
+// forwarding the inline `--btn-accent` Bellstorm gold (Spelling lacks a
+// :where(.spelling-...) accent remap; deferred to a future subject-token
+// sweep — see completion report §6.2), and the `endIcon` slot resolving
+// to a `<span class="btn-end-icon">` AFTER the label text inside the
+// rendered <button>. If a future Button refactor silently dropped
+// `style` from the rest-prop safelist or wrapped endIcon ahead of the
+// label, the existing 750 spelling tests would stay green; this test
+// fails fast in that scenario.
+test('React spelling start CTA forwards Button style + endIcon to the rendered DOM (U7 falsifier)', async () => {
+  const html = await renderSpellingSurfaceFixture({ phase: 'setup' });
+  const startButtonMatch = html.match(
+    /<button[^>]*data-action="spelling-start"[^>]*>[\s\S]*?<\/button>/,
+  );
+  assert.ok(startButtonMatch, 'expected a <button data-action="spelling-start"> with body');
+  const startButtonHtml = startButtonMatch[0];
+
+  // (a) Inline `--btn-accent` survives the Button safelist + Object.assign
+  //     merge into buttonProps. The exact value is set via the
+  //     `accent` prop on SpellingSetupScene; we assert presence + a
+  //     valid 6-char hex form rather than pinning the literal hue so a
+  //     future palette refresh does not require a test bump.
+  assert.match(
+    startButtonHtml,
+    /style="--btn-accent:\s*#[0-9a-fA-F]{6}/,
+    'Button must forward style.--btn-accent so Spelling accent threads through',
+  );
+
+  // (b) `endIcon` slot renders as `<span class="btn-end-icon">` AFTER
+  //     the label text — DOM order is load-bearing for screen reader
+  //     announcement (label first, then aria-hidden chevron).
+  assert.match(
+    startButtonHtml,
+    /Begin\s+\d+\s+words[\s\S]*?<span[^>]*\bbtn-end-icon\b[^>]*aria-hidden="true"[^>]*>[\s\S]*?<svg/,
+    'endIcon must render as <span class="btn-end-icon" aria-hidden> AFTER the button label, '
+    + 'with the SVG chevron inside',
+  );
 });
 
 test('client spelling read model preserves word-family variant preference', () => {
