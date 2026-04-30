@@ -36,6 +36,7 @@ import {
   GRAMMAR_MISCONCEPTIONS,
   createGrammarQuestion,
   evaluateGrammarQuestion,
+  serialiseGrammarQuestion,
 } from '../worker/src/subjects/grammar/content.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -55,6 +56,43 @@ const AMBIGUOUS_SKILL_IDS = Object.freeze([
   'clauses',
   'relative_clauses',
 ]);
+
+/**
+ * Misconception tags that represent genuine grammatical ambiguity where a
+ * child's answer COULD be correct under a different reading.
+ */
+const DEFENSIBLE_MISCONCEPTION_TAGS = Object.freeze([
+  'formality_confusion',
+  'modal_certainty_confusion',
+  'clause_type_confusion',
+  'subject_object_confusion',
+  'relative_subordinate_confusion',
+  'word_class_confusion',
+]);
+
+/**
+ * Phrases in the prompt that narrow interpretation and disambiguate.
+ * Matched case-insensitively.
+ */
+const DISAMBIGUATION_PHRASES = Object.freeze([
+  'in the sentence',
+  'in this sentence',
+  'as used here',
+  'as used in',
+  'in the context',
+  'based on the sentence',
+  'below',
+]);
+
+function isDefensibleAlternative(misconceptionTag) {
+  return Boolean(misconceptionTag && DEFENSIBLE_MISCONCEPTION_TAGS.includes(misconceptionTag));
+}
+
+function doesPromptDisambiguate(promptText) {
+  if (!promptText) return false;
+  const lower = promptText.toLowerCase();
+  return DISAMBIGUATION_PHRASES.some((phrase) => lower.includes(phrase));
+}
 
 function isAmbiguousTemplate(template) {
   const skillIds = template.skillIds || [];
@@ -91,6 +129,11 @@ export function runDistractorAudit() {
       const inputType = question.inputSpec?.type;
       if (inputType !== 'single_choice' && inputType !== 'multi_choice') continue;
 
+      // Serialise to get promptText / screenReaderPromptText for disambiguation check
+      const serialised = serialiseGrammarQuestion(question);
+      const promptTextForCheck = serialised?.screenReaderPromptText || serialised?.promptText || '';
+      const promptDisambiguates = doesPromptDisambiguate(promptTextForCheck);
+
       const options = question.inputSpec.options || [];
       const correctOptions = [];
       const incorrectOptions = [];
@@ -103,12 +146,20 @@ export function runDistractorAudit() {
         const misconceptionTag = (!isCorrect && result?.misconception) ? result.misconception : null;
         const whyWrong = misconceptionTag ? (GRAMMAR_MISCONCEPTIONS[misconceptionTag] || null) : null;
 
-        optionDetails.push({
+        const detail = {
           optionText: opt.label || opt.value,
           isCorrect,
           misconceptionTag,
           whyWrong,
-        });
+        };
+
+        // Per-option defensibility fields for distractors
+        if (!isCorrect) {
+          detail.defensibleAlternative = isDefensibleAlternative(misconceptionTag);
+          detail.promptDisambiguates = promptDisambiguates;
+        }
+
+        optionDetails.push(detail);
 
         if (isCorrect) {
           correctOptions.push(opt.value);

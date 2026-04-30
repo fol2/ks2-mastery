@@ -310,6 +310,24 @@ describe('P10 Evidence Artefacts: distractor audit', () => {
     }
   });
 
+  it('every distractor option has defensibleAlternative and promptDisambiguates boolean fields', () => {
+    if (!fs.existsSync(auditPath)) return;
+    const data = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+    for (const item of data.results) {
+      for (const opt of item.options) {
+        if (opt.isCorrect) continue;
+        assert.ok(
+          typeof opt.defensibleAlternative === 'boolean',
+          `opt.defensibleAlternative must be boolean for distractor "${opt.optionText}" in ${item.templateId} seed ${item.seed}`,
+        );
+        assert.ok(
+          typeof opt.promptDisambiguates === 'boolean',
+          `opt.promptDisambiguates must be boolean for distractor "${opt.optionText}" in ${item.templateId} seed ${item.seed}`,
+        );
+      }
+    }
+  });
+
   it('each result has ambiguousConceptArea and requiresAdultReview flags', () => {
     if (!fs.existsSync(auditPath)) return;
     const data = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
