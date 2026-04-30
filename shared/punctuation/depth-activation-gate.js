@@ -36,6 +36,7 @@ export const DEPTH_ACTIVATION_EVIDENCE = Object.freeze([
   'negative-vectors-pass',
   'transfer-meaningfulness-pass',
   'candidate-decisions-populated',
+  'deployment-commit-sha',
 ]);
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -63,6 +64,8 @@ const EXPECTED_DEPTH_6_RELEASE_ID = 'punctuation-r5-qg-depth-6';
  * @param {boolean} options.negativeVectorsPass - Whether negative vector tests pass
  * @param {boolean} options.transferMeaningfulnessPass - Whether transfer meaningfulness tests pass
  * @param {boolean} options.candidateDecisionsPopulated - Whether all depth-6 candidate items are reviewed
+ * @param {boolean} options.starEvidenceScoped - Whether star evidence is scoped (callers must verify)
+ * @param {string} options.deploymentCommitSha - A valid git SHA (7-40 hex chars) for the deployment commit
  * @returns {{ pass: boolean, outcome: string, blockers: Array, evidence: Array }}
  */
 export function evaluateDepthActivationGate(options) {
@@ -82,6 +85,8 @@ export function evaluateDepthActivationGate(options) {
     negativeVectorsPass,
     transferMeaningfulnessPass,
     candidateDecisionsPopulated,
+    starEvidenceScoped,
+    deploymentCommitSha,
   } = options;
 
   // Depth-8 is NEVER learner-facing — reject immediately
@@ -213,8 +218,15 @@ export function evaluateDepthActivationGate(options) {
     });
   }
 
-  // 9. star-evidence-scoped — structural guarantee (always true by design)
-  evidence.push({ id: 'star-evidence-scoped', pass: true });
+  // 9. star-evidence-scoped — callers must verify and pass this
+  const starScopedPass = starEvidenceScoped === true;
+  evidence.push({ id: 'star-evidence-scoped', pass: starScopedPass });
+  if (!starScopedPass) {
+    blockers.push({
+      evidence: 'star-evidence-scoped',
+      reason: 'Star evidence scoping has not been verified by the caller',
+    });
+  }
 
   // 10. preservation-oracle-pass (P8-U9)
   const preservationPass = preservationOraclePass === true;
@@ -253,6 +265,17 @@ export function evaluateDepthActivationGate(options) {
     blockers.push({
       evidence: 'candidate-decisions-populated',
       reason: 'Not all depth-6 candidate items have been reviewed',
+    });
+  }
+
+  // 14. deployment-commit-sha (P8 gap U5)
+  const SHA_PATTERN = /^[0-9a-f]{7,40}$/i;
+  const shaValid = typeof deploymentCommitSha === 'string' && SHA_PATTERN.test(deploymentCommitSha);
+  evidence.push({ id: 'deployment-commit-sha', pass: shaValid });
+  if (!shaValid) {
+    blockers.push({
+      evidence: 'deployment-commit-sha',
+      reason: `Deployment commit SHA is missing or invalid (got: ${String(deploymentCommitSha).slice(0, 50)})`,
     });
   }
 

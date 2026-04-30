@@ -114,18 +114,6 @@ function loadDecisionsFile() {
       }
     }
 
-    // Backward compat: if legacy 'decisions' object exists and itemDecisions is empty,
-    // populate the item map from legacy for rendering (loader still prefers v2)
-    if (itemDecisionMap.size === 0 && parsed.decisions && typeof parsed.decisions === 'object') {
-      for (const [itemId, decision] of Object.entries(parsed.decisions)) {
-        if (decision && typeof decision === 'string') {
-          itemDecisionMap.set(itemId, { itemId, decision, reviewer: 'legacy', reviewedAt: 'unknown' });
-        } else if (decision && typeof decision === 'object') {
-          itemDecisionMap.set(itemId, { itemId, ...decision });
-        }
-      }
-    }
-
     return { itemDecisionMap, clusterDecisionMap, raw: parsed };
   } catch {
     return { itemDecisionMap: new Map(), clusterDecisionMap: new Map(), raw: { itemDecisions: [], clusterDecisions: [] } };
