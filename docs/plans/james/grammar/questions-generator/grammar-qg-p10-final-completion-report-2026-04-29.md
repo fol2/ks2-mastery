@@ -24,6 +24,7 @@ implementation_prs:
   - "#714"
   - "#717"
   - "#721"
+  - "#722"
 final_content_release_commit: "6835702c"
 post_merge_fix_commits:
   - "665 (U2 target-sentence dedup hotfix)"
@@ -64,9 +65,9 @@ Each round was audited by 10 independent subagent reviewers against the origin c
 - 6 PRs across 11 implementation units (U0–U9, U11)
 - 5,750+ tests in the cumulative P6→P7→P8→P9→P10 verify chain
 - 2,340 items in the canonical learner-render inventory (78 templates × 30 seeds)
-- 78/78 templates approved in the quality register with automated oracle evidence
+- 74 approved + 4 approved_with_limitation templates in the quality register (78 total, all approved-for-ship)
 - 0 S0 and 0 S1 distractor quality failures across all selected-response templates
-- 190 marking matrix entries validating constructed-response boundaries
+- 80 marking matrix entries (seeds 1..5) validating constructed-response boundaries
 - Prompt cue regression caught by adversarial review and fixed same-session (PR #665)
 - Read-aloud now consumes structured `readAloudText` (was previously ignored)
 - Bundle budget adjusted: 227,200 → 227,500 bytes (+300 for speech.js preference chain)
@@ -97,9 +98,9 @@ Each round was audited by 10 independent subagent reviewers against the origin c
 | Evidence validator cross-checks manifest ↔ code ↔ report | Prevents G0-class stale-manifest bugs | Same test file |
 | Completion report validator accepts inline `[]` YAML | Fixes G1 parsing false-negative | Same test file |
 | Render inventory (2,340 items) | Canonical record of what learners see/hear per template×seed | `reports/grammar/grammar-qg-p10-render-inventory.json` |
-| Quality register (78 entries) | Explicit approval/block decision per template | `reports/grammar/grammar-qg-p10-quality-register.json` |
+| Quality register (78 entries: 74 approved + 4 approved_with_limitation) | Explicit approval/block decision per template | `reports/grammar/grammar-qg-p10-quality-register.json` |
 | Distractor audit (0 S0/S1) | Proves every selected-response question has exactly one defensible answer | `reports/grammar/grammar-qg-p10-distractor-audit.json` |
-| Marking matrix (190 entries) | Validates constructed-response boundaries | `reports/grammar/grammar-qg-p10-marking-matrix.json` |
+| Marking matrix (80 entries, seeds 1..5) | Validates constructed-response boundaries | `reports/grammar/grammar-qg-p10-marking-matrix.json` |
 | Certification status map from register | Scheduler blocklist driven by quality evidence, not static assertion | `reports/grammar/grammar-qg-p10-certification-status-map.json` |
 | `verify:grammar-qg-p10` single gate | One command proves everything | `package.json` |
 | Table-choice test fix | Corrected `sentence_function_classify` → `sentence_type_table` | `tests/grammar-qg-p9-table-choice-contract.test.js` |

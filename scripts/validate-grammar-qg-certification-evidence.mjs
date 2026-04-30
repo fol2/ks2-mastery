@@ -567,6 +567,134 @@ export function validateReleaseIdConsistency(manifest, reportReleaseId, reportCo
 }
 
 // ---------------------------------------------------------------------------
+// Cross-check: report claimed counts vs artefact metadata (P11-U1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that a completion report's claimed counts match the actual artefact
+ * metadata (marking matrix totalEntries, quality register approved/limited counts).
+ *
+ * @param {object} manifest - Parsed certification manifest JSON.
+ * @param {string} reportPath - Path to the completion report markdown file.
+ * @param {object} [opts] - Options.
+ * @param {string} [opts.rootDir] - Project root directory.
+ * @returns {{ pass: boolean, mismatches: Array<{ field: string, claimed: any, actual: any, message: string }> }}
+ */
+export function validateReportCounts(manifest, reportPath, opts = {}) {
+  const rootDir = opts.rootDir || ROOT_DIR;
+  const mismatches = [];
+
+  if (!existsSync(reportPath)) {
+    mismatches.push({
+      field: 'reportFile',
+      claimed: reportPath,
+      actual: 'not found',
+      message: `Report file not found: ${reportPath}`,
+    });
+    return { pass: false, mismatches };
+  }
+
+  const reportContent = readFileSync(reportPath, 'utf8');
+
+  // --- Marking matrix count cross-check ---
+  const markingMatrixPath = path.join(rootDir, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json');
+  if (existsSync(markingMatrixPath)) {
+    let matrix;
+    try {
+      matrix = JSON.parse(readFileSync(markingMatrixPath, 'utf8'));
+    } catch (err) {
+      mismatches.push({
+        field: 'markingMatrixParse',
+        claimed: 'valid JSON',
+        actual: `parse error: ${err.message}`,
+        message: `Marking matrix file is not valid JSON: ${err.message}`,
+      });
+    }
+
+    if (matrix?.metadata?.totalEntries != null) {
+      // Extract claimed marking matrix count from report
+      // Pattern: "N marking matrix entries" or "Marking matrix (N entries"
+      const matrixCountRegex = /(\d+)\s+marking\s+matrix\s+entries|[Mm]arking\s+matrix\s*\((\d+)\s+entries/;
+      const matrixMatch = reportContent.match(matrixCountRegex);
+      if (matrixMatch) {
+        const claimedCount = Number(matrixMatch[1] || matrixMatch[2]);
+        if (claimedCount !== matrix.metadata.totalEntries) {
+          mismatches.push({
+            field: 'markingMatrixCount',
+            claimed: claimedCount,
+            actual: matrix.metadata.totalEntries,
+            message: `Report claims ${claimedCount} marking matrix entries but artefact metadata has ${matrix.metadata.totalEntries}`,
+          });
+        }
+      }
+    }
+  }
+
+  // --- Quality register status count cross-check ---
+  const qualityRegisterPath = path.join(rootDir, 'reports', 'grammar', 'grammar-qg-p10-quality-register.json');
+  if (existsSync(qualityRegisterPath)) {
+    let register;
+    try {
+      register = JSON.parse(readFileSync(qualityRegisterPath, 'utf8'));
+    } catch (err) {
+      mismatches.push({
+        field: 'qualityRegisterParse',
+        claimed: 'valid JSON',
+        actual: `parse error: ${err.message}`,
+        message: `Quality register file is not valid JSON: ${err.message}`,
+      });
+    }
+
+    if (register?.metadata) {
+      const meta = register.metadata;
+      // Extract claimed quality register counts from report
+      // Pattern: "N approved" or "N/N templates approved" or "N approved + M approved_with_limitation"
+      const approvedRegex = /(\d+)\s+approved\s*\+\s*(\d+)\s+approved_with_limitation/;
+      const simpleApprovedRegex = /(\d+)\/(\d+)\s+templates?\s+approved|(\d+)\s+templates?\s+approved/;
+
+      const compoundMatch = reportContent.match(approvedRegex);
+      if (compoundMatch) {
+        const claimedApproved = Number(compoundMatch[1]);
+        const claimedLimited = Number(compoundMatch[2]);
+        if (claimedApproved !== meta.approved) {
+          mismatches.push({
+            field: 'qualityRegisterApproved',
+            claimed: claimedApproved,
+            actual: meta.approved,
+            message: `Report claims ${claimedApproved} approved but quality register has ${meta.approved}`,
+          });
+        }
+        if (claimedLimited !== meta.approvedWithLimitation) {
+          mismatches.push({
+            field: 'qualityRegisterApprovedWithLimitation',
+            claimed: claimedLimited,
+            actual: meta.approvedWithLimitation,
+            message: `Report claims ${claimedLimited} approved_with_limitation but quality register has ${meta.approvedWithLimitation}`,
+          });
+        }
+      } else {
+        const simpleMatch = reportContent.match(simpleApprovedRegex);
+        if (simpleMatch) {
+          // "78/78 templates approved" → check total
+          const claimedTotal = Number(simpleMatch[1] || simpleMatch[3]);
+          const actualTotal = (meta.approved || 0) + (meta.approvedWithLimitation || 0);
+          if (claimedTotal !== actualTotal && claimedTotal !== meta.approved) {
+            mismatches.push({
+              field: 'qualityRegisterTotal',
+              claimed: claimedTotal,
+              actual: `${meta.approved} approved + ${meta.approvedWithLimitation} approved_with_limitation = ${actualTotal} total`,
+              message: `Report claims ${claimedTotal} templates approved but quality register has ${meta.approved} approved + ${meta.approvedWithLimitation} approved_with_limitation`,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return { pass: mismatches.length === 0, mismatches };
+}
+
+// ---------------------------------------------------------------------------
 // CLI entry point
 // ---------------------------------------------------------------------------
 
@@ -620,6 +748,21 @@ async function main(argv) {
     console.log(`PASS: Inventory release IDs consistent with manifest (${releaseId})`);
   }
 
+  // Gate 1c: Validate release ID consistency (manifest ↔ code)
+  const releaseIdResult = validateReleaseIdConsistency(manifestResult.manifest);
+  if (!releaseIdResult.pass) {
+    if (jsonOutput) {
+      console.log(JSON.stringify({ pass: false, gate: 'release-id-consistency', mismatches: releaseIdResult.mismatches }, null, 2));
+    } else {
+      console.log(`FAIL: Release ID consistency — ${releaseIdResult.mismatches.length} mismatch(es)\n`);
+      for (const m of releaseIdResult.mismatches) {
+        console.log(`  [${m.field}] ${m.message}`);
+      }
+    }
+    process.exit(1);
+  }
+  console.log(`PASS: Release ID consistent (manifest ↔ code: ${releaseId})`);
+
   // Gate 2: Cross-validate report if provided
   if (reportPath) {
     if (!existsSync(reportPath)) {
@@ -631,7 +774,20 @@ async function main(argv) {
     const reportResult = validateReportAgainstManifest(reportContent, manifestResult.manifest);
     const smokeResult = validateSmokeEvidence(manifestResult.manifest, reportContent);
 
-    const allMismatches = [...reportResult.mismatches, ...smokeResult.mismatches];
+    // Gate 2b: Report count cross-check against artefact metadata
+    const countResult = validateReportCounts(manifestResult.manifest, reportPath);
+
+    // Gate 2c: Release ID consistency with report frontmatter
+    const reportReleaseIdResult = validateReleaseIdConsistency(
+      manifestResult.manifest, null, reportContent
+    );
+
+    const allMismatches = [
+      ...reportResult.mismatches,
+      ...smokeResult.mismatches,
+      ...countResult.mismatches,
+      ...reportReleaseIdResult.mismatches,
+    ];
     const allPass = allMismatches.length === 0;
 
     if (jsonOutput) {
@@ -639,8 +795,10 @@ async function main(argv) {
     } else {
       if (allPass) {
         console.log(`PASS: Report oracle claims align with manifest windows`);
+        console.log(`PASS: Report counts match artefact metadata`);
+        console.log(`PASS: Report frontmatter release IDs consistent`);
       } else {
-        console.log(`FAIL: ${allMismatches.length} oracle-window mismatch(es)\n`);
+        console.log(`FAIL: ${allMismatches.length} validation mismatch(es)\n`);
         for (const m of allMismatches) {
           console.log(`  [${m.field}] ${m.message}`);
           console.log(`    claimed: ${JSON.stringify(m.claimed)}`);
