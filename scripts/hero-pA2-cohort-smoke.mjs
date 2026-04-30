@@ -60,13 +60,17 @@ async function fetchProbe(probeUrl, learnerId) {
 
 // ── Stop condition detection (pure, exported for testing) ───────────
 
-// NOT DETECTABLE FROM PROBE (manual verification required):
-// - claim without Worker-verified completion (command-level audit)
-// - Hero mutates subject state (architectural impossibility, verified by P1-P6)
-// - stale request returns 500 (request monitoring)
-// - operators cannot explain task selection (human assessment)
-// - children directed to Camp before learning (UI review)
-// - support inspects non-existent tables (documentation review)
+// NOT DETECTABLE FROM PROBE (manual verification required per §8):
+// §8 #2: duplicate Camp debit (no per-debit field in probe; reconciliation gap is a proxy)
+// §8 #4: claim without Worker-verified completion (command-level audit)
+// §8 #5: Hero mutates subject state (architectural impossibility, verified by P1-P6)
+// §8 #6: dead CTA (requires UI-level check; readiness-degraded is an indirect proxy)
+// §8 #8: raw child content in telemetry (privacy validator is build-time gate, not runtime probe)
+// §8 #10: rollback cannot hide surfaces (requires production rehearsal)
+// §8 #11: stale request returns 500 (request-level monitoring)
+// §8 #12: operators cannot explain task selection (human assessment)
+// §8 #13: children directed to Camp before learning (UI review)
+// §8 #14: support inspects non-existent tables (documentation review)
 
 /**
  * Detect stop conditions from expanded probe fields.
@@ -100,9 +104,9 @@ export function detectStopConditions({ balance, balanceBucket, hasGap, health, r
     conditions.push({ level: 'warn', key: 'readiness-degraded', detail: failedChecks.join(',') || readiness.overall });
   }
 
-  // Override mismatch: if override exists but isInternalAccount is false
+  // §8 #9: override exposes non-listed accounts — immediate stop per contract
   if (overrideStatus && overrideStatus.isInternalAccount === false) {
-    conditions.push({ level: 'warn', key: 'override-not-internal' });
+    conditions.push({ level: 'stop', key: 'override-not-internal' });
   }
 
   return conditions;

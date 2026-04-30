@@ -27,7 +27,7 @@ const PRIVACY_STRIP_FIELDS = PRIVACY_FORBIDDEN_FIELDS;
  * @param {number} [params.limit=20] — max events to return (capped at 100)
  * @returns {Promise<{ events: Array, count: number, probedAt: string }>}
  */
-export async function probeHeroTelemetry({ db, limit = 20 } = {}) {
+export async function probeHeroTelemetry({ db, limit = 20, learnerId = null } = {}) {
   const probedAt = new Date().toISOString();
   const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 100));
 
@@ -37,13 +37,21 @@ export async function probeHeroTelemetry({ db, limit = 20 } = {}) {
 
   let rows;
   try {
-    const result = await db.prepare(`
-      SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
-      FROM event_log
-      WHERE system_id = 'hero-mode'
-      ORDER BY created_at DESC, id DESC
-      LIMIT ?
-    `).bind(safeLimit).all();
+    const query = learnerId
+      ? `SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+         FROM event_log
+         WHERE system_id = 'hero-mode' AND learner_id = ?
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`
+      : `SELECT id, learner_id, subject_id, system_id, event_type, event_json, created_at
+         FROM event_log
+         WHERE system_id = 'hero-mode'
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`;
+    const stmt = learnerId
+      ? db.prepare(query).bind(learnerId, safeLimit)
+      : db.prepare(query).bind(safeLimit);
+    const result = await stmt.all();
     rows = result?.results || [];
   } catch {
     // Table may not exist on pre-migration deploys — return empty gracefully
