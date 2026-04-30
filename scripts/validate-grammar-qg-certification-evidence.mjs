@@ -864,8 +864,11 @@ export function validateMarkingMatrixCounts(manifest, rootDir) {
  * Validate that every template flagged as requiresAdultReview in the distractor
  * audit has a corresponding adultReviewDecision in the quality register.
  *
- * @param {string} rootDir - Project root directory.
- * @returns {{ pass: boolean, missing: string[], covered: string[] }}
+ * @param {object} manifest - Parsed certification manifest JSON. When `manifest.artefacts`
+ *   is present, artefact paths are resolved from the manifest; otherwise falls back to
+ *   legacy P10 report paths.
+ * @param {string} [rootDir] - Project root directory (defaults to repository root).
+ * @returns {{ pass: boolean, missing: string[], covered: string[], error?: string }}
  */
 export function validateDistractorReviewCoverage(manifest, rootDir) {
   const effectiveRoot = rootDir || ROOT_DIR;
