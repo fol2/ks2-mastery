@@ -191,7 +191,7 @@ test('Punctuation Setup scene preserves journey selectors', () => {
     'data-section="monster-row"',
     'data-section="map-link"',
     'data-section="secondary"',
-    'data-action="punctuation-start"',
+    'punctuation-start',
   ];
   for (const sel of requiredSelectors) {
     assert.ok(source.includes(sel), `PunctuationSetupScene must preserve "${sel}"`);
@@ -216,9 +216,9 @@ test('Punctuation Summary scene preserves journey selectors', () => {
   const source = readSource('src/subjects/punctuation/components/PunctuationSummaryScene.jsx');
   const requiredSelectors = [
     'data-punctuation-summary',
-    'data-action="punctuation-start"',
-    'data-action="punctuation-open-map"',
-    'data-action="punctuation-back"',
+    'punctuation-start',
+    'punctuation-open-map',
+    'punctuation-back',
     'data-punctuation-start-again',
   ];
   for (const sel of requiredSelectors) {

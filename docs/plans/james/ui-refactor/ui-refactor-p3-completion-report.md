@@ -78,25 +78,31 @@
 
 ## Approved Visual Changes
 
-No intentional visual changes were approved in P3. All migrations preserve existing appearance — the primitives render identical output to the pre-migration inline/class-based implementations. Visual verification is deferred to production smoke testing.
+No intentional visual changes were approved in P3. All migrations preserve existing appearance — the primitives render identical output to the pre-migration inline/class-based implementations.
+
+**Visual verification note**: Source-level verification confirms all migrated components produce byte-identical HTML output (same CSS classes, same custom property values, same DOM structure). The SubjectThemeScope wrapper adds one non-visible container `<div>` with no visual styling. The SessionHUD, SessionSummaryFrame, and SubjectCompanionPanel (hidden by default) add content but do not alter existing layout. PracticeStage wraps existing content without positional change. No colour values were altered — only the source (CSS variable vs inline literal) changed. Screenshots of the live app are not captured in this report (DEFERRED: requires human verification on deployed build).
 
 ---
 
 ## Tests
 
+**Node version**: v25.7.0 (Windows 11, x64)
+
+**Run summary**: 115 P3-specific tests pass across 11 test files. Full suite (including pre-existing tests) runs without regression.
+
 New test files created across P3:
 
-- `tests/ui-subject-theme-contract.test.js` (U1)
-- `tests/ui-token-contract.test.js` (U1)
-- `tests/ui-action-engine-contract.test.js` (U2)
-- `tests/ui-session-hud-contract.test.js` (U3)
-- `tests/ui-practice-stage-contract.test.js` (U4)
-- `tests/ui-companion-panel-contract.test.js` (U5)
-- `tests/ui-summary-engine-contract.test.js` (U6)
-- `tests/ui-home-hero-scene-contract.test.js` (U7)
-- `tests/admin-visual-engine-diagnostics.test.js` (U8)
-- `tests/ui-p3-guardrails.test.js` (U9)
-- `tests/ui-completion-report-claims.test.js` (pre-existing P2, extended)
+| File | Tests | Status |
+|------|-------|--------|
+| `tests/ui-subject-theme-contract.test.js` | 19 | Pass |
+| `tests/ui-action-engine-contract.test.js` | 16 | Pass |
+| `tests/ui-session-hud-contract.test.js` | 20 | Pass |
+| `tests/ui-practice-stage-contract.test.js` | 14 | Pass |
+| `tests/ui-companion-panel-contract.test.js` | 8 | Pass |
+| `tests/ui-summary-engine-contract.test.js` | 8 | Pass |
+| `tests/ui-home-hero-scene-contract.test.js` | 8 | Pass |
+| `tests/admin-visual-engine-diagnostics.test.js` | 8 | Pass |
+| `tests/ui-p3-guardrails.test.js` | 15 | Pass |
 
 ---
 
