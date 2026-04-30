@@ -7,7 +7,7 @@ language: en-GB
 created: 2026-04-30
 source_contract: docs/plans/james/punctuation/questions-generator/punctuation-qg-p10.md
 verification_log: reports/punctuation/punctuation-qg-p10-verify.log
-verification_log_sha256: d959818a0466e3b8ccab2c8e55a02308ec8620a846a5a22177f8e74c665cf730
+verification_log_sha256: d6bb73a148207815c37709abee575ea98eac83d0f3c94f3d08c6e2a71809e69c
 ---
 
 # Punctuation QG P10 — Pre-Deploy Certification Report
@@ -62,7 +62,7 @@ Archived verifier output:
 
 ```text
 reports/punctuation/punctuation-qg-p10-verify.log
-sha256: d959818a0466e3b8ccab2c8e55a02308ec8620a846a5a22177f8e74c665cf730
+sha256: d6bb73a148207815c37709abee575ea98eac83d0f3c94f3d08c6e2a71809e69c
 ```
 
 Focused checks:

@@ -13,7 +13,7 @@
     "git": {
       "repository": "fol2/ks2-mastery",
       "ref": "codex/punctuation-qg-p10-delivery",
-      "commitSha": "876c6a01d3a40f24f27c699e7ef061cbb44da770",
+      "commitSha": "933b227d43784ddddc5c60d123601f0d1eb49826",
       "commitContainsAllVerifiedPaths": true,
       "verifiedPaths": [
         "package.json",
@@ -51,7 +51,7 @@
     "npmVersion": "10.9.2",
     "logicalGates": 56,
     "logPath": "reports/punctuation/punctuation-qg-p10-verify.log",
-    "logSha256": "d959818a0466e3b8ccab2c8e55a02308ec8620a846a5a22177f8e74c665cf730"
+    "logSha256": "d6bb73a148207815c37709abee575ea98eac83d0f3c94f3d08c6e2a71809e69c"
   },
   "review": {
     "aiPreReview": {
