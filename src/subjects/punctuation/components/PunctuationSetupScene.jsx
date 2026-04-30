@@ -308,7 +308,6 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
     <section
       className="card border-top punctuation-surface punctuation-setup-scene punctuation-mission-dashboard"
       data-punctuation-phase="setup"
-      style={{ borderTopColor: '#B8873F' }}
     >
       <div className="setup-grid">
         <section
@@ -331,12 +330,13 @@ export function PunctuationSetupScene({ ui, actions, prefs, stats, learner, rewa
             <h2 className="section-title">Today's punctuation mission</h2>
             <HeroWelcome name={learnerName} className="punctuation-hero-welcome" />
             <div className="punctuation-dashboard-cta-row">
-              {/* `--btn-accent: #B8873F` already set by `.punctuation-surface`
-               * on the scene root (`styles/app.css:1132-1136`); CSS variable
-               * inheritance carries it down to this CTA. The inline
-               * `style={{ '--btn-accent' }}` left over from the U1
-               * byte-identical migration is therefore redundant and
-               * dropped here as part of the U1 follow-up bundle sweep. */}
+              {/* `--btn-accent` flows from the P2-U6 Punctuation accent
+               * remap (`:where(.punctuation-surface, …) { --btn-accent:
+               * var(--punctuation-accent) }` in `styles/app.css`). CSS
+               * variable inheritance carries the Bellstorm gold down to
+               * this CTA without any inline style — the legacy
+               * `style={{ '--btn-accent' }}` from the U1 byte-identical
+               * migration was dropped in the U1 follow-up sweep. */}
               <Button
                 size="xl"
                 data-punctuation-cta=""

@@ -226,6 +226,8 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
   'src/surfaces/hubs/AdminAccountsSection.jsx',
   // P2-U3 (refactor-ui shared primitives): monster meter inline width
   // moved into the shared ProgressMeter primitive (-1 site).
+  // P2-U6: removed inline borderTopColor='#B8873F' (line 311); subject-accent
+  // token now drives via .punctuation-surface scope (-1 site).
   'src/subjects/punctuation/components/PunctuationSetupScene.jsx',
   // P2-U3 (refactor-ui shared primitives): subject-card progress span
   // inline width moved into the shared ProgressMeter primitive (-1 site).
@@ -270,9 +272,18 @@ export const MIGRATED_THIS_PR = Object.freeze(new Set([
 // var(--brand)` site). The primitive itself adds 1 inline-style site for
 // `--progress-value` per render (numeric-clamped, css-var-ready), so the
 // global net delta is -1. Constants bumped from 250 → 247.
+//
+// P2-U6 (refactor-ui shared primitives): removed the inline
+// `style={{ borderTopColor: '#B8873F' }}` site at PunctuationSetupScene.jsx:311.
+// The Bellstorm gold border-top now flows through the new `--punctuation-accent`
+// token + the `:where(.punctuation-surface, …) { --card-accent: var(--punctuation-accent) }`
+// remap in styles/app.css, with `.punctuation-surface.border-top {
+// border-top-color: var(--punctuation-accent); }` as a non-invasive
+// Punctuation-scoped override (no canonical `.card.border-top` rule change).
+// Net delta: -1 site. Constants bumped from 247 → 246.
 export const PRE_MIGRATION_TOTAL = 439;
-export const SITES_MIGRATED_THIS_PR = 192;
-export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 247
+export const SITES_MIGRATED_THIS_PR = 193;
+export const POST_MIGRATION_TOTAL = PRE_MIGRATION_TOTAL - SITES_MIGRATED_THIS_PR; // 246
 
 function classifyFile(relativePath) {
   return CLASSIFICATION[relativePath] || 'unclassified';
