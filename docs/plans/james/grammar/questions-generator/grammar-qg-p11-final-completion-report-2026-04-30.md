@@ -15,8 +15,12 @@ implementation_prs:
   - "#735"
   - "#736"
   - "#737"
+  - "#739"
+  - "#740"
 final_content_release_commit: 7b39a78e
-post_merge_fix_commits: []
+post_merge_fix_commits:
+  - "#739"
+  - "#740"
 final_report_commit: pending-this-commit
 ---
 
@@ -35,10 +39,10 @@ P11 is the production-readiness contract for the Grammar Question Generator's 78
 | Templates | 78 (unchanged from P10) |
 | Active template denominator | 78/78 (no blocks) |
 | Content release ID | `grammar-qg-p11-2026-04-30` |
-| New tests added | ~930 |
-| Total P11 test count | ~930 new + 14,263 existing CI suite |
+| New tests added | ~950 |
+| Total P11 test count | ~950 new + 14,263 existing CI suite |
 | Regression tests broken | 0 (after CI-compatible fixes) |
-| Implementation PRs | 6 |
+| Implementation PRs | 8 (6 feature + 2 reviewer-fix) |
 | Implementation units | 10 (U1–U10) |
 | Semantic audit coverage | 78 templates × 30 seeds = 2,340 items |
 | S0/S1 issues remaining | 0 |
@@ -278,13 +282,60 @@ Both are necessary. A grammar label like "adverbs" passes the structural check (
 
 Rather than fixing double-punctuation template by template, the conditional `.` rule (`/[.!?]$/ → skip`) eliminates the entire bug class. Future templates automatically benefit.
 
-### 10.4 SDLC Cycle Throughput
+### 10.4 Assertion Identity Matching
 
-6 PRs merged in a single session using isolated worktrees, parallel subagent workers, independent reviews, and CI-green-before-merge gating. Total new test coverage: ~930 tests. Zero regression.
+When a validator interpolates a constant's *value* into an error message, test assertions must match the value (`grammar-qg-p11-2026-04-30`), not the constant's *identifier name* (`GRAMMAR_CONTENT_RELEASE_ID`). This is distinct from the release-ID-bump propagation lesson — it's about matching what the code actually produces vs what a developer writes in the source.
+
+### 10.5 SDLC Cycle Throughput
+
+8 PRs merged in a single session using isolated worktrees, parallel subagent workers, independent reviews, and CI-green-before-merge gating. Total new test coverage: ~950 tests. Zero regression.
 
 ---
 
-## 11. PR Summary
+## 11. Independent Contract Review
+
+Two rounds of 10 independent reviewers validated the delivery against the original P11 contract spec. Each reviewer held a specific contract requirement and validated it by running code against the live main branch.
+
+### Round 1 Results (pre-fix)
+
+| # | Focus | Verdict | Issue Found |
+|---|-------|---------|-------------|
+| 1 | Target-sentence correctness | PASS | — |
+| 2 | Read-aloud noun phrase | PASS | — |
+| 3 | Double punctuation sweep | PASS | — |
+| 4 | Evidence count reconciliation | **FAIL** | Validator compares P10 manifest against P11 code constant |
+| 5 | Distractor review coverage | PASS | — |
+| 6 | Scheduler fail-closed guard | PASS | — |
+| 7 | Cumulative verify chain | PASS | — |
+| 8 | No scoring/mastery/reward changes | PASS | — |
+| 9 | Semantic audit validates bugs | PASS | — |
+| 10 | Production smoke contract | **FAIL** | Schema diverges from U7 spec; POST_DEPLOY guard is documentation-only |
+
+**Fixes applied:**
+- PR #739: `--expected-release` flag for evidence validator; U7 contract schema coverage in smoke test; CERTIFIED_POST_DEPLOY guard reads report status and enforces constraint.
+
+### Round 2 Results (post-fix)
+
+| # | Focus | Verdict | Notes |
+|---|-------|---------|-------|
+| 1 | Target-sentence correctness | PASS | 6/6 acceptance examples correct |
+| 2 | Read-aloud target kind | PASS | noun-phrase/word/sentence all correct |
+| 3 | Double punctuation sweep | PASS | 0 failures across 838 items (100 seeds) |
+| 4 | Evidence validator with flag | PASS | 3/3 commands behave as specified |
+| 5 | Distractor review coverage | PASS | 18/18 covered, 0 gaps |
+| 6 | Scheduler fail-closed | PASS | 78/78 active, 0 blocked |
+| 7 | Verify chain | **FAIL→PASS** | 1 assertion bug (constant name vs value) — fixed in PR #740 |
+| 8 | No scoring/mastery changes | PASS | Only content.js enrichPromptCue touched |
+| 9 | Semantic audit | PASS | 2,340 items, 0 findings |
+| 10 | Smoke contract U7 schema | PASS | 12 fields, POST_DEPLOY guard enforced |
+
+**Final fix:** PR #740 — one-line assertion fix (match constant value, not identifier name).
+
+**Final state: 10/10 PASS. No further reviewer comments.**
+
+---
+
+## 12. PR Summary
 
 | PR | Units | Title | Tests Added |
 |----|-------|-------|-------------|
@@ -294,4 +345,6 @@ Rather than fixing double-punctuation template by template, the conditional `.` 
 | #735 | U6+U7 | Distractor review closure and marking matrix truth | 7 |
 | #736 | U8+U9+U10 | Scheduler guard, smoke contract, and verify chain | 43 |
 | #737 | U4+U5 | Semantic prompt-cue audit and render regression tests | 430 |
-| **Total** | **U1–U10** | | **~930** |
+| #739 | R1 fix | Expected-release flag and U7 schema coverage | 4 |
+| #740 | R2 fix | Assertion matching constant value not name | 0 (fix only) |
+| **Total** | **U1–U10 + review fixes** | | **~950** |
