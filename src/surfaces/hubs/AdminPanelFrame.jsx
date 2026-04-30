@@ -3,6 +3,8 @@ import { PanelHeader } from './admin-panel-header.jsx';
 import { formatTimestamp } from './hub-utils.js';
 import { decidePanelFrameState, DEFAULT_STALE_THRESHOLD_MS } from '../../platform/hubs/admin-panel-frame.js';
 import { Button } from '../../platform/ui/Button.jsx';
+import { EmptyState } from '../../platform/ui/EmptyState.jsx';
+import { LoadingSkeleton } from '../../platform/ui/LoadingSkeleton.jsx';
 
 // P5 Unit 1: AdminPanelFrame — unified freshness/failure/empty-state wrapper.
 //
@@ -95,16 +97,17 @@ export function AdminPanelFrame({
 
       {frameState.showLoadingSkeleton ? (
         <div data-panel-frame-loading="true" aria-busy="true">
-          {loadingSkeleton || (
-            <div className="small muted admin-panel-frame-placeholder">Loading panel data...</div>
-          )}
+          {loadingSkeleton || <LoadingSkeleton />}
         </div>
       ) : null}
 
       {frameState.showEmptyState ? (
         <div data-panel-frame-empty="true">
           {emptyState || (
-            <p className="small muted admin-panel-frame-placeholder">No data available.</p>
+            <EmptyState
+              title="No data available"
+              body="The panel has nothing to display for the current filters or window."
+            />
           )}
         </div>
       ) : null}

@@ -256,6 +256,27 @@ describe('HeroQuestCard — stale quest error message with aria-live', () => {
     );
   });
 
+  it('emits data-error-code="hero-quest-load" via ErrorCard for error state', async () => {
+    // U5 routed the stale-quest error branch through the shared ErrorCard
+    // primitive. The `code="hero-quest-load"` prop must surface as a
+    // `data-error-code` attribute in the rendered HTML so downstream
+    // telemetry + Admin Debug Bundle locators stay byte-identical.
+    // The parser-level parity test only checks the JSX source; this SSR
+    // assertion locks the rendered-attribute contract.
+    const html = await renderHeroQuestCardFixture({
+      hero: heroModel({
+        error: 'hero_quest_refreshed',
+        canStart: false,
+        canContinue: false,
+        nextTask: null,
+      }),
+    });
+    assert.ok(
+      html.includes('data-error-code="hero-quest-load"'),
+      'rendered HTML must carry data-error-code="hero-quest-load" for telemetry/locator preservation',
+    );
+  });
+
   it('shows inline error with aria-live when canStart is still true', async () => {
     const html = await renderHeroQuestCardFixture({
       hero: heroModel({ error: 'hero_quest_refreshed' }),
