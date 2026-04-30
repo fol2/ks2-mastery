@@ -34,7 +34,8 @@ post_merge_fix_commits:
   - "714 (U6 per-option defensibility)"
   - "717 (U2 targetText rename)"
   - "721 (U5 register eval shapes for checkbox/multi/manualReview)"
-final_report_commit: "6835702c"
+  - "722 (U5 table-choice golden derivation — multiField + closure parser)"
+final_report_commit: "c91debe8"
 baseline_content_release_id: grammar-qg-p9-2026-04-29
 final_content_release_id: grammar-qg-p10-2026-04-29
 content_release_id_changed: "true"
