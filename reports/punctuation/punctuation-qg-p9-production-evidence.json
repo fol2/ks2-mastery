@@ -1,0 +1,27 @@
+{
+  "releaseId": "punctuation-r4-full-14-skill-structure",
+  "commitSha": "6bc5bd3c0bb222d2719e2805402357085f9a83fc",
+  "source": {
+    "zipSha256": "pending-verification",
+    "githubRef": "main",
+    "verifiedPaths": [
+      "shared/punctuation/marking.js",
+      "tests/fixtures/punctuation-negative-vectors.json",
+      "tests/fixtures/punctuation-reviewer-decisions.json",
+      "scripts/verify-punctuation-qg-p9.mjs"
+    ]
+  },
+  "localVerification": {
+    "node": "22.x",
+    "command": "npm run verify:punctuation-qg:p9",
+    "status": "pass",
+    "completedAt": "2026-04-30T12:00:00.000Z"
+  },
+  "liveProductionSmoke": {
+    "status": "not_run",
+    "environment": null,
+    "origin": null,
+    "completedAt": null,
+    "result": null
+  }
+}
