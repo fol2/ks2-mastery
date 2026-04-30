@@ -36,4 +36,3 @@ PUNCTUATION QG P10 VERIFICATION
     - Live production smoke has not run, so post-deploy certification is unavailable.
 
   RESULT: BLOCKED_PENDING_HUMAN_ACCEPTANCE
-

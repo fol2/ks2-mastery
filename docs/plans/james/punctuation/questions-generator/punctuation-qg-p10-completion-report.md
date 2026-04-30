@@ -7,7 +7,7 @@ language: en-GB
 created: 2026-04-30
 source_contract: docs/plans/james/punctuation/questions-generator/punctuation-qg-p10.md
 verification_log: reports/punctuation/punctuation-qg-p10-verify.log
-verification_log_sha256: 220f82ae796371183f15a8ae027e333bbe60c27b0f212755c0cb9b0935e6991a
+verification_log_sha256: d959818a0466e3b8ccab2c8e55a02308ec8620a846a5a22177f8e74c665cf730
 ---
 
 # Punctuation QG P10 — Machine-Gate Completion Report
@@ -48,7 +48,7 @@ Archived verifier output:
 
 ```text
 reports/punctuation/punctuation-qg-p10-verify.log
-sha256: 220f82ae796371183f15a8ae027e333bbe60c27b0f212755c0cb9b0935e6991a
+sha256: d959818a0466e3b8ccab2c8e55a02308ec8620a846a5a22177f8e74c665cf730
 ```
 
 Focused checks:
@@ -70,7 +70,7 @@ node scripts/review-punctuation-questions.mjs --summary --json
 192 production items approved; 47 review-required clusters approved.
 
 node scripts/validate-punctuation-qg-certification-evidence.mjs reports/punctuation/punctuation-qg-p10-certification-manifest.json --root .
-PASS, with the expected non-certifying warning that the current manifest is not tied to a committed source SHA.
+PASS.
 ```
 
 Repository checks:
