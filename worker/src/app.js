@@ -49,7 +49,7 @@ import { resolveHeroStartTaskCommand } from './hero/launch.js';
 import { resolveHeroClaimCommand } from './hero/claim.js';
 import { resolveHeroCampCommand } from './hero/camp.js';
 import { probeHeroTelemetry, buildExpandedProbeResponse, stripPrivacyFields } from './hero/telemetry-probe.js';
-import { resolveHeroFlagsWithOverride, HERO_FLAG_KEYS } from '../../shared/hero/account-override.js';
+import { resolveHeroFlagsWithOverride, resolveHeroFlagsForAccount, HERO_FLAG_KEYS } from '../../shared/hero/account-override.js';
 import {
   initialiseDailyProgress,
   markTaskStarted,
@@ -1435,7 +1435,8 @@ export function createWorkerApp({
         if (url.pathname === '/api/hero/command' && request.method === 'POST') {
           // U8 security fix: apply per-account override BEFORE pre-gate checks
           // so team accounts in HERO_INTERNAL_ACCOUNTS bypass global flag gates.
-          const heroCommandEnv = resolveHeroFlagsWithOverride({ env, accountId: session.accountId });
+          // pA4 U2: unified resolver — also captures overrideStatus for ops output.
+          const { resolvedEnv: heroCommandEnv, overrideStatus: heroCommandOverrideStatus } = resolveHeroFlagsForAccount({ env, accountId: session.accountId });
           if (!envFlagEnabled(heroCommandEnv.HERO_MODE_LAUNCH_ENABLED)) {
             throw new NotFoundError('Hero launch is not available.', {
               code: 'hero_launch_disabled',
@@ -2714,26 +2715,12 @@ export function createWorkerApp({
               parentAccountId = membershipRow?.account_id ?? null;
             } catch { /* orphan learner — parentAccountId stays null */ }
 
-            // Resolve flags using the PARENT account (not operator)
-            const resolvedFlags = resolveHeroFlagsWithOverride({
+            // pA4 U2: unified resolver — replaces manual HERO_INTERNAL_ACCOUNTS parse.
+            // Resolve flags using the PARENT account (not operator).
+            const { resolvedEnv: resolvedFlags, overrideStatus: resolverClassification } = resolveHeroFlagsForAccount({
               env,
               accountId: parentAccountId ?? session.accountId,
             });
-
-            let isInternalAccount = null;
-            if (parentAccountId === null) {
-              // Orphan learner — cannot determine internal status
-              isInternalAccount = null;
-            } else {
-              isInternalAccount = false;
-              try {
-                const raw = env.HERO_INTERNAL_ACCOUNTS;
-                if (raw) {
-                  const parsed = JSON.parse(raw);
-                  isInternalAccount = Array.isArray(parsed) && parsed.includes(parentAccountId);
-                }
-              } catch { /* graceful — default to false */ }
-            }
 
             // P0 security: project only Hero flag keys — never expose full env secrets
             const effectiveFlags = Object.fromEntries(
@@ -2742,7 +2729,7 @@ export function createWorkerApp({
             const overrideStatus = {
               queriedLearnerId: probeLearnerIdParam,
               parentAccountId,
-              isInternalAccount,
+              classification: resolverClassification,
               effectiveFlags,
               ...(parentAccountId === null ? { reason: 'parent-account-not-found' } : {}),
             };
