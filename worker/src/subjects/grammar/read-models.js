@@ -179,7 +179,6 @@ function safeSummary(summary) {
     ? Number(summary.scoredAnswered)
     : Math.max(0, answered - nonScoredAnswered);
   const output = {
-    sessionId: typeof summary.sessionId === 'string' ? summary.sessionId : '',
     mode: typeof summary.mode === 'string' ? summary.mode : 'smart',
     startedAt: asTs(summary.startedAt, 0),
     completedAt: asTs(summary.completedAt, 0),
