@@ -56,26 +56,80 @@ describe('detectRawChildContent', () => {
 // ── 2. Non-Cohort Exposure ───────────────────────────────────────────
 
 describe('detectNonCohortExposure', () => {
-  it('triggers when account is in no cohort list', () => {
-    const env = {
-      HERO_INTERNAL_ACCOUNTS: JSON.stringify(['int-1']),
-      HERO_EXTERNAL_ACCOUNTS: JSON.stringify(['ext-1']),
-    };
-    const result = detectNonCohortExposure({ accountId: 'random-account', env });
+  const nonCohortEnv = {
+    HERO_INTERNAL_ACCOUNTS: JSON.stringify(['int-1']),
+    HERO_EXTERNAL_ACCOUNTS: JSON.stringify(['ext-1']),
+  };
+
+  it('triggers for non-cohort account with heroSurfaceVisible', () => {
+    const result = detectNonCohortExposure({
+      accountId: 'random-account', env: nonCohortEnv, heroSurfaceVisible: true,
+    });
     assert.equal(result.triggered, true);
     assert.equal(result.condition, 'non-cohort-exposure');
     assert.ok(result.detail.includes('random-account'));
+    assert.ok(result.detail.includes('heroSurfaceVisible'));
   });
 
-  it('does not trigger for internal cohort account', () => {
+  it('triggers for non-cohort account with commandAccepted', () => {
+    const result = detectNonCohortExposure({
+      accountId: 'random-account', env: nonCohortEnv, commandAccepted: true,
+    });
+    assert.equal(result.triggered, true);
+    assert.equal(result.condition, 'non-cohort-exposure');
+    assert.ok(result.detail.includes('commandAccepted'));
+  });
+
+  it('triggers for non-cohort account with readModelEnabled', () => {
+    const result = detectNonCohortExposure({
+      accountId: 'random-account', env: nonCohortEnv, readModelEnabled: true,
+    });
+    assert.equal(result.triggered, true);
+    assert.equal(result.condition, 'non-cohort-exposure');
+    assert.ok(result.detail.includes('readModelEnabled'));
+  });
+
+  it('does not trigger for internal cohort account even with all exposure signals', () => {
     const env = { HERO_INTERNAL_ACCOUNTS: JSON.stringify(['acc-1']) };
-    const result = detectNonCohortExposure({ accountId: 'acc-1', env });
+    const result = detectNonCohortExposure({
+      accountId: 'acc-1', env, heroSurfaceVisible: true, commandAccepted: true, readModelEnabled: true,
+    });
     assert.equal(result.triggered, false);
   });
 
-  it('does not trigger for external cohort account', () => {
-    const env = { HERO_EXTERNAL_ACCOUNTS: JSON.stringify(['ext-1']) };
-    const result = detectNonCohortExposure({ accountId: 'ext-1', env });
+  it('does not trigger for non-cohort account with all exposure signals false', () => {
+    const result = detectNonCohortExposure({
+      accountId: 'random-account', env: nonCohortEnv,
+      heroSurfaceVisible: false, commandAccepted: false, readModelEnabled: false,
+    });
+    assert.equal(result.triggered, false);
+  });
+
+  it('does not trigger when no exposure signals are provided (backward compat)', () => {
+    const result = detectNonCohortExposure({ accountId: 'random-account', env: nonCohortEnv });
+    assert.equal(result.triggered, false);
+  });
+
+  it('triggers for excluded account with exposure signal', () => {
+    const env = {
+      HERO_INTERNAL_ACCOUNTS: JSON.stringify(['int-1']),
+      HERO_EXTERNAL_ACCOUNTS: JSON.stringify(['ext-1']),
+      HERO_EXCLUDED_ACCOUNTS: JSON.stringify(['excluded-acc']),
+    };
+    const result = detectNonCohortExposure({
+      accountId: 'excluded-acc', env, heroSurfaceVisible: true,
+    });
+    assert.equal(result.triggered, true);
+    assert.ok(result.detail.includes('excluded-acc'));
+  });
+
+  it('does not trigger when accountId is missing', () => {
+    const result = detectNonCohortExposure({ env: nonCohortEnv, heroSurfaceVisible: true });
+    assert.equal(result.triggered, false);
+  });
+
+  it('does not trigger when env is missing', () => {
+    const result = detectNonCohortExposure({ accountId: 'acc-1', heroSurfaceVisible: true });
     assert.equal(result.triggered, false);
   });
 
@@ -103,6 +157,17 @@ describe('detectUnauthorisedCommand', () => {
     const env = { HERO_INTERNAL_ACCOUNTS: JSON.stringify(['valid-acc']) };
     const result = detectUnauthorisedCommand({ accountId: 'valid-acc', env });
     assert.equal(result.triggered, false);
+  });
+
+  it('triggers for excluded account', () => {
+    const env = {
+      HERO_EXCLUDED_ACCOUNTS: JSON.stringify(['banned-acc']),
+      HERO_INTERNAL_ACCOUNTS: JSON.stringify(['banned-acc']),
+    };
+    const result = detectUnauthorisedCommand({ accountId: 'banned-acc', env });
+    assert.equal(result.triggered, true);
+    assert.equal(result.condition, 'unauthorised-command');
+    assert.ok(result.detail.includes('excluded'));
   });
 
   it('does not trigger for global-enabled account', () => {

@@ -190,12 +190,27 @@ function deriveCohortClassification(overrideStatus, allFlagsEnabled) {
         enabled: true,
         reason: 'Account is in HERO_EXTERNAL_ACCOUNTS cohort list. All Hero flags force-enabled.',
       };
-    case 'global':
+    case 'global-default':
       return {
         enabled: allFlagsEnabled,
         reason: allFlagsEnabled
           ? 'Hero flags are globally enabled in environment. Account benefits from global rollout.'
           : 'Some Hero flags are globally enabled but not all. Partial visibility.',
+      };
+    case 'emergency-off':
+      return {
+        enabled: false,
+        reason: 'HERO_EMERGENCY_DISABLED is active. All Hero functionality is disabled system-wide.',
+      };
+    case 'excluded':
+      return {
+        enabled: false,
+        reason: 'Account is in HERO_EXCLUDED_ACCOUNTS list. Hero Mode is explicitly disabled for this account.',
+      };
+    case 'rollout-bucket':
+      return {
+        enabled: true,
+        reason: 'Account falls within the deterministic rollout bucket. All Hero flags force-enabled via percentage rollout.',
       };
     case 'none':
     default:
@@ -245,7 +260,7 @@ function deriveRecommendations({
   }
 
   // Partial flags
-  if (overrideStatus === 'global' && !allFlagsEnabled) {
+  if (overrideStatus === 'global-default' && !allFlagsEnabled) {
     recs.push('Partial global flag enablement. Either enable all 6 flags or add account to a cohort list for full access.');
   }
 

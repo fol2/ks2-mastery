@@ -35,7 +35,7 @@ One row per observation. Do not combine multiple signals into a single row. If t
 
 ## Provenance Values
 
-- `real-production` — observed in production via automated probe or manual verification against live D1/KV state
+- `real-production` — observed in production via automated probe or manual verification against live D1 child_game_state (system_id = 'hero-mode')
 - `operator-verified` — operator has independently confirmed the observation against a second source
 - `system-generated` — automatically produced by telemetry or monitoring infrastructure
 
@@ -53,7 +53,8 @@ Rows with provenance='real-production' count toward certification gates. Rows wi
 
 | Date | Source | Account | Learner | Signal | Value | Provenance | Confidence | Notes |
 |------|--------|---------|---------|--------|-------|------------|------------|-------|
-| 2026-05-01 | external-cohort | acct-example-001 | learner-A | daily-completion | 1 | real-production | high | Example row — replace with real observations |
+<!-- example row only, do not count -->
+| 2026-05-01 | external-cohort | acct-example-001 | learner-A | daily-completion | 1 | example-only | high | Example row — replace with real observations |
 
 *(Rows will be appended as real external cohort usage occurs during Ring A4-1.)*
 
