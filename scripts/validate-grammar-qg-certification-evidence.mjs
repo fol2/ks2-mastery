@@ -31,6 +31,62 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 // ---------------------------------------------------------------------------
 
 /**
+ * Resolve an artefact path from a manifest's artefacts map.
+ *
+ * @param {object} manifest - Parsed certification manifest JSON.
+ * @param {string} key - The artefact key to look up in manifest.artefacts.
+ * @param {string} [rootDir] - Project root directory.
+ * @returns {{ ok: boolean, path: string|null, error: string|null }}
+ */
+export function requireArtefact(manifest, key, rootDir = ROOT_DIR) {
+  const rel = manifest?.artefacts?.[key];
+  if (!rel || typeof rel !== 'string') {
+    return {
+      ok: false,
+      path: null,
+      error: `Manifest missing required artefact path: artefacts.${key}`,
+    };
+  }
+  const abs = path.resolve(rootDir, rel);
+  if (!existsSync(abs)) {
+    return {
+      ok: false,
+      path: abs,
+      error: `Artefact file not found for ${key}: ${rel}`,
+    };
+  }
+  return { ok: true, path: abs, error: null };
+}
+
+/**
+ * Resolve and read a JSON artefact from a manifest's artefacts map.
+ *
+ * @param {object} manifest - Parsed certification manifest JSON.
+ * @param {string} key - The artefact key to look up in manifest.artefacts.
+ * @param {string} [rootDir] - Project root directory.
+ * @returns {{ ok: boolean, data: object|null, path: string|null, error: string|null }}
+ */
+export function readJsonArtefact(manifest, key, rootDir = ROOT_DIR) {
+  const resolved = requireArtefact(manifest, key, rootDir);
+  if (!resolved.ok) return { ok: false, error: resolved.error, data: null, path: null };
+  try {
+    return {
+      ok: true,
+      data: JSON.parse(readFileSync(resolved.path, 'utf8')),
+      path: resolved.path,
+      error: null,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: `Artefact ${key} is not valid JSON: ${err.message}`,
+      data: null,
+      path: resolved.path,
+    };
+  }
+}
+
+/**
  * Parse a seed window string like "1..15" into { start, end, count }.
  */
 export function parseSeedWindow(windowStr) {
@@ -597,95 +653,149 @@ export function validateReportCounts(manifest, reportPath, opts = {}) {
   const reportContent = readFileSync(reportPath, 'utf8');
 
   // --- Marking matrix count cross-check ---
-  const markingMatrixPath = path.join(rootDir, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json');
-  if (existsSync(markingMatrixPath)) {
-    let matrix;
-    try {
-      matrix = JSON.parse(readFileSync(markingMatrixPath, 'utf8'));
-    } catch (err) {
+  let markingMatrixPath;
+  let matrix = null;
+  if (manifest.artefacts) {
+    const matrixResult = readJsonArtefact(manifest, 'markingMatrix', rootDir);
+    if (matrixResult.ok) {
+      matrix = matrixResult.data;
+      markingMatrixPath = matrixResult.path;
+      // Validate contentReleaseId consistency
+      if (matrix?.metadata?.contentReleaseId && matrix.metadata.contentReleaseId !== manifest.contentReleaseId) {
+        mismatches.push({
+          field: 'markingMatrixReleaseIdMismatch',
+          claimed: manifest.contentReleaseId,
+          actual: matrix.metadata.contentReleaseId,
+          message: `Marking matrix metadata.contentReleaseId "${matrix.metadata.contentReleaseId}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
+        });
+      }
+    } else {
       mismatches.push({
-        field: 'markingMatrixParse',
-        claimed: 'valid JSON',
-        actual: `parse error: ${err.message}`,
-        message: `Marking matrix file is not valid JSON: ${err.message}`,
+        field: 'markingMatrixResolve',
+        claimed: 'artefacts.markingMatrix',
+        actual: matrixResult.error,
+        message: matrixResult.error,
       });
     }
+  } else {
+    // Legacy P10 fallback — no artefacts map in manifest
+    console.warn('WARN: manifest.artefacts not found — falling back to legacy P10 paths for markingMatrix');
+    markingMatrixPath = path.join(rootDir, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json');
+    if (existsSync(markingMatrixPath)) {
+      try {
+        matrix = JSON.parse(readFileSync(markingMatrixPath, 'utf8'));
+      } catch (err) {
+        mismatches.push({
+          field: 'markingMatrixParse',
+          claimed: 'valid JSON',
+          actual: `parse error: ${err.message}`,
+          message: `Marking matrix file is not valid JSON: ${err.message}`,
+        });
+      }
+    }
+  }
 
-    if (matrix?.metadata?.totalEntries != null) {
-      // Extract claimed marking matrix count from report
-      // Pattern: "N marking matrix entries" or "Marking matrix (N entries"
-      const matrixCountRegex = /(\d+)\s+marking\s+matrix\s+entries|[Mm]arking\s+matrix\s*\((\d+)\s+entries/;
-      const matrixMatch = reportContent.match(matrixCountRegex);
-      if (matrixMatch) {
-        const claimedCount = Number(matrixMatch[1] || matrixMatch[2]);
-        if (claimedCount !== matrix.metadata.totalEntries) {
-          mismatches.push({
-            field: 'markingMatrixCount',
-            claimed: claimedCount,
-            actual: matrix.metadata.totalEntries,
-            message: `Report claims ${claimedCount} marking matrix entries but artefact metadata has ${matrix.metadata.totalEntries}`,
-          });
-        }
+  if (matrix?.metadata?.totalEntries != null) {
+    // Extract claimed marking matrix count from report
+    // Pattern: "N marking matrix entries" or "Marking matrix (N entries"
+    const matrixCountRegex = /(\d+)\s+marking\s+matrix\s+entries|[Mm]arking\s+matrix\s*\((\d+)\s+entries/;
+    const matrixMatch = reportContent.match(matrixCountRegex);
+    if (matrixMatch) {
+      const claimedCount = Number(matrixMatch[1] || matrixMatch[2]);
+      if (claimedCount !== matrix.metadata.totalEntries) {
+        mismatches.push({
+          field: 'markingMatrixCount',
+          claimed: claimedCount,
+          actual: matrix.metadata.totalEntries,
+          message: `Report claims ${claimedCount} marking matrix entries but artefact metadata has ${matrix.metadata.totalEntries}`,
+        });
       }
     }
   }
 
   // --- Quality register status count cross-check ---
-  const qualityRegisterPath = path.join(rootDir, 'reports', 'grammar', 'grammar-qg-p10-quality-register.json');
-  if (existsSync(qualityRegisterPath)) {
-    let register;
-    try {
-      register = JSON.parse(readFileSync(qualityRegisterPath, 'utf8'));
-    } catch (err) {
+  let qualityRegisterPath;
+  let register = null;
+  if (manifest.artefacts) {
+    const registerResult = readJsonArtefact(manifest, 'qualityRegister', rootDir);
+    if (registerResult.ok) {
+      register = registerResult.data;
+      qualityRegisterPath = registerResult.path;
+      // Validate contentReleaseId consistency
+      if (register?.metadata?.contentReleaseId && register.metadata.contentReleaseId !== manifest.contentReleaseId) {
+        mismatches.push({
+          field: 'qualityRegisterReleaseIdMismatch',
+          claimed: manifest.contentReleaseId,
+          actual: register.metadata.contentReleaseId,
+          message: `Quality register metadata.contentReleaseId "${register.metadata.contentReleaseId}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
+        });
+      }
+    } else {
       mismatches.push({
-        field: 'qualityRegisterParse',
-        claimed: 'valid JSON',
-        actual: `parse error: ${err.message}`,
-        message: `Quality register file is not valid JSON: ${err.message}`,
+        field: 'qualityRegisterResolve',
+        claimed: 'artefacts.qualityRegister',
+        actual: registerResult.error,
+        message: registerResult.error,
       });
     }
+  } else {
+    // Legacy P10 fallback — no artefacts map in manifest
+    console.warn('WARN: manifest.artefacts not found — falling back to legacy P10 paths for qualityRegister');
+    qualityRegisterPath = path.join(rootDir, 'reports', 'grammar', 'grammar-qg-p10-quality-register.json');
+    if (existsSync(qualityRegisterPath)) {
+      try {
+        register = JSON.parse(readFileSync(qualityRegisterPath, 'utf8'));
+      } catch (err) {
+        mismatches.push({
+          field: 'qualityRegisterParse',
+          claimed: 'valid JSON',
+          actual: `parse error: ${err.message}`,
+          message: `Quality register file is not valid JSON: ${err.message}`,
+        });
+      }
+    }
+  }
 
-    if (register?.metadata) {
-      const meta = register.metadata;
-      // Extract claimed quality register counts from report
-      // Pattern: "N approved" or "N/N templates approved" or "N approved + M approved_with_limitation"
-      const approvedRegex = /(\d+)\s+approved\s*\+\s*(\d+)\s+approved_with_limitation/;
-      const simpleApprovedRegex = /(\d+)\/(\d+)\s+templates?\s+approved|(\d+)\s+templates?\s+approved/;
+  if (register?.metadata) {
+    const meta = register.metadata;
+    // Extract claimed quality register counts from report
+    // Pattern: "N approved" or "N/N templates approved" or "N approved + M approved_with_limitation"
+    const approvedRegex = /(\d+)\s+approved\s*\+\s*(\d+)\s+approved_with_limitation/;
+    const simpleApprovedRegex = /(\d+)\/(\d+)\s+templates?\s+approved|(\d+)\s+templates?\s+approved/;
 
-      const compoundMatch = reportContent.match(approvedRegex);
-      if (compoundMatch) {
-        const claimedApproved = Number(compoundMatch[1]);
-        const claimedLimited = Number(compoundMatch[2]);
-        if (claimedApproved !== meta.approved) {
+    const compoundMatch = reportContent.match(approvedRegex);
+    if (compoundMatch) {
+      const claimedApproved = Number(compoundMatch[1]);
+      const claimedLimited = Number(compoundMatch[2]);
+      if (claimedApproved !== meta.approved) {
+        mismatches.push({
+          field: 'qualityRegisterApproved',
+          claimed: claimedApproved,
+          actual: meta.approved,
+          message: `Report claims ${claimedApproved} approved but quality register has ${meta.approved}`,
+        });
+      }
+      if (claimedLimited !== meta.approvedWithLimitation) {
+        mismatches.push({
+          field: 'qualityRegisterApprovedWithLimitation',
+          claimed: claimedLimited,
+          actual: meta.approvedWithLimitation,
+          message: `Report claims ${claimedLimited} approved_with_limitation but quality register has ${meta.approvedWithLimitation}`,
+        });
+      }
+    } else {
+      const simpleMatch = reportContent.match(simpleApprovedRegex);
+      if (simpleMatch) {
+        // "78/78 templates approved" → check total
+        const claimedTotal = Number(simpleMatch[1] || simpleMatch[3]);
+        const actualTotal = (meta.approved || 0) + (meta.approvedWithLimitation || 0);
+        if (claimedTotal !== actualTotal && claimedTotal !== meta.approved) {
           mismatches.push({
-            field: 'qualityRegisterApproved',
-            claimed: claimedApproved,
-            actual: meta.approved,
-            message: `Report claims ${claimedApproved} approved but quality register has ${meta.approved}`,
+            field: 'qualityRegisterTotal',
+            claimed: claimedTotal,
+            actual: `${meta.approved} approved + ${meta.approvedWithLimitation} approved_with_limitation = ${actualTotal} total`,
+            message: `Report claims ${claimedTotal} templates approved but quality register has ${meta.approved} approved + ${meta.approvedWithLimitation} approved_with_limitation`,
           });
-        }
-        if (claimedLimited !== meta.approvedWithLimitation) {
-          mismatches.push({
-            field: 'qualityRegisterApprovedWithLimitation',
-            claimed: claimedLimited,
-            actual: meta.approvedWithLimitation,
-            message: `Report claims ${claimedLimited} approved_with_limitation but quality register has ${meta.approvedWithLimitation}`,
-          });
-        }
-      } else {
-        const simpleMatch = reportContent.match(simpleApprovedRegex);
-        if (simpleMatch) {
-          // "78/78 templates approved" → check total
-          const claimedTotal = Number(simpleMatch[1] || simpleMatch[3]);
-          const actualTotal = (meta.approved || 0) + (meta.approvedWithLimitation || 0);
-          if (claimedTotal !== actualTotal && claimedTotal !== meta.approved) {
-            mismatches.push({
-              field: 'qualityRegisterTotal',
-              claimed: claimedTotal,
-              actual: `${meta.approved} approved + ${meta.approvedWithLimitation} approved_with_limitation = ${actualTotal} total`,
-              message: `Report claims ${claimedTotal} templates approved but quality register has ${meta.approved} approved + ${meta.approvedWithLimitation} approved_with_limitation`,
-            });
-          }
         }
       }
     }
@@ -707,17 +817,38 @@ export function validateReportCounts(manifest, reportPath, opts = {}) {
  */
 export function validateMarkingMatrixCounts(manifest, rootDir) {
   const effectiveRoot = rootDir || ROOT_DIR;
-  const matrixPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json');
 
-  if (!existsSync(matrixPath)) {
-    return { pass: false, expected: 80, actual: 0, error: `Marking matrix file not found: ${matrixPath}` };
-  }
-
+  let matrixPath;
   let matrix;
-  try {
-    matrix = JSON.parse(readFileSync(matrixPath, 'utf8'));
-  } catch (err) {
-    return { pass: false, expected: 80, actual: 0, error: `Failed to parse marking matrix JSON: ${err.message}` };
+
+  if (manifest?.artefacts) {
+    const result = readJsonArtefact(manifest, 'markingMatrix', effectiveRoot);
+    if (!result.ok) {
+      return { pass: false, expected: 80, actual: 0, error: result.error };
+    }
+    matrix = result.data;
+    matrixPath = result.path;
+    // Validate contentReleaseId consistency
+    if (matrix?.metadata?.contentReleaseId && matrix.metadata.contentReleaseId !== manifest.contentReleaseId) {
+      return {
+        pass: false,
+        expected: 80,
+        actual: 0,
+        error: `Marking matrix metadata.contentReleaseId "${matrix.metadata.contentReleaseId}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
+      };
+    }
+  } else {
+    // Legacy P10 fallback
+    console.warn('WARN: manifest.artefacts not found — falling back to legacy P10 paths for markingMatrix');
+    matrixPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-marking-matrix.json');
+    if (!existsSync(matrixPath)) {
+      return { pass: false, expected: 80, actual: 0, error: `Marking matrix file not found: ${matrixPath}` };
+    }
+    try {
+      matrix = JSON.parse(readFileSync(matrixPath, 'utf8'));
+    } catch (err) {
+      return { pass: false, expected: 80, actual: 0, error: `Failed to parse marking matrix JSON: ${err.message}` };
+    }
   }
 
   const actual = matrix?.metadata?.totalEntries ?? 0;
@@ -733,31 +864,70 @@ export function validateMarkingMatrixCounts(manifest, rootDir) {
  * Validate that every template flagged as requiresAdultReview in the distractor
  * audit has a corresponding adultReviewDecision in the quality register.
  *
- * @param {string} rootDir - Project root directory.
- * @returns {{ pass: boolean, missing: string[], covered: string[] }}
+ * @param {object} manifest - Parsed certification manifest JSON. When `manifest.artefacts`
+ *   is present, artefact paths are resolved from the manifest; otherwise falls back to
+ *   legacy P10 report paths.
+ * @param {string} [rootDir] - Project root directory (defaults to repository root).
+ * @returns {{ pass: boolean, missing: string[], covered: string[], error?: string }}
  */
-export function validateDistractorReviewCoverage(rootDir) {
+export function validateDistractorReviewCoverage(manifest, rootDir) {
   const effectiveRoot = rootDir || ROOT_DIR;
-  const auditPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-distractor-audit.json');
-  const registerPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-quality-register.json');
-
-  if (!existsSync(auditPath)) {
-    return { pass: false, missing: [], covered: [], error: `Distractor audit file not found: ${auditPath}` };
-  }
-  if (!existsSync(registerPath)) {
-    return { pass: false, missing: [], covered: [], error: `Quality register file not found: ${registerPath}` };
-  }
 
   let audit, register;
-  try {
-    audit = JSON.parse(readFileSync(auditPath, 'utf8'));
-  } catch (err) {
-    return { pass: false, missing: [], covered: [], error: `Failed to parse distractor audit: ${err.message}` };
-  }
-  try {
-    register = JSON.parse(readFileSync(registerPath, 'utf8'));
-  } catch (err) {
-    return { pass: false, missing: [], covered: [], error: `Failed to parse quality register: ${err.message}` };
+
+  if (manifest?.artefacts) {
+    const auditResult = readJsonArtefact(manifest, 'distractorAudit', effectiveRoot);
+    if (!auditResult.ok) {
+      return { pass: false, missing: [], covered: [], error: auditResult.error };
+    }
+    audit = auditResult.data;
+    // Validate contentReleaseId consistency
+    if (audit?.metadata?.contentReleaseId && audit.metadata.contentReleaseId !== manifest.contentReleaseId) {
+      return {
+        pass: false,
+        missing: [],
+        covered: [],
+        error: `Distractor audit metadata.contentReleaseId "${audit.metadata.contentReleaseId}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
+      };
+    }
+
+    const registerResult = readJsonArtefact(manifest, 'qualityRegister', effectiveRoot);
+    if (!registerResult.ok) {
+      return { pass: false, missing: [], covered: [], error: registerResult.error };
+    }
+    register = registerResult.data;
+    // Validate contentReleaseId consistency
+    if (register?.metadata?.contentReleaseId && register.metadata.contentReleaseId !== manifest.contentReleaseId) {
+      return {
+        pass: false,
+        missing: [],
+        covered: [],
+        error: `Quality register metadata.contentReleaseId "${register.metadata.contentReleaseId}" does not match manifest contentReleaseId "${manifest.contentReleaseId}"`,
+      };
+    }
+  } else {
+    // Legacy P10 fallback
+    console.warn('WARN: manifest.artefacts not found — falling back to legacy P10 paths for distractorAudit/qualityRegister');
+    const auditPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-distractor-audit.json');
+    const registerPath = path.join(effectiveRoot, 'reports', 'grammar', 'grammar-qg-p10-quality-register.json');
+
+    if (!existsSync(auditPath)) {
+      return { pass: false, missing: [], covered: [], error: `Distractor audit file not found: ${auditPath}` };
+    }
+    if (!existsSync(registerPath)) {
+      return { pass: false, missing: [], covered: [], error: `Quality register file not found: ${registerPath}` };
+    }
+
+    try {
+      audit = JSON.parse(readFileSync(auditPath, 'utf8'));
+    } catch (err) {
+      return { pass: false, missing: [], covered: [], error: `Failed to parse distractor audit: ${err.message}` };
+    }
+    try {
+      register = JSON.parse(readFileSync(registerPath, 'utf8'));
+    } catch (err) {
+      return { pass: false, missing: [], covered: [], error: `Failed to parse quality register: ${err.message}` };
+    }
   }
 
   // Collect unique templates requiring adult review
@@ -830,8 +1000,22 @@ async function main(argv) {
 
   // Gate 1b: Validate render inventory release IDs if inventory exists
   const releaseId = manifestResult.manifest.contentReleaseId;
-  const inventoryPath = path.join(ROOT_DIR, 'reports', 'grammar', `grammar-qg-p10-render-inventory.json`);
-  if (existsSync(inventoryPath)) {
+  let inventoryPath;
+  if (manifestResult.manifest.artefacts) {
+    const invResolved = requireArtefact(manifestResult.manifest, 'renderInventory', ROOT_DIR);
+    if (invResolved.ok) {
+      inventoryPath = invResolved.path;
+    }
+    // If artefact key missing or file not found, skip gracefully (no inventory = no gate)
+  } else {
+    // Legacy P10 fallback
+    console.warn('WARN: manifest.artefacts not found — falling back to legacy P10 path for renderInventory');
+    const legacyPath = path.join(ROOT_DIR, 'reports', 'grammar', 'grammar-qg-p10-render-inventory.json');
+    if (existsSync(legacyPath)) {
+      inventoryPath = legacyPath;
+    }
+  }
+  if (inventoryPath) {
     const invResult = validateInventoryReleaseIds(inventoryPath, releaseId);
     if (!invResult.pass) {
       if (jsonOutput) {

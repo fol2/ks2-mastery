@@ -85,7 +85,7 @@ describe('P11 U7: marking matrix totalEntries is exactly 80', () => {
 
 describe('P11 U6: all ambiguous templates have adult review decisions', () => {
   it('real quality register covers all requiresAdultReview templates', () => {
-    const result = validateDistractorReviewCoverage(ROOT_DIR);
+    const result = validateDistractorReviewCoverage({ contentReleaseId: 'grammar-qg-p11-2026-04-30' }, ROOT_DIR);
     assert.equal(
       result.pass,
       true,
@@ -131,7 +131,7 @@ describe('P11 U6: all ambiguous templates have adult review decisions', () => {
         JSON.stringify(fakeRegister)
       );
 
-      const result = validateDistractorReviewCoverage(tempRoot);
+      const result = validateDistractorReviewCoverage({ contentReleaseId: 'grammar-qg-p11-2026-04-30' }, tempRoot);
       assert.equal(result.pass, false);
       assert.deepEqual(result.missing, ['test_template_missing_review']);
     } finally {
@@ -181,7 +181,7 @@ describe('P11 U6: all ambiguous templates have adult review decisions', () => {
         JSON.stringify(fakeRegister)
       );
 
-      const result = validateDistractorReviewCoverage(tempRoot);
+      const result = validateDistractorReviewCoverage({ contentReleaseId: 'grammar-qg-p11-2026-04-30' }, tempRoot);
       assert.equal(result.pass, true);
       assert.deepEqual(result.covered, ['covered_template']);
       assert.equal(result.missing.length, 0);
