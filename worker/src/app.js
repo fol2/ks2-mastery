@@ -1451,10 +1451,7 @@ export function createWorkerApp({
             } catch { /* best-effort */ }
 
             // No overrideStatus, no account lists, no rollout salt in the response body.
-            return json({
-              error: 'hero-unavailable',
-              reason: heroCommandOverrideStatus === 'emergency-off' ? 'emergency-disabled' : 'account-excluded',
-            }, 403);
+            return json({ error: 'hero-unavailable' }, 403);
           }
 
           if (!envFlagEnabled(heroCommandEnv.HERO_MODE_LAUNCH_ENABLED)) {
