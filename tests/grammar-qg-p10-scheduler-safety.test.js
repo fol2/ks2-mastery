@@ -3,6 +3,9 @@
  *
  * Proves that the P10 certification status map is consistent with the quality
  * register and that blocked templates are excluded from scheduling.
+ *
+ * R-U4 addendum: proves that engine.js paths (takeDueRetry, nextItem
+ * direct-launch, startSimilarProblem) respect the blocklist.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +14,10 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import {
+  createGrammarQuestion,
+  evaluateGrammarQuestion,
   GRAMMAR_TEMPLATE_METADATA,
+  grammarTemplateById,
 } from '../worker/src/subjects/grammar/content.js';
 import {
   isTemplateBlocked,
@@ -21,6 +27,9 @@ import {
 import {
   buildGrammarMiniPack,
 } from '../worker/src/subjects/grammar/selection.js';
+import {
+  createServerGrammarEngine,
+} from '../worker/src/subjects/grammar/engine.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -134,6 +143,243 @@ describe('P10 Scheduler Safety: quality register consistency', () => {
       if (entry.decision === 'blocked') {
         assert.equal(mapEntry.status, 'blocked', `Template ${entry.templateId} is blocked in register but not in status map`);
       }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. Characterisation: approved template flows through engine paths unchanged
+// ---------------------------------------------------------------------------
+
+describe('P10 Scheduler Safety: characterisation — approved template engine paths', () => {
+  // Pick a single_choice sats-friendly template guaranteed to be approved
+  // so we can reliably produce a wrong answer for repair tests.
+  const SINGLE_CHOICE_TEMPLATE_ID = 'word_class_underlined_choice';
+  const approvedTemplate = GRAMMAR_TEMPLATE_METADATA.find((t) => t.id === SINGLE_CHOICE_TEMPLATE_ID);
+  const approvedId = approvedTemplate.id;
+
+  function findWrongAnswer(templateId, seed) {
+    const question = createGrammarQuestion({ templateId, seed });
+    for (const opt of (question.inputSpec.options || [])) {
+      const value = typeof opt === 'string' ? opt : opt.value;
+      const result = evaluateGrammarQuestion(question, { answer: value });
+      if (result && !result.correct) return value;
+    }
+    return null;
+  }
+
+  it('approved template starts a session via direct-launch', () => {
+    const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+    const result = engine.apply({
+      learnerId: 'learner-char-1',
+      subjectRecord: {},
+      command: 'start-session',
+      requestId: 'char-direct-launch',
+      payload: { mode: 'smart', roundLength: 1, templateId: approvedId, seed: 42 },
+    });
+    assert.equal(result.state.phase, 'session');
+    assert.equal(result.state.session.currentItem.templateId, approvedId);
+  });
+
+  it('approved template in retry queue is served via takeDueRetry', () => {
+    const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+    // Pre-load the retry queue with the approved template due now.
+    const retryQueue = [{ templateId: approvedId, seed: 7, dueAt: 0, conceptIds: [], reason: 'recent-miss' }];
+    const result = engine.apply({
+      learnerId: 'learner-char-2',
+      subjectRecord: { data: { retryQueue } },
+      command: 'start-session',
+      requestId: 'char-retry-serve',
+      payload: { mode: 'smart', roundLength: 1 },
+    });
+    assert.equal(result.state.phase, 'session');
+    // The first item should be the retry entry (same template + seed).
+    assert.equal(result.state.session.currentItem.templateId, approvedId);
+    assert.equal(result.state.session.currentItem.seed, 7);
+  });
+
+  it('approved template starts a similar problem after wrong answer', () => {
+    const wrongAnswer = findWrongAnswer(approvedId, 99);
+    assert.ok(wrongAnswer, 'Must have a wrong answer option for this template');
+    const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+    const start = engine.apply({
+      learnerId: 'learner-char-3',
+      subjectRecord: {},
+      command: 'start-session',
+      requestId: 'char-similar-start',
+      payload: { mode: 'smart', roundLength: 2, templateId: approvedId, seed: 99 },
+    });
+    const submit = engine.apply({
+      learnerId: 'learner-char-3',
+      subjectRecord: { ui: start.state, data: start.data },
+      latestSession: start.practiceSession,
+      command: 'submit-answer',
+      requestId: 'char-similar-submit',
+      payload: { response: { answer: wrongAnswer } },
+    });
+    const similar = engine.apply({
+      learnerId: 'learner-char-3',
+      subjectRecord: { ui: submit.state, data: submit.data },
+      latestSession: submit.practiceSession,
+      command: 'start-similar-problem',
+      requestId: 'char-similar-next',
+      payload: {},
+    });
+    assert.equal(similar.state.phase, 'session');
+    assert.equal(similar.state.session.currentItem.templateId, approvedId);
+    assert.equal(similar.changed, true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. R-U4 engine.js blocklist wiring — blocked template exclusion
+// ---------------------------------------------------------------------------
+
+describe('P10 Scheduler Safety R-U4: blocked template skipped in retry queue', () => {
+  const targetTemplate = GRAMMAR_TEMPLATE_METADATA.find((t) => t.satsFriendly);
+  const blockedId = targetTemplate.id;
+
+  it('blocked template in retry queue is skipped; next eligible item served', () => {
+    _testBlockOverride.add(blockedId);
+    try {
+      const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+      // Retry queue has two entries: a blocked one (due now) and an approved one (due now).
+      const approvedId = GRAMMAR_TEMPLATE_METADATA.find((t) => t.id !== blockedId && t.satsFriendly).id;
+      const retryQueue = [
+        { templateId: blockedId, seed: 10, dueAt: 0, conceptIds: [], reason: 'recent-miss' },
+        { templateId: approvedId, seed: 20, dueAt: 0, conceptIds: [], reason: 'recent-miss' },
+      ];
+      const result = engine.apply({
+        learnerId: 'learner-retry-block',
+        subjectRecord: { data: { retryQueue } },
+        command: 'start-session',
+        requestId: 'retry-block-test',
+        payload: { mode: 'smart', roundLength: 1 },
+      });
+      assert.equal(result.state.phase, 'session');
+      // The blocked template must NOT be the one served.
+      assert.notEqual(result.state.session.currentItem.templateId, blockedId,
+        'Blocked template must be skipped in retry queue');
+    } finally {
+      _testBlockOverride.delete(blockedId);
+    }
+  });
+});
+
+describe('P10 Scheduler Safety R-U4: blocked template direct-launch returns blocked', () => {
+  const targetTemplate = GRAMMAR_TEMPLATE_METADATA.find((t) => t.satsFriendly);
+  const blockedId = targetTemplate.id;
+
+  it('blocked template with direct-launch in normal mode throws grammar_template_blocked', () => {
+    _testBlockOverride.add(blockedId);
+    try {
+      const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+      assert.throws(
+        () => engine.apply({
+          learnerId: 'learner-direct-block',
+          subjectRecord: {},
+          command: 'start-session',
+          requestId: 'direct-block-test',
+          payload: { mode: 'smart', roundLength: 1, templateId: blockedId, seed: 5 },
+        }),
+        (error) => error?.extra?.code === 'grammar_template_blocked',
+      );
+    } finally {
+      _testBlockOverride.delete(blockedId);
+    }
+  });
+
+  it('blocked template with debugMode: true is allowed through direct-launch', () => {
+    _testBlockOverride.add(blockedId);
+    try {
+      const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+      const result = engine.apply({
+        learnerId: 'learner-direct-debug',
+        subjectRecord: {},
+        command: 'start-session',
+        requestId: 'direct-debug-test',
+        payload: { mode: 'smart', roundLength: 1, templateId: blockedId, seed: 5, debugMode: true },
+      });
+      assert.equal(result.state.phase, 'session');
+      assert.equal(result.state.session.currentItem.templateId, blockedId);
+    } finally {
+      _testBlockOverride.delete(blockedId);
+    }
+  });
+
+  it('blocked template with reviewMode: true is allowed through direct-launch', () => {
+    _testBlockOverride.add(blockedId);
+    try {
+      const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+      const result = engine.apply({
+        learnerId: 'learner-direct-review',
+        subjectRecord: {},
+        command: 'start-session',
+        requestId: 'direct-review-test',
+        payload: { mode: 'smart', roundLength: 1, templateId: blockedId, seed: 5, reviewMode: true },
+      });
+      assert.equal(result.state.phase, 'session');
+      assert.equal(result.state.session.currentItem.templateId, blockedId);
+    } finally {
+      _testBlockOverride.delete(blockedId);
+    }
+  });
+});
+
+describe('P10 Scheduler Safety R-U4: blocked template returns null from startSimilarProblem', () => {
+  // Use a single_choice template so we can reliably produce a wrong answer.
+  const SINGLE_CHOICE_TEMPLATE_ID = 'word_class_underlined_choice';
+  const blockedId = SINGLE_CHOICE_TEMPLATE_ID;
+
+  function findWrongAnswer(templateId, seed) {
+    const question = createGrammarQuestion({ templateId, seed });
+    for (const opt of (question.inputSpec.options || [])) {
+      const value = typeof opt === 'string' ? opt : opt.value;
+      const result = evaluateGrammarQuestion(question, { answer: value });
+      if (result && !result.correct) return value;
+    }
+    return null;
+  }
+
+  it('startSimilarProblem with blocked base template returns no-change', () => {
+    const wrongAnswer = findWrongAnswer(blockedId, 99);
+    assert.ok(wrongAnswer, 'Must have a wrong answer option');
+    // First start a session with the template while it is still approved.
+    const engine = createServerGrammarEngine({ now: () => 1_777_000_000_000 });
+    const start = engine.apply({
+      learnerId: 'learner-similar-block',
+      subjectRecord: {},
+      command: 'start-session',
+      requestId: 'similar-block-start',
+      payload: { mode: 'smart', roundLength: 2, templateId: blockedId, seed: 99 },
+    });
+    const submit = engine.apply({
+      learnerId: 'learner-similar-block',
+      subjectRecord: { ui: start.state, data: start.data },
+      latestSession: start.practiceSession,
+      command: 'submit-answer',
+      requestId: 'similar-block-submit',
+      payload: { response: { answer: wrongAnswer } },
+    });
+
+    // NOW block the template — simulating a post-session block decision.
+    _testBlockOverride.add(blockedId);
+    try {
+      const similar = engine.apply({
+        learnerId: 'learner-similar-block',
+        subjectRecord: { ui: submit.state, data: submit.data },
+        latestSession: submit.practiceSession,
+        command: 'start-similar-problem',
+        requestId: 'similar-block-next',
+        payload: {},
+      });
+      // When the base template is blocked, startSimilarProblem returns null,
+      // which translates to changed=false (no state mutation, no similar served).
+      assert.equal(similar.changed, false);
+      // Phase stays at feedback (the submit left it in feedback/awaitingAdvance).
+      assert.equal(similar.state.phase, 'feedback');
+    } finally {
+      _testBlockOverride.delete(blockedId);
     }
   });
 });
