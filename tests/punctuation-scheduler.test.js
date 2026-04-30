@@ -175,6 +175,82 @@ test('weak mode avoids the last attempted item when a new session starts', () =>
   assert.equal(result.weakFocus.source, 'weak_facet');
 });
 
+test('misconception retry avoids repeating the last fixed sibling across weak sessions', () => {
+  const missed = {
+    id: 'missed_insert',
+    mode: 'insert',
+    skillIds: ['speech'],
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    misconceptionTags: ['speech.quote_missing'],
+  };
+  const recentSibling = {
+    id: 'recent_transfer',
+    mode: 'transfer',
+    skillIds: ['speech'],
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    misconceptionTags: ['speech.quote_missing'],
+  };
+  const freshSibling = {
+    id: 'fresh_fix',
+    mode: 'fix',
+    skillIds: ['speech'],
+    clusterId: 'speech',
+    rewardUnitId: 'speech-core',
+    misconceptionTags: ['speech.quote_missing'],
+  };
+  const items = [missed, recentSibling, freshSibling];
+  const indexes = {
+    items,
+    itemById: new Map(items.map((item) => [item.id, item])),
+    itemsByMode: new Map([
+      ['insert', [missed]],
+      ['transfer', [recentSibling]],
+      ['fix', [freshSibling]],
+    ]),
+    itemsBySkill: new Map([['speech', items]]),
+    itemsByRewardUnit: new Map([['speech-core', items]]),
+    skillById: new Map([['speech', { id: 'speech', name: 'Direct speech', published: true }]]),
+  };
+
+  const result = selectPunctuationItem({
+    indexes,
+    progress: {
+      items: {},
+      facets: {},
+      rewardUnits: {},
+      attempts: [
+        {
+          itemId: missed.id,
+          mode: missed.mode,
+          itemMode: missed.mode,
+          skillIds: missed.skillIds,
+          rewardUnitId: missed.rewardUnitId,
+          misconceptionTags: missed.misconceptionTags,
+          correct: false,
+        },
+        {
+          itemId: recentSibling.id,
+          mode: recentSibling.mode,
+          itemMode: recentSibling.mode,
+          skillIds: recentSibling.skillIds,
+          rewardUnitId: recentSibling.rewardUnitId,
+          correct: true,
+        },
+      ],
+      sessionsCompleted: 0,
+    },
+    session: { mode: 'weak', answeredCount: 0, recentItemIds: [] },
+    prefs: { mode: 'weak' },
+    now: 0,
+    random: () => 0,
+  });
+
+  assert.equal(result.reason, REASON_TAGS.MISCONCEPTION_RETRY);
+  assert.equal(result.item.id, freshSibling.id);
+});
+
 test('scheduler avoids recently seen generated variant signatures when alternatives exist', () => {
   const signatureItem = (id, variantSignature) => ({
     id,

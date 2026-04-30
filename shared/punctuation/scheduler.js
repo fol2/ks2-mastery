@@ -542,7 +542,7 @@ function consecutiveMisconceptionFailures(progress, tag) {
   return count;
 }
 
-function selectMisconceptionRetry(indexes, progress, session, recentSignatures) {
+function selectMisconceptionRetry(indexes, progress, session, recentSignatures, recentItems = new Set()) {
   const retriedMisconceptions = new Set(
     Array.isArray(session?.retriedMisconceptions) ? session.retriedMisconceptions : []
   );
@@ -564,7 +564,8 @@ function selectMisconceptionRetry(indexes, progress, session, recentSignatures) 
   const ranked = rankMisconceptionCandidates(candidates, missedAttempt);
   if (!ranked.length) return null;
 
-  const best = ranked[0];
+  const nonRecentRanked = ranked.filter((entry) => !recentItems.has(entry.item?.id));
+  const best = (nonRecentRanked.length ? nonRecentRanked : ranked)[0];
   return {
     item: clone(best.item),
     reason: REASON_TAGS.MISCONCEPTION_RETRY,
@@ -738,7 +739,8 @@ export function selectPunctuationItem({
 
   // --- Misconception retry (applies to all modes) ---
   const recentSignaturesForRetry = recentSignatureSet(indexes, session, progress);
-  const misconceptionResult = selectMisconceptionRetry(indexes, progress, session, recentSignaturesForRetry);
+  const recentItemsForRetry = recentItemSet(session, progress);
+  const misconceptionResult = selectMisconceptionRetry(indexes, progress, session, recentSignaturesForRetry, recentItemsForRetry);
   if (misconceptionResult) {
     return {
       item: misconceptionResult.item,
