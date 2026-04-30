@@ -24,6 +24,7 @@ const REPORTS_DIR = path.resolve(ROOT_DIR, 'reports', 'grammar');
 describe('P10 Evidence Artefacts: file existence', () => {
   const expectedFiles = [
     'grammar-qg-p10-render-inventory.json',
+    'grammar-qg-p10-render-inventory.md',
     'grammar-qg-p10-render-inventory-redacted.md',
     'grammar-qg-p10-quality-register.json',
     'grammar-qg-p10-distractor-audit.json',
@@ -74,6 +75,91 @@ describe('P10 Evidence Artefacts: render inventory', () => {
       assert.ok(typeof item.promptText === 'string', 'item.promptText must be string');
       assert.ok(item.contentReleaseId, 'item.contentReleaseId required');
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2b. U6 enrichment: visibleOptions, fullSpeechOutput, _feedbackSummary
+// ---------------------------------------------------------------------------
+
+describe('P10 Evidence Artefacts: U6 render inventory enrichment', () => {
+  const inventoryPath = path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory.json');
+
+  it('visibleOptions is non-null for selected-response items (single_choice, checkbox_list, table_choice)', () => {
+    if (!fs.existsSync(inventoryPath)) {
+      assert.fail('Render inventory file does not exist — run generate script first');
+    }
+    const data = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
+    const selectedResponseTypes = ['single_choice', 'checkbox_list', 'table_choice'];
+    const selectedItems = data.items.filter((item) => selectedResponseTypes.includes(item.inputType));
+    assert.ok(selectedItems.length > 0, 'Expected at least one selected-response item');
+
+    for (const item of selectedItems.slice(0, 50)) {
+      assert.ok(
+        item.visibleOptions !== null && item.visibleOptions !== undefined,
+        `visibleOptions must be non-null for ${item.templateId} seed ${item.seed} (inputType: ${item.inputType})`,
+      );
+      if (Array.isArray(item.visibleOptions)) {
+        assert.ok(item.visibleOptions.length > 0, `visibleOptions must be non-empty array for ${item.templateId} seed ${item.seed}`);
+      }
+    }
+  });
+
+  it('fullSpeechOutput is a non-empty string for items with readAloudText', () => {
+    if (!fs.existsSync(inventoryPath)) {
+      assert.fail('Render inventory file does not exist — run generate script first');
+    }
+    const data = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
+    const readAloudItems = data.items.filter((item) => item.readAloudText);
+    assert.ok(readAloudItems.length > 0, 'Expected at least one item with readAloudText');
+
+    for (const item of readAloudItems.slice(0, 50)) {
+      assert.ok(
+        typeof item.fullSpeechOutput === 'string' && item.fullSpeechOutput.length > 0,
+        `fullSpeechOutput must be a non-empty string for ${item.templateId} seed ${item.seed}`,
+      );
+    }
+  });
+
+  it('_feedbackSummary has feedbackLong or feedbackShort for all items', () => {
+    if (!fs.existsSync(inventoryPath)) {
+      assert.fail('Render inventory file does not exist — run generate script first');
+    }
+    const data = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
+    const sample = data.items.slice(0, 100);
+    let withFeedback = 0;
+    for (const item of sample) {
+      if (item._feedbackSummary) {
+        assert.ok(
+          item._feedbackSummary.feedbackShort || item._feedbackSummary.feedbackLong,
+          `_feedbackSummary must have feedbackShort or feedbackLong for ${item.templateId} seed ${item.seed}`,
+        );
+        withFeedback += 1;
+      }
+    }
+    // At least 90% of sampled items should have feedback
+    assert.ok(withFeedback >= 90, `Expected at least 90 items with _feedbackSummary, got ${withFeedback}`);
+  });
+
+  it('three output files exist (.json, .md, -redacted.md)', () => {
+    const files = [
+      'grammar-qg-p10-render-inventory.json',
+      'grammar-qg-p10-render-inventory.md',
+      'grammar-qg-p10-render-inventory-redacted.md',
+    ];
+    for (const file of files) {
+      const filePath = path.join(REPORTS_DIR, file);
+      assert.ok(fs.existsSync(filePath), `Expected render inventory output file: ${file}`);
+    }
+  });
+
+  it('redacted report strips _ prefixed fields', () => {
+    const redactedPath = path.join(REPORTS_DIR, 'grammar-qg-p10-render-inventory-redacted.md');
+    if (!fs.existsSync(redactedPath)) return;
+    const content = fs.readFileSync(redactedPath, 'utf8');
+    assert.ok(!content.includes('_feedbackSummary'), 'Redacted report must not contain _feedbackSummary');
+    assert.ok(!content.includes('_solutionLines'), 'Redacted report must not contain _solutionLines');
+    assert.ok(!content.includes('_answerSpec'), 'Redacted report must not contain _answerSpec');
   });
 });
 
