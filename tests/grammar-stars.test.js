@@ -8,7 +8,7 @@
 //  2. deriveGrammarConceptStarEvidence — evidence tier detection from mastery
 //     node + recentAttempts.
 //  3. computeGrammarMonsterStars — per-monster Star totals from evidence maps.
-//  4. grammarStarStageFor — stage 0-4 derivation from Stars.
+//  4. grammarStarStageFor — asset stage 0-4 derivation from Stars.
 //  5. grammarStarStageName — child-facing label strings.
 //  6. Per-monster integration — Bracehart, Chronalyx, Couronnail, Concordium.
 //  7. Edge cases — null nodes, NaN, empty evidence, floor guarantee.
@@ -485,31 +485,30 @@ test('star computation: Mega has no next milestone', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 4. grammarStarStageFor — stage 0-4
+// 4. grammarStarStageFor — asset stage 0-4
 // ---------------------------------------------------------------------------
 
 test('grammarStarStageFor: 0 Stars → stage 0', () => {
   assert.equal(grammarStarStageFor(0), 0);
 });
 
-test('grammarStarStageFor: 1 Star → stage 1', () => {
-  assert.equal(grammarStarStageFor(1), 1);
+test('grammarStarStageFor: 1 Star → asset stage 0', () => {
+  assert.equal(grammarStarStageFor(1), 0);
 });
 
-test('grammarStarStageFor: 14 Stars → stage 1', () => {
-  assert.equal(grammarStarStageFor(14), 1);
+test('grammarStarStageFor: 14 Stars → asset stage 0', () => {
+  assert.equal(grammarStarStageFor(14), 0);
 });
 
-test('grammarStarStageFor: 15 Stars → stage 2', () => {
-  assert.equal(grammarStarStageFor(15), 2);
+test('grammarStarStageFor: 15 Stars → asset stage 1', () => {
+  assert.equal(grammarStarStageFor(15), 1);
 });
 
-test('grammarStarStageFor: 34 Stars → stage 2', () => {
-  assert.equal(grammarStarStageFor(34), 2);
+test('grammarStarStageFor: 34 Stars → asset stage 1', () => {
+  assert.equal(grammarStarStageFor(34), 1);
 });
 
 test('grammarStarStageFor: 35 Stars → stage 2', () => {
-  // 35 is evolve2 threshold but internal stage is still 2
   assert.equal(grammarStarStageFor(35), 2);
 });
 

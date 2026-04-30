@@ -24,6 +24,7 @@ function parseCli() {
     options: {
       phase: { type: 'string' },
       release: { type: 'string' },
+      'output-dir': { type: 'string' },
     },
     strict: false,
   });
@@ -86,8 +87,12 @@ async function main() {
     postDeployRequiredForPostDeployCertification: true,
   };
 
-  await fs.mkdir(REPORTS_DIR, { recursive: true });
-  const manifestPath = path.join(REPORTS_DIR, `grammar-qg-${phase}-certification-manifest.json`);
+  const reportsDir = cliArgs['output-dir']
+    ? path.resolve(process.cwd(), cliArgs['output-dir'])
+    : REPORTS_DIR;
+
+  await fs.mkdir(reportsDir, { recursive: true });
+  const manifestPath = path.join(reportsDir, `grammar-qg-${phase}-certification-manifest.json`);
   await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
 
   console.log(`Grammar QG ${phase.toUpperCase()} Certification Manifest generated:`);
