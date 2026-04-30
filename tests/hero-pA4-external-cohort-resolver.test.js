@@ -355,6 +355,19 @@ describe('resolveHeroFlagsForAccount: rollout bucket', () => {
 
     assert.equal(overrideStatus, 'excluded');
   });
+
+  it('account outside bucket at intermediate percent is not enrolled', () => {
+    // Find an account whose hash is >= 50
+    const bucket = _hashAccountToBucket('test-account-xyz:test-salt');
+    // Use a percent that's below this bucket value
+    const percent = Math.max(1, bucket - 1);
+    const env = {
+      HERO_ROLLOUT_PERCENT: String(percent),
+      HERO_ROLLOUT_SALT: 'test-salt',
+    };
+    const { overrideStatus } = resolveHeroFlagsForAccount({ env, accountId: 'test-account-xyz' });
+    assert.equal(overrideStatus, 'none');
+  });
 });
 
 // ── _hashAccountToBucket: determinism and range ──────────────────────────
@@ -391,6 +404,12 @@ describe('_hashAccountToBucket', () => {
   it('empty string produces a deterministic value', () => {
     const result = _hashAccountToBucket('');
     assert.equal(result, 0); // hash of empty = 0, 0 % 100 = 0
+  });
+
+  it('different salt produces different bucket for same account', () => {
+    const result1 = _hashAccountToBucket('acc-test:salt-one');
+    const result2 = _hashAccountToBucket('acc-test:salt-two');
+    assert.notEqual(result1, result2);
   });
 });
 

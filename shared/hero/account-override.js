@@ -1,4 +1,4 @@
-// Resolve Hero flag overrides with 6-way classification.
+// Resolve Hero flag overrides with 7-way classification.
 // Pure function — no side effects, no DB access.
 //
 // Precedence (highest first):

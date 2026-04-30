@@ -80,7 +80,7 @@ export function detectNonCohortExposure({ accountId, env, heroSurfaceVisible, co
 
 /**
  * Detect Hero command succeeding for a non-enabled account.
- * An account with overrideStatus 'none' must never execute Hero commands.
+ * An account with overrideStatus 'none' or 'excluded' must never execute Hero commands.
  *
  * @param {{ accountId: string, env: object }} params
  * @returns {{ triggered: boolean, condition: string, detail: string }}
@@ -90,11 +90,11 @@ export function detectUnauthorisedCommand({ accountId, env } = {}) {
     return { triggered: false, condition: 'unauthorised-command', detail: '' };
   }
   const { overrideStatus } = resolveHeroFlagsForAccount({ env, accountId });
-  if (overrideStatus === 'none') {
+  if (overrideStatus === 'none' || overrideStatus === 'excluded') {
     return {
       triggered: true,
       condition: 'unauthorised-command',
-      detail: `account ${accountId} has no Hero enablement`,
+      detail: `account ${accountId} has no Hero enablement (status: ${overrideStatus})`,
     };
   }
   return { triggered: false, condition: 'unauthorised-command', detail: '' };

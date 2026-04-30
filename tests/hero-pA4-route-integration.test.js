@@ -80,11 +80,11 @@ describe('pA4 U2: command route — unified resolver overrideStatus', () => {
     }
   });
 
-  it('non-cohort account with global flags on gets overrideStatus "global"', () => {
+  it('non-cohort account with global flags on gets overrideStatus "global-default"', () => {
     const env = baseEnvWithGlobalFlags();
     const { resolvedEnv, overrideStatus } = resolveHeroFlagsForAccount({ env, accountId: PUBLIC_ACCOUNT });
 
-    assert.equal(overrideStatus, 'global');
+    assert.equal(overrideStatus, 'global-default');
     // Global flags preserved — only shadow and launch are 'true' in this fixture
     assert.equal(resolvedEnv.HERO_MODE_SHADOW_ENABLED, 'true');
     assert.equal(resolvedEnv.HERO_MODE_LAUNCH_ENABLED, 'true');
@@ -268,9 +268,9 @@ describe('pA4 U2: command route — heroCommandOverrideStatus available for tele
     assert.equal(typeof result.overrideStatus, 'string');
   });
 
-  it('overrideStatus values are one of the four valid classifications', () => {
+  it('overrideStatus values are one of the valid classifications', () => {
     const env = baseEnvWithGlobalFlags();
-    const validStatuses = ['internal', 'external', 'global', 'none'];
+    const validStatuses = ['internal', 'external', 'global-default', 'none', 'emergency-off', 'excluded', 'rollout-bucket'];
 
     const { overrideStatus: s1 } = resolveHeroFlagsForAccount({ env, accountId: INTERNAL_ACCOUNT });
     const { overrideStatus: s2 } = resolveHeroFlagsForAccount({ env, accountId: EXTERNAL_ACCOUNT });
@@ -281,7 +281,7 @@ describe('pA4 U2: command route — heroCommandOverrideStatus available for tele
 
     assert.ok(validStatuses.includes(s1), `internal → ${s1}`);
     assert.ok(validStatuses.includes(s2), `external → ${s2}`);
-    assert.ok(validStatuses.includes(s3), `global → ${s3}`);
+    assert.ok(validStatuses.includes(s3), `global-default → ${s3}`);
     assert.ok(validStatuses.includes(s4), `none → ${s4}`);
   });
 });

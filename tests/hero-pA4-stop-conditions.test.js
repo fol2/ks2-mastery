@@ -111,11 +111,10 @@ describe('detectNonCohortExposure', () => {
   });
 
   it('triggers for excluded account with exposure signal', () => {
-    // Simulate excluded by using an env where the account resolves to 'none'
-    // (excluded status will be added in U3; for now 'none' covers the same branch)
     const env = {
       HERO_INTERNAL_ACCOUNTS: JSON.stringify(['int-1']),
       HERO_EXTERNAL_ACCOUNTS: JSON.stringify(['ext-1']),
+      HERO_EXCLUDED_ACCOUNTS: JSON.stringify(['excluded-acc']),
     };
     const result = detectNonCohortExposure({
       accountId: 'excluded-acc', env, heroSurfaceVisible: true,
@@ -158,6 +157,17 @@ describe('detectUnauthorisedCommand', () => {
     const env = { HERO_INTERNAL_ACCOUNTS: JSON.stringify(['valid-acc']) };
     const result = detectUnauthorisedCommand({ accountId: 'valid-acc', env });
     assert.equal(result.triggered, false);
+  });
+
+  it('triggers for excluded account', () => {
+    const env = {
+      HERO_EXCLUDED_ACCOUNTS: JSON.stringify(['banned-acc']),
+      HERO_INTERNAL_ACCOUNTS: JSON.stringify(['banned-acc']),
+    };
+    const result = detectUnauthorisedCommand({ accountId: 'banned-acc', env });
+    assert.equal(result.triggered, true);
+    assert.equal(result.condition, 'unauthorised-command');
+    assert.ok(result.detail.includes('excluded'));
   });
 
   it('does not trigger for global-enabled account', () => {
