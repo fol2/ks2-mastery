@@ -329,11 +329,12 @@ test('production bootstrap keeps high-history public payloads bounded and redact
   assert.ok(payload.meta.capacity.bootstrapCapacity, 'bootstrapCapacity must be stamped on collector for public bootstrap.');
   // U7: BOOTSTRAP_CAPACITY_VERSION bumped from 1 to 2 when the
   // selected-learner-bounded envelope landed (plan line 750 release
-  // rule). U1 follow-up 2026-04-26: bumped 2 → 3 when the envelope
-  // gained `subjectStatesBounded` AND the revision-hash input set
-  // changed (added `writableLearnerStatesDigest` to close B1 — sibling
-  // subject_state writes now invalidate the notModified probe).
-  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 3);
+  // rule). U1 follow-up 2026-04-26 bumped 2 -> 3 when the envelope
+  // gained `subjectStatesBounded` and the revision-hash input set
+  // changed. PR799 follow-up 2026-04-30 bumped 3 -> 4 because the
+  // Grammar public read-model representation changed and cached v3
+  // revisions must miss the notModified probe.
+  assert.equal(payload.meta.capacity.bootstrapCapacity.version, 4);
   assert.equal(payload.meta.capacity.bootstrapCapacity.mode, 'public-bounded');
   assert.equal('bootstrapPhaseTimings' in payload.meta.capacity, false, 'phase timings stay out of child-facing meta.capacity.');
 

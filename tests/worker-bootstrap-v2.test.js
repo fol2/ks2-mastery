@@ -23,6 +23,7 @@ import {
   BOOTSTRAP_MODES,
   BOOTSTRAP_V2_ENVELOPE_SHAPE,
   computeBootstrapRevisionHash,
+  computeWritableLearnerStatesDigest,
 } from '../worker/src/repository.js';
 import { createWorkerRepositoryServer } from './helpers/worker-server.js';
 
@@ -139,14 +140,17 @@ async function readJsonBody(response) {
 // this test fails. Manual bump means manual snapshot regen in the same PR.
 // ---------------------------------------------------------------------------
 test('U7 scenario 15: envelope shape snapshot matches BOOTSTRAP_CAPACITY_VERSION', () => {
-  // U1 follow-up 2026-04-26: BOOTSTRAP_CAPACITY_VERSION bumped 2 → 3 in
-  // the same PR that (a) adds `bootstrapCapacity.subjectStatesBounded`
-  // (required-field addition — capacity release-gate plan line 167),
-  // (b) extends the revision-hash input set with
-  // `writableLearnerStatesDigest` (B1 blocker fix — sibling
-  // `writeSubjectState` now invalidates `bootstrapNotModifiedProbe`).
-  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 3,
-    'U1 follow-up: bumps BOOTSTRAP_CAPACITY_VERSION 2→3 because the envelope gained subjectStatesBounded AND the hash input set changed.');
+  // U1 follow-up 2026-04-26: BOOTSTRAP_CAPACITY_VERSION bumped 2 -> 3
+  // when the envelope gained `bootstrapCapacity.subjectStatesBounded`
+  // and the hash input set gained `writableLearnerStatesDigest`.
+  //
+  // PR799 follow-up 2026-04-30: bumped 3 -> 4 when the public Grammar
+  // subject-state bootstrap projection changed from raw state to the
+  // public read-model. The version is part of the revision hash, so a
+  // deployed read-model representation change must invalidate cached v3
+  // `lastKnownRevision` values even when learner revisions are stable.
+  assert.equal(BOOTSTRAP_CAPACITY_VERSION, 4,
+    'PR799 follow-up: bumps BOOTSTRAP_CAPACITY_VERSION 3->4 so stale Grammar public read-model caches miss the notModified probe.');
   // Closed union for meta.capacity.bootstrapMode (canonical U7 enum).
   assert.deepEqual(
     [...BOOTSTRAP_MODES].sort(),
@@ -1077,6 +1081,47 @@ test('fresh bootstrap hydrates Punctuation and Grammar public stats from stored 
       'grammar first-paint analytics tracks stored mastery concepts');
     assert.equal(grammar.ui?.analytics?.progressSnapshot?.securedConcepts, 1,
       'grammar first-paint analytics exposes secured concepts');
+  } finally {
+    server.close();
+  }
+});
+
+test('PR799 follow-up: stale v3 Grammar hydration cache misses notModified after read-model projection change', async () => {
+  const server = createServer();
+  try {
+    insertLearner(server, 'adult-u7', { id: 'learner-a', name: 'Alpha', sortIndex: 0, selected: true });
+    insertSubjectStateFor(server, 'adult-u7', 'learner-a', 'grammar', {
+      data: grammarHydrationData({ mode: 'learn' }),
+    });
+
+    const staleV3Digest = await computeWritableLearnerStatesDigest([
+      { id: 'learner-a', state_revision: 0 },
+    ]);
+    const staleV3Revision = await computeBootstrapRevisionHash({
+      accountId: 'adult-u7',
+      accountRevision: 0,
+      selectedLearnerRevision: 0,
+      bootstrapCapacityVersion: 3,
+      accountLearnerListRevision: 0,
+      writableLearnerStatesDigest: staleV3Digest,
+    });
+
+    const response = await postBootstrap(server, { lastKnownRevision: staleV3Revision });
+    assert.equal(response.status, 200);
+    const payload = await readJsonBody(response);
+
+    assert.notEqual(payload.notModified, true,
+      'stale v3 revision must not keep a raw pre-PR799 Grammar cache alive');
+    assert.equal(payload.revision?.bootstrapCapacityVersion, BOOTSTRAP_CAPACITY_VERSION);
+    assert.notEqual(payload.revision?.hash, staleV3Revision,
+      'server emits a fresh v4 hash after the read-model projection bump');
+
+    const grammar = payload.subjectStates?.['learner-a::grammar'];
+    assert.ok(grammar, 'full bundle includes grammar subject state after probe miss');
+    assert.deepEqual(grammar.data, {}, 'raw grammar data remains stripped');
+    assert.equal(grammar.ui?.prefs?.mode, 'learn');
+    assert.equal(grammar.ui?.stats?.concepts?.secured, 1,
+      'full bundle carries the Grammar public read-model stats');
   } finally {
     server.close();
   }
