@@ -14,34 +14,37 @@ Execute a full autonomous delivery pipeline for the contract at $ARGUMENTS.
 ## Pipeline
 
 ```
-Contract (provided) ─── REJECT if missing
+Phase 0: Contract (provided) ─── REJECT if missing
     │
     ▼
-/ce-plan ─── translate contract → implementation plan (autonomous, no questions)
+Phase 1: /ce-plan ─── translate contract → implementation plan (no questions)
     │
     ▼
-Plan Review ─── 3 independent reviewers validate plan vs contract (all must PASS)
+Phase 1.5: Plan Review ─── 3 reviewers validate plan vs contract (all must PASS)
     │
     ▼
-Commit & merge plan PR (doc-only, CI auto-pass)
+Phase 1.5: Commit & merge plan PR (doc-only, CI auto-pass)
     │
     ▼
-/ce-worktree ─── create isolated worktree for this contract (no questions)
+Phase 2: /ce-worktree ─── create isolated worktree (no questions)
     │
     ▼
-/ce-work ─── execute full delivery inside the worktree:
-    │         ├── SDLC cycle (per unit: worker → reviewers → follower → merge)
-    │         ├── Delivery cycle (10 contract reviewers, iterate until all PASS)
-    │         └── Completion report (comprehensive .md, PR merged to main)
+Phase 3: /ce-work ─── SDLC cycle (per unit: worker → reviewers → follower → merge)
     │
     ▼
-Housekeeping ─── remove worktree, delete local branches, prune remote refs
+Phase 4: Delivery ─── 10 contract reviewers validate entire contract (all must PASS)
+    │                  (if blockers: back to Phase 3 for fixes, then re-review ALL 10)
+    ▼
+Phase 5: Report ─── completion report .md, PR merged to main
     │
     ▼
-/compound-engineering:ce-compound ─── document solved problem
+Phase 6: Housekeeping ─── remove worktree, delete branches, prune refs
     │
     ▼
-/dream ─── consolidate session learnings into memory (if available)
+Phase 7: /compound-engineering:ce-compound ─── document solved problem
+    │
+    ▼
+Phase 8: /dream ─── consolidate session learnings (if available)
     │
     ▼
 DONE
@@ -149,13 +152,13 @@ Invoke `/ce-worktree` after the plan PR is merged.
 
 ---
 
-## Phase 3: Work (`/ce-work`)
+## Phase 3: SDLC Cycle (`/ce-work`)
 
-Invoke `/ce-work` inside the worktree with the generated plan. `/ce-work` executes the full delivery lifecycle:
+Invoke `/ce-work` inside the worktree with the generated plan. This phase implements all units of work through the full SDLC pipeline. It does NOT include the delivery validation or the completion report — those are separate phases.
 
-### 3A — SDLC Cycle (per unit of work)
+### Per-unit pipeline
 
-For each unit in the plan, execute this pipeline:
+For each unit in the plan, execute:
 
 ```
 Worker (subagent in worktree)
@@ -187,9 +190,19 @@ Merge Gate
   → Next unit
 ```
 
-### 3B — Delivery Cycle (10 contract reviewers)
+### Exit criteria
 
-After ALL SDLC units merged, spawn 10 independent subagent reviewers. Each validates the **entire contract** at the highest standard:
+Phase 3 is complete when ALL plan units have merged PRs with green CI. Report: "Phase 3 complete: N/N units merged. Starting Phase 4."
+
+---
+
+## Phase 4: Delivery Cycle (10 contract reviewers)
+
+This is a separate validation phase. It runs AFTER all SDLC units are merged. Its purpose is to validate the **entire contract** has been delivered at the highest standard — not just that individual units passed review.
+
+### Reviewer Panel (10 independent subagents)
+
+Spawn 10 independent subagent reviewers in parallel:
 
 1. **Functional Completeness** — every requirement implemented
 2. **Test Coverage** — all acceptance criteria have tests
@@ -202,16 +215,33 @@ After ALL SDLC units merged, spawn 10 independent subagent reviewers. Each valid
 9. **Edge Cases & Error Handling** — boundaries covered
 10. **Integration & Regression** — no side effects
 
-**Protocol:**
-- Each reviewer reads the original contract AND the current codebase state
+### Protocol
+
+Each reviewer:
+- Reads the **original contract** in full
+- Reads the **current codebase state** (post all SDLC merges)
 - Returns: PASS or BLOCK (with specific, actionable findings)
-- If ANY blocks: collect findings → SDLC cycle for fixes → re-invite ALL 10 reviewers
-- On re-review rounds, reviewers evaluate the ENTIRE contract again (new blockers valid)
-- **Delivered** when all 10 simultaneously PASS
 
-### 3C — Completion Report
+### Iteration
 
-After delivery confirmed:
+If ANY reviewer blocks:
+1. Collect all blocking findings
+2. Execute Phase 3 SDLC cycle for the fixes (worker → reviewers → follower → merge)
+3. After fixes merged, re-invite ALL 10 delivery reviewers (not just the blockers)
+4. On subsequent rounds, reviewers re-evaluate the ENTIRE contract at the highest standard (new blockers from previously-passing areas are valid)
+5. Repeat until all 10 simultaneously PASS
+
+### Exit criteria
+
+The contract is **delivered** when all 10 reviewers simultaneously return PASS on the same codebase state. Report: "Phase 4 complete: contract delivered. Starting Phase 5."
+
+---
+
+## Phase 5: Completion Report
+
+This is a separate documentation phase. It runs AFTER the delivery cycle confirms all 10 reviewers passed.
+
+### Report creation
 
 1. Write comprehensive report as `<contract-name>-completion-report.md`
 2. Place in the same folder as the original contract
@@ -225,15 +255,25 @@ After delivery confirmed:
    - Metrics: PRs, commits, review iterations
    - Insights and learnings
    - Deferred items (human-required only)
-4. Commit, push, create PR, merge when CI green
+
+### Merge the report
+
+1. Commit the report file
+2. Push and create PR
+3. Merge when CI green (doc-only, auto-pass)
+4. `git fetch origin` to sync
+
+### Exit criteria
+
+Report PR is merged to main. Report: "Phase 5 complete: report merged. Starting Phase 6."
 
 ---
 
-## Phase 4: Housekeeping
+## Phase 6: Housekeeping
 
 After the completion report PR is merged, clean up all delivery artefacts:
 
-### 4.1 — Remove the worktree
+### 6.1 — Remove the worktree
 
 ```bash
 git worktree remove <worktree-path> --force
@@ -245,7 +285,7 @@ If the worktree has already been removed by squash-merge branch deletion, just p
 git worktree prune
 ```
 
-### 4.2 — Delete local branches
+### 6.2 — Delete local branches
 
 Delete all local branches created during this delivery (feature branches, fix branches, report branch). They have already been squash-merged so no work is lost:
 
@@ -255,7 +295,7 @@ git branch -d <branch-name>
 
 If `-d` refuses (not fully merged due to squash), use `-D` — the PR merge confirms the work landed.
 
-### 4.3 — Prune remote tracking refs
+### 6.3 — Prune remote tracking refs
 
 ```bash
 git fetch origin --prune
@@ -263,7 +303,7 @@ git fetch origin --prune
 
 This removes local tracking references for remote branches already deleted by `--delete-branch` during PR merges.
 
-### 4.4 — Verify clean state
+### 6.4 — Verify clean state
 
 Confirm:
 - `git worktree list` shows only the main worktree
@@ -275,13 +315,13 @@ If any of these fail, fix before proceeding.
 
 ---
 
-## Phase 5: Compound (`/compound-engineering:ce-compound`)
+## Phase 7: Compound (`/compound-engineering:ce-compound`)
 
 Invoke `/compound-engineering:ce-compound` after housekeeping. Use all default/recommended settings. Run autonomously — document the solved problem to compound team knowledge.
 
 ---
 
-## Phase 6: Dream (`/dream`)
+## Phase 8: Dream (`/dream`)
 
 If `/dream` is available, invoke it. Consolidate session learnings into persistent memory.
 
@@ -293,7 +333,7 @@ If `/dream` is available, invoke it. Consolidate session learnings into persiste
 - Preserve your token context — delegate to subagents via the skill chain.
 - Do NOT ask the user questions. The contract is the source of truth.
 - Report progress only at phase transitions: "Phase 1 complete. Phase 2 starting."
-- Stop ONLY when all phases complete (Phase 6, or Phase 5 if `/dream` unavailable).
+- Stop ONLY when all phases complete (Phase 8, or Phase 7 if `/dream` unavailable).
 - If truly stuck (missing credentials, environment broken), report the blocker and stop.
 
 ## No-Regression Guarantees
