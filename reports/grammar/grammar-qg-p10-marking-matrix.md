@@ -1,163 +1,43 @@
-# Grammar QG P10 Marking Matrix — Full Variant Expansion
+# Grammar QG P10 — Marking Matrix (Full Variant Expansion)
 
-Content Release: grammar-qg-p10-2026-04-29
-Generated: 2026-04-30T00:57:25.229Z
-Seed Range: 1..10
-Total Entries: 160
-Variant Categories: 9
+Generated: 2026-04-30T00:59:24.061Z
+Content release: grammar-qg-p10-2026-04-29
+Seed range: 1..5
+Total entries: 80
+Variant categories: 9
 
-## Summary
+## Categories tested
 
-| Metric | Value |
-| --- | --- |
-| Golden all pass | true |
-| Probe all fail | true |
-| Golden pass count | 160 |
-| Golden fail count | 0 |
-| Probe reject count | 160 |
-| Smart punct pass count | 160 |
+| # | Category | Description |
+|---|----------|-------------|
+| 1 | goldenAnswers | All accepted golden answers mark correct |
+| 2 | acceptedVariants | Whitespace-normalised variants mark correct |
+| 3 | nearMisses | First word removed — marks incorrect |
+| 4 | rawPromptProbes | Empty / junk — marks incorrect |
+| 5 | smartPunctuationVariants | Curly <-> straight punctuation |
+| 6 | caseVariants | toLowerCase / toUpperCase |
+| 7 | commonChildMistakes | Last word duplicated — marks incorrect |
+| 8 | expectedScore | Pass/fail expectations per category |
+| 9 | misconceptionTag | Evaluator misconception for near-miss |
 
-## Variant Categories
+## Summary by template
 
-1. **goldenAnswers** — all accepted answers from answerSpec
-2. **acceptedVariants** — whitespace mutations that should still pass
-3. **nearMisses** — golden with one critical word changed (should mark incorrect)
-4. **rawPromptProbes** — empty, whitespace, refusal, prompt echo (must mark incorrect)
-5. **smartPunctuationVariants** — curly/straight transforms on golden
-6. **caseVariants** — lowercase, UPPERCASE, Sentence Case
-7. **commonChildMistakes** — misconception-driven errors
-8. **expectedScore** — correct/incorrect classification per category
-9. **misconceptionTag** — from evaluateGrammarQuestion when wrong answer submitted
-
-## Per-Entry Detail (first 10)
-
-### fix_fronted_adverbial (seed 1)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 2)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 3)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 4)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 5)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 6)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 7)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 8)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 9)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
-
-### fix_fronted_adverbial (seed 10)
-
-| Category | Count | All Pass/Fail |
-| --- | --- | --- |
-| goldenAnswers | 1 | ALL PASS |
-| acceptedVariants | 2 | ALL PASS |
-| nearMisses | 2 | ALL REJECTED |
-| rawPromptProbes | 4 | ALL REJECTED |
-| smartPunctuationVariants | 1 | ALL PASS |
-| caseVariants | 3 | MIXED |
-| commonChildMistakes | 2 | ALL REJECTED |
-| misconceptionTag | — | fronted_adverbial_confusion |
+| Template | Seeds | Golden Pass | Accepted Pass | NearMiss Fail | Probe Fail | Smart Pass | Case Pass | Mistake Fail |
+|----------|-------|-------------|---------------|---------------|------------|------------|-----------|--------------|
+| fix_fronted_adverbial | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| combine_clauses_rewrite | 5 | 10/10 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| tense_rewrite | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
+| active_passive_rewrite | 5 | 6/6 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
+| parenthesis_fix_sentence | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| speech_punctuation_fix | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| proc_fronted_adverbial_fix | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| proc_colon_list_fix | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| proc_dash_boundary_fix | 5 | 15/15 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| proc_speech_punctuation_fix | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| proc2_standard_english_fix | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
+| proc2_passive_to_active | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
+| proc3_clause_join_rewrite | 5 | 10/10 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| proc3_parenthesis_commas_fix | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| proc3_hyphen_fix_meaning | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 0/10 | 5/5 |
+| proc3_apostrophe_rewrite | 5 | 5/5 | 10/10 | 5/5 | 15/15 | 10/10 | 10/10 | 5/5 |
 

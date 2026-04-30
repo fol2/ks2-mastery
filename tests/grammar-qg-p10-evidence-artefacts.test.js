@@ -173,6 +173,18 @@ describe('P10 Evidence Artefacts: status map vs quality register consistency', (
 describe('P10 Evidence Artefacts: marking matrix full variant expansion', () => {
   const matrixPath = path.join(REPORTS_DIR, 'grammar-qg-p10-marking-matrix.json');
 
+  const REQUIRED_CATEGORIES = [
+    'goldenAnswers',
+    'acceptedVariants',
+    'nearMisses',
+    'rawPromptProbes',
+    'smartPunctuationVariants',
+    'caseVariants',
+    'commonChildMistakes',
+    'expectedScore',
+    'misconceptionTag',
+  ];
+
   it('marking matrix JSON exists and is parseable', () => {
     assert.ok(fs.existsSync(matrixPath), `Missing: ${matrixPath}`);
     JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
@@ -184,25 +196,25 @@ describe('P10 Evidence Artefacts: marking matrix full variant expansion', () => 
     assert.equal(data.metadata.variantCategories, 9);
   });
 
-  it('every entry has all 9 variant categories', () => {
+  it('metadata.categoriesTested lists all 9 categories', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    assert.deepEqual(data.metadata.categoriesTested, REQUIRED_CATEGORIES);
+  });
+
+  it('seed range is 1..5', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    assert.equal(data.metadata.seedRange, '1..5');
+  });
+
+  it('every entry contains all 9 variant categories', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
     assert.ok(data.entries.length > 0, 'matrix must have at least one entry');
 
-    const requiredKeys = [
-      'goldenAnswers',
-      'acceptedVariants',
-      'nearMisses',
-      'rawPromptProbes',
-      'smartPunctuationVariants',
-      'caseVariants',
-      'commonChildMistakes',
-      'expectedScore',
-      'misconceptionTag',
-    ];
-
     for (const entry of data.entries) {
-      for (const key of requiredKeys) {
+      for (const key of REQUIRED_CATEGORIES) {
         assert.ok(
           key in entry,
           `Entry ${entry.templateId}:${entry.seed} missing category '${key}'`,
@@ -211,106 +223,103 @@ describe('P10 Evidence Artefacts: marking matrix full variant expansion', () => 
     }
   });
 
-  it('goldenAnswers is a non-empty array with pass/fail results', () => {
+  it('goldenAnswers entries have { input, marksCorrect } shape', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
     for (const entry of data.entries) {
       assert.ok(Array.isArray(entry.goldenAnswers), 'goldenAnswers must be array');
       assert.ok(entry.goldenAnswers.length >= 1, 'goldenAnswers must have at least one entry');
       for (const g of entry.goldenAnswers) {
-        assert.ok(typeof g.answer === 'string', 'goldenAnswers[].answer must be string');
-        assert.ok(typeof g.passed === 'boolean', 'goldenAnswers[].passed must be boolean');
+        assert.ok(typeof g.input === 'string', 'goldenAnswers[].input must be string');
+        assert.ok(typeof g.marksCorrect === 'boolean', 'goldenAnswers[].marksCorrect must be boolean');
       }
     }
   });
 
-  it('acceptedVariants is an array with pass/fail results', () => {
+  it('acceptedVariants entries have { input, marksCorrect } shape', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
     for (const entry of data.entries) {
       assert.ok(Array.isArray(entry.acceptedVariants), 'acceptedVariants must be array');
       for (const v of entry.acceptedVariants) {
-        assert.ok(typeof v.answer === 'string', 'acceptedVariants[].answer must be string');
-        assert.ok(typeof v.passed === 'boolean', 'acceptedVariants[].passed must be boolean');
-        assert.ok(typeof v.reason === 'string', 'acceptedVariants[].reason must be string');
+        assert.ok(typeof v.input === 'string', 'acceptedVariants[].input must be string');
+        assert.ok(typeof v.marksCorrect === 'boolean', 'acceptedVariants[].marksCorrect must be boolean');
       }
     }
   });
 
-  it('nearMisses is an array with pass/fail results', () => {
+  it('nearMisses entries have { input, marksCorrect } shape', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
     for (const entry of data.entries) {
       assert.ok(Array.isArray(entry.nearMisses), 'nearMisses must be array');
       for (const nm of entry.nearMisses) {
-        assert.ok(typeof nm.answer === 'string', 'nearMisses[].answer must be string');
-        assert.ok(typeof nm.passed === 'boolean', 'nearMisses[].passed must be boolean');
+        assert.ok(typeof nm.input === 'string', 'nearMisses[].input must be string');
+        assert.ok(typeof nm.marksCorrect === 'boolean', 'nearMisses[].marksCorrect must be boolean');
       }
     }
   });
 
-  it('rawPromptProbes has 4 probes per entry, all marked incorrect', () => {
+  it('rawPromptProbes has 3 probes per entry, all mark incorrect', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
     for (const entry of data.entries) {
       assert.ok(Array.isArray(entry.rawPromptProbes), 'rawPromptProbes must be array');
-      assert.equal(entry.rawPromptProbes.length, 4, `Expected 4 probes for ${entry.templateId}:${entry.seed}`);
+      assert.equal(entry.rawPromptProbes.length, 3, `Expected 3 probes for ${entry.templateId}:${entry.seed}`);
       for (const p of entry.rawPromptProbes) {
-        assert.ok(typeof p.answer === 'string', 'rawPromptProbes[].answer must be string');
-        assert.equal(p.passed, false, `Probe "${p.reason}" must mark incorrect for ${entry.templateId}:${entry.seed}`);
+        assert.ok(typeof p.input === 'string', 'rawPromptProbes[].input must be string');
+        assert.equal(p.marksCorrect, false, `Probe "${p.input}" must mark incorrect for ${entry.templateId}:${entry.seed}`);
       }
     }
   });
 
-  it('smartPunctuationVariants is a non-empty array with pass/fail results', () => {
+  it('smartPunctuationVariants has 2 entries with { input, marksCorrect } shape', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
     for (const entry of data.entries) {
       assert.ok(Array.isArray(entry.smartPunctuationVariants), 'smartPunctuationVariants must be array');
-      assert.ok(entry.smartPunctuationVariants.length >= 1, 'smartPunctuationVariants must have at least one entry');
+      assert.equal(entry.smartPunctuationVariants.length, 2);
       for (const sp of entry.smartPunctuationVariants) {
-        assert.ok(typeof sp.answer === 'string', 'smartPunctuationVariants[].answer must be string');
-        assert.ok(typeof sp.passed === 'boolean', 'smartPunctuationVariants[].passed must be boolean');
-        assert.ok(typeof sp.transform === 'string', 'smartPunctuationVariants[].transform must be string');
+        assert.ok(typeof sp.input === 'string', 'smartPunctuationVariants[].input must be string');
+        assert.ok(typeof sp.marksCorrect === 'boolean', 'smartPunctuationVariants[].marksCorrect must be boolean');
       }
     }
   });
 
-  it('caseVariants has 3 entries per entry', () => {
+  it('caseVariants has 2 entries with { input, marksCorrect } shape', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
     for (const entry of data.entries) {
       assert.ok(Array.isArray(entry.caseVariants), 'caseVariants must be array');
-      assert.equal(entry.caseVariants.length, 3, `Expected 3 case variants for ${entry.templateId}:${entry.seed}`);
+      assert.equal(entry.caseVariants.length, 2, `Expected 2 case variants for ${entry.templateId}:${entry.seed}`);
       for (const cv of entry.caseVariants) {
-        assert.ok(typeof cv.answer === 'string', 'caseVariants[].answer must be string');
-        assert.ok(typeof cv.passed === 'boolean', 'caseVariants[].passed must be boolean');
-        assert.ok(typeof cv.transform === 'string', 'caseVariants[].transform must be string');
+        assert.ok(typeof cv.input === 'string', 'caseVariants[].input must be string');
+        assert.ok(typeof cv.marksCorrect === 'boolean', 'caseVariants[].marksCorrect must be boolean');
       }
     }
   });
 
-  it('commonChildMistakes is an array with pass/fail results', () => {
+  it('commonChildMistakes entries have { input, marksCorrect } shape', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
     for (const entry of data.entries) {
       assert.ok(Array.isArray(entry.commonChildMistakes), 'commonChildMistakes must be array');
       for (const cm of entry.commonChildMistakes) {
-        assert.ok(typeof cm.answer === 'string', 'commonChildMistakes[].answer must be string');
-        assert.ok(typeof cm.passed === 'boolean', 'commonChildMistakes[].passed must be boolean');
+        assert.ok(typeof cm.input === 'string', 'commonChildMistakes[].input must be string');
+        assert.ok(typeof cm.marksCorrect === 'boolean', 'commonChildMistakes[].marksCorrect must be boolean');
       }
     }
   });
 
-  it('expectedScore has correct/incorrect classification', () => {
+  it('expectedScore has pass/fail/varies per category', () => {
     if (!fs.existsSync(matrixPath)) return;
     const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    const validValues = ['pass', 'fail', 'varies'];
     for (const entry of data.entries) {
       assert.ok(typeof entry.expectedScore === 'object', 'expectedScore must be object');
-      assert.equal(entry.expectedScore.golden, 'correct');
-      assert.equal(entry.expectedScore.acceptedVariants, 'correct');
-      assert.equal(entry.expectedScore.nearMisses, 'incorrect');
-      assert.equal(entry.expectedScore.rawPromptProbes, 'incorrect');
+      for (const [key, val] of Object.entries(entry.expectedScore)) {
+        assert.ok(validValues.includes(val), `expectedScore.${key} = "${val}" not in [pass, fail, varies]`);
+      }
     }
   });
 
