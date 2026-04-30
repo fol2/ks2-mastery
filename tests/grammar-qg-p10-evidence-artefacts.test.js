@@ -29,6 +29,7 @@ describe('P10 Evidence Artefacts: file existence', () => {
     'grammar-qg-p10-quality-register.json',
     'grammar-qg-p10-distractor-audit.json',
     'grammar-qg-p10-marking-matrix.json',
+    'grammar-qg-p10-marking-matrix.md',
     'grammar-qg-p10-certification-status-map.json',
   ];
 
@@ -366,5 +367,179 @@ describe('P10 Evidence Artefacts: status map vs quality register consistency', (
     if (!fs.existsSync(statusMapPath)) return;
     const statusMap = JSON.parse(fs.readFileSync(statusMapPath, 'utf8'));
     assert.equal(Object.keys(statusMap).length, 78);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. Marking matrix: 9 variant categories per entry
+// ---------------------------------------------------------------------------
+
+describe('P10 Evidence Artefacts: marking matrix full variant expansion', () => {
+  const matrixPath = path.join(REPORTS_DIR, 'grammar-qg-p10-marking-matrix.json');
+
+  const REQUIRED_CATEGORIES = [
+    'goldenAnswers',
+    'acceptedVariants',
+    'nearMisses',
+    'rawPromptProbes',
+    'smartPunctuationVariants',
+    'caseVariants',
+    'commonChildMistakes',
+    'expectedScore',
+    'misconceptionTag',
+  ];
+
+  it('marking matrix JSON exists and is parseable', () => {
+    assert.ok(fs.existsSync(matrixPath), `Missing: ${matrixPath}`);
+    JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+  });
+
+  it('metadata declares variantCategories = 9', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    assert.equal(data.metadata.variantCategories, 9);
+  });
+
+  it('metadata.categoriesTested lists all 9 categories', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    assert.deepEqual(data.metadata.categoriesTested, REQUIRED_CATEGORIES);
+  });
+
+  it('seed range is 1..5', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    assert.equal(data.metadata.seedRange, '1..5');
+  });
+
+  it('every entry contains all 9 variant categories', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    assert.ok(data.entries.length > 0, 'matrix must have at least one entry');
+
+    for (const entry of data.entries) {
+      for (const key of REQUIRED_CATEGORIES) {
+        assert.ok(
+          key in entry,
+          `Entry ${entry.templateId}:${entry.seed} missing category '${key}'`,
+        );
+      }
+    }
+  });
+
+  it('goldenAnswers entries have { input, marksCorrect } shape', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    for (const entry of data.entries) {
+      assert.ok(Array.isArray(entry.goldenAnswers), 'goldenAnswers must be array');
+      assert.ok(entry.goldenAnswers.length >= 1, 'goldenAnswers must have at least one entry');
+      for (const g of entry.goldenAnswers) {
+        assert.ok(typeof g.input === 'string', 'goldenAnswers[].input must be string');
+        assert.ok(typeof g.marksCorrect === 'boolean', 'goldenAnswers[].marksCorrect must be boolean');
+      }
+    }
+  });
+
+  it('acceptedVariants entries have { input, marksCorrect } shape', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    for (const entry of data.entries) {
+      assert.ok(Array.isArray(entry.acceptedVariants), 'acceptedVariants must be array');
+      for (const v of entry.acceptedVariants) {
+        assert.ok(typeof v.input === 'string', 'acceptedVariants[].input must be string');
+        assert.ok(typeof v.marksCorrect === 'boolean', 'acceptedVariants[].marksCorrect must be boolean');
+      }
+    }
+  });
+
+  it('nearMisses entries have { input, marksCorrect } shape', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    for (const entry of data.entries) {
+      assert.ok(Array.isArray(entry.nearMisses), 'nearMisses must be array');
+      for (const nm of entry.nearMisses) {
+        assert.ok(typeof nm.input === 'string', 'nearMisses[].input must be string');
+        assert.ok(typeof nm.marksCorrect === 'boolean', 'nearMisses[].marksCorrect must be boolean');
+      }
+    }
+  });
+
+  it('rawPromptProbes has 3 probes per entry, all mark incorrect', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    for (const entry of data.entries) {
+      assert.ok(Array.isArray(entry.rawPromptProbes), 'rawPromptProbes must be array');
+      assert.equal(entry.rawPromptProbes.length, 3, `Expected 3 probes for ${entry.templateId}:${entry.seed}`);
+      for (const p of entry.rawPromptProbes) {
+        assert.ok(typeof p.input === 'string', 'rawPromptProbes[].input must be string');
+        assert.equal(p.marksCorrect, false, `Probe "${p.input}" must mark incorrect for ${entry.templateId}:${entry.seed}`);
+      }
+    }
+  });
+
+  it('smartPunctuationVariants has 2 entries with { input, marksCorrect } shape', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    for (const entry of data.entries) {
+      assert.ok(Array.isArray(entry.smartPunctuationVariants), 'smartPunctuationVariants must be array');
+      assert.equal(entry.smartPunctuationVariants.length, 2);
+      for (const sp of entry.smartPunctuationVariants) {
+        assert.ok(typeof sp.input === 'string', 'smartPunctuationVariants[].input must be string');
+        assert.ok(typeof sp.marksCorrect === 'boolean', 'smartPunctuationVariants[].marksCorrect must be boolean');
+      }
+    }
+  });
+
+  it('caseVariants has 2 entries with { input, marksCorrect } shape', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    for (const entry of data.entries) {
+      assert.ok(Array.isArray(entry.caseVariants), 'caseVariants must be array');
+      assert.equal(entry.caseVariants.length, 2, `Expected 2 case variants for ${entry.templateId}:${entry.seed}`);
+      for (const cv of entry.caseVariants) {
+        assert.ok(typeof cv.input === 'string', 'caseVariants[].input must be string');
+        assert.ok(typeof cv.marksCorrect === 'boolean', 'caseVariants[].marksCorrect must be boolean');
+      }
+    }
+  });
+
+  it('commonChildMistakes entries have { input, marksCorrect } shape', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    for (const entry of data.entries) {
+      assert.ok(Array.isArray(entry.commonChildMistakes), 'commonChildMistakes must be array');
+      for (const cm of entry.commonChildMistakes) {
+        assert.ok(typeof cm.input === 'string', 'commonChildMistakes[].input must be string');
+        assert.ok(typeof cm.marksCorrect === 'boolean', 'commonChildMistakes[].marksCorrect must be boolean');
+      }
+    }
+  });
+
+  it('expectedScore has pass/fail/varies per category', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    const validValues = ['pass', 'fail', 'varies'];
+    for (const entry of data.entries) {
+      assert.ok(typeof entry.expectedScore === 'object', 'expectedScore must be object');
+      for (const [key, val] of Object.entries(entry.expectedScore)) {
+        assert.ok(validValues.includes(val), `expectedScore.${key} = "${val}" not in [pass, fail, varies]`);
+      }
+    }
+  });
+
+  it('misconceptionTag is a string or null', () => {
+    if (!fs.existsSync(matrixPath)) return;
+    const data = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+    for (const entry of data.entries) {
+      assert.ok(
+        entry.misconceptionTag === null || typeof entry.misconceptionTag === 'string',
+        `misconceptionTag must be string|null for ${entry.templateId}:${entry.seed}`,
+      );
+    }
+  });
+
+  it('marking matrix markdown report exists', () => {
+    const mdPath = path.join(REPORTS_DIR, 'grammar-qg-p10-marking-matrix.md');
+    assert.ok(fs.existsSync(mdPath), `Missing: ${mdPath}`);
   });
 });
