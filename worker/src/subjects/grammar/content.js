@@ -7730,13 +7730,13 @@ function enrichPromptCue(question) {
   // Build focusCue (targetOccurrence: 1 disambiguates which occurrence is the
   // target when the cue text appears multiple times in the sentence)
   if (cueType === 'underline' && targetWord) {
-    question.focusCue = { type: 'underline', text: targetWord, targetOccurrence: 1 };
+    question.focusCue = { type: 'underline', targetText: targetWord, targetOccurrence: 1 };
   } else if (cueType === 'bold' && boldSentence) {
-    question.focusCue = { type: 'bold', text: boldSentence, targetOccurrence: 1 };
+    question.focusCue = { type: 'bold', targetText: boldSentence, targetOccurrence: 1 };
   } else if (cueType === 'quoted-word' && targetWord) {
-    question.focusCue = { type: 'quoted-word', text: targetWord, targetOccurrence: 1 };
+    question.focusCue = { type: 'quoted-word', targetText: targetWord, targetOccurrence: 1 };
   } else if (cueType === 'target-sentence' && targetSentence) {
-    question.focusCue = { type: 'target-sentence', text: targetSentence, targetOccurrence: 1 };
+    question.focusCue = { type: 'target-sentence', targetText: targetSentence, targetOccurrence: 1 };
   }
 
   // P10 U2: Cue consistency enforcement — if cueType is 'underline' but we
@@ -7758,7 +7758,7 @@ function enrichPromptCue(question) {
 
   // screenReaderPromptText — mentions the target word clearly
   if (question.focusCue) {
-    const word = question.focusCue.text;
+    const word = question.focusCue.targetText;
     if (cueType === 'underline') {
       question.screenReaderPromptText = `${plainPrompt} Target word: ${word}`;
     } else if (cueType === 'bold') {
@@ -7772,7 +7772,7 @@ function enrichPromptCue(question) {
 
   // readAloudText — full spoken form including cue
   if (question.focusCue) {
-    const word = question.focusCue.text;
+    const word = question.focusCue.targetText;
     if (cueType === 'underline') {
       question.readAloudText = `${plainPrompt} The underlined word is: ${word}.`;
     } else if (cueType === 'target-sentence') {

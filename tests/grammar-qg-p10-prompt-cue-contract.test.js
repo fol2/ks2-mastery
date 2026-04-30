@@ -2,7 +2,7 @@
  * Grammar QG P10 U2 — Explicit Prompt Target Contract
  *
  * Validates that:
- * - focusCue.text correctly targets the intended word/phrase, never the whole sentence
+ * - focusCue.targetText correctly targets the intended word/phrase, never the whole sentence
  * - promptParts does not duplicate sentence content
  * - Templates mentioning "underlined" produce valid focusCue or explicit fallback
  */
@@ -27,44 +27,44 @@ function wordCount(text) {
 }
 
 // ---------------------------------------------------------------------------
-// 1. word_class_underlined_choice: focusCue.text is a single word
+// 1. word_class_underlined_choice: focusCue.targetText is a single word
 // ---------------------------------------------------------------------------
 
 describe('P10 U2: word_class_underlined_choice — focusCue targets single word', () => {
   for (let seed = 1; seed <= 5; seed++) {
-    it(`seed ${seed}: focusCue.text is a single word`, () => {
+    it(`seed ${seed}: focusCue.targetText is a single word`, () => {
       const q = generateQuestion('word_class_underlined_choice', seed);
       assert.ok(q, 'question must be generated');
       assert.ok(q.focusCue, 'focusCue must be present');
       assert.strictEqual(q.focusCue.type, 'underline');
       assert.ok(
-        wordCount(q.focusCue.text) <= 2,
-        `focusCue.text must be 1-2 words (a single word), got ${wordCount(q.focusCue.text)} words: "${q.focusCue.text}"`
+        wordCount(q.focusCue.targetText) <= 2,
+        `focusCue.targetText must be 1-2 words (a single word), got ${wordCount(q.focusCue.targetText)} words: "${q.focusCue.targetText}"`
       );
     });
   }
 });
 
 // ---------------------------------------------------------------------------
-// 2. qg_p4_voice_roles_transfer: focusCue.text is a noun phrase (2-4 words)
+// 2. qg_p4_voice_roles_transfer: focusCue.targetText is a noun phrase (2-4 words)
 // ---------------------------------------------------------------------------
 
 describe('P10 U2: qg_p4_voice_roles_transfer — focusCue targets noun phrase', () => {
   for (let seed = 1; seed <= 5; seed++) {
-    it(`seed ${seed}: focusCue.text is a noun phrase (2-4 words, not a full sentence)`, () => {
+    it(`seed ${seed}: focusCue.targetText is a noun phrase (2-4 words, not a full sentence)`, () => {
       const q = generateQuestion('qg_p4_voice_roles_transfer', seed);
       assert.ok(q, 'question must be generated');
       assert.ok(q.focusCue, 'focusCue must be present');
       assert.strictEqual(q.focusCue.type, 'underline');
-      const wc = wordCount(q.focusCue.text);
+      const wc = wordCount(q.focusCue.targetText);
       assert.ok(
         wc >= 2 && wc <= 4,
-        `focusCue.text must be 2-4 words (noun phrase), got ${wc} words: "${q.focusCue.text}"`
+        `focusCue.targetText must be 2-4 words (noun phrase), got ${wc} words: "${q.focusCue.targetText}"`
       );
       // Must NOT be a full sentence (no verb typically, and shorter than the example)
       assert.ok(
-        !q.focusCue.text.includes('.'),
-        'focusCue.text must not contain a full stop (not a full sentence)'
+        !q.focusCue.targetText.includes('.'),
+        'focusCue.targetText must not contain a full stop (not a full sentence)'
       );
     });
   }
@@ -75,13 +75,13 @@ describe('P10 U2: qg_p4_voice_roles_transfer — focusCue targets noun phrase', 
 // ---------------------------------------------------------------------------
 
 describe('P10 U2: qg_p4_word_class_noun_phrase_transfer seed 3 — focusCue targets word', () => {
-  it('seed 3: focusCue.text is the specific word, not the whole phrase', () => {
+  it('seed 3: focusCue.targetText is the specific word, not the whole phrase', () => {
     const q = generateQuestion('qg_p4_word_class_noun_phrase_transfer', 3);
     assert.ok(q, 'question must be generated');
     assert.ok(q.focusCue, 'focusCue must be present');
     assert.strictEqual(q.focusCue.type, 'underline');
-    assert.strictEqual(q.focusCue.text, 'incredibly');
-    assert.strictEqual(wordCount(q.focusCue.text), 1, 'focusCue.text must be exactly 1 word');
+    assert.strictEqual(q.focusCue.targetText, 'incredibly');
+    assert.strictEqual(wordCount(q.focusCue.targetText), 1, 'focusCue.targetText must be exactly 1 word');
   });
 });
 
@@ -92,21 +92,21 @@ describe('P10 U2: qg_p4_word_class_noun_phrase_transfer seed 3 — focusCue targ
 describe('P10 U2: qg_p3_noun_phrases_explain — underline on noun phrase', () => {
   // Seeds 3 and 7 have "underlined group" prompts
   for (const seed of [3, 7]) {
-    it(`seed ${seed}: focusCue.text is the noun phrase, not the whole sentence`, () => {
+    it(`seed ${seed}: focusCue.targetText is the noun phrase, not the whole sentence`, () => {
       const q = generateQuestion('qg_p3_noun_phrases_explain', seed);
       assert.ok(q, 'question must be generated');
       assert.ok(q.focusCue, `focusCue must be present for seed ${seed}`);
       assert.strictEqual(q.focusCue.type, 'underline');
       // The noun phrase should be 4-8 words (a phrase), not a full sentence
-      const wc = wordCount(q.focusCue.text);
+      const wc = wordCount(q.focusCue.targetText);
       assert.ok(
         wc >= 3 && wc <= 8,
-        `focusCue.text must be 3-8 words (noun phrase), got ${wc} words: "${q.focusCue.text}"`
+        `focusCue.targetText must be 3-8 words (noun phrase), got ${wc} words: "${q.focusCue.targetText}"`
       );
       // Must not end with a full stop (sentence indicator)
       assert.ok(
-        !q.focusCue.text.endsWith('.'),
-        'focusCue.text must not end with full stop — it is a phrase, not a sentence'
+        !q.focusCue.targetText.endsWith('.'),
+        'focusCue.targetText must not end with full stop — it is a phrase, not a sentence'
       );
     });
   }
@@ -180,10 +180,10 @@ describe('P10 U2: cue consistency enforcement', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. focusCue.text must not be unreasonably long (whole-sentence detection)
+// 7. focusCue.targetText must not be unreasonably long (whole-sentence detection)
 // ---------------------------------------------------------------------------
 
-describe('P10 U2: focusCue.text is not a whole sentence', () => {
+describe('P10 U2: focusCue.targetText is not a whole sentence', () => {
   const underlinedTemplates = GRAMMAR_TEMPLATE_METADATA.filter(t => {
     const q = createGrammarQuestion({ templateId: t.id, seed: 1 });
     if (!q || !q.focusCue) return false;
@@ -192,13 +192,13 @@ describe('P10 U2: focusCue.text is not a whole sentence', () => {
 
   for (const template of underlinedTemplates) {
     for (let seed = 1; seed <= 3; seed++) {
-      it(`${template.id} seed ${seed}: focusCue.text is not a whole sentence (<=8 words)`, () => {
+      it(`${template.id} seed ${seed}: focusCue.targetText is not a whole sentence (<=8 words)`, () => {
         const q = createGrammarQuestion({ templateId: template.id, seed });
         if (!q || !q.focusCue || q.focusCue.type !== 'underline') return;
-        const wc = wordCount(q.focusCue.text);
+        const wc = wordCount(q.focusCue.targetText);
         assert.ok(
           wc <= 8,
-          `focusCue.text should be a word/phrase, not a sentence. Got ${wc} words: "${q.focusCue.text}"`
+          `focusCue.targetText should be a word/phrase, not a sentence. Got ${wc} words: "${q.focusCue.targetText}"`
         );
       });
     }
@@ -240,35 +240,35 @@ describe('P10 U2 REGRESSION: target-sentence cue produces visible sentence part'
 });
 
 // ---------------------------------------------------------------------------
-// 9. P10 U7: screenReaderPromptText includes focusCue.text
+// 9. P10 U7: screenReaderPromptText includes focusCue.targetText
 // ---------------------------------------------------------------------------
 
-describe('P10 U7: screenReaderPromptText includes focusCue.text', () => {
-  it('word_class_underlined_choice seed 1: screenReaderPromptText mentions focusCue.text', () => {
+describe('P10 U7: screenReaderPromptText includes focusCue.targetText', () => {
+  it('word_class_underlined_choice seed 1: screenReaderPromptText mentions focusCue.targetText', () => {
     const q = generateQuestion('word_class_underlined_choice', 1);
     assert.ok(q, 'question must be generated');
     assert.ok(q.focusCue, 'focusCue must be present');
     assert.ok(q.screenReaderPromptText, 'screenReaderPromptText must be present');
     assert.ok(
-      q.screenReaderPromptText.toLowerCase().includes(q.focusCue.text.toLowerCase()),
-      `screenReaderPromptText must contain focusCue.text "${q.focusCue.text}" — got "${q.screenReaderPromptText}"`
+      q.screenReaderPromptText.toLowerCase().includes(q.focusCue.targetText.toLowerCase()),
+      `screenReaderPromptText must contain focusCue.targetText "${q.focusCue.targetText}" — got "${q.screenReaderPromptText}"`
     );
   });
 });
 
 // ---------------------------------------------------------------------------
-// 10. P10 U7: readAloudText includes focusCue.text
+// 10. P10 U7: readAloudText includes focusCue.targetText
 // ---------------------------------------------------------------------------
 
-describe('P10 U7: readAloudText includes focusCue.text', () => {
-  it('word_class_underlined_choice seed 1: readAloudText mentions focusCue.text', () => {
+describe('P10 U7: readAloudText includes focusCue.targetText', () => {
+  it('word_class_underlined_choice seed 1: readAloudText mentions focusCue.targetText', () => {
     const q = generateQuestion('word_class_underlined_choice', 1);
     assert.ok(q, 'question must be generated');
     assert.ok(q.focusCue, 'focusCue must be present');
     assert.ok(q.readAloudText, 'readAloudText must be present');
     assert.ok(
-      q.readAloudText.toLowerCase().includes(q.focusCue.text.toLowerCase()),
-      `readAloudText must contain focusCue.text "${q.focusCue.text}" — got "${q.readAloudText}"`
+      q.readAloudText.toLowerCase().includes(q.focusCue.targetText.toLowerCase()),
+      `readAloudText must contain focusCue.targetText "${q.focusCue.targetText}" — got "${q.readAloudText}"`
     );
   });
 });

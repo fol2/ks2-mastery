@@ -222,20 +222,20 @@ test('mini-test mode uses readAloudText from current question item', () => {
 
 // --- U8: qg_p4_voice_roles_transfer generates readAloudText with focusCue ---
 
-test('qg_p4_voice_roles_transfer generates speech text including focusCue.text', () => {
+test('qg_p4_voice_roles_transfer generates speech text including focusCue.targetText', () => {
   const question = createGrammarQuestion({ templateId: 'qg_p4_voice_roles_transfer', seed: 1 });
   assert.ok(question, 'qg_p4_voice_roles_transfer must generate a question at seed 1');
 
   const serialised = serialiseGrammarQuestion(question);
   assert.ok(serialised, 'serialiseGrammarQuestion must return a serialised object');
   assert.ok(serialised.focusCue, 'qg_p4_voice_roles_transfer must produce a focusCue');
-  assert.ok(serialised.focusCue.text, 'focusCue must have a text field');
+  assert.ok(serialised.focusCue.targetText, 'focusCue must have a targetText field');
 
   // Build a speech grammar object from the serialised question
   const grammarObj = wrapSession(serialised);
   const text = buildGrammarSpeechText(grammarObj);
 
   assert.ok(text.length > 0, 'speech text must not be empty');
-  assert.match(text, new RegExp(serialised.focusCue.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
-    `speech text must include focusCue.text "${serialised.focusCue.text}"`);
+  assert.match(text, new RegExp(serialised.focusCue.targetText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+    `speech text must include focusCue.targetText "${serialised.focusCue.targetText}"`);
 });
